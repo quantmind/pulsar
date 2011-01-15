@@ -58,7 +58,7 @@ class PIDFile(object):
     def acquire(self):
         try:
             self.write_pid()
-        except OSError, exc:
+        except OSError as exc:
             raise LockFailed(str(exc))
         return self
 
@@ -71,7 +71,7 @@ class PIDFile(object):
     def read_pid(self):
         try:
             fh = open(self.path, "r")
-        except IOError, exc:
+        except IOError as exc:
             if exc.errno == errno.ENOENT:
                 return
             raise
@@ -87,7 +87,7 @@ class PIDFile(object):
     def remove(self):
         try:
             os.unlink(self.path)
-        except OSError, exc:
+        except OSError as exc:
             if exc.errno in (errno.ENOENT, errno.EACCES):
                 return
             raise
@@ -95,7 +95,7 @@ class PIDFile(object):
     def remove_if_stale(self):
         try:
             pid = self.read_pid()
-        except ValueError, exc:
+        except ValueError as exc:
             sys.stderr.write("Broken pidfile found. Removing it.\n")
             self.remove()
             return True
@@ -105,7 +105,7 @@ class PIDFile(object):
 
         try:
             os.kill(pid, 0)
-        except os.error, exc:
+        except os.error as exc:
             if exc.errno == errno.ESRCH:
                 sys.stderr.write("Stale pidfile exists. Removing it.\n")
                 self.remove()
@@ -159,7 +159,7 @@ class DaemonContext(object):
         for fd in reversed(range(get_fdmax(default=2048))):
             try:
                 os.close(fd)
-            except OSError, exc:
+            except OSError as exc:
                 if exc.errno != errno.EBADF:
                     raise
 

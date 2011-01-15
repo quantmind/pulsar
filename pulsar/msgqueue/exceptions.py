@@ -1,0 +1,31 @@
+
+
+
+class NotBoundError(Exception):
+    """Trying to call channel dependent method on unbound entity."""
+    pass
+
+
+class MessageStateError(Exception):
+    """The message has already been acknowledged."""
+    pass
+
+
+class TimeoutError(Exception):
+    """Operation timed out."""
+    pass
+
+
+class LimitExceeded(Exception):
+    """Limit exceeded."""
+    pass
+
+
+class ConnectionLimitExceeded(LimitExceeded):
+    """Maximum number of simultaneous connections exceeded."""
+    pass
+
+
+class ChannelLimitExceeded(LimitExceeded):
+    """Maximum number of simultaenous channels exceeded."""
+    pass

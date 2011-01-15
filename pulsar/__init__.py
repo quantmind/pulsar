@@ -5,8 +5,7 @@ VERSION = (0, 1, 'dev')
 def get_version():
     return '.'.join(map(str,VERSION))
 
-# This list is updated by the views.appsite.appsite handler
-siteapp_choices = [('','-----------------')]
+SERVER_SOFTWARE = "pulsar/%s" % get_version()
 
 
 __version__   = get_version()

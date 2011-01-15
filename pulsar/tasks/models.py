@@ -1,0 +1,108 @@
+import sys
+from copy import deepcopy
+import logging
+from datetime import datetime, timedelta, date
+
+from unuk.contrib.tasks.registry import registry
+
+
+class TaskMetaClass(type):
+    """Metaclass for tasks.
+
+    Automatically registers the task in the task registry, except
+    if the ``abstract`` attribute is set.
+
+    If no ``name`` attribute is provided, the name is automatically
+    set to the name of the module it was defined in, and the class name.
+    """
+
+    def __new__(cls, name, bases, attrs):
+        super_new = super(TaskMetaClass, cls).__new__
+        task_module = attrs["__module__"]
+
+        # Abstract class, remove the abstract attribute so
+        # any class inheriting from this won't be abstract by default.
+        if attrs.pop("abstract", None) or not attrs.get("autoregister", True):
+            return super_new(cls, name, bases, attrs)
+
+        # Automatically generate missing name.
+        task_name = attrs.get("name",None)
+        if not task_name:
+            task_module = sys.modules[task_module]
+            task_name = ".".join([task_module.__name__, name])
+        task_name = task_name.lower()
+        attrs["name"] = task_name
+
+        # Because of the way import happens (recursively)
+        # we may or may not be the first time the task tries to register
+        # with the framework. There should only be one class for each task
+        # name, so we always return the registered version.
+
+        task_name = attrs["name"]
+        if task_name not in registry:
+            task_cls = super_new(cls, name, bases, attrs)
+            registry.register(task_cls)
+        return registry[task_name].__class__
+
+
+class Task(object):
+    '''The ``unuk`` base task class which is used in a distributed task queue.'''
+    __metaclass__ = TaskMetaClass
+    abstract = True
+    '''If set to ``True`` (default is ``False``), the task won't be registered with the task registry.'''
+    autoregister = True
+    '''If ``False`` (default is ``True``), the task need to be registered manually with the task registry.'''
+    type = "regular"
+    '''Type of task, one of ``regular`` and ``periodic``'''
+        
+    def __call__(self, task_name, task_id, *args, **kwargs):
+        logger = logging.getLogger('%s' % task_name)
+        logger.debug('executing %s' % task_id)
+        return self.run(task_name, task_id, logger, *args, **kwargs)
+    
+    def run(self, task_name, task_id, logger, *args, **kwargs):
+        '''The body of the task executed by the worker. This function needs to be
+implemented by subclasses.'''
+        raise NotImplementedError("Tasks must define the run method.")
+    
+
+class PeriodicTask(Task):
+    '''A periodic :class:`Task` implementation.'''
+    abstract  = True
+    type      = "periodic"
+    anchor    = None
+    '''If specified it must be a :class:`datetime.datetime` instance. It controls when the periodic task is run.'''
+    run_every = None
+    '''Periodicity as a :class:`datetime.timedelta` instance.'''
+    
+    def __init__(self, run_every = None):
+        self.run_every = run_every or self.run_every
+        if self.run_every is None:
+            raise NotImplementedError("Periodic tasks must have a run_every attribute set.")
+
+    def is_due(self, last_run_at):
+        """Returns tuple of two items ``(is_due, next_time_to_run)``,
+        where next time to run is in seconds.
+
+        e.g.
+
+        * ``(True, 20)``, means the task should be run now, and the next
+            time to run is in 20 seconds.
+
+        * ``(False, 12)``, means the task should be run in 12 seconds.
+
+        You can override this to decide the interval at runtime,
+        but keep in mind the value of the :attr:`unuk.contrib.tasks.Scheduler.beat`
+        attribute, which controls the maximum number of seconds the controller can sleep between
+        re-checking the periodic task intervals. You may
+        consider lowering the value of :attr:`unuk.contrib.tasks.Scheduler.beat` if
+        responsiveness if of importance to you.
+        """
+        return self.run_every.is_due(last_run_at)
+
+
+def anchorDate(hour = 0, minute = 0, second = 0):
+    td = date.today()
+    return datetime(year = td.year, month = td.month, day = td.day,
+                    hour = hour, minute = minute, second = second)
+    

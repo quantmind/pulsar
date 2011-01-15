@@ -2,9 +2,6 @@
 #
 # This file is part of gunicorn released under the MIT license. 
 # See the NOTICE for more information.
-
-from __future__ import with_statement
-
 import errno
 import os
 import tempfile
@@ -76,11 +73,11 @@ class Pidfile(object):
                 try:
                     os.kill(wpid, 0)
                     return wpid
-                except OSError, e:
+                except OSError as e:
                     if e[0] == errno.ESRCH:
                         return
                     raise
-        except IOError, e:
+        except IOError as e:
             if e[0] == errno.ENOENT:
                 return
             raise

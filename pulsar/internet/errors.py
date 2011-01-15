@@ -1,4 +1,4 @@
-
+from pulsar.core.errors import PulsarException
 
 class PulsarInternetException(PulsarException):
     '''base class of all Pulsar Internet Exception'''

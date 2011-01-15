@@ -10,7 +10,7 @@ import socket
 import sys
 import time
 
-from gunicorn import util
+from pulsar import utils
 
 log = logging.getLogger(__name__)
 
@@ -46,10 +46,11 @@ class BaseSocket(object):
     def close(self):
         try:
             self.sock.close()
-        except socket.error, e:
+        except socket.error as e:
             log.info("Error while closing socket %s" % str(e))
         time.sleep(0.3)
         del self.sock
+
 
 class TCPSocket(BaseSocket):
     
@@ -62,6 +63,7 @@ class TCPSocket(BaseSocket):
         sock.setsockopt(socket.IPPROTO_TCP, socket.TCP_NODELAY, 1)
         return super(TCPSocket, self).set_options(sock, bound=bound)
 
+
 class TCP6Socket(TCPSocket):
 
     FAMILY = socket.AF_INET6
@@ -69,6 +71,7 @@ class TCP6Socket(TCPSocket):
     def __str__(self):
         (host, port, fl, sc) = self.sock.getsockname()
         return "http://[%s]:%d" % (host, port)
+
 
 class UnixSocket(BaseSocket):
     
@@ -88,12 +91,13 @@ class UnixSocket(BaseSocket):
     def bind(self, sock):
         old_umask = os.umask(self.conf.umask)
         sock.bind(self.address)
-        util.chown(self.address, self.conf.uid, self.conf.gid)
+        utils.chown(self.address, self.conf.uid, self.conf.gid)
         os.umask(old_umask)
         
     def close(self):
         super(UnixSocket, self).close()
         os.unlink(self.address)
+
 
 def create_socket(conf):
     """
@@ -106,7 +110,7 @@ def create_socket(conf):
     addr = conf.address
     
     if isinstance(addr, tuple):
-        if util.is_ipv6(addr[0]):
+        if utils.is_ipv6(addr[0]):
             sock_type = TCP6Socket
         else:
             sock_type = TCPSocket
@@ -119,7 +123,7 @@ def create_socket(conf):
         fd = int(os.environ.pop('GUNICORN_FD'))
         try:
             return sock_type(conf, fd=fd)
-        except socket.error, e:
+        except socket.error as e:
             if e[0] == errno.ENOTCONN:
                 log.error("GUNICORN_FD should refer to an open socket.")
             else:
@@ -132,7 +136,7 @@ def create_socket(conf):
     for i in range(5):
         try:
             return sock_type(conf)
-        except socket.error, e:
+        except socket.error as e:
             if e[0] == errno.EADDRINUSE:
                 log.error("Connection in use: %s" % str(addr))
             if e[0] == errno.EADDRNOTAVAIL:

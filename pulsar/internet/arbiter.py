@@ -11,8 +11,8 @@ import sys
 import time
 import traceback
 
-from pulsar.util.pidfile import Pidfile
-from pulsar import util
+from pulsar.utils.pidfile import Pidfile
+from pulsar import utils
 from pulsar import __version__, SERVER_SOFTWARE
 
 from .sock import create_socket
