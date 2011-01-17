@@ -3,11 +3,9 @@
 # This file is part of gunicorn released under the MIT license. 
 # See the NOTICE for more information.
 import copy
-import grp
 import inspect
 import optparse
 import os
-import pwd
 import textwrap
 import types
 
@@ -18,7 +16,30 @@ from pulsar.utils.py2py3 import *
 
 KNOWN_SETTINGS = []
 
+def def_start_server(server):
+    pass
+    
 
+def def_pre_exec(server):
+    pass
+    
+    
+def default_process(worker):
+    pass
+
+
+def def_pre_request(worker, req):
+    worker.log.debug("%s %s" % (req.method, req.path))
+
+
+def def_post_request(worker, req):
+    pass
+
+
+def def_worker_exit(worker):
+    pass
+    
+    
 def wrap_method(func):
     def _wrapped(instance, *args, **kwargs):
         return func(*args, **kwargs)
@@ -42,6 +63,14 @@ class Config(object):
         self.settings = make_settings()
         self.usage = usage
         
+    def __getstate__(self):
+        d = self.__dict__.copy()
+        return d
+    
+    def __setstate__(self, state):
+        self.__dict__['settings'] = state['settings']
+        self.__dict__['usage'] = state['usage']
+    
     def __getattr__(self, name):
         if name not in self.settings:
             raise AttributeError("No configuration setting for: %s" % name)
@@ -91,22 +120,12 @@ class Config(object):
     @property
     def uid(self):
         user = self.settings['user'].get()
-        if not user:
-            return os.geteuid()
-        elif user.isdigit() or isinstance(user, int):
-            return int(user)
-        else:
-            return pwd.getpwnam(user).pw_uid
+        return system.get_uid(user)
         
     @property
     def gid(self):
         group = self.settings['group'].get()
-        if not group:
-            return os.getegid()
-        elif group.isdigit() or isinstance(group, int):
-            return int(group)
-        else:
-            return grp.getgrnam(group).gr_gid
+        return system.get_gid(group)
         
     @property
     def proc_name(self):
@@ -215,7 +234,7 @@ def validate_pos_int(val):
 def validate_string(val):
     if val is None:
         return None
-    if not isinstance(val, string_type):
+    if not is_string(val):
         raise TypeError("Not a string: %s" % val)
     return val.strip()
 
@@ -542,7 +561,7 @@ class Httplib(Setting):
     cli = ["--http"]
     meta = "STRING"
     validator = validate_string
-    default = 'gunicorn'
+    default = 'standard'
     desc = """\
         HTTP library used by server.
         
@@ -618,10 +637,7 @@ class WhenReady(Setting):
     section = "Server Hooks"
     validator = validate_callable(1)
     type = "callable"
-    def def_start_server(server):
-        pass
-    def_start_server = staticmethod(def_start_server)
-    default = def_start_server
+    default = staticmethod(def_start_server)
     desc = """\
         Called just after the server is started.
         
@@ -632,12 +648,9 @@ class WhenReady(Setting):
 class Prefork(Setting):
     name = "pre_fork"
     section = "Server Hooks"
-    validator = validate_callable(2)
+    validator = validate_callable(1)
+    default = staticmethod(default_process)
     type = "callable"
-    def def_pre_fork(server, worker):
-        pass
-    def_pre_fork = staticmethod(def_pre_fork)
-    default = def_pre_fork
     desc = """\
         Called just before a worker is forked.
         
@@ -649,12 +662,9 @@ class Prefork(Setting):
 class Postfork(Setting):
     name = "post_fork"
     section = "Server Hooks"
-    validator = validate_callable(2)
+    validator = validate_callable(1)
     type = "callable"
-    def def_post_fork(server, worker):
-        pass
-    def_post_fork = staticmethod(def_post_fork)
-    default = def_post_fork
+    default = staticmethod(default_process)
     desc = """\
         Called just after a worker has been forked.
         
@@ -668,10 +678,7 @@ class PreExec(Setting):
     section = "Server Hooks"
     validator = validate_callable(1)
     type = "callable"
-    def def_pre_exec(server):
-        pass
-    def_pre_exec = staticmethod(def_pre_exec)
-    default = def_pre_exec
+    default = staticmethod(def_pre_exec)
     desc = """\
         Called just before a new master process is forked.
         
@@ -684,10 +691,7 @@ class PreRequest(Setting):
     section = "Server Hooks"
     validator = validate_callable(2)
     type = "callable"
-    def def_pre_request(worker, req):
-        worker.log.debug("%s %s" % (req.method, req.path))
-    def_pre_request = staticmethod(def_pre_request)
-    default = def_pre_request
+    default = staticmethod(def_pre_request)
     desc = """\
         Called just before a worker processes the request.
         
@@ -701,10 +705,7 @@ class PostRequest(Setting):
     section = "Server Hooks"
     validator = validate_callable(2)
     type = "callable"
-    def def_post_request(worker, req):
-        pass
-    def_post_request = staticmethod(def_post_request)
-    default = def_post_request
+    default = staticmethod(def_post_request)
     desc = """\
         Called after a worker processes the request.
 
@@ -716,12 +717,9 @@ class PostRequest(Setting):
 class WorkerExit(Setting):
     name = "worker_exit"
     section = "Server Hooks"
-    validator = validate_callable(2)
+    validator = validate_callable(1)
     type = "callable"
-    def def_worker_exit(server, worker):
-        pass
-    def_worker_exit = staticmethod(def_worker_exit)
-    default = def_worker_exit
+    default = staticmethod(def_worker_exit)
     desc = """\
         Called just after a worker has been exited.
 

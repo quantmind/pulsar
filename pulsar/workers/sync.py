@@ -3,22 +3,30 @@
 # This file is part of gunicorn released under the MIT license. 
 # See the NOTICE for more information.
 #
-
 import errno
 import os
-import select
 import socket
 import traceback
+import time
 
+from pulsar.http import get_library
+from pulsar.utils.system import select
 import pulsar.workers.base as base
+
 
 
 class Worker(base.WorkerProcess):
     
-    def run(self):
+    def _run(self):
+        while self.is_alive():
+            self.notify()
+            time.sleep(1)
+            
+    def __run(self):
         # self.socket appears to lose its blocking status after
         # we fork in the arbiter. Reset it here.
-        self.socket.setblocking(0)
+        http = get_library(self.cfg)
+        #self.socket.setblocking(0)
 
         while self.alive:
             self.notify()
@@ -28,10 +36,11 @@ class Worker(base.WorkerProcess):
             # select which is where we'll wait for a bit for new
             # workers to come give us some love.
             try:
+                
                 client, addr = self.socket.accept()
                 client.setblocking(1)
                 util.close_on_exec(client)
-                self.handle(client, addr)
+                self.handle(http, client, addr)
 
                 # Keep processing clients until no one is waiting. This
                 # prevents the need to select() for every client that we
@@ -62,7 +71,7 @@ class Worker(base.WorkerProcess):
                         return
                 raise
         
-    def handle(self, client, addr):
+    def handle(self, http, client, addr):
         try:
             parser = http.RequestParser(client)
             req = parser.next()

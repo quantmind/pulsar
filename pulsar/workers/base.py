@@ -9,24 +9,28 @@ import os
 import random
 import signal
 import sys
+import time
 import tempfile
-from multiprocessing import Process
+from multiprocessing import Process, Pipe
 from threading import current_thread, Thread
 
-import pulsar.http as http
+from pulsar.utils import system
 from pulsar.workers.workertmp import WorkerTmp
 
 
 class WorkerMixin(object):
     
     SIGNALS = map(
-        lambda x: getattr(signal, "SIG%s" % x),
-        "HUP QUIT INT TERM USR1 USR2 WINCH CHLD".split()
-    )
+                  lambda x: getattr(signal, "SIG%s" % x),
+                  system.ALL_SIGNALS.split()
+                  )
     
     PIPE = []
     
-    def __init__(self, age = None, socket = None, app = None, timeout = None, cfg = None):
+    def __init__(self,
+                 age = None, socket = None, 
+                 app = None, timeout = None, cfg = None,
+                 connection = None):
         """\
         This is called pre-fork so it shouldn't do anything to the
         current process. If there's a need to make process wide
@@ -37,21 +41,14 @@ class WorkerMixin(object):
         self.app = app
         self.timeout = timeout
         self.cfg = cfg
-        self.booted = False
-        self.http = http.get_library(cfg)
 
         self.nr = 0
         self.max_requests = getattr(cfg,'max_requests',sys.maxsize)
         self.alive = True
-        self.log = logging.getLogger(__name__)
         self.debug = getattr(cfg,'debug',False)
-        if self.socket:
-            self.address = self.socket.getsockname()
-        self.tmp = WorkerTmp(cfg)
-    
-    @property
-    def pid(self):
-        return os.getpid()
+        #if socket:
+        #    self.address = socket.getsockname()
+        self.connection = connection
     
     @property
     def tid(self):
@@ -70,35 +67,49 @@ class WorkerMixin(object):
         once every ``self.timeout`` seconds. If you fail in accomplishing
         this task, the master process will murder your workers.
         """
-        self.tmp.notify()
+        self.connection.send(time.time())
         
-    def init_process(self):
+    def run(self):
         """\
         If you override this method in a subclass, the last statement
         in the function should be to call this method with
         super(MyWorkerClass, self).init_process() so that the ``run()``
         loop is initiated.
         """
-        utils.set_owner_process(self.cfg.uid, self.cfg.gid)
+        #self.app.configure_logging()
+        try:
+            self.log = logging.getLogger(__name__)
+            system.set_proctitle("worker [{0}]".format(self.cfg.proc_name))
+            self.log.info("Booting worker with pid: %s" % self.pid)
+            self.cfg.post_fork(self)
+            self.init_process()
+            sys.exit(0)
+        except SystemExit:
+            raise
+        except:
+            self.log.exception("Exception in worker process:")
+            sys.exit(-1)
+        finally:
+            self.log.info("Worker exiting (pid: %s)" % self.pid)
+            try:
+                self.cfg.worker_exit(self, self)
+            except:
+                pass
+
+    def init_process(self):
+        system.set_owner_process(self.cfg.uid, self.cfg.gid)
 
         # Reseed the random number generator
         random.seed()
 
-        # For waking ourselves up
-        self.PIPE = os.pipe()
-        map(util.set_non_blocking, self.PIPE)
-        map(util.close_on_exec, self.PIPE)
-        
         # Prevent fd inherientence
-        util.close_on_exec(self.socket)
-        util.close_on_exec(self.tmp.fileno())
-        self.init_signals()
+        #util.close_on_exec(self.socket)
+        #util.close_on_exec(self.tmp.fileno())
         
         self.wsgi = self.app.wsgi()
         
         # Enter main run loop
-        self.booted = True
-        self.run()
+        self._run()
 
     def init_signals(self):
         map(lambda s: signal.signal(s, signal.SIG_DFL), self.SIGNALS)
@@ -125,14 +136,23 @@ class WorkerThread(WorkerMixin,Thread):
         WorkerMixin.__init__(self, *args, **kwargs)
         Thread.__init__(self)
         self._parent_pid = os.getpid()
+        self.daemon = True
         
-    def run(self):
+    def _run(self):
         """\
         This is the mainloop of a worker process. You should override
         this method in a subclass to provide the intended behaviour
         for your particular evil schemes.
         """
         raise NotImplementedError()
+    
+    @property
+    def pid(self):
+        return os.getpid()
+    
+    @classmethod
+    def pipe(cls):
+        return os.pipe()
     
     
 class WorkerProcess(WorkerMixin,Process):
@@ -141,11 +161,16 @@ class WorkerProcess(WorkerMixin,Process):
     def __init__(self, *args, **kwargs):
         WorkerMixin.__init__(self, *args, **kwargs)
         Process.__init__(self)
-
-    def run(self):
+        self.daemon = True
+        
+    def _run(self):
         """\
         This is the mainloop of a worker process. You should override
         this method in a subclass to provide the intended behaviour
         for your particular evil schemes.
         """
         raise NotImplementedError()
+    
+    @classmethod
+    def pipe(cls):
+        return Pipe()

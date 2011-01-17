@@ -3,18 +3,21 @@
 # This file is part of gunicorn released under the MIT license. 
 # See the NOTICE for more information.
 import ctypes
-import fcntl
 import os
-import resource
 import socket
 import sys
 import textwrap
 import time
+
 from pulsar.utils.importer import import_module
 from pulsar.utils.py2py3 import *
 
+from .sock import *
 
+
+ALL_SIGNALS = "HUP QUIT INT TERM TTIN TTOU USR1 USR2 WINCH"
 MAXFD = 1024
+
 if (hasattr(os, "devnull")):
    REDIRECT_TO = os.devnull
 else:
@@ -47,10 +50,10 @@ hop_headers = set("""
              
 try:
     from setproctitle import setproctitle
-    def _setproctitle(title):
-        setproctitle("gunicorn: %s" % title) 
+    def set_proctitle(title):
+        setproctitle("pulsar: %s" % title) 
 except ImportError:
-    def _setproctitle(title):
+    def set_proctitle(title):
         return
 
 def load_worker_class(uri):
@@ -80,14 +83,6 @@ def set_owner_process(uid,gid):
             
     if uid:
         os.setuid(uid)
-
-
-def is_ipv6(addr):
-    try:
-        socket.inet_pton(socket.AF_INET6, addr)
-    except socket.error: # not a valid address
-        return False
-    return True
     
         
 def parse_address(netloc, default_port=8000):
@@ -115,22 +110,7 @@ def parse_address(netloc, default_port=8000):
     else:
         port = default_port 
     return (host, port)
-    
-    
-def get_maxfd():
-    maxfd = resource.getrlimit(resource.RLIMIT_NOFILE)[1]
-    if (maxfd == resource.RLIM_INFINITY):
-        maxfd = MAXFD
-    return maxfd
 
-def close_on_exec(fd):
-    flags = fcntl.fcntl(fd, fcntl.F_GETFD)
-    flags |= fcntl.FD_CLOEXEC
-    fcntl.fcntl(fd, fcntl.F_SETFD, flags)
-    
-def set_non_blocking(fd):
-    flags = fcntl.fcntl(fd, fcntl.F_GETFL) | os.O_NONBLOCK
-    fcntl.fcntl(fd, fcntl.F_SETFL, flags)
 
 def close(sock):
     try:

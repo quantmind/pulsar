@@ -1,14 +1,30 @@
+import sys
 import types
 
 __all__ = ['string_type',
            'int_type',
            'to_bytestring',
-           'to_string']
+           'to_string',
+           'ispy3k',
+           'is_string',
+           'iteritems',
+           'itervalues']
 
-try:
-    string_type = unicode    
-except NameError:
+
+def ispy3k():
+    return int(sys.version[0]) >= 3
+
+
+if not ispy3k(): # Python 3
     string_type = str
+    itervalues = lambda d : d.values()
+    iteritems = lambda d : d.items()
+    is_string = lambda x : isinstance(x,str)
+else: # Python 2
+    string_type = unicode
+    itervalues = lambda d : d.itervalues()
+    iteritems = lambda d : d.iteritems()
+    is_string = lambda x : isinstance(x,basestring)
 
     
 try:

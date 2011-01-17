@@ -8,8 +8,8 @@ import tempfile
 
 class WorkerTmp(object):
 
-    def __init__(self):
-        self._tmp = tempfile.TemporaryFile(prefix="wgunicorn-")
+    def __init__(self, cfg):
+        self._tmp = tempfile.TemporaryFile(prefix="wpulsar-")
         self.spinner = 0
 
     def notify(self): 

@@ -29,12 +29,19 @@ class Application(object):
     }
     
     def __init__(self, usage=None):
-        self.log = logging.getLogger(__name__)
         self.usage = usage
         self.cfg = None
         self.callable = None
-        self.logger = None
         self.load_config()
+        
+    def __getstate__(self):
+        d = self.__dict__.copy()
+        d.pop('logger',None)
+        return d
+    
+    def __setstate__(self, state):
+        self.__dict__ = state
+        self.configure_logging()
   
     def load_config(self):
         # init configuration
@@ -110,7 +117,7 @@ class Application(object):
             system.daemonize()
         else:
             try:
-                os.setpgrp()
+                system.setpgrp()
             except OSError as e:
                 if e[0] != errno.EPERM:
                     raise
@@ -127,7 +134,7 @@ class Application(object):
         """\
         Set the log level and choose the destination for log output.
         """
-        self.logger = logging.getLogger('gunicorn')
+        self.logger = logging.getLogger('pulsar')
 
         handlers = []
         if self.cfg.logfile != "-":

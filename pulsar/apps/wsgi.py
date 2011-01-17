@@ -6,7 +6,7 @@
 import os
 import sys
 
-from pulsar import utils
+from pulsar.utils import system
 from pulsar.apps.base import Application
 
 class WSGIApplication(Application):
@@ -21,7 +21,8 @@ class WSGIApplication(Application):
         sys.path.insert(0, os.getcwd())
 
     def load(self):
-        return util.import_app(self.app_uri)
+        return system.import_app(self.app_uri)
+
 
 def run():
     """\
