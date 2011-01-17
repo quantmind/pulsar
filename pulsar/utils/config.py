@@ -12,15 +12,18 @@ import textwrap
 import types
 
 from pulsar import __version__
-from pulsar import utils
+from pulsar.utils import system
+from pulsar.utils.py2py3 import *
 
 
 KNOWN_SETTINGS = []
+
 
 def wrap_method(func):
     def _wrapped(instance, *args, **kwargs):
         return func(*args, **kwargs)
     return _wrapped
+
 
 def make_settings(ignore=None):
     settings = {}
@@ -31,6 +34,7 @@ def make_settings(ignore=None):
             continue
         settings[setting.name] = setting.copy()
     return settings
+
 
 class Config(object):
         
@@ -70,7 +74,7 @@ class Config(object):
     @property
     def worker_class(self):
         uri = self.settings['worker_class'].get()
-        worker_class = util.load_worker_class(uri)
+        worker_class = system.load_worker_class(uri)
         if hasattr(worker_class, "setup"):
             worker_class.setup()
         return worker_class
@@ -82,7 +86,7 @@ class Config(object):
     @property
     def address(self):
         bind = self.settings['bind'].get()
-        return util.parse_address(util.to_bytestring(bind))
+        return system.parse_address(to_bytestring(bind))
         
     @property
     def uid(self):
@@ -112,32 +116,35 @@ class Config(object):
         else:
             return self.settings['default_proc_name'].get()
             
+            
 class SettingMeta(type):
     def __new__(cls, name, bases, attrs):
         super_new = super(SettingMeta, cls).__new__
         parents = [b for b in bases if isinstance(b, SettingMeta)]
-        if not parents:
-            return super_new(cls, name, bases, attrs)
+        if not parents or attrs.pop('virtual',False):
+            return super_new(cls, name, bases, attrs)            
     
         attrs["order"] = len(KNOWN_SETTINGS)
         attrs["validator"] = wrap_method(attrs["validator"])
         
         new_class = super_new(cls, name, bases, attrs)
-        new_class.fmt_desc(attrs.get("desc", ""))
+        new_class.fmt_desc(attrs['desc'] or '')
         KNOWN_SETTINGS.append(new_class)
         return new_class
 
     def fmt_desc(cls, desc):
         desc = textwrap.dedent(desc).strip()
         setattr(cls, "desc", desc)
-        setattr(cls, "short", desc.splitlines()[0])
+        lines = desc.splitlines()
+        setattr(cls, "short", '' if not lines else lines[0])
         
         
 # This works for Python 2 and Python 3
 BaseSettings =  SettingMeta('BaseSettings', (object, ), {})
 
 
-class Setting(BaseSettings):    
+class Setting(BaseSettings):
+    virtual = True    
     name = None
     value = None
     section = None
@@ -177,13 +184,14 @@ class Setting(BaseSettings):
         return self.value
     
     def set(self, val):
-        assert callable(self.validator), "Invalid validator: %s" % self.name
+        assert hasattr(self.validator,'__call__'), "Invalid validator: %s" % self.name
         self.value = self.validator(val)
 
+
 def validate_bool(val):
-    if isinstance(val, types.BooleanType):
+    if isinstance(val,bool):
         return val
-    if not isinstance(val, basestring):
+    if not isinstance(val, string_type):
         raise TypeError("Invalid type for casting: %s" % val)
     if val.lower().strip() == "true":
         return True
@@ -192,8 +200,9 @@ def validate_bool(val):
     else:
         raise ValueError("Invalid boolean: %s" % val)
 
+
 def validate_pos_int(val):
-    if not isinstance(val, (types.IntType, types.LongType)):
+    if not isinstance(val,int_type):
         val = int(val, 0)
     else:
         # Booleans are ints!
@@ -202,16 +211,18 @@ def validate_pos_int(val):
         raise ValueError("Value must be positive: %s" % val)
     return val
 
+
 def validate_string(val):
     if val is None:
         return None
-    if not isinstance(val, basestring):
+    if not isinstance(val, string_type):
         raise TypeError("Not a string: %s" % val)
     return val.strip()
 
+
 def validate_callable(arity):
     def _validate_callable(val):
-        if not callable(val):
+        if not hasattr(val,'__call__'):
             raise TypeError("Value is not callable: %s" % val)
         if arity != len(inspect.getargspec(val)[0]):
             raise TypeError("Value must have an arity of: %s" % arity)
@@ -233,6 +244,7 @@ class ConfigFile(Setting):
         application specific configuration.    
         """
 
+
 class Bind(Setting):
     name = "bind"
     section = "Server Socket"
@@ -246,6 +258,7 @@ class Bind(Setting):
         A string of the form: 'HOST', 'HOST:PORT', 'unix:PATH'. An IP is a valid
         HOST.
         """
+        
         
 class Backlog(Setting):
     name = "backlog"
@@ -266,6 +279,7 @@ class Backlog(Setting):
         Must be a positive integer. Generally set in the 64-2048 range.    
         """
 
+
 class Workers(Setting):
     name = "workers"
     section = "Worker Processes"
@@ -281,6 +295,7 @@ class Workers(Setting):
         want to vary this a bit to find the best for your particular
         application's work load.
         """
+
 
 class WorkerClass(Setting):
     name = "worker_class"
@@ -309,6 +324,7 @@ class WorkerClass(Setting):
         gevent class: ``egg:gunicorn#gevent``
         """
 
+
 class WorkerConnections(Setting):
     name = "worker_connections"
     section = "Worker Processes"
@@ -322,6 +338,7 @@ class WorkerConnections(Setting):
         
         This setting only affects the Eventlet and Gevent worker types.
         """
+
 
 class MaxRequests(Setting):
     name = "max_requests"
@@ -342,6 +359,7 @@ class MaxRequests(Setting):
         restarts are disabled.
         """
 
+
 class Timeout(Setting):
     name = "timeout"
     section = "Worker Processes"
@@ -359,6 +377,7 @@ class Timeout(Setting):
         is not tied to the length of time required to handle a single request.
         """
 
+
 class Keepalive(Setting):
     name = "keepalive"
     section = "Worker Processes"
@@ -372,6 +391,7 @@ class Keepalive(Setting):
         
         Generally set in the 1-5 seconds range.    
         """
+
 
 class Debug(Setting):
     name = "debug"
@@ -387,6 +407,7 @@ class Debug(Setting):
         handling that's sent to clients.
         """
 
+
 class Spew(Setting):
     name = "spew"
     section = "Debugging"
@@ -399,6 +420,7 @@ class Spew(Setting):
         
         This is the nuclear option.    
         """
+
 
 class PreloadApp(Setting):
     name = "preload_app"
@@ -416,6 +438,7 @@ class PreloadApp(Setting):
         restarting workers.
         """
 
+
 class Daemon(Setting):
     name = "daemon"
     section = "Server Mechanics"
@@ -430,6 +453,7 @@ class Daemon(Setting):
         background.
         """
 
+
 class Pidfile(Setting):
     name = "pidfile"
     section = "Server Mechanics"
@@ -442,6 +466,7 @@ class Pidfile(Setting):
         
         If not set, no PID file will be written.
         """
+
 
 class User(Setting):
     name = "user"
@@ -457,6 +482,7 @@ class User(Setting):
         retrieved with a call to pwd.getpwnam(value) or None to not change
         the worker process user.
         """
+        
 
 class Group(Setting):
     name = "group"
@@ -472,6 +498,7 @@ class Group(Setting):
         retrieved with a call to pwd.getgrnam(value) or None to not change
         the worker processes group.
         """
+
 
 class Umask(Setting):
     name = "umask"
@@ -491,6 +518,7 @@ class Umask(Setting):
         "0xFF", "0022" are valid for decimal, hex, and octal representations)
         """
 
+
 class TmpUploadDir(Setting):
     name = "tmp_upload_dir"
     section = "Server Mechanics"
@@ -506,6 +534,21 @@ class TmpUploadDir(Setting):
         workers. If not specified, Gunicorn will choose a system generated
         temporary directory.
         """
+        
+
+class Httplib(Setting):
+    name = "httplib"
+    section = "Process Naming"
+    cli = ["--http"]
+    meta = "STRING"
+    validator = validate_string
+    default = 'gunicorn'
+    desc = """\
+        HTTP library used by server.
+        
+        It defaults to 'gunicorn'.
+        """
+
 
 class Logfile(Setting):
     name = "logfile"
@@ -519,6 +562,7 @@ class Logfile(Setting):
         
         "-" means log to stdout.
         """
+
 
 class Loglevel(Setting):
     name = "loglevel"
@@ -539,6 +583,7 @@ class Loglevel(Setting):
         * critical
         """
 
+
 class Procname(Setting):
     name = "proc_name"
     section = "Process Naming"
@@ -557,6 +602,7 @@ class Procname(Setting):
         It defaults to 'gunicorn'.
         """
 
+
 class DefaultProcName(Setting):
     name = "default_proc_name"
     section = "Process Naming"
@@ -565,6 +611,7 @@ class DefaultProcName(Setting):
     desc = """\
         Internal setting that is adjusted for each type of application.
         """
+
 
 class WhenReady(Setting):
     name = "when_ready"
@@ -581,6 +628,7 @@ class WhenReady(Setting):
         The callable needs to accept a single instance variable for the Arbiter.
         """
 
+
 class Prefork(Setting):
     name = "pre_fork"
     section = "Server Hooks"
@@ -596,6 +644,7 @@ class Prefork(Setting):
         The callable needs to accept two instance variables for the Arbiter and
         new Worker.
         """
+        
     
 class Postfork(Setting):
     name = "post_fork"
@@ -613,6 +662,7 @@ class Postfork(Setting):
         new Worker.
         """
 
+
 class PreExec(Setting):
     name = "pre_exec"
     section = "Server Hooks"
@@ -627,6 +677,7 @@ class PreExec(Setting):
         
         The callable needs to accept a single instance variable for the Arbiter.
         """
+
 
 class PreRequest(Setting):
     name = "pre_request"
@@ -644,6 +695,7 @@ class PreRequest(Setting):
         the Request.
         """
 
+
 class PostRequest(Setting):
     name = "post_request"
     section = "Server Hooks"
@@ -659,6 +711,7 @@ class PostRequest(Setting):
         The callable needs to accept two instance variables for the Worker and
         the Request.
         """
+
 
 class WorkerExit(Setting):
     name = "worker_exit"

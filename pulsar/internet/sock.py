@@ -10,7 +10,7 @@ import socket
 import sys
 import time
 
-from pulsar import utils
+from pulsar.utils import system
 
 log = logging.getLogger(__name__)
 
@@ -91,7 +91,7 @@ class UnixSocket(BaseSocket):
     def bind(self, sock):
         old_umask = os.umask(self.conf.umask)
         sock.bind(self.address)
-        utils.chown(self.address, self.conf.uid, self.conf.gid)
+        system.chown(self.address, self.conf.uid, self.conf.gid)
         os.umask(old_umask)
         
     def close(self):
@@ -110,7 +110,7 @@ def create_socket(conf):
     addr = conf.address
     
     if isinstance(addr, tuple):
-        if utils.is_ipv6(addr[0]):
+        if system.is_ipv6(addr[0]):
             sock_type = TCP6Socket
         else:
             sock_type = TCPSocket

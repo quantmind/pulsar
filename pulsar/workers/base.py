@@ -11,32 +11,34 @@ import signal
 import sys
 import tempfile
 from multiprocessing import Process
+from threading import current_thread, Thread
 
-from pulsar.utils import 
+import pulsar.http as http
+from pulsar.workers.workertmp import WorkerTmp
 
 
-class Worker(Process):
-
+class WorkerMixin(object):
+    
     SIGNALS = map(
         lambda x: getattr(signal, "SIG%s" % x),
         "HUP QUIT INT TERM USR1 USR2 WINCH CHLD".split()
     )
     
     PIPE = []
-
+    
     def __init__(self, age = None, socket = None, app = None, timeout = None, cfg = None):
         """\
         This is called pre-fork so it shouldn't do anything to the
         current process. If there's a need to make process wide
         changes you'll want to do that in ``self.init_process()``.
         """
-        super(Worker,self).__init__()
         self.age = age
         self.socket = socket
         self.app = app
         self.timeout = timeout
         self.cfg = cfg
         self.booted = False
+        self.http = http.get_library(cfg)
 
         self.nr = 0
         self.max_requests = getattr(cfg,'max_requests',sys.maxsize)
@@ -45,18 +47,23 @@ class Worker(Process):
         self.debug = getattr(cfg,'debug',False)
         if self.socket:
             self.address = self.socket.getsockname()
-        
-    def __str__(self):
-        return "<{0} {0}>".format(self.__class__.__name__,self.pid)
-        
-    @property
-    def parent_pid(self):
-        return self._parent_pid
+        self.tmp = WorkerTmp(cfg)
     
     @property
     def pid(self):
         return os.getpid()
-
+    
+    @property
+    def tid(self):
+        return current_thread().name
+    
+    @property
+    def parent_pid(self):
+        return self._parent_pid
+    
+    def __str__(self):
+        return "<{0} {1} {2}>".format(self.__class__.__name__,self.pid,self.tid)
+    
     def notify(self):
         """\
         Your worker subclass must arrange to have this method called
@@ -64,15 +71,7 @@ class Worker(Process):
         this task, the master process will murder your workers.
         """
         self.tmp.notify()
-
-    def run(self):
-        """\
-        This is the mainloop of a worker process. You should override
-        this method in a subclass to provide the intended behaviour
-        for your particular evil schemes.
-        """
-        raise NotImplementedError()
-
+        
     def init_process(self):
         """\
         If you override this method in a subclass, the last statement
@@ -118,3 +117,35 @@ class Worker(Process):
     def handle_winch(self, sig, fname):
         # Ignore SIGWINCH in worker. Fixes a crash on OpenBSD.
         return
+
+
+class WorkerThread(WorkerMixin,Thread):
+    '''Base Thread Worker Class'''
+    def __init__(self, *args, **kwargs):
+        WorkerMixin.__init__(self, *args, **kwargs)
+        Thread.__init__(self)
+        self._parent_pid = os.getpid()
+        
+    def run(self):
+        """\
+        This is the mainloop of a worker process. You should override
+        this method in a subclass to provide the intended behaviour
+        for your particular evil schemes.
+        """
+        raise NotImplementedError()
+    
+    
+class WorkerProcess(WorkerMixin,Process):
+    '''Base Process Worker Class'''
+    
+    def __init__(self, *args, **kwargs):
+        WorkerMixin.__init__(self, *args, **kwargs)
+        Process.__init__(self)
+
+    def run(self):
+        """\
+        This is the mainloop of a worker process. You should override
+        this method in a subclass to provide the intended behaviour
+        for your particular evil schemes.
+        """
+        raise NotImplementedError()

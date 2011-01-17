@@ -14,3 +14,7 @@ __author__    = "Luca Sbardella"
 __contact__   = "luca.sbardella@gmail.com"
 __homepage__  = "https://github.com/quantmind/pulsar"
 __docformat__ = "restructuredtext"
+
+
+class PulsarException(Exception):
+    '''base class of all Pulsar Exception'''

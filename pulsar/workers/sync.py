@@ -10,12 +10,10 @@ import select
 import socket
 import traceback
 
-import gunicorn.http as http
-import gunicorn.http.wsgi as wsgi
-import gunicorn.util as util
-import gunicorn.workers.base as base
+import pulsar.workers.base as base
 
-class SyncWorker(base.Worker):
+
+class Worker(base.WorkerProcess):
     
     def run(self):
         # self.socket appears to lose its blocking status after
@@ -40,7 +38,7 @@ class SyncWorker(base.Worker):
                 # process.
                 continue
 
-            except socket.error, e:
+            except socket.error as e:
                 if e[0] not in (errno.EAGAIN, errno.ECONNABORTED):
                     raise
 
@@ -54,7 +52,7 @@ class SyncWorker(base.Worker):
                 ret = select.select([self.socket], [], self.PIPE, self.timeout)
                 if ret[0]:
                     continue
-            except select.error, e:
+            except select.error as e:
                 if e[0] == errno.EINTR:
                     continue
                 if e[0] == errno.EBADF:
@@ -71,12 +69,12 @@ class SyncWorker(base.Worker):
             self.handle_request(req, client, addr)
         except StopIteration:
             self.log.debug("Ignored premature client disconnection.")
-        except socket.error, e:
+        except socket.error as e:
             if e[0] != errno.EPIPE:
                 self.log.exception("Error processing request.")
             else:
                 self.log.debug("Ignoring EPIPE")
-        except Exception, e:
+        except Exception as e:
             self.log.exception("Error processing request.")
             try:            
                 # Last ditch attempt to notify the client of an error.
@@ -109,7 +107,7 @@ class SyncWorker(base.Worker):
                 respiter.close()
         except socket.error:
             raise
-        except Exception, e:
+        except Exception as e:
             # Only send back traceback in HTTP in debug mode.
             if not self.debug:
                 raise

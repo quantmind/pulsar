@@ -9,7 +9,7 @@ import os
 import sys
 import traceback
 
-from pulsar import utils
+from pulsar.utils import system
 from pulsar.internet import Arbiter
 from pulsar.utils.config import Config
 #from pulsar.utils import debug
@@ -107,7 +107,7 @@ class Application(object):
         if self.cfg.spew:
             debug.spew()
         if self.cfg.daemon:
-            util.daemonize()
+            system.daemonize()
         else:
             try:
                 os.setpgrp()

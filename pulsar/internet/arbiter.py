@@ -12,7 +12,7 @@ import time
 import traceback
 
 from pulsar.utils.pidfile import Pidfile
-from pulsar import utils
+from pulsar.utils import system
 from pulsar import __version__, SERVER_SOFTWARE
 
 from .sock import create_socket
@@ -131,8 +131,8 @@ class Arbiter(object):
         if self.PIPE:
             map(lambda p: os.close(p), self.PIPE)
         self.PIPE = pair = os.pipe()
-        map(util.set_non_blocking, pair)
-        map(util.close_on_exec, pair)
+        map(system.set_non_blocking, pair)
+        map(system.close_on_exec, pair)
         map(lambda s: signal.signal(s, self.signal), self.SIGNALS)
         signal.signal(signal.SIGCHLD, self.handle_chld)
 
@@ -146,7 +146,7 @@ class Arbiter(object):
     def run(self):
         "Main master loop."
         self.start()
-        util._setproctitle("master [%s]" % self.proc_name)
+        system._setproctitle("master [%s]" % self.proc_name)
         self.manage_workers()
         while True:
             try:
@@ -361,7 +361,7 @@ class Arbiter(object):
             self.pidfile.create(self.pid)
             
         # set new proc_name
-        util._setproctitle("master [%s]" % self.proc_name)
+        system._setproctitle("master [%s]" % self.proc_name)
         
         # manage workers
         self.manage_workers()
@@ -437,7 +437,7 @@ class Arbiter(object):
         # Process Child
         worker_pid = os.getpid()
         try:
-            util._setproctitle("worker [%s]" % self.proc_name)
+            system._setproctitle("worker [%s]" % self.proc_name)
             self.log.info("Booting worker with pid: %s" % worker_pid)
             self.cfg.post_fork(self, worker)
             worker.init_process()
