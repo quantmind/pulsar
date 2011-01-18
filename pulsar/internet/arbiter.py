@@ -9,7 +9,7 @@ import signal
 import sys
 import time
 import traceback
-from multiprocessing import Queue
+from multiprocessing import Queue, Pipe
 from multiprocessing.queues import Empty
 from select import error as selecterror
 
@@ -61,7 +61,7 @@ class Arbiter(object):
     
     def __init__(self, app):
         self.log = logging.getLogger(__name__)
-        self.log.info("Starting gunicorn %s" % __version__)
+        self.log.info("Starting pulsar %s" % __version__)
        
         os.environ["SERVER_SOFTWARE"] = SERVER_SOFTWARE
 
