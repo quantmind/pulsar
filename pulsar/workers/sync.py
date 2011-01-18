@@ -8,25 +8,18 @@ import os
 import socket
 import traceback
 import time
+from select import error as selecterror
 
 from pulsar.http import get_library
-from pulsar.utils.system import select
+from pulsar.utils.system import select, close_on_exec, write_nonblock, close
 import pulsar.workers.base as base
 
-
-
-class Worker(base.WorkerProcess):
+class SyncMixin(object):
     
     def _run(self):
-        while self.is_alive():
-            self.notify()
-            time.sleep(1)
-            
-    def __run(self):
         # self.socket appears to lose its blocking status after
         # we fork in the arbiter. Reset it here.
-        http = get_library(self.cfg)
-        #self.socket.setblocking(0)
+        self.socket.setblocking(0)
 
         while self.alive:
             self.notify()
@@ -36,11 +29,10 @@ class Worker(base.WorkerProcess):
             # select which is where we'll wait for a bit for new
             # workers to come give us some love.
             try:
-                
                 client, addr = self.socket.accept()
                 client.setblocking(1)
-                util.close_on_exec(client)
-                self.handle(http, client, addr)
+                close_on_exec(client)
+                self.handle(client, addr)
 
                 # Keep processing clients until no one is waiting. This
                 # prevents the need to select() for every client that we
@@ -52,16 +44,16 @@ class Worker(base.WorkerProcess):
                     raise
 
             # If our parent changed then we shut down.
-            if self.ppid != os.getppid():
+            if self.parent_pid != self.get_parent_id():
                 self.log.info("Parent changed, shutting down: %s" % self)
                 return
             
             try:
                 self.notify()
-                ret = select.select([self.socket], [], self.PIPE, self.timeout)
+                ret = select([self.socket], [], [], self.timeout)
                 if ret[0]:
                     continue
-            except select.error as e:
+            except selecterror as e:
                 if e[0] == errno.EINTR:
                     continue
                 if e[0] == errno.EBADF:
@@ -70,10 +62,11 @@ class Worker(base.WorkerProcess):
                     else:
                         return
                 raise
-        
-    def handle(self, http, client, addr):
+    
+    def handle(self, client, addr):
+        http = get_library(self.cfg)
         try:
-            parser = http.RequestParser(client)
+            parser = http.RequestParser(client,addr)
             req = parser.next()
             self.handle_request(req, client, addr)
         except StopIteration:
@@ -88,18 +81,17 @@ class Worker(base.WorkerProcess):
             try:            
                 # Last ditch attempt to notify the client of an error.
                 mesg = "HTTP/1.1 500 Internal Server Error\r\n\r\n"
-                util.write_nonblock(client, mesg)
+                write_nonblock(client, mesg)
             except:
                 pass
         finally:    
-            util.close(client)
+            close(client)
 
     def handle_request(self, req, client, addr):
         try:
             debug = self.cfg.debug or False
             self.cfg.pre_request(self, req)
-            resp, environ = wsgi.create(req, client, addr,
-                    self.address, self.cfg)
+            resp, environ = wsgi.create(req, client, addr, self.address, self.cfg)
             # Force the connection closed until someone shows
             # a buffering proxy that supports Keep-Alive to
             # the backend.
@@ -128,3 +120,8 @@ class Worker(base.WorkerProcess):
             except:
                 pass
 
+
+
+class Worker(SyncMixin,base.WorkerProcess):
+    pass        
+    

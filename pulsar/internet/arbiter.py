@@ -9,6 +9,8 @@ import signal
 import sys
 import time
 import traceback
+from multiprocessing import Queue
+from multiprocessing.queues import Empty
 from select import error as selecterror
 
 try:
@@ -48,8 +50,6 @@ class Arbiter(object):
     WORKERS = {}    
     PIPE = []
 
-    # I love dynamic languages
-    SIG_QUEUE = []
     SIGNALS = map(
                   lambda x: getattr(signal, "SIG%s" % x),
                   system.ALL_SIGNALS.split()
@@ -71,6 +71,7 @@ class Arbiter(object):
         self.worker_age = 0
         self.reexec_pid = 0
         self.master_name = "Master"
+        self.SIG_QUEUE = Queue()
         
         # get current path, try to use PWD env first
         try:
@@ -121,7 +122,7 @@ class Arbiter(object):
         self.pid = os.getpid()
         self.init_signals()
         if not self.LISTENER:
-            self.LISTENER = system.create_socket(self.cfg)
+            self.LISTENER = system.create_socket(self)
         
         if self.cfg.pidfile is not None:
             self.pidfile = Pidfile(self.cfg.pidfile)
@@ -145,11 +146,12 @@ class Arbiter(object):
         #signal.signal(signal.SIGCHLD, self.handle_chld)
 
     def signal(self, sig, frame):
-        if len(self.SIG_QUEUE) < 5:
-            self.SIG_QUEUE.append(sig)
-            self.wakeup()
+        signame = self.SIG_NAMES.get(sig,None)
+        if signame:
+            self.log.info('Received signal {0}. Putting it into the queue'.format(signame))
+            self.SIG_QUEUE.put(sig)
         else:
-            self.log.warn("Dropping signal: %s" % sig)
+            self.log.info('Received unknown signal. Skipping')
 
     def run(self):
         "Main master loop."
@@ -158,9 +160,9 @@ class Arbiter(object):
         self.manage_workers()
         while True:
             try:
-                sig = self.SIG_QUEUE.pop(0) if len(self.SIG_QUEUE) else None
+                self.reap_workers()
+                sig = self.get()
                 if sig is None:
-                    self.sleep()
                     self.murder_workers()
                     self.manage_workers()
                     continue
@@ -195,7 +197,6 @@ class Arbiter(object):
 
     def handle_chld(self, sig, frame):
         "SIGCHLD handling"
-        self.wakeup()
         self.reap_workers()
         
     def handle_hup(self):
@@ -264,16 +265,6 @@ class Arbiter(object):
             self.kill_workers(signal.SIGQUIT)
         else:
             self.log.info("SIGWINCH ignored. Not daemonized")
-    
-    def wakeup(self):
-        """\
-        Wake up the arbiter by writing to the PIPE
-        """
-        try:
-            os.write(self.PIPE[1], '.')
-        except IOError as e:
-            if e.errno not in [errno.EAGAIN, errno.EINTR]:
-                raise
                     
     def halt(self, reason=None, exit_status=0):
         """ halt arbiter """
@@ -285,28 +276,13 @@ class Arbiter(object):
             self.pidfile.unlink()
         sys.exit(exit_status)
         
-    def sleep(self):
-        """\
-        Sleep until PIPE is readable or we timeout.
-        A readable PIPE means a signal occurred.
+    def get(self):
+        """Get signals from the signal queue.
         """
         try:
-            fileno = self.PIPE[1].fileno()  
-            ready = select([self.LISTENER], [], [], 1.0)
-            if not ready[0]:
-                return
-            client, addr = self.LISTENER.accept()
-            client.setblocking(1)
-            while os.read(fileno, 1):
-                pass
-        except selecterror as e:
-            if e[0] not in [errno.EAGAIN, errno.EINTR]:
-                raise
-        except OSError as e:
-            if e.errno not in [errno.EAGAIN, errno.EINTR]:
-                raise
-        except KeyboardInterrupt:
-            sys.exit()
+            return self.SIG_QUEUE.get(timeout = 0.5)
+        except Empty:
+            return
     
     def stop(self, graceful=True):
         """\
@@ -335,7 +311,7 @@ class Arbiter(object):
             self.master_name = "Old Master"
             return
             
-        os.environ['GUNICORN_FD'] = str(self.LISTENER.fileno())
+        os.environ['PULSAR_FD'] = str(self.LISTENER.fileno())
         os.chdir(self.START_CTX['cwd'])
         self.cfg.pre_exec(self)
         os.execvpe(self.START_CTX[0], self.START_CTX['args'], os.environ)
@@ -373,10 +349,10 @@ class Arbiter(object):
         self.manage_workers()
         
     def murder_workers(self):
-        """Reap workers to avoid zombie processes
+        """Murder workers to avoid zombie processes
         """
         if self.timeout:
-            for wid, proc in iteritems(self.WORKERS):
+            for wid, proc in list(iteritems(self.WORKERS)):
                 worker = proc['worker']
                 connection = proc['connection']
                 notified = proc['notified']
@@ -384,8 +360,14 @@ class Arbiter(object):
                     notified = connection.recv()
                 proc['notified'] = notified
                 if time.time() - notified > self.timeout:
-                    self.terminate_worker(wid)
+                    if worker.is_alive():
+                        self.terminate_worker(wid)
     
+    def reap_workers(self):
+        for wid, proc in list(iteritems(self.WORKERS)):
+            if not proc['worker'].is_alive():
+                self.WORKERS.pop(wid)
+        
     def manage_workers(self):
         """\
         Maintain the number of workers by spawning or killing
@@ -406,11 +388,12 @@ class Arbiter(object):
         self.worker_age += 1
         connection,worker_conn = self.worker_class.pipe()
         worker = self.worker_class(self.worker_age,
-                                   self.PIPE[0],
+                                   self.LISTENER,
                                    self.app,
                                    self.timeout/2.0,
                                    self.cfg,
-                                   worker_conn)
+                                   worker_conn,
+                                   self.SIG_QUEUE)
         
         self.cfg.pre_fork(worker)
 
@@ -452,15 +435,15 @@ class Arbiter(object):
         for pid in self.WORKERS.keys():
             self.terminate_worker(pid, sig)
                     
-    def terminate_worker(self, wid):
+    def terminate_worker(self, wid, sig):
         """\
         Terminate a worker
         
         :attr wid: int, worker process id
          """
         try:
-            w = self.WORKERS.pop(wid)
-            w.terminate()
+            proc = self.WORKERS[wid]
+            proc['worker'].terminate()
         except OSError as e:
             if e.errno == errno.ESRCH:
                 try:

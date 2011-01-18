@@ -25,12 +25,14 @@ class WorkerMixin(object):
                   system.ALL_SIGNALS.split()
                   )
     
-    PIPE = []
-    
     def __init__(self,
-                 age = None, socket = None, 
-                 app = None, timeout = None, cfg = None,
-                 connection = None):
+                 age = None,
+                 socket = None, 
+                 app = None,
+                 timeout = None,
+                 cfg = None,
+                 connection = None,
+                 SIG_QUEUE = None):
         """\
         This is called pre-fork so it shouldn't do anything to the
         current process. If there's a need to make process wide
@@ -41,6 +43,7 @@ class WorkerMixin(object):
         self.app = app
         self.timeout = timeout
         self.cfg = cfg
+        self.SIG_QUEUE = SIG_QUEUE
 
         self.nr = 0
         self.max_requests = getattr(cfg,'max_requests',sys.maxsize)
@@ -76,23 +79,20 @@ class WorkerMixin(object):
         super(MyWorkerClass, self).init_process() so that the ``run()``
         loop is initiated.
         """
-        #self.app.configure_logging()
         try:
             self.log = logging.getLogger(__name__)
-            system.set_proctitle("worker [{0}]".format(self.cfg.proc_name))
+            self.set_proctitle()
             self.log.info("Booting worker with pid: %s" % self.pid)
             self.cfg.post_fork(self)
             self.init_process()
-            sys.exit(0)
         except SystemExit:
             raise
         except:
             self.log.exception("Exception in worker process:")
-            sys.exit(-1)
         finally:
-            self.log.info("Worker exiting (pid: %s)" % self.pid)
+            self.log.info("Worker exiting {0}".format(self))
             try:
-                self.cfg.worker_exit(self, self)
+                self.cfg.worker_exit(self)
             except:
                 pass
 
@@ -128,6 +128,12 @@ class WorkerMixin(object):
     def handle_winch(self, sig, fname):
         # Ignore SIGWINCH in worker. Fixes a crash on OpenBSD.
         return
+    
+    def set_proctitle(self):
+        pass
+    
+    def get_parent_id(self):
+        return os.getpid()
 
 
 class WorkerThread(WorkerMixin,Thread):
@@ -152,7 +158,10 @@ class WorkerThread(WorkerMixin,Thread):
     
     @classmethod
     def pipe(cls):
-        return os.pipe()
+        return Pipe()
+    
+    def terminate(self):
+        self.join()
     
     
 class WorkerProcess(WorkerMixin,Process):
@@ -174,3 +183,11 @@ class WorkerProcess(WorkerMixin,Process):
     @classmethod
     def pipe(cls):
         return Pipe()
+    
+    def set_proctitle(self):
+        system.set_proctitle("worker [{0}]".format(self.cfg.proc_name))
+        
+    def get_parent_id(self):
+        return os.getppid()
+    
+    

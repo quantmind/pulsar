@@ -188,7 +188,7 @@ def import_app(module):
     app = eval(obj, mod.__dict__)
     if app is None:
         raise ImportError("Failed to find application object: %r" % obj)
-    if not callable(app):
+    if not hasattr(app,'__call__'):
         raise TypeError("Application object must be callable.")
     return app
 

@@ -15,7 +15,7 @@ def ispy3k():
     return int(sys.version[0]) >= 3
 
 
-if not ispy3k(): # Python 3
+if ispy3k(): # Python 3
     string_type = str
     itervalues = lambda d : d.values()
     iteritems = lambda d : d.items()

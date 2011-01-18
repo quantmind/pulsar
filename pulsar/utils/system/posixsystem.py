@@ -2,7 +2,6 @@ import fcntl
 import resource
 import grp
 import pwd
-import signals
 from select import select
 
 from .base import *
