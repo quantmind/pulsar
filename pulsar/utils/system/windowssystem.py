@@ -1,9 +1,21 @@
+import multiprocessing.reduction
 from select import select as _select
 
 from .base import *
 
 if not ispy3k():
     ALL_SIGNALS = "INT TERM"
+    
+    def fromfd(fd, family, type, proto=0):
+        """ fromfd(fd, family, type[, proto]) -> socket object
+    
+        Create a socket object from a duplicate of the given file
+        descriptor.  The remaining arguments are the same as for socket().
+        """
+        nfd = dup(fd)
+        return socket(family, type, proto, nfd)
+    
+    socket.fromfd = fromfd 
     
     
 def select(r, w, e, timeout=None):
