@@ -10,10 +10,10 @@ In-memory transport.
 """
 from multiprocessing import Queue
 
-from kombu.transport import virtual
+from pulsar import qmqp
 
 
-class Channel(virtual.Channel):
+class Channel(amqp.Channel):
     queues = {}
     do_restore = False
 
@@ -39,7 +39,7 @@ class Channel(virtual.Channel):
         return size
 
 
-class Transport(virtual.Transport):
+class Transport(amqp.Transport):
     Channel = Channel
 
     #: memory backend state is global.

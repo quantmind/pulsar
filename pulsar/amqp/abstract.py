@@ -97,7 +97,7 @@ class Message(AMQPobject):
         if postencode and isinstance(self.body, unicode):
             self.body = self.body.encode(postencode)
 
-    def ack(self):
+    def acknowledge(self):
         """Acknowledge this message as being processed.,
         This will remove the message from the queue.
 
