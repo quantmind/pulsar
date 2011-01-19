@@ -1,22 +1,52 @@
 """
-kombu.transport.base
-====================
+kombu.compression
+=================
 
-Base transport interface.
+Object utilities.
 
 :copyright: (c) 2009 - 2010 by Ask Solem.
 :license: BSD, see LICENSE for more details.
 
 """
+from copy import copy
 
-from kombu import serialization
-from kombu.compression import decompress
-from kombu.exceptions import MessageStateError
-
-ACKNOWLEDGED_STATES = frozenset(["ACK", "REJECTED", "REQUEUED"])
+from .version import AMQP_PROTOCOL_BYTES
 
 
-class Message(object):
+class AMQPobject(object):
+    """Common baseclass supporting automatic kwargs->attributes handling,
+    and cloning."""
+    attrs = ()
+
+    def __init__(self, *args, **kwargs):
+        any = lambda v: v
+        for name, type_ in self.attrs:
+            value = kwargs.get(name)
+            if value is not None:
+                setattr(self, name, (type_ or any)(value))
+            else:
+                try:
+                    getattr(self, name)
+                except AttributeError:
+                    setattr(self, name, None)
+
+    def __copy__(self):
+        return self.__class__(**dict((name, getattr(self, name))
+                                        for name, _ in self.attrs))
+
+
+class Node(AMQPobject):
+    '''A mixin class for AMQP Nodes.
+A node exists in a Container and it is linked with other nodes via Links.'''
+    
+
+class Connection(AMQPobject):
+    '''An AMQP Connection consists of a full-duplex,
+reliably ordered sequence of Frames.'''
+    pass
+    
+
+class Message(AMQPobject):
     """Base class for received messages."""
     _state = None
 
@@ -131,7 +161,7 @@ class Message(object):
         return self._decoded_cache
 
 
-class Transport(object):
+class Transport(AMQPobject):
     """Base class for transports."""
 
     #: The :class:`~kombu.connection.BrokerConnection` owning this instance.
@@ -163,3 +193,4 @@ class Transport(object):
 
     def drain_events(self, connection, **kwargs):
         raise NotImplementedError("Subclass responsibility")
+

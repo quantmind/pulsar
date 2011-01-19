@@ -139,7 +139,8 @@ class Arbiter(object):
         """
         if self.PIPE:
             map(lambda p: os.close(p), self.PIPE)
-        self.PIPE = self.worker_class.pipe()
+        server_p, worker_p = self.worker_class.pipe()
+        worker_p.close()
         #map(system.set_non_blocking, pair)
         #map(system.close_on_exec, pair)
         map(lambda s: signal.signal(s, self.signal), self.SIGNALS)
@@ -177,8 +178,7 @@ class Arbiter(object):
                     self.log.error("Unhandled signal: %s" % signame)
                     continue
                 self.log.info("Handling signal: %s" % signame)
-                handler()  
-                self.wakeup()
+                handler()
             except StopIteration:
                 self.halt()
             except KeyboardInterrupt:
@@ -194,6 +194,46 @@ class Arbiter(object):
                 if self.pidfile is not None:
                     self.pidfile.unlink()
                 sys.exit(-1)
+                
+    def halt(self, reason=None, exit_status=0):
+        """ halt arbiter """
+        self.stop()
+        self.log.info("Shutting down: %s" % self.master_name)
+        if reason is not None:
+            self.log.info("Reason: %s" % reason)
+        if self.pidfile is not None:
+            self.pidfile.unlink()
+        sys.exit(exit_status)
+        
+    def get(self):
+        """Get signals from the signal queue.
+        """
+        try:
+            return self.SIG_QUEUE.get(timeout = 0.5)
+        except Empty:
+            return
+        except IOError:
+            return
+        
+    def stop(self, graceful=True):
+        """\
+        Stop workers
+        
+        :attr graceful: boolean, If True (the default) workers will be
+        killed gracefully  (ie. trying to wait for the current connection)
+        """
+        self.stopping = True
+        self.LISTENER = None
+        if self.SIG_QUEUE is not None:
+            self.SIG_QUEUE.close()
+            self.SIG_QUEUE.join_thread()
+            self.SIG_QUEUE = None
+        limit = time.time() + self.timeout
+        while self.WORKERS and time.time() < limit:
+            self.join_workers()
+            time.sleep(0.1)
+            self.murder_workers()
+        self.join_workers()
 
     def handle_chld(self, sig, frame):
         "SIGCHLD handling"
@@ -215,12 +255,10 @@ class Arbiter(object):
     
     def handle_int(self):
         "SIGINT handling"
-        self.stop(False)
         raise StopIteration
     
     def handle_term(self):
         "SIGTERM handling"
-        self.stop(False)
         raise StopIteration
 
     def handle_ttin(self):
@@ -265,39 +303,6 @@ class Arbiter(object):
             self.kill_workers(signal.SIGQUIT)
         else:
             self.log.info("SIGWINCH ignored. Not daemonized")
-                    
-    def halt(self, reason=None, exit_status=0):
-        """ halt arbiter """
-        self.stop()
-        self.log.info("Shutting down: %s" % self.master_name)
-        if reason is not None:
-            self.log.info("Reason: %s" % reason)
-        if self.pidfile is not None:
-            self.pidfile.unlink()
-        sys.exit(exit_status)
-        
-    def get(self):
-        """Get signals from the signal queue.
-        """
-        try:
-            return self.SIG_QUEUE.get(timeout = 0.5)
-        except Empty:
-            return
-    
-    def stop(self, graceful=True):
-        """\
-        Stop workers
-        
-        :attr graceful: boolean, If True (the default) workers will be
-        killed gracefully  (ie. trying to wait for the current connection)
-        """
-        self.LISTENER = None
-        limit = time.time() + self.timeout
-        while self.WORKERS and time.time() < limit:
-            self.join_workers()
-            time.sleep(0.1)
-            self.murder_workers()
-        self.join_workers()
 
     def reexec(self):
         """\

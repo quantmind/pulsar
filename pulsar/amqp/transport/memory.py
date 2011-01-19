@@ -8,7 +8,7 @@ In-memory transport.
 :license: BSD, see LICENSE for more details.
 
 """
-from Queue import Queue
+from multiprocessing import Queue
 
 from kombu.transport import virtual
 

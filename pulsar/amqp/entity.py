@@ -1,12 +1,15 @@
 """
-kombu.entity
-================
-
 Exchange and Queue declarations.
 
-:copyright: (c) 2009 - 2010 by Ask Solem.
-:license: BSD, see LICENSE for more details.
+The AMQP Network consists of ``Nodes`` connected via ``Links``.
 
+ * Nodes are named entities responsible for the safe storage and/or delivery of Messages.
+ * A Link is a unidirectional route between two Nodes along which Messages may travel
+   if they meet the entry criteria of the Link.
+ * Nodes exist within a Container, and each Container may hold many Nodes.
+ * Examples of AMQP Nodes are Producers, Consumers, and Queues. Producers and Consumers are the elements within
+a client Application that generate and process Messages. Queues are entities within a Broker that
+store and forward Messages. Examples of containers are Brokers and Client Applications.
 """
 from kombu.abstract import MaybeChannelBound
 
@@ -14,6 +17,10 @@ TRANSIENT_DELIVERY_MODE = 1
 PERSISTENT_DELIVERY_MODE = 2
 DELIVERY_MODES = {"transient": TRANSIENT_DELIVERY_MODE,
                   "persistent": PERSISTENT_DELIVERY_MODE}
+
+
+
+
 
 
 class Exchange(MaybeChannelBound):

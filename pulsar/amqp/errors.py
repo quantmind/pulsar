@@ -1,6 +1,5 @@
 
 
-
 class NotBoundError(Exception):
     """Trying to call channel dependent method on unbound entity."""
     pass

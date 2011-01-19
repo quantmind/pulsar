@@ -105,6 +105,7 @@ class WorkerMixin(object):
         # Prevent fd inherientence
         #util.close_on_exec(self.socket)
         #util.close_on_exec(self.tmp.fileno())
+        self.init_signals()
         
         self.wsgi = self.app.wsgi()
         

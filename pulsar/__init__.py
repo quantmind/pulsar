@@ -2,11 +2,11 @@
 
 VERSION = (0, 1, 'dev')
 
+
 def get_version():
     return '.'.join(map(str,VERSION))
 
 SERVER_SOFTWARE = "pulsar/%s" % get_version()
-
 
 __version__   = get_version()
 __license__   = "BSD"

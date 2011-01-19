@@ -9,16 +9,13 @@ Broker connection and pools.
 
 """
 import socket
-
 from copy import copy
 from itertools import count
 from Queue import Empty, Queue as _Queue
 
-from kombu import exceptions
-from kombu.transport import get_transport_cls
-from kombu.simple import SimpleQueue, SimpleBuffer
-from kombu.utils import retry_over_time
-from kombu.utils.compat import OrderedDict
+from .errors import exceptions
+from pulsar.utils.starting import retry_over_time
+from pulsar.utils.collections import OrderedDict
 from kombu.utils.functional import wraps
 
 
@@ -26,6 +23,7 @@ from kombu.utils.functional import wraps
 URI_FORMAT = """\
 %(transport)s://%(userid)s@%(hostname)s%(port)s%(virtual_host)s\
 """
+
 
 
 class BrokerConnection(object):
@@ -195,7 +193,7 @@ class BrokerConnection(object):
             for retries in count(0):
                 try:
                     return fun(*args, **kwargs)
-                except self.connection_errors + self.channel_errors, exc:
+                except self.connection_errors + self.channel_errors as exc:
                     if got_connection or \
                             max_retries and retries > max_retries:
                         raise
