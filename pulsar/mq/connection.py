@@ -27,25 +27,26 @@ URI_FORMAT = """\
 
 
 class BrokerConnection(object):
-    """A connection to the broker.
+    """A connection to the broker. The broker is responsable for
+handling Queues, Links and so forth. 
 
-    :keyword hostname: Hostname/address of the server to connect to.
-      Default is ``"localhost"``.
-    :keyword userid: Username. Default is ``"guest"``.
-    :keyword password: Password. Default is ``"guest"``.
-    :keyword virtual_host: Virtual host. Default is ``"/"``.
-    :keyword port: Port of the server. Default is transport specific.
-    :keyword insist: Insist on connecting to a server.
-      In a configuration with multiple load-sharing servers, the insist
-      option tells the server that the client is insisting on a connection
-      to the specified server.  Default is ``False``.
-    :keyword ssl: Use ssl to connect to the server. Default is ``False``.
-    :keyword transport: Transport class to use. Can be a class,
-         or a string specifying the path to the class. (e.g.
-         ``kombu.transport.pyamqplib.Transport``), or one of the aliases:
-         ``amqplib``, ``pika``, ``redis``, ``memory``.
-    :keyword connect_timeout: Timeout in seconds for connecting to the
-      server. May not be suported by the specified transport.
+:keyword hostname: Hostname/address of the server to connect to.
+  Default is ``"localhost"``.
+:keyword userid: Username. Default is ``"guest"``.
+:keyword password: Password. Default is ``"guest"``.
+:keyword virtual_host: Virtual host. Default is ``"/"``.
+:keyword port: Port of the server. Default is transport specific.
+:keyword insist: Insist on connecting to a server.
+  In a configuration with multiple load-sharing servers, the insist
+  option tells the server that the client is insisting on a connection
+  to the specified server.  Default is ``False``.
+:keyword ssl: Use ssl to connect to the server. Default is ``False``.
+:keyword transport: Transport class to use. Can be a class,
+     or a string specifying the path to the class. (e.g.
+     ``kombu.transport.pyamqplib.Transport``), or one of the aliases:
+     ``amqplib``, ``pika``, ``redis``, ``memory``.
+:keyword connect_timeout: Timeout in seconds for connecting to the
+  server. May not be suported by the specified transport.
 
     **Usage**
 

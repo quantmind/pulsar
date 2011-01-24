@@ -168,10 +168,7 @@ class AbstractChannel(object):
     you'd usually want to implement in a virtual channel.
 
     Do not subclass directly, but rather inherit from :class:`Channel`
-    instead.
-
-    """
-
+    instead."""
     def _get(self, queue, timeout=None):
         """Get next message from `queue`."""
         raise NotImplementedError("Virtual channels must implement _get")
