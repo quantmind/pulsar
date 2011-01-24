@@ -6,4 +6,4 @@ from pulsar.internet import Arbiter
 class TestLibrary(test.TestCase):
     
     def testArbiter(self):
-        pass
+        a = Arbiter()

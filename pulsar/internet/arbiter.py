@@ -3,7 +3,6 @@
 # This file is part of gunicorn released under the MIT license. 
 # See the NOTICE for more information.
 import errno
-import logging
 import os
 import signal
 import sys
@@ -22,11 +21,10 @@ except NameError:
 from pulsar.utils.pidfile import Pidfile
 from pulsar.utils.py2py3 import iteritems
 from pulsar.utils import system
-from pulsar import __version__, SERVER_SOFTWARE
+from pulsar import __version__, SERVER_SOFTWARE, getLogger
+from pulsar.utils.system import close_on_exec
 
 from .errors import HaltServer
-
-select = system.select
 
 
 __all__ = ['Arbiter']
@@ -43,6 +41,7 @@ class Arbiter(object):
     # to boot. If a worker process exist with
     # this error code, the arbiter will terminate.
     WORKER_BOOT_ERROR = 3
+    SIG_TIMEOUT = 0.5
 
     START_CTX = {}
     
@@ -60,7 +59,9 @@ class Arbiter(object):
                      )
     
     def __init__(self, app):
-        self.log = logging.getLogger(__name__)
+        self.pid = None
+        self._stopped = False
+        self.log = getLogger(self.__class__.__name__)
         self.log.info("Starting pulsar %s" % __version__)
        
         os.environ["SERVER_SOFTWARE"] = SERVER_SOFTWARE
@@ -114,15 +115,24 @@ class Arbiter(object):
                 self.app.wsgi()
             else:
                 self.log.warning("debug mode: app isn't preloaded.")
+                
+    def iosetup(self):
+        '''Setup Arbiter event loop'''
+        pass
 
     def start(self):
         """\
         Initialize the arbiter. Start listening and set pidfile if needed.
         """
+        if self._stopped:
+            self._stopped = False
+            return
+        assert not self.pid, 'cannot start arbiter twice'
         self.pid = os.getpid()
         self.init_signals()
         if not self.LISTENER:
             self.LISTENER = system.create_socket(self)
+            self.iosetup()
         
         if self.cfg.pidfile is not None:
             self.pidfile = Pidfile(self.cfg.pidfile)
@@ -131,6 +141,9 @@ class Arbiter(object):
         self.log.info("Listening at: %s (%s)" % (self.LISTENER,
             self.pid))
         self.cfg.when_ready(self)
+        system.set_proctitle("master [%s]" % self.proc_name)
+        self.manage_workers()
+        self.run()
     
     def init_signals(self):
         """\
@@ -156,16 +169,14 @@ class Arbiter(object):
 
     def run(self):
         "Main master loop."
-        self.start()
-        system.set_proctitle("master [%s]" % self.proc_name)
-        self.manage_workers()
         while True:
             try:
                 self.reap_workers()
-                sig = self.get()
+                sig = self.getsig()
                 if sig is None:
                     self.murder_workers()
                     self.manage_workers()
+                    self.iohandle()
                     continue
                 
                 if sig not in self.SIG_NAMES:
@@ -205,15 +216,18 @@ class Arbiter(object):
             self.pidfile.unlink()
         sys.exit(exit_status)
         
-    def get(self):
+    def getsig(self):
         """Get signals from the signal queue.
         """
         try:
-            return self.SIG_QUEUE.get(timeout = 0.5)
+            return self.SIG_QUEUE.get(timeout = self.SIG_TIMEOUT)
         except Empty:
             return
         except IOError:
             return
+        
+    def iohandle(self):
+        pass
         
     def stop(self, graceful=True):
         """\
@@ -458,3 +472,26 @@ class Arbiter(object):
                 except (KeyError, OSError):
                     return
             raise            
+
+
+class SyncArbiter(Arbiter):
+    '''An arbiter with a syncronous IO event loop'''
+    SIG_TIMEOUT = 0
+    POLL_TIMEOUT = 1
+    
+    def iosetup(self):
+        '''Setup Arbiter event loop'''
+        self._iopoll = poll = system.IOpoll()
+        poll.register(self.LISTENER)
+        
+    def iohandle(self):
+        try:
+            for fd,etype in self._iopoll.poll(self.POLL_TIMEOUT):
+                if etype == self._iopoll.READ:
+                    client, addr = fd.accept()
+                    client.setblocking(1)
+                    close_on_exec(client)
+                    self.handle(client, addr)
+                    
+        except IOError:
+            return

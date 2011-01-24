@@ -11,7 +11,7 @@ import time
 from select import error as selecterror
 
 from pulsar.http import get_library
-from pulsar.utils.system import select, close_on_exec, write_nonblock, close
+from pulsar.utils.system import IOpoll, close_on_exec, write_nonblock, close
 import pulsar.workers.base as base
 
 class SyncMixin(object):
@@ -19,6 +19,9 @@ class SyncMixin(object):
     def _run(self):
         # self.socket appears to lose its blocking status after
         # we fork in the arbiter. Reset it here.
+        iopoll = IOpoll()
+        iopool.read_fds.add(self.socket)
+        
         self.socket.setblocking(0)
 
         while self.alive:
@@ -50,7 +53,7 @@ class SyncMixin(object):
             
             try:
                 self.notify()
-                ret = select([self.socket], [], [], self.timeout)
+                ret = iopoll.poll(self.timeout)
                 if ret[0]:
                     continue
             except selecterror as e:
@@ -119,7 +122,6 @@ class SyncMixin(object):
                 self.cfg.post_request(self, req)
             except:
                 pass
-
 
 
 class Worker(SyncMixin,base.WorkerProcess):

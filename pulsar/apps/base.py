@@ -9,8 +9,8 @@ import os
 import sys
 import traceback
 
-from pulsar.utils import system
-from pulsar.internet import Arbiter
+from pulsar.utils import system, colors
+from pulsar import internet, getLogger
 from pulsar.utils.config import Config
 #from pulsar.utils import debug
 
@@ -20,6 +20,8 @@ class Application(object):
     An application interface for configuring and loading
     the various necessities for any given web framework.
     """
+    Arbiter = internet.Arbiter
+    
     LOG_LEVELS = {
         "critical": logging.CRITICAL,
         "error": logging.ERROR,
@@ -124,7 +126,7 @@ class Application(object):
                     
         self.configure_logging()
         try:
-            Arbiter(self).run()
+            self.Arbiter(self).start()
         except RuntimeError as e:
             sys.stderr.write("\nError: %s\n\n" % e)
             sys.stderr.flush()
@@ -134,12 +136,14 @@ class Application(object):
         """\
         Set the log level and choose the destination for log output.
         """
-        self.logger = logging.getLogger('pulsar')
+        self.logger = getLogger()
 
         handlers = []
+        Formatter = logging.Formatter
         if self.cfg.logfile != "-":
             handlers.append(logging.FileHandler(self.cfg.logfile))
         else:
+            Formatter = colors.ColorFormatter
             handlers.append(logging.StreamHandler())
 
         loglevel = self.LOG_LEVELS.get(self.cfg.loglevel.lower(), logging.INFO)
@@ -148,7 +152,7 @@ class Application(object):
         format = r"%(asctime)s [%(process)d] [%(levelname)s] %(message)s"
         datefmt = r"%Y-%m-%d %H:%M:%S"
         for h in handlers:
-            h.setFormatter(logging.Formatter(format, datefmt))
+            h.setFormatter(Formatter(format, datefmt))
             self.logger.addHandler(h)
 
 

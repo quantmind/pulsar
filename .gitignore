@@ -1,0 +1,7 @@
+*.pyc
+build/*
+dist/*
+.project
+.pydevproject
+.settings/*
+lib/src/http.c

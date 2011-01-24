@@ -1,7 +1,8 @@
+from time import sleep
 import multiprocessing.reduction
-from select import select as _select
 
 from .base import *
+
 
 if not ispy3k():
     ALL_SIGNALS = "INT TERM"
@@ -16,24 +17,6 @@ if not ispy3k():
         return socket(family, type, proto, nfd)
     
     socket.fromfd = fromfd 
-    
-    
-def select(r, w, e, timeout=None):
-    """Win32 select wrapper."""
-    if not (r or w):
-        # windows select() exits immediately when no sockets
-        if timeout is None:
-            timeout = 0.01
-        else:
-            timeout = min(timeout, 0.001)
-        sleep(timeout)
-        return [], [], []
-    # windows doesn't process 'signals' inside select(), so we set a max
-    # time or ctrl-c will never be recognized
-    if timeout is None or timeout > 0.5:
-        timeout = 0.5
-    r, w, e = _select(r, w, w, timeout)
-    return r, w + e, []
     
     
 def chown(path, uid, gid):
@@ -83,3 +66,25 @@ def create_socket_address(addr):
         raise TypeError("Unable to create socket from: %r" % addr)
 
     return sock_type
+
+
+class IOpoll(IOselect):
+    
+    def poll(self, timeout=None):
+        """Win32 select wrapper."""
+        if not (self.read_fds or self.write_fds):
+            # windows select() exits immediately when no sockets
+            if timeout is None:
+                timeout = 0.01
+            else:
+                timeout = min(timeout, 0.001)
+            sleep(timeout)
+            return ()
+        # windows doesn't process 'signals' inside select(), so we set a max
+        # time or ctrl-c will never be recognized
+        if timeout is None or timeout > 0.5:
+            timeout = 0.5
+        return super(IOpoll,self).poll(timeout)
+    
+    def create_socket(self, arbiter):
+        raise NotImplementedError

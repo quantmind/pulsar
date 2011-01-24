@@ -49,6 +49,7 @@ class GGeventServer(StreamServer):
     def handle(self, sock, addr):
         self.handle_func(sock, addr)
 
+
 class GeventWorker(AsyncWorker):
 
     def __init__(self, *args, **kwargs):
@@ -59,8 +60,7 @@ class GeventWorker(AsyncWorker):
         from gevent import monkey
         monkey.noisy = False
         monkey.patch_all()
-        
-        
+                
     def timeout_ctx(self):
         return gevent.Timeout(self.cfg.keepalive, False)
 
@@ -68,8 +68,10 @@ class GeventWorker(AsyncWorker):
         self.socket.setblocking(1)
 
         pool = Pool(self.worker_connections)
-        server = GGeventServer(self.socket, self.handle, spawn=pool,
-                worker=self)
+        server = GGeventServer(self.socket,
+                               self.handle,
+                               spawn=pool,
+                               worker=self)
 
         server.start()
 

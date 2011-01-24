@@ -8,6 +8,12 @@ import socket
 import sys
 import textwrap
 import time
+from time import sleep
+from select import select as _select
+try:
+    from itertools import izip as zip
+except ImportError:
+    pass
 
 from pulsar.utils.importer import import_module
 from pulsar.utils.py2py3 import *
@@ -236,3 +242,52 @@ def daemonize():
         os.open(REDIRECT_TO, os.O_RDWR)
         os.dup2(0, 1)
         os.dup2(0, 2)
+
+
+class IObase(object):
+    # Constants from the epoll module
+    _EPOLLIN = 0x001
+    _EPOLLPRI = 0x002
+    _EPOLLOUT = 0x004
+    _EPOLLERR = 0x008
+    _EPOLLHUP = 0x010
+    _EPOLLRDHUP = 0x2000
+    _EPOLLONESHOT = (1 << 30)
+    _EPOLLET = (1 << 31)
+
+    # Our events map exactly to the epoll events
+    NONE = 0
+    READ = _EPOLLIN
+    WRITE = _EPOLLOUT
+    ERROR = _EPOLLERR | _EPOLLHUP | _EPOLLRDHUP
+    
+    def get_listener(self, arbiter):
+        return None
+    
+    
+class IOselect(IObase):
+    
+    def __init__(self):
+        self.read_fds = set()
+        self.write_fds = set()
+        self.error_fds = set()
+        self.fd_dict = {self.READ: self.read_fds,
+                        self.WRITE: self.write_fds,
+                        self.ERROR: self.error_fds}
+    
+    def register(self, fd, eventmask = None):
+        eventmask = eventmask or self.READ
+        self.fd_dict[eventmask].add(fd)
+        
+    def poll(self, timeout=None):
+        triple = _select(self.read_fds,
+                         self.write_fds,
+                         self.error_fds,
+                         timeout)
+        events = {}
+        for fds,etype in zip(triple,(self.READ,self.WRITE,self.ERROR)):
+            for fd in fds:
+                if fd not in events:
+                    events[fd] = etype
+        return iteritems(events)
+    

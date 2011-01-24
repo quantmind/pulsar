@@ -26,6 +26,13 @@ class BaseSocket(object):
         else:
             sock = socket.fromfd(fd, self.FAMILY, socket.SOCK_STREAM)
         self.sock = self.set_options(sock, bound=(fd is not None))
+        
+    def __getstate__(self):
+        d = self.__dict__.copy()
+        return d
+    
+    def __setstate__(self, state):
+        self.__dict__ = state
     
     def __str__(self, name):
         return "<socket %d>" % self.sock.fileno()

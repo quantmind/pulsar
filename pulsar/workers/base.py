@@ -55,6 +55,7 @@ class WorkerMixin(object):
     
     @property
     def tid(self):
+        '''Thread Name'''
         return current_thread().name
     
     @property
@@ -190,5 +191,4 @@ class WorkerProcess(WorkerMixin,Process):
         
     def get_parent_id(self):
         return os.getppid()
-    
     
