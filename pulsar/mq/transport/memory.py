@@ -1,19 +1,9 @@
-"""
-kombu.transport.memory
-======================
-
-In-memory transport.
-
-:copyright: (c) 2009 - 2010 by Ask Solem.
-:license: BSD, see LICENSE for more details.
-
-"""
 from multiprocessing import Queue
 
-from pulsar import qmqp
+from pulsar import mq
 
 
-class Channel(amqp.Channel):
+class Channel(mq.Channel):
     queues = {}
     do_restore = False
 
@@ -39,7 +29,7 @@ class Channel(amqp.Channel):
         return size
 
 
-class Transport(amqp.Transport):
+class Transport(mq.Transport):
     Channel = Channel
 
     #: memory backend state is global.

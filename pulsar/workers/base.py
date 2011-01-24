@@ -2,9 +2,6 @@
 #
 # This file is part of gunicorn released under the MIT license. 
 # See the NOTICE for more information.
-
-
-import logging
 import os
 import random
 import signal
@@ -14,16 +11,43 @@ import tempfile
 from multiprocessing import Process, Pipe
 from threading import current_thread, Thread
 
+from pulsar import getLogger
 from pulsar.utils import system
 from pulsar.workers.workertmp import WorkerTmp
 
 
-class WorkerMixin(object):
+class RunnerMixin(object):
+    
+    SIG_QUEUE = None
+    '''Signal Queue'''
     
     SIGNALS = map(
                   lambda x: getattr(signal, "SIG%s" % x),
                   system.ALL_SIGNALS.split()
                   )
+    
+    SIG_NAMES = dict(
+                     (getattr(signal, name), name[3:].lower()) for name in dir(signal)
+                     if name[:3] == "SIG" and name[3] != "_"
+                     )
+    
+    def check_num_requests(self, nr):
+        pass
+    
+    def init_process(self):
+        self.log = getLogger(self.__class__.__name__)
+        self.setup_runner()
+        self.set_proctitle()
+    
+    def setup_runner(self):
+        pass
+    
+    def set_proctitle(self):
+        '''Set the process title'''
+        pass
+        
+
+class WorkerMixin(RunnerMixin):
     
     def __init__(self,
                  age = None,
@@ -39,19 +63,19 @@ class WorkerMixin(object):
         changes you'll want to do that in ``self.init_process()``.
         """
         self.age = age
-        self.socket = socket
-        self.app = app
+        self.nr = 0
+        self.alive = True
+        self.max_requests = getattr(cfg,'max_requests',sys.maxsize)
+        self.debug = getattr(cfg,'debug',False)
+        self.SIG_QUEUE = SIG_QUEUE
         self.timeout = timeout
         self.cfg = cfg
-        self.SIG_QUEUE = SIG_QUEUE
-
-        self.nr = 0
-        self.max_requests = getattr(cfg,'max_requests',sys.maxsize)
-        self.alive = True
-        self.debug = getattr(cfg,'debug',False)
-        #if socket:
-        #    self.address = socket.getsockname()
         self.connection = connection
+        self.set_listener(socket, app)
+        
+    def set_listner(self, socket, app):
+        self.socket = socket
+        self.app = app
     
     @property
     def tid(self):
@@ -65,6 +89,12 @@ class WorkerMixin(object):
     def __str__(self):
         return "<{0} {1} {2}>".format(self.__class__.__name__,self.pid,self.tid)
     
+    def check_num_requests(self, nr):
+        max_requests = getattr(self,'max_requests',None)
+        if max_requests and nr >= self.max_requests:
+            self.log.info("Autorestarting worker after current request.")
+            self.alive = False
+    
     def notify(self):
         """\
         Your worker subclass must arrange to have this method called
@@ -74,18 +104,12 @@ class WorkerMixin(object):
         self.connection.send(time.time())
         
     def run(self):
-        """\
-        If you override this method in a subclass, the last statement
-        in the function should be to call this method with
-        super(MyWorkerClass, self).init_process() so that the ``run()``
-        loop is initiated.
-        """
+        """Called in the subprocess, if this is a subprocess worker, or
+in thread if a Thread Worker."""
         try:
-            self.log = logging.getLogger(__name__)
-            self.set_proctitle()
+            self.init_process()
             self.log.info("Booting worker with pid: %s" % self.pid)
             self.cfg.post_fork(self)
-            self.init_process()
         except SystemExit:
             raise
         except:
@@ -130,9 +154,6 @@ class WorkerMixin(object):
     def handle_winch(self, sig, fname):
         # Ignore SIGWINCH in worker. Fixes a crash on OpenBSD.
         return
-    
-    def set_proctitle(self):
-        pass
     
     def get_parent_id(self):
         return os.getpid()

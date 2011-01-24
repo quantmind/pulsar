@@ -107,8 +107,19 @@ class Config(object):
         if hasattr(worker_class, "setup"):
             worker_class.setup()
         return worker_class
+    
+    @property
+    def arbiter_worker_class(self):
+        uri = self.settings['arbiter_worker_class'].get()
+        if not uri:
+            return None
+        else:
+            worker_class = system.load_worker_class(uri)
+            if hasattr(worker_class, "setup"):
+                worker_class.setup()
+            return worker_class
 
-    @property   
+    @property
     def workers(self):
         return self.settings['workers'].get()
 
@@ -313,6 +324,34 @@ class Workers(Setting):
         A positive integer generally in the 2-4 x $(NUM_CORES) range. You'll
         want to vary this a bit to find the best for your particular
         application's work load.
+        """
+
+
+class ArbiterWorkerClass(Setting):
+    name = "arbiter_worker_class"
+    section = "Arbiter Worker Type"
+    cli = ["-a", "--arbiter-class"]
+    meta = "STRING"
+    validator = validate_string
+    default = ""
+    desc = """\
+        The type of worker to use in the Arbiter.
+        
+        The default class (sync) should handle most 'normal' types of workloads.
+        You'll want to read http://gunicorn.org/design.html for information on
+        when you might want to choose one of the other worker classes.
+        
+        A string referring to one of the following bundled classes:
+        
+        * ``sync``
+        * ``eventlet`` - Requires eventlet >= 0.9.7
+        * ``gevent``   - Requires gevent >= 0.12.2 (?)
+        * ``tornado``  - Requires tornado >= 0.2
+        
+        Optionally, you can provide your own worker by giving gunicorn a
+        MODULE:CLASS pair where CLASS is a subclass of
+        gunicorn.workers.base.Worker. This alternative syntax will load the
+        gevent class: ``egg:gunicorn#gevent``
         """
 
 
@@ -561,7 +600,7 @@ class Httplib(Setting):
     cli = ["--http"]
     meta = "STRING"
     validator = validate_string
-    default = 'standard'
+    default = 'gunicorn'
     desc = """\
         HTTP library used by server.
         

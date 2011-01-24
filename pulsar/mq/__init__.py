@@ -1,4 +1,4 @@
-"""An AMQP micro-library
+"""An Message Queue micro-library
 
 The Advanced Message Queuing Protocol (AMQP) is an open Internet Protocol for Business
 Messaging.

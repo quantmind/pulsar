@@ -21,53 +21,40 @@ except NameError:
 from pulsar.utils.pidfile import Pidfile
 from pulsar.utils.py2py3 import iteritems
 from pulsar.utils import system
+from pulsar.http import get_httplib
 from pulsar import __version__, SERVER_SOFTWARE, getLogger
 from pulsar.utils.system import close_on_exec
+from pulsar.workers.base import RunnerMixin 
 
 from .errors import HaltServer
+from .httpsync import HttpSync
 
 
 __all__ = ['Arbiter']
 
 
-class Arbiter(object):
+class Arbiter(RunnerMixin):
     """
     Arbiter maintain the workers processes alive. It launches or
     kills them if needed. It also manages application reloading
     via SIGHUP/USR2.
     """
-
     # A flag indicating if a worker failed to
     # to boot. If a worker process exist with
     # this error code, the arbiter will terminate.
     WORKER_BOOT_ERROR = 3
     SIG_TIMEOUT = 0.5
-
     START_CTX = {}
-    
     LISTENER = None
     WORKERS = {}    
     PIPE = []
-
-    SIGNALS = map(
-                  lambda x: getattr(signal, "SIG%s" % x),
-                  system.ALL_SIGNALS.split()
-                  )
-    SIG_NAMES = dict(
-                     (getattr(signal, name), name[3:].lower()) for name in dir(signal)
-                     if name[:3] == "SIG" and name[3] != "_"
-                     )
     
     def __init__(self, app):
         self.pid = None
         self._stopped = False
-        self.log = getLogger(self.__class__.__name__)
-        self.log.info("Starting pulsar %s" % __version__)
-       
         os.environ["SERVER_SOFTWARE"] = SERVER_SOFTWARE
-
-        self.setup(app)
-        
+        self.app = app
+        self.cfg = app.cfg        
         self.pidfile = None
         self.worker_age = 0
         self.reexec_pid = 0
@@ -94,16 +81,16 @@ class Arbiter(object):
             "cwd": cwd,
             0: sys.executable
         }
+        self.init_process()
         
-    def setup(self, app):
-        self.app = app
-        self.cfg = app.cfg
+    def setup_runner(self):
+        self.log.info("Starting pulsar %s" % __version__)
         self.address = self.cfg.address
         self.num_workers = self.cfg.workers
         self.debug = self.cfg.debug
         self.timeout = self.cfg.timeout
-        self.proc_name = self.cfg.proc_name
         self.worker_class = self.cfg.worker_class
+        self.arbiter_worker = self.cfg.arbiter_worker_class
         
         if self.cfg.debug:
             self.log.debug("Current configuration:")
@@ -115,6 +102,11 @@ class Arbiter(object):
                 self.app.wsgi()
             else:
                 self.log.warning("debug mode: app isn't preloaded.")
+                
+    def set_proctitle(self):
+        '''Set the process title'''
+        self.proc_name = self.cfg.proc_name
+        system.set_proctitle("master [%s]" % self.proc_name)
                 
     def iosetup(self):
         '''Setup Arbiter event loop'''
@@ -476,22 +468,11 @@ class Arbiter(object):
 
 class SyncArbiter(Arbiter):
     '''An arbiter with a syncronous IO event loop'''
-    SIG_TIMEOUT = 0
-    POLL_TIMEOUT = 1
     
     def iosetup(self):
-        '''Setup Arbiter event loop'''
-        self._iopoll = poll = system.IOpoll()
-        poll.register(self.LISTENER)
+        self._iopoll = HttpSync(self)
+        self.iohandle = self._iopoll.iohandle
+        self.wsgi = self.app.wsgi()
         
-    def iohandle(self):
-        try:
-            for fd,etype in self._iopoll.poll(self.POLL_TIMEOUT):
-                if etype == self._iopoll.READ:
-                    client, addr = fd.accept()
-                    client.setblocking(1)
-                    close_on_exec(client)
-                    self.handle(client, addr)
-                    
-        except IOError:
-            return
+        
+        

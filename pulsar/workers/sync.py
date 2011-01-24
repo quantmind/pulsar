@@ -10,9 +10,11 @@ import traceback
 import time
 from select import error as selecterror
 
-from pulsar.http import get_library
-from pulsar.utils.system import IOpoll, close_on_exec, write_nonblock, close
+from pulsar.http import get_httplib
+from pulsar.utils.system import IOpoll, close_on_exec
+from pulsar.utils.http import write_nonblock, close
 import pulsar.workers.base as base
+
 
 class SyncMixin(object):
     

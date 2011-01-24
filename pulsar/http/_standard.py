@@ -1,4 +1,3 @@
-
 from pulsar.utils.py2py3 import *
 
 if ispy3k():

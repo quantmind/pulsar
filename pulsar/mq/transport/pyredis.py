@@ -213,7 +213,7 @@ class Channel(virtual.Channel):
         return self._client
 
 
-class Transport(virtual.Transport):
+class Transport(mq.Transport):
     Channel = Channel
 
     interval = 1
