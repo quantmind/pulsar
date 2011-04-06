@@ -1,6 +1,7 @@
 from pulsar.apps import wsgi
 from pulsar.internet.arbiter import SyncArbiter
 
+
 class WSGIApplication(wsgi.WSGIApplication):
     Arbiter = SyncArbiter
     

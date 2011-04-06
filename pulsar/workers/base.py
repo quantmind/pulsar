@@ -17,6 +17,7 @@ from pulsar.workers.workertmp import WorkerTmp
 
 
 class RunnerMixin(object):
+    '''Mixin for classes exposing process-type functionalities.'''
     
     SIG_QUEUE = None
     '''Signal Queue'''

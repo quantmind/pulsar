@@ -34,14 +34,9 @@ __all__ = ['Arbiter']
 
 
 class Arbiter(RunnerMixin):
-    """
-    Arbiter maintain the workers processes alive. It launches or
-    kills them if needed. It also manages application reloading
-    via SIGHUP/USR2.
-    """
-    # A flag indicating if a worker failed to
-    # to boot. If a worker process exist with
-    # this error code, the arbiter will terminate.
+    """Arbiter maintain the workers processes alive. It launches or
+kills them if needed. It also manages application reloading
+via SIGHUP/USR2."""
     WORKER_BOOT_ERROR = 3
     SIG_TIMEOUT = 0.5
     START_CTX = {}

@@ -46,7 +46,7 @@ class Application(object):
         self.configure_logging()
   
     def load_config(self):
-        # init configuration
+        '''Load the application configuration'''
         self.cfg = Config(self.usage)
         
         # parse console args

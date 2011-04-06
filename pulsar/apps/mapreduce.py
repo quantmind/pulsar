@@ -1,12 +1,9 @@
-
-
-from pulsar.app.base import Application
-
-
+from .base import Application
 
 
 class MapReduce(Application):
-    
+    '''An application which maintains a pool of workers dedicated to solving
+tasks.'''
     def init(self, parser, opts, args):
         if len(args) != 1:
             parser.error("No application module specified.")
@@ -16,13 +13,6 @@ class MapReduce(Application):
 
         sys.path.insert(0, os.getcwd())
     
-    
-def run():
-    """\
-    The ``gunicorn`` command line runner for launcing Gunicorn with
-    generic WSGI applications.
-    """
-    from gunicorn.app.wsgiapp import WSGIApplication
-    WSGIApplication("%prog [OPTIONS] APP_MODULE").run()
+
     
     

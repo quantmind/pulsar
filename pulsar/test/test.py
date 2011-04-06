@@ -10,7 +10,6 @@ class TestCase(unittest.TestCase):
     pass
 
 
-
 class TestSuiteRunner(object):
     '''A suite runner with twisted if available.'''
     
