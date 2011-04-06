@@ -1,10 +1,13 @@
+import signal
 from time import sleep
 import multiprocessing.reduction
 
 from .base import *
 
 
-if not ispy3k():
+SIGQUIT = signal.SIGTERM
+
+if not ispy3k:
     ALL_SIGNALS = "INT TERM"
     
     def fromfd(fd, family, type, proto=0):
@@ -88,3 +91,4 @@ class IOpoll(IOselect):
     
     def create_socket(self, arbiter):
         raise NotImplementedError
+

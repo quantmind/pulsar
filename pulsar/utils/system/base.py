@@ -10,10 +10,6 @@ import textwrap
 import time
 from time import sleep
 from select import select as _select
-try:
-    from itertools import izip as zip
-except ImportError:
-    pass
 
 from pulsar.utils.importer import import_module
 from pulsar.utils.py2py3 import *

@@ -2,10 +2,12 @@ import fcntl
 import resource
 import grp
 import pwd
+import signal
 from select import select
 
 from .base import *
 
+SIGQUIT = signal.SIGQUIT
 
 def chown(path, uid, gid):
     try:

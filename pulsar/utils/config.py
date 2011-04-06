@@ -14,6 +14,15 @@ from pulsar.utils import system
 from pulsar.utils.py2py3 import *
 
 
+__all__ = ['Config',
+           'Setting',
+           'validate_string',
+           'validate_callable',
+           'validate_bool',
+           'validate_pos_int',
+           'make_settings']
+
+
 KNOWN_SETTINGS = []
 
 def def_start_server(server):
@@ -245,9 +254,9 @@ def validate_pos_int(val):
 def validate_string(val):
     if val is None:
         return None
-    if not is_string(val):
+    if not is_bytes_or_string(val):
         raise TypeError("Not a string: %s" % val)
-    return val.strip()
+    return to_string(val).strip()
 
 
 def validate_callable(arity):

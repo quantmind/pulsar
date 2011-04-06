@@ -1,62 +1,89 @@
+'''\
+Simple python script which helps writing python 2.6 \
+forward compatible code with python 3'''
+import os
 import sys
 import types
 
-__all__ = ['string_type',
-           'int_type',
-           'to_bytestring',
-           'to_string',
-           'ispy3k',
-           'is_string',
-           'iteritems',
-           'itervalues']
+ispy3k = int(sys.version[0]) >= 3
 
+UTF8 = 'utf-8'
 
-def ispy3k():
-    return int(sys.version[0]) >= 3
-
-
-if ispy3k(): # Python 3
+if ispy3k: # Python 3
     string_type = str
     itervalues = lambda d : d.values()
     iteritems = lambda d : d.items()
-    is_string = lambda x : isinstance(x,str)
+    int_type = int
+    zip = zip
+    map = map
+    range = range
+    
+    from urllib import parse as urlparse
+    from io import StringIO
+    
+    class UnicodeMixin(object):
+        
+        def __unicode__(self):
+            return '{0} object'.format(self.__class__.__name__)
+        
+        def __str__(self):
+            return self.__unicode__()
+        
+        def __repr__(self):
+            return '%s: %s' % (self.__class__.__name__,self)
+        
 else: # Python 2
     string_type = unicode
     itervalues = lambda d : d.itervalues()
     iteritems = lambda d : d.iteritems()
-    is_string = lambda x : isinstance(x,basestring)
-
-    
-try:
     int_type = (types.IntType, types.LongType)
-except AttributeError:
-    int_type = int
+    from itertools import izip as zip, imap as map
+    range = xrange
     
+    import urlparse
+    from cStringIO import StringIO
     
+    class UnicodeMixin(object):
+        
+        def __unicode__(self):
+            return unicode('{0} object'.format(self.__class__.__name__))
+        
+        def __str__(self):
+            return self.__unicode__().encode()
+        
+        def __repr__(self):
+            return '%s: %s' % (self.__class__.__name__,self)
     
-def to_bytestring(s, encoding='utf-8', errors='strict'):
+
+is_int = lambda x : isinstance(x,int_type)
+is_string = lambda x : isinstance(x,string_type)
+is_bytes_or_string = lambda x : isinstance(x,string_type) or isinstance(x,bytes)
+
+
+
+def to_bytestring(s, encoding=UTF8, errors='strict'):
     """Returns a bytestring version of 's',
-encoded as specified in 'encoding'.
-If strings_only is True, don't convert (some)
-non-string-like objects."""
+encoded as specified in 'encoding'."""
     if isinstance(s,bytes):
-        if encoding != 'utf-8':
-            return s.decode('utf-8', errors).encode(encoding, errors)
+        if encoding != UTF8:
+            return s.decode(UTF8, errors).encode(encoding, errors)
         else:
             return s
         
-    if isinstance(s, string_type):    
-        return s.encode(encoding, errors)
-    else:
-        return s
+    if not is_string(s):
+        s = string_type(s)    
+    
+    return s.encode(encoding, errors)
 
 
-def to_string(s, encoding='utf-8', errors='strict'):
+def to_string(s, encoding=UTF8, errors='strict'):
     """Inverse of to_bytestring"""
-    if isinstance(s, string_type):
-        return s
-    elif isinstance(s,bytes):
+    if isinstance(s,bytes):
         return s.decode(encoding,errors)
-    else:
-        string_type(s)
+    
+    if not is_string(s):
+        s = string_type(s)
+        
+    return s
+
         

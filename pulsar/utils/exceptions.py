@@ -1,4 +1,6 @@
-from pulsar import PulsarException
+
+class PulsarException(Exception):
+    '''base class of all Pulsar Exception'''
 
 
 class PulsarInternetException(PulsarException):

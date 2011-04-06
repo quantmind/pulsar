@@ -2,12 +2,11 @@ import errno
 from .runtime import Platform
 
 platform = Platform()
-platformType = platform.getType()
 seconds = platform.seconds
 
-if platformType == 'posix':
+if platform.type == 'posix':
     from .posixsystem import *
-elif platformType == 'win':
+elif platform.type == 'win':
     from .windowssystem import *
     
     

@@ -11,9 +11,28 @@ import tempfile
 from multiprocessing import Process, Pipe
 from threading import current_thread, Thread
 
+import pulsar
 from pulsar import getLogger
 from pulsar.utils import system
 from pulsar.workers.workertmp import WorkerTmp
+
+
+__all__ = ['RunnerMixin',
+           'Worker',
+           'WorkerProcess',
+           'WorkerThread',
+           'SIGNALS',
+           'SIG_NAMES']
+
+SIGNALS = map(
+              lambda x: getattr(signal, "SIG%s" % x),
+              system.ALL_SIGNALS.split()
+              )
+
+SIG_NAMES = dict(
+                 (getattr(signal, name), name[3:].lower()) for name in dir(signal)
+                 if name[:3] == "SIG" and name[3] != "_"
+                 )
 
 
 class RunnerMixin(object):
@@ -22,23 +41,17 @@ class RunnerMixin(object):
     SIG_QUEUE = None
     '''Signal Queue'''
     
-    SIGNALS = map(
-                  lambda x: getattr(signal, "SIG%s" % x),
-                  system.ALL_SIGNALS.split()
-                  )
-    
-    SIG_NAMES = dict(
-                     (getattr(signal, name), name[3:].lower()) for name in dir(signal)
-                     if name[:3] == "SIG" and name[3] != "_"
-                     )
-    
     def check_num_requests(self, nr):
         pass
     
     def init_process(self):
         self.log = getLogger(self.__class__.__name__)
-        self.setup_runner()
         self.set_proctitle()
+        self.setup_runner()
+        
+    def init_signals(self):
+        '''Initialise signals for correct signal handling.'''
+        pass
     
     def setup_runner(self):
         pass
@@ -46,27 +59,48 @@ class RunnerMixin(object):
     def set_proctitle(self):
         '''Set the process title'''
         pass
+    
+    @property
+    def tid(self):
+        '''Thread Name'''
+        return current_thread().name
+    
+    @classmethod
+    def pipe(cls):
+        return Pipe()
         
 
-class WorkerMixin(RunnerMixin):
+class Worker(RunnerMixin):
+    """\
+Base class for all workers. The constructor is called
+called pre-fork so it shouldn't do anything to the current process.
+If there's a need to make process wide changes you'll want to do that
+in ``self.init_process()``.
+
+.. attribute:: pid
+
+    The worker process id.
     
-    def __init__(self,
-                 age = None,
+.. attribute:: tid
+
+    The worker thread id.
+    
+.. attribute:: wid
+
+    The worker unique id. If the Worker has not started it is ``None``.
+"""
+    def __init__(self, age, ppid,
                  socket = None, 
                  app = None,
                  timeout = None,
                  cfg = None,
                  connection = None,
                  SIG_QUEUE = None):
-        """\
-        This is called pre-fork so it shouldn't do anything to the
-        current process. If there's a need to make process wide
-        changes you'll want to do that in ``self.init_process()``.
-        """
         self.age = age
+        self.ppid = ppid
         self.nr = 0
         self.alive = True
-        self.max_requests = getattr(cfg,'max_requests',sys.maxsize)
+        self.max_requests = cfg.max_requests or sys.maxsize
         self.debug = getattr(cfg,'debug',False)
         self.SIG_QUEUE = SIG_QUEUE
         self.timeout = timeout
@@ -74,18 +108,10 @@ class WorkerMixin(RunnerMixin):
         self.connection = connection
         self.set_listener(socket, app)
         
-    def set_listner(self, socket, app):
+    def set_listener(self, socket, app):
         self.socket = socket
+        self.address = socket.getsockname()
         self.app = app
-    
-    @property
-    def tid(self):
-        '''Thread Name'''
-        return current_thread().name
-    
-    @property
-    def parent_pid(self):
-        return self._parent_pid
     
     def __str__(self):
         return "<{0} {1} {2}>".format(self.__class__.__name__,self.pid,self.tid)
@@ -109,12 +135,10 @@ class WorkerMixin(RunnerMixin):
 in thread if a Thread Worker."""
         try:
             self.init_process()
-            self.log.info("Booting worker with pid: %s" % self.pid)
-            self.cfg.post_fork(self)
         except SystemExit:
             raise
-        except:
-            self.log.exception("Exception in worker process:")
+        except Exception as e:
+            self.log.exception("Exception in worker {0}: {1}".format(self,e))
         finally:
             self.log.info("Worker exiting {0}".format(self))
             try:
@@ -122,28 +146,22 @@ in thread if a Thread Worker."""
             except:
                 pass
 
-    def init_process(self):
+    def reseed(self):
+        pass
+    
+    def setup_runner(self):
         system.set_owner_process(self.cfg.uid, self.cfg.gid)
-
         # Reseed the random number generator
-        random.seed()
-
+        self.reseed()
         # Prevent fd inherientence
         #util.close_on_exec(self.socket)
         #util.close_on_exec(self.tmp.fileno())
         self.init_signals()
-        
-        self.wsgi = self.app.wsgi()
-        
+        self.handler = self.app.handler()
+        self.log.info('Booting worker "{0}"'.format(self.wid))
+        self.cfg.post_fork(self)
         # Enter main run loop
         self._run()
-
-    def init_signals(self):
-        map(lambda s: signal.signal(s, signal.SIG_DFL), self.SIGNALS)
-        signal.signal(signal.SIGQUIT, self.handle_quit)
-        signal.signal(signal.SIGTERM, self.handle_exit)
-        signal.signal(signal.SIGINT, self.handle_exit)
-        signal.signal(signal.SIGWINCH, self.handle_winch)
             
     def handle_quit(self, sig, frame):
         self.alive = False
@@ -160,12 +178,12 @@ in thread if a Thread Worker."""
         return os.getpid()
 
 
-class WorkerThread(WorkerMixin,Thread):
-    '''Base Thread Worker Class'''
+class WorkerThread(Worker,Thread):
+    '''A :class:`pulsar.Worker` on a thread. This worker class
+inherit from the :class:`threading.Thread` class.'''
     def __init__(self, *args, **kwargs):
-        WorkerMixin.__init__(self, *args, **kwargs)
+        Worker.__init__(self, *args, **kwargs)
         Thread.__init__(self)
-        self._parent_pid = os.getpid()
         self.daemon = True
         
     def _run(self):
@@ -175,26 +193,47 @@ class WorkerThread(WorkerMixin,Thread):
         for your particular evil schemes.
         """
         raise NotImplementedError()
-    
-    @property
-    def pid(self):
-        return os.getpid()
-    
-    @classmethod
-    def pipe(cls):
-        return Pipe()
     
     def terminate(self):
         self.join()
     
+    @property
+    def tid(self):
+        '''Thread Name'''
+        return current_thread().name
+        
+    @property
+    def pid(self):
+        return os.getpid()
+        
+    @property
+    def get_parent_id(self):
+        return self.pid
     
-class WorkerProcess(WorkerMixin,Process):
-    '''Base Process Worker Class'''
+    @property
+    def wid(self):
+        return '{0}-{1}'.format(self.pid,self.tid)
+
+    
+    
+class WorkerProcess(Worker,Process):
+    '''A :class:`pulsar.Worker` on a subprocess. This worker class
+inherit from the :class:`multiprocessProcess` class.'''
     
     def __init__(self, *args, **kwargs):
-        WorkerMixin.__init__(self, *args, **kwargs)
+        Worker.__init__(self, *args, **kwargs)
         Process.__init__(self)
         self.daemon = True
+        
+    def reseed(self):
+        random.seed()
+        
+    def init_signals(self):
+        map(lambda s: signal.signal(s, signal.SIG_DFL), pulsar.SIGNALS)
+        signal.signal(signal.SIGQUIT, self.handle_quit)
+        signal.signal(signal.SIGTERM, self.handle_exit)
+        signal.signal(signal.SIGINT, self.handle_exit)
+        signal.signal(signal.SIGWINCH, self.handle_winch)
         
     def _run(self):
         """\
@@ -204,13 +243,14 @@ class WorkerProcess(WorkerMixin,Process):
         """
         raise NotImplementedError()
     
-    @classmethod
-    def pipe(cls):
-        return Pipe()
-    
     def set_proctitle(self):
         system.set_proctitle("worker [{0}]".format(self.cfg.proc_name))
-        
+    
+    @property    
     def get_parent_id(self):
         return os.getppid()
     
+    @property
+    def wid(self):
+        return self.pid
+ 

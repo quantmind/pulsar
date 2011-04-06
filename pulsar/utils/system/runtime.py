@@ -21,27 +21,29 @@ knownPlatforms = {
     }
 
 _timeFunctions = {
-    #'win32': time.clock,
-    'win32': time.time,
+    #'win': time.clock,
+    'win': time.time,
     }
 
-class Platform:
+class Platform(object):
     """Gives us information about the platform we're running on"""
 
+    name = os.name
     type = knownPlatforms.get(os.name)
     seconds = staticmethod(_timeFunctions.get(type, time.time))
 
-    def __init__(self, name=None):
-        if name is not None:
-            self.type = knownPlatforms.get(name)
-            self.seconds = _timeFunctions.get(self.type, time.time)
-
+    def __str__(self):
+        return '{0} - {1}'.format(self.type,self.name)
+    
+    def __repr__(self):
+        return '{0}: {1}'.format(self.__class__.__name__,self)
+    
     def isKnown(self):
         """Do we know about this platform?"""
         return self.type != None
 
     def getType(self):
-        """Return 'posix', 'win32' or 'java'"""
+        """Return ``posix``, ``win`` or ``java``"""
         return self.type
 
     def isMacOSX(self):
@@ -50,21 +52,20 @@ class Platform:
 
     def isWinNT(self):
         """Are we running in Windows NT?"""
-        if self.getType() == 'win32':
+        if self.getType() == 'win':
             import _winreg
             try:
                 k=_winreg.OpenKeyEx(_winreg.HKEY_LOCAL_MACHINE,
                                     r'Software\Microsoft\Windows NT\CurrentVersion')
                 _winreg.QueryValueEx(k, 'SystemRoot')
-                return 1
+                return True
             except WindowsError:
-                return 0
+                return False
         # not windows NT
-        return 0
+        return False
 
     def isWindows(self):
-        return self.getType() == 'win32'
-
+        return self.getType() == 'win'
 
     def isVista(self):
         """
@@ -77,7 +78,6 @@ class Platform:
             return sys.getwindowsversion()[0] == 6
         else:
             return False
-
 
     def supportsThreads(self):
         """Can threads be created?

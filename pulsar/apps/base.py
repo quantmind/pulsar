@@ -107,7 +107,9 @@ class Application(object):
         loglevel = self.LOG_LEVELS.get(self.cfg.loglevel.lower(), logging.INFO)
         self.logger.setLevel(loglevel)
         
-    def wsgi(self):
+    def handler(self):
+        '''Returns a callable application handler, used by a :class:`pulsar.Worker`
+to carry out its task.'''
         if self.callable is None:
             self.callable = self.load()
         return self.callable

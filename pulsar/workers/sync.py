@@ -10,25 +10,27 @@ import traceback
 import time
 from select import error as selecterror
 
+import pulsar
 from pulsar.http import get_httplib
 from pulsar.utils.system import IOpoll, close_on_exec
-from pulsar.utils.http import write_nonblock, close
-import pulsar.workers.base as base
+from pulsar.utils.http import write_nonblock, write_error, close
 
 
-class SyncMixin(object):
+class WsgiSyncMixin(object):
+    '''A Mixin class for handling syncronous connection over HTTP.'''
+    ALLOWED_ERRORS = (errno.EAGAIN, errno.ECONNABORTED, errno.EWOULDBLOCK)
     
-    def _run(self):
-        # self.socket appears to lose its blocking status after
-        # we fork in the arbiter. Reset it here.
-        iopoll = IOpoll()
-        iopool.read_fds.add(self.socket)
-        
+    def reset_socket(self):
         self.socket.setblocking(0)
+        
+    def _run(self):
+        iopoll = IOpoll()
+        iopoll.read_fds.add(self.socket)
+        # Set socket to non blocking
+        self.reset_socket()
+        self.http = get_httplib(self.cfg)
 
         while self.alive:
-            self.notify()
-            
             # Accept a connection. If we get an error telling us
             # that no connection is waiting we fall down to the
             # select which is where we'll wait for a bit for new
@@ -45,33 +47,36 @@ class SyncMixin(object):
                 continue
 
             except socket.error as e:
-                if e[0] not in (errno.EAGAIN, errno.ECONNABORTED):
+                if e[0] not in self.ALLOWED_ERRORS:
                     raise
 
             # If our parent changed then we shut down.
-            if self.parent_pid != self.get_parent_id():
+            if self.ppid != self.get_parent_id:
                 self.log.info("Parent changed, shutting down: %s" % self)
                 return
             
-            try:
-                self.notify()
-                ret = iopoll.poll(self.timeout)
-                if ret[0]:
-                    continue
-            except selecterror as e:
-                if e[0] == errno.EINTR:
-                    continue
-                if e[0] == errno.EBADF:
-                    if self.nr < 0:
+            self.notify()
+            iopoll.poll(self.timeout)
+            
+            if 0:
+                try:
+                    self.notify()
+                    ret = dict(iopoll.poll(self.timeout))
+                    if ret[0]:
                         continue
-                    else:
-                        return
-                raise
+                except selecterror as e:
+                    if e[0] == errno.EINTR:
+                        continue
+                    if e[0] == errno.EBADF:
+                        if self.nr < 0:
+                            continue
+                        else:
+                            return
+                    raise
     
     def handle(self, client, addr):
-        http = get_library(self.cfg)
         try:
-            parser = http.RequestParser(client,addr)
+            parser = self.http.RequestParser(client)
             req = parser.next()
             self.handle_request(req, client, addr)
         except StopIteration:
@@ -82,7 +87,7 @@ class SyncMixin(object):
             else:
                 self.log.debug("Ignoring EPIPE")
         except Exception as e:
-            self.log.exception("Error processing request.")
+            self.log.exception("Error processing request: {0}".format(e))
             try:            
                 # Last ditch attempt to notify the client of an error.
                 mesg = "HTTP/1.1 500 Internal Server Error\r\n\r\n"
@@ -96,7 +101,7 @@ class SyncMixin(object):
         try:
             debug = self.cfg.debug or False
             self.cfg.pre_request(self, req)
-            resp, environ = wsgi.create(req, client, addr, self.address, self.cfg)
+            resp, environ = self.http.create_wsgi(req, client, addr, self.address, self.cfg)
             # Force the connection closed until someone shows
             # a buffering proxy that supports Keep-Alive to
             # the backend.
@@ -105,7 +110,7 @@ class SyncMixin(object):
             if self.nr >= self.max_requests:
                 self.log.info("Autorestarting worker after current request.")
                 self.alive = False
-            respiter = self.wsgi(environ, resp.start_response)
+            respiter = self.handler(environ, resp.start_response)
             for item in respiter:
                 resp.write(item)
             resp.close()
@@ -117,7 +122,7 @@ class SyncMixin(object):
             # Only send back traceback in HTTP in debug mode.
             if not self.debug:
                 raise
-            util.write_error(client, traceback.format_exc())
+            write_error(client, traceback.format_exc())
             return
         finally:
             try:
@@ -126,6 +131,6 @@ class SyncMixin(object):
                 pass
 
 
-class Worker(SyncMixin,base.WorkerProcess):
-    pass        
+class Worker(WsgiSyncMixin,pulsar.WorkerProcess):
+    pass
     

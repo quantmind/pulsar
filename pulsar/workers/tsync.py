@@ -1,7 +1,9 @@
-
-import pulsar.workers.base as base
+import pulsar
 import pulsar.workers.sync as sync
 
 
-class Worker(sync.SyncMixin,base.WorkerThread):
-    pass
+class Worker(sync.WsgiSyncMixin,pulsar.WorkerThread):
+    '''A syncronous worker on a thread.'''
+    
+    def reset_socket(self):
+        self.socket.setblocking(0)

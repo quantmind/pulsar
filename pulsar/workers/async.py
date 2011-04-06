@@ -1,23 +1,16 @@
-# -*- coding: utf-8 -
-#
-# This file is part of gunicorn released under the MIT license. 
-# See the NOTICE for more information.
-
 from __future__ import with_statement
 
 import errno
 import socket
 import traceback
 
-import gunicorn.http as http
-import gunicorn.http.wsgi as wsgi
-import gunicorn.util as util
-import gunicorn.workers.base as base
+import pulsar
 
 ALREADY_HANDLED = object()
 
-class AsyncWorker(base.Worker):
-
+class AsyncWorker(pulsar.Worker):
+    '''Base class for asyncronous workers'''
+    
     def __init__(self, *args, **kwargs):
         super(AsyncWorker, self).__init__(*args, **kwargs)
         self.worker_connections = self.cfg.worker_connections
@@ -38,7 +31,7 @@ class AsyncWorker(base.Worker):
                     self.handle_request(req, client, addr)
             except StopIteration:
                 pass
-        except socket.error, e:
+        except socket.error as e:
             if e[0] not in (errno.EPIPE, errno.ECONNRESET):
                 self.log.exception("Socket error processing request.")
             else:
@@ -46,7 +39,7 @@ class AsyncWorker(base.Worker):
                     self.log.debug("Ignoring connection reset")
                 else:
                     self.log.debug("Ignoring EPIPE")
-        except Exception, e:
+        except Exception as e:
             self.log.exception("General error processing request.")
             try:            
                 # Last ditch attempt to notify the client of an error.
@@ -80,7 +73,7 @@ class AsyncWorker(base.Worker):
                 raise StopIteration()
         except StopIteration:
             raise
-        except Exception, e:
+        except Exception as e:
             #Only send back traceback in HTTP in debug mode.
             if not self.debug:
                 raise

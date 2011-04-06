@@ -10,7 +10,7 @@
 # See the NOTICE for more information.
 from pulsar.utils.py2py3 import ispy3k, int_type
 
-if ispy3k():
+if ispy3k:
     from urllib.parse import urlparse, unquote
     from io import StringIO as BufferIO 
 else:

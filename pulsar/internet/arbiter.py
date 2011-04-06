@@ -8,35 +8,29 @@ import signal
 import sys
 import time
 import traceback
-from multiprocessing import Queue, Pipe
+from multiprocessing import Queue
 from multiprocessing.queues import Empty
 from select import error as selecterror
 
-try:
-    range = xrange
-    map = imap
-except NameError:
-    pass
-
+from pulsar.utils.py2py3 import iteritems, map, range
 from pulsar.utils.pidfile import Pidfile
-from pulsar.utils.py2py3 import iteritems
 from pulsar.utils import system
 from pulsar.http import get_httplib
-from pulsar import __version__, SERVER_SOFTWARE, getLogger
+from pulsar import SERVER_SOFTWARE, getLogger
 from pulsar.utils.system import close_on_exec
-from pulsar.workers.base import RunnerMixin 
 
-from .errors import HaltServer
+import pulsar 
+
 from .httpsync import HttpSync
 
 
 __all__ = ['Arbiter']
 
 
-class Arbiter(RunnerMixin):
+class Arbiter(pulsar.RunnerMixin):
     """Arbiter maintain the workers processes alive. It launches or
 kills them if needed. It also manages application reloading
-via SIGHUP/USR2."""
+via SIGHUP/USR2 if the platform allows it."""
     WORKER_BOOT_ERROR = 3
     SIG_TIMEOUT = 0.5
     START_CTX = {}
@@ -77,17 +71,16 @@ via SIGHUP/USR2."""
             0: sys.executable
         }
         self.init_process()
-        
+    
     def setup_runner(self):
-        self.log.info("Starting pulsar %s" % __version__)
+        self.log.info("Starting pulsar %s" % pulsar.__version__)
         self.address = self.cfg.address
         self.num_workers = self.cfg.workers
         self.debug = self.cfg.debug
         self.timeout = self.cfg.timeout
-        self.worker_class = self.cfg.worker_class
-        self.arbiter_worker = self.cfg.arbiter_worker_class
+        self.arbiter_listener = self.cfg.arbiter_worker_class
         
-        if self.cfg.debug:
+        if self.debug:
             self.log.debug("Current configuration:")
             for config, value in sorted(self.cfg.settings.items()):
                 self.log.debug("  %s: %s" % (config, value.value))
@@ -97,7 +90,13 @@ via SIGHUP/USR2."""
                 self.app.wsgi()
             else:
                 self.log.warning("debug mode: app isn't preloaded.")
-                
+    
+    def __repr__(self):
+        return self.__class__.__name__
+    
+    def __str__(self):
+        return self.__repr__()
+    
     def set_proctitle(self):
         '''Set the process title'''
         self.proc_name = self.cfg.proc_name
@@ -124,9 +123,8 @@ via SIGHUP/USR2."""
         if self.cfg.pidfile is not None:
             self.pidfile = Pidfile(self.cfg.pidfile)
             self.pidfile.create(self.pid)
-        self.log.debug("Arbiter booted")
-        self.log.info("Listening at: %s (%s)" % (self.LISTENER,
-            self.pid))
+        self.log.debug("{0} booted".format(self))
+        self.log.info("Listening at: %s (%s)" % (self.LISTENER, self.pid))
         self.cfg.when_ready(self)
         system.set_proctitle("master [%s]" % self.proc_name)
         self.manage_workers()
@@ -139,11 +137,11 @@ via SIGHUP/USR2."""
         """
         if self.PIPE:
             map(lambda p: os.close(p), self.PIPE)
-        server_p, worker_p = self.worker_class.pipe()
+        server_p, worker_p = self.cfg.worker_class.pipe()
         worker_p.close()
         #map(system.set_non_blocking, pair)
         #map(system.close_on_exec, pair)
-        map(lambda s: signal.signal(s, self.signal), self.SIGNALS)
+        map(lambda s: signal.signal(s, self.signal), pulsar.SIGNALS)
         #signal.signal(signal.SIGCHLD, self.handle_chld)
 
     def signal(self, sig, frame):
@@ -155,7 +153,7 @@ via SIGHUP/USR2."""
             self.log.info('Received unknown signal. Skipping')
 
     def run(self):
-        "Main master loop."
+        "Arbiter master loop."
         while True:
             try:
                 self.reap_workers()
@@ -181,7 +179,7 @@ via SIGHUP/USR2."""
                 self.halt()
             except KeyboardInterrupt:
                 self.halt()
-            except HaltServer as inst:
+            except pulsar.HaltServer as inst:
                 self.halt(reason=inst.reason, exit_status=inst.exit_status)
             except SystemExit:
                 raise
@@ -367,7 +365,7 @@ via SIGHUP/USR2."""
                 proc['notified'] = notified
                 if time.time() - notified > self.timeout:
                     if worker.is_alive():
-                        self.terminate_worker(wid)
+                        self.terminate_worker(wid,system.SIGQUIT)
     
     def reap_workers(self):
         for wid, proc in list(iteritems(self.WORKERS)):
@@ -391,22 +389,24 @@ via SIGHUP/USR2."""
             self.join_worker(pid)
             
     def spawn_worker(self):
+        '''Spawn a new worker'''
         self.worker_age += 1
-        connection,worker_conn = self.worker_class.pipe()
-        worker = self.worker_class(self.worker_age,
-                                   self.LISTENER,
-                                   self.app,
-                                   self.timeout/2.0,
-                                   self.cfg,
-                                   worker_conn,
-                                   self.SIG_QUEUE)
+        worker_class = self.cfg.worker_class
+        connection,worker_conn = worker_class.pipe()
+        worker = worker_class(self.worker_age,
+                              self.pid,
+                              self.LISTENER,
+                              self.app,
+                              self.timeout/2.0,
+                              self.cfg,
+                              worker_conn,
+                              self.SIG_QUEUE)
         
         self.cfg.pre_fork(worker)
-
         worker.start()
-        pid = worker.pid
-        if pid != 0:
-            self.WORKERS[pid] = {'worker':worker,
+        wid = worker.wid
+        if wid != 0:
+            self.WORKERS[wid] = {'worker':worker,
                                  'connection':connection,
                                  'notified':time.time()}        
         
