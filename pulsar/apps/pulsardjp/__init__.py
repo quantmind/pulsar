@@ -11,6 +11,8 @@ To use it:
 '''
 import os
 import sys
+import logging
+
 import pulsar
 
 
@@ -62,4 +64,9 @@ class DjpCmsApplicationCommand(pulsar.Application):
         self.sites.load()
         return DjpCmsHandler(self.sites)
 
+    def configure_logging(self):
+        """\
+        Set the log level and choose the destination for log output.
+        """
+        self.log = logging.getLogger()
         

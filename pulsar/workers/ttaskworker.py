@@ -1,7 +1,10 @@
-import gunicorn.workers.base as base
+from .base import WorkerThread
+from .ptaskworker import get_task_loop
 
 
-class Worker(base.WorkerThread):
+class Worker(WorkerThread):
+    '''A Task worker on a daemonic subprocess'''
     
-    def run(self):
-        pass
+    def get_ioimpl(self):
+        return get_task_loop(self)
+    

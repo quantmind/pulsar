@@ -8,6 +8,7 @@ if platform.type == 'posix':
     from .posixsystem import *
 elif platform.type == 'win':
     from .windowssystem import *
+
     
     
 def create_socket(self):
@@ -30,7 +31,7 @@ def create_socket(self):
             else:
                 raise
 
-    # If we fail to create a socket from GUNICORN_FD
+    # If we fail to create a socket from PULSAR_FD
     # we fall through and try and open the socket
     # normally.
     

@@ -11,10 +11,6 @@ ALREADY_HANDLED = object()
 class AsyncWorker(pulsar.Worker):
     '''Base class for asyncronous workers'''
     
-    def __init__(self, *args, **kwargs):
-        super(AsyncWorker, self).__init__(*args, **kwargs)
-        self.worker_connections = self.cfg.worker_connections
-    
     def timeout_ctx(self):
         raise NotImplementedError()
 

@@ -9,8 +9,8 @@ import os
 import sys
 import traceback
 
+import pulsar
 from pulsar.utils import system, colors
-from pulsar import internet, getLogger
 from pulsar.utils.config import Config
 #from pulsar.utils import debug
 
@@ -20,7 +20,7 @@ class Application(object):
     An application interface for configuring and loading
     the various necessities for any given web framework.
     """
-    Arbiter = internet.Arbiter
+    Arbiter = pulsar.Arbiter
     
     LOG_LEVELS = {
         "critical": logging.CRITICAL,
@@ -105,7 +105,7 @@ class Application(object):
         if self.cfg.spew:
             debug.spew()
         loglevel = self.LOG_LEVELS.get(self.cfg.loglevel.lower(), logging.INFO)
-        self.logger.setLevel(loglevel)
+        self.log.setLevel(loglevel)
         
     def handler(self):
         '''Returns a callable application handler, used by a :class:`pulsar.Worker`
@@ -138,7 +138,7 @@ to carry out its task.'''
         """\
         Set the log level and choose the destination for log output.
         """
-        self.logger = getLogger()
+        self.log = pulsar.getLogger()
 
         handlers = []
         Formatter = logging.Formatter
@@ -149,12 +149,12 @@ to carry out its task.'''
             handlers.append(logging.StreamHandler())
 
         loglevel = self.LOG_LEVELS.get(self.cfg.loglevel.lower(), logging.INFO)
-        self.logger.setLevel(loglevel)
+        self.log.setLevel(loglevel)
         
         format = r"%(asctime)s [%(process)d] [%(levelname)s] %(message)s"
         datefmt = r"%Y-%m-%d %H:%M:%S"
         for h in handlers:
             h.setFormatter(Formatter(format, datefmt))
-            self.logger.addHandler(h)
+            self.log.addHandler(h)
 
 

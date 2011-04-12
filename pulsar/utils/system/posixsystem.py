@@ -3,9 +3,16 @@ import resource
 import grp
 import pwd
 import signal
-from select import select
 
 from .base import *
+
+
+import select
+if hasattr(select,'epoll'):
+    IOpoll = select.epoll
+else:
+    IOpoll = IOselect
+
 
 SIGQUIT = signal.SIGQUIT
 
@@ -18,8 +25,7 @@ def chown(path, uid, gid):
         
 def close_on_exec(fd):
     flags = fcntl.fcntl(fd, fcntl.F_GETFD)
-    flags |= fcntl.FD_CLOEXEC
-    fcntl.fcntl(fd, fcntl.F_SETFD, flags)
+    fcntl.fcntl(fd, fcntl.F_SETFD, flags | fcntl.FD_CLOEXEC)
     
     
 def set_non_blocking(fd):
@@ -61,6 +67,7 @@ def is_ipv6(addr):
     except socket.error: # not a valid address
         return False
     return True    
+
 
 class UnixSocket(BaseSocket):
     
@@ -105,3 +112,6 @@ def create_socket_address(addr):
         raise TypeError("Unable to create socket from: %r" % addr)
 
     return sock_type
+
+
+

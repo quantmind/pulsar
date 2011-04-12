@@ -19,18 +19,10 @@ from pulsar.utils.eventloop import IOLoop, close_on_exec
 from pulsar.utils.http import write_nonblock, write_error, close
 
 
-class WsgiSyncMixin(object):
+class HttpMixin(object):
     '''A Mixin class for handling syncronous connection over HTTP.'''
     ALLOWED_ERRORS = (errno.EAGAIN, errno.ECONNABORTED, errno.EWOULDBLOCK)
     ssl_options = None
-    
-    def _run(self, ioloop = None):
-        ioloop = self.ioloop
-        if ioloop.add_handler(self.socket, self._handle_events, IOLoop.READ):
-            ioloop.add_loop_task(self.notify)
-            self.socket.setblocking(0)
-            self.http = get_httplib(self.cfg)
-            ioloop.start()
 
     def _handle_events(self, fd, events):
         while True:
@@ -136,9 +128,3 @@ class WsgiSyncMixin(object):
                 self.cfg.post_request(self, req)
             except:
                 pass
-
-
-class Worker(WsgiSyncMixin,pulsar.WorkerProcess):
-    pass
-    
-    

@@ -14,6 +14,8 @@ from pulsar.utils import system
 from pulsar.utils.py2py3 import *
 
 
+DEFAULT_PORT = 8060
+
 __all__ = ['Config',
            'Setting',
            'validate_string',
@@ -277,7 +279,7 @@ class ConfigFile(Setting):
     validator = validate_string
     default = None
     desc = """\
-        The path to a Gunicorn config file.
+        The path to a Pulsar config file.
         
         Only has an effect when specified on the command line or as part of an
         application specific configuration.    
@@ -290,7 +292,7 @@ class Bind(Setting):
     cli = ["-b", "--bind"]
     meta = "ADDRESS"
     validator = validate_string
-    default = "127.0.0.1:8000"
+    default = "127.0.0.1:{0}".format(DEFAULT_PORT)
     desc = """\
         The socket to bind.
         
@@ -347,8 +349,6 @@ class ArbiterWorkerClass(Setting):
         The type of worker to use in the Arbiter.
         
         The default class (sync) should handle most 'normal' types of workloads.
-        You'll want to read http://gunicorn.org/design.html for information on
-        when you might want to choose one of the other worker classes.
         
         A string referring to one of the following bundled classes:
         
@@ -357,10 +357,8 @@ class ArbiterWorkerClass(Setting):
         * ``gevent``   - Requires gevent >= 0.12.2 (?)
         * ``tornado``  - Requires tornado >= 0.2
         
-        Optionally, you can provide your own worker by giving gunicorn a
-        MODULE:CLASS pair where CLASS is a subclass of
-        gunicorn.workers.base.Worker. This alternative syntax will load the
-        gevent class: ``egg:gunicorn#gevent``
+        Optionally, you can provide your own worker by giving pulsar a
+        path to the class.
         """
 
 
@@ -662,11 +660,11 @@ class Procname(Setting):
         A base to use with setproctitle for process naming.
         
         This affects things like ``ps`` and ``top``. If you're going to be
-        running more than one instance of Gunicorn you'll probably want to set a
+        running more than one instance of Pulsar you'll probably want to set a
         name to tell them apart. This requires that you install the setproctitle
         module.
         
-        It defaults to 'gunicorn'.
+        It defaults to 'pulsar'.
         """
 
 
@@ -674,7 +672,7 @@ class DefaultProcName(Setting):
     name = "default_proc_name"
     section = "Process Naming"
     validator = validate_string
-    default = "gunicorn"
+    default = "pulsar"
     desc = """\
         Internal setting that is adjusted for each type of application.
         """

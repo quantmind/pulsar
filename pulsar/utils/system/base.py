@@ -8,6 +8,7 @@ import socket
 import sys
 import textwrap
 import time
+import signal
 from time import sleep
 from select import select as _select
 
@@ -16,8 +17,23 @@ from pulsar.utils.py2py3 import *
 
 from .sock import *
 
+SIG_NAMES = {}
+SKIP_SIGNALS = ('KILL','STOP')
 
-ALL_SIGNALS = "HUP QUIT INT TERM TTIN TTOU USR1 USR2 WINCH"
+def all_signals():
+    for sig in dir(signal):
+        if sig.startswith('SIG') and sig[3] != "_":
+            val = getattr(signal,sig)
+            if is_int(val):
+                name = sig[3:]
+                if name not in SKIP_SIGNALS:
+                    SIG_NAMES[val] = name
+                    yield name
+
+            
+ALL_SIGNALS = tuple(all_signals())
+
+
 MAXFD = 1024
 
 if (hasattr(os, "devnull")):
@@ -57,6 +73,7 @@ try:
 except ImportError:
     def set_proctitle(title):
         return
+
 
 def load_worker_class(uri):
     components = uri.split('.')
@@ -116,7 +133,7 @@ def parse_address(netloc, default_port=8000):
     
 def daemonize():
     """\
-    Standard daemonization of a process. Code is basd on the
+    Standard daemonization of a process. Code is based on the
     ActiveState recipe at:
         http://code.activestate.com/recipes/278731/
     """
@@ -161,33 +178,49 @@ class IObase(object):
     WRITE = _EPOLLOUT
     ERROR = _EPOLLERR | _EPOLLHUP | _EPOLLRDHUP
     
-    def get_listener(self, arbiter):
-        return None
     
-    
-class IOselect(IObase):
-    
+class IOselect(object):
+    '''An epoll like select class.'''
     def __init__(self):
         self.read_fds = set()
         self.write_fds = set()
         self.error_fds = set()
-        self.fd_dict = {self.READ: self.read_fds,
-                        self.WRITE: self.write_fds,
-                        self.ERROR: self.error_fds}
+        self.fd_dict = (self.read_fds, self.write_fds, self.error_fds)
     
     def register(self, fd, eventmask = None):
-        eventmask = eventmask or self.READ
+        eventmask = eventmask or IObase.READ
         self.fd_dict[eventmask].add(fd)
+    
+    def register(self, fd, events):
+        if events & IObase.READ:
+            self.read_fds.add(fd)
+        if events & IObase.WRITE:
+            self.write_fds.add(fd)
+        if events & IObase.ERROR:
+            self.error_fds.add(fd)
+            # Closed connections are reported as errors by epoll and kqueue,
+            # but as zero-byte reads by select, so when errors are requested
+            # we need to listen for both read and error.
+            self.read_fds.add(fd)
+
+    def modify(self, fd, events):
+        self.unregister(fd)
+        self.register(fd, events)
+
+    def unregister(self, fd):
+        self.read_fds.discard(fd)
+        self.write_fds.discard(fd)
+        self.error_fds.discard(fd)
         
     def poll(self, timeout=None):
-        triple = _select(self.read_fds,
-                         self.write_fds,
-                         self.error_fds,
-                         timeout)
+        readable, writeable, errors = _select(
+            self.read_fds, self.write_fds, self.error_fds, timeout)
         events = {}
-        for fds,etype in zip(triple,(self.READ,self.WRITE,self.ERROR)):
-            for fd in fds:
-                if fd not in events:
-                    events[fd] = etype
-        return iteritems(events)
+        for fd in readable:
+            events[fd] = events.get(fd, 0) | IObase.READ
+        for fd in writeable:
+            events[fd] = events.get(fd, 0) | IObase.WRITE
+        for fd in errors:
+            events[fd] = events.get(fd, 0) | IObase.ERROR
+        return list(iteritems(events))
     

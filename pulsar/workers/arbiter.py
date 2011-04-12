@@ -8,47 +8,48 @@ import signal
 import sys
 import time
 import traceback
-from multiprocessing import Queue
+from multiprocessing import Queue, Pipe
 from multiprocessing.queues import Empty
 from select import error as selecterror
 
+import pulsar
 from pulsar.utils.py2py3 import iteritems, map, range
 from pulsar.utils.pidfile import Pidfile
+from pulsar.utils.eventloop import IOLoop
 from pulsar.utils import system
 from pulsar.http import get_httplib
-from pulsar import SERVER_SOFTWARE, getLogger
-from pulsar.utils.system import close_on_exec
 
-import pulsar 
-
-from .httpsync import HttpSync
+from .base import ArbiterBase
 
 
 __all__ = ['Arbiter']
 
 
-class Arbiter(pulsar.RunnerMixin):
-    """Arbiter maintain the workers processes alive. It launches or
-kills them if needed. It also manages application reloading
-via SIGHUP/USR2 if the platform allows it."""
+
+class Arbiter(ArbiterBase):
+    """The Arbiter is the core element of pulsar.
+It maintain workers processes alive by launching or killing
+them as needed. It also manages application reloading
+via SIGHUP/USR2 if the platform allows it.
+"""
     WORKER_BOOT_ERROR = 3
     SIG_TIMEOUT = 0.5
+    JOIN_TIMEOUT = 0.5
     START_CTX = {}
     LISTENER = None
-    WORKERS = {}    
-    PIPE = []
+    WORKERS = {}
     
     def __init__(self, app):
         self.pid = None
-        self._stopped = False
-        os.environ["SERVER_SOFTWARE"] = SERVER_SOFTWARE
+        os.environ["SERVER_SOFTWARE"] = pulsar.SERVER_SOFTWARE
         self.app = app
         self.cfg = app.cfg        
         self.pidfile = None
         self.worker_age = 0
         self.reexec_pid = 0
-        self.master_name = "Master"
         self.SIG_QUEUE = Queue()
+        self._pools = []
+        self.log = pulsar.getLogger(self.__class__.__name__)
         
         # get current path, try to use PWD env first
         try:
@@ -70,15 +71,13 @@ via SIGHUP/USR2 if the platform allows it."""
             "cwd": cwd,
             0: sys.executable
         }
-        self.init_process()
     
-    def setup_runner(self):
+    def setup(self):
         self.log.info("Starting pulsar %s" % pulsar.__version__)
         self.address = self.cfg.address
         self.num_workers = self.cfg.workers
         self.debug = self.cfg.debug
         self.timeout = self.cfg.timeout
-        self.arbiter_listener = self.cfg.arbiter_worker_class
         
         if self.debug:
             self.log.debug("Current configuration:")
@@ -96,29 +95,23 @@ via SIGHUP/USR2 if the platform allows it."""
     
     def __str__(self):
         return self.__repr__()
-    
-    def set_proctitle(self):
-        '''Set the process title'''
-        self.proc_name = self.cfg.proc_name
-        system.set_proctitle("master [%s]" % self.proc_name)
-                
-    def iosetup(self):
-        '''Setup Arbiter event loop'''
-        pass
 
-    def start(self):
+    def _run(self):
         """\
         Initialize the arbiter. Start listening and set pidfile if needed.
         """
-        if self._stopped:
-            self._stopped = False
-            return
+        ioloop = self.get_ioloop()
+        ioloop.add_loop_task(self.arbiter)
+        if ioloop._stopped:
+            ioloop._stopped = False
+            return False
+        assert not ioloop._running, 'cannot start arbiter twice'
         assert not self.pid, 'cannot start arbiter twice'
         self.pid = os.getpid()
-        self.init_signals()
+        
+        # Create the listener
         if not self.LISTENER:
             self.LISTENER = system.create_socket(self)
-            self.iosetup()
         
         if self.cfg.pidfile is not None:
             self.pidfile = Pidfile(self.cfg.pidfile)
@@ -126,77 +119,49 @@ via SIGHUP/USR2 if the platform allows it."""
         self.log.debug("{0} booted".format(self))
         self.log.info("Listening at: %s (%s)" % (self.LISTENER, self.pid))
         self.cfg.when_ready(self)
-        system.set_proctitle("master [%s]" % self.proc_name)
-        self.manage_workers()
-        self.run()
-    
-    def init_signals(self):
-        """\
-        Initialize master signal handling. Most of the signals
-        are queued. Child signals only wake up the master.
-        """
-        if self.PIPE:
-            map(lambda p: os.close(p), self.PIPE)
-        server_p, worker_p = self.cfg.worker_class.pipe()
-        worker_p.close()
-        #map(system.set_non_blocking, pair)
-        #map(system.close_on_exec, pair)
-        map(lambda s: signal.signal(s, self.signal), pulsar.SIGNALS)
-        #signal.signal(signal.SIGCHLD, self.handle_chld)
+        try:
+            ioloop.start()
+        except StopIteration:
+            self.halt('Stop Iteration')
+        except KeyboardInterrupt:
+            self.halt('Keyboard Interrupt')
+        except pulsar.HaltServer as inst:
+            self.halt(reason=inst.reason, exit_status=inst.exit_status)
+        except SystemExit:
+            raise
+        except Exception:
+            self.log.info("Unhandled exception in main loop:\n%s" %  
+                        traceback.format_exc())
+            self.stop(False)
+            if self.pidfile is not None:
+                self.pidfile.unlink()
+            sys.exit(-1)
 
-    def signal(self, sig, frame):
-        signame = self.SIG_NAMES.get(sig,None)
-        if signame:
-            self.log.info('Received signal {0}. Putting it into the queue'.format(signame))
-            self.SIG_QUEUE.put(sig)
-        else:
-            self.log.info('Received unknown signal. Skipping')
-
-    def run(self):
-        "Arbiter master loop."
-        while True:
-            try:
-                self.reap_workers()
-                sig = self.getsig()
-                if sig is None:
-                    self.murder_workers()
-                    self.manage_workers()
-                    self.iohandle()
-                    continue
-                
-                if sig not in self.SIG_NAMES:
-                    self.log.info("Ignoring unknown signal: %s" % sig)
-                    continue
-                
-                signame = self.SIG_NAMES.get(sig)
-                handler = getattr(self, "handle_%s" % signame, None)
-                if not handler:
-                    self.log.error("Unhandled signal: %s" % signame)
-                    continue
+    def arbiter(self):
+        self.log.debug('Manage workers')
+        self.reap_workers()
+        sig = self.getsig()
+        if sig is None:
+            self.murder_workers()
+            self.manage_workers()
+        elif sig not in system.SIG_NAMES:
+            self.log.info("Ignoring unknown signal: %s" % sig)
+        else:        
+            signame = system.SIG_NAMES.get(sig)
+            handler = getattr(self, "handle_%s" % signame.lower(), None)
+            if not handler:
+                self.log.error("Unhandled signal: %s" % signame)
+            else:
                 self.log.info("Handling signal: %s" % signame)
                 handler()
-            except StopIteration:
-                self.halt()
-            except KeyboardInterrupt:
-                self.halt()
-            except pulsar.HaltServer as inst:
-                self.halt(reason=inst.reason, exit_status=inst.exit_status)
-            except SystemExit:
-                raise
-            except Exception:
-                self.log.info("Unhandled exception in main loop:\n%s" %  
-                            traceback.format_exc())
-                self.stop(False)
-                if self.pidfile is not None:
-                    self.pidfile.unlink()
-                sys.exit(-1)
                 
     def halt(self, reason=None, exit_status=0):
         """ halt arbiter """
         self.stop()
-        self.log.info("Shutting down: %s" % self.master_name)
         if reason is not None:
-            self.log.info("Reason: %s" % reason)
+            self.log.info("Shutting down: %s" % reason)
+        else:
+            self.log.info("Shutting down")
         if self.pidfile is not None:
             self.pidfile.unlink()
         sys.exit(exit_status)
@@ -205,14 +170,12 @@ via SIGHUP/USR2 if the platform allows it."""
         """Get signals from the signal queue.
         """
         try:
+            self.log.debug('waiting {0} seconds for signals'.format(self.SIG_TIMEOUT))
             return self.SIG_QUEUE.get(timeout = self.SIG_TIMEOUT)
         except Empty:
             return
         except IOError:
             return
-        
-    def iohandle(self):
-        pass
         
     def stop(self, graceful=True):
         """\
@@ -221,19 +184,29 @@ via SIGHUP/USR2 if the platform allows it."""
         :attr graceful: boolean, If True (the default) workers will be
         killed gracefully  (ie. trying to wait for the current connection)
         """
-        self.stopping = True
+        sig = signal.SIGQUIT
+        if not graceful:
+            self.log.info("Force Stopping.")
+            sig = signal.SIGTERM
+        else:
+            self.log.info("Stopping Gracefully.")
+        self.stopping = True            
         self.LISTENER = None
-        if self.SIG_QUEUE is not None:
-            self.SIG_QUEUE.close()
-            self.SIG_QUEUE.join_thread()
-            self.SIG_QUEUE = None
         limit = time.time() + self.timeout
         while self.WORKERS and time.time() < limit:
-            self.join_workers()
-            time.sleep(0.1)
-            self.murder_workers()
-        self.join_workers()
+            self.kill_workers(sig)
+            time.sleep(0.2)
+            self.reap_workers()
+        self.kill_workers(signal.SIGKILL)
 
+    def signal(self, sig, frame):
+        signame = system.SIG_NAMES.get(sig,None)
+        if signame:
+            self.log.info('Received signal {0}. Putting it into the queue'.format(signame))
+            self.SIG_QUEUE.put(sig)
+        else:
+            self.log.info('Received unknown signal "{0}". Skipping.'.format(sig))
+            
     def handle_chld(self, sig, frame):
         "SIGCHLD handling"
         self.reap_workers()
@@ -245,7 +218,7 @@ via SIGHUP/USR2 if the platform allows it."""
         - Start the new worker processes with a new configuration
         - Gracefully shutdown the old worker processes
         """
-        self.log.info("Hang up: %s" % self.master_name)
+        self.log.info("Hang up: %s" % self)
         self.reload()
         
     def handle_quit(self):
@@ -358,26 +331,27 @@ via SIGHUP/USR2 if the platform allows it."""
         if self.timeout:
             for wid, proc in list(iteritems(self.WORKERS)):
                 worker = proc['worker']
-                connection = proc['connection']
+                connection = proc['reader']
                 notified = proc['notified']
                 while connection.poll():
                     notified = connection.recv()
                 proc['notified'] = notified
-                if time.time() - notified > self.timeout:
+                gap = time.time() - notified
+                if gap > self.timeout:
                     if worker.is_alive():
+                        self.log.info('Terminating worker. Reason timeout surpassed.')
                         self.terminate_worker(wid,system.SIGQUIT)
     
     def reap_workers(self):
+        '''Remove not alive workers from the dictionary'''
         for wid, proc in list(iteritems(self.WORKERS)):
             if not proc['worker'].is_alive():
                 self.WORKERS.pop(wid)
         
     def manage_workers(self):
-        """\
-        Maintain the number of workers by spawning or killing
-        as required.
-        """
-        if len(self.WORKERS.keys()) < self.num_workers:
+        """Maintain the number of workers by spawning or killing
+as required."""
+        if len(self.WORKERS) < self.num_workers:
             self.spawn_workers()
 
         num_to_kill = len(self.WORKERS) - self.num_workers
@@ -388,28 +362,6 @@ via SIGHUP/USR2 if the platform allows it."""
                     pid, age = wpid, worker.age
             self.join_worker(pid)
             
-    def spawn_worker(self):
-        '''Spawn a new worker'''
-        self.worker_age += 1
-        worker_class = self.cfg.worker_class
-        connection,worker_conn = worker_class.pipe()
-        worker = worker_class(self.worker_age,
-                              self.pid,
-                              self.LISTENER,
-                              self.app,
-                              self.timeout/2.0,
-                              self.cfg,
-                              worker_conn,
-                              self.SIG_QUEUE)
-        
-        self.cfg.pre_fork(worker)
-        worker.start()
-        wid = worker.wid
-        if wid != 0:
-            self.WORKERS[wid] = {'worker':worker,
-                                 'connection':connection,
-                                 'notified':time.time()}        
-        
     def spawn_workers(self):
         """\
         Spawn new workers as needed.
@@ -420,54 +372,55 @@ via SIGHUP/USR2 if the platform allows it."""
         
         for i in range(self.num_workers - len(self.WORKERS)):
             self.spawn_worker()
+            
+    def spawn_worker(self):
+        '''Spawn a new worker'''
+        self.worker_age += 1
+        worker_class = self.cfg.worker_class
+        arbiter_reader,worker_writer = Pipe(duplex = False)
+        worker = worker_class(self.worker_age,
+                              self.pid,
+                              self.LISTENER,
+                              self.app,
+                              self.timeout/2.0,
+                              self.cfg,
+                              worker_writer,
+                              ioloop = self.ioloop)
+        
+        self.cfg.pre_fork(worker)
+        worker.start()
+        wid = worker.wid
+        if wid != 0:
+            self.WORKERS[wid] = {'worker':worker,
+                                 'reader':arbiter_reader,
+                                 'notified':time.time()}
 
-    def join_workers(self):
+    def kill_workers(self, sig):
         """\
-        Kill all workers with the signal `sig`
-        :attr sig: `signal.SIG*` value
-        """
-        for pid in self.WORKERS.keys():
-            self.join_worker(pid)
+Kill all workers with the signal ``sig``
+
+:parameter sig: `signal.SIG*` value
+"""
+        for wid in list(self.WORKERS.keys()):
+            if sig == signal.SIGQUIT:
+                self.join_worker(wid)
+            elif sig == signal.SIGTERM:
+                self.terminate_worker(wid)
+            else:
+                self.terminate_worker(wid)
             
     def join_worker(self, wid):
-        w = self.WORKERS.pop(wid)
-        w['worker'].join()
-        
-    def terminate_workers(self, sig):
-        """\
-        Kill all workers with the signal `sig`
-        :attr sig: `signal.SIG*` value
-        """
-        for pid in self.WORKERS.keys():
-            self.terminate_worker(pid, sig)
+        w = self.WORKERS[wid]['worker']
+        w.stop()
+        self.log.info("Joining {0}".format(w))
+        w.join(self.JOIN_TIMEOUT)
                     
-    def terminate_worker(self, wid, sig):
-        """\
-        Terminate a worker
-        
-        :attr wid: int, worker process id
-         """
-        try:
-            proc = self.WORKERS[wid]
-            proc['worker'].terminate()
-        except OSError as e:
-            if e.errno == errno.ESRCH:
-                try:
-                    worker.tmp.close()
-                    self.cfg.worker_exit(self, worker)
-                    return
-                except (KeyError, OSError):
-                    return
-            raise            
+    def terminate_worker(self, wid):
+        w = self.WORKERS.pop(wid)
+        self.log.info("Terminating {0}".format(w))
+        w['worker'].terminate()
+                   
 
 
-class SyncArbiter(Arbiter):
-    '''An arbiter with a syncronous IO event loop'''
-    
-    def iosetup(self):
-        self._iopoll = HttpSync(self)
-        self.iohandle = self._iopoll.iohandle
-        self.wsgi = self.app.wsgi()
-        
         
         

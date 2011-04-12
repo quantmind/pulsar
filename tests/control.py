@@ -1,7 +1,7 @@
 import logging
 import os
 import sys
-from pulsar.test import TestSuiteRunner
+from pulsar import test
 from pulsar.utils import importer, filesystem 
 
 logger = logging.getLogger()
@@ -60,6 +60,6 @@ def run(tags = None, testtype = None, verbosity = 1, show_list = False, itags = 
     testdir  = os.path.join(curdir,testtype)
     setup_logging(verbosity)
     modules = import_tests(tags,testdir)
-    runner  = TestSuiteRunner(verbosity = verbosity, itags = itags)
+    runner  = test.TestSuiteRunner(verbosity = verbosity, itags = itags)
     runner.run_tests(modules)
     

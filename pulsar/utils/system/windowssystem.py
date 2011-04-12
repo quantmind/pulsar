@@ -8,7 +8,6 @@ from .base import *
 SIGQUIT = signal.SIGTERM
 
 if not ispy3k:
-    ALL_SIGNALS = "INT TERM"
     
     def fromfd(fd, family, type, proto=0):
         """ fromfd(fd, family, type[, proto]) -> socket object
@@ -89,6 +88,5 @@ class IOpoll(IOselect):
             timeout = 0.5
         return super(IOpoll,self).poll(timeout)
     
-    def create_socket(self, arbiter):
-        raise NotImplementedError
+    
 
