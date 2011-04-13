@@ -144,6 +144,7 @@ as required."""
         self.worker_age += 1
         worker_class = self.worker_class
         pool_reader, pool_writer = Pipe(duplex = False)
+        # Create the command queue
         command_queue = worker_class.CommandQueue()
         worker = worker_class(age = self.worker_age,
                               ppid = self.pid,

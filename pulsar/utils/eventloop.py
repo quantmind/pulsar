@@ -84,9 +84,9 @@ When using the eventloop on a child process, It should be instantiated after for
         self._lock = threading.Lock()
         # Create a pipe that we send bogus data to when we want to wake
         # the I/O loop when it is idle
-        self._waker_reader, self._waker_writer = Pipe(duplex = False)
-        r = self._waker_reader
-        self.add_handler(r, self.readbogus, self.READ)
+        #self._waker_reader, self._waker_writer = Pipe(duplex = False)
+        #r = self._waker_reader
+        #self.add_handler(r, self.readbogus, self.READ)
         
     def readbogus(self, fd, events):
         r = self._waker_reader
@@ -254,23 +254,24 @@ When using the eventloop on a child process, It should be instantiated after for
             # its handler. Since that handler may perform actions on
             # other file descriptors, there may be reentrant calls to
             # this IOLoop that update self._events
-            self._events.update(event_pairs)
-            while self._events:
-                fd, events = self._events.popitem()
-                try:
-                    self._handlers[fd](fd, events)
-                except (KeyboardInterrupt, SystemExit):
-                    raise
-                except (OSError, IOError) as e:
-                    if e.args[0] == errno.EPIPE:
-                        # Happens when the client closes the connection
-                        pass
-                    else:
+            if event_pairs:
+                self._events.update(event_pairs)
+                while self._events:
+                    fd, events = self._events.popitem()
+                    try:
+                        self._handlers[fd](fd, events)
+                    except (KeyboardInterrupt, SystemExit):
+                        raise
+                    except (OSError, IOError) as e:
+                        if e.args[0] == errno.EPIPE:
+                            # Happens when the client closes the connection
+                            pass
+                        else:
+                            logging.error("Exception in I/O handler for fd %d",
+                                          fd, exc_info=True)
+                    except:
                         logging.error("Exception in I/O handler for fd %d",
                                       fd, exc_info=True)
-                except:
-                    logging.error("Exception in I/O handler for fd %d",
-                                  fd, exc_info=True)
         # reset the stopped flag so another start/stop pair can be issued
         self._stopped = False
         if self._blocking_signal_threshold is not None:
@@ -292,7 +293,7 @@ When using the eventloop on a child process, It should be instantiated after for
         self.log.info("Stopping event loop")
         self._running = False
         self._stopped = True
-        self._wake()
+        #self._wake()
 
     def running(self):
         """Returns true if this IOLoop is currently running."""

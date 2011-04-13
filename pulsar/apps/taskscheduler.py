@@ -16,4 +16,5 @@ The task-queue class used.
     """
 
 class TaskScheduler(pulsar.Application):
-    pass
+    '''A task scheduler with a JSON-RPC hook for remote procedure calls'''
+    

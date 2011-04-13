@@ -8,7 +8,7 @@ import signal
 import sys
 import time
 import traceback
-from multiprocessing import Queue, Pipe
+from multiprocessing import Pipe
 from multiprocessing.queues import Empty
 from select import error as selecterror
 
@@ -19,7 +19,7 @@ from pulsar.utils.eventloop import IOLoop
 from pulsar.utils import system
 from pulsar.http import get_httplib
 
-from .base import ArbiterBase
+from .base import ArbiterBase, ThreadQueue
 
 
 __all__ = ['Arbiter']
@@ -43,14 +43,12 @@ via SIGHUP/USR2 if the platform allows it.
         self.pid = None
         os.environ["SERVER_SOFTWARE"] = pulsar.SERVER_SOFTWARE
         self.app = app
-        self.cfg = app.cfg        
+        self.cfg = app.cfg
         self.pidfile = None
         self.worker_age = 0
         self.reexec_pid = 0
-        self.SIG_QUEUE = Queue()
-        self._pools = []
-        self.log = pulsar.getLogger(self.__class__.__name__)
-        
+        self.SIG_QUEUE = ThreadQueue()
+        self._pools = []        
         # get current path, try to use PWD env first
         try:
             a = os.stat(os.environ['PWD'])

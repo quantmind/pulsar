@@ -1,6 +1,7 @@
 *.pyc
 *.pyd
 build/*
+docs/build/*
 dist/*
 .project
 .pydevproject

@@ -27,9 +27,11 @@ from .workerpool import STOP_WORKER
 
 
 __all__ = ['Runner',
+           'ThreadQueue',
+           'ArbiterBase',
            'Worker',
-           'WorkerProcess',
-           'WorkerThreadPool']
+           'WorkerThread',
+           'WorkerProcess']
 
 
 class Runner(object):
@@ -111,7 +113,7 @@ class Worker(Runner):
 Base class for all workers. The constructor is called
 called pre-fork so it shouldn't do anything to the current process.
 If there's a need to make process wide changes you'll want to do that
-in ``self.init_process()``.
+in ``self.setup()``.
 
 .. attribute:: age
 
@@ -162,7 +164,12 @@ in ``self.init_process()``.
         
     def _run(self):
         self.ioloop.start()
-            
+    
+    def _stop():
+        if self.ioloop.running():
+            self.command_queue.close()
+            self.ioloop.stop()
+                
     def check_pool_commands(self):
         while True:
             try:
@@ -170,8 +177,7 @@ in ``self.init_process()``.
             except Empty:
                 break
             if c == STOP_WORKER:
-                self.command_queue.close()
-                self.ioloop.stop()
+                self._stop()
                 break
         
     def get_ioimpl(self):
@@ -187,10 +193,12 @@ in ``self.init_process()``.
         return "<{0} {1}>".format(self.__class__.__name__,self.wid)
     
     def check_num_requests(self, nr):
+        '''Check the number of requests. If they exceed the maximum number
+stop the event loop and exit.'''
         max_requests = self.max_requests
         if max_requests and nr >= self.max_requests:
             self.log.info("Auto-restarting worker after current request.")
-            self.alive = False
+            self._stop()
     
     def notify(self):
         """\
@@ -214,6 +222,7 @@ in ``self.init_process()``.
             self.cfg.post_fork(self)
         
     def add_loop_tasks(self):
+        '''Add task to be performed at each iteration of the event loop'''
         # Add the notify task
         if self.pool_writer is not None:
             self.ioloop.add_loop_task(self.notify)
