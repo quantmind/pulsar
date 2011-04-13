@@ -1,5 +1,6 @@
 import time
 import textwrap
+import socket
 
 CHUNK_SIZE = (16 * 1024)
 

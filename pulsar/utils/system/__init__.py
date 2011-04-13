@@ -10,7 +10,6 @@ elif platform.type == 'win':
     from .windowssystem import *
 
     
-    
 def create_socket(self):
     """Create a new socket for the given address. If the
     address is a tuple, a TCP socket is created. If it

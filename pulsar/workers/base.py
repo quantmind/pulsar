@@ -39,18 +39,24 @@ class Runner(object):
     '''
     DEF_PROC_NAME = 'pulsar'
     SIG_QUEUE = None
+    worker_name = None
     
     def init_process(self):
         '''Initialise the runner. This function
 will block the current thread since it enters the event loop.
 If the runner is a instance of a subprocess, this function
 is called after fork by the run method.'''
-        self.log = getLogger(self.__class__.__name__)
+        self.worker_name = self.worker_name or self.__class__.__name__
+        self.log = getLogger(self.worker_name)
         self.ioloop = IOLoop(impl = self.get_ioimpl(), logger = self.log)
         self.set_proctitle()
         self.setup()
         self.install_signals()
         self._run()
+        
+    def get_ioimpl(self):
+        '''Return the event-loop implementation. By default it returns ``None``.'''
+        return None
         
     def set_proctitle(self):
         '''Set the process title'''
@@ -134,6 +140,11 @@ in ``self.setup()``.
 .. attribute:: wid
 
     The worker unique id. If the Worker has not started it is ``None``.
+    
+.. attribute:: task_queue
+
+    The task queue where the worker pool add tasks to be processed by the worker.
+    This queue is used by a subsets of workers only.
 """
     COMMAND_TIMEOUT = 0
     CommandQueue = None
@@ -149,6 +160,7 @@ in ``self.setup()``.
                  cfg = None,
                  logger = None,
                  command_timeout = None,
+                 task_queue = None,
                  **kwargs):
         self.age = age
         self.ppid = ppid
@@ -158,10 +170,21 @@ in ``self.setup()``.
         self.timeout = timeout
         self.cfg = cfg
         self.command_queue = command_queue
+        self.task_queue = task_queue
         self.pool_writer = pool_writer
         self.COMMAND_TIMEOUT = command_timeout if command_timeout is not None else self.COMMAND_TIMEOUT
         self.set_listener(socket, app)
-        
+    
+    @classmethod
+    def modify_arbiter_loop(cls, wp, ioloop):
+        '''Called by an instance of :class:`pulsar.WorkerPool`, it modify the 
+event loop of the arbiter if required.
+
+:parameter wp: Instance of :class:`pulsar.WorkerPool`
+:parameter ioloop: Arbiter event loop
+'''
+        pass
+    
     def _run(self):
         self.ioloop.start()
     
@@ -179,10 +202,6 @@ in ``self.setup()``.
             if c == STOP_WORKER:
                 self._stop()
                 break
-        
-    def get_ioimpl(self):
-        '''Return the event-loop implementation. By default it returns ``None``.'''
-        return None
     
     def set_listener(self, socket, app):
         self.socket = socket
@@ -192,11 +211,11 @@ in ``self.setup()``.
     def __str__(self):
         return "<{0} {1}>".format(self.__class__.__name__,self.wid)
     
-    def check_num_requests(self, nr):
+    def check_num_requests(self):
         '''Check the number of requests. If they exceed the maximum number
 stop the event loop and exit.'''
         max_requests = self.max_requests
-        if max_requests and nr >= self.max_requests:
+        if max_requests and self.nr >= self.max_requests:
             self.log.info("Auto-restarting worker after current request.")
             self._stop()
     
@@ -212,6 +231,8 @@ stop the event loop and exit.'''
         pass
     
     def setup(self):
+        '''Called after fork, it set ups the application handler
+and perform several post fork processing before starting the event loop.'''
         if self.cfg:
             system.set_owner_process(self.cfg.uid, self.cfg.gid)
         self.reseed()
@@ -253,6 +274,9 @@ stop the event loop and exit.'''
     def wid(self):
         return '{0}-{1}'.format(self.pid,self.tid)
 
+    @classmethod
+    def MakeRequest(cls, *args, **kwargs):
+        return (args,kwargs)
 
 
 def runworker(self):
@@ -270,48 +294,16 @@ in thread if a Thread Worker."""
             self.cfg.worker_exit(self)
         except:
             pass
-
-
-
-class WorkerThreadPool(Worker):
-    '''A :class:`pulsar.Worker` With an associated pool of threads.
-This worker does not span a new process.'''
-    NUM_THREADS = 5
-    
-    def __init__(self, *args, **kwargs):
-        super(WorkerThreadPool,self).__init__(*args, **kwargs)
-        self.ioloop = kwargs['ioloop']
         
-    def start(self):
-        self.pool = threadpool.ThreadPool(self.NUM_THREADS)
-        self.run()
-        
-    def run(self):
-        self.init_process()
+def updaterequests(f):
     
-    def install_signals(self):
-        pass
+    def _(self,*args,**kwargs):
+        self.nr += 1
+        self.check_num_requests()
+        return f(self,*args,**kwargs)
     
-    def set_proctitle(self):
-        pass
-    
-    def stop(self):
-        self.pool.dismissWorkers()
-    
-    def join(self, timeout = 0):
-        self.pool.joinAllDismissedWorkers()
-        
-    def terminate(self):
-        self.join()
-        
-    def is_alive(self):
-        return len(self.pool.workers)
-    
-    def handle(self, *args):
-        req = threadpool.makeRequests(self.handle_loop_event,args)
-        self.pool.putRequest(req)
-
-    
+    return _
+   
     
 class WorkerProcess(Process,Worker):
     '''A :class:`pulsar.Worker` on a subprocess. This worker class
@@ -334,10 +326,9 @@ inherit from the :class:`multiprocessProcess` class.'''
         return os.getppid()
     
     
-    
 class WorkerThread(Thread,Worker):
     CommandQueue = ThreadQueue
-    CommandQueue = Queue
+    #CommandQueue = Queue
     
     def __init__(self, **kwargs):
         Thread.__init__(self)

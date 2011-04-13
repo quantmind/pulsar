@@ -15,24 +15,27 @@ except:
 
 import pulsar
 from pulsar.http import get_httplib
-from pulsar.utils.eventloop import IOLoop, close_on_exec
+from pulsar.utils.eventloop import close_on_exec
 from pulsar.utils.http import write_nonblock, write_error, close
 
-from .base import WorkerProcess
+from .base import WorkerProcess, updaterequests
 
 
-class HttpMixin(object):
-    '''A Mixin class for handling syncronous connection over HTTP.'''
+class HttpHandler(object):
+    
     ALLOWED_ERRORS = (errno.EAGAIN, errno.ECONNABORTED, errno.EWOULDBLOCK)
     ssl_options = None
 
-    def _handle_events(self, fd, events):
+    def __init__(self, worker):
+        self.worker = worker
+        
+    def __call__(self, fd, events):
         while True:
             try:
-                client, addr = self.socket.accept()
+                client, addr = self.worker.socket.accept()
                 client.setblocking(1)
                 close_on_exec(client)
-                self.handle(client, addr)
+                self.handle(fd, client, addr)
             except socket.error as e:
                 if e[0] not in self.ALLOWED_ERRORS:
                     raise
@@ -40,43 +43,22 @@ class HttpMixin(object):
                     return
                 
             # If our parent changed then we shut down.
-            if self.ppid != self.get_parent_id:
-                self.log.info("Parent changed, shutting down: %s" % self)
-                self.ioloop.stop()
-            
-    def _tornadoserver(self):
-        if self.ssl_options is not None:
-            assert ssl, "Python 2.6+ and OpenSSL required for SSL"
-            try:
-                connection = ssl.wrap_socket(connection,
-                                             server_side=True,
-                                             do_handshake_on_connect=False,
-                                             **self.ssl_options)
-            except ssl.SSLError as err:
-                if err.args[0] == ssl.SSL_ERROR_EOF:
-                    return connection.close()
-                else:
-                    raise
-            except socket.error as err:
-                if err.args[0] == errno.ECONNABORTED:
-                    return connection.close()
-                else:
-                    raise
-        try:
-            if self.ssl_options is not None:
-                stream = iostream.SSLIOStream(connection, io_loop=self.io_loop)
-            else:
-                stream = iostream.IOStream(connection, io_loop=self.io_loop)
-            HTTPConnection(stream, address, self.request_callback,
-                           self.no_keep_alive, self.xheaders)
-        except:
-            logging.error("Error in connection callback", exc_info=True)
+            #if self.ppid != self.get_parent_id:
+            #    self.log.info("Parent changed, shutting down: %s" % self)
+            #    self.ioloop.stop()
+
+    def handle(self, fd, *args):
+        self.worker.handle_task(fd, (args,))
         
-    def handle(self, *args):
-        self.handle_loop_event(*args)
-        
-    def handle_loop_event(self, client, addr):
+
+class HttpMixin(object):
+    '''A Mixin class for handling syncronous connection over HTTP.'''
+    ssl_options = None
+
+    @updaterequests
+    def handle_task(self, fd, req):
         try:
+            client, addr = req[0]
             parser = self.http.RequestParser(client)
             req = parser.next()
             self.handle_request(req, client, addr)
@@ -107,10 +89,6 @@ class HttpMixin(object):
             # a buffering proxy that supports Keep-Alive to
             # the backend.
             resp.force_close()
-            self.nr += 1
-            if self.nr >= self.max_requests:
-                self.log.info("Autorestarting worker after current request.")
-                self.alive = False
             respiter = self.handler(environ, resp.start_response)
             for item in respiter:
                 resp.write(item)
@@ -134,10 +112,13 @@ class HttpMixin(object):
 
 class Worker(WorkerProcess,HttpMixin):
     '''A Http worker on a child process'''
+    worker_name = 'Worker.HttpProcess'
     
     def _run(self, ioloop = None):
         ioloop = self.ioloop
-        if ioloop.add_handler(self.socket, self._handle_events, IOLoop.READ):
+        handler = HttpHandler(self)
+        if ioloop.add_handler(self.socket, handler, ioloop.READ):
             self.socket.setblocking(0)
             self.http = get_httplib(self.cfg)
             ioloop.start()
+

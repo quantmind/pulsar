@@ -122,12 +122,13 @@ When using the eventloop on a child process, It should be instantiated after for
         
     def add_handler(self, fd, handler, events):
         """Registers the given handler to receive the given events for fd."""
-        fd = file_descriptor(fd)
-        if fd not in self._handlers:
-            self._handlers[fd] = handler
-            self.log.debug('Registering file descriptor "{0}" with ioloop.'.format(fd))
-            self._impl.register(fd, events | self.ERROR)
-            return True
+        if fd is not None:
+            fd = file_descriptor(fd)
+            if fd not in self._handlers:
+                self._handlers[fd] = handler
+                self.log.debug('Registering file descriptor "{0}" with ioloop.'.format(fd))
+                self._impl.register(fd, events | self.ERROR)
+                return True
 
     def update_handler(self, fd, events):
         """Changes the events we listen for fd."""
@@ -256,8 +257,9 @@ When using the eventloop on a child process, It should be instantiated after for
             # this IOLoop that update self._events
             if event_pairs:
                 self._events.update(event_pairs)
-                while self._events:
-                    fd, events = self._events.popitem()
+                _events = self._events
+                while _events:
+                    fd, events = _events.popitem()
                     try:
                         self._handlers[fd](fd, events)
                     except (KeyboardInterrupt, SystemExit):

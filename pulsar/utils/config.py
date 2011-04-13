@@ -115,20 +115,9 @@ class Config(object):
     def worker_class(self):
         uri = self.settings['worker_class'].get()
         worker_class = system.load_worker_class(uri)
-        if hasattr(worker_class, "setup"):
-            worker_class.setup()
+        if hasattr(worker_class, "setup_class"):
+            worker_class.setup_class()
         return worker_class
-    
-    @property
-    def arbiter_worker_class(self):
-        uri = self.settings['arbiter_worker_class'].get()
-        if not uri:
-            return None
-        else:
-            worker_class = system.load_worker_class(uri)
-            if hasattr(worker_class, "setup"):
-                worker_class.setup()
-            return worker_class
 
     @property
     def workers(self):
@@ -277,7 +266,7 @@ class ConfigFile(Setting):
     cli = ["-c", "--config"]
     meta = "FILE"
     validator = validate_string
-    default = None
+    default = 'config.py'
     desc = """\
         The path to a Pulsar config file.
         

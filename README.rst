@@ -1,5 +1,4 @@
 
-
 Dependencies
 ==================
 
@@ -9,7 +8,7 @@ Dependencies
 
 Kudos
 ============
-This project started as a combined fork of gunicorn_, a WSGI python server,
+This project started as fork of gunicorn_, a WSGI python server,
 and and kombu_, a AMQP python implementation.
 
 .. _gunicorn: http://gunicorn.org/

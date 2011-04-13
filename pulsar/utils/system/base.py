@@ -179,18 +179,18 @@ class IObase(object):
     ERROR = _EPOLLERR | _EPOLLHUP | _EPOLLRDHUP
     
     
-class IOselect(object):
-    '''An epoll like select class.'''
+class EpollProxy(object):
+    '''An epoll like class.'''
     def __init__(self):
         self.read_fds = set()
         self.write_fds = set()
         self.error_fds = set()
         self.fd_dict = (self.read_fds, self.write_fds, self.error_fds)
-    
+
     def register(self, fd, eventmask = None):
         eventmask = eventmask or IObase.READ
         self.fd_dict[eventmask].add(fd)
-    
+
     def register(self, fd, events):
         if events & IObase.READ:
             self.read_fds.add(fd)
@@ -202,7 +202,7 @@ class IOselect(object):
             # but as zero-byte reads by select, so when errors are requested
             # we need to listen for both read and error.
             self.read_fds.add(fd)
-
+                
     def modify(self, fd, events):
         self.unregister(fd)
         self.register(fd, events)
@@ -211,6 +211,13 @@ class IOselect(object):
         self.read_fds.discard(fd)
         self.write_fds.discard(fd)
         self.error_fds.discard(fd)
+    
+    def poll(self, timeout=None):
+        raise NotImplementedError
+    
+    
+class IOselect(EpollProxy):
+    '''An epoll like select class.'''
         
     def poll(self, timeout=None):
         readable, writeable, errors = _select(

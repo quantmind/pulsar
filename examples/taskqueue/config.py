@@ -1,5 +1,12 @@
 
-worker_class = 'taskqueue:2'
-listener_class = 'httpt:5'
+task_worker_class = 'task_t'
+task_workers = 2
 
-app = ''
+worker_class = 'httpt_t'
+num_workers = 5
+
+
+def rpc_handler(wp):
+    from taskqueue.impl import Handler
+    h = Handler()
+    return h

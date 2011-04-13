@@ -43,6 +43,8 @@ class IOLoopProcess(Process):
         self.io.start()
         
 
+dummy_handler = lambda : None
+
 class TestIOLoop(test.TestCase):
     
     def create(self):
@@ -53,6 +55,10 @@ class TestIOLoop(test.TestCase):
     
     def testCreate(self):
         self.create()
+        
+    def testFunctions(self):
+        io = self.create()
+        io.add_handler(None, dummy_handler, IOLoop.READ)
         
     def testStartStopInThread(self):
         io = self.create()
