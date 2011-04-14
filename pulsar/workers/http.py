@@ -52,7 +52,7 @@ class HttpHandler(object):
         self.handle(fd, req)
 
     def handle(self, fd, req):
-        self.worker.handle_task(fd, req)
+        self.worker.handle_request(fd, req)
         
 
 class HttpMixin(object):
@@ -111,6 +111,5 @@ class Worker(WorkerProcess,HttpMixin):
         handler = HttpHandler(self)
         if ioloop.add_handler(self.socket, handler, ioloop.READ):
             self.socket.setblocking(0)
-            self.http = get_httplib(self.cfg)
             ioloop.start()
 

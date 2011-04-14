@@ -6,4 +6,5 @@ dist/*
 .project
 .pydevproject
 .settings/*
-lib/src/http.c
+lib/src/parser.c
+pulsar/http/cparser/parser.*
