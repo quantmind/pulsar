@@ -31,5 +31,4 @@ to the Thread Pool. This is different from the Http Worker on Processes'''
             ioloop.add_handler(wp.socket,
                                HttpPoolHandler(wp),
                                ioloop.READ)
-    
-    
+

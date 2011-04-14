@@ -28,13 +28,11 @@ __all__ = ['Arbiter']
 
 class Arbiter(ArbiterBase):
     """The Arbiter is the core element of pulsar.
-It maintain workers processes alive by launching or killing
-them as needed. It also manages application reloading
+It maintain pool workers alive. It also manages application reloading
 via SIGHUP/USR2 if the platform allows it.
 """
     WORKER_BOOT_ERROR = 3
     SIG_TIMEOUT = 0.001
-    JOIN_TIMEOUT = 0.5
     START_CTX = {}
     LISTENER = None
     
@@ -46,7 +44,7 @@ via SIGHUP/USR2 if the platform allows it.
         self.pidfile = None
         self.reexec_pid = 0
         self.SIG_QUEUE = ThreadQueue()
-        self._pools = []        
+        self._pools = []
         # get current path, try to use PWD env first
         try:
             a = os.stat(os.environ['PWD'])

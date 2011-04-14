@@ -10,8 +10,8 @@ import sys
 import traceback
 
 import pulsar
+from pulsar.utils.py2py3 import execfile
 from pulsar.utils import system, colors
-from pulsar.utils.config import Config
 #from pulsar.utils import debug
 
 
@@ -47,7 +47,7 @@ class Application(object):
   
     def load_config(self):
         '''Load the application configuration'''
-        self.cfg = Config(self.usage)
+        self.cfg = pulsar.Config(self.usage)
         
         # parse console args
         parser = self.cfg.parser()
@@ -77,7 +77,7 @@ class Application(object):
                 traceback.print_exc()
                 sys.exit(1)
         
-            for k, v in list(cfg.items()):
+            for k, v in cfg.items():
                 # Ignore unknown names
                 if k not in self.cfg.settings:
                     continue
@@ -89,7 +89,7 @@ class Application(object):
             
         # Lastly, update the configuration with any command line
         # settings.
-        for k, v in list(opts.__dict__.items()):
+        for k, v in opts.__dict__.items():
             if v is None:
                 continue
             self.cfg.set(k.lower(), v)

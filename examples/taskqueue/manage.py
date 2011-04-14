@@ -8,8 +8,10 @@ except ImportError:
     path = p(p(p(os.path.abspath(__file__))))
     if path not in sys.path:
         sys.path.insert(0,path)
+
         
 from pulsar.apps import tasks
+
 
 if __name__ == '__main__':
     '''To run this example simply type::

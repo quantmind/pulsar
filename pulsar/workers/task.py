@@ -1,6 +1,6 @@
 from multiprocessing.queues import Empty
 from pulsar import system
-from .base import WorkerProcess
+from .base import WorkerProcess, updaterequests
 
     
 class IOQueue(system.EpollProxy):

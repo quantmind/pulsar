@@ -21,4 +21,4 @@ class TaskApplication(pulsar.Application):
         
     
 def run():
-    TaskApplication("%prog [OPTIONS] APP_MODULE").run()
+    TaskApplication("%prog [OPTIONS]").run()

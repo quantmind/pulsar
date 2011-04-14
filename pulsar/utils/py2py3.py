@@ -31,9 +31,18 @@ if ispy3k: # Python 3
         
         def __repr__(self):
             return '%s: %s' % (self.__class__.__name__,self)
-        
+    
+    def execfile(filename, globals=None, locals=None):
+        if globals is None:
+            globals = sys._getframe(1).f_globals
+        if locals is None:
+            locals = sys._getframe(1).f_locals
+        with open(filename, "r") as fh:
+            exec(fh.read()+"\n", globals, locals)
+            
 else: # Python 2
     string_type = unicode
+    execfile = execfile
     itervalues = lambda d : d.itervalues()
     iteritems = lambda d : d.iteritems()
     int_type = (types.IntType, types.LongType)
