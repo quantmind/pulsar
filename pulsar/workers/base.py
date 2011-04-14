@@ -7,7 +7,6 @@ import random
 import signal
 import sys
 import time
-import tempfile
 try:
     import queue
 except ImportError:
@@ -18,12 +17,11 @@ from multiprocessing import Process
 from multiprocessing.queues import Queue, Empty
 from threading import current_thread, Thread
 
-import pulsar
 from pulsar import getLogger
 from pulsar.utils.eventloop import IOLoop
-from pulsar.utils import system, threadpool
+from pulsar.utils import system
 
-from .workerpool import STOP_WORKER
+from .workerpool import HttpMixin, STOP_WORKER
 
 
 __all__ = ['Runner',
@@ -114,7 +112,7 @@ class ArbiterBase(Runner):
         return self.ioloop.running()
     
 
-class Worker(Runner):
+class Worker(Runner, HttpMixin):
     """\
 Base class for all workers. The constructor is called
 called pre-fork so it shouldn't do anything to the current process.
@@ -188,7 +186,7 @@ event loop of the arbiter if required.
     def _run(self):
         self.ioloop.start()
     
-    def _stop():
+    def _stop(self):
         if self.ioloop.running():
             self.command_queue.close()
             self.ioloop.stop()
@@ -251,11 +249,19 @@ and perform several post fork processing before starting the event loop.'''
         if self.command_queue is not None:
             self.ioloop.add_loop_task(self.check_pool_commands)
     
-    def handle(self, *args):
-        self.handle_loop_event(*args)
-    
-    def handle_loop_event(self):
-        raise NotImplementedError
+    def handle_request(self, fd, req):
+        '''Handle request. A worker class must implement the ``_handle_request``
+method.'''
+        self.nr += 1
+        self.check_num_requests()
+        self.cfg.pre_request(self, req)
+        try:
+            self._handle_request(req)
+        finally:
+            try:
+                self.cfg.post_request(self, req)
+            except:
+                pass
     
     def handle_int(self, sig, frame):
         signame = system.SIG_NAMES.get(sig,None)
@@ -273,10 +279,6 @@ and perform several post fork processing before starting the event loop.'''
     @property
     def wid(self):
         return '{0}-{1}'.format(self.pid,self.tid)
-
-    @classmethod
-    def MakeRequest(cls, *args, **kwargs):
-        return (args,kwargs)
 
 
 def runworker(self):
@@ -337,6 +339,9 @@ class WorkerThread(Thread,Worker):
         
     def run(self):
         runworker(self)
+        
+    def terminate(self):
+        self.ioloop.stop()
         
     @property
     def pid(self):

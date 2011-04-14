@@ -1,7 +1,9 @@
 import logging
+import time
+import signal
 import threading
 import errno
-from multiprocessing import Process, Pipe, Queue
+from multiprocessing import Pipe
 
 from .system import IObase, IOpoll, close_on_exec
 
@@ -16,6 +18,8 @@ def file_descriptor(fd):
 def threadsafe(f):
     
     def _(self, *args, **kwargs):
+        if not hasattr(self,'_lock'):
+            self._lock = threading.Lock()
         self._lock.acquire()
         try:
             return f(self,*args,**kwargs)
@@ -26,9 +30,8 @@ def threadsafe(f):
 
 
 class IOLoop(IObase):
-    """A level-triggered I/O loop.
-
-Adapted from tornado
+    """\
+A level-triggered I/O loop adapted from tornado
 
 We use epoll if it is available, or else we fall back on select().
 Example usage for a simple TCP server:
@@ -81,7 +84,6 @@ When using the eventloop on a child process, It should be instantiated after for
         self._stopped = False
         '''Called when when the child process is forked'''
         self._blocking_signal_threshold = None
-        self._lock = threading.Lock()
         # Create a pipe that we send bogus data to when we want to wake
         # the I/O loop when it is idle
         #self._waker_reader, self._waker_writer = Pipe(duplex = False)

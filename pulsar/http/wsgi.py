@@ -8,20 +8,18 @@
 #
 # This file is part of gunicorn released under the MIT license. 
 # See the NOTICE for more information.
-import logging
 import os
 import re
 import sys
 
-from pulsar import SERVER_SOFTWARE
-from pulsar.utils.http import is_hoppish, http_date, write, write_chunk
+from pulsar import SERVER_SOFTWARE, ispy3k
 
+from .utils import is_hoppish, http_date, write, write_chunk, to_string
 from .globals import *
 
 
 NORMALIZE_SPACE = re.compile(r'(?:\r\n)?[ \t]+')
 
-log = logging.getLogger(__name__)
 
 def create_wsgi(req, sock, client, server, cfg):
     resp = Response(req, sock)
@@ -33,7 +31,7 @@ def create_wsgi(req, sock, client, server, cfg):
         "wsgi.multithread": False,
         "wsgi.multiprocess": (cfg.workers > 1),
         "wsgi.run_once": False,
-        "gunicorn.socket": sock,
+        "pulsar.socket": sock,
         "SERVER_SOFTWARE": SERVER_SOFTWARE,
         "REQUEST_METHOD": req.method,
         "QUERY_STRING": req.query,
@@ -79,7 +77,7 @@ def create_wsgi(req, sock, client, server, cfg):
     environ['wsgi.url_scheme'] = url_scheme
         
 
-    if isinstance(forward, basestring):
+    if is_string(forward):
         # we only took the last one
         # http://en.wikipedia.org/wiki/X-Forwarded-For
         if forward.find(",") >= 0:
@@ -93,7 +91,7 @@ def create_wsgi(req, sock, client, server, cfg):
     environ['REMOTE_ADDR'] = remote[0]
     environ['REMOTE_PORT'] = str(remote[1])
 
-    if isinstance(server, basestring):
+    if is_string(server):
         server =  server.split(":")
         if len(server) == 1:
             if url_scheme == "http":
@@ -133,7 +131,7 @@ class Response(object):
         if exc_info:
             try:
                 if self.status and self.headers_sent:
-                    raise exc_info[0], exc_info[1], exc_info[2]
+                    raise (exc_info[0], exc_info[1], exc_info[2])
             finally:
                 exc_info = None
         elif self.status is not None:
@@ -145,7 +143,8 @@ class Response(object):
 
     def process_headers(self, headers):
         for name, value in headers:
-            assert isinstance(name, basestring), "%r is not a string" % name
+            name = to_string(name)
+            value = to_string(value)
             if is_hoppish(name):
                 lname = name.lower().strip()
                 if lname == "transfer-encoding":
@@ -158,7 +157,7 @@ class Response(object):
                 else:
                     # ignore hopbyhop headers
                     continue
-            self.headers.append((name.strip(), str(value).strip()))
+            self.headers.append((name.strip(), value.strip()))
 
     def default_headers(self):
         connection = "keep-alive"
@@ -182,7 +181,6 @@ class Response(object):
 
     def write(self, arg):
         self.send_headers()
-        assert isinstance(arg, basestring), "%r is not a string." % arg
         write(self.sock, arg, self.chunked)
 
     def close(self):

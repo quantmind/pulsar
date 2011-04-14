@@ -6,12 +6,13 @@
 extern "C" {
 #endif
 
-#include <http_parser.h>
+#include "http_parser.h"
 
 
 inline http_parser* create_request_parser();
 inline http_parser* create_response_parser();
 inline void http_free_parser(http_parser*);
+unsigned parse(http_parser*, const char*, unsigned);
 
 
 #ifdef __cplusplus

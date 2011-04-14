@@ -32,8 +32,7 @@ def get_task_loop(self):
 def start_task_loop(self):
     ioloop = self.ioloop
     impl = ioloop._impl
-    ioloop._handlers[impl.fileno()] = self.handle_task
-    self.http = get_httplib(self.cfg)
+    ioloop._handlers[impl.fileno()] = self.handle_request
     self.ioloop.start()
     
 

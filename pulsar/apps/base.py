@@ -12,7 +12,21 @@ import traceback
 import pulsar
 from pulsar.utils.py2py3 import execfile
 from pulsar.utils import system, colors
+from pulsar.utils.importer import import_module 
 #from pulsar.utils import debug
+
+__all__ = ['Application',
+           'require']
+
+
+def require(appname):
+    apps = appname.split('.')
+    if len(apps) == 1:
+        module = 'pulsar.apps.{0}'.format(appname)
+    else:
+        module = appname
+    mod = import_module(module)
+    return mod
 
 
 class Application(object):
@@ -30,24 +44,24 @@ class Application(object):
         "debug": logging.DEBUG
     }
     
-    def __init__(self, usage=None):
+    def __init__(self, usage=None, callable = None, **params):
         self.usage = usage
         self.cfg = None
-        self.callable = None
-        self.load_config()
+        self.callable = callable
+        self.load_config(**params)
         
     def __getstate__(self):
         d = self.__dict__.copy()
-        d.pop('logger',None)
+        d.pop('log',None)
         return d
     
     def __setstate__(self, state):
         self.__dict__ = state
         self.configure_logging()
   
-    def load_config(self):
+    def load_config(self, **params):
         '''Load the application configuration'''
-        self.cfg = pulsar.Config(self.usage)
+        self.cfg = pulsar.Config(self.usage, **params)
         
         # parse console args
         parser = self.cfg.parser()
@@ -72,7 +86,7 @@ class Application(object):
             }
             try:
                 execfile(opts.config, cfg, cfg)
-            except Exception as e:
+            except Exception:
                 print("Failed to read config file: %s" % opts.config)
                 traceback.print_exc()
                 sys.exit(1)
@@ -102,8 +116,6 @@ class Application(object):
 
     def reload(self):
         self.load_config()
-        if self.cfg.spew:
-            debug.spew()
         loglevel = self.LOG_LEVELS.get(self.cfg.loglevel.lower(), logging.INFO)
         self.log.setLevel(loglevel)
         
@@ -115,8 +127,6 @@ to carry out its task.'''
         return self.callable
     
     def run(self):
-        if self.cfg.spew:
-            debug.spew()
         if self.cfg.daemon:
             system.daemonize()
         else:
@@ -138,7 +148,7 @@ to carry out its task.'''
         """\
         Set the log level and choose the destination for log output.
         """
-        self.log = pulsar.getLogger()
+        log = pulsar.getLogger()
 
         handlers = []
         Formatter = logging.Formatter
@@ -148,13 +158,17 @@ to carry out its task.'''
             Formatter = colors.ColorFormatter
             handlers.append(logging.StreamHandler())
 
-        loglevel = self.LOG_LEVELS.get(self.cfg.loglevel.lower(), logging.INFO)
-        self.log.setLevel(loglevel)
+        if self.cfg.debug:
+            loglevel = logging.DEBUG
+        else:
+            loglevel = self.LOG_LEVELS.get(self.cfg.loglevel.lower(), logging.INFO)
+        log.setLevel(loglevel)
         
-        format = r"%(asctime)s [%(process)d] [%(levelname)s] %(message)s"
+        format = '%(asctime)s [p=%(process)s,t=%(thread)s] [%(levelname)s] [%(name)s] %(message)s'
+        #format = r"%(asctime)s [%(process)d] [%(levelname)s] %(message)s"
         datefmt = r"%Y-%m-%d %H:%M:%S"
         for h in handlers:
             h.setFormatter(Formatter(format, datefmt))
-            self.log.addHandler(h)
+            log.addHandler(h)
 
 

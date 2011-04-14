@@ -327,17 +327,15 @@ class Workers(Setting):
         """
 
 
-class ArbiterWorkerClass(Setting):
-    name = "arbiter_worker_class"
-    section = "Arbiter Worker Type"
-    cli = ["-a", "--arbiter-class"]
+class WorkerClass(Setting):
+    name = "worker_class"
+    section = "Worker Processes"
+    cli = ["-k", "--worker-class"]
     meta = "STRING"
     validator = validate_string
-    default = ""
+    default = "http"
     desc = """\
-        The type of worker to use in the Arbiter.
-        
-        The default class (sync) should handle most 'normal' types of workloads.
+        The type of workers to use.
         
         A string referring to one of the following bundled classes:
         
@@ -347,35 +345,8 @@ class ArbiterWorkerClass(Setting):
         * ``tornado``  - Requires tornado >= 0.2
         
         Optionally, you can provide your own worker by giving pulsar a
-        path to the class.
-        """
-
-
-class WorkerClass(Setting):
-    name = "worker_class"
-    section = "Worker Processes"
-    cli = ["-k", "--worker-class"]
-    meta = "STRING"
-    validator = validate_string
-    default = "sync"
-    desc = """\
-        The type of workers to use.
-        
-        The default class (sync) should handle most 'normal' types of workloads.
-        You'll want to read http://gunicorn.org/design.html for information on
-        when you might want to choose one of the other worker classes.
-        
-        A string referring to one of the following bundled classes:
-        
-        * ``sync``
-        * ``eventlet`` - Requires eventlet >= 0.9.7
-        * ``gevent``   - Requires gevent >= 0.12.2 (?)
-        * ``tornado``  - Requires tornado >= 0.2
-        
-        Optionally, you can provide your own worker by giving gunicorn a
         MODULE:CLASS pair where CLASS is a subclass of
-        gunicorn.workers.base.Worker. This alternative syntax will load the
-        gevent class: ``egg:gunicorn#gevent``
+        pulsar.Worker.
         """
 
 
@@ -501,7 +472,7 @@ class Daemon(Setting):
     action = "store_true"
     default = False
     desc = """\
-        Daemonize the Gunicorn process.
+        Daemonize the Pulsar process.
         
         Detaches the server from the controlling terminal and enters the
         background.

@@ -10,19 +10,20 @@
 # See the NOTICE for more information.
 import re
     
+from pulsar.http.utils import to_string
+from pulsar.http.globals import *
 from .body import ChunkedReader, LengthReader, EOFReader, Body
-from .globals import *
+
 
 class Message(object):
+    hdrre = re.compile("[\x00-\x1F\x7F()<>@,;:\[\]={} \t\\\\\"]")
+    
     def __init__(self, unreader):
         self.unreader = unreader
         self.version = None
         self.headers = []
         self.trailers = []
         self.body = None
-
-        self.hdrre = re.compile("[\x00-\x1F\x7F()<>@,;:\[\]={} \t\\\\\"]")
-
         unused = self.parse(self.unreader)
         self.unreader.unread(unused)
         self.set_body_reader()
@@ -32,9 +33,8 @@ class Message(object):
 
     def parse_headers(self, data):
         headers = []
-
-        # Split lines on \r\n keeping the \r\n on each line
-        lines = [line + "\r\n" for line in data.split("\r\n")]
+        
+        lines = [to_string(line) + "\r\n" for line in data.split(CRLF)]
 
         # Parse headers into key/value pairs paying attention
         # to continuation lines.
@@ -94,10 +94,10 @@ class Message(object):
 
 
 class Request(Message):
+    methre = re.compile("[A-Z0-9$-_.]{3,20}")
+    versre = re.compile("HTTP/(\d+).(\d+)")
+        
     def __init__(self, unreader):
-        self.methre = re.compile("[A-Z0-9$-_.]{3,20}")
-        self.versre = re.compile("HTTP/(\d+).(\d+)")
-    
         self.method = None
         self.uri = None
         self.scheme = None
@@ -106,9 +106,7 @@ class Request(Message):
         self.path = None
         self.query = None
         self.fragment = None
-
         super(Request, self).__init__(unreader)
-
 
     def get_data(self, unreader, buf, stop=False):
         data = unreader.read()
@@ -119,29 +117,29 @@ class Request(Message):
         buf.write(data)
     
     def parse(self, unreader):
-        buf = BufferIO()
+        buf = BytesIO()
 
         self.get_data(unreader, buf, stop=True)
         
         # Request line
-        idx = buf.getvalue().find("\r\n")
+        idx = buf.getvalue().find(CRLF)
         while idx < 0:
             self.get_data(unreader, buf)
-            idx = buf.getvalue().find("\r\n")
+            idx = buf.getvalue().find(CRLF)
         self.parse_request_line(buf.getvalue()[:idx])
-        rest = buf.getvalue()[idx+2:] # Skip \r\n
-        buf.truncate(0)
+        rest = buf.getvalue()[idx+2:] # Skip CRLF
+        buf = BytesIO()
         buf.write(rest)
        
         
         # Headers
-        idx = buf.getvalue().find("\r\n\r\n")
+        idx = buf.getvalue().find(CRLF2)
 
-        done = buf.getvalue()[:2] == "\r\n"
+        done = buf.getvalue()[:2] == CRLF
         while idx < 0 and not done:
             self.get_data(unreader, buf)
-            idx = buf.getvalue().find("\r\n\r\n")
-            done = buf.getvalue()[:2] == "\r\n"
+            idx = buf.getvalue().find(CRLF2)
+            done = buf.getvalue()[:2] == CRLF
              
         if done:
             self.unreader.unread(buf.getvalue()[2:])
@@ -150,11 +148,11 @@ class Request(Message):
         self.headers = self.parse_headers(buf.getvalue()[:idx])
 
         ret = buf.getvalue()[idx+4:]
-        buf.truncate(0)
+        buf = BytesIO()
         return ret
     
     def parse_request_line(self, line):
-        bits = line.split(None, 2)
+        bits = to_string(line).split(None, 2)
         if len(bits) != 3:
             raise InvalidRequestLine(line)
 

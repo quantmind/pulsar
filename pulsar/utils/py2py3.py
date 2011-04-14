@@ -17,6 +17,7 @@ if ispy3k: # Python 3
     zip = zip
     map = map
     range = range
+    from io import BytesIO, StringIO
     
     from urllib import parse as urlparse
     from io import StringIO
@@ -51,6 +52,7 @@ else: # Python 2
     
     import urlparse
     from cStringIO import StringIO
+    BytesIO = StringIO
     
     class UnicodeMixin(object):
         

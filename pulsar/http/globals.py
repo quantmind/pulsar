@@ -8,15 +8,16 @@
 #
 # This file is part of gunicorn released under the MIT license. 
 # See the NOTICE for more information.
-from pulsar.utils.py2py3 import ispy3k, int_type
+from pulsar.utils.py2py3 import ispy3k, int_type, BytesIO, is_string
 
 if ispy3k:
     from urllib.parse import urlparse, unquote
-    from io import StringIO as BufferIO 
 else:
     from urlparse import urlparse, unquote
-    from cStringIO import StringIO as BufferIO
-    
+
+# Carriage Return Line Feed
+CRLF = b'\r\n'
+CRLF2 = b'\r\n\r\n'
     
 class ParseException(Exception):
     pass

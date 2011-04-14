@@ -2,8 +2,10 @@ import os
 import time
 from multiprocessing import Pipe
 
+from pulsar import getLogger
 from pulsar.utils.py2py3 import iteritems
 from pulsar.utils.exceptions import PulsarPoolAlreadyStarted
+from pulsar.http import get_httplib
 
 STOP_WORKER = b'STOP'
 
@@ -11,7 +13,15 @@ STOP_WORKER = b'STOP'
 __all__ = ['WorkerPool']
 
 
-class WorkerPool(object):
+class HttpMixin(object):
+    
+    @property
+    def http(self):
+        return get_httplib(self.cfg)
+    
+
+
+class WorkerPool(HttpMixin):
     '''\
 A pool of worker classes for performing asynchronous tasks and input/output
  
@@ -23,7 +33,7 @@ A pool of worker classes for performing asynchronous tasks and input/output
     RUN = 0x1
     CLOSE = 0x2
     TERMINATE = 0x3
-    _state = None
+    _state = 0x0
     
     def __init__(self,
                  worker_class,
@@ -36,10 +46,15 @@ A pool of worker classes for performing asynchronous tasks and input/output
         self.timeout = timeout
         self.worker_age = 0
         self.app = app
+        self.log = getLogger(worker_class.worker_name or worker_class.__name__)
         if self.app:
             self.cfg = getattr(app,'cfg',None)
         else:
             self.cfg = None
+        if self.cfg:
+            self.address = self.cfg.address
+        else:
+            self.address = None
         self.socket = socket
         self.task_queue = self.get_task_queue()
         self.WORKERS = {}
@@ -47,16 +62,12 @@ A pool of worker classes for performing asynchronous tasks and input/output
     def is_alive(self):
         return self._state == self.RUN
     
-    def request(self, args = None, kwargs = None):
-        '''Create a Request object to be inserted in the queue.'''
-        return self.worker_class.MakeRequest(args,kwargs)
-    
     def putRequest(self, request):
         self.task_queue.put(request)
         
     def get_task_queue(self):
         return self.worker_class.CommandQueue()
-        
+    
     @property
     def pid(self):
         return os.getpid()
@@ -98,17 +109,6 @@ of each worker.'''
                 if not w.is_alive():
                     self.WORKERS.pop(wid)
                 w.terminate()
-            
-    def kill(self, sig = None):
-        """\
-Kill all workers with the signal ``sig``
-
-:parameter sig: `signal.SIG*` value
-"""
-        if sig == signal.SIGQUIT:
-            self.close()
-        else:
-            self.terminate()
                 
     def murder_workers(self):
         """Murder workers to avoid zombie processes.

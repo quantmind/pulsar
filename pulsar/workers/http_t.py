@@ -1,5 +1,3 @@
-import pulsar
-
 from .http import HttpHandler, HttpMixin, get_httplib
 from .base import WorkerThread
 from .task import get_task_loop, start_task_loop
@@ -7,9 +5,8 @@ from .task import get_task_loop, start_task_loop
 
 class HttpPoolHandler(HttpHandler):
     
-    def handle(self, fd, *args):
-        request = self.worker.request(*args)
-        self.worker.putRequest(request)
+    def handle(self, fd, req):
+        self.worker.putRequest(req)
 
 
 class Worker(WorkerThread,HttpMixin):

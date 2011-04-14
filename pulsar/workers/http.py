@@ -16,52 +16,53 @@ except:
 import pulsar
 from pulsar.http import get_httplib
 from pulsar.utils.eventloop import close_on_exec
-from pulsar.utils.http import write_nonblock, write_error, close
+from pulsar.http.utils import write_nonblock, write_error, close
 
-from .base import WorkerProcess, updaterequests
+from .base import WorkerProcess
 
 
 class HttpHandler(object):
-    
-    ALLOWED_ERRORS = (errno.EAGAIN, errno.ECONNABORTED, errno.EWOULDBLOCK)
+    '''Handle HTTP requests and delegate the response to the worker'''
+    ALLOWED_ERRORS = (errno.EAGAIN, errno.ECONNABORTED,
+                      errno.EWOULDBLOCK, errno.EPIPE)
     ssl_options = None
 
     def __init__(self, worker):
         self.worker = worker
         
     def __call__(self, fd, events):
-        while True:
-            try:
-                client, addr = self.worker.socket.accept()
-                client.setblocking(1)
-                close_on_exec(client)
-                self.handle(fd, client, addr)
-            except socket.error as e:
-                if e[0] not in self.ALLOWED_ERRORS:
-                    raise
-                else:
-                    return
-                
-            # If our parent changed then we shut down.
-            #if self.ppid != self.get_parent_id:
-            #    self.log.info("Parent changed, shutting down: %s" % self)
-            #    self.ioloop.stop()
+        client = None
+        try:
+            client, addr = self.worker.socket.accept()
+            client.setblocking(1)
+            req = self.worker.http.Request(client,
+                                           addr,
+                                           self.worker.address,
+                                           self.worker.cfg)
+        except socket.error as e:
+            close(client)
+            if e.errno not in self.ALLOWED_ERRORS:
+                raise
+            else:
+                return
+        except StopIteration:
+            close(client)
+            self.log.debug("Ignored premature client disconnection.")
+            
+        self.handle(fd, req)
 
-    def handle(self, fd, *args):
-        self.worker.handle_task(fd, (args,))
+    def handle(self, fd, req):
+        self.worker.handle_task(fd, req)
         
 
 class HttpMixin(object):
     '''A Mixin class for handling syncronous connection over HTTP.'''
     ssl_options = None
 
-    @updaterequests
-    def handle_task(self, fd, req):
+    def _handle_request(self, req):
         try:
-            client, addr = req[0]
-            parser = self.http.RequestParser(client)
-            req = parser.next()
-            self.handle_request(req, client, addr)
+            resp, environ = req.wsgi()
+            self.response(resp, environ)
         except StopIteration:
             self.log.debug("Ignored premature client disconnection.")
         except socket.error as e:
@@ -74,17 +75,14 @@ class HttpMixin(object):
             try:            
                 # Last ditch attempt to notify the client of an error.
                 mesg = "HTTP/1.1 500 Internal Server Error\r\n\r\n"
-                write_nonblock(client, mesg)
+                write_nonblock(req.client_request, mesg)
             except:
                 pass
         finally:    
-            close(client)
+            close(req.client_request)
 
-    def handle_request(self, req, client, addr):
+    def response(self, resp, environ):
         try:
-            debug = self.cfg.debug or False
-            self.cfg.pre_request(self, req)
-            resp, environ = self.http.create_wsgi(req, client, addr, self.address, self.cfg)
             # Force the connection closed until someone shows
             # a buffering proxy that supports Keep-Alive to
             # the backend.
@@ -97,17 +95,11 @@ class HttpMixin(object):
                 respiter.close()
         except socket.error:
             raise
-        except Exception as e:
+        except Exception:
             # Only send back traceback in HTTP in debug mode.
             if not self.debug:
                 raise
-            write_error(client, traceback.format_exc())
-            return
-        finally:
-            try:
-                self.cfg.post_request(self, req)
-            except:
-                pass
+            write_error(resp.sock, traceback.format_exc())
 
 
 class Worker(WorkerProcess,HttpMixin):

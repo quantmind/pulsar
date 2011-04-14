@@ -182,11 +182,11 @@ via SIGHUP/USR2 if the platform allows it.
         self.close()
         
     def close(self):
-        for pool in self._pool:
+        for pool in self._pools:
             pool.close()
     
     def terminate(self):
-        for pool in self._pool:
+        for pool in self._pools:
             pool.terminate()
         
 

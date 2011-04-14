@@ -10,14 +10,15 @@
 # See the NOTICE for more information.
 import sys
 
-from .globals import *
+from pulsar.http.globals import *
 
 
 class ChunkedReader(object):
+    
     def __init__(self, req, unreader):
         self.req = req
         self.parser = self.parse_chunked(unreader)
-        self.buf = BufferIO()
+        self.buf = BytesIO()
     
     def read(self, size):
         if not isinstance(size, (int, long)):
@@ -42,7 +43,7 @@ class ChunkedReader(object):
         return ret
     
     def parse_trailers(self, unreader, data):
-        buf = BufferIO()
+        buf = BytesIO()
         buf.write(data)
         
         idx = buf.getvalue().find("\r\n\r\n")
@@ -76,7 +77,7 @@ class ChunkedReader(object):
             (size, rest) = self.parse_chunk_size(unreader, data=rest[2:])          
 
     def parse_chunk_size(self, unreader, data=None):
-        buf = BufferIO()
+        buf = BytesIO()
         if data is not None:
             buf.write(data)
 
@@ -124,7 +125,7 @@ class LengthReader(object):
             return ""
         
         
-        buf = BufferIO()
+        buf = BytesIO()
         data = self.unreader.read()
         while data:
             buf.write(data)
@@ -141,7 +142,7 @@ class LengthReader(object):
 class EOFReader(object):
     def __init__(self, unreader):
         self.unreader = unreader
-        self.buf = BufferIO()
+        self.buf = BytesIO()
         self.finished = False
     
     def read(self, size):
@@ -178,7 +179,7 @@ class EOFReader(object):
 class Body(object):
     def __init__(self, reader):
         self.reader = reader
-        self.buf = BufferIO()
+        self.buf = BytesIO()
     
     def __iter__(self):
         return self

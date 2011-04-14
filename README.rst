@@ -1,4 +1,10 @@
 
+Event driven network library for python.
+
+An example of a web server written with pulsar which responds 
+with "Halle World" for every request::
+
+    from pulsar.
 Dependencies
 ==================
 
