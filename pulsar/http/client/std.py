@@ -24,7 +24,7 @@ else:
 class Response(object):
     
     def __init__(self, response):
-        self._response = response
+        self.response = response
         
     @property
     def content(self):

@@ -1,4 +1,7 @@
+from pulsar.utils.eventloop import MainIOLoop
+
 from .std import HttpClient1, getproxies_environment
+
 HttpClients={1:HttpClient1}
 try:
     from ._httplib2 import HttpClient2
@@ -10,7 +13,23 @@ except ImportError:
 form_headers = {'Content-type': 'application/x-www-form-urlencoded'}
 
 
-def HttpClient(cache = None, proxy_info = None, timeout = None, type = 1, async = False):
+class AsyncHttpClient(object):
+    
+    def __init__(self, c, ioloop = None):
+        self.client = c
+        self.ioloop = ioloop or MainIOLoop.instance()
+        
+    def request(self, *args, **kwargs):
+        return self.ioloop.add_callback(
+            lambda : self.client.request(*args, **kwargs)
+        )
+        
+        
+
+
+def HttpClient(cache = None, proxy_info = None,
+               timeout = None, type = 1, ioloop = None,
+               async = False):
     '''Create a http client handler using different implementation.
 It can build a synchronous or an asyncronous handler build on top
 of the :class:`pulsar.IOLoop`. 
@@ -28,6 +47,10 @@ of the :class:`pulsar.IOLoop`.
     if proxy is None:
         proxy = getproxies_environment()
         
-    return client(proxy_info = proxy, cache = cache, timeout = timeout)
+    c = client(proxy_info = proxy, cache = cache, timeout = timeout)
+    if async:
+        return AsyncHttpClient(c, ioloop = ioloop)
+    else:
+        return c
 
     

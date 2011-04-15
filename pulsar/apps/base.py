@@ -29,13 +29,11 @@ def require(appname):
     return mod
 
 
-class Application(object):
+class Application(pulsar.PickableMixin):
     """\
     An application interface for configuring and loading
     the various necessities for any given web framework.
     """
-    Arbiter = pulsar.Arbiter
-    
     LOG_LEVELS = {
         "critical": logging.CRITICAL,
         "error": logging.ERROR,
@@ -50,15 +48,6 @@ class Application(object):
         self.callable = callable
         self.load_config(**params)
         
-    def __getstate__(self):
-        d = self.__dict__.copy()
-        d.pop('log',None)
-        return d
-    
-    def __setstate__(self, state):
-        self.__dict__ = state
-        self.configure_logging()
-  
     def load_config(self, **params):
         '''Load the application configuration'''
         self.cfg = pulsar.Config(self.usage)
@@ -142,7 +131,10 @@ to carry out its task.'''
                     
         self.configure_logging()
         try:
-            self.Arbiter(self).start()
+            arbiter = pulsar.Arbiter(self)
+            self.arbiter = arbiter
+            arbiter.start()
+            return self
         except RuntimeError as e:
             sys.stderr.write("\nError: %s\n\n" % e)
             sys.stderr.flush()
@@ -152,8 +144,7 @@ to carry out its task.'''
         """\
         Set the log level and choose the destination for log output.
         """
-        log = pulsar.getLogger()
-
+        log = logging.getLogger()
         handlers = []
         Formatter = logging.Formatter
         if self.cfg.logfile != "-":

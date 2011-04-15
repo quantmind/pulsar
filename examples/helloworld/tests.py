@@ -10,6 +10,11 @@ class TestCalculatorExample(test.TestCase):
         self.c = HttpClient()
         
     def testThreadWorker(self):
-        run(worker_class = 'http_t')
-        resp = self.c.request(self.uri)
-        self.assertEqual(resp,'Hello World!')
+        c = self.c
+        app = run(worker_class = 'http_t')
+        arbiter = app.arbiter
+        self.assertEqual(arbiter.app,app)
+        t = self.run_on_process(c.request,self.uri)
+        resp = t.wait()
+        content = resp.content
+        self.assertEqual(content,'Hello World!\n')

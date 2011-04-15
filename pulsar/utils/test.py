@@ -1,5 +1,7 @@
 import unittest
+import time
 import inspect
+from multiprocessing import Process
 from threading import Thread
 
 from pulsar.utils.eventloop import MainIOLoop
@@ -8,8 +10,44 @@ TextTestRunner = unittest.TextTestRunner
 TestSuite = unittest.TestSuite
 
 
+class RunInProcess(object):
+    
+    def __init__(self,target,args,kwargs):
+        self.failed = False
+        self.done = False
+        self.result = None
+        target = self._wrap(target)
+        self.p = Process(target=target,args=args,kwargs=kwargs)
+        self.p.run()
+    
+    def _wrap(self, target):
+        def _(*args,**kwargs):
+            try:
+                self.result = target(*args,**kwargs)
+            except Exception as e:
+                self.failed = e
+            finally:
+                self.done = True
+        return _
+    
+    def wait(self, timeout = 5):
+        tim = time.time()
+        while tim - time.time() < timeout:
+            if self.done:
+                break
+            time.sleep(timeout*0.1)
+        if self.failed:
+            raise self.failed
+        return self.result
+    
+
 class TestCase(unittest.TestCase):
-    pass
+    
+    def sleep(self, timeout):
+        time.sleep(timeout)
+        
+    def run_on_process(self,target,*args,**kwargs):
+        return RunInProcess(target,args,kwargs)
 
 
 class TestRunnerThread(Thread):

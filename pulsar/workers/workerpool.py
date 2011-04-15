@@ -148,8 +148,8 @@ as required."""
         for i in range(num_to_kill, 0, -1):
             kwid, kage = 0, sys.maxsize
             for (wid, worker) in iteritems(self.WORKERS):
-                if worker.age < kage:
-                    kwid, kage = wid, worker.age
+                if worker['worker'].age < kage:
+                    kwid, kage = wid, worker['worker'].age
             self.stop_worker(kwid)
             
     def spawn_workers(self):

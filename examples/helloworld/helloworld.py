@@ -14,7 +14,7 @@ def hello(environ, start_response):
 
 def run(**kwargs):
     wsgi = pulsar.require('wsgi')
-    wsgi.createServer(callable = hello, **kwargs).run()
+    return wsgi.createServer(callable = hello, **kwargs).run()
     
     
 if __name__ == '__main__':

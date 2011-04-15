@@ -248,19 +248,17 @@ and perform several post fork processing before starting the event loop.'''
         self.reseed()
         self.log.info('Booting worker "{0}"'.format(self.wid))
         self.handler = self.app.handler()
-        self.add_loop_tasks()
+        self.ioloop.add_loop_task(self)
         if self.cfg:
             self.cfg.post_fork(self)
         
-    def add_loop_tasks(self):
-        '''Add task to be performed at each iteration of the event loop'''
-        # Add the notify task
+    def __call__(self):
+        '''Tasks to be performed at each iteration of the event loop'''
         if self.pool_writer is not None:
-            self.ioloop.add_loop_task(self.notify)
-        # Add the check pool commands to the loop tasks
+            self.notify()
         if self.command_queue is not None:
-            self.ioloop.add_loop_task(self.check_pool_commands)
-    
+            self.check_pool_commands()
+        
     def handle_request(self, fd, req):
         '''Handle request. A worker class must implement the ``_handle_request``
 method.'''
