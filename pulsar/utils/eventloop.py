@@ -1,11 +1,34 @@
 import logging
+import weakref
 import time
 import signal
 import threading
 import errno
 from multiprocessing import Pipe
 
-from .system import IObase, IOpoll, close_on_exec
+from .system import IObase, IOpoll, close_on_exec, platform
+
+
+class WeakList(object):
+    
+    def __init__(self):
+        self._list = []
+        
+    def append(self, obj):
+        if obj:
+            self._list.append(weakref.ref(obj))
+        
+    def __iter__(self):
+        if self._list:
+            ol = self._list
+            nl = self._list = []
+            for v in ol:
+                obj = v()
+                if obj:
+                    nl.append(v)
+                    yield obj
+        else:
+            raise StopIteration
 
 
 def file_descriptor(fd):
@@ -79,45 +102,22 @@ When using the eventloop on a child process, It should be instantiated after for
         self._events = {}
         self._callbacks = []
         self._timeouts = []
-        self._loop_tasks = []
+        self._loop_tasks = WeakList()
         self._running = False
         self._stopped = False
         '''Called when when the child process is forked'''
         self._blocking_signal_threshold = None
-        # Create a pipe that we send bogus data to when we want to wake
-        # the I/O loop when it is idle
-        #self._waker_reader, self._waker_writer = Pipe(duplex = False)
-        #r = self._waker_reader
-        #self.add_handler(r, self.readbogus, self.READ)
+        if platform.type == 'posix':
+            # Create a pipe that we send bogus data to when we want to wake
+            # the I/O loop when it is idle
+            self._waker_reader, self._waker_writer = Pipe(duplex = False)
+            r = self._waker_reader
+            self.add_handler(r, self.readbogus, self.READ)
         
     def readbogus(self, fd, events):
         r = self._waker_reader
         while r.poll():
-            self.log.debug("Got bogus data {0}".format(r.recv()))
-
-    @classmethod
-    def instance(cls, logger = None):
-        """Returns a global IOLoop instance.
-
-        Most single-threaded applications have a single, global IOLoop.
-        Use this method instead of passing around IOLoop instances
-        throughout your code.
-
-        A common pattern for classes that depend on IOLoops is to use
-        a default argument to enable programs with multiple IOLoops
-        but not require the argument for simpler applications:
-
-            class MyClass(object):
-                def __init__(self, io_loop=None):
-                    self.io_loop = io_loop or IOLoop.instance()
-        """
-        if not hasattr(cls, "_instance"):
-            cls._instance = cls(logger = logger)
-        return cls._instance
-
-    @classmethod
-    def initialized(cls):
-        return hasattr(cls, "_instance")
+            self.log.debug("Got wake up data {0}".format(r.recv()))
 
     def add_loop_task(self, task):
         self._loop_tasks.append(task)
@@ -190,6 +190,10 @@ When using the eventloop on a child process, It should be instantiated after for
         self._running = True
         return True
     
+    def do_loop_tasks(self):
+        for task in self._loop_tasks:
+            task()
+        
     def start(self):
         """Starts the I/O loop.
 
@@ -225,10 +229,9 @@ When using the eventloop on a child process, It should be instantiated after for
             if not self.running():
                 self.log.info('Exiting event loop')
                 break
-            
-            for task in self._loop_tasks:
-                task()
 
+            self.do_loop_tasks()
+            
             if self._blocking_signal_threshold is not None:
                 # clear alarm so it doesn't fire while poll is waiting for
                 # events.
@@ -297,7 +300,7 @@ When using the eventloop on a child process, It should be instantiated after for
         self.log.info("Stopping event loop")
         self._running = False
         self._stopped = True
-        #self._wake()
+        self._wake()
 
     def running(self):
         """Returns true if this IOLoop is currently running."""
@@ -337,10 +340,12 @@ When using the eventloop on a child process, It should be instantiated after for
 
     def _wake(self):
         '''Wake up the eventloop'''
-        try:
-            self._waker_writer.send(b'x')
-        except IOError:
-            pass
+        if platform.type == 'posix':
+            if self.running():
+                try:
+                    self._waker_writer.send(b'x')
+                except IOError:
+                    pass
 
     def _run_callback(self, callback):
         try:
@@ -361,7 +366,33 @@ When using the eventloop on a child process, It should be instantiated after for
         in sys.exc_info.
         """
         logging.error("Exception in callback %r", callback, exc_info=True)
-             
+
+
+class MainIOLoop(IOLoop):
+
+    @classmethod
+    def instance(cls, logger = None):
+        """Returns a global MainIOLoop instance.
+
+        Most single-threaded applications have a single, global IOLoop.
+        Use this method instead of passing around IOLoop instances
+        throughout your code.
+
+        A common pattern for classes that depend on IOLoops is to use
+        a default argument to enable programs with multiple IOLoops
+        but not require the argument for simpler applications:
+
+            class MyClass(object):
+                def __init__(self, io_loop=None):
+                    self.io_loop = io_loop or IOLoop.instance()
+        """
+        if not hasattr(cls, "_instance"):
+            cls._instance = cls(logger = logger)
+        return cls._instance
+     
+    @classmethod
+    def initialized(cls):
+        return hasattr(cls, "_instance")
     
     
 class _Timeout(object):

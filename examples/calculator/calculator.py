@@ -2,8 +2,9 @@
 A very simple JSON-RPC Calculator
 '''
 import pulsar
+from pulsar.http import rpc
 
-class Calculator(pulsar.JSONRPC):
+class Calculator(rpc.JSONRPC):
     
     def rpc_ping(self, request):
         return 'pong'
@@ -28,3 +29,4 @@ def run():
     
 if __name__ == '__main__':
     run()
+

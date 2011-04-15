@@ -16,7 +16,7 @@ import pulsar
 from pulsar.utils.py2py3 import iteritems, map, range
 from pulsar.utils.pidfile import Pidfile
 from pulsar.utils import system
-from pulsar.http import get_httplib
+from pulsar.utils.eventloop import MainIOLoop
 
 from .workerpool import WorkerPool
 from .base import ArbiterBase, ThreadQueue
@@ -66,32 +66,37 @@ via SIGHUP/USR2 if the platform allows it.
             0: sys.executable
         }
     
+    def get_eventloop(self):
+        return MainIOLoop.instance(logger = self.log)
+    
     def setup(self):
         self.log.info("Starting pulsar %s" % pulsar.__version__)
         self.address = self.cfg.address
         self.debug = self.cfg.debug
-        self.ioloop.add_loop_task(self.arbiter)
+        self.ioloop.add_loop_task(self)
         
         # Create the listener if not available
         if not self.LISTENER:
             self.LISTENER = system.create_socket(self)
             
-        worker_class = self.cfg.worker_class        
-        # Setup the server pool of workers
-        cfg = self.cfg
-        pool = WorkerPool(worker_class,
-                          cfg.workers,
-                          app = self.app,
-                          timeout = cfg.timeout,
-                          socket = self.LISTENER)
-        self._pools.append(pool)
-        
-        worker_class.modify_arbiter_loop(pool,self.ioloop)
+        self.addpool(self.cfg, self.LISTENER)
         
         if self.debug:
             self.log.debug("Current configuration:")
             for config, value in sorted(self.cfg.settings.items()):
                 self.log.debug("  %s: %s" % (config, value.value))
+                
+    def addpool(self, cfg, socket = None, start = True):
+        worker_class = cfg.worker_class
+        pool = WorkerPool(self.ioloop,
+                          worker_class,
+                          cfg.workers,
+                          app = self.app,
+                          timeout = cfg.timeout,
+                          socket = socket)
+        self._pools.append(pool)
+        if start:
+            pool.start()
     
     def __repr__(self):
         return self.__class__.__name__
@@ -99,7 +104,8 @@ via SIGHUP/USR2 if the platform allows it.
     def __str__(self):
         return self.__repr__()
 
-    def arbiter(self):
+    def __call__(self):
+        '''Called by the Event loop to perform the Arbiter tasks'''
         while True:
             try:
                 sig = self.SIG_QUEUE.get(timeout = self.SIG_TIMEOUT)
@@ -127,12 +133,7 @@ via SIGHUP/USR2 if the platform allows it.
         Initialize the arbiter. Start listening and set pidfile if needed.
         """
         ioloop = self.ioloop
-        if ioloop._stopped:
-            ioloop._stopped = False
-            return False
-        assert not ioloop.running(), 'cannot start arbiter twice'
         self.pid = os.getpid()
-        
         if self.cfg.pidfile is not None:
             self.pidfile = Pidfile(self.cfg.pidfile)
             self.pidfile.create(self.pid)

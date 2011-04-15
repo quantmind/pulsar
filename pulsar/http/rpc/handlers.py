@@ -3,6 +3,7 @@ import logging
 import inspect
 from datetime import datetime
 
+from pulsar import PickableMixin
 from .exceptions import NoSuchFunction
 
 __all__ = ['RpcHandler']
@@ -73,7 +74,7 @@ class MetaRpcHandler(type):
 BaseHandler = MetaRpcHandler('BaseRpcHandler',(object,),{'virtual':True})
 
 
-class RpcHandler(BaseHandler):
+class RpcHandler(BaseHandler,PickableMixin):
     '''Server Handler.
 Sub-handlers for prefixed methods (e.g., system.listMethods)
 can be added with putSubHandler. By default, prefixes are
@@ -96,11 +97,7 @@ separated with a '.'. Override self.separator to change this.
         self.route = route if route is not None else self.route
         self.subHandlers = {}
         self.started = datetime.now()
-        logger = kwargs.pop('logger',None)            
-        if logger:
-            self.log = logger
-        else:
-            self.log = logging.getLogger(self.__class__.__name__)
+        self.log = self.getLogger(**kwargs)
         if subhandlers:
             for route,handler in subhandlers.items():
                 if inspect.isclass(handler):

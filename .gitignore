@@ -5,6 +5,7 @@ docs/build/*
 dist/*
 .project
 .pydevproject
+cfg.py
 .settings/*
 lib/src/parser.c
 pulsar/http/cparser/parser.*

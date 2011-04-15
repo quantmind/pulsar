@@ -104,7 +104,7 @@ class HttpMixin(object):
 
 class Worker(WorkerProcess,HttpMixin):
     '''A Http worker on a child process'''
-    worker_name = 'Worker.HttpProcess'
+    _class_code = 'HttpProcess'
     
     def _run(self, ioloop = None):
         ioloop = self.ioloop

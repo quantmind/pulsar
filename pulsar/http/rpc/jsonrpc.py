@@ -13,10 +13,10 @@ import logging
 import json
 
 from pulsar.utils.crypt import gen_unique_id
+from pulsar.http import HttpClient
 from pulsar.utils.jsontools import DefaultJSONEncoder, DefaultJSONHook
 
 from .handlers import RpcHandler
-#from unuk.http import httplib
 
 
 __all__ = ['JSONRPC',
@@ -161,7 +161,7 @@ class JsonProxy(object):
         self.__id      = id
         self.__data    = data if data is not None else {}
         if not http:
-            self._http    = httplib(proxy_info = proxies)
+            self._http    = HttpClient(proxy_info = proxies)
         else:
             self._http    = http
     

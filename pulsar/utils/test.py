@@ -1,6 +1,8 @@
 import unittest
 import inspect
+from threading import Thread
 
+from pulsar.utils.eventloop import MainIOLoop
 
 TextTestRunner = unittest.TextTestRunner
 TestSuite = unittest.TestSuite
@@ -10,12 +12,26 @@ class TestCase(unittest.TestCase):
     pass
 
 
+class TestRunnerThread(Thread):
+    
+    def __init__(self, suite, verbosity):
+        Thread.__init__(self)
+        self.verbosity = verbosity
+        self.suite = suite
+    
+    def run(self):
+        self.result = TextTestRunner(verbosity = self.verbosity).run(self.suite)
+        ioloop = MainIOLoop.instance()
+        ioloop.stop()
+        
+        
 class TestSuiteRunner(object):
     '''A suite runner with twisted if available.'''
     
     def __init__(self, verbosity = 1, itags = None):
         self.verbosity = verbosity
         self.itags = itags
+        self.ioloop = MainIOLoop.instance()
         
     def setup_test_environment(self):
         pass
@@ -26,20 +42,22 @@ class TestSuiteRunner(object):
     def run_tests(self, modules):
         self.setup_test_environment()
         suite = self.build_suite(modules)
-        self.run_suite(suite)
-    
-    def close_tests(self, result):
+        result = self.run_suite(suite)
         self.teardown_test_environment()
-        return self.suite_result(suite, result)
+        return self.suite_result(result)
     
     def build_suite(self, modules):
         loader = TestLoader()
         return loader.loadTestsFromModules(modules, itags = self.itags)
         
     def run_suite(self, suite):
-        return TextTestRunner(verbosity = self.verbosity).run(suite)
+        ioloop = self.ioloop
+        self.runner = TestRunnerThread(suite,self.verbosity)
+        ioloop.add_callback(self.runner.start)
+        ioloop.start()
+        return self.runner.result
     
-    def suite_result(self, suite, result, **kwargs):
+    def suite_result(self, result):
         return len(result.failures) + len(result.errors) 
     
     

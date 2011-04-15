@@ -15,8 +15,7 @@ if not ispy3k:
         Create a socket object from a duplicate of the given file
         descriptor.  The remaining arguments are the same as for socket().
         """
-        nfd = dup(fd)
-        return socket(family, type, proto, nfd)
+        raise NotImplementedError('Cannot duplicate socket from file descriptor')
     
     socket.fromfd = fromfd 
     

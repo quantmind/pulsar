@@ -12,7 +12,7 @@ class HttpPoolHandler(HttpHandler):
 class Worker(WorkerThread,HttpMixin):
     '''A Http worker on a thread. This worker process http requests from the
 pool queue.'''
-    worker_name = 'Worker.HttpThread'
+    _class_code = 'HttpThread'
     
     def get_ioimpl(self):
         return get_task_loop(self)
@@ -28,4 +28,9 @@ to the Thread Pool. This is different from the Http Worker on Processes'''
             ioloop.add_handler(wp.socket,
                                HttpPoolHandler(wp),
                                ioloop.READ)
+            
+    @classmethod
+    def clean_arbiter_loop(cls, wp, ioloop):
+        if wp.socket:
+            ioloop.remove_handler(wp.socket)
 

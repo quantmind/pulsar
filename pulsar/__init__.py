@@ -1,19 +1,8 @@
 '''Concurrent server and message queues'''
-
 VERSION = (0, 1, 'dev')
-
 
 def get_version():
     return '.'.join(map(str,VERSION))
-
-SERVER_NAME = "pulsar"
-SERVER_SOFTWARE = "{0}/{1}".format(SERVER_NAME,get_version())
-
-
-def getLogger(name = None):
-    import logging
-    name = '{0}.{1}'.format(SERVER_NAME,name) if name else SERVER_NAME
-    return logging.getLogger(name) 
 
 __version__   = get_version()
 __license__   = "BSD"
@@ -34,6 +23,10 @@ CLASSIFIERS  = [
                 'Topic :: Utilities'
                 ]
 
+from .utils.log import *
+
+SERVER_SOFTWARE = "python-{0}/{1}".format(SERVER_NAME,get_version())
+
 from .utils.exceptions import *
 from .utils import test
 from .utils import system
@@ -45,6 +38,5 @@ from .workers.workerpool import *
 from .workers.base import *
 from .workers.arbiter import *
 from .apps.base import Application, require
-from .utils.rpc import *
 
 

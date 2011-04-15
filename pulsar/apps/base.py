@@ -61,8 +61,12 @@ class Application(object):
   
     def load_config(self, **params):
         '''Load the application configuration'''
-        self.cfg = pulsar.Config(self.usage, **params)
+        self.cfg = pulsar.Config(self.usage)
         
+        # add params
+        for k, v in params.items():
+            self.cfg.set(k.lower(), v)
+                
         # parse console args
         parser = self.cfg.parser()
         opts, args = parser.parse_args()

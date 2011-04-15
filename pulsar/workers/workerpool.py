@@ -1,4 +1,5 @@
 import os
+import sys
 import time
 from multiprocessing import Pipe
 
@@ -36,17 +37,19 @@ A pool of worker classes for performing asynchronous tasks and input/output
     _state = 0x0
     
     def __init__(self,
+                 ioloop,
                  worker_class,
                  num_workers,
                  app = None,
                  timeout = 30,
                  socket = None):
+        self.ioloop = ioloop
         self.worker_class = worker_class
         self.num_workers = num_workers
         self.timeout = timeout
         self.worker_age = 0
         self.app = app
-        self.log = getLogger(worker_class.worker_name or worker_class.__name__)
+        self.log = getLogger(worker_class.code())
         if self.app:
             self.cfg = getattr(app,'cfg',None)
         else:
@@ -78,6 +81,7 @@ A pool of worker classes for performing asynchronous tasks and input/output
     
     def start(self):
         if not self._state:
+            self.worker_class.modify_arbiter_loop(self,self.ioloop)
             self._state = self.RUN
             self.spawn_workers()
         else:
@@ -99,11 +103,13 @@ of each worker.'''
             self._state = self.CLOSE
             for wid in list(self.WORKERS):
                 self.stop_worker(wid)
+        self.worker_class.clean_arbiter_loop(self,self.ioloop)
         
     def terminate(self):
         '''Force each worker to terminate'''
         self.close()
         if self._state < self.TERMINATE:
+            self._state = self.TERMINATE
             for wid, proc in list(iteritems(self.WORKERS)):
                 w = proc['worker']
                 if not w.is_alive():

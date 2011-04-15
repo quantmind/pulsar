@@ -17,7 +17,7 @@ from multiprocessing import Process
 from multiprocessing.queues import Queue, Empty
 from threading import current_thread, Thread
 
-from pulsar import getLogger
+import pulsar
 from pulsar.utils.eventloop import IOLoop
 from pulsar.utils import system
 
@@ -31,26 +31,29 @@ __all__ = ['Runner',
            'WorkerThread',
            'WorkerProcess']
 
+_main_thread = current_thread()
 
-class Runner(object):
+
+class Runner(pulsar.PickableMixin):
     '''Base class for classes with an event loop.
     '''
     DEF_PROC_NAME = 'pulsar'
     SIG_QUEUE = None
-    worker_name = None
     
     def init_process(self):
         '''Initialise the runner. This function
 will block the current thread since it enters the event loop.
 If the runner is a instance of a subprocess, this function
 is called after fork by the run method.'''
-        self.worker_name = self.worker_name or self.__class__.__name__
-        self.log = getLogger(self.worker_name)
-        self.ioloop = IOLoop(impl = self.get_ioimpl(), logger = self.log)
+        self.log = self.getLogger()
+        self.ioloop = self.get_eventloop()
         self.set_proctitle()
         self.setup()
         self.install_signals()
         self._run()
+        
+    def get_eventloop(self):
+        return IOLoop(impl = self.get_ioimpl(), logger = self.log)
         
     def get_ioimpl(self):
         '''Return the event-loop implementation. By default it returns ``None``.'''
@@ -65,9 +68,14 @@ is called after fork by the run method.'''
                 proc_name = self.DEF_PROC_NAME
             system.set_proctitle("{0} - {1}".format(proc_name,self))
         
+    def current_thread(self):
+        '''Return the current thread'''
+        return current_thread()
+    
     def install_signals(self):
         '''Initialise signals for correct signal handling.'''
-        if not self.isthread:
+        current = self.current_thread()
+        if current == _main_thread and not self.isthread:
             self.log.debug('Installing signals')
             sfun = getattr(self,'signal',None)
             for name in system.ALL_SIGNALS:
@@ -181,6 +189,10 @@ event loop of the arbiter if required.
 :parameter wp: Instance of :class:`pulsar.WorkerPool`
 :parameter ioloop: Arbiter event loop
 '''
+        pass
+    
+    @classmethod
+    def clean_arbiter_loop(cls, wp, ioloop):
         pass
     
     def _run(self):
