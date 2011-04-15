@@ -5,7 +5,7 @@ from datetime import datetime
 
 from .exceptions import NoSuchFunction
 
-__all__ = ['Handler']
+__all__ = ['RpcHandler']
 
 
 class RpcResponse(object):
@@ -73,25 +73,28 @@ class MetaRpcHandler(type):
 BaseHandler = MetaRpcHandler('BaseRpcHandler',(object,),{'virtual':True})
 
 
-class Handler(BaseHandler):
+class RpcHandler(BaseHandler):
     '''Server Handler.
 Sub-handlers for prefixed methods (e.g., system.listMethods)
 can be added with putSubHandler. By default, prefixes are
 separated with a '.'. Override self.separator to change this.
     '''
-    serve_as   = 'rpc'
+    route        = '/'
+    serve_as     = 'rpc'
     '''Type of server and prefix to functions providing services'''
-    separator  = '.'
+    separator    = '.'
+    content_type = 'text/plain'
     '''Separator between subhandlers.'''
-    RESPONSE   = RpcResponse
+    RESPONSE     = RpcResponse
 
     def __init__(self,
                  subhandlers = None,
                  http = None,
                  attrs = None,
+                 route = None,
                  **kwargs):
+        self.route = route if route is not None else self.route
         self.subHandlers = {}
-        self.http = http
         self.started = datetime.now()
         logger = kwargs.pop('logger',None)            
         if logger:
@@ -155,26 +158,19 @@ separated with a '.'. Override self.separator to change this.
     def listFunctions(self):
         return self.rpcfunctions.keys()
     
-    def wsgi(self, environ, start_response):
+    def __call__(self, environ, start_response):
         '''The WSGI Handler'''
         path = environ['PATH_INFO']
-        handler = self.get_handler(path)
-        if handler:
-            request = self.http.Request(environ)
-            response = handler.serve(request)
-        else:
-            response = self.http.HttpResponse(status = 500)
-        try:
-            status_text = self.http.STATUS_CODE_TEXT[response.status_code]
-        except KeyError:
-            status_text = 'UNKNOWN STATUS CODE'
-        status = '%s %s' % (response.status_code, status_text)
-        response_headers = [(str(k), str(v)) for k, v in response.items()]
-        for c in response.cookies.values():
-            response_headers.append(('Set-Cookie', str(c.output(header=''))))
+        data = environ['QUERY_STRING']
+        method, args, kwargs, id, version = self.get_method_and_args(data)
+        handler = self.get_handler(method)
+        response_headers = (
+                            ('Content-type',handler.content_type),
+                            ('Content-Length', str(len(data)))
+                            )
+            
         start_response(status, response_headers)
+        
         return response
         
-    def serve(self, request):
-        return ['<h1>Not Found</h1>'] 
         

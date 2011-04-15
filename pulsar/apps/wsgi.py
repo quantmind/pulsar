@@ -18,11 +18,7 @@ class WSGIApplication(Application):
             
             if len(args) != 1:
                 parser.error("No application module specified.")
-            
-        
-        #self.cfg.set("default_proc_name", args[0])
-        #self.app_uri = args[0]
-        
+                    
         sys.path.insert(0, os.getcwd())
 
     def load(self):
@@ -32,6 +28,4 @@ class WSGIApplication(Application):
 def createServer(callable = None, **params):
     return WSGIApplication(callable = callable, **params)
     
-    
-def run():
-    WSGIApplication("%prog [OPTIONS] APP_MODULE").run()
+

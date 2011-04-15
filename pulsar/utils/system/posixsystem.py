@@ -24,8 +24,11 @@ def chown(path, uid, gid):
         
         
 def close_on_exec(fd):
-    flags = fcntl.fcntl(fd, fcntl.F_GETFD)
-    fcntl.fcntl(fd, fcntl.F_SETFD, flags | fcntl.FD_CLOEXEC)
+    try:
+        flags = fcntl.fcntl(fd, fcntl.F_GETFD)
+        fcntl.fcntl(fd, fcntl.F_SETFD, flags | fcntl.FD_CLOEXEC)
+    except:
+        pass
     
     
 def set_non_blocking(fd):

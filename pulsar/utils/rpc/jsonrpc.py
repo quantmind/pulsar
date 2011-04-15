@@ -15,12 +15,12 @@ import json
 from pulsar.utils.crypt import gen_unique_id
 from pulsar.utils.jsontools import DefaultJSONEncoder, DefaultJSONHook
 
-from .handlers import Handler
+from .handlers import RpcHandler
 #from unuk.http import httplib
 
 
 __all__ = ['JSONRPC',
-           'Proxy']
+           'JsonProxy']
 
 
 class JSONRPCException(Exception):
@@ -67,7 +67,7 @@ class JsonToolkit(object):
         return json.loads(content, object_hook=DefaultJSONHook)
 
 
-class JSONRPC(Handler):
+class JSONRPC(RpcHandler):
     '''Base class for JSON-RPC services.
 Design to comply with the `JSON-RPC 2.0`_ Specification.
 
@@ -129,10 +129,10 @@ Design to comply with the `JSON-RPC 2.0`_ Specification.
 Handle = JSONRPC
 
 
-class Proxy(object):
+class JsonProxy(object):
     '''A python Proxy class for JSONRPC Servers. Usage::
     
-    >>> a = Proxy('http://domain.name.com/')
+    >>> a = JsonProxy('http://domain.name.com/')
     >>> a.add(3,4)
     7
     

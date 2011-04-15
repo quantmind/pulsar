@@ -45,5 +45,6 @@ from .workers.workerpool import *
 from .workers.base import *
 from .workers.arbiter import *
 from .apps.base import Application, require
+from .utils.rpc import *
 
 

@@ -38,9 +38,9 @@ def create_socket(self):
         try:
             return sock_type(self.cfg)
         except socket.error as e:
-            if e[0] == errno.EADDRINUSE:
+            if e.errno == errno.EADDRINUSE:
                 self.log.error("Connection in use: %s" % str(addr))
-            if e[0] == errno.EADDRNOTAVAIL:
+            elif e.errno == errno.EADDRNOTAVAIL:
                 self.log.error("Invalid address: %s" % str(addr))
                 sys.exit(1)
             if i < 5:
