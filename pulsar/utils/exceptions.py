@@ -18,3 +18,7 @@ class HaltServer(PulsarInternetException):
     
     def __str__(self):
         return "<HaltServer %r %d>" % (self.reason, self.exit_status)
+    
+    
+class AlreadyCalledError(PulsarException):
+    '''Raised when a Deferred instance receives more than une callback'''

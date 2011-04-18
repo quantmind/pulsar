@@ -18,12 +18,12 @@ from pulsar.utils.pidfile import Pidfile
 from pulsar.utils import system
 from pulsar.utils.eventloop import MainIOLoop
 
-from .base import Arbiter, ThreadQueue
+from .arbiter import Arbiter
+from .base import ThreadQueue
 
 HaltServer = pulsar.HaltServer
 
 __all__ = ['Server']
-
 
 
 class Server(Arbiter):
@@ -34,7 +34,7 @@ via SIGHUP/USR2 if the platform allows it.
     WORKER_BOOT_ERROR = 3
     SIG_TIMEOUT = 0.001
     START_CTX = {}
-    EXIT_SIGNALS = (signal.SIGINT,signal.SIGTERM,signal.SIGKILL,signal.SIGABRT,system.SIGQUIT)
+    EXIT_SIGNALS = (signal.SIGINT,signal.SIGTERM,signal.SIGABRT,system.SIGQUIT)
     
     def __init__(self, app):
         super(Server,self).__init__(app)
@@ -129,7 +129,7 @@ via SIGHUP/USR2 if the platform allows it.
         """ halt arbiter """
         _msg = lambda x : x if not reason else '{0}: {1}'.format(x,reason)
         
-        if sig and sig is not signal.SIGKILL:
+        if sig:
             msg = _msg('Shutting down')
             self.close()
             status = 0
@@ -256,18 +256,3 @@ via SIGHUP/USR2 if the platform allows it.
         # manage workers
         self.manage_workers()
         
-    def server_info(self):
-        if not self.arbiter_started:
-            return
-        uptime = time.time() - self.arbiter_started
-        server = {'uptime':uptime,
-                  'version':pulsar.__version__,
-                  'name':pulsar.SERVER_NAME,
-                  'number_of_pools':len(self._pools),
-                  'event_loops':self.ioloop.num_loops,
-                  'socket':str(self.socket)}
-        pools = []
-        for p in self._pools:
-            pools.append(p.info())
-        return {'server':server,
-                'pools':pools}

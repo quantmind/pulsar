@@ -35,6 +35,7 @@ platform = system.platform
 from .utils.config import *
 from .workers.workerpool import *
 from .workers.base import *
+from .workers.arbiter import *
 from .workers.server import *
 from .apps.base import Application, require
 

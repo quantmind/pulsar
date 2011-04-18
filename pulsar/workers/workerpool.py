@@ -5,13 +5,48 @@ from multiprocessing import Pipe
 
 from pulsar import getLogger
 from pulsar.utils.py2py3 import iteritems
+from pulsar.utils.defer import RemoteProxy
 from pulsar.utils.exceptions import PulsarPoolAlreadyStarted
 from pulsar.http import get_httplib
 
-STOP_WORKER = b'STOP'
 
+__all__ = ['WorkerPool',
+           'PoolWorkerProxy']
+        
+        
+class PoolWorkerProxy(RemoteProxy):
+    '''A specialization of a :class:`RemoteProxy`. This class does not need to
+be serializable since it stays in the workerpool process domain.'''
+    remotes = ('stop',)
+    
+    def __init__(self, arbiter, worker, connection, log = None):
+        super(PoolWorkerProxy,self).__init__(connection,log=log)
+        self.arbiter = arbiter
+        self.worker = worker
+        self.notified = time.time()
+    
+    def __repr__(self):
+        return self.worker.__repr__()
+    
+    def __str__(self):
+        return self.worker.__str__()
+    
+    def is_alive(self):
+        return self.worker.is_alive()
+     
+    def terminate(self):
+        self.worker.terminate()
 
-__all__ = ['WorkerPool']
+    def join(self, timeout = 0):
+        self.worker.join(timeout)
+
+    # proxy Functions    
+    def proxy_notify(self, t):
+        self.notified = t
+        
+    def proxy_server_info(self):
+        '''Get server Info and send it back.'''
+        return self.arbiter.info()
 
 
 class HttpMixin(object):
@@ -20,17 +55,18 @@ class HttpMixin(object):
     def http(self):
         return get_httplib(self.cfg)
     
-
-
+    
 class WorkerPool(HttpMixin):
     '''\
 A pool of worker classes for performing asynchronous tasks and input/output
- 
+
+:parameter arbiter: the arbiter managing the pool. 
 :parameter worker_class: a Worker class derived form :class:`pulsar.Worker`
 :parameter num_workers: The number of workers in the pool.
 :parameter app: The working application
 :parameter timeout: Timeout in seconds for murdering unresponsive workers 
     '''
+    WORKER_PROXY = PoolWorkerProxy
     INITIAL = 0X0
     RUN = 0x1
     CLOSE = 0x2
@@ -41,14 +77,14 @@ A pool of worker classes for performing asynchronous tasks and input/output
               0x3:'terminated'}
     
     def __init__(self,
-                 ioloop,
+                 arbiter,
                  worker_class,
                  num_workers,
                  app = None,
                  timeout = 30,
                  socket = None):
         self.__state = self.INITIAL
-        self.ioloop = ioloop
+        self.arbiter = arbiter
         self.worker_class = worker_class
         self.num_workers = num_workers
         self.timeout = timeout or 0
@@ -89,15 +125,28 @@ A pool of worker classes for performing asynchronous tasks and input/output
         return self.worker_class.CommandQueue()
     
     @property
+    def ioloop(self):
+        return self.arbiter.ioloop
+    
+    @property
+    def multithread(self):
+        return self.worker_class.is_thread()
+    
+    @property
+    def multiprocess(self):
+        return self.worker_class.is_process()
+    
+    @property
     def pid(self):
         return os.getpid()
     
-    def arbiter(self):
+    def arbiter_task(self):
         if self.is_alive():
-            self.murder_workers()
             self.manage_workers()
+            self.spawn_workers()
+            self.stop_workers()
         elif self.started():
-            self.murder_workers()
+            self.manage_workers()
             #if not len(self.WORKERS) and self.__state == self.CLOSE:
             #    self.__state = self.INITIAL
         else:
@@ -112,20 +161,15 @@ A pool of worker classes for performing asynchronous tasks and input/output
             raise PulsarPoolAlreadyStarted('Already started')
     
     def clean_worker(self, wid):
-        proc = self.WORKERS.pop(wid)
-        command = proc['command_queue']
-        if hasattr(command,'close'):
-            command.close()
-            command.join_thread()
+        proxy = self.WORKERS.pop(wid)
+        proxy.close()
         
     def stop_worker(self, wid):
-        proc =  self.WORKERS[wid]
-        w = proc['worker']
-        if not w.is_alive():
+        proxy =  self.WORKERS[wid]
+        if not proxy.is_alive():
             self.clean_worker(wid)
         else:
-            c = proc['command_queue']
-            c.put(STOP_WORKER)
+            return proxy.stop()
         
     def close(self):
         '''Close the Pool by putting a STOP_WORKER command in the command queue
@@ -146,57 +190,51 @@ of each worker.'''
             self.close()
             if self.__state < self.TERMINATE:
                 self.__state = self.TERMINATE
-                for wid, proc in list(iteritems(self.WORKERS)):
-                    w = proc['worker']
-                    if not w.is_alive():
+                for wid, proxy in list(iteritems(self.WORKERS)):
+                    if not proxy.is_alive():
                         self.clean_worker(wid)
-                    w.terminate()
+                    else:
+                        proxy.terminate()
                 
     def join(self, timeout = 1):
         '''Join the pool, close or terminate must have been called before.'''
         if not self.stopped():
             raise ValueError('Cannot join worker pool. Must be stopped or terminated first.')
-        for wid, proc in list(iteritems(self.WORKERS)):
-            worker = proc['worker']
-            if not worker.is_alive():
+        for wid, proxy in list(iteritems(self.WORKERS)):
+            if not proxy.is_alive():
                 self.clean_worker(wid)
             else:
-                worker.join(timeout)
+                proxy.join(timeout)
                 
-    def murder_workers(self):
+    def manage_workers(self):
         """Murder workers to avoid zombie processes.
 A worker is murdered when it has not notify itself for a period longer than
 the pool timeout.
         """
         timeout = self.timeout
-        for wid, proc in list(iteritems(self.WORKERS)):
-            worker = proc['worker']
-            if not worker.is_alive():
+        for wid, proxy in list(iteritems(self.WORKERS)):
+            if not proxy.is_alive():
                 self.clean_worker(wid)
-            elif timeout:
-                connection = proc['reader']
-                notified = proc['notified']
-                while connection.poll():
-                    notified = connection.recv()
-                proc['notified'] = notified
-                gap = time.time() - notified
-                if gap > timeout:
-                    self.log.info('Terminating worker {0}. Timeout surpassed.'.format(worker))
-                    worker.terminate()
-                    worker.join()
+            else:
+                if timeout:
+                    gap = time.time() - proxy.notified
+                    if gap > timeout:
+                        self.log.info('Terminating worker {0}. Timeout surpassed.'.format(proxy))
+                        proxy.terminate()
+                        proxy.join()
+                        continue
+                proxy.flush()
         
-    def manage_workers(self):
+    def stop_workers(self):
         """Maintain the number of workers by spawning or killing
 as required."""
-        if len(self.WORKERS) < self.num_workers:
-            self.spawn_workers()
-
         num_to_kill = len(self.WORKERS) - self.num_workers
         for i in range(num_to_kill, 0, -1):
             kwid, kage = 0, sys.maxsize
-            for (wid, worker) in iteritems(self.WORKERS):
-                if worker['worker'].age < kage:
-                    kwid, kage = wid, worker['worker'].age
+            for wid, proxy in iteritems(self.WORKERS):
+                age = proxy.worker.age
+                if age < kage:
+                    kwid, kage = wid, age
             self.stop_worker(kwid)
             
     def spawn_workers(self):
@@ -206,14 +244,14 @@ as required."""
         This is where a worker process leaves the main loop
         of the master process.
         """
-        for i in range(self.num_workers - len(self.WORKERS)):
+        while len(self.WORKERS) < self.num_workers:
             self.spawn_worker()
             
     def spawn_worker(self):
         '''Spawn a new worker'''
         self.worker_age += 1
         worker_class = self.worker_class
-        pool_reader, pool_writer = Pipe(duplex = False)
+        worker_connection, pool_connection = Pipe()
         # Create the command queue
         command_queue = worker_class.CommandQueue()
         worker = worker_class(age = self.worker_age,
@@ -222,21 +260,22 @@ as required."""
                               app = self.app,
                               timeout = self.timeout/2.0,
                               cfg = self.cfg,
-                              pool_writer = pool_writer,
+                              pool_connection = pool_connection,
                               command_queue = command_queue,
                               task_queue = self.task_queue)
         if self.cfg.pre_fork:
             self.cfg.pre_fork(worker)
         worker.start()
+        if self.multiprocess:
+            pool_connection.close()
         wid = worker.wid
         if wid != 0:
-            self.WORKERS[wid] = {'worker':worker,
-                                 'reader':pool_reader,
-                                 'command_queue':command_queue,
-                                 'notified':time.time()}
+            self.WORKERS[wid] = self.WORKER_PROXY(self.arbiter,
+                                                  worker,
+                                                  worker_connection,
+                                                  log = self.log)
         
     def info(self):
         return {'worker_class':self.worker_class.code(),
                 'workers':len(self.WORKERS)}
-    
-    
+

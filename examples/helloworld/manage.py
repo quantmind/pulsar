@@ -1,4 +1,4 @@
-import pulsar
+from penv import pulsar
 
 def hello(environ, start_response):
     '''Pulsar HTTP "Hello World!" application'''

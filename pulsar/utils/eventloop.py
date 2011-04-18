@@ -82,6 +82,7 @@ When using the eventloop on a child process, It should be instantiated after for
         self._callbacks = []
         self._timeouts = []
         self._loop_tasks = WeakList()
+        self._started = None
         self._running = False
         self._stopped = False
         self.num_loops = 0
@@ -186,6 +187,7 @@ The object will be called at each iteration in the loop.'''
         if not self._startup():
             return False
         self.log.debug("Starting event loop")
+        self._started = time.time()
         while True:
             poll_timeout = self.POLL_TIMEOUT
             self.num_loops += 1

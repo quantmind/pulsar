@@ -1,7 +1,7 @@
 '''\
 A very simple JSON-RPC Calculator
 '''
-import pulsar
+from .penv import pulsar
 from pulsar.http import rpc
 
 class Calculator(rpc.JSONRPC):
@@ -10,8 +10,7 @@ class Calculator(rpc.JSONRPC):
         return 'pong'
     
     def rpc_server_info(self, request):
-        arbiter = self._pulsar_arbiter
-        return arbiter.server_info()
+        return self.server_proxy.server_info()
     
     def rpc_add(self, request, a, b):
         return float(a) + float(b)
@@ -26,11 +25,15 @@ class Calculator(rpc.JSONRPC):
         return float(a) / float(b)
 
 
-def server():
+def server(**params):
     wsgi = pulsar.require('wsgi')
-    return wsgi.createServer(callable = Calculator())
-    
+    return wsgi.createServer(callable = Calculator(), **params)
+
+
+def start():
+    server().start()
+
     
 if __name__ == '__main__':
-    server().start()
+    start()
 

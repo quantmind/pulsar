@@ -8,7 +8,8 @@ from multiprocessing import Process, Pipe
 from threading import Thread
 
 from pulsar.utils.eventloop import MainIOLoop
-from pulsar.utils.importer import import_module 
+from pulsar.utils.importer import import_module
+from pulsar.utils.defer import RemoteProxyObject 
 
 TextTestRunner = unittest.TextTestRunner
 
@@ -26,56 +27,24 @@ class Silence(logging.Handler):
 
 
 def setup_logging(verbosity):
+    '''Setup logging'''
     level = LOGGING_MAP.get(verbosity,None)
     if level is None:
         logger.addHandler(Silence())
     else:
         logger.addHandler(logging.StreamHandler())
         logger.setLevel(level)
-
-
-
-class callable_object(object):
-    
-    def __init__(self,obj,method):
-        self.obj = obj
-        self.method = method
-        
-    def __call__(self):
-        getattr(self.obj,self.method)()
-        
-class RunInProcess(object):
-    
-    def __init__(self,target,args,kwargs):
-        self.failed = False
-        self.done = False
-        self.result = None
-        target = self._wrap(target)
-        self.p = Process(target=target,args=args,kwargs=kwargs)
-        self.p.run()
-    
-    def _wrap(self, target):
-        def _(*args,**kwargs):
-            try:
-                self.result = target(*args,**kwargs)
-            except Exception as e:
-                self.failed = e
-            finally:
-                self.done = True
-        return _
-    
-    def wait(self, timeout = 5):
-        tim = time.time()
-        while tim - time.time() < timeout:
-            if self.done:
-                break
-            time.sleep(timeout*0.1)
-        if self.failed:
-            raise self.failed
-        return self.result
     
 
 class TestCase(unittest.TestCase):
+    '''A specialised test case which offers three
+additional functions:
+
+a) 'initTest' and 'endTests', called at the beginning and at the end
+of the tests declared in a derived class. Useful for starting a server
+to send requests to during tests.
+
+b) 'runInProcess' to run a callable in the main process.'''
     _suite = None
     
     def __init__(self, methodName=None):
@@ -94,33 +63,19 @@ class TestCase(unittest.TestCase):
     def sleep(self, timeout):
         time.sleep(timeout)
     
-    def runInProcess(self,obj,method,*args,**kwargs):
+    def runInProcess(self,method,*args,**kwargs):
         '''Run the target function into the main process'''
-        target = callable_object(obj,method)
-        self._suite.writer.send((target,args,kwargs))
-        
+        return self.suiterunner.run(method,*args,**kwargs)        
 
-    def initTest(self):
+    def initTests(self):
         pass
     
-    def endTest(self):
+    def endTests(self):
         pass
     
 
-class TestRunnerThread(Thread):
-    
-    def __init__(self, suite, verbosity):
-        Thread.__init__(self)
-        self.verbosity = verbosity
-        self.suite = suite
-    
-    def run(self):
-        self.result = TextTestRunner(verbosity = self.verbosity).run(self.suite)
-        ioloop = MainIOLoop.instance()
-        ioloop.stop()
-        
-        
 class TestSuite(unittest.TestSuite):
+    '''A test suite for the modified TestCase.'''
     loader = unittest.TestLoader()
     
     def addTest(self, test):
@@ -138,19 +93,19 @@ class TestSuite(unittest.TestSuite):
             if result.shouldStop:
                 break
             obj = test['obj']
-            init = getattr(obj,'initTest',None)
+            init = getattr(obj,'initTests',None)
             if init:
                 init()
             for t in test['tests']:
                 t(result)
-            end = getattr(obj,'endTest',None)
+            end = getattr(obj,'endTests',None)
             if end:
                 end()
         return result
         
         
-        
 class TestLoader(object):
+    '''Load test cases'''
     suiteClass = TestSuite
     
     def __init__(self, tags, testtype, extractors, itags):
@@ -159,8 +114,9 @@ class TestLoader(object):
         self.extractors = extractors
         self.itags = itags
         
-    def load(self, suite):
-        """Return a suite of all tests cases contained in the given module"""
+    def load(self, suiterunner):
+        """Return a suite of all tests cases contained in the given module.
+It injects the suiterunner proxy for comunication with the master process."""
         itags = self.itags or []
         tests = []
         for module in self.modules():
@@ -170,7 +126,7 @@ class TestLoader(object):
                     tag = getattr(obj,'tag',None)
                     if tag and not tag in itags:
                         continue
-                    obj._suite = suite
+                    obj.suiterunner = suiterunner
                     tests.append(obj)
         return self.suiteClass(tests)
     
@@ -200,15 +156,32 @@ class TestLoader(object):
                 logger.debug("Adding tests for %s" % app)
                 yield mod
             
+    
+class SuiteProxy(RemoteProxyObject):
+    remotes = ('result','run')
+    
+    def proxy_run(self, response):
+        '''The callback from the main process'''
+        
+
+class TestProxy(RemoteProxyObject):
+    
+    def proxy_result(self, result):
+        self.obj.result = result
+        self.obj.ioloop.stop()
+        
+    def proxy_run(self, method, *args, **kwargs):
+        result = method(*args,**kwargs)
+        return result
+        
             
 class TestingMixin(object):
     '''A Test suite which runs tests on a separate process while keeping the main process
 busy with the main event loop.'''
-    def __init__(self, tags, testtype, extractors, verbosity, itags, writer):
+    def __init__(self, tags, testtype, extractors, verbosity, itags, connection):
         self.verbosity = verbosity
-        self.writer = writer
+        self.suiterunner = connection
         self.loader = TestLoader(tags, testtype, extractors, itags)
-        self.ioloop = MainIOLoop.instance()
         
     def setup_test_environment(self):
         pass
@@ -217,14 +190,17 @@ busy with the main event loop.'''
         pass
     
     def run(self):
+        self.suiterunner = SuiteProxy(self,self.suiterunner)
         self.setup_test_environment()
-        self.suite = self.loader.load(self)
+        self.suite = self.loader.load(self.suiterunner)
         result = None
         try:
             result = TextTestRunner(verbosity = self.verbosity).run(self.suite)
         finally:
             self.teardown_test_environment()
-            self.result = result
+            if result:
+                result = len(result.failures) + len(result.errors)
+            self.suiterunner.result(result)
     
 
 class TestingProcess(TestingMixin,Process):
@@ -241,31 +217,29 @@ class TestingThread(TestingMixin,Thread):
         TestingMixin.__init__(self, *args)
         Thread.__init__(self)
         self.daemon = True
+        
     
-    
-class TestSuiteRunner(Process):
+class TestSuiteRunner(object):
+    # TestingRunner is a class where tests are run.
+    # Choose between a Thread or a Process.
     TestingRunner = TestingThread
     #TestingRunner = TestingProcess
     
     def __init__(self, tags, testtype, extractors, verbosity = 1, itags = None):
         setup_logging(verbosity)
-        self.connection, connection = Pipe()
-        self.runner = self.TestingRunner(tags, testtype, extractors, verbosity, itags, connection)
+        # Pipe for connection
+        a, connection = Pipe()
+        self.testproxy = TestProxy(self,a)
+        self.runner = self.TestingRunner(tags, testtype, extractors,
+                                         verbosity, itags, connection)
         self.ioloop = MainIOLoop.instance()
         self.ioloop.add_callback(self.runner.start)
         self.ioloop.add_loop_task(self)
         
     def run_tests(self):
         self.ioloop.start()
-        result = self.runner.result
-        if result:
-            return len(result.failures) + len(result.errors) 
+        return self.result 
         
     def __call__(self):
-        if hasattr(self.runner,'result'):
-            self.ioloop.stop()
-        else:
-            while self.connection.poll():
-                callable,args,kwargs = self.reader.recv()
-                callable(*args,**kwargs)
+        self.testproxy.flush()
             

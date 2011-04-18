@@ -12,7 +12,8 @@ import traceback
 import pulsar
 from pulsar.utils.py2py3 import execfile
 from pulsar.utils import system, colors
-from pulsar.utils.importer import import_module 
+from pulsar.utils.importer import import_module
+from pulsar.utils.defer import Remote 
 #from pulsar.utils import debug
 
 __all__ = ['Application',
@@ -29,7 +30,7 @@ def require(appname):
     return mod
 
 
-class Application(pulsar.PickableMixin):
+class Application(pulsar.PickableMixin, Remote):
     """\
     An application interface for configuring and loading
     the various necessities for any given server application
@@ -38,6 +39,7 @@ class Application(pulsar.PickableMixin):
                      The callable must be pickable, therefore it is either a function
                      or a pickable object.
     """
+    remotes = ('start','stop')
     ArbiterClass = pulsar.Server
     REMOVABLE_ATTRIBUTES = ('_pulsar_arbiter',)
     LOG_LEVELS = {
@@ -54,7 +56,7 @@ class Application(pulsar.PickableMixin):
         self.callable = callable
         self.load_config(**params)
         self._pulsar_arbiter = self.ArbiterClass(self)
-        
+    
     def add_timeout(self, deadline, callback):
         self.arbiter.ioloop.add_timeout(deadline, callback)
         
@@ -127,11 +129,10 @@ class Application(pulsar.PickableMixin):
         self.log.setLevel(loglevel)
         
     def handler(self):
-        '''Returns a callable application handler, used by a :class:`pulsar.Worker`
-to carry out its task.'''
+        '''Returns a callable application handler,
+used by a :class:`pulsar.Worker` to carry out its task.'''
         if self.callable is None:
             self.callable = self.load()
-        self.callable._pulsar_arbiter = self._pulsar_arbiter
         return self.callable
     
     def start(self):

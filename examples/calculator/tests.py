@@ -4,14 +4,19 @@ from pulsar.http import rpc
 from .manage import server
 
 
-
 class TestCalculatorExample(test.TestCase):
     
-    def initTest(self):
-        self.server = self.runInProcess(server(),'run')
+    def initTests(self):
+        self.runInProcess(server, worker_class = 'http_t')\
+            .add_callback(self.start_server)
         
-    def endTest(self):
-        self.server.stop()
+    def start_server(self, server):
+        self.server = server
+        self.server.start()
+        
+    def endTests(self):
+        pass
+        #self.server.stop()
         
     def setUp(self):
         self.p = rpc.JsonProxy('http://localhost:8060')

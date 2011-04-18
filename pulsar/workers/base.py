@@ -13,20 +13,21 @@ except ImportError:
     import Queue as queue
 ThreadQueue = queue.Queue
 
-from multiprocessing import Process
+from multiprocessing import Process, current_process
 from multiprocessing.queues import Queue, Empty
 from threading import current_thread, Thread
 
 import pulsar
+from pulsar.utils.defer import RemoteProxy
 from pulsar.utils.eventloop import IOLoop
 from pulsar.utils import system
 
-from .workerpool import WorkerPool, HttpMixin, STOP_WORKER
+from .workerpool import HttpMixin
 
 
 __all__ = ['Runner',
            'ThreadQueue',
-           'Arbiter',
+           'PoolProxy',
            'Worker',
            'WorkerThread',
            'WorkerProcess']
@@ -56,6 +57,11 @@ is called after fork by the run method.'''
     def get_ioimpl(self):
         '''Return the event-loop implementation. By default it returns ``None``.'''
         return None
+    
+    @property
+    def started(self):
+        if hasattr(self,'ioloop'):
+            return self.ioloop._started
         
     def set_proctitle(self):
         '''Set the process title'''
@@ -67,6 +73,9 @@ is called after fork by the run method.'''
     def current_thread(self):
         '''Return the current thread'''
         return current_thread()
+    
+    def current_process(self):
+        return current_process()
     
     def install_signals(self):
         '''Initialise signals for correct signal handling.'''
@@ -104,92 +113,21 @@ is called after fork by the run method.'''
         return isinstance(self,Thread)
         
 
-class Arbiter(Runner):
-    '''An Arbiter is an object which controls pools of workers'''
-    CLOSE_TIMEOUT = 3
-        
-    def __init__(self, app):
-        self.pid = None
-        self.socket = None
-        self.app = app
-        self.cfg = app.cfg
-        self.pidfile = None
-        self.arbiter_started = None
-        self.reexec_pid = 0
-        self._pools = []
-        self.address = self.cfg.address
-        self.debug = self.cfg.debug
-        # Create the listener if not available
-        if not self.socket and self.address:
-            self.socket = system.create_socket(self)
-        self.log = self.getLogger()
-        self.ioloop = self.get_eventloop()
-        self.ioloop.add_loop_task(self)
-        
-    def setup(self):
-        self.arbiter_started = time.time()
-        self.addpool(self.cfg, self.socket)
-        
-    def __repr__(self):
-        return self.__class__.__name__
+class PoolProxy(RemoteProxy):
+    remotes = ('notify','server_info')
     
-    def __str__(self):
-        return self.__repr__()
+    def __init__(self, worker):
+        self.worker = worker
+        super(PoolProxy,self).__init__(worker._pool_proxy,
+                                       log = worker.log)
     
-    def __call__(self):
-        sig = self.arbiter()
-        if sig is None:
-            for pool in self._pools:
-                pool.arbiter()
-        
-    def arbiter(self):
-        return None
-    
-    def addpool(self, cfg, socket = None, start = False):
-        worker_class = cfg.worker_class
-        pool = WorkerPool(self.ioloop,
-                          worker_class,
-                          cfg.workers,
-                          app = self.app,
-                          timeout = cfg.timeout,
-                          socket = socket)
-        self._pools.append(pool)
-        if start:
-            pool.start()
-    
-    def start(self):
-        self.run()
-    
-    def run(self):
-        self.init_process()
-        
-    def _run(self):
-        self.ioloop.start()
-        
-    def is_alive(self):
-        return self.ioloop.running()
-    
-    def stop(self):
-        '''Alias of :meth:`close`'''
-        self.close()
-        
-    def close(self):
-        '''Stop the pools and the arbiter event loop.'''
-        if self._pools:
-            for pool in self._pools:
-                pool.close()
+    def proxy_server_info(self, info):
+        pass
                 
-            #timeout = self.CLOSE_TIMEOUT / float(len(self._pools))
-            timeout = self.CLOSE_TIMEOUT
-            for pool in self._pools:
-                pool.join(timeout)
-    
-    def terminate(self):
-        '''Force termination of pools and close arbiter event loop'''
-        for pool in self._pools:
-            pool.terminate()
+    def proxy_stop(self):
+        self.worker._stop()
         
-    
+
 
 class Worker(Runner, HttpMixin):
     """\
@@ -231,24 +169,23 @@ in ``self.setup()``.
                  ppid = None,
                  socket = None,
                  app = None,
-                 pool_writer = None,
+                 pool_connection = None,
                  timeout = None,
-                 command_queue = None,
                  cfg = None,
                  logger = None,
                  command_timeout = None,
                  task_queue = None,
                  **kwargs):
         self.age = age
+        self.notified = time.time()
         self.ppid = ppid
         self.nr = 0
         self.max_requests = getattr(cfg,'max_requests',None) or sys.maxsize
         self.debug = getattr(cfg,'debug',False)
         self.timeout = timeout
         self.cfg = cfg
-        self.command_queue = command_queue
         self.task_queue = task_queue
-        self.pool_writer = pool_writer
+        self._pool_proxy = pool_connection
         self.COMMAND_TIMEOUT = command_timeout if command_timeout is not None else self.COMMAND_TIMEOUT
         self.set_listener(socket, app)
     
@@ -266,28 +203,22 @@ event loop of the arbiter if required.
     def clean_arbiter_loop(cls, wp, ioloop):
         pass
     
+    @classmethod
+    def is_thread(cls):
+        return issubclass(cls,Thread)
+    
+    @classmethod
+    def is_process(cls):
+        return issubclass(cls,Process)
+    
     def _run(self):
         self.ioloop.start()
     
     def _stop(self):
         if self.ioloop.running():
-            if hasattr(self.command_queue,'close'):
-                self.command_queue.close()
-                self.command_queue.join_thread()
-            self.command_queue = None
+            self._pool_proxy.close()
             self.ioloop.stop()
-                
-    def check_pool_commands(self):
-        if self.command_queue:
-            while True:
-                try:
-                    c = self.command_queue.get(timeout = self.COMMAND_TIMEOUT)
-                except Empty:
-                    break
-                if c == STOP_WORKER:
-                    self._stop()
-                    break
-    
+        
     def set_listener(self, socket, app):
         self.socket = socket
         self.address = None if not socket else socket.getsockname()
@@ -304,14 +235,6 @@ stop the event loop and exit.'''
             self.log.info("Auto-restarting worker after current request.")
             self._stop()
     
-    def notify(self):
-        """\
-        Your worker subclass must arrange to have this method called
-        once every ``self.timeout`` seconds. If you fail in accomplishing
-        this task, the master process will murder your workers.
-        """
-        self.pool_writer.send(time.time())
-
     def reseed(self):
         pass
     
@@ -319,22 +242,26 @@ stop the event loop and exit.'''
         '''Called after fork, it set ups the application handler
 and perform several post fork processing before starting the event loop.'''
         self.log = self.getLogger()
+        # Create the Pool Proxy object
+        self._pool_proxy = PoolProxy(self)
         self.ioloop = self.get_eventloop()
         if self.cfg:
             system.set_owner_process(self.cfg.uid, self.cfg.gid)
         self.reseed()
         self.log.info('Booting worker "{0}"'.format(self.wid))
+        # Get the Application handler
         self.handler = self.app.handler()
+        self.handler.server_proxy = self._pool_proxy
         self.ioloop.add_loop_task(self)
         if self.cfg.post_fork:
             self.cfg.post_fork(self)
         
     def __call__(self):
         '''Tasks to be performed at each iteration of the event loop'''
-        if self.pool_writer is not None:
-            self.notify()
-        if self.command_queue is not None:
-            self.check_pool_commands()
+        p = self._pool_proxy
+        if p:
+            p.notify(time.time())
+            p.flush()                
         
     def handle_request(self, fd, req):
         '''Handle request. A worker class must implement the ``_handle_request``
