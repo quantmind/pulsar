@@ -47,8 +47,9 @@ class HttpHandler(object):
                 return
         except StopIteration:
             close(client)
-            self.log.debug("Ignored premature client disconnection.")
-            
+            self.worker.log.debug("Ignored premature client disconnection.")
+            return
+        
         self.handle(fd, req)
 
     def handle(self, fd, req):

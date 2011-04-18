@@ -28,7 +28,6 @@ from .utils.log import *
 SERVER_SOFTWARE = "python-{0}/{1}".format(SERVER_NAME,get_version())
 
 from .utils.exceptions import *
-from .utils import test
 from .utils import system
 from .utils.py2py3 import ispy3k, to_string, is_string
 platform = system.platform
@@ -36,7 +35,9 @@ platform = system.platform
 from .utils.config import *
 from .workers.workerpool import *
 from .workers.base import *
-from .workers.arbiter import *
+from .workers.server import *
 from .apps.base import Application, require
+
+from .utils import test
 
 

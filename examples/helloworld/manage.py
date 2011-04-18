@@ -12,10 +12,10 @@ def hello(environ, start_response):
     return iter([data])
 
 
-def run(**kwargs):
+def server(**kwargs):
     wsgi = pulsar.require('wsgi')
-    return wsgi.createServer(callable = hello, **kwargs).run()
+    return wsgi.createServer(callable = hello, **kwargs)
     
     
 if __name__ == '__main__':
-    run()
+    server().start()

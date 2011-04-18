@@ -14,9 +14,11 @@ import json
 
 from pulsar.utils.crypt import gen_unique_id
 from pulsar.http import HttpClient
+from pulsar.http.utils import to_string
 from pulsar.utils.jsontools import DefaultJSONEncoder, DefaultJSONHook
 
 from .handlers import RpcHandler
+from .exceptions import exception, INTERNAL_ERROR
 
 
 __all__ = ['JSONRPC',
@@ -64,7 +66,7 @@ class JsonToolkit(object):
     
     @classmethod
     def loads(cls, content):
-        return json.loads(content, object_hook=DefaultJSONHook)
+        return json.loads(to_string(content), object_hook=DefaultJSONHook)
 
 
 class JSONRPC(RpcHandler):
@@ -72,6 +74,7 @@ class JSONRPC(RpcHandler):
 Design to comply with the `JSON-RPC 2.0`_ Specification.
 
 .. _`JSON-RPC 2.0`: http://groups.google.com/group/json-rpc/web/json-rpc-2-0'''
+    content_type = 'text/json'
     _json = JsonToolkit
         
     def get_method_and_args(self, data):
@@ -96,8 +99,7 @@ Design to comply with the `JSON-RPC 2.0`_ Specification.
         res = {'id': id, "jsonrpc": version}
         
         if error:
-            self.log.error(error)
-            res['error'] = {'code':  getattr(error,'code',-32602),
+            res['error'] = {'code':  getattr(error,'faultCode',INTERNAL_ERROR),
                             'message': str(error),
                             'data': getattr(error,'data','')}
         else:
@@ -212,14 +214,14 @@ class JsonProxy(object):
         if self.__version:
             data['jsonrpc'] = self.__version
         body = self._json.dumps(data)
-        resp,content = self._http.request(self.__url,
-                                           method = "POST",
-                                           body = body)
+        resp = self._http.request(self.__url,
+                                  method = "POST",
+                                  body = body)
         if resp.status == 200:
             if raw:
-                return content
+                return resp.content
             else:
-                return self.loads(content)
+                return self.loads(resp.content)
         else:
             raise IOError(resp.reason)
         
@@ -244,7 +246,7 @@ class JsonProxy(object):
                 error = res['error']
                 code    = error.get('code',None)
                 message = error.get('message',None)
-                raise exceptions.error(code, message)
+                raise exception(code, message)
             else:
                 return res.get('result',None)
         return res

@@ -21,12 +21,12 @@ import pulsar
 from pulsar.utils.eventloop import IOLoop
 from pulsar.utils import system
 
-from .workerpool import HttpMixin, STOP_WORKER
+from .workerpool import WorkerPool, HttpMixin, STOP_WORKER
 
 
 __all__ = ['Runner',
            'ThreadQueue',
-           'ArbiterBase',
+           'Arbiter',
            'Worker',
            'WorkerThread',
            'WorkerProcess']
@@ -45,15 +45,13 @@ class Runner(pulsar.PickableMixin):
 will block the current thread since it enters the event loop.
 If the runner is a instance of a subprocess, this function
 is called after fork by the run method.'''
-        self.log = self.getLogger()
-        self.ioloop = self.get_eventloop()
         self.set_proctitle()
         self.setup()
         self.install_signals()
         self._run()
         
     def get_eventloop(self):
-        return IOLoop(impl = self.get_ioimpl(), logger = self.log)
+        return IOLoop(impl = self.get_ioimpl(), logger = pulsar.LogSelf(self,self.log))
         
     def get_ioimpl(self):
         '''Return the event-loop implementation. By default it returns ``None``.'''
@@ -61,12 +59,10 @@ is called after fork by the run method.'''
         
     def set_proctitle(self):
         '''Set the process title'''
-        if not self.isthread:
-            if self.cfg:
-                proc_name = self.cfg.proc_name
-            else:
-                proc_name = self.DEF_PROC_NAME
-            system.set_proctitle("{0} - {1}".format(proc_name,self))
+        if not self.isthread and hasattr(self,'cfg'):
+            proc_name = self.cfg.proc_name or self.cfg.default_proc_name
+            if proc_name:
+                system.set_proctitle("{0} - {1}".format(proc_name,self))
         
     def current_thread(self):
         '''Return the current thread'''
@@ -76,10 +72,10 @@ is called after fork by the run method.'''
         '''Initialise signals for correct signal handling.'''
         current = self.current_thread()
         if current == _main_thread and not self.isthread:
-            self.log.debug('Installing signals')
+            self.log.info('Installing signals')
             sfun = getattr(self,'signal',None)
             for name in system.ALL_SIGNALS:
-                func = getattr(self,'handle_{0}'.format(name),sfun)
+                func = getattr(self,'handle_{0}'.format(name.lower()),sfun)
                 if func:
                     sig = getattr(signal,'SIG{0}'.format(name))
                     signal.signal(sig, func)
@@ -108,7 +104,58 @@ is called after fork by the run method.'''
         return isinstance(self,Thread)
         
 
-class ArbiterBase(Runner):
+class Arbiter(Runner):
+    '''An Arbiter is an object which controls pools of workers'''
+    CLOSE_TIMEOUT = 3
+        
+    def __init__(self, app):
+        self.pid = None
+        self.socket = None
+        self.app = app
+        self.cfg = app.cfg
+        self.pidfile = None
+        self.arbiter_started = None
+        self.reexec_pid = 0
+        self._pools = []
+        self.address = self.cfg.address
+        self.debug = self.cfg.debug
+        # Create the listener if not available
+        if not self.socket and self.address:
+            self.socket = system.create_socket(self)
+        self.log = self.getLogger()
+        self.ioloop = self.get_eventloop()
+        self.ioloop.add_loop_task(self)
+        
+    def setup(self):
+        self.arbiter_started = time.time()
+        self.addpool(self.cfg, self.socket)
+        
+    def __repr__(self):
+        return self.__class__.__name__
+    
+    def __str__(self):
+        return self.__repr__()
+    
+    def __call__(self):
+        sig = self.arbiter()
+        if sig is None:
+            for pool in self._pools:
+                pool.arbiter()
+        
+    def arbiter(self):
+        return None
+    
+    def addpool(self, cfg, socket = None, start = False):
+        worker_class = cfg.worker_class
+        pool = WorkerPool(self.ioloop,
+                          worker_class,
+                          cfg.workers,
+                          app = self.app,
+                          timeout = cfg.timeout,
+                          socket = socket)
+        self._pools.append(pool)
+        if start:
+            pool.start()
     
     def start(self):
         self.run()
@@ -116,8 +163,32 @@ class ArbiterBase(Runner):
     def run(self):
         self.init_process()
         
+    def _run(self):
+        self.ioloop.start()
+        
     def is_alive(self):
         return self.ioloop.running()
+    
+    def stop(self):
+        '''Alias of :meth:`close`'''
+        self.close()
+        
+    def close(self):
+        '''Stop the pools and the arbiter event loop.'''
+        if self._pools:
+            for pool in self._pools:
+                pool.close()
+                
+            #timeout = self.CLOSE_TIMEOUT / float(len(self._pools))
+            timeout = self.CLOSE_TIMEOUT
+            for pool in self._pools:
+                pool.join(timeout)
+    
+    def terminate(self):
+        '''Force termination of pools and close arbiter event loop'''
+        for pool in self._pools:
+            pool.terminate()
+        
     
 
 class Worker(Runner, HttpMixin):
@@ -200,18 +271,22 @@ event loop of the arbiter if required.
     
     def _stop(self):
         if self.ioloop.running():
-            self.command_queue.close()
+            if hasattr(self.command_queue,'close'):
+                self.command_queue.close()
+                self.command_queue.join_thread()
+            self.command_queue = None
             self.ioloop.stop()
                 
     def check_pool_commands(self):
-        while True:
-            try:
-                c = self.command_queue.get(timeout = self.COMMAND_TIMEOUT)
-            except Empty:
-                break
-            if c == STOP_WORKER:
-                self._stop()
-                break
+        if self.command_queue:
+            while True:
+                try:
+                    c = self.command_queue.get(timeout = self.COMMAND_TIMEOUT)
+                except Empty:
+                    break
+                if c == STOP_WORKER:
+                    self._stop()
+                    break
     
     def set_listener(self, socket, app):
         self.socket = socket
@@ -243,13 +318,15 @@ stop the event loop and exit.'''
     def setup(self):
         '''Called after fork, it set ups the application handler
 and perform several post fork processing before starting the event loop.'''
+        self.log = self.getLogger()
+        self.ioloop = self.get_eventloop()
         if self.cfg:
             system.set_owner_process(self.cfg.uid, self.cfg.gid)
         self.reseed()
         self.log.info('Booting worker "{0}"'.format(self.wid))
         self.handler = self.app.handler()
         self.ioloop.add_loop_task(self)
-        if self.cfg:
+        if self.cfg.post_fork:
             self.cfg.post_fork(self)
         
     def __call__(self):
@@ -273,15 +350,14 @@ method.'''
             except:
                 pass
     
-    def handle_int(self, sig, frame):
+    def signal_stop(self, sig, frame):
         signame = system.SIG_NAMES.get(sig,None)
-        self.log.info('Received signal {0}. Exiting.'.format(signame))
-        self.alive = False
+        self.log.warning('Received signal {0}. Exiting.'.format(signame))
+        self._stop()
         
-    def handle_quit(self, sig, frame):
-        signame = system.SIG_NAMES.get(sig,None)
-        self.log.info('Received signal {0}. Exiting.'.format(signame))
-        self.alive = False
+    handle_int  = signal_stop
+    handle_quit = signal_stop
+    handle_term = signal_stop
     
     def get_parent_id(self):
         return os.getpid()
@@ -292,8 +368,7 @@ method.'''
 
 
 def runworker(self):
-    """Called in the subprocess, if this is a subprocess worker, or
-in thread if a Thread Worker."""
+    """Run the worker, in suprocess or therad."""
     try:
         self.init_process()
     except SystemExit:
@@ -301,7 +376,7 @@ in thread if a Thread Worker."""
     except Exception as e:
         self.log.exception("Exception in worker {0}: {1}".format(self,e))
     finally:
-        self.log.info("Worker exiting {0}".format(self))
+        self.log.info("exiting {0}".format(self))
         try:
             self.cfg.worker_exit(self)
         except:

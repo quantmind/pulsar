@@ -1,7 +1,8 @@
 #!/usr/bin/env python
 import os
 import sys
-from optparse import OptionParser 
+from optparse import OptionParser
+from pulsar import test
 
 
 def makeoptions():
@@ -57,7 +58,6 @@ def run():
     '''To perform preprocessing before tests add a cfg.py module'''
     dirs = (('examples',ExampleExtractor),
             ('tests',TestExtractor))
-    from tests.control import run
     try:
         import cfg
     except ImportError:
@@ -72,15 +72,14 @@ def run():
         if p not in sys.path:
             sys.path.insert(0, p)
         running_tests.append(c(p))
-    
+        
     #if options.proxy:
     #    settings.proxies['http'] = options.proxy
-    
-    run(tags,
-        options.test_type,
-        directories = running_tests,
-        verbosity=options.verbosity,
-        show_list=options.show_list)
+    runner  = test.TestSuiteRunner(tags,
+                                   options.test_type,
+                                   running_tests,
+                                   verbosity = options.verbosity)
+    runner.run_tests()
 
 
 if __name__ == '__main__':

@@ -9,6 +9,10 @@ class Calculator(rpc.JSONRPC):
     def rpc_ping(self, request):
         return 'pong'
     
+    def rpc_server_info(self, request):
+        arbiter = self._pulsar_arbiter
+        return arbiter.server_info()
+    
     def rpc_add(self, request, a, b):
         return float(a) + float(b)
     
@@ -22,11 +26,11 @@ class Calculator(rpc.JSONRPC):
         return float(a) / float(b)
 
 
-def run():
+def server():
     wsgi = pulsar.require('wsgi')
-    wsgi.createServer(callable = Calculator()).run()
+    return wsgi.createServer(callable = Calculator())
     
     
 if __name__ == '__main__':
-    run()
+    server().start()
 

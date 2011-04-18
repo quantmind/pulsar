@@ -12,9 +12,9 @@ class PulsarPoolAlreadyStarted(PulsarException):
     
 class HaltServer(PulsarInternetException):
     
-    def __init__(self, reason, exit_status=1):
+    def __init__(self, reason, signal=None):
         self.reason = reason
-        self.exit_status = exit_status
+        self.signal = signal
     
     def __str__(self):
         return "<HaltServer %r %d>" % (self.reason, self.exit_status)

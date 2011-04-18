@@ -1,34 +1,13 @@
 import logging
-import weakref
 import time
 import signal
 import threading
 import errno
+import bisect
 from multiprocessing import Pipe
 
 from .system import IObase, IOpoll, close_on_exec, platform
-
-
-class WeakList(object):
-    
-    def __init__(self):
-        self._list = []
-        
-    def append(self, obj):
-        if obj:
-            self._list.append(weakref.ref(obj))
-        
-    def __iter__(self):
-        if self._list:
-            ol = self._list
-            nl = self._list = []
-            for v in ol:
-                obj = v()
-                if obj:
-                    nl.append(v)
-                    yield obj
-        else:
-            raise StopIteration
+from .collections import WeakList
 
 
 def file_descriptor(fd):
@@ -105,6 +84,7 @@ When using the eventloop on a child process, It should be instantiated after for
         self._loop_tasks = WeakList()
         self._running = False
         self._stopped = False
+        self.num_loops = 0
         '''Called when when the child process is forked'''
         self._blocking_signal_threshold = None
         if platform.type == 'posix':
@@ -120,6 +100,8 @@ When using the eventloop on a child process, It should be instantiated after for
             self.log.debug("Got wake up data {0}".format(r.recv()))
 
     def add_loop_task(self, task):
+        '''Add a callable object to self.
+The object will be called at each iteration in the loop.'''
         self._loop_tasks.append(task)
         
     def add_handler(self, fd, handler, events):
@@ -138,12 +120,13 @@ When using the eventloop on a child process, It should be instantiated after for
 
     def remove_handler(self, fd):
         """Stop listening for events on fd."""
-        self._handlers.pop(fd, None)
-        self._events.pop(fd, None)
+        fdd = file_descriptor(fd)
+        self._handlers.pop(fdd, None)
+        self._events.pop(fdd, None)
         try:
-            self._impl.unregister(fd)
+            self._impl.unregister(fdd)
         except (OSError, IOError):
-            logging.debug("Error deleting fd from IOLoop", exc_info=True)
+            self.log.debug("Error deleting {0} from IOLoop".format(fd), exc_info=True)
 
     def set_blocking_signal_threshold(self, seconds, action):
         """Sends a signal if the ioloop is blocked for more than s seconds.
@@ -202,10 +185,10 @@ When using the eventloop on a child process, It should be instantiated after for
         """
         if not self._startup():
             return False
-        self.log.info("Starting event loop")
+        self.log.debug("Starting event loop")
         while True:
             poll_timeout = self.POLL_TIMEOUT
-
+            self.num_loops += 1
             # Prevent IO event starvation by delaying new callbacks
             # to the next iteration of the event loop.
             callbacks = self._callbacks
@@ -227,7 +210,7 @@ When using the eventloop on a child process, It should be instantiated after for
                     poll_timeout = min(milliseconds, poll_timeout)
 
             if not self.running():
-                self.log.info('Exiting event loop')
+                self.log.debug('Exiting event loop')
                 break
 
             self.do_loop_tasks()
@@ -297,7 +280,7 @@ When using the eventloop on a child process, It should be instantiated after for
         ioloop.start() will return after async_method has run its callback,
         whether that callback was invoked before or after ioloop.start.
         """
-        self.log.info("Stopping event loop")
+        self.log.debug("Stopping event loop")
         self._running = False
         self._stopped = True
         self._wake()
@@ -315,7 +298,7 @@ When using the eventloop on a child process, It should be instantiated after for
 
         Returns a handle that may be passed to remove_timeout to cancel.
         """
-        timeout = _Timeout(deadline, stack_context.wrap(callback))
+        timeout = _Timeout(deadline, callback)
         bisect.insort(self._timeouts, timeout)
         return timeout
 
@@ -365,7 +348,7 @@ When using the eventloop on a child process, It should be instantiated after for
         The exception itself is not passed explicitly, but is available
         in sys.exc_info.
         """
-        logging.error("Exception in callback %r", callback, exc_info=True)
+        self.log.error("Exception in callback %r", callback, exc_info=True)
 
 
 class MainIOLoop(IOLoop):

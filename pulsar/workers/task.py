@@ -4,9 +4,9 @@ from .base import WorkerProcess, updaterequests
 
     
 class IOQueue(system.EpollProxy):
-    '''The polling mechanism for a task queue. No select or epoll performed, simply
-get tasks from the districuted task queue.
-This is an interface for using the same IOLoop class as other workers.'''
+    '''The polling mechanism for a task queue. No select or epoll performed here, simply
+return task from the queue if available.
+This is an interface for using the same IOLoop class of other workers.'''
     def __init__(self, queue = None):
         super(IOQueue,self).__init__()
         self._queue = queue

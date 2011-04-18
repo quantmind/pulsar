@@ -34,6 +34,7 @@ if sys.version_info < (2, 7, 0, 'final'):
 else:
     _readinto = None
 
+
 class HttpBodyReader(io.RawIOBase):
     """ Raw implementation to stream http body """
 
@@ -77,6 +78,7 @@ class HttpBodyReader(io.RawIOBase):
         io.RawIOBase.close(self)
         self.http_stream = None
 
+
 class IterReader(io.RawIOBase):
     """ A raw reader implementation for iterable """
     def __init__(self, iterable):
@@ -107,6 +109,7 @@ class IterReader(io.RawIOBase):
             return
         io.RawIOBase.close(self)
         self.iter = None
+
 
 class StringReader(IterReader):
     """ a raw reader for strings or StringIO.StringIO,

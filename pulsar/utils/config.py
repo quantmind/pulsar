@@ -9,7 +9,7 @@ import os
 import textwrap
 import types
 
-from pulsar import __version__
+from pulsar import __version__, SERVER_NAME
 from pulsar.utils import system
 from pulsar.utils.py2py3 import *
 
@@ -632,7 +632,7 @@ class DefaultProcName(Setting):
     name = "default_proc_name"
     section = "Process Naming"
     validator = validate_string
-    default = "pulsar"
+    default = SERVER_NAME
     desc = """\
         Internal setting that is adjusted for each type of application.
         """

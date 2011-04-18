@@ -32,8 +32,14 @@ def require(appname):
 class Application(pulsar.PickableMixin):
     """\
     An application interface for configuring and loading
-    the various necessities for any given web framework.
+    the various necessities for any given server application
+    
+:parameter callable: A callable which return the application server.
+                     The callable must be pickable, therefore it is either a function
+                     or a pickable object.
     """
+    ArbiterClass = pulsar.Server
+    REMOVABLE_ATTRIBUTES = ('_pulsar_arbiter',)
     LOG_LEVELS = {
         "critical": logging.CRITICAL,
         "error": logging.ERROR,
@@ -42,11 +48,19 @@ class Application(pulsar.PickableMixin):
         "debug": logging.DEBUG
     }
     
-    def __init__(self, usage=None, callable = None, **params):
+    def __init__(self, callable = None, usage=None, cfg = None, **params):
         self.usage = usage
-        self.cfg = None
+        self.cfg = cfg
         self.callable = callable
         self.load_config(**params)
+        self._pulsar_arbiter = self.ArbiterClass(self)
+        
+    def add_timeout(self, deadline, callback):
+        self.arbiter.ioloop.add_timeout(deadline, callback)
+        
+    @property
+    def arbiter(self):
+        return self._pulsar_arbiter
         
     def load_config(self, **params):
         '''Load the application configuration'''
@@ -117,9 +131,11 @@ class Application(pulsar.PickableMixin):
 to carry out its task.'''
         if self.callable is None:
             self.callable = self.load()
+        self.callable._pulsar_arbiter = self._pulsar_arbiter
         return self.callable
     
-    def run(self):
+    def start(self):
+        '''Start the application'''
         if self.cfg.daemon:
             system.daemonize()
         else:
@@ -128,17 +144,20 @@ to carry out its task.'''
             except OSError as e:
                 if e[0] != errno.EPERM:
                     raise
-                    
+        
         self.configure_logging()
         try:
-            arbiter = pulsar.Arbiter(self)
-            self.arbiter = arbiter
-            arbiter.start()
+            self._pulsar_arbiter.start()
             return self
         except RuntimeError as e:
             sys.stderr.write("\nError: %s\n\n" % e)
             sys.stderr.flush()
             sys.exit(1)
+            
+    def stop(self):
+        arbiter = getattr(self,'_pulsar_arbiter',None)
+        if arbiter:
+            arbiter.stop()
     
     def configure_logging(self):
         """\

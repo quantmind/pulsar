@@ -13,6 +13,9 @@ import sys
 from pulsar.http.globals import *
 
 
+MAXSIZE = sys.maxsize
+
+
 class ChunkedReader(object):
     
     def __init__(self, req, unreader):
@@ -109,21 +112,18 @@ class ChunkedReader(object):
             raise NoMoreData()
         buf.write(data)
 
+
 class LengthReader(object):
     def __init__(self, unreader, length):
         self.unreader = unreader
         self.length = length
     
     def read(self, size):
-        if not isinstance(size, (int, long)):
-            raise TypeError("size must be an integral type")
-        
         size = min(self.length, size)
         if size < 0:
             raise ValueError("Size must be positive.")
         if size == 0:
             return ""
-        
         
         buf = BytesIO()
         data = self.unreader.read()
@@ -192,11 +192,11 @@ class Body(object):
 
     def getsize(self, size):
         if size is None:
-            return sys.maxint
+            return MAXSIZE
         elif not isinstance(size, (int, long)):
             raise TypeError("size must be an integral type")
         elif size < 0:
-            return sys.maxint
+            return MAXSIZE
         return size
     
     def read(self, size=None):

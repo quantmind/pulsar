@@ -27,6 +27,14 @@ class Response(object):
         self.response = response
         
     @property
+    def status(self):
+        return self.response.code
+    
+    @property
+    def reason(self):
+        return self.response.reason
+    
+    @property
     def content(self):
         if not hasattr(self,'_content'):
             self._content = self.response.read()

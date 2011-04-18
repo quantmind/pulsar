@@ -1,10 +1,10 @@
 import sys
 import logging
-import inspect
-from datetime import datetime
 
 from pulsar import PickableMixin
-from .exceptions import NoSuchFunction
+from pulsar.utils.tools import checkarity
+
+from .exceptions import NoSuchFunction, InvalidParams
 
 __all__ = ['RpcHandler']
 
@@ -17,27 +17,54 @@ class RpcResponse(object):
         self.path = path
         self.func = func
     
-    @property    
+    @property
     def name(self):
         return self.func.__name__
+    
+    @property
+    def content_type(self):
+        return self.handler.content_type
     
     def __repr__(self):
         return self.func.__name__
         
-    def __call__(self, request, *args, **kwargs):
-        log = self.handler.log
-        log.info('Requesting function "{0}"'.format(self.path))
+    def info(self, request, id, msg, ok = True):
+        '''Do something with the message and request'''
+        self.handler.log.info(msg)
+        
+    def critical(self, request, id, e):
+        msg = 'Unhandled server exception %s: %s' % (e.__class__.__name__,e)
+        self.handler.log.critical(msg,exc_info=sys.exc_info)
+        raise InternalError(msg)
+    
+    def __call__(self, request, id, version, *args, **kwargs):
         try:
-            deco = self.handler.wrap_function_decorator
-            return deco(self, request, *args, **kwargs)
+            if not self.func:
+                msg = 'Function "{0}" not available.'.format(self.path)
+                self.info(request,id,msg,False)
+                raise NoSuchFunction(msg)
+            try:
+                deco = self.handler.wrap_function_decorator
+                result = deco(self, request, *args, **kwargs)
+            except TypeError as e:
+                msg = checkarity(self.func,args,kwargs,discount=2)
+                if msg:
+                    self.info(request,id,'Invalid Parameters in rpc function: {0}'.format(msg),False)
+                    raise InvalidParams(msg)
+                else:
+                    self.critical(request,id,e)
+            except Exception as e:
+                self.critical(request,id,e)
+            result = self.handler.dumps(id,version,result=result)
+            self.info(request,id,'Successfully handled rcp function "{0}"'.format(self.path))
+            return result
         except Exception as e:
-            log.critical('Unhandled exception %s: %s' % (e.__class__.__name__,e),
-                         exc_info=sys.exc_info)
-            raise
+            return self.handler.dumps(id,version,error=e)
+            
     
 
 class MetaRpcHandler(type):
-    '''A metaclass for rpc handlers'''
+    '''A metaclass for rpc handlers. Add a limited ammount of magic to RPC handlers.'''
     def __new__(cls, name, bases, attrs):
         make = super(MetaRpcHandler, cls).__new__
         if attrs.pop('virtual',None):
@@ -96,13 +123,15 @@ separated with a '.'. Override self.separator to change this.
                  **kwargs):
         self.route = route if route is not None else self.route
         self.subHandlers = {}
-        self.started = datetime.now()
         self.log = self.getLogger(**kwargs)
         if subhandlers:
             for route,handler in subhandlers.items():
                 if inspect.isclass(handler):
                     handler = handler(http = self.http)
                 self.putSubHandler(route, handler)
+    
+    def get_method_and_args(self, data):
+        raise NotImplementedError
     
     def __getitem__(self, path):
         return self._getFunction(path)
@@ -146,7 +175,7 @@ separated with a '.'. Override self.separator to change this.
         try:
             func = handler.rpcfunctions[method]
         except:
-            raise NoSuchFunction("function %s not found" % method)
+            func = None
         return self.RESPONSE(handler,method,func)
 
     def invokeServiceEndpoint(self, meth, args):
@@ -156,18 +185,18 @@ separated with a '.'. Override self.separator to change this.
         return self.rpcfunctions.keys()
     
     def __call__(self, environ, start_response):
-        '''The WSGI Handler'''
+        '''The WSGI handler which consume the remote procedure call'''
+        status = '200 OK'
         path = environ['PATH_INFO']
-        data = environ['QUERY_STRING']
+        data = environ['wsgi.input'].read()
         method, args, kwargs, id, version = self.get_method_and_args(data)
-        handler = self.get_handler(method)
+        rpc_handler = self._getFunction(method)
+        result = rpc_handler(environ, id, version, *args, **kwargs)
         response_headers = (
-                            ('Content-type',handler.content_type),
-                            ('Content-Length', str(len(data)))
+                            ('Content-type',rpc_handler.content_type),
+                            ('Content-Length', str(len(result)))
                             )
-            
         start_response(status, response_headers)
-        
-        return response
+        return [result]
         
         

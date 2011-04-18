@@ -8,13 +8,10 @@ else:
     import xmlrpclib as rpc
 
 _errclasses = {}
-INVALID_JSONRPC       = rpc.INVALID_XMLRPC
+INVALID_RPC           = rpc.INVALID_XMLRPC
 METHOD_NOT_FOUND      = rpc.METHOD_NOT_FOUND
 INVALID_METHOD_PARAMS = rpc.INVALID_METHOD_PARAMS
 INTERNAL_ERROR        = rpc.INTERNAL_ERROR
-
-# Custom errors.
-METHOD_NOT_CALLABLE   = -32604
 
 
 class Fault(rpc.Fault):
@@ -23,30 +20,31 @@ class Fault(rpc.Fault):
         rpc.Fault.__init__(self, faultCode, faultString)
         self.extra = extra
         
+    def __str__(self):
+        return str(self.faultString)
+    
+    def __repr__(self):
+        return '{0} ({1}): {2}'.format(self.__class__.__name__,self.faultCode, self.faultString)
+        
         
 class InternalError(Fault):
     
     def __init__(self, faultString, frames = None):
         self.frames = frames or []
         super(InternalError,self).__init__(INTERNAL_ERROR, faultString)
+_errclasses[INTERNAL_ERROR] = InternalError
         
 
 class InvalidRequest(Fault):
     def __init__(self, faultString, **extra):
-        super(InvalidRequest,self).__init__(INVALID_JSONRPC, faultString, **extra)
-_errclasses[INVALID_JSONRPC] = InvalidRequest
+        super(InvalidRequest,self).__init__(INVALID_RPC, faultString, **extra)
+_errclasses[INVALID_RPC] = InvalidRequest
 
 
 class NoSuchFunction(Fault):
     def __init__(self, faultString, **extra):
         super(NoSuchFunction,self).__init__(METHOD_NOT_FOUND, faultString, **extra)
 _errclasses[METHOD_NOT_FOUND] = NoSuchFunction 
-
-
-class MethodNotCallable(Fault):
-    def __init__(self, faultString, **extra):
-        super(MethodNotCallable,self).__init__(METHOD_NOT_CALLABLE, faultString, **extra)
-_errclasses[METHOD_NOT_CALLABLE] = MethodNotCallable
 
 
 class InvalidParams(Fault):
@@ -61,12 +59,13 @@ def handle(err):
     return Fault(INTERNAL_ERROR, str(err))
 
 
-def error(code, message, **extra):
+def exception(code, message, **extra):
     klass = _errclasses.get(code, None)
     if klass:
         return klass(message, **extra)
     else:
         return Fault(code, message, **extra)
+
 
 class JSONEncodeException(Exception):
     '''JSON RPC encode error'''

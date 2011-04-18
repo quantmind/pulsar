@@ -18,15 +18,15 @@ from pulsar.utils.pidfile import Pidfile
 from pulsar.utils import system
 from pulsar.utils.eventloop import MainIOLoop
 
-from .workerpool import WorkerPool
-from .base import ArbiterBase, ThreadQueue
+from .base import Arbiter, ThreadQueue
+
+HaltServer = pulsar.HaltServer
+
+__all__ = ['Server']
 
 
-__all__ = ['Arbiter']
 
-
-
-class Arbiter(ArbiterBase):
+class Server(Arbiter):
     """The Arbiter is the core element of pulsar.
 It maintain pool workers alive. It also manages application reloading
 via SIGHUP/USR2 if the platform allows it.
@@ -34,17 +34,12 @@ via SIGHUP/USR2 if the platform allows it.
     WORKER_BOOT_ERROR = 3
     SIG_TIMEOUT = 0.001
     START_CTX = {}
-    LISTENER = None
+    EXIT_SIGNALS = (signal.SIGINT,signal.SIGTERM,signal.SIGKILL,signal.SIGABRT,system.SIGQUIT)
     
     def __init__(self, app):
-        self.pid = None
+        super(Server,self).__init__(app)
         os.environ["SERVER_SOFTWARE"] = pulsar.SERVER_SOFTWARE
-        self.app = app
-        self.cfg = app.cfg
-        self.pidfile = None
-        self.reexec_pid = 0
         self.SIG_QUEUE = ThreadQueue()
-        self._pools = []
         # get current path, try to use PWD env first
         try:
             a = os.stat(os.environ['PWD'])
@@ -67,66 +62,43 @@ via SIGHUP/USR2 if the platform allows it.
         }
     
     def get_eventloop(self):
-        return MainIOLoop.instance(logger = self.log)
+        return MainIOLoop.instance(logger = pulsar.LogSelf(self,self.log))
     
     def setup(self):
+        super(Server,self).setup()
         self.log.info("Starting pulsar %s" % pulsar.__version__)
-        self.address = self.cfg.address
-        self.debug = self.cfg.debug
-        self.ioloop.add_loop_task(self)
-        
-        # Create the listener if not available
-        if not self.LISTENER:
-            self.LISTENER = system.create_socket(self)
-            
-        self.addpool(self.cfg, self.LISTENER)
-        
         if self.debug:
             self.log.debug("Current configuration:")
             for config, value in sorted(self.cfg.settings.items()):
                 self.log.debug("  %s: %s" % (config, value.value))
-                
-    def addpool(self, cfg, socket = None, start = True):
-        worker_class = cfg.worker_class
-        pool = WorkerPool(self.ioloop,
-                          worker_class,
-                          cfg.workers,
-                          app = self.app,
-                          timeout = cfg.timeout,
-                          socket = socket)
-        self._pools.append(pool)
-        if start:
-            pool.start()
-    
-    def __repr__(self):
-        return self.__class__.__name__
-    
-    def __str__(self):
-        return self.__repr__()
 
-    def __call__(self):
+    def arbiter(self):
         '''Called by the Event loop to perform the Arbiter tasks'''
+        sig = None
         while True:
             try:
                 sig = self.SIG_QUEUE.get(timeout = self.SIG_TIMEOUT)
             except Empty:
                 sig = None
                 break
-            if sig not in system.SIG_NAMES:
+            except IOError:
                 sig = None
+                break
+            if sig not in system.SIG_NAMES:
                 self.log.info("Ignoring unknown signal: %s" % sig)
+                sig = None
             else:        
                 signame = system.SIG_NAMES.get(sig)
-                handler = getattr(self, "handle_%s" % signame.lower(), None)
+                if sig in self.EXIT_SIGNALS:
+                    raise HaltServer('Received Signal {0}.'.format(signame),sig)
+                handler = getattr(self, "handle_queued_%s" % signame.lower(), None)
                 if not handler:
-                    self.log.error("Unhandled signal: %s" % signame)
+                    self.log.critical('Cannot handle signal "{0}". No Handle'.format(signame))
+                    sig = None
                 else:
                     self.log.info("Handling signal: %s" % signame)
                     handler()
-                    
-        if sig is None:
-            for pool in self._pools:
-                pool.arbiter()
+        return sig
                 
     def _run(self):
         """\
@@ -138,7 +110,7 @@ via SIGHUP/USR2 if the platform allows it.
             self.pidfile = Pidfile(self.cfg.pidfile)
             self.pidfile.create(self.pid)
         self.log.debug("{0} booted".format(self))
-        self.log.info("Listening at: %s (%s)" % (self.LISTENER, self.pid))
+        self.log.info("Listening at: %s (%s)" % (self.socket, self.pid))
         self.cfg.when_ready(self)
         try:
             ioloop.start()
@@ -146,51 +118,30 @@ via SIGHUP/USR2 if the platform allows it.
             self.halt('Stop Iteration')
         except KeyboardInterrupt:
             self.halt('Keyboard Interrupt')
-        except pulsar.HaltServer as inst:
-            self.halt(reason=inst.reason, exit_status=inst.exit_status)
+        except HaltServer as e:
+            self.halt(reason=e.reason, sig=e.signal)
         except SystemExit:
             raise
         except Exception:
-            self.log.info("Unhandled exception in main loop:\n%s" %  
-                        traceback.format_exc())
-            self.terminate()
-            if self.pidfile is not None:
-                self.pidfile.unlink()
+            self.halt("Unhandled exception in main loop:\n%s" % traceback.format_exc())
                 
-    def halt(self, reason=None, exit_status=0):
+    def halt(self, reason=None, sig=None):
         """ halt arbiter """
-        self.stop()
-        if reason is not None:
-            self.log.info("Shutting down: %s" % reason)
+        _msg = lambda x : x if not reason else '{0}: {1}'.format(x,reason)
+        
+        if sig and sig is not signal.SIGKILL:
+            msg = _msg('Shutting down')
+            self.close()
+            status = 0
         else:
-            self.log.info("Shutting down")
+            msg = _msg('Force termination')
+            status = 1
         if self.pidfile is not None:
             self.pidfile.unlink()
-        sys.exit(exit_status)
+        self.terminate()
+        self.log.critical(msg)
+        sys.exit(status)
         
-    def getsig(self):
-        """Get signals from the signal queue.
-        """
-        try:
-            #self.log.debug('waiting {0} seconds for signals'.format(self.SIG_TIMEOUT))
-            return self.SIG_QUEUE.get(timeout = self.SIG_TIMEOUT)
-        except Empty:
-            return
-        except IOError:
-            return
-        
-    def stop(self):
-        self.close()
-        
-    def close(self):
-        for pool in self._pools:
-            pool.close()
-    
-    def terminate(self):
-        for pool in self._pools:
-            pool.terminate()
-        
-
     def signal(self, sig, frame):
         signame = system.SIG_NAMES.get(sig,None)
         if signame:
@@ -199,11 +150,11 @@ via SIGHUP/USR2 if the platform allows it.
         else:
             self.log.info('Received unknown signal "{0}". Skipping.'.format(sig))
             
-    def handle_chld(self, sig, frame):
+    def handle_queued_chld(self, sig, frame):
         "SIGCHLD handling"
         self.reap_workers()
         
-    def handle_hup(self):
+    def handle_queued_hup(self):
         """\
         HUP handling.
         - Reload configuration
@@ -212,20 +163,8 @@ via SIGHUP/USR2 if the platform allows it.
         """
         self.log.info("Hang up: %s" % self)
         self.reload()
-        
-    def handle_quit(self):
-        "SIGQUIT handling"
-        raise StopIteration
-    
-    def handle_int(self):
-        "SIGINT handling"
-        raise StopIteration
-    
-    def handle_term(self):
-        "SIGTERM handling"
-        raise StopIteration
 
-    def handle_ttin(self):
+    def handle_queued_ttin(self):
         """\
         SIGTTIN handling.
         Increases the number of workers by one.
@@ -233,7 +172,7 @@ via SIGHUP/USR2 if the platform allows it.
         self.num_workers += 1
         self.manage_workers()
     
-    def handle_ttou(self):
+    def handle_queued_ttou(self):
         """\
         SIGTTOU handling.
         Decreases the number of workers by one.
@@ -243,14 +182,14 @@ via SIGHUP/USR2 if the platform allows it.
         self.num_workers -= 1
         self.manage_workers()
 
-    def handle_usr1(self):
+    def handle_queued_usr1(self):
         """\
         SIGUSR1 handling.
         Kill all workers by sending them a SIGUSR1
         """
         self.kill_workers(signal.SIGUSR1)
     
-    def handle_usr2(self):
+    def handle_queued_usr2(self):
         """\
         SIGUSR2 handling.
         Creates a new master/worker set as a slave of the current
@@ -259,7 +198,7 @@ via SIGHUP/USR2 if the platform allows it.
         """
         self.reexec()
         
-    def handle_winch(self):
+    def handle_queued_winch(self):
         "SIGWINCH handling"
         if os.getppid() == 1 or os.getpgrp() != os.getpid():
             self.log.info("graceful stop of workers")
@@ -280,7 +219,7 @@ via SIGHUP/USR2 if the platform allows it.
             self.master_name = "Old Master"
             return
             
-        os.environ['PULSAR_FD'] = str(self.LISTENER.fileno())
+        os.environ['PULSAR_FD'] = str(self.socket.fileno())
         os.chdir(self.START_CTX['cwd'])
         self.cfg.pre_exec(self)
         os.execvpe(self.START_CTX[0], self.START_CTX['args'], os.environ)
@@ -294,9 +233,9 @@ via SIGHUP/USR2 if the platform allows it.
 
         # do we need to change listener ?
         if old_address != self.cfg.address:
-            self.LISTENER.close()
-            self.LISTENER = system.create_socket(self.cfg)
-            self.log.info("Listening at: %s" % self.LISTENER)    
+            self.socket.close()
+            self.socket = system.create_socket(self.cfg)
+            self.log.info("Listening at: %s" % self.socket)    
 
         # spawn new workers with new app & conf
         for i in range(self.app.cfg.workers):
@@ -317,4 +256,18 @@ via SIGHUP/USR2 if the platform allows it.
         # manage workers
         self.manage_workers()
         
-    
+    def server_info(self):
+        if not self.arbiter_started:
+            return
+        uptime = time.time() - self.arbiter_started
+        server = {'uptime':uptime,
+                  'version':pulsar.__version__,
+                  'name':pulsar.SERVER_NAME,
+                  'number_of_pools':len(self._pools),
+                  'event_loops':self.ioloop.num_loops,
+                  'socket':str(self.socket)}
+        pools = []
+        for p in self._pools:
+            pools.append(p.info())
+        return {'server':server,
+                'pools':pools}
