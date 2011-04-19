@@ -4,12 +4,10 @@ import os
 import sys
 import time
 import inspect
-from multiprocessing import Process, Pipe
-from threading import Thread
 
-from pulsar.utils.eventloop import MainIOLoop
+import pulsar
 from pulsar.utils.importer import import_module
-from pulsar.utils.defer import make_deferred, RemoteServer, Deferred
+from pulsar.utils.async import IOLoop, make_deferred, Deferred
 
 TextTestRunner = unittest.TextTestRunner
 
@@ -25,16 +23,6 @@ class Silence(logging.Handler):
     def emit(self, record):
         pass
 
-
-def setup_logging(verbosity):
-    '''Setup logging'''
-    level = LOGGING_MAP.get(verbosity,None)
-    if level is None:
-        logger.addHandler(Silence())
-    else:
-        logger.addHandler(logging.StreamHandler())
-        logger.setLevel(level)
-    
 
 class TestCase(unittest.TestCase):
     '''A specialised test case which offers three
@@ -143,6 +131,8 @@ It injects the suiterunner proxy for comunication with the master process."""
         join  = os.path.join
         loc = os.path.split(dirpath)[1]
         for d in os.listdir(dirpath):
+            if d.startswith('__'):
+                continue
             if os.path.isdir(join(dirpath,d)):
                 yield (loc,d)
             
@@ -166,13 +156,8 @@ It injects the suiterunner proxy for comunication with the master process."""
                 yield mod
         
             
-class TestingMixin(object):
-    '''A Test suite which runs tests on a separate process while keeping the main process
-busy with the main event loop.'''
-    def __init__(self, tags, testtype, extractors, verbosity, itags, suiterunner):
-        self.verbosity = verbosity
-        self.suiterunner = suiterunner
-        self.loader = TestLoader(tags, testtype, extractors, itags)
+#class TestWorker(pulsar.WorkerProcess):
+class TestWorker(pulsar.WorkerThread):
         
     def setup_test_environment(self):
         pass
@@ -180,67 +165,55 @@ busy with the main event loop.'''
     def teardown_test_environment(self):
         pass
     
-    def run(self):
+    def _run(self):
+        cfg = self.cfg
+        self.loader = TestLoader(cfg.tags, cfg.testtype, cfg.extractors, cfg.itags)
+        self.ioloop = IOLoop()
+        self.ioloop.add_loop_task(self)
         self.setup_test_environment()
-        self.suite = self.loader.load(self.suiterunner)
-        result = None
+        self.suite = self.loader.load(self.pool)
         try:
-            result = TextTestRunner(verbosity = self.verbosity).run(self.suite)
+            result = TextTestRunner(verbosity = cfg.verbosity).run(self.suite)
+            self.ioloop.start()
         finally:
             self.teardown_test_environment()
+            self.ioloop.stop()
     
 
-class TestingProcess(TestingMixin,Process):
+class TestApplication(pulsar.Application):
+    ArbiterClass = pulsar.Arbiter
     
-    def __init__(self, *args):
-        TestingMixin.__init__(self, *args)
-        Process.__init__(self)
-        self.daemon = True
+    '''A dummy application for testing'''
+    def load_config(self, **params):
+        pass
+    
+    def handler(self):
+        return self
+    
+    def configure_logging(self):
+        '''Setup logging'''
+        verbosity = self.cfg.verbosity
+        level = LOGGING_MAP.get(verbosity,None)
+        if level is None:
+            logger.addHandler(Silence())
+        else:
+            logger.addHandler(logging.StreamHandler())
+            logger.setLevel(level)
+        
+
+class TestConfig(pulsar.DummyConfig):
+    '''Configuration for testing'''
+    def __init__(self, tags, testtype, extractors, verbosity, itags):
+        self.tags = tags
+        self.testtype = testtype
+        self.extractors = extractors
+        self.verbosity = verbosity
+        self.itags = itags
+        self.worker_class = TestWorker
+        self.workers = 1
         
         
-class TestingThread(TestingMixin,Thread):
-    
-    def __init__(self, *args):
-        TestingMixin.__init__(self, *args)
-        Thread.__init__(self)
-        self.daemon = True
-        
-    
-class TestSuiteRunner(RemoteServer):
-    # TestingRunner is a class where tests are run.
-    # Choose between a Thread or a Process.
-    TestingRunner = TestingThread
-    #TestingRunner = TestingProcess
-    
-    def __init__(self, tags, testtype, extractors, verbosity = 1, itags = None):
-        connection, remote_connection = Pipe()
-        super(TestSuiteRunner,self).__init__(connection)
-        setup_logging(verbosity)
-        proxy = self.get_proxy(remote_connection)
-        self.runner = self.TestingRunner(tags, testtype, extractors,
-                                         verbosity, itags, proxy)
-        self.ioloop = MainIOLoop.instance()
-        self.ioloop.add_callback(self.start)
-        self.ioloop.add_loop_task(self)
-        
-    def start(self):
-        self.runner.start()
-        if isinstance(self.runner,Process):
-            self.runner.remote_connection.close()
-            
-    def run_tests(self):
-        self.ioloop.start()
-        
-    def __call__(self):
-        self.flush()
-        if not self.runner.is_alive():
-            self.ioloop.stop()
-        
-    def remote_run(self, method, *args, **kwargs):
-        '''Run ``method`` in the current process domain.'''
-        result = method(*args,**kwargs)
-        return result
-    
-    
-        
-    
+def TestSuiteRunner(tags, testtype, extractors, verbosity = 1, itags = None):
+    cfg = TestConfig(tags, testtype, extractors, verbosity, itags)
+    TestApplication(cfg = cfg).start()
+

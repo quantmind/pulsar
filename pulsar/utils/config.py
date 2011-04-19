@@ -17,6 +17,7 @@ from pulsar.utils.py2py3 import *
 DEFAULT_PORT = 8060
 
 __all__ = ['Config',
+           'DummyConfig',
            'Setting',
            'validate_string',
            'validate_callable',
@@ -68,6 +69,18 @@ def make_settings(ignore=None):
     return settings
 
 
+class DummyConfig(object):
+
+    def __getstate__(self):
+        return self.__dict__.copy()
+    
+    def __setstate__(self, state):
+        self.__dict__ = state
+            
+    def __getattr__(self, name):
+        return None
+
+
 class Config(object):
         
     def __init__(self, usage=None):
@@ -75,8 +88,7 @@ class Config(object):
         self.usage = usage
         
     def __getstate__(self):
-        d = self.__dict__.copy()
-        return d
+        return self.__dict__.copy()
     
     def __setstate__(self, state):
         self.__dict__['settings'] = state['settings']

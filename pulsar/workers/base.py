@@ -18,11 +18,10 @@ from multiprocessing.queues import Queue, Empty
 from threading import current_thread, Thread
 
 import pulsar
-from pulsar.utils.defer import RemoteProxy
-from pulsar.utils.eventloop import IOLoop
+from pulsar.utils.async import RemoteServer, IOLoop
 from pulsar.utils import system
 
-from .workerpool import HttpMixin, RemoteWorker
+from .workerpool import HttpMixin
 
 
 __all__ = ['Runner',
@@ -113,7 +112,7 @@ is called after fork by the run method.'''
         
 
 
-class Worker(Runner, HttpMixin):
+class Worker(Runner, RemoteServer, HttpMixin):
     """\
 Base class for all workers. The constructor is called
 called pre-fork so it shouldn't do anything to the current process.
@@ -149,18 +148,18 @@ in ``self.setup()``.
     CommandQueue = None
     
     def __init__(self,
+                 connection,
                  age = 0,
                  ppid = None,
                  socket = None,
                  app = None,
-                 pool_connection = None,
                  timeout = None,
                  cfg = None,
-                 logger = None,
                  command_timeout = None,
                  task_queue = None,
-                 pool_proxy = None,
                  **kwargs):
+        RemoteServer.__init__(self,connection)
+        self.pool = None
         self.age = age
         self.notified = time.time()
         self.ppid = ppid
@@ -170,10 +169,16 @@ in ``self.setup()``.
         self.timeout = timeout
         self.cfg = cfg
         self.task_queue = task_queue
-        self.remoteWorker = pool_connection
-        self.pool_proxy = pool_proxy
         self.COMMAND_TIMEOUT = command_timeout if command_timeout is not None else self.COMMAND_TIMEOUT
         self.set_listener(socket, app)
+    
+    def remote_pool(self, pool):
+        self.pool = pool
+    remote_pool.ack = False
+    
+    def remote_stop(self):
+        self.worker._stop()
+    remote_stop.ack = False
     
     @classmethod
     def modify_arbiter_loop(cls, wp, ioloop):
@@ -221,34 +226,37 @@ stop the event loop and exit.'''
             self.log.info("Auto-restarting worker after current request.")
             self._stop()
     
-    def reseed(self):
-        pass
-    
     def setup(self):
         '''Called after fork, it set ups the application handler
 and perform several post fork processing before starting the event loop.'''
+        # if this is a thread, the pool proxy is not a proxy, it is the actual pool.
+        # In this case we manually serialize it
+        if self.is_thread():
+            self.pool = self.pool.get_proxy(self)
+        else:
+            random.seed()
+            if self.cfg:
+                system.set_owner_process(self.cfg.uid, self.cfg.gid)
+            
         self.log = self.getLogger()
-        # Create the Pool Proxy object
-        self.remoteWorker = RemoteWorker(self)
-        self.pool_proxy.worker(self.remoteWorker)
+        # Set self as the worker in the pool
+        self.pool.worker(self)
         self.ioloop = self.get_eventloop()
-        if self.cfg:
-            system.set_owner_process(self.cfg.uid, self.cfg.gid)
-        self.reseed()
         self.log.info('Booting worker "{0}"'.format(self.wid))
         # Get the Application handler
         self.handler = self.app.handler()
-        self.handler.server_proxy = self._pool_proxy
+        self.handler.server_proxy = self.pool
         self.ioloop.add_loop_task(self)
         if self.cfg.post_fork:
             self.cfg.post_fork(self)
         
     def __call__(self):
-        '''Tasks to be performed at each iteration of the event loop'''
-        p = self._pool_proxy
+        '''Tasks to be performed at each iteration of the event loop.
+Notify the worker pool and flush the pipe.'''
+        p = self.pool
         if p:
             p.notify(time.time())
-            p.flush()                
+            self.flush()                
         
     def handle_request(self, fd, req):
         '''Handle request. A worker class must implement the ``_handle_request``
@@ -311,14 +319,11 @@ class WorkerProcess(Process,Worker):
 inherit from the :class:`multiprocessProcess` class.'''
     CommandQueue = Queue
     
-    def __init__(self, **kwargs):
+    def __init__(self, *args, **kwargs):
         Process.__init__(self)
-        Worker.__init__(self, **kwargs)
+        Worker.__init__(self, *args, **kwargs)
         self.daemon = True
         
-    def reseed(self):
-        random.seed()
-    
     def run(self):
         runworker(self)
     
@@ -331,9 +336,9 @@ class WorkerThread(Thread,Worker):
     CommandQueue = ThreadQueue
     #CommandQueue = Queue
     
-    def __init__(self, **kwargs):
+    def __init__(self, *args, **kwargs):
         Thread.__init__(self)
-        Worker.__init__(self, **kwargs)
+        Worker.__init__(self, *args, **kwargs)
         self.daemon = True
         
     def run(self):

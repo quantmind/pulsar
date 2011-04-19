@@ -1,6 +1,6 @@
 import logging
 
-from pulsar.utils.py2py3 import ispy3k
+from pulsar import ispy3k
 
 if ispy3k:
     from xmlrpc import client as rpc

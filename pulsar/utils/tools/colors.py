@@ -21,7 +21,9 @@ for that particular invocation, which usually shows up as a bold or brighter
 version of the original color on most terminals.
 """
 import logging
-from .py2py3 import to_string, to_bytestring
+from pulsar import to_string
+
+__all__ = ['ColorFormatter']
 
 BLACK, RED, GREEN, YELLOW, BLUE, MAGENTA, CYAN, WHITE = range(8)
 
@@ -75,4 +77,3 @@ class ColorFormatter(logging.Formatter):
                     record.msg = wrap(record.msg)
 
         return logging.Formatter.format(self, record)
-        #return to_bytestring(t, 'utf-8', 'replace')

@@ -5,36 +5,20 @@ from multiprocessing import Pipe
 
 from pulsar import getLogger
 from pulsar.utils.py2py3 import iteritems
-from pulsar.utils.defer import RemoteServer
+from pulsar.utils.async import RemoteServer
 from pulsar.utils.exceptions import PulsarPoolAlreadyStarted
 from pulsar.http import get_httplib
 
 
-__all__ = ['WorkerPool',
-           'RemotePool',
-           'RemoteWorker']
+__all__ = ['WorkerPool']
         
 
-
-class RemoteWorker(RemoteServer):
-    remotes = ('notify','server_info')
-    
-    def __init__(self, worker):
-        self.worker = worker
-        super(RemoteWorker,self).__init__(worker.remoteWorker,
-                                          log = worker.log)
-                
-    def remote_stop(self):
-        self.worker._stop()
-    remote_stop.ack = False
-        
-        
 class RemotePool(RemoteServer):
     '''A specialization of a :class:`RemoteProxy`. This class does not need to
 be serializable since it stays in the workerpool process domain.'''
     remotes = ('stop',)
     
-    def __init__(self, arbiter, worker, connection, log = None):
+    def __init__(self, connection, arbiter, worker, log = None):
         super(RemotePool,self).__init__(connection,log=log)
         self.arbiter = arbiter
         self.worker = worker
@@ -70,10 +54,12 @@ be serializable since it stays in the workerpool process domain.'''
         return self.arbiter.info()
     
     def remote_worker(self, rw):
-        if self.remote_worker:
-            self.remote_worker = rw
+        self.remote_worker = rw
     remote_worker.ack = False
-        
+    
+    def remote_run(self, method, *args, **kwargs):
+        return method(*args,**kwargs)
+
 
 class HttpMixin(object):
     
@@ -278,35 +264,32 @@ as required."""
         self.worker_age += 1
         worker_class = self.worker_class
         worker_connection, pool_connection = Pipe()
-        # Create the command queue
-        command_queue = worker_class.CommandQueue()
-        worker = worker_class(age = self.worker_age,
+        
+        worker = worker_class(pool_connection,
+                              age = self.worker_age,
                               ppid = self.pid,
                               socket = self.socket,
                               app = self.app,
                               timeout = self.timeout/2.0,
                               cfg = self.cfg,
-                              pool_connection = pool_connection,
-                              command_queue = command_queue,
                               task_queue = self.task_queue)
         
-        rw = self.WORKER_PROXY(self.arbiter,
-                               worker,
-                               worker_connection,
-                               log = self.log)
-        # Get the proxy for the pool worker to be send to the worker process domain
-        proxy = rw.get_proxy(pool_connection)
-        worker.pool_proxy = proxy
+        rp = RemotePool(worker_connection,
+                        self.arbiter,
+                        worker,
+                        log = self.log)
+        worker.pool = rp
             
         if self.cfg.pre_fork:
             self.cfg.pre_fork(worker)
         
         worker.start()
+        
         if self.multiprocess:
             pool_connection.close()
         wid = worker.wid
         if wid != 0:
-            self.WORKERS[wid] = rw
+            self.WORKERS[wid] = rp
         
     def info(self):
         return {'worker_class':self.worker_class.code(),

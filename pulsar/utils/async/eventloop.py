@@ -6,9 +6,11 @@ import errno
 import bisect
 from multiprocessing import Pipe
 
-from .system import IObase, IOpoll, close_on_exec, platform
-from .collections import WeakList
+from pulsar.utils.system import IObase, IOpoll, close_on_exec, platform
+from pulsar.utils.collections import WeakList
 
+
+__all__ = ['IOLoop','MainIOLoop']
 
 def file_descriptor(fd):
     if hasattr(fd,'fileno'):

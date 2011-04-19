@@ -1,4 +1,6 @@
+from time import sleep
 
+__all__ = ['retry_over_time']
 
 
 def fxrange(start=1.0, stop=None, step=1.0, repeatlast=False):

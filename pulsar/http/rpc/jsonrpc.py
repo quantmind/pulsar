@@ -12,7 +12,7 @@ The specification is at http://groups.google.com/group/json-rpc/web/json-rpc-2-0
 import logging
 import json
 
-from pulsar.utils.crypt import gen_unique_id
+from pulsar.utils.tools import gen_unique_id
 from pulsar.http import HttpClient
 from pulsar.http.utils import to_string
 from pulsar.utils.jsontools import DefaultJSONEncoder, DefaultJSONHook

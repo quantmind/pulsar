@@ -1,8 +1,3 @@
-# -*- coding: utf-8 -
-#
-# This file is part of gunicorn released under the MIT license. 
-# See the NOTICE for more information.
-
 import errno
 import logging
 import os
@@ -11,9 +6,10 @@ import traceback
 
 import pulsar
 from pulsar.utils.py2py3 import execfile
-from pulsar.utils import system, colors
+from pulsar.utils import system
+from pulsar.utils.tools import ColorFormatter
 from pulsar.utils.importer import import_module
-from pulsar.utils.defer import Remote 
+from pulsar.utils.async import Remote 
 #from pulsar.utils import debug
 
 __all__ = ['Application',
@@ -118,7 +114,7 @@ class Application(pulsar.PickableMixin, Remote):
             self.cfg.set(k.lower(), v)
                
     def init(self, parser, opts, args):
-        raise NotImplementedError
+        pass
     
     def load(self):
         raise NotImplementedError
@@ -165,7 +161,7 @@ used by a :class:`pulsar.Worker` to carry out its task.'''
         if self.cfg.logfile != "-":
             handlers.append(logging.FileHandler(self.cfg.logfile))
         else:
-            Formatter = colors.ColorFormatter
+            Formatter = ColorFormatter
             handlers.append(logging.StreamHandler())
 
         if self.cfg.debug:

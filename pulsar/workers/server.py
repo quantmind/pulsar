@@ -13,10 +13,10 @@ from multiprocessing.queues import Empty
 from select import error as selecterror
 
 import pulsar
-from pulsar.utils.py2py3 import iteritems, map, range
-from pulsar.utils.pidfile import Pidfile
+from pulsar.utils.py2py3 import range
+from pulsar.utils.tools import Pidfile
 from pulsar.utils import system
-from pulsar.utils.eventloop import MainIOLoop
+from pulsar.utils.async import MainIOLoop
 
 from .arbiter import Arbiter
 from .base import ThreadQueue

@@ -4,7 +4,7 @@ from multiprocessing import Process, Queue
 from multiprocessing.queues import Empty
 
 from pulsar import test
-from pulsar.utils.eventloop import IOLoop
+from pulsar.utils.async import IOLoop
 
 
 class IOLoopThread(Thread):

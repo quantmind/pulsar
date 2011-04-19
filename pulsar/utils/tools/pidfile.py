@@ -6,6 +6,7 @@ import errno
 import os
 import tempfile
 
+__all__ = ['Pidfile']
 
 class Pidfile(object):
     """\
