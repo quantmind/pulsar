@@ -60,7 +60,7 @@ class Application(pulsar.PickableMixin, Remote):
     def arbiter(self):
         return self._pulsar_arbiter
         
-    def load_config(self, **params):
+    def load_config(self, parse_console = True, **params):
         '''Load the application configuration'''
         self.cfg = pulsar.Config(self.usage)
         
@@ -69,8 +69,11 @@ class Application(pulsar.PickableMixin, Remote):
             self.cfg.set(k.lower(), v)
                 
         # parse console args
-        parser = self.cfg.parser()
-        opts, args = parser.parse_args()
+        if parse_console:
+            parser = self.cfg.parser()
+            opts, args = parser.parse_args()
+        else:
+            parser, opts, args = None,None,None
         
         # optional settings from apps
         cfg = self.init(parser, opts, args)
@@ -81,39 +84,40 @@ class Application(pulsar.PickableMixin, Remote):
                 self.cfg.set(k.lower(), v)
                 
         # Load up the config file if its found.
-        if opts.config and os.path.exists(opts.config):
-            cfg = {
-                "__builtins__": __builtins__,
-                "__name__": "__config__",
-                "__file__": opts.config,
-                "__doc__": None,
-                "__package__": None
-            }
-            try:
-                execfile(opts.config, cfg, cfg)
-            except Exception:
-                print("Failed to read config file: %s" % opts.config)
-                traceback.print_exc()
-                sys.exit(1)
-        
-            for k, v in cfg.items():
-                # Ignore unknown names
-                if k not in self.cfg.settings:
-                    continue
+        if parser:
+            if opts.config and os.path.exists(opts.config):
+                cfg = {
+                    "__builtins__": __builtins__,
+                    "__name__": "__config__",
+                    "__file__": opts.config,
+                    "__doc__": None,
+                    "__package__": None
+                }
                 try:
-                    self.cfg.set(k.lower(), v)
-                except:
-                    sys.stderr.write("Invalid value for %s: %s\n\n" % (k, v))
-                    raise
+                    execfile(opts.config, cfg, cfg)
+                except Exception:
+                    print("Failed to read config file: %s" % opts.config)
+                    traceback.print_exc()
+                    sys.exit(1)
             
-        # Lastly, update the configuration with any command line
-        # settings.
-        for k, v in opts.__dict__.items():
-            if v is None:
-                continue
-            self.cfg.set(k.lower(), v)
+                for k, v in cfg.items():
+                    # Ignore unknown names
+                    if k not in self.cfg.settings:
+                        continue
+                    try:
+                        self.cfg.set(k.lower(), v)
+                    except:
+                        sys.stderr.write("Invalid value for %s: %s\n\n" % (k, v))
+                        raise
+                
+            # Lastly, update the configuration with any command line
+            # settings.
+            for k, v in opts.__dict__.items():
+                if v is None:
+                    continue
+                self.cfg.set(k.lower(), v)
                
-    def init(self, parser, opts, args):
+    def init(self, parser = None, opts = None, args = None):
         pass
     
     def load(self):

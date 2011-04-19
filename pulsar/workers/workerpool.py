@@ -41,10 +41,14 @@ be serializable since it stays in the workerpool process domain.'''
         self.worker.join(timeout)
     
     def stop(self):
-        self.remote_worker.stop()
+        if self.remote_worker:
+            self.remote_worker.stop()
     
     # Remote functions
-        
+    
+    def remote_ping(self):
+        return 'pong'
+    
     def remote_notify(self, t):
         self.notified = t
     remote_notify.ack = False
@@ -60,6 +64,9 @@ be serializable since it stays in the workerpool process domain.'''
     def remote_run(self, method, *args, **kwargs):
         return method(*args,**kwargs)
 
+    def remote_shut_down(self):
+        self.arbiter.shut_down()
+        
 
 class HttpMixin(object):
     
@@ -285,8 +292,8 @@ as required."""
         
         worker.start()
         
-        if self.multiprocess:
-            pool_connection.close()
+        #if self.multiprocess:
+        #    pool_connection.close()
         wid = worker.wid
         if wid != 0:
             self.WORKERS[wid] = rp

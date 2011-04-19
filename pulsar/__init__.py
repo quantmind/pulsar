@@ -38,7 +38,6 @@ from .workers.base import *
 from .workers.arbiter import *
 from .workers.server import *
 from .apps.base import Application, require
-
-from .utils import test
+from .apps import test
 
 

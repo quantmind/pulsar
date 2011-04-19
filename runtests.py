@@ -2,7 +2,7 @@
 import os
 import sys
 from optparse import OptionParser
-from pulsar import test
+from pulsar.apps.test import TestSuiteRunner
 
 
 def makeoptions():
@@ -23,11 +23,11 @@ def makeoptions():
                       dest="show_list",
                       default=False,
                       help="Show the list of available profiling tests")
-    parser.add_option("-p", "--proxy",
+    parser.add_option("-m","--mode",
                       action="store",
-                      dest="proxy",
-                      default='',
-                      help="Set the HTTP_PROXY environment variable")
+                      dest="mode",
+                      default='p',
+                      help="Run in multiprocessing 'p' or multithreading 't' mode")
     return parser
 
 
@@ -73,12 +73,11 @@ def run():
             sys.path.insert(0, p)
         running_tests.append(c(p))
         
-    #if options.proxy:
-    #    settings.proxies['http'] = options.proxy
-    runner  = test.TestSuiteRunner(tags,
-                                   options.test_type,
-                                   running_tests,
-                                   verbosity = options.verbosity)
+    runner  = TestSuiteRunner(tags,
+                              options.test_type,
+                              running_tests,
+                              verbosity = options.verbosity,
+                              inthread = options.mode == 't')
     runner.run_tests()
 
 

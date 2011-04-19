@@ -5,8 +5,20 @@ from pulsar import AlreadyCalledError
 
 
 __all__ = ['Deferred',
-           'make_deferred']
+           'make_deferred',
+           'simple_callback']
 
+
+def simple_callback(func, *args, **kwargs):
+    '''Wrap a function which does not include the callback
+result as argument. Raise exceptions if result is one.'''
+    def _(result, *args, **kwargs):
+        if isinstance(result,Exception):
+            raise result
+        else:
+            func(*args,**kwargs)
+    
+    return _
 
 
 class Deferred(object):
@@ -65,8 +77,8 @@ the result of the callback.
                     if isinstance(self.result, Deferred):
                         self.pause()
                         self.result.add_callback(self._continue)
-                except:
-                    pass
+                except Exception as e:
+                    self.result = callback(e)
                 
         return self
     

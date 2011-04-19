@@ -4,18 +4,13 @@
 # See the NOTICE for more information.
 #
 import errno
-import os
 import socket
 import traceback
-import time
 try:
     import ssl
 except:
     ssl = None 
 
-import pulsar
-from pulsar.http import get_httplib
-from pulsar.utils.eventloop import close_on_exec
 from pulsar.http.utils import write_nonblock, write_error, close
 
 from .base import WorkerProcess

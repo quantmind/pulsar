@@ -1,3 +1,4 @@
+import os
 import fcntl
 import resource
 import grp
@@ -15,6 +16,9 @@ else:
 
 
 SIGQUIT = signal.SIGQUIT
+
+def get_parent_id():
+    return os.getppid()
 
 def chown(path, uid, gid):
     try:

@@ -8,12 +8,8 @@ from pulsar.utils.importer import import_app
 class WSGIApplication(Application):
     
     def init(self, parser, opts, args):
-        
         if self.callable is None:
-            
-            if len(args) != 1:
-                parser.error("No application module specified.")
-                    
+            parser.error("No application module specified.")        
         sys.path.insert(0, os.getcwd())
 
     def load(self):

@@ -117,7 +117,9 @@ class Worker(Runner, RemoteServer, HttpMixin):
 Base class for all workers. The constructor is called
 called pre-fork so it shouldn't do anything to the current process.
 If there's a need to make process wide changes you'll want to do that
-in ``self.setup()``.
+in :meth:`setup` method.
+
+A worker is manages its own event loop and can leve on a thread or on a Process.
 
 .. attribute:: age
 
@@ -172,13 +174,16 @@ in ``self.setup()``.
         self.COMMAND_TIMEOUT = command_timeout if command_timeout is not None else self.COMMAND_TIMEOUT
         self.set_listener(socket, app)
     
+    # REMOTE FUNCTIONS - INVOCKABLE FROM THE WORKERPOOL
+    
     def remote_pool(self, pool):
         self.pool = pool
     remote_pool.ack = False
     
     def remote_stop(self):
-        self.worker._stop()
+        self._stop()
     remote_stop.ack = False
+    
     
     @classmethod
     def modify_arbiter_loop(cls, wp, ioloop):
@@ -207,8 +212,13 @@ event loop of the arbiter if required.
     
     def _stop(self):
         if self.ioloop.running():
-            self._pool_proxy.close()
+            self.pool.close()
             self.ioloop.stop()
+    
+    def _shut_down(self):
+        '''Shut down the application. Hard core function to use with care.'''
+        if self.ioloop.running():
+            self.pool.shut_down()
         
     def set_listener(self, socket, app):
         self.socket = socket
@@ -329,7 +339,7 @@ inherit from the :class:`multiprocessProcess` class.'''
     
     @property    
     def get_parent_id(self):
-        return os.getppid()
+        return system.get_parent_id()
     
     
 class WorkerThread(Thread,Worker):

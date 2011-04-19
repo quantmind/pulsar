@@ -1,9 +1,14 @@
 import time
+import os
+import sys
+import traceback
+import signal
+from multiprocessing.queues import Empty
 
 import pulsar
 from pulsar.utils import system
 
-from .base import Runner
+from .base import Runner, ThreadQueue
 from .workerpool import WorkerPool
 
 
@@ -13,7 +18,11 @@ __all__ = ['Arbiter']
 class Arbiter(Runner):
     '''An Arbiter is an object which controls pools of workers'''
     CLOSE_TIMEOUT = 3
-        
+    WORKER_BOOT_ERROR = 3
+    SIG_TIMEOUT = 0.001
+    EXIT_SIGNALS = (signal.SIGINT,signal.SIGTERM,signal.SIGABRT,system.SIGQUIT)
+    HaltServer = pulsar.HaltServer
+    
     def __init__(self, app):
         self.pid = None
         self.socket = None
@@ -30,15 +39,31 @@ class Arbiter(Runner):
         self.log = self.getLogger()
         self.ioloop = self.get_eventloop()
         self.ioloop.add_loop_task(self)
-        
-    def setup(self):
-        self.addpool(self.cfg, self.socket)
-        
+        self.SIG_QUEUE = ThreadQueue()
+    
+    # HIGH LEVEL API    
+    def start(self):
+        '''Start the Arbiter. The arbiter should be started in the main process
+in the main thread'''
+        self.run()
+    
+    def shut_down(self):
+        '''Orderly shut down the arbiter'''
+        self.signal(system.SIGQUIT)
+    
+    def is_alive(self):
+        '''``True`` if the arbiter is running.'''
+        return self.ioloop.running()
+    
+    # LOW LEVEL FUNCTIONS
     def __repr__(self):
         return self.__class__.__name__
     
     def __str__(self):
         return self.__repr__()
+    
+    def setup(self):
+        self.addpool(self.cfg, self.socket)
     
     def __call__(self):
         sig = self.arbiter()
@@ -46,9 +71,6 @@ class Arbiter(Runner):
             for pool in self._pools:
                 pool.arbiter_task()
         
-    def arbiter(self):
-        return None
-    
     def addpool(self, cfg, socket = None, start = False):
         worker_class = cfg.worker_class
         pool = WorkerPool(self,
@@ -61,15 +83,54 @@ class Arbiter(Runner):
         if start:
             pool.start()
     
-    def start(self):
-        self.run()
-    
+    def make_pidfile(self):
+        pass
+        
     def run(self):
         self.init_process()
         
     def _run(self):
-        self.ioloop.start()
+        """\
+        Initialize the arbiter. Start listening and set pidfile if needed.
+        """
+        ioloop = self.ioloop
+        self.pid = os.getpid()
+        self.make_pidfile()
+        self.log.debug("{0} booted".format(self))
+        if self.socket:
+            self.log.info("Listening at: %s (%s)" % (self.socket, self.pid))
+        if self.cfg.when_ready:
+            self.cfg.when_ready(self)
+        try:
+            ioloop.start()
+        except StopIteration:
+            self.halt('Stop Iteration')
+        except KeyboardInterrupt:
+            self.halt('Keyboard Interrupt')
+        except self.HaltServer as e:
+            self.halt(reason=e.reason, sig=e.signal)
+        except SystemExit:
+            raise
+        except Exception:
+            self.halt("Unhandled exception in main loop:\n%s" % traceback.format_exc())
+    
+    def halt(self, reason=None, sig=None):
+        """ halt arbiter """
+        _msg = lambda x : x if not reason else '{0}: {1}'.format(x,reason)
         
+        if sig:
+            msg = _msg('Shutting down')
+            self.close()
+            status = 0
+        else:
+            msg = _msg('Force termination')
+            status = 1
+        if self.pidfile is not None:
+            self.pidfile.unlink()
+        self.terminate()
+        self.log.critical(msg)
+        sys.exit(status)
+    
     def is_alive(self):
         return self.ioloop.running()
     
@@ -109,3 +170,40 @@ class Arbiter(Runner):
             pools.append(p.info())
         return {'server':server,
                 'pools':pools}
+
+    def arbiter(self):
+        '''Called by the Event loop to perform the Arbiter tasks'''
+        sig = None
+        while True:
+            try:
+                sig = self.SIG_QUEUE.get(timeout = self.SIG_TIMEOUT)
+            except Empty:
+                sig = None
+                break
+            except IOError:
+                sig = None
+                break
+            if sig not in system.SIG_NAMES:
+                self.log.info("Ignoring unknown signal: %s" % sig)
+                sig = None
+            else:        
+                signame = system.SIG_NAMES.get(sig)
+                if sig in self.EXIT_SIGNALS:
+                    raise self.HaltServer('Received Signal {0}.'.format(signame),sig)
+                handler = getattr(self, "handle_queued_%s" % signame.lower(), None)
+                if not handler:
+                    self.log.critical('Cannot handle signal "{0}". No Handle'.format(signame))
+                    sig = None
+                else:
+                    self.log.info("Handling signal: %s" % signame)
+                    handler()
+        return sig                
+                
+    def signal(self, sig, frame = None):
+        signame = system.SIG_NAMES.get(sig,None)
+        if signame:
+            self.log.warn('Received and queueing signal {0}.'.format(signame))
+            self.SIG_QUEUE.put(sig)
+        else:
+            self.log.info('Received unknown signal "{0}". Skipping.'.format(sig))
+    

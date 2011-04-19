@@ -169,13 +169,19 @@ To specify a functions called by remote objects prefix with "proxy_".
 
 
 class RemoteProxy(object):
-    __slots__ = ('proxyid','remotes','connection')
+    #__slots__ = ('proxyid','remotes','connection')
     
     def __init__(self, proxyid, remotes, connection = None):
         self.proxyid = proxyid
         self.remotes = remotes
         self.connection = connection
-        
+    
+    def __repr__(self):
+        return self.proxyid[:8]
+    
+    def __str__(self):
+        return self.__repr__()
+    
     def noconnection(self):
         return self.__class__(self.proxyid,self.remotes)
     
@@ -193,7 +199,7 @@ we need to manually implement the pcikling and unpickling of thes object'''
             return RemoteProxyRequest(self.proxyid,name, self.connection, ack = ack)
         else:
             raise AttributeError("'{0}' object has no attribute '{1}'".format(self,name))
-        
+    
     
 class Remote(BaseRemote):
     '''A proxy for a remote object used by processes to call

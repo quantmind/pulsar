@@ -38,14 +38,6 @@ mod = get_module()
 def read(fname):
     return open(os.path.join(root_dir, fname)).read()
 
-def requirements():
-    req = read('requirements.txt').replace('\r','').split('\n')
-    result = []
-    for r in req:
-        r = r.replace(' ','')
-        if r:
-            result.append(r)
-    return result    
 
 def fullsplit(path, result=None):
     """
@@ -105,7 +97,6 @@ libparams.update({
                 'long_description' : read('README.rst'),
                 'packages'     : packages,
                 'data_files'   : data_files,
-                'install_requires' : requirements(),
                 'classifiers' : mod.CLASSIFIERS
                 })
  

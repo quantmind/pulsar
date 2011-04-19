@@ -1,15 +1,18 @@
+'''\
+Testing application. Pulsar tests uses exatly the same API as any
+pulsar server. The Test suite is the Arbiter while the
+Worker class runs the tests in an asychronous way.
+'''
 import unittest
 import logging
 import os
-import sys
 import time
 import inspect
 
 import pulsar
 from pulsar.utils.importer import import_module
-from pulsar.utils.async import IOLoop, make_deferred, Deferred
-
-TextTestRunner = unittest.TextTestRunner
+from pulsar.utils.async import IOLoop, make_deferred,\
+                               Deferred, simple_callback
 
 
 logger = logging.getLogger()
@@ -33,7 +36,7 @@ of the tests declared in a derived class. Useful for starting a server
 to send requests to during tests.
 
 b) 'runInProcess' to run a callable in the main process.'''
-    _suite = None
+    suiterunner = None
     
     def __init__(self, methodName=None):
         if methodName:
@@ -49,11 +52,7 @@ b) 'runInProcess' to run a callable in the main process.'''
             return super(TestCase,self).__repr__()
         
     def sleep(self, timeout):
-        time.sleep(timeout)
-    
-    def runInProcess(self,method,*args,**kwargs):
-        '''Run the target function into the main process'''
-        return self.suiterunner.run(method,*args,**kwargs)        
+        time.sleep(timeout)        
 
     def initTests(self):
         pass
@@ -98,7 +97,7 @@ class TestSuite(unittest.TestSuite):
             end = getattr(obj,'endTests',None)
             tests = test['tests']
             d.add_callback(lambda res : self._runtests(res,tests,end,result))
-        return d.wait(1)
+        return d
         
         
 class TestLoader(object):
@@ -154,10 +153,66 @@ It injects the suiterunner proxy for comunication with the master process."""
                 
                 logger.debug("Adding tests for %s" % app)
                 yield mod
-        
+    
+class TextTestRunner(unittest.TextTestRunner):
+    
+    def run(self, test):
+        "Run the given test case or test suite."
+        result = self._makeResult()
+        result.startTime = time.time()
+        startTestRun = getattr(result, 'startTestRun', None)
+        if startTestRun is not None:
+            startTestRun()
+        return test(result).add_callback(self.end)
             
-#class TestWorker(pulsar.WorkerProcess):
-class TestWorker(pulsar.WorkerThread):
+    def end(self, result):
+        stopTestRun = getattr(result, 'stopTestRun', None)
+        if stopTestRun is not None:
+            stopTestRun()
+        result.stopTime = time.time()
+        timeTaken = result.stopTime - result.startTime
+        result.printErrors()
+        if hasattr(result, 'separator2'):
+            self.stream.writeln(result.separator2)
+        run = result.testsRun
+        self.stream.writeln("Ran %d test%s in %.3fs" %
+                            (run, run != 1 and "s" or "", timeTaken))
+        self.stream.writeln()
+
+        expectedFails = unexpectedSuccesses = skipped = 0
+        try:
+            results = map(len, (result.expectedFailures,
+                                result.unexpectedSuccesses,
+                                result.skipped))
+        except AttributeError:
+            pass
+        else:
+            expectedFails, unexpectedSuccesses, skipped = results
+
+        infos = []
+        if not result.wasSuccessful():
+            self.stream.write("FAILED")
+            failed, errored = len(result.failures), len(result.errors)
+            if failed:
+                infos.append("failures=%d" % failed)
+            if errored:
+                infos.append("errors=%d" % errored)
+        else:
+            self.stream.write("OK")
+        if skipped:
+            infos.append("skipped=%d" % skipped)
+        if expectedFails:
+            infos.append("expected failures=%d" % expectedFails)
+        if unexpectedSuccesses:
+            infos.append("unexpected successes=%d" % unexpectedSuccesses)
+        if infos:
+            self.stream.writeln(" (%s)" % (", ".join(infos),))
+        else:
+            self.stream.write("\n")
+        return result
+        
+
+class TestMixin(object):
         
     def setup_test_environment(self):
         pass
@@ -165,6 +220,11 @@ class TestWorker(pulsar.WorkerThread):
     def teardown_test_environment(self):
         pass
     
+    def _run_suite(self):
+        TextTestRunner(verbosity = self.cfg.verbosity)\
+                        .run(self.suite)\
+                        .add_callback(simple_callback(self._shut_down))
+        
     def _run(self):
         cfg = self.cfg
         self.loader = TestLoader(cfg.tags, cfg.testtype, cfg.extractors, cfg.itags)
@@ -172,13 +232,21 @@ class TestWorker(pulsar.WorkerThread):
         self.ioloop.add_loop_task(self)
         self.setup_test_environment()
         self.suite = self.loader.load(self.pool)
+        self.ioloop.add_callback(self._run_suite)
         try:
-            result = TextTestRunner(verbosity = cfg.verbosity).run(self.suite)
             self.ioloop.start()
         finally:
             self.teardown_test_environment()
             self.ioloop.stop()
     
+
+class TestWorkerThread(TestMixin,pulsar.WorkerThread):
+    pass
+
+
+class TestWorkerProcess(TestMixin,pulsar.WorkerProcess):
+    pass
+
 
 class TestApplication(pulsar.Application):
     ArbiterClass = pulsar.Arbiter
@@ -203,17 +271,22 @@ class TestApplication(pulsar.Application):
 
 class TestConfig(pulsar.DummyConfig):
     '''Configuration for testing'''
-    def __init__(self, tags, testtype, extractors, verbosity, itags):
+    def __init__(self, tags, testtype, extractors, verbosity, itags, inthread):
         self.tags = tags
         self.testtype = testtype
         self.extractors = extractors
         self.verbosity = verbosity
         self.itags = itags
-        self.worker_class = TestWorker
         self.workers = 1
+        if inthread:
+            self.worker_class = TestWorkerThread
+        else:
+            self.worker_class = TestWorkerProcess
         
         
-def TestSuiteRunner(tags, testtype, extractors, verbosity = 1, itags = None):
-    cfg = TestConfig(tags, testtype, extractors, verbosity, itags)
+def TestSuiteRunner(tags, testtype, extractors,
+                    verbosity = 1, itags = None,
+                    inthread = False):
+    cfg = TestConfig(tags, testtype, extractors, verbosity, itags, inthread)
     TestApplication(cfg = cfg).start()
 

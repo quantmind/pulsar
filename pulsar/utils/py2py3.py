@@ -5,11 +5,12 @@ import os
 import sys
 import types
 
-ispy3k = int(sys.version[0]) >= 3
+ispy3k = sys.version_info[0] == 3
 
 UTF8 = 'utf-8'
 
 if ispy3k: # Python 3
+    ispy32 = sys.version_info[1] >= 2
     string_type = str
     itervalues = lambda d : d.values()
     iteritems = lambda d : d.items()
@@ -42,6 +43,7 @@ if ispy3k: # Python 3
             exec(fh.read()+"\n", globals, locals)
             
 else: # Python 2
+    ispy32 = False
     string_type = unicode
     execfile = execfile
     itervalues = lambda d : d.itervalues()

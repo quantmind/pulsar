@@ -7,7 +7,9 @@ from .manage import start_server
 class TestCalculatorExample(test.TestCase):
     
     def initTests(self):
-        return self.suiterunner.run(start_server, worker_class = 'http_t')
+        return self.suiterunner.run(start_server,
+                                    worker_class = 'http_t',
+                                    parse_console = False)
         
     def endTests(self):
         pass

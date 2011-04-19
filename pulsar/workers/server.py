@@ -1,16 +1,6 @@
-# -*- coding: utf-8 -
-#
-# This file is part of gunicorn released under the MIT license. 
-# See the NOTICE for more information.
-import errno
 import os
 import signal
 import sys
-import time
-import traceback
-from multiprocessing import Pipe
-from multiprocessing.queues import Empty
-from select import error as selecterror
 
 import pulsar
 from pulsar.utils.py2py3 import range
@@ -19,9 +9,6 @@ from pulsar.utils import system
 from pulsar.utils.async import MainIOLoop
 
 from .arbiter import Arbiter
-from .base import ThreadQueue
-
-HaltServer = pulsar.HaltServer
 
 __all__ = ['Server']
 
@@ -30,16 +17,10 @@ class Server(Arbiter):
     """The Arbiter is the core element of pulsar.
 It maintain pool workers alive. It also manages application reloading
 via SIGHUP/USR2 if the platform allows it.
-"""
-    WORKER_BOOT_ERROR = 3
-    SIG_TIMEOUT = 0.001
-    START_CTX = {}
-    EXIT_SIGNALS = (signal.SIGINT,signal.SIGTERM,signal.SIGABRT,system.SIGQUIT)
-    
+""" 
     def __init__(self, app):
         super(Server,self).__init__(app)
         os.environ["SERVER_SOFTWARE"] = pulsar.SERVER_SOFTWARE
-        self.SIG_QUEUE = ThreadQueue()
         # get current path, try to use PWD env first
         try:
             a = os.stat(os.environ['PWD'])
@@ -71,84 +52,11 @@ via SIGHUP/USR2 if the platform allows it.
             self.log.debug("Current configuration:")
             for config, value in sorted(self.cfg.settings.items()):
                 self.log.debug("  %s: %s" % (config, value.value))
-
-    def arbiter(self):
-        '''Called by the Event loop to perform the Arbiter tasks'''
-        sig = None
-        while True:
-            try:
-                sig = self.SIG_QUEUE.get(timeout = self.SIG_TIMEOUT)
-            except Empty:
-                sig = None
-                break
-            except IOError:
-                sig = None
-                break
-            if sig not in system.SIG_NAMES:
-                self.log.info("Ignoring unknown signal: %s" % sig)
-                sig = None
-            else:        
-                signame = system.SIG_NAMES.get(sig)
-                if sig in self.EXIT_SIGNALS:
-                    raise HaltServer('Received Signal {0}.'.format(signame),sig)
-                handler = getattr(self, "handle_queued_%s" % signame.lower(), None)
-                if not handler:
-                    self.log.critical('Cannot handle signal "{0}". No Handle'.format(signame))
-                    sig = None
-                else:
-                    self.log.info("Handling signal: %s" % signame)
-                    handler()
-        return sig
-                
-    def _run(self):
-        """\
-        Initialize the arbiter. Start listening and set pidfile if needed.
-        """
-        ioloop = self.ioloop
-        self.pid = os.getpid()
+        
+    def make_pidfile(self):
         if self.cfg.pidfile is not None:
             self.pidfile = Pidfile(self.cfg.pidfile)
             self.pidfile.create(self.pid)
-        self.log.debug("{0} booted".format(self))
-        self.log.info("Listening at: %s (%s)" % (self.socket, self.pid))
-        self.cfg.when_ready(self)
-        try:
-            ioloop.start()
-        except StopIteration:
-            self.halt('Stop Iteration')
-        except KeyboardInterrupt:
-            self.halt('Keyboard Interrupt')
-        except HaltServer as e:
-            self.halt(reason=e.reason, sig=e.signal)
-        except SystemExit:
-            raise
-        except Exception:
-            self.halt("Unhandled exception in main loop:\n%s" % traceback.format_exc())
-                
-    def halt(self, reason=None, sig=None):
-        """ halt arbiter """
-        _msg = lambda x : x if not reason else '{0}: {1}'.format(x,reason)
-        
-        if sig:
-            msg = _msg('Shutting down')
-            self.close()
-            status = 0
-        else:
-            msg = _msg('Force termination')
-            status = 1
-        if self.pidfile is not None:
-            self.pidfile.unlink()
-        self.terminate()
-        self.log.critical(msg)
-        sys.exit(status)
-        
-    def signal(self, sig, frame):
-        signame = system.SIG_NAMES.get(sig,None)
-        if signame:
-            self.log.warn('Received and queueing signal {0}.'.format(signame))
-            self.SIG_QUEUE.put(sig)
-        else:
-            self.log.info('Received unknown signal "{0}". Skipping.'.format(sig))
             
     def handle_queued_chld(self, sig, frame):
         "SIGCHLD handling"

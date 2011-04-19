@@ -26,13 +26,14 @@ with "Hello World!" for every request::
     
     
 Pulsar's goal is to provide an easy way to build scalable network programs.
-In the "Hello world!" web server example above, many client connections can be handled
-concurrently.
+In the "Hello world!" web server example above, many client
+connections can be handled concurrently.
 Pulsar tells the operating system (through epoll or select) that it should be
 notified when a new connection is made, and then it goes to sleep.
 
 Pulsar uses the multiprocessing_ module from the standard python library and it can
 be configured to run in multi-processing or multi-threading mode.
+
 
 Kudos
 ============

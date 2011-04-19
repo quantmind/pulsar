@@ -1,4 +1,5 @@
-from multiprocessing import Pipe
+from time import sleep
+from multiprocessing import Pipe, Process
 
 from pulsar import test
 from pulsar.utils.async import RemoteProxyServer, Remote,\
@@ -7,8 +8,36 @@ from pulsar.utils.async import RemoteProxyServer, Remote,\
 from .deferred import TestCbk
 
 
-__all__ = ['TestRemote']
+__all__ = ['TestRemote',
+           'TestRemoteOnProcess']
 
+
+class ServerOnProcess(RemoteServer):
+    _stop = False
+    
+    def __init__(self,*args):
+        RemoteServer.__init__(self,*args)
+        Process.__init__(self)
+        self.loops = 0
+    
+    def run(self):
+        
+        while not self._stop:
+            self.loops += 1
+            sleep(0.1)
+            self.flush()
+
+    def remote_loops(self):
+        return self.loops
+                    
+    def remote_stop(self):
+        self._stop = True
+    remote_stop.ack = False
+
+
+class ServerProcess(Process):
+    server_class = ServerOnProcess
+    
     
 class RObject(Remote):
     '''A simple object with two remote functions'''
@@ -26,7 +55,7 @@ class RObject(Remote):
     def remote_add(self, obj):
         self.data.append(obj)
     remote_add.ack = False
-
+    
 
 class TestRemote(test.TestCase):
     
@@ -109,4 +138,36 @@ parameters of remote functions.'''
         self.assertEqual(objB.data[0],objB)
         
         
-
+class TestRemoteOnProcess(test.TestCase):
+    
+    def setUp(self):
+        a,b = Pipe()
+        self.a,self.b = RemoteProxyServer(a),ServerOnProcess(b)
+        
+    def testSimple(self):
+        server_a,server_b = self.a,self.b
+        self.assertFalse(server_b.is_alive())
+        self.assertEqual(len(server_b.remotes),2)
+        # lets start the server b
+        server_b.start()
+        self.sleep(0.2)
+        self.assertTrue(server_b.is_alive())
+        #
+        # Get the proxy of server b
+        proxyb = server_b.get_proxy(server_a)
+        self.assertEqual(proxyb.proxyid,server_b.proxyid)
+        #
+        # number of loops in server b
+        cbk = TestCbk()
+        proxyb.loops().add_callback(cbk)
+        server_a.flush()
+        loop1 = cbk.result
+        self.assertTrue(loop1 > 0)
+        
+        # lets kill server b
+        proxyb.stop()
+        self.assertTrue(server_b.is_alive())
+        server_a.flush()
+        self.sleep(0.2)
+        self.assertFalse(server_b.is_alive())
+        

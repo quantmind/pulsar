@@ -20,6 +20,13 @@ if not ispy3k:
     socket.fromfd = fromfd 
     
     
+def get_parent_id():
+    if ispy32:
+        return os.getppid()
+    else:
+        return None
+
+
 def chown(path, uid, gid):
     pass
 
