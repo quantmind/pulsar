@@ -5,24 +5,40 @@ from multiprocessing import Pipe
 
 from pulsar import getLogger
 from pulsar.utils.py2py3 import iteritems
-from pulsar.utils.defer import RemoteProxy
+from pulsar.utils.defer import RemoteServer
 from pulsar.utils.exceptions import PulsarPoolAlreadyStarted
 from pulsar.http import get_httplib
 
 
 __all__ = ['WorkerPool',
-           'PoolWorkerProxy']
+           'RemotePool',
+           'RemoteWorker']
+        
+
+
+class RemoteWorker(RemoteServer):
+    remotes = ('notify','server_info')
+    
+    def __init__(self, worker):
+        self.worker = worker
+        super(RemoteWorker,self).__init__(worker.remoteWorker,
+                                          log = worker.log)
+                
+    def remote_stop(self):
+        self.worker._stop()
+    remote_stop.ack = False
         
         
-class PoolWorkerProxy(RemoteProxy):
+class RemotePool(RemoteServer):
     '''A specialization of a :class:`RemoteProxy`. This class does not need to
 be serializable since it stays in the workerpool process domain.'''
     remotes = ('stop',)
     
     def __init__(self, arbiter, worker, connection, log = None):
-        super(PoolWorkerProxy,self).__init__(connection,log=log)
+        super(RemotePool,self).__init__(connection,log=log)
         self.arbiter = arbiter
         self.worker = worker
+        self.remote_worker = None
         self.notified = time.time()
     
     def __repr__(self):
@@ -39,15 +55,25 @@ be serializable since it stays in the workerpool process domain.'''
 
     def join(self, timeout = 0):
         self.worker.join(timeout)
-
-    # proxy Functions    
-    def proxy_notify(self, t):
-        self.notified = t
+    
+    def stop(self):
+        self.remote_worker.stop()
+    
+    # Remote functions
         
-    def proxy_server_info(self):
+    def remote_notify(self, t):
+        self.notified = t
+    remote_notify.ack = False
+        
+    def remote_server_info(self):
         '''Get server Info and send it back.'''
         return self.arbiter.info()
-
+    
+    def remote_worker(self, rw):
+        if self.remote_worker:
+            self.remote_worker = rw
+    remote_worker.ack = False
+        
 
 class HttpMixin(object):
     
@@ -66,7 +92,7 @@ A pool of worker classes for performing asynchronous tasks and input/output
 :parameter app: The working application
 :parameter timeout: Timeout in seconds for murdering unresponsive workers 
     '''
-    WORKER_PROXY = PoolWorkerProxy
+    WORKER_PROXY = RemotePool
     INITIAL = 0X0
     RUN = 0x1
     CLOSE = 0x2
@@ -263,17 +289,24 @@ as required."""
                               pool_connection = pool_connection,
                               command_queue = command_queue,
                               task_queue = self.task_queue)
+        
+        rw = self.WORKER_PROXY(self.arbiter,
+                               worker,
+                               worker_connection,
+                               log = self.log)
+        # Get the proxy for the pool worker to be send to the worker process domain
+        proxy = rw.get_proxy(pool_connection)
+        worker.pool_proxy = proxy
+            
         if self.cfg.pre_fork:
             self.cfg.pre_fork(worker)
+        
         worker.start()
         if self.multiprocess:
             pool_connection.close()
         wid = worker.wid
         if wid != 0:
-            self.WORKERS[wid] = self.WORKER_PROXY(self.arbiter,
-                                                  worker,
-                                                  worker_connection,
-                                                  log = self.log)
+            self.WORKERS[wid] = rw
         
     def info(self):
         return {'worker_class':self.worker_class.code(),

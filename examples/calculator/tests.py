@@ -1,18 +1,13 @@
 from pulsar import test
 from pulsar.http import rpc
 
-from .manage import server
+from .manage import start_server
 
 
 class TestCalculatorExample(test.TestCase):
     
     def initTests(self):
-        self.runInProcess(server, worker_class = 'http_t')\
-            .add_callback(self.start_server)
-        
-    def start_server(self, server):
-        self.server = server
-        self.server.start()
+        return self.suiterunner.run(start_server, worker_class = 'http_t')
         
     def endTests(self):
         pass

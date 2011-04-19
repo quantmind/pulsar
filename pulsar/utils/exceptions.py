@@ -22,3 +22,9 @@ class HaltServer(PulsarInternetException):
     
 class AlreadyCalledError(PulsarException):
     '''Raised when a Deferred instance receives more than une callback'''
+
+class AlreadyRegistered(PulsarException):
+    pass
+
+class NotRegisteredWithServer(PulsarException):
+    pass

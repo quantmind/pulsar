@@ -22,12 +22,11 @@ from pulsar.utils.defer import RemoteProxy
 from pulsar.utils.eventloop import IOLoop
 from pulsar.utils import system
 
-from .workerpool import HttpMixin
+from .workerpool import HttpMixin, RemoteWorker
 
 
 __all__ = ['Runner',
            'ThreadQueue',
-           'PoolProxy',
            'Worker',
            'WorkerThread',
            'WorkerProcess']
@@ -113,21 +112,6 @@ is called after fork by the run method.'''
         return isinstance(self,Thread)
         
 
-class PoolProxy(RemoteProxy):
-    remotes = ('notify','server_info')
-    
-    def __init__(self, worker):
-        self.worker = worker
-        super(PoolProxy,self).__init__(worker._pool_proxy,
-                                       log = worker.log)
-    
-    def proxy_server_info(self, info):
-        pass
-                
-    def proxy_stop(self):
-        self.worker._stop()
-        
-
 
 class Worker(Runner, HttpMixin):
     """\
@@ -175,6 +159,7 @@ in ``self.setup()``.
                  logger = None,
                  command_timeout = None,
                  task_queue = None,
+                 pool_proxy = None,
                  **kwargs):
         self.age = age
         self.notified = time.time()
@@ -185,7 +170,8 @@ in ``self.setup()``.
         self.timeout = timeout
         self.cfg = cfg
         self.task_queue = task_queue
-        self._pool_proxy = pool_connection
+        self.remoteWorker = pool_connection
+        self.pool_proxy = pool_proxy
         self.COMMAND_TIMEOUT = command_timeout if command_timeout is not None else self.COMMAND_TIMEOUT
         self.set_listener(socket, app)
     
@@ -243,7 +229,8 @@ stop the event loop and exit.'''
 and perform several post fork processing before starting the event loop.'''
         self.log = self.getLogger()
         # Create the Pool Proxy object
-        self._pool_proxy = PoolProxy(self)
+        self.remoteWorker = RemoteWorker(self)
+        self.pool_proxy.worker(self.remoteWorker)
         self.ioloop = self.get_eventloop()
         if self.cfg:
             system.set_owner_process(self.cfg.uid, self.cfg.gid)

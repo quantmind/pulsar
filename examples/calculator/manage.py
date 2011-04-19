@@ -30,8 +30,8 @@ def server(**params):
     return wsgi.createServer(callable = Calculator(), **params)
 
 
-def start():
-    server().start()
+def start_server(**params):
+    return server(**params).start()
 
     
 if __name__ == '__main__':

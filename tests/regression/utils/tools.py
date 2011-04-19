@@ -19,4 +19,3 @@ class TestArityCheck(test.TestCase):
         self.assertEqual(checkarity(f0,(),{'a':3,'c':5}),'"f0" does not accept "c" parameter.')
         self.assertEqual(checkarity(f0,(),{'a':3,'c':5, 'd':6}),'"f0" takes 2 parameters. 3 given.')
         
-        

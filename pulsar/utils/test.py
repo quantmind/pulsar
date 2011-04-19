@@ -9,7 +9,7 @@ from threading import Thread
 
 from pulsar.utils.eventloop import MainIOLoop
 from pulsar.utils.importer import import_module
-from pulsar.utils.defer import RemoteProxyObject 
+from pulsar.utils.defer import make_deferred, RemoteServer, Deferred
 
 TextTestRunner = unittest.TextTestRunner
 
@@ -87,21 +87,30 @@ class TestSuite(unittest.TestSuite):
                 obj = test
             self._tests.append({'obj':obj,
                                 'tests':tests})
-                
+    
+    def _runtests(self, res, tests, end, result):
+        if isinstance(res,Deferred):
+            return res.add_callback(lambda x : self._runtests(x,tests,end,result))
+        else:
+            for t in tests:
+                t(result)
+            if end:
+                end()
+            return result
+        
     def run(self, result):
+        d = make_deferred()
         for test in self:
             if result.shouldStop:
                 break
             obj = test['obj']
             init = getattr(obj,'initTests',None)
             if init:
-                init()
-            for t in test['tests']:
-                t(result)
+                d.add_callback(lambda r : init())
             end = getattr(obj,'endTests',None)
-            if end:
-                end()
-        return result
+            tests = test['tests']
+            d.add_callback(lambda res : self._runtests(res,tests,end,result))
+        return d.wait(1)
         
         
 class TestLoader(object):
@@ -155,32 +164,14 @@ It injects the suiterunner proxy for comunication with the master process."""
                 
                 logger.debug("Adding tests for %s" % app)
                 yield mod
-            
-    
-class SuiteProxy(RemoteProxyObject):
-    remotes = ('result','run')
-    
-    def proxy_run(self, response):
-        '''The callback from the main process'''
-        
-
-class TestProxy(RemoteProxyObject):
-    
-    def proxy_result(self, result):
-        self.obj.result = result
-        self.obj.ioloop.stop()
-        
-    def proxy_run(self, method, *args, **kwargs):
-        result = method(*args,**kwargs)
-        return result
         
             
 class TestingMixin(object):
     '''A Test suite which runs tests on a separate process while keeping the main process
 busy with the main event loop.'''
-    def __init__(self, tags, testtype, extractors, verbosity, itags, connection):
+    def __init__(self, tags, testtype, extractors, verbosity, itags, suiterunner):
         self.verbosity = verbosity
-        self.suiterunner = connection
+        self.suiterunner = suiterunner
         self.loader = TestLoader(tags, testtype, extractors, itags)
         
     def setup_test_environment(self):
@@ -190,7 +181,6 @@ busy with the main event loop.'''
         pass
     
     def run(self):
-        self.suiterunner = SuiteProxy(self,self.suiterunner)
         self.setup_test_environment()
         self.suite = self.loader.load(self.suiterunner)
         result = None
@@ -198,9 +188,6 @@ busy with the main event loop.'''
             result = TextTestRunner(verbosity = self.verbosity).run(self.suite)
         finally:
             self.teardown_test_environment()
-            if result:
-                result = len(result.failures) + len(result.errors)
-            self.suiterunner.result(result)
     
 
 class TestingProcess(TestingMixin,Process):
@@ -219,27 +206,41 @@ class TestingThread(TestingMixin,Thread):
         self.daemon = True
         
     
-class TestSuiteRunner(object):
+class TestSuiteRunner(RemoteServer):
     # TestingRunner is a class where tests are run.
     # Choose between a Thread or a Process.
     TestingRunner = TestingThread
     #TestingRunner = TestingProcess
     
     def __init__(self, tags, testtype, extractors, verbosity = 1, itags = None):
+        connection, remote_connection = Pipe()
+        super(TestSuiteRunner,self).__init__(connection)
         setup_logging(verbosity)
-        # Pipe for connection
-        a, connection = Pipe()
-        self.testproxy = TestProxy(self,a)
+        proxy = self.get_proxy(remote_connection)
         self.runner = self.TestingRunner(tags, testtype, extractors,
-                                         verbosity, itags, connection)
+                                         verbosity, itags, proxy)
         self.ioloop = MainIOLoop.instance()
-        self.ioloop.add_callback(self.runner.start)
+        self.ioloop.add_callback(self.start)
         self.ioloop.add_loop_task(self)
         
+    def start(self):
+        self.runner.start()
+        if isinstance(self.runner,Process):
+            self.runner.remote_connection.close()
+            
     def run_tests(self):
         self.ioloop.start()
-        return self.result 
         
     def __call__(self):
-        self.testproxy.flush()
-            
+        self.flush()
+        if not self.runner.is_alive():
+            self.ioloop.stop()
+        
+    def remote_run(self, method, *args, **kwargs):
+        '''Run ``method`` in the current process domain.'''
+        result = method(*args,**kwargs)
+        return result
+    
+    
+        
+    

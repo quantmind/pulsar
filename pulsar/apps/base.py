@@ -147,13 +147,8 @@ used by a :class:`pulsar.Worker` to carry out its task.'''
                     raise
         
         self.configure_logging()
-        try:
-            self._pulsar_arbiter.start()
-            return self
-        except RuntimeError as e:
-            sys.stderr.write("\nError: %s\n\n" % e)
-            sys.stderr.flush()
-            sys.exit(1)
+        self._pulsar_arbiter.start()
+        return self
             
     def stop(self):
         arbiter = getattr(self,'_pulsar_arbiter',None)

@@ -1,5 +1,7 @@
 import sys
-from .exceptions import AlreadyCalledError
+from time import sleep
+
+from .exceptions import AlreadyCalledError, AlreadyRegistered, NotRegisteredWithServer
 from .crypt import gen_unique_id
 
 EMPTY_TUPLE = ()
@@ -8,9 +10,11 @@ EMPTY_DICT = {}
 
 __all__ = ['Deferred',
            'Remote',
+           'RemoteServer',
            'RemoteRequest',
            'RemoteProxyRequest',
            'RemoteProxy',
+           'RemoteProxyServer',
            'RemoteProxyObject']
 
 
@@ -25,12 +29,29 @@ class Deferred(object):
     """
     def __init__(self, rid = None):
         self._called = False
+        self.paused = 0
         self.rid = rid
         self._callbacks = []
     
     @property
     def called(self):
         return self._called
+    
+    def pause(self):
+        """Stop processing until :meth:`unpause` is called.
+        """
+        self.paused += 1
+
+
+    def unpause(self):
+        """
+        Process all callbacks made since L{pause}() was called.
+        """
+        self.paused -= 1
+        if self.paused:
+            return
+        if self.called:
+            self._run_callbacks()
     
     def add_callback(self, callback):
         """Add a callback as a callable function. The function takes one argument,
@@ -43,10 +64,25 @@ the result of the callback.
     def _run_callbacks(self):
         if self._called and self._callbacks:
             callbacks = self._callbacks
-            self._callbacks = []
-            for callback in callbacks:
-                callback(self.result)
+            while callbacks:
+                callback = callbacks.pop(0)
+                try:
+                    self._runningCallbacks = True
+                    try:
+                        self.result = callback(self.result)
+                    finally:
+                        self._runningCallbacks = False
+                    if isinstance(self.result, Deferred):
+                        self.pause()
+                        self.result.add_callback(self._continue)
+                except:
+                    pass
+                
         return self
+    
+    def _continue(self, result):
+        self.result = result
+        self.unpause()
     
     def callback(self, result):
         if isinstance(result,Deferred):
@@ -56,18 +92,38 @@ the result of the callback.
         self.result = result
         self._called = True
         self._run_callbacks()
+        
+    def wait(self, timeout = 1):
+        '''Wait until result is available'''
+        while not self.called:
+            sleep(timeout)
+        if isinstance(self.result,Deferred):
+            return self.result.wait(timeout)
+        else:
+            return self.result
 
 
+def make_deferred(val = None):
+    if not isinstance(val,Deferred):
+        d = Deferred()
+        d.callback(val)
+        return d
+    else:
+        return val
+    
+                
 class RemoteRequest(Deferred):
     LIVE_REQUESTS = {}
     
-    def __init__(self, name, args = None, kwargs = None, ack = True, rid = None):
+    def __init__(self, proxyid, name, args = None, kwargs = None, rid = None, ack = True):
         super(RemoteRequest,self).__init__(rid = rid or gen_unique_id())
+        self.proxyid = proxyid
         self.name = name
         self.args = args or EMPTY_TUPLE
         self.kwargs = kwargs or EMPTY_DICT
         self.ack = ack
-        self.LIVE_REQUESTS[self.rid] = self
+        if ack:
+            self.LIVE_REQUESTS[self.rid] = self
         
     def __str__(self):
         return '{0} - {1}'.format(self.name,self.rid[:8])
@@ -83,7 +139,6 @@ class RemoteRequest(Deferred):
         
     def callback(self, result):
         super(RemoteRequest,self).callback(result)
-        self.ack = False
         
     @classmethod
     def CallBack(cls, rid, result):
@@ -94,27 +149,29 @@ class RemoteRequest(Deferred):
             
 
 class RemoteProxyRequest(object):
-    __slots__ = ('connection','_func_name','ack')
+    __slots__ = ('connection','_func_name','proxyid','ack')
     
-    def __init__(self, connection, name, ack):
+    def __init__(self, proxyid, name, connection, ack = True):
+        self.proxyid = proxyid
         self.connection = connection
         self._func_name = name
         self.ack = ack
         
     def __call__(self, *args, **kwargs):
-        request = RemoteRequest(self._func_name,args,kwargs,self.ack)
+        request = RemoteRequest(self.proxyid,self._func_name,args,kwargs,ack=self.ack)
         self.connection.send(request)
         return request
     
 
-class RemoteProxyMetaClass(type):
+class RemoteMetaClass(type):
     
     def __new__(cls, name, bases, attrs):
-        make = super(RemoteProxyMetaClass, cls).__new__
+        make = super(RemoteMetaClass, cls).__new__
         if attrs.pop('virtual',None):
             return make(cls,name,bases,attrs)
         
-        fprefix = 'proxy_'
+        fprefix = 'remote_'
+        attrib  = '{0}functions'.format(fprefix)
         cont = {}
         for key, method in list(attrs.items()):
             if hasattr(method,'__call__') and key.startswith(fprefix):
@@ -123,29 +180,21 @@ class RemoteProxyMetaClass(type):
                 method.__name__ = name
                 cont[name] = method
             for base in bases[::-1]:
-                if hasattr(base, 'proxy_functions'):
-                    rbase = base.proxy_functions
+                if hasattr(base, attrib):
+                    rbase = getattr(base,attrib)
                     for key,method in rbase.items():
-                        if not cont.has_key(key):
+                        if not key in cont:
                             cont[key] = method
                         
-        attrs['proxy_functions'] = cont
+        attrs[attrib] = cont
+        attrs['remotes'] = dict((name,getattr(attr,'ack',True)) for name,attr in cont.items())
         return make(cls, name, bases, attrs)
 
     
-BaseRemoteProxy = RemoteProxyMetaClass('BaseRemoteProxy',(object,),{})
+BaseRemote = RemoteMetaClass('BaseRemote',(object,),{})
 
 
-class Remote(object):
-    REMOTE_PROXIES = {}
-    remotes = ()
-    def get_proxy(self, rid, connection):
-        proxy = RemoteProxy(connection, remotes = self.remotes, rid = rid)
-        self.REMOTE_PROXIES[rid] = self
-        return proxy
-    
-    
-class RemoteProxy(BaseRemoteProxy):
+class RemoteProxyServer(object):
     '''A proxy for a remote object used by processes to call
 remote functions via a duplex connection.
 To specify a functions called by remote objects prefix with "proxy_".
@@ -155,40 +204,20 @@ To specify a functions called by remote objects prefix with "proxy_".
     Tuple of remote functions names. Default ``()``.
     
 '''
-    remotes = ()
     REQUEST = RemoteProxyRequest
     
-    def __init__(self, connection, log = None, remotes = None, rid = None):
+    def __init__(self, connection, log = None):
         self.connection = connection
-        self.rid = rid
-        if remotes:
-            self.remotes = remotes
+        self.REGISTERED_REMOTES = {}
         self.log = log
-        
-    def __getstate__(self):
-        d = self.__dict__.copy()
-        d.pop('log',None)
-        return d
     
+    def send(self, data):
+        if isinstance(data,Remote):
+            data = data.get_remote()
+            
     def close(self):
         '''Close the proxy by closing the duplex connection.'''
         self.connection.close()
-
-    def callback(self, response, result):
-        '''Got a result for request. If required runs callbacks
-        Callback the caller.'''
-        if response.ack:
-            if isinstance(result,Remote):
-                result = result.get_proxy(response.rid, self.connection)
-            response.callback(result)
-            self.connection.send(response)
-    
-    def __getattr__(self, name):
-        if name in self.remotes:
-            ack = name in self.proxy_functions
-            return self.REQUEST(self.connection,name,ack)
-        else:
-            raise AttributeError("'{0}' object has no attribute '{1}'".format(self,name))
     
     def flush(self):
         '''Flush the pipe and runs callbacks'''
@@ -196,13 +225,12 @@ To specify a functions called by remote objects prefix with "proxy_".
         while c.poll():
             request = c.recv()
             try:
-                func = self.proxy_functions[request.name]
-                if hasattr(request,'result'):
-                    func(self, request)
-                    RemoteRequest.CallBack(request.rid,request.result)
+                pid = request.proxyid
+                if pid in self.REGISTERED_REMOTES:
+                    obj = self.REGISTERED_REMOTES[pid]
+                    obj.handle_remote_request(request)
                 else:
-                    result = func(self, *request.args, **request.kwargs)
-                    self.callback(request,result)
+                    RemoteRequest.CallBack(request.rid,request.result)
             except Exception as e:
                 result = e
                 if self.log:
@@ -210,9 +238,77 @@ To specify a functions called by remote objects prefix with "proxy_".
                                     exc_info=sys.exc_info())
             
 
-class RemoteProxyObject(RemoteProxy):
+class RemoteProxy(object):
+    REQUEST = RemoteProxyRequest
     
-    def __init__(self, obj, connection, log = None):
-        self.obj = obj
-        super(RemoteProxyObject,self).__init__(connection,log=log)
+    def __init__(self, proxyid, remotes, connection = None):
+        self.proxyid = proxyid
+        self.remotes = remotes
+        self.connection = connection
+        
+    def __getattr__(self, name):
+        if name in self.remotes:
+            ack = self.remotes[name]
+            return self.REQUEST(self.proxyid,name, self.connection, ack = ack)
+        else:
+            raise AttributeError("'{0}' object has no attribute '{1}'".format(self,name))
+        
     
+    
+class Remote(BaseRemote):
+    '''A proxy for a remote object used by processes to call
+remote functions via a duplex connection.
+To specify a functions called by remote objects prefix with "proxy_".
+
+.. attribute:: remotes
+
+    Tuple of remote functions names. Default ``()``.
+    
+'''
+    _server = None
+    
+    @property
+    def proxyid(self):
+        if hasattr(self,'_proxyid'):
+            return self._proxyid
+    
+    def register_with_server(self, server):
+        if self._server:
+            raise AlreadyRegistered('{0} already registered with a remote server')
+        if isinstance(server,RemoteProxyServer):
+            self._server = server
+            pid = gen_unique_id()
+            server.REGISTERED_REMOTES[pid] = self
+            self._proxyid = pid
+        return self
+    
+    def get_proxy(self, remote_connection):
+        '''Return an instance of :class:`RemoteProxy` pointig to self. The return object
+can be passed to remote process.'''
+        pid = self.proxyid
+        if not pid:
+            raise NotRegisteredWithServer
+        if isinstance(remote_connection,RemoteProxyServer):
+            remote_connection = remote_connection.connection
+        return RemoteProxy(pid, self.remotes, remote_connection)
+    
+    def handle_remote_request(self, request):
+        func = self.remote_functions[request.name]
+        result = func(self, *request.args, **request.kwargs)
+        if request.ack:
+            self.run_remote_callback(request,result)
+                
+    def run_remote_callback(self, response, result):
+        '''Run the remote callback.'''
+        if isinstance(result,Remote):
+            result = result.get_proxy()
+        response.callback(result)
+        self._server.connection.send(response)
+
+    
+class RemoteServer(RemoteProxyServer,Remote):
+    '''A remote object which is also a server'''
+    def __init__(self, *args, **kwargs):
+        super(RemoteServer,self).__init__(*args, **kwargs)
+        self.register_with_server(self)
+        
