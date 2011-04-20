@@ -135,6 +135,14 @@ used by a :class:`pulsar.Worker` to carry out its task.'''
             self.callable = self.load()
         return self.callable
     
+    def on_arbiter_proxy(self, worker):
+        '''Callback by worker class when the worker when it
+receives the arbiter proxy.
+
+:parameter worker: the :class:`pulsar.Worker` which received the callback
+                   and where ``self`` is served from. '''
+        pass
+    
     def start(self):
         '''Start the application'''
         if self.cfg.daemon:

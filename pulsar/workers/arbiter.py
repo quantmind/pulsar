@@ -15,7 +15,7 @@ from .workerpool import WorkerPool
 __all__ = ['Arbiter']
 
 
-class Arbiter(Runner):
+class Arbiter(Runner,pulsar.PickableMixin):
     '''An Arbiter is an object which controls pools of workers'''
     CLOSE_TIMEOUT = 3
     WORKER_BOOT_ERROR = 3
@@ -87,7 +87,8 @@ in the main thread'''
         pass
         
     def run(self):
-        self.init_process()
+        self.init_runner()
+        self._run()
         
     def _run(self):
         """\
@@ -118,21 +119,20 @@ in the main thread'''
         """ halt arbiter """
         _msg = lambda x : x if not reason else '{0}: {1}'.format(x,reason)
         
+        if self.pidfile is not None:
+            self.pidfile.unlink()
+            
         if sig:
             msg = _msg('Shutting down')
             self.close()
-            status = 0
+            self.terminate()
+            self.log.info(msg)
+            sys.exit(0)
         else:
             msg = _msg('Force termination')
-            status = 1
-        if self.pidfile is not None:
-            self.pidfile.unlink()
-        self.terminate()
-        self.log.critical(msg)
-        sys.exit(status)
-    
-    def is_alive(self):
-        return self.ioloop.running()
+            self.terminate()
+            self.log.critical(msg)
+            sys.exit(1)
     
     def stop(self):
         '''Alias of :meth:`close`'''
@@ -192,17 +192,17 @@ in the main thread'''
                     raise self.HaltServer('Received Signal {0}.'.format(signame),sig)
                 handler = getattr(self, "handle_queued_%s" % signame.lower(), None)
                 if not handler:
-                    self.log.critical('Cannot handle signal "{0}". No Handle'.format(signame))
+                    self.log.debug('Cannot handle signal "{0}". No Handle'.format(signame))
                     sig = None
                 else:
                     self.log.info("Handling signal: %s" % signame)
                     handler()
         return sig                
-                
+    
     def signal(self, sig, frame = None):
         signame = system.SIG_NAMES.get(sig,None)
         if signame:
-            self.log.warn('Received and queueing signal {0}.'.format(signame))
+            self.log.info('Received and queueing signal {0}.'.format(signame))
             self.SIG_QUEUE.put(sig)
         else:
             self.log.info('Received unknown signal "{0}". Skipping.'.format(sig))

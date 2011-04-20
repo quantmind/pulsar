@@ -5,7 +5,7 @@ from multiprocessing import Pipe
 
 from pulsar import getLogger
 from pulsar.utils.py2py3 import iteritems
-from pulsar.utils.async import RemoteServer
+from pulsar.utils.async import RemoteController
 from pulsar.utils.exceptions import PulsarPoolAlreadyStarted
 from pulsar.http import get_httplib
 
@@ -13,60 +13,33 @@ from pulsar.http import get_httplib
 __all__ = ['WorkerPool']
         
 
-class RemotePool(RemoteServer):
+class RemotePool(RemoteController):
     '''A specialization of a :class:`RemoteProxy`. This class does not need to
 be serializable since it stays in the workerpool process domain.'''
     remotes = ('stop',)
     
-    def __init__(self, connection, arbiter, worker, log = None):
-        super(RemotePool,self).__init__(connection,log=log)
+    def __init__(self, connection, worker, log, arbiter):
         self.arbiter = arbiter
-        self.worker = worker
-        self.remote_worker = None
-        self.notified = time.time()
+        super(RemotePool,self).__init__(connection,worker,log=log)
     
-    def __repr__(self):
-        return self.worker.__repr__()
-    
-    def __str__(self):
-        return self.worker.__str__()
-    
-    def is_alive(self):
-        return self.worker.is_alive()
-     
     def terminate(self):
-        self.worker.terminate()
+        self._obj.terminate()
 
     def join(self, timeout = 0):
-        self.worker.join(timeout)
+        self._obj.join(timeout)
     
     def stop(self):
-        if self.remote_worker:
-            self.remote_worker.stop()
-    
-    # Remote functions
-    
-    def remote_ping(self):
-        return 'pong'
-    
-    def remote_notify(self, t):
-        self.notified = t
-    remote_notify.ack = False
+        if self.remote:
+            self.remote.stop()
         
     def remote_server_info(self):
         '''Get server Info and send it back.'''
         return self.arbiter.info()
-    
-    def remote_worker(self, rw):
-        self.remote_worker = rw
-    remote_worker.ack = False
-    
-    def remote_run(self, method, *args, **kwargs):
-        return method(*args,**kwargs)
 
     def remote_shut_down(self):
+        '''Shut down the arbiter from a worker. No acknowledgement in this function'''
         self.arbiter.shut_down()
-        
+    remote_shut_down.ack = False
 
 class HttpMixin(object):
     
@@ -282,10 +255,10 @@ as required."""
                               task_queue = self.task_queue)
         
         rp = RemotePool(worker_connection,
-                        self.arbiter,
                         worker,
-                        log = self.log)
-        worker.pool = rp
+                        self.log,
+                        self.arbiter)
+        #worker.pool = rp
             
         if self.cfg.pre_fork:
             self.cfg.pre_fork(worker)
@@ -297,6 +270,7 @@ as required."""
         wid = worker.wid
         if wid != 0:
             self.WORKERS[wid] = rp
+            rp.register_with_remote()
         
     def info(self):
         return {'worker_class':self.worker_class.code(),

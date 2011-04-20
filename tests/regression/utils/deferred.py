@@ -27,4 +27,4 @@ class TestDeferred(test.TestCase):
         d.callback('ciao')
         self.assertTrue(d.called)
         self.assertEqual(cbk.result,'ciao')
-        
+                

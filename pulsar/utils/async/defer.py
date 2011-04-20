@@ -1,13 +1,48 @@
 import sys
+import inspect
 from time import sleep
 
 from pulsar import AlreadyCalledError
 
 
 __all__ = ['Deferred',
+           'async',
+           'is_async',
+           'make_async',
            'make_deferred',
            'simple_callback']
 
+
+def is_async(obj):
+    return isinstance(obj,Deferred)
+
+async_value = lambda value : lambda result : value 
+
+def make_deferred(val = None):
+    if not is_async(val):
+        d = Deferred()
+        d.callback(val)
+        return d
+    else:
+        return val
+    
+
+def make_async(val = None):
+    if not is_async(val):
+        if inspect.isgenerator(val):
+            d = make_async() 
+            for v in val:
+                if is_async(v):
+                    dv = make_async(v)
+                else:
+                    d.add_callback(async_value(v))
+            return d
+        else:
+            d = Deferred()
+            d.callback(val)
+            return d
+    else:
+        return val
 
 def simple_callback(func, *args, **kwargs):
     '''Wrap a function which does not include the callback
@@ -19,6 +54,18 @@ result as argument. Raise exceptions if result is one.'''
             func(*args,**kwargs)
     
     return _
+
+
+def async(o, *args, **kwargs):
+    '''Transform ``o`` into a Deferred instance'''       
+    if hasattr(o,'__call__'):
+        def _(*args, **kwargs):
+            res = o(*args, **kwargs)
+            return make_async(res)
+        
+        return _
+    else:
+        return make_async(o)
 
 
 class Deferred(object):
@@ -104,12 +151,4 @@ the result of the callback.
         else:
             return self.result
 
-
-def make_deferred(val = None):
-    if not isinstance(val,Deferred):
-        d = Deferred()
-        d.callback(val)
-        return d
-    else:
-        return val
     

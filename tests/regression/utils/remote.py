@@ -1,9 +1,11 @@
 from time import sleep
 from multiprocessing import Pipe, Process
+from threading import Thread
 
 from pulsar import test
-from pulsar.utils.async import RemoteProxyServer, Remote,\
-                               RemoteServer, RemoteProxy
+from pulsar.utils.async import RemoteServer, Remote,\
+                               ProcessWithRemote, RemoteController,\
+                               RemoteProxy
 
 from .deferred import TestCbk
 
@@ -12,50 +14,41 @@ __all__ = ['TestRemote',
            'TestRemoteOnProcess']
 
 
-class RemoteX(RemoteServer):
-    '''A toy remote server for testing'''
-    _stop = False
+class RemoteX(RemoteController):
+    '''A toy remote controller for testing'''
     loops = 0
-    
     def remote_loops(self):
         return self.loops
-                    
-    def remote_stop(self):
-        self._stop = True
-    remote_stop.ack = False
 
 
-class ServerProcess(Process):
-    server_class = RemoteX
-    
-    def __init__(self, connection):
-        super(ServerProcess,self).__init__()
-        self._connection = connection
+class ServerTest(ProcessWithRemote):
+    controller_class = RemoteX
+    _cont = True
         
-    def get_proxy(self, connection):
-        pass
-    
-    def make_server(self):
-        return self.server_class(self._connection)
-    
-    def run(self):
-        self.server = self.make_server()
-        self._run()
-    
-    def _run(self):
-        raise NotImplementedError
-    
-    
-class ServerProcessTest(ServerProcess):
-    
     def _run(self):
         server = self.server
-        server.loops = 0
-        while not self.server._stop:
+        while self._cont:
             server.loops += 1
             server.flush()
-            sleep(0.1)            
+            sleep(0.05)
     
+    def _stop(self):
+        self._cont = False   
+    
+
+class ServerProcessTest(ServerTest,Process):
+    
+    def __init__(self, *args):
+        super(ServerProcessTest,self).__init__(*args)
+        Process.__init__(self)
+        
+
+class ServerThreadTest(ServerTest,Thread):
+    
+    def __init__(self, *args):
+        super(ServerThreadTest,self).__init__(*args)
+        Thread.__init__(self)
+
     
 class RObject(Remote):
     '''A simple object with two remote functions'''
@@ -79,12 +72,12 @@ class TestRemote(test.TestCase):
     
     def setUp(self):
         a,b = Pipe()
-        self.a,self.b = RemoteProxyServer(a),RemoteProxyServer(b)
+        self.a,self.b = RemoteServer(a),RemoteServer(b)
         
     def testRemoteSimple(self):
         server_a,server_b = self.a,self.b
-        self.assertEqual(len(RObject.remote_functions),3)
-        self.assertEqual(len(RObject.remotes),3)
+        self.assertEqual(len(RObject.remote_functions),6)
+        self.assertEqual(len(RObject.remotes),6)
         
         # Create an object and register with server a
         objA = RObject().register_with_server(server_a)
@@ -155,45 +148,63 @@ parameters of remote functions.'''
         server_b.flush()
         self.assertEqual(objB.data[0],objB)
         
+    def testRegisterRemote(self):
+        server_a,server_b = self.a,self.b
+        server_a.register_with_remote()
+        self.assertEqual(server_a.remote,None)
+        server_b.flush()
+        self.assertEqual(server_a.remote,None)
+        # But server_b has received server_a
+        self.assertTrue(server_b.remote)
+        self.assertEqual(server_a.proxyid,server_b.remote.proxyid)
+        server_a.flush()
+        self.assertTrue(server_a.remote)
+        self.assertEqual(server_a.remote.proxyid,server_b.proxyid)
         
 class TestRemoteOnProcess(test.TestCase):
     
     def setUp(self):
         a,b = Pipe()
-        self.a,self.b = RemoteProxyServer(a),ServerProcessTest(b)
+        self.a,self.b = RemoteServer(a,log=self.log),b
         
-    def testSimple(self):
-        try:
-            server_a,server_b = self.a,self.b
-            # lets start the server b
-            server_b.start()
-            self.sleep(0.2)
-            self.assertTrue(server_b.is_alive())
-            #
-            # Get the proxy of server b
-            proxyb = server_b.get_proxy(server_a)
-            self.assertEqual(proxyb.proxyid,server_b.proxyid)
-            #
-            # number of loops in server b
-            cbk = TestCbk()
-            proxyb.loops().add_callback(cbk)
-            server_a.flush()
-            loop1 = cbk.result
-            self.assertTrue(loop1 > 0)
-            
-            self.sleep(0.2)
-            proxyb.loops().add_callback(cbk)
-            server_a.flush()
-            loop2 = cbk.result
-            self.assertTrue(loop2 > loop1)
-            
-            # lets kill server b
-            proxyb.stop()
-            server_a.flush()
-            self.sleep(0.2)
-            self.assertFalse(server_b.is_alive())
-        finally:
-            server_b.terminate()
-            sleep(0.2)
-            self.assertFalse(server_b.is_alive())
+    def __testConnectorInThread(self):
+        server_b = ServerThreadTest(self.b)
+        self._connector_test(server_b)
         
+    def _testConnectorInProcess(self):
+        server_b = ServerProcessTest(self.b)
+        self._connector_test(server_b)
+        
+    def _connector_test(self, server_b):
+        server_a = self.a
+        # lets start the server b
+        server_b.start()
+        self.sleep(0.2)
+        self.assertTrue(server_b.is_alive())
+        #
+        # number of loops in server b
+        server_a.register_with_remote()
+        self.assertEqual(server_a.remote,None)
+        self.sleep(1) # make sure we receive the callback
+        server_a.flush()
+        self.assertTrue(server_a.remote)
+        
+        cbk = TestCbk()
+        server_a.remote.loops().add_callback(cbk)
+        server_a.flush()
+        self.sleep(0.2)
+        loop1 = cbk.result
+        self.assertTrue(loop1 > 0)
+        
+        self.sleep(0.2)
+        server_a.remote.loops().add_callback(cbk)
+        server_a.flush()
+        self.sleep(0.2)
+        loop2 = cbk.result
+        self.assertTrue(loop2 > loop1)
+        
+        # lets kill server b
+        server_a.remote.stop()
+        server_a.flush()
+        self.sleep(0.2)
+        self.assertFalse(server_b.is_alive())

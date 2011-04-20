@@ -24,3 +24,21 @@ Application Class
 .. autoclass:: pulsar.Application
    :members:
    :member-order: bysource
+
+  
+Remote Objects
+===================
+
+Remote
+~~~~~~~~~~~~~~~~~~~
+
+.. autoclass:: pulsar.utils.async.RemoteMixin
+   :members:
+   :member-order: bysource
+   
+RemoteServer
+~~~~~~~~~~~~~~~~~~~
+
+.. autoclass:: pulsar.utils.async.RemoteServer
+   :members:
+   :member-order: bysource

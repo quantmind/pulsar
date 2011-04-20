@@ -1,10 +1,13 @@
+import sys
+
 SERVER_NAME = 'Pulsar'
 
 
 __all__ = ['SERVER_NAME',
            'getLogger',
            'PickableMixin',
-           'LogSelf']
+           'LogSelf',
+           'logerror']
 
 
 def getLogger(name = None):
@@ -12,6 +15,20 @@ def getLogger(name = None):
     import logging
     name = '{0}.{1}'.format(SERVER_NAME,name) if name else SERVER_NAME
     return logging.getLogger(name)
+
+
+def logerror(func):
+    
+    def _(self,*args,**kwargs):
+        try:
+            return func(self,*args,**kwargs)
+        except Exception as e:
+            if self.log:
+                self.log.critical('"{0}" had an unhandled exception in function "{1}": {2}'\
+                                  .format(self,func.__name__,e),exc_info=sys.exc_info())
+            pass
+        
+    return _
 
 
 class LogSelf(object):

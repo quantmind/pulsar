@@ -11,8 +11,8 @@ import inspect
 
 import pulsar
 from pulsar.utils.importer import import_module
-from pulsar.utils.async import IOLoop, make_deferred,\
-                               Deferred, simple_callback
+from pulsar.utils.async import make_deferred,\
+                               Deferred, simple_callback, async
 
 
 logger = logging.getLogger()
@@ -85,20 +85,21 @@ class TestSuite(unittest.TestSuite):
                 end()
             return result
         
+    @async
     def run(self, result):
-        d = make_deferred()
         for test in self:
             if result.shouldStop:
-                break
+                raise StopIteration
             obj = test['obj']
             init = getattr(obj,'initTests',None)
-            if init:
-                d.add_callback(lambda r : init())
             end = getattr(obj,'endTests',None)
-            tests = test['tests']
-            d.add_callback(lambda res : self._runtests(res,tests,end,result))
-        return d
-        
+            if init:
+                yield init()
+            for t in test['tests']:
+                yield t(result)
+            if end:
+                yield end()
+        yield result
         
 class TestLoader(object):
     '''Load test cases'''
@@ -123,6 +124,7 @@ It injects the suiterunner proxy for comunication with the master process."""
                     if tag and not tag in itags:
                         continue
                     obj.suiterunner = suiterunner
+                    obj.log = logging.getLogger(obj.__class__.__name__)
                     tests.append(obj)
         return self.suiteClass(tests)
     
@@ -212,46 +214,25 @@ class TextTestRunner(unittest.TextTestRunner):
         return result
         
 
-class TestMixin(object):
-        
-    def setup_test_environment(self):
-        pass
-    
-    def teardown_test_environment(self):
-        pass
-    
-    def _run_suite(self):
-        TextTestRunner(verbosity = self.cfg.verbosity)\
-                        .run(self.suite)\
-                        .add_callback(simple_callback(self._shut_down))
-        
-    def _run(self):
-        cfg = self.cfg
-        self.loader = TestLoader(cfg.tags, cfg.testtype, cfg.extractors, cfg.itags)
-        self.ioloop = IOLoop()
-        self.ioloop.add_loop_task(self)
-        self.setup_test_environment()
-        self.suite = self.loader.load(self.pool)
-        self.ioloop.add_callback(self._run_suite)
-        try:
-            self.ioloop.start()
-        finally:
-            self.teardown_test_environment()
-            self.ioloop.stop()
-    
-
-class TestWorkerThread(TestMixin,pulsar.WorkerThread):
-    pass
-
-
-class TestWorkerProcess(TestMixin,pulsar.WorkerProcess):
-    pass
+def run_tests(self, suite):
+    '''The tests can start only when we receive the proxy for the testsuite'''
+    cfg = self.cfg
+    self.loader = TestLoader(cfg.tags, cfg.testtype, cfg.extractors, cfg.itags)    
+    TextTestRunner(verbosity = cfg.verbosity)\
+                    .run(suite)\
+                    .add_callback(simple_callback(self._shut_down))
 
 
 class TestApplication(pulsar.Application):
     ArbiterClass = pulsar.Arbiter
     
-    '''A dummy application for testing'''
+    def on_arbiter_proxy(self, worker):
+        cfg = worker.cfg
+        suite = TestLoader(cfg.tags, cfg.testtype, cfg.extractors, cfg.itags)\
+                        .load(worker.arbiter_proxy)  
+        return TextTestRunner(verbosity = cfg.verbosity).run(suite)\
+                        .add_callback(simple_callback(worker._shut_down))
+                    
     def load_config(self, **params):
         pass
     
@@ -279,9 +260,9 @@ class TestConfig(pulsar.DummyConfig):
         self.itags = itags
         self.workers = 1
         if inthread:
-            self.worker_class = TestWorkerThread
+            self.worker_class = pulsar.WorkerThread
         else:
-            self.worker_class = TestWorkerProcess
+            self.worker_class = pulsar.WorkerProcess
         
         
 def TestSuiteRunner(tags, testtype, extractors,

@@ -6,7 +6,6 @@ import os
 import random
 import signal
 import sys
-import time
 try:
     import queue
 except ImportError:
@@ -14,11 +13,11 @@ except ImportError:
 ThreadQueue = queue.Queue
 
 from multiprocessing import Process, current_process
-from multiprocessing.queues import Queue, Empty
+from multiprocessing.queues import Queue
 from threading import current_thread, Thread
 
 import pulsar
-from pulsar.utils.async import RemoteServer, IOLoop
+from pulsar.utils.async import ProcessWithRemote, IOLoop
 from pulsar.utils import system
 
 from .workerpool import HttpMixin
@@ -33,13 +32,13 @@ __all__ = ['Runner',
 _main_thread = current_thread()
 
 
-class Runner(pulsar.PickableMixin):
+class Runner(object):
     '''Base class for classes with an event loop.
     '''
     DEF_PROC_NAME = 'pulsar'
     SIG_QUEUE = None
     
-    def init_process(self):
+    def init_runner(self):
         '''Initialise the runner. This function
 will block the current thread since it enters the event loop.
 If the runner is a instance of a subprocess, this function
@@ -47,7 +46,6 @@ is called after fork by the run method.'''
         self.set_proctitle()
         self.setup()
         self.install_signals()
-        self._run()
         
     def get_eventloop(self):
         return IOLoop(impl = self.get_ioimpl(), logger = pulsar.LogSelf(self,self.log))
@@ -109,10 +107,9 @@ is called after fork by the run method.'''
     @property
     def isthread(self):
         return isinstance(self,Thread)
-        
+    
 
-
-class Worker(Runner, RemoteServer, HttpMixin):
+class Worker(ProcessWithRemote, Runner, HttpMixin):
     """\
 Base class for all workers. The constructor is called
 called pre-fork so it shouldn't do anything to the current process.
@@ -148,6 +145,7 @@ A worker is manages its own event loop and can leve on a thread or on a Process.
 """
     COMMAND_TIMEOUT = 0
     CommandQueue = None
+    arbiter_proxy = None
     
     def __init__(self,
                  connection,
@@ -160,10 +158,8 @@ A worker is manages its own event loop and can leve on a thread or on a Process.
                  command_timeout = None,
                  task_queue = None,
                  **kwargs):
-        RemoteServer.__init__(self,connection)
-        self.pool = None
+        super(Worker,self).__init__(connection)
         self.age = age
-        self.notified = time.time()
         self.ppid = ppid
         self.nr = 0
         self.max_requests = getattr(cfg,'max_requests',None) or sys.maxsize
@@ -173,17 +169,6 @@ A worker is manages its own event loop and can leve on a thread or on a Process.
         self.task_queue = task_queue
         self.COMMAND_TIMEOUT = command_timeout if command_timeout is not None else self.COMMAND_TIMEOUT
         self.set_listener(socket, app)
-    
-    # REMOTE FUNCTIONS - INVOCKABLE FROM THE WORKERPOOL
-    
-    def remote_pool(self, pool):
-        self.pool = pool
-    remote_pool.ack = False
-    
-    def remote_stop(self):
-        self._stop()
-    remote_stop.ack = False
-    
     
     @classmethod
     def modify_arbiter_loop(cls, wp, ioloop):
@@ -199,26 +184,47 @@ event loop of the arbiter if required.
     def clean_arbiter_loop(cls, wp, ioloop):
         pass
     
-    @classmethod
-    def is_thread(cls):
-        return issubclass(cls,Thread)
-    
-    @classmethod
-    def is_process(cls):
-        return issubclass(cls,Process)
+    def before_exit(self):
+        pass
     
     def _run(self):
-        self.ioloop.start()
+        """Run the worker, in suprocess or therad."""
+        try:
+            self.ioloop.start()
+        except SystemExit:
+            raise
+        except Exception as e:
+            self.log.exception("Exception in worker {0}: {1}".format(self,e))
+        finally:
+            self.before_exit()
+            self.log.info("exiting {0}".format(self))
+            try:
+                self.cfg.worker_exit(self)
+            except:
+                pass
     
     def _stop(self):
-        if self.ioloop.running():
-            self.pool.close()
-            self.ioloop.stop()
+        # This may be called on a different process domain.
+        # In that case there is no ioloop and therefore skip altogether
+        if hasattr(self,'ioloop'):
+            if self.ioloop.running():
+                self.close()
+                self.ioloop.stop()
     
     def _shut_down(self):
         '''Shut down the application. Hard core function to use with care.'''
-        if self.ioloop.running():
-            self.pool.shut_down()
+        if self.ioloop.running() and self.arbiter_proxy:
+            self.arbiter_proxy.shut_down()
+    
+    def init_in_process(self):
+        self.init_runner()
+        super(Worker,self).init_in_process()
+        self.log.info('Booting worker "{0}"'.format(self.wid))
+        
+    def on_remote(self, remote):
+        self.arbiter_proxy = remote
+        self.handler.arbiter_proxy = remote
+        self.app.on_arbiter_proxy(self)
         
     def set_listener(self, socket, app):
         self.socket = socket
@@ -228,6 +234,9 @@ event loop of the arbiter if required.
     def __str__(self):
         return "<{0} {1}>".format(self.__class__.__name__,self.wid)
     
+    def __call__(self):
+        self.flush()
+        
     def check_num_requests(self):
         '''Check the number of requests. If they exceed the maximum number
 stop the event loop and exit.'''
@@ -239,34 +248,17 @@ stop the event loop and exit.'''
     def setup(self):
         '''Called after fork, it set ups the application handler
 and perform several post fork processing before starting the event loop.'''
-        # if this is a thread, the pool proxy is not a proxy, it is the actual pool.
-        # In this case we manually serialize it
-        if self.is_thread():
-            self.pool = self.pool.get_proxy(self)
-        else:
+        if self.is_process():
             random.seed()
             if self.cfg:
                 system.set_owner_process(self.cfg.uid, self.cfg.gid)
-            
         self.log = self.getLogger()
-        # Set self as the worker in the pool
-        self.pool.worker(self)
         self.ioloop = self.get_eventloop()
-        self.log.info('Booting worker "{0}"'.format(self.wid))
         # Get the Application handler
         self.handler = self.app.handler()
-        self.handler.server_proxy = self.pool
         self.ioloop.add_loop_task(self)
         if self.cfg.post_fork:
-            self.cfg.post_fork(self)
-        
-    def __call__(self):
-        '''Tasks to be performed at each iteration of the event loop.
-Notify the worker pool and flush the pipe.'''
-        p = self.pool
-        if p:
-            p.notify(time.time())
-            self.flush()                
+            self.cfg.post_fork(self)                
         
     def handle_request(self, fd, req):
         '''Handle request. A worker class must implement the ``_handle_request``
@@ -297,22 +289,7 @@ method.'''
     @property
     def wid(self):
         return '{0}-{1}'.format(self.pid,self.tid)
-
-
-def runworker(self):
-    """Run the worker, in suprocess or therad."""
-    try:
-        self.init_process()
-    except SystemExit:
-        raise
-    except Exception as e:
-        self.log.exception("Exception in worker {0}: {1}".format(self,e))
-    finally:
-        self.log.info("exiting {0}".format(self))
-        try:
-            self.cfg.worker_exit(self)
-        except:
-            pass
+        
         
 def updaterequests(f):
     
@@ -324,7 +301,7 @@ def updaterequests(f):
     return _
    
     
-class WorkerProcess(Process,Worker):
+class WorkerProcess(Worker,Process):
     '''A :class:`pulsar.Worker` on a subprocess. This worker class
 inherit from the :class:`multiprocessProcess` class.'''
     CommandQueue = Queue
@@ -333,16 +310,13 @@ inherit from the :class:`multiprocessProcess` class.'''
         Process.__init__(self)
         Worker.__init__(self, *args, **kwargs)
         self.daemon = True
-        
-    def run(self):
-        runworker(self)
     
     @property    
     def get_parent_id(self):
         return system.get_parent_id()
     
     
-class WorkerThread(Thread,Worker):
+class WorkerThread(Worker,Thread):
     CommandQueue = ThreadQueue
     #CommandQueue = Queue
     
@@ -350,9 +324,6 @@ class WorkerThread(Thread,Worker):
         Thread.__init__(self)
         Worker.__init__(self, *args, **kwargs)
         self.daemon = True
-        
-    def run(self):
-        runworker(self)
         
     def terminate(self):
         self.ioloop.stop()
