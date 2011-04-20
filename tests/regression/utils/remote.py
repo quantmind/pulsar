@@ -12,21 +12,11 @@ __all__ = ['TestRemote',
            'TestRemoteOnProcess']
 
 
-class ServerOnProcess(RemoteServer):
+class RemoteX(RemoteServer):
+    '''A toy remote server for testing'''
     _stop = False
+    loops = 0
     
-    def __init__(self,*args):
-        RemoteServer.__init__(self,*args)
-        Process.__init__(self)
-        self.loops = 0
-    
-    def run(self):
-        
-        while not self._stop:
-            self.loops += 1
-            sleep(0.1)
-            self.flush()
-
     def remote_loops(self):
         return self.loops
                     
@@ -36,7 +26,35 @@ class ServerOnProcess(RemoteServer):
 
 
 class ServerProcess(Process):
-    server_class = ServerOnProcess
+    server_class = RemoteX
+    
+    def __init__(self, connection):
+        super(ServerProcess,self).__init__()
+        self._connection = connection
+        
+    def get_proxy(self, connection):
+        pass
+    
+    def make_server(self):
+        return self.server_class(self._connection)
+    
+    def run(self):
+        self.server = self.make_server()
+        self._run()
+    
+    def _run(self):
+        raise NotImplementedError
+    
+    
+class ServerProcessTest(ServerProcess):
+    
+    def _run(self):
+        server = self.server
+        server.loops = 0
+        while not self.server._stop:
+            server.loops += 1
+            server.flush()
+            sleep(0.1)            
     
     
 class RObject(Remote):
@@ -142,32 +160,40 @@ class TestRemoteOnProcess(test.TestCase):
     
     def setUp(self):
         a,b = Pipe()
-        self.a,self.b = RemoteProxyServer(a),ServerOnProcess(b)
+        self.a,self.b = RemoteProxyServer(a),ServerProcessTest(b)
         
     def testSimple(self):
-        server_a,server_b = self.a,self.b
-        self.assertFalse(server_b.is_alive())
-        self.assertEqual(len(server_b.remotes),2)
-        # lets start the server b
-        server_b.start()
-        self.sleep(0.2)
-        self.assertTrue(server_b.is_alive())
-        #
-        # Get the proxy of server b
-        proxyb = server_b.get_proxy(server_a)
-        self.assertEqual(proxyb.proxyid,server_b.proxyid)
-        #
-        # number of loops in server b
-        cbk = TestCbk()
-        proxyb.loops().add_callback(cbk)
-        server_a.flush()
-        loop1 = cbk.result
-        self.assertTrue(loop1 > 0)
-        
-        # lets kill server b
-        proxyb.stop()
-        self.assertTrue(server_b.is_alive())
-        server_a.flush()
-        self.sleep(0.2)
-        self.assertFalse(server_b.is_alive())
+        try:
+            server_a,server_b = self.a,self.b
+            # lets start the server b
+            server_b.start()
+            self.sleep(0.2)
+            self.assertTrue(server_b.is_alive())
+            #
+            # Get the proxy of server b
+            proxyb = server_b.get_proxy(server_a)
+            self.assertEqual(proxyb.proxyid,server_b.proxyid)
+            #
+            # number of loops in server b
+            cbk = TestCbk()
+            proxyb.loops().add_callback(cbk)
+            server_a.flush()
+            loop1 = cbk.result
+            self.assertTrue(loop1 > 0)
+            
+            self.sleep(0.2)
+            proxyb.loops().add_callback(cbk)
+            server_a.flush()
+            loop2 = cbk.result
+            self.assertTrue(loop2 > loop1)
+            
+            # lets kill server b
+            proxyb.stop()
+            server_a.flush()
+            self.sleep(0.2)
+            self.assertFalse(server_b.is_alive())
+        finally:
+            server_b.terminate()
+            sleep(0.2)
+            self.assertFalse(server_b.is_alive())
         
