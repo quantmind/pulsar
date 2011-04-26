@@ -18,9 +18,10 @@ class TestLibrary(test.TestCase):
             
 class TestTestSuite(test.TestCase):
     
-    def testTestCase(self):
+    def testTestSuite(self):
         self.assertTrue(self.suiterunner)
-        r = self.suiterunner.ping()\
-                .add_callback(lambda result : self.assertEqual(result,'pong'))
-        self.assertEqual(len(r._callbacks),1)
-        return r
+        arb = self.arbiter()
+        self.cbk = self.Callback()
+        #r = arb.ping(self.suiterunner).add_callback(self.cbk)
+        #self.assertTrue(len(r._callbacks)==1)
+        #self.assertEqual(self.cbk.result,'pong')

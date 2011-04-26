@@ -6,6 +6,7 @@ Worker class runs the tests in an asychronous way.
 import unittest
 import logging
 import os
+import sys
 import time
 import inspect
 
@@ -14,7 +15,12 @@ from pulsar.utils.importer import import_module
 from pulsar.utils.async import make_deferred,\
                                Deferred, simple_callback, async
 
-
+if not hasattr(unittest,'SkipTest'):
+    class SkipTest(Exception):
+        pass
+else:
+    SkipTest = unittest.SkipTest
+    
 logger = logging.getLogger()
 
 LOGGING_MAP = {1: logging.CRITICAL,
@@ -26,6 +32,77 @@ class Silence(logging.Handler):
     def emit(self, record):
         pass
 
+
+class TestCbk(object):
+    
+    def __call__(self, result):
+        self.result = result
+        
+        
+class TestGenerator(object):
+    
+    def __init__(self, test, result, testMethod):
+        self.test = test
+        self.result = result
+        test.success = False
+        self.producer = self.wrapmethod(testMethod)
+        try:
+            test.setUp()
+            test.success = True
+        except SkipTest as e:
+            result.addSkip(self, str(e))
+        except Exception:
+            result.addError(self, sys.exc_info())
+        
+    def wrapmethod(self, testMethod):
+        yield testMethod()
+        self.close()
+        
+    def __call__(self, producer = None):
+        result = self.result
+        test = self.test
+        producer = producer or self.producer
+        
+        if not test.success:
+            yield StopIteration
+            
+        test.success = False
+        
+        try:
+            for p in producer:
+                if inspect.isgenerator(p):
+                    for g in self(p):
+                        yield g
+                else:
+                    yield p
+        except test.failureException:
+            result.addFailure(test, sys.exc_info())
+        except SkipTest as e:
+            result.addSkip(self.test, str(e))
+        except Exception:
+            result.addError(self.test, sys.exc_info())
+        else:
+            test.success = True
+    
+    def close(self):
+        result = self.result
+        test = self.test
+        try:
+            try:
+                test.tearDown()
+            except Exception:
+                result.addError(test, sys.exc_info())
+                test.success = False
+    
+            if hasattr(test,'doCleanups'):
+                cleanUpSuccess = test.doCleanups()
+                test.success = test.success and cleanUpSuccess
+                
+            if test.success:
+                result.addSuccess(test)
+        finally:
+            result.stopTest(self) 
+        
 
 class TestCase(unittest.TestCase):
     '''A specialised test case which offers three
@@ -51,14 +128,53 @@ b) 'runInProcess' to run a callable in the main process.'''
         else:
             return super(TestCase,self).__repr__()
         
+    def arbiter(self):
+        return pulsar.arbiter().proxy()
+        
     def sleep(self, timeout):
-        time.sleep(timeout)        
+        time.sleep(timeout)
+        
+    def Callback(self):
+        return TestCbk()
 
     def initTests(self):
         pass
     
     def endTests(self):
         pass
+    
+    def wait(self, callback, timeout = 5):
+        t = time.time()
+        while callback():
+            if time.time() - t > timeout:
+                break
+            self.sleep(0.1)
+            
+    def actor_exited(self, a):
+        return a.aid not in pulsar.arbiter().LIVE_ACTORS
+    
+    def run(self, result=None):
+        orig_result = result
+        if result is None:
+            result = self.defaultTestResult()
+            startTestRun = getattr(result, 'startTestRun', None)
+            if startTestRun is not None:
+                startTestRun()
+
+        self._resultForDoCleanups = result
+        result.startTest(self)
+        if getattr(self.__class__, "__unittest_skip__", False):
+            # If the whole class was skipped.
+            try:
+                result.addSkip(self, self.__class__.__unittest_skip_why__)
+            finally:
+                result.stopTest(self)
+            return
+        testMethod = getattr(self, self._testMethodName)
+        g = TestGenerator(self, result, testMethod)
+        if g.test.success:
+            return g()
+        
     
 
 class TestSuite(unittest.TestSuite):
@@ -158,14 +274,23 @@ It injects the suiterunner proxy for comunication with the master process."""
     
 class TextTestRunner(unittest.TextTestRunner):
     
-    def run(self, test):
+    def run(self, tests):
         "Run the given test case or test suite."
         result = self._makeResult()
         result.startTime = time.time()
-        startTestRun = getattr(result, 'startTestRun', None)
-        if startTestRun is not None:
-            startTestRun()
-        return test(result).add_callback(self.end)
+        for test in tests:
+            if result.shouldStop:
+                raise StopIteration
+            obj = test['obj']
+            init = getattr(obj,'initTests',None)
+            end = getattr(obj,'endTests',None)
+            if init:
+                yield init()
+            for t in test['tests']:
+                yield t(result)
+            if end:
+                yield end()
+        yield self.end(result)
             
     def end(self, result):
         stopTestRun = getattr(result, 'stopTestRun', None)
@@ -212,26 +337,11 @@ class TextTestRunner(unittest.TextTestRunner):
         else:
             self.stream.write("\n")
         return result
-        
-
-def run_tests(self, suite):
-    '''The tests can start only when we receive the proxy for the testsuite'''
-    cfg = self.cfg
-    self.loader = TestLoader(cfg.tags, cfg.testtype, cfg.extractors, cfg.itags)    
-    TextTestRunner(verbosity = cfg.verbosity)\
-                    .run(suite)\
-                    .add_callback(simple_callback(self._shut_down))
 
 
 class TestApplication(pulsar.Application):
-    ArbiterClass = pulsar.Arbiter
-    
-    def on_arbiter_proxy(self, worker):
-        cfg = worker.cfg
-        suite = TestLoader(cfg.tags, cfg.testtype, cfg.extractors, cfg.itags)\
-                        .load(worker.arbiter_proxy)  
-        return TextTestRunner(verbosity = cfg.verbosity).run(suite)\
-                        .add_callback(simple_callback(worker._shut_down))
+    producer = None
+    done = False
                     
     def load_config(self, **params):
         pass
@@ -239,6 +349,26 @@ class TestApplication(pulsar.Application):
     def handler(self):
         return self
     
+    def worker_task(self, worker):
+        '''At each event loop we run a test'''
+        if not self.done:
+            if self.producer is None:
+                cfg = self.cfg
+                suite =  TestLoader(cfg.tags, cfg.testtype, cfg.extractors, cfg.itags).load(worker)
+                self.producer = TextTestRunner(verbosity = cfg.verbosity).run(suite)
+                self.producers = []
+            try:
+                p = next(self.producer)
+                if inspect.isgenerator(p):
+                    self.producers.append(self.producer)
+                    self.producer = p
+            except StopIteration:
+                if self.producers:
+                    self.producer = self.producers.pop()
+                else:
+                    self.done = True
+                    worker.shut_down()
+            
     def configure_logging(self):
         '''Setup logging'''
         verbosity = self.cfg.verbosity
@@ -246,9 +376,11 @@ class TestApplication(pulsar.Application):
         if level is None:
             logger.addHandler(Silence())
         else:
-            logger.addHandler(logging.StreamHandler())
-            logger.setLevel(level)
-        
+            h = logging.StreamHandler()
+            f = self.logging_formatter()
+            h.setFormatter(f)
+            logger.addHandler(h)
+            logger.setLevel(level)        
 
 class TestConfig(pulsar.DummyConfig):
     '''Configuration for testing'''
@@ -259,15 +391,18 @@ class TestConfig(pulsar.DummyConfig):
         self.verbosity = verbosity
         self.itags = itags
         self.workers = 1
+        self.timeout = 300
+        self.worker_class = pulsar.Worker
         if inthread:
-            self.worker_class = pulsar.WorkerThread
+            self.mode = 'thread'
         else:
-            self.worker_class = pulsar.WorkerProcess
+            self.mode = 'process'
         
         
 def TestSuiteRunner(tags, testtype, extractors,
                     verbosity = 1, itags = None,
-                    inthread = False):
+                    inthread = True):
+    '''Start the test suite'''
     cfg = TestConfig(tags, testtype, extractors, verbosity, itags, inthread)
     TestApplication(cfg = cfg).start()
 

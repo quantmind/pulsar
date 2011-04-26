@@ -16,6 +16,9 @@ class WeakList(object):
         if obj:
             self._list.append(weakref.ref(obj))
         
+    def remove(self, obj):
+        self._list.remove(weakref.ref(obj))
+        
     def __iter__(self):
         if self._list:
             ol = self._list

@@ -7,8 +7,8 @@ class PulsarInternetException(PulsarException):
     '''base class of all Pulsar Internet Exception'''
     
     
-class PulsarPoolAlreadyStarted(PulsarException):
-    '''A :class:`PulsarException` raised when trying to start a worker pool already started'''
+class ActorAlreadyStarted(PulsarException):
+    '''A :class:`PulsarException` raised when trying to start an actor already started'''
     
 class HaltServer(PulsarInternetException):
     

@@ -26,7 +26,7 @@ def makeoptions():
     parser.add_option("-m","--mode",
                       action="store",
                       dest="mode",
-                      default='p',
+                      default='t',
                       help="Run in multiprocessing 'p' or multithreading 't' mode")
     return parser
 

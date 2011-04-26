@@ -3,11 +3,6 @@ from pulsar.utils.async import Deferred
 
 __all__ = ['TestDeferred']
         
-class TestCbk(object):
-    
-    def __call__(self, result):
-        self.result = result
-        
 
 class TestDeferred(test.TestCase):
     

@@ -36,7 +36,6 @@ class Application(pulsar.PickableMixin, Remote):
                      or a pickable object.
     """
     remotes = ('start','stop')
-    ArbiterClass = pulsar.Server
     REMOVABLE_ATTRIBUTES = ('_pulsar_arbiter',)
     LOG_LEVELS = {
         "critical": logging.CRITICAL,
@@ -51,14 +50,11 @@ class Application(pulsar.PickableMixin, Remote):
         self.cfg = cfg
         self.callable = callable
         self.load_config(**params)
-        self._pulsar_arbiter = self.ArbiterClass(self)
+        arbiter = pulsar.arbiter()
+        arbiter.add_monitor(pulsar.WorkerMonitor,self)
     
     def add_timeout(self, deadline, callback):
         self.arbiter.ioloop.add_timeout(deadline, callback)
-        
-    @property
-    def arbiter(self):
-        return self._pulsar_arbiter
         
     def load_config(self, parse_console = True, **params):
         '''Load the application configuration'''
@@ -135,7 +131,7 @@ used by a :class:`pulsar.Worker` to carry out its task.'''
             self.callable = self.load()
         return self.callable
     
-    def on_arbiter_proxy(self, worker):
+    def worker_task(self, worker):
         '''Callback by worker class when the worker when it
 receives the arbiter proxy.
 
@@ -145,17 +141,7 @@ receives the arbiter proxy.
     
     def start(self):
         '''Start the application'''
-        if self.cfg.daemon:
-            system.daemonize()
-        else:
-            try:
-                system.setpgrp()
-            except OSError as e:
-                if e[0] != errno.EPERM:
-                    raise
-        
-        self.configure_logging()
-        self._pulsar_arbiter.start()
+        pulsar.arbiter().start()
         return self
             
     def stop(self):
@@ -182,11 +168,14 @@ receives the arbiter proxy.
             loglevel = self.LOG_LEVELS.get(self.cfg.loglevel.lower(), logging.INFO)
         log.setLevel(loglevel)
         
+        f = self.logging_formatter()
+        for h in handlers:
+            h.setFormatter(f)
+            log.addHandler(h)
+
+    def logging_formatter(self):
         format = '%(asctime)s [p=%(process)s,t=%(thread)s] [%(levelname)s] [%(name)s] %(message)s'
         #format = r"%(asctime)s [%(process)d] [%(levelname)s] %(message)s"
         datefmt = r"%Y-%m-%d %H:%M:%S"
-        for h in handlers:
-            h.setFormatter(Formatter(format, datefmt))
-            log.addHandler(h)
-
+        return logging.Formatter(format, datefmt)
 

@@ -33,10 +33,9 @@ from .utils.py2py3 import ispy3k, to_string, is_string
 platform = system.platform
 
 from .utils.config import *
-from .workers.workerpool import *
+from .async import *
 from .workers.base import *
-from .workers.arbiter import *
-from .workers.server import *
+from .workers.monitor import *
 from .apps.base import Application, require
 from .apps import test
 

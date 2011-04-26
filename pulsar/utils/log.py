@@ -5,6 +5,7 @@ SERVER_NAME = 'Pulsar'
 
 __all__ = ['SERVER_NAME',
            'getLogger',
+           'LogginMixin',
            'PickableMixin',
            'LogSelf',
            'logerror']
@@ -51,10 +52,36 @@ class LogSelf(object):
         return _
 
 
-class PickableMixin(object):
+class LogginMixin(object):
+    
+    _class_code = None
+        
+    def getLogger(self, **kwargs):
+        logger = kwargs.pop('logger',None)
+        return logger or getLogger(self.class_code)
+    
+    def __repr__(self):
+        return self.class_code
+    
+    def __str__(self):
+        return self.__repr__()
+    
+    @property
+    def class_code(self):
+        return self.__class__.code()
+    
+    @classmethod
+    def code(cls):
+        return cls._class_code or cls.__name__
+    
+    def configure_logging(self):
+        pass
+
+    
+    
+class PickableMixin(LogginMixin):
     '''A Mixin used throught the library. It provides built in logging object and
 utilities for pickle.'''
-    _class_code = None
     REMOVABLE_ATTRIBUTES = ()
      
     def __getstate__(self):
@@ -69,17 +96,3 @@ utilities for pickle.'''
         self.log = getLogger(self.class_code) 
         self.configure_logging()
         
-    def getLogger(self, **kwargs):
-        logger = kwargs.pop('logger',None)
-        return logger or getLogger(self.class_code)
-            
-    @property
-    def class_code(self):
-        return self.__class__.code()
-    
-    @classmethod
-    def code(cls):
-        return cls._class_code or cls.__name__
-    
-    def configure_logging(self):
-        pass

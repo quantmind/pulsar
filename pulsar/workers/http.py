@@ -13,7 +13,8 @@ except:
 
 from pulsar.http.utils import write_nonblock, write_error, close
 
-from .base import WorkerProcess
+from .base import Worker
+from .task import get_task_loop, start_task_loop
 
 
 class HttpHandler(object):
@@ -98,7 +99,7 @@ class HttpMixin(object):
             write_error(resp.sock, traceback.format_exc())
 
 
-class Worker(WorkerProcess,HttpMixin):
+class Worker(Worker,HttpMixin):
     '''A Http worker on a child process'''
     _class_code = 'HttpProcess'
     
@@ -108,4 +109,36 @@ class Worker(WorkerProcess,HttpMixin):
         if ioloop.add_handler(self.socket, handler, ioloop.READ):
             self.socket.setblocking(0)
             ioloop.start()
+            
 
+
+class HttpPoolHandler(HttpHandler):
+    
+    def handle(self, fd, req):
+        self.worker.putRequest(req)
+
+
+class _Worker(HttpMixin):
+    '''A Http worker on a thread. This worker process http requests from the
+pool queue.'''
+    _class_code = 'HttpThread'
+    
+    def get_ioimpl(self):
+        return get_task_loop(self)
+    
+    def _run(self):
+        start_task_loop(self)
+    
+    @classmethod
+    def modify_arbiter_loop(cls, wp, ioloop):
+        '''The arbiter listen for client connections and delegate the handling
+to the Thread Pool. This is different from the Http Worker on Processes'''
+        if wp.socket:
+            ioloop.add_handler(wp.socket,
+                               HttpPoolHandler(wp),
+                               ioloop.READ)
+            
+    @classmethod
+    def clean_arbiter_loop(cls, wp, ioloop):
+        if wp.socket:
+            ioloop.remove_handler(wp.socket)
