@@ -1,4 +1,3 @@
-import errno
 import logging
 import os
 import sys
@@ -6,10 +5,7 @@ import traceback
 
 import pulsar
 from pulsar.utils.py2py3 import execfile
-from pulsar.utils import system
-from pulsar.utils.tools import ColorFormatter
 from pulsar.utils.importer import import_module
-from pulsar.utils.async import Remote 
 #from pulsar.utils import debug
 
 __all__ = ['Application',
@@ -26,7 +22,7 @@ def require(appname):
     return mod
 
 
-class Application(pulsar.PickableMixin, Remote):
+class Application(pulsar.PickableMixin):
     """\
     An application interface for configuring and loading
     the various necessities for any given server application
@@ -35,15 +31,8 @@ class Application(pulsar.PickableMixin, Remote):
                      The callable must be pickable, therefore it is either a function
                      or a pickable object.
     """
-    remotes = ('start','stop')
+    default_logging_level = logging.INFO
     REMOVABLE_ATTRIBUTES = ('_pulsar_arbiter',)
-    LOG_LEVELS = {
-        "critical": logging.CRITICAL,
-        "error": logging.ERROR,
-        "warning": logging.WARNING,
-        "info": logging.INFO,
-        "debug": logging.DEBUG
-    }
     
     def __init__(self, callable = None, usage=None, cfg = None, **params):
         self.usage = usage
@@ -62,7 +51,11 @@ class Application(pulsar.PickableMixin, Remote):
         
         # add params
         for k, v in params.items():
-            self.cfg.set(k.lower(), v)
+            k = k.lower()
+            try:
+                self.cfg.set(k, v)
+            except AttributeError:
+                setattr(self,k,v)
                 
         # parse console args
         if parse_console:
@@ -153,29 +146,12 @@ receives the arbiter proxy.
         """\
         Set the log level and choose the destination for log output.
         """
-        log = logging.getLogger()
-        handlers = []
-        Formatter = logging.Formatter
-        if self.cfg.logfile != "-":
-            handlers.append(logging.FileHandler(self.cfg.logfile))
-        else:
-            Formatter = ColorFormatter
-            handlers.append(logging.StreamHandler())
-
         if self.cfg.debug:
-            loglevel = logging.DEBUG
+            self.loglevel = logging.DEBUG
         else:
-            loglevel = self.LOG_LEVELS.get(self.cfg.loglevel.lower(), logging.INFO)
-        log.setLevel(loglevel)
-        
-        f = self.logging_formatter()
-        for h in handlers:
-            h.setFormatter(f)
-            log.addHandler(h)
-
-    def logging_formatter(self):
-        format = '%(asctime)s [p=%(process)s,t=%(thread)s] [%(levelname)s] [%(name)s] %(message)s'
-        #format = r"%(asctime)s [%(process)d] [%(levelname)s] %(message)s"
-        datefmt = r"%Y-%m-%d %H:%M:%S"
-        return logging.Formatter(format, datefmt)
+            self.loglevel = self.cfg.loglevel
+        handlers = []
+        if self.cfg.logfile and self.cfg.logfile != "-":
+            handlers.append(logging.FileHandler(self.cfg.logfile))
+        super(Application,self).configure_logging(handlers = handlers)
 

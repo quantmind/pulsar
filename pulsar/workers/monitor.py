@@ -4,7 +4,6 @@ import time
 from multiprocessing import Pipe
 
 import pulsar
-from pulsar import getLogger, system
 from pulsar.utils.py2py3 import iteritems
 
 
@@ -22,21 +21,14 @@ A pool of worker classes for performing asynchronous tasks and input/output
 :parameter timeout: Timeout in seconds for murdering unresponsive workers 
     '''
 
-    def _init(self, app, num_workers = None, **kwargs):
+    def _init(self, impl, app, num_workers = None, **kwargs):
         self.app = app
         self.cfg = app.cfg
-        self.address = self.cfg.address
-        if self.address:
-            self.socket = system.create_socket(self)
-        else:
-            self.socket = None
-        super(WorkerMonitor,self)._init(self.cfg.worker_class,
+        super(WorkerMonitor,self)._init(impl,
+                                        self.cfg.worker_class,
+                                        address = self.cfg.address,
                                         num_workers = self.cfg.workers or 1,
                                         **kwargs)
-        
-    @property
-    def class_code(self):
-        return '{0} - {1}'.format(self.worker_class.code(),self.app)
     
     @property
     def multithread(self):
@@ -59,12 +51,14 @@ A pool of worker classes for performing asynchronous tasks and input/output
         return {'app':self.app,
                 'socket': self.socket,
                 'timeout': self.cfg.timeout,
-                'impl': self.cfg.mode}
+                'loglevel': self.app.loglevel,
+                'impl': self.cfg.concurrency}
         
     def info(self):
         return {'worker_class':self.worker_class.code(),
                 'workers':len(self.LIVE_ACTORS)}
 
-    def configure_logging(self):
-        self.app.configure_logging()
+    def configure_logging(self, **kwargs):
+        self.app.configure_logging(**kwargs)
+        self.loglevel = self.app.loglevel
     

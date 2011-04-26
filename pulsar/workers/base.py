@@ -54,12 +54,17 @@ A worker is manages its own event loop and can leve on a thread or on a Process.
 
     The task queue where the worker pool add tasks to be processed by the worker.
     This queue is used by a subsets of workers only.
-"""    
-    def on_start(self,
-                 app = None,
-                 age = None,
-                 socket = None,
-                 timeout = None):
+"""
+    def on_start(self):
+        self.init_runner()
+        
+    def _init(self,
+              impl,
+              app = None,
+              age = None,
+              socket = None,
+              timeout = None,
+              **kwargs):
         self.app = app
         self.cfg = app.cfg
         self.age = age or 0
@@ -68,8 +73,7 @@ A worker is manages its own event loop and can leve on a thread or on a Process.
         self.debug = self.cfg.debug
         self.socket = socket
         self.address = None if not socket else socket.getsockname()
-        self.init_runner()
-        self.log.info('Booting worker "{0}"'.format(self.aid))
+        super(Worker,self)._init(impl,**kwargs)
     
     def on_exit(self):
         try:
@@ -131,6 +135,9 @@ method.'''
     handle_quit = signal_stop
     handle_term = signal_stop
     
+    def configure_logging(self, **kwargs):
+        pass
+    
     def get_parent_id(self):
         return os.getpid()
     
@@ -148,39 +155,3 @@ def updaterequests(f):
     
     return _
    
-    
-class WorkerProcess(Worker,Process):
-    '''A :class:`pulsar.Worker` on a subprocess. This worker class
-inherit from the :class:`multiprocessProcess` class.'''
-    CommandQueue = Queue
-    
-    def __init__(self, *args, **kwargs):
-        Process.__init__(self)
-        Worker.__init__(self, *args, **kwargs)
-        self.daemon = True
-    
-    @property    
-    def get_parent_id(self):
-        return system.get_parent_id()
-    
-    
-class WorkerThread(Worker,Thread):
-    CommandQueue = pulsar.ThreadQueue
-    #CommandQueue = Queue
-    
-    def __init__(self, *args, **kwargs):
-        Thread.__init__(self)
-        Worker.__init__(self, *args, **kwargs)
-        self.daemon = True
-        
-    def terminate(self):
-        self.ioloop.stop()
-        
-    @property
-    def pid(self):
-        return os.getpid()
-        
-    @property
-    def get_parent_id(self):
-        return self.pid
-    

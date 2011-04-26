@@ -3,7 +3,7 @@ import os
 import sys
 import traceback
 import signal
-from multiprocessing.queues import Queue, Empty
+from multiprocessing.queues import Empty
 from threading import current_thread
 
 try:
@@ -14,10 +14,8 @@ ThreadQueue = queue.Queue
 
 import pulsar
 from pulsar.utils import system
-from pulsar.utils.py2py3 import iteritems
-from pulsar.utils.tools import gen_unique_id
+from pulsar.utils.tools import gen_unique_id, Pidfile
 
-from .actor import Actor
 from .monitor import ActorPool
 
 
@@ -73,13 +71,12 @@ is called after fork by the run method.'''
         
 
 class Arbiter(ActorPool,Runner):
-    '''An Arbiter is a special actor. It manages them all.'''
+    '''An Arbiter is a special :class:`pulsar.Monitor`. It manages them all.'''
     CLOSE_TIMEOUT = 3
     WORKER_BOOT_ERROR = 3
     STOPPING_LOOPS = 2
     SIG_TIMEOUT = 0.001
-    MINIMUM_ACTOR_TIMEOUT = 0.1
-    DEFAULT_ACTOR_TIMEOUT = 10
+    CLOSE_TIMEOUT = 10
     EXIT_SIGNALS = (signal.SIGINT,signal.SIGTERM,signal.SIGABRT,system.SIGQUIT)
     HaltServer = pulsar.HaltServer
     
@@ -91,28 +88,21 @@ class Arbiter(ActorPool,Runner):
     
     @classmethod
     def spawn(cls, actor_class, *args, **kwargs):
-        '''Create a new concurrent Actor'''
-        actor = actor_class()
-        actor._aid = gen_unique_id()
-        actor._inbox = Queue()
-        actor._ppid = os.getpid()
-        actor._timeout = max(kwargs.pop('timeout',cls.DEFAULT_ACTOR_TIMEOUT),cls.MINIMUM_ACTOR_TIMEOUT)
-        impl = kwargs.pop('impl',actor_class.DEFAULT_IMPLEMENTATION)
-        actor._impl = impl
-        impl_cls = actor._runner_impl[impl]
+        '''Create a new concurrent Actor and return its proxy.'''
         arbiter = getattr(cls,'_instance',None)
-        kwargs['arbiter'] = arbiter
-        impl = impl_cls(actor,args,kwargs)
-        impl.start()
-        monitor = impl.proxy_monitor(actor)
+        impl = kwargs.pop('impl',actor_class.DEFAULT_IMPLEMENTATION)
+        timeout = max(kwargs.pop('timeout',cls.DEFAULT_ACTOR_TIMEOUT),cls.MINIMUM_ACTOR_TIMEOUT)
+        impl_cls = actor_class._runner_impl[impl]
+        actor = impl_cls(actor_class,impl,timeout,arbiter,args,kwargs)
+        monitor = actor.proxy_monitor()
         if monitor:
             arbiter.LIVE_ACTORS[actor.aid] = monitor
+            actor.start()
             return monitor
         else:
-            return actor
-
-    
-    def _init(self, **kwargs):
+            return actor.actor
+            
+    def _init(self, impl, *args, **kwargs):
         os.environ["SERVER_SOFTWARE"] = pulsar.SERVER_SOFTWARE
         self.cfg = None
         self.pidfile = None
@@ -139,7 +129,7 @@ class Arbiter(ActorPool,Runner):
             "cwd": cwd,
             0: sys.executable
         }
-        super(Arbiter,self)._init(**kwargs)
+        super(Arbiter,self)._init(impl, *args, **kwargs)
         
     def isprocess(self):
         return True
@@ -156,11 +146,8 @@ class Arbiter(ActorPool,Runner):
             m.start()
             
     def on_task(self):
-        sig = self.arbiter_task()
-        if self._stopping:
-            if not self._linked_actors:
-                self.ioloop.stop()
-        else:
+        if not self._stopping:
+            sig = self.arbiter_task()
             if sig is None:
                 self.manage_actors()
                 
@@ -171,7 +158,7 @@ class Arbiter(ActorPool,Runner):
             if actor.stopping < self.STOPPING_LOOPS:
                 self.log.info('Stopping {0}. Timeout surpassed.'.format(actor))
                 if not actor.stopping:
-                    self.proxy().stop(actor)
+                    self.proxy.stop(actor)
             else:
                 self.log.warn('Terminating {0}. Timeout surpassed.'.format(actor))
                 actor.terminate()
@@ -179,6 +166,7 @@ class Arbiter(ActorPool,Runner):
             
     def on_stop(self):
         '''Stop the pools and the arbiter event loop.'''
+        self._stopping = False
         self.close_monitors()
         self.signal(system.SIGQUIT)
         return True
@@ -201,10 +189,7 @@ class Arbiter(ActorPool,Runner):
                 self.pidfile.create(self.pid)
             if cfg.daemon:
                 system.daemonize()
-            self._monitors[0].configure_logging()
-        else:
-            self.configure_logging()
-                
+    
     def add_monitor(self, monitor_class, *args):
         '''Add a new monitor to the arbiter'''
         m = spawn(monitor_class,*args,**{'impl':'monitor'})
@@ -238,27 +223,45 @@ class Arbiter(ActorPool,Runner):
         if self.pidfile is not None:
             self.pidfile.unlink()
             
-        if sig:
-            msg = _msg('Shutting down')
-            self.close()
-            self.log.info(msg)
-            sys.exit(0)
-        else:
-            msg = _msg('Force termination')
-            self.log.critical(msg)
-            sys.exit(1)
+        self.close(sig)
 
     def close_monitors(self):
         for pool in self._monitors:
             pool.stop()
-        #self._monitors = []
         
-    def close(self):
-        self.close_monitors()
-        stop = self.proxy().stop
-        for actor in self.linked_actors():
-            stop(actor)
-        self._stopping = True
+    def close(self, sig):
+        if not self._stopping:
+            self._stopping = True
+            self.close_message_queue()
+            stop = self.proxy.stop
+            for actor in self.linked_actors():
+                stop(actor)
+            self.close_signal = sig
+            self._stop_ioloop()
+            self._stop()            
+            
+    def on_exit(self):
+        '''Callback after the event loop has stopped.'''
+        st = time()
+        self._state = self.TERMINATE
+        while time() - st < self.CLOSE_TIMEOUT:
+            self.flush(closing = True)
+            if not self.LIVE_ACTORS:
+                self._state = self.CLOSE
+                break
+        self._inbox.close()
+    
+    def close_message_queue(self):
+        return
+        while True:
+            try:
+                self.SIG_QUEUE.get(timeout = 0)
+                self.SIG_QUEUE.task_done()
+            except Empty:
+                self.SIG_QUEUE.join()
+                break
+            except:
+                pass
         
     def server_info(self):
         started = self.started
@@ -315,3 +318,12 @@ class Arbiter(ActorPool,Runner):
     
     def on_actor_exit(self, actor):
         pass
+
+    def configure_logging(self,**kwargs):
+        if self._monitors:
+            monitor = self._monitors[0]
+            monitor.configure_logging(**kwargs)
+            self.loglevel = monitor.loglevel
+        else:
+            super(Arbiter,self).configure_logging(**kwargs)
+    

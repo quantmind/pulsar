@@ -1,50 +1,61 @@
 from time import sleep
-from pulsar import test, spawn, Actor, ActorProxy, arbiter, ActorRequest
+from pulsar import test, spawn, Actor, ActorProxy, ActorRequest
 
 
-__all__ = ['TestActorThread']
+#__all__ = ['TestActorThread']
+__all__ = ['TestActorThread',
+           'TestActorProcess']
 
+def sleepfunc():
+    sleep(2)
     
 
 class TestActorThread(test.TestCase):
-    impl = 'process'
+    impl = 'thread'
     
     def testStop(self):
         a = spawn(Actor,impl = self.impl)
         self.assertTrue(isinstance(a,ActorProxy))
         self.assertTrue(a.is_alive())
-        self.assertEqual(a.actor.impl,self.impl)
-        arb = arbiter()
-        self.assertTrue(a.aid in arb.LIVE_ACTORS)
-        a.stop()
-        self.wait(lambda : not self.actor_exited(a))
-        self.assertFalse(a.aid in arb.LIVE_ACTORS)
+        self.assertEqual(a.impl.impl,self.impl)
+        self.assertTrue(a.aid in self.arbiter.LIVE_ACTORS)
+        self.stop(a)
         
     def testPing(self):
-        self.log.info('Create a new actor to ping')
         a = spawn(Actor, impl = self.impl)
-        self.log.info('Get the arbiter')
-        arb = self.arbiter()
         cbk = self.Callback()
-        self.log.info('Pinging')
-        r = arb.ping(a).add_callback(cbk)
+        r = self.arbiter.proxy.ping(a).add_callback(cbk)
         self.wait(lambda : not hasattr(cbk,'result'))
         self.assertEqual(cbk.result,'pong')
         self.assertFalse(r.rid in ActorRequest.REQUESTS)
+        self.stop(a)
         
-    def _testTimeout(self):
-        arb = arbiter()
-        a = spawn(Actor, on_task = lambda : sleep(2), impl = self.impl, timeout = 1)
-        self.assertTrue(a.aid in arb.LIVE_ACTORS)
-        sleep(3)
-        self.assertFalse(a.aid in arb.LIVE_ACTORS)        
+    def testInfo(self):
+        a = spawn(Actor, impl = self.impl)
+        cbk = self.Callback()
+        r = self.arbiter.proxy.info(a).add_callback(cbk)
+        self.wait(lambda : not hasattr(cbk,'result'))
+        self.assertFalse(r.rid in ActorRequest.REQUESTS)
+        info = cbk.result
+        self.assertEqual(info['aid'],a.aid)
+        self.assertEqual(info['pid'],a.pid)
+        self.stop(a)
         
-    def _testInfo(self):
-        #a = spawn(Actor,impl = self.impl)
-        pass
-        #ap = arb.proxy()
-        #actor_info = ap.info(a)
-        #self.sleep(2)
+    def testSpawnFew(self):
+        actors = (spawn(Actor, impl = self.impl) for i in range(10))
+        for a in actors:
+            self.assertTrue(a.aid in self.arbiter.LIVE_ACTORS)
+            cbk = self.Callback()
+            r = self.arbiter.proxy.ping(a).add_callback(cbk)
+            self.wait(lambda : not hasattr(cbk,'result'))
+            self.assertEqual(cbk.result,'pong')
+            self.assertFalse(r.rid in ActorRequest.REQUESTS)
+                
+    def testTimeout(self):
+        a = spawn(Actor, on_task = sleepfunc, impl = self.impl, timeout = 1)
+        self.assertTrue(a.aid in self.arbiter.LIVE_ACTORS)
+        self.wait(lambda : a.aid in self.arbiter.LIVE_ACTORS, timeout = 3)
+        self.assertFalse(a.aid in self.arbiter.LIVE_ACTORS)
         
 
 class TestActorProcess(TestActorThread):

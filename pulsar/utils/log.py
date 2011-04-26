@@ -1,4 +1,7 @@
 import sys
+import logging
+
+from .system import platform
 
 SERVER_NAME = 'Pulsar'
 
@@ -7,13 +10,22 @@ __all__ = ['SERVER_NAME',
            'getLogger',
            'LogginMixin',
            'PickableMixin',
+           'Silence',
            'LogSelf',
            'logerror']
 
 
+LOG_LEVELS = {
+        "critical": logging.CRITICAL,
+        "error": logging.ERROR,
+        "warning": logging.WARNING,
+        "info": logging.INFO,
+        "debug": logging.DEBUG
+    }
+
+
 def getLogger(name = None):
     '''Get logger name in "Pulsar" namespace'''
-    import logging
     name = '{0}.{1}'.format(SERVER_NAME,name) if name else SERVER_NAME
     return logging.getLogger(name)
 
@@ -52,13 +64,22 @@ class LogSelf(object):
         return _
 
 
-class LogginMixin(object):
+class Silence(logging.Handler):
+    def emit(self, record):
+        pass
     
+
+class LogginMixin(object):
+    loglevel = None
+    default_logging_level = None
     _class_code = None
         
     def getLogger(self, **kwargs):
-        logger = kwargs.pop('logger',None)
-        return logger or getLogger(self.class_code)
+        if hasattr(self,'log'):
+            return self.log
+        else:
+            logger = kwargs.pop('logger',None)
+            return logger or getLogger(self.class_code)
     
     def __repr__(self):
         return self.class_code
@@ -74,9 +95,38 @@ class LogginMixin(object):
     def code(cls):
         return cls._class_code or cls.__name__
     
-    def configure_logging(self):
-        pass
+    def configure_logging(self, handlers = None):
+        '''Configure logging'''
+        loglevel = self.loglevel
+        try:
+            self.loglevel = int(loglevel)
+        except (TypeError,ValueError):
+            lv = str(loglevel).lower()
+            self.loglevel = LOG_LEVELS.get(lv,self.default_logging_level)
+        logger = logging.getLogger()
+        color = False
+        if not handlers:
+            handlers = []
+            if self.loglevel is None:
+                handlers.append(Silence())
+            else:
+                color = True
+                handlers.append(logging.StreamHandler())
+        f = self.logging_formatter(color)
+        for h in handlers:
+            h.setFormatter(f)
+            logger.addHandler(h)
+            logger.setLevel(self.loglevel)
 
+    def logging_formatter(self, color = False):
+        format = '%(asctime)s [p=%(process)s,t=%(thread)s] [%(levelname)s] [%(name)s] %(message)s'
+        #format = r"%(asctime)s [%(process)d] [%(levelname)s] %(message)s"
+        datefmt = r"%Y-%m-%d %H:%M:%S"
+        if color and not platform.isWindows():
+            from pulsar.utils.tools import ColorFormatter as Formatter
+        else:
+            Formatter = logging.Formatter
+        return Formatter(format, datefmt)
     
     
 class PickableMixin(LogginMixin):

@@ -4,7 +4,7 @@ import time
 from multiprocessing import Pipe
 
 import pulsar
-from pulsar import getLogger, system
+from pulsar import system
 from pulsar.utils.py2py3 import iteritems
 
 from .actor import Actor
@@ -16,13 +16,16 @@ __all__ = ['Monitor','ActorPool']
 
 class ActorPool(Actor):
     
-    def _init(self, **kwargs):
+    def _init(self, impl, *args, **kwargs):
         self.num_workers = kwargs.pop('num_workers',0) or 0
-        super(ActorPool,self)._init(**kwargs)       
+        super(ActorPool,self)._init(impl, *args, **kwargs)       
         
     @property
     def LIVE_ACTORS(self):
         return self._linked_actors
+    
+    def isprocess(self):
+        return False
     
     def manage_actors(self):
         """Remove actors not alive"""
@@ -45,21 +48,28 @@ class ActorPool(Actor):
                 self.spawn_actor()        
     
 
-    
 class Monitor(ActorPool):
     '''\
-A pool of worker classes for performing asynchronous tasks and input/output
+A monitor is a special :class:`pulsar.Actor` which shares
+the same event loop as the :class:`pulsar.Arbiter`
+and therefore lives in the main process.
+A monitor manages a set of actors.
 
-:parameter arbiter: the arbiter managing the pool. 
-:parameter worker_class: a Worker class derived form :class:`pulsar.Worker`
-:parameter num_workers: The number of workers in the pool.
-:parameter app: The working application
-:parameter timeout: Timeout in seconds for murdering unresponsive workers 
-    '''
-    def _init(self, worker_class, **kwargs):
+.. attribute: worker_class
+
+    a Worker class derived form :class:`pulsar.Arbiter`
+    
+.. attribute: num_workers
+
+    The number of workers to monitor.
+
+'''
+    def _init(self, impl, worker_class, address = None, **kwargs):
         self.worker_class = worker_class
         self.worker_age = 0
-        super(Monitor,self)._init(**kwargs)
+        self.address = address
+        self.socket = worker_class.create_socket(self.address)
+        super(Monitor,self)._init(impl, **kwargs)
     
     # HOOKS
     def on_start(self):
@@ -77,7 +87,12 @@ A pool of worker classes for performing asynchronous tasks and input/output
             actor.stop()
         
     # OVERRIDES
-    def _get_eventloop(self):
+    
+    @property
+    def name(self):
+        return '{1}-{0}({2})'.format(self.worker_class.code(),self.app,self.aid[:8])
+    
+    def _get_eventloop(self, impl):
         return self.arbiter.ioloop
     
     def _stop_ioloop(self):
@@ -128,7 +143,7 @@ as required."""
             
     def spawn_actor(self):
         '''Spawn a new worker'''
-        self.worker_age += 1        
+        self.worker_age += 1
         worker = self.arbiter.spawn(self.worker_class,
                                     monitor = self,
                                     age = self.worker_age,

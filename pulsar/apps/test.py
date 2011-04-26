@@ -12,25 +12,49 @@ import inspect
 
 import pulsar
 from pulsar.utils.importer import import_module
-from pulsar.utils.async import make_deferred,\
-                               Deferred, simple_callback, async
+from pulsar.utils.async import async
 
 if not hasattr(unittest,'SkipTest'):
     class SkipTest(Exception):
         pass
 else:
     SkipTest = unittest.SkipTest
+
+def TestVerbosity(level):
+    if level is None:
+        return 1
+    else:
+        return 2 if level > logging.DEBUG else 3
+
+class TestType(pulsar.Setting):
+    name = "test_type"
+    section = "Test"
+    meta = "STRING"
+    cli = ["--test-type"]
+    validator = pulsar.validate_string
+    default = 'regression'
+    desc = """\
+        The test type.
+        Possible choices are: regression, bench and profile.
+    """
+
+
+class StreamLogger(object):
     
-logger = logging.getLogger()
+    def __init__(self, log):
+        self.log = log
+        self.msg = ''
+        
+    def write(self,msg):
+        if msg == '\n':
+            self.flush()
+        else:
+            self.msg += msg
 
-LOGGING_MAP = {1: logging.CRITICAL,
-               2: logging.INFO,
-               3: logging.DEBUG}
-
-
-class Silence(logging.Handler):
-    def emit(self, record):
-        pass
+    def flush(self):
+        msg = self.msg
+        self.msg = ''
+        self.log.info(msg)
 
 
 class TestCbk(object):
@@ -45,7 +69,7 @@ class TestGenerator(object):
         self.test = test
         self.result = result
         test.success = False
-        self.producer = self.wrapmethod(testMethod)
+        self.testMethod = testMethod
         try:
             test.setUp()
             test.success = True
@@ -54,35 +78,22 @@ class TestGenerator(object):
         except Exception:
             result.addError(self, sys.exc_info())
         
-    def wrapmethod(self, testMethod):
-        yield testMethod()
-        self.close()
-        
-    def __call__(self, producer = None):
+    def __call__(self):
         result = self.result
         test = self.test
-        producer = producer or self.producer
-        
-        if not test.success:
-            yield StopIteration
-            
-        test.success = False
-        
-        try:
-            for p in producer:
-                if inspect.isgenerator(p):
-                    for g in self(p):
-                        yield g
-                else:
-                    yield p
-        except test.failureException:
-            result.addFailure(test, sys.exc_info())
-        except SkipTest as e:
-            result.addSkip(self.test, str(e))
-        except Exception:
-            result.addError(self.test, sys.exc_info())
-        else:
-            test.success = True
+        if test.success:
+            try:
+                test.success = False
+                self.testMethod()
+            except test.failureException:
+                result.addFailure(test, sys.exc_info())
+            except SkipTest as e:
+                result.addSkip(self.test, str(e))
+            except Exception:
+                result.addError(self.test, sys.exc_info())
+            else:
+                test.success = True
+        self.close()
     
     def close(self):
         result = self.result
@@ -127,9 +138,10 @@ b) 'runInProcess' to run a callable in the main process.'''
             return self.__class__.__name__
         else:
             return super(TestCase,self).__repr__()
-        
+    
+    @property    
     def arbiter(self):
-        return pulsar.arbiter().proxy()
+        return pulsar.arbiter()
         
     def sleep(self, timeout):
         time.sleep(timeout)
@@ -143,18 +155,21 @@ b) 'runInProcess' to run a callable in the main process.'''
     def endTests(self):
         pass
     
+    def stop(self, a):
+        '''Stop an actor and wait for the exit'''
+        a.stop()
+        still_there = lambda : a.aid in self.arbiter.LIVE_ACTORS
+        self.wait(still_there)
+        self.assertFalse(still_there())
+        
     def wait(self, callback, timeout = 5):
         t = time.time()
         while callback():
             if time.time() - t > timeout:
                 break
             self.sleep(0.1)
-            
-    def actor_exited(self, a):
-        return a.aid not in pulsar.arbiter().LIVE_ACTORS
     
     def run(self, result=None):
-        orig_result = result
         if result is None:
             result = self.defaultTestResult()
             startTestRun = getattr(result, 'startTestRun', None)
@@ -171,12 +186,9 @@ b) 'runInProcess' to run a callable in the main process.'''
                 result.stopTest(self)
             return
         testMethod = getattr(self, self._testMethodName)
-        g = TestGenerator(self, result, testMethod)
-        if g.test.success:
-            return g()
+        TestGenerator(self, result, testMethod)()
         
     
-
 class TestSuite(unittest.TestSuite):
     '''A test suite for the modified TestCase.'''
     loader = unittest.TestLoader()
@@ -190,38 +202,13 @@ class TestSuite(unittest.TestSuite):
                 obj = test
             self._tests.append({'obj':obj,
                                 'tests':tests})
-    
-    def _runtests(self, res, tests, end, result):
-        if isinstance(res,Deferred):
-            return res.add_callback(lambda x : self._runtests(x,tests,end,result))
-        else:
-            for t in tests:
-                t(result)
-            if end:
-                end()
-            return result
-        
-    @async
-    def run(self, result):
-        for test in self:
-            if result.shouldStop:
-                raise StopIteration
-            obj = test['obj']
-            init = getattr(obj,'initTests',None)
-            end = getattr(obj,'endTests',None)
-            if init:
-                yield init()
-            for t in test['tests']:
-                yield t(result)
-            if end:
-                yield end()
-        yield result
+
         
 class TestLoader(object):
     '''Load test cases'''
     suiteClass = TestSuite
     
-    def __init__(self, tags, testtype, extractors, itags):
+    def __init__(self, tags, testtype, extractors, itags = None):
         self.tags = tags
         self.testtype = testtype
         self.extractors = extractors
@@ -232,7 +219,7 @@ class TestLoader(object):
 It injects the suiterunner proxy for comunication with the master process."""
         itags = self.itags or []
         tests = []
-        for module in self.modules():
+        for module in self.modules(suiterunner.log):
             for name in dir(module):
                 obj = getattr(module, name)
                 if inspect.isclass(obj) and issubclass(obj, unittest.TestCase):
@@ -240,7 +227,7 @@ It injects the suiterunner proxy for comunication with the master process."""
                     if tag and not tag in itags:
                         continue
                     obj.suiterunner = suiterunner
-                    obj.log = logging.getLogger(obj.__class__.__name__)
+                    obj.log = suiterunner.log
                     tests.append(obj)
         return self.suiteClass(tests)
     
@@ -253,24 +240,25 @@ It injects the suiterunner proxy for comunication with the master process."""
             if os.path.isdir(join(dirpath,d)):
                 yield (loc,d)
             
-    def modules(self):
+    def modules(self, log):
         tags,testtype,extractors = self.tags,self.testtype,self.extractors
         for extractor in extractors:
             testdir = extractor.testdir(testtype)
             for loc,app in self.get_tests(testdir):
                 if tags and app not in tags:
-                    logger.debug("Skipping tests for %s" % app)
+                    log.debug("Skipping tests for %s" % app)
                     continue
-                logger.debug("Try to import tests for %s" % app)
+                log.debug("Try to import tests for %s" % app)
                 test_module = extractor.test_module(testtype,loc,app)
                 try:
                     mod = import_module(test_module)
                 except ImportError as e:
-                    logger.debug("Could not import tests for %s: %s" % (test_module,e))
+                    log.debug("Could not import tests for %s: %s" % (test_module,e))
                     continue
                 
-                logger.debug("Adding tests for %s" % app)
+                log.debug("Adding tests for %s" % app)
                 yield mod
+    
     
 class TextTestRunner(unittest.TextTestRunner):
     
@@ -342,9 +330,15 @@ class TextTestRunner(unittest.TextTestRunner):
 class TestApplication(pulsar.Application):
     producer = None
     done = False
-                    
-    def load_config(self, **params):
-        pass
+    default_logging_level = None
+    
+    def init(self, parser = None, opts = None, args = None, extractors = None):
+        self.tags = args
+        return {'timeout':300,
+                'concurrency':'thread',
+                'workers':1,
+                'worker_class':'base',
+                'loglevel':'none'}
     
     def handler(self):
         return self
@@ -353,10 +347,24 @@ class TestApplication(pulsar.Application):
         '''At each event loop we run a test'''
         if not self.done:
             if self.producer is None:
-                cfg = self.cfg
-                suite =  TestLoader(cfg.tags, cfg.testtype, cfg.extractors, cfg.itags).load(worker)
-                self.producer = TextTestRunner(verbosity = cfg.verbosity).run(suite)
-                self.producers = []
+                try:
+                    cfg = self.cfg
+                    suite =  TestLoader(self.tags, cfg.test_type,
+                                        self.extractors).load(worker)
+                    verbosity = TestVerbosity(self.loglevel)
+                    if self.loglevel is not None:
+                        stream = StreamLogger(worker.log)
+                        producer = TextTestRunner(stream = stream,
+                                                  verbosity = verbosity)
+                    else:
+                        producer = TextTestRunner(verbosity = verbosity)
+                    self.producer = producer.run(suite)
+                    self.producers = []
+                except Exception as e:
+                    worker.log.critical('Could not start tests. {0}'.format(e))
+                    self.done = True
+                    worker.shut_down()
+                    return
             try:
                 p = next(self.producer)
                 if inspect.isgenerator(p):
@@ -368,41 +376,8 @@ class TestApplication(pulsar.Application):
                 else:
                     self.done = True
                     worker.shut_down()
-            
-    def configure_logging(self):
-        '''Setup logging'''
-        verbosity = self.cfg.verbosity
-        level = LOGGING_MAP.get(verbosity,None)
-        if level is None:
-            logger.addHandler(Silence())
-        else:
-            h = logging.StreamHandler()
-            f = self.logging_formatter()
-            h.setFormatter(f)
-            logger.addHandler(h)
-            logger.setLevel(level)        
-
-class TestConfig(pulsar.DummyConfig):
-    '''Configuration for testing'''
-    def __init__(self, tags, testtype, extractors, verbosity, itags, inthread):
-        self.tags = tags
-        self.testtype = testtype
-        self.extractors = extractors
-        self.verbosity = verbosity
-        self.itags = itags
-        self.workers = 1
-        self.timeout = 300
-        self.worker_class = pulsar.Worker
-        if inthread:
-            self.mode = 'thread'
-        else:
-            self.mode = 'process'
+                      
         
-        
-def TestSuiteRunner(tags, testtype, extractors,
-                    verbosity = 1, itags = None,
-                    inthread = True):
-    '''Start the test suite'''
-    cfg = TestConfig(tags, testtype, extractors, verbosity, itags, inthread)
-    TestApplication(cfg = cfg).start()
-
+def TestSuiteRunner(extractors):
+    return TestApplication(extractors = extractors)
+    

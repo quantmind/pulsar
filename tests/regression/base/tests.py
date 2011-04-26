@@ -1,4 +1,4 @@
-from pulsar import test
+from pulsar import test, arbiter
 
 import pulsar as package
 
@@ -20,7 +20,7 @@ class TestTestSuite(test.TestCase):
     
     def testTestSuite(self):
         self.assertTrue(self.suiterunner)
-        arb = self.arbiter()
+        self.assertEqual(self.arbiter,arbiter())
         self.cbk = self.Callback()
         #r = arb.ping(self.suiterunner).add_callback(self.cbk)
         #self.assertTrue(len(r._callbacks)==1)

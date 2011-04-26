@@ -1,48 +1,36 @@
 import sys
 import os
+import logging
 from time import time
 from multiprocessing import Process, reduction, current_process
-from multiprocessing.queues import Queue, Empty
+from multiprocessing.queues import Empty
 from threading import Thread, current_thread
 
 
 from pulsar import AlreadyCalledError, AlreadyRegistered,\
-                   NotRegisteredWithServer, PickableMixin,\
                    ActorAlreadyStarted,\
                    logerror, LogSelf, LogginMixin
-from pulsar.utils.tools import gen_unique_id
 from pulsar.http import get_httplib
-from pulsar.utils.py2py3 import iteritems, itervalues
+from pulsar.utils.py2py3 import iteritems, itervalues, pickle
 
 
 from .defer import Deferred
 from .eventloop import IOLoop
+from .proxy import ActorProxy, ActorRequest
 from .impl import ActorProcess, ActorThread, ActorMonitorImpl
 
 
 __all__ = ['is_actor',
            'Actor',
-           'ActorRequest',
-           'ActorProxy']
+           'ActorRequest']
 
 
 EMPTY_TUPLE = ()
 EMPTY_DICT = {}
-STD_MESSAGE = '__message__'
-
 
 
 def is_actor(obj):
     return isinstance(obj,Actor)
-
-
-def get_proxy(obj):
-    if is_actor(obj):
-        return obj.proxy()
-    elif isinstance(obj,ActorProxy):
-        return obj
-    else:
-        raise ValueError('"{0}" is not a remote or remote proxy.'.format(obj))
 
 
 class HttpMixin(object):
@@ -53,146 +41,6 @@ class HttpMixin(object):
     
     
 
-class ActorRequest(Deferred):
-    REQUESTS = {}
-    
-    def __init__(self, actor, name, ack, msg):
-        super(ActorRequest,self).__init__(rid = gen_unique_id())
-        if hasattr(actor,'aid'):
-            actor = actor.aid
-        self.aid = actor
-        self.name = name
-        self.msg = msg
-        self.ack = ack
-        if self.ack:
-            self.REQUESTS[self.rid] = self
-        
-    def __str__(self):
-        return '{0} - {1}'.format(self.name,self.rid[:8])
-    
-    def __repr__(self):
-        return self.__str__()
-    
-    def __getstate__(self):
-        #Remove the list of callbacks
-        d = self.__dict__.copy()
-        d['_callbacks'] = []
-        return d
-        
-    @classmethod
-    def actor_callback(cls, rid, result):
-        r = cls.REQUESTS.pop(rid,None)
-        if r:
-            r.callback(result)
-            
-
-class ActorProxyRequest(object):
-    __slots__ = ('caller','_func_name','ack')
-    
-    def __init__(self, caller, name, ack):
-        self.caller = caller
-        self._func_name = name
-        self.ack = ack
-        
-    def __repr__(self):
-        return '{0} calling "{1}"'.format(self.caller,self._func_name)
-        
-    def __call__(self, *args, **kwargs):
-        if len(args) == 0:
-            actor = self.caller
-        else:
-            actor = args[0]
-            args = args[1:]
-        ser = self.serialize
-        args = tuple((ser(a) for a in args))
-        kwargs = dict((k,ser(a)) for k,a in iteritems(kwargs))
-        actor = get_proxy(actor)
-        return actor.send(self.caller.aid,(args,kwargs), name = self._func_name, ack = self.ack)
-    
-    def serialize(self, obj):
-        if is_actor(obj):
-            return obj.proxy()
-        else:
-            return obj
-
-
-class ActorProxy(object):
-    '''A proxy for a :class:`pulsar.utils.async.RemoteMixin` instance.
-This is a light class which delegates function calls to a remote object.
-
-.. attribute: proxyid
-
-    Unique ID for the remote object
-    
-.. attribute: remotes
-
-    dictionary of remote functions names with value indicationg if the
-    remote function will acknowledge the call.
-'''
-    __slots__ = ('aid','remotes','inbox','timeout')
-     
-    def __init__(self, aid, inbox, remotes, timeout):
-        self.aid = aid
-        self.remotes = remotes
-        self.inbox = inbox
-        self.timeout = timeout
-        
-    def send(self, aid, msg, name = None, ack = False):
-        '''Send a message to another Actor'''
-        name = name or STD_MESSAGE
-        request = ActorRequest(aid,name,ack,msg)
-        try:
-            self.inbox.put(request)
-            return request
-        except Exception as e:
-            pass
-        
-    def __repr__(self):
-        return self.aid[:8]
-    
-    def __str__(self):
-        return self.__repr__()
-    
-    def __eq__(self, o):
-        return is_actor(o) and self.aid == o.aid
-    
-    def __ne__(self, o):
-        return not is_actor(o) or self.aid != o.aid 
-    
-    def __getstate__(self):
-        '''Because of the __getattr__ implementation,
-we need to manually implement the pcikling and unpickling of thes object.'''
-        return (self.aid,self.remotes,self.inbox)
-    
-    def __setstate__(self, state):
-        self.aid,self.remotes,self.inbox = state
-        
-    def __getattr__(self, name):
-        if name in self.remotes:
-            ack = self.remotes[name]
-            return ActorProxyRequest(self, name, ack)
-        else:
-            raise AttributeError("'{0}' object has no attribute '{1}'".format(self,name))
-           
-
-class ActorProxyMonitor(ActorProxy):
-    
-    def __init__(self, aid, inbox, remotes, timeout, actor, impl):
-        self.actor = actor
-        self.impl = impl
-        self.notified = time()
-        self.stopping = 0
-        super(ActorProxyMonitor,self).__init__(aid, inbox, remotes, timeout)
-        
-    def is_alive(self):
-        return self.impl.is_alive()
-        
-    def terminate(self):
-        self.impl.terminate()
-            
-    def __str__(self):
-        return self.actor.__str__()
-    
 
 class ActorMetaClass(type):
     
@@ -246,14 +94,26 @@ or :class:`threading.Thread` classes. For example::
               0x3:'terminated'}
     INBOX_TIMEOUT = 0.02
     DEFAULT_IMPLEMENTATION = 'process'
+    MINIMUM_ACTOR_TIMEOUT = 1
+    DEFAULT_ACTOR_TIMEOUT = 30
+    ACTOR_TIMEOUT_TOLERANCE = 0.2
     _stopping = False
+    _ppid = None
     _runner_impl = {'monitor':ActorMonitorImpl,
                     'thread':ActorThread,
                     'process':ActorProcess}
     
-    def __init__(self):
-        self._impl = None
+    def __init__(self,impl,*args,**kwargs):
+        self._impl = impl.impl
+        self._aid = impl.aid
+        self._inbox = impl.inbox
+        self._timeout = impl.timeout
+        self._init(impl,*args,**kwargs)
         
+    @property
+    def proxy(self):
+        return ActorProxy(self)
+    
     @property
     def aid(self):
         '''Actor unique identifier'''
@@ -288,18 +148,12 @@ or :class:`threading.Thread` classes. For example::
     def inbox(self):
         return self._inbox
     
-    def proxy(self):
-        return ActorProxy(self._aid,self._inbox,self.actor_functions,self.timeout)
-    
-    def proxy_monitor(self, impl = None):
-        return ActorProxyMonitor(self._aid,self._inbox,self.actor_functions,self.timeout,actor=self,impl=impl)
-    
     def __reduce__(self):
-        return (ActorProxy,(self._aid,self._inbox,self.remotes,self.timeout))
+        raise pickle.PicklingError('{0} - Cannot pickle Actor instances'.format(self))
     
     # HOOKS
     
-    def on_start(self,*args,**kwargs):
+    def on_start(self):
         pass
     
     def on_task(self):
@@ -318,33 +172,33 @@ or :class:`threading.Thread` classes. For example::
         pass
     
     # INITIALIZATION AFTER FORKING
-    def _init(self, arbiter = None, monitor = None):
+    def _init(self, impl, arbiter = None, monitor = None,
+              on_task = None):
         self.arbiter = arbiter
         self.monitor = monitor
+        self.loglevel = impl.loglevel
         self._state = self.INITIAL
         self.log = self.getLogger()
         self._linked_actors = {}
-        self.ioloop = self._get_eventloop()
+        self.ioloop = self._get_eventloop(impl)
         self.ioloop.add_loop_task(self)
+        if on_task:
+            self.on_task = on_task
     
-    def start(self,*args,**kwargs):
-        if not hasattr(self,'_state'):
-            self._init(arbiter = kwargs.pop('arbiter'), monitor = kwargs.pop('monitor'))
-            #self.link(self.arbiter)
+    def start(self):
         if self._state == self.INITIAL:
-            on_task = kwargs.pop('on_task',None)
-            if on_task:
-                self.on_task = on_task
-            self.on_start(*args,**kwargs)
+            if self.isprocess():
+                self.configure_logging()
+            self.on_start()
+            self.log.info('Booting "{0}"'.format(self.name))
             self._state = self.RUN
             self._run()
             return self
         else:
             raise ActorAlreadyStarted('Already started')
     
-    def _get_eventloop(self):
-        impl_cls = self._runner_impl.get(self.impl,None)
-        ioimpl = None if not impl_cls else impl_cls.get_ioimpl()
+    def _get_eventloop(self, impl):
+        ioimpl = impl.get_ioimpl()
         return IOLoop(impl = ioimpl, logger = LogSelf(self,self.log))
     
     def link(self, actor):
@@ -355,6 +209,9 @@ or :class:`threading.Thread` classes. For example::
     
     def started(self):
         return self._state >= self.RUN
+    
+    def closed(self):
+        return self._state == self.CLOSE
     
     def stopped(self):
         return self._state >= self.CLOSE
@@ -373,12 +230,13 @@ or :class:`threading.Thread` classes. For example::
     def _stop(self):
         '''Callback after the event loop has stopped.'''
         if self._stopping:
-            self._inbox.close()
-            self.on_exit()
             self._state = self.CLOSE
+            self.on_exit()
             self.ioloop.remove_loop_task(self)
-            self.proxy().on_actor_exit(self.arbiter)
+            if self.impl != 'monitor':
+                self.proxy.on_actor_exit(self.arbiter)
             self._stopping = False
+            self._inbox.close()
         
     def terminate(self):
         self.stop()
@@ -386,7 +244,7 @@ or :class:`threading.Thread` classes. For example::
     def shut_down(self):
         '''Called by ``self`` to shut down the arbiter'''
         if self.arbiter:
-            self.proxy().stop(self.arbiter)
+            self.proxy.stop(self.arbiter)
             
     # LOW LEVEL API
     def _stop_ioloop(self):
@@ -417,9 +275,9 @@ or :class:`threading.Thread` classes. For example::
         return itervalues(self._linked_actors)
     
     @logerror
-    def flush(self):
-        '''Flush the pipe and runs callbacks. This function should live
-on a event loop.'''
+    def flush(self, closing = False):
+        '''Flush the inbox for one message and runs callbacks.
+This function should live on a event loop.'''
         inbox = self._inbox
         timeout = self.INBOX_TIMEOUT
         while True:
@@ -433,10 +291,12 @@ on a event loop.'''
             if request:
                 try:
                     actor = self.get_actor(request.aid)
-                    if actor == False:
+                    if not actor and not closing:
                         self.log.info('Message from an un-linked actor')
-                        continue
-                    self.handle_request_from_actor(actor,request)
+                    else:
+                        self.handle_request_from_actor(actor,request)
+                    if not closing:
+                        break
                 except Exception as e:
                     #self.handle_request_error(request,e)
                     if self.log:
@@ -445,15 +305,13 @@ on a event loop.'''
                         
     def get_actor(self, aid):
         if aid == self.aid:
-            return self.proxy()
+            return self.proxy
         elif aid in self._linked_actors:
             return self._linked_actors[aid]
         elif self.arbiter and aid == self.arbiter.aid:
             return self.arbiter
         elif self.monitor and aid == self.monitor.aid:
             return self.monitor
-        else:
-            return False
     
     def handle_request_from_actor(self, caller, request):
         func = getattr(self,'actor_{0}'.format(request.name),None)
@@ -462,22 +320,26 @@ on a event loop.'''
             args = request.msg[0]
             kwargs = request.msg[1]
             result = func(caller, *args, **kwargs)
-        else:
-            ack = False
-            pass
-        #uns = self.unserialize
-        #args = tuple((uns(a) for a in request.args))
-        #kwargs = dict(((k,uns(a)) for k,a in iteritems(request.kwargs)))
-        if ack:
-            self.log.debug('Sending callback {0}'.format(request.rid))
-            caller.callback(self.proxy(),request.rid,result)
+            if ack:
+                #self.log.debug('Sending callback {0}'.format(request.rid))
+                self.proxy.callback(caller,request.rid,result)
     
     def __call__(self):
         '''Called in the main eventloop, It flush the inbox queue and notified linked actors'''
         self.flush()
+        # If this is not a monitor, we notify to the arbiter we are still alive
         if self.arbiter and self.impl != 'monitor':
-            self.proxy().notify(self.arbiter,time())
-            #self.arbiter.notify(self,time())
+            nt = time()
+            if hasattr(self,'last_notified'):
+                if not self.timeout:
+                    tole = self.DEFAULT_ACTOR_TIMEOUT
+                else:
+                    tole = self.ACTOR_TIMEOUT_TOLERANCE*self.timeout
+                if nt - self.last_notified < tole:
+                    nt = None
+            if nt:
+                self.last_notified = nt
+                self.proxy.notify(self.arbiter,nt)
         #notify = self.arbiter.notify
         #for actor in self.linked_actors():
         #    actor.notify(self,)
@@ -502,13 +364,16 @@ on a event loop.'''
                 'process':self.current_process().name,
                 'isprocess':self.isprocess()}
         
-    def actorcall(self, actor, name, *args, **kwargs):
-        return getattr(actor,name)(self.aid, *args, **kwargs)
+    def configure_logging(self):
+        if not self.loglevel:
+            if self.arbiter:
+                self.loglevel = self.arbiter.loglevel
+        super(Actor,self).configure_logging()
         
     # BUILT IN ACTOR FUNCTIONS
     
     def actor_callback(self, caller, rid, result):
-        self.log.debug('Received Callaback {0}'.format(rid))
+        #self.log.debug('Received Callaback {0}'.format(rid))
         ActorRequest.actor_callback(rid,result)
     actor_callback.ack = False
     
@@ -548,5 +413,10 @@ event loop of the arbiter if required.
     @classmethod
     def clean_arbiter_loop(cls, wp, ioloop):
         pass
+    
+    @classmethod
+    def create_socket(cls, address):
+        return None
+    
 
 

@@ -11,6 +11,7 @@ try:
 except:
     ssl = None 
 
+from pulsar import system
 from pulsar.http.utils import write_nonblock, write_error, close
 
 from .base import Worker
@@ -109,8 +110,11 @@ class Worker(Worker,HttpMixin):
         if ioloop.add_handler(self.socket, handler, ioloop.READ):
             self.socket.setblocking(0)
             ioloop.start()
-            
-
+       
+    @classmethod
+    def create_socket(cls, address):
+        return system.create_socket(address)
+    
 
 class HttpPoolHandler(HttpHandler):
     

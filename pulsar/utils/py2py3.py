@@ -19,6 +19,7 @@ if ispy3k: # Python 3
     map = map
     range = range
     from io import BytesIO, StringIO
+    import pickle
     
     from urllib import parse as urlparse
     from io import StringIO
@@ -55,6 +56,8 @@ else: # Python 2
     import urlparse
     from cStringIO import StringIO
     BytesIO = StringIO
+    
+    import cPickle as pickle
     
     class UnicodeMixin(object):
         

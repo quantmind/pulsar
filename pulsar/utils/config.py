@@ -362,6 +362,18 @@ class WorkerClass(Setting):
         """
 
 
+class Concurrency(Setting):
+    name = "concurrency"
+    section = "Worker Processes"
+    cli = ["--concurrency"]
+    meta = "STRING"
+    validator = validate_string
+    default = "process"
+    desc = """\
+        The type of concurrency to use
+        """
+        
+
 class WorkerConnections(Setting):
     name = "worker_connections"
     section = "Worker Processes"

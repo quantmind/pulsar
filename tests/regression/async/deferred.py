@@ -16,7 +16,7 @@ class TestDeferred(test.TestCase):
         self.assertRaises(AlreadyCalledError,d.callback,'bla')
 
     def testCallbacks(self):
-        cbk = TestCbk()
+        cbk = self.Callback()
         d = Deferred().add_callback(cbk)
         self.assertFalse(d.called)
         d.callback('ciao')
