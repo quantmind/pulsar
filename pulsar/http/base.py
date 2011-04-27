@@ -42,10 +42,11 @@ class Request(object):
         self.method = req.method
         self.path = req.path 
         
-    def wsgi(self):
+    def wsgi(self, worker = None):
         return create_wsgi(self._req,
                            self.client_request,
                            self.client_address,
                            self.server,
-                           self.cfg)
+                           self.cfg,
+                           worker = worker)
     

@@ -1,16 +1,39 @@
 '''\
-A very simple JSON-RPC Calculator
+A a JSON-RPC Server with some simple functions.
+To run the server type::
+
+    python manage.py
+    
+Open a new shell and launch python and type::
+
+    >>> from pulsar.http import rpc
+    >>> p = rpc.JsonProxy('http://localhost:8060')
+    >>> p.ping()
+    'pong'
+    >>> p.calc.add(3,4)
+    7.0
+    >>>
+    
 '''
-from .penv import pulsar
+try:
+    from penv import pulsar
+except ImportError:
+    import pulsar
+    
 from pulsar.http import rpc
 
-class Calculator(rpc.JSONRPC):
+
+class Root(rpc.JSONRPC):
     
     def rpc_ping(self, request):
         return 'pong'
     
     def rpc_server_info(self, request):
-        return self.server_proxy.server_info()
+        worker = request['pulsar.worker']
+        return worker.proxy.info(worker.arbiter)
+        
+    
+class Calculator(rpc.JSONRPC):
     
     def rpc_add(self, request, a, b):
         return float(a) + float(b)
@@ -26,8 +49,9 @@ class Calculator(rpc.JSONRPC):
 
 
 def server(**params):
+    root = Root().putSubHandler('calc',Calculator())
     wsgi = pulsar.require('wsgi')
-    return wsgi.createServer(callable = Calculator(), **params)
+    return wsgi.createServer(callable = root, **params)
 
 
 def start_server(**params):
@@ -35,5 +59,5 @@ def start_server(**params):
 
     
 if __name__ == '__main__':
-    start()
+    start_server()
 

@@ -1,10 +1,20 @@
 from pulsar import test
 from pulsar.http import rpc
 
-from .manage import start_server
+from .manage import server
 
+class TestRpcMeta(test.TestCase):
+    
+    def testHandler(self):
+        s = server()
+        self.assertTrue(s.callable)
+        handler = s.callable
+        self.assertEqual(handler.content_type,'text/json')
+        self.assertEqual(handler.route,'/')
+        self.assertEqual(len(handler.subHandlers),1)
 
-class TestCalculatorExample(test.TestCase):
+#class TestCalculatorExample(test.TestCase):
+class _TestCalculatorExample(object):
     
     def initTests(self):
         return self.suiterunner.run(start_server,

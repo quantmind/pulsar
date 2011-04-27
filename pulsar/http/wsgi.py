@@ -12,7 +12,7 @@ import os
 import re
 import sys
 
-from pulsar import SERVER_SOFTWARE, ispy3k
+from pulsar import SERVER_SOFTWARE, ispy3k, PickableMixin
 
 from .utils import is_hoppish, http_date, write, write_chunk, to_string
 from .globals import *
@@ -21,7 +21,21 @@ from .globals import *
 NORMALIZE_SPACE = re.compile(r'(?:\r\n)?[ \t]+')
 
 
-def create_wsgi(req, sock, client, server, cfg):
+class PulsarWsgiHandler(PickableMixin):
+    
+    def send(self, environ, name, args = None, kwargs = None,
+             server = None, ack = True):
+        worker = environ['pulsar.worker']
+        if server:
+            server = worker.actor_links[server]
+        else:
+            server = worker.arbiter
+        if name in server.actor_functions:
+            ack = server.actor_functions[name]
+        return server.send(worker.aid, (args,kwargs), name = name, ack = ack)
+
+
+def create_wsgi(req, sock, client, server, cfg, worker = None):
     resp = Response(req, sock)
 
     environ = {
@@ -32,6 +46,7 @@ def create_wsgi(req, sock, client, server, cfg):
         "wsgi.multiprocess": (cfg.concurrency == 'process' and cfg.workers >1),
         "wsgi.run_once": False,
         "pulsar.socket": sock,
+        "pulsar.worker": worker,
         "SERVER_SOFTWARE": SERVER_SOFTWARE,
         "REQUEST_METHOD": req.method,
         "QUERY_STRING": req.query,

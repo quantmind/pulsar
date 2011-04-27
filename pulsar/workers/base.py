@@ -4,15 +4,12 @@
 # See the NOTICE for more information.
 import os
 import random
-import signal
 import sys
 
-from multiprocessing import Process, current_process
 from multiprocessing.queues import Empty
 
-import pulsar
 from pulsar.utils import system
-from pulsar.async import Runner, Actor
+from pulsar import Runner, Actor, is_async
 
 
 __all__ = ['Worker']
@@ -113,21 +110,40 @@ and perform several post fork processing before starting the event loop.'''
         if self.cfg.post_fork:
             self.cfg.post_fork(self)       
         
-    def handle_task(self, fd, req):
-        '''Handle request. A worker class must implement the ``_handle_request``
-method.'''
+    def handle_task(self, fd, request):
+        '''Handle request on a channel. This is a high level function
+which wraps the low level implementation in :meth:`_handle_task`
+and :meth:`_end_task` methods.'''
         self.nr += 1
         self.check_num_requests()
-        self.cfg.pre_request(self, req)
+        self.cfg.pre_request(self, request)
         try:
-            self._handle_task(req)
+            response, result = self._handle_task(request)
+        except Exception as e:
+            self.end_task(request, e)
+        self.end_task(request, response, result)
+    
+    def end_task(self, request, response, result = None):
+        if not isinstance(response,Exception):
+            if is_async(result):
+                if result.called:
+                    result = result.result
+                else:
+                    return self.ioloop.add_callback(lambda : self.end_task(request, response, result))
+        try:
+            self._end_task(response, result)
         finally:
             try:
-                self.cfg.post_request(self, req)
+                self.cfg.post_request(self, request)
             except:
                 pass
+        
+    def _handle_task(self, request):
+        ''''''
+        pass
     
-    def _handle_task(self, task):
+    def _end_task(self, response, result):
+        ''''''
         pass
     
     def signal_stop(self, sig, frame):
@@ -148,6 +164,8 @@ method.'''
     @property
     def wid(self):
         return '{0}-{1}'.format(self.pid,self.tid)
-        
-
-   
+    
+    @classmethod
+    def get_task_queue(cls, monitor):
+        return monitor.app.get_task_queue()
+    

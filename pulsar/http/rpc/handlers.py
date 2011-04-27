@@ -1,10 +1,11 @@
 import sys
-import logging
+import inspect
 
-from pulsar import PickableMixin
+from pulsar import make_async
+from pulsar.http.wsgi import PulsarWsgiHandler
 from pulsar.utils.tools import checkarity
 
-from .exceptions import NoSuchFunction, InvalidParams
+from .exceptions import NoSuchFunction, InvalidParams, InternalError
 
 __all__ = ['RpcHandler']
 
@@ -37,8 +38,9 @@ class RpcResponse(object):
         self.handler.log.critical(msg,exc_info=sys.exc_info)
         raise InternalError(msg)
     
-    def __call__(self, request, id, version, *args, **kwargs):
+    def __call__(self, request, start_response, *args, **kwargs):
         try:
+            id = request['pulsar.rpc.id']
             if not self.func:
                 msg = 'Function "{0}" not available.'.format(self.path)
                 self.info(request,id,msg,False)
@@ -55,16 +57,35 @@ class RpcResponse(object):
                     self.critical(request,id,e)
             except Exception as e:
                 self.critical(request,id,e)
-            result = self.handler.dumps(id,version,result=result)
-            self.info(request,id,'Successfully handled rcp function "{0}"'.format(self.path))
-            return result
         except Exception as e:
-            return self.handler.dumps(id,version,error=e)
+            result = e
+        return make_async(result).add_callback(lambda r : self._end(request,start_response,r))
             
-    
+    def _end(self, request, start_response, result):
+        id = request['pulsar.rpc.id']
+        version = request['pulsar.rpc.version']
+        #status = '400 Bad Request'
+        status = '200 OK'
+        try:
+            if isinstance(result,Exception):
+                result = self.handler.dumps(id,version,error=result)
+            else:
+                result = self.handler.dumps(id,version,result=result)
+                self.info(request,id,'Successfully handled rcp function "{0}"'.format(self.path))
+        except Exception as e:
+            result = self.handler.dumps(id,version,error=e)
+        
+        response_headers = (
+                            ('Content-type', self.content_type),
+                            ('Content-Length', str(len(result)))
+                            )
+        start_response(status, response_headers)
+        return [result]
+        
 
 class MetaRpcHandler(type):
-    '''A metaclass for rpc handlers. Add a limited ammount of magic to RPC handlers.'''
+    '''A metaclass for rpc handlers.
+Add a limited ammount of magic to RPC handlers.'''
     def __new__(cls, name, bases, attrs):
         make = super(MetaRpcHandler, cls).__new__
         if attrs.pop('virtual',None):
@@ -101,7 +122,7 @@ class MetaRpcHandler(type):
 BaseHandler = MetaRpcHandler('BaseRpcHandler',(object,),{'virtual':True})
 
 
-class RpcHandler(BaseHandler,PickableMixin):
+class RpcHandler(BaseHandler,PulsarWsgiHandler):
     '''Server Handler.
 Sub-handlers for prefixed methods (e.g., system.listMethods)
 can be added with putSubHandler. By default, prefixes are
@@ -155,6 +176,7 @@ separated with a '.'. Override self.separator to change this.
 :keyword handler: the sub-handler, an instance of :class:`Handler` 
         '''
         self.subHandlers[prefix] = handler
+        return self
 
     def getSubHandler(self, prefix):
         '''Get a subhandler at ``prefix``
@@ -186,17 +208,11 @@ separated with a '.'. Override self.separator to change this.
     
     def __call__(self, environ, start_response):
         '''The WSGI handler which consume the remote procedure call'''
-        status = '200 OK'
-        path = environ['PATH_INFO']
         data = environ['wsgi.input'].read()
         method, args, kwargs, id, version = self.get_method_and_args(data)
         rpc_handler = self._getFunction(method)
-        result = rpc_handler(environ, id, version, *args, **kwargs)
-        response_headers = (
-                            ('Content-type',rpc_handler.content_type),
-                            ('Content-Length', str(len(result)))
-                            )
-        start_response(status, response_headers)
-        return [result]
+        environ['pulsar.rpc.id'] = id
+        environ['pulsar.rpc.version'] = version
+        return rpc_handler(environ, start_response, *args, **kwargs)
         
         

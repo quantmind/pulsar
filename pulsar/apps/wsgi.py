@@ -1,7 +1,7 @@
 import os
 import sys
 
-from pulsar import Application
+from pulsar import Application, ThreadQueue
 from pulsar.utils.importer import import_app
 
 
@@ -14,6 +14,12 @@ class WSGIApplication(Application):
 
     def load(self):
         return import_app(self.app_uri)
+    
+    def get_task_queue(self): 
+        if self.cfg.concurrency == 'process':
+            return None
+        else:
+            return ThreadQueue()
 
 
 def createServer(callable = None, **params):

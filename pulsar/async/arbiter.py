@@ -14,7 +14,7 @@ ThreadQueue = queue.Queue
 
 import pulsar
 from pulsar.utils import system
-from pulsar.utils.tools import gen_unique_id, Pidfile
+from pulsar.utils.tools import Pidfile
 from pulsar.utils.py2py3 import itervalues
 
 from .monitor import ActorPool
@@ -199,9 +199,11 @@ class Arbiter(ActorPool,Runner):
             if cfg.daemon:
                 system.daemonize()
     
-    def add_monitor(self, monitor_class, *args):
-        '''Add a new monitor to the arbiter'''
-        m = spawn(monitor_class,*args,**{'impl':'monitor'})
+    def add_monitor(self, monitor_class, *args, **kwargs):
+        '''Add a new :class:`pulsar.Monitor` to the arbiter.
+Monitor manage group of actors performing specific tasks.'''
+        kwargs['impl'] = 'monitor'
+        m = spawn(monitor_class,*args,**kwargs)
         self._monitors[m.aid] = m
         return m
         

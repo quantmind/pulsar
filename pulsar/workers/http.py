@@ -63,6 +63,8 @@ class Worker(pulsar.Worker):
     
     def on_start(self):
         super(Worker,self).on_start()
+        # If the worker is a process and it is listening to a socket
+        # Add the socket handler to the event loop
         if self.socket and self.task_queue is None:
             self.socket.setblocking(0)
             handler = HttpHandler(self)
@@ -81,12 +83,30 @@ to the Thread Pool. This is different from the Http Worker on Processes'''
     @classmethod
     def clean_arbiter_loop(cls, wp):
         if wp.socket and wp.task_queue is not None:
-            self.ioloop.remove_handler(wp.socket)
+            wp.ioloop.remove_handler(wp.socket)
+            
+    @classmethod
             
     def _handle_task(self, req):
         try:
-            resp, environ = req.wsgi()
-            self.response(resp, environ)
+            response, environ = req.wsgi(worker = self)
+            response.force_close()
+            return response, self.handler(environ, response.start_response)
+        except StopIteration:
+            self.log.debug("Ignored premature client disconnection.")
+        except socket.error as e:
+            if e[0] != errno.EPIPE:
+                self.log.exception("Error processing request.")
+            else:
+                self.log.debug("Ignoring EPIPE")
+
+    def _end_task(self, response, result):
+        try:
+            for item in result:
+                response.write(item)
+            response.close()
+            if hasattr(result, "close"):
+                result.close()
         except StopIteration:
             self.log.debug("Ignored premature client disconnection.")
         except socket.error as e:
@@ -96,33 +116,11 @@ to the Thread Pool. This is different from the Http Worker on Processes'''
                 self.log.debug("Ignoring EPIPE")
         except Exception as e:
             self.log.exception("Error processing request: {0}".format(e))
-            try:            
-                # Last ditch attempt to notify the client of an error.
-                mesg = "HTTP/1.1 500 Internal Server Error\r\n\r\n"
-                write_nonblock(req.client_request, mesg)
-            except:
-                pass
-        finally:    
-            close(req.client_request)
-
-    def response(self, resp, environ):
-        try:
-            # Force the connection closed until someone shows
-            # a buffering proxy that supports Keep-Alive to
-            # the backend.
-            resp.force_close()
-            respiter = self.handler(environ, resp.start_response)
-            for item in respiter:
-                resp.write(item)
-            resp.close()
-            if hasattr(respiter, "close"):
-                respiter.close()
-        except socket.error:
-            raise
-        except Exception:
-            # Only send back traceback in HTTP in debug mode.
             if not self.debug:
-                raise
-            write_error(resp.sock, traceback.format_exc())
-
+                mesg = "HTTP/1.1 500 Internal Server Error\r\n\r\n"
+                write_nonblock(response.sock, mesg)
+            else:
+                write_error(response.sock, traceback.format_exc())
+        finally:    
+            close(response.sock)
     

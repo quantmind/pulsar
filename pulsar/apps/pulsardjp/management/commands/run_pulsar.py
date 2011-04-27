@@ -1,8 +1,7 @@
-import os
-import logging
 from optparse import make_option
 
 from djpcms.apps.management.base import BaseCommand
+from djpcms.core.exceptions import CommandError
 
 import pulsar
 from pulsar.apps.pulsardjp import DjpCmsApplicationCommand
@@ -54,4 +53,4 @@ class Command(BaseCommand):
         if addrport:
             options['bind'] = addrport
         
-        DjpCmsApplicationCommand(sites, options).run()
+        DjpCmsApplicationCommand(sites, **options).start()

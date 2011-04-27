@@ -59,12 +59,7 @@ class Task(TaskBase):
     type = "regular"
     '''Type of task, one of ``regular`` and ``periodic``'''
         
-    def __call__(self, task_name, task_id, *args, **kwargs):
-        logger = logging.getLogger('%s' % task_name)
-        logger.debug('executing %s' % task_id)
-        return self.run(task_name, task_id, logger, *args, **kwargs)
-    
-    def run(self, task_name, task_id, logger, *args, **kwargs):
+    def __call__(self, consumer, *args, **kwargs):
         '''The body of the task executed by the worker. This function needs to be
 implemented by subclasses.'''
         raise NotImplementedError("Tasks must define the run method.")

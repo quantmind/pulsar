@@ -1,10 +1,8 @@
 import os
 import sys
 import time
-from multiprocessing import Pipe
 
 import pulsar
-from pulsar import system
 from pulsar.utils.py2py3 import iteritems
 
 from .actor import Actor
@@ -68,6 +66,7 @@ A monitor manages a set of actors.
         self.worker_class = worker_class
         self.worker_age = 0
         self.address = address
+        self.task_queue = self.worker_class.get_task_queue(self)
         super(Monitor,self)._init(impl, **kwargs)
     
     # HOOKS
@@ -149,6 +148,7 @@ as required."""
         worker = self.arbiter.spawn(self.worker_class,
                                     monitor = self,
                                     age = self.worker_age,
+                                    task_queue = self.task_queue,
                                     **self.actor_params())
         monitor = self.arbiter.LIVE_ACTORS[worker.aid]
         self.LIVE_ACTORS[worker.aid] = monitor

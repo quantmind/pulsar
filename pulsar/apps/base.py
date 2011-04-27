@@ -30,17 +30,28 @@ class Application(pulsar.PickableMixin):
 :parameter callable: A callable which return the application server.
                      The callable must be pickable, therefore it is either a function
                      or a pickable object.
+:parameter actor_links: A dictionary actor proxies.
     """
+    monitor_class = pulsar.WorkerMonitor
     default_logging_level = logging.INFO
-    REMOVABLE_ATTRIBUTES = ('_pulsar_arbiter',)
+    actor_links = None
+    REMOVABLE_ATTRIBUTES = ('_pulsar_arbiter','actor_links')
     
-    def __init__(self, callable = None, usage=None, cfg = None, **params):
+    def __init__(self,
+                 callable = None,
+                 usage=None,
+                 cfg = None,
+                 links = None,
+                 **params):
         self.usage = usage
         self.cfg = cfg
         self.callable = callable
         self.load_config(**params)
         arbiter = pulsar.arbiter()
-        self.mid = arbiter.add_monitor(pulsar.WorkerMonitor,self).aid
+        links = dict(self.actor_links(links))
+        self.mid = arbiter.add_monitor(pulsar.WorkerMonitor,
+                                       self,
+                                       actor_links = links).aid
     
     def add_timeout(self, deadline, callback):
         self.arbiter.ioloop.add_timeout(deadline, callback)
@@ -51,11 +62,12 @@ class Application(pulsar.PickableMixin):
         
         # add params
         for k, v in params.items():
-            k = k.lower()
-            try:
-                self.cfg.set(k, v)
-            except AttributeError:
-                setattr(self,k,v)
+            if v is not None:
+                k = k.lower()
+                try:
+                    self.cfg.set(k, v)
+                except AttributeError:
+                    setattr(self,k,v)
                 
         # parse console args
         if parse_console:
@@ -132,6 +144,9 @@ receives the arbiter proxy.
                    and where ``self`` is served from. '''
         pass
     
+    def get_task_queue(self):
+        return None
+    
     def start(self):
         '''Start the application'''
         pulsar.arbiter().start()
@@ -155,3 +170,12 @@ receives the arbiter proxy.
             handlers.append(logging.FileHandler(self.cfg.logfile))
         super(Application,self).configure_logging(handlers = handlers)
 
+    def actor_links(self, links):
+        if not links:
+            raise StopIteration
+        else:
+            arbiter = pulsar.arbiter()
+            for name,app in links.items():
+                monitor = arbiter.monitor[app.mid]
+                yield (name,monitor.proxy)
+            

@@ -28,6 +28,7 @@ def make_deferred(val = None):
     
 
 def make_async(val = None):
+    '''Convert ``val`` into an asyncronous object which accept callbacks'''
     if not is_async(val):
         if inspect.isgenerator(val):
             d = make_async() 
@@ -43,6 +44,7 @@ def make_async(val = None):
             return d
     else:
         return val
+
 
 def simple_callback(func, *args, **kwargs):
     '''Wrap a function which does not include the callback

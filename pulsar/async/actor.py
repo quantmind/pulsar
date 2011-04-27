@@ -1,10 +1,9 @@
 import sys
 import os
-import logging
 from time import time
 from multiprocessing import Process, reduction, current_process
 from multiprocessing.queues import Empty
-from threading import Thread, current_thread
+from threading import current_thread
 
 
 from pulsar import AlreadyCalledError, AlreadyRegistered,\
@@ -14,7 +13,6 @@ from pulsar.http import get_httplib
 from pulsar.utils.py2py3 import iteritems, itervalues, pickle
 
 
-from .defer import Deferred
 from .eventloop import IOLoop
 from .proxy import ActorProxy, ActorRequest
 from .impl import ActorProcess, ActorThread, ActorMonitorImpl
@@ -173,13 +171,16 @@ or :class:`threading.Thread` classes. For example::
     
     # INITIALIZATION AFTER FORKING
     def _init(self, impl, arbiter = None, monitor = None,
-              on_task = None):
+              on_task = None, task_queue = None,
+              actor_links = None):
         self.arbiter = arbiter
         self.monitor = monitor
+        self.actor_links = actor_links
         self.loglevel = impl.loglevel
         self._state = self.INITIAL
         self.log = self.getLogger()
         self._linked_actors = {}
+        self.task_queue = task_queue
         self.ioloop = self._get_eventloop(impl)
         self.ioloop.add_loop_task(self)
         if on_task:
@@ -266,7 +267,7 @@ or :class:`threading.Thread` classes. For example::
     
     @logerror
     def flush(self, closing = False):
-        '''Flush the inbox for one message and runs callbacks.
+        '''Flush one message from the inbox and runs callbacks.
 This function should live on a event loop.'''
         inbox = self._inbox
         timeout = self.INBOX_TIMEOUT
@@ -405,5 +406,7 @@ event loop of the arbiter if required.
     def clean_arbiter_loop(cls, wp):
         pass
 
-
+    @classmethod
+    def get_task_queue(cls, monitor):
+        return None
 
