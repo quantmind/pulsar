@@ -8,7 +8,7 @@ class TestCalculatorExample(test.TestCase):
     
     def initTests(self):
         return self.suiterunner.run(start_server,
-                                    worker_class = 'http_t',
+                                    concurrency = 'process',
                                     parse_console = False)
         
     def endTests(self):

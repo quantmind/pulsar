@@ -68,12 +68,15 @@ A monitor manages a set of actors.
         self.worker_class = worker_class
         self.worker_age = 0
         self.address = address
-        self.socket = worker_class.create_socket(self.address)
         super(Monitor,self)._init(impl, **kwargs)
     
     # HOOKS
     def on_start(self):
-        self.worker_class.modify_arbiter_loop(self,self.ioloop)
+        self.worker_class.modify_arbiter_loop(self)
+        if not hasattr(self,'socket'):
+            self.socket = None
+        if self.socket:
+            self.log.info("Listening at: {0}".format(self.socket))
         
     def on_task(self):
         self.manage_actors()
@@ -103,11 +106,10 @@ A monitor manages a set of actors.
     
     @property
     def multithread(self):
-        return self.worker_class.is_thread()
-    
+        return self.cfg.concurrency == 'thread'
     @property
     def multiprocess(self):
-        return self.worker_class.is_process()
+        return self.cfg.concurrency == 'process'
     
     def clean_up(self):
         self.worker_class.clean_arbiter_loop(self,self.ioloop)

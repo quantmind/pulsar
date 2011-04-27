@@ -24,6 +24,10 @@ A pool of worker classes for performing asynchronous tasks and input/output
     def _init(self, impl, app, num_workers = None, **kwargs):
         self.app = app
         self.cfg = app.cfg
+        if self.cfg.concurrency == 'process':
+            self.task_queue = None
+        else:
+            self.task_queue = pulsar.ThreadQueue()
         super(WorkerMonitor,self)._init(impl,
                                         self.cfg.worker_class,
                                         address = self.cfg.address,
@@ -41,18 +45,14 @@ A pool of worker classes for performing asynchronous tasks and input/output
     def clean_up(self):
         self.worker_class.clean_arbiter_loop(self,self.ioloop)
             
-    def on_start(self):
-        if self.socket:
-            self.log.info("Listening at: {0}".format(self.socket))
-        super(WorkerMonitor,self).on_start()
-            
     def actor_params(self):
         '''Spawn a new worker'''
         return {'app':self.app,
                 'socket': self.socket,
                 'timeout': self.cfg.timeout,
                 'loglevel': self.app.loglevel,
-                'impl': self.cfg.concurrency}
+                'impl': self.cfg.concurrency,
+                'task_queue': self.task_queue}
         
     def info(self):
         return {'worker_class':self.worker_class.code(),

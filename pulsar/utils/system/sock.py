@@ -18,9 +18,9 @@ __all__ = ['BaseSocket',
 
 class BaseSocket(object):
     
-    def __init__(self, conf, fd=None):
-        self.conf = conf
-        self.address = conf.address
+    def __init__(self, address, backlog = 2048, fd=None):
+        self.address = address
+        self.backlog = backlog
         if fd is None:
             sock = socket.socket(self.FAMILY, socket.SOCK_STREAM)
         else:
@@ -48,7 +48,7 @@ class BaseSocket(object):
         if not bound:
             self.bind(sock)
         sock.setblocking(0)
-        sock.listen(self.conf.backlog)
+        sock.listen(self.backlog)
         return sock
         
     def bind(self, sock):

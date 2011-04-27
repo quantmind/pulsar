@@ -40,7 +40,7 @@ class Application(pulsar.PickableMixin):
         self.callable = callable
         self.load_config(**params)
         arbiter = pulsar.arbiter()
-        arbiter.add_monitor(pulsar.WorkerMonitor,self)
+        self.mid = arbiter.add_monitor(pulsar.WorkerMonitor,self).aid
     
     def add_timeout(self, deadline, callback):
         self.arbiter.ioloop.add_timeout(deadline, callback)

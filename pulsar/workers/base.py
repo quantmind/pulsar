@@ -8,11 +8,9 @@ import signal
 import sys
 
 from multiprocessing import Process, current_process
-from multiprocessing.queues import Queue
-from threading import current_thread, Thread
+from multiprocessing.queues import Empty
 
 import pulsar
-from pulsar.utils.async import ProcessWithRemote, IOLoop
 from pulsar.utils import system
 from pulsar.async import Runner, Actor
 
@@ -64,6 +62,7 @@ A worker is manages its own event loop and can leve on a thread or on a Process.
               age = None,
               socket = None,
               timeout = None,
+              task_queue = None,
               **kwargs):
         self.app = app
         self.cfg = app.cfg
@@ -73,6 +72,7 @@ A worker is manages its own event loop and can leve on a thread or on a Process.
         self.debug = self.cfg.debug
         self.socket = socket
         self.address = None if not socket else socket.getsockname()
+        self.task_queue = task_queue
         super(Worker,self)._init(impl,**kwargs)
     
     def on_exit(self):
@@ -82,12 +82,13 @@ A worker is manages its own event loop and can leve on a thread or on a Process.
             pass
         
     def on_task(self):
-        self.app.worker_task(self)   
-    
-    def _shut_down(self):
-        '''Shut down the application. Hard core function to use with care.'''
-        if self.ioloop.running() and self.arbiter_proxy:
-            self.arbiter_proxy.shut_down()
+        self.app.worker_task(self)
+        if self.task_queue:
+            try:
+                args = self.task_queue.get(timeout = 0.1)
+            except Empty:
+                return
+            self.handle_task(*args)
     
     def __str__(self):
         return "<{0} {1}>".format(self.__class__.__name__,self.wid)
@@ -103,7 +104,7 @@ stop the event loop and exit.'''
     def _setup(self):
         '''Called after fork, it set ups the application handler
 and perform several post fork processing before starting the event loop.'''
-        if self.is_process():
+        if self.isprocess():
             random.seed()
             if self.cfg:
                 system.set_owner_process(self.cfg.uid, self.cfg.gid)
@@ -112,19 +113,22 @@ and perform several post fork processing before starting the event loop.'''
         if self.cfg.post_fork:
             self.cfg.post_fork(self)       
         
-    def handle_request(self, fd, req):
+    def handle_task(self, fd, req):
         '''Handle request. A worker class must implement the ``_handle_request``
 method.'''
         self.nr += 1
         self.check_num_requests()
         self.cfg.pre_request(self, req)
         try:
-            self._handle_request(req)
+            self._handle_task(req)
         finally:
             try:
                 self.cfg.post_request(self, req)
             except:
                 pass
+    
+    def _handle_task(self, task):
+        pass
     
     def signal_stop(self, sig, frame):
         signame = system.SIG_NAMES.get(sig,None)
@@ -145,13 +149,5 @@ method.'''
     def wid(self):
         return '{0}-{1}'.format(self.pid,self.tid)
         
-        
-def updaterequests(f):
-    
-    def _(self,*args,**kwargs):
-        self.nr += 1
-        self.check_num_requests()
-        return f(self,*args,**kwargs)
-    
-    return _
+
    

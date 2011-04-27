@@ -15,6 +15,7 @@ ThreadQueue = queue.Queue
 import pulsar
 from pulsar.utils import system
 from pulsar.utils.tools import gen_unique_id, Pidfile
+from pulsar.utils.py2py3 import itervalues
 
 from .monitor import ActorPool
 
@@ -101,13 +102,17 @@ class Arbiter(ActorPool,Runner):
             return monitor
         else:
             return actor.actor
-            
+    
+    @property
+    def monitors(self):
+        return self._monitors
+    
     def _init(self, impl, *args, **kwargs):
         os.environ["SERVER_SOFTWARE"] = pulsar.SERVER_SOFTWARE
         self.cfg = None
         self.pidfile = None
         self.reexec_pid = 0
-        self._monitors = []
+        self._monitors = {}
         self.SIG_QUEUE = ThreadQueue()
         # get current path, try to use PWD env first
         try:
@@ -137,19 +142,23 @@ class Arbiter(ActorPool,Runner):
     # ARBITER HOOKS
     
     def on_start(self):
-        for m in self._monitors:
+        for m in itervalues(self._monitors):
             if hasattr(m,'cfg'):
                 self.cfg = m.cfg
                 break
         self.init_runner()
-        for m in self._monitors:
-            m.start()
             
     def on_task(self):
         if not self._stopping:
             sig = self.arbiter_task()
             if sig is None:
                 self.manage_actors()
+                for m in list(itervalues(self._monitors)):
+                    if m.started():
+                        if not m.is_alive():
+                            self._monitors.pop(m.aid)
+                    else:
+                        m.start()
                 
     def on_manage_actor(self, actor):
         '''If an actor failed to notify itself to the arbiter for more than the timeout. Stop the arbiter.'''
@@ -193,7 +202,7 @@ class Arbiter(ActorPool,Runner):
     def add_monitor(self, monitor_class, *args):
         '''Add a new monitor to the arbiter'''
         m = spawn(monitor_class,*args,**{'impl':'monitor'})
-        self._monitors.append(m)
+        self._monitors[m.aid] = m
         return m
         
     def _run(self):
@@ -226,7 +235,7 @@ class Arbiter(ActorPool,Runner):
         self.close(sig)
 
     def close_monitors(self):
-        for pool in self._monitors:
+        for pool in itervalues(self._monitors):
             pool.stop()
         
     def close(self, sig):
@@ -238,7 +247,7 @@ class Arbiter(ActorPool,Runner):
                 stop(actor)
             self.close_signal = sig
             self._stop_ioloop()
-            self._stop()            
+            self._stop()
             
     def on_exit(self):
         '''Callback after the event loop has stopped.'''
@@ -275,7 +284,7 @@ class Arbiter(ActorPool,Runner):
                   'event_loops':self.ioloop.num_loops,
                   'socket':str(self.socket)}
         pools = []
-        for p in self._monitors:
+        for p in itervalues(self._monitors):
             pools.append(p.info())
         return {'server':server,
                 'pools':pools}
@@ -321,7 +330,7 @@ class Arbiter(ActorPool,Runner):
 
     def configure_logging(self,**kwargs):
         if self._monitors:
-            monitor = self._monitors[0]
+            monitor = list(self._monitors.values())[0]
             monitor.configure_logging(**kwargs)
             self.loglevel = monitor.loglevel
         else:

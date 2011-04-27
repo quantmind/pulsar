@@ -11,11 +11,8 @@ try:
 except:
     ssl = None 
 
-from pulsar import system
+import pulsar
 from pulsar.http.utils import write_nonblock, write_error, close
-
-from .base import Worker
-from .task import get_task_loop, start_task_loop
 
 
 class HttpHandler(object):
@@ -50,14 +47,43 @@ class HttpHandler(object):
         self.handle(fd, req)
 
     def handle(self, fd, req):
-        self.worker.handle_request(fd, req)
+        self.worker.handle_task(fd, req)
         
 
-class HttpMixin(object):
-    '''A Mixin class for handling syncronous connection over HTTP.'''
-    ssl_options = None
+class HttpPoolHandler(HttpHandler):
+    
+    def handle(self, fd, req):
+        self.worker.task_queue.put((fd,req))
 
-    def _handle_request(self, req):
+
+class Worker(pulsar.Worker):
+    '''A Http worker on a child process'''
+    _class_code = 'Http'
+    ssl_options = None
+    
+    def on_start(self):
+        super(Worker,self).on_start()
+        if self.socket and self.task_queue is None:
+            self.socket.setblocking(0)
+            handler = HttpHandler(self)
+            self.ioloop.add_handler(self.socket, handler, self.ioloop.READ)
+    
+    @classmethod
+    def modify_arbiter_loop(cls, wp):
+        '''The arbiter listen for client connections and delegate the handling
+to the Thread Pool. This is different from the Http Worker on Processes'''
+        wp.socket = pulsar.system.create_socket(wp.cfg.address, log = wp.log)
+        if wp.socket and wp.task_queue is not None:
+            wp.ioloop.add_handler(wp.socket,
+                                  HttpPoolHandler(wp),
+                                  wp.ioloop.READ)
+            
+    @classmethod
+    def clean_arbiter_loop(cls, wp):
+        if wp.socket and wp.task_queue is not None:
+            self.ioloop.remove_handler(wp.socket)
+            
+    def _handle_task(self, req):
         try:
             resp, environ = req.wsgi()
             self.response(resp, environ)
@@ -99,50 +125,4 @@ class HttpMixin(object):
                 raise
             write_error(resp.sock, traceback.format_exc())
 
-
-class Worker(Worker,HttpMixin):
-    '''A Http worker on a child process'''
-    _class_code = 'HttpProcess'
     
-    def _run(self, ioloop = None):
-        ioloop = self.ioloop
-        handler = HttpHandler(self)
-        if ioloop.add_handler(self.socket, handler, ioloop.READ):
-            self.socket.setblocking(0)
-            ioloop.start()
-       
-    @classmethod
-    def create_socket(cls, address):
-        return system.create_socket(address)
-    
-
-class HttpPoolHandler(HttpHandler):
-    
-    def handle(self, fd, req):
-        self.worker.putRequest(req)
-
-
-class _Worker(HttpMixin):
-    '''A Http worker on a thread. This worker process http requests from the
-pool queue.'''
-    _class_code = 'HttpThread'
-    
-    def get_ioimpl(self):
-        return get_task_loop(self)
-    
-    def _run(self):
-        start_task_loop(self)
-    
-    @classmethod
-    def modify_arbiter_loop(cls, wp, ioloop):
-        '''The arbiter listen for client connections and delegate the handling
-to the Thread Pool. This is different from the Http Worker on Processes'''
-        if wp.socket:
-            ioloop.add_handler(wp.socket,
-                               HttpPoolHandler(wp),
-                               ioloop.READ)
-            
-    @classmethod
-    def clean_arbiter_loop(cls, wp, ioloop):
-        if wp.socket:
-            ioloop.remove_handler(wp.socket)

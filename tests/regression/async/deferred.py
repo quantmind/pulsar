@@ -1,5 +1,4 @@
-from pulsar import test, AlreadyCalledError
-from pulsar.utils.async import Deferred
+from pulsar import test, AlreadyCalledError, Deferred
 
 __all__ = ['TestDeferred']
         

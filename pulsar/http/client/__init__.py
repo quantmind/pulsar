@@ -1,4 +1,4 @@
-from pulsar.utils.async import MainIOLoop
+from pulsar.async import MainIOLoop
 
 from .std import HttpClient1, getproxies_environment
 

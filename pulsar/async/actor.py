@@ -194,8 +194,6 @@ or :class:`threading.Thread` classes. For example::
             self._state = self.RUN
             self._run()
             return self
-        else:
-            raise ActorAlreadyStarted('Already started')
     
     def _get_eventloop(self, impl):
         ioimpl = impl.get_ioimpl()
@@ -230,8 +228,8 @@ or :class:`threading.Thread` classes. For example::
     def _stop(self):
         '''Callback after the event loop has stopped.'''
         if self._stopping:
-            self._state = self.CLOSE
             self.on_exit()
+            self._state = self.CLOSE
             self.ioloop.remove_loop_task(self)
             if self.impl != 'monitor':
                 self.proxy.on_actor_exit(self.arbiter)
@@ -261,14 +259,6 @@ or :class:`threading.Thread` classes. For example::
         finally:
             self.log.info("exiting {0}".format(self))
             self._stop()
-    
-    @classmethod
-    def is_thread(cls,impl):
-        return issubclass(cls,Thread)
-    
-    @classmethod
-    def is_process(cls):
-        return issubclass(cls,Process)
     
     def linked_actors(self):
         '''Iterator over linked-actor proxies'''
@@ -344,7 +334,8 @@ This function should live on a event loop.'''
         #for actor in self.linked_actors():
         #    actor.notify(self,)
         #   notify(actor.aid,self.aid,time.time())
-        self.on_task()
+        if not self._stopping:
+            self.on_task()
     
     def current_thread(self):
         '''Return the current thread'''
@@ -401,7 +392,7 @@ This function should live on a event loop.'''
     # CLASS METHODS
     
     @classmethod
-    def modify_arbiter_loop(cls, wp, ioloop):
+    def modify_arbiter_loop(cls, wp):
         '''Called by an instance of :class:`pulsar.WorkerPool`, it modify the 
 event loop of the arbiter if required.
 
@@ -411,12 +402,8 @@ event loop of the arbiter if required.
         pass
     
     @classmethod
-    def clean_arbiter_loop(cls, wp, ioloop):
+    def clean_arbiter_loop(cls, wp):
         pass
-    
-    @classmethod
-    def create_socket(cls, address):
-        return None
-    
+
 
 

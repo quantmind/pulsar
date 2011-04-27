@@ -12,7 +12,7 @@ import inspect
 
 import pulsar
 from pulsar.utils.importer import import_module
-from pulsar.utils.async import async
+
 
 if not hasattr(unittest,'SkipTest'):
     class SkipTest(Exception):
