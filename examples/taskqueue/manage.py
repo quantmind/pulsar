@@ -32,19 +32,14 @@ class RpcRoot(rpc.JSONRPC):
         return self.send(request,'info')
     
     def rpc_evalcode(self, request, *args, **kwargs):
-        return self.send(request, 'codetask', (args, kwargs),
-                         server = 'task_server')
+        return self.send(request, 'codetask', (args, kwargs), server = 'task_server')
         
 
+
 def server(**params):
-    root = RpcRoot()
-    wsgi = pulsar.require('wsgi')
     tasks = pulsar.require('tasks')
-    task_server = tasks.createServer(tasks_path = ['taskqueue.sampletasks'])
-    rpc_server = wsgi.createServer(callable = root,
-                                   links = {'task_server':task_server},
-                                   **params)
-    return rpc_server
+    return tasks.createRpcTaskServer(RpcRoot(),
+                                     tasks_path = ['taskqueue.sampletasks'])
 
 
 def start_server(**params):

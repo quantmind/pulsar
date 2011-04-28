@@ -49,7 +49,7 @@ class Application(pulsar.PickableMixin):
         self.load_config(**params)
         arbiter = pulsar.arbiter()
         links = dict(self.actor_links(links))
-        self.mid = arbiter.add_monitor(pulsar.WorkerMonitor,
+        self.mid = arbiter.add_monitor(self.monitor_class,
                                        self,
                                        actor_links = links).aid
     
