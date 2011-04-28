@@ -7,6 +7,9 @@ from .manage import createTaskQueue
 
 class TestTaskQueue(test.TestCase):
     
+    def setUp(self):
+        self.tq = createTaskQueue(parse_console = False)
+        
     def testCreate(self):
         tq = createTaskQueue(parse_console = False)
         self.assertTrue(tq.cfg)
@@ -14,6 +17,9 @@ class TestTaskQueue(test.TestCase):
         scheduler = tq.scheduler
         self.assertTrue(scheduler.entries)
         self.assertTrue(scheduler.next_run <= datetime.now())
+        
+    def tearDown(self):
+        self.arbiter.
 
 
 class __TeskTasks(test.TestCase):

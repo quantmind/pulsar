@@ -13,6 +13,7 @@ __all__ = ['Application',
 
 
 def require(appname):
+    '''Shortcut function to load an application'''
     apps = appname.split('.')
     if len(apps) == 1:
         module = 'pulsar.apps.{0}'.format(appname)
@@ -24,19 +25,18 @@ def require(appname):
 
 class Application(pulsar.PickableMixin):
     """\
-    An application interface for configuring and loading
-    the various necessities for any given server application
+An application interface for configuring and loading
+the various necessities for any given server application.
     
 :parameter callable: A callable which return the application server.
                      The callable must be pickable, therefore it is either a function
                      or a pickable object.
 :parameter actor_links: A dictionary actor proxies.
-    """
+:parameter params: a dictionary of configuration parameters which overrides the defaults.
+"""
     cfg = {}
     monitor_class = pulsar.WorkerMonitor
     default_logging_level = logging.INFO
-    actor_links = None
-    REMOVABLE_ATTRIBUTES = ('_pulsar_arbiter','actor_links')
     
     def __init__(self,
                  callable = None,
@@ -142,7 +142,8 @@ used by a :class:`pulsar.Worker` to carry out its task.'''
         pass
     
     def worker_task(self, worker):
-        '''Callback by :class:`pulsar.Worker`` at each event loop'''
+        '''Callback by and instance of :class:`pulsar.Worker`` class
+at each ``worker`` event loop.'''
         pass
     
     def get_task_queue(self):
@@ -154,7 +155,9 @@ used by a :class:`pulsar.Worker` to carry out its task.'''
         return self
             
     def stop(self):
-        arbiter = getattr(self,'_pulsar_arbiter',None)
+        '''Stop the application.'''
+        arbiter = pulsar.arbiter()
+        arbiter
         if arbiter:
             arbiter.stop()
     

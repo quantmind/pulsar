@@ -1,3 +1,5 @@
+'''From kombu
+'''
 import math
 from datetime import datetime, timedelta
 

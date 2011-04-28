@@ -4,7 +4,7 @@ import sys
 import traceback
 import signal
 from multiprocessing.queues import Empty
-from threading import current_thread
+from threading import current_thread, Lock
 
 try:
     import queue
@@ -72,7 +72,16 @@ is called after fork by the run method.'''
         
 
 class Arbiter(ActorPool,Runner):
-    '''An Arbiter is a special :class:`pulsar.Monitor`. It manages them all.'''
+    '''The Arbiter is a special :class:`pulsar.Monitor` class. There is only one and it manages
+all the actors and monitors.
+In other words the Arbiter should be used as a singletone in the following way:
+
+    import pulsar
+    
+    arbiter = pulsar.arbiter()
+    
+The arbiter runs the main event-loop, in a way similar to the twisted reactor.
+'''
     CLOSE_TIMEOUT = 3
     WORKER_BOOT_ERROR = 3
     STOPPING_LOOPS = 2
@@ -80,6 +89,27 @@ class Arbiter(ActorPool,Runner):
     CLOSE_TIMEOUT = 10
     EXIT_SIGNALS = (signal.SIGINT,signal.SIGTERM,signal.SIGABRT,system.SIGQUIT)
     HaltServer = pulsar.HaltServer
+    lock = Lock()
+    _name = 'Arbiter'
+    
+    # ARBITER HIGH LEVEL API
+    
+    def add_monitor(self, monitor_class, actor_class, *args, **kwargs):
+        '''Add a new :class:`pulsar.Monitor` to the arbiter.
+MonitorS manage group of actors performing specific tasks.
+
+:parameter monitor_class: a :class:`pulsar.Monitor` class.
+:parameter actor_class: a :class:`pulsar.Actor` class but not a :class:`pulsar.Monitor` class.'''
+        kwargs['impl'] = 'monitor'
+        m = spawn(monitor_class,actor_class,*args,**kwargs)
+        self._monitors[m.aid] = m
+        return m
+    
+    @property
+    def monitors(self):
+        '''Dictionary of all :clas:`pulsar.Monitor` registered with the the arbiter.'''
+        return self._monitors
+    
     
     @classmethod
     def instance(cls):
@@ -90,51 +120,25 @@ class Arbiter(ActorPool,Runner):
     @classmethod
     def spawn(cls, actor_class, *args, **kwargs):
         '''Create a new concurrent Actor and return its proxy.'''
-        arbiter = getattr(cls,'_instance',None)
-        impl = kwargs.pop('impl',actor_class.DEFAULT_IMPLEMENTATION)
-        timeout = max(kwargs.pop('timeout',cls.DEFAULT_ACTOR_TIMEOUT),cls.MINIMUM_ACTOR_TIMEOUT)
-        impl_cls = actor_class._runner_impl[impl]
-        actor = impl_cls(actor_class,impl,timeout,arbiter,args,kwargs)
-        monitor = actor.proxy_monitor()
-        if monitor:
-            arbiter.LIVE_ACTORS[actor.aid] = monitor
-            actor.start()
-            return monitor
-        else:
-            return actor.actor
-    
-    @property
-    def monitors(self):
-        return self._monitors
-    
-    def _init(self, impl, *args, **kwargs):
-        os.environ["SERVER_SOFTWARE"] = pulsar.SERVER_SOFTWARE
-        self.cfg = None
-        self.pidfile = None
-        self.reexec_pid = 0
-        self._monitors = {}
-        self.SIG_QUEUE = ThreadQueue()
-        # get current path, try to use PWD env first
+        cls.lock.acquire()
         try:
-            a = os.stat(os.environ['PWD'])
-            b = os.stat(os.getcwd())
-            if a.ino == b.ino and a.dev == b.dev:
-                cwd = os.environ['PWD']
+            arbiter = getattr(cls,'_instance',None)
+            if arbiter:
+                arbiter.actor_age += 1
+                kwargs['age'] = arbiter.actor_age
+            impl = kwargs.pop('impl',actor_class.DEFAULT_IMPLEMENTATION)
+            timeout = max(kwargs.pop('timeout',cls.DEFAULT_ACTOR_TIMEOUT),cls.MINIMUM_ACTOR_TIMEOUT)
+            impl_cls = actor_class._runner_impl[impl]
+            actor = impl_cls(actor_class,impl,timeout,arbiter,args,kwargs)
+            monitor = actor.proxy_monitor()
+            if monitor:
+                arbiter.LIVE_ACTORS[actor.aid] = monitor
+                actor.start()
+                return monitor
             else:
-                cwd = os.getcwd()
-        except:
-            cwd = os.getcwd()
-            
-        sargs = sys.argv[:]
-        sargs.insert(0, sys.executable)
-
-        # init start context
-        self.START_CTX = {
-            "args": sargs,
-            "cwd": cwd,
-            0: sys.executable
-        }
-        super(Arbiter,self)._init(impl, *args, **kwargs)
+                return actor.actor
+        finally:
+            cls.lock.release()
         
     def isprocess(self):
         return True
@@ -184,11 +188,42 @@ class Arbiter(ActorPool,Runner):
         self.stop()
     
     # LOW LEVEL FUNCTIONS
+    
     def __repr__(self):
         return self.__class__.__name__
     
     def __str__(self):
         return self.__repr__()
+    
+    def _init(self, impl, *args, **kwargs):
+        os.environ["SERVER_SOFTWARE"] = pulsar.SERVER_SOFTWARE
+        self.actor_age = 0
+        self.cfg = None
+        self.pidfile = None
+        self.reexec_pid = 0
+        self._monitors = {}
+        self.SIG_QUEUE = ThreadQueue()
+        # get current path, try to use PWD env first
+        try:
+            a = os.stat(os.environ['PWD'])
+            b = os.stat(os.getcwd())
+            if a.ino == b.ino and a.dev == b.dev:
+                cwd = os.environ['PWD']
+            else:
+                cwd = os.getcwd()
+        except:
+            cwd = os.getcwd()
+            
+        sargs = sys.argv[:]
+        sargs.insert(0, sys.executable)
+
+        # init start context
+        self.START_CTX = {
+            "args": sargs,
+            "cwd": cwd,
+            0: sys.executable
+        }
+        super(Arbiter,self)._init(impl, *args, **kwargs)
     
     def _setup(self):
         if self.cfg:
@@ -198,14 +233,6 @@ class Arbiter(ActorPool,Runner):
                 self.pidfile.create(self.pid)
             if cfg.daemon:
                 system.daemonize()
-    
-    def add_monitor(self, monitor_class, *args, **kwargs):
-        '''Add a new :class:`pulsar.Monitor` to the arbiter.
-Monitor manage group of actors performing specific tasks.'''
-        kwargs['impl'] = 'monitor'
-        m = spawn(monitor_class,*args,**kwargs)
-        self._monitors[m.aid] = m
-        return m
         
     def _run(self):
         """\
@@ -228,12 +255,17 @@ Monitor manage group of actors performing specific tasks.'''
             self.halt("Unhandled exception in main loop:\n%s" % traceback.format_exc())
     
     def halt(self, reason=None, sig=None):
-        """ halt arbiter """
-        _msg = lambda x : x if not reason else '{0}: {1}'.format(x,reason)
+        """halt arbiter. If there no signal ``sig`` it is an unexpected exit."""
+        x = 'Shutting down pulsar arbiter'
+        _msg = lambda : x if not reason else '{0}: {1}'.format(x,reason)
         
         if self.pidfile is not None:
             self.pidfile.unlink()
-            
+        
+        if not sig:
+            self.log.critical(_msg())
+        else:
+            self.log.info(_msg())
         self.close(sig)
 
     def close_monitors(self):

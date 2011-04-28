@@ -68,19 +68,22 @@ ActorBase = ActorMetaClass('BaseActor',(object,),{})
 
 
 class Actor(ActorBase,LogginMixin,HttpMixin):
-    '''A python implementation of the Actor primitive. In computer science,
-the Actor model is a mathematical model of concurrent computation that treats
-``actors`` as the universal primitives of concurrent digital computation:
-in response to a message that it receives, an actor can make local decisions,
+    '''A python implementation of the **Actor primitive**. This is computer science,
+model that treats ``actors`` as the atoms of concurrent digital computation.
+In response to a message that it receives, an actor can make local decisions,
 create more actors, send more messages, and determine how to respond to
 the next message received.
+The current implementation allows for actor to perform specific tasks such as listening to a socket,
+acting as http server and so forth.
 
-Here is an actor::
+To spawn a new actor::
 
     >>> from pulsar import Actor, spawn
     >>> a = spawn(Actor)
     >>> a.is_alive()
     True
+    
+Here ``a`` is actually a reference to the remote actor.
 '''
     INITIAL = 0X0
     RUN = 0x1
@@ -150,8 +153,8 @@ it will be stopped if it fails to notify itself for a period longer that timeout
         if self._name:
             return self._name
         else:
-            return '{0}({1})'.format(self.class_code,self.aid[:8])
-    
+            return self._make_name()
+        
     @property
     def inbox(self):
         '''Message inbox'''
@@ -200,12 +203,13 @@ it will be stopped if it fails to notify itself for a period longer that timeout
     # INITIALIZATION AFTER FORKING
     def _init(self, impl, arbiter = None, monitor = None,
               on_task = None, task_queue = None,
-              actor_links = None, name = None):
+              actor_links = None, name = None, age = 0):
         self.arbiter = arbiter
         self.monitor = monitor
+        self.age = age
         self.actor_links = actor_links
         self.loglevel = impl.loglevel
-        self._name = name
+        self._name = name or self._name
         self._state = self.INITIAL
         self.log = self.getLogger()
         self._linked_actors = {}
@@ -263,6 +267,9 @@ it will be stopped if it fails to notify itself for a period longer that timeout
             self.proxy.stop(self.arbiter)
             
     # LOW LEVEL API
+    def _make_name(self):
+        return '{0}({1})'.format(self.class_code,self.aid[:8])
+    
     def _stop_ioloop(self):
         return self.ioloop.stop()
         

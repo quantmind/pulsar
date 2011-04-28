@@ -13,6 +13,13 @@ __all__ = ['Monitor','ActorPool']
 
 
 class ActorPool(Actor):
+    '''An :class:`pulsar.Actor` which manages a pool (group) of actors.
+This is the base class for :class:`pulsar.Arbiter` and :class:`pulsar.Monitor`.
+
+.. attribute: num_workers
+
+    Number of workers to manage. Default ``0`` any number of actors.
+'''
     
     def _init(self, impl, *args, **kwargs):
         self.num_workers = kwargs.pop('num_workers',0) or 0
@@ -62,11 +69,11 @@ A monitor manages a set of actors.
     The number of workers to monitor.
 
 '''
-    def _init(self, impl, worker_class, address = None, **kwargs):
+    def _init(self, impl, worker_class, address = None, actor_params = None, **kwargs):
         self.worker_class = worker_class
-        self.worker_age = 0
         self.address = address
         self.task_queue = self.worker_class.get_task_queue(self)
+        self._actor_params = actor_params
         super(Monitor,self)._init(impl, **kwargs)
     
     # HOOKS
@@ -90,9 +97,8 @@ A monitor manages a set of actors.
         
     # OVERRIDES
     
-    @property
-    def name(self):
-        return '{1}-{0}({2})'.format(self.worker_class.code(),self.app,self.aid[:8])
+    def _make_name(self):
+        return 'Monitor-{0}({1})'.format(self.worker_class.code(),self.aid[:8])
     
     def _get_eventloop(self, impl):
         return self.arbiter.ioloop
@@ -144,10 +150,8 @@ as required."""
             
     def spawn_actor(self):
         '''Spawn a new worker'''
-        self.worker_age += 1
         worker = self.arbiter.spawn(self.worker_class,
                                     monitor = self,
-                                    age = self.worker_age,
                                     task_queue = self.task_queue,
                                     **self.actor_params())
         monitor = self.arbiter.LIVE_ACTORS[worker.aid]
@@ -155,7 +159,7 @@ as required."""
         return worker
     
     def actor_params(self):
-        return {}
+        return self._actor_params or {}
         
     def info(self):
         return {'worker_class':self.worker_class.code(),

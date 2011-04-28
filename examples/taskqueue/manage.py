@@ -36,15 +36,19 @@ class RpcRoot(rpc.JSONRPC):
         
 
 def createTaskQueue(tasks_path = None, **params):
+    # Create the taskqueue application using the tasks in the sampletasks directory
     tasks = pulsar.require('tasks')
     return tasks.TaskQueue(tasks_path = ['taskqueue.sampletasks.*'],
                            **params)
     
     
-def server(**params):
-    tasks = pulsar.require('tasks')
-    return tasks.createRpcTaskServer(RpcRoot(),
-                                     tasks_path = ['taskqueue.sampletasks'])
+def server(task_workers = 1, **params):
+    # Create the taskqueue application with an rpc server
+    taskqueue = createTaskQueue(workers = task_workers)
+    wsgi = pulsar.require('wsgi')
+    return wsgi.createServer(RpcRoot(),
+                             links = {'taskqueue':taskqueue},
+                             **params)
 
 
 def start_server(**params):

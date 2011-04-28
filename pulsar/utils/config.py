@@ -1,7 +1,13 @@
-# -*- coding: utf-8 -
-#
-# This file is part of gunicorn released under the MIT license. 
-# See the NOTICE for more information.
+'''\
+Configuration utilities. originally from gunicorn_, adapted and modified for pulsar.
+
+Gunicorn Licence
+
+This file is part of gunicorn released under the MIT license. 
+See the NOTICE for more information.
+
+.. _gunicorn: http://gunicorn.org/
+'''
 import copy
 import inspect
 import optparse
