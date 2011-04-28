@@ -24,7 +24,8 @@ class Channel(mq.Channel):
         self.queues.pop(queue, None)
 
     def _purge(self, queue):
-        size = self.queues[queue].qsize()
+        q = self.queues[queue]
+        size = q.qsize()
         self.queues[queue].queue.clear()
         return size
 
@@ -34,3 +35,6 @@ class Transport(mq.Transport):
 
     #: memory backend state is global.
     state = virtual.BrokerState()
+
+    def establish_connection(self):
+        pass

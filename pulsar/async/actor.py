@@ -1,7 +1,7 @@
 import sys
 import os
 from time import time
-from multiprocessing import Process, reduction, current_process
+from multiprocessing import current_process
 from multiprocessing.queues import Empty
 from threading import current_thread
 
@@ -20,7 +20,8 @@ from .impl import ActorProcess, ActorThread, ActorMonitorImpl
 
 __all__ = ['is_actor',
            'Actor',
-           'ActorRequest']
+           'ActorRequest',
+           'Empty']
 
 
 EMPTY_TUPLE = ()
@@ -67,20 +68,19 @@ ActorBase = ActorMetaClass('BaseActor',(object,),{})
 
 
 class Actor(ActorBase,LogginMixin,HttpMixin):
-    '''A Remote server mixin to be used as Base class
-for python :class:`multiprocessing.Process` or
-or :class:`threading.Thread` classes. For example::
+    '''A python implementation of the Actor primitive. In computer science,
+the Actor model is a mathematical model of concurrent computation that treats
+``actors`` as the universal primitives of concurrent digital computation:
+in response to a message that it receives, an actor can make local decisions,
+create more actors, send more messages, and determine how to respond to
+the next message received.
 
-    class MyProcessServer(ProcessWithRemote,Process):
-        _done = False
-        
-        def _run(self):
-            while not self._done:
-                self.flush()
-                time.sleep(0.1)
-        
-        def _stop(self):
-            self._done = True
+Here is an actor::
+
+    >>> from pulsar import Actor, spawn
+    >>> a = spawn(Actor)
+    >>> a.is_alive()
+    True
 '''
     INITIAL = 0X0
     RUN = 0x1
@@ -97,6 +97,7 @@ or :class:`threading.Thread` classes. For example::
     ACTOR_TIMEOUT_TOLERANCE = 0.2
     _stopping = False
     _ppid = None
+    _name = None
     _runner_impl = {'monitor':ActorMonitorImpl,
                     'thread':ActorThread,
                     'process':ActorProcess}
@@ -124,26 +125,36 @@ or :class:`threading.Thread` classes. For example::
     
     @property
     def impl(self):
+        '''Actor concurrency implementation ("thread", "process" or "greenlet").'''
         return self._impl
     
     @property
     def timeout(self):
+        '''Timeout in seconds. If ``0`` the actor has no timeout, otherwise
+it will be stopped if it fails to notify itself for a period longer that timeout.'''
         return self._timeout
     
     @property
     def pid(self):
+        '''Operative system process ID where the actor is running.'''
         return os.getpid()
     
     @property
     def tid(self):
+        '''Operative system process thread name where the actor is running.'''
         return self.current_thread().name
     
     @property
     def name(self):
-        return '{0}({1})'.format(self.class_code,self.aid[:8])
+        'Actor unique name'
+        if self._name:
+            return self._name
+        else:
+            return '{0}({1})'.format(self.class_code,self.aid[:8])
     
     @property
     def inbox(self):
+        '''Message inbox'''
         return self._inbox
     
     def __reduce__(self):
@@ -152,31 +163,49 @@ or :class:`threading.Thread` classes. For example::
     # HOOKS
     
     def on_start(self):
+        '''Callback when the actor starts (after forking).'''
         pass
     
     def on_task(self):
-        '''Callback in the actor event loop'''
+        '''Callback executed at each actor event loop.'''
         pass
     
     def on_stop(self):
-        '''Called before exiting an actor'''
+        '''Callback executed before stopping the actor.'''
         pass
     
     def on_exit(self):
-        '''Called once the actor is exting'''
+        '''Called just before the actor is exting.'''
         pass
     
     def on_manage_actor(self, actor):
         pass
     
+    def is_alive(self):
+        '''``True`` if actor is running.'''
+        return self._state == self.RUN
+    
+    def started(self):
+        '''``True`` if actor has started.'''
+        return self._state >= self.RUN
+    
+    def closed(self):
+        '''``True`` if actor has exited in an clean fashion.'''
+        return self._state == self.CLOSE
+    
+    def stopped(self):
+        '''``True`` if actor has exited.'''
+        return self._state >= self.CLOSE
+    
     # INITIALIZATION AFTER FORKING
     def _init(self, impl, arbiter = None, monitor = None,
               on_task = None, task_queue = None,
-              actor_links = None):
+              actor_links = None, name = None):
         self.arbiter = arbiter
         self.monitor = monitor
         self.actor_links = actor_links
         self.loglevel = impl.loglevel
+        self._name = name
         self._state = self.INITIAL
         self.log = self.getLogger()
         self._linked_actors = {}
@@ -202,18 +231,6 @@ or :class:`threading.Thread` classes. For example::
     
     def link(self, actor):
         self._linked_actors[actor.aid] = LinkedActor(actor)
-        
-    def is_alive(self):
-        return self._state == self.RUN
-    
-    def started(self):
-        return self._state >= self.RUN
-    
-    def closed(self):
-        return self._state == self.CLOSE
-    
-    def stopped(self):
-        return self._state >= self.CLOSE
     
     # STOPPING TERMINATIONG AND STARTING
     

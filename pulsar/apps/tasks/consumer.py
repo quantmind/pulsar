@@ -8,23 +8,9 @@ from pulsar.utils.importer import import_modules
 
 from .models import *
 from .config import *
+from .exceptions import *
 from .registry import registry
 
-
-class TaskException(pulsar.PulsarException):
-    pass
-
-
-class TaskNotAvailable(TaskException):
-    MESSAGE = 'Task {0} is not registered. Check your settings.'
-    def __init__(self, task_name):
-        super(TaskNotAvailable,self).__init__(self.MESSAGE.format(task_name))
-
-
-class TaskTimeout(TaskException):
-    MESSAGE = 'Task {0} timed-out (timeout was {1}).'
-    def __init__(self, task, timeout):
-        super(TaskNotAvailable,self).__init__(self.MESSAGE.format(task,timeout))
 
 
 class TaskConsumer(object):

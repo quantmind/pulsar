@@ -144,7 +144,7 @@ we need to manually implement the pcikling and unpickling of thes object.'''
             return ActorProxyRequest(self, name, ack)
         else:
             raise AttributeError("'{0}' object has no attribute '{1}'".format(self,name))
-           
+
 
 class ActorProxyMonitor(ActorProxy):
     

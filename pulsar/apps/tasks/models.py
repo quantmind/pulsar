@@ -5,7 +5,7 @@ from datetime import datetime, timedelta, date
 
 from .registry import registry
 
-__all__ = ['Task','PeriodicTask']
+__all__ = ['Task','PeriodicTask','anchorDate']
 
 
 class TaskMetaClass(type):
@@ -104,3 +104,5 @@ def anchorDate(hour = 0, minute = 0, second = 0):
     td = date.today()
     return datetime(year = td.year, month = td.month, day = td.day,
                     hour = hour, minute = minute, second = second)
+    
+

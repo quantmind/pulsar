@@ -11,16 +11,8 @@ __all__ = ['WorkerMonitor']
 
     
 class WorkerMonitor(pulsar.Monitor):
-    '''\
-A pool of worker classes for performing asynchronous tasks and input/output
-
-:parameter arbiter: the arbiter managing the pool. 
-:parameter worker_class: a Worker class derived form :class:`pulsar.Worker`
-:parameter num_workers: The number of workers in the pool.
-:parameter app: The working application
-:parameter timeout: Timeout in seconds for murdering unresponsive workers 
-    '''
-
+    '''A :class:`pulsar.Monitor` implementation
+for :class:`pulsar.Application`.'''
     def _init(self, impl, app, num_workers = None, **kwargs):
         self.app = app
         self.cfg = app.cfg
@@ -30,19 +22,16 @@ A pool of worker classes for performing asynchronous tasks and input/output
                                         num_workers = self.cfg.workers or 1,
                                         **kwargs)
     
-    @property
-    def multithread(self):
-        return self.worker_class.is_thread()
-    
-    @property
-    def multiprocess(self):
-        return self.worker_class.is_process()
-    
+    def on_task(self):
+        super(WorkerMonitor,self).on_task()
+        if not self._stopping:
+            self.app.monitor_task(self)
+        
     def clean_up(self):
         self.worker_class.clean_arbiter_loop(self,self.ioloop)
             
     def actor_params(self):
-        '''Spawn a new worker'''
+        '''Parameters to be passed to the spawn method when creating new actors.'''
         return {'app':self.app,
                 'socket': self.socket,
                 'timeout': self.cfg.timeout,
@@ -56,4 +45,4 @@ A pool of worker classes for performing asynchronous tasks and input/output
     def configure_logging(self, **kwargs):
         self.app.configure_logging(**kwargs)
         self.loglevel = self.app.loglevel
-    
+

@@ -3,6 +3,13 @@
 Low Level API
 ==================
 
+Actors and Monitors
+=======================
+
+.. autoclass:: pulsar.Actor
+   :members:
+   :member-order: bysource
+
 
 Workers
 ============

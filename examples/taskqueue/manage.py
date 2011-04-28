@@ -35,7 +35,12 @@ class RpcRoot(rpc.JSONRPC):
         return self.send(request, 'codetask', (args, kwargs), server = 'task_server')
         
 
-
+def createTaskQueue(tasks_path = None, **params):
+    tasks = pulsar.require('tasks')
+    return tasks.TaskQueue(tasks_path = ['taskqueue.sampletasks.*'],
+                           **params)
+    
+    
 def server(**params):
     tasks = pulsar.require('tasks')
     return tasks.createRpcTaskServer(RpcRoot(),

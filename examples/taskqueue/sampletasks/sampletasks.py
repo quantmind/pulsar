@@ -1,5 +1,5 @@
 
-from pulsar.apps.tasks import Task, PeriodicTask
+from pulsar.apps.tasks import Task
 
 
 class CodeTask(Task):
@@ -11,3 +11,9 @@ class CodeTask(Task):
         func = ns['task_function']
         return func(*args,**kwargs)
         
+        
+
+class Addition(Task):
+    
+    def __call__(self, consumer, code, a, b):
+        return a+b

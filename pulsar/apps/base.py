@@ -32,6 +32,7 @@ class Application(pulsar.PickableMixin):
                      or a pickable object.
 :parameter actor_links: A dictionary actor proxies.
     """
+    cfg = {}
     monitor_class = pulsar.WorkerMonitor
     default_logging_level = logging.INFO
     actor_links = None
@@ -40,13 +41,13 @@ class Application(pulsar.PickableMixin):
     def __init__(self,
                  callable = None,
                  usage=None,
-                 cfg = None,
                  links = None,
                  **params):
         self.usage = usage
-        self.cfg = cfg
+        nparams = self.cfg.copy()
+        nparams.update(params)
         self.callable = callable
-        self.load_config(**params)
+        self.load_config(**nparams)
         arbiter = pulsar.arbiter()
         links = dict(self.actor_links(links))
         self.mid = arbiter.add_monitor(self.monitor_class,
@@ -136,12 +137,12 @@ used by a :class:`pulsar.Worker` to carry out its task.'''
             self.callable = self.load()
         return self.callable
     
+    def monitor_task(self, monitor):
+        '''Callback by :class:`pulsar.WorkerMonitor`` at each event loop'''
+        pass
+    
     def worker_task(self, worker):
-        '''Callback by worker class when the worker when it
-receives the arbiter proxy.
-
-:parameter worker: the :class:`pulsar.Worker` which received the callback
-                   and where ``self`` is served from. '''
+        '''Callback by :class:`pulsar.Worker`` at each event loop'''
         pass
     
     def get_task_queue(self):

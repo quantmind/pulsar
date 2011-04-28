@@ -11,4 +11,5 @@ Pulsar
    contents
    design
    api
+   mq
 

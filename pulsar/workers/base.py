@@ -156,6 +156,7 @@ and :meth:`_end_task` methods.'''
     handle_term = signal_stop
     
     def configure_logging(self, **kwargs):
+        #switch off configure logging. Done by self.app
         pass
     
     def get_parent_id(self):

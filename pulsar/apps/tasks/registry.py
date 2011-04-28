@@ -1,3 +1,4 @@
+from pulsar.utils.py2py3 import iteritems
 import inspect
 
 class TaskRegistry(dict):
@@ -25,7 +26,7 @@ class TaskRegistry(dict):
     def filter_types(self, type):
         """Return a generator of all tasks of a specific type."""
         return ((task_name, task)
-                    for task_name, task in self.data.items()
+                    for task_name, task in iteritems(self)
                             if task.type == type)
 
 

@@ -3,6 +3,8 @@
 Design
 =====================
 
+The building block of pulsar is the :class:`pulsar.Actor` class.
+
 Server Model
 ==================
 
