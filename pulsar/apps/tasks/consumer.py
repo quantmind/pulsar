@@ -16,16 +16,15 @@ from .registry import registry
 class TaskConsumer(object):
     
     def __init__(self, schedulter):
-        self.log = schedulter.log
         self.cfg = schedulter.cfg
         import_modules(self.cfg.tasks_path)
         
     def _handle_task(self, request):
         if request.on_start():
             task = registry[request.name]
-            return request, task(self, *request.args,**request.kwargs)
+            return request, task(self, *request.args, **request.kwargs)
         else:
-            raise TaskTimeout(task,request.expires)
+            return request, TaskTimeout(request.name,request.expires)
 
     def _handle_end(self, request, result):
         if isinstance(result,Exception):
@@ -55,9 +54,9 @@ class TaskRequest(object):
         timeout = self.revoked()
         self.timeout = timeout
         self.exception = timeout
-        self.time_start = time.time()
+        self.time_start = time()
         if timeout:
-            self.time_end  = time.time()
+            self.time_end  = time()
             return False
         return True
     
@@ -65,7 +64,7 @@ class TaskRequest(object):
         self.exception = exception
         self.result = result
         if not self.time_end:
-            self.time_end = time.time()
+            self.time_end = time()
         
     def maybe_expire(self):
         if self.expires and time() > self.expires:
@@ -75,7 +74,7 @@ class TaskRequest(object):
         if self._already_revoked:
             return True
         if self.expires:
-            self.maybe_expire()
+            return self.maybe_expire()
         return False
     
     def execute2start(self):

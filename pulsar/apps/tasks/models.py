@@ -1,9 +1,10 @@
 import sys
-from copy import deepcopy
-import logging
 from datetime import datetime, timedelta, date
 
+from pulsar.utils.tools import gen_unique_id
+
 from .registry import registry
+
 
 __all__ = ['Task','PeriodicTask','anchorDate']
 
@@ -30,8 +31,8 @@ class TaskMetaClass(type):
         # Automatically generate missing name.
         task_name = attrs.get("name",None)
         if not task_name:
-            task_module = sys.modules[task_module]
-            task_name = ".".join([task_module.__name__, name])
+            module_name = sys.modules[task_module].__name__.split('.')[1]
+            task_name = ".".join((module_name, name))
         task_name = task_name.lower()
         attrs["name"] = task_name
 
@@ -58,11 +59,21 @@ class Task(TaskBase):
     '''If ``False`` (default is ``True``), the task need to be registered manually with the task registry.'''
     type = "regular"
     '''Type of task, one of ``regular`` and ``periodic``'''
+    _ack = True
         
     def __call__(self, consumer, *args, **kwargs):
         '''The body of the task executed by the worker. This function needs to be
 implemented by subclasses.'''
         raise NotImplementedError("Tasks must define the run method.")
+    
+    def make_task_id(self, args, kwargs):
+        '''Get the task unique identifier. This can be overridden by Task implementation.'''
+        return gen_unique_id()
+        
+    def ack(self, args, kwargs):
+        '''Return ``True`` if the task will acknowledge the task queue once the result is ready or an error has occured.
+By default it returns ``True`` but it can be overridden so that its behaviour can change at runtime.'''
+        return self._ack
     
 
 class PeriodicTask(Task):
@@ -70,7 +81,8 @@ class PeriodicTask(Task):
     abstract  = True
     type      = "periodic"
     anchor    = None
-    '''If specified it must be a :class:`datetime.datetime` instance. It controls when the periodic task is run.'''
+    '''If specified it must be a :class:`datetime.datetime` instance.
+It controls when the periodic task is run.'''
     run_every = None
     '''Periodicity as a :class:`datetime.timedelta` instance.'''
     
@@ -78,7 +90,7 @@ class PeriodicTask(Task):
         self.run_every = run_every or self.run_every
         if self.run_every is None:
             raise NotImplementedError("Periodic tasks must have a run_every attribute set.")
-
+   
     def is_due(self, last_run_at):
         """Returns tuple of two items ``(is_due, next_time_to_run)``,
         where next time to run is in seconds.

@@ -35,6 +35,17 @@ Pulsar uses the multiprocessing_ module from the standard python library and it 
 be configured to run in multi-processing or multi-threading mode.
 
 
+Application
+=============
+Pulsar design allows for a host of different applications to be implemented in an elegant and efficient way.
+It includes the following
+
+* Http server
+* RPC server
+* Distributed Task Queue
+* Pulsar shell for asynchronous scripting (posix only).
+* Asynchronous testing suite
+
 Kudos
 ============
 This project started as fork of gunicorn_.

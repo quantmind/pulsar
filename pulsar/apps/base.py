@@ -157,9 +157,9 @@ at each ``worker`` event loop.'''
     def stop(self):
         '''Stop the application.'''
         arbiter = pulsar.arbiter()
-        arbiter
-        if arbiter:
-            arbiter.stop()
+        monitor = arbiter.monitors.get(self.mid,None)
+        if monitor:
+            monitor.stop()
     
     def configure_logging(self):
         """\

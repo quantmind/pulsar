@@ -331,14 +331,14 @@ class TestApplication(pulsar.Application):
     producer = None
     done = False
     default_logging_level = None
+    cfg = {'timeout':300,
+           'concurrency':'thread',
+           'workers':1,
+           'worker_class':'base',
+           'loglevel':'none'}
     
     def init(self, parser = None, opts = None, args = None, extractors = None):
         self.tags = args
-        return {'timeout':300,
-                'concurrency':'thread',
-                'workers':1,
-                'worker_class':'base',
-                'loglevel':'none'}
     
     def handler(self):
         return self
@@ -361,7 +361,8 @@ class TestApplication(pulsar.Application):
                     self.producer = producer.run(suite)
                     self.producers = []
                 except Exception as e:
-                    worker.log.critical('Could not start tests. {0}'.format(e))
+                    worker.log.critical('Could not start tests. {0}'.format(e),
+                                        exc_info = sys.exc_info())
                     self.done = True
                     worker.shut_down()
                     return

@@ -1,5 +1,13 @@
 '''\
-A task scheduler application with HTTP-RPC hooks
+A task-queue application for pulsar::
+
+    import pulsar
+    
+    tasks = pulsar.require('tasks')
+    tq = tasks.TaskQueue()
+    tq.start()
+    
+The usual input parameters apply.
 '''
 import os
 import pulsar
@@ -20,7 +28,8 @@ class TaskQueue(pulsar.Application):
     '''A task queue application for consuming task and scheduling.'''
     REMOVABLE_ATTRIBUTES = ('scheduler',) + pulsar.Application.REMOVABLE_ATTRIBUTES
     
-    cfg = {'worker_class':'task'}
+    cfg = {'worker_class':'task',
+           'timeout':'3600'}
     
     def get_task_queue(self):
         return pulsar.Queue()
@@ -33,7 +42,7 @@ class TaskQueue(pulsar.Application):
         # Load the application callable, the task consumer
         return TaskConsumer(self)
         
-    def make_request(self, task_name, targs, tkwargs, **kwargs):
+    def make_request(self, task_name, targs = None, tkwargs = None, **kwargs):
         '''Create a new Task Request'''
         return self.scheduler.make_request(task_name, targs, tkwargs, **kwargs)
         
@@ -43,6 +52,8 @@ class TaskQueue(pulsar.Application):
 
     @property
     def scheduler(self):
+        '''The task queue scheduler is a task producer. At every event loop of the arbiter it checks
+if new periodic tasks need to be scheduled. If so it makes the task requests.'''
         if not self._scheduler:
             self._scheduler = Scheduler()
         return self._scheduler
@@ -52,13 +63,4 @@ class TaskQueue(pulsar.Application):
         global registry
         return registry
         
-        
-def createRpcTaskServer(rpchandle, **params):
-    wsgi = pulsar.require('wsgi')
-    tasks = pulsar.require('tasks')
-    # Create the task server
-    task_server = TaskQueue()
-    rpc_server = wsgi.createServer(callable = rpchandle,
-                                   links = {'task_server':task_server},
-                                   **params)
-    return rpc_server
+

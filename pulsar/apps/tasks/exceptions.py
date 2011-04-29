@@ -19,7 +19,7 @@ class TaskNotAvailable(TaskException):
 class TaskTimeout(TaskException):
     MESSAGE = 'Task {0} timed-out (timeout was {1}).'
     def __init__(self, task, timeout):
-        super(TaskNotAvailable,self).__init__(self.MESSAGE.format(task,timeout))
+        super(TaskTimeout,self).__init__(self.MESSAGE.format(task,timeout))
 
 
 class SchedulingError(TaskException):

@@ -1,3 +1,4 @@
+from time import time
 from datetime import datetime
 
 from pulsar import test
@@ -8,43 +9,59 @@ from .manage import createTaskQueue
 class TestTaskQueue(test.TestCase):
     
     def setUp(self):
-        self.tq = createTaskQueue(parse_console = False)
+        self.tq = createTaskQueue(parse_console = False, concurrency = 'thread')
         
     def testCreate(self):
-        tq = createTaskQueue(parse_console = False)
+        tq = self.tq
         self.assertTrue(tq.cfg)
         self.assertTrue(tq.registry)
         scheduler = tq.scheduler
         self.assertTrue(scheduler.entries)
         self.assertTrue(scheduler.next_run <= datetime.now())
         
+    def testCodeTask(self):
+        '''Here we test the application only, not the queue mechanism implemented by the
+monitor and workers.'''
+        code = '''\
+def task_function(N):
+    return N*N
+'''
+        self.assertTrue('sampletasks.codetask' in self.tq.registry)
+        r = self.tq.make_request('sampletasks.codetask',(code,10),{})
+        self.assertTrue(r)
+        self.assertTrue(r.id)
+        self.assertTrue(r.time_executed)
+        self.assertFalse(r.time_start)
+        self.assertEqual(r.args,(code,10))
+        consumer = self.tq.load()
+        response, result = consumer._handle_task(r)
+        self.assertTrue(response.time_start)
+        self.assertTrue(response.execute2start() > 0)
+        self.assertEqual(result,100)
+        self.assertFalse(response.time_end)
+        consumer._handle_end(response,result)
+        self.assertTrue(response.time_end)
+        self.assertTrue(response.duration() > 0)
+        self.assertEqual(response.result,100)
+        
+    def testTimeout(self):
+        '''we set an expire to the task'''
+        self.assertTrue('sampletasks.addition' in self.tq.registry)
+        consumer = self.tq.load()
+        r = self.tq.make_request('sampletasks.codetask',(3,6),expires=time())
+        response, result = consumer._handle_task(r)
+        self.assertTrue(response.timeout)
+        self.assertTrue(response.exception)
+        consumer._handle_end(response,result)
+        self.assertTrue(response.exception)
+        self.assertFalse(response.result)
+        
     def tearDown(self):
-        pass
+        self.tq.stop()
 
-
-class __TeskTasks(test.TestCase):
-        
-    def standardchecks(self, request):
-        self.assertEqual(request.task_modules,self.controller.task_modules)
-        info = request.info
-        while not info.time_end:
-            self.sleep(0.1)
-        self.assertTrue(info.time_executed<=info.time_start)
-        self.assertTrue(info.time_start<=info.time_end)
-        return info
-        
-    def _testAddition(self):
-        request = self.dispatch('addition',3,4)
-        info = self.standardchecks(request)
-        self.assertEqual(info.result,7)
-        
-    def _testException(self):
-        request = self.dispatch('valueerrortask')
-        info = self.standardchecks(request)
-        self.assertTrue('ValueError' in info.exception)
         
         
-class __TestSchedulerEntry(TestCase):
+class TestSchedulerEntry(test.TestCase):
     
     def _testAnchored(self, entry, delta):
         # First test is_due is False
@@ -86,7 +103,4 @@ class __TestSchedulerEntry(TestCase):
         self.assertEqual(last_run_at.second,mult*2)
         
         self._testAnchored(entry, timedelta(seconds = 1))
-        
-        
-        
         
