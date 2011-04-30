@@ -42,9 +42,3 @@ class Worker(pulsar.Worker):
     '''A Task worker on a subprocess'''
     _class_code = 'TaskQueue'
 
-    def _handle_task(self, req):
-        pass
-
-    def _end_task(self, response, result):
-        pass
-

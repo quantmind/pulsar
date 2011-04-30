@@ -1,12 +1,18 @@
 from time import time
-from datetime import datetime
+from datetime import datetime, timedelta
 
 from pulsar import test
 
 from .manage import createTaskQueue
 
 
-class TestTaskQueue(test.TestCase):
+class dummyQueue(list):
+    
+    def put(self, elem):
+        self.append(elem)
+
+
+class TestTaskQueueMeta(test.TestCase):
     
     def setUp(self):
         self.tq = createTaskQueue(parse_console = False, concurrency = 'thread')
@@ -34,12 +40,12 @@ def task_function(N):
         self.assertFalse(r.time_start)
         self.assertEqual(r.args,(code,10))
         consumer = self.tq.load()
-        response, result = consumer._handle_task(r)
+        response, result = consumer.handle_event_task(None,r)
         self.assertTrue(response.time_start)
         self.assertTrue(response.execute2start() > 0)
         self.assertEqual(result,100)
         self.assertFalse(response.time_end)
-        consumer._handle_end(response,result)
+        consumer.end_event_task(None,response,result)
         self.assertTrue(response.time_end)
         self.assertTrue(response.duration() > 0)
         self.assertEqual(response.result,100)
@@ -49,20 +55,47 @@ def task_function(N):
         self.assertTrue('sampletasks.addition' in self.tq.registry)
         consumer = self.tq.load()
         r = self.tq.make_request('sampletasks.codetask',(3,6),expires=time())
-        response, result = consumer._handle_task(r)
+        response, result = consumer.handle_event_task(None,r)
         self.assertTrue(response.timeout)
         self.assertTrue(response.exception)
-        consumer._handle_end(response,result)
+        consumer.end_event_task(None,response,result)
         self.assertTrue(response.exception)
         self.assertFalse(response.result)
         
+    def testCheckNextRun(self):
+        q = dummyQueue()
+        scheduler = self.tq.scheduler
+        scheduler.tick(q)
+        self.assertTrue(scheduler.next_run > datetime.now())
+        now = datetime.now() + timedelta(hours = 1)
+        scheduler.tick(q,now)
+        self.assertTrue(q)
+        td = scheduler.next_run - now
+            
     def tearDown(self):
         self.tq.stop()
 
         
-        
-class TestSchedulerEntry(test.TestCase):
+class TestRunning(test.TestCase):
     
+    def setUp(self):
+        self.tq = createTaskQueue(parse_console = False, concurrency = 'thread')
+        
+    def testRunning(self):
+        self.tq.start()
+        self.sleep(1)
+        ff = self.tq.scheduler.entries['sampletasks.fastandfurious']
+        nr = ff.total_run_count
+        self.assertTrue(nr)
+        self.sleep(1)
+        self.assertTrue(ff.total_run_count > nr)
+        
+    def tearDown(self):
+        self.tq.stop()
+
+
+class TestSchedulerEntry(test.TestCase):
+        
     def _testAnchored(self, entry, delta):
         # First test is_due is False
         last_run_at = entry.scheduled_last_run_at

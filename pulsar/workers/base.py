@@ -18,37 +18,12 @@ __all__ = ['Worker']
 
 class Worker(Actor, Runner):
     """\
-Base class for all workers. The constructor is called
-called pre-fork so it shouldn't do anything to the current process.
-If there's a need to make process wide changes you'll want to do that
-in :meth:`setup` method.
-
-A worker is manages its own event loop and can leve on a thread or on a Process.
-
-.. attribute:: age
-
-    The age of worker, used to access how long the worker has been created.
-    
-.. attribute:: pid
-
-    The worker process id.
-    
-.. attribute:: ppid
-
-    The worker parent process id.
-    
-.. attribute:: tid
-
-    The worker thread id.
+Base class for actors implementing applications.
     
 .. attribute:: wid
 
     The worker unique id. If the Worker has not started it is ``None``.
-    
-.. attribute:: task_queue
 
-    The task queue where the worker pool add tasks to be processed by the worker.
-    This queue is used by a subsets of workers only.
 """
     def on_start(self):
         self.init_runner()
@@ -56,20 +31,12 @@ A worker is manages its own event loop and can leve on a thread or on a Process.
     def _init(self,
               impl,
               app = None,
-              age = None,
-              socket = None,
-              timeout = None,
-              task_queue = None,
               **kwargs):
         self.app = app
         self.cfg = app.cfg
-        self.age = age or 0
-        self.nr = 0
         self.max_requests = self.cfg.max_requests or sys.maxsize
         self.debug = self.cfg.debug
-        self.socket = socket
-        self.address = None if not socket else socket.getsockname()
-        self.task_queue = task_queue
+        self.app_handler = app.handler()
         super(Worker,self)._init(impl,**kwargs)
     
     def on_exit(self):
@@ -80,12 +47,6 @@ A worker is manages its own event loop and can leve on a thread or on a Process.
         
     def on_task(self):
         self.app.worker_task(self)
-        if self.task_queue:
-            try:
-                args = self.task_queue.get(timeout = 0.1)
-            except Empty:
-                return
-            self.handle_task(*args)
     
     def __str__(self):
         return "<{0} {1}>".format(self.__class__.__name__,self.wid)
@@ -116,11 +77,15 @@ which wraps the low level implementation in :meth:`_handle_task`
 and :meth:`_end_task` methods.'''
         self.nr += 1
         self.check_num_requests()
-        self.cfg.pre_request(self, request)
         try:
-            response, result = self._handle_task(request)
+            self.cfg.pre_request(self, request)
+        except Exception:
+            pass
+        try:
+            response, result = self.app.handle_event_task(self, request)
         except Exception as e:
-            self.end_task(request, e)
+            response = e
+            result = None
         self.end_task(request, response, result)
     
     def end_task(self, request, response, result = None):
@@ -131,20 +96,14 @@ and :meth:`_end_task` methods.'''
                 else:
                     return self.ioloop.add_callback(lambda : self.end_task(request, response, result))
         try:
-            self._end_task(response, result)
+            self.app.end_event_task(self, response, result)
+        except Exception as e:
+            self.log.critical('Handled exception : {0}'.format(e),exc_info = sys.exc_info())
         finally:
             try:
                 self.cfg.post_request(self, request)
             except:
                 pass
-        
-    def _handle_task(self, request):
-        ''''''
-        pass
-    
-    def _end_task(self, response, result):
-        ''''''
-        pass
     
     def signal_stop(self, sig, frame):
         signame = system.SIG_NAMES.get(sig,None)
@@ -158,9 +117,6 @@ and :meth:`_end_task` methods.'''
     def configure_logging(self, **kwargs):
         #switch off configure logging. Done by self.app
         pass
-    
-    def get_parent_id(self):
-        return os.getpid()
     
     @property
     def wid(self):

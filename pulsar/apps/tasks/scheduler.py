@@ -103,6 +103,7 @@ class Scheduler(object):
         return self._entries
         
     def make_request(self, name, targs = None, tkwargs = None, **kwargs):
+        '''Create a new task request'''
         if name in registry:
             task = registry[name]
             return TaskRequest(task, targs, tkwargs, **kwargs)
@@ -119,13 +120,14 @@ value ``now`` can be passed.'''
             for entry in itervalues(self._entries):
                 is_due, next_time_to_run = entry.is_due(now = now)
                 if is_due:
+                    entry = entry.next()
                     request = self.make_request(entry.name)
-                    queue.put(request)
+                    queue.put((request.id,request))
                 if next_time_to_run:
                     remaining_times.append(next_time_to_run)
         except RuntimeError:
             pass
-        self.next_run = datetime.now()
+        self.next_run = now or datetime.now()
         if remaining_times:
             self.next_run += timedelta(seconds = min(remaining_times))
 

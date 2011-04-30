@@ -12,7 +12,6 @@ except:
     ssl = None 
 
 import pulsar
-from pulsar.http.utils import write_nonblock, write_error, close
 
 
 class HttpHandler(object):
@@ -85,42 +84,4 @@ to the Thread Pool. This is different from the Http Worker on Processes'''
         if wp.socket and wp.task_queue is not None:
             wp.ioloop.remove_handler(wp.socket)
             
-    @classmethod
-            
-    def _handle_task(self, req):
-        try:
-            response, environ = req.wsgi(worker = self)
-            response.force_close()
-            return response, self.handler(environ, response.start_response)
-        except StopIteration:
-            self.log.debug("Ignored premature client disconnection.")
-        except socket.error as e:
-            if e[0] != errno.EPIPE:
-                self.log.exception("Error processing request.")
-            else:
-                self.log.debug("Ignoring EPIPE")
-
-    def _end_task(self, response, result):
-        try:
-            for item in result:
-                response.write(item)
-            response.close()
-            if hasattr(result, "close"):
-                result.close()
-        except StopIteration:
-            self.log.debug("Ignored premature client disconnection.")
-        except socket.error as e:
-            if e[0] != errno.EPIPE:
-                self.log.exception("Error processing request.")
-            else:
-                self.log.debug("Ignoring EPIPE")
-        except Exception as e:
-            self.log.exception("Error processing request: {0}".format(e))
-            if not self.debug:
-                mesg = "HTTP/1.1 500 Internal Server Error\r\n\r\n"
-                write_nonblock(response.sock, mesg)
-            else:
-                write_error(response.sock, traceback.format_exc())
-        finally:    
-            close(response.sock)
     

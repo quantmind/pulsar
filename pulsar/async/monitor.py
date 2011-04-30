@@ -50,7 +50,7 @@ This is the base class for :class:`pulsar.Arbiter` and :class:`pulsar.Monitor`.
         """
         if self.num_workers:
             while len(self.LIVE_ACTORS) < self.num_workers:
-                self.spawn_actor()        
+                self.spawn_actor()
     
 
 class Monitor(ActorPool):
@@ -69,12 +69,16 @@ A monitor manages a set of actors.
     The number of workers to monitor.
 
 '''
-    def _init(self, impl, worker_class, address = None, actor_params = None, **kwargs):
+    socket = None
+    
+    def _init(self, impl, worker_class, address = None, actor_params = None,
+              task_queue = None, **kwargs):
         self.worker_class = worker_class
         self.address = address
-        self.task_queue = self.worker_class.get_task_queue(self)
+        if not task_queue:
+            task_queue = self.worker_class.get_task_queue(self)
         self._actor_params = actor_params
-        super(Monitor,self)._init(impl, **kwargs)
+        super(Monitor,self)._init(impl, task_queue = task_queue, **kwargs)
     
     # HOOKS
     def on_start(self):

@@ -248,11 +248,13 @@ MonitorS manage group of actors performing specific tasks.
         except KeyboardInterrupt:
             self.halt('Keyboard Interrupt')
         except self.HaltServer as e:
-            self.halt(reason=e.reason, sig=e.signal)
+            self.halt(reason=str(e), sig=e.signal)
         except SystemExit:
             raise
         except Exception:
-            self.halt("Unhandled exception in main loop:\n%s" % traceback.format_exc())
+            self.log.critical("Unhandled exception in main loop.",
+                              exc_info = sys.exc_info())
+            self.halt()
     
     def halt(self, reason=None, sig=None):
         """halt arbiter. If there no signal ``sig`` it is an unexpected exit."""

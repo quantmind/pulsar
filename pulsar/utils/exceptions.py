@@ -13,11 +13,8 @@ class ActorAlreadyStarted(PulsarException):
 class HaltServer(PulsarInternetException):
     
     def __init__(self, reason, signal=None):
-        self.reason = reason
+        super(HaltServer,self).__init__(reason)
         self.signal = signal
-    
-    def __str__(self):
-        return "<HaltServer %r %d>" % (self.reason, self.exit_status)
     
     
 class AlreadyCalledError(PulsarException):

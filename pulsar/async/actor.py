@@ -8,7 +8,7 @@ from threading import current_thread
 
 from pulsar import AlreadyCalledError, AlreadyRegistered,\
                    ActorAlreadyStarted,\
-                   logerror, LogSelf, LogginMixin
+                   logerror, LogSelf, LogginMixin, system
 from pulsar.http import get_httplib
 from pulsar.utils.py2py3 import iteritems, itervalues, pickle
 
@@ -84,6 +84,15 @@ To spawn a new actor::
     True
     
 Here ``a`` is actually a reference to the remote actor.
+
+.. attribute:: age
+
+    The age of actor, used to access how long the actor has been created.
+    
+.. attribute:: task_queue
+
+    The task queue where the actor's monitor add tasks to be processed by ``self``.
+    This queue is used by a subsets of workers only.
 '''
     INITIAL = 0X0
     RUN = 0x1
@@ -203,10 +212,12 @@ it will be stopped if it fails to notify itself for a period longer that timeout
     # INITIALIZATION AFTER FORKING
     def _init(self, impl, arbiter = None, monitor = None,
               on_task = None, task_queue = None,
-              actor_links = None, name = None, age = 0):
+              actor_links = None, name = None, socket = None,
+              age = 0):
         self.arbiter = arbiter
         self.monitor = monitor
         self.age = age
+        self.nr = 0
         self.actor_links = actor_links
         self.loglevel = impl.loglevel
         self._name = name or self._name
@@ -216,6 +227,8 @@ it will be stopped if it fails to notify itself for a period longer that timeout
         self.task_queue = task_queue
         self.ioloop = self._get_eventloop(impl)
         self.ioloop.add_loop_task(self)
+        self.socket = socket
+        self.address = None if not socket else socket.getsockname()
         if on_task:
             self.on_task = on_task
     

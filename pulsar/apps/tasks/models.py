@@ -93,21 +93,14 @@ It controls when the periodic task is run.'''
    
     def is_due(self, last_run_at):
         """Returns tuple of two items ``(is_due, next_time_to_run)``,
-        where next time to run is in seconds.
+where next time to run is in seconds. e.g.
 
-        e.g.
+* ``(True, 20)``, means the task should be run now, and the next
+    time to run is in 20 seconds.
 
-        * ``(True, 20)``, means the task should be run now, and the next
-            time to run is in 20 seconds.
+* ``(False, 12)``, means the task should be run in 12 seconds.
 
-        * ``(False, 12)``, means the task should be run in 12 seconds.
-
-        You can override this to decide the interval at runtime,
-        but keep in mind the value of the :attr:`unuk.contrib.tasks.Scheduler.beat`
-        attribute, which controls the maximum number of seconds the controller can sleep between
-        re-checking the periodic task intervals. You may
-        consider lowering the value of :attr:`unuk.contrib.tasks.Scheduler.beat` if
-        responsiveness if of importance to you.
+You can override this to decide the interval at runtime.
         """
         return self.run_every.is_due(last_run_at)
 

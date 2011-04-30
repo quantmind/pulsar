@@ -4,6 +4,7 @@ import sys
 import traceback
 
 import pulsar
+from pulsar import Empty
 from pulsar.utils.py2py3 import execfile
 from pulsar.utils.importer import import_module
 #from pulsar.utils import debug
@@ -144,6 +145,19 @@ used by a :class:`pulsar.Worker` to carry out its task.'''
     def worker_task(self, worker):
         '''Callback by and instance of :class:`pulsar.Worker`` class
 at each ``worker`` event loop.'''
+        if worker.task_queue:
+            try:
+                args = worker.task_queue.get(timeout = 0.1)
+            except Empty:
+                return
+            worker.handle_task(*args)
+            
+    def handle_event_task(self, worker, request):
+        '''And a task event. Called by the worker to perform the application task.'''
+        raise NotImplementedError
+    
+    def end_event_task(self, worker, response, result):
+        ''''''
         pass
     
     def get_task_queue(self):

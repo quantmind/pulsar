@@ -25,6 +25,7 @@ CLASSIFIERS  = [
 
 from .utils.log import *
 
+DEFAULT_PORT = 8060
 SERVER_SOFTWARE = "python-{0}/{1}".format(SERVER_NAME,get_version())
 
 from .utils.exceptions import *

@@ -6,7 +6,7 @@ from .manage import server
 class TestRpcMeta(test.TestCase):
     
     def testHandler(self):
-        s = server()
+        s = server(bind = '127.0.0.1:0')
         self.assertTrue(s.callable)
         handler = s.callable
         self.assertEqual(handler.content_type,'text/json')

@@ -1,7 +1,7 @@
 '''\
 Configuration utilities. originally from gunicorn_, adapted and modified for pulsar.
 
-Gunicorn Licence
+Original Gunicorn Licence
 
 This file is part of gunicorn released under the MIT license. 
 See the NOTICE for more information.
@@ -15,12 +15,10 @@ import os
 import textwrap
 import types
 
-from pulsar import __version__, SERVER_NAME
+from pulsar import __version__, SERVER_NAME, DEFAULT_PORT
 from pulsar.utils import system
 from pulsar.utils.py2py3 import *
 
-
-DEFAULT_PORT = 8060
 
 __all__ = ['Config',
            'DummyConfig',
@@ -272,7 +270,13 @@ def validate_callable(arity):
     def _validate_callable(val):
         if not hasattr(val,'__call__'):
             raise TypeError("Value is not callable: %s" % val)
-        if arity != len(inspect.getargspec(val)[0]):
+        if not inspect.isfunction(val):
+            cval = val.__call__
+            discount = 1
+        else:
+            discount = 0
+            cval = val
+        if arity != len(inspect.getargspec(cval)[0]) - discount:
             raise TypeError("Value must have an arity of: %s" % arity)
         return val
     return _validate_callable

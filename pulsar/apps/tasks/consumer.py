@@ -11,26 +11,8 @@ from .config import *
 from .exceptions import *
 from .registry import registry
 
-
-
-class TaskConsumer(object):
-    
-    def __init__(self, schedulter):
-        self.cfg = schedulter.cfg
-        import_modules(self.cfg.tasks_path)
-        
-    def _handle_task(self, request):
-        if request.on_start():
-            task = registry[request.name]
-            return request, task(self, *request.args, **request.kwargs)
-        else:
-            return request, TaskTimeout(request.name,request.expires)
-
-    def _handle_end(self, request, result):
-        if isinstance(result,Exception):
-            request.on_finish(exception = result)
-        else:
-            request.on_finish(result = result)
+EMPTY_TUPLE = ()
+EMPTY_DICT = {}
         
 
 class TaskRequest(object):
@@ -45,9 +27,9 @@ class TaskRequest(object):
         self.time_executed = time()
         self.name = task.name
         self.id = task.make_task_id(args,kwargs)
-        self.args = args
-        self.kwargs = kwargs
-        retries = retries
+        self.args = args or EMPTY_TUPLE
+        self.kwargs = kwargs or EMPTY_DICT
+        self.retries = retries
         self.expires = expires
         
     def on_start(self):

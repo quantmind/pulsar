@@ -9,23 +9,23 @@ class TestPeriodicTask(PeriodicTask):
 
 class TestPeriodic(TestPeriodicTask):
         
-    def __call__(self, consumer, code):
-        pass
+    def __call__(self, consumer):
+        return 'OK'
     
     
 class TestPeriodicError(TestPeriodicTask):
     
-    def __call__(self, consumer, code):
+    def __call__(self, consumer):
         raise Exception('kaputt')
     
 
 class AnchoredEveryHour(TestPeriodicTask):
     anchor    = anchorDate(minute = 25)
     
-    def __call__(self, consumer, code):
+    def __call__(self, consumer):
         raise Exception('kaputt')
     
     
-class AnchoredEvery2seconds(TestPeriodicTask):
-    anchor    = anchorDate(second = 0)
+class FastAndFurious(PeriodicTask):
+    run_every = timedelta(seconds=0.1)
     

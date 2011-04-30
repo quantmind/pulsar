@@ -19,9 +19,9 @@ from pulsar.utils.importer import import_modules
 
 from .models import *
 from .config import *
-from .consumer import TaskConsumer
 from .scheduler import Scheduler
 from .registry import registry
+from .exceptions import *
 
 
 class TaskQueue(pulsar.Application):
@@ -36,11 +36,12 @@ class TaskQueue(pulsar.Application):
     
     def init(self, parser = None, opts = None, args = None):
         self._scheduler = None
-        import_modules(self.cfg.tasks_path)
+        self.load()
         
     def load(self):
         # Load the application callable, the task consumer
-        return TaskConsumer(self)
+        import_modules(self.cfg.tasks_path)
+        return self
         
     def make_request(self, task_name, targs = None, tkwargs = None, **kwargs):
         '''Create a new Task Request'''
@@ -49,6 +50,23 @@ class TaskQueue(pulsar.Application):
     def monitor_task(self, monitor):
         if self.scheduler.next_run <= datetime.now():
             self.scheduler.tick(monitor.task_queue)
+            
+    def handle_event_task(self, worker, request):
+        if request.on_start():
+            task = registry[request.name]
+            try:
+                result = task(self, *request.args, **request.kwargs)
+            except Exception as e:
+                result = TaskException(str(e))
+            return request, result
+        else:
+            return request, TaskTimeout(request.name,request.expires)
+
+    def end_event_task(self, worker, response, result):
+        if isinstance(result,Exception):
+            response.on_finish(exception = result)
+        else:
+            response.on_finish(result = result)
 
     @property
     def scheduler(self):
