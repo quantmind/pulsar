@@ -17,7 +17,7 @@ class TestLibrary(test.TestCase):
             
             
 class TestTestSuite(test.TestCase):
-    
+    '''Test the test suite itself'''
     def testTestSuite(self):
         self.assertTrue(self.suiterunner)
         self.assertEqual(self.arbiter,arbiter())
@@ -25,3 +25,8 @@ class TestTestSuite(test.TestCase):
         #r = arb.ping(self.suiterunner).add_callback(self.cbk)
         #self.assertTrue(len(r._callbacks)==1)
         #self.assertEqual(self.cbk.result,'pong')
+        
+    def testTestMonitor(self):
+        monitors = self.arbiter.get_all_monitors()
+        self.assertTrue(monitors)
+        self.assertTrue('testapplication' in monitors)

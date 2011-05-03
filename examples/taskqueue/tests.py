@@ -2,9 +2,16 @@ from time import time
 from datetime import datetime, timedelta
 
 from pulsar import test
+from pulsar.http import rpc
 
-from .manage import createTaskQueue
+from .manage import createTaskQueue, server
 
+
+CODE_TEST = '''\
+def task_function(N):
+    return N*N
+'''
+        
 
 class dummyQueue(list):
     
@@ -15,7 +22,8 @@ class dummyQueue(list):
 class TestTaskQueueMeta(test.TestCase):
     
     def setUp(self):
-        self.tq = createTaskQueue(parse_console = False, concurrency = 'thread')
+        self.tq = createTaskQueue(parse_console = False,
+                                  concurrency = 'thread')
         
     def testCreate(self):
         tq = self.tq
@@ -28,17 +36,13 @@ class TestTaskQueueMeta(test.TestCase):
     def testCodeTask(self):
         '''Here we test the application only, not the queue mechanism implemented by the
 monitor and workers.'''
-        code = '''\
-def task_function(N):
-    return N*N
-'''
         self.assertTrue('sampletasks.codetask' in self.tq.registry)
-        r = self.tq.make_request('sampletasks.codetask',(code,10),{})
+        r = self.tq.make_request('sampletasks.codetask',(CODE_TEST,10),{})
         self.assertTrue(r)
         self.assertTrue(r.id)
         self.assertTrue(r.time_executed)
         self.assertFalse(r.time_start)
-        self.assertEqual(r.args,(code,10))
+        self.assertEqual(r.args,(CODE_TEST,10))
         consumer = self.tq.load()
         response, result = consumer.handle_event_task(None,r)
         self.assertTrue(response.time_start)
@@ -79,7 +83,8 @@ def task_function(N):
 class TestRunning(test.TestCase):
     
     def setUp(self):
-        self.tq = createTaskQueue(parse_console = False, concurrency = 'thread')
+        self.tq = createTaskQueue(parse_console = False,
+                                  concurrency = 'thread')
         
     def testRunning(self):
         self.tq.start()
@@ -94,6 +99,45 @@ class TestRunning(test.TestCase):
         self.tq.stop()
 
 
+class TestTaskRpc(test.TestCase):
+    
+    def initTests(self):
+        s = self.__class__._server = server(bind = '127.0.0.1:0',
+                                            concurrency = 'process',
+                                            parse_console = False)
+        s.start()
+        monitor = self.arbiter.monitors[s.mid]
+        self.wait(lambda : not monitor.is_alive())
+        self.__class__.address = 'http://{0}:{1}'.format(*monitor.address)
+        
+    def setUp(self):
+        self.p = rpc.JsonProxy(self.__class__.address)
+        
+    def testActorLinks(self):
+        s = self._server
+        monitor = self.arbiter.monitors[s.mid]
+        self.assertTrue(monitor.actor_links)
+        app = monitor.actor_links['taskqueue']
+        self.assertTrue(app.mid in self.arbiter.monitors)
+        tmonitor = self.arbiter.monitors[app.mid]
+        self.assertEqual(app,tmonitor.app)
+        
+    def testPing(self):
+        r = self.p.ping()
+        self.assertEqual(r,'pong')
+            
+    #def testEvalCode(self):
+    #    r = self.p.evalcode(CODE_TEST,10)
+    #    self.assertEqual(r,100)
+    
+    def endTests(self):
+        monitor = self.arbiter.monitors[self._server.mid]
+        monitor.stop()
+        self.wait(lambda : monitor.aid in self.arbiter.monitors)
+        self.assertFalse(monitor.is_alive())
+        self.assertTrue(monitor.closed())
+    
+    
 class TestSchedulerEntry(test.TestCase):
         
     def _testAnchored(self, entry, delta):

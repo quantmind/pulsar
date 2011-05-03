@@ -67,6 +67,8 @@ class TestGenerator(object):
     
     def __init__(self, test, result, testMethod):
         self.test = test
+        self.failureException = test.failureException
+        self.shortDescription = test.shortDescription
         self.result = result
         test.success = False
         self.testMethod = testMethod
@@ -327,10 +329,17 @@ class TextTestRunner(unittest.TextTestRunner):
         return result
 
 
+class TestMonitor(pulsar.WorkerMonitor):
+    '''A specialized worker monitor for testing.'''
+    def info(self):
+        return self._info(len(self.LIVE_ACTORS))
+
+
 class TestApplication(pulsar.Application):
     producer = None
     done = False
     default_logging_level = None
+    monitor_class = TestMonitor
     cfg = {'timeout':300,
            'concurrency':'thread',
            'workers':1,

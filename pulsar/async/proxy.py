@@ -2,14 +2,17 @@ from time import time
 from pulsar.utils.py2py3 import iteritems
 from pulsar.utils.tools import gen_unique_id
 
-from .defer import Deferred
+from .defer import Deferred, is_async
 
 __all__ = ['ActorRequest',
            'ActorProxy',
-           'get_proxy']
+           'get_proxy',
+           'ActorCallBack',
+           'ActorCallBacks',
+           'DEFAULT_MESSAGE_CHANNEL']
 
 
-STD_MESSAGE = '__message__'
+DEFAULT_MESSAGE_CHANNEL = '__message__'
 
 
 def get_proxy(obj, safe = False):
@@ -22,8 +25,56 @@ def get_proxy(obj, safe = False):
             return None
         else:
             raise ValueError('"{0}" is not a remote or remote proxy.'.format(obj))
+        
 
 
+class ActorCallBack(Deferred):
+    '''An actor callback run on the actor event loop'''
+    def __init__(self, actor, request):
+        super(ActorCallBack,self).__init__()
+        self.actor = actor
+        self.request = request
+        if is_async(request):
+            self()
+        else:
+            self.callback(self.request)
+        
+    def __call__(self):
+        if self.request.called:
+            self.callback(self.request.result)
+        else:
+            self.actor.ioloop.add_callback(self)
+
+
+class ActorCallBacks(Deferred):
+    
+    def __init__(self, actor, requests):
+        super(ActorCallBacks,self).__init__()
+        self.actor = actor
+        self.requests = []
+        self._tmp_results = []
+        for r in requests:
+            if is_async(r):
+                self.requests.append(r)
+            else:
+                self._tmp_results.append(r)
+        actor.ioloop.add_callback(self)
+        
+    def __call__(self):
+        if self.requests:
+            nr = []
+            for r in self.requests:
+                if r.called:
+                    self._tmp_results.append(r.result)
+                else:
+                    nr.append(r)
+            self.requests = nr
+        if self.requests:
+            self.actor.ioloop.add_callback(self)
+        else:
+            self.callback(self._tmp_results)
+            
+            
 class ActorRequest(Deferred):
     REQUESTS = {}
     
@@ -108,8 +159,16 @@ This is a light class which delegates function calls to a remote object.
         self.loglevel = impl.loglevel
         
     def send(self, aid, msg, name = None, ack = False):
-        '''Send a message to another Actor'''
-        name = name or STD_MESSAGE
+        '''\
+Send a message to the actor referenced by ``self``.
+
+:parameter aid: the actor id of the actor sending the message
+:parameter msg: the message body.
+:parameter name: the name of the message. If non name is provided, the message will be
+                 broadcasted by the receiving actor, otherwise a specific action
+                 will be performed. Default ``None``.
+:parameter ack: If ``True`` the receiving actor will send a callback.'''
+        name = name or DEFAULT_MESSAGE_CHANNEL
         request = ActorRequest(aid,name,ack,msg)
         try:
             self.inbox.put(request)

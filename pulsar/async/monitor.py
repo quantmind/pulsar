@@ -3,10 +3,11 @@ import sys
 import time
 
 import pulsar
-from pulsar.utils.py2py3 import iteritems
+from pulsar.utils.py2py3 import iteritems, itervalues
 
 from .actor import Actor
-from .defer import make_deferred
+from .defer import make_deferred, Deferred, is_async
+from .proxy import ActorCallBacks
 
 
 __all__ = ['Monitor','ActorPool']
@@ -22,6 +23,7 @@ This is the base class for :class:`pulsar.Arbiter` and :class:`pulsar.Monitor`.
 '''
     
     def _init(self, impl, *args, **kwargs):
+        self._linked_actors = {}
         self.num_workers = kwargs.pop('num_workers',0) or 0
         super(ActorPool,self)._init(impl, *args, **kwargs)       
         
@@ -72,12 +74,13 @@ A monitor manages a set of actors.
     socket = None
     
     def _init(self, impl, worker_class, address = None, actor_params = None,
-              task_queue = None, **kwargs):
+              task_queue = None, actor_links = None, **kwargs):
         self.worker_class = worker_class
         self.address = address
         if not task_queue:
             task_queue = self.worker_class.get_task_queue(self)
         self._actor_params = actor_params
+        self.actor_links = actor_links
         super(Monitor,self)._init(impl, task_queue = task_queue, **kwargs)
     
     # HOOKS
@@ -85,8 +88,7 @@ A monitor manages a set of actors.
         self.worker_class.modify_arbiter_loop(self)
         if not hasattr(self,'socket'):
             self.socket = None
-        if self.socket:
-            self.log.info("Listening at: {0}".format(self.socket))
+        self.set_socket(self.socket)
         
     def on_task(self):
         self.manage_actors()
@@ -100,6 +102,9 @@ A monitor manages a set of actors.
             actor.stop()
         
     # OVERRIDES
+    
+    def init_runner(self):
+        pass
     
     def _make_name(self):
         return 'Monitor-{0}({1})'.format(self.worker_class.code(),self.aid[:8])
@@ -157,6 +162,7 @@ as required."""
         worker = self.arbiter.spawn(self.worker_class,
                                     monitor = self,
                                     task_queue = self.task_queue,
+                                    actor_links = self.arbiter.get_all_monitors(),
                                     **self.actor_params())
         monitor = self.arbiter.LIVE_ACTORS[worker.aid]
         self.LIVE_ACTORS[worker.aid] = monitor
@@ -166,7 +172,21 @@ as required."""
         return self._actor_params or {}
         
     def info(self):
+        requests = []
+        proxy = self.proxy
+        for w in itervalues(self.LIVE_ACTORS):
+            requests.append(proxy.info(w))
+        return ActorCallBacks(self,requests).add_callback(self._info)
+        
+    def _info(self, result):
         return {'worker_class':self.worker_class.code(),
-                'workers':len(self.LIVE_ACTORS)}
+                'workers':result,
+                'listen':str(self.socket),
+                'name':self.name,
+                'age':self.age}
 
+    def get_actor(self, aid):
+        '''Delegate get_actor to the arbiter'''
+        return self.arbiter.get_actor(aid)
+        
     

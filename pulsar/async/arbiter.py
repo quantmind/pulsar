@@ -4,7 +4,7 @@ import sys
 import traceback
 import signal
 from multiprocessing.queues import Empty
-from threading import current_thread, Lock
+from threading import Lock
 
 try:
     import queue
@@ -18,11 +18,10 @@ from pulsar.utils.tools import Pidfile
 from pulsar.utils.py2py3 import itervalues
 
 from .monitor import ActorPool
+from .proxy import ActorCallBacks
 
 
-__all__ = ['arbiter','spawn','ThreadQueue','Runner']
-
-_main_thread = current_thread()
+__all__ = ['arbiter','spawn','ThreadQueue']
 
 
 def arbiter():
@@ -31,47 +30,9 @@ def arbiter():
     
 def spawn(actor_class, *args, **kwargs):
     return arbiter().spawn(actor_class, *args, **kwargs)
-
-
-class Runner(object):
-    '''Base class for classes with an event loop.
-    '''
-    DEF_PROC_NAME = 'pulsar'
-    SIG_QUEUE = None
-    
-    def init_runner(self):
-        '''Initialise the runner. This function
-will block the current thread since it enters the event loop.
-If the runner is a instance of a subprocess, this function
-is called after fork by the run method.'''
-        self._set_proctitle()
-        self._setup()
-        self._install_signals()
-        
-    def _set_proctitle(self):
-        '''Set the process title'''
-        if self.isprocess() and hasattr(self,'cfg'):
-            proc_name = self.cfg.proc_name or self.cfg.default_proc_name
-            if proc_name:
-                system.set_proctitle("{0} - {1}".format(proc_name,self))
-    
-    def _install_signals(self):
-        '''Initialise signals for correct signal handling.'''
-        current = self.current_thread()
-        if current == _main_thread and self.isprocess():
-            self.log.info('Installing signals')
-            sfun = getattr(self,'signal',None)
-            for name in system.ALL_SIGNALS:
-                func = getattr(self,'handle_{0}'.format(name.lower()),sfun)
-                if func:
-                    sig = getattr(signal,'SIG{0}'.format(name))
-                    signal.signal(sig, func)
-    
-    def _setup(self):
-        pass
         
 
-class Arbiter(ActorPool,Runner):
+class Arbiter(ActorPool):
     '''The Arbiter is a special :class:`pulsar.Monitor` class. There is only one and it manages
 all the actors and monitors.
 In other words the Arbiter should be used as a singletone in the following way:
@@ -84,7 +45,7 @@ The arbiter runs the main event-loop, in a way similar to the twisted reactor.
 '''
     CLOSE_TIMEOUT = 3
     WORKER_BOOT_ERROR = 3
-    STOPPING_LOOPS = 2
+    STOPPING_LOOPS = 20
     SIG_TIMEOUT = 0.001
     CLOSE_TIMEOUT = 10
     EXIT_SIGNALS = (signal.SIGINT,signal.SIGTERM,signal.SIGABRT,system.SIGQUIT)
@@ -94,15 +55,18 @@ The arbiter runs the main event-loop, in a way similar to the twisted reactor.
     
     # ARBITER HIGH LEVEL API
     
-    def add_monitor(self, monitor_class, actor_class, *args, **kwargs):
+    def add_monitor(self, monitor_class, actor_class, monitor_name, *args, **kwargs):
         '''Add a new :class:`pulsar.Monitor` to the arbiter.
 MonitorS manage group of actors performing specific tasks.
 
 :parameter monitor_class: a :class:`pulsar.Monitor` class.
 :parameter actor_class: a :class:`pulsar.Actor` class but not a :class:`pulsar.Monitor` class.'''
         kwargs['impl'] = 'monitor'
+        if monitor_name in self._monitors:
+            raise KeyError('Monitor "{0}" already available'.format(monitor_name))
         m = spawn(monitor_class,actor_class,*args,**kwargs)
-        self._monitors[m.aid] = m
+        m._name = monitor_name
+        self._monitors[m.name] = m
         return m
     
     @property
@@ -160,7 +124,7 @@ MonitorS manage group of actors performing specific tasks.
                 for m in list(itervalues(self._monitors)):
                     if m.started():
                         if not m.is_alive():
-                            self._monitors.pop(m.aid)
+                            self._monitors.pop(m.name)
                     else:
                         m.start()
                 
@@ -169,8 +133,8 @@ MonitorS manage group of actors performing specific tasks.
         gap = time() - actor.notified
         if gap > actor.timeout:
             if actor.stopping < self.STOPPING_LOOPS:
-                self.log.info('Stopping {0}. Timeout surpassed.'.format(actor))
                 if not actor.stopping:
+                    self.log.info('Stopping {0}. Timeout surpassed.'.format(actor))
                     self.proxy.stop(actor)
             else:
                 self.log.warn('Terminating {0}. Timeout surpassed.'.format(actor))
@@ -308,22 +272,23 @@ MonitorS manage group of actors performing specific tasks.
             except:
                 pass
         
-    def server_info(self):
-        started = self.started
-        if not started:
+    def info(self):
+        if not self.started():
             return
-        uptime = time.time() - started
+        pools = []
+        for p in itervalues(self.monitors):
+            pools.append(p.info())
+        return ActorCallBacks(self,pools).add_callback(self._info)
+    
+    def _info(self, result):
+        uptime = time() - self.ioloop._started
         server = {'uptime':uptime,
                   'version':pulsar.__version__,
                   'name':pulsar.SERVER_NAME,
                   'number_of_monitors':len(self._monitors),
-                  'event_loops':self.ioloop.num_loops,
-                  'socket':str(self.socket)}
-        pools = []
-        for p in itervalues(self._monitors):
-            pools.append(p.info())
+                  'event_loops':self.ioloop.num_loops}
         return {'server':server,
-                'pools':pools}
+                'monitors':result}
 
     def arbiter_task(self):
         '''Called by the Event loop to perform the signal handling from the signal queue'''
@@ -372,3 +337,5 @@ MonitorS manage group of actors performing specific tasks.
         else:
             super(Arbiter,self).configure_logging(**kwargs)
     
+    def get_all_monitors(self):
+        return dict(((mon.name,mon.proxy) for mon in itervalues(self.monitors)))

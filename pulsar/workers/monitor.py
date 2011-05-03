@@ -37,10 +37,6 @@ for :class:`pulsar.Application`.'''
                 'timeout': self.cfg.timeout,
                 'loglevel': self.app.loglevel,
                 'impl': self.cfg.concurrency}
-        
-    def info(self):
-        return {'worker_class':self.worker_class.code(),
-                'workers':len(self.LIVE_ACTORS)}
 
     def configure_logging(self, **kwargs):
         self.app.configure_logging(**kwargs)

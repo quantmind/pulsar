@@ -1,5 +1,6 @@
 import sys
 import os
+import signal
 from time import time
 from multiprocessing import current_process
 from multiprocessing.queues import Empty
@@ -14,8 +15,9 @@ from pulsar.utils.py2py3 import iteritems, itervalues, pickle
 
 
 from .eventloop import IOLoop
-from .proxy import ActorProxy, ActorRequest
+from .proxy import ActorProxy, ActorRequest, ActorCallBack, DEFAULT_MESSAGE_CHANNEL
 from .impl import ActorProcess, ActorThread, ActorMonitorImpl
+from .defer import is_async, Deferred
 
 
 __all__ = ['is_actor',
@@ -37,7 +39,60 @@ class HttpMixin(object):
     @property
     def http(self):
         return get_httplib(self.cfg)
+
     
+_main_thread = current_thread()
+
+    
+class Runner(LogginMixin,HttpMixin):
+    '''Base class for classes with an event loop.
+    '''
+    DEF_PROC_NAME = 'pulsar'
+    SIG_QUEUE = None
+    
+    def init_runner(self):
+        '''Initialise the runner.'''
+        self._set_proctitle()
+        self._setup()
+        self._install_signals()
+        
+    def _set_proctitle(self):
+        '''Set the process title'''
+        if self.isprocess():
+            if hasattr(self,'cfg'):
+                proc_name = self.cfg.proc_name or self.cfg.default_proc_name
+            else:
+                proc_name = self.DEF_PROC_NAME
+            system.set_proctitle("{0} - {1}".format(proc_name,self))
+    
+    def _install_signals(self):
+        '''Initialise signals for correct signal handling.'''
+        current = self.current_thread()
+        if current == _main_thread and self.isprocess():
+            self.log.info('Installing signals')
+            # The default signal handling function in signal
+            sfun = getattr(self,'signal',None)
+            for name in system.ALL_SIGNALS:
+                func = sfun
+                if not func:
+                    func = getattr(self,'handle_{0}'.format(name.lower()),None)
+                if func:
+                    sig = getattr(signal,'SIG{0}'.format(name))
+                    signal.signal(sig, func)
+    
+    def _setup(self):
+        pass
+    
+    # SIGGNALS HANDLING
+    
+    def signal_stop(self, sig, frame):
+        signame = system.SIG_NAMES.get(sig,None)
+        self.log.warning('Received signal {0}. Exiting.'.format(signame))
+        self.stop()
+            
+    handle_int  = signal_stop
+    handle_quit = signal_stop
+    handle_term = signal_stop
     
 
 
@@ -67,7 +122,7 @@ class ActorMetaClass(type):
 ActorBase = ActorMetaClass('BaseActor',(object,),{})
 
 
-class Actor(ActorBase,LogginMixin,HttpMixin):
+class Actor(ActorBase,Runner):
     '''A python implementation of the **Actor primitive**. This is computer science,
 model that treats ``actors`` as the atoms of concurrent digital computation.
 In response to a message that it receives, an actor can make local decisions,
@@ -218,20 +273,29 @@ it will be stopped if it fails to notify itself for a period longer that timeout
         self.monitor = monitor
         self.age = age
         self.nr = 0
-        self.actor_links = actor_links
         self.loglevel = impl.loglevel
         self._name = name or self._name
         self._state = self.INITIAL
         self.log = self.getLogger()
+        self.channels = {}
+        self.ACTOR_LINKS = actor_links or {}
         self._linked_actors = {}
+        for a in itervalues(self.ACTOR_LINKS):
+            self._linked_actors[a.aid] = a
         self.task_queue = task_queue
         self.ioloop = self._get_eventloop(impl)
         self.ioloop.add_loop_task(self)
-        self.socket = socket
-        self.address = None if not socket else socket.getsockname()
+        self.set_socket(socket)
         if on_task:
             self.on_task = on_task
     
+    def set_socket(self, socket):
+        if not hasattr(self,'socket'):
+            self.socket = socket
+        self.address = None if not self.socket else self.socket.getsockname()
+        if self.socket:
+            self.log.info("Listening at: {0}".format(self.socket))
+            
     def start(self):
         if self._state == self.INITIAL:
             if self.isprocess():
@@ -320,7 +384,7 @@ This function should live on a event loop.'''
                 try:
                     actor = self.get_actor(request.aid)
                     if not actor and not closing:
-                        self.log.info('Message from an un-linked actor')
+                        self.log.info('Message from an un-linked actor {0}'.format(request.aid))
                     else:
                         self.handle_request_from_actor(actor,request)
                     if not closing:
@@ -350,7 +414,16 @@ This function should live on a event loop.'''
             result = func(caller, *args, **kwargs)
             if ack:
                 #self.log.debug('Sending callback {0}'.format(request.rid))
-                self.proxy.callback(caller,request.rid,result)
+                ActorCallBack(self,result).add_callback(lambda res : self.proxy.callback(caller,request.rid,res))
+        else:
+            ack = request.ack
+            msg = request.msg
+            name = request.name or DEFAULT_MESSAGE_CHANNEL
+            if name not in self.channels:
+                self.channels[name] = []
+            ch = self.channels[name]
+            ch.append(request)
+
     
     def __call__(self):
         '''Called in the main eventloop, It flush the inbox queue and notified linked actors'''
@@ -416,7 +489,8 @@ This function should live on a event loop.'''
     actor_notify.ack = False
     
     def actor_on_actor_exit(self, caller, reason = None):
-        self._linked_actors.pop(caller.aid)
+        if caller:
+            self._linked_actors.pop(caller.aid,None)
     actor_on_actor_exit.ack = False
     
     def actor_info(self, caller):

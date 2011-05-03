@@ -36,6 +36,7 @@ the various necessities for any given server application.
 :parameter params: a dictionary of configuration parameters which overrides the defaults.
 """
     cfg = {}
+    _name = None
     monitor_class = pulsar.WorkerMonitor
     default_logging_level = logging.INFO
     
@@ -43,7 +44,10 @@ the various necessities for any given server application.
                  callable = None,
                  usage=None,
                  links = None,
+                 name = None,
                  **params):
+        self.python_path()
+        self._name = name or self._name
         self.usage = usage
         nparams = self.cfg.copy()
         nparams.update(params)
@@ -53,8 +57,18 @@ the various necessities for any given server application.
         links = dict(self.actor_links(links))
         self.mid = arbiter.add_monitor(self.monitor_class,
                                        self,
+                                       self.name,
                                        actor_links = links).aid
     
+    @property
+    def name(self):
+        return self._name or self.__class__.__name__.lower()
+    
+    def python_path(self):
+        path = os.path.split(os.getcwd())[0]
+        if path not in sys.path:
+            sys.path.insert(0, path)
+            
     def add_timeout(self, deadline, callback):
         self.arbiter.ioloop.add_timeout(deadline, callback)
         
@@ -194,6 +208,8 @@ at each ``worker`` event loop.'''
         else:
             arbiter = pulsar.arbiter()
             for name,app in links.items():
-                monitor = arbiter.monitor[app.mid]
-                yield (name,monitor.proxy)
+                if app.mid in arbiter.monitors:
+                    monitor = arbiter.monitors[app.mid]
+                    monitor.actor_links[self.name] = self
+                    yield name, app
             

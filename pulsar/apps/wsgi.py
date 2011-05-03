@@ -11,8 +11,7 @@ class WSGIApplication(Application):
     
     def init(self, parser, opts, args):
         if self.callable is None:
-            parser.error("No application module specified.")        
-        sys.path.insert(0, os.getcwd())
+            parser.error("No application module specified.")
 
     def load(self):
         return import_app(self.app_uri)

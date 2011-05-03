@@ -9,14 +9,14 @@ import sys
 from multiprocessing.queues import Empty
 
 from pulsar.utils import system
-from pulsar import Runner, Actor, is_async
+from pulsar import Actor, is_async
 
 
 __all__ = ['Worker']
 
     
 
-class Worker(Actor, Runner):
+class Worker(Actor):
     """\
 Base class for actors implementing applications.
     
@@ -66,8 +66,6 @@ and perform several post fork processing before starting the event loop.'''
             random.seed()
             if self.cfg:
                 system.set_owner_process(self.cfg.uid, self.cfg.gid)
-        # Get the Application handler
-        self.handler = self.app.handler()
         if self.cfg.post_fork:
             self.cfg.post_fork(self)       
         
@@ -104,15 +102,6 @@ and :meth:`_end_task` methods.'''
                 self.cfg.post_request(self, request)
             except:
                 pass
-    
-    def signal_stop(self, sig, frame):
-        signame = system.SIG_NAMES.get(sig,None)
-        self.log.warning('Received signal {0}. Exiting.'.format(signame))
-        self._stop()
-        
-    handle_int  = signal_stop
-    handle_quit = signal_stop
-    handle_term = signal_stop
     
     def configure_logging(self, **kwargs):
         #switch off configure logging. Done by self.app

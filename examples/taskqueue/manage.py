@@ -32,7 +32,7 @@ class RpcRoot(rpc.JSONRPC):
         return self.send(request,'info')
     
     def rpc_evalcode(self, request, *args, **kwargs):
-        return self.send(request, 'codetask', (args, kwargs), server = 'task_server')
+        return self.send(request, 'codetask', (args, kwargs), server = 'taskqueue')
         
 
 def createTaskQueue(tasks_path = None, **params):

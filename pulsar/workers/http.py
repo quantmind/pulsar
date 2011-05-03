@@ -12,6 +12,7 @@ except:
     ssl = None 
 
 import pulsar
+from pulsar.http.utils import close
 
 
 class HttpHandler(object):

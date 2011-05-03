@@ -30,8 +30,8 @@ class PulsarWsgiHandler(PickableMixin):
             server = worker.actor_links[server]
         else:
             server = worker.arbiter
-        if name in server.actor_functions:
-            ack = server.actor_functions[name]
+        if name in server.remotes:
+            ack = server.remotes[name]
         return server.send(worker.aid, (args,kwargs), name = name, ack = ack)
 
 
