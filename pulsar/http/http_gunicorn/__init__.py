@@ -12,6 +12,6 @@ class Request(RequestBase):
         pass
     
     def parse(self):
-        p = RequestParser(self.client_request)
+        p = RequestParser(self.client_sock)
         return p.next()
     

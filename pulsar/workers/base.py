@@ -24,10 +24,7 @@ Base class for actors implementing applications.
 
     The worker unique id. If the Worker has not started it is ``None``.
 
-"""
-    def on_start(self):
-        self.init_runner()
-        
+"""        
     def _init(self,
               impl,
               app = None,
@@ -38,7 +35,7 @@ Base class for actors implementing applications.
         self.debug = self.cfg.debug
         self.app_handler = app.handler()
         super(Worker,self)._init(impl,**kwargs)
-    
+         
     def on_exit(self):
         try:
             self.cfg.worker_exit(self)
@@ -48,8 +45,8 @@ Base class for actors implementing applications.
     def on_task(self):
         self.app.worker_task(self)
     
-    def __str__(self):
-        return "<{0} {1}>".format(self.__class__.__name__,self.wid)
+    #def __str__(self):
+    #    return "<{0} {1}>".format(self.__class__.__name__,self.wid)
         
     def check_num_requests(self):
         '''Check the number of requests. If they exceed the maximum number
@@ -106,10 +103,6 @@ and :meth:`_end_task` methods.'''
     def configure_logging(self, **kwargs):
         #switch off configure logging. Done by self.app
         pass
-    
-    @property
-    def wid(self):
-        return '{0}-{1}'.format(self.pid,self.tid)
     
     @classmethod
     def get_task_queue(cls, monitor):

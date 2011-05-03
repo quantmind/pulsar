@@ -4,7 +4,7 @@ A task-queue application for pulsar::
     import pulsar
     
     tasks = pulsar.require('tasks')
-    tq = tasks.TaskQueue()
+    tq = tasks.TaskQueue(tasks_path = 'path.to.tasks.*')
     tq.start()
     
 The usual input parameters apply.

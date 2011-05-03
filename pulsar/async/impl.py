@@ -43,7 +43,7 @@ class ActorImpl(object):
        
     @property
     def name(self):
-        return '{0}(1)'.format(self.actor_class.code(),self.aid)
+        return '{0}({1})'.format(self.actor_class.code(),self.aid)
      
     def __str__(self):
         return self.name

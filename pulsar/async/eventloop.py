@@ -112,7 +112,7 @@ The object will be called at each iteration in the loop.'''
         
     def remove_loop_task(self, task):
         try:
-            self._loop_tasks.remove(task)
+            return self._loop_tasks.remove(task)
         except ValueError:
             pass
         

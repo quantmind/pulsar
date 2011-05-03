@@ -11,8 +11,8 @@ else:
 class Request(object):
     MessageClass = None
     
-    def __init__(self, client_request, client_address, server, cfg = None):
-        self.client_request = client_request
+    def __init__(self, client_sock, client_address, server, cfg = None):
+        self.client_sock = client_sock
         self.client_address = client_address
         self.server = server
         self.cfg = cfg
@@ -21,7 +21,7 @@ class Request(object):
         self.finish()
     
     def setup(self):
-        r = self.client_request
+        r = self.client_sock
         self.rfile = r.makefile('rb', -1)
         self.wfile = r.makefile('wb', 0)
 
@@ -44,7 +44,7 @@ class Request(object):
         
     def wsgi(self, worker = None):
         return create_wsgi(self._req,
-                           self.client_request,
+                           self.client_sock,
                            self.client_address,
                            self.server,
                            self.cfg,

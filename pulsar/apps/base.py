@@ -43,7 +43,6 @@ the various necessities for any given server application.
     def __init__(self,
                  callable = None,
                  usage=None,
-                 links = None,
                  name = None,
                  **params):
         self.python_path()
@@ -54,11 +53,9 @@ the various necessities for any given server application.
         self.callable = callable
         self.load_config(**nparams)
         arbiter = pulsar.arbiter()
-        links = dict(self.actor_links(links))
         self.mid = arbiter.add_monitor(self.monitor_class,
                                        self,
-                                       self.name,
-                                       actor_links = links).aid
+                                       self.name).aid
     
     @property
     def name(self):
@@ -139,18 +136,14 @@ the various necessities for any given server application.
     
     def load(self):
         raise NotImplementedError
-
-    def reload(self):
-        self.load_config()
-        loglevel = self.LOG_LEVELS.get(self.cfg.loglevel.lower(), logging.INFO)
-        self.log.setLevel(loglevel)
         
     def handler(self):
         '''Returns a callable application handler,
 used by a :class:`pulsar.Worker` to carry out its task.'''
-        if self.callable is None:
-            self.callable = self.load()
-        return self.callable
+        callable = self.callable
+        if callable is None:
+            callable = self.load()
+        return callable
     
     def monitor_task(self, monitor):
         '''Callback by :class:`pulsar.WorkerMonitor`` at each event loop'''

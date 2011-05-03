@@ -12,7 +12,7 @@ import os
 import re
 import sys
 
-from pulsar import SERVER_SOFTWARE, ispy3k, PickableMixin
+from pulsar import SERVER_SOFTWARE, PickableMixin
 
 from .utils import is_hoppish, http_date, write, write_chunk, to_string
 from .globals import *
@@ -139,6 +139,10 @@ class Response(object):
         self.headers = []
         self.headers_sent = False
 
+    @property
+    def client_sock(self):
+        return self.sock
+    
     def force_close(self):
         self.should_close = True
 

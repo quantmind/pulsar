@@ -219,18 +219,22 @@ it will be stopped if it fails to notify itself for a period longer that timeout
         else:
             return self._make_name()
         
+    def __repr__(self):
+        return self.name
+        
     @property
     def inbox(self):
         '''Message inbox'''
         return self._inbox
-    
+        
     def __reduce__(self):
         raise pickle.PicklingError('{0} - Cannot pickle Actor instances'.format(self))
     
     # HOOKS
     
     def on_start(self):
-        '''Callback when the actor starts (after forking).'''
+        '''Callback just before the actor starts
+(after forking before :meth:`_run` method).'''
         pass
     
     def on_task(self):
@@ -294,13 +298,14 @@ it will be stopped if it fails to notify itself for a period longer that timeout
             self.socket = socket
         self.address = None if not self.socket else self.socket.getsockname()
         if self.socket:
-            self.log.info("Listening at: {0}".format(self.socket))
+            self.log.info('"{0}" listening at {1}'.format(self,self.socket))
             
     def start(self):
         if self._state == self.INITIAL:
             if self.isprocess():
                 self.configure_logging()
             self.on_start()
+            self.init_runner()
             self.log.info('Booting "{0}"'.format(self.name))
             self._state = self.RUN
             self._run()
@@ -309,9 +314,6 @@ it will be stopped if it fails to notify itself for a period longer that timeout
     def _get_eventloop(self, impl):
         ioimpl = impl.get_ioimpl()
         return IOLoop(impl = ioimpl, logger = LogSelf(self,self.log))
-    
-    def link(self, actor):
-        self._linked_actors[actor.aid] = LinkedActor(actor)
     
     # STOPPING TERMINATIONG AND STARTING
     
@@ -329,11 +331,13 @@ it will be stopped if it fails to notify itself for a period longer that timeout
         if self._stopping:
             self.on_exit()
             self._state = self.CLOSE
-            self.ioloop.remove_loop_task(self)
+            if not self.ioloop.remove_loop_task(self):
+                self.log.warn('"{0}" could not be removed from eventloop'.format(self))
             if self.impl != 'monitor':
                 self.proxy.on_actor_exit(self.arbiter)
             self._stopping = False
             self._inbox.close()
+            self.log.info('exited "{0}"'.format(self))
         
     def terminate(self):
         self.stop()
@@ -359,7 +363,7 @@ it will be stopped if it fails to notify itself for a period longer that timeout
         except Exception as e:
             self.log.exception("Exception in worker {0}: {1}".format(self,e))
         finally:
-            self.log.info("exiting {0}".format(self))
+            self.log.debug('exiting "{0}"'.format(self))
             self._stop()
     
     def linked_actors(self):
@@ -384,7 +388,8 @@ This function should live on a event loop.'''
                 try:
                     actor = self.get_actor(request.aid)
                     if not actor and not closing:
-                        self.log.info('Message from an un-linked actor {0}'.format(request.aid))
+                        self.log.warn('"{0}" got a message from an un-linked\
+ actor "{1}"'.format(self,request.aid[:8]))
                     else:
                         self.handle_request_from_actor(actor,request)
                     if not closing:
@@ -396,6 +401,7 @@ This function should live on a event loop.'''
                                         exc_info=sys.exc_info())
                         
     def get_actor(self, aid):
+        '''Given an actor unique id return the actor proxy.'''
         if aid == self.aid:
             return self.proxy
         elif aid in self._linked_actors:
@@ -429,24 +435,21 @@ This function should live on a event loop.'''
         '''Called in the main eventloop, It flush the inbox queue and notified linked actors'''
         self.flush()
         # If this is not a monitor, we notify to the arbiter we are still alive
-        if self.arbiter and self.impl != 'monitor':
-            nt = time()
-            if hasattr(self,'last_notified'):
-                if not self.timeout:
-                    tole = self.DEFAULT_ACTOR_TIMEOUT
-                else:
-                    tole = self.ACTOR_TIMEOUT_TOLERANCE*self.timeout
-                if nt - self.last_notified < tole:
-                    nt = None
-            if nt:
-                self.last_notified = nt
-                self.proxy.notify(self.arbiter,nt)
-        #notify = self.arbiter.notify
-        #for actor in self.linked_actors():
-        #    actor.notify(self,)
-        #   notify(actor.aid,self.aid,time.time())
-        if not self._stopping:
-            self.on_task()
+        if self.is_alive():
+            if self.arbiter and self.impl != 'monitor':
+                nt = time()
+                if hasattr(self,'last_notified'):
+                    if not self.timeout:
+                        tole = self.DEFAULT_ACTOR_TIMEOUT
+                    else:
+                        tole = self.ACTOR_TIMEOUT_TOLERANCE*self.timeout
+                    if nt - self.last_notified < tole:
+                        nt = None
+                if nt:
+                    self.last_notified = nt
+                    self.proxy.notify(self.arbiter,nt)
+            if not self._stopping:
+                self.on_task()
     
     def current_thread(self):
         '''Return the current thread'''

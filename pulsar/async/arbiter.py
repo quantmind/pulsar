@@ -74,7 +74,6 @@ MonitorS manage group of actors performing specific tasks.
         '''Dictionary of all :clas:`pulsar.Monitor` registered with the the arbiter.'''
         return self._monitors
     
-    
     @classmethod
     def instance(cls):
         if not hasattr(cls,'_instance'):
@@ -339,3 +338,14 @@ MonitorS manage group of actors performing specific tasks.
     
     def get_all_monitors(self):
         return dict(((mon.name,mon.proxy) for mon in itervalues(self.monitors)))
+    
+    def get_actor(self, aid):
+        if aid == self.aid:
+            return self
+        elif aid in self.LIVE_ACTORS:
+            return self.LIVE_ACTORS[aid]
+        else:
+            for m in itervalues(self.monitors):
+                if m.aid == aid:
+                    return m.proxy
+        

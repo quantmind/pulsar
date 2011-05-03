@@ -1,65 +1,58 @@
-import os
 import sys
+import traceback
+import errno
 import socket
 
-from pulsar import Application, ThreadQueue
-from pulsar.utils.importer import import_app
+import pulsar
 from pulsar.http.utils import write_nonblock, write_error, close
 
 
-class WSGIApplication(Application):
-    
-    def init(self, parser, opts, args):
-        if self.callable is None:
-            parser.error("No application module specified.")
+class WsgiMonitor(pulsar.WorkerMonitor):
+    '''A specialized worker monitor for wsgi applications.'''
+    def set_socket(self, socket):
+        if self.task_queue:
+            super(WsgiMonitor,self).set_socket(socket)
+        else:
+            self.socket = socket
 
-    def load(self):
-        return import_app(self.app_uri)
+
+class WSGIApplication(pulsar.Application):
+    monitor_class = WsgiMonitor
     
     def get_task_queue(self): 
         if self.cfg.concurrency == 'process':
             return None
         else:
-            return ThreadQueue()
+            return pulsar.ThreadQueue()
         
-    def handle_event_task(self, worker, req):
+    def handle_event_task(self, worker, request):
+        response, environ = request.wsgi(worker = worker)
+        response.force_close()
         try:
-            response, environ = req.wsgi(worker = worker)
-            response.force_close()
-            return response, self.callable(environ, response.start_response)
-        except StopIteration:
-            worker.log.debug("Ignored premature client disconnection.")
+            return response, worker.app_handler(environ, response.start_response)
         except socket.error as e:
             if e[0] != errno.EPIPE:
                 worker.log.exception("Error processing request.")
             else:
                 worker.log.debug("Ignoring EPIPE")
+            return response,None
+        except Exception as e:
+            worker.log.error("Error processing request: {0}".format(e),
+                             exc_info = sys.exc_info())
+            if not worker.debug:
+                msg = "HTTP/1.1 500 Internal Server Error\r\n\r\n"
+            else:
+                msg = traceback.format_exc()
+            return response,[msg]
 
     def end_event_task(self, worker, response, result):
         try:
-            if isinstance(response,Exception):
-                raise response
-            for item in result:
-                response.write(item)
+            if result:
+                for item in result:
+                    response.write(item)
             response.close()
-            if hasattr(result, "close"):
-                result.close()
-        except StopIteration:
-            worker.log.debug("Ignored premature client disconnection.")
-        except socket.error as e:
-            if e[0] != errno.EPIPE:
-                worker.log.exception("Error processing request.")
-            else:
-                worker.log.debug("Ignoring EPIPE")
-        except Exception as e:
-            worker.log.exception("Error processing request: {0}".format(e))
-            if not self.debug:
-                mesg = "HTTP/1.1 500 Internal Server Error\r\n\r\n"
-                write_nonblock(response.sock, mesg)
-            else:
-                write_error(response.sock, traceback.format_exc())
         finally:    
-            close(response.sock)
+            close(response.client_sock)
 
 
 def createServer(callable = None, **params):

@@ -380,7 +380,7 @@ class Concurrency(Setting):
     validator = validate_string
     default = "process"
     desc = """\
-        The type of concurrency to use
+        The type of concurrency to use: process or thread.
         """
         
 

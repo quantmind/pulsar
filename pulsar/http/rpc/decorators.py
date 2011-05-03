@@ -63,3 +63,13 @@ For example::
         return wrapper
     
     
+    
+def FromApi(func, doc = None, format = 'json'):
+    
+    def _(self,request,**kwargs):
+        res = func(**kwargs)
+        return res
+        
+    _.__doc__ = doc or func.__doc__
+    
+    return _

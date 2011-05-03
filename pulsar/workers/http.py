@@ -65,7 +65,9 @@ class Worker(pulsar.Worker):
         super(Worker,self).on_start()
         # If the worker is a process and it is listening to a socket
         # Add the socket handler to the event loop
-        if self.socket and self.task_queue is None:
+        if self.task_queue is not None:
+            self.socket = None
+        if self.socket:
             self.socket.setblocking(0)
             handler = HttpHandler(self)
             self.ioloop.add_handler(self.socket, handler, self.ioloop.READ)

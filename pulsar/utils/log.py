@@ -45,6 +45,13 @@ def logerror(func):
 
 
 class LogSelf(object):
+    '''\
+    Wrapper for logging with the message starting with the
+string representation of an instance.
+
+:parameter instance: instance which prefix the message.
+:parameter logger: the logger object.
+    '''
     LOGGING_FUNCTIONS = ('debug','info','error','warning','critical','exception')
     
     def __init__(self,instance,logger):
@@ -116,7 +123,8 @@ class LogginMixin(object):
         for h in handlers:
             h.setFormatter(f)
             logger.addHandler(h)
-            logger.setLevel(self.loglevel)
+            if self.loglevel is not None:
+                logger.setLevel(self.loglevel)
 
     def logging_formatter(self, color = False):
         format = '%(asctime)s [p=%(process)s,t=%(thread)s] [%(levelname)s] [%(name)s] %(message)s'

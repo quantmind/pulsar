@@ -37,7 +37,7 @@ This is the base class for :class:`pulsar.Arbiter` and :class:`pulsar.Monitor`.
     def manage_actors(self):
         """Remove actors not alive"""
         ACTORS = self.LIVE_ACTORS
-        for aid,actor in list(iteritems(self.LIVE_ACTORS)):
+        for aid,actor in list(iteritems(ACTORS)):
             if not actor.is_alive():
                 ACTORS.pop(aid)
             else:
@@ -98,6 +98,7 @@ A monitor manages a set of actors.
         
     def on_stop(self):
         '''Close the Pool.'''
+        self.log.debug('exiting "{0}"'.format(self))
         for actor in self.linked_actors():
             actor.stop()
         
@@ -124,9 +125,6 @@ A monitor manages a set of actors.
     @property
     def multiprocess(self):
         return self.cfg.concurrency == 'process'
-    
-    def clean_up(self):
-        self.worker_class.clean_arbiter_loop(self,self.ioloop)
         
     def stop_actor(self, actor):
         if not actor.is_alive():
