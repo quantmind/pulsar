@@ -34,3 +34,18 @@ class WeakList(object):
                     yield obj
         else:
             raise StopIteration
+
+
+class DictPropertyMixin(object):
+    properties = ()
+    def __init__(self, data = None, properties = None):
+        self.data = data or {}
+        self.properties = properties or self.properties
+        
+    def __getattr__(self, name):
+        if name not in self.data:
+            if name not in self.properties:
+                raise AttributeError
+            else:
+                return None
+        return self.data[name]

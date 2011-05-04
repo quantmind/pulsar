@@ -2,7 +2,7 @@ import sys
 import inspect
 
 from pulsar import make_async
-from pulsar.http.wsgi import PulsarWsgiHandler
+from pulsar.http.wsgi import PulsarWsgiHandler, Request
 from pulsar.utils.tools import checkarity
 
 from .exceptions import NoSuchFunction, InvalidParams, InternalError
@@ -40,7 +40,7 @@ class RpcResponse(object):
     
     def __call__(self, request, start_response, *args, **kwargs):
         try:
-            id = request['pulsar.rpc.id']
+            id = request.environ['pulsar.rpc.id']
             if not self.func:
                 msg = 'Function "{0}" not available.'.format(self.path)
                 self.info(request,id,msg,False)
@@ -62,8 +62,8 @@ class RpcResponse(object):
         return make_async(result).add_callback(lambda r : self._end(request,start_response,r))
             
     def _end(self, request, start_response, result):
-        id = request['pulsar.rpc.id']
-        version = request['pulsar.rpc.version']
+        id = request.environ['pulsar.rpc.id']
+        version = request.environ['pulsar.rpc.version']
         #status = '400 Bad Request'
         status = '200 OK'
         try:
@@ -134,6 +134,7 @@ separated with a '.'. Override self.separator to change this.
     separator    = '.'
     content_type = 'text/plain'
     '''Separator between subhandlers.'''
+    REQUEST      = Request
     RESPONSE     = RpcResponse
 
     def __init__(self,
@@ -141,10 +142,12 @@ separated with a '.'. Override self.separator to change this.
                  http = None,
                  attrs = None,
                  route = None,
+                 request_middleware = None,
                  **kwargs):
         self.route = route if route is not None else self.route
         self.subHandlers = {}
         self.log = self.getLogger(**kwargs)
+        self.request_middleware = request_middleware
         if subhandlers:
             for route,handler in subhandlers.items():
                 if inspect.isclass(handler):
@@ -203,16 +206,24 @@ separated with a '.'. Override self.separator to change this.
     def invokeServiceEndpoint(self, meth, args):
         return meth(*args)
 
-    def listFunctions(self):
-        return self.rpcfunctions.keys()
+    def listFunctions(self, prefix = ''):
+        for name,func in self.rpcfunctions.items():
+            yield '{0}{1}'.format(prefix,name),func.__doc__
+        for name,handler in self.subHandlers.items():
+            pfx = '{0}{1}{2}'.format(prefix,name,self.separator) 
+            for f,doc in handler.listFunctions(pfx):
+                yield f,doc 
     
     def __call__(self, environ, start_response):
         '''The WSGI handler which consume the remote procedure call'''
-        data = environ['wsgi.input'].read()
+        request = self.REQUEST(environ)
+        if self.request_middleware:
+            self.request_middleware.apply(request)
+        data = request.data
         method, args, kwargs, id, version = self.get_method_and_args(data)
         rpc_handler = self._getFunction(method)
         environ['pulsar.rpc.id'] = id
         environ['pulsar.rpc.version'] = version
-        return rpc_handler(environ, start_response, *args, **kwargs)
+        return rpc_handler(request, start_response, *args, **kwargs)
         
         

@@ -13,8 +13,10 @@ import re
 import sys
 
 from pulsar import SERVER_SOFTWARE, PickableMixin
+from pulsar.utils.tools import cached_property
 
-from .utils import is_hoppish, http_date, write, write_chunk, to_string
+from .utils import is_hoppish, http_date, write, write_chunk, to_string,\
+                   parse_authorization_header
 from .globals import *
 
 
@@ -127,6 +129,41 @@ def create_wsgi(req, sock, client, server, cfg, worker = None):
     return resp, environ
 
 
+class Middleware(object):
+    '''Middleware handler'''
+    
+    def __init__(self):
+        self.handles = []
+        
+    def add(self, handle):
+        self.handles.append(handle)
+        
+    def apply(self, elem):
+        for handle in self.handles:
+            try:
+                handle(elem)
+            except Exception as e:
+                pass
+
+
+class Request(object):
+    
+    def __init__(self, environ):
+        self.environ = environ
+    
+    @cached_property
+    def data(self):
+        return self.environ['wsgi.input'].read()
+    
+    @cached_property
+    def authorization(self):
+        """The `Authorization` object in parsed form."""
+        code = 'HTTP_AUTHORIZATION'
+        if code in self.environ:
+            header = self.environ[code]
+            return parse_authorization_header(header)
+    
+    
 class Response(object):
 
     def __init__(self, req, sock):
