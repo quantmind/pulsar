@@ -28,11 +28,11 @@ class TestCalculatorExample(test.TestCase):
         self.__class__._server = s
         self.__class__._rm = r
         s.start()
-        monitor = self.arbiter.monitors[s.mid]
+        monitor = self.arbiter.get_monitor(s.mid)
         self.wait(lambda : not monitor.is_alive())
         
     def endTests(self):
-        monitor = self.arbiter.monitors[self._server.mid]
+        monitor = self.arbiter.get_monitor(self._server.mid)
         monitor.stop()
         self.wait(lambda : monitor.aid in self.arbiter.monitors)
         self.assertFalse(monitor.is_alive())
@@ -44,8 +44,8 @@ class TestCalculatorExample(test.TestCase):
     def testMonitors(self):
         s = self._server
         self.assertTrue(len(self.arbiter.monitors)>=2)
-        self.assertTrue(s.mid in self.arbiter.monitors)
-        monitor = self.arbiter.monitors[s.mid]
+        monitor = self.arbiter.get_monitor(s.mid)
+        self.assertTrue(monitor.name in self.arbiter.monitors)
         self.assertTrue(monitor.is_alive())
         
     def testResponse(self):

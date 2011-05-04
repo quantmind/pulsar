@@ -78,6 +78,7 @@ monitor and workers.'''
             
     def tearDown(self):
         self.tq.stop()
+        self.wait(lambda : self.tq.name in self.arbiter.monitors)
 
         
 class TestRunning(test.TestCase):

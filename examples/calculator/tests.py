@@ -10,12 +10,12 @@ class TestRpc(test.TestCase):
                                             concurrency = 'process',
                                             parse_console = False)
         s.start()
-        monitor = self.arbiter.monitors[s.mid]
+        monitor = self.arbiter.get_monitor(s.mid)
         self.wait(lambda : not monitor.is_alive())
         self.__class__.address = 'http://{0}:{1}'.format(*monitor.address)
         
     def endTests(self):
-        monitor = self.arbiter.monitors[self._server.mid]
+        monitor = self.arbiter.get_monitor(self._server.mid)
         monitor.stop()
         self.wait(lambda : monitor.aid in self.arbiter.monitors)
         self.assertFalse(monitor.is_alive())
@@ -32,7 +32,7 @@ class TestRpc(test.TestCase):
         self.assertEqual(handler.route,'/')
         self.assertEqual(len(handler.subHandlers),1)
         self.assertTrue(s.mid)
-        monitor = self.arbiter.monitors[s.mid]
+        monitor = self.arbiter.get_monitor(s.mid)
         socket = monitor.socket
         self.assertTrue(socket)
         self.assertTrue(monitor.address)

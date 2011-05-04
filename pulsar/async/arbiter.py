@@ -339,13 +339,18 @@ MonitorS manage group of actors performing specific tasks.
     def get_all_monitors(self):
         return dict(((mon.name,mon.proxy) for mon in itervalues(self.monitors)))
     
+    def get_monitor(self, mid):
+        for m in itervalues(self.monitors):
+            if m.aid == mid:
+                return m
+                
     def get_actor(self, aid):
         if aid == self.aid:
             return self
         elif aid in self.LIVE_ACTORS:
             return self.LIVE_ACTORS[aid]
         else:
-            for m in itervalues(self.monitors):
-                if m.aid == aid:
-                    return m.proxy
+            m = self.get_monitor(aid)
+            if m:
+                return m.proxy
         

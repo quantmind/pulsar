@@ -10,10 +10,9 @@ from pulsar.http.utils import write_nonblock, write_error, close
 class WsgiMonitor(pulsar.WorkerMonitor):
     '''A specialized worker monitor for wsgi applications.'''
     def set_socket(self, socket):
-        if self.task_queue:
-            super(WsgiMonitor,self).set_socket(socket)
-        else:
-            self.socket = socket
+        if not self.task_queue:
+            self._listening = False
+        super(WsgiMonitor,self).set_socket(socket)
 
 
 class WSGIApplication(pulsar.Application):

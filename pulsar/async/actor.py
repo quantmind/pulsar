@@ -165,6 +165,7 @@ Here ``a`` is actually a reference to the remote actor.
     _stopping = False
     _ppid = None
     _name = None
+    _listening = True
     _runner_impl = {'monitor':ActorMonitorImpl,
                     'thread':ActorThread,
                     'process':ActorProcess}
@@ -297,7 +298,7 @@ it will be stopped if it fails to notify itself for a period longer that timeout
         if not hasattr(self,'socket'):
             self.socket = socket
         self.address = None if not self.socket else self.socket.getsockname()
-        if self.socket:
+        if self.socket and self._listening:
             self.log.info('"{0}" listening at {1}'.format(self,self.socket))
             
     def start(self):
