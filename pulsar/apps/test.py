@@ -78,7 +78,7 @@ class TestGenerator(object):
         except SkipTest as e:
             result.addSkip(self, str(e))
         except Exception:
-            result.addError(self, sys.exc_info())
+            result.addError(self.test, sys.exc_info())
         
     def __call__(self):
         result = self.result
@@ -275,11 +275,19 @@ class TextTestRunner(unittest.TextTestRunner):
             init = getattr(obj,'initTests',None)
             end = getattr(obj,'endTests',None)
             if init:
-                yield init()
+                try:
+                    yield init()
+                except Exception as e:
+                    result.shouldStop = True
+                    yield StopIteration
             for t in test['tests']:
                 yield t(result)
             if end:
-                yield end()
+                try:
+                    yield end()
+                except Exception as e:
+                    result.shouldStop = True
+                    yield StopIteration
         yield self.end(result)
             
     def end(self, result):

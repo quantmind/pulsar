@@ -178,7 +178,7 @@ at each ``worker`` event loop.'''
     def stop(self):
         '''Stop the application.'''
         arbiter = pulsar.arbiter()
-        monitor = arbiter.monitors.get(self.mid,None)
+        monitor = arbiter.get_monitor(self.mid)
         if monitor:
             monitor.stop()
     

@@ -79,9 +79,10 @@ monitor and workers.'''
     def tearDown(self):
         self.tq.stop()
         self.wait(lambda : self.tq.name in self.arbiter.monitors)
+        self.assertFalse(self.tq.name in self.arbiter.monitors)
 
         
-class TestRunning(test.TestCase):
+class __TestRunning(test.TestCase):
     
     def setUp(self):
         self.tq = createTaskQueue(parse_console = False,
@@ -100,7 +101,7 @@ class TestRunning(test.TestCase):
         self.tq.stop()
 
 
-class TestTaskRpc(test.TestCase):
+class __TestTaskRpc(test.TestCase):
     
     def initTests(self):
         s = self.__class__._server = server(bind = '127.0.0.1:0',
