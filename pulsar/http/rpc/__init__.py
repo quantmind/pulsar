@@ -1,4 +1,4 @@
-'''
+'''\
 Asyncronous Remote Procedure Calls handlers.
 '''
 from .exceptions import *

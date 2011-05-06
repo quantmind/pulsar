@@ -1,5 +1,9 @@
 '''Decorator for RPC functions operating with users and model instances
 '''
+from pulsar.utils.tools import checkarity
+
+from .exceptions import InvalidParams
+
 
 class AuthenticationException(Exception):
     pass
@@ -64,11 +68,27 @@ For example::
     
     
     
-def FromApi(func, doc = None, format = 'json'):
-    
-    def _(self,request,**kwargs):
-        res = func(**kwargs)
-        return res
+def FromApi(func, doc = None, format = 'json', request_handler = None):
+    '''\
+Expose a function ``func`` as an rpc function.
+
+:parameter func: The function to expose.
+:parameter doc: Optiona doc string. If not provided the doc string of ``func`` will be used.
+:parameter format: Optional output format. Only used if ``request_handler`` is specified.
+:parameter request_handler: function which takes ``request``, ``format`` and ``kwargs``
+                            and return a new ``kwargs`` to be passed to ``func``. It can be used to
+                            add additional parameters based on request and format.'''
+    def _(self, request, *args, **kwargs):
+        try:
+            if request_handler:
+                kwargs = request_handler(request,format,kwargs)
+            return func(*args,**kwargs)
+        except TypeError:
+            msg = checkarity(func,args,kwargs)
+            if msg:
+                raise InvalidParams(msg)
+            else:
+                raise
         
     _.__doc__ = doc or func.__doc__
     

@@ -9,4 +9,18 @@ def get_httplib(cfg = None):
     else:
         return import_module('pulsar.http.base')
     
+    
+def queueTask(taskname, doc = '', ack = True, taskqueue = "taskqueue"):
+    # A decorator for running a taskname in the taskqueue
+    
+    def _(self, request, **kwargs):
+        worker = request.environ['pulsar.worker']
+        tk = worker.ACTOR_LINKS[taskqueue]
+        r = tk.send(worker.aid, ((taskname,),kwargs), 'addtask')
+        if ack:
+            return r
+        
+    _.__doc__ = doc
+    _.__name__ = taskname
+    return _
 

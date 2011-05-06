@@ -7,6 +7,7 @@ from pulsar.utils.tools import checkarity
 
 from .exceptions import NoSuchFunction, InvalidParams, InternalError
 
+
 __all__ = ['RpcHandler']
 
 
@@ -143,9 +144,13 @@ separated with a '.'. Override self.separator to change this.
                  attrs = None,
                  route = None,
                  request_middleware = None,
+                 title = None,
+                 documentation = None,
                  **kwargs):
         self.route = route if route is not None else self.route
         self.subHandlers = {}
+        self.title = title or self.__class__.__name__
+        self.documentation = documentation or ''
         self.log = self.getLogger(**kwargs)
         self.request_middleware = request_middleware
         if subhandlers:
@@ -208,11 +213,22 @@ separated with a '.'. Override self.separator to change this.
 
     def listFunctions(self, prefix = ''):
         for name,func in self.rpcfunctions.items():
-            yield '{0}{1}'.format(prefix,name),func.__doc__
+            doc = {'doc':func.__doc__ or 'No docs','section':prefix}
+            yield '{0}{1}'.format(prefix,name),doc
         for name,handler in self.subHandlers.items():
             pfx = '{0}{1}{2}'.format(prefix,name,self.separator) 
             for f,doc in handler.listFunctions(pfx):
-                yield f,doc 
+                yield f,doc
+                
+    def _docs(self):
+        for name, data in self.listFunctions():
+            link = '.. _functions-{0}:'.format(name)
+            title = name
+            under = (2+len(title))*'-'
+            yield '\n'.join((link,'',title,under,'',data['doc'],'\n')) 
+
+    def docs(self):
+        return '\n'.join(self._docs()) 
     
     def __call__(self, environ, start_response):
         '''The WSGI handler which consume the remote procedure call'''

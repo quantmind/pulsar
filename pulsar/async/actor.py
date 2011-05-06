@@ -162,6 +162,7 @@ Here ``a`` is actually a reference to the remote actor.
     MINIMUM_ACTOR_TIMEOUT = 1
     DEFAULT_ACTOR_TIMEOUT = 30
     ACTOR_TIMEOUT_TOLERANCE = 0.2
+    FLASH_LOOPS = 3
     _stopping = False
     _ppid = None
     _name = None
@@ -377,7 +378,8 @@ it will be stopped if it fails to notify itself for a period longer that timeout
 This function should live on a event loop.'''
         inbox = self._inbox
         timeout = self.INBOX_TIMEOUT
-        while True:
+        flashed = 0
+        while closing or flashed < self.FLASH_LOOPS:
             request = None
             try:
                 request = inbox.get(timeout = timeout)
@@ -385,21 +387,19 @@ This function should live on a event loop.'''
                 break
             except IOError:
                 break
-            if request:
-                try:
-                    actor = self.get_actor(request.aid)
-                    if not actor and not closing:
-                        self.log.warn('"{0}" got a message from an un-linked\
+            flashed += 1
+            try:
+                actor = self.get_actor(request.aid)
+                if not actor and not closing:
+                    self.log.warn('"{0}" got a message from an un-linked\
  actor "{1}"'.format(self,request.aid[:8]))
-                    else:
-                        self.handle_request_from_actor(actor,request)
-                    if not closing:
-                        break
-                except Exception as e:
-                    #self.handle_request_error(request,e)
-                    if self.log:
-                        self.log.error('Error while processing worker request: {0}'.format(e),
-                                        exc_info=sys.exc_info())
+                else:
+                    self.handle_request_from_actor(actor,request)
+            except Exception as e:
+                #self.handle_request_error(request,e)
+                if self.log:
+                    self.log.error('Error while processing worker request: {0}'.format(e),
+                                   exc_info=sys.exc_info())
                         
     def get_actor(self, aid):
         '''Given an actor unique id return the actor proxy.'''

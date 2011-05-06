@@ -42,3 +42,6 @@ class Worker(pulsar.Worker):
     '''A Task worker on a subprocess'''
     _class_code = 'TaskQueue'
 
+
+    
+
