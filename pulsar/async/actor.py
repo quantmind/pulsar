@@ -43,7 +43,7 @@ class HttpMixin(object):
     
 _main_thread = current_thread()
 
-    
+   
 class Runner(LogginMixin,HttpMixin):
     '''Base class for classes with an event loop.
     '''
@@ -407,8 +407,9 @@ This function should live on a event loop.'''
                                    exc_info=sys.exc_info())
             finally:
                 if ack:
-                    ActorCallBack(self,result).add_callback(lambda res : self.proxy.callback(caller,request.rid,res))
-                        
+                    ActorCallBack(self,result).\
+                        add_callback(request.make_actor_callback(self,caller))
+    
     def get_actor(self, aid):
         '''Given an actor unique id return the actor proxy.'''
         if aid == self.aid:

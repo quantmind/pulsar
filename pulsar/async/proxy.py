@@ -30,8 +30,10 @@ def get_proxy(obj, safe = False):
 
 class ActorCallBack(Deferred):
     '''An actor callback run on the actor event loop'''
-    def __init__(self, actor, request):
+    def __init__(self, actor, request, *args, **kwargs):
         super(ActorCallBack,self).__init__()
+        self.args = args
+        self.kwargs = kwargs
         self.actor = actor
         self.request = request
         if is_async(request):
@@ -74,7 +76,19 @@ class ActorCallBacks(Deferred):
         else:
             self.callback(self._tmp_results)
             
-            
+
+class CallerCallBack(object):
+    __slots__ = ('rid','proxy','caller')
+    
+    def __init__(self, request, actor, caller):
+        self.rid = request.rid
+        self.proxy = actor.proxy
+        self.caller = caller
+        
+    def __call__(self, result):
+        self.proxy.callback(self.caller,self.rid,result)
+        
+
 class ActorRequest(Deferred):
     REQUESTS = {}
     
@@ -100,7 +114,10 @@ class ActorRequest(Deferred):
         d = self.__dict__.copy()
         d['_callbacks'] = []
         return d
-        
+    
+    def make_actor_callback(self, actor, caller):
+        return CallerCallBack(self,actor,caller)
+            
     @classmethod
     def actor_callback(cls, rid, result):
         r = cls.REQUESTS.pop(rid,None)
