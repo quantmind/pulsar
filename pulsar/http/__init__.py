@@ -1,6 +1,6 @@
 from pulsar.utils.importer import import_module
 
-from .client import HttpClient
+from .client import HttpClient, urlencode
 
 EMPTY_TUPLE = ()
 EMPTY_DICT = {}

@@ -1,6 +1,6 @@
 from pulsar.async import MainIOLoop
 
-from .std import HttpClient1, getproxies_environment
+from .std import HttpClient1, urlencode, getproxies_environment
 
 HttpClients={1:HttpClient1}
 try:
