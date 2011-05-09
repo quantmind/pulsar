@@ -25,6 +25,10 @@ class JSONDateDecimalEncoder(json.JSONEncoder):
             return {'__date__':totimestamp(obj)}
         elif isinstance(obj, Decimal):
             return {'__decimal__':str(obj)}
+        elif hasattr(obj,'__dict__') and hasattr(obj,'__class__'):
+            d = obj.__dict__.copy()
+            d['__class__'] = obj.__class__.__name__
+            return d
         else:
             raise ValueError("%r is not JSON serializable" % (obj,))
         

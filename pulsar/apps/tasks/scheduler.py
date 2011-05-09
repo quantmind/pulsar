@@ -5,7 +5,6 @@ from pulsar.utils.py2py3 import itervalues
 from pulsar.utils.timeutils import remaining, timedelta_seconds, humanize_seconds
 
 from .registry import registry
-from .consumer import TaskRequest
 from .exceptions import SchedulingError, TaskNotAvailable
 
 
@@ -94,9 +93,10 @@ class SchedulerEntry(object):
 class Scheduler(object):
     """Scheduler for periodic tasks.
     """
-    def __init__(self):
+    def __init__(self, TaskRequest):
         self._entries = self.setup_schedule()
         self.next_run = datetime.now()
+        self.TaskRequest = TaskRequest
         
     @property
     def entries(self):
@@ -106,7 +106,7 @@ class Scheduler(object):
         '''Create a new task request'''
         if name in registry:
             task = registry[name]
-            return TaskRequest(task, targs, tkwargs, **kwargs)
+            return self.TaskRequest(task, targs, tkwargs, **kwargs)
         else:
             raise TaskNotAvailable(name)
 

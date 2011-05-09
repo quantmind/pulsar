@@ -31,8 +31,9 @@ class TaskMetaClass(type):
         # Automatically generate missing name.
         task_name = attrs.get("name",None)
         if not task_name:
-            module_name = sys.modules[task_module].__name__.split('.')[1]
-            task_name = ".".join((module_name, name))
+            task_name = name
+            #module_name = sys.modules[task_module].__name__.split('.')[1]
+            #task_name = ".".join((module_name, name))
         task_name = task_name.lower()
         attrs["name"] = task_name
 

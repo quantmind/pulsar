@@ -121,4 +121,31 @@ def create_socket_address(addr):
     return sock_type
 
 
+    
+def daemonize():
+    """\
+    Standard daemonization of a process. Code is based on the
+    ActiveState recipe at:
+        http://code.activestate.com/recipes/278731/
+    """
+    if os.fork() == 0: 
+        os.setsid()
+        if os.fork() != 0:
+            os.umask(0) 
+        else:
+            os._exit(0)
+    else:
+        os._exit(0)
+    
+    maxfd = MAXFD
 
+    # Iterate through and close all file descriptors.
+    for fd in range(0, maxfd):
+        try:
+            os.close(fd)
+        except OSError:    # ERROR, fd wasn't open to begin with (ignored)
+            pass
+    
+    os.open(REDIRECT_TO, os.O_RDWR)
+    os.dup2(0, 1)
+    os.dup2(0, 2)

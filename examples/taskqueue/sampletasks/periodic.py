@@ -1,4 +1,5 @@
 from datetime import timedelta
+from random import random
 
 from pulsar.apps.tasks import PeriodicTask,  anchorDate
 
@@ -26,6 +27,9 @@ class AnchoredEveryHour(TestPeriodicTask):
         raise Exception('kaputt')
     
     
-class FastAndFurious(PeriodicTask):
-    run_every = timedelta(seconds=0.1)
+#class FastAndFurious(PeriodicTask):
+#    run_every = timedelta(seconds=0.1)
+#    
+#    def __call__(self, consumer):
+#        return random()
     

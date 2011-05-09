@@ -20,7 +20,7 @@ try:
 except ImportError:
     import pulsar
     
-from pulsar.http import rpc
+from pulsar.http import rpc, queueTask, actorCall
 
 
 class RpcRoot(rpc.JSONRPC):
@@ -28,11 +28,14 @@ class RpcRoot(rpc.JSONRPC):
     def rpc_ping(self, request):
         return 'pong'
     
-    def rpc_server_info(self, request):
-        return self.send(request,'info')
+    def rpc_shut_down(self, request):
+        request.environ['pulsar.worker'].shut_down()
     
-    def rpc_evalcode(self, request, *args, **kwargs):
-        return self.send(request, 'codetask', (args, kwargs), server = 'taskqueue')
+    def rpc_server_info(self, request):
+        return self.send(request, 'info')
+    
+    rpc_get_task = actorCall('get_task', server = 'taskqueue')
+    rpc_evalcode = queueTask('codetask', server = 'taskqueue')
         
 
 def createTaskQueue(tasks_path = None, **params):
@@ -42,11 +45,12 @@ def createTaskQueue(tasks_path = None, **params):
                            **params)
     
     
-def server(task_workers = 1, **params):
+def server(task_workers = 1, concurrency = 'process', **params):
     # Create the taskqueue application with an rpc server
-    taskqueue = createTaskQueue(workers = task_workers)
+    taskqueue = createTaskQueue(workers = task_workers,
+                                concurrency = concurrency)
     wsgi = pulsar.require('wsgi')
-    return wsgi.createServer(RpcRoot(),**params)
+    return wsgi.createServer(RpcRoot(),concurrency=concurrency,**params)
 
 
 def start_server(**params):

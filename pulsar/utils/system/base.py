@@ -17,6 +17,7 @@ from pulsar.utils.py2py3 import *
 
 from .sock import *
 
+MAXFD = 1024
 SIG_NAMES = {}
 SKIP_SIGNALS = ('KILL','STOP')
 
@@ -129,36 +130,6 @@ def parse_address(netloc, default_port=8000):
     else:
         port = default_port 
     return (host, port)
-
-    
-def daemonize():
-    """\
-    Standard daemonization of a process. Code is based on the
-    ActiveState recipe at:
-        http://code.activestate.com/recipes/278731/
-    """
-    if not 'GUNICORN_FD' in os.environ:
-        if os.fork() == 0: 
-            os.setsid()
-            if os.fork() != 0:
-                os.umask(0) 
-            else:
-                os._exit(0)
-        else:
-            os._exit(0)
-        
-        maxfd = get_maxfd()
-
-        # Iterate through and close all file descriptors.
-        for fd in range(0, maxfd):
-            try:
-                os.close(fd)
-            except OSError:    # ERROR, fd wasn't open to begin with (ignored)
-                pass
-        
-        os.open(REDIRECT_TO, os.O_RDWR)
-        os.dup2(0, 1)
-        os.dup2(0, 2)
 
 
 class IObase(object):

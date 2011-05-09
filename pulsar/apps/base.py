@@ -52,7 +52,7 @@ the various necessities for any given server application.
         nparams.update(params)
         self.callable = callable
         self.load_config(**nparams)
-        arbiter = pulsar.arbiter()
+        arbiter = pulsar.arbiter(self.cfg.daemon)
         self.mid = arbiter.add_monitor(self.monitor_class,
                                        self,
                                        self.name).aid
@@ -156,6 +156,8 @@ at each ``worker`` event loop.'''
             try:
                 args = worker.task_queue.get(timeout = 0.1)
             except Empty:
+                return
+            except IOError:
                 return
             worker.handle_task(*args)
             

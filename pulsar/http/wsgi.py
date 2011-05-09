@@ -21,19 +21,23 @@ from .globals import *
 
 
 NORMALIZE_SPACE = re.compile(r'(?:\r\n)?[ \t]+')
+EMPTY_DICT = {}
+EMPTY_TUPLE = ()
 
 
 class PulsarWsgiHandler(PickableMixin):
     
-    def send(self, environ, name, args = None, kwargs = None,
+    def send(self, request, name, args = None, kwargs = None,
              server = None, ack = True):
-        worker = environ['pulsar.worker']
+        worker = request.environ['pulsar.worker']
         if server:
-            server = worker.actor_links[server]
+            server = worker.ACTOR_LINKS[server]
         else:
             server = worker.arbiter
         if name in server.remotes:
             ack = server.remotes[name]
+        args = args or EMPTY_TUPLE
+        kwargs = kwargs or EMPTY_DICT
         return server.send(worker.aid, (args,kwargs), name = name, ack = ack)
 
 

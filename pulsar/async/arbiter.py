@@ -24,8 +24,8 @@ from .proxy import ActorCallBacks
 __all__ = ['arbiter','spawn','ThreadQueue']
 
 
-def arbiter():
-    return Arbiter.instance()
+def arbiter(daemonize = False):
+    return Arbiter.instance(daemonize)
     
     
 def spawn(actor_class, *args, **kwargs):
@@ -75,9 +75,9 @@ MonitorS manage group of actors performing specific tasks.
         return self._monitors
     
     @classmethod
-    def instance(cls):
+    def instance(cls,daemonize=False):
         if not hasattr(cls,'_instance'):
-            cls._instance = cls.spawn(cls,impl='monitor')
+            cls._instance = cls.spawn(cls,impl='monitor',daemonize=daemonize)
         return cls._instance
     
     @classmethod
@@ -160,6 +160,9 @@ MonitorS manage group of actors performing specific tasks.
     
     def _init(self, impl, *args, **kwargs):
         os.environ["SERVER_SOFTWARE"] = pulsar.SERVER_SOFTWARE
+        daemonize = kwargs.pop('daemonize',False)
+        if daemonize:
+            system.daemonize()
         self.actor_age = 0
         self.cfg = None
         self.pidfile = None
@@ -194,8 +197,6 @@ MonitorS manage group of actors performing specific tasks.
             if cfg.pidfile is not None:
                 self.pidfile = Pidfile(cfg.pidfile)
                 self.pidfile.create(self.pid)
-            if cfg.daemon:
-                system.daemonize()
         
     def _run(self):
         """\

@@ -29,7 +29,7 @@ class Root(rpc.JSONRPC):
         return 'pong'
     
     def rpc_server_info(self, request):
-        worker = request['pulsar.worker']
+        worker = request.environ['pulsar.worker']
         return worker.proxy.info(worker.arbiter)
         
     

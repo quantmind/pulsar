@@ -160,7 +160,7 @@ Here ``a`` is actually a reference to the remote actor.
     INBOX_TIMEOUT = 0.02
     DEFAULT_IMPLEMENTATION = 'process'
     MINIMUM_ACTOR_TIMEOUT = 1
-    DEFAULT_ACTOR_TIMEOUT = 30
+    DEFAULT_ACTOR_TIMEOUT = 60
     ACTOR_TIMEOUT_TOLERANCE = 0.2
     FLASH_LOOPS = 3
     _stopping = False
@@ -381,6 +381,7 @@ This function should live on a event loop.'''
         flashed = 0
         while closing or flashed < self.FLASH_LOOPS:
             request = None
+            ack = False
             try:
                 request = inbox.get(timeout = timeout)
             except Empty:
@@ -389,17 +390,24 @@ This function should live on a event loop.'''
                 break
             flashed += 1
             try:
-                actor = self.get_actor(request.aid)
-                if not actor and not closing:
+                caller = self.get_actor(request.aid)
+                if not caller and not closing:
                     self.log.warn('"{0}" got a message from an un-linked\
  actor "{1}"'.format(self,request.aid[:8]))
                 else:
-                    self.handle_request_from_actor(actor,request)
+                    func = getattr(self,'actor_{0}'.format(request.name),None)
+                    if func:
+                        ack = getattr(func,'ack',True)
+                    result = self.handle_request_from_actor(caller,request,func)
             except Exception as e:
                 #self.handle_request_error(request,e)
+                result = e
                 if self.log:
                     self.log.error('Error while processing worker request: {0}'.format(e),
                                    exc_info=sys.exc_info())
+            finally:
+                if ack:
+                    ActorCallBack(self,result).add_callback(lambda res : self.proxy.callback(caller,request.rid,res))
                         
     def get_actor(self, aid):
         '''Given an actor unique id return the actor proxy.'''
@@ -412,16 +420,12 @@ This function should live on a event loop.'''
         elif self.monitor and aid == self.monitor.aid:
             return self.monitor
     
-    def handle_request_from_actor(self, caller, request):
-        func = getattr(self,'actor_{0}'.format(request.name),None)
+    def handle_request_from_actor(self, caller, request, func):
+        '''Handle a request from a linked actor'''
         if func:
-            ack = getattr(func,'ack',True)
             args = request.msg[0]
             kwargs = request.msg[1]
-            result = func(caller, *args, **kwargs)
-            if ack:
-                #self.log.debug('Sending callback {0}'.format(request.rid))
-                ActorCallBack(self,result).add_callback(lambda res : self.proxy.callback(caller,request.rid,res))
+            return func(caller, *args, **kwargs)
         else:
             ack = request.ack
             msg = request.msg

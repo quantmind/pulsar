@@ -103,7 +103,8 @@ When using the eventloop on a child process, It should be instantiated after for
     def readbogus(self, fd, events):
         r = self._waker_reader
         while r.poll():
-            self.log.debug("Got wake up data {0}".format(r.recv()))
+            r.recv()
+            #self.log.debug("Got wake up data {0}".format(r.recv()))
 
     def add_loop_task(self, task):
         '''Add a callable object to self.

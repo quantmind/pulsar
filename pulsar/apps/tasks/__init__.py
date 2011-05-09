@@ -20,20 +20,36 @@ from pulsar.utils.importer import import_modules
 from .models import *
 from .config import *
 from .scheduler import Scheduler
+from .consumer import TaskRequestMemory
 from .registry import registry
+from .worker import TaskScheduler
 from .exceptions import *
+
+
+def get_request_class(name = None):
+    if name == 'stdnet':
+        from .db.stdn.taskqueue.models import StdnetTaskRequest
+        return StdnetTaskRequest
+    else:
+        return TaskRequestMemory
 
 
 class TaskQueue(pulsar.Application):
     '''A task queue application for consuming task and scheduling.'''
+    monitor_class = TaskScheduler
     REMOVABLE_ATTRIBUTES = ('scheduler',) + pulsar.Application.REMOVABLE_ATTRIBUTES
+    request_class = None
     
-    cfg = {'worker_class':'task',
+    cfg = {'worker_class':'pulsar.apps.tasks.worker.Worker',
            'timeout':'3600'}
     
     def get_task_queue(self):
         return pulsar.Queue()
     
+    def __init__(self, request_class = None, **kwargs):
+        self.request_class = request_class or self.request_class
+        super(TaskQueue,self).__init__(**kwargs)
+        
     def init(self, parser = None, opts = None, args = None):
         self._scheduler = None
         self.load()
@@ -52,7 +68,7 @@ class TaskQueue(pulsar.Application):
             self.scheduler.tick(monitor.task_queue)
             
     def handle_event_task(self, worker, request):
-        if request.on_start():
+        if request.on_start(worker):
             task = registry[request.name]
             try:
                 result = task(self, *request.args, **request.kwargs)
@@ -64,16 +80,22 @@ class TaskQueue(pulsar.Application):
 
     def end_event_task(self, worker, response, result):
         if isinstance(result,Exception):
-            response.on_finish(exception = result)
+            response.on_finish(worker, exception = result)
         else:
-            response.on_finish(result = result)
+            response.on_finish(worker, result = result)
+            
+    def task_finished(self, response):
+        response._on_finish()
+        
+    def get_task(self, id):
+        return self.scheduler.TaskRequest.get_task(id)
 
     @property
     def scheduler(self):
         '''The task queue scheduler is a task producer. At every event loop of the arbiter it checks
 if new periodic tasks need to be scheduled. If so it makes the task requests.'''
         if not self._scheduler:
-            self._scheduler = Scheduler()
+            self._scheduler = Scheduler(get_request_class(self.request_class))
         return self._scheduler
     
     @property
@@ -81,4 +103,3 @@ if new periodic tasks need to be scheduled. If so it makes the task requests.'''
         global registry
         return registry
         
-

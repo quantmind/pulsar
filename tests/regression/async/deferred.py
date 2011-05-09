@@ -21,4 +21,15 @@ class TestDeferred(test.TestCase):
         d.callback('ciao')
         self.assertTrue(d.called)
         self.assertEqual(cbk.result,'ciao')
+        
+    def testError(self):
+        e = Exception('blabla exception')
+        cbk = self.Callback()
+        d = Deferred().add_callback(cbk)
+        self.assertFalse(d.called)
+        d.callback(e)
+        self.assertTrue(d.called)
+        self.assertEqual(cbk.result,e)
+        
+
 

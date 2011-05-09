@@ -1,6 +1,7 @@
 from pulsar.utils.py2py3 import iteritems
 import inspect
 
+
 class TaskRegistry(dict):
     """Site registry for tasks."""
 

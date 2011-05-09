@@ -156,14 +156,15 @@ class JsonProxy(object):
     
     def __init__(self, url, name = None, version = None,
                  proxies = None, id = None, data = None,
-                 http = None):
+                 http = None, timeout = None):
         self.__url     = url
         self.__name    = name
         self.__version = version or self.__class__.default_version
         self.__id      = id
         self.__data    = data if data is not None else {}
         if not http:
-            self._http    = HttpClient(proxy_info = proxies)
+            self._http    = HttpClient(proxy_info = proxies,
+                                       timeout = timeout)
         else:
             self._http    = http
     

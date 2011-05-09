@@ -95,4 +95,5 @@ class IOpoll(IOselect):
         return super(IOpoll,self).poll(timeout)
     
     
-
+def daemonize():
+    pass

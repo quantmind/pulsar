@@ -19,17 +19,20 @@ class PostRequest(object):
             return None
         
 
-class TestCalculatorExample(test.TestCase):
-    uri = 'http://localhost:8060'
+class TestHelloWorldExample(test.TestCase):
     
     def initTests(self):
         r = PostRequest()
-        s = server(concurrency = 'process',parse_console = False,post_request=r)
+        s = server(concurrency = 'process',
+                   bind = '127.0.0.1:0',
+                   parse_console = False,
+                   name = 'helloworld',
+                   post_request=r)
         self.__class__._server = s
         self.__class__._rm = r
-        s.start()
         monitor = self.arbiter.get_monitor(s.mid)
         self.wait(lambda : not monitor.is_alive())
+        self.__class__.uri = 'http://{0}:{1}'.format(*monitor.address)
         
     def endTests(self):
         monitor = self.arbiter.get_monitor(self._server.mid)
@@ -40,6 +43,12 @@ class TestCalculatorExample(test.TestCase):
     
     def setUp(self):
         self.c = HttpClient()
+        
+    def testMeta(self):
+        s = self._server
+        self.assertEqual(s.name,'helloworld')
+        monitor = self.arbiter.get_monitor(s.mid)
+        self.assertEqual(monitor.name,'helloworld')
         
     def testMonitors(self):
         s = self._server
