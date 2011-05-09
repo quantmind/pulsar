@@ -70,7 +70,7 @@ hop_headers = set("""
 try:
     from setproctitle import setproctitle
     def set_proctitle(title):
-        setproctitle("pulsar: %s" % title) 
+        setproctitle(title) 
 except ImportError:
     def set_proctitle(title):
         return

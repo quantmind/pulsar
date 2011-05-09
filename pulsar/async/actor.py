@@ -427,7 +427,6 @@ This function should live on a event loop.'''
             kwargs = request.msg[1]
             return func(caller, *args, **kwargs)
         else:
-            ack = request.ack
             msg = request.msg
             name = request.name or DEFAULT_MESSAGE_CHANNEL
             if name not in self.channels:
@@ -435,7 +434,6 @@ This function should live on a event loop.'''
             ch = self.channels[name]
             ch.append(request)
 
-    
     def __call__(self):
         '''Called in the main eventloop, It flush the inbox queue and notified linked actors'''
         self.flush()

@@ -113,8 +113,7 @@ MonitorS manage group of actors performing specific tasks.
             if hasattr(m,'cfg'):
                 self.cfg = m.cfg
                 break
-        self.init_runner()
-            
+    
     def on_task(self):
         if not self._stopping:
             sig = self.arbiter_task()

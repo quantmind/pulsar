@@ -53,4 +53,6 @@ class Command(BaseCommand):
         if addrport:
             options['bind'] = addrport
         
-        DjpCmsApplicationCommand(sites, **options).start()
+        DjpCmsApplicationCommand(sites = sites,
+                                 parse_console = False,
+                                 **options).start()

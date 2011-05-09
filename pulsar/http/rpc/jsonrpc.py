@@ -12,6 +12,7 @@ The specification is at http://groups.google.com/group/json-rpc/web/json-rpc-2-0
 import logging
 import json
 
+import pulsar
 from pulsar.utils.tools import gen_unique_id
 from pulsar.http import HttpClient
 from pulsar.http.utils import to_string
@@ -152,6 +153,7 @@ class JsonProxy(object):
     separator  = '.'
     rawprefix  = 'raw'
     default_version = '2.0'
+    default_timeout = 3
     _json = JsonToolkit
     
     def __init__(self, url, name = None, version = None,
@@ -163,6 +165,7 @@ class JsonProxy(object):
         self.__id      = id
         self.__data    = data if data is not None else {}
         if not http:
+            timeout = timeout if timeout is not None else self.default_timeout
             self._http    = HttpClient(proxy_info = proxies,
                                        timeout = timeout)
         else:
@@ -215,9 +218,12 @@ class JsonProxy(object):
         if self.__version:
             data['jsonrpc'] = self.__version
         body = self._json.dumps(data)
-        resp = self._http.request(self.__url,
-                                  method = "POST",
-                                  body = body)
+        try:
+            resp = self._http.request(self.__url,
+                                      method = "POST",
+                                      body = body)
+        except self._http.URLError as e:
+            raise pulsar.ConnectionError(str(e))
         if resp.status == 200:
             if raw:
                 return resp.content

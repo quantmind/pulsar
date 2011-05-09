@@ -73,6 +73,8 @@ the various necessities for any given server application.
         '''Load the application configuration'''
         self.cfg = pulsar.Config(self.usage)
         
+        overrides = {}
+        
         # add params
         for k, v in params.items():
             if v is not None:
@@ -80,12 +82,16 @@ the various necessities for any given server application.
                 try:
                     self.cfg.set(k, v)
                 except AttributeError:
-                    setattr(self,k,v)
-                
+                    if not self.add_to_overrides(k,v,overrides):
+                        setattr(self,k,v)
+        
+        config = self.cfg.config
+        
         # parse console args
         if parse_console:
             parser = self.cfg.parser()
             opts, args = parser.parse_args()
+            config = opts.config or config
         else:
             parser, opts, args = None,None,None
         
@@ -96,41 +102,54 @@ the various necessities for any given server application.
         if cfg:
             for k, v in list(cfg.items()):
                 self.cfg.set(k.lower(), v)
-                
+        
         # Load up the config file if its found.
-        if parser:
-            if opts.config and os.path.exists(opts.config):
-                cfg = {
-                    "__builtins__": __builtins__,
-                    "__name__": "__config__",
-                    "__file__": opts.config,
-                    "__doc__": None,
-                    "__package__": None
-                }
-                try:
-                    execfile(opts.config, cfg, cfg)
-                except Exception:
-                    print("Failed to read config file: %s" % opts.config)
-                    traceback.print_exc()
-                    sys.exit(1)
-            
-                for k, v in cfg.items():
-                    # Ignore unknown names
-                    if k not in self.cfg.settings:
-                        continue
+        if config and os.path.exists(config):
+            cfg = {
+                "__builtins__": __builtins__,
+                "__name__": "__config__",
+                "__file__": config,
+                "__doc__": None,
+                "__package__": None
+            }
+            try:
+                execfile(config, cfg, cfg)
+            except Exception:
+                print("Failed to read config file: %s" % config)
+                traceback.print_exc()
+                sys.exit(1)
+        
+            for k, v in cfg.items():
+                # Ignore unknown names
+                if k not in self.cfg.settings:
+                    self.add_to_overrides(k,v,overrides)
+                else:
                     try:
                         self.cfg.set(k.lower(), v)
                     except:
                         sys.stderr.write("Invalid value for %s: %s\n\n" % (k, v))
                         raise
-                
-            # Lastly, update the configuration with any command line
-            # settings.
+            
+        # Update the configuration with any command line settings.
+        if opts:
             for k, v in opts.__dict__.items():
                 if v is None:
                     continue
                 self.cfg.set(k.lower(), v)
-               
+                
+        # Lastly, update the configuration with overrides
+        for k,v in overrides.items():
+            self.cfg.set(k, v)
+            
+    
+    def add_to_overrides(self, name, value, overrides):
+        names = name.lower().split('_')
+        if len(names) > 1 and names[0] == self.name:
+            name = '_'.join(names[1:])
+            if name in self.cfg.settings:
+                overrides[name] = value
+                return True
+            
     def init(self, parser = None, opts = None, args = None):
         pass
     

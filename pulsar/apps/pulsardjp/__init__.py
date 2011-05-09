@@ -1,5 +1,5 @@
 '''\
-A pulsar application for serving ``djpcms`` powered web sites.
+A pulsar application for serving djpcms_ powered web sites.
 
 To use it:
 
@@ -7,20 +7,19 @@ To use it:
 * type::
 
     python manage.py run_pulsar
-        
+
+
+.. _djpcms: http://djpcms.com/
 '''
 import os
 import sys
 
-import pulsar
+from pulsar.apps import wsgi
 
 
-class DjpCmsApplicationCommand(pulsar.Application):
+class DjpCmsApplicationCommand(wsgi.WSGIApplication):
+    _name = 'djpcms'
     
-    def __init__(self, sites, **kwargs):
-        self.sites = sites
-        super(DjpCmsApplicationCommand,self).__init__(**kwargs)
-        
     def load(self):
         from djpcms.apps.handlers import DjpCmsHandler
         self.sites.load()

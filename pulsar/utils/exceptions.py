@@ -15,7 +15,10 @@ class HaltServer(PulsarInternetException):
     def __init__(self, reason, signal=None):
         super(HaltServer,self).__init__(reason)
         self.signal = signal
-    
+
+
+class ConnectionError(PulsarInternetException):
+    pass
     
 class AlreadyCalledError(PulsarException):
     '''Raised when a Deferred instance receives more than une callback'''

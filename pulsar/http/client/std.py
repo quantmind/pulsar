@@ -10,13 +10,13 @@ if pulsar.ispy3k:
     from urllib.request import Request, build_opener, install_opener
     from urllib.request import HTTPCookieProcessor, HTTPPasswordMgrWithDefaultRealm
     from urllib.request import HTTPBasicAuthHandler, ProxyHandler
-    from urllib.request import getproxies_environment
+    from urllib.request import getproxies_environment, URLError
     from urllib.parse import urlencode
 else:
     # Python 2.*
     from urllib2 import Request, build_opener, install_opener, HTTPCookieProcessor
     from urllib2 import HTTPPasswordMgrWithDefaultRealm, HTTPBasicAuthHandler
-    from urllib2 import ProxyHandler
+    from urllib2 import ProxyHandler, URLError
     from urllib import urlencode, getproxies_environment
 
     
@@ -54,7 +54,7 @@ class HttpClientBase(object):
         
     
 class HttpClient1(HttpClientBase):
-    
+    URLError = URLError
     def __init__(self, proxy_info = None,
                  timeout = None, cache = None, headers = None):
         proxy = ProxyHandler(proxy_info)
