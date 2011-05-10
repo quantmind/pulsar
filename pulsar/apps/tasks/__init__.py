@@ -26,19 +26,11 @@ from .worker import TaskScheduler
 from .exceptions import *
 
 
-def get_request_class(name = None):
-    if name == 'stdnet':
-        from .db.stdn.taskqueue.models import StdnetTaskRequest
-        return StdnetTaskRequest
-    else:
-        return TaskRequestMemory
-
-
 class TaskQueue(pulsar.Application):
     '''A task queue application for consuming task and scheduling.'''
     monitor_class = TaskScheduler
     REMOVABLE_ATTRIBUTES = ('scheduler',) + pulsar.Application.REMOVABLE_ATTRIBUTES
-    request_class = None
+    request_class = TaskRequestMemory
     
     cfg = {'worker_class':'pulsar.apps.tasks.worker.Worker',
            'timeout':'3600'}
@@ -95,7 +87,7 @@ class TaskQueue(pulsar.Application):
         '''The task queue scheduler is a task producer. At every event loop of the arbiter it checks
 if new periodic tasks need to be scheduled. If so it makes the task requests.'''
         if not self._scheduler:
-            self._scheduler = Scheduler(get_request_class(self.request_class))
+            self._scheduler = Scheduler(self.request_class)
         return self._scheduler
     
     @property

@@ -20,6 +20,7 @@ SIGQUIT = signal.SIGQUIT
 def get_parent_id():
     return os.getppid()
 
+
 def chown(path, uid, gid):
     try:
         os.chown(path, uid, gid)
@@ -35,17 +36,10 @@ def close_on_exec(fd):
         pass
     
     
-def set_non_blocking(fd):
+def __set_non_blocking(fd):
     flags = fcntl.fcntl(fd, fcntl.F_GETFL) | os.O_NONBLOCK
     fcntl.fcntl(fd, fcntl.F_SETFL, flags)
     
-    
-def get_maxfd():
-    maxfd = resource.getrlimit(resource.RLIMIT_NOFILE)[1]
-    if (maxfd == resource.RLIM_INFINITY):
-        maxfd = MAXFD
-    return maxfd
-
 
 def get_uid(user):
     if not user:
@@ -66,59 +60,6 @@ def get_gid(group):
 
 def setpgrp():
     os.setpgrp()
-
-
-def is_ipv6(addr):
-    try:
-        socket.inet_pton(socket.AF_INET6, addr)
-    except socket.error: # not a valid address
-        return False
-    return True    
-
-
-class UnixSocket(BaseSocket):
-    
-    FAMILY = socket.AF_UNIX
-    
-    def __init__(self, conf, fd=None):
-        if fd is None:
-            try:
-                os.remove(conf.address)
-            except OSError:
-                pass
-        super(UnixSocket, self).__init__(conf, fd=fd)
-    
-    def __str__(self):
-        return "unix:%s" % self.address
-        
-    def bind(self, sock):
-        old_umask = os.umask(self.conf.umask)
-        sock.bind(self.address)
-        system.chown(self.address, self.conf.uid, self.conf.gid)
-        os.umask(old_umask)
-        
-    def close(self):
-        super(UnixSocket, self).close()
-        os.unlink(self.address)
-
-
-def create_socket_address(addr):
-    """Create a new socket for the given address. If the
-    address is a tuple, a TCP socket is created. If it
-    is a string, a Unix socket is created. Otherwise
-    a TypeError is raised.
-    """
-    if isinstance(addr, tuple):
-        if is_ipv6(addr[0]):
-            sock_type = TCP6Socket
-        else:
-            sock_type = TCPSocket
-    elif isinstance(addr, basestring):
-        sock_type = UnixSocket
-    else:
-        raise TypeError("Unable to create socket from: %r" % addr)
-
-    return sock_type
 
 
     

@@ -1,24 +1,12 @@
 import signal
 from time import sleep
-import multiprocessing.reduction
+#import multiprocessing.reduction
 
 from .base import *
 
 
 SIGQUIT = signal.SIGTERM
-
-if not ispy3k:
-    
-    def fromfd(fd, family, type, proto=0):
-        """ fromfd(fd, family, type[, proto]) -> socket object
-    
-        Create a socket object from a duplicate of the given file
-        descriptor.  The remaining arguments are the same as for socket().
-        """
-        raise NotImplementedError('Cannot duplicate socket from file descriptor')
-    
-    socket.fromfd = fromfd 
-    
+   
     
 def get_parent_id():
     if ispy32:
@@ -35,12 +23,8 @@ def close_on_exec(fd):
     pass
     
     
-def set_non_blocking(fd):
+def __set_non_blocking(fd):
     pass
-
-
-def get_maxfd():
-    return MAXFD
 
 
 def get_uid(user):
@@ -53,27 +37,6 @@ def get_gid(group):
 
 def setpgrp():
     pass
-
-
-def is_ipv6(addr):
-    return False
-
-
-def create_socket_address(addr):
-    """Create a new socket for the given address. If the
-    address is a tuple, a TCP socket is created. 
-    Otherwise a TypeError is raised.
-    """
-    # get it only once    
-    if isinstance(addr, tuple):
-        if is_ipv6(addr[0]):
-            sock_type = TCP6Socket
-        else:
-            sock_type = TCPSocket
-    else:
-        raise TypeError("Unable to create socket from: %r" % addr)
-
-    return sock_type
 
 
 class IOpoll(IOselect):

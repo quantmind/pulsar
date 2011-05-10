@@ -3,21 +3,12 @@
 # This file is part of gunicorn released under the MIT license. 
 # See the NOTICE for more information.
 import ctypes
-import os
-import socket
-import sys
-import textwrap
-import time
 import signal
-from time import sleep
 from select import select as _select
 
 from pulsar.utils.importer import import_module
 from pulsar.utils.py2py3 import *
 
-from .sock import *
-
-MAXFD = 1024
 SIG_NAMES = {}
 SKIP_SIGNALS = ('KILL','STOP')
 
@@ -35,12 +26,10 @@ def all_signals():
 ALL_SIGNALS = tuple(all_signals())
 
 
-MAXFD = 1024
-
 if (hasattr(os, "devnull")):
-   REDIRECT_TO = os.devnull
+    REDIRECT_TO = os.devnull
 else:
-   REDIRECT_TO = "/dev/null"
+    REDIRECT_TO = "/dev/null"
 
 timeout_default = object()
 
@@ -106,6 +95,7 @@ def set_owner_process(uid,gid):
     
         
 def parse_address(netloc, default_port=8000):
+    '''Parse an address and return a tuple with host and port'''
     netloc = to_string(netloc)
     if netloc.startswith("unix:"):
         return netloc.split("unix:")[1]
@@ -157,10 +147,6 @@ class EpollProxy(object):
         self.write_fds = set()
         self.error_fds = set()
         self.fd_dict = (self.read_fds, self.write_fds, self.error_fds)
-
-    def register(self, fd, eventmask = None):
-        eventmask = eventmask or IObase.READ
-        self.fd_dict[eventmask].add(fd)
 
     def register(self, fd, events):
         if events & IObase.READ:

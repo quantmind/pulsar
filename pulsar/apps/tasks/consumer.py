@@ -23,7 +23,8 @@ class TaskRequest(object):
     timeout       = False
     _already_revoked = False
     
-    def __init__(self, task, args, kwargs, retries = 0, expires = None, ack = True):
+    def __init__(self, task, args, kwargs, retries = 0,
+                 expires = None, ack = True):
         self.time_executed = time()
         self.name = task.name
         self.ack = ack
@@ -32,8 +33,9 @@ class TaskRequest(object):
         self.kwargs = kwargs or EMPTY_DICT
         self.retries = retries
         self.expires = expires
+        self.time_executed = time()
         self._on_init()
-        
+    
     def _on_init(self):
         pass
     
@@ -88,9 +90,15 @@ class TaskRequest(object):
         if self.time_end:
             return self.time_end - self.time_start  
 
+    def todict(self):
+        return self.__dict__.copy()
+    
     @classmethod
     def get_task(cls, id, remove = False):
         raise NotImplementedError
+    
+    def ack(self):
+        return self
     
 
 class TaskRequestMemory(TaskRequest):

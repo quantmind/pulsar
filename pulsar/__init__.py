@@ -29,6 +29,7 @@ DEFAULT_PORT = 8060
 SERVER_SOFTWARE = "python-{0}/{1}".format(SERVER_NAME,get_version())
 
 from .utils.exceptions import *
+from .utils.sock import *
 from .utils import system
 from .utils.py2py3 import ispy3k, to_string, is_string
 platform = system.platform

@@ -50,6 +50,8 @@ class WSGIApplication(pulsar.Application):
                 for item in result:
                     response.write(item)
             response.close()
+        except socket.error as e:
+            pass
         finally:    
             close(response.client_sock)
 

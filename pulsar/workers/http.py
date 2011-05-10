@@ -79,7 +79,10 @@ class Worker(pulsar.Worker):
     def modify_arbiter_loop(cls, wp):
         '''The arbiter listen for client connections and delegate the handling
 to the Thread Pool. This is different from the Http Worker on Processes'''
-        wp.socket = pulsar.system.create_socket(wp.cfg.address, log = wp.log)
+        wp.address = wp.cfg.address
+        if wp.address:
+            wp.socket = pulsar.create_socket(wp.address,
+                                             log = wp.log)
         if wp.socket and wp.task_queue is not None:
             wp.ioloop.add_handler(wp.socket,
                                   HttpPoolHandler(wp),
