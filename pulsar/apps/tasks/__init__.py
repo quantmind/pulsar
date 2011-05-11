@@ -65,7 +65,7 @@ class TaskQueue(pulsar.Application):
             try:
                 result = task(self, *request.args, **request.kwargs)
             except Exception as e:
-                result = TaskException(str(e))
+                result = TaskException(e,log = worker.log)
             return request, result
         else:
             return request, TaskTimeout(request.name,request.expires)

@@ -1,13 +1,27 @@
 import pulsar
+import sys
+import traceback
 
 __all__ = ['TaskException',
            'TaskNotAvailable',
            'TaskTimeout',
-           'SchedulingError']
+           'SchedulingError',
+           'get_traceback']
+
+
+def get_traceback(log = None):
+    exc_info = sys.exc_info()
+    return '\n'.join(traceback.format_exception(*exc_info))
 
 
 class TaskException(pulsar.PulsarException):
-    pass
+    
+    def __init__(self, e, log = None):
+        msg = str(e)
+        if log:
+            log.error(msg, exc_info = sys.exc_info())
+        self.stack_trace = get_traceback(log = log)
+        super(TaskException,self).__init__(str(e))
 
 
 class TaskNotAvailable(TaskException):

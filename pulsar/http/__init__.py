@@ -46,3 +46,20 @@ def queueTask(taskname, doc = '', ack = True, server = "taskqueue"):
     return _
 
 
+
+class SendToQueue(object):
+    '''Same as ``queueTask`` decorator, but it returns an object.'''
+    def __init__(self, taskname, request, *args, **kwargs):
+        self.taskname = taskname
+        self.request = request
+        self.args = args
+        self.kwargs = kwargs
+        
+    def __call__(self):
+        server = self.kwargs.pop('server','taskqueue')
+        worker = self.request.environ['pulsar.worker']
+        tk = worker.ACTOR_LINKS[server]
+        args = (self.taskname,self.args,self.kwargs)
+        return tk.send(worker.aid, (args,EMPTY_DICT), name='addtask')
+        
+
