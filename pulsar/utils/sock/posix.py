@@ -1,7 +1,7 @@
 import os
 import socket
 from pulsar import system
-from .base import log, BaseSocket, TCPSocket, TCP6Socket, MAXFD
+from .base import BaseSocket, TCPSocket, TCP6Socket, MAXFD
 
 
 __all__ = ['is_ipv6',

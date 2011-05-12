@@ -12,13 +12,14 @@ if pulsar.ispy3k:
     from urllib.request import HTTPBasicAuthHandler, ProxyHandler
     from urllib.request import getproxies_environment, URLError
     from urllib.parse import urlencode
+    from http import cookiejar
 else:
     # Python 2.*
     from urllib2 import Request, build_opener, install_opener, HTTPCookieProcessor
     from urllib2 import HTTPPasswordMgrWithDefaultRealm, HTTPBasicAuthHandler
     from urllib2 import ProxyHandler, URLError
     from urllib import urlencode, getproxies_environment
-
+    from cookielib import CookieJar as cookiejar
     
     
 class Response(object):
@@ -56,9 +57,13 @@ class HttpClientBase(object):
 class HttpClient1(HttpClientBase):
     URLError = URLError
     def __init__(self, proxy_info = None,
-                 timeout = None, cache = None, headers = None):
-        proxy = ProxyHandler(proxy_info)
-        self._opener = build_opener(proxy)
+                 timeout = None, cache = None,
+                 headers = None, handle_cookie = False):
+        handlers = [ProxyHandler(proxy_info)]
+        if handle_cookie:
+            cj = cookiejar()
+            handlers.append(HTTPCookieProcessor(cj))
+        self._opener = build_opener(*handlers)
         self.timeout = timeout
         
     def request(self, url, body=None, **kwargs):
