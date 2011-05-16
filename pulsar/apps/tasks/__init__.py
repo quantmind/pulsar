@@ -49,6 +49,8 @@ class TaskQueue(pulsar.Application):
     def load(self):
         # Load the application callable, the task consumer
         import_modules(self.cfg.tasks_path)
+        if self.callable:
+            self.callable()
         return self
         
     def make_request(self, task_name, targs = None, tkwargs = None, **kwargs):

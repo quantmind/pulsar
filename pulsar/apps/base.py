@@ -154,15 +154,12 @@ the various necessities for any given server application.
         pass
     
     def load(self):
-        raise NotImplementedError
+        pass
         
     def handler(self):
         '''Returns a callable application handler,
 used by a :class:`pulsar.Worker` to carry out its task.'''
-        callable = self.callable
-        if callable is None:
-            callable = self.load()
-        return callable
+        return self.load() or self.callable
     
     def monitor_task(self, monitor):
         '''Callback by :class:`pulsar.WorkerMonitor`` at each event loop'''
