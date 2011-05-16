@@ -5,6 +5,7 @@ This is a thin layer on top of urllib2 in python2 / urllib in Python 3
 It exposes the httplib1 class from the standard library.
 '''
 import pulsar
+from pulsar.utils.py2py3 import to_bytestring
 if pulsar.ispy3k:
     # Python 3
     from urllib.request import Request, build_opener, install_opener
@@ -67,6 +68,8 @@ class HttpClient1(HttpClientBase):
         self.timeout = timeout
         
     def request(self, url, body=None, **kwargs):
+        if body:
+            body = to_bytestring(body)
         response = self._opener.open(url,data=body,timeout=self.timeout)
         return Response(response)
     

@@ -7,7 +7,8 @@ from .base import BaseSocket, TCPSocket, TCP6Socket, MAXFD
 __all__ = ['is_ipv6',
            'get_maxfd',
            'UnixSocket',
-           'TCP6Socket']
+           'TCP6Socket',
+           'create_socket_address']
 
 
     
