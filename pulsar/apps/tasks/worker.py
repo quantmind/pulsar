@@ -36,6 +36,9 @@ class TaskScheduler(pulsar.WorkerMonitor):
         except Exception as e:
             return e
     
+    def actor_tasks_list(self, caller):
+        return self.app.tasks_list()
+    
     def actor_addtask(self, caller, task_name, targs, tkwargs, ack=True, **kwargs):
         return self._addtask(caller, task_name, targs, tkwargs, ack = True, **kwargs)
         
