@@ -52,7 +52,9 @@ class TaskScheduler(pulsar.WorkerMonitor):
     
     def actor_get_task(self, caller, id):
         return self.app.get_task(id)
-    actor_get_task.ack = True
+    
+    def actor_job_list(self, caller):
+        return list(self.app.job_list())
         
 
 class Worker(pulsar.Worker):

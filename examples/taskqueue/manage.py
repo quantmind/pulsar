@@ -47,8 +47,8 @@ def createTaskQueue(tasks_path = None, **params):
     
 def server(task_workers = 1, concurrency = 'process', **params):
     # Create the taskqueue application with an rpc server
-    taskqueue = createTaskQueue(workers = task_workers,
-                                concurrency = concurrency)
+    createTaskQueue(workers = task_workers,
+                    concurrency = concurrency)
     wsgi = pulsar.require('wsgi')
     return wsgi.createServer(RpcRoot(),concurrency=concurrency,**params)
 

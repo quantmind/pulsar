@@ -1,7 +1,7 @@
 import time
 from datetime import timedelta, datetime
 
-from pulsar.utils.py2py3 import itervalues
+from pulsar.utils.py2py3 import itervalues, iteritems
 from pulsar.utils.timeutils import remaining, timedelta_seconds, humanize_seconds
 
 from .registry import registry
@@ -145,3 +145,8 @@ value ``now`` can be passed.'''
             entries[name] = SchedulerEntry(name,schedule)
         return entries
 
+    def job_list(self):
+        for name,job in iteritems(registry):
+            yield (name,{'doc':job.__doc__,
+                         'type':job.type})
+        

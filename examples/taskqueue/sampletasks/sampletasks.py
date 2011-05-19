@@ -1,8 +1,8 @@
 
-from pulsar.apps.tasks import Task
+from pulsar.apps.tasks import Job
 
 
-class CodeTask(Task):
+class RunPyCode(Job):
     
     def __call__(self, consumer, code, *args, **kwargs):
         code_local = compile(code, '<string>', 'exec')
@@ -13,7 +13,7 @@ class CodeTask(Task):
         
         
 
-class Addition(Task):
+class Addition(Job):
     
     def __call__(self, consumer, code, a, b):
         return a+b
