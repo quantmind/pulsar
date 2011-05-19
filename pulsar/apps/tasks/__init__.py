@@ -83,6 +83,9 @@ class TaskQueue(pulsar.Application):
         
     def get_task(self, id):
         return self.scheduler.TaskRequest.get_task(id)
+    
+    def job_list(self):
+        return self.scheduler.job_list()
 
     @property
     def scheduler(self):

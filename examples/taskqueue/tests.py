@@ -41,8 +41,8 @@ class TestTaskQueueMeta(test.TestCase):
     def testCodeTask(self):
         '''Here we test the application only, not the queue mechanism implemented by the
 monitor and workers.'''
-        self.assertTrue('codetask' in self.tq.registry)
-        r = self.tq.make_request('codetask',(CODE_TEST,10),{})
+        self.assertTrue('runpycode' in self.tq.registry)
+        r = self.tq.make_request('runpycode',(CODE_TEST,10),{})
         self.assertTrue(r)
         self.assertTrue(r.id)
         self.assertTrue(r.time_executed)
@@ -63,7 +63,7 @@ monitor and workers.'''
         '''we set an expire to the task'''
         self.assertTrue('addition' in self.tq.registry)
         consumer = self.tq.load()
-        r = self.tq.make_request('codetask',(3,6),expires=time())
+        r = self.tq.make_request('runpycode',(3,6),expires=time())
         response, result = consumer.handle_event_task(None,r)
         self.assertTrue(response.timeout)
         self.assertTrue(response.exception)
