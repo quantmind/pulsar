@@ -29,13 +29,23 @@ class TaskRequest(object):
         self.name = task.name
         self.ack = ack
         self.id = task.make_task_id(args,kwargs)
+        tc = self.get_task(self.id)
+        if tc:
+            if tc.done():
+                self._already_revoked = self.revoke_on_same_id()
+            else:
+                self._already_revoked = True
         self.args = args or EMPTY_TUPLE
         self.kwargs = kwargs or EMPTY_DICT
         self.retries = retries
         self.expires = expires
         self.time_executed = time()
-        self._on_init()
+        if not self.revoked():
+            self._on_init()
     
+    def revoke_on_same_id(self):
+        return True
+        
     def _on_init(self):
         pass
     

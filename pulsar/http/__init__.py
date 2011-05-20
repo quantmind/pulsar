@@ -44,37 +44,39 @@ def actorCall(function, doc = '', ack = True, server = "taskqueue"):
     return _
 
     
+class SendToQueue(object):
+    '''Same as ``queueTask`` decorator, but it returns an object.'''
+    funcname = {True:'addtask',False:'addtask_noack'}
+    
+    def __init__(self, taskname, request, server = 'taskqueue', ack = True, **kwargs):
+        self.taskname = taskname
+        self.request = request
+        self.server = server
+        self.ack = ack
+        self.kwargs = kwargs
         
+    def __call__(self, *args, **kwargs):
+        worker = self.request.environ['pulsar.worker']
+        if self.server in worker.ACTOR_LINKS:
+            tk = worker.ACTOR_LINKS[self.server]
+            kwg = self.kwargs.copy()
+            kwg.update(kwargs)
+            targs = (self.taskname,args,kwg)
+            name = self.funcname[self.ack] 
+            r = tk.send(worker.aid, (targs,EMPTY_DICT),
+                        name=name, ack=self.ack)
+            if self.ack:
+                return r
+        
+                
 def queueTask(taskname, doc = '', ack = True, server = "taskqueue"):
     # A decorator for running a taskname in the taskqueue
-    
-    def _(self, request, **kwargs):
-        worker = request.environ['pulsar.worker']
-        tk = worker.ACTOR_LINKS[server]
-        args = (taskname,(),kwargs)
-        if ack:
-            return tk.send(worker.aid, (args,EMPTY_DICT), name='addtask', ack=True)
-        else:
-            tk.send(worker.aid, (args,EMPTY_DICT), name='addtask_noack', ack=False)
+    def _(self, request, *args, **kwargs):
+        return SendToQueue(taskname,request,server,ack)(*args,**kwargs)
         
     _.__doc__ = doc
     _.__name__ = taskname
     return _
 
-
-class SendToQueue(object):
-    '''Same as ``queueTask`` decorator, but it returns an object.'''
-    def __init__(self, taskname, request, *args, **kwargs):
-        self.taskname = taskname
-        self.request = request
-        self.args = args
-        self.kwargs = kwargs
-        
-    def __call__(self):
-        server = self.kwargs.pop('server','taskqueue')
-        worker = self.request.environ['pulsar.worker']
-        tk = worker.ACTOR_LINKS[server]
-        args = (self.taskname,self.args,self.kwargs)
-        return tk.send(worker.aid, (args,EMPTY_DICT), name='addtask')
         
 
