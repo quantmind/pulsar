@@ -30,7 +30,8 @@ class TaskScheduler(pulsar.WorkerMonitor):
     def _addtask(self, caller, task_name, targs, tkwargs, ack = True, **kwargs):
         try:
             request = self.app.make_request(task_name, targs, tkwargs, **kwargs)
-            self.task_queue.put((None,request))
+            if not request.revoked():
+                self.task_queue.put((None,request))
             if ack:
                 return request.todict()
         except Exception as e:

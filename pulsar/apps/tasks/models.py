@@ -63,6 +63,12 @@ implemented by subclasses.'''
     def make_task_id(self, args, kwargs):
         '''Get the task unique identifier. This can be overridden by Job implementation.'''
         return gen_unique_id()
+    
+    def on_same_id(self, task):
+        '''Callback invocked when a task has an id equal to a task already
+submitted to the task queue. By default return None and the
+task is aborted.'''
+        return None
         
     def ack(self, args, kwargs):
         '''Return ``True`` if a Job task will acknowledge the task queue
