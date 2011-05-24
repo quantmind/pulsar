@@ -31,10 +31,11 @@ class TaskRequest(object):
         self.id = task.make_task_id(args,kwargs)
         tc = self.get_task(self.id)
         if tc:
-            if tc.done():
-                self._already_revoked = self.revoke_on_same_id()
-            else:
-                self._already_revoked = True
+            self._already_revoked = True
+            #if tc.done():
+            #    self._already_revoked = self.revoke_on_same_id()
+            #else:
+            #    self._already_revoked = True
         self.args = args or EMPTY_TUPLE
         self.kwargs = kwargs or EMPTY_DICT
         self.retries = retries
