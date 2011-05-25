@@ -4,8 +4,16 @@ from datetime import timedelta, datetime
 from pulsar.utils.py2py3 import itervalues, iteritems
 from pulsar.utils.timeutils import remaining, timedelta_seconds, humanize_seconds
 
-from .registry import registry
+from .models import registry
 from .exceptions import SchedulingError, TaskNotAvailable
+from .states import PENDING
+
+
+__all__ = ['Scheduler']
+
+
+EMPTY_TUPLE = ()
+EMPTY_DICT = {}
 
 
 class Schedule(object):
@@ -93,10 +101,10 @@ class SchedulerEntry(object):
 class Scheduler(object):
     """Scheduler for periodic tasks.
     """
-    def __init__(self, TaskRequest):
+    def __init__(self, TaskFactory):
         self._entries = self.setup_schedule()
         self.next_run = datetime.now()
-        self.TaskRequest = TaskRequest
+        self.TaskFactory = TaskFactory
         
     @property
     def entries(self):
@@ -105,8 +113,25 @@ class Scheduler(object):
     def make_request(self, name, targs = None, tkwargs = None, **kwargs):
         '''Create a new task request'''
         if name in registry:
-            task = registry[name]
-            return self.TaskRequest(task, targs, tkwargs, **kwargs)
+            TaskFactory = self.TaskFactory
+            job = registry[name]
+            targs = targs or EMPTY_TUPLE
+            tkwargs = tkwargs or EMPTY_DICT
+            id = job.make_task_id(targs,tkwargs)
+            task = TaskFactory.get_task(id)
+            if task:
+                if task.done():
+                    task.delete()
+                else:
+                    return task
+            expiry = None
+            time_executed = datetime.now()
+            if job.timeout:
+                expiry = time_executed + job.timeout
+            task = TaskFactory(id = id, name = job.name,time_executed = time_executed,
+                               expiry = expiry, args = targs, kwargs = tkwargs,
+                               status = PENDING)
+            return task.save()
         else:
             raise TaskNotAvailable(name)
 

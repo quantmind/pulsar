@@ -1,12 +1,46 @@
-import sys
-from datetime import datetime, timedelta, date
+from datetime import datetime, date
+import inspect
+
+from pulsar.utils.py2py3 import iteritems
+ 
 
 from pulsar.utils.tools import gen_unique_id
 
-from .registry import registry
+
+__all__ = ['Job','PeriodicJob','anchorDate','registry']
 
 
-__all__ = ['Job','PeriodicJob','anchorDate']
+class JobRegistry(dict):
+    """Site registry for tasks."""
+
+    def regular(self):
+        """A generator of all regular task types."""
+        return self.filter_types("regular")
+
+    def periodic(self):
+        """A generator of all periodic task types."""
+        return self.filter_types("periodic")
+
+    def register(self, job):
+        """Register a job in the job registry.
+
+        The task will be automatically instantiated if not already an
+        instance.
+
+        """
+        job = inspect.isclass(job) and job() or job
+        name = job.name
+        self[name] = job
+
+    def filter_types(self, type):
+        """Return a generator of all tasks of a specific type."""
+        return ((job_name, job)
+                    for job_name, job in iteritems(self)
+                            if job.type == type)
+
+
+registry = JobRegistry()
+
 
 
 class JobMetaClass(type):
@@ -53,6 +87,8 @@ class Job(JobBase):
     '''If ``False`` (default is ``True``), the Job need to be registered manually with the Job registry.'''
     type = "regular"
     '''Type of Job, one of ``regular`` and ``periodic``'''
+    timeout = None
+    expires = None
     _ack = True
         
     def __call__(self, consumer, *args, **kwargs):

@@ -2,6 +2,7 @@ from multiprocessing.queues import Empty
 
 import pulsar
 from pulsar import system
+from .states import PENDING
 
     
 class IOQueue(system.EpollProxy):
@@ -29,11 +30,14 @@ class TaskScheduler(pulsar.WorkerMonitor):
     
     def _addtask(self, caller, task_name, targs, tkwargs, ack = True, **kwargs):
         try:
-            request = self.app.make_request(task_name, targs, tkwargs, **kwargs)
-            if not request.revoked():
-                self.task_queue.put((None,request))
+            task = self.app.make_request(task_name, targs, tkwargs, **kwargs)
+            tq = task.to_queue()
+            if tq:
+                self.task_queue.put((None,tq))
+            
             if ack:
-                return request.todict()
+                task = tq or task
+                return task.todict()
         except Exception as e:
             return e
     

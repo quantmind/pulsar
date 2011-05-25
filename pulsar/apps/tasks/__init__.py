@@ -17,20 +17,20 @@ from datetime import datetime
 import pulsar
 from pulsar.utils.importer import import_modules
 
-from .models import *
-from .config import *
-from .scheduler import Scheduler
-from .consumer import TaskRequestMemory
-from .registry import registry
-from .worker import TaskScheduler
 from .exceptions import *
+from .config import *
+from .task import *
+from .models import *
+from .scheduler import *
+from .worker import TaskScheduler
+from .states import *
 
 
 class TaskQueue(pulsar.Application):
     '''A task queue application for consuming task and scheduling.'''
     monitor_class = TaskScheduler
     REMOVABLE_ATTRIBUTES = ('scheduler',) + pulsar.Application.REMOVABLE_ATTRIBUTES
-    request_class = TaskRequestMemory
+    task_class = TaskInMemory
     
     cfg = {'worker_class':'pulsar.apps.tasks.worker.Worker',
            'timeout':'3600'}
@@ -38,8 +38,8 @@ class TaskQueue(pulsar.Application):
     def get_task_queue(self):
         return pulsar.Queue()
     
-    def __init__(self, request_class = None, **kwargs):
-        self.request_class = request_class or self.request_class
+    def __init__(self, task_class = None, **kwargs):
+        self.task_class = task_class or self.task_class
         super(TaskQueue,self).__init__(**kwargs)
         
     def init(self, parser = None, opts = None, args = None):
@@ -61,28 +61,28 @@ class TaskQueue(pulsar.Application):
         if self.scheduler.next_run <= datetime.now():
             self.scheduler.tick(monitor.task_queue)
             
-    def handle_event_task(self, worker, request):
-        if request.on_start(worker):
-            task = registry[request.name]
+    def handle_event_task(self, worker, task):
+        if task.on_start(worker):
+            job = registry[task.name]
             try:
-                result = task(self, *request.args, **request.kwargs)
+                result = job(self, *task.args, **task.kwargs)
             except Exception as e:
                 result = TaskException(e,log = worker.log)
-            return request, result
+            return task, result
         else:
-            return request, TaskTimeout(request.name,request.expires)
+            return task, TaskTimeout(task.name,task.expires)
 
-    def end_event_task(self, worker, response, result):
+    def end_event_task(self, worker, task, result):
         if isinstance(result,Exception):
-            response.on_finish(worker, exception = result)
+            task.on_finish(worker, exception = result)
         else:
-            response.on_finish(worker, result = result)
+            task.on_finish(worker, result = result)
             
     def task_finished(self, response):
         response._on_finish()
         
     def get_task(self, id):
-        return self.scheduler.TaskRequest.get_task(id)
+        return self.task_class.get_task(id)
     
     def job_list(self):
         return self.scheduler.job_list()
@@ -92,7 +92,7 @@ class TaskQueue(pulsar.Application):
         '''The task queue scheduler is a task producer. At every event loop of the arbiter it checks
 if new periodic tasks need to be scheduled. If so it makes the task requests.'''
         if not self._scheduler:
-            self._scheduler = Scheduler(self.request_class)
+            self._scheduler = Scheduler(self.task_class)
         return self._scheduler
     
     @property
