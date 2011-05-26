@@ -6,7 +6,10 @@ from djpcms.html import LazyRender, Table, ObjectDefinition
 from djpcms.utils.dates import nicetimedelta
 from djpcms.utils.text import nicename
 from djpcms.utils import mark_safe
+from djpcms.forms.utils import return_form_errors
 from djpcms import forms, views
+
+from stdnet import orm
 
 import pulsar
 from pulsar.utils.py2py3 import iteritems
@@ -79,4 +82,63 @@ class TasksAdmin(AdminApplicationSimple):
     view   = views.ViewView(regex = views.UUID_REGEX)
     delete = views.DeleteView()
     
+
+#
+# Scripts
+#
+
+script_languages = (
+                    ('python','python'),
+                    )
+
+
+class ScriptForm(forms.Form):
+    name = forms.CharField(toslug = '_')
+    language = forms.ChoiceField(choices = script_languages)
+    body = forms.CharField(widget = forms.TextArea(cn = 'taboverride'))
     
+    def clean_name(self, value):
+        return orm.test_unique('name',self.model,value,self.instance,
+                               forms.ValidationError)
+    
+
+class RunScriptForm(forms.Form):
+    parameters = forms.CharField(required = False)
+    
+    def clean_parameters(self, value):
+        return value
+    
+
+class RunScriptView(views.ChangeView):
+    
+    def default_post(self, djp):
+        fhtml = self.get_form(djp)
+        form = fhtml.form
+        if form.is_valid():
+            self.appmodel.run(djp)
+        else:
+            return return_form_errors(fhtml,djp)
+    
+
+HtmlRunScriptForm = forms.HtmlForm(
+    RunScriptForm,
+    #layout = Layout(default_style = blockLabels2),
+    inputs = (('run','_save'),)
+)
+    
+    
+class ScriptApplication(views.ModelApplication):
+    inherit = True
+    form = ScriptForm
+    list_display = ('name','language','parameters')
+    
+    run_view = RunScriptView(regex = 'run', form = HtmlRunScriptForm)
+    
+    class Media:
+        js = ['djpcms/taboverride.js']
+    
+    def run(self, djp, **params):
+        '''This needs to be implemented by your application'''
+        pass
+        
+        

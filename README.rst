@@ -35,20 +35,39 @@ Pulsar uses the multiprocessing_ module from the standard python library and it 
 be configured to run in multi-processing or multi-threading mode.
 
 
-Application
-=============
+Applications
+==============
 Pulsar design allows for a host of different applications to be implemented in an elegant and efficient way.
 It includes the following
 
-* Http server
-* RPC server
-* Distributed Task Queue
+* Http server.
+* RPC server.
+* Distributed Task Queue.
 * Pulsar shell for asynchronous scripting (posix only).
-* Asynchronous testing suite
+* Asynchronous testing suite.
+
+Design
+=============
+Pulsar internals are based on `actors primitive`_. Actors are the atoms of 
+pulsar's concurrent computation,they do not share state between them,
+communication is achieved via asyncronous inter-process message passing, implemented using
+the standard library ``multiprocessing.Queue`` class.
+Two special classes of actors are the ``Arbiter``, used as a singletone,
+and the ``Monitor``, a manager of several actors.
+
+More information about design and phylosophy in the documentations.  
 
 Kudos
 ============
-This project started as fork of gunicorn_.
+Pulsar project started as a fork of gunicorn_ (from where the arbiter idea) and has been developed using
+ideas from nodejs_ (api design), twisted_ (the deferred), tornado_ web server
+(the eventloop implementation), celery_ (the task queue application) and
+many other open-source efforts.
 
 .. _gunicorn: http://gunicorn.org/
+.. _nodejs: http://nodejs.org/
+.. _twisted: http://twistedmatrix.com/trac/
+.. _tornado: http://www.tornadoweb.org/
+.. _celery: http://celeryproject.org/
 .. _multiprocessing: http://docs.python.org/library/multiprocessing.html
+.. _`actors primitive`: http://en.wikipedia.org/wiki/Actor_model

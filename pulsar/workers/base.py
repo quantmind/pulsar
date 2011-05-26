@@ -37,6 +37,7 @@ Base class for actors implementing applications.
         super(Worker,self)._init(impl,**kwargs)
          
     def on_exit(self):
+        self.app.on_exit(self)
         try:
             self.cfg.worker_exit(self)
         except:

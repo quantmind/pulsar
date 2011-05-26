@@ -26,6 +26,9 @@ for :class:`pulsar.Application`.'''
         super(WorkerMonitor,self).on_task()
         if not self._stopping:
             self.app.monitor_task(self)
+            
+    def on_exit(self):
+        self.app.on_exit(self)
         
     def clean_up(self):
         self.worker_class.clean_arbiter_loop(self,self.ioloop)

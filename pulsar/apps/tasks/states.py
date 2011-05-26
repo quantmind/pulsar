@@ -1,59 +1,10 @@
 """
-Task States.
 
-:copyright: (c) 2009 - 2011 by Ask Solem.
-:license: BSD, see LICENSE for more details.
-
-
-.. _states:
-
-States
-------
-
-See :ref:`task-states`.
-
-
-Sets
-----
-
-.. state:: READY_STATES
-
-READY_STATES
-~~~~~~~~~~~~
-
-Set of states meaning the task result is ready (has been executed).
-
-.. state:: UNREADY_STATES
-
-UNREADY_STATES
-~~~~~~~~~~~~~~
-
-Set of states meaning the task result is not ready (has not been executed).
-
-.. state:: EXCEPTION_STATES
-
-EXCEPTION_STATES
-~~~~~~~~~~~~~~~~
-
-Set of states meaning the task returned an exception.
-
-.. state:: PROPAGATE_STATES
-
-PROPAGATE_STATES
-~~~~~~~~~~~~~~~~
-
-Set of exception states that should propagate exceptions to the user.
-
-.. state:: ALL_STATES
-
-ALL_STATES
-~~~~~~~~~~
-
-Set of all possible states.
-
-
-Misc.
------
+* ``PENDING`` A task waiting for execution and unknown.
+* ``RECEIVED`` when the task is received by the task queue.
+* ``STARTED`` task execution has started.
+* ``SUCESS`` task execution has finished with success.
+* ``FAILURE`` task execution has finished with failure.
 
 """
 

@@ -1,5 +1,7 @@
 '''\
 A pulsar application for serving djpcms_ powered web sites.
+It includes an :class:`pulsar.apps.tasks.Task` implementation
+with Redis backend which uses stdnet_.
 
 To use it:
 
@@ -10,6 +12,7 @@ To use it:
 
 
 .. _djpcms: http://djpcms.com/
+.. _stdnet: http://lsbardel.github.com/python-stdnet/
 '''
 import os
 import sys
@@ -67,9 +70,9 @@ used by a :class:`pulsar.Worker` to carry out its task.'''
         return self.load()
     
     def load(self):
-        from djpcms.apps.handlers import DjpCmsHandler
+        from djpcms import http
         self.sites.load()
-        return DjpCmsHandler(self.sites)
+        return http.DjpCmsHandler(self.sites)
 
     def configure_logging(self):
         pass

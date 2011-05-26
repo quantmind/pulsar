@@ -6,6 +6,7 @@ Contents
    :maxdepth: 2
    
    design
+   applications
    api
 
 Indices and tables

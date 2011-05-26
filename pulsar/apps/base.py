@@ -199,6 +199,9 @@ at each ``worker`` event loop.'''
         monitor = arbiter.get_monitor(self.mid)
         if monitor:
             monitor.stop()
+            
+    def on_exit(self, worker):
+        pass
     
     def configure_logging(self):
         """\

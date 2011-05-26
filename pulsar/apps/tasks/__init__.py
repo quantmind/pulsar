@@ -7,10 +7,17 @@ A task-queue application for pulsar::
     tq = tasks.TaskQueue(tasks_path = 'path.to.tasks.*')
     tq.start()
     
-The usual input parameters apply.
+An application implements several :class:`pulsar.apps.tasks.Job`
+classes which specify the way each task is run. Essentialy
+a job class is used to generate a series of tasks.
+
+Therefore, a task is always associated with a job, which can be
+of two types:
+
+* standard
+* periodic (uses the scheduler)
 '''
 import os
-import pulsar
 from time import time
 from datetime import datetime
 
@@ -24,10 +31,18 @@ from .models import *
 from .scheduler import *
 from .worker import TaskScheduler
 from .states import *
+from .utils import *
 
 
 class TaskQueue(pulsar.Application):
-    '''A task queue application for consuming task and scheduling.'''
+    '''A task queue pulsar :class:`pulsar.Application` for consuming
+tasks and managing scheduling of tasks.
+    
+.. attribute: task_class
+
+    A subclass of :class:`pulsar.apps.tasks,Task` for storing information
+    about task execution.
+'''
     monitor_class = TaskScheduler
     REMOVABLE_ATTRIBUTES = ('scheduler',) + pulsar.Application.REMOVABLE_ATTRIBUTES
     task_class = TaskInMemory
