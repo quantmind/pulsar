@@ -10,7 +10,7 @@ from djpcms import forms, views
 
 import pulsar
 from pulsar.utils.py2py3 import iteritems
-from pulsar.apps.tasks import states, consumer, TaskException, get_traceback
+from pulsar.apps import tasks
 from pulsar.http import rpc
 
 from .models import Task
@@ -66,69 +66,17 @@ class PulsarServerApplication(AdminApplication):
                 'right_panels':monitors}
 
 
-task_display = ('id','name','status','time_executed',
-                'time_start','time_end','duration',
+task_display = ('name','status','timeout','time_executed',
+                'time_start','time_end','duration','expiry',
                 'user')
 
 class TasksAdmin(AdminApplicationSimple):
-    list_display = task_display
-    object_display = list_display + ('api','string_result','stack_trace') 
+    list_display = ('short_id',) + task_display
+    object_display = ('id',) + task_display + ('api','string_result','stack_trace') 
     has_plugins = False
     inherit = False
     search = views.SearchView()
     view   = views.ViewView(regex = views.UUID_REGEX)
     delete = views.DeleteView()
     
-    
-class TaskRequest(consumer.TaskRequest):
-    
-    def _on_init(self):
-        if self.ack:
-            Task(id = self.id,
-                 name = self.name,
-                 time_executed = fromtimestamp(self.time_executed),
-                 status = states.PENDING).save()
-             
-    def _on_start(self,worker):
-        if self.ack:
-            t = Task.objects.get(id = self.id)
-            t.status = states.STARTED
-            t.time_start = fromtimestamp(self.time_start)
-            t.save()
-            return t
-        
-    def _on_finish(self,worker):
-        if self.ack:
-            t = Task.objects.get(id = self.id)
-            if self.exception:
-                t.status = states.FAILURE
-                if isinstance(self.exception,TaskException):
-                    t.stack_trace = self.exception.stack_trace
-                else:
-                    t.stack_trace = get_traceback()
-                t.result = str(self.exception)
-            else:
-                t.status = states.SUCCESS
-                t.result = self.result
-            t.time_end = fromtimestamp(self.time_end)
-            t.save()
-    
-    def todict(self):
-        try:
-            task = Task.objects.get(id = self.id)
-        except Task.DoesNotExist:
-            return super(TaskRequest,self).todict()
-        d = task.todict()
-        d['id'] = task.id
-        return d
-        
-    @classmethod
-    def get_task(cls, id, remove = False):
-        try:
-            task = Task.objects.get(id = id)
-        except Task.DoesNotExist:
-            return None
-        if remove and task.time_end:
-            task.delete()
-        return task.todict()
     
