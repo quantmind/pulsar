@@ -1,7 +1,6 @@
 from time import time
 import os
 import sys
-import traceback
 import signal
 from multiprocessing.queues import Empty
 from threading import Lock

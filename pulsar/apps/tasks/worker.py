@@ -37,7 +37,7 @@ class TaskScheduler(pulsar.WorkerMonitor):
             
             if ack:
                 task = tq or task
-                return task.todict()
+                return task.tojson_dict()
         except Exception as e:
             return e
     

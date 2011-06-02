@@ -67,6 +67,11 @@ try:
             return str(self.result)
         string_result.short_description = 'result'
         
+        def tojson_dict(self):
+            d = self.todict()
+            d['id'] = self.id
+            return d
+        
         @classmethod
         def get_task(cls, id, remove = False):
             try:
@@ -78,7 +83,17 @@ try:
             except cls.DoesNotExist:
                 pass
     
+    
+    class Script(orm.StdModel):
+        name = orm.SymbolField(unique = True)
+        body = orm.CharField()
+        language = orm.SymbolField()
+        
+        def __unicode__(self):
+            return self.name
+        
 except ImportError:
     PulsarServer = None
     Task = None
+    Script = None
 

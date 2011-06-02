@@ -130,7 +130,7 @@ class Scheduler(object):
                 expiry = time_executed + job.timeout
             task = TaskFactory(id = id, name = job.name,time_executed = time_executed,
                                expiry = expiry, args = targs, kwargs = tkwargs,
-                               status = PENDING)
+                               status = PENDING, **kwargs)
             return task.save()
         else:
             raise TaskNotAvailable(name)

@@ -66,7 +66,7 @@ class Task(object):
             self.result = str(exception)
         else:
             self.status = SUCCESS
-            self.result = self.result
+            self.result = result
         self.save()
         self._on_finish(worker)
         
@@ -98,7 +98,7 @@ class Task(object):
         if self.time_end:
             return self.time_end - self.time_start  
 
-    def todict(self):
+    def tojson_dict(self):
         return self.__dict__.copy()
     
     def on_same_id(self):
