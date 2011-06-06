@@ -49,7 +49,7 @@ class SiteLoader(object):
             
     def _load(self):
         import djpcms
-        djpcms.MakeSite(__file__,
+        djpcms.MakeSite(os.getcwd(),
                         settings = self.settings)
 
     def finish(self, sites):
