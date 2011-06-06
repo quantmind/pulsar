@@ -113,7 +113,7 @@ Add a limited ammount of magic to RPC handlers.'''
                 if hasattr(base, 'rpcfunctions'):
                     rpcbase = base.rpcfunctions
                     for key,method in rpcbase.items():
-                        if not rpc.has_key(key):
+                        if key not in rpc:
                             rpc[key] = method
                         
         attrs['rpcfunctions'] = rpc

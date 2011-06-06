@@ -21,6 +21,7 @@ from pulsar.apps import wsgi
 
 
 class SiteLoader(object):
+    settings = None
     ENVIRON_NAME = 'PULSAR_SERVER_TYPE'
     
     def __init__(self, name):
@@ -47,7 +48,9 @@ class SiteLoader(object):
         return djpcms.sites
             
     def _load(self):
-        djpcms.MakeSite(__file__)
+        import djpcms
+        djpcms.MakeSite(os.getcwd(),
+                        settings = self.settings)
 
     def finish(self, sites):
         pass
