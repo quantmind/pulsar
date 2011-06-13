@@ -23,6 +23,7 @@ from .defer import is_async, Deferred
 __all__ = ['is_actor',
            'Actor',
            'ActorRequest',
+           'MAIN_THREAD',
            'Empty']
 
 
@@ -41,7 +42,7 @@ class HttpMixin(object):
         return get_httplib(self.cfg)
 
     
-_main_thread = current_thread()
+MAIN_THREAD = current_thread()
 
    
 class Runner(LogginMixin,HttpMixin):
@@ -68,7 +69,7 @@ class Runner(LogginMixin,HttpMixin):
     def _install_signals(self):
         '''Initialise signals for correct signal handling.'''
         current = self.current_thread()
-        if current == _main_thread and self.isprocess():
+        if current == MAIN_THREAD and self.isprocess():
             self.log.info('Installing signals')
             # The default signal handling function in signal
             sfun = getattr(self,'signal',None)
@@ -78,7 +79,10 @@ class Runner(LogginMixin,HttpMixin):
                     func = getattr(self,'handle_{0}'.format(name.lower()),None)
                 if func:
                     sig = getattr(signal,'SIG{0}'.format(name))
-                    signal.signal(sig, func)
+                    try:
+                        signal.signal(sig, func)
+                    except ValueError:
+                        break
     
     def _setup(self):
         pass

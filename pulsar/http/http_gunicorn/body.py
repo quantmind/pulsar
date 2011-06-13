@@ -24,7 +24,7 @@ class ChunkedReader(object):
         self.buf = BytesIO()
     
     def read(self, size):
-        if not isinstance(size, (int, long)):
+        if not isinstance(size, int):
             raise TypeError("size must be an integral type")
         if size <= 0:
             raise ValueError("Size must be positive.")
@@ -146,7 +146,7 @@ class EOFReader(object):
         self.finished = False
     
     def read(self, size):
-        if not isinstance(size, (int, long)):
+        if not isinstance(size,int):
             raise TypeError("size must be an integral type")
         if size < 0:
             raise ValueError("Size must be positive.")
@@ -193,7 +193,7 @@ class Body(object):
     def getsize(self, size):
         if size is None:
             return MAXSIZE
-        elif not isinstance(size, (int, long)):
+        elif not isinstance(size,int):
             raise TypeError("size must be an integral type")
         elif size < 0:
             return MAXSIZE
