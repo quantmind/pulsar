@@ -169,14 +169,17 @@ as required."""
     def actor_params(self):
         return self._actor_params or {}
         
-    def info(self):
-        requests = []
-        proxy = self.proxy
-        for w in itervalues(self.LIVE_ACTORS):
-            requests.append(proxy.info(w))
-        return ActorCallBacks(self,requests).add_callback(self._info)
+    def info(self, full = False):
+        if full:
+            requests = []
+            proxy = self.proxy
+            for w in itervalues(self.LIVE_ACTORS):
+                requests.append(proxy.info(w))
+            return ActorCallBacks(self,requests).add_callback(self._info)
+        else:
+            return self._info()
         
-    def _info(self, result):
+    def _info(self, result = None):
         return {'worker_class':self.worker_class.code(),
                 'workers':result,
                 'listen':str(self.socket),

@@ -270,12 +270,12 @@ MonitorS manage group of actors performing specific tasks.
             except:
                 pass
         
-    def info(self):
+    def info(self, full = False):
         if not self.started():
             return
         pools = []
         for p in itervalues(self.monitors):
-            pools.append(p.info())
+            pools.append(p.info(full))
         return ActorCallBacks(self,pools).add_callback(self._info)
     
     def _info(self, result):

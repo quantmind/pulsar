@@ -469,7 +469,7 @@ This function should live on a event loop.'''
     def isprocess(self):
         return self.impl == 'process'
     
-    def info(self):
+    def info(self, full = False):
         return {'aid':self.aid,
                 'pid':self.pid,
                 'ppid':self.ppid,
@@ -504,9 +504,9 @@ This function should live on a event loop.'''
             self._linked_actors.pop(caller.aid,None)
     actor_on_actor_exit.ack = False
     
-    def actor_info(self, caller):
+    def actor_info(self, caller, full = False):
         '''Get server Info and send it back.'''
-        return self.info()
+        return self.info(full)
     
     def actor_ping(self, caller):
         return 'pong'
