@@ -90,6 +90,8 @@ tasks and managing scheduling of tasks.
     def end_event_task(self, worker, task, result):
         if isinstance(result,Exception):
             task.on_finish(worker, exception = result)
+        elif isinstance(task,Exception):
+            raise task
         else:
             task.on_finish(worker, result = result)
             
