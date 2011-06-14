@@ -72,7 +72,7 @@ class RpcResponse(object):
                 result = self.handler.dumps(id,version,error=result)
             else:
                 result = self.handler.dumps(id,version,result=result)
-                self.info(request,id,'Successfully handled rcp function "{0}"'.format(self.path))
+                self.info(request,id,'Successfully handled rpc function "{0}"'.format(self.path))
         except Exception as e:
             result = self.handler.dumps(id,version,error=e)
         
