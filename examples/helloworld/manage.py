@@ -1,7 +1,10 @@
-try:
-    from penv import pulsar
-except ImportError:
-    import pulsar
+'''Pulsar "Hello World!" application. It runs a HTTP server which
+display the two famous words::
+
+    python manage.py
+'''
+import pulsar
+
 
 def hello(environ, start_response):
     '''Pulsar HTTP "Hello World!" application'''

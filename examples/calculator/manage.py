@@ -28,9 +28,9 @@ class Root(rpc.JSONRPC):
     def rpc_ping(self, request):
         return 'pong'
     
-    def rpc_server_info(self, request):
+    def rpc_server_info(self, request, full = False):
         worker = request.environ['pulsar.worker']
-        return worker.proxy.info(worker.arbiter)
+        return worker.proxy.info(worker.arbiter, full = full)
         
     
 class Calculator(rpc.JSONRPC):
