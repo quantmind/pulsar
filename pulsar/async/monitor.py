@@ -180,8 +180,10 @@ as required."""
             return self._info()
         
     def _info(self, result = None):
+        result = result or len(self.LIVE_ACTORS)
         return {'worker_class':self.worker_class.code(),
                 'workers':result,
+                'concurrency':self.cfg.concurrency,
                 'listen':str(self.socket),
                 'name':self.name,
                 'age':self.age}

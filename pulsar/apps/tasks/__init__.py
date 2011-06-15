@@ -32,6 +32,7 @@ from .scheduler import *
 from .worker import TaskScheduler
 from .states import *
 from .utils import *
+from .rpc import *
 
 
 class TaskQueue(pulsar.Application):

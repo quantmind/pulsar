@@ -1,6 +1,7 @@
 
-__all__=  ['SendToQueue','queueTask']
+__all__=  ['SendToQueue','queueTask','nice_task_message']
 
+format_time = lambda x : x
 
 class SendToQueue(object):
     '''Utility class for sending a task to the task queue from a
@@ -69,6 +70,8 @@ def queueTask(jobname, doc = '', ack = True, server = "taskqueue"):
     '''A decorator for sending tasks to the queue. It uses the
 Same as :class:`pulsar.apps.tasks.SendToQueue` class.'''
     def _(self, request, *args, **kwargs):
+        if hasattr(self,'task_queue_manager'):
+            server = self.task_queue_manager
         return SendToQueue(jobname,request,server,ack)(*args,**kwargs)
         
     _.__doc__ = doc
@@ -76,5 +79,14 @@ Same as :class:`pulsar.apps.tasks.SendToQueue` class.'''
     return _
 
 
-        
+def nice_task_message(req, smart_time = None):
+    smart_time = smart_time or format_time
+    status = req['status'].lower()
+    user = req.get('user',None)
+    ti = req.get('time_start',req.get('time_executed',None))
+    name = '{0} ({1}) '.format(req['name'],req['id'][:8])
+    msg = '{0} {1} at {2}'.format(name,status,smart_time(ti))
+    if user:
+        msg = '{0} by {1}'.format(msg,user)
+    return msg
 

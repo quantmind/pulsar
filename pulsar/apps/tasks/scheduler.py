@@ -174,4 +174,29 @@ value ``now`` can be passed.'''
         for name,job in iteritems(registry):
             yield (name,{'doc':job.__doc__,
                          'type':job.type})
+            
+    def next_scheduled(self, jobname = None):
+        if jobname:
+            entry = self._entries.get(jobname,None)
+            if entry:
+                _, next_time_to_run = entry.is_due()
+                return (jobname,max(next_time_to_run,0))
+        else:
+            next_entry = None
+            next_time = None
+            for entry in itervalues(self._entries):
+                is_due, next_time_to_run = entry.is_due()
+                if is_due:
+                    next_time = 0
+                    next_entry = entry
+                    break
+                else:
+                    if next_time_to_run == None or \
+                       next_time_to_run < next_time:
+                        next_time = next_time_to_run
+                        next_entry = entry
+            if next_entry:
+                return (next_entry.name,max(next_time,0))
+            
+        return (jobname,None)
         

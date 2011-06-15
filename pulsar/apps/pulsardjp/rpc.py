@@ -39,3 +39,4 @@ Retrive a list of tasks according to a set of filters.
     
     def extra_server_info(self, request, info):
         return info
+    
