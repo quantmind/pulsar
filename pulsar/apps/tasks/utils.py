@@ -70,9 +70,10 @@ def queueTask(jobname, doc = '', ack = True, server = "taskqueue"):
     '''A decorator for sending tasks to the queue. It uses the
 Same as :class:`pulsar.apps.tasks.SendToQueue` class.'''
     def _(self, request, *args, **kwargs):
+        s = server
         if hasattr(self,'task_queue_manager'):
-            server = self.task_queue_manager
-        return SendToQueue(jobname,request,server,ack)(*args,**kwargs)
+            s = self.task_queue_manager
+        return SendToQueue(jobname,request,s,ack)(*args,**kwargs)
         
     _.__doc__ = doc
     _.__name__ = jobname
