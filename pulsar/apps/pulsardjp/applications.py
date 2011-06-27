@@ -1,13 +1,12 @@
 from datetime import datetime
 
+from djpcms import forms, views, html
 from djpcms.template import loader
 from djpcms.apps.included.admin import AdminApplication, AdminApplicationSimple
-from djpcms.html import LazyRender, Table, ObjectDefinition
 from djpcms.utils.dates import nicetimedelta
 from djpcms.utils.text import nicename
 from djpcms.utils import mark_safe
 from djpcms.forms.utils import return_form_errors
-from djpcms import forms, views
 
 from stdnet import orm
 
@@ -25,7 +24,7 @@ class ServerForm(forms.Form):
     schema = forms.CharField(initial = 'http://')
     host = forms.CharField()
     port = forms.IntegerField(initial = 8060)
-    notes = forms.CharField(widget = forms.TextArea,
+    notes = forms.CharField(widget = html.TextArea,
                             required = False)
     location = forms.CharField(required = False)
     
@@ -95,7 +94,7 @@ script_languages = (
 class ScriptForm(forms.Form):
     name = forms.CharField(toslug = '_')
     language = forms.ChoiceField(choices = script_languages)
-    body = forms.CharField(widget = forms.TextArea(cn = 'taboverride'))
+    body = forms.CharField(widget = html.TextArea(default_class = 'taboverride'))
     
     def clean_name(self, value):
         return orm.test_unique('name',self.model,value,self.instance,
