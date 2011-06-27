@@ -53,6 +53,10 @@ try:
         user = orm.SymbolField(required = False)
         api = orm.SymbolField(required = False)
         
+        
+        class Meta:
+            ordering = '-time_executed'
+        
         def short_id(self):
             return self.id[:8]
         short_id.short_description = 'id'
