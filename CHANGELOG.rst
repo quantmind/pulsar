@@ -6,4 +6,4 @@ Version 0.1.0 - Development
 * Five different applications: HTTP server, RPC server, distributed task queue,
   asynchronous test suite and asynchronous shell.
 * 4 examples spanning all applications.
-* **38 regression tests**
+* **35 regression tests**

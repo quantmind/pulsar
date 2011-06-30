@@ -12,7 +12,7 @@ class PulsarServerCommands(rpc.JSONRPC):
     def rpc_server_info(self, request, full = False):
         '''Dictionary of information about the server'''
         worker = request.environ['pulsar.worker']
-        info = worker.proxy.info(worker.arbiter, full = False)
+        info = worker.proxy.info(worker.arbiter, full = full)
         return info.add_callback(lambda res : self.extra_server_info(request, res))
     
     def rpc_functions_list(self, request):
