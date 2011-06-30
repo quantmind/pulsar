@@ -59,10 +59,10 @@ class PulsarServerApplication(AdminApplication):
         monitors = []
         for monitor in info['monitors']:
             monitors.append({'name':nicename(monitor.pop('name','Monitor')),
-                             'value':ObjectDefinition(self,djp,\
+                             'value':html.ObjectDefinition(self,djp,\
                                           self.pannel_data(monitor))})
         servers = [{'name':'Server',
-                    'value':ObjectDefinition(self,djp,\
+                    'value':html.ObjectDefinition(self,djp,\
                                    self.pannel_data(info['server']))}]
         return {'left_panels':servers,
                 'right_panels':monitors}
