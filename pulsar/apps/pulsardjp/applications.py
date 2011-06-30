@@ -19,6 +19,7 @@ from .models import Task
 
 fromtimestamp = datetime.fromtimestamp
 
+
 class ServerForm(forms.Form):
     code = forms.CharField()
     schema = forms.CharField(initial = 'http://')
