@@ -2,7 +2,7 @@
 Event driven network library for python. Tested in Windows and Linux,
 it requires python 2.6 and up, including python 3.
 
-An example of a web server written with pulsar which responds 
+An example of a web server written with ``pulsar`` which responds 
 with "Hello World!" for every request::
 
     
@@ -50,18 +50,18 @@ Design
 =============
 Pulsar internals are based on `actors primitive`_. Actors are the atoms of 
 pulsar's concurrent computation,they do not share state between them,
-communication is achieved via asyncronous inter-process message passing, implemented using
+communication is achieved via asynchronous inter-process message passing, implemented using
 the standard library ``multiprocessing.Queue`` class.
 Two special classes of actors are the ``Arbiter``, used as a singletone,
-and the ``Monitor``, a manager of several actors.
+and the ``Monitor``, a manager of several actors performing similar functions.
 
-More information about design and phylosophy in the documentations.  
+More information about design and philosophy in the documentations.  
 
 Kudos
 ============
 Pulsar project started as a fork of gunicorn_ (from where the arbiter idea) and has been developed using
-ideas from nodejs_ (api design), twisted_ (the deferred), tornado_ web server
-(the eventloop implementation), celery_ (the task queue application) and
+ideas from nodejs_ (api design), twisted_ (the deferred implementation), tornado_ web server
+(the event-loop implementation), celery_ (the task queue application) and
 many other open-source efforts.
 
 .. _gunicorn: http://gunicorn.org/

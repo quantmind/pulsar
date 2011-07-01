@@ -20,6 +20,30 @@ from .models import Task
 fromtimestamp = datetime.fromtimestamp
 
 
+monitor_template = '''\
+{% extends "djpcms/yui/yui-g.html" %}{% block left_column %}
+<div class="pulsar-panel">{% for panel in left_panels %}
+ <div class="flat-panel">
+  <div class="hd">
+   <h2>{{ panel.name }}</h2>
+  </div>
+  <div class="bd">
+   {{ panel.value }}
+  </div>
+ </div>{% endfor %}
+</div>{% endblock %}{% block right_column %}
+<div class="pulsar-panel">{% for panel in right_panels %}
+ <div class="flat-panel">
+  <div class="hd">
+   <h2>{{ panel.name }}</h2>
+  </div>
+  <div class="bd">
+   {{ panel.value }}
+  </div>
+ </div>{% endfor %}
+</div>{% endblock %}'''
+
+
 class ServerForm(forms.Form):
     code = forms.CharField()
     schema = forms.CharField(initial = 'http://')
@@ -34,7 +58,6 @@ class PulsarServerApplication(AdminApplication):
     inherit = True
     form = ServerForm
     list_per_page = 100
-    template_view = ('pulsardjp/monitor.html',)
     converters = {'uptime': nicetimedelta}
     list_display = ('code','path','machine','this','notes')
      
@@ -47,7 +70,7 @@ class PulsarServerApplication(AdminApplication):
             panels = self.get_panels(djp,r.server_info())
         except pulsar.ConnectionError:
             panels = {'left_panels':[{'name':'Server','value':'No Connection'}]}
-        return loader.render(self.template_view,panels)
+        return loader.template_class(monitor_template).render(panels)
     
     def pannel_data(self, data):
         for k,v in iteritems(data):
@@ -72,6 +95,7 @@ class PulsarServerApplication(AdminApplication):
 task_display = ('name','status','timeout','time_executed',
                 'time_start','time_end','duration','expiry',
                 'user')
+
 
 class TasksAdmin(AdminApplicationSimple):
     list_display = ('short_id',) + task_display
