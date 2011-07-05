@@ -19,29 +19,33 @@ from .models import Task
 
 fromtimestamp = datetime.fromtimestamp
 
-
 monitor_template = '''\
-{% extends "djpcms/yui/yui-g.html" %}{% block left_column %}
-<div class="pulsar-panel">{% for panel in left_panels %}
- <div class="flat-panel">
-  <div class="hd">
-   <h2>{{ panel.name }}</h2>
-  </div>
-  <div class="bd">
-   {{ panel.value }}
-  </div>
- </div>{% endfor %}
-</div>{% endblock %}{% block right_column %}
-<div class="pulsar-panel">{% for panel in right_panels %}
- <div class="flat-panel">
-  <div class="hd">
-   <h2>{{ panel.name }}</h2>
-  </div>
-  <div class="bd">
-   {{ panel.value }}
-  </div>
- </div>{% endfor %}
-</div>{% endblock %}'''
+<div class="yui-g">
+    <div class="yui-u first">
+        <div class="pulsar-panel">{% for panel in left_panels %}
+         <div class="flat-panel">
+          <div class="hd">
+           <h2>{{ panel.name }}</h2>
+          </div>
+          <div class="bd">
+           {{ panel.value }}
+          </div>
+         </div>{% endfor %}
+        </div>
+    </div>
+    <div class="yui-u"> 
+        <div class="pulsar-panel">{% for panel in right_panels %}
+         <div class="flat-panel">
+          <div class="hd">
+           <h2>{{ panel.name }}</h2>
+          </div>
+          <div class="bd">
+           {{ panel.value }}
+          </div>
+         </div>{% endfor %}
+        </div>
+    </div>
+</div>'''
 
 
 class ServerForm(forms.Form):
