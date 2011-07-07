@@ -34,7 +34,8 @@ for :class:`pulsar.Application`.'''
         self.worker_class.clean_arbiter_loop(self,self.ioloop)
             
     def actor_params(self):
-        '''Parameters to be passed to the spawn method when creating new actors.'''
+        '''Parameters to be passed to the spawn method
+when creating new actors.'''
         return {'app':self.app,
                 'socket': self.socket,
                 'timeout': self.cfg.timeout,

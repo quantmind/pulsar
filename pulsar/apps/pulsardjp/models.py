@@ -35,6 +35,17 @@ try:
             return '{0}{1}{2}'.format(self.schema,self.host,ap)
 
 
+    class JobModel(orm.FakeModel):
+        
+        def __init__(self, p, name, header, data):
+            self.proxy = p
+            self.id = name
+            self.name = name
+            for head in header:
+                if head is not 'name' and head in data:
+                    setattr(self,head,data[head])
+
+
     class Task(orm.StdModel, tasks.Task):
         '''A Task Stored in Redis'''
         filtering = ('id','name','status','user')
@@ -77,7 +88,7 @@ try:
             return d
         
         @classmethod
-        def get_task(cls, id, remove = False):
+        def get_task(cls, id, remove = True):
             try:
                 task = cls.objects.get(id = id)
                 if remove and task.done():

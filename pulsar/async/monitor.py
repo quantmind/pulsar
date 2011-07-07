@@ -135,7 +135,8 @@ A monitor manages a set of actors.
     def __join(self, timeout = 1):
         '''Join the pool, close or terminate must have been called before.'''
         if not self.stopped():
-            raise ValueError('Cannot join worker pool. Must be stopped or terminated first.')
+            raise ValueError('Cannot join worker pool. Must be stopped\
+ or terminated first.')
         for wid, proxy in list(iteritems(self.WORKERS)):
             if not proxy.is_alive():
                 self.clean_worker(wid)
@@ -157,11 +158,12 @@ as required."""
             
     def spawn_actor(self):
         '''Spawn a new worker'''
-        worker = self.arbiter.spawn(self.worker_class,
-                                    monitor = self,
-                                    task_queue = self.task_queue,
-                                    actor_links = self.arbiter.get_all_monitors(),
-                                    **self.actor_params())
+        worker = self.arbiter.spawn(
+                        self.worker_class,
+                        monitor = self,
+                        task_queue = self.task_queue,
+                        actor_links = self.arbiter.get_all_monitors(),
+                        **self.actor_params())
         monitor = self.arbiter.LIVE_ACTORS[worker.aid]
         self.LIVE_ACTORS[worker.aid] = monitor
         return worker
@@ -181,12 +183,15 @@ as required."""
         
     def _info(self, result = None):
         result = result or len(self.LIVE_ACTORS)
+        tq = self.task_queue
         return {'worker_class':self.worker_class.code(),
                 'workers':result,
                 'concurrency':self.cfg.concurrency,
                 'listen':str(self.socket),
                 'name':self.name,
-                'age':self.age}
+                'age':self.age,
+                'task_queue': tq is not None,
+                'task_queue_size': tq.qsize() if tq else None}
 
     def get_actor(self, aid):
         '''Delegate get_actor to the arbiter'''

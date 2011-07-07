@@ -111,7 +111,7 @@ class Scheduler(object):
         return self._entries
         
     def make_request(self, name, targs = None, tkwargs = None, **kwargs):
-        '''Create a new task request'''
+        '''Create a new task request'''            
         if name in registry:
             TaskFactory = self.TaskFactory
             job = registry[name]
@@ -120,16 +120,17 @@ class Scheduler(object):
             id = job.make_task_id(targs,tkwargs)
             task = TaskFactory.get_task(id)
             if task:
-                if task.done():
-                    task.delete()
-                else:
-                    return task
+                return task
+            if job.name in self.entries:
+                self.entries[job.name].next()
             expiry = None
             time_executed = datetime.now()
             if job.timeout:
                 expiry = time_executed + job.timeout
-            task = TaskFactory(id = id, name = job.name,time_executed = time_executed,
-                               expiry = expiry, args = targs, kwargs = tkwargs,
+            task = TaskFactory(id = id, name = job.name,
+                               time_executed = time_executed,
+                               expiry = expiry, args = targs,
+                               kwargs = tkwargs,
                                status = PENDING, **kwargs)
             return task.save()
         else:
@@ -145,7 +146,7 @@ value ``now`` can be passed.'''
             for entry in itervalues(self._entries):
                 is_due, next_time_to_run = entry.is_due(now = now)
                 if is_due:
-                    entry = entry.next()
+                    #entry = entry.next()
                     request = self.make_request(entry.name)
                     queue.put((request.id,request))
                 if next_time_to_run:
@@ -172,8 +173,15 @@ value ``now`` can be passed.'''
 
     def job_list(self):
         for name,job in iteritems(registry):
-            yield (name,{'doc':job.__doc__,
-                         'type':job.type})
+            d = {'doc':job.__doc__, 'type':job.type}
+            if name in self.entries:
+                entry = self.entries[name]
+                _,next_time_to_run = self.next_scheduled(name)
+                run_every = 86400*job.run_every.days + job.run_every.seconds
+                d.update({'next_run':next_time_to_run,
+                          'run_every':run_every,
+                          'runs_count':entry.total_run_count})
+            yield (name,d)
             
     def next_scheduled(self, jobname = None):
         if jobname:

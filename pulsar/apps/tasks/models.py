@@ -59,7 +59,8 @@ class JobMetaClass(type):
 
         # Abstract class, remove the abstract attribute so
         # any class inheriting from this won't be abstract by default.
-        if attrs.pop("abstract", None) or not attrs.get("autoregister", True) or not job_module:
+        if attrs.pop("abstract", None) or not attrs.get("autoregister", True)\
+                                       or not job_module:
             return super_new(cls, name, bases, attrs)
 
         # Automatically generate missing name.
@@ -127,7 +128,8 @@ It controls when the periodic Job is run.'''
     def __init__(self, run_every = None):
         self.run_every = run_every or self.run_every
         if self.run_every is None:
-            raise NotImplementedError("Periodic Jobs must have a run_every attribute set.")
+            raise NotImplementedError("Periodic Jobs must have\
+ a run_every attribute set.")
    
     def is_due(self, last_run_at):
         """Returns tuple of two items ``(is_due, next_time_to_run)``,
