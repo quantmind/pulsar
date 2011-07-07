@@ -23,7 +23,8 @@ from .exceptions import exception, INTERNAL_ERROR
 
 
 __all__ = ['JSONRPC',
-           'JsonProxy']
+           'JsonProxy',
+           'JsonServer']
 
 
 class JSONRPCException(Exception):
@@ -129,6 +130,29 @@ Design to comply with the `JSON-RPC 2.0`_ Specification.
             return self.http.HttpResponse('<h1>Not Found</h1>')
 
 
+class JsonServer(JSONRPC):
+    '''Add Four calls to the base Json Rpc handler.'''
+    def rpc_ping(self, request):
+        '''Ping the server'''
+        return 'pong'
+    
+    def rpc_server_info(self, request, full = False):
+        '''Dictionary of information about the server'''
+        worker = request.environ['pulsar.worker']
+        info = worker.proxy.info(worker.arbiter, full = full)
+        return info.add_callback(lambda res : self.extra_server_info(request, res))
+    
+    def rpc_functions_list(self, request):
+        return list(self.listFunctions())
+    
+    def rpc_shut_down(self, request):
+        request.environ['pulsar.worker'].shut_down()
+    
+    def extra_server_info(self, request, info):
+        '''Add additional information to the info dictionary.'''
+        return info
+    
+    
 Handle = JSONRPC
 
 

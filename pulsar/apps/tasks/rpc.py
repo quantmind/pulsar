@@ -5,8 +5,9 @@ __all__ = ['TaskQueueRpcMixin']
 
 
 class TaskQueueRpcMixin(rpc.JSONRPC):
-    '''A mixin RPC class for communicating with a task queue. To use this mixin, you
-need to have an RPC application and a taskqueue application installed in the arbiter.'''
+    '''A mixin RPC class for communicating with a task queue.
+To use this mixin, you need to have an RPC application and a taskqueue
+application installed in the arbiter.'''
     
     task_queue_manager = 'taskqueue'
     

@@ -1,5 +1,5 @@
 '''\
-Models for traking tasks and servers.
+Models for tracking tasks and servers.
 Requires python-stdnet_
 
 .. _python-stdnet: http://pypi.python.org/pypi/python-stdnet/

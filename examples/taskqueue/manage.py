@@ -20,29 +20,21 @@ try:
 except ImportError:
     import pulsar
     
-from pulsar.http import rpc, queueTask, actorCall
+from pulsar.apps.tasks import TaskQueueRpcMixin, queueTask, TaskQueue
+from pulsar.http import rpc, actorCall
 
 
-class RpcRoot(rpc.JSONRPC):
-    
-    def rpc_ping(self, request):
-        return 'pong'
-    
-    def rpc_shut_down(self, request):
-        request.environ['pulsar.worker'].shut_down()
-    
-    def rpc_server_info(self, request):
-        return self.send(request, 'info')
-    
+class RpcRoot(rpc.JsonServer,TaskQueueRpcMixin):
+    '''The rpc handler which communicates with the task queue'''    
     rpc_get_task = actorCall('get_task', server = 'taskqueue')
     rpc_evalcode = queueTask('codetask', server = 'taskqueue')
         
 
 def createTaskQueue(tasks_path = None, **params):
-    # Create the taskqueue application using the tasks in the sampletasks directory
-    tasks = pulsar.require('tasks')
-    return tasks.TaskQueue(tasks_path = ['taskqueue.sampletasks.*'],
-                           **params)
+    # Create the taskqueue application using the tasks in
+    # the sampletasks directory
+    return TaskQueue(tasks_path = ['taskqueue.sampletasks.*'],
+                     **params)
     
     
 def server(task_workers = 1, concurrency = 'process', **params):

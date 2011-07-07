@@ -11,7 +11,7 @@ To use it:
     python manage.py run_pulsar
 
 
-.. _djpcms: http://djpcms.com/
+.. _djpcms: https://github.com/lsbardel/djpcms
 .. _stdnet: http://lsbardel.github.com/python-stdnet/
 '''
 import os
@@ -79,4 +79,3 @@ used by a :class:`pulsar.Worker` to carry out its task.'''
 
     def configure_logging(self):
         pass
-        
