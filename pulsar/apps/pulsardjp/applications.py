@@ -107,9 +107,12 @@ class PulsarServerApplication(AdminApplication):
 
 ################################    TASKQUEUE DJPCMS APPLICATION
 
-task_display = ('name','status','timeout','time_executed',
-                'time_start','time_end','duration','expiry',
-                'user')
+task_display = (
+    'name','status','timeout','time_executed','time_start','time_end',
+    html.table_header('task_duration','duration',function='duration'),
+    'expiry',
+    'api',
+    'user')
 
 
 class JobsView(views.SearchView):
@@ -172,7 +175,7 @@ class JobApplication(views.ModelApplication):
 class TasksAdmin(AdminApplicationSimple):
     list_display = ('short_id',) + task_display
     object_display = ('id',) + task_display +\
-                     ('api','string_result','stack_trace') 
+                     ('string_result','stack_trace') 
     has_plugins = False
     inherit = True
     proxy = None

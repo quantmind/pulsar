@@ -52,18 +52,19 @@ try:
         id = orm.SymbolField(primary_key = True)
         name = orm.SymbolField()
         status = orm.SymbolField()
+        user = orm.SymbolField(required = False)
+        api = orm.SymbolField(required = False)
+        
         time_executed = orm.DateTimeField(index = False)
         time_start = orm.DateTimeField(required = False, index = False)
         time_end = orm.DateTimeField(required = False, index = False)
+        task_duration = orm.FloatField(required = False)
         expiry = orm.DateTimeField(required = False, index = False)
         timeout = orm.BooleanField(default = False)
         args = orm.PickleObjectField()
         kwargs = orm.PickleObjectField()
         result = orm.PickleObjectField(required = False)
         stack_trace = orm.CharField()
-        user = orm.SymbolField(required = False)
-        api = orm.SymbolField(required = False)
-        
         
         class Meta:
             ordering = '-time_executed'
@@ -86,6 +87,12 @@ try:
             d = self.todict()
             d['id'] = self.id
             return d
+        
+        def _on_finish(self, worker):
+            duration = self.duration()
+            if duration:
+                self.task_duration = 86400*duration.days + duration.seconds
+                self.save()
         
         @classmethod
         def get_task(cls, id, remove = True):

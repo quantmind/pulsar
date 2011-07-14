@@ -141,7 +141,8 @@ class TaskInMemory(Task):
 
     def _on_finish(self,worker=None):
         if worker:
-            worker.monitor.send(worker.aid, ((self,),{}), name = 'task_finished')
+            worker.monitor.send(worker.aid, ((self,),{}),
+                                name = 'task_finished')
 
     def save(self):
         self._TASKS[self.id] = self
