@@ -25,7 +25,7 @@ and the time in seconds when the task will run.
         return actor_call(request,
                           self.task_queue_manager,
                           'next_scheduled',
-                          jobname = 'liverefresh')
+                          jobname = jobname)
         
     def rpc_run_new_task(self, request, jobname = None, ack = True, **kwargs):
         '''Run a new task in the task queue. The task can be of any type

@@ -182,17 +182,19 @@ as required."""
             return self._info()
         
     def _info(self, result = None):
-        result = result or len(self.LIVE_ACTORS)
+        if not result:
+            result = [a.local_info() for a in self.LIVE_ACTORS.values()] 
         tq = self.task_queue
         return {'worker_class':self.worker_class.code(),
-                'workers':result,
+                'workers': result,
+                'num_workers':len(self.LIVE_ACTORS),
                 'concurrency':self.cfg.concurrency,
                 'listen':str(self.socket),
                 'name':self.name,
                 'age':self.age,
                 'task_queue': tq is not None,
                 'task_queue_size': tq.qsize() if tq else None}
-
+        
     def get_actor(self, aid):
         '''Delegate get_actor to the arbiter'''
         return self.arbiter.get_actor(aid)

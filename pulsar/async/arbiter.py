@@ -89,7 +89,8 @@ MonitorS manage group of actors performing specific tasks.
                 arbiter.actor_age += 1
                 kwargs['age'] = arbiter.actor_age
             impl = kwargs.pop('impl',actor_class.DEFAULT_IMPLEMENTATION)
-            timeout = max(kwargs.pop('timeout',cls.DEFAULT_ACTOR_TIMEOUT),cls.MINIMUM_ACTOR_TIMEOUT)
+            timeout = max(kwargs.pop('timeout',cls.DEFAULT_ACTOR_TIMEOUT),
+                            cls.MINIMUM_ACTOR_TIMEOUT)
             impl_cls = actor_class._runner_impl[impl]
             actor = impl_cls(actor_class,impl,timeout,arbiter,args,kwargs)
             monitor = actor.proxy_monitor()
@@ -279,12 +280,11 @@ MonitorS manage group of actors performing specific tasks.
         return ActorCallBacks(self,pools).add_callback(self._info)
     
     def _info(self, result):
-        uptime = time() - self.ioloop._started
-        server = {'uptime':uptime,
-                  'version':pulsar.__version__,
-                  'name':pulsar.SERVER_NAME,
-                  'number_of_monitors':len(self._monitors),
-                  'event_loops':self.ioloop.num_loops}
+        server = super(Arbiter,self).info()
+        server.update({'version':pulsar.__version__,
+                       'name':pulsar.SERVER_NAME,
+                       'number_of_monitors':len(self._monitors),
+                       'number_of_actors':len(self.LIVE_ACTORS)})
         return {'server':server,
                 'monitors':result}
 

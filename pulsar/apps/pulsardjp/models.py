@@ -12,6 +12,7 @@ from pulsar.apps import tasks
 try:
     from stdnet import orm
     from stdnet.utils import to_string
+    from djpcms.utils.text import nicename
     
     class PulsarServer(orm.StdModel):
         code = orm.SymbolField()
@@ -40,7 +41,7 @@ try:
         def __init__(self, p, name, header, data):
             self.proxy = p
             self.id = name
-            self.name = name
+            self.name = nicename(name)
             for head in header:
                 if head is not 'name' and head in data:
                     setattr(self,head,data[head])

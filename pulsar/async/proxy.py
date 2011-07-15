@@ -221,6 +221,11 @@ we need to manually implement the pcikling and unpickling of thes object.'''
         else:
             raise AttributeError("'{0}' object has no attribute '{1}'".format(self,name))
 
+    def local_info(self):
+        return {'aid':self.aid[:8],
+                'timeout':self.timeout,
+                'inbox_size':self.inbox.qsize()}
+
 
 class ActorProxyMonitor(ActorProxy):
     
@@ -243,3 +248,8 @@ class ActorProxyMonitor(ActorProxy):
     def __str__(self):
         return self.impl.__str__()
     
+    def local_info(self):
+        data = super(ActorProxyMonitor,self).local_info()
+        data.update({'notified':self.notified,
+                     'pid':self.pid})
+        return data

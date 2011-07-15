@@ -45,4 +45,9 @@ when creating new actors.'''
     def configure_logging(self, **kwargs):
         self.app.configure_logging(**kwargs)
         self.loglevel = self.app.loglevel
+        
+    def _info(self, result = None):
+        info = super(WorkerMonitor,self)._info(result)
+        info.update({'default_timeout': self.cfg.timeout})
+        return info
 

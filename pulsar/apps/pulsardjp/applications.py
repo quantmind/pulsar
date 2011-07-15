@@ -62,7 +62,10 @@ class ServerForm(forms.Form):
     
 
 class ServerView(TabView):
-    converters = {'uptime': nicetimedelta}
+    converters = {'uptime': nicetimedelta,
+                  'notified': nicetimedelta,
+                  'default_timeout': nicetimedelta,
+                  'timeout': nicetimedelta}
     
     def get_client(self, instance):
         return rpc.JsonProxy(instance.path())
@@ -182,7 +185,7 @@ class TasksAdmin(AdminApplicationSimple):
     
     view = views.ViewView(regex = views.UUID_REGEX)
     
-    redisdb = JobApplication('/jobs/', JobModel, parent = 'search')
+    #redisdb = JobApplication('/jobs/', JobModel, parent = 'search')
 
 #
 # Scripts

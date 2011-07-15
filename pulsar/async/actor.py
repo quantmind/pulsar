@@ -470,12 +470,17 @@ This function should live on a event loop.'''
         return self.impl == 'process'
     
     def info(self, full = False):
-        return {'aid':self.aid,
+        data = {'aid':self.aid[:8],
                 'pid':self.pid,
                 'ppid':self.ppid,
                 'thread':self.current_thread().name,
                 'process':self.current_process().name,
                 'isprocess':self.isprocess()}
+        ioloop = self.ioloop
+        if ioloop:
+            data.update({'uptime': time() - ioloop._started,
+                         'event_loops': ioloop.num_loops})
+        return data
         
     def configure_logging(self):
         if not self.loglevel:
