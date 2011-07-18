@@ -20,6 +20,13 @@ import sys
 from pulsar.apps import wsgi
 
 
+def set_proxy_function(sites, proxy):
+    for site in sites:
+        for app in site.applications:
+            if hasattr(app,'proxy') and app.proxy == None:
+                app.proxy = proxy
+                
+
 class SiteLoader(object):
     settings = None
     ENVIRON_NAME = 'PULSAR_SERVER_TYPE'

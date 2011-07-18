@@ -63,7 +63,7 @@ class ServerForm(forms.Form):
 
 class ServerView(TabView):
     converters = {'uptime': nicetimedelta,
-                  'notified': nicetimedelta,
+                  'notified': smart_time,
                   'default_timeout': nicetimedelta,
                   'timeout': nicetimedelta}
     
@@ -89,9 +89,16 @@ class ServerView(TabView):
     def get_panels(self,djp,appmodel,instance,info):
         monitors = []
         for monitor in info['monitors']:
+            workers = monitor.pop('workers',None)
             monitors.append({'name':nicename(monitor.pop('name','Monitor')),
                              'value':html.ObjectDefinition(appmodel,djp,\
                                           self.pannel_data(monitor))})
+            if workers:
+                for worker in workers:
+                    monitors.append(
+                            {'name':worker.pop('aid','worker'),
+                            'value':html.ObjectDefinition(appmodel,djp,\
+                                            self.pannel_data(worker))})
         servers = [{'name':'Server',
                     'value':html.ObjectDefinition(appmodel,djp,\
                                    self.pannel_data(info['server']))}]
@@ -125,8 +132,11 @@ class JobsView(views.SearchView):
         return 'Job list'
     
     def title(self, djp):
-        p = self.appmodel.proxy(djp.request)
-        return 'Job list on {0}'.format(p.domain)
+        try:
+            p = self.appmodel.proxy(djp.request)
+            return 'Job list on {0}'.format(p.domain)
+        except:
+            return 'No Jobs'
 
 
 class JobApplication(views.ModelApplication):
@@ -175,6 +185,7 @@ class JobApplication(views.ModelApplication):
                                modal = True,
                                width = 700)
     
+    
 class TasksAdmin(AdminApplicationSimple):
     list_display = ('short_id',) + task_display
     object_display = ('id',) + task_display +\
@@ -186,6 +197,7 @@ class TasksAdmin(AdminApplicationSimple):
     view = views.ViewView(regex = views.UUID_REGEX)
     
     #redisdb = JobApplication('/jobs/', JobModel, parent = 'search')
+                
 
 #
 # Scripts
