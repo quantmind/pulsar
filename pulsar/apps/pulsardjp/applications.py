@@ -118,7 +118,8 @@ class PulsarServerApplication(AdminApplication):
 ################################    TASKQUEUE DJPCMS APPLICATION
 
 task_display = (
-    'name','status','timeout','time_executed','time_start','time_end',
+    html.table_header('name','name',function='nice_name'),
+    'status','timeout','time_executed','time_start','time_end',
     html.table_header('task_duration','duration',function='duration'),
     'expiry',
     'api',

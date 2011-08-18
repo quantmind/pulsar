@@ -74,6 +74,10 @@ try:
             return self.id[:8]
         short_id.short_description = 'id'
         
+        @property
+        def nice_name(self):
+            return nicename(self.name)
+        
         def __unicode__(self):
             return '{0}({1})'.format(self.name,self.id[:8])
         
