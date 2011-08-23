@@ -38,13 +38,16 @@ try:
 
     class JobModel(orm.FakeModel):
         
-        def __init__(self, p, name, header, data):
-            self.proxy = p
+        def __init__(self, name, data = None, proxy = None):
+            self.proxy = proxy
+            if data:
+                for head in data:
+                    setattr(self,head,data[head])
             self.id = name
             self.name = nicename(name)
-            for head in header:
-                if head is not 'name' and head in data:
-                    setattr(self,head,data[head])
+            
+        def __unicode__(self):
+            return self.name
 
 
     class Task(orm.StdModel, tasks.Task):
@@ -75,8 +78,8 @@ try:
         short_id.short_description = 'id'
         
         @property
-        def nice_name(self):
-            return nicename(self.name)
+        def job(self):
+            return JobModel(self.name)
         
         def __unicode__(self):
             return '{0}({1})'.format(self.name,self.id[:8])

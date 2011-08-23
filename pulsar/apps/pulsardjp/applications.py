@@ -9,7 +9,8 @@ from djpcms.apps.included.admin import AdminApplication,\
 from djpcms.utils.dates import nicetimedelta, smart_time
 from djpcms.utils.text import nicename
 from djpcms.utils import mark_safe
-from djpcms.forms.utils import return_form_errors
+from djpcms.forms.utils import return_form_errors, get_form, saveform
+from djpcms.forms.layout import uniforms as uni
 
 from stdnet import orm
 
@@ -50,6 +51,7 @@ monitor_template = '''\
     </div>
 </div>'''
 
+job_forms = {}
 
 class ServerForm(forms.Form):
     code = forms.CharField()
@@ -117,14 +119,19 @@ class PulsarServerApplication(AdminApplication):
 
 ################################    TASKQUEUE DJPCMS APPLICATION
 
-task_display = (
-    html.table_header('name','name',function='nice_name'),
-    'status','timeout','time_executed','time_start','time_end',
+task_display = ('job','status','timeout','time_executed',
+    'time_start','time_end',
     html.table_header('task_duration','duration',function='duration'),
     'expiry',
     'api',
     'user')
 
+
+EmptyForm = forms.HtmlForm(
+    forms.Form,
+    inputs = (('run','run'),),
+    layout = uni.Layout(default_style = uni.blockLabels2)
+)
 
 class JobsView(views.SearchView):
     astable = True
@@ -141,22 +148,68 @@ class JobsView(views.SearchView):
         
 
 class JobRun(views.ViewView):
-    pass
+    
+    def default_post(self, djp):
+        return saveform(djp, force_redirect = False)
+        
+    def get_form(self, djp, **kwargs):
+        instance= djp.instance
+        if instance.id in job_forms:
+            form = job_forms[instance.id]
+        else:
+            form = EmptyForm
+        if not isinstance(form,forms.HtmlForm):
+            form = forms.HtmlForm(form,inputs = (('run','run'),))
+        return get_form(djp,form,form_ajax=True).addClass(instance.id)
+    
+    def save_as_new(self, djp, f, commit = True):
+        kwargs = f.cleaned_data
+        instance = djp.instance
+        
+        p = self.appmodel.proxy(djp.request)
+        res = self.appmodel.run(p, instance.id, **kwargs)
+        if res:
+            return res
 
 
 class JobDisplay(html.ObjectItem):
-    pass
+    tag = 'div'
+    default_class = 'yui3-g'
+    _inner_template = '''\
+<div class="yui3-u-1-2">
+    <h2>{0[title]}</h2>
+    <p>{0[doc]}</p>
+    {0[definition]}
+    <h3>Run now</h3>
+    {0[form]}
+</div>
+<div class="yui3-u-1-2">
+</div>'''
+    
+    def stream(self, djp, widget, context):
+        instance=  context['instance']
+        df = self.definition_list(djp,context)
+        view = context['view']
+        if view:
+            vdjp = view['view']
+            form = vdjp.view.get_form(vdjp).render(vdjp)
+        else:
+            form = ''
+        yield self._inner_template.format({'title':instance.name,
+                                           'doc':instance.doc,
+                                           'definition':df.render(djp),
+                                           'form':form})
 
 
 class JobApplication(views.ModelApplication):
     proxy = None
-    job_forms = {}
-    list_display = ('name','type','next_run','run_every','runs_count','doc')
+    list_display = ('name','type','next_run','run_every','runs_count')
+    object_display = ('id','type','next_run','run_every','runs_count')
     table_actions = [views.application_action('bulk_run','run', djpcms.ADD)]
     search = JobsView()
     view = JobRun(regex = '(?P<id>{0})'.format(views.SLUG_REGEX))
     task_header = ('name','status','user','time_executed','id')
-    object_widgets = {'home':JobDisplay}
+    object_widgets = {'home':JobDisplay()}
     
     def basequery(self, djp):
         p = self.proxy(djp.request)
@@ -164,8 +217,22 @@ class JobApplication(views.ModelApplication):
             jobs = p.job_list()
         except:
             return 'No connection'
-        return sorted((JobModel(p,name,self.list_display,data) for\
+        return sorted((JobModel(name,data,p) for\
                        name,data in jobs),key = lambda x : x.name)
+        
+    def run(self, p, job, **kwargs):
+        res = p.run_new_task(jobname = job, **kwargs)
+        if 'id' in res:
+            id = res['id']
+            task = Task.objects.get(id = id)
+            url = taskapp.viewurl(request,task)
+            res['time_executed'] = smart_time(res['time_executed'])
+            id = id[:8]
+            if url:
+                id = html.Widget('a',href=url).render(inner=id)
+            res['id'] = id
+            return res
+        
         
     def get_object(self, request, **kwargs):
         if len(self.model_url_bits) != 1:
@@ -183,7 +250,8 @@ class JobApplication(views.ModelApplication):
             except:
                 return None
             if job:
-                return JobModel(p,id,self.list_display,job[0])
+                job = job[0][1]
+                return JobModel(id,job,p)
         
     def ajax__bulk_run(self, djp):
         request = djp.request
@@ -218,6 +286,7 @@ class JobApplication(views.ModelApplication):
     
 class TasksAdmin(AdminApplicationSimple):
     list_display = ('short_id',) + task_display
+    list_display_links = ('id','job')
     object_display = ('id',) + task_display +\
                      ('string_result','stack_trace') 
     has_plugins = False
@@ -225,9 +294,6 @@ class TasksAdmin(AdminApplicationSimple):
     proxy = None
     
     view = views.ViewView(regex = views.UUID_REGEX)
-    
-    #redisdb = JobApplication('/jobs/', JobModel, parent = 'search')
-                
 
 #
 # Scripts
@@ -289,4 +355,4 @@ class ScriptApplication(views.ModelApplication):
         
 
 def register_job_form(job,form):
-    JobApplication.job_forms[job] = form
+    job_forms[job] = form
