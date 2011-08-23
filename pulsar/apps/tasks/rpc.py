@@ -11,11 +11,13 @@ application installed in the arbiter.'''
     
     task_queue_manager = 'taskqueue'
     
-    def rpc_job_list(self, request):
-        '''Dictionary of information about the registered jobs.'''
+    def rpc_job_list(self, request, jobnames = None):
+        '''Dictionary of information about the registered jobs. If
+*jobname* is passed, information regrading the specific job will be returned.'''
         return actor_call(request,
                           self.task_queue_manager,
-                          'job_list')
+                          'job_list',
+                          jobnames = jobnames)
     
     def rpc_next_scheduled_task(self, request, jobname = None):
         '''Return a two elements tuple containing the job name of the next scheduled task

@@ -102,8 +102,8 @@ tasks and managing scheduling of tasks.
     def get_task(self, id):
         return self.task_class.get_task(id)
     
-    def job_list(self):
-        return self.scheduler.job_list()
+    def job_list(self, jobnames = None):
+        return self.scheduler.job_list(jobnames = jobnames)
 
     @property
     def scheduler(self):

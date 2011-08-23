@@ -138,14 +138,25 @@ class JobsView(views.SearchView):
             return 'Job list on {0}'.format(p.domain)
         except:
             return 'No Jobs'
+        
+
+class JobRun(views.ViewView):
+    pass
+
+
+class JobDisplay(html.ObjectItem):
+    pass
 
 
 class JobApplication(views.ModelApplication):
     proxy = None
+    job_forms = {}
     list_display = ('name','type','next_run','run_every','runs_count','doc')
     table_actions = [views.application_action('bulk_run','run', djpcms.ADD)]
     search = JobsView()
+    view = JobRun(regex = '(?P<id>{0})'.format(views.SLUG_REGEX))
     task_header = ('name','status','user','time_executed','id')
+    object_widgets = {'home':JobDisplay}
     
     def basequery(self, djp):
         p = self.proxy(djp.request)
@@ -154,8 +165,26 @@ class JobApplication(views.ModelApplication):
         except:
             return 'No connection'
         return sorted((JobModel(p,name,self.list_display,data) for\
-                       name,data in jobs),key = lambda x : x.name)        
-    
+                       name,data in jobs),key = lambda x : x.name)
+        
+    def get_object(self, request, **kwargs):
+        if len(self.model_url_bits) != 1:
+            return None
+        model_id_url = self.model_url_bits[0]
+        if not model_id_url in kwargs:
+            return None
+        id = kwargs[model_id_url]
+        if isinstance(id,self.model):
+            return id
+        else:
+            p = self.proxy(request)
+            try:
+                job = p.job_list(jobnames = (id,))
+            except:
+                return None
+            if job:
+                return JobModel(p,id,self.list_display,job[0])
+        
     def ajax__bulk_run(self, djp):
         request = djp.request
         data = request.REQUEST
@@ -258,4 +287,6 @@ class ScriptApplication(views.ModelApplication):
         '''This needs to be implemented by your application'''
         pass
         
-        
+
+def register_job_form(job,form):
+    JobApplication.job_forms[job] = form

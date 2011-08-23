@@ -58,8 +58,8 @@ class TaskScheduler(pulsar.WorkerMonitor):
     def actor_get_task(self, caller, id):
         return self.app.get_task(id)
     
-    def actor_job_list(self, caller):
-        return list(self.app.job_list())
+    def actor_job_list(self, caller, jobnames = None):
+        return list(self.app.job_list(jobnames = jobnames))
     
     def actor_next_scheduled(self, caller, jobname = None):
         return self.app.scheduler.next_scheduled(jobname = jobname)

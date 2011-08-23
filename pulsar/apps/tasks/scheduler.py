@@ -171,8 +171,12 @@ value ``now`` can be passed.'''
             entries[name] = SchedulerEntry(name,schedule)
         return entries
 
-    def job_list(self):
-        for name,job in iteritems(registry):
+    def job_list(self, jobnames = None):
+        jobnames = jobnames or registry
+        for name in jobnames:
+            if name not in registry:
+                continue
+            job = registry[name]
             d = {'doc':job.__doc__, 'type':job.type}
             if name in self.entries:
                 entry = self.entries[name]
