@@ -92,15 +92,15 @@ class ServerView(TabView):
         monitors = []
         for monitor in info['monitors']:
             workers = monitor.pop('workers',None)
-            monitors.append({'name':nicename(monitor.pop('name','Monitor')),
-                             'value':html.ObjectDefinition(appmodel,djp,\
-                                          self.pannel_data(monitor))})
-            if workers:
-                for worker in workers:
-                    monitors.append(
-                            {'name':worker.pop('aid','worker'),
-                            'value':html.ObjectDefinition(appmodel,djp,\
-                                            self.pannel_data(worker))})
+            #monitors.append({'name':nicename(monitor.pop('name','Monitor')),
+            #                 'value':html.ObjectDefinition(appmodel,djp,\
+            #                              self.pannel_data(monitor))})
+            #if workers:
+            #    for worker in workers:
+            #        monitors.append(
+            #                {'name':worker.pop('aid','worker'),
+            #                'value':html.ObjectDefinition(appmodel,djp,\
+            #                                self.pannel_data(worker))})
         servers = [{'name':'Server',
                     'value':html.ObjectDefinition(appmodel,djp,\
                                    self.pannel_data(info['server']))}]
@@ -175,15 +175,13 @@ class JobRun(views.ViewView):
 class JobDisplay(html.ObjectItem):
     tag = 'div'
     default_class = 'yui3-g'
+    _body = '''<p>{0}</p>\n{1}'''
     _inner_template = '''\
-<div class="yui3-u-1-2">
-    <h2>{0[title]}</h2>
-    <p>{0[doc]}</p>
-    {0[definition]}
-    <h3>Run now</h3>
-    {0[form]}
+<div class="yui3-u-1-3">
+    {0[inner]}
 </div>
-<div class="yui3-u-1-2">
+<div class="yui3-u-2-3">
+    {0[tasks]}
 </div>'''
     
     def stream(self, djp, widget, context):
@@ -195,10 +193,13 @@ class JobDisplay(html.ObjectItem):
             form = vdjp.view.get_form(vdjp).render(vdjp)
         else:
             form = ''
-        yield self._inner_template.format({'title':instance.name,
-                                           'doc':instance.doc,
-                                           'definition':df.render(djp),
-                                           'form':form})
+        bd = self._body.format(instance.doc,df.render(djp))
+        inner = html.box(instance.name, bd, form)
+        qs = instance.tasks()
+        app = djp.site.for_model(Task,all=True)
+        tasks = app.render_query(app.root_view(djp.request, **djp.kwargs),qs)
+        yield self._inner_template.format({'inner':inner,
+                                           'tasks':tasks})
 
 
 class JobApplication(views.ModelApplication):
@@ -232,7 +233,6 @@ class JobApplication(views.ModelApplication):
                 id = html.Widget('a',href=url).render(inner=id)
             res['id'] = id
             return res
-        
         
     def get_object(self, request, **kwargs):
         if len(self.model_url_bits) != 1:

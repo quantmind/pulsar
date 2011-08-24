@@ -48,6 +48,9 @@ try:
             
         def __unicode__(self):
             return self.name
+        
+        def tasks(self):
+            return Task.objects.filter(name = self.id)
 
 
     class Task(orm.StdModel, tasks.Task):
