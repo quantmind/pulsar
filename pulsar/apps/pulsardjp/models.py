@@ -78,7 +78,6 @@ try:
         
         def short_id(self):
             return self.id[:8]
-        short_id.short_description = 'id'
         
         @property
         def job(self):

@@ -224,15 +224,7 @@ class JobApplication(views.ModelApplication):
     def run(self, p, job, **kwargs):
         res = p.run_new_task(jobname = job, **kwargs)
         if 'id' in res:
-            id = res['id']
-            task = Task.objects.get(id = id)
-            url = taskapp.viewurl(request,task)
-            res['time_executed'] = smart_time(res['time_executed'])
-            id = id[:8]
-            if url:
-                id = html.Widget('a',href=url).render(inner=id)
-            res['id'] = id
-            return res
+            return Task.objects.get(id = res['id'])
         
     def get_object(self, request, **kwargs):
         if len(self.model_url_bits) != 1:
@@ -262,12 +254,10 @@ class JobApplication(views.ModelApplication):
             body = []
             for job in data.getlist('ids[]'):
                 try:
-                    res = p.run_new_task(job)
+                    task = p.run_new_task(job)
                 except:
                     continue
-                if 'id' in res:
-                    id = res['id']
-                    task = Task.objects.get(id = id)
+                if task:
                     url = taskapp.viewurl(request,task)
                     res['time_executed'] = smart_time(res['time_executed'])
                     id = id[:8]
