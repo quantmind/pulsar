@@ -2,10 +2,7 @@
 Pulsar Python Shell
 '''
 import os
-try:
-    from penv import pulsar
-except ImportError:
-    import pulsar
+import pulsar
 
 from pulsar.apps.shell import PulsarShell 
 

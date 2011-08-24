@@ -56,8 +56,9 @@ html_static_path = ['_static']
 html_theme_path = ["_theme"]
 exclude_trees = ['_build']
 html_sidebars = {
-    'index': ['sidebarintro.html', 'sourcelink.html', 'searchbox.html'],
-    '**': ['sidebarintro.html', 'localtoc.html', 'relations.html',
+    'index': ['sidebarlogo.html', 'sidebarintro.html',
+              'sourcelink.html', 'searchbox.html'],
+    '**': ['sidebarlogo.html', 'localtoc.html', 'relations.html',
            'sourcelink.html', 'searchbox.html'],
 }
 exclude_trees = []
