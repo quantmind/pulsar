@@ -160,7 +160,7 @@ class JobRun(views.ViewView):
             form = EmptyForm
         if not isinstance(form,forms.HtmlForm):
             form = forms.HtmlForm(form,inputs = (('run','run'),))
-        return get_form(djp,form,form_ajax=True).addClass(instance.id)
+        return get_form(djp,form).addClass(instance.id)
     
     def save_as_new(self, djp, f, commit = True):
         kwargs = f.cleaned_data
@@ -275,8 +275,9 @@ class JobApplication(views.ModelApplication):
     
     
 class TasksAdmin(AdminApplicationSimple):
-    list_display = ('short_id',) + task_display
-    list_display_links = ('id','job')
+    list_display = (html.table_header('short_id', 'TID', function='id'),)\
+                    + task_display
+    list_display_links = ('id','short_id','job')
     object_display = ('id',) + task_display +\
                      ('string_result','stack_trace') 
     has_plugins = False
