@@ -1,3 +1,10 @@
+'''
+Pulsar is shipped with a Http server applications which conforms the python
+web server gateway interface (WSGI).
+
+The application server can be used in conjunction with several web frameworks
+as well as the pulsar RPC handler in :mod:`pulsar.http.rpc`.
+'''
 import sys
 import traceback
 import errno
@@ -59,4 +66,3 @@ class WSGIApplication(pulsar.Application):
 def createServer(callable = None, **params):
     return WSGIApplication(callable = callable, **params)
     
-

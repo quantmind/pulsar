@@ -1,5 +1,8 @@
-from pulsar.http import actor_call, rpc
+from pulsar.apps import rpc
+from pulsar.http import actor_call
+
 from .utils import SendToQueue
+
 
 __all__ = ['TaskQueueRpcMixin']
 

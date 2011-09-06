@@ -31,20 +31,21 @@ connections can be handled concurrently.
 Pulsar tells the operating system (through epoll or select) that it should be
 notified when a new connection is made, and then it goes to sleep.
 
-Pulsar uses the multiprocessing_ module from the standard python library and it can
-be configured to run in multi-processing or multi-threading mode.
+Pulsar uses the multiprocessing_ module from the standard python library and
+it can be configured to run in multi-processing or multi-threading mode.
 
 
 Applications
 ==============
-Pulsar design allows for a host of different applications to be implemented in an elegant and efficient way.
-It includes the following
+Pulsar design allows for a host of different applications to be implemented
+in an elegant and efficient way. Out of the box it is shipped with the
+the following
 
-* Http server.
-* RPC server.
-* Distributed Task Queue.
+* Http server (with a RPC handler too)
+* A distributed Task Queue.
 * Pulsar shell for asynchronous scripting (posix only).
 * Asynchronous testing suite.
+* A djpcms_ - pulsar integration for handling dynamic web applications.
 
 Design
 =============
@@ -66,6 +67,7 @@ many other open-source efforts.
 
 .. _gunicorn: http://gunicorn.org/
 .. _nodejs: http://nodejs.org/
+.. _djpcms: https://github.com/lsbardel/djpcms
 .. _twisted: http://twistedmatrix.com/trac/
 .. _tornado: http://www.tornadoweb.org/
 .. _celery: http://celeryproject.org/

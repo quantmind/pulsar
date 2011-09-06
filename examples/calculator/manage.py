@@ -6,31 +6,23 @@ To run the server type::
     
 Open a new shell and launch python and type::
 
-    >>> from pulsar.http import rpc
+    >>> from pulsar.apps import rpc
     >>> p = rpc.JsonProxy('http://localhost:8060')
     >>> p.ping()
     'pong'
+    >>> p.functions_list()
+    >>> ...
     >>> p.calc.add(3,4)
     7.0
     >>>
     
 '''
-try:
-    from penv import pulsar
-except ImportError:
-    import pulsar
-    
-from pulsar.http import rpc
+import pulsar
+from pulsar.apps import rpc
 
 
-class Root(rpc.JSONRPC):
-    
-    def rpc_ping(self, request):
-        return 'pong'
-    
-    def rpc_server_info(self, request, full = False):
-        worker = request.environ['pulsar.worker']
-        return worker.proxy.info(worker.arbiter, full = full)
+class Root(rpc.PulsarServerCommands):
+    pass
         
     
 class Calculator(rpc.JSONRPC):

@@ -10,6 +10,7 @@ it requires python 2.6 and up, including python 3.
    :maxdepth: 1
    
    overview
+   install
    design
    api
    
@@ -20,6 +21,8 @@ Applications
 .. toctree::
    :maxdepth: 1
    
+   apps/wsgi
+   apps/rpc
    apps/tasks
    apps/pulsardjp
    

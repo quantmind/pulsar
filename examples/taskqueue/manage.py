@@ -15,13 +15,11 @@ Open a new shell and launch python and type::
     >>>
     
 '''
-try:
-    from penv import pulsar
-except ImportError:
-    import pulsar
-    
+import pulsar    
+from pulsar.http import actorCall
+
 from pulsar.apps.tasks import TaskQueueRpcMixin, queueTask, TaskQueue
-from pulsar.http import rpc, actorCall
+from pulsar.apps import rpc
 
 
 class RpcRoot(rpc.JsonServer,TaskQueueRpcMixin):

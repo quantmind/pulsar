@@ -36,6 +36,7 @@ class requires_instance(object):
         
         return wrapper    
     
+    
 class requires_owner(requires_instance):
     '''Decorator for class view used to check if an authenticated request
 can manipulate an instance obtained from the getter function.
@@ -70,14 +71,17 @@ For example::
     
 def FromApi(func, doc = None, format = 'json', request_handler = None):
     '''\
-Expose a function ``func`` as an rpc function.
+A decorator which exposes a function ``func`` as an rpc function.
 
 :parameter func: The function to expose.
-:parameter doc: Optional doc string. If not provided the doc string of ``func`` will be used.
-:parameter format: Optional output format. Only used if ``request_handler`` is specified.
-:parameter request_handler: function which takes ``request``, ``format`` and ``kwargs``
-                            and return a new ``kwargs`` to be passed to ``func``. It can be used to
-                            add additional parameters based on request and format.'''
+:parameter doc: Optional doc string. If not provided the doc string of
+                ``func`` will be used.
+:parameter format: Optional output format. Only used if ``request_handler``
+                    is specified.
+:parameter request_handler: function which takes ``request``, ``format`` and
+                 ``kwargs`` and return a new ``kwargs`` to be passed to
+                 ``func``. It can be used to add additional parameters based
+                 on request and format.'''
     def _(self, request, *args, **kwargs):
         try:
             if request_handler:

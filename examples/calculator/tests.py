@@ -3,6 +3,7 @@ from pulsar.http import rpc
 
 from .manage import server
 
+
 class TestRpc(test.TestCase):
     
     def initTests(self):

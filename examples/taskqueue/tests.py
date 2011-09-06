@@ -2,8 +2,7 @@ from time import time, sleep
 from datetime import datetime, timedelta
 
 from pulsar import test
-from pulsar.http import rpc
-from pulsar.apps import tasks
+from pulsar.apps import tasks, rpc
 from pulsar.utils.timeutils import timedelta_seconds
 
 from .manage import createTaskQueue, server

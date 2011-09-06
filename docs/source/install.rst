@@ -1,8 +1,9 @@
-
 ============
 Installing
 ============
 
+Installing pulsar can be done via `pip`, `easy_install` or downloading the
+tarball from pypi_.
 
 Add-on
 =========
@@ -14,3 +15,4 @@ If setproctitle_ is installed, pulsar will used to change the processes names. T
 
 
 .. _setproctitle: http://code.google.com/p/py-setproctitle/
+.. _pypi: http://pypi.python.org/pypi/pulsar

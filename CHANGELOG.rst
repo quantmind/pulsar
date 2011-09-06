@@ -1,3 +1,8 @@
+Version Master
+=======================================
+* Moved `http.rpc` module to `apps`.
+* Introduced context manager for `apps.tasks` to handle logs and exceptions.
+
 Version 0.1.0 - 2001-Aug-24
 =======================================
 

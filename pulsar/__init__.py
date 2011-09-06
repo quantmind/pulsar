@@ -38,7 +38,7 @@ from .utils.config import *
 from .async import *
 from .workers.base import *
 from .workers.monitor import *
-from .apps.base import Application, require
+from .apps import Application, require
 from .apps import test
 
 
