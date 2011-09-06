@@ -127,13 +127,18 @@ ActorBase = ActorMetaClass('BaseActor',(object,),{})
 
 
 class Actor(ActorBase,Runner):
-    '''A python implementation of the **Actor primitive**. This is computer science,
-model that treats ``actors`` as the atoms of concurrent digital computation.
+    '''The base class for concurrent programming in pulsar. In computer science,
+the **Actor model** is a mathematical model of concurrent computation that
+treats *actors* as the universal primitives of computation.
 In response to a message that it receives, an actor can make local decisions,
 create more actors, send more messages, and determine how to respond to
 the next message received.
-The current implementation allows for actor to perform specific tasks such as listening to a socket,
-acting as http server and so forth.
+
+Pulsar actors are slightly different from the general theory. They cannot
+create other actors, unless they are of special kind.
+
+The current implementation allows for actor to perform specific tasks such
+as listening to a socket, acting as http server and so forth.
 
 To spawn a new actor::
 

@@ -19,6 +19,9 @@ import sys
 
 from pulsar.apps import wsgi
 
+from .models import *
+from .forms import *
+
 
 def set_proxy_function(sites, proxy):
     for site in sites:

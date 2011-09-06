@@ -2,6 +2,19 @@
 __all__=  ['SendToQueue','queueTask','nice_task_message']
 
 format_time = lambda x : x
+        
+
+class Consumer(object):
+    
+    __slots__ = ('queue','task')
+    
+    def __init__(self, queue, task):
+        self.queue = queue
+        self.task = task
+        
+    def tasklogger(self, job):
+        job.logger.addHandler()
+        
 
 class SendToQueue(object):
     '''Utility class for sending a task to the task queue from a

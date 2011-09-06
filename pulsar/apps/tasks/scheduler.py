@@ -16,6 +16,16 @@ EMPTY_TUPLE = ()
 EMPTY_DICT = {}
 
 
+def get_datetime(expiry, start):
+    if expiry:
+        if isinstance(expiry,datetime):
+            return expiry
+        elif isinstance(expiry,timedelta):
+            return start + expiry
+        else:
+            return datetime.fromtimestamp(expiry)
+
+
 class Schedule(object):
 
     def __init__(self, run_every=None, anchor=None):
@@ -110,7 +120,8 @@ class Scheduler(object):
     def entries(self):
         return self._entries
         
-    def make_request(self, name, targs = None, tkwargs = None, **kwargs):
+    def make_request(self, name, targs = None, tkwargs = None,
+                     expiry = None, **kwargs):
         '''Create a new task request'''            
         if name in registry:
             TaskFactory = self.TaskFactory
@@ -123,9 +134,9 @@ class Scheduler(object):
                 return task
             if job.name in self.entries:
                 self.entries[job.name].next()
-            expiry = None
             time_executed = datetime.now()
-            if job.timeout:
+            expiry = get_datetime(expiry, time_executed)
+            if not expiry and job.timeout:
                 expiry = time_executed + job.timeout
             task = TaskFactory(id = id, name = job.name,
                                time_executed = time_executed,

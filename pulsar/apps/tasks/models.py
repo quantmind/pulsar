@@ -1,4 +1,5 @@
 from datetime import datetime, date
+import logging
 import inspect
 
 from pulsar.utils.py2py3 import iteritems
@@ -7,18 +8,19 @@ from pulsar.utils.py2py3 import iteritems
 from pulsar.utils.tools import gen_unique_id
 
 
-__all__ = ['Job','PeriodicJob','anchorDate','registry']
+__all__ = ['JobMetaClass','Job','PeriodicJob',
+           'anchorDate','JobRegistry','registry']
 
 
 class JobRegistry(dict):
     """Site registry for tasks."""
 
     def regular(self):
-        """A generator of all regular task types."""
+        """A generator of all regular jobs."""
         return self.filter_types("regular")
 
     def periodic(self):
-        """A generator of all periodic task types."""
+        """A generator of all periodic jobs."""
         return self.filter_types("periodic")
 
     def register(self, job):
@@ -44,14 +46,17 @@ registry = JobRegistry()
 
 
 class JobMetaClass(type):
-    """Metaclass for Jobs.
+    """Metaclass for Jobs. It performs a little ammount of magic
+by:
 
-    Automatically registers the Job in the Job registry, except
-    if the ``abstract`` attribute is set.
-
-    If no ``name`` attribute is provided, the name is automatically
-    set to the name of the module it was defined in, and the class name.
-    """
+ * Automatic registration of :class:`pulsar.apps.tasks.Job` instances to the
+  global :class:`pulsar.apps.tasks.JobRegistry`, unless
+  the :attr:`pulsar.apps.tasks.Job.abstract` attribute is set to ``True``.
+ * If no :attr:`pulsar.apps.tasks.Job.name`` attribute is provided,
+   it is automatically set to the class name in lower case.
+ * Add a logger instance with name given by 'job.name` where name is the
+   same as above.
+"""
 
     def __new__(cls, name, bases, attrs):
         super_new = super(JobMetaClass, cls).__new__
@@ -65,13 +70,14 @@ class JobMetaClass(type):
 
         # Automatically generate missing name.
         job_name = attrs.get("name",name).lower()
-        attrs["name"] = job_name
 
         # Because of the way import happens (recursively)
         # we may or may not be the first time the Job tries to register
         # with the framework. There should only be one class for each Job
         # name, so we always return the registered version.
         if job_name not in registry:
+            attrs["name"] = job_name
+            attrs['logger'] = logging.getLogger('job.{0}'.format(name))
             job_cls = super_new(cls, name, bases, attrs)
             registry.register(job_cls)
         return registry[job_name].__class__
@@ -81,15 +87,44 @@ JobBase = JobMetaClass('JobBase',(object,),{'abstract':True})
 
 
 class Job(JobBase):
-    '''The Job class which is used in a distributed task queue.'''
+    '''The Job class which is used in a distributed task queue.
+    
+.. attribute:: name
+
+    The unique name which defines the Job and which can be used to retrieve
+    it from the job registry.
+    
+.. attribute:: abstract
+
+    If set to ``True`` (default is ``False``), the Job won't be registered
+    with the Job registry.
+    
+.. attribute:: autoregister
+
+    If ``False`` (default is ``True``), the Job need to be registered
+    manually with the Job registry.
+    
+.. attribute:: type
+
+    Type of Job, one of ``regular`` and ``periodic``.
+    
+.. attribute:: timeout
+
+    An instance of a datetime.timedelta or ``None``. If set, it represents the
+    time lag after which a task whch has not been processed expires.
+    
+    Default ```None``.
+    
+.. attribute:: logger
+
+    an instance of a logger.
+'''
     abstract = True
-    '''If set to ``True`` (default is ``False``), the Job won't be registered with the Job registry.'''
     autoregister = True
-    '''If ``False`` (default is ``True``), the Job need to be registered manually with the Job registry.'''
     type = "regular"
-    '''Type of Job, one of ``regular`` and ``periodic``'''
     timeout = None
     expires = None
+    logformatter = None
     _ack = True
         
     def __call__(self, consumer, *args, **kwargs):

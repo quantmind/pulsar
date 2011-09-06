@@ -2,12 +2,47 @@
 A task scheduler application with HTTP-RPC hooks
 '''
 from datetime import datetime
+import logging
 
+from pulsar.utils.py2py3 import StringIO
 from .exceptions import *
 from .states import *
 
 
 __all__ = ['Task','TaskInMemory']
+    
+
+class TaskConsumer(object):
+    
+    def __init__(self, task, queue, worker, job):
+        self.queue = queue
+        self.worker = worker
+        self.job = job
+        self.task = task
+        self.handler = logging.StreamHandler(StringIO())
+        formatter = job.logformatter
+        if not formatter:
+            h = logging.getLogger().handlers
+            if h:
+                formatter = h[0].formatter
+        if formatter:
+            self.handler.setFormatter(formatter)
+        
+    def get_logs(self):
+        self.job.logger.removeHandler(self.handler)
+        return self.handler.stream.getvalue()
+    
+    def __enter__(self):
+        self.job.logger.addHandler(self.handler)
+        return self
+    
+    def __exit__(self, type, value, traceback):
+        if type:
+            self.job.logger.critical('', exc_info = (type, value, traceback))
+        self.task.logs = self.get_logs()
+        if type:
+            self.task.on_finish(self.worker, exception = value)
+        return value
 
 
 class Task(object):
@@ -39,36 +74,37 @@ class Task(object):
     
 .. attribute: timeout
     
-    A boolean indicating whether a timeout has occured
+    A boolean indicating whether a timeout has occurred
 '''
+    def consumer(self, queue, worker, job):
+        '''Return the task context manager for execution.'''
+        return TaskConsumer(self, queue, worker, job)
+        
     def on_start(self,worker):
         '''Called by worker when the task start its execution.'''
+        self.time_start = datetime.now()
         timeout = self.revoked()
         self.timeout = timeout
-        self.time_start = datetime.now()
         if timeout:
-            self.on_finish(worker, exception = timeout)
-            return False
+            raise TaskTimeout()
         else:
             self.status = STARTED
             self.save()
             self._on_start(worker)
             return True
-    
+        
     def on_finish(self, worker, exception = None, result = None):
-        self.time_end = datetime.now()
-        if exception:
-            self.status = FAILURE
-            if isinstance(exception,TaskException):
-                self.stack_trace = exception.stack_trace
+        '''called when finishing the task.'''
+        if not self.time_end:
+            self.time_end = datetime.now()
+            if exception:
+                self.status = getattr(exception,'status',FAILURE)
+                self.result = str(exception)
             else:
-                self.stack_trace = get_traceback()
-            self.result = str(exception)
-        else:
-            self.status = SUCCESS
-            self.result = result
-        self.save()
-        self._on_finish(worker)
+                self.status = SUCCESS
+                self.result = result
+            self.save()
+            self._on_finish(worker)
         
     def to_queue(self):
         if self.status == PENDING:
@@ -82,9 +118,11 @@ class Task(object):
             return self.revoked()
         
     def revoked(self):
-        if self.expiry and datetime.now() > self.expiry:
-            return True
-        return False
+        if self.expiry:
+            tm = datetime.now()
+            if tm > self.expiry:
+                return tm
+        return None
     
     def execute2start(self):
         if self.time_start:

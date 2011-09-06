@@ -20,7 +20,7 @@ from .monitor import ActorPool
 from .proxy import ActorCallBacks
 
 
-__all__ = ['arbiter','spawn','ThreadQueue']
+__all__ = ['arbiter','spawn','ThreadQueue','Arbiter']
 
 
 def arbiter(daemonize = False):
@@ -32,15 +32,16 @@ def spawn(actor_class, *args, **kwargs):
         
 
 class Arbiter(ActorPool):
-    '''The Arbiter is a special :class:`pulsar.Monitor` class. There is only one and it manages
-all the actors and monitors.
-In other words the Arbiter should be used as a singletone in the following way:
+    '''The Arbiter is a very special :class:`pulsar.Actor`. It is used as
+singletone in the main process and it manages one or more
+:class:`pulsar.Monitors` and their :class:`pulsar.Arbiters`.  
+The arbiter runs the main event-loop, in a way similar to the twisted reactor.
+
+Users access the arbiter by the high level api::
 
     import pulsar
     
     arbiter = pulsar.arbiter()
-    
-The arbiter runs the main event-loop, in a way similar to the twisted reactor.
 '''
     CLOSE_TIMEOUT = 3
     WORKER_BOOT_ERROR = 3
@@ -56,10 +57,10 @@ The arbiter runs the main event-loop, in a way similar to the twisted reactor.
     
     def add_monitor(self, monitor_class, actor_class, monitor_name, *args, **kwargs):
         '''Add a new :class:`pulsar.Monitor` to the arbiter.
-MonitorS manage group of actors performing specific tasks.
 
 :parameter monitor_class: a :class:`pulsar.Monitor` class.
-:parameter actor_class: a :class:`pulsar.Actor` class but not a :class:`pulsar.Monitor` class.'''
+:parameter actor_class: a :class:`pulsar.Actor` class but not a
+    :class:`pulsar.Monitor` class.'''
         kwargs['impl'] = 'monitor'
         if monitor_name in self._monitors:
             raise KeyError('Monitor "{0}" already available'.format(monitor_name))
@@ -70,7 +71,8 @@ MonitorS manage group of actors performing specific tasks.
     
     @property
     def monitors(self):
-        '''Dictionary of all :clas:`pulsar.Monitor` registered with the the arbiter.'''
+        '''Dictionary of all :class:`pulsar.Monitor` instances
+registered with the the arbiter.'''
         return self._monitors
     
     @classmethod

@@ -2,14 +2,31 @@
 Pulsar
 ==================================
 
-.. include:: ../../README.rst
+Pulsar is an event-driven networked library for python. Tested in Windows and Linux,
+it requires python 2.6 and up, including python 3.
 
 
 .. toctree::
    :maxdepth: 1
    
-   contents
+   overview
    design
    api
-   mq
+   
 
+Applications
+====================
+
+.. toctree::
+   :maxdepth: 1
+   
+   apps/tasks
+   apps/pulsardjp
+   
+
+Indices and tables
+==================
+
+* :ref:`genindex`
+* :ref:`modindex`
+* :ref:`search`

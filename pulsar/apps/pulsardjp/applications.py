@@ -10,16 +10,15 @@ from djpcms.utils.dates import nicetimedelta, smart_time
 from djpcms.utils.text import nicename
 from djpcms.utils import mark_safe
 from djpcms.forms.utils import return_form_errors, get_form, saveform
-from djpcms.forms.layout import uniforms as uni
 
 from stdnet import orm
 
 import pulsar
 from pulsar.utils.py2py3 import iteritems
-from pulsar.apps import tasks
 from pulsar.http import rpc
 
 from .models import Task, JobModel
+from .forms import get_job_form, ServerForm
 
 fromtimestamp = datetime.fromtimestamp
 
@@ -50,17 +49,6 @@ monitor_template = '''\
         </div>
     </div>
 </div>'''
-
-job_forms = {}
-
-class ServerForm(forms.Form):
-    code = forms.CharField()
-    schema = forms.CharField(initial = 'http://')
-    host = forms.CharField()
-    port = forms.IntegerField(initial = 8060)
-    notes = forms.CharField(widget = html.TextArea,
-                            required = False)
-    location = forms.CharField(required = False)
     
 
 class ServerView(TabView):
@@ -127,12 +115,6 @@ task_display = ('job','status','timeout','time_executed',
     'user')
 
 
-EmptyForm = forms.HtmlForm(
-    forms.Form,
-    inputs = (('run','run'),),
-    layout = uni.Layout(default_style = uni.blockLabels2)
-)
-
 class JobsView(views.SearchView):
     astable = True
      
@@ -148,28 +130,30 @@ class JobsView(views.SearchView):
         
 
 class JobRun(views.ViewView):
-    
+    '''A view for running task on demand from a web page.'''
     def default_post(self, djp):
         return saveform(djp, force_redirect = False)
         
     def get_form(self, djp, **kwargs):
         instance= djp.instance
-        if instance.id in job_forms:
-            form = job_forms[instance.id]
-        else:
-            form = EmptyForm
+        form = get_job_form(instance)
         if not isinstance(form,forms.HtmlForm):
             form = forms.HtmlForm(form,inputs = (('run','run'),))
         return get_form(djp,form).addClass(instance.id)
     
-    def save_as_new(self, djp, f, commit = True):
+    def save(self, djp, f, commit = True):
         kwargs = f.cleaned_data
         instance = djp.instance
-        
         p = self.appmodel.proxy(djp.request)
         res = self.appmodel.run(p, instance.id, **kwargs)
         if res:
-            return res
+            url = djp.site.get_url(res, request = djp.request)
+            link = html.Widget('a',href=url).render(inner=res)\
+                             if url else str(res)
+            f.add_message(link+' sent to taskqueue')
+        else:
+            f.add_error('Could not create task')
+        return f
 
 
 class JobDisplay(html.ObjectItem):
@@ -203,6 +187,7 @@ class JobDisplay(html.ObjectItem):
 
 
 class JobApplication(views.ModelApplication):
+    '''An application for running jobs from a web page.'''
     proxy = None
     list_display = ('name','type','next_run','run_every','runs_count')
     object_display = ('id','type','next_run','run_every','runs_count')
@@ -279,7 +264,7 @@ class TasksAdmin(AdminApplicationSimple):
                     + task_display
     list_display_links = ('id','short_id','job')
     object_display = ('id',) + task_display +\
-                     ('string_result','stack_trace') 
+                     ('string_result','logs') 
     has_plugins = False
     inherit = True
     proxy = None
@@ -298,7 +283,8 @@ script_languages = (
 class ScriptForm(forms.Form):
     name = forms.CharField(toslug = '_')
     language = forms.ChoiceField(choices = script_languages)
-    body = forms.CharField(widget = html.TextArea(default_class = 'taboverride'))
+    body = forms.CharField(widget = html.TextArea(
+                                            default_class = 'taboverride'))
     
     def clean_name(self, value):
         return orm.test_unique('name',self.model,value,self.instance,
@@ -344,6 +330,3 @@ class ScriptApplication(views.ModelApplication):
         '''This needs to be implemented by your application'''
         pass
         
-
-def register_job_form(job,form):
-    job_forms[job] = form

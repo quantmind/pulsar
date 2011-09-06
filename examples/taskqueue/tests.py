@@ -1,14 +1,18 @@
-from time import time
+from time import time, sleep
 from datetime import datetime, timedelta
 
 from pulsar import test
 from pulsar.http import rpc
+from pulsar.apps import tasks
+from pulsar.utils.timeutils import timedelta_seconds
 
 from .manage import createTaskQueue, server
 
 
 CODE_TEST = '''\
+import time
 def task_function(N = 10):
+    time.sleep(0.1)
     return N*N
 '''
         
@@ -38,11 +42,12 @@ class TestTaskQueueMeta(test.TestCase):
         scheduler = tq.scheduler
         self.assertTrue(scheduler.entries)
         
-    def testCodeTask(self):
-        '''Here we test the application only, not the queue mechanism implemented by the
-monitor and workers.'''
+    def testApplicationSimple(self):
+        '''Here we test the application only, not the queue mechanism
+implemented by the monitor and workers.'''
         self.assertTrue('runpycode' in self.tq.registry)
-        r = self.tq.make_request('runpycode',(CODE_TEST,10),{})
+        # create a request
+        r = self.tq.make_request('runpycode',(CODE_TEST,10))
         self.assertTrue(r)
         self.assertTrue(r.id)
         self.assertTrue(r.time_executed)
@@ -51,25 +56,34 @@ monitor and workers.'''
         consumer = self.tq.load()
         response, result = consumer.handle_event_task(None,r)
         self.assertTrue(response.time_start)
-        self.assertTrue(response.execute2start() > 0)
         self.assertEqual(result,100)
         self.assertFalse(response.time_end)
         consumer.end_event_task(None,response,result)
         self.assertTrue(response.time_end)
-        self.assertTrue(response.duration() > 0)
+        self.assertTrue(response.time_end>response.time_start)
+        d = timedelta_seconds(response.duration())
+        self.assertTrue(d > 0.1)
         self.assertEqual(response.result,100)
+        
+    def testApplicationSimpleError(self):
+        consumer = self.tq.load()
+        r = self.tq.make_request('runpycode',(CODE_TEST,'bla'))
+        task, result = consumer.handle_event_task(None,r)
+        self.assertTrue(task.time_start)
+        self.assertTrue(task.result.startswith("can't multiply sequence"))
+        self.assertTrue(task.time_end)
+        self.assertEqual(task.status,tasks.FAILURE)
         
     def testTimeout(self):
         '''we set an expire to the task'''
         self.assertTrue('addition' in self.tq.registry)
         consumer = self.tq.load()
-        r = self.tq.make_request('runpycode',(3,6),expires=time())
-        response, result = consumer.handle_event_task(None,r)
-        self.assertTrue(response.timeout)
-        self.assertTrue(response.exception)
-        consumer.end_event_task(None,response,result)
-        self.assertTrue(response.exception)
-        self.assertFalse(response.result)
+        r = self.tq.make_request('runpycode',(3,6),expiry=time())
+        sleep(0.05)
+        task, result = consumer.handle_event_task(None,r)
+        self.assertTrue(task.timeout)
+        self.assertEqual(task.status,tasks.REVOKED)
+        consumer.end_event_task(None,task,result)
         
     def testCheckNextRun(self):
         q = dummyQueue()

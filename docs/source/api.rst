@@ -3,7 +3,7 @@
 Low Level API
 ==================
 
-Actors and Monitors
+Actors
 =======================
 
 .. autoclass:: pulsar.Actor
@@ -11,41 +11,17 @@ Actors and Monitors
    :member-order: bysource
 
 
-Workers
-============
+Monitors
+==================
 
-Runner Mixin
-~~~~~~~~~~~~~~~~~~~~
-
-.. autoclass:: pulsar.Runner
-   :members:
-   :member-order: bysource
-   
-
-Applications
-=================
-
-Application Class
-~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-.. autoclass:: pulsar.Application
+.. autoclass:: pulsar.Monitor
    :members:
    :member-order: bysource
 
-  
-Remote Objects
-===================
 
-Remote
-~~~~~~~~~~~~~~~~~~~
+Arbiter
+==================
 
-.. autoclass:: pulsar.utils.async.RemoteMixin
-   :members:
-   :member-order: bysource
-   
-RemoteServer
-~~~~~~~~~~~~~~~~~~~
-
-.. autoclass:: pulsar.utils.async.RemoteServer
+.. autoclass:: pulsar.Arbiter
    :members:
    :member-order: bysource

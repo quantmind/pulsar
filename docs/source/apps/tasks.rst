@@ -11,11 +11,31 @@ A task can have one of the following `status`:
 API
 =========
 
+
+Job and Tasks
+~~~~~~~~~~~~~~~~~~~~~~
+
+.. autoclass:: pulsar.apps.tasks.JobRegistry
+   :members:
+   :member-order: bysource
+
+.. autoclass:: pulsar.apps.tasks.JobMetaClass
+   :members:
+   :member-order: bysource
+   
 .. autoclass:: pulsar.apps.tasks.Job
    :members:
    :member-order: bysource
 
 .. autoclass:: pulsar.apps.tasks.Task
+   :members:
+   :member-order: bysource
+   
+   
+Application and Scheduler
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. autoclass:: pulsar.apps.tasks.TaskQueue
    :members:
    :member-order: bysource
    

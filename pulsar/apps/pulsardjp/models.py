@@ -7,6 +7,7 @@ Requires python-stdnet_
 import platform
 
 from pulsar.apps import tasks
+from pulsar.utils.timeutils import timedelta_seconds
 
 
 try:
@@ -67,11 +68,11 @@ try:
         time_end = orm.DateTimeField(required = False, index = False)
         task_duration = orm.FloatField(required = False)
         expiry = orm.DateTimeField(required = False, index = False)
-        timeout = orm.BooleanField(default = False)
+        timeout = orm.DateTimeField(required = False)
         args = orm.PickleObjectField()
         kwargs = orm.PickleObjectField()
         result = orm.PickleObjectField(required = False)
-        stack_trace = orm.CharField()
+        logs = orm.CharField()
         
         class Meta:
             ordering = '-time_executed'
@@ -101,7 +102,7 @@ try:
         def _on_finish(self, worker):
             duration = self.duration()
             if duration:
-                self.task_duration = 86400*duration.days + duration.seconds
+                self.task_duration = timedelta_seconds(duration)
                 self.save()
         
         @classmethod

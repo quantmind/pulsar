@@ -2,6 +2,8 @@ import pulsar
 import sys
 import traceback
 
+from .states import REVOKED
+
 __all__ = ['TaskException',
            'TaskNotAvailable',
            'TaskTimeout',
@@ -15,13 +17,7 @@ def get_traceback(log = None):
 
 
 class TaskException(pulsar.PulsarException):
-    
-    def __init__(self, e, log = None):
-        msg = str(e)
-        if log:
-            log.error(msg, exc_info = sys.exc_info())
-        self.stack_trace = get_traceback(log = log)
-        super(TaskException,self).__init__(str(e))
+    pass
 
 
 class TaskNotAvailable(TaskException):
@@ -31,9 +27,7 @@ class TaskNotAvailable(TaskException):
 
 
 class TaskTimeout(TaskException):
-    MESSAGE = 'Task {0} timed-out (timeout was {1}).'
-    def __init__(self, task, timeout):
-        super(TaskTimeout,self).__init__(self.MESSAGE.format(task,timeout))
+    status = REVOKED
 
 
 class SchedulingError(TaskException):
