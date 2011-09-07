@@ -1,28 +1,26 @@
-# -*- coding: utf-8 -
-#
-# This file is part of gunicorn released under the MIT license. 
-# See the NOTICE for more information.
 import os
 import random
 import sys
 
-from multiprocessing.queues import Empty
-
 from pulsar.utils import system
-from pulsar import Actor, is_async
+from pulsar import Actor, is_async, Empty
 
 
 __all__ = ['Worker']
 
-    
 
 class Worker(Actor):
     """\
-Base class for actors implementing applications.
+A base class for a :class:`pulsar.Actor` implementing a
+:class:`pulsar.Application`.
     
-.. attribute:: wid
+.. attribute:: app
 
-    The worker unique id. If the Worker has not started it is ``None``.
+    Instance of the :class:`pulsar.Application` to be performed by the worker
+    
+.. attribute:: cfg
+
+    Configuration dictionary
 
 """        
     def _init(self,
@@ -45,9 +43,6 @@ Base class for actors implementing applications.
         
     def on_task(self):
         self.app.worker_task(self)
-    
-    #def __str__(self):
-    #    return "<{0} {1}>".format(self.__class__.__name__,self.wid)
         
     def check_num_requests(self):
         '''Check the number of requests. If they exceed the maximum number

@@ -42,6 +42,14 @@ Users access the arbiter by the high level api::
     import pulsar
     
     arbiter = pulsar.arbiter()
+    
+    
+.. attribute:: LIVE_ACTORS
+
+    dictionary of all live actors proxies. Values are given by instances of
+    :class:`pulsar.ActorProxyMonitor` which are used to communicate with
+    remote actors.
+    
 '''
     CLOSE_TIMEOUT = 3
     WORKER_BOOT_ERROR = 3
