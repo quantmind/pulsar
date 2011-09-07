@@ -27,7 +27,8 @@ __all__ = ['Config',
            'validate_callable',
            'validate_bool',
            'validate_pos_int',
-           'make_settings']
+           'make_settings',
+           'make_options']
 
 
 KNOWN_SETTINGS = []
@@ -71,6 +72,38 @@ def make_settings(ignore=None):
             continue
         settings[setting.name] = setting.copy()
     return settings
+
+
+def make_options():
+    g_settings = make_settings(ignore=('version',))
+
+    keys = g_settings.keys()
+    def sorter(k):
+        return (g_settings[k].section, g_settings[k].order)
+
+    opts = []
+    
+    for k in keys:
+        setting = g_settings[k]
+        if not setting.cli:
+            continue
+
+        args = tuple(setting.cli)
+
+        kwargs = {
+            "dest": setting.name,
+            "metavar": setting.meta or None,
+            "action": setting.action or "store",
+            "type": setting.type or "string",
+            "default": None,
+            "help": "%s [%s]" % (setting.short, setting.default)
+        }
+        if kwargs["action"] != "store":
+            kwargs.pop("type")
+
+        opts.append(optparse.make_option(*args, **kwargs))
+
+    return tuple(opts)
 
 
 class DummyConfig(object):

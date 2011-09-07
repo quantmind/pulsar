@@ -3,9 +3,7 @@ from datetime import datetime
 import djpcms
 from djpcms import forms, views, html, ajax
 from djpcms.template import loader
-from djpcms.apps.included.admin import AdminApplication,\
-                                        AdminApplicationSimple,\
-                                        TabView
+from djpcms.apps.included import admin
 from djpcms.utils.dates import nicetimedelta, smart_time
 from djpcms.utils.text import nicename
 from djpcms.utils import mark_safe
@@ -15,12 +13,11 @@ from stdnet import orm
 
 import pulsar
 from pulsar.utils.py2py3 import iteritems
-from pulsar.http import rpc
+from pulsar.apps import rpc
 
 from .models import Task, JobModel
 from .forms import get_job_form, ServerForm
 
-fromtimestamp = datetime.fromtimestamp
 
 monitor_template = '''\
 <div class="yui-g">
@@ -51,7 +48,7 @@ monitor_template = '''\
 </div>'''
     
 
-class ServerView(TabView):
+class ServerView(admin.TabView):
     converters = {'uptime': nicetimedelta,
                   'notified': smart_time,
                   'default_timeout': nicetimedelta,
@@ -96,7 +93,7 @@ class ServerView(TabView):
                 'right_panels':monitors}
 
     
-class PulsarServerApplication(AdminApplication):
+class PulsarServerApplication(admin.AdminApplication):
     inherit = True
     form = ServerForm
     list_per_page = 100
@@ -259,7 +256,7 @@ class JobApplication(views.ModelApplication):
                                width = 700)
     
     
-class TasksAdmin(AdminApplicationSimple):
+class TasksAdmin(admin.AdminApplicationSimple):
     list_display = (html.table_header('short_id', 'TID', function='id'),)\
                     + task_display
     list_display_links = ('id','short_id','job')
