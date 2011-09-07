@@ -133,23 +133,6 @@ def create_wsgi(req, sock, client, server, cfg, worker = None):
     return resp, environ
 
 
-class Middleware(object):
-    '''Middleware handler'''
-    
-    def __init__(self):
-        self.handles = []
-        
-    def add(self, handle):
-        self.handles.append(handle)
-        
-    def apply(self, elem):
-        for handle in self.handles:
-            try:
-                handle(elem)
-            except Exception as e:
-                pass
-
-
 class Request(object):
     
     def __init__(self, environ):

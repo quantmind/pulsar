@@ -181,8 +181,9 @@ Send a message to the actor referenced by ``self``.
 
 :parameter aid: the actor id of the actor sending the message
 :parameter msg: the message body.
-:parameter name: the name of the message. If non name is provided, the message will be
-                 broadcasted by the receiving actor, otherwise a specific action
+:parameter name: the name of the message. If non name is provided,
+                 the message will be broadcasted by the receiving actor,
+                 otherwise a specific action
                  will be performed. Default ``None``.
 :parameter ack: If ``True`` the receiving actor will send a callback.'''
         name = name or DEFAULT_MESSAGE_CHANNEL

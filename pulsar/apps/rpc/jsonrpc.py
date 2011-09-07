@@ -11,20 +11,20 @@ The specification is at http://groups.google.com/group/json-rpc/web/json-rpc-2-0
 '''
 import logging
 import json
+from timeit import default_timer
 
 import pulsar
 from pulsar.utils.tools import gen_unique_id
 from pulsar.http import HttpClient
 from pulsar.http.utils import to_string
+from pulsar.utils.py2py3 import range
 from pulsar.utils.jsontools import DefaultJSONEncoder, DefaultJSONHook
 
 from .handlers import RpcHandler
 from .exceptions import exception, INTERNAL_ERROR
 
 
-__all__ = ['JSONRPC',
-           'JsonProxy',
-           'JsonServer']
+__all__ = ['JSONRPC','JsonProxy']
 
 
 class JSONRPCException(Exception):
@@ -128,29 +128,6 @@ Design to comply with the `JSON-RPC 2.0`_ Specification.
             return self.http.HttpResponse(result,'application/javascript')
         else:
             return self.http.HttpResponse('<h1>Not Found</h1>')
-
-
-class JsonServer(JSONRPC):
-    '''Add Four calls to the base Json Rpc handler.'''
-    def rpc_ping(self, request):
-        '''Ping the server'''
-        return 'pong'
-    
-    def rpc_server_info(self, request, full = False):
-        '''Dictionary of information about the server'''
-        worker = request.environ['pulsar.worker']
-        info = worker.proxy.info(worker.arbiter, full = full)
-        return info.add_callback(lambda res : self.extra_server_info(request, res))
-    
-    def rpc_functions_list(self, request):
-        return list(self.listFunctions())
-    
-    def rpc_shut_down(self, request):
-        request.environ['pulsar.worker'].shut_down()
-    
-    def extra_server_info(self, request, info):
-        '''Add additional information to the info dictionary.'''
-        return info
     
     
 Handle = JSONRPC
@@ -226,6 +203,14 @@ class JsonProxy(object):
                               id = id,
                               data = self.__data)
 
+    def timeit(self, func, times, *args, **kwargs):
+        r = range(times)
+        func = getattr(self,func)
+        start = default_timer()
+        for t in r:
+            func(*args, **kwargs)
+        return default_timer() - start            
+        
     def __call__(self, *args, **kwargs):
         func_name = self.__name
         fs        = func_name.split('_')

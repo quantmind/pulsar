@@ -90,11 +90,13 @@ and :meth:`_end_task` methods.'''
                 if result.called:
                     result = result.result
                 else:
-                    return self.ioloop.add_callback(lambda : self.end_task(request, response, result))
+                    return self.ioloop.add_callback(\
+                            lambda : self.end_task(request, response, result))
         try:
             self.app.end_event_task(self, response, result)
         except Exception as e:
-            self.log.critical('Handled exception : {0}'.format(e),exc_info = sys.exc_info())
+            self.log.critical('Handled exception : {0}'.\
+                              format(e),exc_info = sys.exc_info())
         finally:
             try:
                 self.cfg.post_request(self, request)

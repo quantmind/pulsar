@@ -1,4 +1,3 @@
-
 from pulsar.apps.tasks import Job
 
 
@@ -10,7 +9,6 @@ class RunPyCode(Job):
         exec(code_local,ns)
         func = ns['task_function']
         return func(*args,**kwargs)
-        
         
 
 class Addition(Job):

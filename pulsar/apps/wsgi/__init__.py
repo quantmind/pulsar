@@ -58,7 +58,7 @@ class WSGIApplication(pulsar.Application):
                     response.write(item)
             response.close()
         except socket.error as e:
-            pass
+            worker.log.error("Error processing request: {0}".format(e))
         finally:    
             close(response.client_sock)
 

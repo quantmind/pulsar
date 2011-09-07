@@ -4,7 +4,8 @@ import traceback
 
 from .states import REVOKED
 
-__all__ = ['TaskException',
+__all__ = ['TaskQueueException',
+           'TaskException',
            'TaskNotAvailable',
            'TaskTimeout',
            'SchedulingError',
@@ -16,7 +17,11 @@ def get_traceback(log = None):
     return '\n'.join(traceback.format_exception(*exc_info))
 
 
-class TaskException(pulsar.PulsarException):
+class TaskQueueException(pulsar.PulsarException):
+    pass
+
+
+class TaskException(TaskQueueException):
     pass
 
 

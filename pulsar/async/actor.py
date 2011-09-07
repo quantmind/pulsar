@@ -15,7 +15,8 @@ from pulsar.utils.py2py3 import iteritems, itervalues, pickle
 
 
 from .eventloop import IOLoop
-from .proxy import ActorProxy, ActorRequest, ActorCallBack, DEFAULT_MESSAGE_CHANNEL
+from .proxy import ActorProxy, ActorRequest, ActorCallBack,\
+                    DEFAULT_MESSAGE_CHANNEL
 from .impl import ActorProcess, ActorThread, ActorMonitorImpl
 from .defer import is_async, Deferred
 
@@ -412,8 +413,8 @@ This function should live on a event loop.'''
                 #self.handle_request_error(request,e)
                 result = e
                 if self.log:
-                    self.log.error('Error while processing worker request: {0}'.format(e),
-                                   exc_info=sys.exc_info())
+                    self.log.critical('Unhandled error while processing worker\
+ request: {0}'.format(e), exc_info=sys.exc_info())
             finally:
                 if ack:
                     ActorCallBack(self,result).\

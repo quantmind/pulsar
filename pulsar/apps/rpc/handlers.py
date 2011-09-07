@@ -60,7 +60,8 @@ class RpcResponse(object):
                 self.critical(request,id,e)
         except Exception as e:
             result = e
-        return make_async(result).add_callback(lambda r : self._end(request,start_response,r))
+        return make_async(result).add_callback(
+                        lambda r : self._end(request,start_response,r))
             
     def _end(self, request, start_response, result):
         id = request.environ['pulsar.rpc.id']
@@ -69,6 +70,7 @@ class RpcResponse(object):
         status = '200 OK'
         try:
             if isinstance(result,Exception):
+                self.handler.log.error(str(result),exc_info=True)
                 result = self.handler.dumps(id,version,error=result)
             else:
                 result = self.handler.dumps(id,version,result=result)
@@ -124,10 +126,21 @@ BaseHandler = MetaRpcHandler('BaseRpcHandler',(object,),{'virtual':True})
 
 
 class RpcHandler(BaseHandler,PulsarWsgiHandler):
-    '''Server Handler.
+    '''A WSGI RPC server handler.
 Sub-handlers for prefixed methods (e.g., system.listMethods)
 can be added with putSubHandler. By default, prefixes are
 separated with a '.'. Override self.separator to change this.
+
+.. attribute:: request_middleware
+    
+    instance of :class:`pulsar.utils.Middleware` or ``None``. It available
+    the request will be processed by the middleware before
+    processing.
+    
+.. attribute:: response_middleware
+    
+    instance of :class:`pulsar.utils.Middleware` or ``None``. It available
+    the response will be processed by the middleware before returning.
     '''
     route        = '/'
     serve_as     = 'rpc'
@@ -144,6 +157,7 @@ separated with a '.'. Override self.separator to change this.
                  attrs = None,
                  route = None,
                  request_middleware = None,
+                 response_middleware = None,
                  title = None,
                  documentation = None,
                  **kwargs):
@@ -153,11 +167,12 @@ separated with a '.'. Override self.separator to change this.
         self.documentation = documentation or ''
         self.log = self.getLogger(**kwargs)
         self.request_middleware = request_middleware
+        self.response_middleware = response_middleware
         if subhandlers:
-            for route,handler in subhandlers.items():
+            for prefix,handler in subhandlers.items():
                 if inspect.isclass(handler):
                     handler = handler(http = self.http)
-                self.putSubHandler(route, handler)
+                self.putSubHandler(prefix, handler)
     
     def get_method_and_args(self, data):
         raise NotImplementedError
@@ -240,6 +255,9 @@ separated with a '.'. Override self.separator to change this.
         rpc_handler = self._getFunction(method)
         environ['pulsar.rpc.id'] = id
         environ['pulsar.rpc.version'] = version
-        return rpc_handler(request, start_response, *args, **kwargs)
+        response = rpc_handler(request, start_response, *args, **kwargs)
+        if self.response_middleware:
+            self.response_middleware.apply(response)
+        return response
         
         

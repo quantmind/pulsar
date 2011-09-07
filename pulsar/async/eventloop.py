@@ -70,14 +70,17 @@ Example usage for a simple TCP server:
     io_loop.add_handler(sock.fileno(), callback, io_loop.READ)
     io_loop.start()
 
-When using the eventloop on a child process, It should be instantiated after forking.
+When using the eventloop on a child process,
+It should be instantiated after forking.
     """
     # Never use an infinite timeout here - it can stall epoll
     POLL_TIMEOUT = 0.2
     
-    def __init__(self, impl=None, logger = None, pool_timeout = None, commnads = None):
+    def __init__(self, impl=None, logger = None,
+                 pool_timeout = None, commnads = None):
         self._impl = impl or IOpoll()
-        self.POLL_TIMEOUT = pool_timeout if pool_timeout is not None else self.POLL_TIMEOUT
+        self.POLL_TIMEOUT = pool_timeout if pool_timeout is not None\
+                                 else self.POLL_TIMEOUT
         self.log = logger or logging.getLogger('ioloop')
         fd = file_descriptor(self._impl)
         if fd:
@@ -108,7 +111,7 @@ When using the eventloop on a child process, It should be instantiated after for
 
     def add_loop_task(self, task):
         '''Add a callable object to self.
-The object will be called at each iteration in the loop.'''
+The object will be called at each iteration in the event loop.'''
         self._loop_tasks.append(task)
         
     def remove_loop_task(self, task):
@@ -123,7 +126,8 @@ The object will be called at each iteration in the loop.'''
             fd = file_descriptor(fd)
             if fd not in self._handlers:
                 self._handlers[fd] = handler
-                self.log.debug('Registering file descriptor "{0}" with ioloop.'.format(fd))
+                self.log.debug('Registering file descriptor "{0}"\
+ with ioloop.'.format(fd))
                 self._impl.register(fd, events | self.ERROR)
                 return True
 
@@ -209,8 +213,9 @@ The object will be called at each iteration in the loop.'''
             callbacks = self._callbacks
             if callbacks:
                 self._callbacks = []
+                _run_callback = self._run_callback 
                 for callback in callbacks:
-                    self._run_callback(callback)
+                    _run_callback(callback)
 
             if self._callbacks:
                 poll_timeout = 0.0

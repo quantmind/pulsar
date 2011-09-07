@@ -1,3 +1,6 @@
+'''\
+A lightweight deferred module inspired by twisted.
+'''
 import sys
 import inspect
 from time import sleep
@@ -18,7 +21,9 @@ def is_async(obj):
 
 async_value = lambda value : lambda result : value 
 
+
 def make_deferred(val = None):
+    '''Make *val* into an asynchronous deferred instance.'''
     if not is_async(val):
         d = Deferred()
         d.callback(val)
@@ -124,25 +129,31 @@ the result of the callback.
                     finally:
                         self._runningCallbacks = False
                     if isinstance(self.result, Deferred):
+                        # Add a pause and add new callback
                         self.pause()
                         self.result.add_callback(self._continue)
                 except Exception as e:
-                    self.result = callback(e)
+                    self.result = e
                 
         return self
     
+    def add_callback_args(self, callback, *args, **kwargs):
+        return self.add_callback(\
+                lambda result : callback(result,*args,**kwargs))
+        
     def _continue(self, result):
         self.result = result
         self.unpause()
     
     def callback(self, result):
         if isinstance(result,Deferred):
-            raise ValueError('Received a deferred instance from callback function')
+            raise ValueError('Received a deferred instance from\
+ callback function')
         if self.called:
             raise AlreadyCalledError
         self.result = result
         self._called = True
-        self._run_callbacks()
+        return self._run_callbacks()
         
     def wait(self, timeout = 1):
         '''Wait until result is available'''
@@ -154,3 +165,14 @@ the result of the callback.
             return self.result
 
     
+class ObjectCallback(object):
+    __slots__ = ('o',)
+    def __init__(self, o):
+        self.o = o
+    
+    def __call__(self, result):
+        self.o.callback(result)
+        return self.o.result
+        
+    
+

@@ -29,26 +29,27 @@ This is an interface for using the same IOLoop class of other workers.'''
 class TaskScheduler(pulsar.WorkerMonitor):
     
     def _addtask(self, caller, task_name, targs, tkwargs, ack = True, **kwargs):
-        try:
-            task = self.app.make_request(task_name, targs, tkwargs, **kwargs)
-            tq = task.to_queue()
-            if tq:
-                self.task_queue.put((None,tq))
-            
-            if ack:
-                task = tq or task
-                return task.tojson_dict()
-        except Exception as e:
-            return e
+        task = self.app.make_request(task_name, targs, tkwargs, **kwargs)
+        tq = task.to_queue()
+        if tq:
+            self.task_queue.put((None,tq))
+        
+        if ack:
+            task = tq or task
+            return task.tojson_dict()
     
     def actor_tasks_list(self, caller):
         return self.app.tasks_list()
     
-    def actor_addtask(self, caller, task_name, targs, tkwargs, ack=True, **kwargs):
-        return self._addtask(caller, task_name, targs, tkwargs, ack = True, **kwargs)
+    def actor_addtask(self, caller, task_name, targs, tkwargs,
+                      ack=True, **kwargs):
+        return self._addtask(caller, task_name, targs, tkwargs,
+                             ack = True, **kwargs)
         
-    def actor_addtask_noack(self, caller, task_name, targs, tkwargs, ack=False, **kwargs):
-        return self._addtask(caller, task_name, targs, tkwargs, ack = False, **kwargs)
+    def actor_addtask_noack(self, caller, task_name, targs, tkwargs,
+                            ack=False, **kwargs):
+        return self._addtask(caller, task_name, targs, tkwargs,
+                             ack = False, **kwargs)
     actor_addtask_noack.ack = False
     
     def actor_task_finished(self, caller, response):

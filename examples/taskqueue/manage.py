@@ -6,7 +6,7 @@ To run the server type::
     
 Open a new shell and launch python and type::
 
-    >>> from pulsar.http import rpc
+    >>> from pulsar.apps import rpc
     >>> p = rpc.JsonProxy('http://localhost:8060')
     >>> p.ping()
     'pong'
@@ -15,24 +15,37 @@ Open a new shell and launch python and type::
     >>>
     
 '''
-import pulsar    
-from pulsar.http import actorCall
+import pulsar
+from pulsar.apps import rpc, tasks
 
-from pulsar.apps.tasks import TaskQueueRpcMixin, queueTask, TaskQueue
-from pulsar.apps import rpc
+TASK_QUEUE_NAME = 'taskqueue'
+TASK_PATHS = ['taskqueue.sampletasks.*']
 
 
-class RpcRoot(rpc.JsonServer,TaskQueueRpcMixin):
-    '''The rpc handler which communicates with the task queue'''    
-    rpc_get_task = actorCall('get_task', server = 'taskqueue')
-    rpc_evalcode = queueTask('codetask', server = 'taskqueue')
+def test_middleware(request, margs):
+    '''Add a simple flag to the dictionary. Just for testing middleware.'''
+    margs['test'] = True
+
+task_manager = tasks.HttpTaskManager(TASK_QUEUE_NAME)
+task_manager.add_request_middleware(test_middleware)
+
+
+class RpcRoot(rpc.PulsarServerCommands,
+              tasks.TaskQueueRpcMixin):
+    '''The rpc handler which communicates with the task queue'''
+    task_queue_manager = task_manager
+    
+    rpc_evalcode = tasks.queueTask('codetask',
+                                   'Evaluate python code on the task queue.')
         
 
 def createTaskQueue(tasks_path = None, **params):
     # Create the taskqueue application using the tasks in
     # the sampletasks directory
-    return TaskQueue(tasks_path = ['taskqueue.sampletasks.*'],
-                     **params)
+    tasks_path = tasks_path or TASK_PATHS
+    return tasks.TaskQueue(tasks_path = tasks_path,
+                           name = TASK_QUEUE_NAME,
+                           **params)
     
     
 def server(task_workers = 1, concurrency = 'process', **params):

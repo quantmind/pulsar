@@ -21,6 +21,9 @@ a error message if the check did not pass, otherwise it returns ``None``.
     maxlen = len_args
     if spec.varargs or spec.keywords:
         maxlen = None
+        if not minlen:
+            return
+    
     if not spec.defaults and maxlen:
         start = '"{0}" takes'.format(func.__name__)
     else:
