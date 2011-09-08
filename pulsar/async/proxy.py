@@ -6,6 +6,7 @@ from .defer import Deferred, is_async
 
 __all__ = ['ActorRequest',
            'ActorProxy',
+           'ActorProxyMonitor',
            'get_proxy',
            'ActorCallBack',
            'ActorCallBacks',
@@ -126,6 +127,8 @@ class ActorRequest(Deferred):
             
 
 class ActorProxyRequest(object):
+    '''A class holding information about a message to be sent from one
+actor to another'''
     __slots__ = ('caller','_func_name','ack')
     
     def __init__(self, caller, name, ack):
@@ -156,17 +159,43 @@ class ActorProxyRequest(object):
 
 
 class ActorProxy(object):
-    '''A proxy for a :class:`pulsar.utils.async.RemoteMixin` instance.
-This is a light class which delegates function calls to a remote object.
+    '''This is an important component in pulsar concurrent framework. An
+instance of this class behaves as a proxy for a remote `underlying` 
+:class:`pulsar.Actor` instance.
+This is a lightweight class which delegates function calls to the underlying
+remote object.
 
-.. attribute: proxyid
+It is pickable and therefore can be send from actor to actor using pulsar
+messaging.
+
+A proxy exposes all the underlying remote functions which have been implemented
+in the actor class by prefixing with ``actor_``
+(see the :class:`pulsar.ActorMetaClass` documentation).
+By default each actor comes with a set of remote functions: info, ping,
+notify, stop, on_actor_exit and callback
+
+For example, lets say we have a proxy ``a`` and an actor (or proxy) ``b``::
+
+    a.notify(b)
+    
+will call notify on the actor underlying ``a`` with ``b`` as the caller.
+This is equivalent as to using the lower level call::
+
+    a.send(b.aid,(),'notify')
+    
+
+.. attribute:: proxyid
 
     Unique ID for the remote object
     
-.. attribute: remotes
+.. attribute:: remotes
 
-    dictionary of remote functions names with value indicationg if the
-    remote function will acknowledge the call.
+    dictionary of remote functions names with value indicating if the
+    remote function will acknowledge the call or not.
+    
+.. attribute:: timeout
+
+    the value of the underlying :attr:`pulsar.Actor.timeout` attribute
 '''     
     def __init__(self, impl):
         self.aid = impl.aid
@@ -177,14 +206,15 @@ This is a light class which delegates function calls to a remote object.
         
     def send(self, aid, msg, name = None, ack = False):
         '''\
-Send a message to the actor referenced by ``self``.
+Send a message to the underlying actor. This is the low level function
+call for communicating between actors.
 
 :parameter aid: the actor id of the actor sending the message
 :parameter msg: the message body.
-:parameter name: the name of the message. If non name is provided,
+:parameter name: the name of the message. If not provided,
                  the message will be broadcasted by the receiving actor,
-                 otherwise a specific action
-                 will be performed. Default ``None``.
+                 otherwise a specific action will be performed.
+                 Default ``None``.
 :parameter ack: If ``True`` the receiving actor will send a callback.'''
         name = name or DEFAULT_MESSAGE_CHANNEL
         request = ActorRequest(aid,name,ack,msg)
@@ -209,7 +239,7 @@ Send a message to the actor referenced by ``self``.
     
     def __getstate__(self):
         '''Because of the __getattr__ implementation,
-we need to manually implement the pcikling and unpickling of thes object.'''
+we need to manually implement the pickling and unpickling of the object.'''
         return (self.aid,self.remotes,self.inbox,self.timeout,self.loglevel)
     
     def __setstate__(self, state):
@@ -223,13 +253,18 @@ we need to manually implement the pcikling and unpickling of thes object.'''
             raise AttributeError("'{0}' object has no attribute '{1}'".format(self,name))
 
     def local_info(self):
+        '''Return a dictionary containing information about the remote
+object including, aid (actor id), timeout and inbox size.'''
         return {'aid':self.aid[:8],
                 'timeout':self.timeout,
                 'inbox_size':self.inbox.qsize()}
 
 
 class ActorProxyMonitor(ActorProxy):
-    
+    '''A specialized :class:`pulsar.ActorProxy` class which contains additional
+information about the remote underlying :class:`pulsar.Actor`. Unlike the
+:class:`pulsar.ActorProxy` class, instances of this class are not pickable and
+therefore remain in the process where they have been created.'''
     def __init__(self, impl):
         self.impl = impl
         self.notified = time()
@@ -241,15 +276,20 @@ class ActorProxyMonitor(ActorProxy):
         return self.impl.pid
     
     def is_alive(self):
+        '''True if underlying actor is alive'''
         return self.impl.is_alive()
         
     def terminate(self):
+        '''Terminate life of underlying actor.'''
         self.impl.terminate()
             
     def __str__(self):
         return self.impl.__str__()
     
     def local_info(self):
+        '''Return a dictionary containing information about the remote
+object including, aid (actor id), timeout inbox size, last notified time and
+process id.'''
         data = super(ActorProxyMonitor,self).local_info()
         data.update({'notified':self.notified,
                      'pid':self.pid})

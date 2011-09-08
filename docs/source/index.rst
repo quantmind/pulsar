@@ -25,6 +25,8 @@ Applications
    apps/rpc
    apps/tasks
    apps/pulsardjp
+   apps/shell
+   apps/tempo
    
 
 Indices and tables

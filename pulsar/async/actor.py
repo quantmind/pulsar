@@ -23,6 +23,7 @@ from .defer import is_async, Deferred
 
 __all__ = ['is_actor',
            'Actor',
+           'ActorMetaClass',
            'ActorRequest',
            'MAIN_THREAD',
            'Empty']
@@ -47,7 +48,7 @@ MAIN_THREAD = current_thread()
 
    
 class Runner(LogginMixin,HttpMixin):
-    '''Base class for classes with an event loop.
+    '''Base class with event loop powered
     '''
     DEF_PROC_NAME = 'pulsar'
     SIG_QUEUE = None
@@ -102,7 +103,22 @@ class Runner(LogginMixin,HttpMixin):
 
 
 class ActorMetaClass(type):
+    '''The actor metaclass performs a little ammount of magic
+by collecting functions prefixed with ``actor_`` and placing them into
+the :class:`Actor.actor_functions` dictionary. These are the remote functions
+which the arbiter exposes.
+
+Each remote function must at least accept one argument which is represented
+by the remote actor calling the function. For example::
+
+    import pulsar
     
+    class MyArbiter(pulsar.Arbiter):
+    
+        def actor_dosomething(self, caller, ...):
+            ...
+            
+'''
     def __new__(cls, name, bases, attrs):
         make = super(ActorMetaClass, cls).__new__
         fprefix = 'actor_'
@@ -150,6 +166,12 @@ To spawn a new actor::
     
 Here ``a`` is actually a reference to the remote actor.
 
+.. attribute:: actor_functions
+
+    dictionary of remote functions exposed by the actor. This
+    dictionary is filled by the :class:`pulsar.ActorMetaClass` during class
+    construction.
+    
 .. attribute:: age
 
     The age of actor, used to access how long the actor has been created.
@@ -190,6 +212,9 @@ Here ``a`` is actually a reference to the remote actor.
         
     @property
     def proxy(self):
+        '''Instance of an :class:`pulsar.ActorProxy` holding a reference
+to the actor. The proxy is a lightweight representation of the actor
+which can be shared across different processes (i.e. it is pickable).'''
         return ActorProxy(self)
     
     @property
@@ -240,7 +265,8 @@ it will be stopped if it fails to notify itself for a period longer that timeout
         return self._inbox
         
     def __reduce__(self):
-        raise pickle.PicklingError('{0} - Cannot pickle Actor instances'.format(self))
+        raise pickle.PicklingError('{0} - Cannot pickle Actor instances'\
+                                   .format(self))
     
     # HOOKS
     
@@ -281,6 +307,7 @@ it will be stopped if it fails to notify itself for a period longer that timeout
         return self._state >= self.CLOSE
     
     # INITIALIZATION AFTER FORKING
+    
     def _init(self, impl, arbiter = None, monitor = None,
               on_task = None, task_queue = None,
               actor_links = None, name = None, socket = None,
@@ -360,6 +387,7 @@ it will be stopped if it fails to notify itself for a period longer that timeout
             self.proxy.stop(self.arbiter)
             
     # LOW LEVEL API
+    
     def _make_name(self):
         return '{0}({1})'.format(self.class_code,self.aid[:8])
     
@@ -446,7 +474,8 @@ This function should live on a event loop.'''
             ch.append(request)
 
     def __call__(self):
-        '''Called in the main eventloop, It flush the inbox queue and notified linked actors'''
+        '''Called in the main eventloop, it flush the inbox queue and
+notified linked actors'''
         self.flush()
         # If this is not a monitor, we notify to the arbiter we are still alive
         if self.is_alive():
