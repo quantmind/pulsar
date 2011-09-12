@@ -34,8 +34,10 @@ def spawn(actor_class, *args, **kwargs):
 class Arbiter(ActorPool):
     '''The Arbiter is a very special :class:`pulsar.Actor`. It is used as
 singletone in the main process and it manages one or more
-:class:`pulsar.Monitors` and their :class:`pulsar.Arbiters`.  
-The arbiter runs the main event-loop, in a way similar to the twisted reactor.
+:class:`pulsar.Monitors`.  
+The arbiter runs the main event-loop of your concurrent application.
+It is the equivalent of the gunicorn_ arbiter, the twisted_ reactor
+and the tornado_ eventloop.
 
 Users access the arbiter by the high level api::
 
@@ -50,6 +52,10 @@ Users access the arbiter by the high level api::
     :class:`pulsar.ActorProxyMonitor` which are used to communicate with
     remote actors.
     
+    
+.. _gunicorn: http://gunicorn.org/
+.. _twisted: http://twistedmatrix.com/trac/
+.. _tornado: http://www.tornadoweb.org/
 '''
     CLOSE_TIMEOUT = 3
     WORKER_BOOT_ERROR = 3
@@ -71,7 +77,8 @@ Users access the arbiter by the high level api::
     :class:`pulsar.Monitor` class.'''
         kwargs['impl'] = 'monitor'
         if monitor_name in self._monitors:
-            raise KeyError('Monitor "{0}" already available'.format(monitor_name))
+            raise KeyError('Monitor "{0}" already available'\
+                           .format(monitor_name))
         m = spawn(monitor_class,actor_class,*args,**kwargs)
         m._name = monitor_name
         self._monitors[m.name] = m
@@ -137,15 +144,18 @@ registered with the the arbiter.'''
                         m.start()
                 
     def on_manage_actor(self, actor):
-        '''If an actor failed to notify itself to the arbiter for more than the timeout. Stop the arbiter.'''
+        '''If an actor failed to notify itself to the arbiter for more than
+the timeout. Stop the arbiter.'''
         gap = time() - actor.notified
         if gap > actor.timeout:
             if actor.stopping < self.STOPPING_LOOPS:
                 if not actor.stopping:
-                    self.log.info('Stopping {0}. Timeout surpassed.'.format(actor))
+                    self.log.info(\
+                        'Stopping {0}. Timeout surpassed.'.format(actor))
                     self.proxy.stop(actor)
             else:
-                self.log.warn('Terminating {0}. Timeout surpassed.'.format(actor))
+                self.log.warn(\
+                        'Terminating {0}. Timeout surpassed.'.format(actor))
                 actor.terminate()
             actor.stopping += 1
             

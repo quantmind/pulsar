@@ -20,12 +20,142 @@ from .utils import is_hoppish, http_date, write, write_chunk, to_string,\
 from .globals import *
 
 
+__all__ = ['Request','Response','PulsarWsgiHandler','create_wsgi']
+
+
 NORMALIZE_SPACE = re.compile(r'(?:\r\n)?[ \t]+')
 EMPTY_DICT = {}
 EMPTY_TUPLE = ()
 
 
+class Request(object):
+    '''An request environment wrapper'''
+    def __init__(self, environ):
+        self.environ = environ
+        self._init()
+    
+    def _init(self):
+        pass
+    
+    @cached_property
+    def data(self):
+        return self.environ['wsgi.input'].read()
+    
+    @cached_property
+    def authorization(self):
+        """The `Authorization` object in parsed form."""
+        code = 'HTTP_AUTHORIZATION'
+        if code in self.environ:
+            header = self.environ[code]
+            return parse_authorization_header(header)
+        
+
+class Response(object):
+
+    def __init__(self, req, sock):
+        self.req = req
+        self.sock = sock
+        self.version = SERVER_SOFTWARE
+        self.status = None
+        self.chunked = False
+        self.should_close = req.should_close()
+        self.headers = []
+        self.headers_sent = False
+
+    @property
+    def client_sock(self):
+        return self.sock
+    
+    def force_close(self):
+        self.should_close = True
+
+    def start_response(self, status, headers, exc_info=None):
+        if exc_info:
+            try:
+                if self.status and self.headers_sent:
+                    raise (exc_info[0], exc_info[1], exc_info[2])
+            finally:
+                exc_info = None
+        elif self.status is not None:
+            raise AssertionError("Response headers already set!")
+
+        self.status = status
+        self.process_headers(headers)
+        return self.write
+
+    def process_headers(self, headers):
+        for name, value in headers:
+            name = to_string(name)
+            value = to_string(value)
+            if is_hoppish(name):
+                lname = name.lower().strip()
+                if lname == "transfer-encoding":
+                    if value.lower().strip() == "chunked":
+                        self.chunked = True
+                elif lname == "connection":
+                    # handle websocket
+                    if value.lower().strip() != "upgrade":
+                        continue
+                else:
+                    # ignore hopbyhop headers
+                    continue
+            self.headers.append((name.strip(), value.strip()))
+
+    def default_headers(self):
+        connection = "keep-alive"
+        if self.should_close:
+            connection = "close"
+
+        return [
+            "HTTP/1.1 %s\r\n" % self.status,
+            "Server: %s\r\n" % self.version,
+            "Date: %s\r\n" % http_date(),
+            "Connection: %s\r\n" % connection
+        ]
+
+    def send_headers(self):
+        if self.headers_sent:
+            return
+        tosend = self.default_headers()
+        tosend.extend(["%s: %s\r\n" % (n, v) for n, v in self.headers])
+        write(self.sock, "%s\r\n" % "".join(tosend))
+        self.headers_sent = True
+
+    def write(self, arg):
+        self.send_headers()
+        write(self.sock, arg, self.chunked)
+
+    def close(self):
+        if not self.headers_sent:
+            self.send_headers()
+        if self.chunked:
+            write_chunk(self.sock, "")
+
+        
 class PulsarWsgiHandler(PickableMixin):
+    '''Asyncronous WSGI handler'''
+    REQUEST = Request
+    
+    def __init__(self,
+                 request_middleware = None,
+                 response_middleware = None,
+                 **kwargs):
+        self.log = self.getLogger(**kwargs)
+        self.request_middleware = request_middleware
+        self.response_middleware = response_middleware
+        self._init(**kwargs)
+        
+    def _init(self,**kwargs):
+        pass
+        
+    def __call__(self, environ, start_response):
+        request = self.REQUEST(environ)
+        if self.request_middleware:
+            self.request_middleware.apply(request)
+        self.execute(request)
+        
+    def execute(self, request):
+        pass
     
     def send(self, request, name, args = None, kwargs = None,
              server = None, ack = True):
@@ -131,103 +261,4 @@ def create_wsgi(req, sock, client, server, cfg, worker = None):
     environ['SCRIPT_NAME'] = script_name
 
     return resp, environ
-
-
-class Request(object):
     
-    def __init__(self, environ):
-        self.environ = environ
-    
-    @cached_property
-    def data(self):
-        return self.environ['wsgi.input'].read()
-    
-    @cached_property
-    def authorization(self):
-        """The `Authorization` object in parsed form."""
-        code = 'HTTP_AUTHORIZATION'
-        if code in self.environ:
-            header = self.environ[code]
-            return parse_authorization_header(header)
-    
-    
-class Response(object):
-
-    def __init__(self, req, sock):
-        self.req = req
-        self.sock = sock
-        self.version = SERVER_SOFTWARE
-        self.status = None
-        self.chunked = False
-        self.should_close = req.should_close()
-        self.headers = []
-        self.headers_sent = False
-
-    @property
-    def client_sock(self):
-        return self.sock
-    
-    def force_close(self):
-        self.should_close = True
-
-    def start_response(self, status, headers, exc_info=None):
-        if exc_info:
-            try:
-                if self.status and self.headers_sent:
-                    raise (exc_info[0], exc_info[1], exc_info[2])
-            finally:
-                exc_info = None
-        elif self.status is not None:
-            raise AssertionError("Response headers already set!")
-
-        self.status = status
-        self.process_headers(headers)
-        return self.write
-
-    def process_headers(self, headers):
-        for name, value in headers:
-            name = to_string(name)
-            value = to_string(value)
-            if is_hoppish(name):
-                lname = name.lower().strip()
-                if lname == "transfer-encoding":
-                    if value.lower().strip() == "chunked":
-                        self.chunked = True
-                elif lname == "connection":
-                    # handle websocket
-                    if value.lower().strip() != "upgrade":
-                        continue
-                else:
-                    # ignore hopbyhop headers
-                    continue
-            self.headers.append((name.strip(), value.strip()))
-
-    def default_headers(self):
-        connection = "keep-alive"
-        if self.should_close:
-            connection = "close"
-
-        return [
-            "HTTP/1.1 %s\r\n" % self.status,
-            "Server: %s\r\n" % self.version,
-            "Date: %s\r\n" % http_date(),
-            "Connection: %s\r\n" % connection
-        ]
-
-    def send_headers(self):
-        if self.headers_sent:
-            return
-        tosend = self.default_headers()
-        tosend.extend(["%s: %s\r\n" % (n, v) for n, v in self.headers])
-        write(self.sock, "%s\r\n" % "".join(tosend))
-        self.headers_sent = True
-
-    def write(self, arg):
-        self.send_headers()
-        write(self.sock, arg, self.chunked)
-
-    def close(self):
-        if not self.headers_sent:
-            self.send_headers()
-        if self.chunked:
-            write_chunk(self.sock, "")

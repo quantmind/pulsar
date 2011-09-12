@@ -35,6 +35,8 @@ if ispy3k:
     def to_string(data, charset=CHARSET, errors=ERRORS):
         if isinstance(data,bytes):
             return data.decode(charset,errors)
+        elif not isinstance(data,str):
+            return str(data)
         return data
     
     
@@ -46,10 +48,10 @@ if ispy3k:
 else:
     # Don't bother
     def to_string(data, charset=CHARSET, errors=ERRORS):
-        return data
+        return unicode(data)
     
     def to_bytes(data, charset=CHARSET, errors=ERRORS):
-        return data
+        return str(data)
     
     
 def is_hoppish(header):

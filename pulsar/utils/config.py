@@ -390,15 +390,7 @@ class WorkerClass(Setting):
     validator = validate_string
     default = "http"
     desc = """\
-        The type of workers to use.
-        
-        A string referring to one of the following bundled classes:
-        
-        * ``sync``
-        * ``eventlet`` - Requires eventlet >= 0.9.7
-        * ``gevent``   - Requires gevent >= 0.12.2 (?)
-        * ``tornado``  - Requires tornado >= 0.2
-        
+        The type of workers to use.        
         Optionally, you can provide your own worker by giving pulsar a
         MODULE:CLASS pair where CLASS is a subclass of
         pulsar.Worker.

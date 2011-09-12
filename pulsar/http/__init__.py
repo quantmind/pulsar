@@ -2,6 +2,8 @@ from pulsar.utils.importer import import_module
 
 from .client import HttpClient, urlencode
 from .link import *
+from .wsgi import *
+from .websocket import *
 
 EMPTY_TUPLE = ()
 EMPTY_DICT = {}
@@ -13,15 +15,4 @@ def get_httplib(cfg = None):
     else:
         return import_module('pulsar.http.base')
     
-
-
-# A decorator
-#def actorCall(function, doc = '', ack = True, server = "taskqueue"):
-#    
-#    def _(self, request, **kwargs):
-#        return actor_call(request, server, function, ack=ack, **kwargs)
-#        
-#    _.__doc__ = doc
-#    _.__name__ = function
-#    return _
 

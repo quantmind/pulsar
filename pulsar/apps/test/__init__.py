@@ -337,7 +337,7 @@ class TextTestRunner(unittest.TextTestRunner):
         return result
 
 
-class TestMonitor(pulsar.WorkerMonitor):
+class TestMonitor(pulsar.ApplicationMonitor):
     '''A specialized worker monitor for testing.'''
     def info(self):
         return self._info(len(self.LIVE_ACTORS))

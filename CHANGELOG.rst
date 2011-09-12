@@ -1,5 +1,6 @@
 Version Master
 =======================================
+* Removed the `worker` module.
 * Moved `http.rpc` module to `apps`.
 * Introduced context manager for `apps.tasks` to handle logs and exceptions.
 

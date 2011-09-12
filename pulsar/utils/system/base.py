@@ -71,10 +71,11 @@ def load_worker_class(uri):
         try:
             if uri.startswith("#"):
                 uri = uri[1:]
-            mod = import_module('pulsar.workers.' + uri)
+            mod = import_module('pulsar.apps.{0}'.format(uri))
             return getattr(mod,'Worker')
         except ImportError: 
-            raise RuntimeError('Worker class uri "{0}" invalid or not found'.format(uri))
+            raise RuntimeError('Worker class uri "{0}" invalid or not found'\
+                               .format(uri))
     klass = components.pop(-1)
     mod = import_module('.'.join(components))
     return getattr(mod, klass)

@@ -22,8 +22,8 @@ Actor Metaclass
    :member-order: bysource
 
 
-Monitors
-==================
+Monitor
+~~~~~~~~~~~~~~~~~~
 
 .. autoclass:: pulsar.Monitor
    :members:
@@ -31,14 +31,12 @@ Monitors
 
 
 Arbiter
-==================
+~~~~~~~~~~~~~~~~~~
 
 .. autoclass:: pulsar.Arbiter
    :members:
    :member-order: bysource
       
-Proxies
-===================
 
 ActorProxy
 ~~~~~~~~~~~~~~~~~~~~
@@ -55,6 +53,31 @@ ActorProxyMonitor
    :member-order: bysource
    
    
+Applications
+======================
+
+Application
+~~~~~~~~~~~~~~~~~
+
+.. autoclass:: pulsar.Application
+   :members:
+   :member-order: bysource
+   
+Application Worker
+~~~~~~~~~~~~~~~~~~~~~
+   
+.. autoclass:: pulsar.Worker
+   :members:
+   :member-order: bysource
+
+
+Application Monitor
+~~~~~~~~~~~~~~~~~~~~~
+   
+.. autoclass:: pulsar.WorkerMonitor
+   :members:
+   :member-order: bysource
+
 
 Utilities
 ================

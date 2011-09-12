@@ -31,7 +31,7 @@ class ActorImpl(object):
     
     def __init__(self, actor_class, impl, timeout, arbiter, args, kwargs):
         self.inbox = Queue()
-        self.aid = gen_unique_id()
+        self.aid = gen_unique_id()[:8]
         self.impl = impl
         self.timeout = timeout
         self.actor_class = actor_class

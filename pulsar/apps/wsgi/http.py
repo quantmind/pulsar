@@ -9,6 +9,9 @@ import pulsar
 from pulsar.http.utils import close
 
 
+__all__ = ['Worker']
+
+
 class HttpHandler(object):
     '''Handle HTTP requests and delegate the response to the worker'''
     ALLOWED_ERRORS = (errno.EAGAIN, errno.ECONNABORTED,
@@ -45,7 +48,7 @@ class HttpHandler(object):
         
 
 class HttpPoolHandler(HttpHandler):
-    
+    '''THis is used when the monitor is using thread-based workes.'''
     def handle(self, fd, req):
         self.worker.task_queue.put((fd,req))
 

@@ -91,6 +91,13 @@ class ServerView(admin.TabView):
                                    self.pannel_data(info['server']))}]
         return {'left_panels':servers,
                 'right_panels':monitors}
+        
+
+class PulsarView(view.ViewView):
+    
+    def default_post(self, djp):
+        '''Get response handler.'''
+        raise NotImplementedError('Post response not implemented')
 
     
 class PulsarServerApplication(admin.AdminApplication):
@@ -100,6 +107,12 @@ class PulsarServerApplication(admin.AdminApplication):
     converters = {'uptime': nicetimedelta}
     list_display = ('code','path','machine','this','notes')
     object_widgets = views.extend_widgets({'home':ServerView()})
+    
+    view = PulsarView()
+    
+    def get_client(self, instance):
+        return rpc.JsonProxy(instance.path())
+    
      
 
 ################################    TASKQUEUE DJPCMS APPLICATION

@@ -2,7 +2,7 @@ import sys
 import inspect
 
 from pulsar import make_async
-from pulsar.http.wsgi import PulsarWsgiHandler, Request
+from pulsar.http.wsgi import PulsarWsgiHandler
 from pulsar.utils.tools import checkarity
 
 from .exceptions import NoSuchFunction, InvalidParams, InternalError
@@ -142,32 +142,22 @@ separated with a '.'. Override self.separator to change this.
     instance of :class:`pulsar.utils.Middleware` or ``None``. It available
     the response will be processed by the middleware before returning.
     '''
-    route        = '/'
     serve_as     = 'rpc'
     '''Type of server and prefix to functions providing services'''
     separator    = '.'
     content_type = 'text/plain'
     '''Separator between subhandlers.'''
-    REQUEST      = Request
     RESPONSE     = RpcResponse
 
-    def __init__(self,
-                 subhandlers = None,
-                 http = None,
-                 attrs = None,
-                 route = None,
-                 request_middleware = None,
-                 response_middleware = None,
-                 title = None,
-                 documentation = None,
-                 **kwargs):
-        self.route = route if route is not None else self.route
+    def _init(self,
+              subhandlers = None,
+              title = None,
+              documentation = None,
+              **kwargs):
         self.subHandlers = {}
         self.title = title or self.__class__.__name__
         self.documentation = documentation or ''
         self.log = self.getLogger(**kwargs)
-        self.request_middleware = request_middleware
-        self.response_middleware = response_middleware
         if subhandlers:
             for prefix,handler in subhandlers.items():
                 if inspect.isclass(handler):
@@ -245,11 +235,8 @@ separated with a '.'. Override self.separator to change this.
     def docs(self):
         return '\n'.join(self._docs()) 
     
-    def __call__(self, environ, start_response):
+    def execute(self, request, start_response):
         '''The WSGI handler which consume the remote procedure call'''
-        request = self.REQUEST(environ)
-        if self.request_middleware:
-            self.request_middleware.apply(request)
         data = request.data
         method, args, kwargs, id, version = self.get_method_and_args(data)
         rpc_handler = self._getFunction(method)

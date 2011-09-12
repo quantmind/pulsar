@@ -4,12 +4,15 @@ import sys
 import traceback
 
 import pulsar
-from pulsar import Empty
+from pulsar import Empty, is_async
 from pulsar.utils.py2py3 import execfile
 from pulsar.utils.importer import import_module
+from pulsar.utils import system
 #from pulsar.utils import debug
 
-__all__ = ['Application',
+__all__ = ['Worker',
+           'Application',
+           'ApplicationMonitor',
            'require']
 
 
@@ -24,20 +27,176 @@ def require(appname):
     return mod
 
 
+class Worker(pulsar.Actor):
+    """\
+Base class for a :class:`pulsar.Actor` serving a
+:class:`pulsar.Application`.
+    
+.. attribute:: app
+
+    Instance of the :class:`pulsar.Application` to be performed by the worker
+    
+.. attribute:: cfg
+
+    Configuration dictionary
+
+"""        
+    def _init(self,
+              impl,
+              app = None,
+              **kwargs):
+        self.app = app
+        self.cfg = app.cfg
+        self.max_requests = self.cfg.max_requests or sys.maxsize
+        self.debug = self.cfg.debug
+        self.app_handler = app.handler()
+        super(Worker,self)._init(impl,**kwargs)
+         
+    def on_exit(self):
+        self.app.on_exit(self)
+        try:
+            self.cfg.worker_exit(self)
+        except:
+            pass
+        
+    def on_task(self):
+        self.app.worker_task(self)
+        
+    def check_num_requests(self):
+        '''Check the number of requests. If they exceed the maximum number
+stop the event loop and exit.'''
+        max_requests = self.max_requests
+        if max_requests and self.nr >= self.max_requests:
+            self.log.info("Auto-restarting worker after current request.")
+            self._stop()
+    
+    def _setup(self):
+        '''Called after fork, it set ups the application handler
+and perform several post fork processing before starting the event loop.'''
+        if self.isprocess():
+            random.seed()
+            if self.cfg:
+                system.set_owner_process(self.cfg.uid, self.cfg.gid)
+        if self.cfg.post_fork:
+            self.cfg.post_fork(self)       
+        
+    def handle_task(self, fd, request):
+        '''Handle request on a channel. This is a high level function
+which wraps the low level implementation in :meth:`_handle_task`
+and :meth:`_end_task` methods.'''
+        self.nr += 1
+        self.check_num_requests()
+        try:
+            self.cfg.pre_request(self, request)
+        except Exception:
+            pass
+        try:
+            response, result = self.app.handle_event_task(self, request)
+        except Exception as e:
+            response = e
+            result = None
+        self.end_task(request, response, result)
+    
+    def end_task(self, request, response, result = None):
+        if not isinstance(response,Exception):
+            if is_async(result):
+                if result.called:
+                    result = result.result
+                else:
+                    return self.ioloop.add_callback(\
+                            lambda : self.end_task(request, response, result))
+        try:
+            self.app.end_event_task(self, response, result)
+        except Exception as e:
+            self.log.critical('Handled exception : {0}'.\
+                              format(e),exc_info = sys.exc_info())
+        finally:
+            try:
+                self.cfg.post_request(self, request)
+            except:
+                pass
+    
+    def configure_logging(self, **kwargs):
+        #switch off configure logging. Done by self.app
+        pass
+    
+    @classmethod
+    def get_task_queue(cls, monitor):
+        return monitor.app.get_task_queue()
+
+
+class ApplicationMonitor(pulsar.Monitor):
+    '''A :class:`pulsar.Monitor` implementation for managing
+pulsar applications (subclasses of :class:`pulsar.Application`).
+'''
+    def _init(self, impl, app, num_workers = None, **kwargs):
+        self.app = app
+        self.cfg = app.cfg
+        super(ApplicationMonitor,self)._init(impl,
+                                        self.cfg.worker_class,
+                                        address = self.cfg.address,
+                                        num_workers = self.cfg.workers,
+                                        **kwargs)
+    
+    def on_task(self):
+        super(ApplicationMonitor,self).on_task()
+        if not self._stopping:
+            self.app.monitor_task(self)
+            
+    def on_exit(self):
+        self.app.on_exit(self)
+        
+    def clean_up(self):
+        self.worker_class.clean_arbiter_loop(self,self.ioloop)
+            
+    def actor_params(self):
+        '''Parameters to be passed to the spawn method
+when creating new actors.'''
+        return {'app':self.app,
+                'socket': self.socket,
+                'timeout': self.cfg.timeout,
+                'loglevel': self.app.loglevel,
+                'impl': self.cfg.concurrency}
+
+    def configure_logging(self, **kwargs):
+        self.app.configure_logging(**kwargs)
+        self.loglevel = self.app.loglevel
+        
+    def _info(self, result = None):
+        info = super(ApplicationMonitor,self)._info(result)
+        info.update({'default_timeout': self.cfg.timeout})
+        return info
+
+
 class Application(pulsar.PickableMixin):
     """\
 An application interface for configuring and loading
 the various necessities for any given server application.
     
 :parameter callable: A callable which return the application server.
-                     The callable must be pickable, therefore it is either a function
-                     or a pickable object.
-:parameter actor_links: A dictionary actor proxies.
-:parameter params: a dictionary of configuration parameters which overrides the defaults.
+    The callable must be pickable, therefore it is either a function
+    or a pickable object.
+:parameter name: Application name. If not provided the class name in lower
+    case is used
+:parameter params: a dictionary of configuration parameters which overrides
+    the defaults and :attr:`pulsar.Application.cfg`.
+
+
+.. attribute:: monitor_class
+
+    The :class:`pulsar.Monitor` class which manage the application.
+    
+    Default: :class:`pulsar.WorkerMonitor`
+    
+.. attribute:: cfg
+
+    dictionary of default configuration parameters.
+    
+    Default: ``{}``
 """
     cfg = {}
     _name = None
-    monitor_class = pulsar.WorkerMonitor
+    monitor_class = ApplicationMonitor
     default_logging_level = logging.INFO
     
     def __init__(self,
@@ -46,7 +205,7 @@ the various necessities for any given server application.
                  name = None,
                  **params):
         self.python_path()
-        self._name = name or self._name
+        self._name = name or self._name or self.__class__.__name__.lower()
         self.usage = usage
         nparams = self.cfg.copy()
         nparams.update(params)
@@ -59,9 +218,11 @@ the various necessities for any given server application.
     
     @property
     def name(self):
-        return self._name or self.__class__.__name__.lower()
+        '''Application name, It is unique and defines the application.'''
+        return self._name
     
     def python_path(self):
+        #Insert the application directory at the top of the python path.
         path = os.path.split(os.getcwd())[0]
         if path not in sys.path:
             sys.path.insert(0, path)
@@ -70,7 +231,7 @@ the various necessities for any given server application.
         self.arbiter.ioloop.add_timeout(deadline, callback)
         
     def load_config(self, parse_console = True, **params):
-        '''Load the application configuration'''
+        #Load the application configuration
         self.cfg = pulsar.Config(self.usage)
         
         overrides = {}

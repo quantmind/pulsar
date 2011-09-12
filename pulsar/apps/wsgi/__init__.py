@@ -1,9 +1,9 @@
 '''
-Pulsar is shipped with a Http server applications which conforms the python
+Pulsar is shipped with a Http applications which conforms the python
 web server gateway interface (WSGI).
 
-The application server can be used in conjunction with several web frameworks
-as well as the pulsar RPC handler in :mod:`pulsar.http.rpc`.
+The application can be used in conjunction with several web frameworks
+as well as the pulsar RPC handler in :mod:`pulsar.apps.rpc`.
 '''
 import sys
 import traceback
@@ -13,8 +13,10 @@ import socket
 import pulsar
 from pulsar.http.utils import write_nonblock, write_error, close
 
+from .http import *
 
-class WsgiMonitor(pulsar.WorkerMonitor):
+
+class WsgiMonitor(pulsar.ApplicationMonitor):
     '''A specialized worker monitor for wsgi applications.'''
     def set_socket(self, socket):
         if not self.task_queue:
@@ -24,6 +26,7 @@ class WsgiMonitor(pulsar.WorkerMonitor):
 
 class WSGIApplication(pulsar.Application):
     monitor_class = WsgiMonitor
+    cfg = {'worker_class':'wsgi'}
     
     def get_task_queue(self): 
         if self.cfg.concurrency == 'process':
@@ -35,7 +38,8 @@ class WSGIApplication(pulsar.Application):
         response, environ = request.wsgi(worker = worker)
         response.force_close()
         try:
-            return response, worker.app_handler(environ, response.start_response)
+            return response, worker.app_handler(environ,
+                                                response.start_response)
         except socket.error as e:
             if e[0] != errno.EPIPE:
                 worker.log.exception("Error processing request.")

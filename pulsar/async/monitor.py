@@ -25,7 +25,7 @@ This is the base class for :class:`pulsar.Arbiter` and :class:`pulsar.Monitor`.
     def _init(self, impl, *args, **kwargs):
         self._linked_actors = {}
         self.num_workers = kwargs.pop('num_workers',0) or 0
-        super(ActorPool,self)._init(impl, *args, **kwargs)       
+        super(ActorPool,self)._init(impl, *args, **kwargs)
         
     @property
     def LIVE_ACTORS(self):
@@ -44,12 +44,6 @@ This is the base class for :class:`pulsar.Arbiter` and :class:`pulsar.Monitor`.
                 self.on_manage_actor(actor)
                 
     def spawn_actors(self):
-        """\
-        Spawn new workers as needed.
-        
-        This is where a worker process leaves the main loop
-        of the master process.
-        """
         if self.num_workers:
             while len(self.LIVE_ACTORS) < self.num_workers:
                 self.spawn_actor()
@@ -58,18 +52,30 @@ This is the base class for :class:`pulsar.Arbiter` and :class:`pulsar.Monitor`.
 class Monitor(ActorPool):
     '''\
 A monitor is a special :class:`pulsar.Actor` which shares
-the same event loop as the :class:`pulsar.Arbiter`
-and therefore lives in the main process.
-A monitor manages a set of actors.
+the same event loop with the :class:`pulsar.Arbiter`
+and therefore lives in the main process. The Arbiter manages monitors which
+in turns manage a set of :class:`pulsar.Actor` performing similar tasks.
 
-.. attribute: worker_class
+Therefore you may
+have a monitor managing actors for serving HTTP requests on a given port,
+another monitor managing actors consuming tasks from a task queue and so forth. 
 
-    a Worker class derived form :class:`pulsar.Arbiter`
+.. attribute:: worker_class
+
+    The class derived form :class:`pulsar.Actor` which the monitor manages
+    during its life time.
     
-.. attribute: num_workers
+.. attribute:: num_workers
 
     The number of workers to monitor.
 
+.. method:: manage_actors
+
+    Remove actors which are not alive
+    
+.. method:: spawn_actors
+
+    Spawn new actors as needed.
 '''
     socket = None
     
@@ -91,13 +97,22 @@ A monitor manages a set of actors.
         self.set_socket(self.socket)
         
     def on_task(self):
+        '''Overrides the :meth:`pulsar.Actor.on_task` callback to perform
+the monitor only task: to maintain a responsive set of actors ready
+to perform their duty. The monitor performs its task in the following way:
+
+* It calls :meth:`pulsar.Monitor.manage_actors` which removes from the live
+  actors dictionary all actors which are not alive.
+* Spawn new actors if required by calling :meth:`pulsar.Monitor.spawn_actors`
+  and :meth:`pulsar.Monitor.stop_actors`.'''
         self.manage_actors()
         if not self._stopping:
             self.spawn_actors()
             self.stop_actors()
         
     def on_stop(self):
-        '''Close the Pool.'''
+        '''Ovverrides the :meth:`pulsar.Actor.on_stop` callback by stopping
+all actors managed by ``self``..'''
         self.log.debug('exiting "{0}"'.format(self))
         for actor in self.linked_actors():
             actor.stop()
@@ -108,7 +123,7 @@ A monitor manages a set of actors.
         pass
     
     def _make_name(self):
-        return 'Monitor-{0}({1})'.format(self.worker_class.code(),self.aid[:8])
+        return 'Monitor-{0}({1})'.format(self.worker_class.code(),self.aid)
     
     def _get_eventloop(self, impl):
         return self.arbiter.ioloop
@@ -157,7 +172,7 @@ as required."""
                 self.stop_actor(w)
             
     def spawn_actor(self):
-        '''Spawn a new worker'''
+        '''Spawn a new actor'''
         worker = self.arbiter.spawn(
                         self.worker_class,
                         monitor = self,
