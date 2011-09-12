@@ -1,6 +1,6 @@
 import pulsar
 from pulsar.utils.py2py3 import *
-from .wsgi import create_wsgi
+from .wsgi import create_wsgi, Response
 
 if ispy3k:
     from http.server import BaseHTTPRequestHandler
@@ -9,6 +9,7 @@ else:
     
 
 class Request(object):
+    RESPONSE_CLASS = Response
     MessageClass = None
     
     def __init__(self, client_sock, client_address, server, cfg = None):

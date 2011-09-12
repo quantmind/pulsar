@@ -28,8 +28,7 @@ from .exceptions import *
 from .config import *
 from .task import *
 from .models import *
-from .scheduler import *
-from .worker import TaskScheduler
+from .scheduler import Scheduler
 from .states import *
 from .link import *
 from .rpc import *
@@ -44,13 +43,11 @@ tasks and managing scheduling of tasks.
     A subclass of :class:`pulsar.apps.tasks,Task` for storing information
     about task execution.
 '''
-    monitor_class = TaskScheduler
     REMOVABLE_ATTRIBUTES = ('scheduler',) +\
                              pulsar.Application.REMOVABLE_ATTRIBUTES
     task_class = TaskInMemory
     
-    cfg = {'worker_class':'pulsar.apps.tasks.worker.Worker',
-           'timeout':'3600'}
+    cfg = {'timeout':'3600'}
     
     @property
     def scheduler(self):
@@ -118,4 +115,44 @@ responsability to the :attr:`pulsar.apps.tasks.TaskQueue.scheduler`
     def registry(self):
         global registry
         return registry
+    
+    # REMOTE FUNCTIONS
+    
+    def _addtask(self, monitor, caller, task_name, targs, tkwargs,
+                 ack = True, **kwargs):
+        task = self.make_request(task_name, targs, tkwargs, **kwargs)
+        tq = task.to_queue()
+        if tq:
+            monitor.task_queue.put((None,tq))
+        
+        if ack:
+            task = tq or task
+            return task.tojson_dict()
+    
+    def actor_tasks_list(monitor, caller):
+        return monitor.app.tasks_list()
+    
+    def actor_addtask(monitor, caller, task_name, targs, tkwargs,
+                      ack=True, **kwargs):
+        return monitor.app._addtask(monitor, caller, task_name, targs, tkwargs,
+                                    ack = True, **kwargs)
+        
+    def actor_addtask_noack(self, caller, task_name, targs, tkwargs,
+                            ack=False, **kwargs):
+        return monitor.app._addtask(monitor, caller, task_name, targs, tkwargs,
+                                    ack = False, **kwargs)
+    actor_addtask_noack.ack = False
+    
+    def actor_task_finished(monitor, caller, response):
+        monitor.app.task_finished(response)
+    actor_task_finished.ack = False
+    
+    def actor_get_task(monitor, caller, id):
+        return monitor.app.get_task(id)
+    
+    def actor_job_list(monitor, caller, jobnames = None):
+        return list(monitor.app.job_list(jobnames = jobnames))
+    
+    def actor_next_scheduled(monitor, caller, jobname = None):
+        return monitor.app.scheduler.next_scheduled(jobname = jobname)
         

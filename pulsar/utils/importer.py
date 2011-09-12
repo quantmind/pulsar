@@ -34,7 +34,7 @@ def import_modules(modules):
                 pass
             
 
-def module_attribute(dotpath, default = None):
+def module_attribute(dotpath, default = None, safe = False):
     '''
     Load an attribute from a module.
     If the module or the attriubute is not available,
@@ -46,31 +46,10 @@ def module_attribute(dotpath, default = None):
             module = import_module('.'.join(bits[:-1]))
             return getattr(module,bits[-1],default)
         except Exception as e:
+            if not safe:
+                raise
             return default
     else:
+        if not safe:
+            raise ImportError()
         return default
-
-
-def import_app(module):
-    parts = module.rsplit(":", 1)
-    if len(parts) == 1:
-        module, obj = module, "application"
-    else:
-        module, obj = parts[0], parts[1]
-
-    try:
-        __import__(module)
-    except ImportError:
-        if module.endswith(".py") and os.path.exists(module):
-            raise ImportError("Failed to find application, did "
-                "you mean '%s:%s'?" % (module.rsplit(".",1)[0], obj))
-        else:
-            raise
-
-    mod = sys.modules[module]
-    app = eval(obj, mod.__dict__)
-    if app is None:
-        raise ImportError("Failed to find application object: %r" % obj)
-    if not hasattr(app,'__call__'):
-        raise TypeError("Application object must be callable.")
-    return app

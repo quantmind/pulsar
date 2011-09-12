@@ -199,7 +199,7 @@ This is equivalent as to using the lower level call::
 '''     
     def __init__(self, impl):
         self.aid = impl.aid
-        self.remotes = impl.actor_functions
+        self.remotes = impl.remotes
         self.inbox = impl.inbox
         self.timeout = impl.timeout
         self.loglevel = impl.loglevel

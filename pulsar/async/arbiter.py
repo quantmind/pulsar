@@ -69,17 +69,19 @@ Users access the arbiter by the high level api::
     
     # ARBITER HIGH LEVEL API
     
-    def add_monitor(self, monitor_class, actor_class, monitor_name, *args, **kwargs):
+    def add_monitor(self, monitor_class, monitor_name, *args, **kwargs):
         '''Add a new :class:`pulsar.Monitor` to the arbiter.
 
 :parameter monitor_class: a :class:`pulsar.Monitor` class.
-:parameter actor_class: a :class:`pulsar.Actor` class but not a
-    :class:`pulsar.Monitor` class.'''
+:parameter monitor_name: a unique name for the monitor.
+:parameter args: tuple containing additional arguments.
+:parameter kwargs: dictionary of key valued parameters.
+:rtype: an instance of a :class:`pulsar.Monitor`.'''
         kwargs['impl'] = 'monitor'
         if monitor_name in self._monitors:
             raise KeyError('Monitor "{0}" already available'\
                            .format(monitor_name))
-        m = spawn(monitor_class,actor_class,*args,**kwargs)
+        m = spawn(monitor_class,*args,**kwargs)
         m._name = monitor_name
         self._monitors[m.name] = m
         return m

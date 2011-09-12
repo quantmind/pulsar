@@ -240,11 +240,8 @@ separated with a '.'. Override self.separator to change this.
         data = request.data
         method, args, kwargs, id, version = self.get_method_and_args(data)
         rpc_handler = self._getFunction(method)
-        environ['pulsar.rpc.id'] = id
-        environ['pulsar.rpc.version'] = version
-        response = rpc_handler(request, start_response, *args, **kwargs)
-        if self.response_middleware:
-            self.response_middleware.apply(response)
-        return response
+        request.environ['pulsar.rpc.id'] = id
+        request.environ['pulsar.rpc.version'] = version
+        return rpc_handler(request, start_response, *args, **kwargs)
         
         

@@ -21,6 +21,7 @@ import struct
 import time
 
 import pulsar
+from pulsar.utils.py2py3 import to_bytestring
 
 from .wsgi import PulsarWsgiHandler, Request
 
@@ -35,11 +36,15 @@ class WebSocketRequest(Request):
     specified in
     http://tools.ietf.org/html/draft-hixie-thewebsocketprotocol-76
     """
-    fields = ("Origin", "Host", "Sec-Websocket-Key1", "Sec-Websocket-Key2")
+    fields = ("HTTP_ORIGIN",
+              "HTTP_HOST",
+              "HTTP_SEC_WEBSOCKET_KEY1",
+              "HTTP_SEC_WEBSOCKET_KEY2")
     
     def _init(self):
-        self.challenge = None
         self._handle_websocket_headers()
+        challenge = self.environ['wsgi.input'].read()
+        self.challenge = self.challenge_response(challenge)
 
     def challenge_response(self, challenge):
         """Generates the challange response that's needed in the handshake
@@ -47,8 +52,8 @@ class WebSocketRequest(Request):
         The challenge parameter should be the raw bytes as sent from the
         client.
         """
-        key_1 = self.request.headers.get("Sec-Websocket-Key1")
-        key_2 = self.request.headers.get("Sec-Websocket-Key2")
+        key_1 = self.environ.get("HTTP_SEC_WEBSOCKET_KEY1")
+        key_2 = self.environ.get("HTTP_SEC_WEBSOCKET_KEY2")
         try:
             part_1 = self._calculate_part(key_1)
             part_2 = self._calculate_part(key_2)
@@ -62,16 +67,19 @@ class WebSocketRequest(Request):
         If a header is missing or have an incorrect value ValueError will be
         raised
         """
-        headers = self.request.headers
-        if headers.get("Upgrade", '').lower() != "websocket" or \
-           headers.get("Connection", '').lower() != "upgrade" or \
-           not all(map(lambda f: self.request.headers.get(f), self.fields)):
+        environ = self.environ
+        if environ.get("HTTP_UPGRADE", '').lower() != "websocket" or \
+           environ.get("HTTP_CONNECTION", '').lower() != "upgrade" or \
+           not all(map(lambda f: environ.get(f), self.fields)):
             raise pulsar.BadHttpRequest(400,"Missing/Invalid WebSocket headers")
-
+        self.origin = environ.get('HTTP_ORIGIN')
+        self.protocol = environ.get('HTTP_WEBSOCKET_PROTOCOL')
+        
     def _calculate_part(self, key):
         """Processes the key headers and calculates their key value.
 
         Raises ValueError when feed invalid key."""
+        key = to_bytestring(key)
         number, spaces = filter(str.isdigit, key), filter(str.isspace, key)
         try:
             key_number = int(number) / len(spaces)
@@ -135,7 +143,7 @@ class WebSocket(PulsarWsgiHandler):
     def _init(self, handler = None, **kwargs):
         self.handler = handler
 
-    def execute(self, request, *args, **kwargs):
+    def execute(self, request, start_response):
         self.open_args = args
         self.open_kwargs = kwargs
         try:

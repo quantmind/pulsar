@@ -54,7 +54,7 @@ class Monitor(ActorPool):
 A monitor is a special :class:`pulsar.Actor` which shares
 the same event loop with the :class:`pulsar.Arbiter`
 and therefore lives in the main process. The Arbiter manages monitors which
-in turns manage a set of :class:`pulsar.Actor` performing similar tasks.
+in turn manage a set of :class:`pulsar.Actor` performing similar tasks.
 
 Therefore you may
 have a monitor managing actors for serving HTTP requests on a given port,
@@ -68,6 +68,10 @@ another monitor managing actors consuming tasks from a task queue and so forth.
 .. attribute:: num_workers
 
     The number of workers to monitor.
+    
+.. attribute:: LIVE_ACTORS
+
+    dictionary containing instances of live actors
 
 .. method:: manage_actors
 
@@ -76,39 +80,45 @@ another monitor managing actors consuming tasks from a task queue and so forth.
 .. method:: spawn_actors
 
     Spawn new actors as needed.
+    
 '''
     socket = None
     
     def _init(self, impl, worker_class, address = None, actor_params = None,
-              task_queue = None, actor_links = None, **kwargs):
+              actor_links = None, **kwargs):
         self.worker_class = worker_class
         self.address = address
-        if not task_queue:
-            task_queue = self.worker_class.get_task_queue(self)
         self._actor_params = actor_params
         self.actor_links = actor_links
-        super(Monitor,self)._init(impl, task_queue = task_queue, **kwargs)
-    
-    # HOOKS
-    def on_start(self):
-        self.worker_class.modify_arbiter_loop(self)
-        if not hasattr(self,'socket'):
-            self.socket = None
-        self.set_socket(self.socket)
+        super(Monitor,self)._init(impl, **kwargs)
         
+    def monitor_task(self):
+        '''Monitor specific task called at each monitor event loop.
+By default it does nothing.'''
+        pass
+    
+    # HOOKS        
     def on_task(self):
         '''Overrides the :meth:`pulsar.Actor.on_task` callback to perform
-the monitor only task: to maintain a responsive set of actors ready
-to perform their duty. The monitor performs its task in the following way:
+the monitor event loop tasks: a) maintain a responsive set of actors ready
+to perform their duty and b) perform its own task.
+
+The monitor performs its tasks in the following way:
 
 * It calls :meth:`pulsar.Monitor.manage_actors` which removes from the live
   actors dictionary all actors which are not alive.
 * Spawn new actors if required by calling :meth:`pulsar.Monitor.spawn_actors`
-  and :meth:`pulsar.Monitor.stop_actors`.'''
+  and :meth:`pulsar.Monitor.stop_actors`.
+* Call :meth:`pulsar.Monitor.monitor_task` which performs the monitor specific
+  task.
+  
+  User should not override this method, and use
+  :meth:`pulsar.Monitor.monitor_task` instead.'''
         self.manage_actors()
         if not self._stopping:
             self.spawn_actors()
             self.stop_actors()
+            self.monitor_task()
         
     def on_stop(self):
         '''Ovverrides the :meth:`pulsar.Actor.on_stop` callback by stopping
@@ -172,18 +182,19 @@ as required."""
                 self.stop_actor(w)
             
     def spawn_actor(self):
-        '''Spawn a new actor'''
+        '''Spawn a new actor and add its :class:`pulsar.ActorProxyMonitor`
+ to the :attr:`pulsar.Monitor.LIVE_ACTORS` dictionary.'''
         worker = self.arbiter.spawn(
                         self.worker_class,
                         monitor = self,
                         task_queue = self.task_queue,
                         actor_links = self.arbiter.get_all_monitors(),
-                        **self.actor_params())
+                        **self.actorparams())
         monitor = self.arbiter.LIVE_ACTORS[worker.aid]
         self.LIVE_ACTORS[worker.aid] = monitor
         return worker
     
-    def actor_params(self):
+    def actorparams(self):
         return self._actor_params or {}
         
     def info(self, full = False):

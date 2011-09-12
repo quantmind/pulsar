@@ -388,12 +388,11 @@ class WorkerClass(Setting):
     cli = ["-k", "--worker-class"]
     meta = "STRING"
     validator = validate_string
-    default = "http"
+    default = ""
     desc = """\
-        The type of workers to use.        
-        Optionally, you can provide your own worker by giving pulsar a
-        MODULE:CLASS pair where CLASS is a subclass of
-        pulsar.Worker.
+        The type of workers to use. First it searches the relative path
+        ``pulsar.apps``, and if it does not find it it searches as absolute
+        path.
         """
 
 

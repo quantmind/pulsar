@@ -2,6 +2,10 @@
 class PulsarException(Exception):
     '''base class of all Pulsar Exception'''
 
+class ImproperlyConfigured(PulsarException):
+    '''A :class:`PulsarException` raised when pulsar has inconsistent
+configuration.'''
+    pass
 
 class PulsarInternetException(PulsarException):
     '''base class of all Pulsar Internet Exception'''

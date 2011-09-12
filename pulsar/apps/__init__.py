@@ -29,8 +29,7 @@ def require(appname):
 
 class Worker(pulsar.Actor):
     """\
-Base class for a :class:`pulsar.Actor` serving a
-:class:`pulsar.Application`.
+Base class for a :class:`pulsar.Actor` serving a :class:`pulsar.Application`.
     
 .. attribute:: app
 
@@ -51,17 +50,25 @@ Base class for a :class:`pulsar.Actor` serving a
         self.debug = self.cfg.debug
         self.app_handler = app.handler()
         super(Worker,self)._init(impl,**kwargs)
+    
+    # Delegates Callbacks to the application
          
+    def on_start(self):
+        self.app.worker_start(self)
+    
+    def on_task(self):
+        self.app.worker_task(self)
+    
+    def on_stop(self):
+        self.app.worker_start(self)
+            
     def on_exit(self):
-        self.app.on_exit(self)
+        self.app.worker_exit(self)
         try:
             self.cfg.worker_exit(self)
         except:
             pass
-        
-    def on_task(self):
-        self.app.worker_task(self)
-        
+    
     def check_num_requests(self):
         '''Check the number of requests. If they exceed the maximum number
 stop the event loop and exit.'''
@@ -119,14 +126,10 @@ and :meth:`_end_task` methods.'''
     def configure_logging(self, **kwargs):
         #switch off configure logging. Done by self.app
         pass
-    
-    @classmethod
-    def get_task_queue(cls, monitor):
-        return monitor.app.get_task_queue()
 
 
 class ApplicationMonitor(pulsar.Monitor):
-    '''A :class:`pulsar.Monitor` implementation for managing
+    '''A spcialized :class:`pulsar.Monitor` implementation for managing
 pulsar applications (subclasses of :class:`pulsar.Application`).
 '''
     def _init(self, impl, app, num_workers = None, **kwargs):
@@ -138,25 +141,33 @@ pulsar applications (subclasses of :class:`pulsar.Application`).
                                         num_workers = self.cfg.workers,
                                         **kwargs)
     
-    def on_task(self):
-        super(ApplicationMonitor,self).on_task()
-        if not self._stopping:
-            self.app.monitor_task(self)
+    # Delegates Callbacks to the application
+    
+    def on_start(self):
+        self.app.monitor_start(self)
+        
+    def monitor_task(self):
+        self.app.monitor_task(self)
             
+    def on_stop(self):
+        self.app.monitor_stop(self)
+        
     def on_exit(self):
-        self.app.on_exit(self)
+        self.app.monitor_exit(self)
+    
         
     def clean_up(self):
         self.worker_class.clean_arbiter_loop(self,self.ioloop)
             
-    def actor_params(self):
+    def actorparams(self):
         '''Parameters to be passed to the spawn method
 when creating new actors.'''
-        return {'app':self.app,
-                'socket': self.socket,
-                'timeout': self.cfg.timeout,
-                'loglevel': self.app.loglevel,
-                'impl': self.cfg.concurrency}
+        params = {'app':self.app,
+                  'timeout': self.cfg.timeout,
+                  'loglevel': self.app.loglevel,
+                  'impl': self.cfg.concurrency,
+                  'name':'{0}-worker'.format(self.app.name)}
+        return self.app.update_worker_paramaters(self,params)
 
     def configure_logging(self, **kwargs):
         self.app.configure_logging(**kwargs)
@@ -168,10 +179,14 @@ when creating new actors.'''
         return info
 
 
-class Application(pulsar.PickableMixin):
+class Application(pulsar.ActorBase,pulsar.PickableMixin):
     """\
 An application interface for configuring and loading
 the various necessities for any given server application.
+
+When creating a new application, a new :class:`pulsar.ApplicationMonitor`
+instance is added to the :class:`pulsar.Arbiter`, ready to perform
+its duties.
     
 :parameter callable: A callable which return the application server.
     The callable must be pickable, therefore it is either a function
@@ -212,14 +227,32 @@ the various necessities for any given server application.
         self.callable = callable
         self.load_config(**nparams)
         arbiter = pulsar.arbiter(self.cfg.daemon)
-        self.mid = arbiter.add_monitor(self.monitor_class,
-                                       self,
-                                       self.name).aid
+        task_queue = self.get_task_queue()
+        monitor = arbiter.add_monitor(self.monitor_class,
+                                      self.name,
+                                      self,
+                                      task_queue = task_queue,
+                                      socket = self.get_socket())
+        self.mid = monitor.aid
+        monitor.actor_functions = monitor.actor_functions.copy()
+        monitor.actor_functions.update(self.actor_functions)
+        monitor.remotes = monitor.remotes.copy()
+        monitor.remotes.update(self.actor_functions)
     
     @property
     def name(self):
         '''Application name, It is unique and defines the application.'''
         return self._name
+    
+    def get_socket(self):
+        '''Build the socket for the application.
+By default it returns ``None``.'''
+        return None
+    
+    def get_task_queue(self):
+        '''Build the task queue for the application.
+By default it returns ``None``.'''
+        return None
     
     def python_path(self):
         #Insert the application directory at the top of the python path.
@@ -288,7 +321,8 @@ the various necessities for any given server application.
                     try:
                         self.cfg.set(k.lower(), v)
                     except:
-                        sys.stderr.write("Invalid value for %s: %s\n\n" % (k, v))
+                        sys.stderr.write("Invalid value for %s: %s\n\n"\
+                                          % (k, v))
                         raise
             
         # Update the configuration with any command line settings.
@@ -322,8 +356,13 @@ the various necessities for any given server application.
 used by a :class:`pulsar.Worker` to carry out its task.'''
         return self.load() or self.callable
     
-    def monitor_task(self, monitor):
-        '''Callback by :class:`pulsar.WorkerMonitor`` at each event loop'''
+    # WORKERS CALLBACKS
+    
+    def update_worker_paramaters(self, monitor, params):
+        return params
+    
+    def worker_start(self, worker):
+        '''Called by the :class:`pulsar.Worker` after fork'''
         pass
     
     def worker_task(self, worker):
@@ -338,19 +377,43 @@ at each ``worker`` event loop.'''
                 return
             worker.handle_task(*args)
             
+    def worker_stop(self, worker):
+        '''Called by the :class:`pulsar.Worker` just after stopping.'''
+        pass
+    
+    def worker_exit(self, worker):
+        '''Called by the :class:`pulsar.Worker` just when exited.'''
+        pass
+            
+    # MONITOR CALLBAKS
+    
+    def monitor_start(self, monitor):
+        '''Callback by :class:`pulsar.WorkerMonitor`` at each event loop'''
+        pass
+    
+    def monitor_task(self, monitor):
+        '''Callback by :class:`pulsar.WorkerMonitor`` at each event loop'''
+        pass
+    
+    def monitor_stop(self, monitor):
+        '''Callback by :class:`pulsar.WorkerMonitor`` at each event loop'''
+        pass
+    
+    def monitor_exit(self, monitor):
+        '''Callback by :class:`pulsar.WorkerMonitor`` at each event loop'''
+        pass
+    
     def handle_event_task(self, worker, request):
-        '''And a task event. Called by the worker to perform the application task.'''
+        '''And a task event. Called by the worker to perform the\
+ application task.'''
         raise NotImplementedError
     
     def end_event_task(self, worker, response, result):
         ''''''
         pass
     
-    def get_task_queue(self):
-        return None
-    
     def start(self):
-        '''Start the application'''
+        '''Start the application if it wasn't already started.'''
         pulsar.arbiter().start()
         return self
             
@@ -360,9 +423,6 @@ at each ``worker`` event loop.'''
         monitor = arbiter.get_monitor(self.mid)
         if monitor:
             monitor.stop()
-            
-    def on_exit(self, worker):
-        pass
     
     def configure_logging(self):
         """\
@@ -387,4 +447,4 @@ at each ``worker`` event loop.'''
                     monitor = arbiter.monitors[app.mid]
                     monitor.actor_links[self.name] = self
                     yield name, app
-            
+    

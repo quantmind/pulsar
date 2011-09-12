@@ -4,7 +4,10 @@ include README.rst
 include docs/make.bat
 include docs/Makefile
 include docs/source/conf.py
-recursive-include tests *
-recursive-include lib *
+recursive-include tests *.py
+recursive-include lib *.py
+recursive-include lib *.h
+recursive-include lib *.c
+recursive-include lib *.pyx
 recursive-include docs *.rst
-recursive-include examples *
+recursive-include examples *.py

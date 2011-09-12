@@ -23,6 +23,8 @@ def server(**kwargs):
     return wsgi.createServer(callable = hello,
                              **kwargs)
     
-    
+def start_server(**params):
+    return server(**params).start()
+
 if __name__ == '__main__':
-    server().start()
+    start_server()

@@ -6,18 +6,18 @@ Low Level API
 Actors
 =======================
 
-Actor
-~~~~~~~~~~~~~~
-
-.. autoclass:: pulsar.Actor
-   :members:
-   :member-order: bysource
-
-
 Actor Metaclass
 ~~~~~~~~~~~~~~~~~~~~
 
 .. autoclass:: pulsar.ActorMetaClass
+   :members:
+   :member-order: bysource
+   
+   
+Actor
+~~~~~~~~~~~~~~
+
+.. autoclass:: pulsar.Actor
    :members:
    :member-order: bysource
 

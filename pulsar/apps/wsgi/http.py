@@ -9,7 +9,7 @@ import pulsar
 from pulsar.http.utils import close
 
 
-__all__ = ['Worker']
+__all__ = ['HttpHandler','HttpPoolHandler']
 
 
 class HttpHandler(object):
@@ -52,43 +52,5 @@ class HttpPoolHandler(HttpHandler):
     def handle(self, fd, req):
         self.worker.task_queue.put((fd,req))
 
-
-class Worker(pulsar.Worker):
-    '''A Http worker on a child process'''
-    _class_code = 'Http'
-    ssl_options = None
-    
-    def on_start(self):
-        super(Worker,self).on_start()
-        # If the worker is a process and it is listening to a socket
-        # Add the socket handler to the event loop
-        if self.socket:
-            self.socket.setblocking(0)
-            handler = HttpHandler(self)
-            self.ioloop.add_handler(self.socket, handler, self.ioloop.READ)
-    
-    def set_socket(self, socket):
-        if self.task_queue is not None:
-            self._listening = False
-            self.socket = None
-        super(Worker,self).set_socket(socket)
-        
-    @classmethod
-    def modify_arbiter_loop(cls, wp):
-        '''The arbiter listen for client connections and delegate the handling
-to the Thread Pool. This is different from the Http Worker on Processes'''
-        wp.address = wp.cfg.address
-        if wp.address:
-            wp.socket = pulsar.create_socket(wp.address,
-                                             log = wp.log)
-        if wp.socket and wp.task_queue is not None:
-            wp.ioloop.add_handler(wp.socket,
-                                  HttpPoolHandler(wp),
-                                  wp.ioloop.READ)
-            
-    @classmethod
-    def clean_arbiter_loop(cls, wp):
-        if wp.socket and wp.task_queue is not None:
-            wp.ioloop.remove_handler(wp.socket)
             
     

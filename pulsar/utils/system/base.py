@@ -6,7 +6,7 @@ import ctypes
 import signal
 from select import select as _select
 
-from pulsar.utils.importer import import_module
+from pulsar.utils.importer import import_module, module_attribute
 from pulsar.utils.py2py3 import *
 
 SIG_NAMES = {}
@@ -65,20 +65,21 @@ except ImportError:
         return
 
 
-def load_worker_class(uri):
+def load_worker_class(uri, base_loc = 'pulsar.apps'):
     components = uri.split('.')
     if len(components) == 1:
+        mod_name = '.'.join((base_loc,uri)) if uri else base_loc
         try:
-            if uri.startswith("#"):
-                uri = uri[1:]
-            mod = import_module('pulsar.apps.{0}'.format(uri))
-            return getattr(mod,'Worker')
-        except ImportError: 
-            raise RuntimeError('Worker class uri "{0}" invalid or not found'\
-                               .format(uri))
-    klass = components.pop(-1)
-    mod = import_module('.'.join(components))
-    return getattr(mod, klass)
+            mod = import_module(mod_name)
+        except ImportError:
+            try:
+                mod = import_module(uri)
+            except ImportError: 
+                raise RuntimeError('Worker class uri "{0}" invalid or\
+ not found'.format(uri))
+        return getattr(mod,'Worker')
+    else:
+        return module_attribute(uri, safe = False)
 
 
 def set_owner_process(uid,gid):

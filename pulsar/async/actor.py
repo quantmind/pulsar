@@ -24,6 +24,7 @@ from .defer import is_async, Deferred
 __all__ = ['is_actor',
            'Actor',
            'ActorMetaClass',
+           'ActorBase',
            'ActorRequest',
            'MAIN_THREAD',
            'Empty']
@@ -103,10 +104,10 @@ class Runner(LogginMixin,HttpMixin):
 
 
 class ActorMetaClass(type):
-    '''The actor metaclass performs a little ammount of magic
+    '''The actor metaclass performs a little amount of magic
 by collecting functions prefixed with ``actor_`` and placing them into
-the :class:`Actor.actor_functions` dictionary. These are the remote functions
-which the arbiter exposes.
+the :class:`Actor.actor_functions` dictionary.
+These are the remote functions exposed by the actor.
 
 Each remote function must at least accept one argument which is represented
 by the remote actor calling the function. For example::
@@ -123,12 +124,21 @@ by the remote actor calling the function. For example::
         make = super(ActorMetaClass, cls).__new__
         fprefix = 'actor_'
         attrib  = '{0}functions'.format(fprefix)
+        rattrib = 'remotes'
         cont = {}
-        for key, method in attrs.items():
+        remotes = {}
+        for base in bases[::-1]:
+            if hasattr(base,attrib) and hasattr(base,rattrib):
+                cont.update(getattr(base,attrib))
+                remotes.update(getattr(base,rattrib))
+                
+        for key, method in list(attrs.items()):
             if hasattr(method,'__call__') and key.startswith(fprefix):
+                method = attrs.pop(key)
                 meth_name = key[len(fprefix):]
                 ack = getattr(method,'ack',True)
-                cont[meth_name] = ack
+                cont[meth_name] = method
+                remotes[meth_name] = ack
             for base in bases[::-1]:
                 if hasattr(base, attrib):
                     rbase = getattr(base,attrib)
@@ -136,7 +146,8 @@ by the remote actor calling the function. For example::
                         if not key in cont:
                             cont[key] = method
                         
-        attrs[attrib] = cont
+        attrs.update({attrib: cont,
+                      rattrib: remotes})
         return make(cls, name, bases, attrs)
 
     
@@ -154,8 +165,9 @@ the next message received.
 Pulsar actors are slightly different from the general theory. They cannot
 create other actors, unless they are of special kind.
 
-The current implementation allows for actor to perform specific tasks such
-as listening to a socket, acting as http server and so forth.
+The current implementation allows for actors to perform specific tasks such
+as listening to a socket, acting as http server, consuming
+a task queue and so forth.
 
 To spawn a new actor::
 
@@ -198,7 +210,6 @@ Here ``a`` is actually a reference to the remote actor.
     _stopping = False
     _ppid = None
     _name = None
-    _listening = True
     _runner_impl = {'monitor':ActorMonitorImpl,
                     'thread':ActorThread,
                     'process':ActorProcess}
@@ -312,6 +323,8 @@ it will be stopped if it fails to notify itself for a period longer that timeout
               on_task = None, task_queue = None,
               actor_links = None, name = None, socket = None,
               age = 0):
+        # This function is called just after forking (if the concurrency model
+        # is process, otherwise just after the concurrent model has started).
         self.arbiter = arbiter
         self.monitor = monitor
         self.age = age
@@ -333,10 +346,9 @@ it will be stopped if it fails to notify itself for a period longer that timeout
             self.on_task = on_task
     
     def set_socket(self, socket):
-        if not hasattr(self,'socket'):
-            self.socket = socket
+        self.socket = socket
         self.address = None if not self.socket else self.socket.getsockname()
-        if self.socket and self._listening:
+        if self.socket:
             self.log.info('"{0}" listening at {1}'.format(self,self.socket))
             
     def start(self):
@@ -433,7 +445,7 @@ This function should live on a event loop.'''
                     self.log.warn('"{0}" got a message from an un-linked\
  actor "{1}"'.format(self,request.aid[:8]))
                 else:
-                    func = getattr(self,'actor_{0}'.format(request.name),None)
+                    func = self.actor_functions.get(request.name,None)
                     if func:
                         ack = getattr(func,'ack',True)
                     result = self.handle_request_from_actor(caller,request,func)
@@ -464,7 +476,7 @@ This function should live on a event loop.'''
         if func:
             args = request.msg[0]
             kwargs = request.msg[1]
-            return func(caller, *args, **kwargs)
+            return func(self, caller, *args, **kwargs)
         else:
             msg = request.msg
             name = request.name or DEFAULT_MESSAGE_CHANNEL
@@ -551,24 +563,4 @@ notified linked actors'''
     def actor_ping(self, caller):
         return 'pong'
 
-
-    # CLASS METHODS
-    
-    @classmethod
-    def modify_arbiter_loop(cls, wp):
-        '''Called by an instance of :class:`pulsar.WorkerPool`, it modify the 
-event loop of the arbiter if required.
-
-:parameter wp: Instance of :class:`pulsar.WorkerPool`
-:parameter ioloop: Arbiter event loop
-'''
-        pass
-    
-    @classmethod
-    def clean_arbiter_loop(cls, wp):
-        pass
-
-    @classmethod
-    def get_task_queue(cls, monitor):
-        return None
 

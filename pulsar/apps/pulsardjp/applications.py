@@ -93,7 +93,7 @@ class ServerView(admin.TabView):
                 'right_panels':monitors}
         
 
-class PulsarView(view.ViewView):
+class PulsarView(views.ViewView):
     
     def default_post(self, djp):
         '''Get response handler.'''

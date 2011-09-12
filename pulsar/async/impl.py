@@ -36,7 +36,7 @@ class ActorImpl(object):
         self.timeout = timeout
         self.actor_class = actor_class
         self.loglevel = kwargs.pop('loglevel',None)
-        self.actor_functions = actor_class.actor_functions
+        self.remotes = actor_class.remotes
         self.a_args = args
         self.a_kwargs = kwargs
         self.process_actor(arbiter)

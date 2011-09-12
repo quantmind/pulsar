@@ -32,6 +32,8 @@ class Request(object):
     '''An request environment wrapper'''
     def __init__(self, environ):
         self.environ = environ
+        self.sock = environ.get('pulsar.socket')
+        self.path = environ.get('PATH_INFO')
         self._init()
     
     def _init(self):
@@ -152,9 +154,12 @@ class PulsarWsgiHandler(PickableMixin):
         request = self.REQUEST(environ)
         if self.request_middleware:
             self.request_middleware.apply(request)
-        self.execute(request)
+        response = self.execute(request, start_response)
+        #if self.response_middleware:
+        #    self.response_middleware.apply(response)
+        return response
         
-    def execute(self, request):
+    def execute(self, request, start_response):
         pass
     
     def send(self, request, name, args = None, kwargs = None,
