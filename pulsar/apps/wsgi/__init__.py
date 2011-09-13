@@ -25,7 +25,7 @@ class WsgiMonitor(pulsar.ApplicationMonitor):
 
 
 class WSGIApplication(pulsar.Application):
-        
+    
     def get_task_queue(self): 
         if self.cfg.concurrency == 'process':
             return None
@@ -39,11 +39,13 @@ class WSGIApplication(pulsar.Application):
         
     def worker_start(self, worker):
         # If the worker is a process and it is listening to a socket
-        # Add the socket handler to the event loop
+        # Add the socket handler to the event loop, otherwise do nothing.
+        # The worker will receive requests on a task queue
         if worker.socket:
-            worker.socket.setblocking(0)
+            worker.socket.setblocking(False)
             handler = HttpHandler(worker)
-            worker.ioloop.add_handler(worker.socket, handler,
+            worker.ioloop.add_handler(worker.socket,
+                                      handler,
                                       worker.ioloop.READ)
         
     def handle_event_task(self, worker, request):

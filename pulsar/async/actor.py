@@ -190,8 +190,18 @@ Here ``a`` is actually a reference to the remote actor.
     
 .. attribute:: task_queue
 
-    The task queue where the actor's monitor add tasks to be processed by ``self``.
-    This queue is used by a subsets of workers only.
+    An optional python queue where the actor's monitor add tasks to be processed
+    by the actor.
+    
+    Default ``None``.
+    
+.. attribute:: ioloop
+
+    An instance of :class:`pulsar.IOLoop` the input/output event loop
+    driving each actor. Some actors may share the ioloop with other actors
+    depending on their concurrency implementation.
+    
+.. attribute:: 
 '''
     INITIAL = 0X0
     RUN = 0x1

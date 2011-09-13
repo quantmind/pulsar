@@ -38,10 +38,10 @@ def threadsafe(f):
 
 class IOLoop(IObase):
     """\
-A level-triggered I/O loop adapted from tornado
+A level-triggered I/O loop adapted from tornado.
 
 We use epoll if it is available, or else we fall back on select().
-Example usage for a simple TCP server:
+Example usage for a simple TCP server::
 
     import errno
     import functools
@@ -74,7 +74,7 @@ When using the eventloop on a child process,
 It should be instantiated after forking.
     """
     # Never use an infinite timeout here - it can stall epoll
-    POLL_TIMEOUT = 0.2
+    POLL_TIMEOUT = 0.5
     
     def __init__(self, impl=None, logger = None,
                  pool_timeout = None, commnads = None):

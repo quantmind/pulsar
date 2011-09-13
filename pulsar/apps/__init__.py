@@ -2,6 +2,7 @@ import logging
 import os
 import sys
 import traceback
+import random
 
 import pulsar
 from pulsar import Empty, is_async

@@ -39,6 +39,10 @@ class Request(object):
     def _init(self):
         pass
     
+    @property
+    def actor(self):
+        return self.environ.get("pulsar.worker")
+    
     @cached_property
     def data(self):
         return self.environ['wsgi.input'].read()

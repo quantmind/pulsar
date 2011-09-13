@@ -8,25 +8,29 @@ and open a web browser at http://localhost:8060
 '''
 import os
 import random
+import time
 
 import pulsar
 from pulsar import http
+from pulsar.utils.py2py3 import range
 
 
-def handle(ws):
-    """This is the websocket handler function.  Note that we 
-    can dispatch based on path in here, too."""
-    if ws.path == '/echo':
-        while True:
-            m = ws.wait()
-            if m is None:
-                break
-            ws.send(m)
-            
-    elif ws.path == '/data':
-        for i in xrange(10000):
-            ws.send("0 %s %s\n" % (i, random.random()))
-            eventlet.sleep(0.1)
+class handle(object):
+    
+    def __call__(self, request):
+        """This is the websocket handler function.  Note that we 
+        can dispatch based on path in here, too."""
+        if request.path == '/echo':
+            while True:
+                m = request.wait()
+                if m is None:
+                    break
+                request.send(m)
+                
+        elif request.path == '/data':
+            for i in range(10000):
+                yield "0 %s %s\n" % (i, random.random())
+                request.send("0 %s %s\n" % (i, random.random()))
 
 
 wsapp = http.WebSocket(handler = handle)

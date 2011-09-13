@@ -79,6 +79,17 @@ Application Monitor
    :member-order: bysource
 
 
+Asyncronous Tools
+=====================
+
+IOLoop
+~~~~~~~~~~~~~~~~~~~~
+
+.. autoclass:: pulsar.IOLoop
+   :members:
+   :member-order: bysource
+
+
 Utilities
 ================
 

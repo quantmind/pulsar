@@ -33,7 +33,10 @@ def make_deferred(val = None):
     
 
 def make_async(val = None):
-    '''Convert ``val`` into an asyncronous object which accept callbacks'''
+    '''Convert *val* into an asyncronous object which accept callbacks.
+
+:parameter val: can be a generator or any other value.
+:rtype: an instance of :class:`pulsar.Deferred`.'''
     if not is_async(val):
         if inspect.isgenerator(val):
             d = make_async() 

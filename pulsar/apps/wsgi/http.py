@@ -46,6 +46,31 @@ class HttpHandler(object):
     def handle(self, fd, req):
         self.worker.handle_task(fd, req)
         
+        
+class AsyncHttpHandler(HttpHandler):
+    
+    def __call__(self, fd, events):
+        client = None
+        try:
+            client, addr = self.worker.socket.accept()
+        except socket.error as e:
+            close(client)
+            if e.errno not in self.ALLOWED_ERRORS:
+                raise
+            else:
+                return
+        except StopIteration:
+            close(client)
+            self.worker.log.debug("Ignored premature client disconnection.")
+            return
+        
+        stream = pulsar.IOStream(worker, client)
+        req = http.Request(stream, addr, self.worker.address, self.worker.cfg)
+        self.handle(fd, req)
+
+    def handle(self, fd, req):
+        self.worker.handle_task(fd, req)
+        
 
 class HttpPoolHandler(HttpHandler):
     '''THis is used when the monitor is using thread-based workes.'''
