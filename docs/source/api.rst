@@ -74,7 +74,7 @@ Application Worker
 Application Monitor
 ~~~~~~~~~~~~~~~~~~~~~
    
-.. autoclass:: pulsar.WorkerMonitor
+.. autoclass:: pulsar.ApplicationMonitor
    :members:
    :member-order: bysource
 

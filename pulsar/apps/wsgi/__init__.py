@@ -16,16 +16,9 @@ from pulsar.http.utils import write_nonblock, write_error, close
 from .http import *
 
 
-class WsgiMonitor(pulsar.ApplicationMonitor):
-    '''A specialized worker monitor for wsgi applications.'''
-    def set_socket(self, socket):
-        if not self.task_queue:
-            self._listening = False
-        super(WsgiMonitor,self).set_socket(socket)
-
-
 class WSGIApplication(pulsar.Application):
-    
+    '''A WSGI application running on pulsar concurrent framework.
+It can be configured to run as a multiprocess or a multithreaded server.'''
     def get_task_queue(self): 
         if self.cfg.concurrency == 'process':
             return None
@@ -33,6 +26,9 @@ class WSGIApplication(pulsar.Application):
             return pulsar.ThreadQueue()
         
     def update_worker_paramaters(self, monitor, params):
+        '''If running as a multiprocess, pass the socket to the worker
+parameters.'''
+        #TODO RAISE ERROR IN WINDOWS WHEN USING PYTHON 2
         if not monitor.task_queue:
             params['socket'] = monitor.socket
         return params

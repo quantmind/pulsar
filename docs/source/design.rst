@@ -1,3 +1,4 @@
+.. _design:
 
 =====================
 Design
@@ -13,8 +14,24 @@ a set of worker pools. In multi-processing mode, the master never knows anything
 about individual clients. All requests and responses are handled completely by worker pools.
 
 
+
+Actors
+=================
+
+Event loop
+~~~~~~~~~~~~~~~
+Each actor has its own instance of an :class:`pulsar.IOLoop` to perform its
+normal operations. The :attr:`pulsar.Actor.ioloop` is initiated just after
+forking.
+Once the event loop is created, the actor add itself to
+:ref:`the event loop tasks <ioloop-tasks>`, so that it can perform
+its operations at each iteration in the event loop.
+ 
+
+.. _actor-callbacks:
+
 Actor Callbacks
-===================
+~~~~~~~~~~~~~~~~~~~~~~~~
 
 :class:`pulsar.Actor` exposes four callback functions which can be
 used to customize the behaviour of the actor.
@@ -27,3 +44,13 @@ used to customize the behaviour of the actor.
 These functions do nothing in the :class:`pulsar.Actor` implementation. 
 
 .. _gunicorn: http://gunicorn.org/
+
+
+Event Loop
+====================
+
+
+.. _ioloop-tasks:
+
+Event loop tasks
+~~~~~~~~~~~~~~~~~~~~~~

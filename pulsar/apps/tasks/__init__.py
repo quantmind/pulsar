@@ -37,24 +37,31 @@ from .rpc import *
 class TaskQueue(pulsar.Application):
     '''A :class:`pulsar.Application` for consuming
 tasks and managing scheduling of tasks.
-   
-.. attribute: task_class
+    
+.. attribute:: registry
 
-    A subclass of :class:`pulsar.apps.tasks,Task` for storing information
-    about task execution.
+    Instance of a :class:`pulsar.apps.tasks.JobRegistry` containing all
+    registered :class:`pulsar.apps.tasks.Job` instances.
 '''
     REMOVABLE_ATTRIBUTES = ('scheduler',) +\
                              pulsar.Application.REMOVABLE_ATTRIBUTES
     task_class = TaskInMemory
+    '''A subclass of :class:`pulsar.apps.tasks.Task` for storing information
+    about task execution.
+    
+    Default: :class:`pulsar.apps.tasks.TaskInMemory`'''
     
     cfg = {'timeout':'3600'}
     
     @property
     def scheduler(self):
         '''The scheduler is a producer of periodic tasks. At every event
-loop of the :class:`pulsar.Monitor` running the task queue application
-checks if a new periodic tasks need to be scheduled.
-If so it makes the task requests.'''
+loop of the :class:`pulsar.ApplicationMonitor` running the task queue
+application, the application checks if a new periodic tasks need to
+be scheduled. If so it makes the task requests.
+
+Check the :meth:`pulsar.apps.tasks.TaskQueue.monitor_task` callback
+for implementation.'''
         if not self._scheduler:
             self._scheduler = Scheduler(self.task_class)
         return self._scheduler
@@ -88,6 +95,8 @@ responsability to the :attr:`pulsar.apps.tasks.TaskQueue.scheduler`
         return self.scheduler.make_request(job_name, targs, tkwargs, **kwargs)
         
     def monitor_task(self, monitor):
+        '''Override the :meth:`pulsar.Application.monitor_task` callback
+to check if the schedulter needs to perform a new run.'''
         if self.scheduler.next_run <= datetime.now():
             self.scheduler.tick(monitor.task_queue)
             

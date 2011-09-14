@@ -72,6 +72,16 @@ Example usage for a simple TCP server::
 
 When using the eventloop on a child process,
 It should be instantiated after forking.
+
+.. attribute:: num_lumps
+
+    total number of loops
+    
+.. attribute:: POLL_TIMEOUT
+
+    The timeout in seconds when polling with epol or select.
+    
+    Default: `0.5`
     """
     # Never use an infinite timeout here - it can stall epoll
     POLL_TIMEOUT = 0.5
@@ -94,7 +104,6 @@ It should be instantiated after forking.
         self._running = False
         self._stopped = False
         self.num_loops = 0
-        '''Called when when the child process is forked'''
         self._blocking_signal_threshold = None
         if platform.type == 'posix':
             # Create a pipe that we send bogus data to when we want to wake
@@ -110,18 +119,26 @@ It should be instantiated after forking.
             #self.log.debug("Got wake up data {0}".format(r.recv()))
 
     def add_loop_task(self, task):
-        '''Add a callable object to self.
-The object will be called at each iteration in the event loop.'''
+        '''Add a callable object to the list of tasks which are
+executed at each iteration in the event loop.'''
         self._loop_tasks.append(task)
         
     def remove_loop_task(self, task):
+        '''Remove the task from the list of tasks
+executed at each iteration in the event loop.'''
         try:
             return self._loop_tasks.remove(task)
         except ValueError:
             pass
         
     def add_handler(self, fd, handler, events):
-        """Registers the given handler to receive the given events for fd."""
+        """Registers the given *handler* to receive the given events for the
+file descriptor *fd*.
+
+:parameter fd: A file descriptor or an object with the ``fileno`` method.
+:parameter handler: A callable which will be called when events occur on the
+    file descriptor *fd*.
+:rtype: ``True`` if the handler was succesfully added."""
         if fd is not None:
             fd = file_descriptor(fd)
             if fd not in self._handlers:
@@ -146,19 +163,16 @@ The object will be called at each iteration in the event loop.'''
             self.log.debug("Error deleting {0} from IOLoop".format(fd), exc_info=True)
 
     def set_blocking_signal_threshold(self, seconds, action):
-        """Sends a signal if the ioloop is blocked for more than s seconds.
+        """Sends a signal if the ioloop is blocked for more than *seconds*.
 
-        Pass seconds=None to disable.  Requires python 2.6 on a unixy
-        platform.
-
-        The action parameter is a python signal handler.  Read the
-        documentation for the python 'signal' module for more information.
-        If action is None, the process will be killed if it is blocked for
-        too long.
-        """
+:parameter seconds: the timeout, pass ``None`` to disable.
+:parameter action: A python signal handler.  Read the documentation for the
+    python 'signal' module for more information. If action is None,
+    the process will be killed if it is blocked for too long.
+"""
         if not hasattr(signal, "setitimer"):
-            logging.error("set_blocking_signal_threshold requires a signal module "
-                       "with the setitimer method")
+            self.log.error("set_blocking_signal_threshold requires a\
+ signal module with the setitimer method")
             return
         self._blocking_signal_threshold = seconds
         if seconds is not None:
@@ -191,6 +205,13 @@ The object will be called at each iteration in the event loop.'''
         return True
     
     def do_loop_tasks(self):
+        '''Perform tasks in the event loop. These tasks can be added and
+removed using the :meth:`pulsar.IOLoop.add_loop_task` and
+:meth:`pulsar.IOLoop.remove_loop_task` methods.
+
+For example, a :class:`pulsar.Actor` add itself to the event loop tasks
+so that it can perform its tasks at each event loop. Check the
+:meth:`pulsar.Actor` method.'''
         for task in self._loop_tasks:
             task()
         
@@ -277,10 +298,10 @@ The object will be called at each iteration in the event loop.'''
                             # Happens when the client closes the connection
                             pass
                         else:
-                            logging.error("Exception in I/O handler for fd %d",
+                            self.log.error("Exception in I/O handler for fd %d",
                                           fd, exc_info=True)
                     except:
-                        logging.error("Exception in I/O handler for fd %d",
+                        self.log.error("Exception in I/O handler for fd %d",
                                       fd, exc_info=True)
         # reset the stopped flag so another start/stop pair can be issued
         self._on_exit.callback(self)

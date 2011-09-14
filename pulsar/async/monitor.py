@@ -58,7 +58,15 @@ in turn manage a set of :class:`pulsar.Actor` performing similar tasks.
 
 Therefore you may
 have a monitor managing actors for serving HTTP requests on a given port,
-another monitor managing actors consuming tasks from a task queue and so forth. 
+another monitor managing actors consuming tasks from a task queue and so forth.
+
+Monitors are created by invoking the :meth:`pulsar.Arbiter.add_monitor`
+functions and not by directly invoking the constructor. Therefore
+adding a new monitor to the arbiter would follow the following pattern::
+
+    import pulsar
+    
+    m = pulsar.arbiter().add_monitor(pulsar.Monitor,'mymonitor')
 
 .. attribute:: worker_class
 
@@ -93,13 +101,15 @@ another monitor managing actors consuming tasks from a task queue and so forth.
         super(Monitor,self)._init(impl, **kwargs)
         
     def monitor_task(self):
-        '''Monitor specific task called at each monitor event loop.
+        '''Monitor specific task called by the :meth:`pulsar.Monitor.on_task`
+:ref:`actor callback <actor-callbacks>` at each iteration in the event loop.
 By default it does nothing.'''
         pass
     
     # HOOKS        
     def on_task(self):
-        '''Overrides the :meth:`pulsar.Actor.on_task` callback to perform
+        '''Overrides the :meth:`pulsar.Actor.on_task`
+:ref:`actor callback <actor-callbacks>` to perform
 the monitor event loop tasks: a) maintain a responsive set of actors ready
 to perform their duty and b) perform its own task.
 
@@ -121,8 +131,9 @@ The monitor performs its tasks in the following way:
             self.monitor_task()
         
     def on_stop(self):
-        '''Ovverrides the :meth:`pulsar.Actor.on_stop` callback by stopping
-all actors managed by ``self``..'''
+        '''Ovverrides the :meth:`pulsar.Actor.on_stop` 
+:ref:`actor callback <actor-callbacks>` by stopping
+all actors managed by ``self``.'''
         self.log.debug('exiting "{0}"'.format(self))
         for actor in self.linked_actors():
             actor.stop()
@@ -195,6 +206,8 @@ as required."""
         return worker
     
     def actorparams(self):
+        ''':rtype: a dictionary of parameters to be passed to the
+spawn method when creating new actors.'''
         return self._actor_params or {}
         
     def info(self, full = False):

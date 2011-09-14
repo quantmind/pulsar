@@ -197,11 +197,10 @@ Here ``a`` is actually a reference to the remote actor.
     
 .. attribute:: ioloop
 
-    An instance of :class:`pulsar.IOLoop` the input/output event loop
-    driving each actor. Some actors may share the ioloop with other actors
+    An instance of :class:`pulsar.IOLoop`, the input/output event loop
+    driving the actor. Some actors may share the ioloop with other actors
     depending on their concurrency implementation.
-    
-.. attribute:: 
+
 '''
     INITIAL = 0X0
     RUN = 0x1
@@ -292,20 +291,23 @@ it will be stopped if it fails to notify itself for a period longer that timeout
     # HOOKS
     
     def on_start(self):
-        '''Callback just before the actor starts
-(after forking before :meth:`_run` method).'''
+        '''The :ref:`actor callback <actor-callbacks>` run once just before
+the actor starts (after forking).'''
         pass
     
     def on_task(self):
-        '''Callback executed at each actor event loop.'''
+        '''The :ref:`actor callback <actor-callbacks>` executed at each
+iteration of the :attr:`pulsar.Actor.ioloop`.'''
         pass
     
     def on_stop(self):
-        '''Callback executed before stopping the actor.'''
+        '''The :ref:`actor callback <actor-callbacks>` run once just before
+ the actor stops running.'''
         pass
     
     def on_exit(self):
-        '''Called just before the actor is exting.'''
+        '''The :ref:`actor callback <actor-callbacks>` run once when the actor
+ is exting the framework (and vanish in the garbage collector).'''
         pass
     
     def on_manage_actor(self, actor):
@@ -362,6 +364,7 @@ it will be stopped if it fails to notify itself for a period longer that timeout
             self.log.info('"{0}" listening at {1}'.format(self,self.socket))
             
     def start(self):
+        '''Called after forking to start the life of the actor.'''
         if self._state == self.INITIAL:
             if self.isprocess():
                 self.configure_logging()
@@ -496,10 +499,17 @@ This function should live on a event loop.'''
             ch.append(request)
 
     def __call__(self):
-        '''Called in the main eventloop, it flush the inbox queue and
-notified linked actors'''
+        '''Called in the main eventloop, it perform the following
+actions:
+
+* it flush the inbox queue
+* it notifies linked actors if required (arbiter only for now)
+* it executes the :meth:`pulsar.Actor.on_task` callback.
+'''
         self.flush()
-        # If this is not a monitor, we notify to the arbiter we are still alive
+        # If this is not a monitor
+        # we notify to the arbiter we are still alive
+        # TODO: Should we notify to the Monitor instead?
         if self.is_alive():
             if self.arbiter and self.impl != 'monitor':
                 nt = time()
@@ -524,9 +534,13 @@ notified linked actors'''
         return current_process()
     
     def isprocess(self):
+        ''':rtype: boolean indicating if this is an actor on a
+children process.'''
         return self.impl == 'process'
     
     def info(self, full = False):
+        ''':rtype: A dictionary of information related to the actor
+status and performance.'''
         data = {'aid':self.aid[:8],
                 'pid':self.pid,
                 'ppid':self.ppid,

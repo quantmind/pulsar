@@ -56,6 +56,10 @@ Base class for a :class:`pulsar.Actor` serving a :class:`pulsar.Application`.
          
     def on_start(self):
         self.app.worker_start(self)
+        try:
+            self.cfg.worker_start(self)
+        except:
+            pass
     
     def on_task(self):
         self.app.worker_task(self)
@@ -156,13 +160,15 @@ pulsar applications (subclasses of :class:`pulsar.Application`).
     def on_exit(self):
         self.app.monitor_exit(self)
     
-        
     def clean_up(self):
         self.worker_class.clean_arbiter_loop(self,self.ioloop)
             
     def actorparams(self):
-        '''Parameters to be passed to the spawn method
-when creating new actors.'''
+        '''Override the :meth:`pulsar.Monitor.actorparams` method to
+updated actor parameters with information about the application.
+
+:rtype: a dictionary of parameters to be passed to the
+spawn method when creating new actors.'''
         params = {'app':self.app,
                   'timeout': self.cfg.timeout,
                   'loglevel': self.app.loglevel,
@@ -183,7 +189,8 @@ when creating new actors.'''
 class Application(pulsar.ActorBase,pulsar.PickableMixin):
     """\
 An application interface for configuring and loading
-the various necessities for any given server application.
+the various necessities for any given server application running
+on pulsar concurrent framework.
 
 When creating a new application, a new :class:`pulsar.ApplicationMonitor`
 instance is added to the :class:`pulsar.Arbiter`, ready to perform
@@ -192,23 +199,24 @@ its duties.
 :parameter callable: A callable which return the application server.
     The callable must be pickable, therefore it is either a function
     or a pickable object.
+:parameter usage: A string indicating how to launch the application.
 :parameter name: Application name. If not provided the class name in lower
     case is used
 :parameter params: a dictionary of configuration parameters which overrides
-    the defaults and :attr:`pulsar.Application.cfg`.
-
-
-.. attribute:: monitor_class
-
-    The :class:`pulsar.Monitor` class which manage the application.
-    
-    Default: :class:`pulsar.WorkerMonitor`
+    the defaults and the `cfg` attribute. They will be overritten by
+    a config file or command line arguments.
     
 .. attribute:: cfg
 
     dictionary of default configuration parameters.
     
     Default: ``{}``
+    
+
+.. attribute:: mid
+
+    The unique id of the :class:`pulsar.ApplicationMonitor` managing the
+    application. Defined at runtime.
 """
     cfg = {}
     _name = None
@@ -228,12 +236,10 @@ its duties.
         self.callable = callable
         self.load_config(**nparams)
         arbiter = pulsar.arbiter(self.cfg.daemon)
-        task_queue = self.get_task_queue()
         monitor = arbiter.add_monitor(self.monitor_class,
                                       self.name,
                                       self,
-                                      task_queue = task_queue,
-                                      socket = self.get_socket())
+                                      task_queue = self.get_task_queue())
         self.mid = monitor.aid
         monitor.actor_functions = monitor.actor_functions.copy()
         monitor.actor_functions.update(self.actor_functions)
@@ -244,11 +250,6 @@ its duties.
     def name(self):
         '''Application name, It is unique and defines the application.'''
         return self._name
-    
-    def get_socket(self):
-        '''Build the socket for the application.
-By default it returns ``None``.'''
-        return None
     
     def get_task_queue(self):
         '''Build the task queue for the application.
@@ -357,9 +358,20 @@ By default it returns ``None``.'''
 used by a :class:`pulsar.Worker` to carry out its task.'''
         return self.load() or self.callable
     
-    # WORKERS CALLBACKS
+    # MONITOR AND WORKER CALLBACKS
     
     def update_worker_paramaters(self, monitor, params):
+        '''Called by the :class:`pulsar.ApplicationMonitor` when
+returning from the :meth:`pulsar.ApplicationMonitor.actorparams`
+and just before spawnning a new worker for serving the application.
+
+:parameter monitor: instance of the monitor serving the application.
+:parameter params: the dictionary of parameters to updated (if needed).
+:rtype: the updated dictionary of parameters.
+
+This callback is a chance for the application to pass its own custom
+parameters to the workers. By default it returns *params* without
+doing anything.'''
         return params
     
     def worker_start(self, worker):
