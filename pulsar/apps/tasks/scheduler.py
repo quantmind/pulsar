@@ -1,4 +1,5 @@
 import time
+import logging
 from datetime import timedelta, datetime
 
 from pulsar.utils.py2py3 import itervalues, iteritems
@@ -115,6 +116,7 @@ class Scheduler(object):
         self._entries = self.setup_schedule()
         self.next_run = datetime.now()
         self.TaskFactory = TaskFactory
+        self.log = logging.getLogger('pulsar.tasks.scheduler')
         
     @property
     def entries(self):
@@ -122,7 +124,13 @@ class Scheduler(object):
         
     def make_request(self, name, targs = None, tkwargs = None,
                      expiry = None, **kwargs):
-        '''Create a new task request'''            
+        '''Create a new task request. This function is invoked by
+the :meth:`pulsar.apps.tasks.TaskQueue.make_request` method.
+
+:parameter name: the name of a :class:`pulsar.apps.tasks.Job` registered
+    with the application.
+    
+:rtype: an instance of :class:`pulsar.apps.tasks.Task`'''
         if name in registry:
             TaskFactory = self.TaskFactory
             job = registry[name]
@@ -131,6 +139,8 @@ class Scheduler(object):
             id = job.make_task_id(targs,tkwargs)
             task = TaskFactory.get_task(id)
             if task:
+                self.log.info('task {0} already requested. Abort request.'\
+                              .format(task))
                 return task
             if job.name in self.entries:
                 self.entries[job.name].next()

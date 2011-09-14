@@ -34,6 +34,36 @@ from .link import *
 from .rpc import *
 
 
+class Remotes(pulsar.ActorBase):
+    
+    def actor_tasks_list(self, caller):
+        return self.app.tasks_list()
+    
+    def actor_addtask(self, caller, task_name, targs, tkwargs,
+                      ack=True, **kwargs):
+        return self.app._addtask(self, caller, task_name, targs, tkwargs,
+                                    ack = True, **kwargs)
+        
+    def actor_addtask_noack(self, caller, task_name, targs, tkwargs,
+                            ack=False, **kwargs):
+        return self.app._addtask(self, caller, task_name, targs, tkwargs,
+                                    ack = False, **kwargs)
+    actor_addtask_noack.ack = False
+    
+    def actor_task_finished(self, caller, response):
+        self.app.task_finished(response)
+    actor_task_finished.ack = False
+    
+    def actor_get_task(self, caller, id):
+        return self.app.get_task(id)
+    
+    def actor_job_list(self, caller, jobnames = None):
+        return list(self.app.job_list(jobnames = jobnames))
+    
+    def actor_next_scheduled(self, caller, jobname = None):
+        return self.app.scheduler.next_scheduled(jobname = jobname)
+
+
 class TaskQueue(pulsar.Application):
     '''A :class:`pulsar.Application` for consuming
 tasks and managing scheduling of tasks.
@@ -137,31 +167,6 @@ to check if the schedulter needs to perform a new run.'''
         if ack:
             task = tq or task
             return task.tojson_dict()
-    
-    def actor_tasks_list(monitor, caller):
-        return monitor.app.tasks_list()
-    
-    def actor_addtask(monitor, caller, task_name, targs, tkwargs,
-                      ack=True, **kwargs):
-        return monitor.app._addtask(monitor, caller, task_name, targs, tkwargs,
-                                    ack = True, **kwargs)
-        
-    def actor_addtask_noack(self, caller, task_name, targs, tkwargs,
-                            ack=False, **kwargs):
-        return monitor.app._addtask(monitor, caller, task_name, targs, tkwargs,
-                                    ack = False, **kwargs)
-    actor_addtask_noack.ack = False
-    
-    def actor_task_finished(monitor, caller, response):
-        monitor.app.task_finished(response)
-    actor_task_finished.ack = False
-    
-    def actor_get_task(monitor, caller, id):
-        return monitor.app.get_task(id)
-    
-    def actor_job_list(monitor, caller, jobnames = None):
-        return list(monitor.app.job_list(jobnames = jobnames))
-    
-    def actor_next_scheduled(monitor, caller, jobname = None):
-        return monitor.app.scheduler.next_scheduled(jobname = jobname)
-        
+
+    def remote_functions(self):
+        return Remotes.remotes, Remotes.actor_functions

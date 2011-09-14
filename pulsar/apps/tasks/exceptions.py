@@ -1,6 +1,5 @@
 import pulsar
 import sys
-import traceback
 
 from .states import REVOKED
 
@@ -8,14 +7,7 @@ __all__ = ['TaskQueueException',
            'TaskException',
            'TaskNotAvailable',
            'TaskTimeout',
-           'SchedulingError',
-           'get_traceback']
-
-
-def get_traceback(log = None):
-    exc_info = sys.exc_info()
-    return '\n'.join(traceback.format_exception(*exc_info))
-
+           'SchedulingError']
 
 class TaskQueueException(pulsar.PulsarException):
     pass

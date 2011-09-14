@@ -186,7 +186,7 @@ spawn method when creating new actors.'''
         return info
 
 
-class Application(pulsar.ActorBase,pulsar.PickableMixin):
+class Application(pulsar.PickableMixin):
     """\
 An application interface for configuring and loading
 the various necessities for any given server application running
@@ -241,10 +241,12 @@ its duties.
                                       self,
                                       task_queue = self.get_task_queue())
         self.mid = monitor.aid
-        monitor.actor_functions = monitor.actor_functions.copy()
-        monitor.actor_functions.update(self.actor_functions)
-        monitor.remotes = monitor.remotes.copy()
-        monitor.remotes.update(self.actor_functions)
+        r,f = self.remote_functions()
+        if r:
+            monitor.remotes = monitor.remotes.copy()
+            monitor.remotes.update(r)
+            monitor.actor_functions = monitor.actor_functions.copy()
+            monitor.actor_functions.update(f)
     
     @property
     def name(self):
@@ -266,7 +268,12 @@ By default it returns ``None``.'''
         self.arbiter.ioloop.add_timeout(deadline, callback)
         
     def load_config(self, parse_console = True, **params):
-        #Load the application configuration
+        '''Load the application configuration from a file and or
+from the command line. Called during application initialization.
+
+:parameter parse_console: if ``False`` the console won't be parsed.
+:parameter params: parameters which override the defaults.
+'''
         self.cfg = pulsar.Config(self.usage)
         
         overrides = {}
@@ -316,6 +323,12 @@ By default it returns ``None``.'''
                 sys.exit(1)
         
             for k, v in cfg.items():
+                ks = k.split('__')
+                if len(ks) == 2:
+                    if ks[0] != self.name:
+                        continue
+                    k = ks[1]
+                    
                 # Ignore unknown names
                 if k not in self.cfg.settings:
                     self.add_to_overrides(k,v,overrides)
@@ -450,7 +463,7 @@ at each ``worker`` event loop.'''
             handlers.append(logging.FileHandler(self.cfg.logfile))
         super(Application,self).configure_logging(handlers = handlers)
 
-    def actor_links(self, links):
+    def actorlinks(self, links):
         if not links:
             raise StopIteration
         else:
@@ -460,4 +473,12 @@ at each ``worker`` event loop.'''
                     monitor = arbiter.monitors[app.mid]
                     monitor.actor_links[self.name] = self
                     yield name, app
+                    
+    def remote_functions(self):
+        '''Provide with additional remote functions
+to be added to the monitor dictionary of remote functions.
+
+:rtype: a two dimensional tuple of remotes and actor_functions
+    dictionaries.'''
+        return None,None
     

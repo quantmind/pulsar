@@ -138,8 +138,8 @@ class LogginMixin(object):
     
     
 class PickableMixin(LogginMixin):
-    '''A Mixin used throught the library. It provides built in logging object and
-utilities for pickle.'''
+    '''A Mixin used throught the library. It provides built in logging object
+and utilities for pickle.'''
     REMOVABLE_ATTRIBUTES = ()
      
     def __getstate__(self):
