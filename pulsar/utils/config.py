@@ -1,5 +1,6 @@
 '''\
-Configuration utilities. originally from gunicorn_, adapted and modified for pulsar.
+Configuration utilities. originally from gunicorn_,
+adapted and modified for pulsar.
 
 Original Gunicorn Licence
 
@@ -10,7 +11,7 @@ See the NOTICE for more information.
 '''
 import copy
 import inspect
-import optparse
+import argparse
 import os
 import textwrap
 import types
@@ -26,12 +27,15 @@ __all__ = ['Config',
            'validate_string',
            'validate_callable',
            'validate_bool',
+           'validate_list',
            'validate_pos_int',
            'make_settings',
            'make_options']
 
 
 KNOWN_SETTINGS = []
+KNOWN_SETTINGS_SET = set()
+
 
 def def_start_server(server):
     pass
@@ -63,12 +67,16 @@ def wrap_method(func):
     return _wrapped
 
 
-def make_settings(ignore=None):
+def make_settings(app = None, include=None, exclude=None):
     settings = {}
-    ignore = ignore or ()
+    exclude = exclude or ()
     for s in KNOWN_SETTINGS:
         setting = s()
-        if setting.name in ignore:
+        if setting.app and setting.app != app:
+            continue
+        if include and setting.name not in include and not setting.app:
+            continue
+        if setting.name in exclude:
             continue
         settings[setting.name] = setting.copy()
     return settings
@@ -120,19 +128,24 @@ class DummyConfig(object):
 
 class Config(object):
         
-    def __init__(self, usage=None):
-        self.settings = make_settings()
-        self.usage = usage
+    def __init__(self, description = None, epilog = None,
+                 app = None, include=None, exclude = None):
+        self.settings = make_settings(app,include,exclude)
+        self.description = description or 'Pulsar server'
+        self.epilog = epilog or 'Have fun!'
         
     def __getstate__(self):
         return self.__dict__.copy()
     
     def __setstate__(self, state):
         self.__dict__['settings'] = state['settings']
-        self.__dict__['usage'] = state['usage']
+        self.__dict__['description'] = state['description']
+        self.__dict__['epilog'] = state['epilog']
     
     def __getattr__(self, name):
         if name not in self.settings:
+            if name in KNOWN_SETTINGS_SET:
+                return None
             raise AttributeError("No configuration setting for: %s" % name)
         return self.settings[name].get()
     
@@ -148,16 +161,17 @@ class Config(object):
 
     def parser(self):
         kwargs = {
-            "usage": self.usage,
+            "description": self.description,
+            "epilog": self.epilog,
             "version": __version__
         }
-        parser = optparse.OptionParser(**kwargs)
+        parser = argparse.ArgumentParser(**kwargs)
 
         keys = self.settings.keys()
         sorter = lambda x: (self.settings[x].section, self.settings[x].order)
         
         for k in sorted(keys,key=sorter):
-            self.settings[k].add_option(parser)
+            self.settings[k].add_argument(parser)
         return parser
 
     @property
@@ -167,33 +181,40 @@ class Config(object):
         if hasattr(worker_class, "setup_class"):
             worker_class.setup_class()
         return worker_class
-
+    
     @property
     def workers(self):
         return self.settings['workers'].get()
 
     @property
     def address(self):
-        bind = self.settings['bind'].get()
-        return system.parse_address(to_bytestring(bind))
+        bind = self.settings['bind']
+        if bind:
+            return system.parse_address(to_bytestring(bind.get()))
         
     @property
     def uid(self):
-        user = self.settings['user'].get()
-        return system.get_uid(user)
+        user = self.settings.get('user')
+        if user:
+            return system.get_uid(user.get())
         
     @property
     def gid(self):
-        group = self.settings['group'].get()
-        return system.get_gid(group)
+        group = self.settings.get('group')
+        if group:
+            return system.get_gid(group.get())
         
     @property
     def proc_name(self):
-        pn = self.settings['proc_name'].get()
+        pn = self.settings.get('proc_name')
+        if pn:
+            pn = pn.get()
         if pn is not None:
             return pn
         else:
-            return self.settings['default_proc_name'].get()
+            pn = self.settings.get('default_proc_name')
+            if pn:
+                return pn.get()
             
             
 class SettingMeta(type):
@@ -204,11 +225,13 @@ class SettingMeta(type):
             return super_new(cls, name, bases, attrs)            
     
         attrs["order"] = len(KNOWN_SETTINGS)
-        attrs["validator"] = wrap_method(attrs["validator"])
+        attrs["validator"] = wrap_method(attrs.get("validator",validate_string))
         
         new_class = super_new(cls, name, bases, attrs)
         new_class.fmt_desc(attrs['desc'] or '')
         KNOWN_SETTINGS.append(new_class)
+        if new_class.name:
+            KNOWN_SETTINGS_SET.add(new_class.name)
         return new_class
 
     def fmt_desc(cls, desc):
@@ -223,7 +246,9 @@ BaseSettings =  SettingMeta('BaseSettings', (object, ), {})
 
 
 class Setting(BaseSettings):
-    virtual = True    
+    virtual = True
+    nargs = None
+    app = None
     name = None
     value = None
     section = None
@@ -238,23 +263,32 @@ class Setting(BaseSettings):
     
     def __init__(self):
         if self.default is not None:
-            self.set(self.default)    
+            self.set(self.default)
+        self.short = self.short or self.desc
+        self.desc = self.desc or self.short   
         
-    def add_option(self, parser):
-        if not self.cli:
+    def add_argument(self, parser):
+        kwargs = {}
+        if self.type and self.type != 'string':
+            kwargs["type"] = self.type
+            
+        if self.cli:
+            args = tuple(self.cli)
+            kwargs.update({"dest": self.name,
+                           "action": self.action or "store",
+                           "default": self.default,
+                           "help": "%s [%s]" % (self.short, self.default)})
+            if kwargs["action"] != "store":
+                kwargs.pop("type",None)
+        elif self.nargs and self.name:
+            args = (self.name,)
+            kwargs.update({'nargs':self.nargs,
+                           'metavar': self.meta or None,
+                           'help': self.short})
+        else:
             return
-        args = tuple(self.cli)
-        kwargs = {
-            "dest": self.name,
-            "metavar": self.meta or None,
-            "action": self.action or "store",
-            "type": self.type or "string",
-            "default": None,
-            "help": "%s [%s]" % (self.short, self.default)
-        }
-        if kwargs["action"] != "store":
-            kwargs.pop("type")
-        parser.add_option(*args, **kwargs)
+        
+        parser.add_argument(*args, **kwargs)
     
     def copy(self):
         return copy.copy(self)
@@ -263,7 +297,8 @@ class Setting(BaseSettings):
         return self.value
     
     def set(self, val):
-        assert hasattr(self.validator,'__call__'), "Invalid validator: %s" % self.name
+        if not hasattr(self.validator,'__call__'):
+            raise TypeError("Invalid validator: %s" % self.name)
         self.value = self.validator(val)
 
 
@@ -299,6 +334,12 @@ def validate_string(val):
     return to_string(val).strip()
 
 
+def validate_list(val):
+    if val and not isinstance(val,list):
+        raise TypeError("Not a list: %s" % val)
+    return val
+
+
 def validate_callable(arity):
     def _validate_callable(val):
         if not hasattr(val,'__call__'):
@@ -328,50 +369,14 @@ class ConfigFile(Setting):
         Only has an effect when specified on the command line or as part of an
         application specific configuration.    
         """
-
-
-class Bind(Setting):
-    name = "bind"
-    section = "Server Socket"
-    cli = ["-b", "--bind"]
-    meta = "ADDRESS"
-    validator = validate_string
-    default = "127.0.0.1:{0}".format(DEFAULT_PORT)
-    desc = """\
-        The socket to bind.
         
-        A string of the form: 'HOST', 'HOST:PORT', 'unix:PATH'. An IP is a valid
-        HOST.
-        """
-        
-        
-class Backlog(Setting):
-    name = "backlog"
-    section = "Server Socket"
-    cli = ["--backlog"]
-    meta = "INT"
-    validator = validate_pos_int
-    type = "int"
-    default = 2048
-    desc = """\
-        The maximum number of pending connections.    
-        
-        This refers to the number of clients that can be waiting to be served.
-        Exceeding this number results in the client getting an error when
-        attempting to connect. It should only affect servers under significant
-        load.
-        
-        Must be a positive integer. Generally set in the 64-2048 range.    
-        """
-
 
 class Workers(Setting):
     name = "workers"
     section = "Worker Processes"
     cli = ["-w", "--workers"]
-    meta = "INT"
     validator = validate_pos_int
-    type = "int"
+    type = int
     default = 1
     desc = """\
         The number of worker process for handling requests.
@@ -386,22 +391,15 @@ class WorkerClass(Setting):
     name = "worker_class"
     section = "Worker Processes"
     cli = ["-k", "--worker-class"]
-    meta = "STRING"
-    validator = validate_string
     default = ""
-    desc = """\
-        The type of workers to use. First it searches the relative path
-        ``pulsar.apps``, and if it does not find it it searches as absolute
-        path.
-        """
+    desc = """The type of workers to use. First it searches the relative path\
+ pulsar.apps, and if it does not find it it searches as absolute path."""
 
 
 class Concurrency(Setting):
     name = "concurrency"
     section = "Worker Processes"
     cli = ["--concurrency"]
-    meta = "STRING"
-    validator = validate_string
     default = "process"
     desc = """\
         The type of concurrency to use: process or thread.
@@ -412,9 +410,8 @@ class WorkerConnections(Setting):
     name = "worker_connections"
     section = "Worker Processes"
     cli = ["--worker-connections"]
-    meta = "INT"
     validator = validate_pos_int
-    type = "int"
+    type = int
     default = 1000
     desc = """\
         The maximum number of simultaneous clients.
@@ -427,9 +424,8 @@ class MaxRequests(Setting):
     name = "max_requests"
     section = "Worker Processes"
     cli = ["--max-requests"]
-    meta = "INT"
     validator = validate_pos_int
-    type = "int"
+    type = int
     default = 0
     desc = """\
         The maximum number of requests a worker will process before restarting.
@@ -447,9 +443,8 @@ class Timeout(Setting):
     name = "timeout"
     section = "Worker Processes"
     cli = ["-t", "--timeout"]
-    meta = "INT"
     validator = validate_pos_int
-    type = "int"
+    type = int
     default = 30
     desc = """\
         Workers silent for more than this many seconds are killed and restarted.
@@ -465,9 +460,8 @@ class Keepalive(Setting):
     name = "keepalive"
     section = "Worker Processes"
     cli = ["--keep-alive"]
-    meta = "INT"
     validator = validate_pos_int
-    type = "int"
+    type = int
     default = 2
     desc = """\
         The number of seconds to wait for requests on a Keep-Alive connection.
@@ -502,23 +496,6 @@ class Spew(Setting):
         Install a trace function that spews every line executed by the server.
         
         This is the nuclear option.    
-        """
-
-
-class PreloadApp(Setting):
-    name = "preload_app"
-    section = "Server Mechanics"
-    cli = ["--preload"]
-    validator = validate_bool
-    action = "store_true"
-    default = False
-    desc = """\
-        Load application code before the worker processes are forked.
-        
-        By preloading an application you can save some RAM resources as well as
-        speed up server boot times. Although, if you defer application loading
-        to each worker process, you can reload your application code easily by
-        restarting workers.
         """
 
 
@@ -587,9 +564,8 @@ class Umask(Setting):
     name = "umask"
     section = "Server Mechanics"
     cli = ["-m", "--umask"]
-    meta = "INT"
     validator = validate_pos_int
-    type = "int"
+    type = int
     default = 0
     desc = """\
         A bit mask for the file mode on files written by Gunicorn.

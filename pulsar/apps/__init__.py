@@ -142,7 +142,6 @@ pulsar applications (subclasses of :class:`pulsar.Application`).
         self.cfg = app.cfg
         super(ApplicationMonitor,self)._init(impl,
                                         self.cfg.worker_class,
-                                        address = self.cfg.address,
                                         num_workers = self.cfg.workers,
                                         **kwargs)
     
@@ -206,13 +205,18 @@ its duties.
     the defaults and the `cfg` attribute. They will be overritten by
     a config file or command line arguments.
     
+.. attribute:: app
+
+    A string indicating the application namespace for configuration parameters.
+    
+    Default `None`
+    
 .. attribute:: cfg
 
     dictionary of default configuration parameters.
     
     Default: ``{}``
     
-
 .. attribute:: mid
 
     The unique id of the :class:`pulsar.ApplicationMonitor` managing the
@@ -220,33 +224,41 @@ its duties.
 """
     cfg = {}
     _name = None
+    description = None
+    epilog = None
+    app = None
+    config_options_include = None
+    config_options_exclude = None
     monitor_class = ApplicationMonitor
     default_logging_level = logging.INFO
     
     def __init__(self,
                  callable = None,
-                 usage=None,
                  name = None,
+                 description = None,
+                 epilog = None,
                  **params):
         self.python_path()
+        self.description = description or self.description
+        self.epilog = epilog or self.epilog
         self._name = name or self._name or self.__class__.__name__.lower()
-        self.usage = usage
         nparams = self.cfg.copy()
         nparams.update(params)
         self.callable = callable
         self.load_config(**nparams)
-        arbiter = pulsar.arbiter(self.cfg.daemon)
-        monitor = arbiter.add_monitor(self.monitor_class,
-                                      self.name,
-                                      self,
-                                      task_queue = self.get_task_queue())
-        self.mid = monitor.aid
-        r,f = self.remote_functions()
-        if r:
-            monitor.remotes = monitor.remotes.copy()
-            monitor.remotes.update(r)
-            monitor.actor_functions = monitor.actor_functions.copy()
-            monitor.actor_functions.update(f)
+        if self.on_config() is not False:
+            arbiter = pulsar.arbiter(self.cfg.daemon)
+            monitor = arbiter.add_monitor(self.monitor_class,
+                                          self.name,
+                                          self,
+                                          task_queue = self.get_task_queue())
+            self.mid = monitor.aid
+            r,f = self.remote_functions()
+            if r:
+                monitor.remotes = monitor.remotes.copy()
+                monitor.remotes.update(r)
+                monitor.actor_functions = monitor.actor_functions.copy()
+                monitor.actor_functions.update(f)
     
     @property
     def name(self):
@@ -258,6 +270,12 @@ its duties.
 By default it returns ``None``.'''
         return None
     
+    def on_config(self):
+        '''Callback when configuration is loaded. This is a chanse to do
+ an application specific check before the concurrent machinery is put into
+ place. If it returns ``False`` the application will abort.'''
+        pass
+    
     def python_path(self):
         #Insert the application directory at the top of the python path.
         path = os.path.split(os.getcwd())[0]
@@ -266,7 +284,7 @@ By default it returns ``None``.'''
             
     def add_timeout(self, deadline, callback):
         self.arbiter.ioloop.add_timeout(deadline, callback)
-        
+              
     def load_config(self, parse_console = True, **params):
         '''Load the application configuration from a file and or
 from the command line. Called during application initialization.
@@ -274,32 +292,43 @@ from the command line. Called during application initialization.
 :parameter parse_console: if ``False`` the console won't be parsed.
 :parameter params: parameters which override the defaults.
 '''
-        self.cfg = pulsar.Config(self.usage)
+        self.cfg = pulsar.Config(self.description,
+                                 self.epilog,
+                                 self.app,
+                                 self.config_options_include,
+                                 self.config_options_exclude)
         
         overrides = {}
         
-        # add params
+        # modify defaults and values of cfg with params
         for k, v in params.items():
             if v is not None:
                 k = k.lower()
                 try:
                     self.cfg.set(k, v)
+                    self.cfg.settings[k].default = v
                 except AttributeError:
                     if not self.add_to_overrides(k,v,overrides):
                         setattr(self,k,v)
         
-        config = self.cfg.config
+        try:
+            config = self.cfg.config
+        except AttributeError:
+            config = None
         
         # parse console args
         if parse_console:
             parser = self.cfg.parser()
-            opts, args = parser.parse_args()
-            config = opts.config or config
+            opts = parser.parse_args()
+            try:
+                config = opts.config or config
+            except AttributeError:
+                config = None
         else:
-            parser, opts, args = None,None,None
+            parser, opts = None,None
         
         # optional settings from apps
-        cfg = self.init(parser, opts, args)
+        cfg = self.init(opts)
         
         # Load up the any app specific configuration
         if cfg:
@@ -360,7 +389,7 @@ from the command line. Called during application initialization.
                 overrides[name] = value
                 return True
             
-    def init(self, parser = None, opts = None, args = None):
+    def init(self, opts):
         pass
     
     def load(self):

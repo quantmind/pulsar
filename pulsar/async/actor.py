@@ -63,10 +63,10 @@ class Runner(LogginMixin,HttpMixin):
     def _set_proctitle(self):
         '''Set the process title'''
         if self.isprocess():
+            proc_name = self.DEF_PROC_NAME
             if hasattr(self,'cfg'):
                 proc_name = self.cfg.proc_name or self.cfg.default_proc_name
-            else:
-                proc_name = self.DEF_PROC_NAME
+            proc_name = proc_name or self.DEF_PROC_NAME
             system.set_proctitle("{0} - {1}".format(proc_name,self))
     
     def _install_signals(self):
