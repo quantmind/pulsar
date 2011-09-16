@@ -13,7 +13,7 @@ __all__ = ['Task','TaskInMemory']
     
 
 class TaskConsumer(object):
-    
+    '''A context manager for consuming tasks'''
     def __init__(self, task, queue, worker, job):
         self.queue = queue
         self.worker = worker

@@ -106,11 +106,14 @@ try:
                 self.save()
         
         @classmethod
-        def get_task(cls, id, remove = True):
+        def get_task(cls, id, remove = False):
             try:
                 task = cls.objects.get(id = id)
-                if remove and task.done():
+                if task.done():
                     task.delete()
+                    if not remove:
+                        task.id = tasks.create_task_id()
+                        task.save()
                 else:
                     return task
             except cls.DoesNotExist:

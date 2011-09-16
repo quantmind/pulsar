@@ -59,7 +59,8 @@ hop_headers = set("""
 try:
     from setproctitle import setproctitle
     def set_proctitle(title):
-        setproctitle(title) 
+        setproctitle(title)
+        return True 
 except ImportError:
     def set_proctitle(title):
         return

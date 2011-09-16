@@ -1,4 +1,5 @@
 from datetime import datetime, date
+from hashlib import sha1
 import logging
 import inspect
 
@@ -9,7 +10,12 @@ from pulsar.utils.tools import gen_unique_id
 
 
 __all__ = ['JobMetaClass','Job','PeriodicJob',
-           'anchorDate','JobRegistry','registry']
+           'anchorDate','JobRegistry','registry',
+           'create_task_id']
+
+
+def create_task_id():
+    return gen_unique_id()[:8]
 
 
 class JobRegistry(dict):
@@ -125,6 +131,7 @@ class Job(JobBase):
     timeout = None
     expires = None
     logformatter = None
+    can_overlap = True
     _ack = True
         
     def __call__(self, consumer, *args, **kwargs):
@@ -133,8 +140,12 @@ implemented by subclasses.'''
         raise NotImplementedError("Jobs must define the run method.")
     
     def make_task_id(self, args, kwargs):
-        '''Get the task unique identifier. This can be overridden by Job implementation.'''
-        return gen_unique_id()
+        '''Get the task unique identifier.
+This can be overridden by Job implementation.'''
+        if self.can_overlap:
+            return create_task_id()
+        else:
+            return sha1(self.name).hexdigest()[:8]
     
     def on_same_id(self, task):
         '''Callback invocked when a task has an id equal to a task already
@@ -178,6 +189,7 @@ where next time to run is in seconds. e.g.
 You can override this to decide the interval at runtime.
         """
         return self.run_every.is_due(last_run_at)
+    
 
 
 def anchorDate(hour = 0, minute = 0, second = 0):

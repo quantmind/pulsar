@@ -67,7 +67,9 @@ class Runner(LogginMixin,HttpMixin):
                 proc_name = self.cfg.proc_name or self.cfg.default_proc_name
             else:
                 proc_name = self.DEF_PROC_NAME
-            system.set_proctitle("{0} - {1}".format(proc_name,self))
+            proc_name = "{0} - {1}".format(proc_name,self)
+            if system.set_proctitle(proc_name):
+                self.log.debug('Set process title to {0}'.format(proc_name))
     
     def _install_signals(self):
         '''Initialise signals for correct signal handling.'''
