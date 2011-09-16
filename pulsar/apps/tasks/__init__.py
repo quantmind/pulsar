@@ -103,7 +103,7 @@ for implementation.'''
         self.task_class = task_class or self.task_class
         super(TaskQueue,self).__init__(**kwargs)
         
-    def init(self, parser = None, opts = None, args = None):
+    def init(self):
         self._scheduler = None
         self.load()
         

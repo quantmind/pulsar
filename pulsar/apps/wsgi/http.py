@@ -12,6 +12,45 @@ from pulsar.http.utils import close
 __all__ = ['HttpHandler','HttpPoolHandler']
 
 
+
+
+class Bind(pulsar.Setting):
+    app = 'wsgi'
+    name = "bind"
+    section = "Server Socket"
+    cli = ["-b", "--bind"]
+    meta = "ADDRESS"
+    validator = validate_string
+    default = "127.0.0.1:{0}".format(DEFAULT_PORT)
+    desc = """\
+        The socket to bind.
+        
+        A string of the form: 'HOST', 'HOST:PORT', 'unix:PATH'. An IP is a valid
+        HOST.
+        """
+        
+        
+class Backlog(pulsar.Setting):
+    app = 'wsgi'
+    name = "backlog"
+    section = "Server Socket"
+    cli = ["--backlog"]
+    validator = validate_pos_int
+    type = int
+    default = 2048
+    desc = """\
+        The maximum number of pending connections.    
+        
+        This refers to the number of clients that can be waiting to be served.
+        Exceeding this number results in the client getting an error when
+        attempting to connect. It should only affect servers under significant
+        load.
+        
+        Must be a positive integer. Generally set in the 64-2048 range.    
+        """
+
+
+
 class HttpHandler(object):
     '''Handle HTTP requests and delegate the response to the worker'''
     ALLOWED_ERRORS = (errno.EAGAIN, errno.ECONNABORTED,

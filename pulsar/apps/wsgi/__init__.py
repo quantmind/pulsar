@@ -19,6 +19,8 @@ from .http import *
 class WSGIApplication(pulsar.Application):
     '''A WSGI application running on pulsar concurrent framework.
 It can be configured to run as a multiprocess or a multithreaded server.'''
+    app = 'wsgi'
+    
     def get_task_queue(self): 
         if self.cfg.concurrency == 'process':
             return None

@@ -30,10 +30,6 @@ def run():
     '''To perform preprocessing before tests add a cfg.py module'''
     dirs = (('examples',ExampleExtractor),
             ('tests',TestExtractor))
-    try:
-        import cfg
-    except ImportError:
-        pass
     p = lambda x : os.path.split(x)[0]
     path = p(os.path.abspath(__file__))
     

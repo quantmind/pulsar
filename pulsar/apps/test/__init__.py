@@ -13,6 +13,8 @@ import inspect
 import pulsar
 from pulsar.utils.importer import import_module
 
+from .utils import *
+
 
 if not hasattr(unittest,'SkipTest'):
     class SkipTest(Exception):
@@ -25,18 +27,6 @@ def TestVerbosity(level):
         return 1
     else:
         return 2 if level > logging.DEBUG else 3
-
-class TestType(pulsar.Setting):
-    name = "test_type"
-    section = "Test"
-    meta = "STRING"
-    cli = ["--test-type"]
-    validator = pulsar.validate_string
-    default = 'regression'
-    desc = """\
-        The test type.
-        Possible choices are: regression, bench and profile.
-    """
 
 
 class StreamLogger(object):
@@ -337,52 +327,40 @@ class TextTestRunner(unittest.TextTestRunner):
         return result
 
 
-class TestMonitor(pulsar.ApplicationMonitor):
-    '''A specialized worker monitor for testing.'''
-    def info(self):
-        return self._info(len(self.LIVE_ACTORS))
-
 
 class TestApplication(pulsar.Application):
-    producer = None
-    done = False
+    app = 'test'
+    config_options_include = ('timeout','concurrency','workers','loglevel',
+                              'daemon','worker_class','debug')
     default_logging_level = None
-    monitor_class = TestMonitor
     cfg = {'timeout':300,
            'concurrency':'thread',
            'workers':1,
-           'worker_class':'base',
            'loglevel':'none'}
-    
-    def init(self, parser = None, opts = None, args = None, extractors = None):
-        self.tags = args
     
     def handler(self):
         return self
     
+    def worker_start(self, worker):
+        try:
+            cfg = self.cfg
+            suite =  TestLoader(cfg.labels, cfg.test_type,
+                                self.extractors).load(worker)
+            verbosity = TestVerbosity(self.loglevel)
+            if self.loglevel is not None:
+                stream = StreamLogger(worker.log)
+                producer = TextTestRunner(stream = stream,
+                                          verbosity = verbosity)
+            else:
+                producer = TextTestRunner(verbosity = verbosity)
+            self.producer = producer.run(suite)
+            self.producers = []
+        except Exception as e:
+            raise e.__class__('Could not start tests. {0}'.format(e),
+                                exc_info = True)
+    
     def worker_task(self, worker):
-        '''At each event loop we run a test'''
-        if not self.done:
-            if self.producer is None:
-                try:
-                    cfg = self.cfg
-                    suite =  TestLoader(self.tags, cfg.test_type,
-                                        self.extractors).load(worker)
-                    verbosity = TestVerbosity(self.loglevel)
-                    if self.loglevel is not None:
-                        stream = StreamLogger(worker.log)
-                        producer = TextTestRunner(stream = stream,
-                                                  verbosity = verbosity)
-                    else:
-                        producer = TextTestRunner(verbosity = verbosity)
-                    self.producer = producer.run(suite)
-                    self.producers = []
-                except Exception as e:
-                    worker.log.critical('Could not start tests. {0}'.format(e),
-                                        exc_info = sys.exc_info())
-                    self.done = True
-                    worker.shut_down()
-                    return
+        while self.producer:
             try:
                 p = next(self.producer)
                 if inspect.isgenerator(p):
@@ -392,8 +370,8 @@ class TestApplication(pulsar.Application):
                 if self.producers:
                     self.producer = self.producers.pop()
                 else:
-                    self.done = True
-                    worker.shut_down()
+                    self.producer = None
+        worker.shut_down()
                       
         
 def TestSuiteRunner(extractors):

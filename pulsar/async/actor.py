@@ -63,6 +63,7 @@ class Runner(LogginMixin,HttpMixin):
     def _set_proctitle(self):
         '''Set the process title'''
         if self.isprocess():
+            proc_name = self.DEF_PROC_NAME
             if hasattr(self,'cfg'):
                 proc_name = self.cfg.proc_name or self.cfg.default_proc_name
             else:
