@@ -21,6 +21,10 @@ class WSGIApplication(pulsar.Application):
 It can be configured to run as a multiprocess or a multithreaded server.'''
     app = 'wsgi'
     
+    def on_config(self):
+        if not pulsar.platform.multiProcessSocket():
+            self.cfg.set('concurrency','thread')
+    
     def get_task_queue(self): 
         if self.cfg.concurrency == 'process':
             return None

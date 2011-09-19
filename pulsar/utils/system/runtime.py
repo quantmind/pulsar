@@ -11,6 +11,7 @@ import os
 import sys
 import time
 import imp
+from socket import socket
 
 knownPlatforms = {
     'nt': 'win',
@@ -87,3 +88,12 @@ class Platform(object):
         except ImportError:
             return False
 
+    def multiProcessSocket(self):
+        ''':rtype: a boolean indicating if support for multiprocess
+ sockets is available.
+        '''
+        try:
+            pickle.dumps(socket())
+            return True
+        except:
+            return False

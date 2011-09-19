@@ -50,7 +50,7 @@ monitor_template = '''\
 
 class ServerView(admin.TabView):
     converters = {'uptime': nicetimedelta,
-                  'notified': smart_time,
+                  'last_notified': smart_time,
                   'default_timeout': nicetimedelta,
                   'timeout': nicetimedelta}
     
@@ -60,38 +60,34 @@ class ServerView(admin.TabView):
     def render_object_view(self, djp, appmodel, instance):
         r = self.get_client(instance)
         try:
-            panels = self.get_panels(djp,appmodel,instance,r.server_info())
+            return self.get_panels(djp,appmodel,instance,r.server_info())
         except pulsar.ConnectionError:
-            panels = {'left_panels':
-                      [{'name':'Server','value':'No Connection'}]}
-        return loader.template_class(monitor_template).render(panels)
+            return 'No connection'
     
     def pannel_data(self, data):
         for k,v in iteritems(data):
             if k in self.converters:
                 v = self.converters[k](v)
-            yield {'name':nicename(k),
-                   'value':v}
+            yield (nicename(k),v)
+    
+    def workers_panel(self, djp, workers):
+        for worker in workers:
+            aid = worker['aid']
+            dl = html.DefinitionList(data_stream = self.pannel_data(worker),
+                                     cn = 'object-definition')
+            yield aid,dl.render(djp)
             
     def get_panels(self,djp,appmodel,instance,info):
-        monitors = []
+        server = html.DefinitionList(\
+                    data_stream = self.pannel_data(info['server']),
+                    cn = 'object-definition')
+        data_stream = [('Server',server.render(djp))]
         for monitor in info['monitors']:
             workers = monitor.pop('workers',None)
-            #monitors.append({'name':nicename(monitor.pop('name','Monitor')),
-            #                 'value':html.ObjectDefinition(appmodel,djp,\
-            #                              self.pannel_data(monitor))})
-            #if workers:
-            #    for worker in workers:
-            #        monitors.append(
-            #                {'name':worker.pop('aid','worker'),
-            #                'value':html.ObjectDefinition(appmodel,djp,\
-            #                                self.pannel_data(worker))})
-        servers = [{'name':'Server',
-                    'value':html.ObjectDefinition(appmodel,djp,\
-                                   self.pannel_data(info['server']))}]
-        return {'left_panels':servers,
-                'right_panels':monitors}
-        
+            tabs = html.tabs(data_stream = self.workers_panel(djp,workers))
+            data_stream.append((monitor['name'],tabs.render(djp)))
+        return html.tabs(data_stream = data_stream).render(djp)
+
 
 class PulsarView(views.ViewView):
     

@@ -1,4 +1,8 @@
 import os
+import sys
+import logging
+import time
+
 import pythoncom
 import win32serviceutil
 import win32service
@@ -6,53 +10,81 @@ import win32event
 import win32api
 import servicemanager
 
+import pulsar
 
-class SiroService(win32serviceutil.ServiceFramework):
-    _svc_name_ = 'SIROWEB_%s' % siro.__version__
-    _svc_display_name_ = "SIRO %s WEB server" % siro.__version__
-    _svc_description_ = "Web client for Scenario Analysis of Interest Rate Options"
+import multiprocessing
 
-    def __init__(self,args):
-        win32serviceutil.ServiceFramework.__init__(self,args)
-        self.hWaitStop = win32event.CreateEvent(None,0,0,None)
-        self.isAlive = True
-        servicemanager.LogInfoMsg('%s - setting up environment' % self._svc_name_)
+from .winprocess import WINEXE
 
-    def SvcStop(self):
-        servicemanager.LogInfoMsg('%s - Received stop signal' % self._svc_name_)
-        self.ReportServiceStatus(win32service.SERVICE_STOP_PENDING)
-        self.isAlive = False
-        from unuk.contrib.txweb import stop
-        stop()
-        win32event.SetEvent(self.hWaitStop)
 
-    def SvcDoRun(self):
-        servicemanager.LogInfoMsg('%s - setting up the server' % self._svc_name_)
-        servicemanager.LogMsg(servicemanager.EVENTLOG_INFORMATION_TYPE,
-                              servicemanager.PYS_SERVICE_STARTED,
-                              (self._svc_name_,''))
-        from siro.siroserv import get_webserver
-        self.server = get_webserver()
-        self.server.serve()
-        
-    def main(self):
-        import time
-        while self.isAlive:
-            time.sleep(1)
+class ServiceManagerLogHandler(logging.Handler):
+    
+    def emit(self, record):
+        try:
+            msg = self.format(record)
+            if record.levelno >= logging.ERROR:
+                servicemanager.LogErrorMsg(msg)
+            elif record.levelno >= logging.INFO:
+                servicemanager.LogiNFOMsg(msg)
+        except:
+            pass
             
 
 def ctrlHandler(ctrlType):
-   return True
+   return True
 
-
-def run(): 
-    win32api.SetConsoleCtrlHandler(ctrlHandler, True)
-    win32serviceutil.HandleCommandLine(SiroService)
+class PulsarService(win32serviceutil.ServiceFramework):
+    _svc_name_ = 'PULSAR_%s' % pulsar.__version__
+    _svc_display_name_ = "PULSAR %s server" % pulsar.__version__
+    _svc_description_ = "Pulsar asynchronous server"
     
+    def __init__(self, args):
+        win32serviceutil.ServiceFramework.__init__(self,args)
+        self.hWaitStop = win32event.CreateEvent(None,0,0,None)
+        self.running = False
+
+    def SvcStop(self):
+        #self.log.info('%s - Received stop signal' % self._svc_name_)
+        self.running = False
+        self.ReportServiceStatus(win32service.SERVICE_STOP_PENDING)
+        self.arbiter.stop()
+        win32event.SetEvent(self.hWaitStop)
+
+    def SvcDoRun(self):
+        self.setup()
+        self.arbiter = pulsar.arbiter()
+        self.log = self.arbiter.log
+        self.log.info('%s - starting up the server' % self._svc_name_)
+        self.arbiter.start()
+        self.running = True
+    
+    def setup(self):
+        raise NotImplementedError
+        
+    def main(self):
+        while self.running:
+            time.sleep(1)
+
+    @classmethod
+    def run(cls, **params):
+        argv = sys.argv
+        cdir = None
+        if not argv or not argv[0]:
+            print('bla')
+            main_path = getattr(sys.modules['__main__'], '__file__', None)
+            path,script = os.path.split(main_path)                
+            sys.argv = [script,'start']
+        cls.params = params
+        win32api.SetConsoleCtrlHandler(ctrlHandler, True)
+        win32serviceutil.HandleCommandLine(cls)
+        if cdir:
+            os.chdir(cdir)
+
+
     
 if __name__ == '__main__':
     '''To debug type::
 
     python winservice.py debug
     '''
-    run()
+    PulsarService.run()

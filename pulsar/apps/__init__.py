@@ -65,7 +65,7 @@ Base class for a :class:`pulsar.Actor` serving a :class:`pulsar.Application`.
         self.app.worker_task(self)
     
     def on_stop(self):
-        self.app.worker_start(self)
+        self.app.worker_stop(self)
             
     def on_exit(self):
         self.app.worker_exit(self)
@@ -73,6 +73,11 @@ Base class for a :class:`pulsar.Actor` serving a :class:`pulsar.Application`.
             self.cfg.worker_exit(self)
         except:
             pass
+        
+    def on_info(self, data):
+        data.update({'request processed': self.nr,
+                     'max requests':self.cfg.max_requests})
+        return data        
     
     def check_num_requests(self):
         '''Check the number of requests. If they exceed the maximum number
@@ -93,7 +98,7 @@ and perform several post fork processing before starting the event loop.'''
             self.cfg.post_fork(self)       
         
     def handle_task(self, fd, request):
-        '''Handle request on a channel. This is a high level function
+        '''Handle a request. This is a high level function
 which wraps the low level implementation in :meth:`_handle_task`
 and :meth:`_end_task` methods.'''
         self.nr += 1
@@ -286,11 +291,19 @@ By default it returns ``None``.'''
         self.arbiter.ioloop.add_timeout(deadline, callback)
               
     def load_config(self, parse_console = True, **params):
-        '''Load the application configuration from a file and or
+        '''Load the application configuration from a file and/or
 from the command line. Called during application initialization.
 
 :parameter parse_console: if ``False`` the console won't be parsed.
 :parameter params: parameters which override the defaults.
+
+The parameters overrriding order is the following:
+
+ * default parameters.
+ * the :attr:`cfg` attribute.
+ * the *params* passed in the initialization.
+ * the parameters in the optional configuration file
+ * the parameters passed in the command line.
 '''
         self.cfg = pulsar.Config(self.description,
                                  self.epilog,
@@ -299,6 +312,7 @@ from the command line. Called during application initialization.
                                  self.config_options_exclude)
         
         overrides = {}
+        specials = set()
         
         # modify defaults and values of cfg with params
         for k, v in params.items():
@@ -351,13 +365,7 @@ from the command line. Called during application initialization.
                 traceback.print_exc()
                 sys.exit(1)
         
-            for k, v in cfg.items():
-                ks = k.split('__')
-                if len(ks) == 2:
-                    if ks[0] != self.name:
-                        continue
-                    k = ks[1]
-                    
+            for k, v in cfg.items():                    
                 # Ignore unknown names
                 if k not in self.cfg.settings:
                     self.add_to_overrides(k,v,overrides)
@@ -380,11 +388,10 @@ from the command line. Called during application initialization.
         for k,v in overrides.items():
             self.cfg.set(k, v)
             
-    
     def add_to_overrides(self, name, value, overrides):
-        names = name.lower().split('_')
-        if len(names) > 1 and names[0] == self.name:
-            name = '_'.join(names[1:])
+        names = name.split('__')
+        if len(names) == 2 and names[0] == self.name:
+            name = names[1].lower()
             if name in self.cfg.settings:
                 overrides[name] = value
                 return True
@@ -443,7 +450,7 @@ at each ``worker`` event loop.'''
     # MONITOR CALLBAKS
     
     def monitor_start(self, monitor):
-        '''Callback by :class:`pulsar.WorkerMonitor`` at each event loop'''
+        '''Callback by :class:`pulsar.WorkerMonitor`` when starting'''
         pass
     
     def monitor_task(self, monitor):

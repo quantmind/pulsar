@@ -16,7 +16,7 @@ import os
 import textwrap
 import types
 
-from pulsar import __version__, SERVER_NAME, DEFAULT_PORT
+from pulsar import __version__, SERVER_NAME
 from pulsar.utils import system
 from pulsar.utils.py2py3 import *
 
@@ -162,11 +162,12 @@ class Config(object):
     def parser(self):
         kwargs = {
             "description": self.description,
-            "epilog": self.epilog,
-            "version": __version__
+            "epilog": self.epilog
         }
         parser = argparse.ArgumentParser(**kwargs)
-
+        parser.add_argument('--version',
+                            action='version',
+                            version = __version__)
         keys = self.settings.keys()
         sorter = lambda x: (self.settings[x].section, self.settings[x].order)
         
@@ -276,7 +277,7 @@ class Setting(BaseSettings):
             args = tuple(self.cli)
             kwargs.update({"dest": self.name,
                            "action": self.action or "store",
-                           "default": self.default,
+                           "default": None,
                            "help": "%s [%s]" % (self.short, self.default)})
             if kwargs["action"] != "store":
                 kwargs.pop("type",None)

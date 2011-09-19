@@ -267,10 +267,14 @@ information about the remote underlying :class:`pulsar.Actor`. Unlike the
 therefore remain in the process where they have been created.'''
     def __init__(self, impl):
         self.impl = impl
-        self.notified = time()
+        self.info = {'last_notified':time()}
         self.stopping = 0
         super(ActorProxyMonitor,self).__init__(impl)
-        
+    
+    @property
+    def notified(self):
+        return self.info['last_notified']
+    
     @property
     def pid(self):
         return self.impl.pid
@@ -290,7 +294,4 @@ therefore remain in the process where they have been created.'''
         '''Return a dictionary containing information about the remote
 object including, aid (actor id), timeout inbox size, last notified time and
 process id.'''
-        data = super(ActorProxyMonitor,self).local_info()
-        data.update({'notified':self.notified,
-                     'pid':self.pid})
-        return data
+        return self.info

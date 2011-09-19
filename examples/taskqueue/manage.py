@@ -16,17 +16,16 @@ Open a new shell and launch python and type::
     
 '''
 import pulsar
-from pulsar.apps import rpc, tasks
+from pulsar.apps import rpc, tasks, wsgi
 
-TASK_QUEUE_NAME = 'taskqueue'
-TASK_PATHS = ['taskqueue.sampletasks.*']
+TASK_PATHS = ['sampletasks.*']
 
 
 def test_middleware(request, margs):
     '''Add a simple flag to the dictionary. Just for testing middleware.'''
     margs['test'] = True
 
-task_manager = tasks.HttpTaskManager(TASK_QUEUE_NAME)
+task_manager = tasks.HttpTaskManager('taskqueue')
 task_manager.add_request_middleware(test_middleware)
 
 
@@ -38,22 +37,15 @@ class RpcRoot(rpc.PulsarServerCommands,
     rpc_evalcode = tasks.queueTask('codetask',
                                    'Evaluate python code on the task queue.')
         
-
-def createTaskQueue(tasks_path = None, **params):
-    # Create the taskqueue application using the tasks in
-    # the sampletasks directory
-    tasks_path = tasks_path or TASK_PATHS
-    return tasks.TaskQueue(tasks_path = tasks_path,
-                           name = TASK_QUEUE_NAME,
-                           **params)
     
-    
-def server(task_workers = 1, concurrency = 'process', **params):
+def server(**params):
     # Create the taskqueue application with an rpc server
-    createTaskQueue(workers = task_workers,
-                    concurrency = concurrency)
-    wsgi = pulsar.require('wsgi')
-    return wsgi.createServer(RpcRoot(),concurrency=concurrency,**params)
+    tasks.TaskQueue(tasks_path = TASK_PATHS,
+                    name = 'taskqueue',
+                    **params)
+    return wsgi.createServer(RpcRoot(),
+                             name = 'rpc',
+                             **params)
 
 
 def start_server(**params):

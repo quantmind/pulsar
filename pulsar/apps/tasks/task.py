@@ -107,6 +107,9 @@ class Task(object):
             self._on_finish(worker)
         
     def to_queue(self):
+        '''The task has been received by the scheduler. If its status
+is PENDING swicth to RECEIVED, save the task and return it. Otherwise
+returns nothing.'''
         if self.status == PENDING:
             self.status = RECEIVED
             return self.save()

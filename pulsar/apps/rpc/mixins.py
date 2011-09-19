@@ -31,7 +31,7 @@ class PulsarServerCommands(JSONRPC):
         '''Kill and actor which match the id *aid*'''
         # get the worker serving the request
         worker = request.environ['pulsar.worker']
-        worker.proxy.kill_actort(worker.arbiter, aid)
+        return worker.proxy.kill_actor(worker.arbiter, aid)
         
     def rpc_shut_down(self, request):
         request.environ['pulsar.worker'].shut_down()

@@ -62,7 +62,10 @@ Users access the arbiter by the high level api::
     STOPPING_LOOPS = 20
     SIG_TIMEOUT = 0.001
     CLOSE_TIMEOUT = 10
-    EXIT_SIGNALS = (signal.SIGINT,signal.SIGTERM,signal.SIGABRT,system.SIGQUIT)
+    EXIT_SIGNALS = (signal.SIGINT,
+                    signal.SIGTERM,
+                    signal.SIGABRT,
+                    system.SIGQUIT)
     HaltServer = pulsar.HaltServer
     lock = Lock()
     _name = 'Arbiter'
@@ -245,7 +248,6 @@ the timeout. Stop the arbiter.'''
         """halt arbiter. If there no signal ``sig`` it is an unexpected exit."""
         x = 'Shutting down pulsar arbiter'
         _msg = lambda : x if not reason else '{0}: {1}'.format(x,reason)
-        
         if self.pidfile is not None:
             self.pidfile.unlink()
         
@@ -328,10 +330,13 @@ the timeout. Stop the arbiter.'''
             else:        
                 signame = system.SIG_NAMES.get(sig)
                 if sig in self.EXIT_SIGNALS:
-                    raise self.HaltServer('Received Signal {0}.'.format(signame),sig)
-                handler = getattr(self, "handle_queued_%s" % signame.lower(), None)
+                    raise self.HaltServer('Received Signal {0}.'\
+                                          .format(signame),sig)
+                handler = getattr(self, "handle_queued_%s"\
+                                   % signame.lower(), None)
                 if not handler:
-                    self.log.debug('Cannot handle signal "{0}". No Handle'.format(signame))
+                    self.log.debug('Cannot handle signal "{0}". No Handle'\
+                                   .format(signame))
                     sig = None
                 else:
                     self.log.info("Handling signal: %s" % signame)
@@ -344,7 +349,8 @@ the timeout. Stop the arbiter.'''
             self.log.info('Received and queueing signal {0}.'.format(signame))
             self.SIG_QUEUE.put(sig)
         else:
-            self.log.info('Received unknown signal "{0}". Skipping.'.format(sig))
+            self.log.info('Received unknown signal "{0}". Skipping.'\
+                          .format(sig))
     
     def on_actor_exit(self, actor):
         pass
@@ -375,3 +381,9 @@ the timeout. Stop the arbiter.'''
             if m:
                 return m.proxy
         
+    # REMOTES
+    
+    def actor_kill_actor(self, caller, aid):
+        a = self.get_actor(aid)
+        return a.stop()
+    

@@ -14,7 +14,7 @@ if hasattr(select,'epoll'):
 else:
     IOpoll = IOselect
 
-
+# The standard signal quit
 SIGQUIT = signal.SIGQUIT
 
 def get_parent_id():

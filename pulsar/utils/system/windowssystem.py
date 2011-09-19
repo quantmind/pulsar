@@ -1,11 +1,11 @@
 import signal
 from time import sleep
-#import multiprocessing.reduction
 
+from .winprocess import WINEXE
 from .base import *
 
-
-SIGQUIT = signal.SIGTERM
+# The BREAK signal for windows
+SIGQUIT = signal.SIGBREAK
    
     
 def get_parent_id():

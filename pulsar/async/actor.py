@@ -97,7 +97,8 @@ class Runner(LogginMixin,HttpMixin):
     
     def signal_stop(self, sig, frame):
         signame = system.SIG_NAMES.get(sig,None)
-        self.log.warning('Received signal {0}. Exiting.'.format(signame))
+        self.log.warning('{0} got signal {1}. Exiting.'\
+                         .format(self.fullname,signame))
         self.stop()
             
     handle_int  = signal_stop
@@ -193,8 +194,8 @@ Here ``a`` is actually a reference to the remote actor.
     
 .. attribute:: task_queue
 
-    An optional python queue where the actor's monitor add tasks to be processed
-    by the actor.
+    An optional python queue where the actor's monitor add tasks
+    to be processed by the actor.
     
     Default ``None``.
     
@@ -252,13 +253,15 @@ which can be shared across different processes (i.e. it is pickable).'''
     
     @property
     def impl(self):
-        '''Actor concurrency implementation ("thread", "process" or "greenlet").'''
+        '''Actor concurrency implementation
+("thread", "process" or "greenlet").'''
         return self._impl
     
     @property
     def timeout(self):
         '''Timeout in seconds. If ``0`` the actor has no timeout, otherwise
-it will be stopped if it fails to notify itself for a period longer that timeout.'''
+it will be stopped if it fails to notify itself for a period
+longer that timeout.'''
         return self._timeout
     
     @property
@@ -273,7 +276,7 @@ it will be stopped if it fails to notify itself for a period longer that timeout
     
     @property
     def name(self):
-        'Actor unique name'
+        'Actor name'
         if self._name:
             return self._name
         else:
@@ -287,6 +290,10 @@ it will be stopped if it fails to notify itself for a period longer that timeout
         '''Message inbox'''
         return self._inbox
         
+    @property
+    def fullname(self):
+        return '{0} {1}'.format(self.name,self.aid)
+    
     def __reduce__(self):
         raise pickle.PicklingError('{0} - Cannot pickle Actor instances'\
                                    .format(self))
@@ -312,6 +319,15 @@ iteration of the :attr:`pulsar.Actor.ioloop`.'''
         '''The :ref:`actor callback <actor-callbacks>` run once when the actor
  is exting the framework (and vanish in the garbage collector).'''
         pass
+    
+    def on_info(self, data):
+        '''The :ref:`actor callback <actor-callbacks>` executed when
+ obtaining information about the actor. It can be used to add additional
+ data to the *data* dictionary.
+ 
+ :parameter data: dictionary of data with information about the actor.
+ :rtype: a dictionary of pickable data.'''
+        return data
     
     def on_manage_actor(self, actor):
         pass
@@ -364,7 +380,8 @@ iteration of the :attr:`pulsar.Actor.ioloop`.'''
         self.socket = socket
         self.address = None if not self.socket else self.socket.getsockname()
         if self.socket:
-            self.log.info('"{0}" listening at {1}'.format(self,self.socket))
+            self.log.info('"{0}" listening at {1}'\
+                          .format(self.fullname,self.socket))
             
     def start(self):
         '''Called after forking to start the life of the actor.'''
@@ -373,7 +390,7 @@ iteration of the :attr:`pulsar.Actor.ioloop`.'''
                 self.configure_logging()
             self.on_start()
             self.init_runner()
-            self.log.info('Booting "{0}"'.format(self.name))
+            self.log.info('Booting "{0}"'.format(self.fullname))
             self._state = self.RUN
             self._run()
             return self
@@ -394,17 +411,18 @@ iteration of the :attr:`pulsar.Actor.ioloop`.'''
                     self._stop_ioloop().add_callback(lambda r : self._stop())
         
     def _stop(self):
-        '''Callback after the event loop has stopped.'''
+        #Callback after the event loop has stopped.
         if self._stopping:
             self.on_exit()
             self._state = self.CLOSE
             if not self.ioloop.remove_loop_task(self):
-                self.log.warn('"{0}" could not be removed from eventloop'.format(self))
+                self.log.warn('"{0}" could not be removed from\
+ eventloop'.format(self.fullname))
             if self.impl != 'monitor':
                 self.proxy.on_actor_exit(self.arbiter)
             self._stopping = False
             self._inbox.close()
-            self.log.info('exited "{0}"'.format(self))
+            self.log.info('exited "{0}"'.format(self.fullname))
         
     def terminate(self):
         self.stop()
@@ -429,9 +447,10 @@ iteration of the :attr:`pulsar.Actor.ioloop`.'''
         except SystemExit:
             raise
         except Exception as e:
-            self.log.exception("Exception in worker {0}: {1}".format(self,e))
+            self.log.exception("Exception in worker {0}: {1}"\
+                               .format(self.fullname,e))
         finally:
-            self.log.debug('exiting "{0}"'.format(self))
+            self.log.debug('exiting "{0}"'.format(self.fullname))
             self._stop()
     
     def linked_actors(self):
@@ -525,7 +544,9 @@ actions:
                         nt = None
                 if nt:
                     self.last_notified = nt
-                    self.proxy.notify(self.arbiter,nt)
+                    info = self.info(True)
+                    info['last_notified'] = nt
+                    self.proxy.notify(self.arbiter,info)
             if not self._stopping:
                 self.on_task()
     
@@ -544,17 +565,19 @@ children process.'''
     def info(self, full = False):
         ''':rtype: A dictionary of information related to the actor
 status and performance.'''
-        data = {'aid':self.aid[:8],
+        data = {'name':self.name,
+                'aid':self.aid[:8],
                 'pid':self.pid,
                 'ppid':self.ppid,
                 'thread':self.current_thread().name,
                 'process':self.current_process().name,
-                'isprocess':self.isprocess()}
+                'isprocess':self.isprocess(),
+                'age':self.age}
         ioloop = self.ioloop
         if ioloop:
             data.update({'uptime': time() - ioloop._started,
                          'event_loops': ioloop.num_loops})
-        return data
+        return self.on_info(data)
         
     def configure_logging(self):
         if not self.loglevel:
@@ -573,9 +596,9 @@ status and performance.'''
         self.stop()
     actor_stop.ack = False
     
-    def actor_notify(self, caller, t):
+    def actor_notify(self, caller, info):
         '''An actor notified itself'''
-        caller.notified = t
+        caller.info = info
     actor_notify.ack = False
     
     def actor_on_actor_exit(self, caller, reason = None):
@@ -589,5 +612,8 @@ status and performance.'''
     
     def actor_ping(self, caller):
         return 'pong'
+    
+    def actor_kill_actor(self, caller, aid):
+        return self.arbiter.kill_actor(aid)
 
 

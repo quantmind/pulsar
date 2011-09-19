@@ -92,7 +92,7 @@ be scheduled. If so it makes the task requests.
 
 Check the :meth:`pulsar.apps.tasks.TaskQueue.monitor_task` callback
 for implementation.'''
-        if not self._scheduler:
+        if not hasattr(self,'_scheduler'):
             self._scheduler = Scheduler(self.task_class)
         return self._scheduler
     
@@ -103,9 +103,14 @@ for implementation.'''
         self.task_class = task_class or self.task_class
         super(TaskQueue,self).__init__(**kwargs)
         
-    def init(self):
-        self._scheduler = None
+    def monitor_start(self, monitor):
         self.load()
+        
+    def monitor_task(self, monitor):
+        '''Override the :meth:`pulsar.Application.monitor_task` callback
+to check if the schedulter needs to perform a new run.'''
+        if self.scheduler.next_run <= datetime.now():
+            self.scheduler.tick(monitor.task_queue)
         
     def load(self):
         # Load the application callable, the task consumer
@@ -123,12 +128,6 @@ responsability to the :attr:`pulsar.apps.tasks.TaskQueue.scheduler`
 :parameter targs: optional tuple of arguments for the task.
 :parameter tkwargs: optional dictionary of arguments for the task.'''
         return self.scheduler.make_request(job_name, targs, tkwargs, **kwargs)
-        
-    def monitor_task(self, monitor):
-        '''Override the :meth:`pulsar.Application.monitor_task` callback
-to check if the schedulter needs to perform a new run.'''
-        if self.scheduler.next_run <= datetime.now():
-            self.scheduler.tick(monitor.task_queue)
             
     def handle_event_task(self, worker, task):
         '''Called by the worker to perform the *task* in the queue.'''

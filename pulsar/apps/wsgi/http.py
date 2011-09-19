@@ -20,8 +20,7 @@ class Bind(pulsar.Setting):
     section = "Server Socket"
     cli = ["-b", "--bind"]
     meta = "ADDRESS"
-    validator = validate_string
-    default = "127.0.0.1:{0}".format(DEFAULT_PORT)
+    default = "127.0.0.1:{0}".format(pulsar.DEFAULT_PORT)
     desc = """\
         The socket to bind.
         
@@ -35,7 +34,7 @@ class Backlog(pulsar.Setting):
     name = "backlog"
     section = "Server Socket"
     cli = ["--backlog"]
-    validator = validate_pos_int
+    validator = pulsar.validate_pos_int
     type = int
     default = 2048
     desc = """\
