@@ -4,12 +4,23 @@ Distributed Task Queue
 
 .. automodule:: pulsar.apps.tasks
 
-A task can have one of the following `status`:
+Tasks
+============
 
 .. automodule:: pulsar.apps.tasks.states
 
-API
-=========
+
+
+Low Level API
+===============
+
+
+Taskqueue and Scheduler
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. autoclass:: pulsar.apps.tasks.TaskQueue
+   :members:
+   :member-order: bysource
 
 
 Job and Tasks
@@ -31,14 +42,7 @@ Job and Tasks
    :members:
    :member-order: bysource
    
-   
-Application and Scheduler
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-.. autoclass:: pulsar.apps.tasks.TaskQueue
-   :members:
-   :member-order: bysource
-   
+      
 Utilities and Decorators
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 

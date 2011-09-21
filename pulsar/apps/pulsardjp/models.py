@@ -13,6 +13,7 @@ from pulsar.utils.timeutils import timedelta_seconds
 try:
     from stdnet import orm
     from stdnet.utils import to_string
+    from stdnet.contrib import tasks as stdtasks
     from djpcms.utils.text import nicename
     
     class PulsarServer(orm.StdModel):
@@ -119,6 +120,10 @@ try:
             except cls.DoesNotExist:
                 pass
     
+    
+    class Queue(stdtasks.Queue):
+        queue = orm.ListField(Task)
+        
     
     class Script(orm.StdModel):
         name = orm.SymbolField(unique = True)

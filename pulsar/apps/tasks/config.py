@@ -1,5 +1,6 @@
 import pulsar
 from pulsar import to_string
+from pulsar.utils.importer import module_attribute
 
 
 def validate_list(val):
@@ -27,3 +28,15 @@ class TaskPath(pulsar.Setting):
     desc = """\
         List of python dotted paths where tasks are located.
         """
+
+
+class TaskQueueFactory(pulsar.Setting):
+    name = "task_queue_factory"
+    section = "Task Consumer"
+    cli = ["-q", "--task-queue"]
+    default = "pulsar.Queue"
+    desc = """The task queue factory to use."""
+    
+    def get(self):
+        return module_attribute(self.value)
+        return self.value

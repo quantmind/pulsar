@@ -97,7 +97,8 @@ for implementation.'''
         return self._scheduler
     
     def get_task_queue(self):
-        return pulsar.Queue()
+        queue = self.cfg.task_queue_factory
+        return queue()
     
     def __init__(self, task_class = None, **kwargs):
         self.task_class = task_class or self.task_class

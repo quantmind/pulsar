@@ -1,9 +1,12 @@
 """
+A task can have one of the following `status`:
 
 * ``PENDING`` A task waiting for execution and unknown.
 * ``RECEIVED`` when the task is received by the task queue.
 * ``STARTED`` task execution has started.
-* ``SUCESS`` task execution has finished with success.
+* ``REVOKED`` the task execution has been revoked. One possible reason could be
+  the task has timed out.
+* ``SUCCESS`` task execution has finished with success.
 * ``FAILURE`` task execution has finished with failure.
 
 """
