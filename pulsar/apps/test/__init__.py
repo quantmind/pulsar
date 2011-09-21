@@ -109,13 +109,11 @@ class TestGenerator(object):
 
 class TestCase(unittest.TestCase):
     '''A specialised test case which offers three
-additional functions:
-
-a) 'initTest' and 'endTests', called at the beginning and at the end
-of the tests declared in a derived class. Useful for starting a server
-to send requests to during tests.
-
-b) 'runInProcess' to run a callable in the main process.'''
+additional functions: i) `initTest` and ii) `endTests`,
+called at the beginning and at the end of all tests functions declared
+in derived classes. Useful for starting a server to send requests
+to during tests. iii) `runInProcess` to run a
+callable in the main process.'''
     suiterunner = None
     
     def __init__(self, methodName=None):
@@ -194,62 +192,6 @@ class TestSuite(unittest.TestSuite):
                 obj = test
             self._tests.append({'obj':obj,
                                 'tests':tests})
-
-        
-class TestLoader(object):
-    '''Load test cases'''
-    suiteClass = TestSuite
-    
-    def __init__(self, tags, testtype, extractors, itags = None):
-        self.tags = tags
-        self.testtype = testtype
-        self.extractors = extractors
-        self.itags = itags
-        
-    def load(self, suiterunner):
-        """Return a suite of all tests cases contained in the given module.
-It injects the suiterunner proxy for comunication with the master process."""
-        itags = self.itags or []
-        tests = []
-        for module in self.modules(suiterunner.log):
-            for name in dir(module):
-                obj = getattr(module, name)
-                if inspect.isclass(obj) and issubclass(obj, unittest.TestCase):
-                    tag = getattr(obj,'tag',None)
-                    if tag and not tag in itags:
-                        continue
-                    obj.suiterunner = suiterunner
-                    obj.log = suiterunner.log
-                    tests.append(obj)
-        return self.suiteClass(tests)
-    
-    def get_tests(self,dirpath):
-        join  = os.path.join
-        loc = os.path.split(dirpath)[1]
-        for d in os.listdir(dirpath):
-            if d.startswith('__'):
-                continue
-            if os.path.isdir(join(dirpath,d)):
-                yield (loc,d)
-            
-    def modules(self, log):
-        tags,testtype,extractors = self.tags,self.testtype,self.extractors
-        for extractor in extractors:
-            testdir = extractor.testdir(testtype)
-            for loc,app in self.get_tests(testdir):
-                if tags and app not in tags:
-                    log.debug("Skipping tests for %s" % app)
-                    continue
-                log.debug("Try to import tests for %s" % app)
-                test_module = extractor.test_module(testtype,loc,app)
-                try:
-                    mod = import_module(test_module)
-                except ImportError as e:
-                    log.debug("Could not import tests for %s: %s" % (test_module,e))
-                    continue
-                
-                log.debug("Adding tests for %s" % app)
-                yield mod
     
     
 class TextTestRunner(unittest.TextTestRunner):
@@ -329,6 +271,8 @@ class TextTestRunner(unittest.TextTestRunner):
 
 
 class TestApplication(pulsar.Application):
+    '''A task queue where each task is a group of tests specified
+in a test class.'''
     app = 'test'
     config_options_include = ('timeout','concurrency','workers','loglevel',
                               'daemon','worker_class','debug')

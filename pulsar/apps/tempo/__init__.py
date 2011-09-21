@@ -12,4 +12,5 @@ def basescript():
 
 
 class Application(pulsar.Application):
-    pass
+    '''A benchmarking application for testing http servers'''
+    

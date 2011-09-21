@@ -28,18 +28,26 @@ Once the event loop is created, the actor add itself to
 its operations at each iteration in the event loop.
  
 
+.. _remote-functions:
+
+Remote functions
+~~~~~~~~~~~~~~~~~~~~~~~~
+
+
+
 .. _actor-callbacks:
 
 Actor Callbacks
 ~~~~~~~~~~~~~~~~~~~~~~~~
 
-:class:`pulsar.Actor` exposes four callback functions which can be
+:class:`pulsar.Actor` exposes five callback functions which can be
 used to customize the behaviour of the actor.
 
  * :meth:`pulsar.Actor.on_start` called just after forking.
  * :meth:`pulsar.Actor.on_task` called at every actor event loop.
  * :meth:`pulsar.Actor.on_stop`.
  * :meth:`pulsar.Actor.on_exit`.
+ * :meth:`pulsar.Actor.on_info`.
 
 These functions do nothing in the :class:`pulsar.Actor` implementation. 
 

@@ -135,10 +135,14 @@ by the remote actor calling the function. For example::
             if hasattr(base,attrib) and hasattr(base,rattrib):
                 cont.update(getattr(base,attrib))
                 remotes.update(getattr(base,rattrib))
-                
+        
+        docs = os.environ.get('BUILDING-PULSAR-DOCS') == 'yes'
         for key, method in list(attrs.items()):
             if hasattr(method,'__call__') and key.startswith(fprefix):
-                method = attrs.pop(key)
+                if docs:
+                    method = attrs[key]
+                else:
+                    method = attrs.pop(key)
                 meth_name = key[len(fprefix):]
                 ack = getattr(method,'ack',True)
                 cont[meth_name] = method
@@ -321,9 +325,11 @@ iteration of the :attr:`pulsar.Actor.ioloop`.'''
         pass
     
     def on_info(self, data):
-        '''The :ref:`actor callback <actor-callbacks>` executed when
+        '''An :ref:`actor callback <actor-callbacks>` executed when
  obtaining information about the actor. It can be used to add additional
- data to the *data* dictionary.
+ data to the *data* dictionary. Information about the actor is obtained
+ via the :meth:`pulsar.Actor.info` method which is also exposed
+ as a remote function.
  
  :parameter data: dictionary of data with information about the actor.
  :rtype: a dictionary of pickable data.'''
@@ -402,6 +408,9 @@ iteration of the :attr:`pulsar.Actor.ioloop`.'''
     # STOPPING TERMINATIONG AND STARTING
     
     def stop(self):
+        '''Stop the actor by stopping its :attr:`pulsar.Actor.ioloop`
+and closing its :attr:`pulsar.Actor.inbox` orderly. Once everything is closed
+properly this actor will go out of scope.'''
         # This may be called on a different process domain.
         # In that case there is no ioloop and therefore skip altogether
         if hasattr(self,'ioloop'):
@@ -585,19 +594,28 @@ status and performance.'''
                 self.loglevel = self.arbiter.loglevel
         super(Actor,self).configure_logging()
         
-    # BUILT IN ACTOR FUNCTIONS
+    #################################################################
+    # BUILT IN REMOTE FUNCTIONS
+    #################################################################
     
     def actor_callback(self, caller, rid, result):
-        #self.log.debug('Received Callaback {0}'.format(rid))
+        '''Actor :ref:`remote function <remote-functions>` which sends
+the a results back to an actor which previously accessed another remote
+function. Essentially this is the return statement in the pulsar concurrent
+framework'''
         ActorRequest.actor_callback(rid,result)
     actor_callback.ack = False
     
     def actor_stop(self, caller):
+        '''Actor :ref:`remote function <remote-functions>` which stops
+the actor by invoking the local :meth:`pulsar.Actor.stop` method. This
+function does not acknowledge its caller since the actor will stop running.'''
         self.stop()
     actor_stop.ack = False
     
     def actor_notify(self, caller, info):
-        '''An actor notified itself'''
+        '''Actor :ref:`remote function <remote-functions>` for notifying
+the actor information to the caller.'''
         caller.info = info
     actor_notify.ack = False
     
