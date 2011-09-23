@@ -27,6 +27,7 @@ Applications
    apps/tasks
    apps/pulsardjp
    apps/shell
+   apps/test
    apps/tempo
    
 

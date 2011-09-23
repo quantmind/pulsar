@@ -1,95 +1,83 @@
-import pulsar
+import unittest
 
+
+class TestCase(unittest.TestCase):
+    '''A specialised test case which offers three
+additional functions: i) `initTest` and ii) `endTests`,
+called at the beginning and at the end of all tests functions declared
+in derived classes. Useful for starting a server to send requests
+to during tests. iii) `runInProcess` to run a
+callable in the main process.'''
+    suiterunner = None
     
-class TestLabels(pulsar.Setting):
-    name = "labels"
-    app = 'test'
-    nargs = '*'
-    section = "Test"
-    validator = pulsar.validate_list
-    desc = """Optional test labels to run. If not provided\
- all tests are run.
- 
-To see available labels use the -l option."""
-
-
-class TestType(pulsar.Setting):
-    name = "test_type"
-    app = 'test'
-    section = "Test"
-    meta = "STRING"
-    cli = ["--test-type"]
-    validator = pulsar.validate_string
-    default = 'regression'
-    desc = """\
-        The test type.
-        Possible choices are: regression, bench and profile.
-    """
-
-
-class TestList(pulsar.Setting):
-    name = "list_labels"
-    app = 'test'
-    section = "Test"
-    meta = "STRING"
-    cli = ['-l','--list_labels']
-    action = 'store_true'
-    default = False
-    validator = pulsar.validate_bool
-    desc = """List all test labels without performing tests."""
-
-
+    def __init__(self, methodName=None):
+        if methodName:
+            self._dummy = False
+            super(TestCase,self).__init__(methodName)
+        else:
+            self._dummy = True
+    
+    def __repr__(self):
+        if self._dummy:
+            return self.__class__.__name__
+        else:
+            return super(TestCase,self).__repr__()
+    
+    def initTests(self):
+        '''Called at the beginning off all tests functions in the class'''
+        pass
+    
+    def endTests(self):
+        '''Called at the end off all tests functions in the class'''
+        pass
+    
+    @property    
+    def arbiter(self):
+        return pulsar.arbiter()
         
-class TestLoader(object):
-    '''Load test cases'''
-    
-    def __init__(self, tags, testtype, extractors, itags = None):
-        self.tags = tags
-        self.testtype = testtype
-        self.extractors = extractors
-        self.itags = itags
+    def sleep(self, timeout):
+        time.sleep(timeout)
         
-    def load(self, suiterunner):
-        """Return a suite of all tests cases contained in the given module.
-It injects the suiterunner proxy for comunication with the master process."""
-        itags = self.itags or []
-        tests = []
-        for module in self.modules(suiterunner.log):
-            for name in dir(module):
-                obj = getattr(module, name)
-                if inspect.isclass(obj) and issubclass(obj, unittest.TestCase):
-                    tag = getattr(obj,'tag',None)
-                    if tag and not tag in itags:
-                        continue
-                    obj.suiterunner = suiterunner
-                    obj.log = suiterunner.log
-                    tests.append(obj)
-        return self.suiteClass(tests)
+    def Callback(self):
+        return TestCbk()
+
+    def initTests(self):
+        pass
     
-    def get_tests(self,dirpath):
-        join  = os.path.join
-        loc = os.path.split(dirpath)[1]
-        for d in os.listdir(dirpath):
-            if d.startswith('__'):
-                continue
-            if os.path.isdir(join(dirpath,d)):
-                yield (loc,d)
-            
-    def modules(self, log):
-        tags,testtype,extractors = self.tags,self.testtype,self.extractors
-        for extractor in extractors:
-            testdir = extractor.testdir(testtype)
-            for loc,app in self.get_tests(testdir):
-                if tags and app not in tags:
-                    log.debug("Skipping tests for %s" % app)
-                    continue
-                log.debug("Try to import tests for %s" % app)
-                test_module = extractor.test_module(testtype,loc,app)
-                try:
-                    mod = import_module(test_module)
-                except ImportError as e:
-                    log.debug("Could not import tests for %s: %s" % (test_module,e))
-                    continue
-                
-                log.debug("Adding tests for %s" % app)
-                yield mod
+    def endTests(self):
+        pass
+    
+    def stop(self, a):
+        '''Stop an actor and wait for the exit'''
+        a.stop()
+        still_there = lambda : a.aid in self.arbiter.LIVE_ACTORS
+        self.wait(still_there)
+        self.assertFalse(still_there())
+        
+    def wait(self, callback, timeout = 5):
+        t = time.time()
+        while callback():
+            if time.time() - t > timeout:
+                break
+            self.sleep(0.1)
+    
+    def run(self, result=None):
+        if result is None:
+            result = self.defaultTestResult()
+            startTestRun = getattr(result, 'startTestRun', None)
+            if startTestRun is not None:
+                startTestRun()
+
+        self._resultForDoCleanups = result
+        result.startTest(self)
+        if getattr(self.__class__, "__unittest_skip__", False):
+            # If the whole class was skipped.
+            try:
+                result.addSkip(self, self.__class__.__unittest_skip_why__)
+            finally:
+                result.stopTest(self)
+            return
+        testMethod = getattr(self, self._testMethodName)
+        TestGenerator(self, result, testMethod)()
+        
+        

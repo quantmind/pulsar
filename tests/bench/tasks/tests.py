@@ -1,1 +1,0 @@
-from pulsar.apps.tasks import TaskApplication
