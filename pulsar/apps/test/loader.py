@@ -76,31 +76,6 @@ class TestLoader(object):
                     yield tag,mod
                 
 
-def TestVerbosity(level):
-    if level is None:
-        return 1
-    else:
-        return 2 if level > logging.DEBUG else 3
-
-
-class StreamLogger(object):
-    
-    def __init__(self, log):
-        self.log = log
-        self.msg = ''
-        
-    def write(self,msg):
-        if msg == '\n':
-            self.flush()
-        else:
-            self.msg += msg
-
-    def flush(self):
-        msg = self.msg
-        self.msg = ''
-        self.log.info(msg)
-
-
 class TestCbk(object):
     
     def __call__(self, result):

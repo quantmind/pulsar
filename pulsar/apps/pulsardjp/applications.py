@@ -249,17 +249,20 @@ class JobApplication(views.ModelApplication):
                 except:
                     continue
                 if task:
-                    url = taskapp.viewurl(request,task)
-                    res['time_executed'] = smart_time(res['time_executed'])
-                    id = id[:8]
+                    instance=  Task.objects.get(id = task['id'])
+                    url = taskapp.viewurl(request,instance)
+                    task['time_executed'] = smart_time(task['time_executed'])
                     if url:
-                        id = html.Widget('a',href=url).render(inner=id)
-                    res['id'] = id
-                body.append([res.get(head,None) for head in self.task_header])
-            inner = html.Table(self.task_header,
-                               body = body,
-                               footer = False,
-                               data = {'options':{'sDom':'t'}}).render(djp)
+                        task['id'] = html.Widget('a',href=url)\
+                                            .render(inner=instance.id)
+                body.append([task.get(head) for head in self.task_header])
+            if not body:
+                inner = html.Table(self.task_header,
+                                   body = body,
+                                   footer = False,
+                                   data = {'options':{'sDom':'t'}}).render(djp)
+            else:
+                inner = '<p>Nothing done.</p>'
             return ajax.dialog(hd = 'Executed Tasks', bd = inner,
                                modal = True,
                                width = 700)

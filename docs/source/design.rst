@@ -62,3 +62,13 @@ Event Loop
 
 Event loop tasks
 ~~~~~~~~~~~~~~~~~~~~~~
+
+
+
+.. _application-framework:
+
+Application Framework
+=============================
+
+To aid the development of applications running on top of pulsar concurrent
+framework, the library ships with the :class:`pulsar.Application` class.

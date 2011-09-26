@@ -22,7 +22,7 @@ from pulsar.utils.py2py3 import *
 
 
 __all__ = ['Config',
-           'DummyConfig',
+           #'DummyConfig',
            'Setting',
            'validate_string',
            'validate_callable',
@@ -68,6 +68,13 @@ def wrap_method(func):
 
 
 def make_settings(app = None, include=None, exclude=None):
+    '''Creates a dictionary of available settings for a given
+application *app*.
+
+:parameter app: Optional application name.
+:parameter include: Optional list of settings to include.
+:parameter app: Optional list of settings to exclude.
+:rtype: dictionary of :class:`pulsar.Setting` instances.'''
     settings = {}
     exclude = exclude or ()
     for s in KNOWN_SETTINGS:
@@ -83,7 +90,7 @@ def make_settings(app = None, include=None, exclude=None):
 
 
 def make_options():
-    g_settings = make_settings(ignore=('version',))
+    g_settings = make_settings(exclude=('version',))
 
     keys = g_settings.keys()
     def sorter(k):
@@ -631,17 +638,16 @@ class Loglevel(Setting):
     meta = "LEVEL"
     validator = validate_string
     default = "info"
-    desc = """\
-        The granularity of log outputs.
+    desc = """The granularity of log outputs.
         
-        Valid level names are:
-        
-        * debug
-        * info
-        * warning
-        * error
-        * critical
-        """
+Valid level names are:
+
+ * debug
+ * info
+ * warning
+ * error
+ * critical
+ """
 
 
 class Procname(Setting):

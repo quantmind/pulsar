@@ -162,7 +162,7 @@ responsability to the :attr:`pulsar.apps.tasks.TaskQueue.scheduler`
         task = self.make_request(task_name, targs, tkwargs, **kwargs)
         tq = task.to_queue()
         if tq:
-            monitor.task_queue.put((None,tq))
+            monitor.task_queue.put(tq)
         
         if ack:
             task = tq or task

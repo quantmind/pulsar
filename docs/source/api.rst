@@ -1,10 +1,17 @@
+.. module:: pulsar
+
+.. _api:
 
 ==================
-Low Level API
+API
 ==================
 
 Actors
 =======================
+
+At the core of the library we have the :class:`Actor` class which defines
+the primitive of pulsar concurrent framework. Actor's instances communicate
+with each other via messages in a *share-nothing architecture*. 
 
 Actor Metaclass
 ~~~~~~~~~~~~~~~~~~~~

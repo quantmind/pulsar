@@ -79,10 +79,10 @@ class HttpHandler(object):
             self.worker.log.debug("Ignored premature client disconnection.")
             return
         
-        self.handle(fd, req)
+        self.handle(req)
 
-    def handle(self, fd, req):
-        self.worker.handle_task(fd, req)
+    def handle(self, req):
+        self.worker.handle_task(req)
         
         
 class AsyncHttpHandler(HttpHandler):
@@ -104,16 +104,13 @@ class AsyncHttpHandler(HttpHandler):
         
         stream = pulsar.IOStream(worker, client)
         req = http.Request(stream, addr, self.worker.address, self.worker.cfg)
-        self.handle(fd, req)
+        self.handle(req)
 
-    def handle(self, fd, req):
-        self.worker.handle_task(fd, req)
-        
 
 class HttpPoolHandler(HttpHandler):
-    '''THis is used when the monitor is using thread-based workes.'''
-    def handle(self, fd, req):
-        self.worker.task_queue.put((fd,req))
+    '''This is used when the monitor is using thread-based workers.'''
+    def handle(self, req):
+        self.worker.task_queue.put(req)
 
             
     

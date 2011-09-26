@@ -1,6 +1,24 @@
 import unittest
 
 
+def run_test_case(worker,testcls):
+    loader = unittest.TestLoader()
+    test = testcls()
+    init = getattr(test,'initTests',None)
+    end = getattr(test,'endTests',None)
+    if init:
+        yield init()
+    for name in loader.getTestCaseNames(test):
+        func = getattr(tes,name)
+        let = unittest.FunctionTestCase(func,
+                                        test.setUp,
+                                        test.tearDown)
+        result = let.run()
+        yield result
+    if end:
+        yield end()
+
+
 class TestCase(unittest.TestCase):
     '''A specialised test case which offers three
 additional functions: i) `initTest` and ii) `endTests`,

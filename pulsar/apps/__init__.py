@@ -97,10 +97,16 @@ and perform several post fork processing before starting the event loop.'''
         if self.cfg.post_fork:
             self.cfg.post_fork(self)       
         
-    def handle_task(self, fd, request):
-        '''Handle a request. This is a high level function
-which wraps the low level implementation in :meth:`_handle_task`
-and :meth:`_end_task` methods.'''
+    def handle_task(self, request):
+        '''Handle a request. This is a high level function which
+performs some preprocessing of *request* and delegates the actual
+implementation to :meth:`Application.handle_event_task` method.
+
+:parameter request: A request instance which is application specific.
+
+After obtaining the result from the
+:meth:`Application.handle_event_task` method, it invokes the
+:meth:`Worker.end_task` method to close the request.'''
         self.nr += 1
         self.check_num_requests()
         try:
@@ -115,6 +121,8 @@ and :meth:`_end_task` methods.'''
         self.end_task(request, response, result)
     
     def end_task(self, request, response, result = None):
+        '''Handle the response from the#
+:meth:`Application.handle_event_task` method in an asyncronous fascion.'''
         if not isinstance(response,Exception):
             if is_async(result):
                 if result.called:
@@ -195,15 +203,20 @@ class Application(pulsar.PickableMixin):
 An application interface for configuring and loading
 the various necessities for any given server application running
 on pulsar concurrent framework.
+Applications can be of any sort or form and the library is shipped with several
+battery included examples in the :mod:`pulsar.apps`.
 
-When creating a new application, a new :class:`pulsar.ApplicationMonitor`
-instance is added to the :class:`pulsar.Arbiter`, ready to perform
+When creating a new application, a new :class:`ApplicationMonitor`
+instance is added to the :class:`Arbiter`, ready to perform
 its duties.
     
 :parameter callable: A callable which return the application server.
     The callable must be pickable, therefore it is either a function
     or a pickable object.
-:parameter usage: A string indicating how to launch the application.
+:parameter description: A string describing the application.
+    It will be displayed on the command line.
+:parameter epilog: Epilog string you will see when interacting with the command
+    line.
 :parameter name: Application name. If not provided the class name in lower
     case is used
 :parameter params: a dictionary of configuration parameters which overrides
@@ -232,6 +245,7 @@ its duties.
     description = None
     epilog = None
     app = None
+    task_queue_timeout = 1.0
     config_options_include = None
     config_options_exclude = None
     monitor_class = ApplicationMonitor
@@ -242,6 +256,7 @@ its duties.
                  name = None,
                  description = None,
                  epilog = None,
+                 argv = None,
                  **params):
         self.python_path()
         self.description = description or self.description
@@ -250,7 +265,7 @@ its duties.
         nparams = self.cfg.copy()
         nparams.update(params)
         self.callable = callable
-        self.load_config(**nparams)
+        self.load_config(argv,**nparams)
         if self.on_config() is not False:
             arbiter = pulsar.arbiter(self.cfg.daemon)
             monitor = arbiter.add_monitor(self.monitor_class,
@@ -290,7 +305,7 @@ By default it returns ``None``.'''
     def add_timeout(self, deadline, callback):
         self.arbiter.ioloop.add_timeout(deadline, callback)
               
-    def load_config(self, parse_console = True, **params):
+    def load_config(self, argv, parse_console = True, **params):
         '''Load the application configuration from a file and/or
 from the command line. Called during application initialization.
 
@@ -333,7 +348,7 @@ The parameters overrriding order is the following:
         # parse console args
         if parse_console:
             parser = self.cfg.parser()
-            opts = parser.parse_args()
+            opts = parser.parse_args(argv)
             try:
                 config = opts.config or config
             except AttributeError:
@@ -412,14 +427,15 @@ used by a :class:`pulsar.Worker` to carry out its task.'''
     def update_worker_paramaters(self, monitor, params):
         '''Called by the :class:`pulsar.ApplicationMonitor` when
 returning from the :meth:`pulsar.ApplicationMonitor.actorparams`
-and just before spawnning a new worker for serving the application.
+and just before spawning a new worker for serving the application.
 
 :parameter monitor: instance of the monitor serving the application.
 :parameter params: the dictionary of parameters to updated (if needed).
 :rtype: the updated dictionary of parameters.
 
 This callback is a chance for the application to pass its own custom
-parameters to the workers. By default it returns *params* without
+parameters to the workers before it is created.
+By default it returns *params* without
 doing anything.'''
         return params
     
@@ -428,41 +444,45 @@ doing anything.'''
         pass
     
     def worker_task(self, worker):
-        '''Callback by and instance of :class:`pulsar.Worker`` class
-at each ``worker`` event loop.'''
+        '''Callback by a *worker* event loop.
+The default implementation of this callback
+is to check if the *worker* has a :attr:`Actor.task_queue` attribute.
+If so it tries to get one task from the queue and if a task is available
+it is processed by the :meth:`Worker.handle_task` method.'''
         if worker.task_queue:
             try:
-                args = worker.task_queue.get(timeout = 0.1)
+                request = worker.task_queue.get(\
+                                    timeout = self.task_queue_timeout)
             except Empty:
                 return
             except IOError:
                 return
-            worker.handle_task(*args)
+            worker.handle_task(request)
             
     def worker_stop(self, worker):
-        '''Called by the :class:`pulsar.Worker` just after stopping.'''
+        '''Called by the :class:`Worker` just after stopping.'''
         pass
     
     def worker_exit(self, worker):
-        '''Called by the :class:`pulsar.Worker` just when exited.'''
+        '''Called by the :class:`Worker` just when exited.'''
         pass
             
     # MONITOR CALLBAKS
     
     def monitor_start(self, monitor):
-        '''Callback by :class:`pulsar.WorkerMonitor`` when starting'''
+        '''Callback by :class:`ApplicationMonitor` when starting'''
         pass
     
     def monitor_task(self, monitor):
-        '''Callback by :class:`pulsar.WorkerMonitor`` at each event loop'''
+        '''Callback by :class:`ApplicationMonitor` at each event loop'''
         pass
     
     def monitor_stop(self, monitor):
-        '''Callback by :class:`pulsar.WorkerMonitor`` at each event loop'''
+        '''Callback by :class:`ApplicationMonitor` at each event loop'''
         pass
     
     def monitor_exit(self, monitor):
-        '''Callback by :class:`pulsar.WorkerMonitor`` at each event loop'''
+        '''Callback by :class:`ApplicationMonitor` at each event loop'''
         pass
     
     def handle_event_task(self, worker, request):

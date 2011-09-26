@@ -45,25 +45,24 @@ class PulsarService(win32serviceutil.ServiceFramework):
 
     def SvcStop(self):
         #self.log.info('%s - Received stop signal' % self._svc_name_)
+        pulsar.arbiter().stop()
         self.running = False
         self.ReportServiceStatus(win32service.SERVICE_STOP_PENDING)
-        self.arbiter.stop()
         win32event.SetEvent(self.hWaitStop)
 
     def SvcDoRun(self):
         self.setup()
-        self.arbiter = pulsar.arbiter()
-        self.log = self.arbiter.log
-        self.log.info('%s - starting up the server' % self._svc_name_)
-        self.arbiter.start()
-        self.running = True
     
     def setup(self):
         raise NotImplementedError
         
     def main(self):
+        arbiter = pulsar.arbiter()
+        arbiter.log.info('%s - starting up the service' % self._svc_name_)
+        self.running = True
         while self.running:
             time.sleep(1)
+        arbiter.log.info('%s - exiting up the service' % self._svc_name_)
 
     @classmethod
     def run(cls, **params):

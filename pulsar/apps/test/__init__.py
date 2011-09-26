@@ -68,11 +68,15 @@ is a group of tests specified in a test class.'''
         self.cfg.set('workers',min(self.cfg.workers,len(self.tests)))
         
     def monitor_start(self, monitor):
-        '''When the monitor starts load put all tests classes in the taskqueue'''
+        '''When the monitor starts load put all tests classes\
+ in the taskqueue'''
         for _,test in self.tests:
-            self.queue.put(test)
+            monitor.task_queue.put(test)
             
-    def worker_start(self, worker):
+    def handle_event_task(self, worker, testcls):
+        return make_async(run_test_case(worker,testcls))            
+        
+    def __worker_start(self, worker):
         try:
             cfg = self.cfg
             suite =  TestLoader(cfg.labels, cfg.test_type,
@@ -90,7 +94,7 @@ is a group of tests specified in a test class.'''
             raise e.__class__('Could not start tests. {0}'.format(e),
                                 exc_info = True)
     
-    def worker_task(self, worker):
+    def __worker_task(self, worker):
         while self.producer:
             try:
                 p = next(self.producer)

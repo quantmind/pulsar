@@ -1,22 +1,17 @@
-from djpcms.apps.management.base import BaseCommand
-from djpcms.core.exceptions import CommandError
+import sys
+
+import djpcms
 
 import pulsar
 from pulsar.apps.pulsardjp import DjpCmsApplicationCommand
 
 
-class Command(BaseCommand):
-    option_list = BaseCommand.option_list + pulsar.make_options()
+class Command(djpcms.Command):
     help = "Starts a fully-functional Web server using pulsar."
-    args = '[optional port number]'
     
-    def handle(self, callable, addrport=None, *args, **options):
-        if args:
-            raise CommandError('Usage is run_pulsar %s' % self.args)
+    def run_from_argv(self, sites, command, argv):
+        self.execute(sites, argv)
         
-        if addrport:
-            options['bind'] = addrport
-        
+    def handle(self, callable, argv):
         DjpCmsApplicationCommand(callable = callable,
-                                 parse_console = False,
-                                 **options).start()
+                                 argv = argv).start()
