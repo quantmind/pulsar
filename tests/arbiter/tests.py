@@ -1,5 +1,4 @@
-'''Tests for arbiter an monitor
-'''
+'''Tests for arbiter and monitors'''
 from pulsar import test, Monitor, Actor, DEFAULT_MESSAGE_CHANNEL
 
 

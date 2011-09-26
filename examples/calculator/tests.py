@@ -1,5 +1,5 @@
 from pulsar import test
-from pulsar.http import rpc
+from pulsar.apps import rpc
 
 from .manage import server
 

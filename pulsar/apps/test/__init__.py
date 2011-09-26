@@ -25,7 +25,7 @@ class TestSuite(tasks.TaskQueue):
 is a group of tests specified in a test class.'''
     app = 'test'
     config_options_include = ('timeout','concurrency','workers','loglevel',
-                              'daemon','worker_class','debug')
+                              'worker_class','debug','task_queue_factory')
     default_logging_level = None
     cfg = {'timeout':300,
            'concurrency':'thread',
@@ -51,20 +51,26 @@ is a group of tests specified in a test class.'''
  parameters to the TestSuite Constructor.')
         loader = TestLoader(os.getcwd(),modules,test_type)
         if self.cfg.list_labels:
+            print('\nTEST LABELS\n')
             for tag,mod in loader.testmodules():
                 doc = mod.__doc__
                 if doc:
                     tag = '{0} - {1}'.format(tag,doc)
                 print(tag)
+            print('\n')
             return False
         
         tags = self.cfg.labels
-        tests = list(loader.testclasses(tags))
-        if not tags:
+        self.tests = list(loader.testclasses(tags))
+        if not self.tests:
             print('Nothing done. No tests available.')
             return False
-        self.cfg.set('workers',min(self.cfg.workers,len(tags)))
+        self.cfg.set('workers',min(self.cfg.workers,len(self.tests)))
         
+    def monitor_start(self, monitor):
+        '''When the monitor starts load put all tests classes in the taskqueue'''
+        for _,test in self.tests:
+            self.queue.put(test)
             
     def worker_start(self, worker):
         try:

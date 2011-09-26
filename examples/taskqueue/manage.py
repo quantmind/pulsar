@@ -37,12 +37,14 @@ class RpcRoot(rpc.PulsarServerCommands,
     rpc_evalcode = tasks.queueTask('codetask',
                                    'Evaluate python code on the task queue.')
         
+def createTaskQueue(**params):
+    return tasks.TaskQueue(tasks_path = TASK_PATHS,
+                           name = 'taskqueue',
+                           **params)
     
 def server(**params):
     # Create the taskqueue application with an rpc server
-    tasks.TaskQueue(tasks_path = TASK_PATHS,
-                    name = 'taskqueue',
-                    **params)
+    createTaskQueue(**params)
     return wsgi.createServer(RpcRoot(),
                              name = 'rpc',
                              **params)
