@@ -68,13 +68,13 @@ is a group of tests specified in a test class.'''
         self.cfg.set('workers',min(self.cfg.workers,len(self.tests)))
         
     def monitor_start(self, monitor):
-        '''When the monitor starts load put all tests classes\
+        '''When the monitor starts load all tests classes\
  in the taskqueue'''
         for _,test in self.tests:
             monitor.task_queue.put(test)
             
     def handle_event_task(self, worker, testcls):
-        return make_async(run_test_case(worker,testcls))            
+        return pulsar.make_async(run_test_case(worker,testcls))            
         
     def __worker_start(self, worker):
         try:

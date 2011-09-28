@@ -16,7 +16,12 @@ __all__ = ['TestLoader','SkipTest']
     
 
 class TestLoader(object):
-    '''Aggregate tests from a list of paths. ''' 
+    '''Aggregate tests from a list of paths. The way it works is simple,
+you give a *root* directory and a list of submodules where to look for tests.
+
+:parameter root: root path.
+:parameter modules: list of modules where to look for tests.
+''' 
     test_mapping = {'regression':'tests',
                     'benchmark':'benchmarks',
                     'profile':'profile'}

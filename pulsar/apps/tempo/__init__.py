@@ -1,5 +1,5 @@
 '''\
-Pulsar tempo is an application for benchmarking application servers by
+Pulsar tempo is an parallel testing/benchmarking/profiling application
 sending lots of requests, and analysing results.
 It is used to benchmark pulsar itself.
 '''

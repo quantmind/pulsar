@@ -2,7 +2,7 @@
 A lightweight deferred module inspired by twisted.
 '''
 import sys
-import inspect
+from inspect import isgenerator
 from time import sleep
 
 from pulsar import AlreadyCalledError
@@ -38,7 +38,7 @@ def make_async(val = None):
 :parameter val: can be a generator or any other value.
 :rtype: an instance of :class:`pulsar.Deferred`.'''
     if not is_async(val):
-        if inspect.isgenerator(val):
+        if isgenerator(val):
             d = make_async() 
             for v in val:
                 if is_async(v):
