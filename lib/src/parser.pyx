@@ -2,196 +2,64 @@
 #
 # This file is part of http-parser released under the MIT license. 
 # See the NOTICE for more information.
-
-from libc.stdlib cimport *
 import os
-from urllib import unquote
+from http cimport *
 
-cdef extern from "Python.h":
-
-    object PyString_FromStringAndSize(char *s, Py_ssize_t len)
-
-cdef extern from "http_parser.h" nogil:
+if ispy3k:
+    from urllib.parse import urlsplit
+else:
+    from urlparse import urlsplit
     
-    cdef enum http_method:
-        HTTP_DELETE, HTTP_GET, HTTP_HEAD, HTTP_POST, HTTP_PUT,
-        HTTP_CONNECT, HTTP_OPTIONS, HTTP_TRACE, HTTP_COPY, HTTP_LOCK,
-        HTTP_MKCOL, HTTP_MOVE, HTTP_PROPFIND, HTTP_PROPPATCH, HTTP_UNLOCK, 
-        HTTP_REPORT, HTTP_MKACTIVITY, HTTP_CHECKOUT, HTTP_MERGE, HTTP_MSEARCH,
-        HTTP_NOTIFY, HTTP_SUBSCRIBE, HTTP_UNSUBSCRIBE
-
-
-    cdef enum http_parser_type:
-        HTTP_REQUEST, HTTP_RESPONSE, HTTP_BOTH
-
-    cdef struct http_parser:
-        int content_length
-        unsigned short http_major
-        unsigned short http_minor
-        unsigned short status_code
-        unsigned char method
-        char upgrade
-        void *data
-
-    ctypedef int (*http_data_cb) (http_parser*, char *at, size_t length)
-    ctypedef int (*http_cb) (http_parser*)
     
-    struct http_parser_settings:
-        http_cb on_message_begin
-        http_data_cb on_path
-        http_data_cb on_query_string
-        http_data_cb on_url
-        http_data_cb on_fragment
-        http_data_cb on_header_field
-        http_data_cb on_header_value
-        http_cb on_headers_complete
-        http_data_cb on_body
-        http_cb on_message_complete
-
-    void http_parser_init(http_parser *parser, 
-            http_parser_type ptype)
+class Header(object):
+    '''A minimalist Header class'''
+    def __init__():
+        self._keys = []
+        self._data = {}
+        
+    def __iter__(self):
+        d = self._data
+        for k in self._keys:
+            yield k,d[k]
+            
+    def __contains__(self, key):
+        return key.lower() in self.data
+        
+     def __delitem__(self, key):
+        key = key.lower()
+        del self._data[key]
+        self._keys.remove(key)
+        
+    def __setitem__(self, key, value):
+        key = key.lower()
+        if key in self._data and value:
+            value = ', '.join((self._data[key],value))
+        else:
+            self._keys.append(key)
+        self._data[key] = value
+        
+    def __getitem__(self, key):
+        return self._data[key.lower()]
+        
+    def get(self, key, default=None):
+        try:
+            return self.__getitem__(key)
+        except KeyError:
+            return default
+        
     
-    size_t http_parser_execute(http_parser *parser, 
-            http_parser_settings *settings, char *data,
-            size_t len)
+class _ParserData:
 
-    int http_should_keep_alive(http_parser *parser)
-
-    char *http_method_str(http_method)
-
-
-cdef int on_path_cb(http_parser *parser, char *at,
-        size_t length):
-    res = <object>parser.data
-    value = PyString_FromStringAndSize(at, length)
-
-    res.path = value
-    res.environ['PATH_INFO'] = unquote(value)
-    
-    if 'on_path' in res.callbacks:
-        res.callbacks['on_path'](value)
-    return 0
-
-cdef int on_query_string_cb(http_parser *parser, char *at, 
-        size_t length):
-    res = <object>parser.data
-    value = PyString_FromStringAndSize(at, length)
-    res.query_string = value
-    res.environ['QUERY_STRING'] = value
-    
-    if 'on_query_string' in res.callbacks:
-        res.callbacks['on_query_string'](value)
-    return 0
-
-cdef int on_url_cb(http_parser *parser, char *at,
-        size_t length):
-    res = <object>parser.data
-    value = PyString_FromStringAndSize(at, length)
-    res.url = value
-    res.environ['RAW_URI'] = value
-    if 'on_url' in res.callbacks:
-        res.callbacks['on_url'](value)
-    return 0
-
-cdef int on_fragment_cb(http_parser *parser, char *at, 
-        size_t length):
-    res = <object>parser.data
-    value = PyString_FromStringAndSize(at, length)
-    res.fragment = value
-    
-    if 'on_fragment' in res.callbacks:
-        res.callbacks['on_fragment'](value)
-
-    return 0
-
-cdef int on_header_field_cb(http_parser *parser, char *at, 
-        size_t length):
-    header_field = PyString_FromStringAndSize(at, length)
-    res = <object>parser.data
-   
-    if res._last_was_value:
-        res._last_field = ""
-    res._last_field += header_field
-    res._last_was_value = False
-
-    if 'on_header_field' in res.callbacks:
-        res.callbacks['on_header_field'](header_field, res._state_is_value)
-
-
-    return 0
-
-cdef int on_header_value_cb(http_parser *parser, char *at, 
-        size_t length):
-    res = <object>parser.data
-    header_value = PyString_FromStringAndSize(at, length)
-    
-    # update wsgi environ
-    key =  res._last_field.upper().replace('-','_')
-    if key not in ("CONTENT_LENGTH", "CONTENT_TYPE", "SCRIPT_NAME"):
-        key = 'HTTP_' + key
-
-    res.environ[key] = res.environ.get(key, '') + header_value
-
-    # add to headers
-    res.headers[res._last_field] = res.headers.get(res._last_field,
-            '') + header_value
-
-    if 'on_header_value' in res.callbacks:
-        res.callbacks['on_header_value'](res._last_field, header_value)
-
-    res._last_was_value = True
-    return 0
-
-cdef int on_headers_complete_cb(http_parser *parser):
-    res = <object>parser.data
-    res.headers_complete = True
-
-    if 'on_headers_complete' in res.callbacks:
-        res.callbacks['on_headers_complete']()
-
-    return 0
-
-cdef int on_message_begin_cb(http_parser *parser):
-    res = <object>parser.data
-    res.message_begin = True
-    
-    if 'on_message_begin' in res.callbacks:
-        res.callbacks['on_message_begin']()
-    return 0
-
-cdef int on_body_cb(http_parser *parser, char *at, 
-        size_t length):
-    res = <object>parser.data
-    value = PyString_FromStringAndSize(at, length)
-
-    res.partial_body = True
-    res.body.append(value)
-
-    if 'on_body' in res.callbacks:
-        res.callbacks['on_body'](value)
-
-    return 0
-
-cdef int on_message_complete_cb(http_parser *parser):
-    res = <object>parser.data
-    res.message_complete = True
-    if 'on_message_complete' in res.callbacks:
-        res.callbacks['on_message_complete']()
-
-    return 0
-
-
-class _ParserData(object):
-
-    def __init__(self, callbacks=None):
-        self.callbacks = callbacks or {}
-        self.path = ""
-        self.query_string = ""
+    def __init__(self, decompress=False):
         self.url = ""
-        self.fragment = ""
         self.body = []
-        self.headers = {}
+        self.headers = Header()
         self.environ = {}
+        
+        self.decompress = decompress
+        self.decompressobj = None
+
+        self.chunked = False
 
         self.headers_complete = False
         self.partial_body = False
@@ -203,38 +71,23 @@ class _ParserData(object):
         
         
 cdef class HttpParser:
-    """ Low level HTTP parser.  """
+    """Cython HTTP parser wrapping http_parser."""
 
     cdef http_parser _parser
     cdef http_parser_settings _settings
     cdef object _data
 
-    def __init__(self, kind=2, callbacks=None):
-        """ constructor of HttpParser object. 
-        
-        
-        :attr kind: Int,  could be 0 to parseonly requests, 
-        1 to parse only responses or 2 if we want to let
-        the parser detect the type. 
+    cdef str _path
+    cdef str _query_string
+    cdef str _fragment
+    cdef object _parsed_url
 
-        :attr callbacks: list of callbacks we want to pass to the
-        parser::
-
-            on_message_begin()
-            on_path(path)
-            on_query_string(query_string)
-            on_url(url)
-            on_fragment(fragment)
-            on_header_field(field, last_was_value)
-            on_header_value(key, value)
-            on_headers_complete()
-            on_body(chunk)
-            on_message_complete()
-        
-        Callbacks are useful for those who want to parse an HTTP stream
-        asynchronously.
+    def __init__(self, kind=2, decompress=False):
+        """ constructor of HttpParser object.
+:attr kind: Int,  could be 0 to parseonly requests, 
+1 to parse only responses or 2 if we want to let
+the parser detect the type. 
         """
-
         # set parser type
         if kind == 2:
             parser_type = HTTP_BOTH
@@ -245,14 +98,15 @@ cdef class HttpParser:
 
         # initialize parser
         http_parser_init(&self._parser, parser_type)
-        self._data = _ParserData(callbacks=None)
+        self._data = _ParserData(decompress=decompress)
         self._parser.data = <void *>self._data
+        self._parsed_url = None
+        self._path = ""
+        self._query_string = ""
+        self._fragment = ""
 
         # set callback
-        self._settings.on_path = <http_data_cb>on_path_cb
-        self._settings.on_query_string = <http_data_cb>on_query_string_cb
         self._settings.on_url = <http_data_cb>on_url_cb
-        self._settings.on_fragment = <http_data_cb>on_fragment_cb
         self._settings.on_body = <http_data_cb>on_body_cb
         self._settings.on_header_field = <http_data_cb>on_header_field_cb
         self._settings.on_header_value = <http_data_cb>on_header_value_cb
@@ -287,67 +141,50 @@ cdef class HttpParser:
         """ get full url of the request """
         return self._data.url
 
+    def maybe_parse_url(self):
+        raw_url = self.get_url()
+        if not self._parsed_url and raw_url:
+            self._parsed_url = urlsplit(raw_url)
+            self._path =  self._parsed_url.path or ""
+            self._query_string = self._parsed_url.query or ""
+            self._fragment = self._parsed_url.fragments or ""
+
     def get_path(self):
         """ get path of the request (url without query string and
         fragment """
-        return self._data.path
+        self.maybe_parse_url()
+        return self._path
 
     def get_query_string(self):
         """ get query string of the url """
-        return self._data.query_string
+        self.maybe_parse_url()
+        return self._query_string
 
     def get_fragment(self):
         """ get fragment of the url """
-        return self._data.fragment
+        self.maybe_parse_url()
+        return self._fragment
 
     def get_headers(self):
-        """ get request/response headers """
+        """ get request/response headers, headers are returned in a
+        OrderedDict that allows you to get value using insensitive keys. """
         return self._data.headers
-
-    def get_wsgi_environ(self, initial=None):
-        """ get WSGI environ based on the current request """
-        environ = initial or {}
-        environ.update(self._data.environ)
-
-        script_name = environ.get('HTTP_SCRIPT_NAME', 
-                os.environ.get("SCRIPT_NAME", ""))
-
-        if script_name:
-            path_info = self.get_path() 
-            path_info = path_info.split(script_name, 1)[1]
-            environ.update({
-                'PATH_INFO': path_info,
-                'SCRIPT_NAME': script_name})
-
-        if environ.get('HTTP_X_FORWARDED_PROTOCOL', '').lower() == "ssl":
-            environ['wsgi.url_scheme']= "https"
-        elif environ.get('HTTP_X_FORWARDED_SSL', '').lower() == "on":
-            environ['wsgi.url_scheme'] = "https"
-        else:
-            environ['wsgi.url_scheme'] = "http"
-
-        # add missing environ var
-        environ.update({
-            'REQUEST_METHOD': self.get_method(),
-            'SERVER_PROTOCOL': "HTTP/%s" % ".".join(map(str, 
-                self.get_version()))})
-        return environ
 
     def recv_body(self):
         """ return last chunk of the parsed body"""
-        body = "".join(self._data.body)
+        body = b''.join(self._data.body)
         self._data.body = []
         self._data.partial_body = False
         return body
 
-    def recv_body_into(self, b):
+    def recv_body_into(self, barray):
         """ Receive the last chunk of the parsed bodyand store the data
         in a buffer rather than creating a new string. """
-        l = len(b)
-        body = "".join(self._data.body)
+        l = len(barray)
+        body = b''.join(self._data.body)
         m = min(len(body), l)
         data, rest = body[:m], body[m:]
-        b[0:m] = data
+        barray[0:m] = data
         if not rest:
             self._data.body = []
             self._data.partial_body = False
@@ -375,6 +212,11 @@ cdef class HttpParser:
     def is_message_complete(self):
         """ return True if the parsing is done (we get EOF) """
         return self._data.message_complete
+
+    def is_chunked(self):
+        """ return True if Transfer-Encoding header value is chunked"""
+        te = self._data.headers.get('transfer-encoding', '').lower()
+        return te == 'chunked'
 
     def should_keep_alive(self):
         """ return True if the connection should be kept alive

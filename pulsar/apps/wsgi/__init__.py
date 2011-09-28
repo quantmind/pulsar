@@ -11,8 +11,10 @@ import errno
 import socket
 
 import pulsar
+from pulsar.http import HttpResponse
 from pulsar.http.utils import write_nonblock, write_error, close
 
+from . import config
 from .http import *
 
 
@@ -51,8 +53,27 @@ parameters.'''
                                       worker.ioloop.READ)
         
     def handle_event_task(self, worker, request):
-        response, environ = request.wsgi(worker = worker)
+        request.handle()
+        environ = request.wsgi_environ()
+        if not environ:
+            # Not done yet
+            return request
+        else:
+            cfg = worker.cfg
+            mt = cfg.concurrency == 'thread' and cfg.workers > 1
+            mp = cfg.concurrency == 'process' and cfg.workers > 1
+            environ.update({"pulsar.worker": worker,
+                            "wsgi.multithread": mt,
+                            "wsgi.multiprocess": mp})
+            response = HttpResponse(request)
+            data = worker.app_handler(environ, response.start_response)
+            if data is not None:
+                response.write(data)
+            return response
+    
+    def end_event_task(self, worker, response):
         response.force_close()
+        return response
         try:
             return response, worker.app_handler(environ,
                                                 response.start_response)
@@ -71,7 +92,7 @@ parameters.'''
                 msg = traceback.format_exc()
             return response,[msg]
 
-    def end_event_task(self, worker, response, result):
+    def _end_event_task(self, worker, response, result):
         try:
             if result:
                 for item in result:

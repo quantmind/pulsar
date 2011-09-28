@@ -10,7 +10,6 @@ from threading import current_thread
 from pulsar import AlreadyCalledError, AlreadyRegistered,\
                    ActorAlreadyStarted,\
                    logerror, LogSelf, LogginMixin, system
-from pulsar.http import get_httplib
 from pulsar.utils.py2py3 import iteritems, itervalues, pickle
 
 
@@ -37,18 +36,11 @@ EMPTY_DICT = {}
 def is_actor(obj):
     return isinstance(obj,Actor)
 
-
-class HttpMixin(object):
-    
-    @property
-    def http(self):
-        return get_httplib(self.cfg)
-
     
 MAIN_THREAD = current_thread()
 
-   
-class Runner(LogginMixin,HttpMixin):
+
+class Runner(LogginMixin):
     '''Base class with event loop powered
     '''
     DEF_PROC_NAME = 'pulsar'

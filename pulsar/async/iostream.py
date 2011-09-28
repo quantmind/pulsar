@@ -22,14 +22,15 @@ import socket
 import sys
 import ssl
 
+import pulsar
 
-__all__ = ['IOStream']
+__all__ = ['AsyncIOStream']
 
 
 iologger = logging.getLogger('pulsar.iostream')
 
 
-class IOStream(object):
+class AsyncIOStream(pulsar.IOStream):
     """A utility class to write to and read from a non-blocking socket.
 
     We support three methods: write(), read_until(), and read_bytes().
@@ -73,31 +74,17 @@ class IOStream(object):
         ioloop.IOLoop.instance().start()
 
     """
-    def __init__(self, actor, socket, max_buffer_size=104857600,
-                 read_chunk_size=4096):
-        self.actor = actor
-        self.log = actor.log or iologger
-        self.ioloop = actor.ioloop
-        self.socket = socket
-        self.socket.setblocking(False)
-        self.max_buffer_size = max_buffer_size
-        self.read_chunk_size = read_chunk_size
-        self._read_buffer = collections.deque()
-        self._write_buffer = collections.deque()
-        self._write_buffer_frozen = False
-        self._read_delimiter = None
-        self._read_bytes = None
-        self._read_callback = None
-        self._write_callback = None
-        self._close_callback = None
-        self._connect_callback = None
-        self._connecting = False
-        self._state = self.ioloop.ERROR
-        self.ioloop.add_handler(
-                self.socket.fileno(), self._handle_events, self._state)
+    def blocking(self):
+        return False
     
-    def wrap(self, callback):
-        return callback
+    def on_read(self):
+        self._add_io_state(self.io_loop.READ)
+        
+    def on_write(self):
+        self._add_io_state(self.ioloop.WRITE)
+        
+    def on_close(self):
+        self.ioloop.remove_handler(self.socket.fileno())
 
     def connect(self, address, callback=None):
         """Connects the socket to a remote address without blocking.
@@ -124,61 +111,9 @@ class IOStream(object):
         self._connect_callback = self.wrap(callback)
         self._add_io_state(self.ioloop.WRITE)
 
-    def read_until(self, delimiter, callback):
-        """Call callback when we read the given delimiter."""
-        assert not self._read_callback, "Already reading"
-        self._read_delimiter = delimiter
-        self._read_callback = self.wrap(callback)
-        while True:
-            # See if we've already got the data from a previous read
-            if self._read_from_buffer():
-                return
-            self._check_closed()
-            if self._read_to_buffer() == 0:
-                break
-        self._add_io_state(self.ioloop.READ)
-
-    def read_bytes(self, num_bytes, callback):
-        """Call callback when we read the given number of bytes."""
-        assert not self._read_callback, "Already reading"
-        if num_bytes == 0:
-            callback("")
-            return
-        self._read_bytes = num_bytes
-        self._read_callback = self.wrap(callback)
-        while True:
-            if self._read_from_buffer():
-                return
-            self._check_closed()
-            if self._read_to_buffer() == 0:
-                break
-        self._add_io_state(self.ioloop.READ)
-
-    def write(self, data, callback=None):
-        """Write the given data to this stream.
-
-        If callback is given, we call it when all of the buffered write
-        data has been successfully written to the stream. If there was
-        previously buffered write data and an old write callback, that
-        callback is simply overwritten with this new callback.
-        """
-        self._check_closed()
-        self._write_buffer.append(data)
-        self._add_io_state(self.ioloop.WRITE)
-        self._write_callback = stack_context.wrap(callback)
-
     def set_close_callback(self, callback):
         """Call the given callback when the stream is closed."""
         self._close_callback = stack_context.wrap(callback)
-
-    def close(self):
-        """Close this stream."""
-        if self.socket is not None:
-            self.ioloop.remove_handler(self.socket.fileno())
-            self.socket.close()
-            self.socket = None
-            if self._close_callback:
-                self._run_callback(self._close_callback)
 
     def reading(self):
         """Returns true if we are currently reading from the stream."""
@@ -188,9 +123,6 @@ class IOStream(object):
         """Returns true if we are currently writing to the stream."""
         return bool(self._write_buffer)
 
-    def closed(self):
-        return self.socket is None
-
     def _handle_events(self, fd, events):
         # This is the actual callback from the event loop
         if not self.socket:
@@ -198,7 +130,7 @@ class IOStream(object):
             return
         try:
             if events & self.ioloop.READ:
-                self._handle_read()
+                self.read()
             if not self.socket:
                 return
             if events & self.ioloop.WRITE:
@@ -224,85 +156,7 @@ class IOStream(object):
             self.close()
             raise
 
-    def _run_callback(self, callback, *args, **kwargs):
-        try:
-            # Use a NullContext to ensure that all StackContexts are run
-            # inside our blanket exception handler rather than outside.
-            with stack_context.NullContext():
-                callback(*args, **kwargs)
-        except:
-            self.log.error("Uncaught exception, closing connection.",
-                          exc_info=True)
-            # Close the socket on an uncaught exception from a user callback
-            # (It would eventually get closed when the socket object is
-            # gc'd, but we don't want to rely on gc happening before we
-            # run out of file descriptors)
-            self.close()
-            # Re-raise the exception so that IOLoop.handle_callback_exception
-            # can see it and log the error
-            raise
-
-    def _handle_read(self):
-        while True:
-            try:
-                # Read from the socket until we get EWOULDBLOCK or equivalent.
-                # SSL sockets do some internal buffering, and if the data is
-                # sitting in the SSL object's buffer select() and friends
-                # can't see it; the only way to find out if it's there is to
-                # try to read it.
-                result = self._read_to_buffer()
-            except Exception:
-                self.close()
-                return
-            if result == 0:
-                break
-            else:
-                if self._read_from_buffer():
-                    return
-
-    def _read_from_socket(self):
-        """Attempts to read from the socket.
-
-        Returns the data read or None if there is nothing to read.
-        May be overridden in subclasses.
-        """
-        try:
-            chunk = self.socket.recv(self.read_chunk_size)
-        except socket.error as e:
-            if e.args[0] in (errno.EWOULDBLOCK, errno.EAGAIN):
-                return None
-            else:
-                raise
-        if not chunk:
-            self.close()
-            return None
-        return chunk
-
-    def _read_to_buffer(self):
-        """Reads from the socket and appends the result to the read buffer.
-
-        Returns the number of bytes read.  Returns 0 if there is nothing
-        to read (i.e. the read returns EWOULDBLOCK or equivalent).  On
-        error closes the socket and raises an exception.
-        """
-        try:
-            chunk = self._read_from_socket()
-        except socket.error as e:
-            # ssl.SSLError is a subclass of socket.error
-            logging.warning("Read error on %d: %s",
-                            self.socket.fileno(), e)
-            self.close()
-            raise
-        if chunk is None:
-            return 0
-        self._read_buffer.append(chunk)
-        if self._read_buffer_size() >= self.max_buffer_size:
-            logging.error("Reached maximum read buffer size")
-            self.close()
-            raise IOError("Reached maximum read buffer size")
-        return len(chunk)
-
-    def _read_from_buffer(self):
+    def read_from_buffer(self):
         """Attempts to complete the currently-pending read from the buffer.
 
         Returns True if the read was completed.
@@ -335,63 +189,21 @@ class IOStream(object):
             self._run_callback(callback)
         self._connecting = False
 
-    def _handle_write(self):
-        while self._write_buffer:
-            try:
-                if not self._write_buffer_frozen:
-                    # On windows, socket.send blows up if given a
-                    # write buffer that's too large, instead of just
-                    # returning the number of bytes it was able to
-                    # process.  Therefore we must not call socket.send
-                    # with more than 128KB at a time.
-                    _merge_prefix(self._write_buffer, 128 * 1024)
-                num_bytes = self.socket.send(self._write_buffer[0])
-                self._write_buffer_frozen = False
-                _merge_prefix(self._write_buffer, num_bytes)
-                self._write_buffer.popleft()
-            except socket.error as e:
-                if e.args[0] in (errno.EWOULDBLOCK, errno.EAGAIN):
-                    # With OpenSSL, after send returns EWOULDBLOCK,
-                    # the very same string object must be used on the
-                    # next call to send.  Therefore we suppress
-                    # merging the write buffer after an EWOULDBLOCK.
-                    # A cleaner solution would be to set
-                    # SSL_MODE_ACCEPT_MOVING_WRITE_BUFFER, but this is
-                    # not yet accessible from python
-                    # (http://bugs.python.org/issue8240)
-                    self._write_buffer_frozen = True
-                    break
-                else:
-                    logging.warning("Write error on %d: %s",
-                                    self.socket.fileno(), e)
-                    self.close()
-                    return
-        if not self._write_buffer and self._write_callback:
-            callback = self._write_callback
-            self._write_callback = None
-            self._run_callback(callback)
-
-    def _consume(self, loc):
-        _merge_prefix(self._read_buffer, loc)
-        return self._read_buffer.popleft()
-
-    def _check_closed(self):
-        if not self.socket:
-            raise IOError("Stream is closed")
-
     def _add_io_state(self, state):
         if self.socket is None:
             # connection has been closed, so there can be no future events
             return
-        if not self._state & state:
+        if self._state is None:
+            self._state = ioloop.IOLoop.ERROR | state
+            with stack_context.NullContext():
+                self.io_loop.add_handler(
+                    self.socket.fileno(), self._handle_events, self._state)
+        elif not self._state & state:
             self._state = self._state | state
-            self.ioloop.update_handler(self.socket.fileno(), self._state)
-
-    def _read_buffer_size(self):
-        return sum(len(chunk) for chunk in self._read_buffer)
+            self.io_loop.update_handler(self.socket.fileno(), self._state)
 
 
-class SSLIOStream(IOStream):
+class SSLIOStream(AsyncIOStream):
     """A utility class to write to and read from a non-blocking socket.
 
     If the socket passed to the constructor is already connected,
@@ -400,14 +212,9 @@ class SSLIOStream(IOStream):
     before constructing the SSLIOStream.  Unconnected sockets will be
     wrapped when IOStream.connect is finished.
     """
-    def __init__(self, *args, **kwargs):
-        """Creates an SSLIOStream.
-
-        If a dictionary is provided as keyword argument ssl_options,
-        it will be used as additional keyword arguments to ssl.wrap_socket.
-        """
+    def setup(self, kwargs):
+        super(SSLIOStream,self).setup(kwargs)
         self._ssl_options = kwargs.pop('ssl_options', {})
-        super(SSLIOStream, self).__init__(*args, **kwargs)
         self._ssl_accepting = True
         self._handshake_reading = False
         self._handshake_writing = False
@@ -492,33 +299,6 @@ class SSLIOStream(IOStream):
             return None
         return chunk
 
-def _merge_prefix(deque, size):
-    """Replace the first entries in a deque of strings with a single
-    string of up to size bytes.
 
-    >>> d = collections.deque(['abc', 'de', 'fghi', 'j'])
-    >>> _merge_prefix(d, 5); print d
-    deque(['abcde', 'fghi', 'j'])
-
-    Strings will be split as necessary to reach the desired size.
-    >>> _merge_prefix(d, 7); print d
-    deque(['abcdefg', 'hi', 'j'])
-
-    >>> _merge_prefix(d, 3); print d
-    deque(['abc', 'defg', 'hi', 'j'])
-
-    >>> _merge_prefix(d, 100); print d
-    deque(['abcdefghij'])
-    """
-    prefix = []
-    remaining = size
-    while deque and remaining > 0:
-        chunk = deque.popleft()
-        if len(chunk) > remaining:
-            deque.appendleft(chunk[remaining:])
-            chunk = chunk[:remaining]
-        prefix.append(chunk)
-        remaining -= len(chunk)
-    deque.appendleft(''.join(prefix))
 
 

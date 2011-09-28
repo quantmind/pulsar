@@ -92,6 +92,9 @@ class Deferred(object):
         self.rid = rid
         self._callbacks = []
     
+    def set_actor(self, actor):
+        pass
+    
     @property
     def called(self):
         return self._called

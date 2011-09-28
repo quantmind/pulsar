@@ -8,7 +8,7 @@
 #
 # This file is part of gunicorn released under the MIT license. 
 # See the NOTICE for more information.
-from pulsar.utils.py2py3 import ispy3k, int_type, BytesIO, is_string
+from pulsar.utils.py2py3 import ispy3k, int_type, is_string
 
 if ispy3k:
     from urllib.parse import urlparse, unquote

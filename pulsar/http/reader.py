@@ -9,10 +9,8 @@ import io
 import socket
 import sys
 import types
-try:
-    from cStringIO import StringIO
-except ImportError:
-    from StringIO import StringIO
+
+from pulsar.utils.py2py3 import StringIO
 
 if sys.version_info < (2, 7, 0, 'final'):
     # in python 2.6 socket.recv_into doesn't support bytesarray

@@ -113,25 +113,26 @@ After obtaining the result from the
             self.cfg.pre_request(self, request)
         except Exception:
             pass
+        if hasattr(request,'set_actor'):
+            request.set_actor(self)
         try:
-            response, result = self.app.handle_event_task(self, request)
+            response = self.app.handle_event_task(self, request)
         except Exception as e:
             response = e
-            result = None
-        self.end_task(request, response, result)
+        self.end_task(response)
     
-    def end_task(self, request, response, result = None):
+    def end_task(self, response):
         '''Handle the response from the#
 :meth:`Application.handle_event_task` method in an asyncronous fascion.'''
         if not isinstance(response,Exception):
-            if is_async(result):
+            if is_async(response):
                 if result.called:
-                    result = result.result
+                    response = response.result
                 else:
                     return self.ioloop.add_callback(\
-                            lambda : self.end_task(request, response, result))
+                            lambda : self.end_task(response))
         try:
-            self.app.end_event_task(self, response, result)
+            self.app.end_event_task(self, response)
         except Exception as e:
             self.log.critical('Handled exception : {0}'.\
                               format(e),exc_info = sys.exc_info())
@@ -490,7 +491,7 @@ it is processed by the :meth:`Worker.handle_task` method.'''
  application task.'''
         raise NotImplementedError
     
-    def end_event_task(self, worker, response, result):
+    def end_event_task(self, worker, response):
         ''''''
         pass
     

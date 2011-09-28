@@ -1,116 +1,35 @@
 import errno
-import socket
-try:
-    import ssl
-except:
-    ssl = None 
 
-import pulsar
+from pulsar import http, IOStream, AsyncIOStream
 from pulsar.http.utils import close
 
 
 __all__ = ['HttpHandler','HttpPoolHandler']
 
 
-
-
-class Bind(pulsar.Setting):
-    app = 'wsgi'
-    name = "bind"
-    section = "Server Socket"
-    cli = ["-b", "--bind"]
-    meta = "ADDRESS"
-    default = "127.0.0.1:{0}".format(pulsar.DEFAULT_PORT)
-    desc = """\
-        The socket to bind.
-        
-        A string of the form: 'HOST', 'HOST:PORT', 'unix:PATH'. An IP is a valid
-        HOST.
-        """
-        
-        
-class Backlog(pulsar.Setting):
-    app = 'wsgi'
-    name = "backlog"
-    section = "Server Socket"
-    cli = ["--backlog"]
-    validator = pulsar.validate_pos_int
-    type = int
-    default = 2048
-    desc = """\
-        The maximum number of pending connections.    
-        
-        This refers to the number of clients that can be waiting to be served.
-        Exceeding this number results in the client getting an error when
-        attempting to connect. It should only affect servers under significant
-        load.
-        
-        Must be a positive integer. Generally set in the 64-2048 range.    
-        """
-
-
-
 class HttpHandler(object):
     '''Handle HTTP requests and delegate the response to the worker'''
     ALLOWED_ERRORS = (errno.EAGAIN, errno.ECONNABORTED,
                       errno.EWOULDBLOCK, errno.EPIPE)
-    ssl_options = None
 
     def __init__(self, worker):
         self.worker = worker
+        self.iostream = IOStream if self.worker.cfg.synchronous else\
+                        AsyncIOStream
         
     def __call__(self, fd, events):
-        client = None
-        try:
-            client, addr = self.worker.socket.accept()
-            client.setblocking(1)
-            req = self.worker.http.Request(client,
-                                           addr,
-                                           self.worker.address,
-                                           self.worker.cfg)
-        except socket.error as e:
-            close(client)
-            if e.errno not in self.ALLOWED_ERRORS:
-                raise
-            else:
-                return
-        except StopIteration:
-            close(client)
-            self.worker.log.debug("Ignored premature client disconnection.")
-            return
-        
-        self.handle(req)
+        client, addr = self.worker.socket.accept()
+        stream = self.iostream(socket = client)
+        self.handle(http.HttpRequest(stream, addr))
 
-    def handle(self, req):
-        self.worker.handle_task(req)
-        
-        
-class AsyncHttpHandler(HttpHandler):
-    
-    def __call__(self, fd, events):
-        client = None
-        try:
-            client, addr = self.worker.socket.accept()
-        except socket.error as e:
-            close(client)
-            if e.errno not in self.ALLOWED_ERRORS:
-                raise
-            else:
-                return
-        except StopIteration:
-            close(client)
-            self.worker.log.debug("Ignored premature client disconnection.")
-            return
-        
-        stream = pulsar.IOStream(worker, client)
-        req = http.Request(stream, addr, self.worker.address, self.worker.cfg)
-        self.handle(req)
+    def handle(self, request):
+        self.worker.handle_task(request)
 
 
 class HttpPoolHandler(HttpHandler):
     '''This is used when the monitor is using thread-based workers.'''
-    def handle(self, req):
-        self.worker.task_queue.put(req)
+    def handle(self, request):
+        self.worker.task_queue.put(request)
 
             
     

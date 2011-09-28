@@ -2,35 +2,27 @@ import pulsar
 from pulsar.utils.py2py3 import *
 from .wsgi import create_wsgi, Response
 
-if ispy3k:
-    from http.server import BaseHTTPRequestHandler
-else:
-    from BaseHTTPServer import BaseHTTPRequestHandler
-    
+
+__all__ = ['Request']
+
 
 class Request(object):
     RESPONSE_CLASS = Response
     MessageClass = None
     
-    def __init__(self, client_sock, client_address, server, cfg = None):
-        self.client_sock = client_sock
+    def __init__(self, stream, client_address):
+        self.stream = stream
         self.client_address = client_address
-        self.server = server
-        self.cfg = cfg
+        self.reader = http.HttpStream(self.stream)
         self.setup()
         self.handle()
         self.finish()
     
     def setup(self):
-        r = self.client_sock
-        self.rfile = r.makefile('rb', -1)
-        self.wfile = r.makefile('wb', 0)
+        pass
 
     def finish(self):
-        if not self.wfile.closed:
-            self.wfile.flush()
-        self.wfile.close()
-        self.rfile.close()
+        pass
         
     def parse(self):
         self.raw_requestline = self.rfile.readline()

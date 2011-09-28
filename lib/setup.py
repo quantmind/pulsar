@@ -6,13 +6,17 @@ from distutils.core import setup
 from distutils.extension import Extension
 from Cython.Distutils import build_ext
 
-SRC_DIR = os.path.join(os.path.split(os.path.abspath(__file__))[0],'src')
 
-ext_modules  = Extension('pulsar.http.cparser.parser', ['lib/src/http_parser.c',
-                                                        'lib/src/parser.pyx'])
+ext_modules  = Extension('pulsar.lib._pulsar', ['lib/http-parser/http_parser.c',
+                                                'lib/src/parser.pyx'])
+
+
+base_path = os.path.split(os.path.abspath(__file__))[0]
+include_dirs = [os.path.join(base_path,'http-parser'),
+                os.path.join(base_path,'src')]
 
 libparams = {
              'ext_modules': [ext_modules],
              'cmdclass': {'build_ext' : build_ext},
-             'include_dirs': [SRC_DIR]
+             'include_dirs': include_dirs
              }
