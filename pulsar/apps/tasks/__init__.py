@@ -136,10 +136,10 @@ responsability to the :attr:`pulsar.apps.tasks.TaskQueue.scheduler`
         with task.consumer(self,worker,job) as consumer:
             task.on_start(worker)
             task.result = job(consumer, *task.args, **task.kwargs)
-        return task, task.result
+        return task
 
-    def end_event_task(self, worker, task, result):
-        task.on_finish(worker, result = result)
+    def end_event_task(self, worker, task):
+        task.on_finish(worker, result = task.result)
             
     def task_finished(self, response):
         response._on_finish()

@@ -14,7 +14,8 @@ from pulsar.utils import system
 __all__ = ['Worker',
            'Application',
            'ApplicationMonitor',
-           'require']
+           'require',
+           'ResponseError']
 
 
 def require(appname):
@@ -27,6 +28,14 @@ def require(appname):
     mod = import_module(module)
     return mod
 
+
+class ResponseError(pulsar.PulsarException):
+    
+    def __init__(self, request, e):
+        self.request = request
+        self.exception = e
+        
+        
 
 class Worker(pulsar.Actor):
     """\
@@ -118,15 +127,15 @@ After obtaining the result from the
         try:
             response = self.app.handle_event_task(self, request)
         except Exception as e:
-            response = e
+            response = ResponseError(request,e)
         self.end_task(response)
     
     def end_task(self, response):
         '''Handle the response from the#
 :meth:`Application.handle_event_task` method in an asyncronous fascion.'''
-        if not isinstance(response,Exception):
+        if not isinstance(response,ResponseError):
             if is_async(response):
-                if result.called:
+                if response.called:
                     response = response.result
                 else:
                     return self.ioloop.add_callback(\

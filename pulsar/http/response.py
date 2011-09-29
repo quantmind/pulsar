@@ -79,5 +79,3 @@ class HttpResponse(Deferred):
             callback = lambda : self.write_chunk(data)
             self.stream.write(data, callback)
             
-    def write_chunk(self, ):
-        

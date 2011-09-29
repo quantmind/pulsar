@@ -39,13 +39,7 @@ def make_async(val = None):
 :rtype: an instance of :class:`pulsar.Deferred`.'''
     if not is_async(val):
         if isgenerator(val):
-            d = make_async() 
-            for v in val:
-                if is_async(v):
-                    dv = make_async(v)
-                else:
-                    d.add_callback(async_value(v))
-            return d
+            return DeferredGenerator(val)
         else:
             d = Deferred()
             d.callback(val)
@@ -171,14 +165,28 @@ the result of the callback.
             return self.result
 
     
-class ObjectCallback(object):
-    __slots__ = ('o',)
-    def __init__(self, o):
-        self.o = o
+class DeferredGenerator(Deferred):
     
-    def __call__(self, result):
-        self.o.callback(result)
-        return self.o.result
+    def __init__(self, gen):
+        self.gen = gen
+        self._generator_results = []
+        super(DeferredGenerator,self).__init__()
+        self.consume()
         
-    
+    def consume(self):
+        while True:
+            try:
+                result = next(self.gen)
+            except StopIteration:
+                break
+            else:
+                d = make_async(result)
+                if d.called:
+                    self._generator_results.append(d.result)
+                else:
+                    return
+        self.callback(self._generator_results)
+                
+        
+        
 

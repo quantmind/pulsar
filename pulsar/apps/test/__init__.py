@@ -74,25 +74,11 @@ is a group of tests specified in a test class.'''
             monitor.task_queue.put(test)
             
     def handle_event_task(self, worker, testcls):
-        return pulsar.make_async(run_test_case(worker,testcls))            
-        
-    def __worker_start(self, worker):
-        try:
-            cfg = self.cfg
-            suite =  TestLoader(cfg.labels, cfg.test_type,
-                                self.extractors).load(worker)
-            verbosity = TestVerbosity(self.loglevel)
-            if self.loglevel is not None:
-                stream = StreamLogger(worker.log)
-                producer = TextTestRunner(stream = stream,
-                                          verbosity = verbosity)
-            else:
-                producer = TextTestRunner(verbosity = verbosity)
-            self.producer = producer.run(suite)
-            self.producers = []
-        except Exception as e:
-            raise e.__class__('Could not start tests. {0}'.format(e),
-                                exc_info = True)
+        test = AsyncTest(worker,testcls)
+        return pulsar.make_async(run_test_case(worker,testcls))
+    
+    def end_event_task(self, worker, result):
+        pass
     
     def __worker_task(self, worker):
         while self.producer:

@@ -1,24 +1,73 @@
+import sys
 import unittest
 
+import pulsar
 
-def run_test_case(worker,testcls):
-    loader = unittest.TestLoader()
-    test = testcls()
-    init = getattr(test,'initTests',None)
-    end = getattr(test,'endTests',None)
-    if init:
-        yield init()
-    for name in loader.getTestCaseNames(test):
-        func = getattr(tes,name)
-        let = unittest.FunctionTestCase(func,
-                                        test.setUp,
-                                        test.tearDown)
-        result = let.run()
-        yield result
-    if end:
-        yield end()
+class AsyncTest(pulsar.Deferred):
+    
+    def __init__(self, worker, testcls):
+        loader = unittest.TestLoader()
+        self.tests = testcls()
+        self.test_results = tests.defaultTestResult()
+        
+    def response(self):
+        init = getattr(self.tests,'initTests',None)
+        end = getattr(self.tests,'endTests',None)
+        if init:
+            yield init()
+        for name in loader.getTestCaseNames(tests):
+            func = getattr(tests,name)
+            test = unittest.FunctionTestCase(func,
+                                             tests.setUp,
+                                             tests.tearDown)
+            yield run_test(test,result)
+        if end:
+            yield end()
 
 
+def run_test(self, result):
+    result.startTest(self)
+
+    testMethod = getattr(self, self._testMethodName)
+    if (getattr(self.__class__, "__unittest_skip__", False) or
+        getattr(testMethod, "__unittest_skip__", False)):
+        # If the class or method was skipped.
+        try:
+            skip_why = (getattr(self.__class__, '__unittest_skip_why__', '')
+                        or getattr(testMethod, '__unittest_skip_why__', ''))
+            self._addSkip(result, skip_why)
+        finally:
+            result.stopTest(self)
+        raise StopIteration
+    try:
+        try:
+            yield self.setUp()
+        except:
+            result.addError(self, sys.exc_info())
+            return
+
+        ok = False
+        try:
+            yield testMethod()
+            ok = True
+        except self.failureException:
+            result.addFailure(self, sys.exc_info())
+        except KeyboardInterrupt:
+            raise
+        except:
+            result.addError(self, sys.exc_info())
+
+        try:
+            yield self.tearDown()
+        except:
+            result.addError(self, sys.exc_info())
+            ok = False
+        if ok:
+            result.addSuccess(self)
+    finally:
+        result.stopTest(self)
+    
+    
 class TestCase(unittest.TestCase):
     '''A specialised test case which offers three
 additional functions: i) `initTest` and ii) `endTests`,
