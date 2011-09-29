@@ -1,8 +1,7 @@
 import sys
 import inspect
 
-from pulsar import make_async
-from pulsar.http.wsgi import PulsarWsgiHandler
+from pulsar import make_async, net
 from pulsar.utils.tools import checkarity
 
 from .exceptions import NoSuchFunction, InvalidParams, InternalError
@@ -125,7 +124,7 @@ Add a limited ammount of magic to RPC handlers.'''
 BaseHandler = MetaRpcHandler('BaseRpcHandler',(object,),{'virtual':True})
 
 
-class RpcHandler(BaseHandler,PulsarWsgiHandler):
+class RpcHandler(BaseHandler,net.WsgiHandler):
     '''A WSGI RPC server handler.
 Sub-handlers for prefixed methods (e.g., system.listMethods)
 can be added with putSubHandler. By default, prefixes are

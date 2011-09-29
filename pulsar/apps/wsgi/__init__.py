@@ -11,11 +11,9 @@ import errno
 import socket
 
 import pulsar
-from pulsar.http import HttpResponse
-from pulsar.http.utils import write_nonblock, write_error, close
+from pulsar.net import HttpResponse
 
-from . import config
-from .http import *
+from .handlers import *
 
 
 class WSGIApplication(pulsar.Application):
@@ -52,56 +50,23 @@ parameters.'''
                                       handler,
                                       worker.ioloop.READ)
         
-    def handle_event_task(self, worker, request):
-        request.handle()
+    def handle_request(self, worker, request):
         environ = request.wsgi_environ()
         if not environ:
-            # Not done yet
-            return request
-        else:
-            cfg = worker.cfg
-            mt = cfg.concurrency == 'thread' and cfg.workers > 1
-            mp = cfg.concurrency == 'process' and cfg.workers > 1
-            environ.update({"pulsar.worker": worker,
-                            "wsgi.multithread": mt,
-                            "wsgi.multiprocess": mp})
-            response = HttpResponse(request)
-            data = worker.app_handler(environ, response.start_response)
-            if data is not None:
-                response.write(data)
-            return response
-    
-    def end_event_task(self, worker, response):
-        response.force_close()
-        return response
-        try:
-            return response, worker.app_handler(environ,
-                                                response.start_response)
-        except socket.error as e:
-            if e[0] != errno.EPIPE:
-                worker.log.exception("Error processing request.")
-            else:
-                worker.log.debug("Ignoring EPIPE")
-            return response,None
-        except Exception as e:
-            worker.log.error("Error processing request: {0}".format(e),
-                             exc_info = sys.exc_info())
-            if not worker.debug:
-                msg = "HTTP/1.1 500 Internal Server Error\r\n\r\n"
-            else:
-                msg = traceback.format_exc()
-            return response,[msg]
-
-    def _end_event_task(self, worker, response, result):
-        try:
-            if result:
-                for item in result:
-                    response.write(item)
-            response.close()
-        except socket.error as e:
-            worker.log.error("Error processing request: {0}".format(e))
-        finally:    
-            close(response.client_sock)
+            yield request.on_headers
+            environ = request.wsgi_environ()
+        cfg = worker.cfg
+        mt = cfg.concurrency == 'thread' and cfg.workers > 1
+        mp = cfg.concurrency == 'process' and cfg.workers > 1
+        environ.update({"pulsar.worker": worker,
+                        "wsgi.multithread": mt,
+                        "wsgi.multiprocess": mp})
+        # Create the response object
+        response = HttpResponse(request)
+        data = worker.app_handler(environ, response.start_response)
+        yield response.write(data)
+        yield response.close()
+        yield response
             
     def monitor_start(self, monitor):
         '''If the concurrency model is thread, a new handler is

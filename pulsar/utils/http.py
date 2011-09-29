@@ -8,7 +8,8 @@ __all__ = ['urlparse',
            'Headers',
            'bytes_to_str',
            'is_hoppish',
-           'http_date']
+           'http_date',
+           'to_string']
 
 
 weekdayname = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
@@ -28,11 +29,21 @@ if ispy3k:
     def bytes_to_str(b):
         return str(b, 'latin1')
     
+    def to_string(data):
+        if isinstance(data, bytes):
+            return str(b, 'latin1')
+        elif not isinstance(data,str):
+            return str(data)
+        return data
+    
 else:
     from urlparse import urlparse, unquote, urlsplit
     
     def bytes_to_str(b):
         return b
+    
+    def to_string(data):
+        return str(data)
 
     
 def is_hoppish(header):

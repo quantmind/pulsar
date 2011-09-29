@@ -5,12 +5,6 @@ import signal
 from multiprocessing.queues import Empty
 from threading import Lock
 
-try:
-    import queue
-except ImportError:
-    import Queue as queue
-ThreadQueue = queue.Queue
-
 import pulsar
 from pulsar.utils import system
 from pulsar.utils.tools import Pidfile
@@ -18,9 +12,10 @@ from pulsar.utils.py2py3 import itervalues
 
 from .monitor import ActorPool
 from .proxy import ActorCallBacks
+from .defer import ThreadQueue
 
 
-__all__ = ['arbiter','spawn','ThreadQueue','Arbiter']
+__all__ = ['arbiter','spawn','Arbiter']
 
 
 def arbiter(daemonize = False):

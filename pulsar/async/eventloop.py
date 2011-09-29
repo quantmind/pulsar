@@ -160,39 +160,8 @@ file descriptor *fd*.
         try:
             self._impl.unregister(fdd)
         except (OSError, IOError):
-            self.log.debug("Error deleting {0} from IOLoop".format(fd), exc_info=True)
-
-    def set_blocking_signal_threshold(self, seconds, action):
-        """Sends a signal if the ioloop is blocked for more than *seconds*.
-
-:parameter seconds: the timeout, pass ``None`` to disable.
-:parameter action: A python signal handler.  Read the documentation for the
-    python 'signal' module for more information. If action is None,
-    the process will be killed if it is blocked for too long.
-"""
-        if not hasattr(signal, "setitimer"):
-            self.log.error("set_blocking_signal_threshold requires a\
- signal module with the setitimer method")
-            return
-        self._blocking_signal_threshold = seconds
-        if seconds is not None:
-            signal.signal(signal.SIGALRM,
-                          action if action is not None else signal.SIG_DFL)
-
-    def set_blocking_log_threshold(self, seconds):
-        """Logs a stack trace if the ioloop is blocked for more than s seconds.
-        Equivalent to set_blocking_signal_threshold(seconds, self.log_stack)
-        """
-        self.set_blocking_signal_threshold(seconds, self.log_stack)
-
-    def log_stack(self, signal, frame):
-        """Signal handler to log the stack trace of the current thread.
-
-        For use with set_blocking_signal_threshold.
-        """
-        logging.warning('IOLoop blocked for %f seconds in\n%s',
-                        self._blocking_signal_threshold,
-                        ''.join(traceback.format_stack(frame)))
+            self.log.error("Error deleting {0} from IOLoop"\
+                           .format(fd), exc_info=True)
 
     @threadsafe
     def _startup(self):

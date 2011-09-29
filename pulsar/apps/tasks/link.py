@@ -1,6 +1,6 @@
 import functools
 
-from pulsar.http import Remotecall, HttpActorManager
+from pulsar.net import Remotecall, HttpActorManager
 
 from .exceptions import TaskQueueException
 

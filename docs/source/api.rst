@@ -89,6 +89,27 @@ Application Monitor
 Asyncronous Tools
 =====================
 
+Make Async
+~~~~~~~~~~~~~~~~~
+
+.. autofunction:: make_async
+
+
+Deferred
+~~~~~~~~~~~~~~~~~~~~
+
+.. autoclass:: Deferred
+   :members:
+   :member-order: bysource
+   
+
+Deferred Generator
+~~~~~~~~~~~~~~~~~~~~~~
+
+.. autoclass:: DeferredGenerator
+   :members:
+   :member-order: bysource
+   
 IOLoop
 ~~~~~~~~~~~~~~~~~~~~
 

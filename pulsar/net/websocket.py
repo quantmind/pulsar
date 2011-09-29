@@ -24,13 +24,13 @@ import time
 import pulsar
 from pulsar.utils.py2py3 import ispy3k, to_bytestring, BytesIO
 
-from .wsgi import PulsarWsgiHandler, Request
+from .wsgi import WsgiHandler, WsgiRequest
 
 
 __all__ = ['WebSocketRequest','WebSocket']
 
 
-class WebSocketRequest(Request):
+class WebSocketRequest(WsgiRequest):
     """A single WebSocket request.
 
     This class provides basic functionality to process WebSockets requests as
@@ -144,7 +144,7 @@ class WS(object):
         pass
 
 
-class WebSocket(PulsarWsgiHandler):
+class WebSocket(WsgiHandler):
     """Subclass this class to create a basic WebSocket handler.
 
     Override on_message to handle incoming messages. You can also override

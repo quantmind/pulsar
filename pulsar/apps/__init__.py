@@ -3,9 +3,11 @@ import os
 import sys
 import traceback
 import random
+from inspect import isgenerator
 
 import pulsar
-from pulsar import Empty, is_async
+from pulsar import Empty, is_async, make_async, DeferredGenerator,\
+                     is_stack_trace
 from pulsar.utils.py2py3 import execfile
 from pulsar.utils.importer import import_module
 from pulsar.utils import system
@@ -104,11 +106,20 @@ and perform several post fork processing before starting the event loop.'''
             if self.cfg:
                 system.set_owner_process(self.cfg.uid, self.cfg.gid)
         if self.cfg.post_fork:
-            self.cfg.post_fork(self)       
-        
-    def handle_task(self, request):
+            self.cfg.post_fork(self)
+            
+    def maybe_async(self, func, response):
+        response = func(response)
+        if is_async(response):
+            if response.called:
+                response = response.result
+            else:
+                return self.ioloop.add_callback(lambda : func(response))
+        return response
+                
+    def handle_request(self, request):
         '''Handle a request. This is a high level function which
-performs some preprocessing of *request* and delegates the actual
+performs some pre-processing of *request* and delegates the actual
 implementation to :meth:`Application.handle_event_task` method.
 
 :parameter request: A request instance which is application specific.
@@ -122,34 +133,44 @@ After obtaining the result from the
             self.cfg.pre_request(self, request)
         except Exception:
             pass
-        if hasattr(request,'set_actor'):
-            request.set_actor(self)
+        #if hasattr(request,'set_actor'):
+        #    request.set_actor(self)
         try:
-            response = self.app.handle_event_task(self, request)
+            response = self.app.handle_request(self, request)
         except Exception as e:
+            self.log.critical("Error processing request: {0}".format(e),
+                              exc_info = True)
             response = ResponseError(request,e)
-        self.end_task(response)
+        self.handle_response(response)
     
-    def end_task(self, response):
-        '''Handle the response from the#
-:meth:`Application.handle_event_task` method in an asyncronous fascion.'''
-        if not isinstance(response,ResponseError):
-            if is_async(response):
-                if response.called:
-                    response = response.result
-                else:
-                    return self.ioloop.add_callback(\
-                            lambda : self.end_task(response))
-        try:
-            self.app.end_event_task(self, response)
-        except Exception as e:
-            self.log.critical('Handled exception : {0}'.\
-                              format(e),exc_info = sys.exc_info())
-        finally:
+    def handle_response(self, response):
+        '''Handle the response from the
+:meth:`Application.handle_request` method in an asynchronous fashion.'''
+        response = make_async(response, self.ioloop)
+        if response.called:
+            response = response.result
+        else:
+            return self.ioloop.add_callback(\
+                        lambda : self.handle_response(response))
+        
+        # if we are here means we are done with response from server
+        if is_stack_trace(response):
+            self.log.critical('Handled exception in handling response',
+                              exc_info = response)
             try:
-                self.cfg.post_request(self, request)
+                self.app.handle_response(self, response)
             except:
                 pass
+        else:
+            try:
+                self.app.handle_response(self, response)
+            except Exception as e:
+                self.log.critical('Handled exception : {0}'.format(e),
+                                  exc_info = True)
+        try:
+            self.cfg.post_request(self, request)
+        except:
+            pass
     
     def configure_logging(self, **kwargs):
         #switch off configure logging. Done by self.app
@@ -294,6 +315,22 @@ its duties.
     def name(self):
         '''Application name, It is unique and defines the application.'''
         return self._name
+    
+    def handle_request(self, worker, request):
+        '''This is the main function which needs to be implemented
+by actual applications. It is called by the :class:`Worker` *worker* to handle
+a *request*.
+
+:parameter worker: the :class:`Worker` handling the request
+:parameter request: an application specific request object.
+:rtype: It can be a generator, a :class:`pulsar.Deferred` instance
+    or the actual response which will be passed to the
+    :meth:`pulsar.Application.handle_response` method.'''
+        raise NotImplementedError
+    
+    def handle_response(self, worker, response):
+        '''Handle the response once the request handling has finished.'''
+        pass
     
     def get_task_queue(self):
         '''Build the task queue for the application.
@@ -467,7 +504,7 @@ it is processed by the :meth:`Worker.handle_task` method.'''
                 return
             except IOError:
                 return
-            worker.handle_task(request)
+            worker.handle_request(request)
             
     def worker_stop(self, worker):
         '''Called by the :class:`Worker` just after stopping.'''
@@ -493,15 +530,6 @@ it is processed by the :meth:`Worker.handle_task` method.'''
     
     def monitor_exit(self, monitor):
         '''Callback by :class:`ApplicationMonitor` at each event loop'''
-        pass
-    
-    def handle_event_task(self, worker, request):
-        '''And a task event. Called by the worker to perform the\
- application task.'''
-        raise NotImplementedError
-    
-    def end_event_task(self, worker, response):
-        ''''''
         pass
     
     def start(self):

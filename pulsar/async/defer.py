@@ -4,42 +4,55 @@ A lightweight deferred module inspired by twisted.
 import sys
 from inspect import isgenerator
 from time import sleep
+try:
+    import queue
+except ImportError:
+    import Queue as queue
+ThreadQueue = queue.Queue
 
 from pulsar import AlreadyCalledError
+from pulsar.utils.mixins import Synchronized
 
 
 __all__ = ['Deferred',
+           'DeferredGenerator',
+           'is_stack_trace',
            'async',
            'is_async',
+           'async_func_call',
            'make_async',
-           'make_deferred',
-           'simple_callback']
+           'simple_callback',
+           'ThreadQueue']
 
 
+def is_stack_trace(data):
+    if isinstance(data,tuple) and len(data) == 3:
+        return True
+    return False
+    
 def is_async(obj):
     return isinstance(obj,Deferred)
 
-async_value = lambda value : lambda result : value 
 
-
-def make_deferred(val = None):
-    '''Make *val* into an asynchronous deferred instance.'''
-    if not is_async(val):
-        d = Deferred()
-        d.callback(val)
-        return d
+def async_func_call(func, result, *args, **kwargs):
+    callback = lambda : func(*args,**kwargs)
+    if is_async(result):
+        return result.add_callback(callback)
     else:
-        return val
+        return callback()
+
+async_value = lambda value : lambda result : value 
     
 
-def make_async(val = None):
+def make_async(val = None, ioloop = None):
     '''Convert *val* into an asyncronous object which accept callbacks.
 
 :parameter val: can be a generator or any other value.
-:rtype: an instance of :class:`pulsar.Deferred`.'''
+:parameter ioloop: optional :class:`IOLoop` instance where to run callbacks
+:rtype: a :class:`Deferred` instance.'''
     if not is_async(val):
         if isgenerator(val):
-            return DeferredGenerator(val)
+            return DeferredGenerator(val,ioloop).start()
         else:
             d = Deferred()
             d.callback(val)
@@ -72,14 +85,12 @@ def async(o, *args, **kwargs):
         return make_async(o)
 
 
-class Deferred(object):
-    """
-    This is a callback which will be put off until later. The idea is the same
-    as twisted.defer.Deferred object.
+class Deferred(Synchronized):
+    """This is a callback which will be put off until later. The idea is the same
+as the ``twisted.defer.Deferred`` object.
 
-    Use this class to return from functions which otherwise would block the
-    program execution. Instead, it should return a Deferred.
-    """
+Use this class to return from functions which otherwise would block the
+program execution. Instead, it should return a Deferred."""
     def __init__(self, rid = None):
         self._called = False
         self.paused = 0
@@ -110,8 +121,8 @@ class Deferred(object):
             self._run_callbacks()
     
     def add_callback(self, callback):
-        """Add a callback as a callable function. The function takes one argument,
-the result of the callback.
+        """Add a callback as a callable function.
+The function takes at most one argument, the result of the callback.
         """
         self._callbacks.append(callback)
         self._run_callbacks()
@@ -145,7 +156,7 @@ the result of the callback.
         self.result = result
         self.unpause()
     
-    def callback(self, result):
+    def callback(self, result = None):
         if isinstance(result,Deferred):
             raise ValueError('Received a deferred instance from\
  callback function')
@@ -166,27 +177,60 @@ the result of the callback.
 
     
 class DeferredGenerator(Deferred):
-    
-    def __init__(self, gen):
+    '''Transform a generator into a deferred generator.
+It is preferred to use the :func:`make_async` function rather than
+invoking directly the constructor.'''
+    def __init__(self, gen, ioloop = None):
         self.gen = gen
-        self._generator_results = []
+        self.ioloop = ioloop
         super(DeferredGenerator,self).__init__()
-        self.consume()
         
-    def consume(self):
+    def start(self):
+        if hasattr(self,'_consumed'):
+            raise AlreadyCalledError('A deferred generator can only start once')
+        self._consumed = 0
+        self._results = []
+        self._errors = []
+        return self._consume()
+    
+    @Synchronized.make
+    def next(self):
+        return next(self.gen)
+    
+    def _consume(self):
         while True:
             try:
-                result = next(self.gen)
+                result = self.next()
+                self._consumed += 1
             except StopIteration:
                 break
+            except Exception as e:
+                self._errors.append(sys.exc_info())
             else:
                 d = make_async(result)
                 if d.called:
-                    self._generator_results.append(d.result)
+                    self._results.append(d.result)
                 else:
-                    return
-        self.callback(self._generator_results)
-                
+                    return d.add_callback(self._resume)
+        if self._errors:
+            #TODO, merge stack traces
+            self.callback(self._errors[0])
+        else:
+            self.callback(self._results)
+        return self
+    
+    def _resume(self, result):
+        '''This callback may be called by a different thread'''
+        if is_stack_trace(result):
+            self._errors.append(result)
+        else:
+            self._results.append(result)
+        # if event loop available, run callback in it
+        if self.ioloop:
+            self.ioloop.add_callback(self._consume)
+        else:
+            self._consume()
+            
         
         
 

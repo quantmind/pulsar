@@ -323,7 +323,7 @@ class HttpParser(object):
         else:
             self._chunked = (te == 'chunked')
             if not self._chunked:
-                self._clen_rest = sys.maxint
+                self._clen_rest = sys.maxsize
 
         # detect encoding and set decompress object 
         encoding = self._headers.get('content-encoding')

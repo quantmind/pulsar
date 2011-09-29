@@ -76,7 +76,6 @@ is_string = lambda x : isinstance(x,string_type)
 is_bytes_or_string = lambda x : isinstance(x,string_type) or isinstance(x,bytes)
 
 
-
 def to_bytestring(s, encoding=UTF8, errors='strict'):
     """Returns a bytestring version of 's',
 encoded as specified in 'encoding'."""

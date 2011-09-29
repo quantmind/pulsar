@@ -11,7 +11,7 @@ import random
 import time
 
 import pulsar
-from pulsar import http
+from pulsar import net
 from pulsar.utils.py2py3 import range
 
 
@@ -33,7 +33,7 @@ class handle(object):
                 request.send("0 %s %s\n" % (i, random.random()))
 
 
-wsapp = http.WebSocket(handler = handle)
+wsapp = net.WebSocket(handler = handle)
 
 
 def app(environ, start_response):

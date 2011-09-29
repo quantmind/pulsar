@@ -6,7 +6,7 @@ import pulsar
 from pulsar.utils.py2py3 import iteritems, itervalues
 
 from .actor import Actor
-from .defer import make_deferred, Deferred, is_async
+from .defer import make_async, Deferred, is_async
 from .proxy import ActorCallBacks
 
 
@@ -150,7 +150,7 @@ all actors managed by ``self``.'''
         return self.arbiter.ioloop
     
     def _stop_ioloop(self):
-        return make_deferred()
+        return make_async()
     
     def _run(self):
         pass

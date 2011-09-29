@@ -25,7 +25,7 @@ class ConnectionError(PulsarInternetException):
     pass
     
 class AlreadyCalledError(PulsarException):
-    '''Raised when a Deferred instance receives more than une callback'''
+    '''Raised when a Deferred instance receives more than one callback'''
 
 class AlreadyRegistered(PulsarException):
     pass
@@ -39,3 +39,7 @@ class BadHttpRequest(PulsarInternetException):
     def __init__(self, status = None, reason = ''):
         self.status = status or self.status
         super(BadHttpRequest,self).__init__(reason)
+        
+        
+class BadHttpResponse(BadHttpRequest):
+    pass
