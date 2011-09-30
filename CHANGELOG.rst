@@ -1,5 +1,6 @@
 Version Master
 =======================================
+* Create the :mod:`net` module for socket and stream primitive.
 * Added a windows service wrapper class for using pulsar with windows services.
 * Removed the `worker` module.
 * Moved `http.rpc` module to `apps`.

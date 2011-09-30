@@ -1,6 +1,9 @@
 
 class PulsarException(Exception):
     '''base class of all Pulsar Exception'''
+    
+class Timeout(PulsarException):
+    '''Raised when a timeout occurs'''
 
 class ImproperlyConfigured(PulsarException):
     '''A :class:`PulsarException` raised when pulsar has inconsistent

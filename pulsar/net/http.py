@@ -172,6 +172,7 @@ class HttpResponse(TcpResponse):
         self.on_headers = Deferred() # callback when headers are sent
         #
         # Internal flags
+        self.__clength = None
         self.__should_keep_alive = self.request.should_keep_alive
         self.__status = None
         self.__headers_sent = False
@@ -187,7 +188,7 @@ class HttpResponse(TcpResponse):
     def is_chunked(self):
         '''Only use chunked responses when the client is
 speaking HTTP/1.1 or newer and there was no Content-Length header set.'''
-        if self.clength is not None:
+        if self.__clength is not None:
             return False
         elif self.request.version <= (1,0):
             return False
@@ -252,7 +253,7 @@ for the server as a whole.
     def write(self, data):
         '''WSGI Compliant write function returned by the
 :meth:`HttpResponse.start_response` function.'''
-        return make_async(self.generate_data(data),self.stream.ioloop)
+        return make_async(self.generate_data(data)).start(self.stream.ioloop)
     
     def _write(self, data, callback = None):
         data = to_bytestring(data)
@@ -263,7 +264,7 @@ for the server as a whole.
             name = to_string(name).lower().strip()
             value = to_string(value).lower().strip()
             if name == "content-length":
-                self.clength = int(value)
+                self.__clength = int(value)
             elif is_hoppish(name):
                 if lname == "connection":
                     # handle websocket
@@ -276,24 +277,20 @@ for the server as a whole.
             
     def default_headers(self):
         connection = "keep-alive" if self.should_keep_alive else "close"
-        headers = [
-            "HTTP/{0}.{1} {2}\r\n".format(self.req.version[0],\
-                                       self.req.version[1], self.status),
-            "Server: %s\r\n" % self.version,
-            "Date: %s\r\n" % http_date(),
-            "Connection: %s\r\n" % connection
-        ]
+        headers = Headers((('Server',self.version),
+                           ('date', http_date()),
+                           ('connection', connection)))
         if self.is_chunked():
-            headers.append("Transfer-Encoding: chunked\r\n")
+            headers['Transfer-Encoding'] = 'chunked'
         return headers
     
     def send_headers(self):
         if not self.__headers_sent:
             tosend = self.default_headers()
-            tosend.extend(["%s: %s\r\n" % (n, v) for n, v in self.headers])
-            data = '{0}\r\n'.format(''.join(tosend))
-            self.__headers_sent = True
-            self._write(data, self.on_headers.callback)
+            tosend.extend(self.headers)
+            data = tosend.flat(self.request.version,self.status)
+            self.__headers_sent = data
+            self._write(data, self.on_headers)
         return self.on_headers
         
     def generate_data(self, data):
@@ -303,5 +300,6 @@ for the server as a whole.
             yield write(elem)
         
     def on_close(self):
-        self.send_headers()
+        if self.__status:
+            self.send_headers()
     

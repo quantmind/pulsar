@@ -79,15 +79,9 @@ class Headers(object):
         values.
         """
         if isinstance(iterable, dict):
-            for key, value in iteritems(iterable):
-                if isinstance(value, (tuple, list)):
-                    for v in value:
-                        self.add(key, v)
-                else:
-                    self.add(key, value)
-        else:
-            for key, value in iterable:
-                self.add(key, value)
+            iterable = iteritems(iterable)
+        for key, value in iterable:
+            self.__setitem__(key, value)
                 
     def __iter__(self):
         d = self._dict
@@ -118,4 +112,10 @@ class Headers(object):
             return self.__getitem__(key)
         except KeyError:
             return default
+        
+    def flat(self, version, status):
+        vs = version + (status,)
+        h = 'HTTP/{0}.{1} {2}'.format(*vs) 
+        f = ''.join(("%s: %s\r\n" % (n, v) for n, v in self))
+        return '{0}\r\n{1}\r\n'.format(h,f)
         

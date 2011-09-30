@@ -5,6 +5,7 @@ import socket
 from collections import deque
 
 from pulsar import Deferred
+from pulsar import is_async
 
 iologger = logging.getLogger('pulsar.iostream')
 
@@ -14,12 +15,27 @@ MAX_BODY = 1024 * 128
 __all__ = ['IOStream','AsyncIOStream']
 
 
+def make_callback(callback):
+    if is_async(callback):
+        return callback
+    d = Deferred()
+    if not callback:
+        callback = d.callback
+    else:
+        d.add_callback(callback)
+    return d
+
+
 class IOStream(object):
     '''An utility class to write to and read from a blocking socket.
 It is also used as base class for :class:`AsyncIOStream` its
-asyncronous equivalent.
+asynchronous equivalent counterpart.
 
-We support ``write`` and a ``read`` methods.
+It supports :meth:`write` and :meth:`read` operations with `callbacks` which
+can be used to act when data has just been sent or has just been received.
+
+This class was originally forked from tornado_ IOStream and subsequently
+manipulated and adapted to pulsar :ref:`concurrent framework <design>`.
 
 :parameter socket: Optional socket which may either be connected or unconnected.
     If not supplied a new socket is created.
@@ -27,10 +43,10 @@ We support ``write`` and a ``read`` methods.
     :meth:`on_init` callback.
 '''
     
-    def __init__(self, socket = None, max_buffer_size=None,
-                 read_chunk_size = None, family = None,
-                 actor = None, **kwargs):
-        self.socket = self.get_socket(socket,family)
+    def __init__(self, socket, max_buffer_size=None,
+                 read_chunk_size = None, actor = None,
+                 **kwargs):
+        self.socket = socket
         self.socket.setblocking(self.blocking())
         self.max_buffer_size = max_buffer_size or 104857600
         self.read_chunk_size = read_chunk_size or io.DEFAULT_BUFFER_SIZE
@@ -70,9 +86,6 @@ We support ``write`` and a ``read`` methods.
         '''Boolean indication if the socket is blocking.'''
         return True
     
-    def wrap(self, callback):
-        return callback
-    
     def on_init(self, kwargs):
         '''Called at initialization. Override if you need to.'''
         pass
@@ -83,36 +96,45 @@ We support ``write`` and a ``read`` methods.
         
     def read(self, callback = None):
         """Reads data from the socket.
-The callback will be called with chunks of data as they become available."""
+The callback will be called with chunks of data as they become available.
+If no callback is provided, the callback of the returned deferred instance
+will be used.
+
+:parameter callback: Optional callback function with arity 1.
+:rtype: a :class:`pulsar.Deferred` instance.
+
+One common pattern of usage::
+
+    def parse(data):
+        ...
+        
+    io = IOStream(socket = sock)
+    io.read().add_callback(parse)
+    
+"""
         assert not self._read_callback, "Already reading"
-        if not callback:
-            d = Deferred()
-            callback = d.callback
-        else:
-            d = None
+        d = make_callback(callback)
         if self.closed():
-            self._run_callback(callback, self._get_buffer())
+            self._run_callback(d.callback, self._get_buffer())
             return
-        self._read_callback = self.wrap(callback)
+        self._read_callback = d.callback
         self.on_read()
         return d
         
     def write(self, data, callback=None):
-        """Write the given data to this stream.
+        """Write the given data to this stream. If callback is given,
+we call it when all of the buffered write data has been successfully
+written to the stream. If there was previously buffered write data and
+an old write callback, that callback is simply overwritten with
+this new callback.
 
-        If callback is given, we call it when all of the buffered write
-        data has been successfully written to the stream. If there was
-        previously buffered write data and an old write callback, that
-        callback is simply overwritten with this new callback.
+:parameter callback: Optional callback function with arity 0.
+:rtype: a :class:`pulsar.Deferred` instance.
         """
         self._check_closed()
         self._write_buffer.append(data)
-        if not callback:
-            d = Deferred()
-            callback = d.callback
-        else:
-            d = None
-        self._write_callback = callback
+        d = make_callback(callback)
+        self._write_callback = d.callback
         self.on_write()
         return d
     
@@ -237,24 +259,6 @@ On error closes the socket and raises an exception."""
         '''Size of the reading buffer'''
         return sum(len(chunk) for chunk in self._read_buffer)
     
-    def get_socket(self, fd, family = None):
-        if hasattr(fd,'fileno'):
-            return fd
-        
-        family = family or socket.AF_INET
-        if fd is None:
-            sock = socket.socket(family, socket.SOCK_STREAM)
-        else:
-            if hasattr(socket,'fromfd'):
-                sock = socket.fromfd(fd, family, socket.SOCK_STREAM)
-            else:
-                raise ValueError('Cannot create socket from file deascriptor.\
- Not implemented in your system')
-        if sock.family == socket.AF_INET:
-            sock.setsockopt(socket.IPPROTO_TCP, socket.TCP_NODELAY, 1)
-        sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-        return sock
-    
     ######################################################################
     ##    INTERNALS
     ######################################################################
@@ -350,37 +354,8 @@ On error closes the socket and raises an exception."""
         
         
 class AsyncIOStream(IOStream):
-    """A specialized :class:`pulsar.IOStream` class to write to and
+    """A specialized :class:`IOStream` class to write to and
 read from a non-blocking socket.
-
-    A very simple (and broken) HTTP client using this class:
-
-        from tornado import ioloop
-        from tornado import iostream
-        import socket
-
-        def send_request():
-            stream.write("GET / HTTP/1.0\r\nHost: friendfeed.com\r\n\r\n")
-            stream.read_until("\r\n\r\n", on_headers)
-
-        def on_headers(data):
-            headers = {}
-            for line in data.split("\r\n"):
-               parts = line.split(":")
-               if len(parts) == 2:
-                   headers[parts[0].strip()] = parts[1].strip()
-            stream.read_bytes(int(headers["Content-Length"]), on_body)
-
-        def on_body(data):
-            print data
-            stream.close()
-            ioloop.IOLoop.instance().stop()
-
-        s = socket.socket(socket.AF_INET, socket.SOCK_STREAM, 0)
-        stream = iostream.IOStream(s)
-        stream.connect(("friendfeed.com", 80), send_request)
-        ioloop.IOLoop.instance().start()
-
     """
     def blocking(self):
         return False
@@ -417,6 +392,7 @@ read from a non-blocking socket.
             # In non-blocking mode connect() always raises an exception
             if e.args[0] not in (errno.EINPROGRESS, errno.EWOULDBLOCK):
                 raise
+        
         self._connect_callback = self.wrap(callback)
         self._add_io_state(self.ioloop.WRITE)
 

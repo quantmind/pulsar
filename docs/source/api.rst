@@ -6,6 +6,8 @@
 API
 ==================
 
+.. _api-actors:
+
 Actors
 =======================
 
@@ -59,32 +61,8 @@ ActorProxyMonitor
    :members:
    :member-order: bysource
    
-   
-Applications
-======================
 
-Application
-~~~~~~~~~~~~~~~~~
-
-.. autoclass:: pulsar.Application
-   :members:
-   :member-order: bysource
-   
-Application Worker
-~~~~~~~~~~~~~~~~~~~~~
-   
-.. autoclass:: pulsar.Worker
-   :members:
-   :member-order: bysource
-
-
-Application Monitor
-~~~~~~~~~~~~~~~~~~~~~
-   
-.. autoclass:: pulsar.ApplicationMonitor
-   :members:
-   :member-order: bysource
-
+.. _api-async-tools:
 
 Asyncronous Tools
 =====================
@@ -116,7 +94,79 @@ IOLoop
 .. autoclass:: pulsar.IOLoop
    :members:
    :member-order: bysource
+   
 
+.. _api-apps:
+
+Applications
+======================
+
+Application
+~~~~~~~~~~~~~~~~~
+
+.. autoclass:: pulsar.Application
+   :members:
+   :member-order: bysource
+   
+Application Worker
+~~~~~~~~~~~~~~~~~~~~~
+   
+.. autoclass:: pulsar.Worker
+   :members:
+   :member-order: bysource
+
+
+Application Monitor
+~~~~~~~~~~~~~~~~~~~~~
+   
+.. autoclass:: pulsar.ApplicationMonitor
+   :members:
+   :member-order: bysource
+
+
+.. _net:
+
+.. module:: pulsar.net
+
+Net
+========================
+
+Create Socket
+~~~~~~~~~~~~~~~~~~~~
+
+.. autofunction:: create_socket
+
+
+IOStream
+~~~~~~~~~~~~~~~~~
+
+.. autoclass:: IOStream
+   :members:
+   :member-order: bysource
+   
+AsyncIOStream
+~~~~~~~~~~~~~~~~~
+
+.. autoclass:: AsyncIOStream
+   :members:
+   :member-order: bysource
+   
+
+HttpRequest
+~~~~~~~~~~~~~~~~~~~~
+
+.. autoclass:: HttpRequest
+   :members:
+   :member-order: bysource
+   
+  
+HttpResponse
+~~~~~~~~~~~~~~~~~~~~
+
+.. autoclass:: HttpResponse
+   :members:
+   :member-order: bysource
+   
 
 Utilities
 ================
@@ -124,3 +174,5 @@ Utilities
 .. autoclass:: pulsar.utils.Middleware
    :members:
    :member-order: bysource
+   
+   

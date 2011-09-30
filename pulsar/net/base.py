@@ -14,11 +14,10 @@ def close_socket(sock):
             pass
 
 
-class NetStream(pulsar.Deferred):
+class NetStream(object):
     
     def __init__(self, stream, **kwargs):
         self.stream = stream
-        super(NetStream,self).__init__()
         self.on_init(kwargs)
     
     @property
@@ -54,15 +53,15 @@ create your own.'''
             return self.parsercls()
         
     
-class NetResponse(NetStream):
+class NetResponse(NetStream,pulsar.Response):
     '''A HTTP parser providing higher-level access to a readable,
 sequential io.RawIOBase object. You can use implementions of
 http_parser.reader (IterReader, StringReader, SocketReader) or 
 create your own.'''
-    def __init__(self, request = None, stream = None, **kwargs):
-        stream = stream or request.stream
-        self.request = request
+    def __init__(self, request, stream = None, **kwargs):
+        pulsar.Response.__init__(self,request)
+        stream = stream or self.request.stream
         self.version = pulsar.SERVER_SOFTWARE
-        super(NetResponse,self).__init__(stream, **kwargs)
+        NetStream.__init__(self, stream, **kwargs)
     
     

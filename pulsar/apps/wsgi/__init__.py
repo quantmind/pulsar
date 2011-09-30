@@ -5,13 +5,8 @@ web server gateway interface (WSGI).
 The application can be used in conjunction with several web frameworks
 as well as the pulsar RPC handler in :mod:`pulsar.apps.rpc`.
 '''
-import sys
-import traceback
-import errno
-import socket
-
 import pulsar
-from pulsar.net import HttpResponse
+from pulsar.net import HttpResponse, create_socket
 
 from .handlers import *
 
@@ -63,38 +58,46 @@ parameters.'''
                         "wsgi.multiprocess": mp})
         # Create the response object
         response = HttpResponse(request)
-        response.foce_close()
+        #response.force_close()
         data = worker.app_handler(environ, response.start_response)
         yield response.write(data)
-        #yield response.close()
         yield response
+        
+    def handle_response(self, worker, response):
+        if response.exception:
+            response = HttpResponse(response.request)
+        return response.close()
             
     def monitor_start(self, monitor):
         '''If the concurrency model is thread, a new handler is
 added to the monitor event loop which listen for requests on
 the socket.'''
-        # We have a task queue, This means the monitor itself listen for
-        # requests on the socket and delegate the handling to the
-        # workers
+        # First we create the socket we listen to
         address = self.cfg.address
         if address:
-            socket = pulsar.create_socket(address, log = monitor.log)
+            socket = create_socket(address, log = monitor.log,
+                                   backlog = self.cfg.backlog)
         else:
             raise pulsar.ImproperlyConfigured('\
  WSGI application with no address for socket')
         
+        # We have a task queue, This means the monitor itself listen for
+        # requests on the socket and delegate the handling to the
+        # workers
         if monitor.task_queue is not None:
             monitor.set_socket(socket)
             monitor.ioloop.add_handler(monitor.socket,
                                        HttpPoolHandler(monitor),
                                        monitor.ioloop.READ)
         else:
+            # The monitor won't listent to socket, the workers will.
             monitor.socket = socket
             
             
     def monitor_stop(self, monitor):
         if monitor.task_queue is not None:
             monitor.ioloop.remove_handler(monitor.socket)
+            monitor.socket.close(monitor.log)
 
 
 def createServer(callable = None, **params):

@@ -206,7 +206,7 @@ as required."""
         return worker
     
     def actorparams(self):
-        ''':rtype: a dictionary of parameters to be passed to the
+        '''Return a dictionary of parameters to be passed to the
 spawn method when creating new actors.'''
         return self._actor_params or {}
         

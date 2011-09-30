@@ -2,22 +2,23 @@
 A lightweight deferred module inspired by twisted.
 '''
 import sys
+from copy import copy
 from inspect import isgenerator
-from time import sleep
+from time import sleep, time
 try:
     import queue
 except ImportError:
     import Queue as queue
 ThreadQueue = queue.Queue
 
-from pulsar import AlreadyCalledError
+from pulsar import AlreadyCalledError, Timeout
 from pulsar.utils.mixins import Synchronized
 
 
 __all__ = ['Deferred',
+           'Failure',
            'DeferredGenerator',
            'is_stack_trace',
-           'async',
            'is_async',
            'async_func_call',
            'make_async',
@@ -25,10 +26,41 @@ __all__ = ['Deferred',
            'ThreadQueue']
 
 
+class Failure(object):
+    
+    def __init__(self, err = None):
+        if isinstance(err,self.__class__):
+            self.traces = copy(err.traces)
+        else:
+            self.traces = []
+            self.append(err)
+    
+    def append(self, trace):
+        if trace:
+            if isinstance(trace,self.__class__):
+                self.traces.extend(trace.traces)
+            else:
+                self.traces.append(trace)
+        return self
+            
+    def __len__(self):
+        return len(self.traces)
+    
+    def __iter__(self):
+        return iter(self.traces)
+    
+    def log(self, log):
+        for e in self:
+            log.critical('', exc_info = e)
+        
+        
 def is_stack_trace(data):
-    if isinstance(data,tuple) and len(data) == 3:
+    if isinstance(data,Failure):
+        return True
+    elif isinstance(data,tuple) and len(data) == 3:
         return True
     return False
+    
     
 def is_async(obj):
     return isinstance(obj,Deferred)
@@ -44,21 +76,20 @@ def async_func_call(func, result, *args, **kwargs):
 async_value = lambda value : lambda result : value 
     
 
-def make_async(val = None, ioloop = None):
+def make_async(val = None):
     '''Convert *val* into an asyncronous object which accept callbacks.
 
 :parameter val: can be a generator or any other value.
-:parameter ioloop: optional :class:`IOLoop` instance where to run callbacks
 :rtype: a :class:`Deferred` instance.'''
     if not is_async(val):
         if isgenerator(val):
-            return DeferredGenerator(val,ioloop).start()
+            return DeferredGenerator(val)
         else:
             d = Deferred()
             d.callback(val)
             return d
     else:
-        return val
+        return val 
 
 
 def simple_callback(func, *args, **kwargs):
@@ -73,18 +104,6 @@ result as argument. Raise exceptions if result is one.'''
     return _
 
 
-def async(o, *args, **kwargs):
-    '''Transform ``o`` into a Deferred instance'''       
-    if hasattr(o,'__call__'):
-        def _(*args, **kwargs):
-            res = o(*args, **kwargs)
-            return make_async(res)
-        
-        return _
-    else:
-        return make_async(o)
-
-
 class Deferred(Synchronized):
     """This is a callback which will be put off until later. The idea is the same
 as the ``twisted.defer.Deferred`` object.
@@ -95,6 +114,7 @@ program execution. Instead, it should return a Deferred."""
         self._called = False
         self.paused = 0
         self.rid = rid
+        self._ioloop = None
         self._callbacks = []
     
     def set_actor(self, actor):
@@ -122,8 +142,8 @@ program execution. Instead, it should return a Deferred."""
     
     def add_callback(self, callback):
         """Add a callback as a callable function.
-The function takes at most one argument, the result of the callback.
-        """
+The function takes at most one argument, the result passed to the
+:meth:`callback` method."""
         self._callbacks.append(callback)
         self._run_callbacks()
         return self
@@ -157,6 +177,10 @@ The function takes at most one argument, the result of the callback.
         self.unpause()
     
     def callback(self, result = None):
+        '''Run registered callbacks with the given *result*.
+This can only be run once. Later calls to this will raise
+:class:`pulsar.AlreadyCalledError`. If further callbacks are added after
+this point, add_callback will run the *callbacks* immediately.'''
         if isinstance(result,Deferred):
             raise ValueError('Received a deferred instance from\
  callback function')
@@ -175,62 +199,107 @@ The function takes at most one argument, the result of the callback.
         else:
             return self.result
 
+    def start(self, ioloop, timeout = None):
+        '''Start running the deferred into an Event loop.
+If the deferred was already started do nothing.
+
+:parameter ioloop: :class:`IOLoop` instance where to run the deferred.
+:parameter timeout: Optional timeout in seconds. If the deferred has not done within
+    this time period it will raise a :class:`pulsar.Timeout` exception.
+:rtype: ``self``.
+
+A common usage pattern::
+
+    def blocking_function():
+        ...
+        
+    def callback(result):
+        ...
+        
+    make_async(blocking_function).start(ioloop).add_callback(callback)
+'''
+        if not self._ioloop:
+            self._ioloop = ioloop
+            self._timeout = timeout
+            self._started = time()
+            self.on_start()
+            self._consume()
+        return self
+            
+    def on_start(self):
+        '''Callback just before being added to the event loop
+in :meth:`start`.'''
+        pass
     
+    def _consume(self):
+        if not self.called:
+            try:
+                if self._timeout and time() - self._started > self._timeout:
+                    raise Timeout('Timeout {0} reached without results.\
+ Aborting.'.format(self._timeout))
+                self._ioloop.add_callback(self._consume)
+            except:
+                self.callback(sys.exc_info())
+        
+            
 class DeferredGenerator(Deferred):
-    '''Transform a generator into a deferred generator.
-It is preferred to use the :func:`make_async` function rather than
-invoking directly the constructor.'''
-    def __init__(self, gen, ioloop = None):
+    '''A :class:`Deferred` for a generator (iterable) over deferred.
+The callback will occur once the generator has stopped
+(when it raises StopIteration).
+
+:parameter gen: a generator or iterable.
+:parameter max_errors: The maximum number of exceptions allowed before stopping.
+    Default ``None``, no limit.'''
+    def __init__(self, gen, max_errors = None):
         self.gen = gen
-        self.ioloop = ioloop
+        self.max_errors = max_errors
         super(DeferredGenerator,self).__init__()
         
-    def start(self):
-        if hasattr(self,'_consumed'):
-            raise AlreadyCalledError('A deferred generator can only start once')
+    def on_start(self):
         self._consumed = 0
-        self._results = []
-        self._errors = []
-        return self._consume()
-    
+        self._errors = Failure()
+        
     @Synchronized.make
     def next(self):
         return next(self.gen)
     
     def _consume(self):
-        while True:
+        '''override the deferred consume private method for handling the
+generator.'''
+        consume = True
+        
+        while consume:
             try:
                 result = self.next()
                 self._consumed += 1
             except StopIteration:
                 break
             except Exception as e:
-                self._errors.append(sys.exc_info())
+                consume = not self._should_stop(sys.exc_info())
             else:
                 d = make_async(result)
                 if d.called:
-                    self._results.append(d.result)
+                    consume = not self._should_stop(d.result)
                 else:
-                    return d.add_callback(self._resume)
-        if self._errors:
-            #TODO, merge stack traces
-            self.callback(self._errors[0])
-        else:
-            self.callback(self._results)
-        return self
+                    return d.add_callback(self._resume).start(self._ioloop,
+                                                              self._timeout)
+        
+        if consume:
+            if self._errors:
+                self.callback(self._errors)
+            else:
+                self.callback(self._consumed)
     
-    def _resume(self, result):
-        '''This callback may be called by a different thread'''
-        if is_stack_trace(result):
-            self._errors.append(result)
-        else:
-            self._results.append(result)
-        # if event loop available, run callback in it
-        if self.ioloop:
-            self.ioloop.add_callback(self._consume)
-        else:
+    def _resume(self, result = None):
+        if not self._should_stop(result):
             self._consume()
             
-        
-        
-
+    def _should_stop(self, trace):
+        if is_stack_trace(trace):
+            self._errors.append(trace)
+            if self.max_errors and len(self._errors) >= self.max_errors:
+                self.callback(self._errors)
+                return True
+            
+            
+    

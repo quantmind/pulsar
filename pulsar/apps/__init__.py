@@ -6,8 +6,7 @@ import random
 from inspect import isgenerator
 
 import pulsar
-from pulsar import Empty, is_async, make_async, DeferredGenerator,\
-                     is_stack_trace
+from pulsar import Empty, make_async, DeferredGenerator, is_stack_trace, Failure
 from pulsar.utils.py2py3 import execfile
 from pulsar.utils.importer import import_module
 from pulsar.utils import system
@@ -16,6 +15,7 @@ from pulsar.utils import system
 __all__ = ['Worker',
            'Application',
            'ApplicationMonitor',
+           'Response',
            'require',
            'ResponseError']
 
@@ -31,17 +31,33 @@ def require(appname):
     return mod
 
 
-class ResponseError(pulsar.PulsarException):
-    
-    def __init__(self, request, e):
+class Response(object):
+    '''A mixin for pulsar response classes'''
+    exception = None
+    def __init__(self, request):
         self.request = request
-        self.exception = e
+
+
+class ResponseError(pulsar.PulsarException,Response):
+    
+    def __init__(self, request, failure):
+        pulsar.Response.__init__(self, request)
+        self.exception = Failure(failure)
         
+        
+def make_response(request, response, err = None):
+    if is_stack_trace(response):
+        response = ResponseError(request,response)
+    if err:
+        response.exception = err.append(response.exception)
+    return response
         
 
 class Worker(pulsar.Actor):
     """\
 Base class for a :class:`pulsar.Actor` serving a :class:`pulsar.Application`.
+It provides two new functions :meth:`handle_request` and :meth:`handle_response`
+used for by the application for handling requests and sending back responses.
     
 .. attribute:: app
 
@@ -108,19 +124,10 @@ and perform several post fork processing before starting the event loop.'''
         if self.cfg.post_fork:
             self.cfg.post_fork(self)
             
-    def maybe_async(self, func, response):
-        response = func(response)
-        if is_async(response):
-            if response.called:
-                response = response.result
-            else:
-                return self.ioloop.add_callback(lambda : func(response))
-        return response
-                
     def handle_request(self, request):
-        '''Handle a request. This is a high level function which
-performs some pre-processing of *request* and delegates the actual
-implementation to :meth:`Application.handle_event_task` method.
+        '''Entry point for handling a request. This is a high level
+function which performs some pre-processing of *request* and delegates
+the actual implementation to :meth:`Application.handle_request` method.
 
 :parameter request: A request instance which is application specific.
 
@@ -133,40 +140,34 @@ After obtaining the result from the
             self.cfg.pre_request(self, request)
         except Exception:
             pass
-        #if hasattr(request,'set_actor'):
-        #    request.set_actor(self)
         try:
             response = self.app.handle_request(self, request)
-        except Exception as e:
-            self.log.critical("Error processing request: {0}".format(e),
-                              exc_info = True)
-            response = ResponseError(request,e)
-        self.handle_response(response)
-    
-    def handle_response(self, response):
-        '''Handle the response from the
-:meth:`Application.handle_request` method in an asynchronous fashion.'''
-        response = make_async(response, self.ioloop)
-        if response.called:
-            response = response.result
-        else:
-            return self.ioloop.add_callback(\
-                        lambda : self.handle_response(response))
+        except:
+            response = ResponseError(request,sys.exc_info())
+            
+        make_async(response).add_callback(
+              lambda r : self._got_response(request,r)).start(self.ioloop)
         
-        # if we are here means we are done with response from server
-        if is_stack_trace(response):
-            self.log.critical('Handled exception in handling response',
-                              exc_info = response)
-            try:
-                self.app.handle_response(self, response)
-            except:
-                pass
-        else:
-            try:
-                self.app.handle_response(self, response)
-            except Exception as e:
-                self.log.critical('Handled exception : {0}'.format(e),
-                                  exc_info = True)
+    def _got_response(self, request, response):
+        response = make_response(request, response)
+        err = response.exception
+        try:
+            response = self.app.handle_response(self,response)
+        except:
+            response = make_response(request,sys.exc_info(),err)
+        
+        make_async(response).add_callback(
+              lambda r : self.close_response(request,r,err))\
+              .start(self.ioloop)
+        
+    def close_response(self, request, response, err):
+        '''Close the response. This method should be called by the
+:meth:`Application.handle_response` once done.'''
+        response = make_response(request,response,err)
+        
+        if response.exception:
+            response.exception.log(self.log)
+                        
         try:
             self.cfg.post_request(self, request)
         except:
@@ -211,7 +212,7 @@ pulsar applications (subclasses of :class:`pulsar.Application`).
 updated actor parameters with information about the application.
 
 :rtype: a dictionary of parameters to be passed to the
-spawn method when creating new actors.'''
+    spawn method when creating new actors.'''
         params = {'app':self.app,
                   'timeout': self.cfg.timeout,
                   'loglevel': self.app.loglevel,
@@ -318,10 +319,10 @@ its duties.
     
     def handle_request(self, worker, request):
         '''This is the main function which needs to be implemented
-by actual applications. It is called by the :class:`Worker` *worker* to handle
+by actual applications. It is called by the *worker* to handle
 a *request*.
 
-:parameter worker: the :class:`Worker` handling the request
+:parameter worker: the :class:`Worker` handling the request.
 :parameter request: an application specific request object.
 :rtype: It can be a generator, a :class:`pulsar.Deferred` instance
     or the actual response which will be passed to the
@@ -329,8 +330,19 @@ a *request*.
         raise NotImplementedError
     
     def handle_response(self, worker, response):
-        '''Handle the response once the request handling has finished.'''
-        pass
+        '''The response has finished. Do the clean up if needed. By default
+it return *response* (does nothing).
+
+:parameter worker: the :class:`Worker` handling the request.
+:parameter response: The response object. 
+:rtype: and instance of :class:`Response`.'''
+        return response
+    
+    def handle_task(self, worker, request):
+        '''Called by the :meth:`worker_task` method if a new task is available.
+By default delegates to :meth:`Worker.handle_request`.
+Overrides if you need to.'''
+        worker.handle_request(request)
     
     def get_task_queue(self):
         '''Build the task queue for the application.
@@ -491,11 +503,11 @@ doing anything.'''
         pass
     
     def worker_task(self, worker):
-        '''Callback by a *worker* event loop.
+        '''Callback by the *worker* :meth:`Actor.on_task` callback.
 The default implementation of this callback
 is to check if the *worker* has a :attr:`Actor.task_queue` attribute.
 If so it tries to get one task from the queue and if a task is available
-it is processed by the :meth:`Worker.handle_task` method.'''
+it is processed by the :meth:`handle_task` method.'''
         if worker.task_queue:
             try:
                 request = worker.task_queue.get(\
@@ -504,7 +516,7 @@ it is processed by the :meth:`Worker.handle_task` method.'''
                 return
             except IOError:
                 return
-            worker.handle_request(request)
+            self.handle_task(worker, request)
             
     def worker_stop(self, worker):
         '''Called by the :class:`Worker` just after stopping.'''

@@ -30,7 +30,6 @@ SERVER_SOFTWARE = "python-{0}/{1}".format(SERVER_NAME,get_version())
 
 from .utils.exceptions import *
 from .utils import system
-from .utils.sock import *
 from .utils.py2py3 import ispy3k, to_string, is_string, to_bytestring
 platform = system.platform
 

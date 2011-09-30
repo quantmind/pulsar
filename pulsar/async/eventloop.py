@@ -279,18 +279,19 @@ so that it can perform its tasks at each event loop. Check the
             signal.setitimer(signal.ITIMER_REAL, 0, 0)
 
     def stop(self):
-        """Stop the loop after the current event loop iteration is complete.
-        If the event loop is not currently running, the next call to start()
-        will return immediately.
+        '''Stop the loop after the current event loop iteration is complete.
+If the event loop is not currently running, the next call to :meth:`start`
+will return immediately.
 
-        To use asynchronous methods from otherwise-synchronous code (such as
-        unit tests), you can start and stop the event loop like this:
-          ioloop = IOLoop()
-          async_method(ioloop=ioloop, callback=ioloop.stop)
-          ioloop.start()
-        ioloop.start() will return after async_method has run its callback,
-        whether that callback was invoked before or after ioloop.start.
-        """
+To use asynchronous methods from otherwise-synchronous code (such as
+unit tests), you can start and stop the event loop like this::
+
+    ioloop = IOLoop()
+    async_method(ioloop=ioloop, callback=ioloop.stop)
+    ioloop.start()
+  
+:meth:`start` will return after async_method has run its callback,
+whether that callback was invoked before or after ioloop.start.'''
         self.log.debug("Stopping event loop")
         self._running = False
         self._stopped = True

@@ -190,7 +190,7 @@ Here ``a`` is actually a reference to the remote actor.
     
 .. attribute:: task_queue
 
-    An optional python queue where the actor's monitor add tasks
+    An optional distributed queue where the actor's monitor add tasks
     to be processed by the actor.
     
     Default ``None``.
@@ -559,12 +559,11 @@ actions:
         return current_process()
     
     def isprocess(self):
-        ''':rtype: boolean indicating if this is an actor on a
-children process.'''
+        '''boolean indicating if this is an actor on a child process.'''
         return self.impl == 'process'
     
     def info(self, full = False):
-        ''':rtype: A dictionary of information related to the actor
+        '''return A dictionary of information related to the actor
 status and performance.'''
         data = {'name':self.name,
                 'aid':self.aid[:8],
