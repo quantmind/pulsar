@@ -37,6 +37,11 @@ create your own.'''
     def get_parser(self, kind = None, **kwargs):
         kind = kind if kind is not None else lib.HTTP_BOTH
         return self.parsercls(kind)
+    
+    @property
+    @on_headers
+    def version(self):
+        return self.parser.get_version()
         
     @property
     @on_headers
@@ -163,11 +168,11 @@ class HttpResponse(TcpResponse):
     '''A specialized TcpResponse class for the HTTP protocol'''
     
     def on_init(self, kwargs):
-        self.chunked = False
         self.headers = Headers()
         self.on_headers = Deferred() # callback when headers are sent
         #
         # Internal flags
+        self.__should_keep_alive = self.request.should_keep_alive
         self.__status = None
         self.__headers_sent = False
         
@@ -177,7 +182,23 @@ class HttpResponse(TcpResponse):
         
     @property
     def should_keep_alive(self):
-        return self.request.should_keep_alive
+        return self.__should_keep_alive
+    
+    def is_chunked(self):
+        '''Only use chunked responses when the client is
+speaking HTTP/1.1 or newer and there was no Content-Length header set.'''
+        if self.clength is not None:
+            return False
+        elif self.request.version <= (1,0):
+            return False
+        elif self.status.startswith("304") or self.status.startswith("204"):
+            # Do not use chunked responses when the response is guaranteed to
+            # not have a response body.
+            return False
+        return True
+    
+    def force_close(self):
+        self.__should_keep_alive = False
     
     def start_response(self, status, response_headers, exc_info=None):
         '''WSGI compliant ``start_response`` callable, see pep3333_.
@@ -239,30 +260,32 @@ for the server as a whole.
     
     def process_headers(self, headers):
         for name, value in headers:
-            name = to_string(name)
-            value = to_string(value)
-            if is_hoppish(name):
-                lname = name.lower().strip()
-                if lname == "transfer-encoding":
-                    if value.lower().strip() == "chunked":
-                        self.chunked = True
-                elif lname == "connection":
+            name = to_string(name).lower().strip()
+            value = to_string(value).lower().strip()
+            if name == "content-length":
+                self.clength = int(value)
+            elif is_hoppish(name):
+                if lname == "connection":
                     # handle websocket
-                    if value.lower().strip() != "upgrade":
+                    if value != "upgrade":
                         continue
                 else:
                     # ignore hopbyhop headers
                     continue
-            self.headers[name.strip()] = value.strip()
+            self.headers[name] = value
             
     def default_headers(self):
         connection = "keep-alive" if self.should_keep_alive else "close"
-        return [
-            "HTTP/1.1 %s\r\n" % self.status,
+        headers = [
+            "HTTP/{0}.{1} {2}\r\n".format(self.req.version[0],\
+                                       self.req.version[1], self.status),
             "Server: %s\r\n" % self.version,
             "Date: %s\r\n" % http_date(),
             "Connection: %s\r\n" % connection
         ]
+        if self.is_chunked():
+            headers.append("Transfer-Encoding: chunked\r\n")
+        return headers
     
     def send_headers(self):
         if not self.__headers_sent:

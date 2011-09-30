@@ -63,9 +63,10 @@ parameters.'''
                         "wsgi.multiprocess": mp})
         # Create the response object
         response = HttpResponse(request)
+        response.foce_close()
         data = worker.app_handler(environ, response.start_response)
         yield response.write(data)
-        yield response.close()
+        #yield response.close()
         yield response
             
     def monitor_start(self, monitor):

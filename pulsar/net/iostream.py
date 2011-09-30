@@ -46,6 +46,12 @@ We support ``write`` and a ``read`` methods.
         self.on_init(kwargs)
         self.set_actor(actor)
     
+    def __repr__(self):
+        return '{0}'.format(self.fileno())
+    
+    def __str__(self):
+        return '{0}({1})'.format(self.__class__.__name__,self.fileno())
+    
     def fileno(self):
         '''Return the file descriptor of the socket.'''
         return self.socket.fileno()
@@ -149,6 +155,7 @@ The callback will be called with chunks of data as they become available."""
     def close(self):
         """Close this stream."""
         if self.socket is not None:
+            self.log.debug('Closing {0}'.format(self))
             self.on_close()
             self.socket.close()
             self.socket = None

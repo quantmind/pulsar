@@ -1,7 +1,17 @@
+import socket
+
 import pulsar
 from pulsar import async_func_call
 
-__all__ = ['NetStream','NetRequest','NetResponse']
+__all__ = ['NetStream','NetRequest','NetResponse','close_socket']
+
+
+def close_socket(sock):
+    if sock:
+        try:
+            sock.close()
+        except socket.error:
+            pass
 
 
 class NetStream(pulsar.Deferred):

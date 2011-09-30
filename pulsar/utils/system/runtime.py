@@ -13,6 +13,8 @@ import time
 import imp
 from socket import socket
 
+from pulsar.utils.py2py3 import pickle
+
 knownPlatforms = {
     'nt': 'win',
     'ce': 'win',

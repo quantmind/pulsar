@@ -1,3 +1,6 @@
+import errno
+import socket
+
 import pulsar
 from pulsar import net
 
@@ -7,8 +10,8 @@ __all__ = ['HttpHandler','HttpPoolHandler']
 
 class HttpHandler(object):
     '''Handle HTTP requests and delegate the response to the worker'''
-    #ALLOWED_ERRORS = (errno.EAGAIN, errno.ECONNABORTED,
-    #                  errno.EWOULDBLOCK, errno.EPIPE)
+    ALLOWED_ERRORS = (errno.EAGAIN, errno.ECONNABORTED,
+                      errno.EWOULDBLOCK, errno.EPIPE)
 
     def __init__(self, worker):
         self.worker = worker
@@ -16,12 +19,20 @@ class HttpHandler(object):
                         net.AsyncIOStream
         
     def __call__(self, fd, events):
-        client, addr = self.worker.socket.accept()
+        client = None
+        try:
+            client, addr = self.worker.socket.accept()
+        except socket.error as e:
+            net.close_socket(client)
+            if e.errno not in self.ALLOWED_ERRORS:
+                raise
+            else:
+                return
         stream = self.iostream(actor = self.worker, socket = client)
         self.handle(net.HttpRequest(stream, addr))
 
     def handle(self, request):
-        self.worker.handle_task(request)
+        self.worker.handle_request(request)
 
 
 class HttpPoolHandler(HttpHandler):
