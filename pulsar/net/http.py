@@ -294,10 +294,12 @@ for the server as a whole.
         return self.on_headers
         
     def generate_data(self, data):
-        yield self.send_headers()
         write = self._write
         for elem in data:
-            yield write(elem)
+            if elem:
+                if not self.__headers_sent:
+                    yield self.send_headers()
+                yield write(elem)
         
     def on_close(self):
         if self.__status:
