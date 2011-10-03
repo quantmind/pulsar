@@ -2,6 +2,7 @@ import sys
 import io
 import logging
 import socket
+import errno
 from collections import deque
 
 from pulsar import Deferred

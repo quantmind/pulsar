@@ -5,7 +5,7 @@ from wsgiref.handlers import format_date_time
 from wsgiref.util import is_hop_by_hop
 
 import pulsar
-from pulsar import is_string, lib, Deferred, make_async, to_bytestring
+from pulsar import is_string, lib, Deferred, make_async, to_bytestring, NOT_DONE
 from pulsar.utils.http import Headers, unquote, to_string
 
 from .tcp import TcpRequest, TcpResponse
@@ -73,6 +73,7 @@ which conforms with python WSGI.'''
             "wsgi.errors": sys.stderr,
             "wsgi.version": version,
             "wsgi.run_once": False,
+            "wsgi.body": parser.get_body(),
             "SERVER_SOFTWARE": pulsar.SERVER_SOFTWARE,
             "REQUEST_METHOD": parser.get_method(),
             "QUERY_STRING": parser.get_query_string(),
@@ -91,6 +92,7 @@ which conforms with python WSGI.'''
         script_name = os.environ.get("SCRIPT_NAME", "")
 
         for header, value in parser.get_headers():
+            header = header.lower()
             if header == "expect":
                 # handle expect
                 if value == "100-continue":
@@ -254,9 +256,19 @@ for the server as a whole.
         return self.write
     
     def write(self, data):
-        '''WSGI Compliant write function returned by the
-:meth:`HttpResponse.start_response` function.'''
-        return make_async(self.generate_data(data)).start(self.stream.ioloop)
+        '''WSGI write function returned by the
+:meth:`HttpResponse.start_response` function.
+
+:parameter data: an iterable over bytes'''
+        ioloop = self.stream.ioloop
+        wb = self._write
+        for b in data:
+            if b:
+                yield self.send_headers()
+                yield make_async(wb(b)).start(ioloop)
+            else:
+                # release the loop
+                yield NOT_DONE
     
     def _write(self, data, callback = None):
         data = to_bytestring(data)
@@ -264,25 +276,27 @@ for the server as a whole.
     
     def process_headers(self, headers):
         for name, value in headers:
-            name = to_string(name).lower().strip()
-            value = to_string(value).lower().strip()
-            if name == "content-length":
-                self.__clength = int(value)
+            name = to_string(name).strip()
+            value = to_string(value).strip()
             self.headers[name] = value
+            lname = name.lower()
+            if lname == "content-length":
+                self.__clength = int(value)
+            elif lname == 'upgrade':
+                self.__upgrade = self.headers['upgrade']
             
     def default_headers(self):
         connection = "keep-alive" if self.should_keep_alive else "close"
         headers = Headers((('Server',self.version),
-                           ('date', format_date_time(time.time())),
-                           ('connection', connection)))
+                           ('Date', format_date_time(time.time())),
+                           ('Connection', connection)))
         if self.is_chunked():
             headers['Transfer-Encoding'] = 'chunked'
         return headers
     
     def send_headers(self,force=True):
         if not self.__headers_sent:
-            if 'upgrade' in self.headers:
-                self.__upgrade = self.headers['upgrade']
+            if self.__upgrade:
                 tosend = self.headers
             elif force:
                 tosend = self.default_headers()

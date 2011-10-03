@@ -11,7 +11,7 @@ except ImportError:
     import Queue as queue
 ThreadQueue = queue.Queue
 
-from pulsar import AlreadyCalledError, Timeout
+from pulsar import AlreadyCalledError, Timeout, NOT_DONE
 from pulsar.utils.mixins import Synchronized
 
 
@@ -278,12 +278,15 @@ generator.'''
             except Exception as e:
                 consume = not self._should_stop(sys.exc_info())
             else:
-                d = make_async(result)
-                if d.called:
-                    consume = not self._should_stop(d.result)
+                if result == NOT_DONE:
+                    return self._ioloop.add_callback(self._consume)
                 else:
-                    return d.add_callback(self._resume).start(self._ioloop,
-                                                              self._timeout)
+                    d = make_async(result)
+                    if d.called:
+                        consume = not self._should_stop(d.result)
+                    else:
+                        return d.add_callback(self._resume).start(self._ioloop,
+                                                                  self._timeout)
         
         if consume:
             if self._errors:

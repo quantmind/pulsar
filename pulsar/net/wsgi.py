@@ -11,6 +11,7 @@
 import os
 import re
 import sys
+from functools import partial
 
 import pulsar
 from pulsar.utils.tools import cached_property
@@ -18,13 +19,26 @@ from pulsar.utils.tools import cached_property
 from .utils import parse_authorization_header
 
 
-__all__ = ['WsgiHandler']
+__all__ = ['WsgiHandler','WsgiRequest']
 
 
 EMPTY_DICT = {}
 EMPTY_TUPLE = ()
 
 
+class WsgiRequest(object):
+    
+    def __init__(self, environ):
+        self.environ = environ
+        self.data = environ.get('wsgi.body')
+        
+    def read(self):
+        return self.environ['wsgi.input'].read(self._on_data)
+    
+    def _on_data(self, data):
+        self.data = data
+    
+    
 def authorization(environ, start_response):
     """An `Authorization` middleware."""
     code = 'HTTP_AUTHORIZATION'
@@ -51,6 +65,9 @@ class WsgiHandler(pulsar.PickableMixin):
         self.log = self.getLogger(**kwargs)
         self.middleware = middleware or []
         
+    def request(self, environ):
+        return WsgiRequest(environ)
+    
     def __call__(self, environ, start_response):
         '''The WSGI callable'''
         #request = self.REQUEST(environ)
@@ -61,10 +78,10 @@ class WsgiHandler(pulsar.PickableMixin):
                 # if a middleware has return break the loop and return what it
                 # returns
         return []
-        
-    def read(self, environ):
-        '''Read data from stream'''
-        return environ['wsgi.input'].read()
+    
+    def on_data(self, environ,  start_response, data):
+        '''Callback when data is available'''
+        pass
     
     def send(self, request, name, args = None, kwargs = None,
              server = None, ack = True):

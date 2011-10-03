@@ -28,9 +28,13 @@ from .utils.log import *
 DEFAULT_PORT = 8060
 SERVER_SOFTWARE = "python-{0}/{1}".format(SERVER_NAME,get_version())
 
+class NOT_DONE(object):
+    pass
+
 from .utils.exceptions import *
 from .utils import system
-from .utils.py2py3 import ispy3k, to_string, is_string, to_bytestring
+from .utils.py2py3 import ispy3k, to_string, is_string, native_str,\
+                            to_bytestring
 platform = system.platform
 
 from .utils.config import *

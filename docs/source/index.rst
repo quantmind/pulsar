@@ -26,6 +26,7 @@ Applications
    apps/wsgi
    apps/rpc
    apps/tasks
+   apps/websockets
    apps/pulsardjp
    apps/shell
    apps/test

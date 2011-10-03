@@ -103,6 +103,9 @@ class HttpParser(object):
     
     def get_protocol(self):
         return self._protocol
+    
+    def get_body(self):
+        return self._body
 
     def recv_body(self):
         """ return last chunk of the parsed body"""

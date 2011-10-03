@@ -13,18 +13,19 @@ import time
 
 import pulsar
 from pulsar import net
+from pulsar.apps import ws, wsgi
 from pulsar.utils.py2py3 import range
 
 
-class handle(net.WS):
+class handle(ws.WS):
     
     def on_message(self, msg):
-        path = self.environ['REQUEST_PATH']
+        path = self.environ['PATH_INFO']
         if path == '/echo':
             self.write_message(msg)
                 
         elif path == '/data':
-            data = [(i,random()) for i in range(10000)]
+            data = [(i,random()) for i in range(100)]
             self.write_message(json.dumps(data))
 
 
@@ -42,11 +43,10 @@ def page(environ, start_response):
 
 app = net.WsgiHandler(\
         middleware = (page,
-                      net.WebSocket(handle)))
+                      ws.WebSocket(handle)))
 
 
 def server(**kwargs):
-    wsgi = pulsar.require('wsgi')
     return wsgi.createServer(callable = app,
                              **kwargs)
 

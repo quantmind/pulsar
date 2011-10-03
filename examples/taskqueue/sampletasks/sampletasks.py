@@ -2,7 +2,8 @@ from pulsar.apps.tasks import Job
 
 
 class RunPyCode(Job):
-    
+    '''execute python code in *code*. There must be a *task_function*
+function defined.'''
     def __call__(self, consumer, code, *args, **kwargs):
         code_local = compile(code, '<string>', 'exec')
         ns = {}

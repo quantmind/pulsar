@@ -49,7 +49,7 @@ task in a taskqueue application.'''
     
                 
 class queueTask(object):
-    '''A class for sending tasks of a specific job to the queue.
+    '''A decorator for sending tasks of a specific job to the queue.
 In a general case you would simply use the
 :meth:`pulsar.apps.tasks.HttpTaskManager.maketask` function.
 This decorator can be used on a rpc server class so that it exposes a job name
@@ -58,15 +58,15 @@ as an rpc function.'''
                  manager = None, **kwargs):
         self.manager = manager
         self.__doc__ = doc
-        self.__name__ = jobname
+        self.__name = jobname
         self.ack = ack
         self.kwargs = kwargs
         
-    def __call__(self, request, manager = None, **kwargs):
-        manager = manager or self.manager
+    def __call__(self, request, **kwargs):
+        manager = kwargs.pop('manager',None) or self.manager
         if manager:
-            return manager.maketask(request,self.__name__,request,ack)\
-                                    (*args,**kwargs)
+            return manager.maketask(request,self.__name,self.ack,**self.kwargs)\
+                                    (**kwargs)
         else:
             raise TaskQueueException('Task manager not specified')
 

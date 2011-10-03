@@ -395,7 +395,9 @@ iteration of the :attr:`pulsar.Actor.ioloop`.'''
     
     def _get_eventloop(self, impl):
         ioimpl = impl.get_ioimpl()
-        return IOLoop(impl = ioimpl, logger = LogSelf(self,self.log))
+        return IOLoop(impl = ioimpl,
+                      logger = LogSelf(self,self.log),
+                      name = self.name)
     
     # STOPPING TERMINATIONG AND STARTING
     

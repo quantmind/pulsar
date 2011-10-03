@@ -174,13 +174,6 @@ WsgiHandler
    :members:
    :member-order: bysource
    
-WebSocket
-~~~~~~~~~~~~~~~~
-
-.. autoclass:: WebSocket
-   :members:
-   :member-order: bysource
-
 
 Utilities
 ================

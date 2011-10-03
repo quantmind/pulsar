@@ -87,7 +87,8 @@ It should be instantiated after forking.
     POLL_TIMEOUT = 0.5
     
     def __init__(self, impl=None, logger = None,
-                 pool_timeout = None, commnads = None):
+                 pool_timeout = None, commnads = None,
+                 name = None):
         self._impl = impl or IOpoll()
         self.POLL_TIMEOUT = pool_timeout if pool_timeout is not None\
                                  else self.POLL_TIMEOUT
@@ -95,6 +96,7 @@ It should be instantiated after forking.
         fd = file_descriptor(self._impl)
         if fd:
             close_on_exec(fd)
+        self._name = name
         self._handlers = {}
         self._events = {}
         self._callbacks = []
@@ -112,6 +114,19 @@ It should be instantiated after forking.
             r = self._waker_reader
             self.add_handler(r, self.readbogus, self.READ)
         
+    def __str__(self):
+        if self.name:
+            return '{0} - {1}'.format(self.__class__.__name__,self.name)
+        else:
+            return self.__class__.__name__
+    
+    def __repr__(self):
+        return self.name or self.__class__.__name__
+    
+    @property
+    def name(self):
+        return self._name
+    
     def readbogus(self, fd, events):
         r = self._waker_reader
         while r.poll():

@@ -20,4 +20,5 @@ class TasqueueService(winservice.PulsarService):
         
 
 if __name__ == '__main__':
-    TasqueueService.run()
+    server(parse_console = False, concurrency = 'thread').start()
+    #TasqueueService.run()

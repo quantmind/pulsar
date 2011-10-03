@@ -60,26 +60,24 @@ class Headers(object):
     def __iter__(self):
         d = self._dict
         for k in self._keys:
-            yield k,d[k]
+            yield k,d[k.lower()]
 
     def __len__(self):
         return len(self._keys)
     
     def __getitem__(self, key):
-        ikey = key.lower()
-        return self._dict[ikey]
+        return self._dict[key.lower()]
 
     def __setitem__(self, key, value):
-        key = key.lower()
+        lkey = key.lower()
         if value:
             if isinstance(value, (tuple, list)):
                 value = ','.join(value)
-            value = value.lower()
-            if key in self._dict:
-                value = ','.join((self._dict[key],value))
+            if lkey in self._dict:
+                value = ','.join((self._dict[lkey],value))
             else:
                 self._keys.append(key)
-            self._dict[key] = value
+            self._dict[lkey] = value
         
     def get(self, key, default=None):
         try:
@@ -90,6 +88,6 @@ class Headers(object):
     def flat(self, version, status):
         vs = version + (status,)
         h = 'HTTP/{0}.{1} {2}'.format(*vs) 
-        f = ''.join(("%s: %s\r\n" % (n, v) for n, v in self))
+        f = ''.join(("{0}: {1}\r\n".format(n, v) for n, v in self))
         return '{0}\r\n{1}\r\n'.format(h,f)
         

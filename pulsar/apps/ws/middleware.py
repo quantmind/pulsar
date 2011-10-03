@@ -1,17 +1,3 @@
-# Author: Jacob Kristhammar, 2010
-#
-# Updated version of websocket.py[1] that implements latest[2] stable version
-# of the websocket protocol.
-#
-# NB. It's no longer possible to manually select which callback that should
-#     be invoked upon message reception. Instead you must override the
-#     on_message(message) method to handle incoming messsages.
-#     This also means that you don't have to explicitly invoke
-#     receive_message, in fact you shouldn't.
-#
-# [1] http://github.com/facebook/tornado/blob/
-#     2c89b89536bbfa081745336bb5ab5465c448cb8a/tornado/websocket.py
-# [2] http://tools.ietf.org/html/draft-hixie-thewebsocketprotocol-76
 import hashlib
 import logging
 import socket
@@ -19,23 +5,25 @@ import re
 import struct
 import time
 import base64
-from hashlib import sha1
+import hashlib
 from functools import partial
 
 import pulsar
-from pulsar.utils.py2py3 import ispy3k, to_bytestring, BytesIO
+from pulsar.utils.py2py3 import ispy3k, to_bytestring, native_str, BytesIO
+
+from .frame import *
 
 
 __all__ = ['WebSocket','WS']
 
 
-class WebSocketError(pulsar.BadHttpRequest):
-    pass        
-        
+logger = logging.getLogger('websocket')
+
 
 class WS(object):
-    '''Override on_message to handle incoming messages. You can also override
-open and on_close to handle opened and closed connections.
+    '''Override :meth:`on_message` to handle incoming messages.
+You can also override :meth:`on_open` and :meth:`on_close` to handle opened
+and closed connections.
 Here is an example Web Socket handler that echos back all received messages
 back to the client::
 
@@ -72,8 +60,10 @@ This script pops up an alert box that says "You said: Hello, world".
 '''
     def __init__(self, environ, protocols, extensions):
         self.environ = environ
+        self.version = environ.get('HTTP_SEC_WEBSOCKET_VERSION')
         self.protocols = protocols
         self.extensions = extensions
+        self.parser = Parser()
         self.stream = environ['wsgi.input']
         
     def __iter__(self):
@@ -81,15 +71,19 @@ This script pops up an alert box that says "You said: Hello, world".
         yield ''
         stream = self.stream
         self.on_open()
-        stream.read(self._on_frame_start,2)
+        # kick of reading
+        self._handle()
+        
+    @property
+    def client_terminated(self):
+        return self.stream.closed()
         
     def on_open(self):
         """Invoked when a new WebSocket is opened."""
         pass
 
     def on_message(self, message):
-        """Handle incoming messages on the WebSocket
-
+        """Handle incoming messages on the WebSocket.
         This method must be overloaded
         """
         raise NotImplementedError
@@ -101,105 +95,62 @@ This script pops up an alert box that says "You said: Hello, world".
     def write_message(self, message, binary=False):
         """Sends the given message to the client of this Web Socket."""
         message = to_bytestring(message)
-        if not binary:
-            opcode = 0x1
-        else:
-            opcode = 0x2
-        return self._write_frame(True, opcode, message)
+        frame = Frame(version = self.version, message = message,
+                      binary = binary)
+        self.stream.write(frame)
+    
+    def close(self):
+        """Closes the WebSocket connection."""
+        frame = Frame(version = self.version, close = True)
+        self.stream.write(frame).add_callback(self._abort)
+        self._started_closing_handshake = True
         
-    def _write_frame(self, fin, opcode, data):
-        if fin:
-            finbit = 0x80
-        else:
-            finbit = 0
-        frame = struct.pack("B", finbit | opcode)
-        l = len(data)
-        if l < 126:
-            frame += struct.pack("B", l)
-        elif l <= 0xFFFF:
-            frame += struct.pack("!BH", 126, l)
-        else:
-            frame += struct.pack("!BQ", 127, l)
-        frame += data
-        return self.stream.write(frame)
-
-    def _on_frame_start(self, data):
-        header, payloadlen = struct.unpack("BB", data)
-        self._final_frame = header & 0x80
-        self._frame_opcode = header & 0xf
-        if not (payloadlen & 0x80):
-            # Unmasked frame -> abort connection
-            self._abort()
-        payloadlen = payloadlen & 0x7f
-        if payloadlen < 126:
-            self._frame_length = payloadlen
-            self.stream.read_bytes(self._on_masking_key)
-        elif payloadlen == 126:
-            self.stream.read_bytes(self._on_frame_length_16)
-        elif payloadlen == 127:
-            self.stream.read_bytes(self._on_frame_length_64)
-
-    def _on_frame_length_16(self, data):
-        self._frame_length = struct.unpack("!H", data)[0];
-        self.stream.read_bytes(4, self._on_masking_key);
+    def abort(self, r = None):
+        self.stream.close()
         
-    def _on_frame_length_64(self, data):
-        self._frame_length = struct.unpack("!Q", data)[0];
-        self.stream.read_bytes(4, self._on_masking_key);
+    #################################################################    
+    # INTERNALS
+    #################################################################
+    
+    def safe(self, callback, *args, **kwargs):
+        """Wrap callbacks with this if they are used on asynchronous requests.
 
-    def _on_masking_key(self, data):
-        self._frame_mask = bytearray(data)
-        self.stream.read_bytes(self._frame_length, self._on_frame_data)
-
-    def _on_frame_data(self, data):
-        unmasked = bytearray(data)
-        for i in xrange(len(data)):
-            unmasked[i] = unmasked[i] ^ self._frame_mask[i % 4]
-
-        if not self._final_frame:
-            if self._fragmented_message_buffer:
-                self._fragmented_message_buffer += unmasked
-            else:
-                self._fragmented_message_opcode = self._frame_opcode
-                self._fragmented_message_buffer = unmasked
-        else:
-            if self._frame_opcode == 0:
-                unmasked = self._fragmented_message_buffer + unmasked
-                opcode = self._fragmented_message_opcode
-                self._fragmented_message_buffer = None
-            else:
-                opcode = self._frame_opcode
-
-            self._handle_message(opcode, bytes_type(unmasked))
-
-        if not self.client_terminated:
-            self._receive_frame()
-        
-
-    def _handle_message(self, opcode, data):
-        if self.client_terminated: return
-        
-        if opcode == 0x1:
-            # UTF-8 data
-            self.async_callback(self.handler.on_message)(data.decode("utf-8", "replace"))
-        elif opcode == 0x2:
-            # Binary data
-            self.async_callback(self.handler.on_message)(data)
-        elif opcode == 0x8:
-            # Close
-            self.client_terminated = True
-            if not self._started_closing_handshake:
-                self._write_frame(True, 0x8, b(""))
-            self.stream.close()
-        elif opcode == 0x9:
-            # Ping
-            self._write_frame(True, 0xA, data)
-        elif opcode == 0xA:
-            # Pong
-            pass
-        else:
-            self._abort()
-
+        Catches exceptions properly and closes this WebSocket if an exception
+        is uncaught.
+        """
+        if args or kwargs:
+            callback = partial(callback, *args, **kwargs)
+            
+        def wrapper(*args, **kwargs):
+            try:
+                return callback(*args, **kwargs)
+            except Exception:
+                logger.error("Uncaught exception in {0[PATH_INFO]}"\
+                             .format(self.environ), exc_info=True)
+                self._abort()
+                
+        return wrapper
+    
+    def _write_message(self, msg):
+        self.stream.write(msg)
+    
+    def _handle(self, data = None):
+        if data is not None:
+            try:
+                self.parser.execute(data,len(data))
+            except Exception as e:
+                logger.critical('Unhandled exception while parsing',
+                                exc_info = True)
+                
+        frame = self.parser.frame
+        if frame.is_complete():
+            if self.client_terminated:
+                return
+            frame.on_complete(self)
+            
+        self.stream.read(callback = self._handle)
+            
+    
 
 class WebSocket(object):
     """A WSGI_ middleware for serving web socket applications.
@@ -224,7 +175,8 @@ See http://www.w3.org/TR/websockets/ for details on the
 JavaScript interface.
     """
     VERSIONS = ('8',)
-    WS_KEY = "258EAFA5-E914-47DA-95CA-C5AB0DC85B11"
+    WS_KEY = '258EAFA5-E914-47DA-95CA-C5AB0DC85B11'
+    '''magic string'''
     STATUS = "101 Switching Protocols"
     
     def __init__(self, handle):
@@ -269,12 +221,10 @@ JavaScript interface.
                     ws_extensions.append(ext)
         
         # Build and start the HTTP response
-        key = key + self.WS_KEY
-        key = key.encode('utf8')
         headers = [
             ('Upgrade', 'websocket'),
             ('Connection', 'Upgrade'),
-            ('Sec-WebSocket-Accept', base64.b64encode(sha1(key).digest()))
+            ('Sec-WebSocket-Accept', self.challenge_response(key))
         ]
         if ws_protocols:
             headers.append(('Sec-WebSocket-Protocol',
@@ -286,3 +236,6 @@ JavaScript interface.
         start_response(self.STATUS, headers)
         return self.handle(environ,ws_protocols,ws_extensions)
         
+    def challenge_response(self, key):
+        sha1 = hashlib.sha1(to_bytestring(key+self.WS_KEY))
+        return native_str(base64.b64encode(sha1.digest()))

@@ -34,7 +34,7 @@ class RpcRoot(rpc.PulsarServerCommands,
     '''The rpc handler which communicates with the task queue'''
     task_queue_manager = task_manager
     
-    rpc_evalcode = tasks.queueTask('codetask',
+    rpc_evalcode = tasks.queueTask('runpycode',
                                    'Evaluate python code on the task queue.')
         
 def createTaskQueue(**params):

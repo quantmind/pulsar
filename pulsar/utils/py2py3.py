@@ -35,6 +35,16 @@ if ispy3k: # Python 3
         def __repr__(self):
             return '%s: %s' % (self.__class__.__name__,self)
     
+    def native_str(s):
+        if isinstance(s,bytes):
+            return s.decode(UTF8)
+        return s
+    
+    def to_bytestring(s, encoding=UTF8, errors='strict'):
+        if isinstance(s,bytes):
+            return s
+        return s.encode(encoding, errors)
+    
     def execfile(filename, globals=None, locals=None):
         if globals is None:
             globals = sys._getframe(1).f_globals
@@ -59,6 +69,13 @@ else: # Python 2
     
     import cPickle as pickle
     
+    def native_str(s):
+        return s.encode('utf-8')
+    
+    def to_bytestring(s, encoding=UTF8, errors='strict'):    
+        return s.encode(encoding, errors)
+    
+    
     class UnicodeMixin(object):
         
         def __unicode__(self):
@@ -75,20 +92,6 @@ is_int = lambda x : isinstance(x,int_type)
 is_string = lambda x : isinstance(x,string_type)
 is_bytes_or_string = lambda x : isinstance(x,string_type) or isinstance(x,bytes)
 
-
-def to_bytestring(s, encoding=UTF8, errors='strict'):
-    """Returns a bytestring version of 's',
-encoded as specified in 'encoding'."""
-    if isinstance(s,bytes):
-        if encoding != UTF8:
-            return s.decode(UTF8, errors).encode(encoding, errors)
-        else:
-            return s
-        
-    if not is_string(s):
-        s = string_type(s)    
-    
-    return s.encode(encoding, errors)
 
 
 def to_string(s, encoding=UTF8, errors='strict'):
