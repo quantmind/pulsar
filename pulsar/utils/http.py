@@ -7,31 +7,18 @@ __all__ = ['urlparse',
            'urlsplit',
            'Headers',
            'bytes_to_str',
-           'is_hoppish',
-           'http_date',
            'to_string']
 
-
-weekdayname = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
-monthname = [None,
-             'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-             'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
-
-HOP_HEADERS = set("""
-    connection keep-alive proxy-authenticate proxy-authorization
-    te trailers transfer-encoding upgrade
-    server date
-    """.split())
 
 if ispy3k:
     from urllib.parse import urlparse, unquote, urlsplit
     
     def bytes_to_str(b):
-        return str(b, 'latin1')
+        return str(b, 'latin-1')
     
     def to_string(data):
         if isinstance(data, bytes):
-            return str(b, 'latin1')
+            return str(data, 'latin-1')
         elif not isinstance(data,str):
             return str(data)
         return data
@@ -44,22 +31,6 @@ else:
     
     def to_string(data):
         return str(data)
-
-    
-def is_hoppish(header):
-    return header.lower().strip() in HOP_HEADERS
-
-
-def http_date(timestamp=None):
-    """Return the current date and time formatted for a message header."""
-    if timestamp is None:
-        timestamp = time.time()
-    year, month, day, hh, mm, ss, wd, y, z = time.gmtime(timestamp)
-    s = "%s, %02d %3s %4d %02d:%02d:%02d GMT" % (
-            weekdayname[wd],
-            day, monthname[month], year,
-            hh, mm, ss)
-    return s
 
     
 class Headers(object):
@@ -82,7 +53,10 @@ class Headers(object):
             iterable = iteritems(iterable)
         for key, value in iterable:
             self.__setitem__(key, value)
-                
+    
+    def __contains__(self, key):
+        return key.lower() in self._dict
+        
     def __iter__(self):
         d = self._dict
         for k in self._keys:

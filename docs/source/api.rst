@@ -167,6 +167,20 @@ HttpResponse
    :members:
    :member-order: bysource
    
+WsgiHandler
+~~~~~~~~~~~~~~~~
+
+.. autoclass:: WsgiHandler
+   :members:
+   :member-order: bysource
+   
+WebSocket
+~~~~~~~~~~~~~~~~
+
+.. autoclass:: WebSocket
+   :members:
+   :member-order: bysource
+
 
 Utilities
 ================

@@ -1,10 +1,12 @@
 import os
 import sys
+import time
+from wsgiref.handlers import format_date_time
+from wsgiref.util import is_hop_by_hop
 
 import pulsar
 from pulsar import is_string, lib, Deferred, make_async, to_bytestring
-from pulsar.utils.http import Headers, is_hoppish, http_date, unquote,\
-                              to_string
+from pulsar.utils.http import Headers, unquote, to_string
 
 from .tcp import TcpRequest, TcpResponse
 
@@ -22,10 +24,8 @@ def on_headers(f):
 
 
 class HttpRequest(TcpRequest):
-    '''A HTTP parser providing higher-level access to a readable,
-sequential io.RawIOBase object. You can use implementions of
-http_parser.reader (IterReader, StringReader, SocketReader) or 
-create your own.'''
+    '''A specialized :class:`TcpRequest` class for the HTTP protocol
+which conforms with python WSGI.'''
     default_parser = lib.HttpParser
     
     def on_init(self, kwargs):
@@ -60,7 +60,7 @@ create your own.'''
                 return False
             elif hconn == "keep-alive":
                 return True
-            return self._version == (1, 1)
+            return self.version == (1, 1)
    
     @on_headers
     def wsgi_environ(self):
@@ -165,7 +165,9 @@ create your own.'''
         
 
 class HttpResponse(TcpResponse):
-    '''A specialized TcpResponse class for the HTTP protocol'''
+    '''A specialized TcpResponse class for the HTTP protocol which conforms
+with Python WSGI for python 2 and 3. Headers are string, body is bytes.'''
+    middleware = []
     
     def on_init(self, kwargs):
         self.headers = Headers()
@@ -173,6 +175,7 @@ class HttpResponse(TcpResponse):
         #
         # Internal flags
         self.__clength = None
+        self.__upgrade = False
         self.__should_keep_alive = self.request.should_keep_alive
         self.__status = None
         self.__headers_sent = False
@@ -265,29 +268,28 @@ for the server as a whole.
             value = to_string(value).lower().strip()
             if name == "content-length":
                 self.__clength = int(value)
-            elif is_hoppish(name):
-                if lname == "connection":
-                    # handle websocket
-                    if value != "upgrade":
-                        continue
-                else:
-                    # ignore hopbyhop headers
-                    continue
             self.headers[name] = value
             
     def default_headers(self):
         connection = "keep-alive" if self.should_keep_alive else "close"
         headers = Headers((('Server',self.version),
-                           ('date', http_date()),
+                           ('date', format_date_time(time.time())),
                            ('connection', connection)))
         if self.is_chunked():
             headers['Transfer-Encoding'] = 'chunked'
         return headers
     
-    def send_headers(self):
+    def send_headers(self,force=True):
         if not self.__headers_sent:
-            tosend = self.default_headers()
-            tosend.extend(self.headers)
+            if 'upgrade' in self.headers:
+                self.__upgrade = self.headers['upgrade']
+                tosend = self.headers
+            elif force:
+                tosend = self.default_headers()
+                tosend.extend(self.headers)
+            else:
+                # No data no upgrade, don't send headers
+                return None
             data = tosend.flat(self.request.version,self.status)
             self.__headers_sent = data
             self._write(data, self.on_headers)
@@ -296,10 +298,14 @@ for the server as a whole.
     def generate_data(self, data):
         write = self._write
         for elem in data:
+            yield self.send_headers(elem)
             if elem:
-                if not self.__headers_sent:
-                    yield self.send_headers()
                 yield write(elem)
+        
+    def close(self):
+        yield self.on_close()
+        if not self.__upgrade == 'websocket':
+            yield self.stream.close()
         
     def on_close(self):
         if self.__status:

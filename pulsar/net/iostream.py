@@ -54,6 +54,7 @@ manipulated and adapted to pulsar :ref:`concurrent framework <design>`.
         self._write_buffer = deque()
         self._write_buffer_frozen = False
         self._read_callback = None
+        self._read_length = None
         self._write_callback = None
         self._close_callback = None
         self._connect_callback = None
@@ -94,7 +95,7 @@ manipulated and adapted to pulsar :ref:`concurrent framework <design>`.
         """Returns true if we are currently reading from the stream."""
         return self._read_callback is not None
         
-    def read(self, callback = None):
+    def read(self, callback = None, length = None):
         """Reads data from the socket.
 The callback will be called with chunks of data as they become available.
 If no callback is provided, the callback of the returned deferred instance
@@ -118,6 +119,7 @@ One common pattern of usage::
             self._run_callback(d.callback, self._get_buffer())
             return
         self._read_callback = d.callback
+        self._read_length = length
         self.on_read()
         return d
         
@@ -205,8 +207,9 @@ but is non-portable.
         """Attempts to read from the socket.
 Returns the data read or ``None`` if there is nothing to read.
 May be overridden in subclasses."""
+        length = self._read_length or self.read_chunk_size
         try:
-            chunk = self.socket.recv(self.read_chunk_size)
+            chunk = self.socket.recv(length)
         except socket.error as e:
             if e.args[0] in (errno.EWOULDBLOCK, errno.EAGAIN):
                 return None

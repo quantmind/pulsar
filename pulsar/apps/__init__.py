@@ -36,6 +36,9 @@ class Response(object):
     exception = None
     def __init__(self, request):
         self.request = request
+        
+    def close(self):
+        pass
 
 
 class ResponseError(pulsar.PulsarException,Response):
@@ -43,13 +46,19 @@ class ResponseError(pulsar.PulsarException,Response):
     def __init__(self, request, failure):
         pulsar.Response.__init__(self, request)
         self.exception = Failure(failure)
+    
+    def close(self):
+        return self.request.close()
         
         
 def make_response(request, response, err = None):
     if is_stack_trace(response):
         response = ResponseError(request,response)
     if err:
-        response.exception = err.append(response.exception)
+        if not hasattr(response,'exception'):
+            response = ResponseError(request,err)
+        else:
+            response.exception = err.append(response.exception)
     return response
         
 
@@ -331,12 +340,12 @@ a *request*.
     
     def handle_response(self, worker, response):
         '''The response has finished. Do the clean up if needed. By default
-it return *response* (does nothing).
+it calls the *response* close method.
 
 :parameter worker: the :class:`Worker` handling the request.
 :parameter response: The response object. 
 :rtype: and instance of :class:`Response`.'''
-        return response
+        return response.close()
     
     def handle_task(self, worker, request):
         '''Called by the :meth:`worker_task` method if a new task is available.

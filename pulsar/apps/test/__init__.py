@@ -73,7 +73,7 @@ is a group of tests specified in a test class.'''
         for _,test in self.tests:
             monitor.task_queue.put(test)
             
-    def handle_event_task(self, worker, testcls):
+    def handle_request(self, worker, testcls):
         test = AsyncTest(worker,testcls)
         return pulsar.make_async(run_test_case(worker,testcls))
     

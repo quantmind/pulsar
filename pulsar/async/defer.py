@@ -257,6 +257,7 @@ The callback will occur once the generator has stopped
         
     def on_start(self):
         self._consumed = 0
+        self._last_result = None
         self._errors = Failure()
         
     @Synchronized.make
@@ -288,7 +289,7 @@ generator.'''
             if self._errors:
                 self.callback(self._errors)
             else:
-                self.callback(self._consumed)
+                self.callback(self._last_result)
     
     def _resume(self, result = None):
         if not self._should_stop(result):
@@ -300,6 +301,8 @@ generator.'''
             if self.max_errors and len(self._errors) >= self.max_errors:
                 self.callback(self._errors)
                 return True
+        else:
+            self._last_result = trace
             
             
     

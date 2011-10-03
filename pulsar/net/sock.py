@@ -1,6 +1,7 @@
 import logging
 import sys
 import socket
+import errno
 import time
 
 from pulsar import platform

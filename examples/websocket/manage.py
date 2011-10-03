@@ -7,7 +7,8 @@ To run the server type::
 and open a web browser at http://localhost:8060    
 '''
 import os
-import random
+import json
+from random import random
 import time
 
 import pulsar
@@ -15,44 +16,39 @@ from pulsar import net
 from pulsar.utils.py2py3 import range
 
 
-class handle(object):
+class handle(net.WS):
     
-    def __call__(self, request):
-        """This is the websocket handler function.  Note that we 
-        can dispatch based on path in here, too."""
-        if request.path == '/echo':
-            while True:
-                m = request.wait()
-                if m is None:
-                    break
-                request.send(m)
+    def on_message(self, msg):
+        path = self.environ['REQUEST_PATH']
+        if path == '/echo':
+            self.write_message(msg)
                 
-        elif request.path == '/data':
-            for i in range(10000):
-                yield "0 %s %s\n" % (i, random.random())
-                request.send("0 %s %s\n" % (i, random.random()))
+        elif path == '/data':
+            data = [(i,random()) for i in range(10000)]
+            self.write_message(json.dumps(data))
 
 
-wsapp = net.WebSocket(handler = handle)
-
-
-def app(environ, start_response):
+def page(environ, start_response):
     """ This resolves to the web page or the websocket depending on the path."""
-    if environ['PATH_INFO'] == '/' or environ['PATH_INFO'] == "":
-        data = open(os.path.join(
-                     os.path.dirname(__file__), 
+    path = environ['PATH_INFO']
+    if not path or path == '/':
+        data = open(os.path.join(os.path.dirname(__file__), 
                      'websocket.html')).read()
         data = data % environ
         start_response('200 OK', [('Content-Type', 'text/html'),
-                                 ('Content-Length', len(data))])
+                                  ('Content-Length', str(len(data)))])
         return [data]
-    else:
-        return wsapp(environ, start_response)
+
+
+app = net.WsgiHandler(\
+        middleware = (page,
+                      net.WebSocket(handle)))
 
 
 def server(**kwargs):
     wsgi = pulsar.require('wsgi')
-    return wsgi.createServer(callable = app, **kwargs)
+    return wsgi.createServer(callable = app,
+                             **kwargs)
 
 
 def start_server(**params):

@@ -16,71 +16,55 @@ import pulsar
 from pulsar.utils.tools import cached_property
 
 from .utils import parse_authorization_header
-from .globals import *
 
 
-__all__ = ['WsgiRequest','WsgiHandler']
+__all__ = ['WsgiHandler']
 
 
 EMPTY_DICT = {}
 EMPTY_TUPLE = ()
 
 
-class WsgiRequest(object):
-    '''An request environment wrapper'''
-    def __init__(self, environ):
-        self.environ = environ
-        self.sock = environ.get('pulsar.socket')
-        self.path = environ.get('PATH_INFO')
-        self._init()
-    
-    def _init(self):
-        pass
-    
-    @property
-    def actor(self):
-        return self.environ.get("pulsar.worker")
-    
-    @cached_property
-    def data(self):
-        return self.environ['wsgi.input'].read()
-    
-    @cached_property
-    def authorization(self):
-        """The `Authorization` object in parsed form."""
-        code = 'HTTP_AUTHORIZATION'
-        if code in self.environ:
-            header = self.environ[code]
-            return parse_authorization_header(header)
+def authorization(environ, start_response):
+    """An `Authorization` middleware."""
+    code = 'HTTP_AUTHORIZATION'
+    if code in environ:
+        header = environ[code]
+        return parse_authorization_header(header)
 
         
 class WsgiHandler(pulsar.PickableMixin):
-    '''Asyncronous WSGI handler'''
-    REQUEST = WsgiRequest
+    '''An asynchronous handler for application conforming to python WSGI_.
     
-    def __init__(self,
-                 request_middleware = None,
-                 response_middleware = None,
-                 **kwargs):
+.. attribute: request_middleware
+
+    Optional list of middleware request functions.
+    
+.. attribute: response_middleware
+
+    Optional list of middleware response functions.
+    
+    
+.. _WSGI: http://www.python.org/dev/peps/pep-3333/
+'''    
+    def __init__(self, middleware = None, **kwargs):
         self.log = self.getLogger(**kwargs)
-        self.request_middleware = request_middleware
-        self.response_middleware = response_middleware
-        self._init(**kwargs)
-        
-    def _init(self,**kwargs):
-        pass
+        self.middleware = middleware or []
         
     def __call__(self, environ, start_response):
-        request = self.REQUEST(environ)
-        if self.request_middleware:
-            self.request_middleware.apply(request)
-        response = self.execute(request, start_response)
-        #if self.response_middleware:
-        #    self.response_middleware.apply(response)
-        return response
+        '''The WSGI callable'''
+        #request = self.REQUEST(environ)
+        for middleware in self.middleware:
+            response = middleware(environ, start_response)
+            if response is not None:
+                return response
+                # if a middleware has return break the loop and return what it
+                # returns
+        return []
         
-    def execute(self, request, start_response):
-        pass
+    def read(self, environ):
+        '''Read data from stream'''
+        return environ['wsgi.input'].read()
     
     def send(self, request, name, args = None, kwargs = None,
              server = None, ack = True):

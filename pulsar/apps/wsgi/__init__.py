@@ -58,15 +58,10 @@ parameters.'''
                         "wsgi.multiprocess": mp})
         # Create the response object
         response = HttpResponse(request)
-        #response.force_close()
+        # WSGI
         data = worker.app_handler(environ, response.start_response)
         yield response.write(data)
         yield response
-        
-    def handle_response(self, worker, response):
-        if response.exception:
-            response = HttpResponse(response.request)
-        return response.close()
             
     def monitor_start(self, monitor):
         '''If the concurrency model is thread, a new handler is
