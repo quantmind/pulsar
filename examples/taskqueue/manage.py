@@ -21,9 +21,9 @@ from pulsar.apps import rpc, tasks, wsgi
 TASK_PATHS = ['sampletasks.*']
 
 
-def test_middleware(request, margs):
+def test_middleware(request, kwargs):
     '''Add a simple flag to the dictionary. Just for testing middleware.'''
-    margs['test'] = True
+    kwargs['test'] = True
 
 task_manager = tasks.HttpTaskManager('taskqueue')
 task_manager.add_request_middleware(test_middleware)

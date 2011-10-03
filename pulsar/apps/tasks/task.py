@@ -157,6 +157,10 @@ returns nothing.'''
     
     def _on_finish(self, worker):
         pass
+    
+    def close(self):
+        '''Needed by pulsar. Does nothing.'''
+        pass
 
 
 class TaskInMemory(Task):
@@ -171,7 +175,7 @@ class TaskInMemory(Task):
     
     def __init__(self, id = None, name = None, time_executed = None,
                  expiry = None, args = None, kwargs = None, ack = None,
-                 status = None):
+                 status = None, **params):
         self.id = id
         self.name = name
         self.time_executed = time_executed
@@ -179,6 +183,7 @@ class TaskInMemory(Task):
         self.args = args
         self.kwargs = kwargs
         self.status = status
+        self.params = params
 
     def _on_finish(self,worker=None):
         if worker:

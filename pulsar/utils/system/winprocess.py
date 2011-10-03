@@ -4,7 +4,8 @@ from multiprocessing import forking, process, freeze_support
 from multiprocessing.util import _logger, _log_to_stderr
 
 WINEXE = forking.WINEXE
-        
+
+
 def get_preparation_data(name):
     '''
     Return info about parent needed by child to unpickle process object.

@@ -68,7 +68,7 @@ This script pops up an alert box that says "You said: Hello, world".
         
     def __iter__(self):
         #yield en empty string so that headers are sent
-        yield ''
+        yield b''
         stream = self.stream
         self.on_open()
         # kick of reading

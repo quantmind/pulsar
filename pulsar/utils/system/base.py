@@ -5,6 +5,7 @@
 import ctypes
 import signal
 from select import select as _select
+from multiprocessing import Pipe
 
 from pulsar.utils.importer import import_module, module_attribute
 from pulsar.utils.py2py3 import *
@@ -141,7 +142,7 @@ class IObase(object):
     READ = _EPOLLIN
     WRITE = _EPOLLOUT
     ERROR = _EPOLLERR | _EPOLLHUP | _EPOLLRDHUP
-    
+        
     
 class EpollProxy(object):
     '''An epoll like class.'''
@@ -182,6 +183,9 @@ class IOselect(EpollProxy):
     def poll(self, timeout=None):
         readable, writeable, errors = _select(
             self.read_fds, self.write_fds, self.error_fds, timeout)
+        return self.get_events(readable, writeable, errors)
+    
+    def get_events(self, readable, writeable, errors):
         events = {}
         for fd in readable:
             events[fd] = events.get(fd, 0) | IObase.READ
@@ -190,4 +194,32 @@ class IOselect(EpollProxy):
         for fd in errors:
             events[fd] = events.get(fd, 0) | IObase.ERROR
         return list(iteritems(events))
+    
+
+class IOQueue(IOselect):
+    '''Epoll like class for a IO based on a queue.
+No select or epoll performed here,
+simply get data from a queue.
+return task from the queue if available.'''
+    def __init__(self):
+        super(IOQueue,self).__init__()
+        self._fd = gen_unique_id()[:8]
+        self._queue = ThreadQueue()
+        self._empty = ()
+    
+    def fileno(self):
+        return self._fd
+    
+    def put_read(self,fd):
+        self._queue.put(((fd,),self._empty,self._empty))
+    
+    def poll(self, timeout = 0):
+        try:
+            readable, writeable, errors = self._queue.get(timeout)
+        except Empty:
+            return self._empty
+        except IOError:
+            return self._empty
+        return self.get_events(readable, writeable, errors)
+    
     

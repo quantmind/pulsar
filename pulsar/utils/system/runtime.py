@@ -11,9 +11,8 @@ import os
 import sys
 import time
 import imp
-from socket import socket
+import socket
 
-from pulsar.utils.py2py3 import pickle
 
 knownPlatforms = {
     'nt': 'win',
@@ -94,8 +93,4 @@ class Platform(object):
         ''':rtype: a boolean indicating if support for multiprocess
  sockets is available.
         '''
-        try:
-            pickle.dumps(socket())
-            return True
-        except:
-            return False
+        return hasattr(socket,'fromfd')

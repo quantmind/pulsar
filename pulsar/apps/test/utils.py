@@ -3,27 +3,42 @@ import unittest
 
 import pulsar
 
-class AsyncTest(pulsar.Deferred):
+
+class _Outcome(object):
+    def __init__(self):
+        self.success = True
+        self.skipped = None
+        self.unexpectedSuccess = None
+        self.expectedFailure = None
+        self.errors = []
+        self.failures = []
+
+
+class TestRequest(object):
     
-    def __init__(self, worker, testcls):
-        loader = unittest.TestLoader()
-        self.tests = testcls()
-        self.test_results = tests.defaultTestResult()
+    def __init__(self, testcls):
+        self.testcls = testcls
         
-    def response(self):
-        init = getattr(self.tests,'initTests',None)
-        end = getattr(self.tests,'endTests',None)
+    def run(self, worker):
+        loader = unittest.TestLoader()
+        self.tests = tests = self.testcls()
+        self.test_results = results = tests.defaultTestResult()
+        init = getattr(tests,'initTests',None)
+        end = getattr(tests,'endTests',None)
         if init:
             yield init()
-        for name in loader.getTestCaseNames(tests):
-            func = getattr(tests,name)
-            test = unittest.FunctionTestCase(func,
-                                             tests.setUp,
-                                             tests.tearDown)
-            yield run_test(test,result)
+        for test in loader.loadTestsFromTestCase(self.testcls):
+            yield test()
+            #yield run_test(test,results)
         if end:
             yield end()
 
+    def response(self):
+        return self
+    
+    def close(self):
+        pass
+    
 
 def run_test(self, result):
     result.startTest(self)
@@ -77,19 +92,6 @@ to during tests. iii) `runInProcess` to run a
 callable in the main process.'''
     suiterunner = None
     
-    def __init__(self, methodName=None):
-        if methodName:
-            self._dummy = False
-            super(TestCase,self).__init__(methodName)
-        else:
-            self._dummy = True
-    
-    def __repr__(self):
-        if self._dummy:
-            return self.__class__.__name__
-        else:
-            return super(TestCase,self).__repr__()
-    
     def initTests(self):
         '''Called at the beginning off all tests functions in the class'''
         pass
@@ -127,24 +129,69 @@ callable in the main process.'''
             if time.time() - t > timeout:
                 break
             self.sleep(0.1)
-    
+        
     def run(self, result=None):
+        orig_result = result
         if result is None:
             result = self.defaultTestResult()
             startTestRun = getattr(result, 'startTestRun', None)
             if startTestRun is not None:
                 startTestRun()
 
-        self._resultForDoCleanups = result
         result.startTest(self)
-        if getattr(self.__class__, "__unittest_skip__", False):
-            # If the whole class was skipped.
+
+        testMethod = getattr(self, self._testMethodName)
+        if (getattr(self.__class__, "__unittest_skip__", False) or
+            getattr(testMethod, "__unittest_skip__", False)):
+            # If the class or method was skipped.
             try:
-                result.addSkip(self, self.__class__.__unittest_skip_why__)
+                skip_why = (getattr(self.__class__, '__unittest_skip_why__', '')
+                            or getattr(testMethod, '__unittest_skip_why__', ''))
+                self._addSkip(result, skip_why)
             finally:
                 result.stopTest(self)
-            return
-        testMethod = getattr(self, self._testMethodName)
-        TestGenerator(self, result, testMethod)()
+            raise StopIteration
         
-        
+        try:
+            outcome = _Outcome()
+            self._outcomeForDoCleanups = outcome
+
+            yield self._executeTestPart(self.setUp, outcome)
+            if outcome.success:
+                yield self._executeTestPart(testMethod, outcome, isTest=True)
+                yield self._executeTestPart(self.tearDown, outcome)
+
+            self.doCleanups()
+            if outcome.success:
+                result.addSuccess(self)
+            else:
+                if outcome.skipped is not None:
+                    self._addSkip(result, outcome.skipped)
+                for exc_info in outcome.errors:
+                    result.addError(self, exc_info)
+                for exc_info in outcome.failures:
+                    result.addFailure(self, exc_info)
+                if outcome.unexpectedSuccess is not None:
+                    addUnexpectedSuccess = getattr(result, 'addUnexpectedSuccess', None)
+                    if addUnexpectedSuccess is not None:
+                        addUnexpectedSuccess(self)
+                    else:
+                        warnings.warn("TestResult has no addUnexpectedSuccess method, reporting as failures",
+                                      RuntimeWarning)
+                        result.addFailure(self, outcome.unexpectedSuccess)
+
+                if outcome.expectedFailure is not None:
+                    addExpectedFailure = getattr(result, 'addExpectedFailure', None)
+                    if addExpectedFailure is not None:
+                        addExpectedFailure(self, outcome.expectedFailure)
+                    else:
+                        warnings.warn("TestResult has no addExpectedFailure method, reporting as passes",
+                                      RuntimeWarning)
+                        result.addSuccess(self)
+
+        finally:
+            result.stopTest(self)
+            if orig_result is None:
+                stopTestRun = getattr(result, 'stopTestRun', None)
+                if stopTestRun is not None:
+                    stopTestRun()

@@ -261,11 +261,13 @@ for the server as a whole.
 
 :parameter data: an iterable over bytes'''
         ioloop = self.stream.ioloop
+        upgrade = self.__upgrade
         wb = self._write
         for b in data:
-            if b:
+            if b or upgrade:
                 yield self.send_headers()
-                yield make_async(wb(b)).start(ioloop)
+                if b:
+                    yield make_async(wb(b)).start(ioloop)
             else:
                 # release the loop
                 yield NOT_DONE
@@ -317,6 +319,8 @@ for the server as a whole.
                 yield write(elem)
         
     def close(self):
+        '''Override close method so that the socket is closed only if
+there is no upgrade.'''
         yield self.on_close()
         if not self.__upgrade == 'websocket':
             yield self.stream.close()

@@ -34,6 +34,17 @@ from .link import *
 from .rpc import *
 
 
+class TaskResponse(pulsar.Response):
+    
+    def __init__(self, worker, request):
+        self.worker = worker
+        super(TaskResponse,self).__init__(request)
+        
+    def close(self):
+        task = self.request
+        return task.on_finish(self.worker, result = task.result)
+
+
 class Remotes(pulsar.ActorBase):
     
     def actor_tasks_list(self, caller):
@@ -130,16 +141,13 @@ responsability to the :attr:`pulsar.apps.tasks.TaskQueue.scheduler`
 :parameter tkwargs: optional dictionary of arguments for the task.'''
         return self.scheduler.make_request(job_name, targs, tkwargs, **kwargs)
             
-    def handle_event_task(self, worker, task):
+    def handle_request(self, worker, task):
         '''Called by the worker to perform the *task* in the queue.'''
         job = registry[task.name]
         with task.consumer(self,worker,job) as consumer:
             task.on_start(worker)
             task.result = job(consumer, *task.args, **task.kwargs)
-        return task
-
-    def end_event_task(self, worker, task):
-        task.on_finish(worker, result = task.result)
+        return TaskResponse(worker,task)
             
     def task_finished(self, response):
         response._on_finish()

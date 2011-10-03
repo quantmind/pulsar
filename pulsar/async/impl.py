@@ -7,24 +7,7 @@ from pulsar.utils.tools import gen_unique_id
 from .proxy import ActorProxyMonitor
 
 
-__all__ = ['Queue','IODummy']
-
-
-class IODummy(system.EpollProxy):
-    '''The polling mechanism for a task queue.
-No select or epoll performed here, simply
-return task from the queue if available.
-This is an interface for using the same IOLoop class of other workers.'''
-    def __init__(self):
-        super(IODummy,self).__init__()
-        self._fd = gen_unique_id()
-        self._empty = []
-    
-    def fileno(self):
-        return self._fd
-    
-    def poll(self, timeout = 0):
-        return self._empty
+__all__ = ['Queue']
     
     
 class ActorImpl(object):
@@ -115,8 +98,8 @@ class ActorThread(Thread,ActorImpl):
     def run(self):
         run_actor(self)
         
-    def get_ioimpl(self):
-        return IODummy()
+    #def get_ioimpl(self):
+    #    return system.IODummy()
     
     def terminate(self):
         self.actor.stop()

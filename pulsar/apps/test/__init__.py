@@ -70,15 +70,12 @@ is a group of tests specified in a test class.'''
     def monitor_start(self, monitor):
         '''When the monitor starts load all tests classes\
  in the taskqueue'''
-        for _,test in self.tests:
-            monitor.task_queue.put(test)
+        for _,testcls in self.tests:
+            monitor.task_queue.put(TestRequest(testcls))
             
-    def handle_request(self, worker, testcls):
-        test = AsyncTest(worker,testcls)
-        return pulsar.make_async(run_test_case(worker,testcls))
-    
-    def end_event_task(self, worker, result):
-        pass
+    def handle_request(self, worker, request):
+        yield request.run(worker)
+        yield request.response()
     
     def __worker_task(self, worker):
         while self.producer:
