@@ -4,7 +4,7 @@ import os
 import struct
 
 import pulsar
-from pulsar.utils.py2py3 import ispy3k, range  
+from pulsar.utils.py2py3 import ispy3k, range, BytesIO, i2b
 
 
 class WebSocketError(pulsar.BadHttpRequest):
@@ -99,7 +99,7 @@ specification supporting protocol version 8::
     def _build(self):
         """Builds a frame from the instance's attributes.
         """
-        header = ''
+        header = BytesIO()
 
         if self.fin > 0x1:
             raise WebSocketProtocolError('FIN bit parameter must be 0 or 1')
@@ -113,11 +113,11 @@ specification supporting protocol version 8::
         ## |N|V|V|V|       |
         ## | |1|2|3|       |
         ## +-+-+-+-+-------+
-        header += chr(((self.fin << 7)
+        header.write(i2b(((self.fin << 7)
                        | (self.rsv1 << 6)
                        | (self.rsv2 << 5)
                        | (self.rsv3 << 4)
-                       | self.opcode))
+                       | self.opcode)))
 
         ##                 +-+-------------+-------------------------------+
         ##                 |M| Payload len |    Extended payload length    |
@@ -134,11 +134,13 @@ specification supporting protocol version 8::
 
         length = self.payload_length 
         if length < 126:
-            header += chr(mask_bit | length)
+            header.write(i2b(mask_bit | length))
         elif length < (1 << 16):
-            header += chr(mask_bit | 126) + struct.pack('!H', length)
+            header.write(i2b(mask_bit | 126))
+            header.write(struct.pack('!H', length))
         elif length < (1 << 63):
-            header += chr(mask_bit | 127) + struct.pack('!Q', length)
+            header.write(i2b(mask_bit | 127))
+            header.write(struct.pack('!Q', length))
         else:
             raise WebSocketProtocolError('Frame too large')
 
@@ -152,10 +154,12 @@ specification supporting protocol version 8::
         ## |                     Payload Data continued ...                |
         ## +---------------------------------------------------------------+
         if not self.masking_key:
-            return header + self.body 
-
-        bytes = header + self.masking_key + self.mask(self.body)
-        return str(bytes)
+            header.write(self.body)
+        else:
+            header.write(self.masking_key)
+            header.write(self.mask(self.body))
+        
+        return header.getvalue()
                 
     def mask(self, data):
         """Performs the masking or unmasking operation on data

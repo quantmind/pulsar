@@ -20,6 +20,7 @@ if ispy3k: # Python 3
     range = range
     from io import BytesIO, StringIO
     import pickle
+    i2b = lambda n : bytes((n,))
     
     from urllib import parse as urlparse
     from io import StringIO
@@ -63,6 +64,8 @@ else: # Python 2
     from itertools import izip as zip, imap as map
     range = xrange
     
+    i2b = lambda n : chr(n)
+    
     import urlparse
     from cStringIO import StringIO
     BytesIO = StringIO
@@ -72,8 +75,11 @@ else: # Python 2
     def native_str(s):
         return s.encode('utf-8')
     
-    def to_bytestring(s, encoding=UTF8, errors='strict'):    
-        return s.encode(encoding, errors)
+    def to_bytestring(s, encoding=UTF8, errors='strict'):
+        if isinstance(s,unicode): 
+            return s.encode(encoding, errors)
+        else:
+            return s
     
     
     class UnicodeMixin(object):

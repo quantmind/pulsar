@@ -10,7 +10,6 @@ from .tcp import *
 from .http import *
 from .client import HttpClient, urlencode
 from .link import *
-from .wsgi import *
 from .iostream import *
 
 

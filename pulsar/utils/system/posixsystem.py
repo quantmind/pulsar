@@ -29,14 +29,11 @@ def chown(path, uid, gid):
         
         
 def close_on_exec(fd):
-    try:
-        flags = fcntl.fcntl(fd, fcntl.F_GETFD)
-        fcntl.fcntl(fd, fcntl.F_SETFD, flags | fcntl.FD_CLOEXEC)
-    except:
-        pass
+    flags = fcntl.fcntl(fd, fcntl.F_GETFD)
+    fcntl.fcntl(fd, fcntl.F_SETFD, flags | fcntl.FD_CLOEXEC)
     
     
-def __set_non_blocking(fd):
+def _set_non_blocking(fd):
     flags = fcntl.fcntl(fd, fcntl.F_GETFL) | os.O_NONBLOCK
     fcntl.fcntl(fd, fcntl.F_SETFL, flags)
     
@@ -61,6 +58,34 @@ def get_gid(group):
 def setpgrp():
     os.setpgrp()
 
+
+class Waker(object):
+    
+    def __init__(self):
+        r, w = Pipe(duplex = False)
+        _set_non_blocking(r.fileno())
+        _set_non_blocking(w.fileno())
+        close_on_exec(r.fileno())
+        close_on_exec(w.fileno())
+        self._writer = w
+        self._reader = r
+        
+    def fileno(self):
+        return self._reader.fileno()
+    
+    def wake(self):
+        try:
+            self.writer.write(b'x')
+        except IOError:
+            pass
+
+    def consume(self):
+        r = self._reader
+        try:
+             while r.poll():
+                 r.recv()
+        except IOError:
+            pass
 
     
 def daemonize():

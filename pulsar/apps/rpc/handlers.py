@@ -152,7 +152,7 @@ Add a limited ammount of magic to RPC handlers.'''
 BaseHandler = MetaRpcHandler('BaseRpcHandler',(object,),{'virtual':True})
 
 
-class RpcMiddleware(BaseHandler,net.WsgiHandler):
+class RpcMiddleware(BaseHandler):
     '''A WSGI middleware for serving RPC.
 Sub-handlers for prefixed methods (e.g., system.listMethods)
 can be added with putSubHandler. By default, prefixes are

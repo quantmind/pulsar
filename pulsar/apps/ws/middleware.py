@@ -20,6 +20,15 @@ __all__ = ['WebSocket','WS']
 logger = logging.getLogger('websocket')
 
 
+def safe(self, func, *args, **kwargs):
+    try:
+        return func(*args, **kwargs)
+    except Exception:
+        logger.error("Uncaught exception in {0[PATH_INFO]}"\
+                        .format(self.environ), exc_info=True)
+        self._abort()
+
+
 class WS(object):
     '''Override :meth:`on_message` to handle incoming messages.
 You can also override :meth:`on_open` and :meth:`on_close` to handle opened
@@ -64,7 +73,7 @@ This script pops up an alert box that says "You said: Hello, world".
         self.protocols = protocols
         self.extensions = extensions
         self.parser = Parser()
-        self.stream = environ['wsgi.input']
+        self.stream = environ['pulsar.stream']
         
     def __iter__(self):
         #yield en empty string so that headers are sent
@@ -111,44 +120,22 @@ This script pops up an alert box that says "You said: Hello, world".
     #################################################################    
     # INTERNALS
     #################################################################
-    
-    def safe(self, callback, *args, **kwargs):
-        """Wrap callbacks with this if they are used on asynchronous requests.
-
-        Catches exceptions properly and closes this WebSocket if an exception
-        is uncaught.
-        """
-        if args or kwargs:
-            callback = partial(callback, *args, **kwargs)
-            
-        def wrapper(*args, **kwargs):
-            try:
-                return callback(*args, **kwargs)
-            except Exception:
-                logger.error("Uncaught exception in {0[PATH_INFO]}"\
-                             .format(self.environ), exc_info=True)
-                self._abort()
-                
-        return wrapper
-    
+        
     def _write_message(self, msg):
         self.stream.write(msg)
     
     def _handle(self, data = None):
         if data is not None:
-            try:
-                self.parser.execute(data,len(data))
-            except Exception as e:
-                logger.critical('Unhandled exception while parsing',
-                                exc_info = True)
+            safe(self, self.parser.execute, data, len(data))
                 
         frame = self.parser.frame
         if frame.is_complete():
             if self.client_terminated:
                 return
-            frame.on_complete(self)
+            safe(self, frame.on_complete, self)
             
-        self.stream.read(callback = self._handle)
+        if not self.client_terminated:
+            self.stream.read(callback = self._handle)
             
     
 

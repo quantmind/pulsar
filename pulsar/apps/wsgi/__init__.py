@@ -9,6 +9,7 @@ import pulsar
 from pulsar.net import HttpResponse, create_socket
 
 from .handlers import *
+from .wsgi import *
 
 
 class WSGIApplication(pulsar.Application):

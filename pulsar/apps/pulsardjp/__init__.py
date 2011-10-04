@@ -85,7 +85,7 @@ used by a :class:`pulsar.Worker` to carry out its task.'''
     def load(self):
         from djpcms import http
         self.sites.load()
-        return http.DjpCmsHandler(self.sites)
+        return http.WSGI(self.sites)
 
     def configure_logging(self):
         pass

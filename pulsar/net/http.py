@@ -7,6 +7,8 @@ from wsgiref.util import is_hop_by_hop
 import pulsar
 from pulsar import is_string, lib, Deferred, make_async, to_bytestring, NOT_DONE
 from pulsar.utils.http import Headers, unquote, to_string
+from pulsar.utils.py2py3 import BytesIO
+
 
 from .tcp import TcpRequest, TcpResponse
 
@@ -24,8 +26,7 @@ def on_headers(f):
 
 
 class HttpRequest(TcpRequest):
-    '''A specialized :class:`TcpRequest` class for the HTTP protocol
-which conforms with python WSGI.'''
+    '''A specialized :class:`TcpRequest` class for the HTTP protocol.'''
     default_parser = lib.HttpParser
     
     def on_init(self, kwargs):
@@ -64,23 +65,28 @@ which conforms with python WSGI.'''
    
     @on_headers
     def wsgi_environ(self):
-        """Get WSGI environ based on the current request """        
+        """Get WSGI compatible environ dictionary based on the current
+pulsar request."""        
         parser = self.parser
         version = parser.get_version()
-        
+        input = BytesIO()
+        for b in parser.get_body():
+            input.write(b)
+        input.seek(0)
         environ = {
-            "wsgi.input": self.stream,
+            "wsgi.input": input,
             "wsgi.errors": sys.stderr,
             "wsgi.version": version,
             "wsgi.run_once": False,
-            "wsgi.body": parser.get_body(),
+            "wsgi.url_scheme": parser.get_protocol(),
             "SERVER_SOFTWARE": pulsar.SERVER_SOFTWARE,
             "REQUEST_METHOD": parser.get_method(),
             "QUERY_STRING": parser.get_query_string(),
             "RAW_URI": parser.get_url(),
             "SERVER_PROTOCOL": parser.get_protocol(),
             "CONTENT_TYPE": "",
-            "CONTENT_LENGTH": ""
+            "CONTENT_LENGTH": "",
+            "pulsar.stream": self.stream
         }
         
         # REMOTE_HOST and REMOTE_ADDR may not qualify the remote addr:
@@ -168,7 +174,18 @@ which conforms with python WSGI.'''
 
 class HttpResponse(TcpResponse):
     '''A specialized TcpResponse class for the HTTP protocol which conforms
-with Python WSGI for python 2 and 3. Headers are string, body is bytes.'''
+with Python WSGI for python 2 and 3.
+
+ * Headers are python native strings (the ``str`` type, therefore strings in
+   python 2 and unicode in python 3).
+ * Content body are bytes (``str`` in python 2 and ``bytes`` in python 3).
+ 
+Do not be confused however: even if Python 3 ``str`` is actually 
+Unicode under the hood, the *content* of a native string is still 
+restricted to bytes!
+
+Therefore headers are converted to bytes before sending.
+'''
     middleware = []
     
     def on_init(self, kwargs):
@@ -262,6 +279,9 @@ for the server as a whole.
 :parameter data: an iterable over bytes'''
         ioloop = self.stream.ioloop
         upgrade = self.__upgrade
+        if not upgrade:
+            if hasattr(data,'__len__'):
+                self.force_close()
         wb = self._write
         for b in data:
             if b or upgrade:
@@ -273,7 +293,6 @@ for the server as a whole.
                 yield NOT_DONE
     
     def _write(self, data, callback = None):
-        data = to_bytestring(data)
         return self.stream.write(data,callback)
     
     def process_headers(self, headers):
@@ -307,16 +326,12 @@ for the server as a whole.
                 # No data no upgrade, don't send headers
                 return None
             data = tosend.flat(self.request.version,self.status)
+            # headers are python native strings, therefore we need to convert
+            # them to bytes before sending them
+            data = to_bytestring(data)
             self.__headers_sent = data
             self._write(data, self.on_headers)
         return self.on_headers
-        
-    def generate_data(self, data):
-        write = self._write
-        for elem in data:
-            yield self.send_headers(elem)
-            if elem:
-                yield write(elem)
         
     def close(self):
         '''Override close method so that the socket is closed only if

@@ -6,9 +6,8 @@ import threading
 import errno
 import bisect
 import socket
-from multiprocessing import Pipe
 
-from pulsar.utils.system import IObase, IOpoll, close_on_exec, platform
+from pulsar.utils.system import IObase, IOpoll, close_on_exec, platform, Waker
 from pulsar.utils.tools import gen_unique_id
 from pulsar.utils.mixins import Synchronized
 from pulsar.utils.collections import WeakList
@@ -23,44 +22,6 @@ def file_descriptor(fd):
         return fd.fileno()
     else:
         return fd
-
-
-class PipeWaker(object):
-    
-    def __init__(self, ioloop):
-        self._waker_reader, self._waker_writer = Pipe(duplex = False)
-        self.register(ioloop)
-        
-    def register(self,ioloop):        
-        ioloop.add_handler(self._waker_reader, self.readbogus, ioloop.READ)
-        
-    def readbogus(self, fd, events):
-        r = self._waker_reader
-        while r.poll():
-            r.recv()
-            
-    def __call__(self):
-        try:
-            self._waker_writer.send(b'x')
-        except IOError:
-            pass
-
-
-class SocketWaker(PipeWaker):
-    '''In windows '''
-    def __init__(self, ioloop):
-        self._sock = s = socket.socket()
-        s.bind(('',0))
-        s.setblocking(False)
-        s.listen(1)
-        self._waker_writer = socket.create_connection(\
-                                self._waker_reader.getsockname())
-        self._waker_reader,_ = s.connect()
-        self._waker_reader.setblocking(False)
-        self.register(ioloop)
-        
-    def readbogus(self, fd, events):
-        self._waker_reader.recv(1024)
         
 
 class IOLoop(IObase,Synchronized):
@@ -120,9 +81,8 @@ It should be instantiated after forking.
         self.POLL_TIMEOUT = pool_timeout if pool_timeout is not None\
                                  else self.POLL_TIMEOUT
         self.log = logger or logging.getLogger('ioloop')
-        fd = file_descriptor(self._impl)
-        if fd:
-            close_on_exec(fd)
+        if hasattr(self._impl, 'fileno'):
+            close_on_exec(self._impl.fileno())
         self._name = name
         self._handlers = {}
         self._events = {}
@@ -134,10 +94,10 @@ It should be instantiated after forking.
         self._stopped = False
         self.num_loops = 0
         self._blocking_signal_threshold = None
-        if platform.type == 'posix':
-            self.waker = PipeWaker(self)
-        else:
-            self.waker = SocketWaker(self)
+        self._waker = Waker()
+        self.add_handler(self._waker.fileno(),
+                         lambda fd, events: self._waker.consume(),
+                         self.READ)
         
     def __str__(self):
         if self.name:
@@ -370,9 +330,8 @@ whether that callback was invoked before or after ioloop.start.'''
 
     def _wake(self):
         '''Wake up the eventloop'''
-        if platform.type == 'posix':
-            if self.running():
-                self.waker()
+        if self.running():
+            self._waker.wake()
 
     def _run_callback(self, callback):
         try:

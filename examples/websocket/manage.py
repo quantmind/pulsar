@@ -12,7 +12,7 @@ from random import random
 import time
 
 import pulsar
-from pulsar import net
+from pulsar import net, to_bytestring
 from pulsar.apps import ws, wsgi
 from pulsar.utils.py2py3 import range
 
@@ -38,10 +38,10 @@ def page(environ, start_response):
         data = data % environ
         start_response('200 OK', [('Content-Type', 'text/html'),
                                   ('Content-Length', str(len(data)))])
-        return [data]
+        return [to_bytestring(data)]
 
 
-app = net.WsgiHandler(\
+app = wsgi.WsgiHandler(\
         middleware = (page,
                       ws.WebSocket(handle)))
 

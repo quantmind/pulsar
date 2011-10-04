@@ -4,11 +4,12 @@ display the two famous words::
     python manage.py
 '''
 import pulsar
+from pulsar.apps import wsgi
 
 
 def hello(environ, start_response):
     '''Pulsar HTTP "Hello World!" application'''
-    data = 'Hello World!\n'
+    data = b'Hello World!\n'
     status = '200 OK'
     response_headers = (
         ('Content-type','text/plain'),
@@ -19,9 +20,7 @@ def hello(environ, start_response):
 
 
 def server(**kwargs):
-    wsgi = pulsar.require('wsgi')
-    return wsgi.createServer(callable = hello,
-                             **kwargs)
+    return wsgi.createServer(callable = hello, **kwargs)
     
 def start_server(**params):
     return server(**params).start()

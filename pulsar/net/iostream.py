@@ -5,8 +5,7 @@ import socket
 import errno
 from collections import deque
 
-from pulsar import Deferred
-from pulsar import is_async
+from pulsar import Deferred, is_async
 
 iologger = logging.getLogger('pulsar.iostream')
 

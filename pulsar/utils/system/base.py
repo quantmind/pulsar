@@ -5,7 +5,6 @@
 import ctypes
 import signal
 from select import select as _select
-from multiprocessing import Pipe
 
 from pulsar.utils.importer import import_module, module_attribute
 from pulsar.utils.py2py3 import *
@@ -38,24 +37,6 @@ CHUNK_SIZE = (16 * 1024)
 
 MAX_BODY = 1024 * 132
 
-weekdayname = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
-monthname = [None,
-             'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-             'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
-
-# Server and Date aren't technically hop-by-hop
-# headers, but they are in the purview of the
-# origin server which the WSGI spec says we should
-# act like. So we drop them and add our own.
-#
-# In the future, concatenation server header values
-# might be better, but nothing else does it and
-# dropping them is easier.
-hop_headers = set("""
-    connection keep-alive proxy-authenticate proxy-authorization
-    te trailers transfer-encoding upgrade
-    server date
-    """.split())
              
 try:
     from setproctitle import setproctitle
