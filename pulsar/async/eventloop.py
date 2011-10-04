@@ -8,8 +8,7 @@ import bisect
 import socket
 from multiprocessing import Pipe
 
-from pulsar.utils.system import IObase, IOpoll, close_on_exec, platform,\
-                                 EpollProxy
+from pulsar.utils.system import IObase, IOpoll, close_on_exec, platform
 from pulsar.utils.tools import gen_unique_id
 from pulsar.utils.mixins import Synchronized
 from pulsar.utils.collections import WeakList
@@ -135,10 +134,10 @@ It should be instantiated after forking.
         self._stopped = False
         self.num_loops = 0
         self._blocking_signal_threshold = None
-        if isinstance(self._impl,EpollProxy):
-            self.waker = SocketWaker(self)
-        else:
+        if platform.type == 'posix':
             self.waker = PipeWaker(self)
+        else:
+            self.waker = SocketWaker(self)
         
     def __str__(self):
         if self.name:

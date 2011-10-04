@@ -76,20 +76,6 @@ is a group of tests specified in a test class.'''
     def handle_request(self, worker, request):
         yield request.run(worker)
         yield request.response()
-    
-    def __worker_task(self, worker):
-        while self.producer:
-            try:
-                p = next(self.producer)
-                if inspect.isgenerator(p):
-                    self.producers.append(self.producer)
-                    self.producer = p
-            except StopIteration:
-                if self.producers:
-                    self.producer = self.producers.pop()
-                else:
-                    self.producer = None
-        worker.shut_down()
                       
         
 def TestSuiteRunner(extractors):

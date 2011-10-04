@@ -28,8 +28,7 @@ class TestRequest(object):
         if init:
             yield init()
         for test in loader.loadTestsFromTestCase(self.testcls):
-            yield test()
-            #yield run_test(test,results)
+            yield run_test(test,results)
         if end:
             yield end()
 
@@ -41,8 +40,7 @@ class TestRequest(object):
     
 
 def run_test(self, result):
-    result.startTest(self)
-
+    
     testMethod = getattr(self, self._testMethodName)
     if (getattr(self.__class__, "__unittest_skip__", False) or
         getattr(testMethod, "__unittest_skip__", False)):
@@ -54,34 +52,82 @@ def run_test(self, result):
         finally:
             result.stopTest(self)
         raise StopIteration
+    
     try:
-        try:
-            yield self.setUp()
-        except:
-            result.addError(self, sys.exc_info())
-            return
+        outcome = _Outcome()
+        self._outcomeForDoCleanups = outcome
 
-        ok = False
-        try:
-            yield testMethod()
-            ok = True
-        except self.failureException:
-            result.addFailure(self, sys.exc_info())
-        except KeyboardInterrupt:
-            raise
-        except:
-            result.addError(self, sys.exc_info())
+        yield _executeTestPart(self, self.setUp, outcome)
+        if outcome.success:
+            yield self._executeTestPart(self, testMethod, outcome, isTest=True)
+            yield self._executeTestPart(self, self.tearDown, outcome)
 
-        try:
-            yield self.tearDown()
-        except:
-            result.addError(self, sys.exc_info())
-            ok = False
-        if ok:
+        self.doCleanups()
+        if outcome.success:
             result.addSuccess(self)
+        else:
+            if outcome.skipped is not None:
+                self._addSkip(result, outcome.skipped)
+            for exc_info in outcome.errors:
+                result.addError(self, exc_info)
+            for exc_info in outcome.failures:
+                result.addFailure(self, exc_info)
+            if outcome.unexpectedSuccess is not None:
+                addUnexpectedSuccess = getattr(result, 'addUnexpectedSuccess', None)
+                if addUnexpectedSuccess is not None:
+                    addUnexpectedSuccess(self)
+                else:
+                    warnings.warn("TestResult has no addUnexpectedSuccess method, reporting as failures",
+                                  RuntimeWarning)
+                    result.addFailure(self, outcome.unexpectedSuccess)
+
+            if outcome.expectedFailure is not None:
+                addExpectedFailure = getattr(result, 'addExpectedFailure', None)
+                if addExpectedFailure is not None:
+                    addExpectedFailure(self, outcome.expectedFailure)
+                else:
+                    warnings.warn("TestResult has no addExpectedFailure method, reporting as passes",
+                                  RuntimeWarning)
+                    result.addSuccess(self)
+
     finally:
         result.stopTest(self)
+        if orig_result is None:
+            stopTestRun = getattr(result, 'stopTestRun', None)
+            if stopTestRun is not None:
+                stopTestRun()
     
+
+def _executeTestPart(self, function, outcome, isTest=False):
+    try:
+        function()
+    except KeyboardInterrupt:
+        raise
+    except SkipTest as e:
+        outcome.success = False
+        outcome.skipped = str(e)
+    except _UnexpectedSuccess:
+        exc_info = sys.exc_info()
+        outcome.success = False
+        if isTest:
+            outcome.unexpectedSuccess = exc_info
+        else:
+            outcome.errors.append(exc_info)
+    except _ExpectedFailure:
+        outcome.success = False
+        exc_info = sys.exc_info()
+        if isTest:
+            outcome.expectedFailure = exc_info
+        else:
+            outcome.errors.append(exc_info)
+    except self.failureException:
+        outcome.success = False
+        outcome.failures.append(sys.exc_info())
+        exc_info = sys.exc_info()
+    except:
+        outcome.success = False
+        outcome.errors.append(sys.exc_info())
+            
     
 class TestCase(unittest.TestCase):
     '''A specialised test case which offers three
@@ -129,69 +175,3 @@ callable in the main process.'''
             if time.time() - t > timeout:
                 break
             self.sleep(0.1)
-        
-    def run(self, result=None):
-        orig_result = result
-        if result is None:
-            result = self.defaultTestResult()
-            startTestRun = getattr(result, 'startTestRun', None)
-            if startTestRun is not None:
-                startTestRun()
-
-        result.startTest(self)
-
-        testMethod = getattr(self, self._testMethodName)
-        if (getattr(self.__class__, "__unittest_skip__", False) or
-            getattr(testMethod, "__unittest_skip__", False)):
-            # If the class or method was skipped.
-            try:
-                skip_why = (getattr(self.__class__, '__unittest_skip_why__', '')
-                            or getattr(testMethod, '__unittest_skip_why__', ''))
-                self._addSkip(result, skip_why)
-            finally:
-                result.stopTest(self)
-            raise StopIteration
-        
-        try:
-            outcome = _Outcome()
-            self._outcomeForDoCleanups = outcome
-
-            yield self._executeTestPart(self.setUp, outcome)
-            if outcome.success:
-                yield self._executeTestPart(testMethod, outcome, isTest=True)
-                yield self._executeTestPart(self.tearDown, outcome)
-
-            self.doCleanups()
-            if outcome.success:
-                result.addSuccess(self)
-            else:
-                if outcome.skipped is not None:
-                    self._addSkip(result, outcome.skipped)
-                for exc_info in outcome.errors:
-                    result.addError(self, exc_info)
-                for exc_info in outcome.failures:
-                    result.addFailure(self, exc_info)
-                if outcome.unexpectedSuccess is not None:
-                    addUnexpectedSuccess = getattr(result, 'addUnexpectedSuccess', None)
-                    if addUnexpectedSuccess is not None:
-                        addUnexpectedSuccess(self)
-                    else:
-                        warnings.warn("TestResult has no addUnexpectedSuccess method, reporting as failures",
-                                      RuntimeWarning)
-                        result.addFailure(self, outcome.unexpectedSuccess)
-
-                if outcome.expectedFailure is not None:
-                    addExpectedFailure = getattr(result, 'addExpectedFailure', None)
-                    if addExpectedFailure is not None:
-                        addExpectedFailure(self, outcome.expectedFailure)
-                    else:
-                        warnings.warn("TestResult has no addExpectedFailure method, reporting as passes",
-                                      RuntimeWarning)
-                        result.addSuccess(self)
-
-        finally:
-            result.stopTest(self)
-            if orig_result is None:
-                stopTestRun = getattr(result, 'stopTestRun', None)
-                if stopTestRun is not None:
-                    stopTestRun()
