@@ -38,7 +38,7 @@ class HttpHandler(object):
 class HttpPoolHandler(HttpHandler):
     '''This is used when the monitor is using thread-based workers.'''
     def handle(self, request):
-        self.worker.task_queue.put(request)
+        self.worker.task_queue.put((0,request))
 
 
 class Bind(pulsar.Setting):

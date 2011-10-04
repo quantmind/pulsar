@@ -4,6 +4,7 @@
 # See the NOTICE for more information.
 import ctypes
 import signal
+import socket
 from select import select as _select
 
 from pulsar.utils.importer import import_module, module_attribute
@@ -37,7 +38,7 @@ CHUNK_SIZE = (16 * 1024)
 
 MAX_BODY = 1024 * 132
 
-             
+
 try:
     from setproctitle import setproctitle
     def set_proctitle(title):
@@ -177,30 +178,29 @@ class IOselect(EpollProxy):
         return list(iteritems(events))
     
 
-class IOQueue(IOselect):
-    '''Epoll like class for a IO based on a queue.
-No select or epoll performed here,
-simply get data from a queue.
-return task from the queue if available.'''
-    def __init__(self):
-        super(IOQueue,self).__init__()
-        self._fd = gen_unique_id()[:8]
-        self._queue = ThreadQueue()
-        self._empty = ()
+def socket_pair(listen = 1):
+    w = socket.socket()
+    w.setsockopt(socket.IPPROTO_TCP, socket.TCP_NODELAY, 1)
     
-    def fileno(self):
-        return self._fd
-    
-    def put_read(self,fd):
-        self._queue.put(((fd,),self._empty,self._empty))
-    
-    def poll(self, timeout = 0):
+    count = 0
+    while 1:
+        count += 1
+        s = socket.socket()
+        s.bind(('127.0.0.1',0))
+        addr = s.getsockname()
+        s.listen(1)
         try:
-            readable, writeable, errors = self._queue.get(timeout)
-        except Empty:
-            return self._empty
-        except IOError:
-            return self._empty
-        return self.get_events(readable, writeable, errors)
-    
+            w.connect(addr)
+            break
+        except socket.error as e:
+            if e[0] != errno.WSAEADDRINUSE:
+                raise
+            if count >= 10:
+                s.close()
+                w.close()
+                raise socket.error("Cannot bind socket pairs!")
+            s.close()
+    return w,s
+
+        
     

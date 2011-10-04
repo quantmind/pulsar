@@ -18,7 +18,7 @@ with each other via messages in a *share-nothing architecture*.
 Actor Metaclass
 ~~~~~~~~~~~~~~~~~~~~
 
-.. autoclass:: pulsar.ActorMetaClass
+.. autoclass:: ActorMetaClass
    :members:
    :member-order: bysource
    
@@ -26,7 +26,7 @@ Actor Metaclass
 Actor
 ~~~~~~~~~~~~~~
 
-.. autoclass:: pulsar.Actor
+.. autoclass:: Actor
    :members:
    :member-order: bysource
 
@@ -34,7 +34,7 @@ Actor
 Monitor
 ~~~~~~~~~~~~~~~~~~
 
-.. autoclass:: pulsar.Monitor
+.. autoclass:: Monitor
    :members:
    :member-order: bysource
 
@@ -42,7 +42,7 @@ Monitor
 Arbiter
 ~~~~~~~~~~~~~~~~~~
 
-.. autoclass:: pulsar.Arbiter
+.. autoclass:: Arbiter
    :members:
    :member-order: bysource
       
@@ -50,17 +50,24 @@ Arbiter
 ActorProxy
 ~~~~~~~~~~~~~~~~~~~~
 
-.. autoclass:: pulsar.ActorProxy
+.. autoclass:: ActorProxy
    :members:
    :member-order: bysource
    
 ActorProxyMonitor
 ~~~~~~~~~~~~~~~~~~~~~~~~
 
-.. autoclass:: pulsar.ActorProxyMonitor
+.. autoclass:: ActorProxyMonitor
    :members:
    :member-order: bysource
    
+
+ActorImpl
+~~~~~~~~~~~~~~~~~~~~~
+
+.. autoclass:: ActorImpl
+   :members:
+   :member-order: bysource
 
 .. _api-async-tools:
 
@@ -164,13 +171,6 @@ HttpResponse
 ~~~~~~~~~~~~~~~~~~~~
 
 .. autoclass:: HttpResponse
-   :members:
-   :member-order: bysource
-   
-WsgiHandler
-~~~~~~~~~~~~~~~~
-
-.. autoclass:: WsgiHandler
    :members:
    :member-order: bysource
    

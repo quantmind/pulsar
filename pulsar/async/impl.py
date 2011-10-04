@@ -3,15 +3,16 @@ from threading import Thread
 
 from pulsar import system
 from pulsar.utils.tools import gen_unique_id
+from pulsar.utils.ioqueue import IOQueue
 
 from .proxy import ActorProxyMonitor
 
 
-__all__ = ['Queue']
+__all__ = ['ActorImpl','Queue']
     
     
 class ActorImpl(object):
-    
+    '''Actor concurrency implementation.'''
     def __init__(self, actor_class, impl, timeout, arbiter, args, kwargs):
         self.inbox = Queue()
         self.aid = gen_unique_id()[:8]
@@ -45,7 +46,14 @@ class ActorImpl(object):
         '''create an instance of :class:`pulsar.Actor`.'''
         self.actor = self.actor_class(self,*self.a_args,**self.a_kwargs)
         
-    def get_ioimpl(self):
+    def get_io(self, actor):
+        '''Create a Input/Output object used in the :class:`IOLoop` instance
+of the actor. By default return None so that the default system implementation
+will be used.
+
+:parameter actor: instance of :class:`Actor`.
+:rtype: An ``epoll``-like object used as the edge and level trigger polling
+    element in the *actor* :class:`IOLoop` instance.'''
         return None
     
     
@@ -98,8 +106,11 @@ class ActorThread(Thread,ActorImpl):
     def run(self):
         run_actor(self)
         
-    #def get_ioimpl(self):
-    #    return system.IODummy()
+    def get_io(self, worker):
+        tq = worker.task_queue
+        if tq:
+            ioq = IOQueue(tq)
+            return ioq
     
     def terminate(self):
         self.actor.stop()

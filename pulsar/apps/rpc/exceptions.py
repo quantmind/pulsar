@@ -24,7 +24,8 @@ class Fault(rpc.Fault):
         return str(self.faultString)
     
     def __repr__(self):
-        return '{0} ({1}): {2}'.format(self.__class__.__name__,self.faultCode, self.faultString)
+        return '{0} ({1}): {2}'.format(self.__class__.__name__,self.faultCode,
+                                       self.faultString)
         
         
 class InternalError(Fault):
@@ -43,13 +44,15 @@ _errclasses[INVALID_RPC] = InvalidRequest
 
 class NoSuchFunction(Fault):
     def __init__(self, faultString, **extra):
-        super(NoSuchFunction,self).__init__(METHOD_NOT_FOUND, faultString, **extra)
+        super(NoSuchFunction,self).__init__(METHOD_NOT_FOUND,
+                                            faultString, **extra)
 _errclasses[METHOD_NOT_FOUND] = NoSuchFunction 
 
 
-class InvalidParams(Fault):
+class InvalidParams(InvalidRequest):
     def __init__(self, faultString, **extra):
-        super(InvalidParams,self).__init__(INVALID_METHOD_PARAMS, faultString, **extra)
+        super(InvalidParams,self).__init__(INVALID_METHOD_PARAMS,
+                                           faultString, **extra)
 _errclasses[INVALID_METHOD_PARAMS] = InvalidParams
 
 

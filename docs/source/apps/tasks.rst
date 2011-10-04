@@ -1,3 +1,5 @@
+.. _apps-tasks:
+
 =============================
 Distributed Task Queue
 =============================
@@ -7,38 +9,61 @@ Distributed Task Queue
 Tasks
 ============
 
-.. automodule:: pulsar.apps.tasks.states
+.. automodule:: states
 
 
+Utilities
+=================
 
-Low Level API
+.. autoclass:: TaskQueueRpcMixin
+   :members:
+   :member-order: bysource
+   
+   
+API
 ===============
 
 
 Taskqueue and Scheduler
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-.. autoclass:: pulsar.apps.tasks.TaskQueue
+.. autoclass:: TaskQueue
    :members:
    :member-order: bysource
 
 
-Job and Tasks
+Job Registry
 ~~~~~~~~~~~~~~~~~~~~~~
 
-.. autoclass:: pulsar.apps.tasks.JobRegistry
+.. autoclass:: JobRegistry
    :members:
    :member-order: bysource
 
-.. autoclass:: pulsar.apps.tasks.JobMetaClass
+Job meta Class
+~~~~~~~~~~~~~~~~~~~~~~
+
+.. autoclass:: JobMetaClass
+   :members:
+   :member-order: bysource
+
+Job
+~~~~~~~~~~~~~~~~~~~~~~
+   
+.. autoclass:: Job
    :members:
    :member-order: bysource
    
-.. autoclass:: pulsar.apps.tasks.Job
+Periodic Job
+~~~~~~~~~~~~~~~~~~~~~~
+   
+.. autoclass:: PeriodicJob
    :members:
    :member-order: bysource
 
-.. autoclass:: pulsar.apps.tasks.Task
+Task
+~~~~~~~~
+
+.. autoclass:: Task
    :members:
    :member-order: bysource
    
@@ -46,6 +71,6 @@ Job and Tasks
 Utilities and Decorators
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-.. autoclass:: pulsar.apps.tasks.SendToQueue
+.. autoclass:: SendToQueue
    :members:
    :member-order: bysource

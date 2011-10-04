@@ -133,6 +133,9 @@ and perform several post fork processing before starting the event loop.'''
         if self.cfg.post_fork:
             self.cfg.post_fork(self)
             
+    def get_eventloop(self, impl):
+        return self.app.worker_eventloop(self, impl)
+            
     def handle_request(self, request):
         '''Entry point for handling a request. This is a high level
 function which performs some pre-processing of *request* and delegates
@@ -517,6 +520,7 @@ The default implementation of this callback
 is to check if the *worker* has a :attr:`Actor.task_queue` attribute.
 If so it tries to get one task from the queue and if a task is available
 it is processed by the :meth:`handle_task` method.'''
+        return
         if worker.task_queue:
             try:
                 request = worker.task_queue.get(\
@@ -534,6 +538,9 @@ it is processed by the :meth:`handle_task` method.'''
     def worker_exit(self, worker):
         '''Called by the :class:`Worker` just when exited.'''
         pass
+    
+    def worker_eventloop(self, worker, impl):
+        return pulsar.default_eventloop(worker, impl)
             
     # MONITOR CALLBAKS
     

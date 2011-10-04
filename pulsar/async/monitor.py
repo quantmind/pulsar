@@ -146,7 +146,8 @@ all actors managed by ``self``.'''
     def _make_name(self):
         return 'Monitor-{0}({1})'.format(self.worker_class.code(),self.aid)
     
-    def _get_eventloop(self, impl):
+    def get_eventloop(self, impl):
+        '''Return the arbiter event loop.'''
         return self.arbiter.ioloop
     
     def _stop_ioloop(self):

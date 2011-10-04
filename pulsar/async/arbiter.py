@@ -24,6 +24,32 @@ def arbiter(daemonize = False):
     
 def spawn(actor_class, *args, **kwargs):
     return arbiter().spawn(actor_class, *args, **kwargs)
+
+
+class ArbiterSocket(object):
+    
+    def __init__(self):
+        w,s = system.socket_pair(2048)
+        s.setblocking(False)
+        self.sock = s
+        w.close()
+        
+    def fileno(self):
+        return self.sock.fileno()
+    
+    def __call__(self, fd, events):
+        return
+        client = None
+        try:
+            client, addr = self.sock.accept()
+        except socket.error as e:
+            system.close_socket(client)
+            if e.errno not in self.ALLOWED_ERRORS:
+                raise
+            else:
+                return
+        s.setblocking(True)
+        data = client.recv()
         
 
 class Arbiter(ActorPool):

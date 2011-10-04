@@ -1,10 +1,11 @@
 import sys
 import inspect
 
-from pulsar import make_async, net, NOT_DONE
+from pulsar import make_async, net, NOT_DONE, PickableMixin, to_bytestring
 from pulsar.utils.tools import checkarity
 
-from .exceptions import NoSuchFunction, InvalidParams, InternalError
+from .exceptions import NoSuchFunction, InvalidParams,\
+                        InternalError
 
 
 __all__ = ['RpcMiddleware']
@@ -29,83 +30,109 @@ def wrap_function_call(func,namefunc):
     return _
 
 
-class RpcResponse(object):
-    __slots__ = ('handler','path','func')
+class RpcRequest(object):
     
-    def __init__(self, handler, path, func):
+    def __init__(self, environ, handler, method, func, args,
+                kwargs, id, version):
+        self.environ = environ
+        self.log = handler.log
         self.handler = handler
-        self.path = path
+        self.method = method
         self.func = func
+        self.args = args
+        self.kwargs = kwargs
+        self.version = version
+        self.id = id
     
-    @property
-    def name(self):
-        return self.func.__name__
+    def __repr__(self):
+        return self.method
     
     @property
     def content_type(self):
         return self.handler.content_type
     
-    def __repr__(self):
-        return self.func.__name__
-        
-    def info(self, request, id, msg, ok = True):
+    def info(self, msg):
         '''Do something with the message and request'''
-        self.handler.log.info(msg)
+        self.log.debug(msg)
+        
+    def critical(self, e):
+        msg = 'Unhandled server exception %s: %s' % (e.__class__.__name__,e)
+        self.log.critical(msg,exc_info=True)
+        raise InternalError(msg)
+    
+
+class RpcResponse(object):
+    __slots__ = ('request','start_response')
+    
+    def __init__(self, request, start_response):
+        self.request = request
+        self.start_response = start_response
+    
+    @property
+    def name(self):
+        return self.request.method
+    
+    def __repr__(self):
+        return self.name
         
     def critical(self, request, id, e):
         msg = 'Unhandled server exception %s: %s' % (e.__class__.__name__,e)
         self.handler.log.critical(msg,exc_info=sys.exc_info)
         raise InternalError(msg)
     
-    def __call__(self, request, start_response, *args, **kwargs):
+    def __iter__(self):
+        request = self.request
+        handler = request.handler
+        status = '200 OK'
         try:
-            id = request.environ['pulsar.rpc.id']
-            if not self.func:
-                msg = 'Function "{0}" not available.'.format(self.path)
-                self.info(request,id,msg,False)
+            if not request.func:
+                msg = 'Function "{0}" not available.'.format(request.method)
                 raise NoSuchFunction(msg)
             try:
-                deco = self.handler.wrap_function_decorator
-                result = deco(self, request, *args, **kwargs)
+                result = request.func(request.handler, request, *request.args,
+                                      **request.kwargs)
             except TypeError as e:
-                msg = checkarity(self.func,args,kwargs,discount=2)
+                msg = checkarity(request.func,
+                                 request.args,
+                                 request.kwargs,
+                                 discount=2)
                 if msg:
-                    self.info(request,id,'Invalid Parameters in rpc function: {0}'.format(msg),False)
+                    msg = 'Invalid Parameters in rpc function: {0}'.format(msg)
                     raise InvalidParams(msg)
                 else:
-                    self.critical(request,id,e)
-            except Exception as e:
-                self.critical(request,id,e)
+                    raise
         except Exception as e:
+            status = '400 Bad Request'
             result = e
             
         result = make_async(result)
         while not result.called:
             yield b''
-        yield self._end(request,start_response,result.result)
-            
-    def _end(self, request, start_response, result):
-        id = request.environ['pulsar.rpc.id']
-        version = request.environ['pulsar.rpc.version']
-        #status = '400 Bad Request'
-        status = '200 OK'
+        result=  result.result
         try:
             if isinstance(result,Exception):
-                self.handler.log.error(str(result),exc_info=True)
-                result = self.handler.dumps(id,version,error=result)
+                handler.log.error(str(result),exc_info=True)
+                result = handler.dumps(request.id,
+                                       request.version,
+                                       error=result)
             else:
-                result = self.handler.dumps(id,version,result=result)
-                self.info(request,id,'Successfully handled rpc function "{0}"'\
-                                .format(self.path))
+                result = handler.dumps(request.id,
+                                       request.version,
+                                       result=result)
+                request.info('Successfully handled rpc function "{0}"'\
+                                .format(request.method))
         except Exception as e:
-            result = self.handler.dumps(id,version,error=e)
+            status = '500 Internal Server Error'
+            result = handler.dumps(request.id,
+                                   request.version,
+                                   error=e)
         
         response_headers = (
-                            ('Content-type', self.content_type),
+                            ('Content-type', request.content_type),
                             ('Content-Length', str(len(result)))
                             )
-        start_response(status, response_headers)
-        return result
+        self.start_response(status, response_headers)
+        yield to_bytestring(result)
         
 
 class MetaRpcHandler(type):
@@ -149,32 +176,22 @@ Add a limited ammount of magic to RPC handlers.'''
         return make(cls, name, bases, attrs)
 
 
-BaseHandler = MetaRpcHandler('BaseRpcHandler',(object,),{'virtual':True})
+BaseHandler = MetaRpcHandler('BaseRpcHandler',(PickableMixin,),{'virtual':True})
 
 
 class RpcMiddleware(BaseHandler):
-    '''A WSGI middleware for serving RPC.
-Sub-handlers for prefixed methods (e.g., system.listMethods)
-can be added with putSubHandler. By default, prefixes are
-separated with a '.'. Override self.separator to change this.
+    '''A WSGI middleware for serving Remote procedure calls (RPC).
 
-.. attribute:: request_middleware
-    
-    instance of :class:`pulsar.utils.Middleware` or ``None``. It available
-    the request will be processed by the middleware before
-    processing.
-    
-.. attribute:: response_middleware
-    
-    instance of :class:`pulsar.utils.Middleware` or ``None``. It available
-    the response will be processed by the middleware before returning.
+Sub-handlers for prefixed methods (e.g., system.listMethods)
+can be added with :meth:`putSubHandler`. By default, prefixes are
+separated with a dot. Override :attr:`separator` to change this.
     '''
     serve_as     = 'rpc'
-    '''Type of server and prefix to functions providing services'''
+    '''Prefix to callable providing services.'''
     separator    = '.'
-    content_type = 'text/plain'
     '''Separator between subhandlers.'''
-    RESPONSE     = RpcResponse
+    content_type = 'text/plain'
+    '''Default content type.'''
 
     def __init__(self, subhandlers = None,
                  title = None,
@@ -191,6 +208,15 @@ separated with a '.'. Override self.separator to change this.
                 self.putSubHandler(prefix, handler)
     
     def get_method_and_args(self, data):
+        '''Obtain function information form ``wsgi.input``. Needs to be
+implemented by subclasses. It should return a five elements tuple containing::
+
+    method, args, kwargs, id, version
+    
+where ``method`` is the function name, ``args`` are non-keyworded
+to pass to the function, ``kwargs`` are keyworded parameters, ``id`` is an
+identifier for the client, ``version`` is the version of the RPC protocol.
+    '''
         raise NotImplementedError
     
     def __getitem__(self, path):
@@ -222,10 +248,10 @@ separated with a '.'. Override self.separator to change this.
         '''
         return self.subHandlers.get(prefix, None)
     
-    def wrap_function_decorator(self, rpc, *args, **kwargs):
-        return rpc.func(rpc.handler,*args,**kwargs)
+    def wrap_function_decorator(self, request, *args, **kwargs):
+        return request.func(rpc.handler, request, *args,**kwargs)
     
-    def _getFunction(self, method):
+    def request(self, environ, method, args, kwargs, id, version):
         prefix_method = method.split(self.separator, 1)
         if len(prefix_method) > 1:
             # Found prefixes, get the subhandler
@@ -237,7 +263,9 @@ separated with a '.'. Override self.separator to change this.
             func = handler.rpcfunctions[method]
         except:
             func = None
-        return self.RESPONSE(handler,method,func)
+        return RpcRequest(environ, handler, method, func, args,
+                          kwargs, id, version)
+        #return RpcResponse(handler,method,func)
 
     def invokeServiceEndpoint(self, meth, args):
         return meth(*args)
@@ -263,20 +291,9 @@ separated with a '.'. Override self.separator to change this.
     
     def __call__(self, environ, start_response):
         '''The WSGI handler which consume the remote procedure call'''
-        request = self.request(environ)
-        data = request.data
-        if data is None:
-            request.read()
-            yield b''
-            while request.data is None:
-                yield b''
-            data = request.data
-        data = data[0]
+        data = environ['wsgi.input'].read()
         method, args, kwargs, id, version = self.get_method_and_args(data)
-        rpc_handler = self._getFunction(method)
-        environ['pulsar.rpc.id'] = id
-        environ['pulsar.rpc.version'] = version
-        for data in rpc_handler(request, start_response, *args, **kwargs):
-            yield data
+        request = self.request(environ, method, args, kwargs, id, version)
+        return RpcResponse(request, start_response)
         
         

@@ -75,30 +75,7 @@ class IOpoll(IOselect):
 class Waker(object):
     '''In windows '''
     def __init__(self):
-        self._writer = socket.socket()
-        # Disable buffering -- pulling the trigger sends 1 byte,
-        # and we want that sent immediately, to wake up ASAP.
-        self._writer.setsockopt(socket.IPPROTO_TCP, socket.TCP_NODELAY, 1)
-        
-        count = 0
-        while 1:
-            count += 1
-            s = socket.socket()
-            s.bind(('127.0.0.1',0))
-            addr = s.getsockname()
-            s.listen(1)
-            try:
-                self._writer.connect(addr)
-                break
-            except socket.error as e:
-                if e[0] != errno.WSAEADDRINUSE:
-                    raise
-                if count >= 10:  # I've never seen it go above 2
-                    s.close()
-                    self.writer.close()
-                    raise socket.error("Cannot bind trigger!")
-                s.close()
-        
+        self._writer, s = socket_pair(1)        
         self._reader, addr = s.accept()
         self._writer.setblocking(False)
         self._reader.setblocking(False)

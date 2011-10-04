@@ -122,42 +122,58 @@ class Scheduler(object):
     def entries(self):
         return self._entries
         
-    def make_request(self, name, targs = None, tkwargs = None,
+    def make_request(self, job_name, targs = None, tkwargs = None,
                      expiry = None, **kwargs):
-        '''Create a new task request. This function is invoked by
-the :meth:`pulsar.apps.tasks.TaskQueue.make_request` method.
+        '''Create a new task request.
 
-:parameter name: the name of a :class:`pulsar.apps.tasks.Job` registered
+:parameter job_name: the name of a :class:`Job` registered
     with the application.
+:parameter targs: optional tuple of arguments for the task.
+:parameter tkwargs: optional dictionary of arguments for the task.
     
-:rtype: an instance of :class:`pulsar.apps.tasks.Task`'''
-        if name in registry:
+:rtype: an instance of :class:`Task`'''
+        if job_name in registry:
             TaskFactory = self.TaskFactory
-            job = registry[name]
+            job = registry[job_name]
             targs = targs or EMPTY_TUPLE
             tkwargs = tkwargs or EMPTY_DICT
             id = job.make_task_id(targs,tkwargs)
             task = TaskFactory.get_task(id)
             if task:
-                self.log.info('task {0} already requested. Abort request.'\
-                              .format(task))
-                return task
-            if job.name in self.entries:
-                self.entries[job.name].next()
-            time_executed = datetime.now()
-            expiry = get_datetime(expiry, time_executed)
-            if not expiry and job.timeout:
-                expiry = time_executed + job.timeout
-            task = TaskFactory(id = id, name = job.name,
-                               time_executed = time_executed,
-                               expiry = expiry, args = targs,
-                               kwargs = tkwargs,
-                               status = PENDING, **kwargs)
-            return task.save()
+                tq = task.to_queue()
+                if not tq:
+                    self.log.info('task {0} already requested. Abort request.'\
+                                  .format(task))
+                    return task,None
+                else:
+                    return tq,tq
+            else:
+                if job.name in self.entries:
+                    self.entries[job.name].next()
+                time_executed = datetime.now()
+                expiry = get_datetime(expiry, time_executed)
+                if not expiry and job.timeout:
+                    expiry = time_executed + job.timeout
+                task = TaskFactory(id = id, name = job.name,
+                                   time_executed = time_executed,
+                                   expiry = expiry, args = targs,
+                                   kwargs = tkwargs,
+                                   status = PENDING, **kwargs)
+                task.save()
+                return task,task
         else:
-            raise TaskNotAvailable(name)
+            raise TaskNotAvailable(job_name)
+        
+    def queue_task(self, monitor, job_name, targs = None, tkwargs = None,
+                   **kwargs):
+        '''Put a new task in the task queue.'''
+        task,tq = self.make_request(job_name, targs, tkwargs, **kwargs)
+        if tq:
+            self.log.info('Adding {0} to the task queue'.format(tq))
+            monitor.task_queue.put(tq)
+        return task
 
-    def tick(self, queue, now = None):
+    def tick(self, monitor, now = None):
         '''Run a tick, that is one iteration of the scheduler.
 Executes all due tasks calculate the time in seconds to wait before
 running a new :meth:`tick`. For testing purposes a :class:`datetime.datetime`
@@ -167,9 +183,7 @@ value ``now`` can be passed.'''
             for entry in itervalues(self._entries):
                 is_due, next_time_to_run = entry.is_due(now = now)
                 if is_due:
-                    #entry = entry.next()
-                    request = self.make_request(entry.name)
-                    queue.put((request.id,request))
+                    self.queue_task(monitor,entry.name)
                 if next_time_to_run:
                     remaining_times.append(next_time_to_run)
         except RuntimeError:

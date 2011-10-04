@@ -8,8 +8,28 @@ __all__ = ['TaskQueueRpcMixin']
 
 class TaskQueueRpcMixin(rpc.JSONRPC):
     '''A mixin RPC class for communicating with a task queue.
-To use this mixin, you need to have an RPC application and a taskqueue
-application installed in the arbiter.'''
+To use this mixin, you need to have an :ref:`RPC application <apps-rpc>`
+and a :ref:`task queue <apps-tasks>` application installed in the arbiter.
+
+It exposes the following functions:
+
+.. method:: job_list([jobnames=None])
+
+    Return the list of jobs registered with task queue with meta information.
+    If a list of jobnames is given, it returns only jobs included in the list.
+    
+    :rtype: A list of dictionaries
+    
+    
+.. method:: run_new_task(jobname, [**kwargs])
+    
+    Run a new task in the task queue. The task can be of any type
+    as long as it is registered in the job registry.
+
+    :parameter jobname: the name of the job to run.
+    :parameter kwargs: optional key-valued job parameters.
+    :rtype: a dictionary containing information about the request
+'''
     
     task_queue_manager = HttpTaskManager('taskqueue')
     

@@ -1,21 +1,30 @@
 '''\
 A task-queue application for pulsar::
 
-    import pulsar
+    from pulsar.apps import tasks
     
-    tasks = pulsar.require('tasks')
     tq = tasks.TaskQueue(tasks_path = 'path.to.tasks.*')
     tq.start()
     
 An application implements several :class:`pulsar.apps.tasks.Job`
 classes which specify the way each task is run.
-A job class is used to generate a series of tasks.
+Each job class is task-factory, therefore, a task is always associated
+with one job, which can be of two types:
 
-Therefore, a task is always associated with a job, which can be
-of two types:
+* standard (:class:`Job`)
+* periodic (:class:`PeriodicJob`)
 
-* standard
-* periodic (uses a scheduler)
+To define a task is simple, subclass from :class:`Job` and implement the
+callable function::
+
+    from pulsar.apps import tasks
+    
+    class MyJob(tasks.Job):
+    
+        def __call__(self, consumer, *args, **kwargs):
+            ...
+            
+The *consumer* is passed by the task queue.
 '''
 import os
 from time import time
@@ -122,7 +131,7 @@ for implementation.'''
         '''Override the :meth:`pulsar.Application.monitor_task` callback
 to check if the schedulter needs to perform a new run.'''
         if self.scheduler.next_run <= datetime.now():
-            self.scheduler.tick(monitor.task_queue)
+            self.scheduler.tick(monitor)
         
     def load(self):
         # Load the application callable, the task consumer
@@ -130,16 +139,6 @@ to check if the schedulter needs to perform a new run.'''
             self.callable()
         import_modules(self.cfg.tasks_path)
         return self
-        
-    def make_request(self, job_name, targs = None, tkwargs = None, **kwargs):
-        '''Create a new task request. This function delegate the
-responsability to the :attr:`pulsar.apps.tasks.TaskQueue.scheduler`
-
-:parameter job_name: the name of a :class:`pulsar.apps.tasks.Job` registered
-    with the application.
-:parameter targs: optional tuple of arguments for the task.
-:parameter tkwargs: optional dictionary of arguments for the task.'''
-        return self.scheduler.make_request(job_name, targs, tkwargs, **kwargs)
             
     def handle_request(self, worker, task):
         '''Called by the worker to perform the *task* in the queue.'''
@@ -163,17 +162,13 @@ responsability to the :attr:`pulsar.apps.tasks.TaskQueue.scheduler`
         global registry
         return registry
     
-    # REMOTE FUNCTIONS
-    
+    # Internals        
     def _addtask(self, monitor, caller, task_name, targs, tkwargs,
                  ack = True, **kwargs):
-        task = self.make_request(task_name, targs, tkwargs, **kwargs)
-        tq = task.to_queue()
-        if tq:
-            monitor.task_queue.put(tq)
+        task = self.scheduler.queue_task(monitor, task_name, targs, tkwargs,
+                                         **kwargs)
         
         if ack:
-            task = tq or task
             return task.tojson_dict()
 
     def remote_functions(self):

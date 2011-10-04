@@ -21,7 +21,9 @@ It can be configured to run as a multiprocess or a multithreaded server.'''
         if not pulsar.platform.multiProcessSocket():
             self.cfg.set('concurrency','thread')
     
-    def get_task_queue(self): 
+    def get_task_queue(self):
+        '''If the concurrency is thread we create a task queue for processing
+requests in the threaded workers.''' 
         if self.cfg.concurrency == 'process':
             return None
         else:
@@ -45,6 +47,12 @@ parameters.'''
             worker.ioloop.add_handler(worker.socket,
                                       handler,
                                       worker.ioloop.READ)
+        else:
+            # If the worker is on a thread, register the handle request
+            # handler with the worker event loop
+            worker.ioloop.add_handler(0,
+                        lambda fd, request : worker.handle_request(request),
+                        worker.ioloop.READ)
         
     def handle_request(self, worker, request):
         environ = request.wsgi_environ()
@@ -67,7 +75,8 @@ parameters.'''
     def monitor_start(self, monitor):
         '''If the concurrency model is thread, a new handler is
 added to the monitor event loop which listen for requests on
-the socket.'''
+the socket. Otherwise the monitor has no handlers since requests are
+directly handled by the workers.'''
         # First we create the socket we listen to
         address = self.cfg.address
         if address:
@@ -89,11 +98,12 @@ the socket.'''
             # The monitor won't listent to socket, the workers will.
             monitor.socket = socket
             
-            
     def monitor_stop(self, monitor):
         if monitor.task_queue is not None:
             monitor.ioloop.remove_handler(monitor.socket)
             monitor.socket.close(monitor.log)
+        else:
+            monitor.ioloop.remove_handler(0)
 
 
 def createServer(callable = None, **params):

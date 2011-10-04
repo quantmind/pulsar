@@ -1,5 +1,5 @@
 '''\
-Asyncronous Remote Procedure Calls handlers.
+Asynchronous WSGI Remote Procedure Calls middleware.
 '''
 from .exceptions import *
 from .handlers import *

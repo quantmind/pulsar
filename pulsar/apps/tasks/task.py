@@ -112,7 +112,8 @@ is PENDING swicth to RECEIVED, save the task and return it. Otherwise
 returns nothing.'''
         if self.status == PENDING:
             self.status = RECEIVED
-            return self.save()
+            self.save()
+            return self
         
     def done(self):
         if self.time_end:
@@ -121,6 +122,7 @@ returns nothing.'''
             return self.revoked()
         
     def revoked(self):
+        '''Attempt to revoke the task'''
         if self.expiry:
             tm = datetime.now()
             if tm > self.expiry:

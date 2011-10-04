@@ -26,6 +26,7 @@ __all__ = ['is_actor',
            'ActorBase',
            'ActorRequest',
            'MAIN_THREAD',
+           'default_eventloop',
            'Empty']
 
 
@@ -39,6 +40,13 @@ def is_actor(obj):
     
 MAIN_THREAD = current_thread()
 
+
+def default_eventloop(actor, impl = None):
+    ioimpl = impl.get_io(actor) if impl else None
+    return IOLoop(io = ioimpl,
+                  logger = LogSelf(actor,actor.log),
+                  name = actor.name)
+    
 
 class Runner(LogginMixin):
     '''Base class with event loop powered
@@ -368,7 +376,7 @@ iteration of the :attr:`pulsar.Actor.ioloop`.'''
         for a in itervalues(self.ACTOR_LINKS):
             self._linked_actors[a.aid] = a
         self.task_queue = task_queue
-        self.ioloop = self._get_eventloop(impl)
+        self.ioloop = self.get_eventloop(impl)
         self.ioloop.add_loop_task(self)
         self.set_socket(socket)
         if on_task:
@@ -393,11 +401,9 @@ iteration of the :attr:`pulsar.Actor.ioloop`.'''
             self._run()
             return self
     
-    def _get_eventloop(self, impl):
-        ioimpl = impl.get_ioimpl()
-        return IOLoop(impl = ioimpl,
-                      logger = LogSelf(self,self.log),
-                      name = self.name)
+    def get_eventloop(self, impl):
+        '''Build the event loop from a :class:`ActorImpl` instance.'''
+        return default_eventloop(self,impl)
     
     # STOPPING TERMINATIONG AND STARTING
     

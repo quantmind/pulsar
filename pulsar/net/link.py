@@ -4,7 +4,7 @@ from pulsar.async.defer import Deferred, AlreadyCalledError
 class Remotecall(object):
     '''\
 An utility function for sending a remote call to a manager
-from an actor serving a Http request. An instance of this class
+from an actor serving an Http request. An instance of this class
 can be called once only, otherwise an error occurs.
 
 :parameter manager: a :class:`pulsar.http.HttpActorManager` instance

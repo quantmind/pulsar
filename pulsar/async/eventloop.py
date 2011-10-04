@@ -26,9 +26,13 @@ def file_descriptor(fd):
 
 class IOLoop(IObase,Synchronized):
     """\
-A level-triggered I/O loop adapted from tornado.
+A level-triggered I/O event loop adapted from tornado.
 
-We use epoll if it is available, or else we fall back on select().
+:parameter io: The IO implementation. If not supplied, the best possible
+    implementation available will be used. On posix system this is ``epoll``,
+    or else ``select``. It can be any other custom implementation as long as
+    it has an ``epoll`` like interface.
+    
 Example usage for a simple TCP server::
 
     import errno
@@ -74,10 +78,10 @@ It should be instantiated after forking.
     # Never use an infinite timeout here - it can stall epoll
     POLL_TIMEOUT = 0.5
     
-    def __init__(self, impl=None, logger = None,
+    def __init__(self, io = None, logger = None,
                  pool_timeout = None, commnads = None,
                  name = None):
-        self._impl = impl or IOpoll()
+        self._impl = io or IOpoll()
         self.POLL_TIMEOUT = pool_timeout if pool_timeout is not None\
                                  else self.POLL_TIMEOUT
         self.log = logger or logging.getLogger('ioloop')
@@ -94,7 +98,7 @@ It should be instantiated after forking.
         self._stopped = False
         self.num_loops = 0
         self._blocking_signal_threshold = None
-        self._waker = Waker()
+        self._waker = self.get_waker()
         self.add_handler(self._waker.fileno(),
                          lambda fd, events: self._waker.consume(),
                          self.READ)
@@ -112,6 +116,9 @@ It should be instantiated after forking.
     def name(self):
         return self._name
 
+    def get_waker(self):
+        return getattr(self._impl,'waker',Waker)()
+        
     def add_loop_task(self, task):
         '''Add a callable object to the list of tasks which are
 executed at each iteration in the event loop.'''
