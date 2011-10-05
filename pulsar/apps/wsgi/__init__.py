@@ -16,12 +16,13 @@ class WSGIApplication(pulsar.Application):
     '''A WSGI application running on pulsar concurrent framework.
 It can be configured to run as a multiprocess or a multithreaded server.'''
     app = 'wsgi'
+    _name = 'wsgi'
     
     def on_config(self):
         if not pulsar.platform.multiProcessSocket():
             self.cfg.set('concurrency','thread')
     
-    def get_task_queue(self):
+    def get_ioqueue(self):
         '''If the concurrency is thread we create a task queue for processing
 requests in the threaded workers.''' 
         if self.cfg.concurrency == 'process':
@@ -33,26 +34,18 @@ requests in the threaded workers.'''
         '''If running as a multiprocess, pass the socket to the worker
 parameters.'''
         #TODO RAISE ERROR IN WINDOWS WHEN USING PYTHON 2
-        if not monitor.task_queue:
+        if not monitor.ioqueue:
             params['socket'] = monitor.socket
         return params
         
     def worker_start(self, worker):
-        # If the worker is a process and it is listening to a socket
+        # If the worker is listening to a socket
         # Add the socket handler to the event loop, otherwise do nothing.
-        # The worker will receive requests on a task queue
         if worker.socket:
             worker.socket.setblocking(False)
-            handler = HttpHandler(worker)
             worker.ioloop.add_handler(worker.socket,
-                                      handler,
+                                      HttpHandler(worker),
                                       worker.ioloop.READ)
-        else:
-            # If the worker is on a thread, register the handle request
-            # handler with the worker event loop
-            worker.ioloop.add_handler(0,
-                        lambda fd, request : worker.handle_request(request),
-                        worker.ioloop.READ)
         
     def handle_request(self, worker, request):
         environ = request.wsgi_environ()
@@ -89,7 +82,7 @@ directly handled by the workers.'''
         # We have a task queue, This means the monitor itself listen for
         # requests on the socket and delegate the handling to the
         # workers
-        if monitor.task_queue is not None:
+        if monitor.ioqueue is not None:
             monitor.set_socket(socket)
             monitor.ioloop.add_handler(monitor.socket,
                                        HttpPoolHandler(monitor),
@@ -99,11 +92,9 @@ directly handled by the workers.'''
             monitor.socket = socket
             
     def monitor_stop(self, monitor):
-        if monitor.task_queue is not None:
+        if monitor.ioqueue is not None:
             monitor.ioloop.remove_handler(monitor.socket)
             monitor.socket.close(monitor.log)
-        else:
-            monitor.ioloop.remove_handler(0)
 
 
 def createServer(callable = None, **params):

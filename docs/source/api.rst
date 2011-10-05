@@ -113,13 +113,25 @@ Socket
    :member-order: bysource
 
 
-   
+Eventloop
+=================
+
 IOLoop
 ~~~~~~~~~~~~~~~~~~~~
 
-.. autoclass:: pulsar.IOLoop
+.. autoclass:: IOLoop
    :members:
    :member-order: bysource
+   
+   
+IOQueue
+~~~~~~~~~~~~~~~~~~~~
+
+.. autoclass:: IOQueue
+   :members:
+   :member-order: bysource
+   
+   
    
 
 .. _api-apps:

@@ -196,7 +196,7 @@ so that it can perform its tasks at each event loop. Check the
         self.log.debug("Starting event loop")
         self._started = time.time()
         self._on_exit = Deferred()
-        while True:
+        while self._running:
             poll_timeout = self.POLL_TIMEOUT
             self.num_loops += 1
             # Prevent IO event starvation by delaying new callbacks
@@ -220,6 +220,7 @@ so that it can perform its tasks at each event loop. Check the
                     milliseconds = self._timeouts[0].deadline - now
                     poll_timeout = min(milliseconds, poll_timeout)
 
+            # A chance to exit
             if not self.running():
                 self.log.debug('Exiting event loop')
                 break
@@ -273,9 +274,9 @@ so that it can perform its tasks at each event loop. Check the
                     except:
                         self.log.error("Exception in I/O handler for fd %d",
                                       fd, exc_info=True)
-        # reset the stopped flag so another start/stop pair can be issued
+        
+        self._stopped = True
         self._on_exit.callback(self)
-        self._stopped = False
         if self._blocking_signal_threshold is not None:
             signal.setitimer(signal.ITIMER_REAL, 0, 0)
 
@@ -295,7 +296,6 @@ unit tests), you can start and stop the event loop like this::
 whether that callback was invoked before or after ioloop.start.'''
         self.log.debug("Stopping event loop")
         self._running = False
-        self._stopped = True
         self._wake()
         return self._on_exit
 
@@ -337,7 +337,7 @@ whether that callback was invoked before or after ioloop.start.'''
 
     def _wake(self):
         '''Wake up the eventloop'''
-        if self.running():
+        if not self.stopped():
             self._waker.wake()
 
     def _run_callback(self, callback):

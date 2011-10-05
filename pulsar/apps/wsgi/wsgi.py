@@ -28,7 +28,7 @@ class WsgiHandler(pulsar.PickableMixin):
     
     
 .. _WSGI: http://www.python.org/dev/peps/pep-3333/
-'''    
+'''
     def __init__(self, middleware = None, **kwargs):
         self.log = self.getLogger(**kwargs)
         self.middleware = middleware or []

@@ -13,6 +13,9 @@ configuration.'''
 class PulsarInternetException(PulsarException):
     '''base class of all Pulsar Internet Exception'''
     pass
+
+class MailboxError(PulsarException):
+    pass
     
 class ActorAlreadyStarted(PulsarException):
     '''A :class:`PulsarException` raised when trying to start an actor already started'''

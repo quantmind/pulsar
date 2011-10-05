@@ -5,7 +5,7 @@ import socket
 import errno
 from collections import deque
 
-from pulsar import Deferred, is_async
+from .defer import Deferred, is_async
 
 iologger = logging.getLogger('pulsar.iostream')
 
@@ -72,6 +72,12 @@ manipulated and adapted to pulsar :ref:`concurrent framework <design>`.
     def fileno(self):
         '''Return the file descriptor of the socket.'''
         return self.socket.fileno()
+    
+    def getsockname(self):
+        '''Return the socket's own address. This is useful to find out the
+    port number of an IPv4/v6 socket, for instance. The format of the
+    address returned depends on the address family.'''
+        return self.socket.getsockname()
 
     def set_actor(self, actor):
         '''Set the :class:`pulsar.Actor` instance handling the io stream.'''

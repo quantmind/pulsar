@@ -133,9 +133,6 @@ and perform several post fork processing before starting the event loop.'''
         if self.cfg.post_fork:
             self.cfg.post_fork(self)
             
-    def get_eventloop(self, impl):
-        return self.app.worker_eventloop(self, impl)
-            
     def handle_request(self, request):
         '''Entry point for handling a request. This is a high level
 function which performs some pre-processing of *request* and delegates
@@ -289,7 +286,6 @@ its duties.
     description = None
     epilog = None
     app = None
-    task_queue_timeout = 1.0
     config_options_include = None
     config_options_exclude = None
     monitor_class = ApplicationMonitor
@@ -315,7 +311,7 @@ its duties.
             monitor = arbiter.add_monitor(self.monitor_class,
                                           self.name,
                                           self,
-                                          task_queue = self.get_task_queue())
+                                          ioqueue = self.get_ioqueue())
             self.mid = monitor.aid
             r,f = self.remote_functions()
             if r:
@@ -350,13 +346,7 @@ it calls the *response* close method.
 :rtype: and instance of :class:`Response`.'''
         return response.close()
     
-    def handle_task(self, worker, request):
-        '''Called by the :meth:`worker_task` method if a new task is available.
-By default delegates to :meth:`Worker.handle_request`.
-Overrides if you need to.'''
-        worker.handle_request(request)
-    
-    def get_task_queue(self):
+    def get_ioqueue(self):
         '''Build the task queue for the application.
 By default it returns ``None``.'''
         return None
@@ -515,21 +505,8 @@ doing anything.'''
         pass
     
     def worker_task(self, worker):
-        '''Callback by the *worker* :meth:`Actor.on_task` callback.
-The default implementation of this callback
-is to check if the *worker* has a :attr:`Actor.task_queue` attribute.
-If so it tries to get one task from the queue and if a task is available
-it is processed by the :meth:`handle_task` method.'''
+        '''Callback by the *worker* :meth:`Actor.on_task` callback.'''
         return
-        if worker.task_queue:
-            try:
-                request = worker.task_queue.get(\
-                                    timeout = self.task_queue_timeout)
-            except Empty:
-                return
-            except IOError:
-                return
-            self.handle_task(worker, request)
             
     def worker_stop(self, worker):
         '''Called by the :class:`Worker` just after stopping.'''
@@ -538,9 +515,6 @@ it is processed by the :meth:`handle_task` method.'''
     def worker_exit(self, worker):
         '''Called by the :class:`Worker` just when exited.'''
         pass
-    
-    def worker_eventloop(self, worker, impl):
-        return pulsar.default_eventloop(worker, impl)
             
     # MONITOR CALLBAKS
     

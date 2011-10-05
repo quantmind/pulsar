@@ -3,32 +3,27 @@ import os
 import signal
 from time import time
 from multiprocessing import current_process
-from multiprocessing.queues import Empty
 from threading import current_thread
 
 
 from pulsar import AlreadyCalledError, AlreadyRegistered,\
                    ActorAlreadyStarted,\
-                   logerror, LogSelf, LogginMixin, system,\
-                   create_connection
+                   logerror, LogSelf, LogginMixin, system
 from pulsar.utils.py2py3 import iteritems, itervalues, pickle
 
 
 from .eventloop import IOLoop
-from .proxy import ActorProxy, ActorRequest, ActorCallBack,\
+from .proxy import ActorProxy, ActorMessage, ActorCallBack,\
                     DEFAULT_MESSAGE_CHANNEL
-from .impl import ActorProcess, ActorThread, ActorMonitorImpl
 from .defer import is_async, Deferred
+from .mailbox import IOQueue
 
 
 __all__ = ['is_actor',
            'Actor',
            'ActorMetaClass',
            'ActorBase',
-           'ActorRequest',
-           'MAIN_THREAD',
-           'default_eventloop',
-           'Empty']
+           'MAIN_THREAD']
 
 
 EMPTY_TUPLE = ()
@@ -40,13 +35,6 @@ def is_actor(obj):
 
     
 MAIN_THREAD = current_thread()
-
-
-def default_eventloop(actor, impl = None):
-    ioimpl = impl.get_io(actor) if impl else None
-    return IOLoop(io = ioimpl,
-                  logger = LogSelf(actor,actor.log),
-                  name = actor.name)
     
 
 class Runner(LogginMixin):
@@ -197,10 +185,10 @@ Here ``a`` is actually a reference to the remote actor.
 
     The age of actor, used to access how long the actor has been created.
     
-.. attribute:: task_queue
+.. attribute:: ioqueue
 
-    An optional distributed queue where the actor's monitor add tasks
-    to be processed by the actor.
+    An optional distributed queue used as IO. Check server configuration with
+    :ref:`io queue <configuration-ioqueue>` for information.
     
     Default ``None``.
     
@@ -221,21 +209,23 @@ Here ``a`` is actually a reference to the remote actor.
               0x3:'terminated'}
     INBOX_TIMEOUT = 0.02
     DEFAULT_IMPLEMENTATION = 'process'
-    MINIMUM_ACTOR_TIMEOUT = 1
+    MINIMUM_ACTOR_TIMEOUT = 10
     DEFAULT_ACTOR_TIMEOUT = 60
-    ACTOR_TIMEOUT_TOLERANCE = 0.2
-    FLASH_LOOPS = 3
+    # Send messages to arbiter not before the difference of
+    # now and the last message time is greater than this tolerance
+    # times timeout. So for a timeout of 30 seconds, the messages will
+    # go after tolerance*30 seconds (18 secs for tolerance = 0.6).
+    ACTOR_TIMEOUT_TOLERANCE = 0.6
     _stopping = False
     _ppid = None
     _name = None
-    _runner_impl = {'monitor':ActorMonitorImpl,
-                    'thread':ActorThread,
-                    'process':ActorProcess}
     
     def __init__(self,impl,*args,**kwargs):
+        self.__repr = ''
         self._impl = impl.impl
         self._aid = impl.aid
         self._inbox = impl.inbox
+        self._outbox = impl.outbox
         self._timeout = impl.timeout
         self._init(impl,*args,**kwargs)
         
@@ -258,8 +248,8 @@ which can be shared across different processes (i.e. it is pickable).'''
     
     @property
     def impl(self):
-        '''Actor concurrency implementation
-("thread", "process" or "greenlet").'''
+        '''String indicating actor concurrency implementation
+("monitor", "thread", "process" or "greenlet").'''
         return self._impl
     
     @property
@@ -288,16 +278,21 @@ longer that timeout.'''
             return self._make_name()
         
     def __repr__(self):
-        return self.name
+        return self.__repr
         
     @property
     def inbox(self):
-        '''Message inbox'''
+        '''Messages inbox'''
         return self._inbox
+    
+    @property
+    def outbox(self):
+        '''Messages outbox'''
+        return self._outbox
         
     @property
     def fullname(self):
-        return '{0} {1}'.format(self.name,self.aid)
+        return self.__repr
     
     def __reduce__(self):
         raise pickle.PicklingError('{0} - Cannot pickle Actor instances'\
@@ -355,12 +350,12 @@ iteration of the :attr:`pulsar.Actor.ioloop`.'''
         '''``True`` if actor has exited.'''
         return self._state >= self.CLOSE
     
-    # INITIALIZATION AFTER FORKING
+    # INITIALIZATION AFTER FORKING FOR ALL ACTORS
     
     def _init(self, impl, arbiter = None, monitor = None,
-              on_task = None, task_queue = None,
+              on_task = None, ioqueue = None,
               actor_links = None, name = None, socket = None,
-              age = 0, arbiter_address = None):
+              age = 0):
         # This function is called just after forking (if the concurrency model
         # is process, otherwise just after the concurrent model has started).
         self.arbiter = arbiter
@@ -371,22 +366,33 @@ iteration of the :attr:`pulsar.Actor.ioloop`.'''
         self._name = name or self._name
         self._state = self.INITIAL
         self.log = self.getLogger()
+        
+        # If arbiter available
+        if arbiter:
+            self.__repr = '{0} {1}'.format(self._name,self._aid)
+            self.log = LogSelf(self,self.log)
+            if on_task:
+                self.on_task = on_task
+        else:
+            self.__repr = self._name
+            
         self.channels = {}
         self.ACTOR_LINKS = actor_links or {}
         self._linked_actors = {}
         for a in itervalues(self.ACTOR_LINKS):
             self._linked_actors[a.aid] = a
-        self.task_queue = task_queue
+        self.ioqueue = ioqueue
         self.ioloop = self.get_eventloop(impl)
+        # ADD SELF TO THE EVENT LOOP TASKS
         self.ioloop.add_loop_task(self)
         self.set_socket(socket)
-        if arbiter:
-            if on_task:
-                self.on_task = on_task
-            if arbiter_address:
-                self.arbiter_connection = create_connection(arbiter_address)
-            else:
-                self.arbiter_waker = None
+                
+        inbox = self.inbox
+        if inbox:
+            inbox.set_actor(self)
+    
+    def handle_request(self, request):
+        pass
     
     def set_socket(self, socket):
         self.socket = socket
@@ -400,29 +406,68 @@ iteration of the :attr:`pulsar.Actor.ioloop`.'''
         if self._state == self.INITIAL:
             if self.isprocess():
                 self.configure_logging()
+            # if monitor and a ioqueue available, register
+            # the event loop handler
             self.on_start()
             self.init_runner()
-            self.log.info('Booting "{0}"'.format(self.fullname))
+            self.log.info('Booting')
             self._state = self.RUN
             self._run()
             return self
     
     def get_eventloop(self, impl):
-        '''Build the event loop from a :class:`ActorImpl` instance.'''
-        return default_eventloop(self,impl)
+        ioq = self.ioqueue
+        ioimpl = IOQueue(ioq) if ioq else None
+        ioloop = IOLoop(io = ioimpl,
+                        logger = self.log,
+                        name = self.name)
+        #add the handler
+        if ioq and self.monitor:
+            ioloop.add_handler('request',
+                        lambda fd, request : self.handle_request(request),
+                        ioloop.READ)
+        return ioloop
     
-    def wake_arbiter(self):
-        if self.arbiter_connection:
-            self.arbiter_connection.sock.write(b'x')
-    
+    def message_arrived(self, request):
+        '''A new message has arrived in the actor inbox.'''
+        try:
+            sender = self.get_actor(request.sender)
+            receiver = self.get_actor(request.receiver)
+            if not sender or not receiver:
+                if not sender:
+                    self.log.warn('message from an unknown actor "{0}"'\
+                                  .format(request.sender))
+                if not receiver:
+                    self.log.warn('message for an unknown actor "{0}"'\
+                                  .format(request.receiver))
+            else:                
+                func = receiver.actor_functions.get(request.action,None)
+                if func:
+                    ack = getattr(func,'ack',True)
+                    args,kwargs = request.msg
+                    result = func(self, sender, *args, **kwargs)
+                else:
+                    result = self.channel_messsage(sender, request)
+        except Exception as e:
+            #self.handle_request_error(request,e)
+            result = e
+            if self.log:
+                self.log.critical('Unhandled error while processing worker\
+ request: {0}'.format(e), exc_info=True)
+        finally:
+            if ack:
+                ActorCallBack(self,result).\
+                    add_callback(request.make_actor_callback(self,caller))
+        
     def put(self, request):
-        '''Put a request into the actor task queue'''
-        if self.task_queue:
-            self.task_queue.put((self.aid,request))
+        '''Put a request into the actor :attr:`ioqueue` if available.'''
+        if self.ioqueue:
+            self.log.debug('Put a request on task queue')
+            self.ioqueue.put(('request',request))
         else:
             self.log.warning('Trying to put a request on task queue,\
  but {0} does not have one')
-            
+        
     # STOPPING TERMINATIONG AND STARTING
     
     def stop(self):
@@ -446,10 +491,13 @@ properly this actor will go out of scope.'''
                 self.log.warn('"{0}" could not be removed from\
  eventloop'.format(self.fullname))
             if self.impl != 'monitor':
-                self.proxy.on_actor_exit(self.arbiter)
+                self.arbiter.send(self,'on_actor_exit')
             self._stopping = False
-            self._inbox.close()
-            self.log.info('exited "{0}"'.format(self.fullname))
+            if self.inbox:
+                self.inbox.close()
+            if self.outbox:
+                self.outbox.close()
+            self.log.info('exited')
         
     def terminate(self):
         self.stop()
@@ -484,44 +532,6 @@ properly this actor will go out of scope.'''
         '''Iterator over linked-actor proxies'''
         return itervalues(self._linked_actors)
     
-    @logerror
-    def flush(self, closing = False):
-        '''Flush one message from the inbox and runs callbacks.
-This function should live on a event loop.'''
-        inbox = self._inbox
-        timeout = self.INBOX_TIMEOUT
-        flashed = 0
-        while closing or flashed < self.FLASH_LOOPS:
-            request = None
-            ack = False
-            try:
-                request = inbox.get(timeout = timeout)
-            except Empty:
-                break
-            except IOError:
-                break
-            flashed += 1
-            try:
-                caller = self.get_actor(request.aid)
-                if not caller and not closing:
-                    self.log.warn('"{0}" got a message from an un-linked\
- actor "{1}"'.format(self,request.aid[:8]))
-                else:
-                    func = self.actor_functions.get(request.name,None)
-                    if func:
-                        ack = getattr(func,'ack',True)
-                    result = self.handle_request_from_actor(caller,request,func)
-            except Exception as e:
-                #self.handle_request_error(request,e)
-                result = e
-                if self.log:
-                    self.log.critical('Unhandled error while processing worker\
- request: {0}'.format(e), exc_info=sys.exc_info())
-            finally:
-                if ack:
-                    ActorCallBack(self,result).\
-                        add_callback(request.make_actor_callback(self,caller))
-    
     def get_actor(self, aid):
         '''Given an actor unique id return the actor proxy.'''
         if aid == self.aid:
@@ -532,50 +542,33 @@ This function should live on a event loop.'''
             return self.arbiter
         elif self.monitor and aid == self.monitor.aid:
             return self.monitor
-    
-    def handle_request_from_actor(self, caller, request, func):
-        '''Handle a request from a linked actor'''
-        if func:
-            args = request.msg[0]
-            kwargs = request.msg[1]
-            return func(self, caller, *args, **kwargs)
-        else:
-            msg = request.msg
-            name = request.name or DEFAULT_MESSAGE_CHANNEL
-            if name not in self.channels:
-                self.channels[name] = []
-            ch = self.channels[name]
-            ch.append(request)
 
     def __call__(self):
-        '''Called in the main eventloop, it perform the following
+        '''Called in the main eventloop to perform the following
 actions:
 
-* it flush the inbox queue
 * it notifies linked actors if required (arbiter only for now)
 * it executes the :meth:`pulsar.Actor.on_task` callback.
 '''
-        self.flush()
         # If this is not a monitor
         # we notify to the arbiter we are still alive
-        # TODO: Should we notify to the Monitor instead?
-        if self.is_alive():
-            if self.arbiter and self.impl != 'monitor':
-                nt = time()
-                if hasattr(self,'last_notified'):
-                    if not self.timeout:
-                        tole = self.DEFAULT_ACTOR_TIMEOUT
-                    else:
-                        tole = self.ACTOR_TIMEOUT_TOLERANCE*self.timeout
-                    if nt - self.last_notified < tole:
-                        nt = None
-                if nt:
-                    self.last_notified = nt
-                    info = self.info(True)
-                    info['last_notified'] = nt
-                    self.proxy.notify(self.arbiter,info)
-            if not self._stopping:
-                self.on_task()
+        if self.is_alive() and self.arbiter and self.impl != 'monitor':
+            nt = time()
+            if hasattr(self,'last_notified'):
+                if not self.timeout:
+                    tole = self.DEFAULT_ACTOR_TIMEOUT
+                else:
+                    tole = self.ACTOR_TIMEOUT_TOLERANCE*self.timeout
+                if nt - self.last_notified < tole:
+                    nt = None
+            if nt:
+                self.last_notified = nt
+                info = self.info(True)
+                info['last_notified'] = nt
+                self.arbiter.send(self,'notify',info)
+
+        if not self._stopping:
+            self.on_task()
     
     def current_thread(self):
         '''Return the current thread'''
@@ -614,13 +607,22 @@ status and performance.'''
     #################################################################
     # BUILT IN REMOTE FUNCTIONS
     #################################################################
+    def action_message(self, request):
+        # Do nothing for now
+        return
+        msg = request.msg
+        name = request.name or DEFAULT_MESSAGE_CHANNEL
+        if name not in self.channels:
+            self.channels[name] = []
+        ch = self.channels[name]
+        ch.append(request)
     
     def actor_callback(self, caller, rid, result):
         '''Actor :ref:`remote function <remote-functions>` which sends
 the a results back to an actor which previously accessed another remote
 function. Essentially this is the return statement in the pulsar concurrent
 framework'''
-        ActorRequest.actor_callback(rid,result)
+        ActorMessage.actor_callback(rid,result)
     actor_callback.ack = False
     
     def actor_stop(self, caller):

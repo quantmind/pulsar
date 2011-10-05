@@ -52,7 +52,8 @@ string representation of an instance.
 :parameter instance: instance which prefix the message.
 :parameter logger: the logger object.
     '''
-    LOGGING_FUNCTIONS = ('debug','info','error','warning','critical','exception')
+    LOGGING_FUNCTIONS = ('debug','info','error','warning','warn',
+                         'critical','exception')
     
     def __init__(self,instance,logger):
         self.instance = instance

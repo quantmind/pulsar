@@ -31,20 +31,9 @@ def create_connection(address, blocking = False):
     s.sock.setblocking(blocking)
     return s
     
-    
-def accept_connection(sock):
-    client = None
-    try:
-        return sock.accept()
-    except socket.error as e:
-        if e.errno not in ALLOWED_ERRORS:
-            raise
-        else:
-            return None,None
-    
 
 def flush_socket(sock):
-    client, addr = accept_connection(sock)
+    client, addr = sock.accept()
     if client:
         r = client.recv(1024)
         while len(r) > 1024:
@@ -130,6 +119,17 @@ higher level tools for creating and reusing sockets already created.'''
     
     def _clean(self):
         pass
+    
+    def accept(self):
+        '''Wrap the socket accept method.'''
+        client = None
+        try:
+            return self.sock.accept()
+        except socket.error as e:
+            if e.errno not in ALLOWED_ERRORS:
+                raise
+            else:
+                return None,None
     
     @property
     def name(self):

@@ -62,11 +62,20 @@ another monitor managing actors consuming tasks from a task queue and so forth.
 
 Monitors are created by invoking the :meth:`pulsar.Arbiter.add_monitor`
 functions and not by directly invoking the constructor. Therefore
-adding a new monitor to the arbiter would follow the following pattern::
+adding a new monitor to the arbiter follows the pattern::
 
     import pulsar
     
     m = pulsar.arbiter().add_monitor(pulsar.Monitor,'mymonitor')
+    
+You can also create a monitor with a distributed queue as IO mechanism::
+
+    from multiprocessing import Queue
+    import pulsar
+    
+    m = pulsar.arbiter().add_monitor(pulsar.Monitor,
+                                     'mymonitor',
+                                     ioqueue = Queue())
 
 .. attribute:: worker_class
 
@@ -199,7 +208,7 @@ as required."""
         worker = self.arbiter.spawn(
                         self.worker_class,
                         monitor = self,
-                        task_queue = self.task_queue,
+                        ioqueue = self.ioqueue,
                         actor_links = self.arbiter.get_all_monitors(),
                         **self.actorparams())
         monitor = self.arbiter.LIVE_ACTORS[worker.aid]
@@ -224,7 +233,7 @@ spawn method when creating new actors.'''
     def _info(self, result = None):
         if not result:
             result = [a.local_info() for a in self.LIVE_ACTORS.values()] 
-        tq = self.task_queue
+        tq = self.ioqueue
         return {'worker_class':self.worker_class.code(),
                 'workers': result,
                 'num_workers':len(self.LIVE_ACTORS),
@@ -232,8 +241,8 @@ spawn method when creating new actors.'''
                 'listen':str(self.socket),
                 'name':self.name,
                 'age':self.age,
-                'task_queue': tq is not None,
-                'task_queue_size': tq.qsize() if tq else None}
+                'ioqueue': tq is not None,
+                'ioqueue_size': tq.qsize() if tq else None}
         
     def get_actor(self, aid):
         '''Delegate get_actor to the arbiter'''

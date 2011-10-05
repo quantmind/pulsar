@@ -109,7 +109,7 @@ class Waker(object):
     def close(self):
         self.reader.close()
         self.writer.close()
-    
+        
     
 def daemonize():
     pass

@@ -11,6 +11,7 @@ from pulsar.utils.system import IObase
 from pulsar.utils.tools import Pidfile
 from pulsar.utils.py2py3 import itervalues
 
+from .impl import actor_impl
 from .monitor import ActorPool
 from .proxy import ActorCallBacks
 from .defer import ThreadQueue
@@ -25,12 +26,6 @@ def arbiter(daemonize = False):
     
 def spawn(actor_class, *args, **kwargs):
     return arbiter().spawn(actor_class, *args, **kwargs)
-
-
-def arbiter_socket():
-    w,s = system.socket_pair(2048)
-    w.close()
-    return pulsar.wrap_socket(s)
     
         
 
@@ -80,15 +75,15 @@ Users access the arbiter by the high level api::
 
 :parameter monitor_class: a :class:`pulsar.Monitor` class.
 :parameter monitor_name: a unique name for the monitor.
-:parameter args: tuple containing additional arguments.
-:parameter kwargs: dictionary of key valued parameters.
+:parameter args: tuple containing additional parameters for the monitor.
+:parameter kwargs: dictionary of key-valued parameters for the monitor.
 :rtype: an instance of a :class:`pulsar.Monitor`.'''
         kwargs['impl'] = 'monitor'
         if monitor_name in self._monitors:
             raise KeyError('Monitor "{0}" already available'\
                            .format(monitor_name))
+        kwargs['name'] = monitor_name
         m = spawn(monitor_class,*args,**kwargs)
-        m._name = monitor_name
         self._monitors[m.name] = m
         return m
     
@@ -116,8 +111,8 @@ registered with the the arbiter.'''
             impl = kwargs.pop('impl',actor_class.DEFAULT_IMPLEMENTATION)
             timeout = max(kwargs.pop('timeout',cls.DEFAULT_ACTOR_TIMEOUT),
                             cls.MINIMUM_ACTOR_TIMEOUT)
-            impl_cls = actor_class._runner_impl[impl]
-            actor_maker = impl_cls(actor_class,impl,timeout,arbiter,args,kwargs)
+            actor_maker = actor_impl(impl,actor_class,timeout,arbiter,
+                                     args,kwargs)
             monitor = actor_maker.proxy_monitor()
             if monitor:
                 arbiter.LIVE_ACTORS[actor_maker.aid] = monitor
@@ -160,7 +155,7 @@ the timeout. Stop the arbiter.'''
                 if not actor.stopping:
                     self.log.info(\
                         'Stopping {0}. Timeout surpassed.'.format(actor))
-                    self.proxy.stop(actor)
+                    actor.send(self,'stop')
             else:
                 self.log.warn(\
                         'Terminating {0}. Timeout surpassed.'.format(actor))
@@ -216,11 +211,7 @@ the timeout. Stop the arbiter.'''
             "cwd": cwd,
             0: sys.executable
         }
-        kwargs['socket'] = arbiter_socket()
         super(Arbiter,self)._init(impl, *args, **kwargs)
-        self.ioloop.add_handler(self.socket,
-                lambda fd, events : pulsar.flush_socket(self.socket),
-                IObase.READ)
     
     def _setup(self):
         if self.cfg:
@@ -233,7 +224,6 @@ the timeout. Stop the arbiter.'''
         """\
         Initialize the arbiter. Start listening and set pidfile if needed.
         """
-        self.log.debug("{0} booted".format(self))
         if self.cfg.when_ready:
             self.cfg.when_ready(self)
         try:
@@ -284,7 +274,6 @@ the timeout. Stop the arbiter.'''
         st = time()
         self._state = self.TERMINATE
         while time() - st < self.CLOSE_TIMEOUT:
-            self.flush(closing = True)
             if not self.LIVE_ACTORS:
                 self._state = self.CLOSE
                 break
