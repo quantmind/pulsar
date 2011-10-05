@@ -71,7 +71,7 @@ is a group of tests specified in a test class.'''
         '''When the monitor starts load all tests classes\
  in the taskqueue'''
         for _,testcls in self.tests:
-            monitor.task_queue.put(TestRequest(testcls))
+            monitor.put(TestRequest(testcls))
             
     def handle_request(self, worker, request):
         yield request.run(worker)

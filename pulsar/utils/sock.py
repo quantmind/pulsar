@@ -4,34 +4,68 @@ import socket
 import errno
 import time
 
-from pulsar import platform
+from .system import platform
 
-__all__ = ['BaseSocket',
+__all__ = ['Socket',
            'TCPSocket',
            'TCP6Socket',
+           'wrap_socket',
+           'flush_socket',
            'create_socket',
-           'create_socket_address']
+           'create_connection',
+           'create_socket_address',
+           'get_maxfd']
 
 logger = logging.getLogger('pulsar.sock')
 
+ALLOWED_ERRORS = (errno.EAGAIN, errno.ECONNABORTED,
+                  errno.EWOULDBLOCK, errno.EPIPE)
 
 MAXFD = 1024
 
 
+def create_connection(address, blocking = False):
+    sock_type = create_socket_address(address)
+    s = sock_type(address, backlog = None, bound = True)
+    s.sock.connect(address)
+    s.sock.setblocking(blocking)
+    return s
+    
+    
+def accept_connection(sock):
+    client = None
+    try:
+        return sock.accept()
+    except socket.error as e:
+        if e.errno not in ALLOWED_ERRORS:
+            raise
+        else:
+            return None,None
+    
+
+def flush_socket(sock):
+    client, addr = accept_connection(sock)
+    if client:
+        r = client.recv(1024)
+        while len(r) > 1024:
+            r = client.recv(1024)
+    
+
 def create_socket(address, log = None, backlog = 2048,
                   bound = False, retry = 5, retry_lag = 2):
-    """Create a new socket for the given address. If the address is a tuple,
-a TCP socket is created. If it is a string, a Unix socket is created.
+    """Create a new :class:`Socket` for the given address.
+If the address is a tuple, a TCP socket is created.
+If it is a string, a Unix socket is created.
 Otherwise a TypeError is raised.
 
 :parameter address: Socket address.
 :parameter log: Optional python logger instance.
 :parameter backlog: The maximum number of pending connections.
-:parameter bound: If ``False`` the socke will bind to *adress* otherwise
+:parameter bound: If ``False`` the socket will bind to *address* otherwise
     it is assumed to be already bound.
 :parameter retry: Number of retries before aborting.
-:parameter retry_lag: Number of seconds between retrying connection.
-:rtype: and instance of :class:`BaseSocket`
+:parameter retry_lag: Number of seconds between connection attempts.
+:rtype: Instance of :class:`Socket`
     """
     sock_type = create_socket_address(address)
     
@@ -54,10 +88,17 @@ Otherwise a TypeError is raised.
     if log:
         log.error("Can't connect to %s" % str(address))
     sys.exit(1)
-
-
-class BaseSocket(object):
     
+
+def wrap_socket(sock):
+    address = sock.getsockname()
+    sock_type = create_socket_address(address)
+    return sock_type(address,fd=sock,bound=True)    
+    
+
+class Socket(object):
+    '''Wrapper class for a python socket. It provides with
+higher level tools for creating and reusing sockets already created.'''
     def __init__(self, address, backlog=2048, fd=None, bound=False):
         self.address = address
         self.backlog = backlog
@@ -65,7 +106,10 @@ class BaseSocket(object):
         
     def _init(self, fd, bound = False):
         if fd is None:
+            self._clean()
             sock = socket.socket(self.FAMILY, socket.SOCK_STREAM)
+        elif hasattr(fd,'fileno'):
+            sock = fd
         else:
             if hasattr(socket,'fromfd'):
                 sock = socket.fromfd(fd, self.FAMILY, socket.SOCK_STREAM)
@@ -84,6 +128,9 @@ class BaseSocket(object):
         self.__dict__ = state
         self._init(fd,True)
     
+    def _clean(self):
+        pass
+    
     @property
     def name(self):
         return self.sock.getsockname()
@@ -95,14 +142,16 @@ class BaseSocket(object):
         return getattr(self.sock, name)
     
     def fileno(self):
+        '''Return the file descriptor of the socket.'''
         return self.sock.fileno()
     
     def set_options(self, sock, bound=False):
         sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         if not bound:
             self.bind(sock)
-        sock.setblocking(0)
-        sock.listen(self.backlog)
+        if self.backlog:
+            sock.setblocking(0)
+            sock.listen(self.backlog)
         return sock
         
     def bind(self, sock):
@@ -118,7 +167,7 @@ class BaseSocket(object):
         del self.sock
 
 
-class TCPSocket(BaseSocket):
+class TCPSocket(Socket):
     
     FAMILY = socket.AF_INET
     
@@ -157,17 +206,15 @@ if platform.type == 'posix':
         return True    
 
 
-    class UnixSocket(BaseSocket):
+    class UnixSocket(Socket):
         
         FAMILY = socket.AF_UNIX
         
-        def __init__(self, conf, fd=None):
-            if fd is None:
-                try:
-                    os.remove(conf.address)
-                except OSError:
-                    pass
-            super(UnixSocket, self).__init__(conf, fd=fd)
+        def _clean(self):
+            try:
+                os.remove(conf.address)
+            except OSError:
+                pass
         
         def __str__(self):
             return "unix:%s" % self.address
@@ -194,7 +241,7 @@ if platform.type == 'posix':
                 sock_type = TCP6Socket
             else:
                 sock_type = TCPSocket
-        elif isinstance(addr, basestring):
+        elif isinstance(addr, str):
             sock_type = UnixSocket
         else:
             raise TypeError("Unable to create socket from: %r" % addr)

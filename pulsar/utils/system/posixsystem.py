@@ -4,8 +4,17 @@ import resource
 import grp
 import pwd
 import signal
+from multiprocessing import Pipe
 
 from .base import *
+
+__all__ = ['IOpoll',
+           'close_on_exec',
+           'Waker',
+           'daemonize',
+           'SIGQUIT',
+           'get_uid',
+           'get_gid']
 
 
 import select
@@ -75,7 +84,7 @@ class Waker(object):
     
     def wake(self):
         try:
-            self.writer.write(b'x')
+            self._writer.send(b'x')
         except IOError:
             pass
 

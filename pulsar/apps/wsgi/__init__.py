@@ -6,7 +6,7 @@ The application can be used in conjunction with several web frameworks
 as well as the pulsar RPC handler in :mod:`pulsar.apps.rpc`.
 '''
 import pulsar
-from pulsar.net import HttpResponse, create_socket
+from pulsar.net import HttpResponse
 
 from .handlers import *
 from .wsgi import *
@@ -80,8 +80,8 @@ directly handled by the workers.'''
         # First we create the socket we listen to
         address = self.cfg.address
         if address:
-            socket = create_socket(address, log = monitor.log,
-                                   backlog = self.cfg.backlog)
+            socket = pulsar.create_socket(address, log = monitor.log,
+                                          backlog = self.cfg.backlog)
         else:
             raise pulsar.ImproperlyConfigured('\
  WSGI application with no address for socket')

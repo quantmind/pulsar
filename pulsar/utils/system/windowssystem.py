@@ -8,6 +8,14 @@ from time import sleep
 from .winprocess import WINEXE
 from .base import *
 
+__all__ = ['IOpoll',
+           'close_on_exec',
+           'Waker',
+           'daemonize',
+           'SIGQUIT',
+           'get_uid',
+           'get_gid']
+
 # See: http://msdn.microsoft.com/en-us/library/ms724935(VS.85).aspx
 SetHandleInformation = ctypes.windll.kernel32.SetHandleInformation
 SetHandleInformation.argtypes = (ctypes.wintypes.HANDLE, ctypes.wintypes.DWORD,\

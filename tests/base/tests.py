@@ -1,4 +1,5 @@
-from pulsar import test, arbiter
+from pulsar import arbiter
+from pulsar.apps import test
 
 import pulsar as package
 

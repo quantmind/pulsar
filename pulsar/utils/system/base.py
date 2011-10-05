@@ -10,6 +10,18 @@ from select import select as _select
 from pulsar.utils.importer import import_module, module_attribute
 from pulsar.utils.py2py3 import *
 
+__all__ = ['ALL_SIGNALS',
+           'SIG_NAMES',
+           'set_proctitle',
+           'load_worker_class',
+           'set_owner_process',
+           'parse_address',
+           'IObase',
+           'EpollProxy',
+           'IOselect',
+           'socket_pair']
+
+
 SIG_NAMES = {}
 SKIP_SIGNALS = ('KILL','STOP')
 
@@ -27,16 +39,14 @@ def all_signals():
 ALL_SIGNALS = tuple(all_signals())
 
 
-if (hasattr(os, "devnull")):
-    REDIRECT_TO = os.devnull
-else:
-    REDIRECT_TO = "/dev/null"
-
-timeout_default = object()
-
-CHUNK_SIZE = (16 * 1024)
-
-MAX_BODY = 1024 * 132
+#if (hasattr(os, "devnull")):
+#    REDIRECT_TO = os.devnull
+#else:
+#    REDIRECT_TO = "/dev/null"#
+#
+#timeout_default = object()
+#CHUNK_SIZE = (16 * 1024)
+#MAX_BODY = 1024 * 132
 
 
 try:

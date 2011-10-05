@@ -9,7 +9,8 @@ from threading import current_thread
 
 from pulsar import AlreadyCalledError, AlreadyRegistered,\
                    ActorAlreadyStarted,\
-                   logerror, LogSelf, LogginMixin, system
+                   logerror, LogSelf, LogginMixin, system,\
+                   create_connection
 from pulsar.utils.py2py3 import iteritems, itervalues, pickle
 
 
@@ -359,7 +360,7 @@ iteration of the :attr:`pulsar.Actor.ioloop`.'''
     def _init(self, impl, arbiter = None, monitor = None,
               on_task = None, task_queue = None,
               actor_links = None, name = None, socket = None,
-              age = 0):
+              age = 0, arbiter_address = None):
         # This function is called just after forking (if the concurrency model
         # is process, otherwise just after the concurrent model has started).
         self.arbiter = arbiter
@@ -379,8 +380,13 @@ iteration of the :attr:`pulsar.Actor.ioloop`.'''
         self.ioloop = self.get_eventloop(impl)
         self.ioloop.add_loop_task(self)
         self.set_socket(socket)
-        if on_task:
-            self.on_task = on_task
+        if arbiter:
+            if on_task:
+                self.on_task = on_task
+            if arbiter_address:
+                self.arbiter_connection = create_connection(arbiter_address)
+            else:
+                self.arbiter_waker = None
     
     def set_socket(self, socket):
         self.socket = socket
@@ -405,6 +411,18 @@ iteration of the :attr:`pulsar.Actor.ioloop`.'''
         '''Build the event loop from a :class:`ActorImpl` instance.'''
         return default_eventloop(self,impl)
     
+    def wake_arbiter(self):
+        if self.arbiter_connection:
+            self.arbiter_connection.sock.write(b'x')
+    
+    def put(self, request):
+        '''Put a request into the actor task queue'''
+        if self.task_queue:
+            self.task_queue.put((self.aid,request))
+        else:
+            self.log.warning('Trying to put a request on task queue,\
+ but {0} does not have one')
+            
     # STOPPING TERMINATIONG AND STARTING
     
     def stop(self):

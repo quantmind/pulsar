@@ -33,6 +33,7 @@ class NOT_DONE(object):
 
 from .utils.exceptions import *
 from .utils import system
+from .utils.sock import *
 from .utils.py2py3 import ispy3k, to_string, is_string, native_str,\
                             to_bytestring
 platform = system.platform
@@ -40,7 +41,6 @@ platform = system.platform
 from .utils.config import *
 from .async import *
 from .apps import *
-from .apps import test
 
 
 

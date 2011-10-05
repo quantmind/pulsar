@@ -1,5 +1,6 @@
 from time import sleep
-from pulsar import test, spawn, Actor, ActorProxy, ActorRequest
+from pulsar import spawn, Actor, ActorProxy, ActorRequest
+from pulsar.apps import test
 
 
 #__all__ = ['TestActorThread']

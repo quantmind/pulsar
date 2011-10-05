@@ -44,9 +44,10 @@ Send the actual request to the remote manager and return the deferred request.
             kwg.update(kwargs)
             params = self.get_args(request, args, kwg)
             self._result = tk.send(worker.aid,
-                                  params,
-                                  name=self.remotefunction,
-                                  ack = self.ack)
+                                   params,
+                                   name=self.remotefunction,
+                                   ack = self.ack)
+            worker.wake_arbiter()
         else:
             self._result = Deferred()
             try:

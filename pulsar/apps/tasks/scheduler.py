@@ -110,8 +110,8 @@ class SchedulerEntry(object):
     
 
 class Scheduler(object):
-    """Scheduler for periodic tasks.
-    """
+    """Scheduler for periodic tasks. This class is the main driver of tasks
+and task scheduling."""
     def __init__(self, TaskFactory):
         self._entries = self.setup_schedule()
         self.next_run = datetime.now()
@@ -166,11 +166,12 @@ class Scheduler(object):
         
     def queue_task(self, monitor, job_name, targs = None, tkwargs = None,
                    **kwargs):
-        '''Put a new task in the task queue.'''
+        '''Put a new task in the task queue. This function invokes
+:meth:`make_request` and check that the task can be inserted into the queue.'''
         task,tq = self.make_request(job_name, targs, tkwargs, **kwargs)
         if tq:
             self.log.info('Adding {0} to the task queue'.format(tq))
-            monitor.task_queue.put(tq)
+            monitor.task_queue.put((0,tq))
         return task
 
     def tick(self, monitor, now = None):

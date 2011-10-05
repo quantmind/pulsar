@@ -7,6 +7,7 @@ from threading import Lock
 
 import pulsar
 from pulsar.utils import system
+from pulsar.utils.system import IObase
 from pulsar.utils.tools import Pidfile
 from pulsar.utils.py2py3 import itervalues
 
@@ -26,30 +27,11 @@ def spawn(actor_class, *args, **kwargs):
     return arbiter().spawn(actor_class, *args, **kwargs)
 
 
-class ArbiterSocket(object):
+def arbiter_socket():
+    w,s = system.socket_pair(2048)
+    w.close()
+    return pulsar.wrap_socket(s)
     
-    def __init__(self):
-        w,s = system.socket_pair(2048)
-        s.setblocking(False)
-        self.sock = s
-        w.close()
-        
-    def fileno(self):
-        return self.sock.fileno()
-    
-    def __call__(self, fd, events):
-        return
-        client = None
-        try:
-            client, addr = self.sock.accept()
-        except socket.error as e:
-            system.close_socket(client)
-            if e.errno not in self.ALLOWED_ERRORS:
-                raise
-            else:
-                return
-        s.setblocking(True)
-        data = client.recv()
         
 
 class Arbiter(ActorPool):
@@ -135,14 +117,14 @@ registered with the the arbiter.'''
             timeout = max(kwargs.pop('timeout',cls.DEFAULT_ACTOR_TIMEOUT),
                             cls.MINIMUM_ACTOR_TIMEOUT)
             impl_cls = actor_class._runner_impl[impl]
-            actor = impl_cls(actor_class,impl,timeout,arbiter,args,kwargs)
-            monitor = actor.proxy_monitor()
+            actor_maker = impl_cls(actor_class,impl,timeout,arbiter,args,kwargs)
+            monitor = actor_maker.proxy_monitor()
             if monitor:
-                arbiter.LIVE_ACTORS[actor.aid] = monitor
-                actor.start()
+                arbiter.LIVE_ACTORS[actor_maker.aid] = monitor
+                actor_maker.start()
                 return monitor
             else:
-                return actor.actor
+                return actor_maker.actor
         finally:
             cls.lock.release()
         
@@ -234,7 +216,11 @@ the timeout. Stop the arbiter.'''
             "cwd": cwd,
             0: sys.executable
         }
+        kwargs['socket'] = arbiter_socket()
         super(Arbiter,self)._init(impl, *args, **kwargs)
+        self.ioloop.add_handler(self.socket,
+                lambda fd, events : pulsar.flush_socket(self.socket),
+                IObase.READ)
     
     def _setup(self):
         if self.cfg:

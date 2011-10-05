@@ -1,5 +1,5 @@
-from pulsar import test
 from pulsar.utils.tools import checkarity
+from pulsar.apps import test
 
 
 __all__ = ['TestArityCheck']

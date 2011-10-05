@@ -12,7 +12,17 @@ __all__ = ['ActorImpl','Queue']
     
     
 class ActorImpl(object):
-    '''Actor concurrency implementation.'''
+    '''Actor implementation is responsible for the actual spawning of
+actors according to a concurrency implementation.
+
+:parameter actor_class: a :class:`Actor` or one of its subclasses.
+:parameter impl: string indicating the concurrency implementation. Valid choices
+    are ``process`` and ``thread``.
+:parameter timeout: timeout in seconds for the actor.
+:parameter args: additional arguments to be passed to the arbiter constructor.
+:parameter kwargs: additional key-valued arguments to be passed to the arbiter
+    constructor.
+'''
     def __init__(self, actor_class, impl, timeout, arbiter, args, kwargs):
         self.inbox = Queue()
         self.aid = gen_unique_id()[:8]
@@ -36,14 +46,21 @@ class ActorImpl(object):
         return ActorProxyMonitor(self)
     
     def process_actor(self, arbiter):
-        self.a_kwargs['arbiter'] = arbiter.proxy
-        monitor = self.a_kwargs.pop('monitor',None)
+        kwargs = self.a_kwargs
+        monitor = kwargs.pop('monitor',None)
         if monitor:
             monitor = monitor.proxy
-        self.a_kwargs['monitor'] = monitor
+        kwargs.update({'arbiter':arbiter.proxy,
+                       'arbiter_address':arbiter.address,
+                       'monitor':monitor})
         
     def make_actor(self):
-        '''create an instance of :class:`pulsar.Actor`.'''
+        '''create an instance of :class:`Actor`. For standard actors, this
+function is called after forking, therefore in the new process
+(or thread if using a concurrency based on threads).
+For the :class:`Arbiter` and for :class:`Monitor` instances it is
+called in the main process since those special actors always live in the
+main process.'''
         self.actor = self.actor_class(self,*self.a_args,**self.a_kwargs)
         
     def get_io(self, actor):
@@ -58,7 +75,7 @@ will be used.
     
     
 class ActorMonitorImpl(ActorImpl):
-    '''This is a dummy actor implementation used to create Monitors.'''
+    '''A dummy actor implementation to create Monitors.'''
     def process_actor(self, arbiter):
         self.a_kwargs['arbiter'] = arbiter
         self.timeout = 0
@@ -99,7 +116,7 @@ class ActorProcess(Process,ActorImpl):
         
         
 class ActorThread(Thread,ActorImpl):
-    
+    '''Actor on a thread'''
     def __init__(self, *args):
         init_actor(self, Thread, *args)
         
@@ -107,6 +124,8 @@ class ActorThread(Thread,ActorImpl):
         run_actor(self)
         
     def get_io(self, worker):
+        '''Actors on a thread by default do not use select or epoll, instead
+ they use a queue where the monitor add tasks to be consumed.'''
         tq = worker.task_queue
         if tq:
             ioq = IOQueue(tq)

@@ -1,5 +1,6 @@
 '''Tests for arbiter and monitors'''
-from pulsar import test, Monitor, Actor, DEFAULT_MESSAGE_CHANNEL
+from pulsar import Monitor, Actor, DEFAULT_MESSAGE_CHANNEL
+from pulsar.apps import test
 
 
 class ActorA(Actor):

@@ -40,7 +40,6 @@ class TestRequest(object):
     
 
 def run_test(self, result):
-    
     testMethod = getattr(self, self._testMethodName)
     if (getattr(self.__class__, "__unittest_skip__", False) or
         getattr(testMethod, "__unittest_skip__", False)):
@@ -92,10 +91,6 @@ def run_test(self, result):
 
     finally:
         result.stopTest(self)
-        if orig_result is None:
-            stopTestRun = getattr(result, 'stopTestRun', None)
-            if stopTestRun is not None:
-                stopTestRun()
     
 
 def _executeTestPart(self, function, outcome, isTest=False):

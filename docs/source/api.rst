@@ -95,6 +95,25 @@ Deferred Generator
    :members:
    :member-order: bysource
    
+
+Sockets
+================
+
+Create Socket
+~~~~~~~~~~~~~~~~~~~~
+
+.. autofunction:: create_socket
+
+
+Socket
+~~~~~~~~~~~~~~~~~~~~~~
+
+.. autoclass:: Socket
+   :members:
+   :member-order: bysource
+
+
+   
 IOLoop
 ~~~~~~~~~~~~~~~~~~~~
 
@@ -137,11 +156,6 @@ Application Monitor
 
 Net
 ========================
-
-Create Socket
-~~~~~~~~~~~~~~~~~~~~
-
-.. autofunction:: create_socket
 
 
 IOStream

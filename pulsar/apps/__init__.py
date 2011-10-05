@@ -240,7 +240,7 @@ updated actor parameters with information about the application.
         info = super(ApplicationMonitor,self)._info(result)
         info.update({'default_timeout': self.cfg.timeout})
         return info
-
+    
 
 class Application(pulsar.PickableMixin):
     """\
