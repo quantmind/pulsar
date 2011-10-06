@@ -1,10 +1,31 @@
-'''
-Pulsar is shipped with a Http applications which conforms the python
-web server gateway interface (WSGI).
+"""
+Pulsar is shipped with a HTTP applications which conforms the python
+web server gateway interface (WSGI_).
 
 The application can be used in conjunction with several web frameworks
-as well as the pulsar RPC handler in :mod:`pulsar.apps.rpc`.
-'''
+as well as the :ref:`pulsar RPC middleware <apps-rpc>` and
+the :ref:`websocket middleware <apps-ws>`.
+
+An example of a web server written with ``pulsar.apps.wsgi`` which responds 
+with "Hello World!" for every request:: 
+
+    from pulsar.apps import wsgi
+    
+    def hello(environ, start_response):
+        data = b"Hello World!"
+        response_headers = (
+            ('Content-type','text/plain'),
+            ('Content-Length', str(len(data)))
+        )
+        start_response("200 OK", response_headers)
+        return [data]
+    
+    if __name__ == '__main__':
+        wsgi.createServer(callable = hello).start()
+
+
+.. _WSGI: http://www.wsgi.org
+"""
 import pulsar
 from pulsar.net import HttpResponse
 

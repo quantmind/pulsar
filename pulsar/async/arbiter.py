@@ -58,7 +58,7 @@ Users access the arbiter by the high level api::
     CLOSE_TIMEOUT = 3
     WORKER_BOOT_ERROR = 3
     STOPPING_LOOPS = 20
-    SIG_TIMEOUT = 0.001
+    SIG_TIMEOUT = 0.01
     CLOSE_TIMEOUT = 10
     EXIT_SIGNALS = (signal.SIGINT,
                     signal.SIGTERM,
@@ -180,7 +180,7 @@ the timeout. Stop the arbiter.'''
     def __str__(self):
         return self.__repr__()
     
-    def _init(self, impl, *args, **kwargs):
+    def _init(self, impl, **kwargs):
         os.environ["SERVER_SOFTWARE"] = pulsar.SERVER_SOFTWARE
         daemonize = kwargs.pop('daemonize',False)
         if daemonize:
@@ -191,27 +191,6 @@ the timeout. Stop the arbiter.'''
         self.reexec_pid = 0
         self._monitors = {}
         self.SIG_QUEUE = ThreadQueue()
-        # get current path, try to use PWD env first
-        try:
-            a = os.stat(os.environ['PWD'])
-            b = os.stat(os.getcwd())
-            if a.ino == b.ino and a.dev == b.dev:
-                cwd = os.environ['PWD']
-            else:
-                cwd = os.getcwd()
-        except:
-            cwd = os.getcwd()
-            
-        sargs = sys.argv[:]
-        sargs.insert(0, sys.executable)
-
-        # init start context
-        self.START_CTX = {
-            "args": sargs,
-            "cwd": cwd,
-            0: sys.executable
-        }
-        super(Arbiter,self)._init(impl, *args, **kwargs)
     
     def _setup(self):
         if self.cfg:
@@ -236,9 +215,9 @@ the timeout. Stop the arbiter.'''
             self.halt(reason=str(e), sig=e.signal)
         except SystemExit:
             raise
-        except Exception:
+        except:
             self.log.critical("Unhandled exception in main loop.",
-                              exc_info = sys.exc_info())
+                              exc_info = True)
             self.halt()
     
     def halt(self, reason=None, sig=None):
@@ -259,12 +238,12 @@ the timeout. Stop the arbiter.'''
             pool.stop()
         
     def close(self, sig):
+        #close the arbiter
         if not self._stopping:
             self._stopping = True
             self.close_message_queue()
-            stop = self.proxy.stop
             for actor in self.linked_actors():
-                stop(actor)
+                actor.send(self,'stop')
             self.close_signal = sig
             self._stop_ioloop()
             self._stop()
@@ -309,7 +288,8 @@ the timeout. Stop the arbiter.'''
                 'monitors':result}
 
     def arbiter_task(self):
-        '''Called by the Event loop to perform the signal handling from the signal queue'''
+        '''Called by the Event loop to perform the signal handling from the
+signal queue'''
         sig = None
         while True:
             try:

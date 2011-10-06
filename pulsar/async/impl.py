@@ -51,7 +51,7 @@ and are shared between the :class:`Actor` and its
 '''
     def __init__(self, concurrency, actor_class, timeout, arbiter,
                  args, kwargs):
-        self.aid = gen_unique_id()[:8]
+        self.aid = gen_unique_id()[:8] if arbiter else 'arbiter'
         self.impl = concurrency
         self.timeout = timeout
         self.actor_class = actor_class

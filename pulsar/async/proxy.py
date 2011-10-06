@@ -171,7 +171,7 @@ actor to another'''
 class ActorProxy(object):
     '''This is an important component in pulsar concurrent framework. An
 instance of this class behaves as a proxy for a remote `underlying` 
-:class:`pulsar.Actor` instance.
+:class:`Actor` instance.
 This is a lightweight class which delegates function calls to the underlying
 remote object.
 
@@ -193,12 +193,9 @@ By default each actor comes with a set of remote functions:
 
 For example, lets say we have a proxy ``a`` and an actor (or proxy) ``b``::
 
-    a.notify(b)
+    a.send(b,'notify','hello there!')
     
-will call notify on the actor underlying ``a`` with ``b`` as the caller.
-This is equivalent as to using the lower level call::
-
-    a.send(b.aid,(),'notify')
+will call ``notify`` on the actor ``a`` with ``b`` as the sender.
     
 
 .. attribute:: proxyid
@@ -223,10 +220,10 @@ This is equivalent as to using the lower level call::
         
     def send(self, sender, action, *args, **kwargs):
         '''\
-Send a message to the underlying actor. This is the low level function
-call for communicating between actors.
+Send a message to the underlying actor (the receiver). This is the low level
+function call for communicating between actors.
 
-:parameter sender: the actor sending the message
+:parameter sender: the actor sending the message.
 :parameter action: the action of the message. If not provided,
     the message will be broadcasted by the receiving actor,
     otherwise a specific action will be performed.
@@ -235,15 +232,20 @@ call for communicating between actors.
 :parameter ack: If ``True`` the receiving actor will send a callback.
     If the action is provided and available, this parameter will be overritten.
 :rtype: an instance of :class:`ActorRequest`.
+
+When sending a message, first we check the ``sender`` outbox. If that is
+not available, we get the receiver ``inbox`` and hope it can carry the message.
+If there is no inbox either, abort the message passing and log a critical error.
     '''
         mailbox = sender.outbox
-        # if the sender has no outbox, pick the receiver inbox
+        # if the sender has no outbox, pick the receiver mailbox an hope
+        # for the best
         if not mailbox:
             mailbox = self.mailbox
         
         if not mailbox:
-            sender.log.warn('Cannot send a message to {0}. There is no\
- mailbox available.'.format(actor))
+            sender.log.critical('Cannot send a message to {0}. There is no\
+ mailbox available.'.format(self))
             return
         
         ack = False

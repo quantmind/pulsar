@@ -185,6 +185,9 @@ Unicode under the hood, the *content* of a native string is still
 restricted to bytes!
 
 Therefore headers are converted to bytes before sending.
+
+Status codes can be found here
+https://github.com/joyent/node/blob/master/lib/http.js
 '''
     middleware = []
     
@@ -284,6 +287,7 @@ for the server as a whole.
                 self.force_close()
         wb = self._write
         for b in data:
+            # send headers only if there is data or it is an upgrade
             if b or upgrade:
                 yield self.send_headers()
                 if b:

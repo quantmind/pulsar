@@ -10,9 +10,9 @@ __all__ = ['mailbox','Mailbox','IOQueue','Empty','Queue']
 
 
 def mailbox(address = None, id = None, queue = None, stream = None):
-    '''Creates :class:`Mailbox` for :class:`Actor` instances.
+    '''Creates a :class:`Mailbox` instances for :class:`Actor` instances.
 If an address is provided, the communication is implemented using a socket,
-otherwise a queue is used. Istream is provided, this is the arbiter socket.'''   
+otherwise a queue is used. If stream is provided, this is the arbiter socket.'''   
     if address:
         if id:
             raise ValueError('Mailbox with address and id is not supported')
@@ -96,9 +96,7 @@ pipe is created.'''
             
     
 class SocketMailbox(Mailbox):
-    '''An outbox for :class:`Actor` instances. If an address is provided,
-the communication is implemented using a socket, otherwise a unidirectional
-pipe is created.'''
+    '''An inbox for :class:`Actor` instances.'''
     def __init__(self, address):
         self._address = address
         self.sock = None
@@ -125,6 +123,7 @@ pipe is created.'''
         raise MailboxError('Cannot read messages')        
         
     def close(self):
+        self.actor.log.debug('shutting down {0} outbox'.format(self.actor))
         self.sock.close()
 
 
@@ -180,6 +179,7 @@ pipe is created.'''
             self.stream.ioloop.READ)
         
     def close(self):
+        self.actor.log.debug('shutting down {0} inbox'.format(self.actor))
         for c in self.clients:
             try:
                 c.close()

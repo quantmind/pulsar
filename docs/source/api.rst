@@ -111,6 +111,22 @@ Socket
 .. autoclass:: Socket
    :members:
    :member-order: bysource
+   
+   
+IOStream
+~~~~~~~~~~~~~~~~~
+
+.. autoclass:: IOStream
+   :members:
+   :member-order: bysource
+   
+   
+AsyncIOStream
+~~~~~~~~~~~~~~~~~
+
+.. autoclass:: AsyncIOStream
+   :members:
+   :member-order: bysource
 
 
 Eventloop
@@ -168,21 +184,6 @@ Application Monitor
 
 Net
 ========================
-
-
-IOStream
-~~~~~~~~~~~~~~~~~
-
-.. autoclass:: IOStream
-   :members:
-   :member-order: bysource
-   
-AsyncIOStream
-~~~~~~~~~~~~~~~~~
-
-.. autoclass:: AsyncIOStream
-   :members:
-   :member-order: bysource
    
 
 HttpRequest

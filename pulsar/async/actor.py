@@ -220,14 +220,54 @@ Here ``a`` is actually a reference to the remote actor.
     _ppid = None
     _name = None
     
-    def __init__(self,impl,*args,**kwargs):
+    def __init__(self,impl,arbiter = None, monitor = None,
+                 on_task = None, ioqueue = None,
+                 actor_links = None, name = None, socket = None,
+                 age = 0):
         self.__repr = ''
         self._impl = impl.impl
         self._aid = impl.aid
         self._inbox = impl.inbox
         self._outbox = impl.outbox
         self._timeout = impl.timeout
-        self._init(impl,*args,**kwargs)
+        self._linked_actors = {}
+        self.age = age
+        self.nr = 0
+        self._name = name or self._name
+        # Call _init
+        self._init(impl,**kwargs)
+        self.arbiter = arbiter
+        self.monitor = monitor
+        self.loglevel = impl.loglevel
+        self._state = self.INITIAL
+        self.log = self.getLogger()
+        actor_links = actor_links or {}
+        #self.ACTOR_LINKS = actor_links or {}
+        for a in itervalues(actor_links):
+            self._linked_actors[a.aid] = a
+        
+        # If arbiter available
+        if arbiter:
+            self._linked_actors[arbiter.aid] = arbiter
+            self.__repr = '{0} {1}'.format(self._name,self._aid)
+            self.log = LogSelf(self,self.log)
+            if on_task:
+                self.on_task = on_task
+        else:
+            self.__repr = self._name
+            
+        self.ioqueue = ioqueue
+        self.ioloop = self.get_eventloop(impl)
+        # ADD SELF TO THE EVENT LOOP TASKS
+        self.ioloop.add_loop_task(self)
+        self.set_socket(socket)
+                
+        inbox = self.inbox
+        if inbox:
+            inbox.set_actor(self)
+            
+    def _init(self, impl, **kwargs):
+        pass
         
     @property
     def proxy(self):
@@ -366,9 +406,14 @@ iteration of the :attr:`pulsar.Actor.ioloop`.'''
         self._name = name or self._name
         self._state = self.INITIAL
         self.log = self.getLogger()
+        actor_links = actor_links or {}
+        #self.ACTOR_LINKS = actor_links or {}
+        for a in itervalues(actor_links):
+            self._linked_actors[a.aid] = a
         
         # If arbiter available
         if arbiter:
+            self._linked_actors[arbiter.aid] = arbiter
             self.__repr = '{0} {1}'.format(self._name,self._aid)
             self.log = LogSelf(self,self.log)
             if on_task:
@@ -376,11 +421,6 @@ iteration of the :attr:`pulsar.Actor.ioloop`.'''
         else:
             self.__repr = self._name
             
-        self.channels = {}
-        self.ACTOR_LINKS = actor_links or {}
-        self._linked_actors = {}
-        for a in itervalues(self.ACTOR_LINKS):
-            self._linked_actors[a.aid] = a
         self.ioqueue = ioqueue
         self.ioloop = self.get_eventloop(impl)
         # ADD SELF TO THE EVENT LOOP TASKS
@@ -452,8 +492,8 @@ iteration of the :attr:`pulsar.Actor.ioloop`.'''
             #self.handle_request_error(request,e)
             result = e
             if self.log:
-                self.log.critical('Unhandled error while processing worker\
- request: {0}'.format(e), exc_info=True)
+                self.log.critical('Error while processing message: {0}.'\
+                                  .format(e), exc_info=True)
         finally:
             if ack:
                 ActorCallBack(self,result).\
@@ -465,8 +505,8 @@ iteration of the :attr:`pulsar.Actor.ioloop`.'''
             self.log.debug('Put a request on task queue')
             self.ioqueue.put(('request',request))
         else:
-            self.log.warning('Trying to put a request on task queue,\
- but {0} does not have one')
+            self.log.warning("Trying to put a request on task queue,\
+ but there isn't one!")
         
     # STOPPING TERMINATIONG AND STARTING
     
@@ -531,17 +571,15 @@ properly this actor will go out of scope.'''
     def linked_actors(self):
         '''Iterator over linked-actor proxies'''
         return itervalues(self._linked_actors)
-    
+            
     def get_actor(self, aid):
         '''Given an actor unique id return the actor proxy.'''
         if aid == self.aid:
-            return self.proxy
+            return self
         elif aid in self._linked_actors:
             return self._linked_actors[aid]
-        elif self.arbiter and aid == self.arbiter.aid:
-            return self.arbiter
-        elif self.monitor and aid == self.monitor.aid:
-            return self.monitor
+        else:
+            return None
 
     def __call__(self):
         '''Called in the main eventloop to perform the following

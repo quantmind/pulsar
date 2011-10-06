@@ -22,10 +22,8 @@ This is the base class for :class:`pulsar.Arbiter` and :class:`pulsar.Monitor`.
     Number of workers to manage. Default ``0`` any number of actors.
 '''
     
-    def _init(self, impl, *args, **kwargs):
-        self._linked_actors = {}
+    def _init(self, impl, **kwargs):
         self.num_workers = kwargs.pop('num_workers',0) or 0
-        super(ActorPool,self)._init(impl, *args, **kwargs)
         
     @property
     def LIVE_ACTORS(self):
@@ -101,13 +99,11 @@ You can also create a monitor with a distributed queue as IO mechanism::
 '''
     socket = None
     
-    def _init(self, impl, worker_class, address = None, actor_params = None,
-              actor_links = None, **kwargs):
+    def _init(self, impl, worker_class = None, address = None,
+              actor_params = None, **kwargs):
         self.worker_class = worker_class
         self.address = address
         self._actor_params = actor_params
-        self.actor_links = actor_links
-        super(Monitor,self)._init(impl, **kwargs)
         
     def monitor_task(self):
         '''Monitor specific task called by the :meth:`pulsar.Monitor.on_task`

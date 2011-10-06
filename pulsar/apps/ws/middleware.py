@@ -140,22 +140,24 @@ This script pops up an alert box that says "You said: Hello, world".
     
 
 class WebSocket(object):
-    """A WSGI_ middleware for serving web socket applications.
+    """A :ref:`WSGI <apps-wsgi>` middleware for serving web socket applications.
 It implements the protocol version 8 as specified at
 http://www.whatwg.org/specs/web-socket-protocol/.
 
 Web Sockets are not standard HTTP connections. The "handshake" is HTTP,
-but after the handshake, the protocol is message-based. To create
-a valid :class:`WebSocket` instance initialize as follow::
+but after that, the protocol is message-based. To create
+a valid :class:`WebSocket` instance initialise as follow::
 
-    ws = MyWebSocket()
-    w = WebSocket(handler = ws)
-
-where ``ws`` is an implementation of :class:`WS`.
-
-The communication methods available to you are write_message()
-and close(). Likewise, your request handler class should
-implement open() method rather than get() or post().
+    from pulsar.apps import wsgi, ws
+    
+    class MyWebSocket(ws.WS):
+        ...
+    
+    wm = ws.WebSocket(handler = MyWebSocket())
+        
+    app = wsgi.WsgiHandler(middleware = (...,wm))
+    
+    wsgi.createServer(callable = app).start()
 
 
 See http://www.w3.org/TR/websockets/ for details on the
@@ -163,7 +165,7 @@ JavaScript interface.
     """
     VERSIONS = ('8',)
     WS_KEY = '258EAFA5-E914-47DA-95CA-C5AB0DC85B11'
-    '''magic string'''
+    #magic string
     STATUS = "101 Switching Protocols"
     
     def __init__(self, handle):

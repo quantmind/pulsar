@@ -1,5 +1,5 @@
 from time import sleep
-from pulsar import spawn, Actor, ActorProxy, ActorRequest
+from pulsar import spawn, Actor, ActorProxy, ActorMessage
 from pulsar.apps import test
 
 

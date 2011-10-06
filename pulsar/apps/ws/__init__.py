@@ -8,8 +8,8 @@ See this `browser compatibility table
 <http://en.wikipedia.org/wiki/WebSockets#Browser_support>`_ on Wikipedia.
    
 The implementation uses the WSGI middleware
-:class:`pulsar.net.WebSocket` which implements the handshake and the
-:class:`pulsar.net.WS` handler for the communication part. 
+:class:`pulsar.apps.ws.WebSocket` which implements the handshake and the
+:class:`pulsar.apps.ws.WS` handler for the communication part. 
 
 .. _WebSockets: http://dev.w3.org/html5/websockets/
 .. _hybi: http://tools.ietf.org/html/draft-ietf-hybi-thewebsocketprotocol-17
