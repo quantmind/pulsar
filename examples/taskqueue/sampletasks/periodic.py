@@ -9,13 +9,13 @@ class TestPeriodicJob(PeriodicJob):
 
 
 class TestPeriodic(TestPeriodicJob):
-        
+    run_every = timedelta(seconds=10)
     def __call__(self, consumer):
         return 'OK'
     
     
 class TestPeriodicError(TestPeriodicJob):
-    
+    run_every = timedelta(seconds=6)
     def __call__(self, consumer):
         raise Exception('kaputt')
     

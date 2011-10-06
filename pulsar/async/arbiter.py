@@ -12,7 +12,8 @@ from pulsar.utils.tools import Pidfile
 from pulsar.utils.py2py3 import itervalues
 
 from .impl import actor_impl
-from .monitor import ActorPool
+from .actor import Actor
+from .monitor import PoolMixin
 from .proxy import ActorCallBacks
 from .defer import ThreadQueue
 
@@ -29,7 +30,7 @@ def spawn(actor_class, *args, **kwargs):
     
         
 
-class Arbiter(ActorPool):
+class Arbiter(PoolMixin,Actor):
     '''The Arbiter is a very special :class:`pulsar.Actor`. It is used as
 singletone in the main process and it manages one or more
 :class:`pulsar.Monitors`.  
@@ -42,14 +43,6 @@ Users access the arbiter by the high level api::
     import pulsar
     
     arbiter = pulsar.arbiter()
-    
-    
-.. attribute:: LIVE_ACTORS
-
-    dictionary of all live actors proxies. Values are given by instances of
-    :class:`pulsar.ActorProxyMonitor` which are used to communicate with
-    remote actors.
-    
     
 .. _gunicorn: http://gunicorn.org/
 .. _twisted: http://twistedmatrix.com/trac/
@@ -70,12 +63,11 @@ Users access the arbiter by the high level api::
     
     # ARBITER HIGH LEVEL API
     
-    def add_monitor(self, monitor_class, monitor_name, *args, **kwargs):
+    def add_monitor(self, monitor_class, monitor_name, **kwargs):
         '''Add a new :class:`pulsar.Monitor` to the arbiter.
 
 :parameter monitor_class: a :class:`pulsar.Monitor` class.
 :parameter monitor_name: a unique name for the monitor.
-:parameter args: tuple containing additional parameters for the monitor.
 :parameter kwargs: dictionary of key-valued parameters for the monitor.
 :rtype: an instance of a :class:`pulsar.Monitor`.'''
         kwargs['impl'] = 'monitor'
@@ -83,7 +75,8 @@ Users access the arbiter by the high level api::
             raise KeyError('Monitor "{0}" already available'\
                            .format(monitor_name))
         kwargs['name'] = monitor_name
-        m = spawn(monitor_class,*args,**kwargs)
+        m = spawn(monitor_class,**kwargs)
+        self._linked_actors[m.aid] = m
         self._monitors[m.name] = m
         return m
     
@@ -100,8 +93,9 @@ registered with the the arbiter.'''
         return cls._instance
     
     @classmethod
-    def spawn(cls, actor_class, *args, **kwargs):
-        '''Create a new concurrent Actor and return its proxy.'''
+    def spawn(cls, actor_class, **kwargs):
+        '''Create a new :class:`Actor` and return its
+:class:`ActorProxyMonitor`.'''
         cls.lock.acquire()
         try:
             arbiter = getattr(cls,'_instance',None)
@@ -111,11 +105,11 @@ registered with the the arbiter.'''
             impl = kwargs.pop('impl',actor_class.DEFAULT_IMPLEMENTATION)
             timeout = max(kwargs.pop('timeout',cls.DEFAULT_ACTOR_TIMEOUT),
                             cls.MINIMUM_ACTOR_TIMEOUT)
-            actor_maker = actor_impl(impl,actor_class,timeout,arbiter,
-                                     args,kwargs)
+            actor_maker = actor_impl(impl,actor_class,timeout,arbiter,kwargs)
             monitor = actor_maker.proxy_monitor()
+            # Add to the list of managed actors if this is a remote actor
             if monitor:
-                arbiter.LIVE_ACTORS[actor_maker.aid] = monitor
+                arbiter.MANAGED_ACTORS[actor_maker.aid] = monitor
                 actor_maker.start()
                 return monitor
             else:
@@ -180,16 +174,15 @@ the timeout. Stop the arbiter.'''
     def __str__(self):
         return self.__repr__()
     
-    def _init(self, impl, **kwargs):
+    def _init_arbiter(self, impl, daemonize = False, **kwargs):
+        self.__repr = self._name
         os.environ["SERVER_SOFTWARE"] = pulsar.SERVER_SOFTWARE
-        daemonize = kwargs.pop('daemonize',False)
         if daemonize:
             system.daemonize()
         self.actor_age = 0
         self.cfg = None
         self.pidfile = None
         self.reexec_pid = 0
-        self._monitors = {}
         self.SIG_QUEUE = ThreadQueue()
     
     def _setup(self):
@@ -253,10 +246,10 @@ the timeout. Stop the arbiter.'''
         st = time()
         self._state = self.TERMINATE
         while time() - st < self.CLOSE_TIMEOUT:
-            if not self.LIVE_ACTORS:
+            if not self.MANAGED_ACTORS:
                 self._state = self.CLOSE
                 break
-        self._inbox.close()
+        self.inbox.close()
     
     def close_message_queue(self):
         return
@@ -283,7 +276,7 @@ the timeout. Stop the arbiter.'''
         server.update({'version':pulsar.__version__,
                        'name':pulsar.SERVER_NAME,
                        'number_of_monitors':len(self._monitors),
-                       'number_of_actors':len(self.LIVE_ACTORS)})
+                       'number_of_actors':len(self.MANAGED_ACTORS)})
         return {'server':server,
                 'monitors':result}
 
@@ -341,22 +334,7 @@ signal queue'''
     
     def get_all_monitors(self):
         return dict(((mon.name,mon.proxy) for mon in itervalues(self.monitors)))
-    
-    def get_monitor(self, mid):
-        for m in itervalues(self.monitors):
-            if m.aid == mid:
-                return m
-                
-    def get_actor(self, aid):
-        if aid == self.aid:
-            return self
-        elif aid in self.LIVE_ACTORS:
-            return self.LIVE_ACTORS[aid]
-        else:
-            m = self.get_monitor(aid)
-            if m:
-                return m.proxy
-        
+            
     # REMOTES
     
     def actor_kill_actor(self, caller, aid):

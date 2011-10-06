@@ -1,7 +1,7 @@
 .. _apps-rpc:
 
 ============================
-Remote Procedure Calls
+JSON-RPC
 ============================
 
 .. automodule:: pulsar.apps.rpc
@@ -23,6 +23,14 @@ JSON RPC
 ~~~~~~~~~~~~~~~~
 
 .. autoclass:: JSONRPC
+   :members:
+   :member-order: bysource
+   
+   
+JsonProxy
+~~~~~~~~~~~~~~~~
+
+.. autoclass:: JsonProxy
    :members:
    :member-order: bysource
    

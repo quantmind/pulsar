@@ -170,8 +170,7 @@ and task scheduling."""
 :meth:`make_request` and check that the task can be inserted into the queue.'''
         task,tq = self.make_request(job_name, targs, tkwargs, **kwargs)
         if tq:
-            self.log.info('Adding {0} to the task queue'.format(tq))
-            monitor.task_queue.put((0,tq))
+            monitor.put(tq)
         return task
 
     def tick(self, monitor, now = None):

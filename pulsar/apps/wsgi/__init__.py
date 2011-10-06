@@ -69,16 +69,18 @@ parameters.'''
                                       worker.ioloop.READ)
         
     def handle_request(self, worker, request):
-        environ = request.wsgi_environ()
-        if not environ:
-            yield request.on_headers
-            environ = request.wsgi_environ()
         cfg = worker.cfg
         mt = cfg.concurrency == 'thread' and cfg.workers > 1
         mp = cfg.concurrency == 'process' and cfg.workers > 1
-        environ.update({"pulsar.worker": worker,
-                        "wsgi.multithread": mt,
-                        "wsgi.multiprocess": mp})
+        environ = request.wsgi_environ(actor = worker,
+                                       multithread = mt,
+                                       multiprocess = mp)
+        if not environ:
+            yield request.on_headers
+            environ = request.wsgi_environ(
+                                       actor = worker,
+                                       multithread = mt,
+                                       multiprocess = mp)
         # Create the response object
         response = HttpResponse(request)
         # WSGI

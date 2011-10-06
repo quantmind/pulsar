@@ -31,6 +31,13 @@ Actor
    :member-order: bysource
 
 
+PoolMixin
+~~~~~~~~~~~~~~~~~~
+
+.. autoclass:: PoolMixin
+   :members:
+   :member-order: bysource
+
 Monitor
 ~~~~~~~~~~~~~~~~~~
 
@@ -58,6 +65,14 @@ ActorProxyMonitor
 ~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. autoclass:: ActorProxyMonitor
+   :members:
+   :member-order: bysource
+   
+   
+ActorMessage
+~~~~~~~~~~~~~~
+
+.. autoclass:: ActorMessage
    :members:
    :member-order: bysource
    
@@ -95,6 +110,14 @@ Deferred Generator
    :members:
    :member-order: bysource
    
+
+Mailbox
+~~~~~~~~~~~~~~
+
+.. autoclass:: Mailbox
+   :members:
+   :member-order: bysource
+
 
 Sockets
 ================

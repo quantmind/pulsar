@@ -30,6 +30,10 @@ class HaltServer(PulsarInternetException):
 class ConnectionError(PulsarInternetException):
     pass
     
+
+class DeferredFailure(PulsarException):
+    pass
+
 class AlreadyCalledError(PulsarException):
     '''Raised when a Deferred instance receives more than one callback'''
 

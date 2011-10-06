@@ -100,7 +100,7 @@ try:
             d['id'] = self.id
             return d
         
-        def _on_finish(self, worker):
+        def on_finish(self, worker):
             duration = self.duration()
             if duration:
                 self.task_duration = timedelta_seconds(duration)

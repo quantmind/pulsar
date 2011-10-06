@@ -20,16 +20,14 @@ def arbiter_socket():
     return mailbox(stream = stream)
     
 
-def actor_impl(concurrency, actor_class, timeout, arbiter, args, kwargs):
+def actor_impl(concurrency, actor_class, timeout, arbiter, kwargs):
     if concurrency == 'monitor':
         return ActorMonitorImpl(concurrency,actor_class, timeout, arbiter,
-                                args, kwargs)
+                                kwargs)
     elif concurrency == 'thread':
-        return ActorThread(concurrency,actor_class, timeout, arbiter,
-                           args, kwargs)
+        return ActorThread(concurrency,actor_class, timeout, arbiter, kwargs)
     elif concurrency == 'process':
-        return ActorProcess(concurrency,actor_class, timeout, arbiter,
-                            args, kwargs)
+        return ActorProcess(concurrency, actor_class, timeout, arbiter, kwargs)
     else:
         raise ValueError('Concurrency {0} not supported by pulsar'\
                          .format(concurrency))
@@ -45,19 +43,16 @@ and are shared between the :class:`Actor` and its
     Valid choices are ``monitor``, ``process`` and ``thread``.
 :parameter actor_class: :class:`Actor` or one of its subclasses.
 :parameter timeout: timeout in seconds for the actor.
-:parameter args: additional arguments to be passed to the actor constructor.
 :parameter kwargs: additional key-valued arguments to be passed to the actor
     constructor.
 '''
-    def __init__(self, concurrency, actor_class, timeout, arbiter,
-                 args, kwargs):
+    def __init__(self, concurrency, actor_class, timeout, arbiter, kwargs):
         self.aid = gen_unique_id()[:8] if arbiter else 'arbiter'
         self.impl = concurrency
         self.timeout = timeout
         self.actor_class = actor_class
         self.loglevel = kwargs.pop('loglevel',None)
         self.remotes = actor_class.remotes
-        self.a_args = args
         self.a_kwargs = kwargs
         self.inbox = self.get_inbox(arbiter,kwargs.get('monitor'))
         self.outbox = None
@@ -124,7 +119,7 @@ function is called after forking, therefore in the new process
 For the :class:`Arbiter` and for :class:`Monitor` instances it is
 called in the main process since those special actors always live in the
 main process.'''
-        self.actor = self.actor_class(self,*self.a_args,**self.a_kwargs)
+        self.actor = self.actor_class(self,**self.a_kwargs)
     
     
 class ActorMonitorImpl(ActorImpl):

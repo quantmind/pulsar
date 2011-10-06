@@ -41,7 +41,7 @@ class TaskConsumer(object):
             self.job.logger.critical('', exc_info = (type, value, traceback))
         self.task.logs = self.get_logs()
         if type:
-            self.task.on_finish(self.worker, exception = value)
+            self.task.finish(self.worker, exception = value)
         return value
 
 
@@ -93,7 +93,7 @@ class Task(object):
             self._on_start(worker)
             return True
         
-    def on_finish(self, worker, exception = None, result = None):
+    def finish(self, worker, exception = None, result = None):
         '''called when finishing the task.'''
         if not self.time_end:
             self.time_end = datetime.now()
@@ -104,7 +104,7 @@ class Task(object):
                 self.status = SUCCESS
                 self.result = result
             self.save()
-            self._on_finish(worker)
+            self.on_finish(worker)
         
     def to_queue(self):
         '''The task has been received by the scheduler. If its status
@@ -157,7 +157,8 @@ returns nothing.'''
     def _on_start(self, worker):
         pass
     
-    def _on_finish(self, worker):
+    def on_finish(self, worker):
+        '''Callback when the task has finished.'''
         pass
     
     def close(self):
@@ -186,11 +187,13 @@ class TaskInMemory(Task):
         self.kwargs = kwargs
         self.status = status
         self.params = params
+        
+    def __str__(self):
+        return '{0}({1})'.format(self.name,self.id)
 
-    def _on_finish(self,worker=None):
+    def on_finish(self,worker=None):
         if worker:
-            worker.monitor.send(worker.aid, ((self,),{}),
-                                name = 'task_finished')
+            worker.monitor.send(worker, 'task_finished', self)
 
     def save(self):
         self._TASKS[self.id] = self

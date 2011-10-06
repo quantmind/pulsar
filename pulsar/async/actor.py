@@ -13,9 +13,9 @@ from pulsar.utils.py2py3 import iteritems, itervalues, pickle
 
 
 from .eventloop import IOLoop
-from .proxy import ActorProxy, ActorMessage, ActorCallBack,\
+from .proxy import ActorProxy, ActorMessage, process_message,\
                     DEFAULT_MESSAGE_CHANNEL
-from .defer import is_async, Deferred
+from .defer import make_async
 from .mailbox import IOQueue
 
 
@@ -220,58 +220,56 @@ Here ``a`` is actually a reference to the remote actor.
     _ppid = None
     _name = None
     
-    def __init__(self,impl,arbiter = None, monitor = None,
+    def __init__(self, impl, arbiter = None, monitor = None,
                  on_task = None, ioqueue = None,
-                 actor_links = None, name = None, socket = None,
-                 age = 0):
-        self.__repr = ''
-        self._impl = impl.impl
-        self._aid = impl.aid
-        self._inbox = impl.inbox
-        self._outbox = impl.outbox
-        self._timeout = impl.timeout
+                 monitors = None, name = None, socket = None,
+                 age = 0, **kwargs):
+        # Call _init
+        self.on_init(impl,**kwargs)
+        self._impl = impl
         self._linked_actors = {}
         self.age = age
         self.nr = 0
         self._name = name or self._name
-        # Call _init
-        self._init(impl,**kwargs)
         self.arbiter = arbiter
         self.monitor = monitor
-        self.loglevel = impl.loglevel
         self._state = self.INITIAL
+        self.loglevel = impl.loglevel
         self.log = self.getLogger()
-        actor_links = actor_links or {}
+        self._monitors = monitors or {}
+        actor_links = {}
         #self.ACTOR_LINKS = actor_links or {}
-        for a in itervalues(actor_links):
+        for a in itervalues(self._monitors):
             self._linked_actors[a.aid] = a
         
         # If arbiter available
         if arbiter:
             self._linked_actors[arbiter.aid] = arbiter
-            self.__repr = '{0} {1}'.format(self._name,self._aid)
+            self.__repr = '{0} {1}'.format(self._name,self.aid)
             self.log = LogSelf(self,self.log)
             if on_task:
                 self.on_task = on_task
         else:
-            self.__repr = self._name
+            self._init_arbiter(impl,**kwargs)
             
         self.ioqueue = ioqueue
         self.ioloop = self.get_eventloop(impl)
         # ADD SELF TO THE EVENT LOOP TASKS
         self.ioloop.add_loop_task(self)
         self.set_socket(socket)
-                
         inbox = self.inbox
         if inbox:
             inbox.set_actor(self)
             
-    def _init(self, impl, **kwargs):
+    def on_init(self, impl, **kwargs):
         pass
+    
+    def _init_arbiter(self, impl, **kwargs):
+        raise ValueError('This is not the arbiter')
         
     @property
     def proxy(self):
-        '''Instance of an :class:`pulsar.ActorProxy` holding a reference
+        '''Instance of a :class:`pulsar.ActorProxy` holding a reference
 to the actor. The proxy is a lightweight representation of the actor
 which can be shared across different processes (i.e. it is pickable).'''
         return ActorProxy(self)
@@ -279,7 +277,7 @@ which can be shared across different processes (i.e. it is pickable).'''
     @property
     def aid(self):
         '''Actor unique identifier'''
-        return self._aid
+        return self._impl.aid
     
     @property
     def ppid(self):
@@ -290,14 +288,14 @@ which can be shared across different processes (i.e. it is pickable).'''
     def impl(self):
         '''String indicating actor concurrency implementation
 ("monitor", "thread", "process" or "greenlet").'''
-        return self._impl
+        return self._impl.impl
     
     @property
     def timeout(self):
         '''Timeout in seconds. If ``0`` the actor has no timeout, otherwise
 it will be stopped if it fails to notify itself for a period
 longer that timeout.'''
-        return self._timeout
+        return self._impl.timeout
     
     @property
     def pid(self):
@@ -306,7 +304,7 @@ longer that timeout.'''
     
     @property
     def tid(self):
-        '''Operative system process thread name where the actor is running.'''
+        '''Operative system thread name where the actor is running.'''
         return self.current_thread().name
     
     @property
@@ -322,13 +320,13 @@ longer that timeout.'''
         
     @property
     def inbox(self):
-        '''Messages inbox'''
-        return self._inbox
+        '''Messages inbox :class:`Mailbox`.'''
+        return self._impl.inbox
     
     @property
     def outbox(self):
-        '''Messages outbox'''
-        return self._outbox
+        '''Messages outbox :class:`Mailbox`.'''
+        return self._impl.outbox
         
     @property
     def fullname(self):
@@ -390,56 +388,16 @@ iteration of the :attr:`pulsar.Actor.ioloop`.'''
         '''``True`` if actor has exited.'''
         return self._state >= self.CLOSE
     
-    # INITIALIZATION AFTER FORKING FOR ALL ACTORS
-    
-    def _init(self, impl, arbiter = None, monitor = None,
-              on_task = None, ioqueue = None,
-              actor_links = None, name = None, socket = None,
-              age = 0):
-        # This function is called just after forking (if the concurrency model
-        # is process, otherwise just after the concurrent model has started).
-        self.arbiter = arbiter
-        self.monitor = monitor
-        self.age = age
-        self.nr = 0
-        self.loglevel = impl.loglevel
-        self._name = name or self._name
-        self._state = self.INITIAL
-        self.log = self.getLogger()
-        actor_links = actor_links or {}
-        #self.ACTOR_LINKS = actor_links or {}
-        for a in itervalues(actor_links):
-            self._linked_actors[a.aid] = a
-        
-        # If arbiter available
-        if arbiter:
-            self._linked_actors[arbiter.aid] = arbiter
-            self.__repr = '{0} {1}'.format(self._name,self._aid)
-            self.log = LogSelf(self,self.log)
-            if on_task:
-                self.on_task = on_task
-        else:
-            self.__repr = self._name
-            
-        self.ioqueue = ioqueue
-        self.ioloop = self.get_eventloop(impl)
-        # ADD SELF TO THE EVENT LOOP TASKS
-        self.ioloop.add_loop_task(self)
-        self.set_socket(socket)
-                
-        inbox = self.inbox
-        if inbox:
-            inbox.set_actor(self)
-    
     def handle_request(self, request):
         pass
     
     def set_socket(self, socket):
+        '''Set a socket for the actor. The socket is either ``None``
+or an instance of :class:`Socket`.'''
         self.socket = socket
         self.address = None if not self.socket else self.socket.getsockname()
         if self.socket:
-            self.log.info('"{0}" listening at {1}'\
-                          .format(self.fullname,self.socket))
+            self.log.info('listening at {0}'.format(self.socket))
             
     def start(self):
         '''Called after forking to start the life of the actor.'''
@@ -468,44 +426,29 @@ iteration of the :attr:`pulsar.Actor.ioloop`.'''
                         ioloop.READ)
         return ioloop
     
-    def message_arrived(self, request):
-        '''A new message has arrived in the actor inbox.'''
-        try:
-            sender = self.get_actor(request.sender)
-            receiver = self.get_actor(request.receiver)
-            if not sender or not receiver:
-                if not sender:
-                    self.log.warn('message from an unknown actor "{0}"'\
-                                  .format(request.sender))
-                if not receiver:
-                    self.log.warn('message for an unknown actor "{0}"'\
-                                  .format(request.receiver))
-            else:                
-                func = receiver.actor_functions.get(request.action,None)
-                if func:
-                    ack = getattr(func,'ack',True)
-                    args,kwargs = request.msg
-                    result = func(self, sender, *args, **kwargs)
-                else:
-                    result = self.channel_messsage(sender, request)
-        except Exception as e:
-            #self.handle_request_error(request,e)
-            result = e
-            if self.log:
-                self.log.critical('Error while processing message: {0}.'\
-                                  .format(e), exc_info=True)
-        finally:
-            if ack:
-                ActorCallBack(self,result).\
-                    add_callback(request.make_actor_callback(self,caller))
+    def message_arrived(self, message):
+        '''A new *message* has arrived in the inbox. Check the sender and
+ the receiver (it may be not self) and perform the message action.
+ If the message needs acknowledgment, send the result back.'''
+        sender = self.get_actor(message.sender)
+        receiver = self.get_actor(message.receiver)
+        if not sender or not receiver:
+            if not sender:
+                self.log.warn('message from an unknown actor "{0}"'\
+                              .format(message.sender))
+            if not receiver:
+                self.log.warn('message for an unknown actor "{0}"'\
+                              .format(message.receiver))
+        else:
+            return process_message(receiver,sender,message)
         
     def put(self, request):
         '''Put a request into the actor :attr:`ioqueue` if available.'''
         if self.ioqueue:
-            self.log.debug('Put a request on task queue')
+            self.log.debug('Put a {0} on task queue'.format(request))
             self.ioqueue.put(('request',request))
         else:
-            self.log.warning("Trying to put a request on task queue,\
+            self.log.error("Trying to put a request on task queue,\
  but there isn't one!")
         
     # STOPPING TERMINATIONG AND STARTING
@@ -569,8 +512,10 @@ properly this actor will go out of scope.'''
             self._stop()
     
     def linked_actors(self):
-        '''Iterator over linked-actor proxies'''
-        return itervalues(self._linked_actors)
+        '''Iterator over linked-actor proxies (no moitors are yielded).'''
+        for a in itervalues(self._linked_actors):
+            if isinstance(a,ActorProxy):
+                yield a
             
     def get_actor(self, aid):
         '''Given an actor unique id return the actor proxy.'''
@@ -579,7 +524,7 @@ properly this actor will go out of scope.'''
         elif aid in self._linked_actors:
             return self._linked_actors[aid]
         else:
-            return None
+            return self._monitors.get(aid)
 
     def __call__(self):
         '''Called in the main eventloop to perform the following

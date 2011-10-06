@@ -39,7 +39,6 @@ from .task import *
 from .models import *
 from .scheduler import Scheduler
 from .states import *
-from .link import *
 from .rpc import *
 
 
@@ -51,7 +50,7 @@ class TaskResponse(pulsar.Response):
         
     def close(self):
         task = self.request
-        return task.on_finish(self.worker, result = task.result)
+        return task.finish(self.worker, result = task.result)
 
 
 class Remotes(pulsar.ActorBase):
@@ -116,7 +115,9 @@ for implementation.'''
             self._scheduler = Scheduler(self.task_class)
         return self._scheduler
     
-    def get_task_queue(self):
+    def get_ioqueue(self):
+        '''Return the distributed task queue which produces tasks to
+be consumed by the workers.'''
         queue = self.cfg.task_queue_factory
         return queue()
     
@@ -149,7 +150,7 @@ to check if the schedulter needs to perform a new run.'''
         return TaskResponse(worker,task)
             
     def task_finished(self, response):
-        response._on_finish()
+        response.on_finish()
         
     def get_task(self, id):
         return self.task_class.get_task(id)

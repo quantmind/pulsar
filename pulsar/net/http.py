@@ -18,10 +18,13 @@ __all__ = ['HttpRequest','HttpResponse']
 
 def on_headers(f):
     
-    def _(self):
+    def _(self, *args, **kwargs):
+        
         if self.parser.is_headers_complete():
-            return f(self)
+            return f(self, *args, **kwargs)
     
+    _.__name__ = f.__name__
+    _.__doc__ = f.__doc__   # for sphinx
     return _
 
 
@@ -64,9 +67,14 @@ class HttpRequest(TcpRequest):
             return self.version == (1, 1)
    
     @on_headers
-    def wsgi_environ(self):
-        """Get WSGI compatible environ dictionary based on the current
-pulsar request."""        
+    def wsgi_environ(self, actor = None, **kwargs):
+        """return a :ref:`WSGI <apps-wsgi>` compatible environ dictionary
+based on the current request. In addition to all standard WSGI entries it
+adds the following 2 pulsar information:
+
+* ``pulsar.stream`` the :attr:`stream` attribute.
+* ``pulsar.actor`` the :class:`pulsar.Actor` serving the request.
+"""        
         parser = self.parser
         version = parser.get_version()
         input = BytesIO()
@@ -86,8 +94,13 @@ pulsar request."""
             "SERVER_PROTOCOL": parser.get_protocol(),
             "CONTENT_TYPE": "",
             "CONTENT_LENGTH": "",
-            "pulsar.stream": self.stream
+            "wsgi.multithread": False,
+            "wsgi.multiprocess":False,
+            "pulsar.stream": self.stream,
+            "pulsar.actor": actor or self.stream.actor,
         }
+        if kwargs:
+            environ.update(kwargs)
         
         # REMOTE_HOST and REMOTE_ADDR may not qualify the remote addr:
         # http://www.ietf.org/rfc/rfc3875

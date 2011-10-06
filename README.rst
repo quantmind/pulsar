@@ -1,6 +1,7 @@
-
-Event driven network library for python. Tested in Windows and Linux,
+Event driven concurrent framework for python. Tested in Windows and Linux,
 it requires python 2.6 and up, including python 3.
+With pulsar you can write asynchronous servers performing one or several
+activities in different threads and or processes.
 
 An example of a web server written with ``pulsar`` which responds 
 with "Hello World!" for every request::
@@ -10,14 +11,14 @@ with "Hello World!" for every request::
     
     def hello(environ, start_response):
         '''Pulsar HTTP "Hello World!" application'''
-        data = 'Hello World!\n'
+        data = b'Hello World!\n'
         status = '200 OK'
         response_headers = (
             ('Content-type','text/plain'),
             ('Content-Length', str(len(data)))
         )
         start_response(status, response_headers)
-        return iter([data])
+        return [data]
     
     
     if __name__ == '__main__':

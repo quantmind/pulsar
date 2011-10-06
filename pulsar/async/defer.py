@@ -3,6 +3,7 @@ A lightweight deferred module inspired by twisted.
 '''
 import sys
 from copy import copy
+import logging
 from inspect import isgenerator
 from time import sleep, time
 try:
@@ -11,7 +12,7 @@ except ImportError:
     import Queue as queue
 ThreadQueue = queue.Queue
 
-from pulsar import AlreadyCalledError, Timeout, NOT_DONE
+from pulsar import AlreadyCalledError, DeferredFailure, Timeout, NOT_DONE
 from pulsar.utils.mixins import Synchronized
 
 
@@ -22,13 +23,18 @@ __all__ = ['Deferred',
            'is_async',
            'async_func_call',
            'make_async',
+           'raise_failure',
            'simple_callback',
            'ThreadQueue']
 
 
+logger = logging.getLogger('pulsar.async.defer')
+
+
 class Failure(object):
-    
+    '''Aggregate failures during :class:`Deferred` callbacks.'''
     def __init__(self, err = None):
+        self.should_stop = False
         if isinstance(err,self.__class__):
             self.traces = copy(err.traces)
         else:
@@ -49,11 +55,30 @@ class Failure(object):
     def __iter__(self):
         return iter(self.traces)
     
-    def log(self, log):
+    def raise_all(self):
+        self.log()
+        N = len(self.traces)
+        if N == 1:
+            raise DeferredFailure('There was one failure during callbacks.')
+        elif N > 1:
+            raise DeferredFailure('There were {0} failures during callbacks.'\
+                                  .format(N))
+            
+    def log(self, log = None):
+        log = log or logger
         for e in self:
             log.critical('', exc_info = e)
-        
-        
+    
+    
+def update_failure(f):
+    '''If *f* is an instance of :class:`Failure` add the current
+ ``sys.exc_info`` otherwuise return a new :class:`Failure` with current
+ ``sys.exc_info``.'''
+    if not isinstance(f,Failure):
+        f = Failure()
+    return f.append(sys.exc_info())
+    
+    
 def is_stack_trace(data):
     if isinstance(data,Failure):
         return True
@@ -61,7 +86,15 @@ def is_stack_trace(data):
         return True
     return False
     
-    
+
+def raise_failure(result):
+    '''Utility callback function which stop execution of callbacks on failure
+and raise errors.'''
+    if isinstance(result,Failure):
+        result.should_stop = True
+    return result 
+        
+        
 def is_async(obj):
     return isinstance(obj,Deferred)
 
@@ -152,6 +185,9 @@ The function takes at most one argument, the result passed to the
         if self._called and self._callbacks:
             callbacks = self._callbacks
             while callbacks:
+                if isinstance(self.result,Failure):
+                    if self.result.should_stop:
+                        rasult.raise_all()
                 callback = callbacks.pop(0)
                 try:
                     self._runningCallbacks = True
@@ -163,8 +199,12 @@ The function takes at most one argument, the result passed to the
                         # Add a pause and add new callback
                         self.pause()
                         self.result.add_callback(self._continue)
-                except Exception as e:
-                    self.result = e
+                except:
+                    self.result = update_failure(self.result)
+                
+            if isinstance(self.result,Failure):
+                if self.result.should_stop:
+                    self.result.raise_all()
                 
         return self
     

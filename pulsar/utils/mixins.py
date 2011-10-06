@@ -24,3 +24,13 @@ class Synchronized(object):
         _.__doc__ = f.__doc__
         
         return _
+    
+    
+def _getnone():
+    return None
+
+
+class NonePickler(object):
+    
+    def __reduce__(self):
+        return (_getnone,())

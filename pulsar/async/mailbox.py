@@ -3,6 +3,7 @@ from multiprocessing.queues import Empty, Queue
 
 from pulsar import create_connection, MailboxError
 from pulsar.utils.tools import gen_unique_id
+from pulsar.utils.mixins import NonePickler
 from pulsar.utils.py2py3 import pickle
 
 
@@ -109,7 +110,7 @@ class SocketMailbox(Mailbox):
             
     def __getstate__(self):
         d = self.__dict__.copy()
-        d.pop('sock')
+        d.pop('sock',None)
         return d
         
     def setup(self):
@@ -127,13 +128,20 @@ class SocketMailbox(Mailbox):
         self.sock.close()
 
 
-class SocketServerMailbox(Mailbox):
+def getNone(*args,**kwargs):
+    return None
+
+class SocketServerMailbox(NonePickler,Mailbox):
     '''An outbox for :class:`Actor` instances. If an address is provided,
 the communication is implemented using a socket, otherwise a unidirectional
 pipe is created.'''
     def __init__(self, stream):
         self.stream = stream
         self.clients = set()
+        
+    def __str__(self):
+        return '{0} socket server mailbox'.format(self.stream.actor)
+    __repr__ = __str__
     
     def set_actor(self, actor):
         self.stream.set_actor(actor)
@@ -144,11 +152,6 @@ pipe is created.'''
     
     def fileno(self):
         return self.stream.fileno()
-            
-    def __getstate__(self):
-        d = self.__dict__.copy()
-        d.pop('sock')
-        return d
         
     def put(self, request):
         raise MailboxError('Cannot put messages')

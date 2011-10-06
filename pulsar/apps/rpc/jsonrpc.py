@@ -134,23 +134,28 @@ Handle = JSONRPC
 
 
 class JsonProxy(object):
-    '''A python Proxy class for JSONRPC Servers. Usage::
-    
-    >>> a = JsonProxy('http://domain.name.com/')
-    >>> a.add(3,4)
-    7
+    '''A python Proxy class for :class:`JSONRPC` Servers.
     
 :param url: server location
 :param version: JSONRPC server version. Default ``2.0``
 :param id: optional request id, generated if not provided. Default ``None``.
 :param data: Extra data to include in all requests. Default ``None``.
-:param http: optional http opener. If provided it must have the ``request`` method available
-             which must be of the form::
-             
-                 http.request(url, body=..., method=...)
+:param http: optional http opener. If provided it must have the ``request``
+    method available which must be of the form::
+    
+        http.request(url, body=..., method=...)
                  
-            Default ``None``.
-    '''
+    Default ``None``.
+     
+Lets say your RPC server is running at ``http://domain.name.com/``::
+  
+    >>> a = JsonProxy('http://domain.name.com/')
+    >>> a.add(3,4)
+    7
+    >>> a.ping()
+    'pong'
+
+'''
     separator  = '.'
     rawprefix  = 'raw'
     default_version = '2.0'
@@ -204,6 +209,15 @@ class JsonProxy(object):
                               data = self.__data)
 
     def timeit(self, func, times, *args, **kwargs):
+        '''Usefull little utility for timing responses from server. The
+usage is simple::
+
+    >>> from pulsar.apps import rpc
+    >>> p = rpc.JsonProxy('http://127.0.0.1:8060')
+    >>> p.timeit('ping',10)
+    0.56...
+    >>> _
+    '''
         r = range(times)
         func = getattr(self,func)
         start = default_timer()

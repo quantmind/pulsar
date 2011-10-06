@@ -77,16 +77,12 @@ used for by the application for handling requests and sending back responses.
     Configuration dictionary
 
 """        
-    def _init(self,
-              impl,
-              app = None,
-              **kwargs):
+    def on_init(self, impl, app = None, **kwargs):
         self.app = app
         self.cfg = app.cfg
         self.max_requests = self.cfg.max_requests or sys.maxsize
         self.debug = self.cfg.debug
         self.app_handler = app.handler()
-        super(Worker,self)._init(impl,**kwargs)
     
     # Delegates Callbacks to the application
          
@@ -191,13 +187,12 @@ class ApplicationMonitor(pulsar.Monitor):
     '''A spcialized :class:`pulsar.Monitor` implementation for managing
 pulsar applications (subclasses of :class:`pulsar.Application`).
 '''
-    def _init(self, impl, app, num_workers = None, **kwargs):
+    def on_init(self, impl, app = None, **kwargs):
         self.app = app
         self.cfg = app.cfg
-        super(ApplicationMonitor,self)._init(impl,
-                                        self.cfg.worker_class,
-                                        num_workers = self.cfg.workers,
-                                        **kwargs)
+        kwargs['actor_class'] = self.cfg.worker_class
+        kwargs['num_actors'] = self.cfg.workers
+        super(ApplicationMonitor,self).on_init(impl,**kwargs)
     
     # Delegates Callbacks to the application
     
@@ -245,7 +240,7 @@ An application interface for configuring and loading
 the various necessities for any given server application running
 on pulsar concurrent framework.
 Applications can be of any sort or form and the library is shipped with several
-battery included examples in the :mod:`pulsar.apps`.
+battery included examples in the :mod:`pulsar.apps` module.
 
 When creating a new application, a new :class:`ApplicationMonitor`
 instance is added to the :class:`Arbiter`, ready to perform
@@ -310,7 +305,7 @@ its duties.
             arbiter = pulsar.arbiter(self.cfg.daemon)
             monitor = arbiter.add_monitor(self.monitor_class,
                                           self.name,
-                                          self,
+                                          app = self,
                                           ioqueue = self.get_ioqueue())
             self.mid = monitor.aid
             r,f = self.remote_functions()
@@ -347,7 +342,10 @@ it calls the *response* close method.
         return response.close()
     
     def get_ioqueue(self):
-        '''Build the task queue for the application.
+        '''Returns an I/O distributed queue for the application if one
+is needed. If a queue is returned, the application :class:`Worker`
+will have a :class:`IOLoop` instance based on the queue (via :class:`IOQueue`).
+ 
 By default it returns ``None``.'''
         return None
     

@@ -1,9 +1,19 @@
+import pulsar
 from pulsar.apps import rpc
 
-from .link import HttpTaskManager
+
+__all__ = ['TaskQueueRpcMixin','link_middleware']
 
 
-__all__ = ['TaskQueueRpcMixin']
+def link_middleware(clb, kwargs):
+    '''Check if a job is specified in the kwargs. If so rearrange
+to accomodate for sending jobs to the task queue.'''
+    if clb.action.startswith('addtask'):
+        job = clb.kwargs.pop('job',None)
+        clb.args = (job,clb.args,clb.kwargs)
+        clb.kwargs = kwargs
+    else:
+        clb.kwargs.update(kwargs)
 
 
 class TaskQueueRpcMixin(rpc.JSONRPC):
@@ -31,12 +41,12 @@ It exposes the following functions:
     :rtype: a dictionary containing information about the request
 '''
     
-    task_queue_manager = HttpTaskManager('taskqueue')
+    task_queue_manager = pulsar.ActorLink('taskqueue',[link_middleware])
     
     def rpc_job_list(self, request, jobnames = None):
         '''Dictionary of information about the registered jobs. If
 *jobname* is passed, information regrading the specific job will be returned.'''
-        return self.task_queue_manager(request,
+        return self.task_queue_manager(request.actor,
                                        'job_list',
                                        jobnames = jobnames)
     
@@ -45,7 +55,7 @@ It exposes the following functions:
 and the time in seconds when the task will run.
 
 :parameter jobname: optional jobname.'''
-        return self.task_queue_manager(request,
+        return self.task_queue_manager(request.actor,
                                        'next_scheduled',
                                        jobname = jobname)
         
@@ -56,8 +66,11 @@ as long as it is registered in the job registry.
 :parameter jobname: the name of the job to run.
 :parameter ack: if ``True`` the request will be send to the caller.
 :parameter kwargs: optional task parameters.'''
-        req = self.task_queue_manager.maketask(request,jobname,ack)
-        return req(**kwargs)
+        funcname = 'addtask' if ack else 'addtask_noack'
+        return self.task_queue_manager(request.actor,
+                                       funcname,
+                                       job = jobname,
+                                       **kwargs)
                            
     
         

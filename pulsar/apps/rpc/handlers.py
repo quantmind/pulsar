@@ -48,6 +48,10 @@ class RpcRequest(object):
         return self.method
     
     @property
+    def actor(self):
+        return self.environ.get('pulsar.actor')
+    
+    @property
     def content_type(self):
         return self.handler.content_type
     

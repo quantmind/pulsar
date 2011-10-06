@@ -21,21 +21,15 @@ from pulsar.apps import rpc, tasks, wsgi
 TASK_PATHS = ['sampletasks.*']
 
 
-def test_middleware(request, kwargs):
-    '''Add a simple flag to the dictionary. Just for testing middleware.'''
-    kwargs['test'] = True
-
-task_manager = tasks.HttpTaskManager('taskqueue')
-task_manager.add_request_middleware(test_middleware)
-
-
 class RpcRoot(rpc.PulsarServerCommands,
               tasks.TaskQueueRpcMixin):
     '''The rpc handler which communicates with the task queue'''
-    task_queue_manager = task_manager
     
-    rpc_evalcode = tasks.queueTask('runpycode',
-                                   'Evaluate python code on the task queue.')
+    def rpc_runpycode(self, request, code = None):
+        return self.task_queue_manager(request.actor,
+                                       'addtask',
+                                       job = 'runpycode',
+                                       code = code)
         
 def createTaskQueue(**params):
     return tasks.TaskQueue(tasks_path = TASK_PATHS,
