@@ -1,7 +1,6 @@
 Version Master
 =======================================
-* The arbiter has its own socket which can be accessed by actors to wake up the
-  arbiter polling event loop.
+* Added mailboxes classes for handling messagingin between actors.
 * Asyncronous applications.
 * Create the :mod:`net` module for socket and stream primitive.
 * Added a windows service wrapper class for using pulsar with windows services.

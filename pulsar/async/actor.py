@@ -245,7 +245,7 @@ Here ``a`` is actually a reference to the remote actor.
         # If arbiter available
         if arbiter:
             self._linked_actors[arbiter.aid] = arbiter
-            self.__repr = '{0} {1}'.format(self._name,self.aid)
+            self._repr = '{0} {1}'.format(self._name,self.aid)
             self.log = LogSelf(self,self.log)
             if on_task:
                 self.on_task = on_task
@@ -316,7 +316,7 @@ longer that timeout.'''
             return self._make_name()
         
     def __repr__(self):
-        return self.__repr
+        return self._repr
         
     @property
     def inbox(self):
@@ -330,7 +330,13 @@ longer that timeout.'''
         
     @property
     def fullname(self):
-        return self.__repr
+        return self._repr
+    
+    @property
+    def monitors(self):
+        '''Dictionary of all :class:`pulsar.Monitor` instances
+registered with the actor.'''
+        return self._monitors
     
     def __reduce__(self):
         raise pickle.PicklingError('{0} - Cannot pickle Actor instances'\

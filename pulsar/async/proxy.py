@@ -191,7 +191,8 @@ For example, lets say we have a proxy ``a`` and an actor (or proxy) ``b``::
 
     a.send(b,'notify','hello there!')
     
-will call ``notify`` on the actor ``a`` with ``b`` as the sender.
+will send a message to actor ``a`` from sender ``b`` invoking
+action ``notify`` with parameter ``"hello there!"``.
     
 
 .. attribute:: proxyid
@@ -258,7 +259,7 @@ If there is no inbox either, abort the message passing and log a critical error.
             return msg
         except Exception as e:
             sender.log.error('Failed to send message {0}: {1}'.\
-                            format(request,e), exc_info = True)
+                             format(msg,e), exc_info = True)
         
     def __repr__(self):
         return self.aid[:8]

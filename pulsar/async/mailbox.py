@@ -1,4 +1,5 @@
 import io
+import logging
 from multiprocessing.queues import Empty, Queue
 
 from pulsar import create_connection, MailboxError
@@ -28,16 +29,18 @@ otherwise a queue is used. If stream is provided, this is the arbiter socket.'''
 
 
 class Mailbox(object):
-    '''An mailbox for :class:`Actor` instances. If an address is provided,
+    '''A mailbox for :class:`Actor` instances. If an address is provided,
 the communication is implemented using a socket, otherwise a unidirectional
-pipe is created.'''        
+pipe is created. Mailboxes are setup before a new actor is forked during
+the initialization of :class:`ActorImpl`.'''        
     def setup(self):
-        '''Called after forking to setup the outbox for arbiter'''
+        '''Called after forking to setup the mailbox.'''
         pass
     
     def set_actor(self, actor):
-        # register the inbox with the eventloop so that when we get
-        # a message the eventloop wakes up.
+        '''Set the actor in the mailbox. Indoing so the actor :class:`IOLoop`
+add the mailbox as handler which wakes up on events to invoke
+:meth:`on_message`.'''
         self.actor = actor
         actor.ioloop.add_handler(self,
                                  self.on_message,
@@ -100,7 +103,8 @@ class SocketMailbox(Mailbox):
     '''An inbox for :class:`Actor` instances.'''
     def __init__(self, address):
         self._address = address
-        self.sock = None
+        self.setup()
+        #self.sock = None
         
     def address(self):
         return self._address

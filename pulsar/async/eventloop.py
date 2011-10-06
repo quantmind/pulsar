@@ -296,7 +296,7 @@ unit tests), you can start and stop the event loop like this::
 whether that callback was invoked before or after ioloop.start.'''
         self.log.debug("Stopping event loop")
         self._running = False
-        self._wake()
+        self.wake()
         return self._on_exit
 
     def running(self):
@@ -333,10 +333,10 @@ whether that callback was invoked before or after ioloop.start.'''
         control from other threads to the IOLoop's thread.
         """
         self._callbacks.append(callback)
-        self._wake()
+        self.wake()
 
-    def _wake(self):
-        '''Wake up the eventloop'''
+    def wake(self):
+        '''Wake up the eventloop.'''
         if not self.stopped():
             self._waker.wake()
 

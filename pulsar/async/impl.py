@@ -83,12 +83,13 @@ a socket, a pipe or a queue.'''
                        'monitor':monitor})
         
     def get_inbox(self, arbiter, monitor):
-        '''Create the inbox handler. By default it is either a socket
+        '''Create the inbox :class:`Mailbox`. By default it is either a socket
 (in windows) or a pipe (in posix).
 
-:parameter arbiter: The arbiter
-:parameter monitor: Optional instance of the monitor supervising the actor.
-:rtype: an instance of :pulsar:`Mailbox'
+:parameter arbiter: The :class:`Arbiter`
+:parameter monitor: Optional instance of the :class:`Monitor` supervising
+    the actor.
+:rtype: an instance of :class:`Mailbox`
 
 If a monitor is available, check if it has a task queue.
 If so the mailbox will be based on the queue since the actor

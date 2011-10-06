@@ -31,10 +31,10 @@ def spawn(actor_class, *args, **kwargs):
         
 
 class Arbiter(PoolMixin,Actor):
-    '''The Arbiter is a very special :class:`pulsar.Actor`. It is used as
+    '''The Arbiter is a very special :class:`Actor`. It is used as
 singletone in the main process and it manages one or more
-:class:`pulsar.Monitors`.  
-The arbiter runs the main event-loop of your concurrent application.
+:class:`Monitor`.  
+It runs the main :class:`IOLoop` of your concurrent application.
 It is the equivalent of the gunicorn_ arbiter, the twisted_ reactor
 and the tornado_ eventloop.
 
@@ -79,12 +79,6 @@ Users access the arbiter by the high level api::
         self._linked_actors[m.aid] = m
         self._monitors[m.name] = m
         return m
-    
-    @property
-    def monitors(self):
-        '''Dictionary of all :class:`pulsar.Monitor` instances
-registered with the the arbiter.'''
-        return self._monitors
     
     @classmethod
     def instance(cls,daemonize=False):
@@ -168,14 +162,8 @@ the timeout. Stop the arbiter.'''
     
     # LOW LEVEL FUNCTIONS
     
-    def __repr__(self):
-        return self.__class__.__name__
-    
-    def __str__(self):
-        return self.__repr__()
-    
     def _init_arbiter(self, impl, daemonize = False, **kwargs):
-        self.__repr = self._name
+        self._repr = self._name
         os.environ["SERVER_SOFTWARE"] = pulsar.SERVER_SOFTWARE
         if daemonize:
             system.daemonize()
@@ -317,6 +305,7 @@ signal queue'''
         if signame:
             self.log.info('Received and queueing signal {0}.'.format(signame))
             self.SIG_QUEUE.put(sig)
+            self.ioloop.wake()
         else:
             self.log.info('Received unknown signal "{0}". Skipping.'\
                           .format(sig))
@@ -338,6 +327,7 @@ signal queue'''
     # REMOTES
     
     def actor_kill_actor(self, caller, aid):
+        '''Remote function for ``caller`` to kill an actor with id ``aid``'''
         a = self.get_actor(aid)
-        return a.stop()
+        return a.stop() if a else False
     
