@@ -107,11 +107,11 @@ won't have a select/epoll type ionput/output but one based on
             ioq = monitor.ioqueue
             if ioq:
                 return mailbox(id = 'inbox', queue = ioq)
-        # No task queue no inbox for now
-        #if arbiter.inbox:
-        #    return mailbox(address = arbiter.inbox.address)
-        #else:
-        #    raise NotiomplementedError('Pipe inbox not yet implemented')
+            else:
+                return None
+        else:
+            # Monitors use the same inbox as the arbiter
+            return arbiter.inbox
         
     def make_actor(self):
         '''create an instance of :class:`Actor`. For standard actors, this

@@ -82,12 +82,11 @@ class Runner(LogginMixin):
     def _setup(self):
         pass
     
-    # SIGGNALS HANDLING
+    # SIGNALS HANDLING
     
     def signal_stop(self, sig, frame):
         signame = system.SIG_NAMES.get(sig,None)
-        self.log.warning('{0} got signal {1}. Exiting.'\
-                         .format(self.fullname,signame))
+        self.log.warning('got signal {0}. Exiting.'.format(signame))
         self.stop()
             
     handle_int  = signal_stop

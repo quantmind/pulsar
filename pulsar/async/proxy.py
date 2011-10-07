@@ -211,7 +211,7 @@ action ``notify`` with parameter ``"hello there!"``.
     def __init__(self, impl):
         self.aid = impl.aid
         self.remotes = impl.remotes
-        self.mailbox = impl.inbox
+        self.inbox = impl.inbox
         self.timeout = impl.timeout
         self.loglevel = impl.loglevel
         
@@ -246,7 +246,7 @@ If there is no inbox either, abort the message passing and log a critical error.
         # if the sender has no outbox, pick the receiver mailbox an hope
         # for the best
         if not mailbox:
-            mailbox = self.mailbox
+            mailbox = self.inbox
         
         if not mailbox:
             sender.log.critical('Cannot send a message to {0}. There is no\
@@ -262,36 +262,15 @@ If there is no inbox either, abort the message passing and log a critical error.
                              format(msg,e), exc_info = True)
         
     def __repr__(self):
-        return self.aid[:8]
-    
-    def __str__(self):
-        return self.__repr__()
+        return self.aid
+    __str__ = __repr__
     
     def __eq__(self, o):
         o = get_proxy(o,True)
         return o and self.aid == o.aid
     
     def __ne__(self, o):
-        return not self.__eq__(o) 
-    
-#    #def __getstate__(self):
-#        '''Because of the __getattr__ implementation,
-#we need to manually implement the pickling and unpickling of the object.'''
-#        return (self.aid,self.remotes,self.mailbox,self.timeout,self.loglevel)
-#    
-#    def __setstate__(self, state):
-#        self.aid,self.remotes,self.mailbox,self.timeout,self.loglevel = state
-#        
-#    def get_request(self, action):
-#        if action in self.remotes:
-#           ack = self.remotes[action]
-#           return ActorProxyRequest(self, action, ack)
-#        else:
-#            raise AttributeError("'{0}' object has no attribute '{1}'"\
-#                                 .format(self,action))
-#
-#    def __getattr__(self, name):
-#        return self.get_request(name)
+        return not self.__eq__(o)
 
     def local_info(self):
         '''Return a dictionary containing information about the remote
@@ -327,9 +306,6 @@ therefore remain in the process where they have been created.'''
     def terminate(self):
         '''Terminate life of underlying actor.'''
         self.impl.terminate()
-            
-    def __str__(self):
-        return self.impl.__str__()
     
     def local_info(self):
         '''Return a dictionary containing information about the remote
