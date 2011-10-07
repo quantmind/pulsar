@@ -32,8 +32,8 @@ class NOT_DONE(object):
     pass
 
 from .utils.exceptions import *
-from .utils import system
 from .utils.sock import *
+from .utils import system
 from .utils.py2py3 import ispy3k, to_string, is_string, native_str,\
                             to_bytestring
 platform = system.platform

@@ -122,6 +122,8 @@ be consumed by the workers.'''
         return queue()
     
     def __init__(self, task_class = None, **kwargs):
+        self.tasks_statistics = {'total':0,
+                                 'failures':0}
         self.task_class = task_class or self.task_class
         super(TaskQueue,self).__init__(**kwargs)
         

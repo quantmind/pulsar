@@ -20,6 +20,9 @@ class NetStream(object):
         self.stream = stream
         self.on_init(kwargs)
     
+    def fileno(self):
+        return self.stream.fileno()
+    
     @property
     def actor(self):
         return self.stream.actor
@@ -33,6 +36,12 @@ class NetStream(object):
     
     def on_close(self):
         pass
+    
+    def __repr__(self):
+        return '{0}({1})'.format(self.__class__.__name__,self.fileno())
+    
+    def __str__(self):
+        return self.__repr__()
 
 
 class NetRequest(NetStream):
@@ -51,6 +60,7 @@ create your own.'''
     def get_parser(self, **kwargs):
         if self.parsercls:
             return self.parsercls()
+    
         
     
 class NetResponse(NetStream,pulsar.Response):

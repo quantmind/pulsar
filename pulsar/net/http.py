@@ -356,8 +356,8 @@ there is no upgrade.'''
         yield self.on_close()
         if not self.__upgrade == 'websocket':
             yield self.stream.close()
+        yield self # return itself.
         
     def on_close(self):
         if self.__status:
             self.send_headers()
-    

@@ -1,6 +1,6 @@
-from .mailbox import *
 from .defer import *
 from .iostream import *
+from .mailbox import *
 from .eventloop import *
 from .proxy import *
 from .actor import *

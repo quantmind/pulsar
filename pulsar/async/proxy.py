@@ -278,6 +278,11 @@ object including, aid (actor id), timeout and mailbox size.'''
         return {'aid':self.aid[:8],
                 'timeout':self.timeout,
                 'mailbox_size':self.mailbox.qsize()}
+        
+    def stop(self,sender):
+        '''Stop the remote arbiter'''
+        self.send(sender,'stop')
+        
 
 
 class ActorProxyMonitor(ActorProxy):
@@ -288,7 +293,7 @@ therefore remain in the process where they have been created.'''
     def __init__(self, impl):
         self.impl = impl
         self.info = {'last_notified':time()}
-        self.stopping = 0
+        self.stopping_loops = 0
         super(ActorProxyMonitor,self).__init__(impl)
     
     @property

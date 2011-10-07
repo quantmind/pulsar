@@ -1,10 +1,10 @@
 import logging
 import sys
+import os
+import io
 import socket
 import errno
 import time
-
-from .system import platform
 
 __all__ = ['Socket',
            'TCPSocket',
@@ -14,7 +14,8 @@ __all__ = ['Socket',
            'create_socket',
            'create_connection',
            'create_socket_address',
-           'get_maxfd']
+           'get_maxfd',
+           'socket_pair']
 
 logger = logging.getLogger('pulsar.sock')
 
@@ -24,9 +25,9 @@ ALLOWED_ERRORS = (errno.EAGAIN, errno.ECONNABORTED,
 MAXFD = 1024
 
 
-def create_connection(address, blocking = False):
+def create_connection(address, blocking = 0):
     sock_type = create_socket_address(address)
-    s = sock_type(address, backlog = None, bound = True)
+    s = sock_type(setoptions = False)
     s.sock.connect(address)
     s.sock.setblocking(blocking)
     return s
@@ -80,32 +81,68 @@ Otherwise a TypeError is raised.
     
 
 def wrap_socket(sock):
+    '''Wrap a python socket with pulsar :class:`Socket`.'''
     address = sock.getsockname()
     sock_type = create_socket_address(address)
-    return sock_type(address,fd=sock,bound=True)    
+    return sock_type(fd=sock,bound=True,backlog=None)
+
+
+def socket_pair(backlog = 2048, log = None):
+    '''Create a localhost socket pair on any available port.
+The first socket is connected to the second which is bound to
+``127.0.0.1`` at any available port.
+
+:param backlog: number of connection to listen.
+:param log: optional python logger.'''
+    w = socket.socket()
+    w.setsockopt(socket.IPPROTO_TCP, socket.TCP_NODELAY, 1)
+    
+    count = 0
+    while 1:
+        count += 1
+        s = create_socket(('127.0.0.1',0), log = log, backlog = backlog)
+        try:
+            w.connect(s.name)
+            break
+        except socket.error as e:
+            if e[0] != errno.WSAEADDRINUSE:
+                raise
+            if count >= 10:
+                s.close()
+                w.close()
+                raise socket.error("Cannot bind socket pairs!")
+            s.close()
+    
+    w = s.__class__(fd = w, bound = True, backlog = None)
+    w.setblocking(0)
+    return w,s    
     
 
 class Socket(object):
     '''Wrapper class for a python socket. It provides with
 higher level tools for creating and reusing sockets already created.'''
-    def __init__(self, address, backlog=2048, fd=None, bound=False):
-        self.address = address
+    def __init__(self, address=None, backlog=2048, fd=None, bound=False,
+                 setoptions = True):
         self.backlog = backlog
-        self._init(fd,bound)
+        self._init(fd,address,bound,setoptions)
         
-    def _init(self, fd, bound = False):
+    def _init(self, fd, address, bound, setoptions = True):
         if fd is None:
             self._clean()
             sock = socket.socket(self.FAMILY, socket.SOCK_STREAM)
         elif hasattr(fd,'fileno'):
-            sock = fd
+            self.sock = fd
+            return
         else:
             if hasattr(socket,'fromfd'):
                 sock = socket.fromfd(fd, self.FAMILY, socket.SOCK_STREAM)
             else:
                 raise ValueError('Cannot create socket from file deascriptor.\
  Not implemented in your system')
-        self.sock = self.set_options(sock, bound=bound)
+        if setoptions:
+            self.sock = self.set_options(sock, address, bound)
+        else:
+            self.sock = sock
         
     def __getstate__(self):
         d = self.__dict__.copy()
@@ -115,7 +152,7 @@ higher level tools for creating and reusing sockets already created.'''
     def __setstate__(self, state):
         fd = state.pop('fd')
         self.__dict__ = state
-        self._init(fd,True)
+        self._init(fd,None,True)
     
     def _clean(self):
         pass
@@ -130,6 +167,15 @@ higher level tools for creating and reusing sockets already created.'''
                 raise
             else:
                 return None,None
+            
+    def async_recv(self, length):
+        try:
+            return self.sock.recv(length)
+        except socket.error as e:
+            if e.args[0] in (errno.EWOULDBLOCK, errno.EAGAIN):
+                return None
+            else:
+                raise
     
     @property
     def name(self):
@@ -138,6 +184,14 @@ higher level tools for creating and reusing sockets already created.'''
     def __str__(self, name):
         return "<socket %d>" % self.sock.fileno()
     
+    def __repr__(self):
+        s = str(self)
+        v = "<socket %d>" % self.sock.fileno()
+        if s != v:
+            return '{0} {1}'.format(v,s)
+        else:
+            return s
+    
     def __getattr__(self, name):
         return getattr(self.sock, name)
     
@@ -145,17 +199,17 @@ higher level tools for creating and reusing sockets already created.'''
         '''Return the file descriptor of the socket.'''
         return self.sock.fileno()
     
-    def set_options(self, sock, bound=False):
+    def set_options(self, sock, address, bound):
         sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         if not bound:
-            self.bind(sock)
+            self.bind(sock, address)
         if self.backlog:
             sock.setblocking(0)
             sock.listen(self.backlog)
         return sock
         
-    def bind(self, sock):
-        sock.bind(self.address)
+    def bind(self, sock, address):
+        sock.bind(address)
         
     def close(self, log = None):
         try:
@@ -164,7 +218,6 @@ higher level tools for creating and reusing sockets already created.'''
             if log:
                 log.info("Error while closing socket %s" % str(e))
         time.sleep(0.3)
-        del self.sock
 
 
 class TCPSocket(Socket):
@@ -174,9 +227,9 @@ class TCPSocket(Socket):
     def __str__(self):
         return "http://%s:%d" % self.name
     
-    def set_options(self, sock, bound=False):
+    def set_options(self, sock, address, bound):
         sock.setsockopt(socket.IPPROTO_TCP, socket.TCP_NODELAY, 1)
-        return super(TCPSocket, self).set_options(sock, bound=bound)
+        return super(TCPSocket, self).set_options(sock, address, bound)
 
 
 class TCP6Socket(TCPSocket):
@@ -188,7 +241,7 @@ class TCP6Socket(TCPSocket):
         return "http://[%s]:%d" % (host, port)
 
 
-if platform.type == 'posix':
+if os.name == 'posix':
     import resource
     
     def get_maxfd():
@@ -219,15 +272,15 @@ if platform.type == 'posix':
         def __str__(self):
             return "unix:%s" % self.address
             
-        def bind(self, sock):
+        def bind(self, sock, address):
             old_umask = os.umask(self.conf.umask)
-            sock.bind(self.address)
-            system.chown(self.address, self.conf.uid, self.conf.gid)
+            sock.bind(address)
+            system.chown(address, self.conf.uid, self.conf.gid)
             os.umask(old_umask)
             
         def close(self):
             super(UnixSocket, self).close()
-            os.unlink(self.address)
+            os.unlink(self.name)
 
 
     def create_socket_address(addr):

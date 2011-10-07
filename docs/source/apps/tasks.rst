@@ -76,10 +76,3 @@ Task
    :members:
    :member-order: bysource
    
-      
-Utilities and Decorators
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-.. autoclass:: SendToQueue
-   :members:
-   :member-order: bysource

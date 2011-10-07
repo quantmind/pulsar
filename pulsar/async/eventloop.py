@@ -15,7 +15,7 @@ from pulsar.utils.collections import WeakList
 from .defer import Deferred
 
 
-__all__ = ['IOLoop','MainIOLoop']
+__all__ = ['IOLoop']
 
 def file_descriptor(fd):
     if hasattr(fd,'fileno'):
@@ -294,9 +294,10 @@ unit tests), you can start and stop the event loop like this::
   
 :meth:`start` will return after async_method has run its callback,
 whether that callback was invoked before or after ioloop.start.'''
-        self.log.debug("Stopping event loop")
-        self._running = False
-        self.wake()
+        if self.running():
+            self.log.debug("Stopping event loop")
+            self._running = False
+            self.wake()
         return self._on_exit
 
     def running(self):
@@ -359,33 +360,6 @@ whether that callback was invoked before or after ioloop.start.'''
         in sys.exc_info.
         """
         self.log.error("Exception in callback %r", callback, exc_info=True)
-
-
-class MainIOLoop(IOLoop):
-
-    @classmethod
-    def instance(cls, logger = None):
-        """Returns a global MainIOLoop instance.
-
-        Most single-threaded applications have a single, global IOLoop.
-        Use this method instead of passing around IOLoop instances
-        throughout your code.
-
-        A common pattern for classes that depend on IOLoops is to use
-        a default argument to enable programs with multiple IOLoops
-        but not require the argument for simpler applications:
-
-            class MyClass(object):
-                def __init__(self, io_loop=None):
-                    self.io_loop = io_loop or IOLoop.instance()
-        """
-        if not hasattr(cls, "_instance"):
-            cls._instance = cls(logger = logger)
-        return cls._instance
-     
-    @classmethod
-    def initialized(cls):
-        return hasattr(cls, "_instance")
     
     
 class _Timeout(object):

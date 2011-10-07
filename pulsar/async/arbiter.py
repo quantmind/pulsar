@@ -26,6 +26,11 @@ def arbiter(daemonize = False):
     
     
 def spawn(actor_class, *args, **kwargs):
+    '''Create a new :class:`Actor` instance and return its proxy in the arbiter
+process domain.
+
+:param actor_class: :class:`Actor` or one of its subclasses.
+:rtype: instance of :class:`ActorProxyMonitor`'''
     return arbiter().spawn(actor_class, *args, **kwargs)
     
         
@@ -52,7 +57,6 @@ Users access the arbiter by the high level api::
     WORKER_BOOT_ERROR = 3
     STOPPING_LOOPS = 20
     SIG_TIMEOUT = 0.01
-    CLOSE_TIMEOUT = 10
     EXIT_SIGNALS = (signal.SIGINT,
                     signal.SIGTERM,
                     signal.SIGABRT,
@@ -110,6 +114,10 @@ Users access the arbiter by the high level api::
                 return actor_maker.actor
         finally:
             cls.lock.release()
+            
+    @property
+    def close_signal(self):
+        return self._close_signal
         
     def isprocess(self):
         return True
@@ -123,24 +131,24 @@ Users access the arbiter by the high level api::
                 break
     
     def on_task(self):
-        if not self._stopping:
+        if self.running():
             sig = self.arbiter_task()
             if sig is None:
                 self.manage_actors()
                 for m in list(itervalues(self._monitors)):
                     if m.started():
-                        if not m.is_alive():
+                        if not m.running():
                             self._monitors.pop(m.name)
                     else:
                         m.start()
-                
+    
     def on_manage_actor(self, actor):
         '''If an actor failed to notify itself to the arbiter for more than
 the timeout. Stop the arbiter.'''
         gap = time() - actor.notified
         if gap > actor.timeout:
-            if actor.stopping < self.STOPPING_LOOPS:
-                if not actor.stopping:
+            if actor.stopping_loops < self.STOPPING_LOOPS:
+                if not actor.stopping_loops:
                     self.log.info(\
                         'Stopping {0}. Timeout surpassed.'.format(actor))
                     actor.send(self,'stop')
@@ -148,14 +156,7 @@ the timeout. Stop the arbiter.'''
                 self.log.warn(\
                         'Terminating {0}. Timeout surpassed.'.format(actor))
                 actor.terminate()
-            actor.stopping += 1
-            
-    def on_stop(self):
-        '''Stop the pools and the arbiter event loop.'''
-        self._stopping = False
-        self.close_monitors()
-        self.signal(system.SIGQUIT)
-        return True
+            actor.stopping_loops += 1
         
     def shut_down(self):
         self.stop()
@@ -164,6 +165,7 @@ the timeout. Stop the arbiter.'''
     
     def _init_arbiter(self, impl, daemonize = False, **kwargs):
         self._repr = self._name
+        self._close_signal = None
         os.environ["SERVER_SOFTWARE"] = pulsar.SERVER_SOFTWARE
         if daemonize:
             system.daemonize()
@@ -188,6 +190,7 @@ the timeout. Stop the arbiter.'''
             self.cfg.when_ready(self)
         try:
             self.ioloop.start()
+            print('ciao')
         except StopIteration:
             self.halt('Stop Iteration')
         except KeyboardInterrupt:
@@ -212,32 +215,33 @@ the timeout. Stop the arbiter.'''
             self.log.critical(_msg())
         else:
             self.log.info(_msg())
-        self.close(sig)
+        self._close_signal = sig
+        self.stop()
 
     def close_monitors(self):
         for pool in itervalues(self._monitors):
             pool.stop()
         
-    def close(self, sig):
-        #close the arbiter
-        if not self._stopping:
-            self._stopping = True
-            self.close_message_queue()
-            for actor in self.linked_actors():
-                actor.send(self,'stop')
-            self.close_signal = sig
-            self._stop_ioloop()
-            self._stop()
+    def on_stop(self):
+        '''Stop the pools the message queue and remaining actors.'''
+        self.close_message_queue()
+        self.close_monitors()
+        self.close_actors()
+        self._stopping_start = time()
+        return self._on_actors_stopped()
+    
+    def _on_actors_stopped(self):
+        if self.MANAGED_ACTORS:
+            if time() - self._stopping_start < self.CLOSE_TIMEOUT:
+                return self.ioloop.add_callback(self._on_actors_stopped)
+            else:
+                self.log.warning('There are {0} actors still alive.'\
+                                 .format(len(self.MANAGED_ACTORS)))
+        return self.ioloop.stop()
             
     def on_exit(self):
-        '''Callback after the event loop has stopped.'''
-        st = time()
-        self._state = self.TERMINATE
-        while time() - st < self.CLOSE_TIMEOUT:
-            if not self.MANAGED_ACTORS:
-                self._state = self.CLOSE
-                break
-        self.inbox.close()
+        if self.MANAGED_ACTORS:
+            self._state = self.TERMINATE
     
     def close_message_queue(self):
         return

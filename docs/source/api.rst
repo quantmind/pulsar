@@ -6,6 +6,8 @@
 API
 ==================
 
+.. autofunction:: spawn
+
 .. _api-actors:
 
 Actors

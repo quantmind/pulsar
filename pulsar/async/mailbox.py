@@ -1,8 +1,9 @@
 import io
 import logging
+import socket
 from multiprocessing.queues import Empty, Queue
 
-from pulsar import create_connection, MailboxError
+from pulsar import create_connection, MailboxError, socket_pair, wrap_socket
 from pulsar.utils.tools import gen_unique_id
 from pulsar.utils.mixins import NonePickler
 from pulsar.utils.py2py3 import pickle
@@ -11,7 +12,7 @@ from pulsar.utils.py2py3 import pickle
 __all__ = ['mailbox','Mailbox','IOQueue','Empty','Queue']
 
 
-def mailbox(address = None, id = None, queue = None, stream = None):
+def mailbox(address = None, id = None, queue = None):
     '''Creates a :class:`Mailbox` instances for :class:`Actor` instances.
 If an address is provided, the communication is implemented using a socket,
 otherwise a queue is used. If stream is provided, this is the arbiter socket.'''   
@@ -26,6 +27,14 @@ otherwise a queue is used. If stream is provided, this is the arbiter socket.'''
     else:
         raise ValueError('Cannot obtain a valid mailbox')
         o = PipeOutbox()
+
+
+def serverInbox():
+    '''Create an asynchronous server inbox. This is TCP socket ready for
+accepting messages from ather actors.'''
+    w,s = socket_pair()
+    w.close()
+    return SocketServerMailbox(s)
 
 
 class Mailbox(object):
@@ -47,6 +56,7 @@ add the mailbox as handler which wakes up on events to invoke
                                  actor.ioloop.READ)
     
     def on_message(self, fd, events, **kwargs):
+        '''Handle the message events'''
         message = self.read_message(fd, events, **kwargs)
         if message:
             self.actor.message_arrived(message)
@@ -100,11 +110,11 @@ pipe is created.'''
             
     
 class SocketMailbox(Mailbox):
-    '''An inbox for :class:`Actor` instances.'''
+    '''A socket outbox for :class:`Actor` instances. This outbox
+send messages to a :class:`SocketServerMailbox`.'''
     def __init__(self, address):
         self._address = address
-        self.setup()
-        #self.sock = None
+        self.sock = None
         
     def address(self):
         return self._address
@@ -125,32 +135,28 @@ class SocketMailbox(Mailbox):
         return self.sock.send(request)
     
     def read_message(self, fd, events, client = None):
-        raise MailboxError('Cannot read messages')        
+        raise MailboxError('Cannot read messages. This is an outbox only.')        
         
     def close(self):
-        self.actor.log.debug('shutting down {0} outbox'.format(self.actor))
         self.sock.close()
 
 
 def getNone(*args,**kwargs):
     return None
 
+
 class SocketServerMailbox(NonePickler,Mailbox):
-    '''An outbox for :class:`Actor` instances. If an address is provided,
+    '''An inbox for :class:`Actor` instances. If an address is provided,
 the communication is implemented using a socket, otherwise a unidirectional
 pipe is created.'''
     def __init__(self, stream):
         self.stream = stream
-        self.clients = set()
+        self.clients = {}
         
     def __str__(self):
         return '{0} socket server mailbox'.format(self.stream.actor)
     __repr__ = __str__
-    
-    def set_actor(self, actor):
-        self.stream.set_actor(actor)
-        super(SocketServerMailbox,self).set_actor(actor)
-        
+            
     def address(self):
         return self.stream.getsockname()
     
@@ -160,30 +166,37 @@ pipe is created.'''
     def put(self, request):
         raise MailboxError('Cannot put messages')
     
-    def read_message(self, fd, events, client = None):
+    def read_message(self, fd, events):
         '''Called when a new message has arrived.'''
-        length = io.DEFAULT_BUFFER_SIZE
+        client = self.clients.get(fd)
         if not client:
-            client,addr = self.stream.socket.accept()
+            client,addr = self.stream.accept()
             if not client:
                 return
-            self.register_client(client)
-            
-        chunk = client.recv(length)
-        msg = bytearray(chunk)
-        while len(chunk) > length:
-            chunk = client.read(length)
-            msg.extend(chunk)
-        if msg:
+            client = wrap_socket(client)
+            client.setblocking(0.1)
+            self.clients[client.fileno()] = client
+            self.actor.ioloop.add_handler(client,
+                                          self.on_message,
+                                          self.actor.ioloop.READ)
+        
+        length = io.DEFAULT_BUFFER_SIZE
+        try:
+            chunk = client.async_recv(length)
+        except socket.error:
+            try:
+                client.close()
+            except:
+                pass
+            self.clients.pop(fd)
+        if chunk:
+            msg = bytearray(chunk)
+            while len(chunk) > length:
+                chunk = client.async_recv(length)
+                if not chunk:
+                    break
+                msg.extend(chunk)
             return pickle.loads(bytes(msg))
-
-    def register_client(self, client):
-        self.clients.add(client)
-        client.setblocking(True)
-        actor = self.stream.actor
-        self.stream.ioloop.add_handler(client,
-            lambda fd, events : self.on_message(fd, events, client = client),
-            self.stream.ioloop.READ)
         
     def close(self):
         self.actor.log.debug('shutting down {0} inbox'.format(self.actor))

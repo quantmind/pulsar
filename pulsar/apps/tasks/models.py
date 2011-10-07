@@ -55,13 +55,13 @@ class JobMetaClass(type):
     """Metaclass for Jobs. It performs a little ammount of magic
 by:
 
- * Automatic registration of :class:`pulsar.apps.tasks.Job` instances to the
+* Automatic registration of :class:`pulsar.apps.tasks.Job` instances to the
   global :class:`pulsar.apps.tasks.JobRegistry`, unless
   the :attr:`pulsar.apps.tasks.Job.abstract` attribute is set to ``True``.
- * If no :attr:`pulsar.apps.tasks.Job.name`` attribute is provided,
-   it is automatically set to the class name in lower case.
- * Add a logger instance with name given by 'job.name` where name is the
-   same as above.
+* If no :attr:`pulsar.apps.tasks.Job.name`` attribute is provided,
+  it is automatically set to the class name in lower case.
+* Add a logger instance with name given by 'job.name` where name is the
+  same as above.
 """
 
     def __new__(cls, name, bases, attrs):

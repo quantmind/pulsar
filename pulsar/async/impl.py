@@ -1,23 +1,16 @@
 from multiprocessing import Process, current_process
 from threading import Thread
 
-from pulsar import system, wrap_socket, platform
+from pulsar import system, wrap_socket, platform, socket_pair
 from pulsar.utils.tools import gen_unique_id
 from pulsar.utils.py2py3 import pickle
 
 from .iostream import AsyncIOStream
-from .mailbox import mailbox, IOQueue
+from .mailbox import mailbox, IOQueue, serverInbox
 from .proxy import ActorProxyMonitor
 
 
 __all__ = ['ActorImpl','actor_impl']
-
-
-def arbiter_socket():
-    w,s = system.socket_pair(2048)
-    w.close()
-    stream = AsyncIOStream(wrap_socket(s))
-    return mailbox(stream = stream)
     
 
 def actor_impl(concurrency, actor_class, timeout, arbiter, kwargs):
@@ -98,7 +91,7 @@ won't have a select/epoll type ionput/output but one based on
 '''
         if not arbiter:
             # This is the arbiter implementation
-            return arbiter_socket()
+            return serverInbox()
             #if platform.type != 'posix':
             #    self.inbox = arbiter_socket()
             #else:

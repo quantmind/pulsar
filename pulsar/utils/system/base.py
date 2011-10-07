@@ -4,7 +4,6 @@
 # See the NOTICE for more information.
 import ctypes
 import signal
-import socket
 from select import select as _select
 
 from pulsar.utils.importer import import_module, module_attribute
@@ -18,8 +17,7 @@ __all__ = ['ALL_SIGNALS',
            'parse_address',
            'IObase',
            'EpollProxy',
-           'IOselect',
-           'socket_pair']
+           'IOselect']
 
 
 SIG_NAMES = {}
@@ -187,30 +185,6 @@ class IOselect(EpollProxy):
             events[fd] = events.get(fd, 0) | IObase.ERROR
         return list(iteritems(events))
     
-
-def socket_pair(listen = 1):
-    w = socket.socket()
-    w.setsockopt(socket.IPPROTO_TCP, socket.TCP_NODELAY, 1)
-    
-    count = 0
-    while 1:
-        count += 1
-        s = socket.socket()
-        s.bind(('127.0.0.1',0))
-        addr = s.getsockname()
-        s.listen(1)
-        try:
-            w.connect(addr)
-            break
-        except socket.error as e:
-            if e[0] != errno.WSAEADDRINUSE:
-                raise
-            if count >= 10:
-                s.close()
-                w.close()
-                raise socket.error("Cannot bind socket pairs!")
-            s.close()
-    return w,s
 
         
     

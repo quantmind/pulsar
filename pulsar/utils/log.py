@@ -1,4 +1,5 @@
 import sys
+from time import time
 import logging
 
 from .system import platform
@@ -12,7 +13,8 @@ __all__ = ['SERVER_NAME',
            'PickableMixin',
            'Silence',
            'LogSelf',
-           'logerror']
+           'logerror',
+           'LogInformation']
 
 
 LOG_LEVELS = {
@@ -154,4 +156,17 @@ and utilities for pickle.'''
         self.__dict__ = state
         self.log = getLogger(self.class_code) 
         self.configure_logging()
+        
+        
+class LogInformation(object):
+    
+    def __init__(self, logevery):
+        self.logevery = logevery
+        self.last = time()
+        
+    def log(self):
+        t = time()
+        if t - self.last > self.logevery:
+            self.last = t
+            return t
         

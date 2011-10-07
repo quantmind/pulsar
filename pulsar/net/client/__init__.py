@@ -1,4 +1,4 @@
-from pulsar.async import MainIOLoop
+import pulsar
 
 from .std import HttpClient1, urlencode, getproxies_environment
 
@@ -15,9 +15,9 @@ form_headers = {'Content-type': 'application/x-www-form-urlencoded'}
 
 class AsyncHttpClient(object):
     
-    def __init__(self, c, ioloop = None):
+    def __init__(self, c, ioloop):
         self.client = c
-        self.ioloop = ioloop or MainIOLoop.instance()
+        self.ioloop = ioloop
         
     def request(self, *args, **kwargs):
         return self.ioloop.add_callback(

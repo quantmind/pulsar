@@ -65,6 +65,10 @@ it makes sure there are always :attr:`num_actors` alive.
                 linked.pop(aid,None)
             else:
                 self.on_manage_actor(actor)
+                
+    def on_manage_actor(self, actor):
+        '''This function is overritten by the arbiter'''
+        pass
     
     def spawn_actors(self):
         '''Spawn new actors if needed'''
@@ -87,6 +91,14 @@ as required."""
                 
     def stop_actor(self, actor):
         raise NotImplementedError
+    
+    def close_actors(self):
+        '''Ovverrides the :meth:`pulsar.Actor.on_stop` 
+:ref:`actor callback <actor-callbacks>` by stopping
+all actors managed by ``self``.'''
+        for actor in itervalues(self.MANAGED_ACTORS()):
+            if actor.is_alive():
+                actor.stop(self)
 
 
 class Monitor(PoolMixin,Actor):
@@ -149,22 +161,18 @@ The monitor performs its tasks in the following way:
   User should not override this method, and use
   :meth:`pulsar.Monitor.monitor_task` instead.'''
         self.manage_actors()
-        if not self._stopping:
+        if self.running():
             self.spawn_actors()
             self.stop_actors()
             self.monitor_task()
-        
+            
     def on_stop(self):
-        '''Ovverrides the :meth:`pulsar.Actor.on_stop` 
-:ref:`actor callback <actor-callbacks>` by stopping
-all actors managed by ``self``.'''
-        self.log.debug('exiting "{0}"'.format(self))
-        for actor in self.linked_actors():
-            actor.stop()
+        self.close_actors()
+        return make_async()
         
     # OVERRIDES
     
-    def init_runner(self):
+    def _init_runner(self):
         pass
     
     def _make_name(self):
@@ -187,18 +195,7 @@ all actors managed by ``self``.'''
     @property
     def multiprocess(self):
         return self.cfg.concurrency == 'process'
-                
-    def __join(self, timeout = 1):
-        '''Join the pool, close or terminate must have been called before.'''
-        if not self.stopped():
-            raise ValueError('Cannot join worker pool. Must be stopped\
- or terminated first.')
-        for wid, proxy in list(iteritems(self.WORKERS)):
-            if not proxy.is_alive():
-                self.clean_worker(wid)
-            else:
-                proxy.join(timeout)
-            
+    
     def spawn_actor(self):
         '''Spawn a new actor and add its :class:`pulsar.ActorProxyMonitor`
  to the :attr:`pulsar.Monitor.MANAGED_ACTORS` dictionary.'''

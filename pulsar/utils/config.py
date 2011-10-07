@@ -601,20 +601,6 @@ class TmpUploadDir(Setting):
         workers. If not specified, Gunicorn will choose a system generated
         temporary directory.
         """
-        
-
-class Httplib(Setting):
-    name = "httplib"
-    section = "Process Naming"
-    cli = ["--http"]
-    meta = "STRING"
-    validator = validate_string
-    default = 'gunicorn'
-    desc = """\
-        HTTP library used by server.
-        
-        It defaults to 'gunicorn'.
-        """
 
 
 class Logfile(Setting):
@@ -650,6 +636,15 @@ Valid level names are:
  """
 
 
+class LogEvery(Setting):
+    name = "logevery"
+    section = "Logging"
+    cli = ["--log-every"]
+    validator = validate_pos_int
+    default = 10
+    desc = """Log information every n seconds"""
+    
+    
 class Procname(Setting):
     name = "proc_name"
     section = "Process Naming"

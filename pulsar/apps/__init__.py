@@ -9,6 +9,7 @@ import pulsar
 from pulsar import Empty, make_async, DeferredGenerator, is_stack_trace, Failure
 from pulsar.utils.py2py3 import execfile
 from pulsar.utils.importer import import_module
+from pulsar.utils.log import LogInformation
 from pulsar.utils import system
 #from pulsar.utils import debug
 
@@ -81,6 +82,7 @@ used for by the application for handling requests and sending back responses.
         self.app = app
         self.cfg = app.cfg
         self.max_requests = self.cfg.max_requests or sys.maxsize
+        self.information = LogInformation(self.cfg.logevery)
         self.debug = self.cfg.debug
         self.app_handler = app.handler()
     
@@ -94,6 +96,8 @@ used for by the application for handling requests and sending back responses.
             pass
     
     def on_task(self):
+        if self.information.log():
+            self.log.info('Processed {0} requests'.format(self.nr))
         self.app.worker_task(self)
     
     def on_stop(self):
@@ -109,25 +113,16 @@ used for by the application for handling requests and sending back responses.
     def on_info(self, data):
         data.update({'request processed': self.nr,
                      'max requests':self.cfg.max_requests})
-        return data        
+        return data
     
-    def check_num_requests(self):
-        '''Check the number of requests. If they exceed the maximum number
-stop the event loop and exit.'''
-        max_requests = self.max_requests
-        if max_requests and self.nr >= self.max_requests:
-            self.log.info("Auto-restarting worker after current request.")
-            self._stop()
-    
-    def _setup(self):
+    def on_start(self):
         '''Called after fork, it set ups the application handler
 and perform several post fork processing before starting the event loop.'''
-        if self.isprocess():
-            random.seed()
-            if self.cfg:
-                system.set_owner_process(self.cfg.uid, self.cfg.gid)
         if self.cfg.post_fork:
-            self.cfg.post_fork(self)
+            try:
+                self.cfg.post_fork(self)
+            except:
+                pass
             
     def handle_request(self, request):
         '''Entry point for handling a request. This is a high level
@@ -140,7 +135,8 @@ After obtaining the result from the
 :meth:`Application.handle_event_task` method, it invokes the
 :meth:`Worker.end_task` method to close the request.'''
         self.nr += 1
-        self.check_num_requests()
+        should_stop = self.max_requests and self.nr >= self.max_requests
+        self.local['should_stop'] = should_stop
         try:
             self.cfg.pre_request(self, request)
         except Exception:
@@ -170,13 +166,17 @@ After obtaining the result from the
 :meth:`Application.handle_response` once done.'''
         response = make_response(request,response,err)
         
-        if response.exception:
+        if response and response.exception:
             response.exception.log(self.log)
                         
         try:
             self.cfg.post_request(self, request)
         except:
             pass
+        
+        if self.local.get('should_stop'):
+            self.log.info("Auto-restarting worker.")
+            self.stop()
     
     def configure_logging(self, **kwargs):
         #switch off configure logging. Done by self.app

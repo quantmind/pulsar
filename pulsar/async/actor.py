@@ -2,6 +2,7 @@ import sys
 import os
 import signal
 from time import time
+import random
 from multiprocessing import current_process
 from threading import current_thread
 
@@ -15,7 +16,7 @@ from pulsar.utils.py2py3 import iteritems, itervalues, pickle
 from .eventloop import IOLoop
 from .proxy import ActorProxy, ActorMessage, process_message,\
                     DEFAULT_MESSAGE_CHANNEL
-from .defer import make_async
+from .defer import make_async, raise_failure
 from .mailbox import IOQueue
 
 
@@ -35,64 +36,6 @@ def is_actor(obj):
 
     
 MAIN_THREAD = current_thread()
-    
-
-class Runner(LogginMixin):
-    '''Base class with event loop powered
-    '''
-    DEF_PROC_NAME = 'pulsar'
-    SIG_QUEUE = None
-    
-    def init_runner(self):
-        '''Initialise the runner.'''
-        self._set_proctitle()
-        self._setup()
-        self._install_signals()
-        
-    def _set_proctitle(self):
-        '''Set the process title'''
-        if self.isprocess():
-            proc_name = self.DEF_PROC_NAME
-            if hasattr(self,'cfg'):
-                proc_name = self.cfg.proc_name or self.cfg.default_proc_name
-            else:
-                proc_name = self.DEF_PROC_NAME
-            proc_name = "{0} - {1}".format(proc_name,self)
-            if system.set_proctitle(proc_name):
-                self.log.debug('Set process title to {0}'.format(proc_name))
-    
-    def _install_signals(self):
-        '''Initialise signals for correct signal handling.'''
-        current = self.current_thread()
-        if current == MAIN_THREAD and self.isprocess():
-            self.log.info('Installing signals')
-            # The default signal handling function in signal
-            sfun = getattr(self,'signal',None)
-            for name in system.ALL_SIGNALS:
-                func = sfun
-                if not func:
-                    func = getattr(self,'handle_{0}'.format(name.lower()),None)
-                if func:
-                    sig = getattr(signal,'SIG{0}'.format(name))
-                    try:
-                        signal.signal(sig, func)
-                    except ValueError:
-                        break
-    
-    def _setup(self):
-        pass
-    
-    # SIGNALS HANDLING
-    
-    def signal_stop(self, sig, frame):
-        signame = system.SIG_NAMES.get(sig,None)
-        self.log.warning('got signal {0}. Exiting.'.format(signame))
-        self.stop()
-            
-    handle_int  = signal_stop
-    handle_quit = signal_stop
-    handle_term = signal_stop
-    
 
 
 class ActorMetaClass(type):
@@ -150,7 +93,7 @@ by the remote actor calling the function. For example::
 ActorBase = ActorMetaClass('BaseActor',(object,),{})
 
 
-class Actor(ActorBase,Runner):
+class Actor(ActorBase,LogginMixin):
     '''The base class for concurrent programming in pulsar. In computer science,
 the **Actor model** is a mathematical model of concurrent computation that
 treats *actors* as the universal primitives of computation.
@@ -200,13 +143,14 @@ Here ``a`` is actually a reference to the remote actor.
 '''
     INITIAL = 0X0
     RUN = 0x1
-    CLOSE = 0x2
-    TERMINATE = 0x3
-    status = {0x0:'not started',
-              0x1:'started',
-              0x2:'closed',
-              0x3:'terminated'}
-    INBOX_TIMEOUT = 0.02
+    STOPPING = 0x2
+    CLOSE = 0x3
+    TERMINATE = 0x4
+    STATE_DESCRIPTION = {0x0:'initial',
+                         0x1:'running',
+                         0x2:'stopping',
+                         0x3:'closed',
+                         0x4:'terminated'}
     DEFAULT_IMPLEMENTATION = 'process'
     MINIMUM_ACTOR_TIMEOUT = 10
     DEFAULT_ACTOR_TIMEOUT = 60
@@ -215,7 +159,8 @@ Here ``a`` is actually a reference to the remote actor.
     # times timeout. So for a timeout of 30 seconds, the messages will
     # go after tolerance*30 seconds (18 secs for tolerance = 0.6).
     ACTOR_TIMEOUT_TOLERANCE = 0.6
-    _stopping = False
+    DEF_PROC_NAME = 'pulsar'
+    SIG_QUEUE = None
     _ppid = None
     _name = None
     
@@ -223,12 +168,13 @@ Here ``a`` is actually a reference to the remote actor.
                  on_task = None, ioqueue = None,
                  monitors = None, name = None, socket = None,
                  age = 0, **kwargs):
-        # Call _init
+        # Call on_init
         self.on_init(impl,**kwargs)
         self._impl = impl
         self._linked_actors = {}
         self.age = age
         self.nr = 0
+        self.local = {}
         self._name = name or self._name
         self.arbiter = arbiter
         self.monitor = monitor
@@ -237,7 +183,6 @@ Here ``a`` is actually a reference to the remote actor.
         self.log = self.getLogger()
         self._monitors = monitors or {}
         actor_links = {}
-        #self.ACTOR_LINKS = actor_links or {}
         for a in itervalues(self._monitors):
             self._linked_actors[a.aid] = a
         
@@ -259,9 +204,6 @@ Here ``a`` is actually a reference to the remote actor.
         inbox = self.inbox
         if inbox:
             inbox.set_actor(self)
-            
-    def on_init(self, impl, **kwargs):
-        pass
     
     def _init_arbiter(self, impl, **kwargs):
         raise ValueError('This is not the arbiter')
@@ -343,9 +285,14 @@ registered with the actor.'''
     
     # HOOKS
     
+    def on_init(self, impl, **kwargs):
+        '''The :ref:`actor callback <actor-callbacks>` run once at the
+beginning of initialization after forking.'''
+        pass
+    
     def on_start(self):
         '''The :ref:`actor callback <actor-callbacks>` run once just before
-the actor starts (after forking).'''
+the actor starts (after forking) its event loop.'''
         pass
     
     def on_task(self):
@@ -363,6 +310,11 @@ iteration of the :attr:`pulsar.Actor.ioloop`.'''
  is exting the framework (and vanish in the garbage collector).'''
         pass
     
+    def on_actor_exit(self, aid):
+        '''The :ref:`actor callback <actor-callbacks>` run when a linked
+ actor has exited.'''
+        pass
+    
     def on_info(self, data):
         '''An :ref:`actor callback <actor-callbacks>` executed when
  obtaining information about the actor. It can be used to add additional
@@ -374,16 +326,24 @@ iteration of the :attr:`pulsar.Actor.ioloop`.'''
  :rtype: a dictionary of pickable data.'''
         return data
     
-    def on_manage_actor(self, actor):
-        pass
+    @property
+    def state(self):
+        '''Current state description. One of ``initial``, ``running``,
+ ``stopping``, ``closed`` and ``terminated``.'''
+        return self.STATE_DESCRIPTION[self._state]
     
-    def is_alive(self):
+    def running(self):
         '''``True`` if actor is running.'''
         return self._state == self.RUN
     
     def started(self):
-        '''``True`` if actor has started.'''
+        '''``True`` if actor has started. It does not necessarily
+mean it is running.'''
         return self._state >= self.RUN
+    
+    def stopping(self):
+        '''``True`` if actor is stopping.'''
+        return self._state == self.STOPPING
     
     def closed(self):
         '''``True`` if actor has exited in an clean fashion.'''
@@ -412,7 +372,7 @@ or an instance of :class:`Socket`.'''
             # if monitor and a ioqueue available, register
             # the event loop handler
             self.on_start()
-            self.init_runner()
+            self._init_runner()
             self.log.info('Booting')
             self._state = self.RUN
             self._run()
@@ -456,39 +416,37 @@ or an instance of :class:`Socket`.'''
             self.log.error("Trying to put a request on task queue,\
  but there isn't one!")
         
-    # STOPPING TERMINATIONG AND STARTING
+    ############################################################################
+    # STOPPING
+    ############################################################################
     
     def stop(self):
         '''Stop the actor by stopping its :attr:`pulsar.Actor.ioloop`
 and closing its :attr:`pulsar.Actor.inbox` orderly. Once everything is closed
 properly this actor will go out of scope.'''
-        # This may be called on a different process domain.
-        # In that case there is no ioloop and therefore skip altogether
-        if hasattr(self,'ioloop'):
-            if self.is_alive() and not self._stopping:
-                self._stopping = True
-                if not self.on_stop():
-                    self._stop_ioloop().add_callback(lambda r : self._stop())
+        if self._state == self.RUN:
+            self._state = self.STOPPING
+            self.log.info('stopping')
+            stp = self.on_stop()
+            if not stp:
+                stp = self.ioloop.stop()
+            stp.add_callback(lambda r : self.close())\
+               .add_callback(raise_failure)
         
-    def _stop(self):
-        #Callback after the event loop has stopped.
-        if self._stopping:
-            self.on_exit()
+    def close(self):
+        if self.stopping():
             self._state = self.CLOSE
+            self.on_exit()
             if not self.ioloop.remove_loop_task(self):
                 self.log.warn('"{0}" could not be removed from\
  eventloop'.format(self.fullname))
-            if self.impl != 'monitor':
-                self.arbiter.send(self,'on_actor_exit')
-            self._stopping = False
+            #if self.impl != 'monitor':
+            #    self.arbiter.send(self,'on_actor_exit')
             if self.inbox:
                 self.inbox.close()
             if self.outbox:
                 self.outbox.close()
             self.log.info('exited')
-        
-    def terminate(self):
-        self.stop()
         
     def shut_down(self):
         '''Called by ``self`` to shut down the arbiter'''
@@ -499,22 +457,6 @@ properly this actor will go out of scope.'''
     
     def _make_name(self):
         return '{0}({1})'.format(self.class_code,self.aid[:8])
-    
-    def _stop_ioloop(self):
-        return self.ioloop.stop()
-        
-    def _run(self):
-        '''The run implementation which must be done by a derived class.'''
-        try:
-            self.ioloop.start()
-        except SystemExit:
-            raise
-        except Exception as e:
-            self.log.exception("Exception in worker {0}: {1}"\
-                               .format(self.fullname,e))
-        finally:
-            self.log.debug('exiting "{0}"'.format(self.fullname))
-            self._stop()
     
     def linked_actors(self):
         '''Iterator over linked-actor proxies (no moitors are yielded).'''
@@ -540,7 +482,11 @@ actions:
 '''
         # If this is not a monitor
         # we notify to the arbiter we are still alive
-        if self.is_alive() and self.arbiter and self.impl != 'monitor':
+        # self.log.debug(self.state)
+        if not self.running():
+            return
+        
+        if self.impl != 'monitor':
             nt = time()
             if hasattr(self,'last_notified'):
                 if not self.timeout:
@@ -555,8 +501,7 @@ actions:
                 info['last_notified'] = nt
                 self.arbiter.send(self,'notify',info)
 
-        if not self._stopping:
-            self.on_task()
+        self.on_task()
     
     def current_thread(self):
         '''Return the current thread'''
@@ -592,9 +537,10 @@ status and performance.'''
                 self.loglevel = self.arbiter.loglevel
         super(Actor,self).configure_logging()
         
-    #################################################################
+    ############################################################################
     # BUILT IN REMOTE FUNCTIONS
-    #################################################################
+    ############################################################################
+    
     def action_message(self, request):
         # Do nothing for now
         return
@@ -616,20 +562,19 @@ framework'''
     def actor_stop(self, caller):
         '''Actor :ref:`remote function <remote-functions>` which stops
 the actor by invoking the local :meth:`pulsar.Actor.stop` method. This
-function does not acknowledge its caller since the actor will stop running.'''
-        self.stop()
-    actor_stop.ack = False
+method only works if self is not the arbiter.'''
+        if self.arbiter:
+            return self.stop()
+        
+    def actor_on_actor_exit(self, caller):
+        self._linked_actors.pop(caller,None)
+        self.on_actor_exit(caller)
     
     def actor_notify(self, caller, info):
         '''Actor :ref:`remote function <remote-functions>` for notifying
 the actor information to the caller.'''
         caller.info = info
     actor_notify.ack = False
-    
-    def actor_on_actor_exit(self, caller, reason = None):
-        if caller:
-            self._linked_actors.pop(caller.aid,None)
-    actor_on_actor_exit.ack = False
     
     def actor_info(self, caller, full = False):
         '''Get server Info and send it back.'''
@@ -641,4 +586,65 @@ the actor information to the caller.'''
     def actor_kill_actor(self, caller, aid):
         return self.arbiter.kill_actor(aid)
 
-
+    ############################################################################
+    #    INTERNALS
+    ############################################################################
+    
+    def _init_runner(self):
+        '''Initialise the runner.'''
+        if self.isprocess():
+            random.seed()
+            proc_name = self.DEF_PROC_NAME
+            if hasattr(self,'cfg'):
+                proc_name = self.cfg.proc_name or self.cfg.default_proc_name
+            else:
+                proc_name = self.DEF_PROC_NAME
+            proc_name = "{0} - {1}".format(proc_name,self)
+            if system.set_proctitle(proc_name):
+                self.log.debug('Set process title to {0}'.format(proc_name))
+            #system.set_owner_process(self.cfg.uid, self.cfg.gid)
+        self._setup()
+        self._install_signals()
+        
+    def _setup(self):
+        pass
+    
+    def _run(self):
+        '''The run implementation which must be done by a derived class.'''
+        try:
+            self.ioloop.start()
+        except:
+            self.log.exception("Unhandled exception exiting.", exc_info = True)
+        finally:
+            self.stop()
+            
+    ############################################################################
+    # SIGNALS HANDLING
+    ############################################################################
+    
+    def _install_signals(self):
+        '''Initialise signals for correct signal handling.'''
+        current = self.current_thread()
+        if current == MAIN_THREAD and self.isprocess():
+            self.log.info('Installing signals')
+            # The default signal handling function in signal
+            sfun = getattr(self,'signal',None)
+            for name in system.ALL_SIGNALS:
+                func = sfun
+                if not func:
+                    func = getattr(self,'handle_{0}'.format(name.lower()),None)
+                if func:
+                    sig = getattr(signal,'SIG{0}'.format(name))
+                    try:
+                        signal.signal(sig, func)
+                    except ValueError:
+                        break
+                    
+    def signal_stop(self, sig, frame):
+        signame = system.SIG_NAMES.get(sig,None)
+        self.log.warning('got signal {0}. Exiting.'.format(signame))
+        self.stop()
+            
+    handle_int  = signal_stop
+    handle_quit = signal_stop
+    handle_term = signal_stop
