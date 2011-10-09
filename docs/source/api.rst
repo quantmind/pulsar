@@ -86,6 +86,15 @@ ActorImpl
    :members:
    :member-order: bysource
 
+
+ActorLink
+~~~~~~~~~~~~~~~~~~
+
+.. autoclass:: ActorLink
+   :members:
+   :member-order: bysource
+
+
 .. _api-async-tools:
 
 Asyncronous Tools

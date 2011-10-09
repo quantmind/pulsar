@@ -62,8 +62,7 @@ the initialization of :class:`ActorImpl`.
 In doing so the :attr:`Actor.ioloop`
 add the mailbox as read handler which wakes up on events to invoke
 :meth:`on_message`.
-
-This method is invoked during :meth:`Actor.start` after iniitialization
+This method is invoked during :meth:`Actor.start` after initialisation
 of the :attr:`Actor.ioloop`'''
         self.actor = actor
         self.type = 'inbox' if inbox else 'outbox'
@@ -93,7 +92,6 @@ of the :attr:`Actor.ioloop`'''
         return self.__str__()
     
     def on_actor(self):
-        '''Called after forking to setup the mailbox.'''
         pass
     
     def on_message(self, fd, events):

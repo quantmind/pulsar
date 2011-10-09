@@ -11,6 +11,7 @@ it requires python 2.6 and up, including python 3.
    
    overview
    install
+   changelog
    design
    configuration
    api

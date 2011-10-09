@@ -9,6 +9,9 @@ Distributed Task Queue
 Utilities
 =================
 
+TaskQueue Rpc Mixin
+~~~~~~~~~~~~~~~~~~~~~
+
 .. autoclass:: TaskQueueRpcMixin
    :members:
    :member-order: bysource

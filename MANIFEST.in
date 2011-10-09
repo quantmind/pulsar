@@ -11,3 +11,4 @@ recursive-include lib *.c
 recursive-include lib *.pyx
 recursive-include docs *.rst
 recursive-include examples *.py
+recursive-include examples *.html

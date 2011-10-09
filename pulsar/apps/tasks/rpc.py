@@ -21,6 +21,11 @@ class TaskQueueRpcMixin(rpc.JSONRPC):
 To use this mixin, you need to have an :ref:`RPC application <apps-rpc>`
 and a :ref:`task queue <apps-tasks>` application installed in the arbiter.
 
+.. attribute:: task_queue_manager
+
+    A :class:`pulsar.ActorLink` for facilitating the communication
+    from the rpc workers to the task queue.
+    
 It exposes the following functions:
 
 .. method:: job_list([jobnames=None])

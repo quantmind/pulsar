@@ -379,9 +379,10 @@ the :attr:`Actor.ioloop` is initialised and started.'''
         return ioloop
     
     def message_arrived(self, message):
-        '''A new *message* has arrived in the inbox. Check the sender and
- the receiver (it may be not self) and perform the message action.
- If the message needs acknowledgment, send the result back.'''
+        '''A new :class:`ActorMessage` has arrived in the :attr:`Actor.inbox`.
+Here we check the sender and the receiver (it may be not ``self`` if
+``self`` is the  :class:`Arbiter`) and perform the message action.
+If the message needs acknowledgment, send the result back.'''
         sender = self.get_actor(message.sender)
         receiver = self.get_actor(message.receiver)
         if not sender or not receiver:
