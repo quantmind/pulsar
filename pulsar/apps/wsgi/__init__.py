@@ -51,21 +51,15 @@ requests in the threaded workers.'''
         else:
             return pulsar.ThreadQueue()
         
-    def update_worker_paramaters(self, monitor, params):
-        '''If running as a multiprocess, pass the socket to the worker
-parameters.'''
-        #TODO RAISE ERROR IN WINDOWS WHEN USING PYTHON 2
-        if not monitor.ioqueue:
-            params['socket'] = monitor.socket
-        return params
-        
     def worker_start(self, worker):
         # If the worker is listening to a socket
         # Add the socket handler to the event loop, otherwise do nothing.
-        if worker.socket:
-            worker.socket.setblocking(False)
-            worker.ioloop.add_handler(worker.socket,
-                                      HttpHandler(worker),
+        socket = worker.get('socket')
+        if socket:
+            worker.log.info(socket.info())
+            socket.setblocking(False)
+            worker.ioloop.add_handler(socket,
+                                      HttpHandler(worker,socket),
                                       worker.ioloop.READ)
         
     def handle_request(self, worker, request):
@@ -106,18 +100,19 @@ directly handled by the workers.'''
         # requests on the socket and delegate the handling to the
         # workers
         if monitor.ioqueue is not None:
-            monitor.set_socket(socket)
-            monitor.ioloop.add_handler(monitor.socket,
-                                       HttpPoolHandler(monitor),
+            self.socket = socket
+            monitor.log.info(socket.info())
+            monitor.ioloop.add_handler(socket,
+                                       HttpPoolHandler(monitor,socket),
                                        monitor.ioloop.READ)
         else:
-            # The monitor won't listent to socket, the workers will.
-            monitor.socket = socket
+            # put the socket in the parameters to be passed to workers
+            monitor['socket'] = socket
             
     def monitor_stop(self, monitor):
         if monitor.ioqueue is not None:
-            monitor.ioloop.remove_handler(monitor.socket)
-            monitor.socket.close(monitor.log)
+            monitor.ioloop.remove_handler(self.socket)
+            self.socket.close(monitor.log)
 
 
 def createServer(callable = None, **params):

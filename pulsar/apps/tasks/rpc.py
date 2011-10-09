@@ -71,6 +71,11 @@ as long as it is registered in the job registry.
                                        funcname,
                                        job = jobname,
                                        **kwargs)
+        
+    def rpc_get_task(self, request, id):
+        return self.task_queue_manager(request.actor,
+                                       'get_task',
+                                       id)
                            
     
         

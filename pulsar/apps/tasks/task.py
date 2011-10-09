@@ -5,6 +5,8 @@ from datetime import datetime
 import logging
 
 from pulsar.utils.py2py3 import StringIO
+from pulsar import make_async
+
 from .exceptions import *
 from .states import *
 
@@ -41,8 +43,10 @@ class TaskConsumer(object):
             self.job.logger.critical('', exc_info = (type, value, traceback))
         self.task.logs = self.get_logs()
         if type:
-            self.task.finish(self.worker, exception = value)
-        return value
+            return make_async(self.task.finish(self.worker, exception = value))\
+                    .add_callback(lambda r : value)
+        else:
+            return value
 
 
 class Task(object):
@@ -80,7 +84,7 @@ class Task(object):
         '''Return the task context manager for execution.'''
         return TaskConsumer(self, queue, worker, job)
         
-    def on_start(self,worker):
+    def start(self,worker):
         '''Called by worker when the task start its execution.'''
         self.time_start = datetime.now()
         timeout = self.revoked()
@@ -89,9 +93,7 @@ class Task(object):
             raise TaskTimeout()
         else:
             self.status = STARTED
-            self.save()
-            self._on_start(worker)
-            return True
+            return self.on_start(worker)
         
     def finish(self, worker, exception = None, result = None):
         '''called when finishing the task.'''
@@ -103,19 +105,24 @@ class Task(object):
             else:
                 self.status = SUCCESS
                 self.result = result
-            self.save()
-            self.on_finish(worker)
+            return self.on_finish(worker)
         
     def to_queue(self):
         '''The task has been received by the scheduler. If its status
 is PENDING swicth to RECEIVED, save the task and return it. Otherwise
 returns nothing.'''
+        self._toqueue = False
         if self.status == PENDING:
             self.status = RECEIVED
-            self.save()
+            self._toqueue = True
+            self.on_received()
             return self
         
+    def needs_queuing(self):
+        return self.__dict__.pop('_toqueue',False)
+        
     def done(self):
+        '''Return ``True`` if the task has finished its execution.'''
         if self.time_end:
             return True
         else:
@@ -149,27 +156,41 @@ returns nothing.'''
     
     @classmethod
     def get_task(cls, id, remove = False):
+        '''Given a task *id* it retrieves a task instance or ``None`` if
+not available.'''
         raise NotImplementedError
     
     def ack(self):
         return self
     
-    def _on_start(self, worker):
+    ############################################################################
+    # CALLBACKS
+    ############################################################################
+    
+    def on_created(self):
+        '''A :ref:`task callback <tasks-callbacks>` when the task has
+has been created.'''
         pass
     
-    def on_finish(self, worker):
-        '''Callback when the task has finished.'''
+    def on_received(self, worker = None):
+        '''A :ref:`task callback <tasks-callbacks>` when the task has
+has been received by the scheduler.'''
+        pass
+        
+    def on_start(self, worker = None):
+        '''A :ref:`task callback <tasks-callbacks>` when the task starts
+its execution'''
         pass
     
-    def close(self):
-        '''Needed by pulsar. Does nothing.'''
+    def on_finish(self, worker = None):
+        '''A :ref:`task callback <tasks-callbacks>` when the task finish
+its execution'''
         pass
 
 
 class TaskInMemory(Task):
     '''An in memory implementation of a Task'''
     _TASKS = {}
-    _TASKS_DONE = {}
     time_start = None
     time_end = None
     stack_trace = None
@@ -191,17 +212,30 @@ class TaskInMemory(Task):
     def __str__(self):
         return '{0}({1})'.format(self.name,self.id)
 
+    def on_received(self,worker=None):
+        # Called by the scheduler
+        self.__class__.save_task(self)
+    
+    def on_start(self, worker=None):
+        if worker:
+            return worker.monitor.send(worker,'save_task',self)
+            
     def on_finish(self,worker=None):
         if worker:
-            worker.monitor.send(worker, 'task_finished', self)
-
-    def save(self):
-        self._TASKS[self.id] = self
-        return self
+            return worker.monitor.send(worker, 'save_task', self)
         
     def delete(self):
         self._TASKS.pop(self.id,None)
         
+    @classmethod
+    def save_task(cls, task):
+        if task.id in cls._TASKS:
+            t = cls._TASKS[task.id]
+            if precedence(t.status) < precedence(task.status):
+                # we don't save here. Could by concurrency lags
+                return
+        cls._TASKS[task.id] = task
+    
     @classmethod
     def get_task(cls,id,remove=False):
         task = cls._TASKS.get(id,None)

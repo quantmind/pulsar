@@ -140,13 +140,7 @@ and task scheduling."""
             id = job.make_task_id(targs,tkwargs)
             task = TaskFactory.get_task(id)
             if task:
-                tq = task.to_queue()
-                if not tq:
-                    self.log.info('task {0} already requested. Abort request.'\
-                                  .format(task))
-                    return task,None
-                else:
-                    return tq,tq
+                return task.to_queue()
             else:
                 if job.name in self.entries:
                     self.entries[job.name].next()
@@ -159,8 +153,7 @@ and task scheduling."""
                                    expiry = expiry, args = targs,
                                    kwargs = tkwargs,
                                    status = PENDING, **kwargs)
-                task.save()
-                return task,task
+                return task.to_queue()
         else:
             raise TaskNotAvailable(job_name)
         
@@ -168,9 +161,12 @@ and task scheduling."""
                    **kwargs):
         '''Put a new task in the task queue. This function invokes
 :meth:`make_request` and check that the task can be inserted into the queue.'''
-        task,tq = self.make_request(job_name, targs, tkwargs, **kwargs)
-        if tq:
-            monitor.put(tq)
+        task = self.make_request(job_name, targs, tkwargs, **kwargs)
+        if task.needs_queuing():
+            monitor.put(task)
+        else:
+            self.log.info('task {0} already requested. Abort request.'\
+                                  .format(task))
         return task
 
     def tick(self, monitor, now = None):

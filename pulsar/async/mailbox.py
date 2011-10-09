@@ -1,6 +1,7 @@
 import io
 import logging
 import socket
+import time
 from multiprocessing.queues import Empty, Queue
 
 from pulsar import create_connection, MailboxError, socket_pair, wrap_socket
@@ -9,13 +10,13 @@ from pulsar.utils.mixins import NonePickler
 from pulsar.utils.py2py3 import pickle
 
 
-__all__ = ['mailbox','Mailbox','IOQueue','Empty','Queue']
+__all__ = ['mailbox','Mailbox','SocketServerMailbox','IOQueue','Empty','Queue']
 
 
 def mailbox(address = None, id = None, queue = None):
     '''Creates a :class:`Mailbox` instances for :class:`Actor` instances.
 If an address is provided, the communication is implemented using a socket,
-otherwise a queue is used. If stream is provided, this is the arbiter socket.'''   
+otherwise a queue is used.'''   
     if address:
         if id:
             raise ValueError('Mailbox with address and id is not supported')
@@ -29,35 +30,76 @@ otherwise a queue is used. If stream is provided, this is the arbiter socket.'''
         o = PipeOutbox()
 
 
-def serverInbox():
+def serverSocket():
     '''Create an asynchronous server inbox. This is TCP socket ready for
 accepting messages from ather actors.'''
-    w,s = socket_pair()
+    # get a socket pair
+    w,s = socket_pair(backlog = 1)
+    s.setblocking(True)
+    r, _ = s.accept()
+    r.close()
     w.close()
-    return SocketServerMailbox(s)
+    s.setblocking(False)
+    return s
 
 
 class Mailbox(object):
-    '''A mailbox for :class:`Actor` instances. If an address is provided,
-the communication is implemented using a socket, otherwise a unidirectional
-pipe is created. Mailboxes are setup before a new actor is forked during
-the initialization of :class:`ActorImpl`.'''        
-    def setup(self):
+    '''A mailbox for :class:`Actor` instances. They are the tool which
+allows actors to communicate with each other in a share-nothing architecture.
+The implementation of a mailbox can be of two types:
+ 
+* Socket
+* Distributes queue
+
+Mailboxes are setup before a new actor is forked during
+the initialization of :class:`ActorImpl`.
+'''
+    actor = None
+    type = None
+    
+    def register(self, actor, inbox = True):
+        '''register *actor* with the mailbox.
+In doing so the :attr:`Actor.ioloop`
+add the mailbox as read handler which wakes up on events to invoke
+:meth:`on_message`.
+
+This method is invoked during :meth:`Actor.start` after iniitialization
+of the :attr:`Actor.ioloop`'''
+        self.actor = actor
+        self.type = 'inbox' if inbox else 'outbox'
+        self.on_actor()
+        if inbox:
+            actor.ioloop.add_handler(self,
+                                     self.on_message,
+                                     actor.ioloop.READ)
+            # the actor may need to acknowledge the arbiter
+            if actor.impl != 'monitor':
+                address = self.address()
+                if address:
+                    actor.ioloop.add_callback(
+                        lambda : actor.arbiter.send(self.actor,
+                                                    'inbox_address', address))
+    
+    def name(self):
+        return 'mailbox'
+    
+    def __str__(self):
+        if self.actor:
+            return '{0} {1} {2}'.format(self.actor,self.name(),self.type)
+        else:
+            return 'mailbox'
+        
+    def __repr__(self):
+        return self.__str__()
+    
+    def on_actor(self):
         '''Called after forking to setup the mailbox.'''
         pass
     
-    def set_actor(self, actor):
-        '''Set the actor in the mailbox. Indoing so the actor :class:`IOLoop`
-add the mailbox as handler which wakes up on events to invoke
-:meth:`on_message`.'''
-        self.actor = actor
-        actor.ioloop.add_handler(self,
-                                 self.on_message,
-                                 actor.ioloop.READ)
-    
-    def on_message(self, fd, events, **kwargs):
-        '''Handle the message events'''
-        message = self.read_message(fd, events, **kwargs)
+    def on_message(self, fd, events):
+        '''Handle the message by parsing it and invoking
+:meth:`Actor.message_arrived`'''
+        message = self.read_message(fd, events)
         if message:
             self.actor.message_arrived(message)
         
@@ -65,11 +107,13 @@ add the mailbox as handler which wakes up on events to invoke
         '''The address of the mailbox'''
         return None
     
-    def __setstate__(self, state):
-        self.__dict__ = state
-        self.setup()
-        
+    def fileno(self):
+        '''Return the file descriptor of the mailbox.'''
+        raise NotImplementedError
+    
     def put(self, request):
+        '''Put a :class:`ActorMessage` into the mailbox. This function is
+ available when the mailbox is acting as an outbox.'''
         raise NotImplementedError
     
     def read_message(self,  fd, events):
@@ -85,6 +129,9 @@ class QueueMailbox(Mailbox):
         self.id = id
         self.queue = queue
         
+    def name(self):
+        return 'queue {0}'.format(self.id)
+    
     def fileno(self):
         return self.id
     
@@ -97,17 +144,6 @@ class QueueMailbox(Mailbox):
     def read_message(self, fd, events):
         return events
         
-        
-class PipeMailbox(Mailbox):
-    '''An outbox for :class:`Actor` instances. If an address is provided,
-the communication is implemented using a socket, otherwise a unidirectional
-pipe is created.'''
-    def __init__(self):
-        self.reader, self.writer = Pipe(duplex = False)
-        
-    def fileno():
-        return self.sock.fileno()
-            
     
 class SocketMailbox(Mailbox):
     '''A socket outbox for :class:`Actor` instances. This outbox
@@ -116,6 +152,9 @@ send messages to a :class:`SocketServerMailbox`.'''
         self._address = address
         self.sock = None
         
+    def name(self):
+        return str(self.sock)
+    
     def address(self):
         return self._address
     
@@ -124,10 +163,13 @@ send messages to a :class:`SocketServerMailbox`.'''
             
     def __getstate__(self):
         d = self.__dict__.copy()
-        d.pop('sock',None)
+        d['sock'] = None
         return d
         
-    def setup(self):
+    def on_actor(self):
+        if self.type == 'inbox':
+            raise ValueError('Trying to use {0} as inbox'\
+                             .format(self.__class__.__name__))
         self.sock = create_connection(self._address,blocking=True)
         
     def put(self, request):
@@ -138,9 +180,22 @@ send messages to a :class:`SocketServerMailbox`.'''
         raise MailboxError('Cannot read messages. This is an outbox only.')        
         
     def close(self):
-        self.sock.close()
+        if self.sock:
+            self.sock.close()
 
 
+class SocketServerClient(object):
+    __slots__ = ('sock',)
+    def __init__(self, sock):
+        self.sock = sock
+        
+    def fileno(self):
+        return self.sock.fileno()
+    
+    def __str__(self):
+        return '{0} inbox client'.format(self.sock)
+    
+    
 def getNone(*args,**kwargs):
     return None
 
@@ -149,63 +204,73 @@ class SocketServerMailbox(NonePickler,Mailbox):
     '''An inbox for :class:`Actor` instances. If an address is provided,
 the communication is implemented using a socket, otherwise a unidirectional
 pipe is created.'''
-    def __init__(self, stream):
-        self.stream = stream
+    def __init__(self):
+        self.sock = None
         self.clients = {}
         
-    def __str__(self):
-        return '{0} socket server mailbox'.format(self.stream.actor)
-    __repr__ = __str__
+    def name(self):
+        return str(self.sock)
             
     def address(self):
-        return self.stream.getsockname()
+        return self.sock.getsockname()
     
     def fileno(self):
-        return self.stream.fileno()
+        return self.sock.fileno()
         
     def put(self, request):
         raise MailboxError('Cannot put messages')
     
+    def on_actor(self):
+        self.sock = serverSocket()
+        if self.type == 'outbox':
+            raise ValueError('Trying to use {0} as outbox'\
+                             .format(self.__class__.__name__))
+    
     def read_message(self, fd, events):
         '''Called when a new message has arrived.'''
+        ioloop = self.actor.ioloop
         client = self.clients.get(fd)
         if not client:
-            client,addr = self.stream.accept()
+            client,_ = self.sock.accept()
             if not client:
+                self.actor.log.debug('Still no client. Aborting')
                 return
             client = wrap_socket(client)
-            client.setblocking(0.1)
+            client.setblocking(True)
             self.clients[client.fileno()] = client
-            self.actor.ioloop.add_handler(client,
-                                          self.on_message,
-                                          self.actor.ioloop.READ)
+            #self.actor.log.debug('Got inbox event on {0}, {1}'.format(fd,client))
+            ioloop.add_handler(SocketServerClient(client),
+                               self.on_message,
+                               ioloop.READ)
+            return
         
         length = io.DEFAULT_BUFFER_SIZE
         try:
-            chunk = client.async_recv(length)
+            chunk = client.recv(length)
         except socket.error:
-            try:
-                client.close()
-            except:
-                pass
-            self.clients.pop(fd)
-        if chunk:
+            chunk = None
+        
+        if not chunk:
+            ioloop.remove_handler(client)
+            client.close()
+        else:
             msg = bytearray(chunk)
             while len(chunk) > length:
-                chunk = client.async_recv(length)
+                chunk = client.recv(length)
                 if not chunk:
                     break
                 msg.extend(chunk)
             return pickle.loads(bytes(msg))
         
     def close(self):
-        self.actor.log.debug('shutting down {0} inbox'.format(self.actor))
-        for c in self.clients:
-            try:
-                c.close()
-            except:
-                pass
-        self.stream.close()
+        if self.sock:
+            self.actor.log.debug('shutting down {0} inbox'.format(self.actor))
+            for c in self.clients:
+                try:
+                    c.close()
+                except:
+                    pass
+            self.sock.close()
 
 
 class QueueWaker(object):
@@ -214,6 +279,9 @@ class QueueWaker(object):
         self._queue = queue
         self._fd = 'waker'
         
+    def __str__(self):
+        return '{0} {1}'.format(self.__class__.__name__,self._fd)
+    
     def fileno(self):
         return self._fd
     

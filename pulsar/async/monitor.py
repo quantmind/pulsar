@@ -37,13 +37,15 @@ it makes sure there are always :attr:`num_actors` alive.
     
     Default: :class:`Actor`
 '''
-    def on_init(self, impl, actor_class = None, address = None,
-                actor_params = None, num_actors = 0, **kwargs):
+    def on_init(self, actor_class = None, num_actors = 0, **kwargs):
         self._managed_actors = {}
         self.num_actors = num_actors or 0
         self.actor_class = actor_class or Actor
-        self.address = address
-        self._actor_params = actor_params
+        
+    def actorparams(self):
+        '''Return a dictionary of parameters to be passed to the
+spawn method when creating new actors.'''
+        return {}
         
     def get_actor(self, aid):
         a = Actor.get_actor(self, aid)
@@ -93,10 +95,7 @@ as required."""
         raise NotImplementedError
     
     def close_actors(self):
-        '''Ovverrides the :meth:`pulsar.Actor.on_stop` 
-:ref:`actor callback <actor-callbacks>` by stopping
-all actors managed by ``self``.'''
-        for actor in itervalues(self.MANAGED_ACTORS()):
+        for actor in itervalues(self.MANAGED_ACTORS):
             if actor.is_alive():
                 actor.stop(self)
 
@@ -172,13 +171,10 @@ The monitor performs its tasks in the following way:
         
     # OVERRIDES
     
-    def _init_runner(self):
-        pass
-    
     def _make_name(self):
         return 'Monitor-{0}({1})'.format(self.actor_class.code(),self.aid)
     
-    def get_eventloop(self, impl):
+    def get_eventloop(self):
         '''Return the arbiter event loop.'''
         return self.arbiter.ioloop
     
@@ -200,10 +196,11 @@ The monitor performs its tasks in the following way:
         '''Spawn a new actor and add its :class:`pulsar.ActorProxyMonitor`
  to the :attr:`pulsar.Monitor.MANAGED_ACTORS` dictionary.'''
         worker = self.arbiter.spawn(
-                        self.actor_class,
+                        actor_class = self.actor_class,
                         monitor = self,
                         ioqueue = self.ioqueue,
                         monitors = self.arbiter.get_all_monitors(),
+                        params = self._params,
                         **self.actorparams())
         monitor = self.arbiter.MANAGED_ACTORS[worker.aid]
         self.MANAGED_ACTORS[worker.aid] = monitor
@@ -214,11 +211,6 @@ The monitor performs its tasks in the following way:
             self.MANAGED_ACTORS.pop(actor.aid)
         else:
             return actor.proxy.stop()
-    
-    def actorparams(self):
-        '''Return a dictionary of parameters to be passed to the
-spawn method when creating new actors.'''
-        return self._actor_params or {}
         
     def info(self, full = False):
         if full:

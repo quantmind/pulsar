@@ -14,5 +14,5 @@ function defined.'''
 
 class Addition(Job):
     
-    def __call__(self, consumer, code, a, b):
+    def __call__(self, consumer, a, b):
         return a+b

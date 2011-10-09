@@ -28,10 +28,11 @@ class IOLoop(IObase,Synchronized):
     """\
 A level-triggered I/O event loop adapted from tornado.
 
-:parameter io: The IO implementation. If not supplied, the best possible
+:parameter io: The I/O implementation. If not supplied, the best possible
     implementation available will be used. On posix system this is ``epoll``,
     or else ``select``. It can be any other custom implementation as long as
-    it has an ``epoll`` like interface.
+    it has an ``epoll`` like interface. Pulsar ships with an additional
+    I/O implementation based on distributed queue :class:`IOQueue`.
     
 Example usage for a simple TCP server::
 
@@ -99,7 +100,8 @@ It should be instantiated after forking.
         self.num_loops = 0
         self._blocking_signal_threshold = None
         self._waker = self.get_waker()
-        self.add_handler(self._waker.fileno(),
+        self._on_exit = None
+        self.add_handler(self._waker,
                          lambda fd, events: self._waker.consume(),
                          self.READ)
         
@@ -141,13 +143,16 @@ file descriptor *fd*.
     file descriptor *fd*.
 :rtype: ``True`` if the handler was succesfully added."""
         if fd is not None:
-            fd = file_descriptor(fd)
-            if fd not in self._handlers:
-                self._handlers[fd] = handler
-                self.log.debug('Registering file descriptor "{0}"\
+            fde = file_descriptor(fd)
+            if fde not in self._handlers:
+                self._handlers[fde] = handler
+                self.log.debug('Registering handler for "{0}"\
  with ioloop.'.format(fd))
-                self._impl.register(fd, events | self.ERROR)
+                self._impl.register(fde, events | self.ERROR)
                 return True
+            else:
+                self.log.debug('Handler for "{0}"\
+ already available.'.format(fd))
 
     def update_handler(self, fd, events):
         """Changes the events we listen for fd."""
@@ -364,9 +369,7 @@ whether that callback was invoked before or after ioloop.start.'''
     
 class _Timeout(object):
     """An IOLoop timeout, a UNIX timestamp and a callback"""
-
-    # Reduce memory overhead when there are lots of pending callbacks
-    __slots__ = ['deadline', 'callback']
+    __slots__ = ('deadline', 'callback')
 
     def __init__(self, deadline, callback):
         self.deadline = deadline
@@ -380,30 +383,31 @@ class _Timeout(object):
 class PeriodicCallback(object):
     """Schedules the given callback to be called periodically.
 
-    The callback is called every callback_time milliseconds.
+    The callback is called every callback_time seconds.
     """
-    def __init__(self, callback, callback_time, io_loop=None):
+    def __init__(self, callback, callback_time, ioloop):
         self.callback = callback
         self.callback_time = callback_time
-        self.io_loop = io_loop or IOLoop.instance()
+        self.ioloop = ioloop
         self._running = False
 
     def start(self):
         self._running = True
-        timeout = time.time() + self.callback_time / 1000.0
-        self.io_loop.add_timeout(timeout, self._run)
+        timeout = time.time() + self.callback_time
+        self.ioloop.add_timeout(timeout, self._run)
 
     def stop(self):
         self._running = False
 
     def _run(self):
-        if not self._running: return
+        if not self._running:
+            return
         try:
             self.callback()
         except (KeyboardInterrupt, SystemExit):
             raise
         except:
-            logging.error("Error in periodic callback", exc_info=True)
+            ioloop.log.error("Error in periodic callback", exc_info=True)
         if self._running:
             self.start()
 

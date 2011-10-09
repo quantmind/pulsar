@@ -9,12 +9,13 @@ import pulsar
 from pulsar.utils import system
 from pulsar.utils.system import IObase
 from pulsar.utils.tools import Pidfile
-from pulsar.utils.py2py3 import itervalues
+from pulsar.utils.py2py3 import itervalues, iteritems
 
 from .impl import actor_impl
 from .actor import Actor
 from .monitor import PoolMixin
 from .proxy import ActorCallBacks
+from .mailbox import SocketMailbox
 from .defer import ThreadQueue
 
 
@@ -25,13 +26,13 @@ def arbiter(daemonize = False):
     return Arbiter.instance(daemonize)
     
     
-def spawn(actor_class, *args, **kwargs):
+def spawn(actor_class = None, **kwargs):
     '''Create a new :class:`Actor` instance and return its proxy in the arbiter
 process domain.
 
 :param actor_class: :class:`Actor` or one of its subclasses.
 :rtype: instance of :class:`ActorProxyMonitor`'''
-    return arbiter().spawn(actor_class, *args, **kwargs)
+    return arbiter().spawn(actor_class or Arbiter, **kwargs)
     
         
 
@@ -124,12 +125,27 @@ Users access the arbiter by the high level api::
  
     # ARBITER HOOKS
     
-    def on_start(self):
-        for m in itervalues(self._monitors):
-            if hasattr(m,'cfg'):
-                self.cfg = m.cfg
-                break
+    def on_init(self, daemonize = False, **kwargs):
+        PoolMixin.on_init(self,**kwargs)
+        self._repr = self._name
+        self._close_signal = None
+        os.environ["SERVER_SOFTWARE"] = pulsar.SERVER_SOFTWARE
+        if daemonize:
+            system.daemonize()
+        self.actor_age = 0
+        self.reexec_pid = 0
+        self.SIG_QUEUE = ThreadQueue()
     
+    def on_start(self):
+        cfg = self.get('cfg')
+        if cfg:
+            pidfile = cfg.pidfile
+        
+            if pidfile is not None:
+                p = Pidfile(cfg.pidfile)
+                p.create(self.pid)
+                self['pidfile'] = p
+        
     def on_task(self):
         if self.running():
             sig = self.arbiter_task()
@@ -138,6 +154,7 @@ Users access the arbiter by the high level api::
                 for m in list(itervalues(self._monitors)):
                     if m.started():
                         if not m.running():
+                            self.log.info('Removing monitor {0}'.format(m))
                             self._monitors.pop(m.name)
                     else:
                         m.start()
@@ -162,35 +179,17 @@ the timeout. Stop the arbiter.'''
         self.stop()
     
     # LOW LEVEL FUNCTIONS
-    
-    def _init_arbiter(self, impl, daemonize = False, **kwargs):
-        self._repr = self._name
-        self._close_signal = None
-        os.environ["SERVER_SOFTWARE"] = pulsar.SERVER_SOFTWARE
-        if daemonize:
-            system.daemonize()
-        self.actor_age = 0
-        self.cfg = None
-        self.pidfile = None
-        self.reexec_pid = 0
-        self.SIG_QUEUE = ThreadQueue()
-    
-    def _setup(self):
-        if self.cfg:
-            cfg = self.cfg
-            if cfg.pidfile is not None:
-                self.pidfile = Pidfile(cfg.pidfile)
-                self.pidfile.create(self.pid)
         
     def _run(self):
         """\
         Initialize the arbiter. Start listening and set pidfile if needed.
         """
-        if self.cfg.when_ready:
-            self.cfg.when_ready(self)
+        try:
+            self['cfg'].when_ready(self)
+        except:
+            pass
         try:
             self.ioloop.start()
-            print('ciao')
         except StopIteration:
             self.halt('Stop Iteration')
         except KeyboardInterrupt:
@@ -207,10 +206,7 @@ the timeout. Stop the arbiter.'''
     def halt(self, reason=None, sig=None):
         """halt arbiter. If there no signal ``sig`` it is an unexpected exit."""
         x = 'Shutting down pulsar arbiter'
-        _msg = lambda : x if not reason else '{0}: {1}'.format(x,reason)
-        if self.pidfile is not None:
-            self.pidfile.unlink()
-        
+        _msg = lambda : x if not reason else '{0}: {1}'.format(x,reason)        
         if not sig:
             self.log.critical(_msg())
         else:
@@ -230,6 +226,11 @@ the timeout. Stop the arbiter.'''
         self._stopping_start = time()
         return self._on_actors_stopped()
     
+    def on_exit(self):
+        p = self.get('pidfile')
+        if p is not None:
+            p.unlink()
+            
     def _on_actors_stopped(self):
         if self.MANAGED_ACTORS:
             if time() - self._stopping_start < self.CLOSE_TIMEOUT:
@@ -330,8 +331,23 @@ signal queue'''
             
     # REMOTES
     
+    def actor_inbox_address(self, actor, address):
+        '''The ``actor`` register its inbox ``address``.'''
+        self.log.debug('Registering actor {0} inbox address {1}'
+                       .format(actor,address))
+        actor.inbox = SocketMailbox(address)
+        actor.inbox.register(actor,False)
+    actor_inbox_address.ack = False
+        
     def actor_kill_actor(self, caller, aid):
         '''Remote function for ``caller`` to kill an actor with id ``aid``'''
         a = self.get_actor(aid)
-        return a.stop() if a else False
+        if a:
+            if isinstance(a,Actor):
+                a.stop()
+            else:
+                a.send(self,'stop')
+            return 'stopped {0}'.format(a)
+        else:
+            self.log.info('Could not kill "{0}" no such actor'.format(aid))
     

@@ -100,6 +100,15 @@ try:
             d['id'] = self.id
             return d
         
+        def on_created(self, worker = None):
+            self.save()
+            
+        def on_received(self, worker = None):
+            self.save()
+        
+        def on_start(self, worker = None):
+            self.save()
+    
         def on_finish(self, worker):
             duration = self.duration()
             if duration:

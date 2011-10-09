@@ -79,6 +79,9 @@ class Waker(object):
         self._writer = w
         self._reader = r
         
+    def __str__(self):
+        return 'Pipe waker {0}'.format(self.fileno())
+        
     def fileno(self):
         return self._reader.fileno()
     

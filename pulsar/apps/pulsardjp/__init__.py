@@ -1,6 +1,6 @@
 '''\
 A pulsar application for serving djpcms_ powered web sites.
-It includes an :class:`pulsar.apps.tasks.Task` implementation
+It includes a :class:`pulsar.apps.tasks.Task` implementation
 with Redis backend which uses stdnet_.
 
 To use it:

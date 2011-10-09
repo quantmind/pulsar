@@ -52,7 +52,7 @@ class ColorFormatter(logging.Formatter):
     COLORS = {"DEBUG": "blue",
               "WARNING": "yellow",
               "ERROR": "red",
-              "CRITICAL": "magenta",
+              "CRITICAL": "red",
               "default": "green"}
     
     def __init__(self, *args, **kwargs):

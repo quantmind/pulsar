@@ -27,7 +27,7 @@ MAXFD = 1024
 
 def create_connection(address, blocking = 0):
     sock_type = create_socket_address(address)
-    s = sock_type(setoptions = False)
+    s = sock_type(is_server = False)
     s.sock.connect(address)
     s.sock.setblocking(blocking)
     return s
@@ -43,14 +43,15 @@ def flush_socket(sock):
 
 def create_socket(address, log = None, backlog = 2048,
                   bound = False, retry = 5, retry_lag = 2):
-    """Create a new :class:`Socket` for the given address.
+    """Create a new server :class:`Socket` for the given address.
 If the address is a tuple, a TCP socket is created.
 If it is a string, a Unix socket is created.
 Otherwise a TypeError is raised.
 
 :parameter address: Socket address.
 :parameter log: Optional python logger instance.
-:parameter backlog: The maximum number of pending connections.
+:parameter backlog: The maximum number of pending connections or ``None``.
+    if ``None`` this is a client socket.
 :parameter bound: If ``False`` the socket will bind to *address* otherwise
     it is assumed to be already bound.
 :parameter retry: Number of retries before aborting.
@@ -88,12 +89,14 @@ def wrap_socket(sock):
 
 
 def socket_pair(backlog = 2048, log = None):
-    '''Create a localhost socket pair on any available port.
-The first socket is connected to the second which is bound to
-``127.0.0.1`` at any available port.
+    '''Create a ``127.0.0.1`` (client,server) socket pair on any
+available port. The first socket is connected to the second, the server socket,
+which is bound to ``127.0.0.1`` at any available port.
 
 :param backlog: number of connection to listen.
-:param log: optional python logger.'''
+:param log: optional python logger.
+:rtype: tuple with two instances of :class:`Socket`
+'''
     w = socket.socket()
     w.setsockopt(socket.IPPROTO_TCP, socket.TCP_NODELAY, 1)
     
@@ -122,11 +125,12 @@ class Socket(object):
     '''Wrapper class for a python socket. It provides with
 higher level tools for creating and reusing sockets already created.'''
     def __init__(self, address=None, backlog=2048, fd=None, bound=False,
-                 setoptions = True):
+                 is_server = None):
         self.backlog = backlog
-        self._init(fd,address,bound,setoptions)
+        self._is_server = is_server if is_server is not None else not bound
+        self._init(fd,address,bound)
         
-    def _init(self, fd, address, bound, setoptions = True):
+    def _init(self, fd, address, bound):
         if fd is None:
             self._clean()
             sock = socket.socket(self.FAMILY, socket.SOCK_STREAM)
@@ -139,7 +143,7 @@ higher level tools for creating and reusing sockets already created.'''
             else:
                 raise ValueError('Cannot create socket from file deascriptor.\
  Not implemented in your system')
-        if setoptions:
+        if self.is_server():
             self.sock = self.set_options(sock, address, bound)
         else:
             self.sock = sock
@@ -153,6 +157,9 @@ higher level tools for creating and reusing sockets already created.'''
         fd = state.pop('fd')
         self.__dict__ = state
         self._init(fd,None,True)
+    
+    def is_server(self):
+        return self._is_server
     
     def _clean(self):
         pass
@@ -218,6 +225,12 @@ higher level tools for creating and reusing sockets already created.'''
             if log:
                 log.info("Error while closing socket %s" % str(e))
         time.sleep(0.3)
+        
+    def info(self):
+        if self.is_server():
+            return 'listening at {0}'.format(self)
+        else:
+            return 'client at {0}'.format(self)
 
 
 class TCPSocket(Socket):

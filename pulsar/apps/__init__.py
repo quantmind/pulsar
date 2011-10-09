@@ -78,12 +78,11 @@ used for by the application for handling requests and sending back responses.
     Configuration dictionary
 
 """        
-    def on_init(self, impl, app = None, **kwargs):
+    def on_init(self, app = None, **kwargs):
         self.app = app
         self.cfg = app.cfg
         self.max_requests = self.cfg.max_requests or sys.maxsize
         self.information = LogInformation(self.cfg.logevery)
-        self.debug = self.cfg.debug
         self.app_handler = app.handler()
     
     # Delegates Callbacks to the application
@@ -114,15 +113,6 @@ used for by the application for handling requests and sending back responses.
         data.update({'request processed': self.nr,
                      'max requests':self.cfg.max_requests})
         return data
-    
-    def on_start(self):
-        '''Called after fork, it set ups the application handler
-and perform several post fork processing before starting the event loop.'''
-        if self.cfg.post_fork:
-            try:
-                self.cfg.post_fork(self)
-            except:
-                pass
             
     def handle_request(self, request):
         '''Entry point for handling a request. This is a high level
@@ -187,15 +177,17 @@ class ApplicationMonitor(pulsar.Monitor):
     '''A spcialized :class:`pulsar.Monitor` implementation for managing
 pulsar applications (subclasses of :class:`pulsar.Application`).
 '''
-    def on_init(self, impl, app = None, **kwargs):
+    def on_init(self, app = None, **kwargs):
         self.app = app
         self.cfg = app.cfg
-        kwargs['actor_class'] = self.cfg.worker_class
-        kwargs['num_actors'] = self.cfg.workers
-        super(ApplicationMonitor,self).on_init(impl,**kwargs)
+        kwargs['actor_class'] = app.cfg.worker_class
+        kwargs['num_actors'] = app.cfg.workers
+        arbiter = pulsar.arbiter()
+        if not arbiter.get('cfg'):
+            arbiter['cfg'] = app.cfg
+        super(ApplicationMonitor,self).on_init(**kwargs)
     
-    # Delegates Callbacks to the application
-    
+    # Delegates Callbacks to the application    
     def on_start(self):
         self.app.monitor_start(self)
         
@@ -203,7 +195,8 @@ pulsar applications (subclasses of :class:`pulsar.Application`).
         self.app.monitor_task(self)
             
     def on_stop(self):
-        self.app.monitor_stop(self)
+        stp = make_async(self.app.monitor_stop(self))
+        return stp.add_callback(super(ApplicationMonitor,self).on_stop())
         
     def on_exit(self):
         self.app.monitor_exit(self)
@@ -217,12 +210,11 @@ updated actor parameters with information about the application.
 
 :rtype: a dictionary of parameters to be passed to the
     spawn method when creating new actors.'''
-        params = {'app':self.app,
-                  'timeout': self.cfg.timeout,
-                  'loglevel': self.app.loglevel,
-                  'impl': self.cfg.concurrency,
-                  'name':'{0}-worker'.format(self.app.name)}
-        return self.app.update_worker_paramaters(self,params)
+        return  {'app':self.app,
+                 'timeout': self.app.cfg.timeout,
+                 'loglevel': self.app.loglevel,
+                 'impl': self.app.cfg.concurrency,
+                 'name':'{0}-worker'.format(self.app.name)}
 
     def configure_logging(self, **kwargs):
         self.app.configure_logging(**kwargs)

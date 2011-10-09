@@ -136,7 +136,7 @@ Here ``a`` is actually a reference to the remote actor.
     
 .. attribute:: ioloop
 
-    An instance of :class:`pulsar.IOLoop`, the input/output event loop
+    An instance of :class:`IOLoop`, the input/output event loop
     driving the actor. Some actors may share the ioloop with other actors
     depending on their concurrency implementation.
 
@@ -166,10 +166,9 @@ Here ``a`` is actually a reference to the remote actor.
     
     def __init__(self, impl, arbiter = None, monitor = None,
                  on_task = None, ioqueue = None,
-                 monitors = None, name = None, socket = None,
+                 monitors = None, name = None, params = None,
                  age = 0, **kwargs):
         # Call on_init
-        self.on_init(impl,**kwargs)
         self._impl = impl
         self._linked_actors = {}
         self.age = age
@@ -181,6 +180,7 @@ Here ``a`` is actually a reference to the remote actor.
         self._state = self.INITIAL
         self.loglevel = impl.loglevel
         self.log = self.getLogger()
+        self._params = params or {}
         self._monitors = monitors or {}
         actor_links = {}
         for a in itervalues(self._monitors):
@@ -193,24 +193,17 @@ Here ``a`` is actually a reference to the remote actor.
             self.log = LogSelf(self,self.log)
             if on_task:
                 self.on_task = on_task
-        else:
-            self._init_arbiter(impl,**kwargs)
             
         self.ioqueue = ioqueue
-        self.ioloop = self.get_eventloop(impl)
-        # ADD SELF TO THE EVENT LOOP TASKS
-        self.ioloop.add_loop_task(self)
-        self.set_socket(socket)
-        inbox = self.inbox
-        if inbox:
-            inbox.set_actor(self)
+        #
+        self.on_init(**kwargs)
     
     def _init_arbiter(self, impl, **kwargs):
         raise ValueError('This is not the arbiter')
         
     @property
     def proxy(self):
-        '''Instance of a :class:`pulsar.ActorProxy` holding a reference
+        '''Instance of a :class:`ActorProxy` holding a reference
 to the actor. The proxy is a lightweight representation of the actor
 which can be shared across different processes (i.e. it is pickable).'''
         return ActorProxy(self)
@@ -275,7 +268,7 @@ longer that timeout.'''
     
     @property
     def monitors(self):
-        '''Dictionary of all :class:`pulsar.Monitor` instances
+        '''Dictionary of all :class:`Monitor` instances
 registered with the actor.'''
         return self._monitors
     
@@ -287,7 +280,7 @@ registered with the actor.'''
     
     def on_init(self, impl, **kwargs):
         '''The :ref:`actor callback <actor-callbacks>` run once at the
-beginning of initialization after forking.'''
+end of initialisation (after forking).'''
         pass
     
     def on_start(self):
@@ -297,7 +290,7 @@ the actor starts (after forking) its event loop.'''
     
     def on_task(self):
         '''The :ref:`actor callback <actor-callbacks>` executed at each
-iteration of the :attr:`pulsar.Actor.ioloop`.'''
+iteration of the :attr:`Actor.ioloop`.'''
         pass
     
     def on_stop(self):
@@ -310,16 +303,11 @@ iteration of the :attr:`pulsar.Actor.ioloop`.'''
  is exting the framework (and vanish in the garbage collector).'''
         pass
     
-    def on_actor_exit(self, aid):
-        '''The :ref:`actor callback <actor-callbacks>` run when a linked
- actor has exited.'''
-        pass
-    
     def on_info(self, data):
         '''An :ref:`actor callback <actor-callbacks>` executed when
  obtaining information about the actor. It can be used to add additional
  data to the *data* dictionary. Information about the actor is obtained
- via the :meth:`pulsar.Actor.info` method which is also exposed
+ via the :meth:`Actor.info` method which is also exposed
  as a remote function.
  
  :parameter data: dictionary of data with information about the actor.
@@ -355,40 +343,39 @@ mean it is running.'''
     
     def handle_request(self, request):
         pass
-    
-    def set_socket(self, socket):
-        '''Set a socket for the actor. The socket is either ``None``
-or an instance of :class:`Socket`.'''
-        self.socket = socket
-        self.address = None if not self.socket else self.socket.getsockname()
-        if self.socket:
-            self.log.info('listening at {0}'.format(self.socket))
             
     def start(self):
-        '''Called after forking to start the life of the actor.'''
+        '''Called after forking to start the life of the actor. This is where
+logging is configured, the mailboxes are registered and
+the :attr:`Actor.ioloop` is initialised and started.'''
         if self._state == self.INITIAL:
+            self._state = self.RUN
             if self.isprocess():
                 self.configure_logging()
-            # if monitor and a ioqueue available, register
-            # the event loop handler
+            self.log.info('Starting')
+            # ADD SELF TO THE EVENT LOOP TASKS
+            self.ioloop = self.get_eventloop()
+            self.ioloop.add_loop_task(self)
+            if self.inbox:
+                self.inbox.register(self)
+            if self.outbox:
+                self.outbox.register(self,inbox=False)
             self.on_start()
-            self._init_runner()
-            self.log.info('Booting')
-            self._state = self.RUN
             self._run()
-            return self
     
-    def get_eventloop(self, impl):
+    def get_eventloop(self):
         ioq = self.ioqueue
         ioimpl = IOQueue(ioq) if ioq else None
         ioloop = IOLoop(io = ioimpl,
                         logger = self.log,
                         name = self.name)
-        #add the handler
-        if ioq and self.monitor:
+        
+        #add the ioqueue handler if needed
+        if ioq:
             ioloop.add_handler('request',
                         lambda fd, request : self.handle_request(request),
                         ioloop.READ)
+        self._init_runner()
         return ioloop
     
     def message_arrived(self, message):
@@ -410,19 +397,31 @@ or an instance of :class:`Socket`.'''
     def put(self, request):
         '''Put a request into the actor :attr:`ioqueue` if available.'''
         if self.ioqueue:
-            self.log.debug('Put a {0} on task queue'.format(request))
+            self.log.debug('Put {0} on IO queue'.format(request))
             self.ioqueue.put(('request',request))
         else:
             self.log.error("Trying to put a request on task queue,\
  but there isn't one!")
+            
+    def __getitem__(self,key):
+        return self._params[key]
+    
+    def __setitem__(self,key,val):
+        self._params[key] = val
+        
+    def get(self, key, default = None):
+        try:
+            return self.__getitem__(key)
+        except KeyError:
+            return default
         
     ############################################################################
     # STOPPING
     ############################################################################
     
     def stop(self):
-        '''Stop the actor by stopping its :attr:`pulsar.Actor.ioloop`
-and closing its :attr:`pulsar.Actor.inbox` orderly. Once everything is closed
+        '''Stop the actor by stopping its :attr:`Actor.ioloop`
+and closing its :attr:`Actor.inbox` orderly. Once everything is closed
 properly this actor will go out of scope.'''
         if self._state == self.RUN:
             self._state = self.STOPPING
@@ -430,8 +429,8 @@ properly this actor will go out of scope.'''
             stp = self.on_stop()
             if not stp:
                 stp = self.ioloop.stop()
-            stp.add_callback(lambda r : self.close())\
-               .add_callback(raise_failure)
+            make_async(stp).add_callback(lambda r : self.close())\
+                           .add_callback(raise_failure)
         
     def close(self):
         if self.stopping():
@@ -440,18 +439,11 @@ properly this actor will go out of scope.'''
             if not self.ioloop.remove_loop_task(self):
                 self.log.warn('"{0}" could not be removed from\
  eventloop'.format(self.fullname))
-            #if self.impl != 'monitor':
-            #    self.arbiter.send(self,'on_actor_exit')
             if self.inbox:
                 self.inbox.close()
             if self.outbox:
                 self.outbox.close()
             self.log.info('exited')
-        
-    def shut_down(self):
-        '''Called by ``self`` to shut down the arbiter'''
-        if self.arbiter:
-            self.proxy.stop(self.arbiter)
             
     # LOW LEVEL API
     
@@ -478,7 +470,7 @@ properly this actor will go out of scope.'''
 actions:
 
 * it notifies linked actors if required (arbiter only for now)
-* it executes the :meth:`pulsar.Actor.on_task` callback.
+* it executes the :meth:`Actor.on_task` callback.
 '''
         # If this is not a monitor
         # we notify to the arbiter we are still alive
@@ -561,15 +553,11 @@ framework'''
     
     def actor_stop(self, caller):
         '''Actor :ref:`remote function <remote-functions>` which stops
-the actor by invoking the local :meth:`pulsar.Actor.stop` method. This
+the actor by invoking the local :meth:`Actor.stop` method. This
 method only works if self is not the arbiter.'''
         if self.arbiter:
             return self.stop()
         
-    def actor_on_actor_exit(self, caller):
-        self._linked_actors.pop(caller,None)
-        self.on_actor_exit(caller)
-    
     def actor_notify(self, caller, info):
         '''Actor :ref:`remote function <remote-functions>` for notifying
 the actor information to the caller.'''
@@ -592,41 +580,23 @@ the actor information to the caller.'''
     
     def _init_runner(self):
         '''Initialise the runner.'''
-        if self.isprocess():
-            random.seed()
-            proc_name = self.DEF_PROC_NAME
-            if hasattr(self,'cfg'):
-                proc_name = self.cfg.proc_name or self.cfg.default_proc_name
-            else:
-                proc_name = self.DEF_PROC_NAME
-            proc_name = "{0} - {1}".format(proc_name,self)
-            if system.set_proctitle(proc_name):
-                self.log.debug('Set process title to {0}'.format(proc_name))
-            #system.set_owner_process(self.cfg.uid, self.cfg.gid)
-        self._setup()
-        self._install_signals()
+        if not self.isprocess():
+            return
         
-    def _setup(self):
-        pass
-    
-    def _run(self):
-        '''The run implementation which must be done by a derived class.'''
-        try:
-            self.ioloop.start()
-        except:
-            self.log.exception("Unhandled exception exiting.", exc_info = True)
-        finally:
-            self.stop()
-            
-    ############################################################################
-    # SIGNALS HANDLING
-    ############################################################################
-    
-    def _install_signals(self):
-        '''Initialise signals for correct signal handling.'''
+        random.seed()
+        proc_name = self.DEF_PROC_NAME
+        cfg = self.get('cfg')
+        if cfg:
+            proc_name = cfg.proc_name or cfg.default_proc_name
+        else:
+            proc_name = self.DEF_PROC_NAME
+        proc_name = "{0} - {1}".format(proc_name,self)
+        if system.set_proctitle(proc_name):
+            self.log.debug('Set process title to {0}'.format(proc_name))
+        #system.set_owner_process(cfg.uid, cfg.gid)
         current = self.current_thread()
-        if current == MAIN_THREAD and self.isprocess():
-            self.log.info('Installing signals')
+        if current == MAIN_THREAD:
+            self.log.debug('Installing signals')
             # The default signal handling function in signal
             sfun = getattr(self,'signal',None)
             for name in system.ALL_SIGNALS:
@@ -639,12 +609,22 @@ the actor information to the caller.'''
                         signal.signal(sig, func)
                     except ValueError:
                         break
+    
+    def _run(self):
+        '''The run implementation which must be done by a derived class.'''
+        try:
+            self.ioloop.start()
+        except:
+            self.log.critical("Unhandled exception exiting.", exc_info = True)
+        finally:
+            self.stop()
+
                     
-    def signal_stop(self, sig, frame):
+    def _signal_stop(self, sig, frame):
         signame = system.SIG_NAMES.get(sig,None)
         self.log.warning('got signal {0}. Exiting.'.format(signame))
         self.stop()
             
-    handle_int  = signal_stop
-    handle_quit = signal_stop
-    handle_term = signal_stop
+    handle_int  = _signal_stop
+    handle_quit = _signal_stop
+    handle_term = _signal_stop

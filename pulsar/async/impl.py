@@ -6,7 +6,7 @@ from pulsar.utils.tools import gen_unique_id
 from pulsar.utils.py2py3 import pickle
 
 from .iostream import AsyncIOStream
-from .mailbox import mailbox, IOQueue, serverInbox
+from .mailbox import mailbox, IOQueue, SocketServerMailbox
 from .proxy import ActorProxyMonitor
 
 
@@ -76,8 +76,7 @@ a socket, a pipe or a queue.'''
                        'monitor':monitor})
         
     def get_inbox(self, arbiter, monitor):
-        '''Create the inbox :class:`Mailbox`. By default it is either a socket
-(in windows) or a pipe (in posix).
+        '''Create the inbox :class:`Mailbox`.
 
 :parameter arbiter: The :class:`Arbiter`
 :parameter monitor: Optional instance of the :class:`Monitor` supervising
@@ -89,22 +88,11 @@ If so the mailbox will be based on the queue since the actor
 won't have a select/epoll type ionput/output but one based on
 :class:`IOQueue`.
 '''
-        if not arbiter:
-            # This is the arbiter implementation
-            return serverInbox()
-            #if platform.type != 'posix':
-            #    self.inbox = arbiter_socket()
-            #else:
-            #    self.inbox = None
-        if monitor:
-            ioq = monitor.ioqueue
-            if ioq:
-                return mailbox(id = 'inbox', queue = ioq)
-            else:
-                return None
+        ioq = self.a_kwargs.get('ioqueue')
+        if ioq:
+            return mailbox(id = 'inbox', queue = ioq)
         else:
-            # Monitors use the same inbox as the arbiter
-            return arbiter.inbox
+            return SocketServerMailbox()
         
     def make_actor(self):
         '''create an instance of :class:`Actor`. For standard actors, this
@@ -123,6 +111,11 @@ loop and therefore do not require an inbox.'''
         self.a_kwargs['arbiter'] = arbiter
         self.timeout = 0
         self.make_actor()
+        
+    def get_inbox(self, arbiter, monitor):
+        if not arbiter:
+            # This is the arbiter implementation
+            return SocketServerMailbox()
         
     def proxy_monitor(self):
         return None
@@ -160,10 +153,6 @@ class ActorThread(Thread,ActorImpl):
         init_actor(self, Thread, *args)
         
     def run(self):
-        # First simulate a forking by pickling contents
-        for k in ('outbox',):
-            v = pickle.loads(pickle.dumps(getattr(self,k)))
-            setattr(self,k,v)
         self.make_actor()
         self.actor.start()
     

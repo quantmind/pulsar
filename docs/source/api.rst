@@ -130,6 +130,12 @@ Create Socket
 .. autofunction:: create_socket
 
 
+Socket Pair
+~~~~~~~~~~~~~~~~~~~~
+
+.. autofunction:: socket_pair
+
+
 Socket
 ~~~~~~~~~~~~~~~~~~~~~~
 

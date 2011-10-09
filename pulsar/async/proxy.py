@@ -10,8 +10,7 @@ __all__ = ['ActorMessage',
            'ActorProxy',
            'ActorProxyMonitor',
            'get_proxy',
-           #'ActorCallBack',
-           #'ActorCallBacks',
+           'ActorCallBacks',
            'process_message',
            'DEFAULT_MESSAGE_CHANNEL']
 
@@ -61,28 +60,6 @@ the receiver eventloop.'''
                     lambda res : sender.send(receiver, 'callback',\
                                              message.rid, res))\
             .add_callback(raise_failure)
-            #ActorCallBack(self,result).\
-            #    add_callback(message.make_actor_callback(self,sender))
-
-
-class ActorCallBack(Deferred):
-    '''An actor callback run on the actor event loop'''
-    def __init__(self, actor, request, *args, **kwargs):
-        super(ActorCallBack,self).__init__()
-        self.args = args
-        self.kwargs = kwargs
-        self.actor = actor
-        self.request = request
-        if is_async(request):
-            self.__call__()
-        else:
-            self.callback(self.request)
-        
-    def __call__(self):
-        if self.request.called:
-            self.callback(self.request.result)
-        else:
-            self.actor.ioloop.add_callback(self)
 
 
 class ActorCallBacks(Deferred):
@@ -241,7 +218,7 @@ communicating between actors.
 When sending a message, first we check the ``sender`` outbox. If that is
 not available, we get the receiver ``inbox`` and hope it can carry the message.
 If there is no inbox either, abort the message passing and log a critical error.
-    '''
+'''
         mailbox = sender.outbox
         # if the sender has no outbox, pick the receiver mailbox an hope
         # for the best
@@ -258,7 +235,7 @@ If there is no inbox either, abort the message passing and log a critical error.
             mailbox.put(msg)
             return msg
         except Exception as e:
-            sender.log.error('Failed to send message {0}: {1}'.\
+            sender.log.critical('Failed to send message {0}: {1}'.\
                              format(msg,e), exc_info = True)
         
     def __repr__(self):
@@ -284,12 +261,20 @@ object including, aid (actor id), timeout and mailbox size.'''
         self.send(sender,'stop')
         
 
-
 class ActorProxyMonitor(ActorProxy):
-    '''A specialized :class:`pulsar.ActorProxy` class which contains additional
+    '''A specialised :class:`pulsar.ActorProxy` class which contains additional
 information about the remote underlying :class:`pulsar.Actor`. Unlike the
 :class:`pulsar.ActorProxy` class, instances of this class are not pickable and
-therefore remain in the process where they have been created.'''
+therefore remain in the process where they have been created.
+
+.. attribute:: impl
+
+    Instance of the remote actor :class:`ActorImpl`
+    
+.. attribute:: info
+
+    Dictionary of information regarding the remote actor
+'''
     def __init__(self, impl):
         self.impl = impl
         self.info = {'last_notified':time()}

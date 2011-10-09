@@ -6,25 +6,89 @@ A task-queue application for pulsar::
     tq = tasks.TaskQueue(tasks_path = 'path.to.tasks.*')
     tq.start()
     
-An application implements several :class:`pulsar.apps.tasks.Job`
+An application implements several :class:`Job`
 classes which specify the way each task is run.
-Each job class is task-factory, therefore, a task is always associated
+Each job class is a task-factory, therefore, a task is always associated
 with one job, which can be of two types:
 
 * standard (:class:`Job`)
 * periodic (:class:`PeriodicJob`)
 
-To define a task is simple, subclass from :class:`Job` and implement the
+To define a job is simple, subclass from :class:`Job` and implement the
 callable function::
 
     from pulsar.apps import tasks
     
-    class MyJob(tasks.Job):
+    class Addition(tasks.Job):
     
-        def __call__(self, consumer, *args, **kwargs):
-            ...
+        def __call__(self, consumer, a, b):
+            "Add two numbers"
+            return a+b
             
-The *consumer* is passed by the task queue.
+The *consumer* is passed by the task queue, while the remaining arguments are
+needed by your job implementation.
+
+Task Class
+================
+
+By default, tasks are constructed using an in-memory implementation of
+:class:`Task`. To use a different implementation, for example one that
+saves tasks on a database, subclass :class:`Task` and pass the new class
+to the :class:`TaskQueue` constructor::
+    
+    from pulsar.apps import tasks
+    
+    class TaskDatabase(tasks.Task):
+        
+        def on_created(self):
+            return save2db(self)
+        
+        def on_received(self):
+            return save2db(self)
+            
+        def on_start(self):
+            return save2db(self)
+            
+        def on_finish(self):
+            return save2db(self)
+            
+        @classmethod
+        def get_task(cls, id, remove = False):
+            return taskfromdb(id)
+            
+            
+    tq = tasks.TaskQueue(task_class = TaskDatabase,
+                         tasks_path = 'path.to.tasks.*')
+    tq.start()
+
+
+.. _tasks-callbacks:
+
+Task callbacks
+~~~~~~~~~~~~~~~~~~~
+
+When creating your own task class all you need to override are the four
+task callbacks:
+
+* :meth:`Task.on_created` called by the taskqueue when it creates a new task
+  instance.
+* :meth:`Task.on_received` called by a worker when it receives the task.
+* :meth:`Task.on_start` called by a worker when it starts the task.
+* :meth:`Task.on_finish` called by a worker when it ends the task.
+
+
+Task state
+~~~~~~~~~~~~~
+
+A :class:`Task` can have one of the following `status`:
+
+* ``PENDING`` A task waiting for execution and unknown.
+* ``RECEIVED`` when the task is received by the task queue.
+* ``STARTED`` task execution has started.
+* ``REVOKED`` the task execution has been revoked. One possible reason could be
+  the task has timed out.
+* ``SUCCESS`` task execution has finished with success.
+* ``FAILURE`` task execution has finished with failure.
 '''
 import os
 from time import time
@@ -69,12 +133,11 @@ class Remotes(pulsar.ActorBase):
                                     ack = False, **kwargs)
     actor_addtask_noack.ack = False
     
-    def actor_task_finished(self, caller, response):
-        self.app.task_finished(response)
-    actor_task_finished.ack = False
+    def actor_save_task(self, caller, task):
+        self.app.task_class.save_task(task)
     
     def actor_get_task(self, caller, id):
-        return self.app.get_task(id)
+        return self.app.task_class.get_task(id)
     
     def actor_job_list(self, caller, jobnames = None):
         return list(self.app.job_list(jobnames = jobnames))
@@ -89,16 +152,16 @@ tasks and managing scheduling of tasks.
     
 .. attribute:: registry
 
-    Instance of a :class:`pulsar.apps.tasks.JobRegistry` containing all
-    registered :class:`pulsar.apps.tasks.Job` instances.
+    Instance of a :class:`JobRegistry` containing all
+    registered :class:`Job` instances.
 '''
     REMOVABLE_ATTRIBUTES = ('scheduler',) +\
                              pulsar.Application.REMOVABLE_ATTRIBUTES
     task_class = TaskInMemory
-    '''A subclass of :class:`pulsar.apps.tasks.Task` for storing information
+    '''A subclass of :class:`Task` for storing information
     about task execution.
     
-    Default: :class:`pulsar.apps.tasks.TaskInMemory`'''
+    Default: :class:`TaskInMemory`'''
     
     cfg = {'timeout':'3600'}
     
@@ -109,7 +172,7 @@ loop of the :class:`pulsar.ApplicationMonitor` running the task queue
 application, the application checks if a new periodic tasks need to
 be scheduled. If so it makes the task requests.
 
-Check the :meth:`pulsar.apps.tasks.TaskQueue.monitor_task` callback
+Check the :meth:`TaskQueue.monitor_task` callback
 for implementation.'''
         if not hasattr(self,'_scheduler'):
             self._scheduler = Scheduler(self.task_class)
@@ -147,16 +210,10 @@ to check if the schedulter needs to perform a new run.'''
         '''Called by the worker to perform the *task* in the queue.'''
         job = registry[task.name]
         with task.consumer(self,worker,job) as consumer:
-            task.on_start(worker)
+            yield task.start(worker)
             task.result = job(consumer, *task.args, **task.kwargs)
-        return TaskResponse(worker,task)
+        yield TaskResponse(worker,task)
             
-    def task_finished(self, response):
-        response.on_finish()
-        
-    def get_task(self, id):
-        return self.task_class.get_task(id)
-    
     def job_list(self, jobnames = None):
         return self.scheduler.job_list(jobnames = jobnames)
     

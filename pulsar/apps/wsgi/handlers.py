@@ -8,13 +8,14 @@ __all__ = ['HttpHandler','HttpPoolHandler']
 class HttpHandler(object):
     '''Handle HTTP requests and delegate the response to the worker'''
 
-    def __init__(self, worker):
+    def __init__(self, worker, socket):
         self.worker = worker
-        self.iostream = pulsar.IOStream if self.worker.cfg.synchronous else\
-                        pulsar.AsyncIOStream
+        self.socket = socket
+        self.iostream = pulsar.IOStream if self.worker.app.cfg.synchronous\
+                         else pulsar.AsyncIOStream
         
     def __call__(self, fd, events):
-        client, addr = self.worker.socket.accept()
+        client, addr = self.socket.accept()
         if client:
             stream = self.iostream(actor = self.worker, socket = client)
             self.handle(net.HttpRequest(stream, addr))

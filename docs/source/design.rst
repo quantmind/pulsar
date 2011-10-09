@@ -43,7 +43,8 @@ Actor Callbacks
 :class:`pulsar.Actor` exposes five callback functions which can be
 used to customize the behaviour of the actor.
 
- * :meth:`pulsar.Actor.on_start` called just after forking.
+ * :meth:`pulsar.Actor.on_init` called just after initialization after forking.
+ * :meth:`pulsar.Actor.on_start` called just before the actor event loop starts.
  * :meth:`pulsar.Actor.on_task` called at every actor event loop.
  * :meth:`pulsar.Actor.on_stop`.
  * :meth:`pulsar.Actor.on_exit`.

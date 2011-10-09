@@ -92,6 +92,9 @@ class Waker(object):
         self._reader.setblocking(False)
         s.close()
         
+    def __str__(self):
+        return 'Socket waker {0}'.format(self.fileno())
+        
     def fileno(self):
         return self._reader.fileno()
     
