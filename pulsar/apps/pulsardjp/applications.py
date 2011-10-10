@@ -55,7 +55,7 @@ class ServerView(admin.TabView):
                   'timeout': nicetimedelta}
     
     def get_client(self, instance):
-        return rpc.JsonProxy(instance.path())
+        return rpc.JsonProxy(instance.path)
         
     def render_object_view(self, djp, appmodel, instance):
         r = self.get_client(instance)
@@ -101,13 +101,13 @@ class PulsarServerApplication(admin.AdminApplication):
     form = ServerForm
     list_per_page = 100
     converters = {'uptime': nicetimedelta}
-    list_display = ('code','path','machine','this','notes')
+    list_display = ('code','path','this','notes')
     object_widgets = views.extend_widgets({'home':ServerView()})
     
     view = PulsarView()
     
     def get_client(self, instance):
-        return rpc.JsonProxy(instance.path())
+        return rpc.JsonProxy(instance.path)
     
      
 

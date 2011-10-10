@@ -3,7 +3,7 @@ import sys
 import djpcms
 
 import pulsar
-from pulsar.apps.pulsardjp import DjpCmsApplicationCommand
+from pulsar.apps.pulsardjp import DjpCmsWSGIApplication
 
 
 class Command(djpcms.Command):
@@ -13,5 +13,5 @@ class Command(djpcms.Command):
         self.execute(sites, argv)
         
     def handle(self, callable, argv):
-        DjpCmsApplicationCommand(callable = callable,
-                                 argv = argv).start()
+        DjpCmsWSGIApplication(callable = callable,
+                              argv = argv).start()

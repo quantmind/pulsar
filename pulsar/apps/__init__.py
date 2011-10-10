@@ -61,59 +61,11 @@ def make_response(request, response, err = None):
         else:
             response.exception = err.append(response.exception)
     return response
-        
 
-class Worker(pulsar.Actor):
-    """\
-Base class for a :class:`pulsar.Actor` serving a :class:`pulsar.Application`.
-It provides two new functions :meth:`handle_request` and :meth:`handle_response`
-used for by the application for handling requests and sending back responses.
-    
-.. attribute:: app
 
-    Instance of the :class:`pulsar.Application` to be performed by the worker
-    
-.. attribute:: cfg
 
-    Configuration dictionary
-
-"""        
-    def on_init(self, app = None, **kwargs):
-        self.app = app
-        self.cfg = app.cfg
-        self.max_requests = self.cfg.max_requests or sys.maxsize
-        self.information = LogInformation(self.cfg.logevery)
-        self.app_handler = app.handler()
-    
-    # Delegates Callbacks to the application
-         
-    def on_start(self):
-        self.app.worker_start(self)
-        try:
-            self.cfg.worker_start(self)
-        except:
-            pass
-    
-    def on_task(self):
-        if self.information.log():
-            self.log.info('Processed {0} requests'.format(self.nr))
-        self.app.worker_task(self)
-    
-    def on_stop(self):
-        self.app.worker_stop(self)
-            
-    def on_exit(self):
-        self.app.worker_exit(self)
-        try:
-            self.cfg.worker_exit(self)
-        except:
-            pass
-        
-    def on_info(self, data):
-        data.update({'request processed': self.nr,
-                     'max requests':self.cfg.max_requests})
-        return data
-            
+class HandlerMixin(object):
+      
     def handle_request(self, request):
         '''Entry point for handling a request. This is a high level
 function which performs some pre-processing of *request* and delegates
@@ -167,24 +119,78 @@ After obtaining the result from the
         if self.local.get('should_stop'):
             self.log.info("Auto-restarting worker.")
             self.stop()
+      
+
+class Worker(HandlerMixin,pulsar.Actor):
+    """\
+Base class for a :class:`Actor` serving a :class:`Application`.
+It provides two new functions :meth:`handle_request` and :meth:`handle_response`
+used for by the application for handling requests and sending back responses.
+    
+.. attribute:: app
+
+    Instance of the :class:`Application` to be performed by the worker
+    
+.. attribute:: cfg
+
+    Configuration dictionary
+
+"""        
+    def on_init(self, app = None, **kwargs):
+        self.app = app
+        self.cfg = app.cfg
+        self.max_requests = self.cfg.max_requests or sys.maxsize
+        self.information = LogInformation(self.cfg.logevery)
+        self.app_handler = app.handler()
+    
+    # Delegates Callbacks to the application
+         
+    def on_start(self):
+        self.app.worker_start(self)
+        try:
+            self.cfg.worker_start(self)
+        except:
+            pass
+    
+    def on_task(self):
+        if self.information.log():
+            self.log.info('Processed {0} requests'.format(self.nr))
+        self.app.worker_task(self)
+    
+    def on_stop(self):
+        self.app.worker_stop(self)
+            
+    def on_exit(self):
+        self.app.worker_exit(self)
+        try:
+            self.cfg.worker_exit(self)
+        except:
+            pass
+        
+    def on_info(self, data):
+        data.update({'request processed': self.nr,
+                     'max requests':self.cfg.max_requests})
+        return data
     
     def configure_logging(self, **kwargs):
         #switch off configure logging. Done by self.app
         pass
 
 
-class ApplicationMonitor(pulsar.Monitor):
-    '''A spcialized :class:`pulsar.Monitor` implementation for managing
-pulsar applications (subclasses of :class:`pulsar.Application`).
+class ApplicationMonitor(HandlerMixin,pulsar.Monitor):
+    '''A spcialized :class:`Monitor` implementation for managing
+pulsar applications (subclasses of :class:`Application`).
 '''
     def on_init(self, app = None, **kwargs):
         self.app = app
         self.cfg = app.cfg
+        self.max_requests = 0
         kwargs['actor_class'] = app.cfg.worker_class
         kwargs['num_actors'] = app.cfg.workers
         arbiter = pulsar.arbiter()
         if not arbiter.get('cfg'):
             arbiter['cfg'] = app.cfg
+        self.app_handler = app.handler()
         super(ApplicationMonitor,self).on_init(**kwargs)
     
     # Delegates Callbacks to the application    
@@ -205,7 +211,7 @@ pulsar applications (subclasses of :class:`pulsar.Application`).
         self.worker_class.clean_arbiter_loop(self,self.ioloop)
             
     def actorparams(self):
-        '''Override the :meth:`pulsar.Monitor.actorparams` method to
+        '''Override the :meth:`Monitor.actorparams` method to
 updated actor parameters with information about the application.
 
 :rtype: a dictionary of parameters to be passed to the
@@ -238,9 +244,7 @@ When creating a new application, a new :class:`ApplicationMonitor`
 instance is added to the :class:`Arbiter`, ready to perform
 its duties.
     
-:parameter callable: A callable which return the application server.
-    The callable must be pickable, therefore it is either a function
-    or a pickable object.
+:parameter callable: Initialise the :attr:`Application.callable` attribute.
 :parameter description: A string describing the application.
     It will be displayed on the command line.
 :parameter epilog: Epilog string you will see when interacting with the command
@@ -257,6 +261,15 @@ its duties.
     
     Default `None`
     
+.. attribute:: callable
+
+    A callable serving your application. The callable must be pickable,
+    therefore it is either a function
+    or a pickable object. If not provided, the application must
+    implement the :meth:`handler` method.
+    
+    Default `None`
+    
 .. attribute:: cfg
 
     dictionary of default configuration parameters.
@@ -265,7 +278,7 @@ its duties.
     
 .. attribute:: mid
 
-    The unique id of the :class:`pulsar.ApplicationMonitor` managing the
+    The unique id of the :class:`ApplicationMonitor` managing the
     application. Defined at runtime.
 """
     cfg = {}
@@ -319,9 +332,9 @@ a *request*.
 
 :parameter worker: the :class:`Worker` handling the request.
 :parameter request: an application specific request object.
-:rtype: It can be a generator, a :class:`pulsar.Deferred` instance
+:rtype: It can be a generator, a :class:`Deferred` instance
     or the actual response which will be passed to the
-    :meth:`pulsar.Application.handle_response` method.'''
+    :meth:`Application.handle_response` method.'''
         raise NotImplementedError
     
     def handle_response(self, worker, response):
@@ -465,19 +478,17 @@ The parameters overrriding order is the following:
     def init(self, opts):
         pass
     
-    def load(self):
-        pass
-        
     def handler(self):
         '''Returns a callable application handler,
-used by a :class:`pulsar.Worker` to carry out its task.'''
-        return self.load() or self.callable
+used by a :class:`Worker` to carry out its task. By default it
+returns the :attr:`Application.callable`.'''
+        return self.callable
     
     # MONITOR AND WORKER CALLBACKS
     
     def update_worker_paramaters(self, monitor, params):
-        '''Called by the :class:`pulsar.ApplicationMonitor` when
-returning from the :meth:`pulsar.ApplicationMonitor.actorparams`
+        '''Called by the :class:`ApplicationMonitor` when
+returning from the :meth:`ApplicationMonitor.actorparams`
 and just before spawning a new worker for serving the application.
 
 :parameter monitor: instance of the monitor serving the application.
@@ -491,7 +502,7 @@ doing anything.'''
         return params
     
     def worker_start(self, worker):
-        '''Called by the :class:`pulsar.Worker` after fork'''
+        '''Called by the :class:`Worker` after fork'''
         pass
     
     def worker_task(self, worker):

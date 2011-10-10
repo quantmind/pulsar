@@ -359,5 +359,7 @@ there is no upgrade.'''
         yield self # return itself.
         
     def on_close(self):
+        '''If status is available send headers.'''
         if self.__status:
-            self.send_headers()
+            return self.send_headers()
+    

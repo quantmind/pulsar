@@ -11,7 +11,7 @@ from .exceptions import *
 from .states import *
 
 
-__all__ = ['Task','TaskInMemory']
+__all__ = ['Task','TaskInMemory','nice_task_message']
     
 
 class TaskConsumer(object):
@@ -116,7 +116,7 @@ returns nothing.'''
             self.status = RECEIVED
             self._toqueue = True
             self.on_received()
-            return self
+        return self
         
     def needs_queuing(self):
         return self.__dict__.pop('_toqueue',False)
@@ -187,6 +187,9 @@ its execution'''
 its execution'''
         pass
 
+    def close(self):
+        pass
+
 
 class TaskInMemory(Task):
     '''An in memory implementation of a Task'''
@@ -243,3 +246,15 @@ class TaskInMemory(Task):
             if task.done():
                 cls._TASKS.pop(id)
         return task
+
+
+def nice_task_message(req, smart_time = None):
+    smart_time = smart_time or format_time
+    status = req['status'].lower()
+    user = req.get('user',None)
+    ti = req.get('time_start',req.get('time_executed',None))
+    name = '{0} ({1}) '.format(req['name'],req['id'][:8])
+    msg = '{0} {1} at {2}'.format(name,status,smart_time(ti))
+    if user:
+        msg = '{0} by {1}'.format(msg,user)
+    return msg

@@ -325,8 +325,9 @@ generator.'''
                     if d.called:
                         consume = not self._should_stop(d.result)
                     else:
-                        return d.add_callback(self._resume).start(self._ioloop,
-                                                                  self._timeout)
+                        # the deferred is not ready.
+                        return d.add_callback(self._resume)\
+                                .start(self._ioloop, self._timeout)
         
         if consume:
             if self._errors:

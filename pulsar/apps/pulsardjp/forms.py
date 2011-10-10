@@ -9,9 +9,7 @@ job_forms = {}
 
 class ServerForm(forms.Form):
     code = forms.CharField()
-    schema = forms.CharField(initial = 'http://')
-    host = forms.CharField()
-    port = forms.IntegerField(initial = 8060)
+    path = forms.CharField(initial = 'http://127.0.0.1')
     notes = forms.CharField(widget = html.TextArea,
                             required = False)
     location = forms.CharField(required = False)

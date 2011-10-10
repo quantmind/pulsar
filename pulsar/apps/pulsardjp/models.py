@@ -18,25 +18,16 @@ try:
     
     class PulsarServer(orm.StdModel):
         code = orm.SymbolField()
-        host = orm.SymbolField()
-        port = orm.IntegerField(default = 8060, index = False)
+        path = orm.CharField(required = True)
         notes = orm.CharField(required = False)
         location = orm.CharField()
-        schema = orm.CharField(default = 'http://')
         
         def __unicode__(self):
-            return to_string('{0} - {1}'.format(self.code,self.path()))
+            return to_string('{0} - {1}'.format(self.code,self.path))
         
         def this(self):
-            return self.host == platform.node()
+            return False
         this.boolean = True
-        
-        def path(self):
-            ap = ''
-            if self.port:
-                ap = ':%s' % self.port
-            return '{0}{1}{2}'.format(self.schema,self.host,ap)
-
 
     class JobModel(orm.FakeModel):
         

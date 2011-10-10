@@ -28,6 +28,7 @@ class ActorLink(object):
         self.middleware = middleware or []
         
     def proxy(self, sender):
+        '''Get the :class:`ActorProxy` for the sender.'''
         proxy = sender.get_actor(self.name)
         if not proxy:
             raise ValueError('Got a request from actor {0} which is\
@@ -37,9 +38,12 @@ class ActorLink(object):
     def add_middleware(self, middleware):
         '''Add a middleware function to the middleware list.
 A middleware function takes 2 parameters, an instance of
-:class:`ActorLinkCallback` and a dictionary.'''
+:class:`ActorLinkCallback` and a dictionary.
+
+:rtype: ``self`` so it can be chained.'''
         if middleware not in self.middleware:
             self.middleware.append(middleware)
+        return self
     
     def process_middleware(self, callback, kwargs):
         for process in self.middleware:

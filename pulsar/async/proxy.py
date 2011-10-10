@@ -28,7 +28,8 @@ def get_proxy(obj, safe = False):
         if safe:
             return None
         else:
-            raise ValueError('"{0}" is not a remote or remote proxy.'.format(obj))
+            raise ValueError('"{0}" is not an actor or actor proxy.'\
+                             .format(obj))
 
         
 def actorid(actor):

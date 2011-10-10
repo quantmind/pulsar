@@ -342,12 +342,12 @@ mean it is running.'''
         return self._state >= self.CLOSE
     
     def handle_request(self, request):
-        pass
+        raise NotImplementedError
             
     def start(self):
         '''Called after forking to start the life of the actor. This is where
-logging is configured, the mailboxes are registered and
-the :attr:`Actor.ioloop` is initialised and started.'''
+logging is configured, the :attr:`Actor.inbox` and :attr:`Actor.outbox`
+are registered and the :attr:`Actor.ioloop` is initialised and started.'''
         if self._state == self.INITIAL:
             self._state = self.RUN
             if self.isprocess():

@@ -32,7 +32,7 @@ it makes sure there are always :attr:`num_actors` alive.
     
 .. attribute:: actor_class
 
-    The class derived form :class:`pulsar.Actor` which the monitor manages
+    The class derived form :class:`Actor` which the monitor manages
     during its life time.
     
     Default: :class:`Actor`
@@ -98,20 +98,28 @@ as required."""
         for actor in itervalues(self.MANAGED_ACTORS):
             if actor.is_alive():
                 actor.stop(self)
-
+    
+    def send(self, sender, action, *args, **kwargs):
+        '''The send method.'''
+        func = self.actor_functions.get(action)
+        if func:
+            return func(self,sender,*args,**kwargs)
+        else:
+            return self.channel_message(sender,*args,**kwargs)
+        
 
 class Monitor(PoolMixin,Actor):
     '''\
-A monitor is a special :class:`pulsar.Actor` which shares
-the same event loop with the :class:`pulsar.Arbiter`
+A monitor is a special :class:`Actor` which shares
+the same event loop with the :class:`Arbiter`
 and therefore lives in the main process. The Arbiter manages monitors which
-in turn manage a set of :class:`pulsar.Actor` performing similar tasks.
+in turn manage a set of :class:`Actor` performing similar tasks.
 
 Therefore you may
 have a monitor managing actors for serving HTTP requests on a given port,
 another monitor managing actors consuming tasks from a task queue and so forth.
 
-Monitors are created by invoking the :meth:`pulsar.Arbiter.add_monitor`
+Monitors are created by invoking the :meth:`Arbiter.add_monitor`
 functions and not by directly invoking the constructor. Therefore
 adding a new monitor to the arbiter follows the pattern::
 
@@ -128,7 +136,6 @@ You can also create a monitor with a distributed queue as IO mechanism::
                                      'mymonitor',
                                      ioqueue = Queue())
 
-    
 '''
     socket = None
     
@@ -136,29 +143,31 @@ You can also create a monitor with a distributed queue as IO mechanism::
         return False
         
     def monitor_task(self):
-        '''Monitor specific task called by the :meth:`pulsar.Monitor.on_task`
+        '''Monitor specific task called by the :meth:`Monitor.on_task`
 :ref:`actor callback <actor-callbacks>` at each iteration in the event loop.
 By default it does nothing.'''
         pass
     
     # HOOKS        
     def on_task(self):
-        '''Overrides the :meth:`pulsar.Actor.on_task`
+        '''Overrides the :meth:`Actor.on_task`
 :ref:`actor callback <actor-callbacks>` to perform
-the monitor event loop tasks: a) maintain a responsive set of actors ready
-to perform their duty and b) perform its own task.
+the monitor event loop tasks:
 
-The monitor performs its tasks in the following way:
+ * maintain a responsive set of actors ready to perform their duty
+ * perform its own task
 
-* It calls :meth:`pulsar.Monitor.manage_actors` which removes from the live
+The implementation goes as following:
+
+* It calls :meth:`PoolMixin.manage_actors` which removes from the live
   actors dictionary all actors which are not alive.
-* Spawn new actors if required by calling :meth:`pulsar.Monitor.spawn_actors`
-  and :meth:`pulsar.Monitor.stop_actors`.
-* Call :meth:`pulsar.Monitor.monitor_task` which performs the monitor specific
+* Spawn new actors if required by calling :meth:`PoolMixin.spawn_actors`
+  and :meth:`PoolMixin.stop_actors`.
+* Call :meth:`Monitor.monitor_task` which performs the monitor specific
   task.
   
   User should not override this method, and use
-  :meth:`pulsar.Monitor.monitor_task` instead.'''
+  :meth:`Monitor.monitor_task` instead.'''
         self.manage_actors()
         if self.running():
             self.spawn_actors()
@@ -166,6 +175,8 @@ The monitor performs its tasks in the following way:
             self.monitor_task()
             
     def on_stop(self):
+        '''Overrides the :meth:`Actor.on_task`
+:ref:`actor callback <actor-callbacks>` to stop managed actors.'''
         self.close_actors()
         return make_async()
         
@@ -193,8 +204,8 @@ The monitor performs its tasks in the following way:
         return self.cfg.concurrency == 'process'
     
     def spawn_actor(self):
-        '''Spawn a new actor and add its :class:`pulsar.ActorProxyMonitor`
- to the :attr:`pulsar.Monitor.MANAGED_ACTORS` dictionary.'''
+        '''Spawn a new actor and add its :class:`ActorProxyMonitor`
+ to the :attr:`PoolMixin.MANAGED_ACTORS` dictionary.'''
         worker = self.arbiter.spawn(
                         actor_class = self.actor_class,
                         monitor = self,

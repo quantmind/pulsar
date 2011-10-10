@@ -31,6 +31,29 @@ def set_proxy_function(sites, proxy):
                 
 
 class SiteLoader(object):
+    '''An pickable utility for loading and configuring djpcms_ sites before 
+ pulsar server starts. It can be used as the callable to be be passed to
+ the ``run_pulsar`` command.
+ 
+ .. attribute:: name
+ 
+     The configuration name, useful when different types of configuration are
+     needed (WEB, RPC, ...)
+     
+
+A tipical usage along these lines::
+
+    import djpcms
+    from pulsar.apps import pulsardjp
+    
+    pt.add(module='siropy', down = ('clients',))
+    
+    class SiteLoader(pulsardjp.SiteLoader):
+        ...
+    
+    if __name__ == '__main__':
+        return djpcms.execute(SiteLoader('WEB'))
+ '''
     settings = None
     ENVIRON_NAME = 'PULSAR_SERVER_TYPE'
     
@@ -63,29 +86,29 @@ class SiteLoader(object):
                         settings = self.settings)
 
     def finish(self, sites):
+        '''Callback once the sites are loaded.'''
         pass
     
+    def wsgi(self):
+        '''This function is invoked by self at the end of its callable
+function to create the WSGI handler.'''
+        sites = self.__call__()
+        from djpcms import http
+        return http.WSGI(sites)
+        
     def get_settings(self):
         import djpcms
         if self.loaded:
             return djpcms.sites.settings
 
 
-class DjpCmsApplicationCommand(wsgi.WSGIApplication):
+class DjpCmsWSGIApplication(wsgi.WSGIApplication):
     _name = 'djpcms'
     
     def handler(self):
         '''Returns a callable application handler,
 used by a :class:`pulsar.Worker` to carry out its task.'''
-        callable = self.callable
-        if callable:
-            self.sites = callable()
-        return self.load()
-    
-    def load(self):
-        from djpcms import http
-        self.sites.load()
-        return http.WSGI(self.sites)
+        return self.callable.wsgi()
 
     def configure_logging(self):
         pass

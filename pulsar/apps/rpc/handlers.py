@@ -189,7 +189,13 @@ class RpcMiddleware(BaseHandler):
 Sub-handlers for prefixed methods (e.g., system.listMethods)
 can be added with :meth:`putSubHandler`. By default, prefixes are
 separated with a dot. Override :attr:`separator` to change this.
-    '''
+
+.. attribute:: path
+
+    The path where the RPC is located
+    
+    Default ``None``
+'''
     serve_as     = 'rpc'
     '''Prefix to callable providing services.'''
     separator    = '.'
@@ -200,11 +206,13 @@ separated with a dot. Override :attr:`separator` to change this.
     def __init__(self, subhandlers = None,
                  title = None,
                  documentation = None,
+                 path = None,
                  **kwargs):
         self.subHandlers = {}
         self.title = title or self.__class__.__name__
         self.documentation = documentation or ''
         self.log = self.getLogger(**kwargs)
+        self.path = path or '/'
         if subhandlers:
             for prefix,handler in subhandlers.items():
                 if inspect.isclass(handler):
@@ -295,9 +303,11 @@ identifier for the client, ``version`` is the version of the RPC protocol.
     
     def __call__(self, environ, start_response):
         '''The WSGI handler which consume the remote procedure call'''
-        data = environ['wsgi.input'].read()
-        method, args, kwargs, id, version = self.get_method_and_args(data)
-        request = self.request(environ, method, args, kwargs, id, version)
-        return RpcResponse(request, start_response)
+        path = environ['PATH_INFO']
+        if path == self.path:
+            data = environ['wsgi.input'].read()
+            method, args, kwargs, id, version = self.get_method_and_args(data)
+            request = self.request(environ, method, args, kwargs, id, version)
+            return RpcResponse(request, start_response)
         
         

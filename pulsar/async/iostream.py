@@ -139,10 +139,14 @@ this new callback.
 :parameter callback: Optional callback function with arity 0.
 :rtype: a :class:`pulsar.Deferred` instance.
         """
-        self._check_closed()
-        self._write_buffer.append(data)
         d = make_callback(callback)
+        try:
+            self._check_closed()
+        except:
+            d.add_callback(sys.exc_info())
+            return d
         self._write_callback = d.callback
+        self._write_buffer.append(data)
         self.on_write()
         return d
     

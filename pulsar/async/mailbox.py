@@ -32,9 +32,9 @@ otherwise a queue is used.'''
 
 def serverSocket():
     '''Create an asynchronous server inbox. This is TCP socket ready for
-accepting messages from ather actors.'''
+accepting messages from other actors.'''
     # get a socket pair
-    w,s = socket_pair(backlog = 1)
+    w,s = socket_pair(backlog = 64)
     s.setblocking(True)
     r, _ = s.accept()
     r.close()
@@ -122,13 +122,13 @@ of the :attr:`Actor.ioloop`'''
         
 
 class QueueMailbox(Mailbox):
-    '''An mailbox handled by a queue.'''
+    '''A mailbox handled by a queue.'''
     def __init__(self, id, queue = None):
         self.id = id
         self.queue = queue
-        
+    
     def name(self):
-        return 'queue {0}'.format(self.id)
+        return 'queue "{0}"'.format(self.id)
     
     def fileno(self):
         return self.id
@@ -151,7 +151,7 @@ send messages to a :class:`SocketServerMailbox`.'''
         self.sock = None
         
     def name(self):
-        return str(self.sock)
+        return str(self.sock or self._address)
     
     def address(self):
         return self._address
@@ -168,7 +168,10 @@ send messages to a :class:`SocketServerMailbox`.'''
         if self.type == 'inbox':
             raise ValueError('Trying to use {0} as inbox'\
                              .format(self.__class__.__name__))
-        self.sock = create_connection(self._address,blocking=True)
+        try:
+            self.sock = create_connection(self._address,blocking=True)
+        except Exception as e:
+            raise MailboxError('Cannot register {0}. {1}'.format(self,e))
         
     def put(self, request):
         request = pickle.dumps(request)

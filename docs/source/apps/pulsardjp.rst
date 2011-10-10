@@ -1,3 +1,7 @@
+.. _apps-pulsardjp:
+
+.. module:: pulsar.apps.pulsardjp
+
 =============================
 Djpcms-Pulsar Integration
 =============================
@@ -20,8 +24,12 @@ To use it:
 
 
 
-Redis Tasks
-=================
+Utilities
+===================
 
-This application comes with an implementation of pulsar tasks which is
-backed by a redis dataserver.
+SiteLoader
+~~~~~~~~~~~~~~~~~
+
+.. autoclass:: SiteLoader
+   :members:
+   :member-order: bysource
