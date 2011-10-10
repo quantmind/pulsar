@@ -58,8 +58,8 @@ def run_test(self, result):
 
         yield _executeTestPart(self, self.setUp, outcome)
         if outcome.success:
-            yield self._executeTestPart(self, testMethod, outcome, isTest=True)
-            yield self._executeTestPart(self, self.tearDown, outcome)
+            yield _executeTestPart(self, testMethod, outcome, isTest=True)
+            yield _executeTestPart(self, self.tearDown, outcome)
 
         self.doCleanups()
         if outcome.success:
@@ -98,9 +98,6 @@ def _executeTestPart(self, function, outcome, isTest=False):
         function()
     except KeyboardInterrupt:
         raise
-    except SkipTest as e:
-        outcome.success = False
-        outcome.skipped = str(e)
     except _UnexpectedSuccess:
         exc_info = sys.exc_info()
         outcome.success = False

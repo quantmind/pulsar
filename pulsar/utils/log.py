@@ -165,8 +165,9 @@ class LogInformation(object):
         self.last = time()
         
     def log(self):
-        t = time()
-        if t - self.last > self.logevery:
-            self.last = t
-            return t
+        if self.logevery:
+            t = time()
+            if t - self.last > self.logevery:
+                self.last = t
+                return t
         

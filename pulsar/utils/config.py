@@ -491,21 +491,7 @@ class Debug(Setting):
         This limits the number of worker processes to 1 and changes some error
         handling that's sent to clients.
         """
-
-
-class Spew(Setting):
-    name = "spew"
-    section = "Debugging"
-    cli = ["--spew"]
-    validator = validate_bool
-    action = "store_true"
-    default = False
-    desc = """\
-        Install a trace function that spews every line executed by the server.
         
-        This is the nuclear option.    
-        """
-
 
 class Daemon(Setting):
     name = "daemon"
@@ -641,7 +627,7 @@ class LogEvery(Setting):
     section = "Logging"
     cli = ["--log-every"]
     validator = validate_pos_int
-    default = 10
+    default = 0
     desc = """Log information every n seconds"""
     
     
