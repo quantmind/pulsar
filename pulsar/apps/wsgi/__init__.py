@@ -99,7 +99,7 @@ directly handled by the workers.'''
         # We have a task queue, This means the monitor itself listen for
         # requests on the socket and delegate the handling to the
         # workers
-        if monitor.ioqueue is not None or not self.num_actors:
+        if monitor.ioqueue is not None or not monitor.num_actors:
             self.socket = socket
             monitor.log.info(socket.info())
             handler = HttpPoolHandler(monitor,socket) if monitor.num_actors\

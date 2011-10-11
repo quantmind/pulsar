@@ -197,9 +197,6 @@ Here ``a`` is actually a reference to the remote actor.
         self.ioqueue = ioqueue
         #
         self.on_init(**kwargs)
-    
-    def _init_arbiter(self, impl, **kwargs):
-        raise ValueError('This is not the arbiter')
         
     @property
     def proxy(self):
@@ -278,7 +275,7 @@ registered with the actor.'''
     
     # HOOKS
     
-    def on_init(self, impl, **kwargs):
+    def on_init(self, **kwargs):
         '''The :ref:`actor callback <actor-callbacks>` run once at the
 end of initialisation (after forking).'''
         pass

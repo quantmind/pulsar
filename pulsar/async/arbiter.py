@@ -26,13 +26,13 @@ def arbiter(daemonize = False):
     return Arbiter.instance(daemonize)
     
     
-def spawn(actor_class = None, **kwargs):
+def spawn(actorcls = None, **kwargs):
     '''Create a new :class:`Actor` instance and return its proxy in the arbiter
 process domain.
 
-:param actor_class: :class:`Actor` or one of its subclasses.
+:param actorcls: :class:`Actor` or one of its subclasses.
 :rtype: instance of :class:`ActorProxyMonitor`'''
-    return arbiter().spawn(actor_class or Arbiter, **kwargs)
+    return arbiter().spawn(actorcls or Arbiter, **kwargs)
     
         
 
@@ -80,7 +80,7 @@ Users access the arbiter by the high level api::
             raise KeyError('Monitor "{0}" already available'\
                            .format(monitor_name))
         kwargs['name'] = monitor_name
-        m = spawn(monitor_class,**kwargs)
+        m = arbiter().spawn(monitor_class,**kwargs)
         self._linked_actors[m.aid] = m
         self._monitors[m.name] = m
         return m
@@ -92,7 +92,7 @@ Users access the arbiter by the high level api::
         return cls._instance
     
     @classmethod
-    def spawn(cls, actor_class, **kwargs):
+    def spawn(cls, actorcls, **kwargs):
         '''Create a new :class:`Actor` and return its
 :class:`ActorProxyMonitor`.'''
         cls.lock.acquire()
@@ -101,10 +101,10 @@ Users access the arbiter by the high level api::
             if arbiter:
                 arbiter.actor_age += 1
                 kwargs['age'] = arbiter.actor_age
-            impl = kwargs.pop('impl',actor_class.DEFAULT_IMPLEMENTATION)
+            impl = kwargs.pop('impl',actorcls.DEFAULT_IMPLEMENTATION)
             timeout = max(kwargs.pop('timeout',cls.DEFAULT_ACTOR_TIMEOUT),
                             cls.MINIMUM_ACTOR_TIMEOUT)
-            actor_maker = actor_impl(impl,actor_class,timeout,arbiter,kwargs)
+            actor_maker = actor_impl(impl,actorcls,timeout,arbiter,kwargs)
             monitor = actor_maker.proxy_monitor()
             # Add to the list of managed actors if this is a remote actor
             if monitor:

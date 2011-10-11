@@ -37,10 +37,12 @@ it makes sure there are always :attr:`num_actors` alive.
     
     Default: :class:`Actor`
 '''
+    actor_class = Actor
+    
     def on_init(self, actor_class = None, num_actors = 0, **kwargs):
         self._managed_actors = {}
         self.num_actors = num_actors or 0
-        self.actor_class = actor_class or Actor
+        self.actor_class = actor_class or self.actor_class
         
     def actorparams(self):
         '''Return a dictionary of parameters to be passed to the
@@ -207,7 +209,7 @@ The implementation goes as following:
         '''Spawn a new actor and add its :class:`ActorProxyMonitor`
  to the :attr:`PoolMixin.MANAGED_ACTORS` dictionary.'''
         worker = self.arbiter.spawn(
-                        actor_class = self.actor_class,
+                        self.actor_class,
                         monitor = self,
                         ioqueue = self.ioqueue,
                         monitors = self.arbiter.get_all_monitors(),
