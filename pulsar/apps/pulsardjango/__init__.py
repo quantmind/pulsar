@@ -281,7 +281,7 @@ class DjangoApplicationCommand(DjangoApplication):
             # ... then invoke it with the logging settings
             logging_config_func(settings.LOGGING)
 
-    def load(self):
+    def handler(self):
         from django.core.handlers.wsgi import WSGIHandler
         
         # reload django settings and setup environ

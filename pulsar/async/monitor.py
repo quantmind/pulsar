@@ -17,6 +17,7 @@ class PoolMixin(object):
     '''Not an actor per se, this is a mixin for :class:`Actor`
 which manages a pool (group) of actors. Given an :attr:`actor_class`
 it makes sure there are always :attr:`num_actors` alive.
+It is used by both the :class:`Arbiter` and the :class:`Monitor` classes.
 
 .. attribute:: MANAGED_ACTORS
 
@@ -30,19 +31,36 @@ it makes sure there are always :attr:`num_actors` alive.
     
     Default ``0`` any number of actors.
     
-.. attribute:: actor_class
+.. attribute:: when_running
 
-    The class derived form :class:`Actor` which the monitor manages
-    during its life time.
+    A :class:`Deferred` called back when running. Useful for adding
+    code when the mixin is not yet running. For example, lets take the
+    arbiter::
     
-    Default: :class:`Actor`
+        import pulsar
+        
+        arb = pulsar.arbiter()
+        
+        def do_something():
+            ...
+            
+        arb.when_running.add_callback(do_something)
+        arb.start()
 '''
     actor_class = Actor
+    '''The class derived form :class:`Actor` which the monitor manages
+during its life time.
+
+    Default: :class:`Actor`'''
     
     def on_init(self, actor_class = None, num_actors = 0, **kwargs):
         self._managed_actors = {}
         self.num_actors = num_actors or 0
         self.actor_class = actor_class or self.actor_class
+        self.when_running = Deferred()
+        
+    def on_start(self):
+        self.when_running.callback()
         
     def actorparams(self):
         '''Return a dictionary of parameters to be passed to the

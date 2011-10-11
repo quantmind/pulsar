@@ -3,9 +3,20 @@ The dining philosophers problem is an example problem often used in concurrent
 algorithm design to illustrate synchronization issues and techniques
 for resolving them.
 
+The problem
+===================
+
 Five silent philosophers sit at a table around a bowl of spaghetti.
 A fork is placed between each pair of adjacent philosophers.
-Each philosopher must alternately think and eat.
+
+
+        P  f  P
+      f         f
+    P      O      P
+       f        f
+           P
+           
+Each philosopher `P` must alternately think and eat.
 Eating is not limited by the amount of spaghetti left: assume an infinite
 supply.
 
@@ -14,12 +25,16 @@ the fork to the right.
 Each philosopher can pick up an adjacent fork, when available, and put it down,
 when holding it. These are separate actions: forks must be picked up and put
 down one by one.
+
+This implementation will just work. No starvation or dead-lock.
 '''
 import pulsar
 import random
 import time
 
+arbiter = pulsar.arbiter()
 lag = 2
+
 
 def talk(self,msg,wait=False):
     self.log.info(msg)
@@ -36,11 +51,9 @@ def thinking(self,wait=False):
 
 class Philosopher(pulsar.Actor):
         
-    def on_init(self, left_fork = None, right_fork = None, index = None,
-                **kwargs):
+    def on_init(self, left_fork = None, right_fork = None, **kwargs):
         self.left_fork = left_fork
         self.right_fork = right_fork
-        self.index = index
         self.nr = 0
         
     def on_task(self):
@@ -67,33 +80,27 @@ class Philosopher(pulsar.Actor):
     #def configure_logging(self, **kwargs):
     #    pass
     
+     
+def dining():
+    # Create 5 forks queues and spawn 5 philosophers
+    forks = []
+    for i in range(5):
+        f = pulsar.Queue(maxsize = 1) 
+        f.put(True)
+        forks.append(f)
+    forks.append(forks[0])
+    for i in range(5):
+        arbiter.spawn(Philosopher,
+                      pool_timeout = 0.01, # All time spent on `on_task`
+                      name = 'philosopher-{0}'.format(i+1),
+                      left_fork = forks[i],
+                      right_fork = forks[i+1],
+                      loglevel = 'info')
     
-class Dininig(pulsar.Monitor):
-    
-    def actorparams(self):
-        if not hasattr(self,'forks'):
-            self.forks = forks = []
-            for i in range(5):
-                f = pulsar.Queue(maxsize = 1) 
-                f.put(True)
-                forks.append(f)
-            forks.append(forks[0])
-            self.index = 0
-        else:
-            self.index += 1
-        return {'name': 'philosopher-{0}'.format(self.index+1),
-                'index': self.index + 1,
-                'left_fork': self.forks[self.index],
-                'right_fork': self.forks[self.index+1]}
-        
         
 def start():
-    arbiter = pulsar.arbiter()
-    arbiter.add_monitor(Dininig, 'dining',
-                        num_actors = 5,
-                        actor_class = Philosopher,
-                        timeout = 0,
-                        loglevel = 'info')
+    arbiter.when_running.add_callback(lambda r : dining())\
+                        .add_callback(pulsar.raise_failure)
     arbiter.start()
         
 

@@ -145,6 +145,7 @@ Users access the arbiter by the high level api::
                 p = Pidfile(cfg.pidfile)
                 p.create(self.pid)
                 self['pidfile'] = p
+        PoolMixin.on_start(self)
         
     def on_task(self):
         if self.running():
