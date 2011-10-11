@@ -167,13 +167,14 @@ Here ``a`` is actually a reference to the remote actor.
     def __init__(self, impl, arbiter = None, monitor = None,
                  on_task = None, ioqueue = None,
                  monitors = None, name = None, params = None,
-                 age = 0, **kwargs):
+                 age = 0, pool_timeout = None, **kwargs):
         # Call on_init
         self._impl = impl
         self._linked_actors = {}
         self.age = age
         self.nr = 0
         self.local = {}
+        self._pool_timeout = pool_timeout
         self._name = name or self._name
         self.arbiter = arbiter
         self.monitor = monitor
@@ -268,6 +269,15 @@ longer that timeout.'''
         '''Dictionary of all :class:`Monitor` instances
 registered with the actor.'''
         return self._monitors
+    
+    @property
+    def pool_timeout(self):
+        '''Timeout in seconds for waiting for events in the eventloop.
+ A small number is suitable for :class:`Actor` performing CPU-bound
+ operation on the :meth:`Actor.on_task` method, a larger number is better for
+ I/O bound actors.
+'''
+        return self.ioloop.POLL_TIMEOUT
     
     def __reduce__(self):
         raise pickle.PicklingError('{0} - Cannot pickle Actor instances'\
@@ -364,6 +374,7 @@ are registered and the :attr:`Actor.ioloop` is initialised and started.'''
         ioq = self.ioqueue
         ioimpl = IOQueue(ioq) if ioq else None
         ioloop = IOLoop(io = ioimpl,
+                        pool_timeout = self._pool_timeout,
                         logger = self.log,
                         name = self.name)
         

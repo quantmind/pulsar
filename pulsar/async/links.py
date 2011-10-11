@@ -1,7 +1,16 @@
 from .defer import Deferred, AlreadyCalledError
 
 
-class ActorLinkCallback(object):
+class LocalData(object):
+    
+    @property
+    def local(self):
+        if not hasattr(self,'_local'):
+            self._local = {}
+        return self._local
+
+
+class ActorLinkCallback(LocalData):
  
     def __init__(self, link, proxy, sender, action, args, kwargs):
         self.link = link
@@ -55,7 +64,11 @@ A middleware function takes 2 parameters, an instance of
     def get_callback(self, sender, action, *args, **kwargs):
         '''Get an instance of :`ActorLinkCallback`'''
         proxy = self.proxy(sender)
-        return ActorLinkCallback(self, proxy, sender, action, args, kwargs)
+        local = kwargs.pop('local',None)
+        res = ActorLinkCallback(self, proxy, sender, action, args, kwargs)
+        if local:
+            res.local.update(local)
+        return res
         
     def __call__(self, sender, action, *args, **kwargs):
         return self.get_callback(sender, action, *args, **kwargs)()

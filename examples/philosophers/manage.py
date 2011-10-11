@@ -24,10 +24,15 @@ lag = 2
 def talk(self,msg,wait=False):
     self.log.info(msg)
     if wait:
-        time.sleep(wait)
+        try:
+            time.sleep(wait)
+        except IOError:
+            pass
+
 
 def thinking(self,wait=False):
     talk(self,'Thinking... Done {0} loops...'.format(self.nr),wait)
+
 
 class Philosopher(pulsar.Actor):
         
@@ -59,8 +64,8 @@ class Philosopher(pulsar.Actor):
         self.nr += 1
         thinking(self,lag*random.random())
     
-    def configure_logging(self, **kwargs):
-        pass
+    #def configure_logging(self, **kwargs):
+    #    pass
     
     
 class Dininig(pulsar.Monitor):
@@ -93,6 +98,5 @@ def start():
         
 
 if __name__ == '__main__':
-    print('Setting up')
     start()
     
