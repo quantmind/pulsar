@@ -100,6 +100,12 @@ ActorLink
 Asyncronous Tools
 =====================
 
+This section describes the asynchronous utilities used throughout the library
+and which form the building block of the event driven concurrent framework.
+While :class:`Actor` represents the concurrent side of pulsar,
+the :class:`Deferred` adds the asynchronous flavour to it by using callbacks
+functions similar to twisted_.
+
 Make Async
 ~~~~~~~~~~~~~~~~~
 
@@ -242,11 +248,5 @@ HttpResponse
    :member-order: bysource
    
 
-Utilities
-================
 
-.. autoclass:: pulsar.utils.Middleware
-   :members:
-   :member-order: bysource
-   
    

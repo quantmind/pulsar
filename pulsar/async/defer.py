@@ -110,10 +110,19 @@ async_value = lambda value : lambda result : value
     
 
 def make_async(val = None):
-    '''Convert *val* into an asyncronous object which accept callbacks.
+    '''Convert *val* into an :class:`Deferred` asynchronous instance
+so that callbacks can be attached to it.
 
-:parameter val: can be a generator or any other value.
-:rtype: a :class:`Deferred` instance.'''
+:parameter val: can be a generator or any other value. If a generator, a
+    :class:`DeferredGenerator` instance will be returned.
+:rtype: a :class:`Deferred` instance.
+
+This function is useful when someone whants to treat a value as a deferred::
+
+    v = ...
+    make_async(v).add_callback(...)
+    
+'''
     if not is_async(val):
         if isgenerator(val):
             return DeferredGenerator(val)
@@ -161,7 +170,6 @@ program execution. Instead, it should return a Deferred."""
         """Stop processing until :meth:`unpause` is called.
         """
         self.paused += 1
-
 
     def unpause(self):
         """
@@ -220,7 +228,7 @@ The function takes at most one argument, the result passed to the
         '''Run registered callbacks with the given *result*.
 This can only be run once. Later calls to this will raise
 :class:`pulsar.AlreadyCalledError`. If further callbacks are added after
-this point, add_callback will run the *callbacks* immediately.'''
+this point, :meth:`add_callback` will run the *callbacks* immediately.'''
         if isinstance(result,Deferred):
             raise ValueError('Received a deferred instance from\
  callback function')
@@ -230,14 +238,20 @@ this point, add_callback will run the *callbacks* immediately.'''
         self._called = True
         return self._run_callbacks()
         
+    def is_failure(self):
+        '''return ``True`` if the result is a failure. If the result is not
+ready it throws a :class:`pulsar.DeferredFailure` exception'''
+        if not self.called:
+            raise DeferredFailure('Deferred not called')
+        return is_stack_trace(self.result)
+    
     def wait(self, timeout = 1):
-        '''Wait until result is available'''
-        while not self.called:
+        '''Wait until *timeout* for a result to be available'''
+        if not self.called:
             sleep(timeout)
-        if isinstance(self.result,Deferred):
-            return self.result.wait(timeout)
-        else:
-            return self.result
+            if not self.called:
+                raise DeferredFailure('Deferred not called')
+        return self.result
 
     def start(self, ioloop, timeout = None):
         '''Start running the deferred into an Event loop.
@@ -349,4 +363,3 @@ generator.'''
             self._last_result = trace
             
             
-    

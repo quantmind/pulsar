@@ -26,7 +26,10 @@ class TestRequest(object):
         init = getattr(tests,'initTests',None)
         end = getattr(tests,'endTests',None)
         if init:
-            yield init()
+            d = pulsar.Deferred()
+            yield pulsar.make_async(init()).add_callback(d.callback)
+            if d.is_failure():
+                pass
         for test in loader.loadTestsFromTestCase(self.testcls):
             yield run_test(test,results)
         if end:
