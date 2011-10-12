@@ -193,8 +193,9 @@ be consumed by the workers.'''
     def monitor_task(self, monitor):
         '''Override the :meth:`pulsar.Application.monitor_task` callback
 to check if the schedulter needs to perform a new run.'''
-        if self.scheduler.next_run <= datetime.now():
-            self.scheduler.tick(monitor)
+        if self._scheduler:
+            if self.scheduler.next_run <= datetime.now():
+                self.scheduler.tick(monitor)
     
     def handler(self):
         # Load the application callable, the task consumer

@@ -55,7 +55,6 @@ Users access the arbiter by the high level api::
 .. _tornado: http://www.tornadoweb.org/
 '''
     CLOSE_TIMEOUT = 3
-    WORKER_BOOT_ERROR = 3
     STOPPING_LOOPS = 20
     SIG_TIMEOUT = 0.01
     EXIT_SIGNALS = (signal.SIGINT,
@@ -66,7 +65,9 @@ Users access the arbiter by the high level api::
     lock = Lock()
     _name = 'Arbiter'
     
+    ############################################################################
     # ARBITER HIGH LEVEL API
+    ############################################################################
     
     def add_monitor(self, monitor_class, monitor_name, **kwargs):
         '''Add a new :class:`pulsar.Monitor` to the arbiter.
@@ -118,12 +119,40 @@ Users access the arbiter by the high level api::
             
     @property
     def close_signal(self):
+        '''Return the signal that caused the arbiter to stop.'''
         return self._close_signal
         
     def isprocess(self):
         return True
+    
+    def get_all_monitors(self):
+        '''A dictionary of all :class:`Monitor` in the arbiter'''
+        return dict(((mon.name,mon.proxy) for mon in itervalues(self.monitors)))
+    
+    def close_monitors(self):
+        '''Clase all :class:`Monitor` in the arbiter.'''
+        for pool in itervalues(self._monitors):
+            pool.stop()
+            
+    def info(self, full = False):
+        if not self.started():
+            return
+        pools = []
+        for p in itervalues(self.monitors):
+            pools.append(p.info(full))
+        return ActorCallBacks(self,pools).add_callback(self._info)
+    
+    def configure_logging(self,**kwargs):
+        if self._monitors:
+            monitor = list(self._monitors.values())[0]
+            monitor.configure_logging(**kwargs)
+            self.loglevel = monitor.loglevel
+        else:
+            super(Arbiter,self).configure_logging(**kwargs)
  
-    # ARBITER HOOKS
+    ############################################################################
+    # OVERRIDE ACTOR HOOKS
+    ############################################################################
     
     def on_init(self, daemonize = False, **kwargs):
         PoolMixin.on_init(self,**kwargs)
@@ -149,7 +178,7 @@ Users access the arbiter by the high level api::
         
     def on_task(self):
         if self.running():
-            sig = self.arbiter_task()
+            sig = self._arbiter_task()
             if sig is None:
                 self.manage_actors()
                 for m in list(itervalues(self._monitors)):
@@ -175,11 +204,49 @@ the timeout. Stop the arbiter.'''
                         'Terminating {0}. Timeout surpassed.'.format(actor))
                 actor.terminate()
             actor.stopping_loops += 1
-        
-    def shut_down(self):
-        self.stop()
+            
+    def on_stop(self):
+        '''Stop the pools the message queue and remaining actors.'''
+        self._close_message_queue()
+        self.close_monitors()
+        self.close_actors()
+        self._stopping_start = time()
+        return self._on_actors_stopped()
     
-    # LOW LEVEL FUNCTIONS
+    def on_exit(self):
+        p = self.get('pidfile')
+        if p is not None:
+            p.unlink()
+        if self.MANAGED_ACTORS:
+            self._state = self.TERMINATE
+    
+    ############################################################################
+    # ADDITIONAL REMOTES
+    ############################################################################
+    
+    def actor_inbox_address(self, actor, address):
+        '''The ``actor`` register its inbox ``address``.'''
+        self.log.debug('Registering actor {0} inbox address {1}'
+                       .format(actor,address))
+        actor.inbox = SocketMailbox(address)
+        actor.inbox.register(actor,False)
+    actor_inbox_address.ack = False
+        
+    def actor_kill_actor(self, caller, aid):
+        '''Remote function for ``caller`` to kill an actor with id ``aid``'''
+        a = self.get_actor(aid)
+        if a:
+            if isinstance(a,Actor):
+                a.stop()
+            else:
+                a.send(self,'stop')
+            return 'stopped {0}'.format(a)
+        else:
+            self.log.info('Could not kill "{0}" no such actor'.format(aid))
+    
+    ############################################################################
+    # INTERNALS
+    ############################################################################
         
     def _run(self):
         """\
@@ -192,20 +259,20 @@ the timeout. Stop the arbiter.'''
         try:
             self.ioloop.start()
         except StopIteration:
-            self.halt('Stop Iteration')
+            self._halt('Stop Iteration')
         except KeyboardInterrupt:
-            self.halt('Keyboard Interrupt')
+            self._halt('Keyboard Interrupt')
         except self.HaltServer as e:
-            self.halt(reason=str(e), sig=e.signal)
+            self._halt(reason=str(e), sig=e.signal)
         except SystemExit:
             raise
         except:
             self.log.critical("Unhandled exception in main loop.",
                               exc_info = True)
-            self.halt()
+            self._halt()
     
-    def halt(self, reason=None, sig=None):
-        """halt arbiter. If there no signal ``sig`` it is an unexpected exit."""
+    def _halt(self, reason=None, sig=None):
+        #halt the arbiter. If there no signal ``sig`` it is an unexpected exit
         x = 'Shutting down pulsar arbiter'
         _msg = lambda : x if not reason else '{0}: {1}'.format(x,reason)        
         if not sig:
@@ -214,23 +281,6 @@ the timeout. Stop the arbiter.'''
             self.log.info(_msg())
         self._close_signal = sig
         self.stop()
-
-    def close_monitors(self):
-        for pool in itervalues(self._monitors):
-            pool.stop()
-        
-    def on_stop(self):
-        '''Stop the pools the message queue and remaining actors.'''
-        self.close_message_queue()
-        self.close_monitors()
-        self.close_actors()
-        self._stopping_start = time()
-        return self._on_actors_stopped()
-    
-    def on_exit(self):
-        p = self.get('pidfile')
-        if p is not None:
-            p.unlink()
             
     def _on_actors_stopped(self):
         if self.MANAGED_ACTORS:
@@ -240,12 +290,8 @@ the timeout. Stop the arbiter.'''
                 self.log.warning('There are {0} actors still alive.'\
                                  .format(len(self.MANAGED_ACTORS)))
         return self.ioloop.stop()
-            
-    def on_exit(self):
-        if self.MANAGED_ACTORS:
-            self._state = self.TERMINATE
     
-    def close_message_queue(self):
+    def _close_message_queue(self):
         return
         while True:
             try:
@@ -256,14 +302,6 @@ the timeout. Stop the arbiter.'''
                 break
             except:
                 pass
-        
-    def info(self, full = False):
-        if not self.started():
-            return
-        pools = []
-        for p in itervalues(self.monitors):
-            pools.append(p.info(full))
-        return ActorCallBacks(self,pools).add_callback(self._info)
     
     def _info(self, result):
         server = super(Arbiter,self).info()
@@ -274,7 +312,7 @@ the timeout. Stop the arbiter.'''
         return {'server':server,
                 'monitors':result}
 
-    def arbiter_task(self):
+    def _arbiter_task(self):
         '''Called by the Event loop to perform the signal handling from the
 signal queue'''
         sig = None
@@ -315,40 +353,7 @@ signal queue'''
         else:
             self.log.info('Received unknown signal "{0}". Skipping.'\
                           .format(sig))
-    
-    def on_actor_exit(self, actor):
-        pass
 
-    def configure_logging(self,**kwargs):
-        if self._monitors:
-            monitor = list(self._monitors.values())[0]
-            monitor.configure_logging(**kwargs)
-            self.loglevel = monitor.loglevel
-        else:
-            super(Arbiter,self).configure_logging(**kwargs)
     
-    def get_all_monitors(self):
-        return dict(((mon.name,mon.proxy) for mon in itervalues(self.monitors)))
-            
-    # REMOTES
-    
-    def actor_inbox_address(self, actor, address):
-        '''The ``actor`` register its inbox ``address``.'''
-        self.log.debug('Registering actor {0} inbox address {1}'
-                       .format(actor,address))
-        actor.inbox = SocketMailbox(address)
-        actor.inbox.register(actor,False)
-    actor_inbox_address.ack = False
-        
-    def actor_kill_actor(self, caller, aid):
-        '''Remote function for ``caller`` to kill an actor with id ``aid``'''
-        a = self.get_actor(aid)
-        if a:
-            if isinstance(a,Actor):
-                a.stop()
-            else:
-                a.send(self,'stop')
-            return 'stopped {0}'.format(a)
-        else:
-            self.log.info('Could not kill "{0}" no such actor'.format(aid))
+
     
