@@ -20,13 +20,22 @@ class ActorLinkCallback(LocalData):
         self.args = args
         self.kwargs = kwargs
         
-    def __call__(self, **kwargs):
+    def __call__(self, *args, **kwargs):
         if hasattr(self,'_message'):
             raise AlreadyCalledError()
+        self.args += args
         self.link.process_middleware(self,kwargs)
         self._message = self.proxy.send(self.sender, self.action,
                                         *self.args, **self.kwargs)
         return self._message
+    
+    def result(self):
+        '''Call this function to get a result. If self was never called
+return a :class:`Deferred` already called with ``None``.'''
+        if not hasattr(self,'_message'):
+            self._message = Deferred().callback(None)
+        return self._message
+        
 
 
 class ActorLink(object):
