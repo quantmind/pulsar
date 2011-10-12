@@ -34,3 +34,9 @@ JsonProxy
    :members:
    :member-order: bysource
    
+   
+FromApi
+~~~~~~~~~~~~~~~~~
+
+.. autofunction:: FromApi
+   

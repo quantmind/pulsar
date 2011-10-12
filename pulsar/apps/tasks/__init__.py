@@ -122,14 +122,14 @@ class Remotes(pulsar.ActorBase):
     def actor_tasks_list(self, caller):
         return self.app.tasks_list()
     
-    def actor_addtask(self, caller, task_name, targs, tkwargs,
+    def actor_addtask(self, caller, jobname, targs, tkwargs,
                       ack=True, **kwargs):
-        return self.app._addtask(self, caller, task_name, targs, tkwargs,
+        return self.app._addtask(self, caller, jobname, targs, tkwargs,
                                     ack = True, **kwargs)
         
-    def actor_addtask_noack(self, caller, task_name, targs, tkwargs,
+    def actor_addtask_noack(self, caller, jobname, targs, tkwargs,
                             ack=False, **kwargs):
-        return self.app._addtask(self, caller, task_name, targs, tkwargs,
+        return self.app._addtask(self, caller, jobname, targs, tkwargs,
                                     ack = False, **kwargs)
     actor_addtask_noack.ack = False
     
@@ -222,9 +222,9 @@ to check if the schedulter needs to perform a new run.'''
         return registry
     
     # Internals        
-    def _addtask(self, monitor, caller, task_name, targs, tkwargs,
+    def _addtask(self, monitor, caller, jobname, targs, tkwargs,
                  ack = True, **kwargs):
-        task = self.scheduler.queue_task(monitor, task_name, targs, tkwargs,
+        task = self.scheduler.queue_task(monitor, jobname, targs, tkwargs,
                                          **kwargs)
         
         if ack:

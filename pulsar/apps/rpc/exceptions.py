@@ -6,6 +6,11 @@ if ispy3k:
     from xmlrpc import client as rpc
 else:
     import xmlrpclib as rpc
+    
+    
+__all__ = ['INVALID_RPC','METHOD_NOT_FOUND','INVALID_METHOD_PARAMS',
+           'INTERNAL_ERROR','Fault','InternalError','InvalidRequest',
+           'NoSuchFunction','InvalidParams']
 
 _errclasses = {}
 INVALID_RPC           = rpc.INVALID_XMLRPC
@@ -42,17 +47,17 @@ class InvalidRequest(Fault):
 _errclasses[INVALID_RPC] = InvalidRequest
 
 
-class NoSuchFunction(Fault):
+class NoSuchFunction(InvalidRequest):
     def __init__(self, faultString, **extra):
-        super(NoSuchFunction,self).__init__(METHOD_NOT_FOUND,
-                                            faultString, **extra)
+        super(NoSuchFunction,self).__init__(faultString, **extra)
+        self.faultCode = METHOD_NOT_FOUND
 _errclasses[METHOD_NOT_FOUND] = NoSuchFunction 
 
 
 class InvalidParams(InvalidRequest):
     def __init__(self, faultString, **extra):
-        super(InvalidParams,self).__init__(INVALID_METHOD_PARAMS,
-                                           faultString, **extra)
+        super(InvalidParams,self).__init__(faultString, **extra)
+        self.faultCode = INVALID_METHOD_PARAMS
 _errclasses[INVALID_METHOD_PARAMS] = InvalidParams
 
 

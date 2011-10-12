@@ -8,8 +8,9 @@ __all__ = ['TaskQueueRpcMixin','link_middleware']
 def link_middleware(clb, kwargs):
     '''Check if a job is specified in the kwargs. If so rearrange
 to accomodate for sending jobs to the task queue.'''
+    # If the action is adding tasks, get the jobname
     if clb.action.startswith('addtask'):
-        job = clb.kwargs.pop('job',None)
+        job = clb.kwargs.pop('jobname',None)
         clb.args = (job,clb.args,clb.kwargs)
         clb.kwargs = kwargs
     else:
@@ -74,7 +75,7 @@ as long as it is registered in the job registry.
         funcname = 'addtask' if ack else 'addtask_noack'
         return self.task_queue_manager(request.actor,
                                        funcname,
-                                       job = jobname,
+                                       jobname = jobname,
                                        **kwargs)
         
     def rpc_get_task(self, request, id):

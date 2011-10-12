@@ -4,8 +4,7 @@ import inspect
 from pulsar import make_async, net, NOT_DONE, PickableMixin, to_bytestring
 from pulsar.utils.tools import checkarity
 
-from .exceptions import NoSuchFunction, InvalidParams,\
-                        InternalError
+from .exceptions import *
 
 
 __all__ = ['RpcMiddleware']
@@ -46,6 +45,10 @@ class RpcRequest(object):
     
     def __repr__(self):
         return self.method
+    
+    @property
+    def user(self):
+        return self.environ.get('user')
     
     @property
     def actor(self):
@@ -112,7 +115,7 @@ class RpcResponse(object):
         result = make_async(result)
         while not result.called:
             yield b''
-        result=  result.result
+        result = result.result
         try:
             if isinstance(result,Exception):
                 handler.log.error(str(result),exc_info=True)

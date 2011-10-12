@@ -95,5 +95,6 @@ A decorator which exposes a function ``func`` as an rpc function.
                 raise
         
     _.__doc__ = doc or func.__doc__
+    _.__name__ = func.__name__
     
     return _

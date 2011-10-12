@@ -63,11 +63,16 @@ A middleware function takes 2 parameters, an instance of
     
     def get_callback(self, sender, action, *args, **kwargs):
         '''Get an instance of :`ActorLinkCallback`'''
+        if isinstance(sender,dict):
+            # This is an environment dictionary
+            local = sender
+            sender = sender.get('pulsar.actor')
+        else:
+            local = kwargs.pop('local',None)
         proxy = self.proxy(sender)
-        local = kwargs.pop('local',None)
         res = ActorLinkCallback(self, proxy, sender, action, args, kwargs)
         if local:
-            res.local.update(local)
+            res._local = local
         return res
         
     def __call__(self, sender, action, *args, **kwargs):

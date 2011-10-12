@@ -27,39 +27,6 @@ from .exceptions import exception, INTERNAL_ERROR
 __all__ = ['JSONRPC','JsonProxy']
 
 
-class JSONRPCException(Exception):
-    code = None
-    msg  = ''
-    def __init__(self, data = None):
-        super(JSONRPCException,self).__init__(self.msg)
-        self.data = data
-        
-    def dumps(self):
-        return {'code':  self.code,
-                'message': self.message,
-                'data': self.data}
-            
-            
-class JsonParseError(JSONRPCException):
-    code = -32700
-    msg = 'Parse error'
-    
-
-class JsonRpcInvalidParams(JSONRPCException):
-    code = -32602
-    msg = 'Invalid params'
-    
-    
-class JsonRpcInternalError(JSONRPCException):
-    code = -32603
-    msg = 'Internal error'
-    
-
-class JsonRpcAuthenticationRequired(JSONRPCException):
-    code = -32040
-    msg = 'Authentication Required'
-
-
 class JsonToolkit(object):
     
     @classmethod
@@ -109,29 +76,6 @@ Design to comply with the `JSON-RPC 2.0`_ Specification.
             
         return self._json.dumps(res)
     
-    def serve(self, request):
-        content = request._get_raw_post_data()
-        if request.method == 'POST':
-            method, args, kwargs, id, version = self.get_method_and_args(content)
-            meth = self._getFunction(method)
-            try:
-                res = meth(self,request,*args,**kwargs)
-                result = self.dumps(id,version,result=res)
-            #except AuthenticationException:
-            #    result = self.dumps(id,version,error=JsonRpcAuthenticationRequired())
-            except JsonRpcInternalError as e:
-                result = self.dumps(id,version,error=e)
-            except Exception as e:
-                error = JsonRpcInvalidParams(data = str(e))
-                result = self.dumps(id,version,error=error)
-            
-            return self.http.HttpResponse(result,'application/javascript')
-        else:
-            return self.http.HttpResponse('<h1>Not Found</h1>')
-    
-    
-Handle = JSONRPC
-
 
 class JsonProxy(object):
     '''A python Proxy class for :class:`JSONRPC` Servers.

@@ -21,7 +21,8 @@ class HttpClient2(HttpClientBase):
     
     def __init__(self, proxy_info = None,
                  timeout = None, cache = None, headers = None):
-        self._opener = httplib2.Http(cache = cache, timeout = timeout,
+        self._opener = httplib2.Http(cache = cache,
+                                     timeout = timeout,
                                      proxy_info = proxy_info)
         
     def request(self, uri, method='GET', body=None, headers = None, **kwargs):
