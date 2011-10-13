@@ -64,15 +64,17 @@ manipulated and adapted to pulsar :ref:`concurrent framework <design>`.
         self.set_actor(actor)
     
     def __repr__(self):
-        return '{0}'.format(self.fileno())
+        fn = self.fileno() if self.socket else 'Closed'
+        return '{0}'.format(fn)
     
     def __str__(self):
-        return '{0}({1})'.format(self.__class__.__name__,self.fileno())
+        fn = self.fileno() if self.socket else 'Closed'
+        return '{0}({1})'.format(self.__class__.__name__,fn)
     
     def fileno(self):
         '''Return the file descriptor of the socket.'''
         return self.socket.fileno()
-    
+        
     def getsockname(self):
         '''Return the socket's own address. This is useful to find out the
     port number of an IPv4/v6 socket, for instance. The format of the

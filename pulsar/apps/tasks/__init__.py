@@ -122,15 +122,15 @@ class Remotes(pulsar.ActorBase):
     def actor_tasks_list(self, caller):
         return self.app.tasks_list()
     
-    def actor_addtask(self, caller, jobname, targs, tkwargs,
-                      ack=True, **kwargs):
-        return self.app._addtask(self, caller, jobname, targs, tkwargs,
-                                    ack = True, **kwargs)
+    def actor_addtask(self, caller, jobname, task_extra, *args, **kwargs):
+        kwargs.pop('ack',None)
+        return self.app._addtask(self, caller, jobname, task_extra, True,
+                                 args, kwargs)
         
-    def actor_addtask_noack(self, caller, jobname, targs, tkwargs,
-                            ack=False, **kwargs):
-        return self.app._addtask(self, caller, jobname, targs, tkwargs,
-                                    ack = False, **kwargs)
+    def actor_addtask_noack(self, caller, jobname, task_extra, *args, **kwargs):
+        kwargs.pop('ack',None)
+        return self.app._addtask(self, caller, jobname, task_extra, False,
+                                 args, kwargs)
     actor_addtask_noack.ack = False
     
     def actor_save_task(self, caller, task):
@@ -222,13 +222,11 @@ to check if the schedulter needs to perform a new run.'''
         return registry
     
     # Internals        
-    def _addtask(self, monitor, caller, jobname, targs, tkwargs,
-                 ack = True, **kwargs):
-        task = self.scheduler.queue_task(monitor, jobname, targs, tkwargs,
-                                         **kwargs)
-        
+    def _addtask(self, monitor, caller, jobname, task_extra, ack, args, kwargs):
+        task = self.scheduler.queue_task(monitor, jobname, args, kwargs,
+                                         **task_extra)
         if ack:
-            return task.tojson_dict()
+            return task
 
     def remote_functions(self):
         return Remotes.remotes, Remotes.actor_functions

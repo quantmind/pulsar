@@ -4,7 +4,7 @@ A lightweight deferred module inspired by twisted.
 import sys
 from copy import copy
 import logging
-from inspect import isgenerator
+from inspect import isgenerator, isfunction
 from time import sleep, time
 try:
     import queue
@@ -141,23 +141,26 @@ This function is useful when someone whants to treat a value as a deferred::
     
     
 def async_pair(func):
-
-    def _(*args, **kwargs):
-        try:
-            r = func(*args, **kwargs)
-        except:
-            r = Failure(err = sys.exc_info())
-        d = Deferred()
-        r = make_async(r).add_callback(d.callback)
-        return r,d
     
-    if func:
-        _.__doc__ = func.__doc__
-        _.__name__ = func.__name__
+    if isfunction(func):
+        def _(*args, **kwargs):
+            try:
+                r = func(*args, **kwargs)
+            except:
+                r = Failure(err = sys.exc_info())
+            d = Deferred()
+            r = make_async(r).add_callback(d.callback)
+            return r,d
         
         return _
-    else:
+    
+    elif func is None:
         return None
+    
+    else:
+        d = Deferred()
+        r = make_async(func).add_callback(d.callback)
+        return r,d
 
 
 def simple_callback(func, *args, **kwargs):

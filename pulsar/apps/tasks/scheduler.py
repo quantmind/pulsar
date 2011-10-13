@@ -138,7 +138,7 @@ and task scheduling."""
             targs = targs or EMPTY_TUPLE
             tkwargs = tkwargs or EMPTY_DICT
             id = job.make_task_id(targs,tkwargs)
-            task = TaskFactory.get_task(id)
+            task = TaskFactory.get_task(id, remove = True)
             if task:
                 return task.to_queue()
             else:

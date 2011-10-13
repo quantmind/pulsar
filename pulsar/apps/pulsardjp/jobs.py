@@ -18,10 +18,14 @@ HtmlCodeForm = forms.HtmlForm(
 class RunPyCode(Job):
     '''Run a python script in the task queue. The code must have a callable
 named "task_function".'''
-    def __call__(self, consumer, code = None):
+    def __call__(self, consumer, code = None, **kwargs):
         code_local = compile(code, '<string>', 'exec')
         ns = {}
         exec(code_local,ns)
-        func = ns['task_function']
-        return func()
+        func = ns.get('task_function')
+        if hasattr(func,'__call__'):
+            return func(**kwargs)
+        else:
+            raise ValueError('task_function is not defined in script, or it\
+ is not a callable')
     

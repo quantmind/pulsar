@@ -1,4 +1,4 @@
-from .defer import Deferred, AlreadyCalledError
+from .defer import Deferred, AlreadyCalledError, make_async
 
 
 class LocalData(object):
@@ -24,9 +24,10 @@ class ActorLinkCallback(LocalData):
         if hasattr(self,'_message'):
             raise AlreadyCalledError()
         self.args += args
-        self.link.process_middleware(self,kwargs)
-        self._message = self.proxy.send(self.sender, self.action,
-                                        *self.args, **self.kwargs)
+        self.kwargs.update(kwargs)
+        msg = self.proxy.send(self.sender, self.action,
+                              *self.args, **self.kwargs)
+        self._message = make_async(msg)
         return self._message
     
     def result(self):
@@ -39,11 +40,15 @@ return a :class:`Deferred` already called with ``None``.'''
 
 
 class ActorLink(object):
-    '''Utility for sending messages to linked actors.'''
-    def __init__(self, name, middleware = None):
-        '''Provide a link between two actors.'''
+    '''Utility for sending messages to linked actors.
+    
+.. attribute:: name
+
+    The :attr:`Actor.name` of the actor which will receive messages via
+    ``self`` from other actors.
+'''
+    def __init__(self, name):
         self.name = name
-        self.middleware = middleware or []
         
     def proxy(self, sender):
         '''Get the :class:`ActorProxy` for the sender.'''
@@ -52,26 +57,9 @@ class ActorLink(object):
             raise ValueError('Got a request from actor {0} which is\
  not linked with {1}.'.format(sender,self.name))
         return proxy
-        
-    def add_middleware(self, middleware):
-        '''Add a middleware function to the middleware list.
-A middleware function takes 2 parameters, an instance of
-:class:`ActorLinkCallback` and a dictionary.
-
-:rtype: ``self`` so it can be chained.'''
-        if middleware not in self.middleware:
-            self.middleware.append(middleware)
-        return self
-    
-    def process_middleware(self, callback, kwargs):
-        for process in self.middleware:
-            try:
-                process(callback, kwargs)
-            except:
-                pass
     
     def get_callback(self, sender, action, *args, **kwargs):
-        '''Get an instance of :`ActorLinkCallback`'''
+        '''Get an instance of :class:`ActorLinkCallback`'''
         if isinstance(sender,dict):
             # This is an environment dictionary
             local = sender

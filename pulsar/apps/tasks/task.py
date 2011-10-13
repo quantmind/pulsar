@@ -105,7 +105,8 @@ class Task(object):
             else:
                 self.status = SUCCESS
                 self.result = result
-            return self.on_finish(worker)
+            self.on_finish(worker)
+        return self
         
     def to_queue(self):
         '''The task has been received by the scheduler. If its status
@@ -148,7 +149,8 @@ returns nothing.'''
         if self.time_end:
             return self.time_end - self.time_start  
 
-    def tojson_dict(self):
+    def tojson(self):
+        '''Convert the task instance into a JSON-serializable dictionary.'''
         return self.__dict__.copy()
     
     def on_same_id(self):

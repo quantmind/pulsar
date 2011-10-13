@@ -6,7 +6,7 @@ import random
 from inspect import isgenerator
 
 import pulsar
-from pulsar import Empty, make_async, DeferredGenerator, is_failure, Failure
+from pulsar import Empty, make_async, is_failure, async_pair, Failure
 from pulsar.utils.py2py3 import execfile
 from pulsar.utils.importer import import_module
 from pulsar.utils.log import LogInformation
@@ -53,7 +53,7 @@ class ResponseError(pulsar.PulsarException,Response):
         
         
 def make_response(request, response, err = None):
-    if is_stack_trace(response):
+    if is_failure(response):
         response = ResponseError(request,response)
     if err:
         if not hasattr(response,'exception'):
@@ -66,6 +66,22 @@ def make_response(request, response, err = None):
 
 class HandlerMixin(object):
       
+    def _response_generator(self, request):
+        try:
+            self.cfg.pre_request(self, request)
+        except Exception:
+            pass
+        try:
+            response = self.app.handle_request(self, request)
+        except:
+            response = ResponseError(request,sys.exc_info())
+        
+        response, outcome = async_pair(response)
+        yield response
+        response = make_response(request, outcome.result)
+        yield response.close()
+        yield response
+    
     def handle_request(self, request):
         '''Entry point for handling a request. This is a high level
 function which performs some pre-processing of *request* and delegates
@@ -77,36 +93,15 @@ After obtaining the result from the
 :meth:`Application.handle_event_task` method, it invokes the
 :meth:`Worker.end_task` method to close the request.'''
         self.nr += 1
-        should_stop = self.max_requests and self.nr >= self.max_requests
-        self.local['should_stop'] = should_stop
-        try:
-            self.cfg.pre_request(self, request)
-        except Exception:
-            pass
-        try:
-            response = self.app.handle_request(self, request)
-        except:
-            response = ResponseError(request,sys.exc_info())
-            
-        make_async(response).add_callback(
-              lambda r : self._got_response(request,r)).start(self.ioloop)
+        should_stop = self.max_requests and self.nr >= self.max_requests        
+        make_async(self._response_generator(request)).add_callback(
+               lambda res : self.close_response(request,res,should_stop))\
+               .start(self.ioloop)
         
-    def _got_response(self, request, response):
-        response = make_response(request, response)
-        err = response.exception
-        try:
-            response = self.app.handle_response(self,response)
-        except:
-            response = make_response(request,sys.exc_info(),err)
-        
-        make_async(response).add_callback(
-              lambda r : self.close_response(request,r,err))\
-              .start(self.ioloop)
-        
-    def close_response(self, request, response, err):
+    def close_response(self, request, response, should_stop):
         '''Close the response. This method should be called by the
 :meth:`Application.handle_response` once done.'''
-        response = make_response(request,response,err)
+        response = make_response(request, response)
         
         if response and response.exception:
             response.exception.log(self.log)
@@ -116,10 +111,10 @@ After obtaining the result from the
         except:
             pass
         
-        if self.local.get('should_stop'):
+        if should_stop:
             self.log.info("Auto-restarting worker.")
             self.stop()
-      
+
 
 class Worker(HandlerMixin,pulsar.Actor):
     """\
@@ -333,18 +328,8 @@ a *request*.
 :parameter worker: the :class:`Worker` handling the request.
 :parameter request: an application specific request object.
 :rtype: It can be a generator, a :class:`Deferred` instance
-    or the actual response which will be passed to the
-    :meth:`Application.handle_response` method.'''
+    or the actual response.'''
         raise NotImplementedError
-    
-    def handle_response(self, worker, response):
-        '''The response has finished. Do the clean up if needed. By default
-it calls the *response* close method.
-
-:parameter worker: the :class:`Worker` handling the request.
-:parameter response: The response object. 
-:rtype: and instance of :class:`Response`.'''
-        return response.close()
     
     def get_ioqueue(self):
         '''Returns an I/O distributed queue for the application if one

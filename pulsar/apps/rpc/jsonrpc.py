@@ -20,7 +20,7 @@ from pulsar.utils.http import to_string
 from pulsar.utils.py2py3 import range
 from pulsar.utils.jsontools import DefaultJSONEncoder, DefaultJSONHook
 
-from .handlers import RpcMiddleware
+from .handlers import RpcHandler
 from .exceptions import exception, INTERNAL_ERROR
 
 
@@ -38,7 +38,7 @@ class JsonToolkit(object):
         return json.loads(to_string(content), object_hook=DefaultJSONHook)
 
 
-class JSONRPC(RpcMiddleware):
+class JSONRPC(RpcHandler):
     '''Base class for JSON-RPC services.
 Design to comply with the `JSON-RPC 2.0`_ Specification.
 

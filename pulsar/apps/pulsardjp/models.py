@@ -86,7 +86,7 @@ try:
             return str(self.result)
         string_result.short_description = 'result'
         
-        def tojson_dict(self):
+        def tojson(self):
             d = self.todict()
             d['id'] = self.id
             return d
@@ -105,16 +105,16 @@ try:
             if duration:
                 self.task_duration = timedelta_seconds(duration)
                 self.save()
+            return self
         
         @classmethod
         def get_task(cls, id, remove = False):
             try:
                 task = cls.objects.get(id = id)
-                if task.done():
+                if task.done() and remove:
                     task.delete()
-                    if not remove:
-                        task.id = tasks.create_task_id()
-                        task.save()
+                    task.id = tasks.create_task_id()
+                    task.save()
                 else:
                     return task
             except cls.DoesNotExist:

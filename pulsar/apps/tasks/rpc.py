@@ -2,19 +2,12 @@ import pulsar
 from pulsar.apps import rpc
 
 
-__all__ = ['TaskQueueRpcMixin','link_middleware']
+__all__ = ['TaskQueueRpcMixin']
 
 
-def link_middleware(clb, kwargs):
-    '''Check if a job is specified in the kwargs. If so rearrange
-to accomodate for sending jobs to the task queue.'''
-    # If the action is adding tasks, get the jobname
-    if clb.action.startswith('addtask'):
-        job = clb.kwargs.pop('jobname',None)
-        clb.args = (job,clb.args,clb.kwargs)
-        clb.kwargs = kwargs
-    else:
-        clb.kwargs.update(kwargs)
+def task_to_json(task):
+    if task:
+        return task.tojson()
 
 
 class TaskQueueRpcMixin(rpc.JSONRPC):
@@ -45,14 +38,36 @@ It exposes the following functions:
     :parameter jobname: the name of the job to run.
     :parameter kwargs: optional key-valued job parameters.
     :rtype: a dictionary containing information about the request
+    
+    
+.. method:: get_task(task_id)
+
+    Retrieve a task from its ``id``.
+    Returns ``None`` if the task is not available.
 '''
     
-    task_queue_manager = pulsar.ActorLink('taskqueue',[link_middleware])
+    task_queue_manager = pulsar.ActorLink('taskqueue')
     
+    def task_request_parameters(self, request):
+        '''return a dictionary of parameters to be passed to the :class:`Task`
+class during construction. This function can be used to add information about
+the type of request, who made the request and so forth.'''
+        return {}
+    
+    def task_callback(self, request, jobname, ack = True, **kwargs):
+        funcname = 'addtask' if ack else 'addtask_noack'
+        request_params = self.task_request_parameters(request)
+        return self.task_queue_manager.get_callback(
+                                            request.environ,
+                                            funcname,
+                                            jobname = jobname,
+                                            task_extra = request_params,
+                                            **kwargs)    
+        
     def rpc_job_list(self, request, jobnames = None):
         '''Dictionary of information about the registered jobs. If
 *jobname* is passed, information regrading the specific job will be returned.'''
-        return self.task_queue_manager(request.actor,
+        return self.task_queue_manager(request.environ,
                                        'job_list',
                                        jobnames = jobnames)
     
@@ -61,7 +76,7 @@ It exposes the following functions:
 and the time in seconds when the task will run.
 
 :parameter jobname: optional jobname.'''
-        return self.task_queue_manager(request.actor,
+        return self.task_queue_manager(request.environ,
                                        'next_scheduled',
                                        jobname = jobname)
         
@@ -72,16 +87,14 @@ as long as it is registered in the job registry.
 :parameter jobname: the name of the job to run.
 :parameter ack: if ``True`` the request will be send to the caller.
 :parameter kwargs: optional task parameters.'''
-        funcname = 'addtask' if ack else 'addtask_noack'
-        return self.task_queue_manager(request.actor,
-                                       funcname,
-                                       jobname = jobname,
-                                       **kwargs)
+        result = self.task_callback(request, jobname, ack, **kwargs)()
+        return result.add_callback(task_to_json)
         
-    def rpc_get_task(self, request, id):
-        return self.task_queue_manager(request.actor,
-                                       'get_task',
-                                       id)
+    def rpc_get_task(self, request, id = None):
+        if id:
+            return self.task_queue_manager(request.actor,
+                                           'get_task',
+                                           id).add_callback(task_to_json)
                            
     
         

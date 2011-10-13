@@ -7,7 +7,7 @@ from pulsar.utils.tools import checkarity
 from .exceptions import *
 
 
-__all__ = ['RpcMiddleware']
+__all__ = ['RpcHandler','RpcMiddleware']
 
 
 def wrap_object_call(fname,namefunc):
@@ -186,19 +186,8 @@ Add a limited ammount of magic to RPC handlers.'''
 BaseHandler = MetaRpcHandler('BaseRpcHandler',(PickableMixin,),{'virtual':True})
 
 
-class RpcMiddleware(BaseHandler):
-    '''A WSGI middleware for serving Remote procedure calls (RPC).
-
-Sub-handlers for prefixed methods (e.g., system.listMethods)
-can be added with :meth:`putSubHandler`. By default, prefixes are
-separated with a dot. Override :attr:`separator` to change this.
-
-.. attribute:: path
-
-    The path where the RPC is located
-    
-    Default ``None``
-'''
+class RpcHandler(BaseHandler):
+    '''The base class for rpc handlers'''
     serve_as     = 'rpc'
     '''Prefix to callable providing services.'''
     separator    = '.'
@@ -209,19 +198,27 @@ separated with a dot. Override :attr:`separator` to change this.
     def __init__(self, subhandlers = None,
                  title = None,
                  documentation = None,
-                 path = None,
                  **kwargs):
+        self._parent = None
         self.subHandlers = {}
         self.title = title or self.__class__.__name__
         self.documentation = documentation or ''
         self.log = self.getLogger(**kwargs)
-        self.path = path or '/'
         if subhandlers:
             for prefix,handler in subhandlers.items():
                 if inspect.isclass(handler):
-                    handler = handler(http = self.http)
+                    handler = handler()
                 self.putSubHandler(prefix, handler)
     
+    @property
+    def parent(self):
+        '''Return the parent :class:`RpcHandler` instance or ``None`` if this
+is the root handler.'''
+        return self._parent
+    
+    def isroot(self):
+        return self._parent == None
+        
     def get_method_and_args(self, data):
         '''Obtain function information form ``wsgi.input``. Needs to be
 implemented by subclasses. It should return a five elements tuple containing::
@@ -234,8 +231,11 @@ identifier for the client, ``version`` is the version of the RPC protocol.
     '''
         raise NotImplementedError
     
-    def __getitem__(self, path):
-        return self._getFunction(path)
+    def __getattr__(self, name):
+        if self.isroot():
+            raise AttributeError("'{0}' object has no attribute '{1}'"\
+                                 .format(self.__class__.__name__,name))
+        return getattr(self._parent,name)
     
     def get_handler(self, path):
         prefixes = path.split(self.separator)
@@ -256,6 +256,7 @@ identifier for the client, ``version`` is the version of the RPC protocol.
 :keyword handler: the sub-handler, an instance of :class:`Handler` 
         '''
         self.subHandlers[prefix] = handler
+        handler._parent = self
         return self
 
     def getSubHandler(self, prefix):
@@ -280,7 +281,6 @@ identifier for the client, ``version`` is the version of the RPC protocol.
             func = None
         return RpcRequest(environ, handler, method, func, args,
                           kwargs, id, version)
-        #return RpcResponse(handler,method,func)
 
     def invokeServiceEndpoint(self, meth, args):
         return meth(*args)
@@ -302,15 +302,40 @@ identifier for the client, ``version`` is the version of the RPC protocol.
             yield '\n'.join((link,'',title,under,'',data['doc'],'\n')) 
 
     def docs(self):
-        return '\n'.join(self._docs()) 
+        return '\n'.join(self._docs())
+    
+    
+class RpcMiddleware(BaseHandler):
+    '''A WSGI middleware for serving Remote procedure calls (RPC).
+
+Sub-handlers for prefixed methods (e.g., system.listMethods)
+can be added with :meth:`putSubHandler`. By default, prefixes are
+separated with a dot. Override :attr:`separator` to change this.
+
+.. attribute:: path
+
+    The path where the RPC is located
+    
+    Default ``None``
+'''
+    serve_as     = 'rpc'
+    '''Prefix to callable providing services.'''
+    separator    = '.'
+    '''Separator between subhandlers.'''
+    content_type = 'text/plain'
+    '''Default content type.'''
+
+    def __init__(self, handler, path = None):
+        self.handler = handler 
+        self.path = path or '/'
     
     def __call__(self, environ, start_response):
         '''The WSGI handler which consume the remote procedure call'''
-        path = environ['PATH_INFO']
-        if path == self.path:
+        if environ['PATH_INFO'] == self.path:
             data = environ['wsgi.input'].read()
-            method, args, kwargs, id, version = self.get_method_and_args(data)
-            request = self.request(environ, method, args, kwargs, id, version)
+            hnd = self.handler
+            method, args, kwargs, id, version = hnd.get_method_and_args(data)
+            request = hnd.request(environ, method, args, kwargs, id, version)
             return RpcResponse(request, start_response)
         
         

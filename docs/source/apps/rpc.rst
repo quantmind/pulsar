@@ -11,6 +11,14 @@ JSON-RPC
 API
 ===========
 
+RpcHandler
+~~~~~~~~~~~~~~
+
+.. autoclass:: RpcHandler
+   :members:
+   :member-order: bysource
+   
+   
 RpcMiddleware
 ~~~~~~~~~~~~~~~~
 
