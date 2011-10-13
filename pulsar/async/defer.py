@@ -21,6 +21,7 @@ __all__ = ['Deferred',
            'DeferredGenerator',
            'is_stack_trace',
            'is_async',
+           'async_pair',
            'async_func_call',
            'make_async',
            'raise_failure',
@@ -29,6 +30,12 @@ __all__ = ['Deferred',
 
 
 logger = logging.getLogger('pulsar.async.defer')
+
+
+def _is_stack_trace(trace):
+    if isinstance(data,tuple) and len(data) == 3:
+        return True
+    return False
 
 
 class Failure(object):
@@ -45,7 +52,7 @@ class Failure(object):
         if trace:
             if isinstance(trace,self.__class__):
                 self.traces.extend(trace.traces)
-            else:
+            elif _is_stack_trace(trace):
                 self.traces.append(trace)
         return self
             
@@ -82,9 +89,8 @@ def update_failure(f):
 def is_stack_trace(data):
     if isinstance(data,Failure):
         return True
-    elif isinstance(data,tuple) and len(data) == 3:
-        return True
-    return False
+    else:
+        return _is_stack_trace(trace)
     
 
 def raise_failure(result):
@@ -132,6 +138,26 @@ This function is useful when someone whants to treat a value as a deferred::
             return d
     else:
         return val 
+    
+    
+def async_pair(func):
+
+    def _(*args, **kwargs):
+        try:
+            r = func(*args, **kwargs)
+        except:
+            r = Failure(err = sys.exc_info())
+        d = Deferred()
+        r = make_async(r).add_callback(d.callback)
+        return r,d
+    
+    if func:
+        _.__doc__ = func.__doc__
+        _.__name__ = func.__name__
+        
+        return _
+    else:
+        return None
 
 
 def simple_callback(func, *args, **kwargs):
@@ -327,6 +353,8 @@ generator.'''
             try:
                 result = self.next()
                 self._consumed += 1
+            except KeyboardInterrupt:
+                raise
             except StopIteration:
                 break
             except Exception as e:

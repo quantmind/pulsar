@@ -23,15 +23,19 @@ class TestRequest(object):
         loader = unittest.TestLoader()
         self.tests = tests = self.testcls()
         self.test_results = results = tests.defaultTestResult()
-        init = getattr(tests,'initTests',None)
+        init = async_pair(getattr(tests,'initTests',None))
         end = getattr(tests,'endTests',None)
         if init:
-            d = pulsar.Deferred()
-            yield pulsar.make_async(init()).add_callback(d.callback)
-            if d.is_failure():
-                pass
+            result,outcome = init()
+            yield result
+            if outcome.is_failure():
+                if end:
+                    yield end()
+                yield pulsar.raise_failure()
+                    
         for test in loader.loadTestsFromTestCase(self.testcls):
             yield run_test(test,results)
+            
         if end:
             yield end()
 
@@ -98,7 +102,7 @@ def run_test(self, result):
 
 def _executeTestPart(self, function, outcome, isTest=False):
     try:
-        function()
+        return function()
     except KeyboardInterrupt:
         raise
     except _UnexpectedSuccess:
