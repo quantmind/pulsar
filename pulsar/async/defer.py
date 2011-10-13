@@ -19,7 +19,7 @@ from pulsar.utils.mixins import Synchronized
 __all__ = ['Deferred',
            'Failure',
            'DeferredGenerator',
-           'is_stack_trace',
+           'is_failure',
            'is_async',
            'async_pair',
            'async_func_call',
@@ -32,8 +32,8 @@ __all__ = ['Deferred',
 logger = logging.getLogger('pulsar.async.defer')
 
 
-def _is_stack_trace(trace):
-    if isinstance(data,tuple) and len(data) == 3:
+def is_stack_trace(trace):
+    if isinstance(trace,tuple) and len(trace) == 3:
         return True
     return False
 
@@ -52,7 +52,7 @@ class Failure(object):
         if trace:
             if isinstance(trace,self.__class__):
                 self.traces.extend(trace.traces)
-            elif _is_stack_trace(trace):
+            elif is_stack_trace(trace):
                 self.traces.append(trace)
         return self
             
@@ -86,11 +86,11 @@ def update_failure(f):
     return f.append(sys.exc_info())
     
     
-def is_stack_trace(data):
+def is_failure(data):
     if isinstance(data,Failure):
         return True
     else:
-        return _is_stack_trace(trace)
+        return is_stack_trace(data)
     
 
 def raise_failure(result):
@@ -269,7 +269,7 @@ this point, :meth:`add_callback` will run the *callbacks* immediately.'''
 ready it throws a :class:`pulsar.DeferredFailure` exception'''
         if not self.called:
             raise DeferredFailure('Deferred not called')
-        return is_stack_trace(self.result)
+        return is_failure(self.result)
     
     def wait(self, timeout = 1):
         '''Wait until *timeout* for a result to be available'''
@@ -382,7 +382,7 @@ generator.'''
             self._consume()
             
     def _should_stop(self, trace):
-        if is_stack_trace(trace):
+        if is_failure(trace):
             self._errors.append(trace)
             if self.max_errors and len(self._errors) >= self.max_errors:
                 self.callback(self._errors)

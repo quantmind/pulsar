@@ -6,7 +6,7 @@ import random
 from inspect import isgenerator
 
 import pulsar
-from pulsar import Empty, make_async, DeferredGenerator, is_stack_trace, Failure
+from pulsar import Empty, make_async, DeferredGenerator, is_failure, Failure
 from pulsar.utils.py2py3 import execfile
 from pulsar.utils.importer import import_module
 from pulsar.utils.log import LogInformation
