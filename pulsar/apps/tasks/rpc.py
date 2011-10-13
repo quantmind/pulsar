@@ -55,6 +55,8 @@ the type of request, who made the request and so forth.'''
         return {}
     
     def task_callback(self, request, jobname, ack = True, **kwargs):
+        '''Return a callable for running a task from *jobname* in
+the tsak queue.'''
         funcname = 'addtask' if ack else 'addtask_noack'
         request_params = self.task_request_parameters(request)
         return self.task_queue_manager.get_callback(

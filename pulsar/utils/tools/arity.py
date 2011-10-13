@@ -37,7 +37,7 @@ a error message if the check did not pass, otherwise it returns ``None``.
     if len_args_input < len_args:
         for arg in spec.args[discount+len_args_input:]:
             kwargs.pop(arg,None)
-        if kwargs:
+        if kwargs and maxlen:
             s = ''
             if len(kwargs) > 1:
                 s = 's'
