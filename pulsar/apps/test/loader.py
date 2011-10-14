@@ -81,12 +81,6 @@ you give a *root* directory and a list of submodules where to look for tests.
                     yield tag,mod
                 
 
-class TestCbk(object):
-    
-    def __call__(self, result):
-        self.result = result
-        
-        
 class TestGenerator(object):
     
     def __init__(self, test, result, testMethod):

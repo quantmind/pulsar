@@ -43,13 +43,16 @@ is a group of tests specified in a test class.'''
             sys.path.insert(0, path)
             
     def on_config(self):
-        # The config is available. Load the tests
+        '''Whene config is available load the tests and check what type of
+action is required.'''
         test_type = self.cfg.test_type
         modules = getattr(self,'modules',None)
         if not modules:
             raise ValueError('No modules specified. Please pass the modules\
  parameters to the TestSuite Constructor.')
         loader = TestLoader(os.getcwd(),modules,test_type)
+        
+        # Listing labels
         if self.cfg.list_labels:
             print('\nTEST LABELS\n')
             for tag,mod in loader.testmodules():
@@ -68,8 +71,8 @@ is a group of tests specified in a test class.'''
         self.cfg.set('workers',min(self.cfg.workers,len(self.tests)))
         
     def monitor_start(self, monitor):
-        '''When the monitor starts load all tests classes\
- in the taskqueue'''
+        '''When the monitor starts load all :test:`TestRequest` into the\
+ in the :attr:`pulsar.Arbiter.ioqueue`.'''
         for _,testcls in self.tests:
             monitor.put(TestRequest(testcls))
             

@@ -10,6 +10,15 @@ Parallel Testing
 API
 =========
 
-.. autoclass:: pulsar.apps.test.TestCase
+TestSuite
+~~~~~~~~~~~~~~~~~~~
+.. autoclass:: TestSuite
+   :members:
+   :member-order: bysource
+   
+
+TestRequest
+~~~~~~~~~~~~~~~~~~~
+.. autoclass:: TestRequest
    :members:
    :member-order: bysource

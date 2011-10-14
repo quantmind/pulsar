@@ -16,6 +16,7 @@ from pulsar.utils import system
 __all__ = ['Worker',
            'Application',
            'ApplicationMonitor',
+           'WorkerRequest',
            'Response',
            'require',
            'ResponseError']
@@ -32,6 +33,15 @@ def require(appname):
     return mod
 
 
+class WorkerRequest(object):
+    
+    def response(self):
+        return self
+    
+    def close(self):
+        pass
+    
+    
 class Response(object):
     '''A mixin for pulsar response classes'''
     exception = None

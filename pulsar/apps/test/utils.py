@@ -4,18 +4,31 @@ import unittest
 import pulsar
 
 
-class _Outcome(object):
-    def __init__(self):
+__all__ = ['TestRequest','TestCase']
+
+
+class Outcome(object):
+    
+    def __init__(self, result = None):
         self.success = True
         self.skipped = None
         self.unexpectedSuccess = None
         self.expectedFailure = None
         self.errors = []
         self.failures = []
+        self.add(result)
+        
+    def add(self, result):
+        if pulsar.is_failure(result):
+            self.success = False
+            self.failureinfo(result)
+            
+    def failureinfo(self, result):
+        pass
 
 
-class TestRequest(object):
-    
+class TestRequest(pulsar.WorkerRequest):
+    '''A :class:`pulsar.WorkerRequest` class which wraps a test case class'''
     def __init__(self, testcls):
         self.testcls = testcls
         
@@ -23,7 +36,7 @@ class TestRequest(object):
         loader = unittest.TestLoader()
         self.tests = tests = self.testcls()
         self.test_results = results = tests.defaultTestResult()
-        init = async_pair(getattr(tests,'initTests',None))
+        init = pulsar.async_pair(getattr(tests,'initTests',None))
         end = getattr(tests,'endTests',None)
         if init:
             result,outcome = init()
@@ -34,77 +47,71 @@ class TestRequest(object):
                 yield pulsar.raise_failure()
                     
         for test in loader.loadTestsFromTestCase(self.testcls):
-            yield run_test(test,results)
+            yield self.run_test(test,results)
             
         if end:
             yield end()
+        
 
-    def response(self):
-        return self
+    def run_test(self, test, result):
+        testMethod = getattr(test, test._testMethodName)
+        if (getattr(test.__class__, "__unittest_skip__", False) or
+            getattr(testMethod, "__unittest_skip__", False)):
+            # If the class or method was skipped.
+            try:
+                skip_why = (getattr(test.__class__, '__unittest_skip_why__', '')
+                            or getattr(testMethod, '__unittest_skip_why__', ''))
+                test._addSkip(result, skip_why)
+            finally:
+                result.stopTest(test)
+            raise StopIteration
+        
+        result, setup_outcome = pulsar.async_pair(test.setUp)()
+        yield result
+        if not setup_outcome.is_failure():
+            result, outcome = pulsar.async_pair(testMethod)()
+            yield result
+            outcome = Outcome(outcome.result)
+            result, teardown_outcome = pulsar.async_pair(test.tearDown)()
+            yield result
+            outcome.add(teardown_outcome.result)
+        else:
+            outcome = Outcome(outcome.result)
     
-    def close(self):
-        pass
-    
-
-def run_test(self, result):
-    testMethod = getattr(self, self._testMethodName)
-    if (getattr(self.__class__, "__unittest_skip__", False) or
-        getattr(testMethod, "__unittest_skip__", False)):
-        # If the class or method was skipped.
-        try:
-            skip_why = (getattr(self.__class__, '__unittest_skip_why__', '')
-                        or getattr(testMethod, '__unittest_skip_why__', ''))
-            self._addSkip(result, skip_why)
-        finally:
-            result.stopTest(self)
-        raise StopIteration
-    
-    try:
-        outcome = _Outcome()
-        self._outcomeForDoCleanups = outcome
-
-        yield _executeTestPart(self, self.setUp, outcome)
+        
         if outcome.success:
-            yield _executeTestPart(self, testMethod, outcome, isTest=True)
-            yield _executeTestPart(self, self.tearDown, outcome)
-
-        self.doCleanups()
-        if outcome.success:
-            result.addSuccess(self)
+            result.addSuccess(test)
         else:
             if outcome.skipped is not None:
-                self._addSkip(result, outcome.skipped)
+                test._addSkip(result, outcome.skipped)
             for exc_info in outcome.errors:
-                result.addError(self, exc_info)
+                result.addError(test, exc_info)
             for exc_info in outcome.failures:
-                result.addFailure(self, exc_info)
+                result.addFailure(test, exc_info)
             if outcome.unexpectedSuccess is not None:
                 addUnexpectedSuccess = getattr(result, 'addUnexpectedSuccess', None)
                 if addUnexpectedSuccess is not None:
-                    addUnexpectedSuccess(self)
+                    addUnexpectedSuccess(test)
                 else:
                     warnings.warn("TestResult has no addUnexpectedSuccess method, reporting as failures",
                                   RuntimeWarning)
-                    result.addFailure(self, outcome.unexpectedSuccess)
-
+                    result.addFailure(test, outcome.unexpectedSuccess)
+    
             if outcome.expectedFailure is not None:
                 addExpectedFailure = getattr(result, 'addExpectedFailure', None)
                 if addExpectedFailure is not None:
-                    addExpectedFailure(self, outcome.expectedFailure)
+                    addExpectedFailure(test, outcome.expectedFailure)
                 else:
                     warnings.warn("TestResult has no addExpectedFailure method, reporting as passes",
                                   RuntimeWarning)
-                    result.addSuccess(self)
+                    result.addSuccess(test)
 
-    finally:
-        result.stopTest(self)
     
 
+@pulsar.async_pair
 def _executeTestPart(self, function, outcome, isTest=False):
     try:
         return function()
-    except KeyboardInterrupt:
-        raise
     except _UnexpectedSuccess:
         exc_info = sys.exc_info()
         outcome.success = False
