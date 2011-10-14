@@ -158,6 +158,15 @@ and utilities for pickle.'''
         self.configure_logging()
         
         
+class LocalMixin(object):
+    
+    @property
+    def local(self):
+        if not hasattr(self,'_local'):
+            self._local = {}
+        return self._local
+    
+        
 class LogInformation(object):
     
     def __init__(self, logevery):

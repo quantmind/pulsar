@@ -86,11 +86,6 @@ try:
             return str(self.result)
         string_result.short_description = 'result'
         
-        def tojson(self):
-            d = self.todict()
-            d['id'] = self.id
-            return d
-        
         def on_created(self, worker = None):
             self.save()
             

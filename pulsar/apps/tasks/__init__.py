@@ -7,7 +7,7 @@ A task-queue application for pulsar::
     tq.start()
     
 An application implements several :class:`Job`
-classes which specify the way each task is run.
+classes which specify the way each :class:`Task` is run.
 Each job class is a task-factory, therefore, a task is always associated
 with one job, which can be of two types:
 
@@ -77,18 +77,28 @@ task callbacks:
 * :meth:`Task.on_finish` called by a worker when it ends the task.
 
 
-Task state
+.. _task-state:
+
+Task states
 ~~~~~~~~~~~~~
 
-A :class:`Task` can have one of the following `status`:
+A :class:`Task` can have one of the following :attr:`Task.status` string:
 
 * ``PENDING`` A task waiting for execution and unknown.
+* ``RETRY`` A task is retrying calculation.
 * ``RECEIVED`` when the task is received by the task queue.
 * ``STARTED`` task execution has started.
 * ``REVOKED`` the task execution has been revoked. One possible reason could be
   the task has timed out.
-* ``SUCCESS`` task execution has finished with success.
+* ``UNKNOWN`` task execution is unknown.
 * ``FAILURE`` task execution has finished with failure.
+* ``SUCCESS`` task execution has finished with success.
+
+
+.. attribute:: READY_STATES
+
+    The set of states for which a :class:`Task` has finished:
+    ``REVOKED``, ``FAILURE`` and ``SUCCESS``
 '''
 import os
 from time import time

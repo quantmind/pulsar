@@ -52,34 +52,40 @@ class TaskConsumer(object):
 class Task(object):
     '''A Task interface.
 
-.. attribute: name
+.. attribute:: name
     
-    Job name
+    :class:`Job` name
     
-.. attribute: status
+.. attribute:: status
 
-    Current status of task
+    The current :ref:`status string <task-state>` of task
     
-.. attribute: time_executed
+.. attribute:: time_executed
 
     date time when the task was executed
     
-.. attribute: time_start
+.. attribute:: time_start
 
     date-time when the task calculation has started.
     
-.. attribute: time_end
+.. attribute:: time_end
 
     date-time when the task has finished.
     
-.. attribute: expiry
+.. attribute:: expiry
 
     optional date-time indicating when the task should expire.
     
-.. attribute: timeout
+.. attribute:: timeout
     
     A boolean indicating whether a timeout has occurred
 '''
+    @property
+    def state(self):
+        '''Integer indicating :attr:`status` precedence.
+Lower number higher precedence.'''
+        return PRECEDENCE_MAPPING.get(self.status,UNKNOWN_STATE)
+    
     def consumer(self, queue, worker, job):
         '''Return the task context manager for execution.'''
         return TaskConsumer(self, queue, worker, job)
@@ -120,6 +126,8 @@ returns nothing.'''
         return self
         
     def needs_queuing(self):
+        '''called after calling :meth:`to_queue`, it return ``True`` if the
+task needs to be queued.'''
         return self.__dict__.pop('_toqueue',False)
         
     def done(self):
@@ -130,7 +138,8 @@ returns nothing.'''
             return self.revoked()
         
     def revoked(self):
-        '''Attempt to revoke the task'''
+        '''Attempt to revoke the task, if the task is not in
+:attr:`READY_STATES`. It returns a timestamp if the revoke was successful.'''
         if self.expiry:
             tm = datetime.now()
             if tm > self.expiry:
@@ -236,7 +245,7 @@ class TaskInMemory(Task):
     def save_task(cls, task):
         if task.id in cls._TASKS:
             t = cls._TASKS[task.id]
-            if precedence(t.status) < precedence(task.status):
+            if t.state < task.state:
                 # we don't save here. Could by concurrency lags
                 return
         cls._TASKS[task.id] = task
