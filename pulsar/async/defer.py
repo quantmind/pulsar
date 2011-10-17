@@ -12,7 +12,8 @@ except ImportError:
     import Queue as queue
 ThreadQueue = queue.Queue
 
-from pulsar import AlreadyCalledError, DeferredFailure, Timeout, NOT_DONE
+from pulsar import AlreadyCalledError, DeferredFailure, Timeout,\
+                     NOT_DONE, CLEAR_ERRORS
 from pulsar.utils.mixins import Synchronized
 
 
@@ -70,7 +71,10 @@ class Failure(object):
         elif N > 1:
             raise DeferredFailure('There were {0} failures during callbacks.'\
                                   .format(N))
-            
+
+    def trace(self):
+        return self.traces[-1]
+                
     def log(self, log = None):
         log = log or logger
         for e in self:
@@ -98,8 +102,8 @@ def raise_failure(result):
 and raise errors.'''
     if isinstance(result,Failure):
         result.should_stop = True
-    return result 
-        
+    return result
+
         
 def is_async(obj):
     return isinstance(obj,Deferred)
@@ -243,8 +247,6 @@ The function takes at most one argument, the result passed to the
             if isinstance(self.result,Failure):
                 if self.result.should_stop:
                     self.result.raise_all()
-                
-        return self
     
     def add_callback_args(self, callback, *args, **kwargs):
         return self.add_callback(\
@@ -266,7 +268,8 @@ this point, :meth:`add_callback` will run the *callbacks* immediately.'''
             raise AlreadyCalledError
         self.result = result
         self._called = True
-        return self._run_callbacks()
+        self._run_callbacks()
+        return self.result
         
     def is_failure(self):
         '''return ``True`` if the result is a failure. If the result is not
@@ -366,6 +369,8 @@ generator.'''
             else:
                 if result == NOT_DONE:
                     return self._ioloop.add_callback(self._consume)
+                elif result == CLEAR_ERRORS:
+                    self._errors = Failure()
                 else:
                     d = make_async(result)
                     if d.called:

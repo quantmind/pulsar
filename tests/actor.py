@@ -1,11 +1,8 @@
 from time import sleep
+import unittest as test
+
 from pulsar import spawn, Actor, ActorProxy, ActorMessage
-from pulsar.apps import test
 
-
-#__all__ = ['TestActorThread']
-__all__ = ['TestActorThread',
-           'TestActorProcess']
 
 def sleepfunc():
     sleep(2)

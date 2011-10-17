@@ -161,14 +161,15 @@ Here ``a`` is actually a reference to the remote actor.
     ACTOR_TIMEOUT_TOLERANCE = 0.6
     DEF_PROC_NAME = 'pulsar'
     SIG_QUEUE = None
-    _ppid = None
     _name = None
     
     def __init__(self, impl, arbiter = None, monitor = None,
                  on_task = None, ioqueue = None,
                  monitors = None, name = None, params = None,
-                 age = 0, pool_timeout = None, **kwargs):
+                 age = 0, pool_timeout = None, ppid = None,
+                 **kwargs):
         # Call on_init
+        self.__ppid = ppid
         self._impl = impl
         self._linked_actors = {}
         self.age = age
@@ -214,7 +215,7 @@ which can be shared across different processes (i.e. it is pickable).'''
     @property
     def ppid(self):
         '''Parent process id.'''
-        return self._ppid
+        return self.__ppid
     
     @property
     def impl(self):
@@ -232,12 +233,12 @@ longer that timeout.'''
     @property
     def pid(self):
         '''Operative system process ID where the actor is running.'''
-        return os.getpid()
+        return self.__pid
     
     @property
     def tid(self):
         '''Operative system thread name where the actor is running.'''
-        return self.current_thread().name
+        return self.__tid
     
     @property
     def name(self):
@@ -368,6 +369,8 @@ are registered and the :attr:`Actor.ioloop` is initialised and started.'''
             if self.outbox:
                 self.outbox.register(self,inbox=False)
             self.on_start()
+            self.__tid = current_thread().ident
+            self.__pid = os.getpid()
             self._run()
     
     def get_eventloop(self):
@@ -402,6 +405,10 @@ If the message needs acknowledgment, send the result back.'''
                               .format(message.receiver))
         else:
             return process_message(receiver,sender,message)
+        
+    def handle_message(self, sender, message):
+        '''Handle a *message* from a *sender*.'''
+        pass
         
     def put(self, request):
         '''Put a request into the actor :attr:`ioqueue` if available.'''
@@ -522,8 +529,8 @@ status and performance.'''
                 'aid':self.aid[:8],
                 'pid':self.pid,
                 'ppid':self.ppid,
-                'thread':self.current_thread().name,
-                'process':self.current_process().name,
+                'thread':self.tid,
+                'process':self.pid,
                 'isprocess':self.isprocess(),
                 'age':self.age}
         ioloop = self.ioloop
@@ -596,9 +603,7 @@ the actor information to the caller.'''
         proc_name = self.DEF_PROC_NAME
         cfg = self.get('cfg')
         if cfg:
-            proc_name = cfg.proc_name or cfg.default_proc_name
-        else:
-            proc_name = self.DEF_PROC_NAME
+            proc_name = cfg.proc_name or cfg.default_proc_name or proc_name
         proc_name = "{0} - {1}".format(proc_name,self)
         if system.set_proctitle(proc_name):
             self.log.debug('Set process title to {0}'.format(proc_name))

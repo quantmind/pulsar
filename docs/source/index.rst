@@ -24,14 +24,14 @@ Applications
 .. toctree::
    :maxdepth: 1
    
+   apps/framework
    apps/wsgi
    apps/rpc
    apps/tasks
    apps/websockets
-   apps/pulsardjp
-   apps/shell
    apps/test
-   apps/tempo
+   apps/shell
+   apps/pulsardjp
    
 
 Indices and tables

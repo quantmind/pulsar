@@ -2,8 +2,8 @@ from time import time
 import os
 import sys
 import signal
+from multiprocessing import current_process, Lock
 from multiprocessing.queues import Empty
-from threading import Lock
 
 import pulsar
 from pulsar.utils import system
@@ -23,7 +23,12 @@ __all__ = ['arbiter','spawn','Arbiter']
 
 
 def arbiter(daemonize = False):
-    return Arbiter.instance(daemonize)
+    p = current_process()
+    arbiter = getattr(p,'_arbiter',None)
+    if not arbiter:
+        arbiter = Arbiter.spawn(Arbiter,impl='monitor',daemonize=daemonize)
+        setattr(p,'_arbiter',arbiter)
+    return arbiter
     
     
 def spawn(actorcls = None, **kwargs):
@@ -32,9 +37,8 @@ process domain.
 
 :param actorcls: :class:`Actor` or one of its subclasses.
 :rtype: instance of :class:`ActorProxyMonitor`'''
-    return arbiter().spawn(actorcls or Arbiter, **kwargs)
-    
-        
+    return arbiter().spawn(actorcls or Actor, **kwargs)
+
 
 class Arbiter(PoolMixin,Actor):
     '''The Arbiter is a very special :class:`Actor`. It is used as
@@ -87,21 +91,17 @@ Users access the arbiter by the high level api::
         return m
     
     @classmethod
-    def instance(cls,daemonize=False):
-        if not hasattr(cls,'_instance'):
-            cls._instance = cls.spawn(cls,impl='monitor',daemonize=daemonize)
-        return cls._instance
-    
-    @classmethod
     def spawn(cls, actorcls, **kwargs):
         '''Create a new :class:`Actor` and return its
 :class:`ActorProxyMonitor`.'''
+        p = current_process()
+        arbiter = getattr(p,'_arbiter',None)
         cls.lock.acquire()
         try:
-            arbiter = getattr(cls,'_instance',None)
             if arbiter:
                 arbiter.actor_age += 1
                 kwargs['age'] = arbiter.actor_age
+                kwargs['ppid'] = arbiter.ppid
             impl = kwargs.pop('impl',actorcls.DEFAULT_IMPLEMENTATION)
             timeout = max(kwargs.pop('timeout',cls.DEFAULT_ACTOR_TIMEOUT),
                             cls.MINIMUM_ACTOR_TIMEOUT)
@@ -155,6 +155,13 @@ Users access the arbiter by the high level api::
     ############################################################################
     
     def on_init(self, daemonize = False, **kwargs):
+        p = current_process()
+        arbiter = getattr(p,'_arbiter',None)
+        if arbiter:
+            raise pulsar.PulsarException('Arbiter already created')
+        if p.daemon:
+            raise pulsar.PulsarException(
+                    'Cannot create the arbiter in a daemon process')
         PoolMixin.on_init(self,**kwargs)
         self._repr = self._name
         self._close_signal = None

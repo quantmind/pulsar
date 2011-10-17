@@ -1,5 +1,7 @@
-from pulsar import test, SERVER_SOFTWARE, Queue, Empty
-from pulsar.http import HttpClient
+import unittest as test
+
+from pulsar import SERVER_SOFTWARE, Queue, Empty
+from pulsar.net import HttpClient
 
 from .manage import server
 

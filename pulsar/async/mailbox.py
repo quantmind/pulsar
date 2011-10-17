@@ -12,6 +12,8 @@ from pulsar.utils.py2py3 import pickle
 
 __all__ = ['mailbox','Mailbox','SocketServerMailbox','IOQueue','Empty','Queue']
 
+crlf = b'\r\n'
+
 
 def mailbox(address = None, id = None, queue = None):
     '''Creates a :class:`Mailbox` instances for :class:`Actor` instances.
@@ -97,8 +99,7 @@ of the :attr:`Actor.ioloop`'''
     def on_message(self, fd, events):
         '''Handle the message by parsing it and invoking
 :meth:`Actor.message_arrived`'''
-        message = self.read_message(fd, events)
-        if message:
+        for message in self.read_message(fd, events):
             self.actor.message_arrived(message)
         
     def address(self):
@@ -140,7 +141,7 @@ class QueueMailbox(Mailbox):
             pass
         
     def read_message(self, fd, events):
-        return events
+        yield events
         
     
 class SocketMailbox(Mailbox):
@@ -174,7 +175,7 @@ send messages to a :class:`SocketServerMailbox`.'''
             raise MailboxError('Cannot register {0}. {1}'.format(self,e))
         
     def put(self, request):
-        request = pickle.dumps(request)
+        request = pickle.dumps(request) + crlf
         return self.sock.send(request)
     
     def read_message(self, fd, events, client = None):
@@ -223,6 +224,7 @@ pipe is created.'''
     
     def on_actor(self):
         self.sock = serverSocket()
+        self.buffer = bytearray()
         if self.type == 'outbox':
             raise ValueError('Trying to use {0} as outbox'\
                              .format(self.__class__.__name__))
@@ -251,17 +253,28 @@ pipe is created.'''
         except socket.error:
             chunk = None
         
-        if not chunk:
-            ioloop.remove_handler(client)
-            client.close()
-        else:
-            msg = bytearray(chunk)
+        toclose = False
+        if chunk:
+            self.buffer.extend(chunk)
             while len(chunk) > length:
                 chunk = client.recv(length)
                 if not chunk:
                     break
-                msg.extend(chunk)
-            return pickle.loads(bytes(msg))
+                else:
+                    self.buffer.extend(chunk)
+        else:
+            toclose = True
+            
+        while self.buffer:
+            p = self.buffer.find(crlf)
+            if p >= 0:
+                msg = self.buffer[:p]
+                del self.buffer[0:p+2]
+                yield pickle.loads(bytes(msg))
+            
+        if toclose:
+            ioloop.remove_handler(client)
+            client.close()
         
     def close(self):
         if self.sock:

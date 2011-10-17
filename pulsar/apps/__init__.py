@@ -91,6 +91,10 @@ class HandlerMixin(object):
         response = make_response(request, outcome.result)
         yield response.close()
         yield response
+        
+    def handle_message(self, sender, message):
+        '''Handle a *message* from a *sender*.'''
+        return self.app.handle_message(sender, self, message)
     
     def handle_request(self, request):
         '''Entry point for handling a request. This is a high level
@@ -240,10 +244,10 @@ updated actor parameters with information about the application.
 class Application(pulsar.PickableMixin):
     """\
 An application interface for configuring and loading
-the various necessities for any given server application running
-on pulsar concurrent framework.
+the various necessities for any given server or distributed application running
+on :mod:`pulsar` concurrent framework.
 Applications can be of any sort or form and the library is shipped with several
-battery included examples in the :mod:`pulsar.apps` module.
+battery included examples in the :mod:`pulsar.apps` framework module.
 
 When creating a new application, a new :class:`ApplicationMonitor`
 instance is added to the :class:`Arbiter`, ready to perform
@@ -264,7 +268,7 @@ its duties.
 
     A string indicating the application namespace for configuration parameters.
     
-    Default `None`
+    Default ``None``
     
 .. attribute:: callable
 
@@ -273,7 +277,7 @@ its duties.
     or a pickable object. If not provided, the application must
     implement the :meth:`handler` method.
     
-    Default `None`
+    Default ``None``
     
 .. attribute:: cfg
 
@@ -330,6 +334,14 @@ its duties.
         '''Application name, It is unique and defines the application.'''
         return self._name
     
+    def handle_message(self, sender, receiver, message):
+        '''Handle messages for the *receiver*.'''
+        handler = getattr(self,'actor_' + message.action,None)
+        if handler:
+            return handler(sender, receiver, *message.args, **message.kwargs)
+        else:
+            receiver.log.error('Unknown action ' + message.action)
+        
     def handle_request(self, worker, request):
         '''This is the main function which needs to be implemented
 by actual applications. It is called by the *worker* to handle
@@ -532,7 +544,9 @@ doing anything.'''
     
     def start(self):
         '''Start the application if it wasn't already started.'''
-        pulsar.arbiter().start()
+        arbiter = pulsar.arbiter()
+        if self.name in arbiter.monitors:
+            arbiter.start()
         return self
             
     def stop(self):

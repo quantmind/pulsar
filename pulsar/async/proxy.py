@@ -37,18 +37,17 @@ def actorid(actor):
         
         
 def process_message(receiver, sender, message):
-    '''Process *message* received by *receiver* by perfroming the message
-action. If an acknowledgment is required send back the result using
+    '''Process *message* received by *receiver* by performing the message
+action. If an acknowledgment is required, send back the result using
 the receiver eventloop.'''
     ack = message.ack
     try:
         func = receiver.actor_functions.get(message.action,None)
         if func:
             ack = getattr(func,'ack',True)
-            args,kwargs = message.msg
-            result = func(receiver, sender, *args, **kwargs)
+            result = func(receiver, sender, *message.args, **message.kwargs)
         else:
-            result = receiver.channel_messsage(sender, message)
+            result = receiver.handle_message(sender, message)
     except Exception as e:
         result = e
         if receiver.log:
@@ -105,15 +104,40 @@ class ActorMessage(Deferred):
 :parameter ack: Boolean indicating if message needs to be acknowledge by the
     receiver.
 :param msg: Message to send.
+
+.. parameter:: sender
+
+    id of the actor sending the message.
+    
+.. parameter:: receiver
+
+    id of the actor receiving the message.
+    
+.. parameter:: action
+
+    action to be performed
+    
+.. parameter:: args
+
+    Positional arguments in the message body
+    
+.. parameter:: kwargs
+
+    Optional arguments in the message body
+    
+.. parameter:: ack
+
+    ``True`` if the message needs acknowledgment
 '''
     MESSAGES = {}
     
-    def __init__(self, sender, target, action, ack, msg):
+    def __init__(self, sender, target, action, ack, args, kwargs):
         super(ActorMessage,self).__init__(rid = gen_unique_id()[:8])
         self.sender = actorid(sender)
         self.receiver = actorid(target)
         self.action = action
-        self.msg = msg
+        self.args = args
+        self.kwargs = kwargs
         self.ack = ack
         if self.ack:
             self.MESSAGES[self.rid] = self
@@ -130,7 +154,7 @@ class ActorMessage(Deferred):
         d = self.__dict__.copy()
         d.pop('_lock',None)
         d['_callbacks'] = []
-        return d
+        return d    
     
     def make_actor_callback(self, actor, caller):
         return CallerCallBack(self, actor, caller)
@@ -140,6 +164,7 @@ class ActorMessage(Deferred):
         r = cls.MESSAGES.pop(rid,None)
         if r:
             r.callback(result)
+            
             
 
 class ActorProxy(object):
@@ -197,7 +222,7 @@ action ``notify`` with parameter ``"hello there!"``.
         ack = False
         if action in self.remotes:
             ack = self.remotes[action]
-        return ActorMessage(sender,self.aid,action,ack,(args,kwargs))
+        return ActorMessage(sender,self.aid,action,ack,args,kwargs)
         
     def send(self, sender, action, *args, **kwargs):
         '''\

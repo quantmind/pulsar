@@ -1,5 +1,7 @@
+import unittest as test
+
 from pulsar import AlreadyCalledError, Deferred
-from pulsar.apps import test
+
 
 __all__ = ['TestDeferred']
         

@@ -1,5 +1,6 @@
+import unittest as test
+
 from pulsar import net
-from pulsar.apps import test
 
 
 class WebSocketTest(test.TestCase):

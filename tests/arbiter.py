@@ -1,9 +1,11 @@
 '''Tests for arbiter and monitors'''
-from pulsar import Monitor, Actor, DEFAULT_MESSAGE_CHANNEL
-from pulsar.apps import test
+import unittest as test
+import os
+
+import pulsar
 
 
-class ActorA(Actor):
+class ActorA(pulsar.Actor):
     '''This actor ping application "app1" and once it receive the callback
 it fires a message with the result to its monitor.'''
     def on_task(self):
@@ -21,16 +23,17 @@ it fires a message with the result to its monitor.'''
 class TestArbiter(test.TestCase):
     
     def testArbiter(self):
-        arbiter = self.arbiter
+        self.assertRaises(pulsar.PulsarException,pulsar.arbiter)
+        worker = self.worker
+        arbiter = worker.arbiter
         self.assertEqual(arbiter.impl,'monitor')
-        self.assertTrue(arbiter.monitors)
-        self.assertTrue(arbiter.actor_functions)
         
         
-class TestMonitor(test.TestCase):
+class TestMonitor(object):
     
-    def get_monitor(self,impl,name,actor=Actor):
-        m = self.arbiter.add_monitor(Monitor, actor, name,
+    def get_monitor(self,impl,name,actor=None):
+        actor = actor or pulsar.Actor
+        m = self.arbiter.add_monitor(pulsar.Monitor, actor, name,
                                      num_workers = 2,
                                      actor_params = {'impl':impl})
         self.assertEqual(m.ioloop,self.arbiter.ioloop)

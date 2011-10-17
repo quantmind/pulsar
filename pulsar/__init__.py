@@ -31,6 +31,9 @@ SERVER_SOFTWARE = "python-{0}/{1}".format(SERVER_NAME,get_version())
 class NOT_DONE(object):
     pass
 
+class CLEAR_ERRORS(object):
+    pass
+
 from .utils.exceptions import *
 from .utils.sock import *
 from .utils import system

@@ -1,8 +1,7 @@
 '''\
-An asynchronous testing application for tesing pulsar and pulsar based
-applications. It can be run in parallel by specifying the number of test
+An asynchronous testing application. It is used for testing pulsar.
+It can be run in parallel by specifying the number of test
 workers in the command line.
-
 '''
 import unittest
 import logging
@@ -12,28 +11,36 @@ import time
 import inspect
 
 import pulsar
-from pulsar.apps import tasks
-from pulsar.utils.importer import import_module
+import pulsar.apps.tasks # Need to import for the task_queue_factory settings
 
 from .config import *
-from .utils import *
+from .case import *
 from .loader import *
 
 
-class TestSuite(tasks.TaskQueue):
-    '''An asyncronous test suite which works like a task queue where each task
-is a group of tests specified in a test class.'''
+class TestSuite(pulsar.Application):
+    '''An asynchronous test suite which works like a task queue where each task
+is a group of tests specified in a test class.
+
+:parameter modules: An iterable over modules where to look for tests.
+'''
     app = 'test'
     config_options_include = ('timeout','concurrency','workers','loglevel',
                               'worker_class','debug','task_queue_factory')
     default_logging_level = None
     cfg = {'timeout':300,
-           'concurrency':'thread',
+           #'concurrency':'thread',
            'workers':1,
            'loglevel':'none'}
     
     def handler(self):
         return self
+    
+    def get_ioqueue(self):
+        '''Return the distributed task queue which produces tasks to
+be consumed by the workers.'''
+        queue = self.cfg.task_queue_factory
+        return queue()
     
     def python_path(self):
         #Override the python path so that we put the directory where the script
@@ -42,9 +49,14 @@ is a group of tests specified in a test class.'''
         if path not in sys.path:
             sys.path.insert(0, path)
             
+    def make_result(self):
+        r = unittest.TextTestRunner()
+        return r._makeResult()
+            
     def on_config(self):
         '''Whene config is available load the tests and check what type of
 action is required.'''
+        pulsar.arbiter()
         test_type = self.cfg.test_type
         modules = getattr(self,'modules',None)
         if not modules:
@@ -65,21 +77,70 @@ action is required.'''
         
         tags = self.cfg.labels
         self.tests = list(loader.testclasses(tags))
-        if not self.tests:
-            print('Nothing done. No tests available.')
-            return False
         self.cfg.set('workers',min(self.cfg.workers,len(self.tests)))
         
     def monitor_start(self, monitor):
         '''When the monitor starts load all :test:`TestRequest` into the\
  in the :attr:`pulsar.Arbiter.ioqueue`.'''
+        self._results = TestResult()
+        self._time_start = time.time()
         for _,testcls in self.tests:
             monitor.put(TestRequest(testcls))
+    
+    def monitor_task(self, monitor):
+        '''Check if we got all results'''
+        if self._results.count == len(self.tests):
+            time_taken = time.time() - self._time_start
+            self.results_summary(time_taken)
+            monitor.arbiter.stop()
             
     def handle_request(self, worker, request):
         yield request.run(worker)
         yield request.response()
-                      
+        
+    def actor_test_result(self, sender, worker, result):
+        self._results.add(result)
+    
+    def results_summary(self, timeTaken):
+        res = self.make_result()
+        res.getDescription = lambda test : test
+        stream = res.stream
+        result = self._results
+        res.failures = result.failures
+        res.errors = result.errors
+        res.printErrors()
+        run = result.testsRun
+        stream.writeln("Ran %d test%s in %.3fs" %
+                            (run, run != 1 and "s" or "", timeTaken))
+        stream.writeln()
+
+        expectedFails = unexpectedSuccesses = skipped = 0
+        results = map(len, (result.expectedFailures,
+                            result.unexpectedSuccesses,
+                            result.skipped))
+        expectedFails, unexpectedSuccesses, skipped = results
+
+        infos = []
+        if not result.wasSuccessful():
+            stream.write("FAILED")
+            failed, errored = map(len, (result.failures, result.errors))
+            if failed:
+                infos.append("failures=%d" % failed)
+            if errored:
+                infos.append("errors=%d" % errored)
+        else:
+            stream.write("OK")
+        if skipped:
+            infos.append("skipped=%d" % skipped)
+        if expectedFails:
+            infos.append("expected failures=%d" % expectedFails)
+        if unexpectedSuccesses:
+            infos.append("unexpected successes=%d" % unexpectedSuccesses)
+        if infos:
+            stream.writeln(" (%s)" % (", ".join(infos),))
+        else:
+            stream.write("\n")
+
         
 def TestSuiteRunner(extractors):
     return TestApplication(extractors = extractors)
