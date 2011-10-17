@@ -1,7 +1,8 @@
 import unittest as test
 
-from pulsar import SERVER_SOFTWARE, Queue, Empty
+from pulsar import SERVER_SOFTWARE, Queue, Empty, async_pair
 from pulsar.net import HttpClient
+from pulsar.apps.test import test_server
 
 from .manage import server
 
@@ -22,47 +23,36 @@ class PostRequest(object):
         
 
 class TestHelloWorldExample(test.TestCase):
+    concurrency = 'process'
     
-    def initTests(self):
-        r = PostRequest()
-        s = server(concurrency = 'process',
-                   bind = '127.0.0.1:0',
-                   parse_console = False,
-                   name = 'helloworld',
-                   post_request=r)
-        self.__class__._server = s
-        self.__class__._rm = r
-        monitor = self.arbiter.get_monitor(s.mid)
-        self.wait(lambda : not monitor.is_alive())
-        self.__class__.uri = 'http://{0}:{1}'.format(*monitor.address)
+    @classmethod
+    def setUpClass(cls):
+        s = test_server(server,
+                        bind = '127.0.0.1:0',
+                        name = 'helloworld',
+                        concurrency = cls.concurrency)
+        r,outcome = cls.worker.run_on_arbiter(s)
+        yield r
+        app = outcome.result
+        cls.app = app
+        cls.uri = 'http://{0}:{1}'.format(*app.address)
         
-    def endTests(self):
-        monitor = self.arbiter.get_monitor(self._server.mid)
-        monitor.stop()
-        self.wait(lambda : monitor.aid in self.arbiter.monitors)
-        self.assertFalse(monitor.is_alive())
-        self.assertTrue(monitor.closed())
+    @classmethod
+    def tearDownClass(cls):
+        return cls.worker.arbiter.send(cls.worker,'kill_actor',cls.app.mid)
     
-    def setUp(self):
-        self.c = HttpClient()
-        
     def testMeta(self):
-        s = self._server
-        self.assertEqual(s.name,'helloworld')
-        monitor = self.arbiter.get_monitor(s.mid)
+        import pulsar
+        arbiter = pulsar.arbiter()
+        self.assertTrue(len(arbiter.monitors)>=2)
+        monitor = arbiter.monitors.get('helloworld')
         self.assertEqual(monitor.name,'helloworld')
-        
-    def testMonitors(self):
-        s = self._server
-        self.assertTrue(len(self.arbiter.monitors)>=2)
-        monitor = self.arbiter.get_monitor(s.mid)
-        self.assertTrue(monitor.name in self.arbiter.monitors)
-        self.assertTrue(monitor.is_alive())
+        self.assertTrue(monitor.running())
+    testMeta.run_on_arbiter = True
         
     def testResponse(self):
-        c = self.c
-        r = self._rm
-        resp = self.c.request(self.uri)
+        c = HttpClient()
+        resp = c.request(self.uri)
         self.assertTrue(resp.status,200)
         content = resp.content
         self.assertEqual(content,b'Hello World!\n')
@@ -70,12 +60,3 @@ class TestHelloWorldExample(test.TestCase):
         self.assertTrue(headers)
         self.assertEqual(headers['content-type'],'text/plain')
         self.assertEqual(headers['server'],SERVER_SOFTWARE)
-        #
-        # lets check the response count
-        aid,age,nr = r.get()
-        self.assertTrue(nr)
-        resp = self.c.request(self.uri)
-        aid1,age1,nr1 = r.get()
-        if aid == aid1:
-            self.assertEqual(nr1,nr+1)
-        

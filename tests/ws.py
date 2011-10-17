@@ -1,12 +1,12 @@
 import unittest as test
 
-from pulsar import net
+from pulsar.apps import ws
 
 
 class WebSocketTest(test.TestCase):
     
     def testHyBiKey(self):
-        w = net.WebSocket(None)
+        w = ws.WebSocket(None)
         v = w.challenge_response('dGhlIHNhbXBsZSBub25jZQ==')
         self.assertEqual(v,"s3pPLMBiTxaQ9kYGzzhZRbK+xOo=")
         

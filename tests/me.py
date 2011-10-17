@@ -1,4 +1,4 @@
-'''Tests for arbiter and monitors'''
+'''Tests the test suite and pulsar distribution'''
 import os
 import unittest as test
 import threading

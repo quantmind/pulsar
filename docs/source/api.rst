@@ -112,6 +112,12 @@ Make Async
 .. autofunction:: make_async
 
 
+Asynchronous Pair
+~~~~~~~~~~~~~~~~~~~~
+
+.. autofunction:: async_pair
+
+
 Deferred
 ~~~~~~~~~~~~~~~~~~~~
 
@@ -127,6 +133,14 @@ Deferred Generator
    :members:
    :member-order: bysource
    
+
+Failure
+~~~~~~~~~~~~~~~~~~~~
+
+.. autoclass:: Failure
+   :members:
+   :member-order: bysource
+
 
 Mailbox
 ~~~~~~~~~~~~~~

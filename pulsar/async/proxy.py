@@ -5,6 +5,7 @@ from pulsar.utils.py2py3 import iteritems
 from pulsar.utils.tools import gen_unique_id
 
 from .defer import Deferred, is_async, make_async, raise_failure
+from .mailbox import SocketMailbox
 
 __all__ = ['ActorMessage',
            'ActorProxy',
@@ -300,13 +301,35 @@ therefore remain in the process where they have been created.
 .. attribute:: info
 
     Dictionary of information regarding the remote actor
+    
+.. attribute:: on_address
+
+    A :class:`Deferred` called back when the inbox address is ready.
+    You can use this funvtion in the following way::
+    
+        import pulsar
+        
+        a = pulsar.spawn()
+        a.on_address.add_callback(...)
 '''
     def __init__(self, impl):
         self.impl = impl
         self.info = {'last_notified':time()}
         self.stopping_loops = 0
         super(ActorProxyMonitor,self).__init__(impl)
+        self.on_address = Deferred()
     
+    def inbox_address(self, address):
+        '''Callback from the :class:`Arbiter` when the remote underlying actor
+has registered its inbox address.
+
+:parameter address: the address for the undrlying remote :attr:`Arbiter.inbox`
+'''
+        if address:
+            self.inbox = SocketMailbox(address)
+            self.inbox.register(self,False)
+        self.on_address.callback(address)
+        
     @property
     def notified(self):
         return self.info['last_notified']

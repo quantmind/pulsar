@@ -1,10 +1,8 @@
+'''Deferred and asynchronous tools'''
 import unittest as test
 
-from pulsar import AlreadyCalledError, Deferred
+from pulsar import AlreadyCalledError, Deferred, async_pair
 
-
-__all__ = ['TestDeferred']
-        
 
 class TestDeferred(test.TestCase):
     
@@ -18,8 +16,7 @@ class TestDeferred(test.TestCase):
         self.assertRaises(AlreadyCalledError,d.callback,'bla')
 
     def testCallbacks(self):
-        cbk = self.Callback()
-        d = Deferred().add_callback(cbk)
+        d,cbk = async_pair(Deferred())
         self.assertFalse(d.called)
         d.callback('ciao')
         self.assertTrue(d.called)
@@ -27,8 +24,7 @@ class TestDeferred(test.TestCase):
         
     def testError(self):
         e = Exception('blabla exception')
-        cbk = self.Callback()
-        d = Deferred().add_callback(cbk)
+        d,cbk = async_pair(Deferred())
         self.assertFalse(d.called)
         d.callback(e)
         self.assertTrue(d.called)

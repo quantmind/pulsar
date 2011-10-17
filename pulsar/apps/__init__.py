@@ -182,7 +182,6 @@ used for by the application for handling requests and sending back responses.
         return data
     
     def configure_logging(self, **kwargs):
-        #switch off configure logging. Done by self.app
         pass
 
 
@@ -201,6 +200,7 @@ pulsar applications (subclasses of :class:`Application`).
             arbiter['cfg'] = app.cfg
         self.app_handler = app.handler()
         super(ApplicationMonitor,self).on_init(**kwargs)
+        self.app.monitor_init(self)
     
     # Delegates Callbacks to the application    
     def on_start(self):
@@ -289,6 +289,11 @@ its duties.
 
     The unique id of the :class:`ApplicationMonitor` managing the
     application. Defined at runtime.
+    
+.. attribute:: script
+
+    full path of the script which starts the application or ``None``.
+    If supplied it is used to setup the python path
 """
     cfg = {}
     _name = None
@@ -298,7 +303,6 @@ its duties.
     config_options_include = None
     config_options_exclude = None
     monitor_class = ApplicationMonitor
-    default_logging_level = logging.INFO
     
     def __init__(self,
                  callable = None,
@@ -306,11 +310,13 @@ its duties.
                  description = None,
                  epilog = None,
                  argv = None,
+                 script = None,
                  **params):
-        self.python_path()
         self.description = description or self.description
         self.epilog = epilog or self.epilog
         self._name = name or self._name or self.__class__.__name__.lower()
+        self.script = script
+        self.python_path()
         nparams = self.cfg.copy()
         nparams.update(params)
         self.callable = callable
@@ -369,7 +375,8 @@ By default it returns ``None``.'''
     
     def python_path(self):
         #Insert the application directory at the top of the python path.
-        path = os.path.split(os.getcwd())[0]
+        fname = self.script or os.getcwd()
+        path = os.path.split(fname)[0]
         if path not in sys.path:
             sys.path.insert(0, path)
             
@@ -525,6 +532,10 @@ doing anything.'''
         pass
             
     # MONITOR CALLBAKS
+    
+    def monitor_init(self, monitor):
+        '''Callback by :class:`ApplicationMonitor` when initializing'''
+        pass
     
     def monitor_start(self, monitor):
         '''Callback by :class:`ApplicationMonitor` when starting'''

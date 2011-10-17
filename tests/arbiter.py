@@ -26,7 +26,14 @@ class TestArbiter(test.TestCase):
         self.assertRaises(pulsar.PulsarException,pulsar.arbiter)
         worker = self.worker
         arbiter = worker.arbiter
+        self.assertTrue(arbiter)
+        
+    def testArbiterObject(self):
+        import pulsar
+        arbiter = pulsar.arbiter()
         self.assertEqual(arbiter.impl,'monitor')
+        self.assertTrue(arbiter.monitors)
+    testArbiterObject.run_on_arbiter = True
         
         
 class TestMonitor(object):

@@ -1,4 +1,5 @@
-from pulsar import test
+import unittest as test
+
 from pulsar.apps import rpc
 
 from .manage import server

@@ -134,8 +134,6 @@ task needs to be queued.'''
         '''Return ``True`` if the task has finished its execution.'''
         if self.time_end:
             return True
-        else:
-            return self.revoked()
         
     def revoked(self):
         '''Attempt to revoke the task, if the task is not in

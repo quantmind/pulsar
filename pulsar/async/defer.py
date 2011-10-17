@@ -4,6 +4,7 @@ A lightweight deferred module inspired by twisted.
 import sys
 from copy import copy
 import logging
+import traceback
 from inspect import isgenerator, isfunction, ismethod, istraceback
 from time import sleep, time
 try:
@@ -20,10 +21,12 @@ from pulsar.utils.mixins import Synchronized
 __all__ = ['Deferred',
            'Failure',
            'DeferredGenerator',
+           'SafeAsync',
+           'as_failure',
            'is_failure',
            'is_async',
            'async_pair',
-           'async_func_call',
+           #'async_func_call',
            'make_async',
            'raise_failure',
            'simple_callback',
@@ -40,7 +43,13 @@ def is_stack_trace(trace):
 
 
 class Failure(object):
-    '''Aggregate failures during :class:`Deferred` callbacks.'''
+    '''Aggregate failures during :class:`Deferred` callbacks.
+    
+.. attribute:: traces
+
+    List of (``errorType``, ``errvalue``, ``traceback``) occured during
+    the execution of a :class:`Deferred`.
+'''
     def __init__(self, err = None):
         self.should_stop = False
         if isinstance(err,self.__class__):
@@ -50,12 +59,22 @@ class Failure(object):
             self.append(err)
     
     def append(self, trace):
+        '''Add new failure to self.'''
         if trace:
             if isinstance(trace,self.__class__):
                 self.traces.extend(trace.traces)
             elif is_stack_trace(trace):
                 self.traces.append(trace)
         return self
+    
+    def __getstate__(self):
+        traces = []
+        for exctype, value, tb in self:
+            st = traceback.format_exception(exctype, value, tb)
+            traces.append((exctype, value, st))
+        state = self.__dict__.copy()
+        state['traces'] = traces
+        return state
             
     def __len__(self):
         return len(self.traces)
@@ -96,6 +115,15 @@ def is_failure(data):
     else:
         return is_stack_trace(data)
     
+    
+def as_failure(data):
+    if isinstance(data,Failure):
+        return data
+    elif is_stack_trace(data):
+        return Failure(data)
+    elif isinstance(data,Exception):
+        return Failure((data.__class__,data,None))
+    
 
 def raise_failure(result):
     '''Utility callback function which stop execution of callbacks on failure
@@ -119,7 +147,7 @@ def async_func_call(func, result, *args, **kwargs):
 async_value = lambda value : lambda result : value 
     
 
-def make_async(val = None):
+def make_async(val = None, max_errors = None):
     '''Convert *val* into an :class:`Deferred` asynchronous instance
 so that callbacks can be attached to it.
 
@@ -135,7 +163,7 @@ This function is useful when someone whants to treat a value as a deferred::
 '''
     if not is_async(val):
         if isgenerator(val):
-            return DeferredGenerator(val)
+            return DeferredGenerator(val,max_errors)
         else:
             d = Deferred()
             d.callback(val)
@@ -143,10 +171,31 @@ This function is useful when someone whants to treat a value as a deferred::
     else:
         return val 
     
+
+class SafeAsync(object):
     
-def async_pair(val):
+    def __init__(self, max_errors = None):
+        self.max_errors = max_errors
+        
+    def _call(self):
+        raise NotImplemented
+    
+    def __call__(self):
+        try:
+            res = self._call()
+        except:
+            res = Failure(sys.exc_info())
+        return make_async(res, max_errors = self.max_errors)
+        
+        
+def async_pair(val, max_errors = None):
     '''Convert val into an asynchronous pair or a function returning an
-asynchronous pair.'''
+asynchronous pair.
+
+:parameter val: A function or an object.
+:parameter max_errors: maximum number of errors allowed.
+    Default ``None``.
+'''
     if isfunction(val) or ismethod(val):
         def _(*args, **kwargs):
             try:
@@ -154,7 +203,7 @@ asynchronous pair.'''
             except:
                 r = Failure(err = sys.exc_info())
             d = Deferred()
-            r = make_async(r).add_callback(d.callback)
+            r = make_async(r,max_errors=max_errors).add_callback(d.callback)
             return r,d
         
         return _
@@ -164,7 +213,7 @@ asynchronous pair.'''
     
     else:
         d = Deferred()
-        r = make_async(val).add_callback(d.callback)
+        r = make_async(val,max_errors=max_errors).add_callback(d.callback)
         return r,d
 
 

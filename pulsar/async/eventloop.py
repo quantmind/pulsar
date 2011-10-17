@@ -146,8 +146,8 @@ file descriptor *fd*.
             fde = file_descriptor(fd)
             if fde not in self._handlers:
                 self._handlers[fde] = handler
-                self.log.debug('Registering handler for "{0}"\
- with ioloop.'.format(fd))
+                self.log.debug('Registering fd {0} for "{1}"\
+ with ioloop.'.format(fde,fd))
                 self._impl.register(fde, events | self.ERROR)
                 return True
             else:

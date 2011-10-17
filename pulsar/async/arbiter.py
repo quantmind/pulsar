@@ -15,7 +15,6 @@ from .impl import actor_impl
 from .actor import Actor
 from .monitor import PoolMixin
 from .proxy import ActorCallBacks
-from .mailbox import SocketMailbox
 from .defer import ThreadQueue
 
 
@@ -233,10 +232,10 @@ the timeout. Stop the arbiter.'''
     
     def actor_inbox_address(self, actor, address):
         '''The ``actor`` register its inbox ``address``.'''
-        self.log.debug('Registering actor {0} inbox address {1}'
-                       .format(actor,address))
-        actor.inbox = SocketMailbox(address)
-        actor.inbox.register(actor,False)
+        if address:
+            self.log.debug('Registering actor {0} inbox address {1}'
+                           .format(actor,address))
+        actor.inbox_address(address)
     actor_inbox_address.ack = False
         
     def actor_kill_actor(self, caller, aid):

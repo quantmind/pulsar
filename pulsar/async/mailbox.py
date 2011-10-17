@@ -73,13 +73,14 @@ of the :attr:`Actor.ioloop`'''
             actor.ioloop.add_handler(self,
                                      self.on_message,
                                      actor.ioloop.READ)
-            # the actor may need to acknowledge the arbiter
+            # the actor need to acknowledge the arbiter
             if actor.impl != 'monitor':
                 address = self.address()
-                if address:
-                    actor.ioloop.add_callback(
-                        lambda : actor.arbiter.send(self.actor,
-                                                    'inbox_address', address))
+                actor.log.debug('Sending address {0} to arbiter'\
+                                 .format(address))
+                actor.ioloop.add_callback(
+                    lambda : actor.arbiter.send(self.actor,
+                                    'inbox_address', address))
     
     def name(self):
         return 'mailbox'
@@ -202,7 +203,8 @@ def getNone(*args,**kwargs):
     return None
 
 
-class SocketServerMailbox(NonePickler,Mailbox):
+#class SocketServerMailbox(NonePickler,Mailbox):
+class SocketServerMailbox(Mailbox):
     '''An inbox for :class:`Actor` instances. If an address is provided,
 the communication is implemented using a socket, otherwise a unidirectional
 pipe is created.'''

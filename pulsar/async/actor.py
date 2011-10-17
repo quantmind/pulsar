@@ -16,7 +16,7 @@ from pulsar.utils.py2py3 import iteritems, itervalues, pickle
 from .eventloop import IOLoop
 from .proxy import ActorProxy, ActorMessage, process_message,\
                     DEFAULT_MESSAGE_CHANNEL
-from .defer import make_async, raise_failure
+from .defer import make_async, raise_failure, async_pair
 from .mailbox import IOQueue
 
 
@@ -161,7 +161,7 @@ Here ``a`` is actually a reference to the remote actor.
     ACTOR_TIMEOUT_TOLERANCE = 0.6
     DEF_PROC_NAME = 'pulsar'
     SIG_QUEUE = None
-    _name = None
+    _name = 'actor'
     
     def __init__(self, impl, arbiter = None, monitor = None,
                  on_task = None, ioqueue = None,
@@ -268,7 +268,8 @@ longer that timeout.'''
     @property
     def monitors(self):
         '''Dictionary of all :class:`Monitor` instances
-registered with the actor.'''
+registered with the actor. The keys are given by the monitor names rather than
+their ids.'''
         return self._monitors
     
     @property
@@ -364,10 +365,10 @@ are registered and the :attr:`Actor.ioloop` is initialised and started.'''
             # ADD SELF TO THE EVENT LOOP TASKS
             self.ioloop = self.get_eventloop()
             self.ioloop.add_loop_task(self)
-            if self.inbox:
-                self.inbox.register(self)
             if self.outbox:
                 self.outbox.register(self,inbox=False)
+            if self.inbox:
+                self.inbox.register(self)
             self.on_start()
             self.__tid = current_thread().ident
             self.__pid = os.getpid()
@@ -430,6 +431,15 @@ If the message needs acknowledgment, send the result back.'''
             return self.__getitem__(key)
         except KeyError:
             return default
+        
+    def run_on_arbiter(self, callable):
+        '''Run a *callable* in the arbiter event loop.
+
+:parameter callable: a pickable, therefore it must be a pickable callable object
+    or a function.
+:rtype: a tuple of :class:`Deferred` instances'''
+        res = self.arbiter.send(self,'run',callable)
+        return async_pair(res)
         
     ############################################################################
     # STOPPING
@@ -586,6 +596,10 @@ the actor information to the caller.'''
     
     def actor_ping(self, caller):
         return 'pong'
+    
+    def actor_run(self, caller, callable):
+        '''Execute a callable in the worker process domain'''
+        return callable()
     
     def actor_kill_actor(self, caller, aid):
         return self.arbiter.kill_actor(aid)

@@ -22,8 +22,12 @@ LOG_LEVELS = {
         "error": logging.ERROR,
         "warning": logging.WARNING,
         "info": logging.INFO,
-        "debug": logging.DEBUG
+        "debug": logging.DEBUG,
+        'none': None
     }
+
+
+_added_default_handler = False
 
 
 def getLogger(name = None):
@@ -107,6 +111,7 @@ class LogginMixin(object):
     
     def configure_logging(self, handlers = None):
         '''Configure logging'''
+        global _added_default_handler
         loglevel = self.loglevel
         try:
             self.loglevel = int(loglevel)
@@ -114,17 +119,21 @@ class LogginMixin(object):
             lv = str(loglevel).lower()
             self.loglevel = LOG_LEVELS.get(lv,self.default_logging_level)
         logger = logging.getLogger()
+        
         color = False
-        if not handlers:
-            handlers = []
+        handlers = handlers or []
+        if not handlers and not _added_default_handler:
+            _added_default_handler = True
             if self.loglevel is None:
                 handlers.append(Silence())
             else:
                 color = True
                 handlers.append(logging.StreamHandler())
-        f = self.logging_formatter(color)
+            
+        f = self.logging_formatter(color) if color else None
         for h in handlers:
-            h.setFormatter(f)
+            if f:
+                h.setFormatter(f)
             logger.addHandler(h)
             if self.loglevel is not None:
                 logger.setLevel(self.loglevel)
@@ -142,30 +151,24 @@ class LogginMixin(object):
     
 class PickableMixin(LogginMixin):
     '''A Mixin used throught the library. It provides built in logging object
-and utilities for pickle.'''
-    REMOVABLE_ATTRIBUTES = ()
-     
-    def __getstate__(self):
-        d = self.__dict__.copy()
-        d.pop('log',None)
-        for attr in self.REMOVABLE_ATTRIBUTES:
-            d.pop(attr,None)
-        return d
-    
-    def __setstate__(self, state):
-        self.__dict__ = state
-        self.log = getLogger(self.class_code) 
-        self.configure_logging()
-        
-        
-class LocalMixin(object):
-    
+and utilities for pickle.'''     
     @property
     def local(self):
         if not hasattr(self,'_local'):
             self._local = {}
         return self._local
+     
+    def __getstate__(self):
+        d = self.__dict__.copy()
+        d.pop('log',None)
+        d.pop('_local',None)
+        return d
     
+    def __setstate__(self, state):
+        self.__dict__ = state
+        self.log = getLogger(self.class_code)
+        self.configure_logging()
+        
         
 class LogInformation(object):
     

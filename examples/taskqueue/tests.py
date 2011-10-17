@@ -1,8 +1,10 @@
 from time import time, sleep
 from datetime import datetime, timedelta
+import unittest as test
 
-from pulsar import test
+import pulsar
 from pulsar.apps import tasks, rpc
+from pulsar.apps.test import test_server
 from pulsar.utils.timeutils import timedelta_seconds
 
 from .manage import createTaskQueue, server
@@ -10,90 +12,114 @@ from .manage import createTaskQueue, server
 
 CODE_TEST = '''\
 import time
-def task_function(N = 10):
-    time.sleep(0.1)
+def task_function(N = 10, lag = 0.1):
+    time.sleep(lag)
     return N*N
 '''
         
 
-class dummyQueue(list):
-    
-    def put(self, elem):
-        self.append(elem)
-
-
 class TestTaskQueueMeta(test.TestCase):
     concurrency = 'process'
     
-    def initTests(self):
-        self.__class__.tq = createTaskQueue(parse_console = False,
-                                            concurrency = self.concurrency)
+    @classmethod
+    def setUpClass(cls):
+        s = test_server(createTaskQueue,
+                        concurrency = cls.concurrency,
+                        name = 'tq')
+        r,outcome = cls.worker.run_on_arbiter(s)
+        yield r
+        cls.app = outcome.result
         
-    def endTests(self):
-        self.tq.stop()
-        self.wait(lambda : self.tq.name in self.arbiter.monitors)
-        self.assertFalse(self.tq.name in self.arbiter.monitors)
+    @classmethod
+    def tearDownClass(cls):
+        return cls.worker.arbiter.send(cls.worker,'kill_actor',cls.app.mid)
+    
+    def tq(self):
+        import pulsar
+        arbiter = pulsar.arbiter()
+        self.assertTrue(len(arbiter.monitors)>=2)
+        monitor = arbiter.monitors.get('tq')
+        self.assertEqual(monitor.name,'tq')
+        self.assertTrue(monitor.running())
+        return monitor
         
-    def testCreate(self):
-        tq = self.tq
-        self.assertTrue(tq.cfg)
-        self.assertTrue(tq.registry)
-        scheduler = tq.scheduler
+    def testMeta(self):
+        tq = self.tq()
+        app = tq.app
+        self.assertTrue(app.registry)
+        scheduler = app.scheduler
         self.assertTrue(scheduler.entries)
+    testMeta.run_on_arbiter = True
         
     def testApplicationSimple(self):
         '''Here we test the application only, not the queue mechanism
 implemented by the monitor and workers.'''
-        self.assertTrue('runpycode' in self.tq.registry)
         # create a request
-        r = self.tq.make_request('runpycode',(CODE_TEST,10))
+        tq = self.tq()
+        app = tq.app
+        self.assertTrue('runpycode' in app.registry)
+        r = app.scheduler.queue_task(tq, 'runpycode', (CODE_TEST,), {'N': 10})
         self.assertTrue(r)
         self.assertTrue(r.id)
         self.assertTrue(r.time_executed)
-        self.assertFalse(r.time_start)
-        self.assertEqual(r.args,(CODE_TEST,10))
-        consumer = self.tq.load()
-        response, result = consumer.handle_event_task(None,r)
-        self.assertTrue(response.time_start)
-        self.assertEqual(result,100)
-        self.assertFalse(response.time_end)
-        consumer.end_event_task(None,response,result)
-        self.assertTrue(response.time_end)
-        self.assertTrue(response.time_end>response.time_start)
-        d = timedelta_seconds(response.duration())
+        self.assertEqual(r.args,(CODE_TEST,))
+        self.assertEqual(r.kwargs,{'N': 10})
+        while not r.done():
+            yield pulsar.NOT_DONE # Give a chance to perform the task
+            r = app.task_class.get_task(r.id)
+        self.assertTrue(r.time_start)
+        self.assertTrue(r.status,tasks.SUCCESS)
+        self.assertEqual(r.result,100)
+        self.assertTrue(r.time_end)
+        self.assertTrue(r.time_end>r.time_start)
+        d = timedelta_seconds(r.duration())
         self.assertTrue(d > 0.1)
-        self.assertEqual(response.result,100)
+    testApplicationSimple.run_on_arbiter = True
         
     def testApplicationSimpleError(self):
-        consumer = self.tq.load()
-        r = self.tq.make_request('runpycode',(CODE_TEST,'bla'))
-        task, result = consumer.handle_event_task(None,r)
-        self.assertTrue(task.time_start)
-        self.assertTrue(task.result.startswith("can't multiply sequence"))
-        self.assertTrue(task.time_end)
-        self.assertEqual(task.status,tasks.FAILURE)
+        tq = self.tq()
+        app = tq.app
+        r = app.scheduler.queue_task(tq, 'runpycode', (CODE_TEST,),{'N': 'bla'})
+        self.assertTrue(r)
+        self.assertTrue(r.id)
+        self.assertTrue(r.time_executed)
+        self.assertEqual(r.args,(CODE_TEST,))
+        self.assertEqual(r.kwargs,{'N': 'bla'})
+        while not r.done():
+            yield pulsar.NOT_DONE # Give a chance to perform the task
+            r = app.task_class.get_task(r.id)
+        self.assertTrue(r.time_start)
+        self.assertTrue(r.status,tasks.FAILURE)
+        self.assertTrue(r.result.startswith("can't multiply sequence"))
+        self.assertTrue(r.time_end)
+        self.assertTrue(r.time_end>r.time_start)
+        d = timedelta_seconds(r.duration())
+        self.assertTrue(d > 0.1)
+    testApplicationSimpleError.run_on_arbiter = True
         
     def testTimeout(self):
         '''we set an expire to the task'''
-        self.assertTrue('addition' in self.tq.registry)
-        consumer = self.tq.load()
-        r = self.tq.make_request('runpycode',(3,6),expiry=time())
-        sleep(0.05)
-        task, result = consumer.handle_event_task(None,r)
-        self.assertTrue(task.timeout)
-        self.assertEqual(task.status,tasks.REVOKED)
-        consumer.end_event_task(None,task,result)
+        tq = self.tq()
+        app = tq.app
+        r = app.scheduler.queue_task(tq, 'runpycode',
+                                     (CODE_TEST,),{'N': 2, 'lag': 2},
+                                     expiry=time())
+        while not r.done():
+            yield pulsar.NOT_DONE # Give a chance to perform the task
+            r = app.task_class.get_task(r.id)
+        self.assertTrue(r.timeout)
+        self.assertEqual(r.status,tasks.REVOKED)
+    testTimeout.run_on_arbiter = True    
         
     def testCheckNextRun(self):
-        q = dummyQueue()
-        scheduler = self.tq.scheduler
-        scheduler.tick(q)
+        tq = self.tq()
+        app = tq.app
+        scheduler = app.scheduler
+        scheduler.tick(tq)
         self.assertTrue(scheduler.next_run > datetime.now())
-        now = datetime.now() + timedelta(hours = 1)
-        scheduler.tick(q,now)
-        self.assertTrue(q)
-        td = scheduler.next_run - now
-        
+        #now = datetime.now() + timedelta(hours = 1)
+        #scheduler.tick(tq,now)
+    testCheckNextRun.run_on_arbiter = True    
         
     #def testRunning(self):
     #    ff = self.tq.scheduler.entries['sampletasks.fastandfurious']
@@ -104,7 +130,7 @@ implemented by the monitor and workers.'''
 
 
 
-class TestTaskRpc(test.TestCase):
+class TestTaskRpc(object):
     concurrency = 'thread'
     timeout = 3
     

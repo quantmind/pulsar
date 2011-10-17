@@ -165,8 +165,6 @@ tasks and managing scheduling of tasks.
     Instance of a :class:`JobRegistry` containing all
     registered :class:`Job` instances.
 '''
-    REMOVABLE_ATTRIBUTES = ('_scheduler',) +\
-                             pulsar.Application.REMOVABLE_ATTRIBUTES
     task_class = TaskInMemory
     '''A subclass of :class:`Task` for storing information
     about task execution.
@@ -174,8 +172,6 @@ tasks and managing scheduling of tasks.
     Default: :class:`TaskInMemory`'''
     
     cfg = {'timeout':'3600'}
-    
-    _scheduler = None
     
     @property
     def scheduler(self):
@@ -186,7 +182,7 @@ be scheduled. If so it makes the task requests.
 
 Check the :meth:`TaskQueue.monitor_task` callback
 for implementation.'''
-        return self._scheduler
+        return self.local.get('scheduler')
     
     def get_ioqueue(self):
         '''Return the distributed task queue which produces tasks to
@@ -203,16 +199,17 @@ be consumed by the workers.'''
     def monitor_task(self, monitor):
         '''Override the :meth:`pulsar.Application.monitor_task` callback
 to check if the schedulter needs to perform a new run.'''
-        if self._scheduler:
-            if self.scheduler.next_run <= datetime.now():
-                self.scheduler.tick(monitor)
+        s = self.scheduler
+        if s:
+            if s.next_run <= datetime.now():
+                s.tick(monitor)
     
     def handler(self):
         # Load the application callable, the task consumer
         if self.callable:
             self.callable()
         import_modules(self.cfg.tasks_path)
-        self._scheduler = Scheduler(self.task_class)
+        self.local['scheduler'] = Scheduler(self.task_class)
         return self
             
     def handle_request(self, worker, task):

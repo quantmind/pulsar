@@ -4,5 +4,6 @@ import sys
 from pulsar.apps.test import TestSuite
 
 if __name__ == '__main__':
-    TestSuite(modules = ('tests',
+    TestSuite(description = 'Pulsar Asynchronous test suite',
+              modules = ('tests',
                          ('examples','tests'))).start()

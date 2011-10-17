@@ -81,12 +81,8 @@ requests in the threaded workers.'''
         data = worker.app_handler(environ, response.start_response)
         yield response.write(data)
         yield response
-            
-    def monitor_start(self, monitor):
-        '''If the concurrency model is thread, a new handler is
-added to the monitor event loop which listen for requests on
-the socket. Otherwise the monitor has no handlers since requests are
-directly handled by the workers.'''
+    
+    def monitor_init(self, monitor):
         # First we create the socket we listen to
         address = self.cfg.address
         if address:
@@ -95,12 +91,19 @@ directly handled by the workers.'''
         else:
             raise pulsar.ImproperlyConfigured('\
  WSGI application with no address for socket')
+        self.address = socket.name
+        self.local['socket'] = socket
         
+    def monitor_start(self, monitor):
+        '''If the concurrency model is thread, a new handler is
+added to the monitor event loop which listen for requests on
+the socket. Otherwise the monitor has no handlers since requests are
+directly handled by the workers.'''
         # We have a task queue, This means the monitor itself listen for
         # requests on the socket and delegate the handling to the
         # workers
+        socket = self.local.get('socket')
         if monitor.ioqueue is not None or not monitor.num_actors:
-            self.socket = socket
             monitor.log.info(socket.info())
             handler = HttpPoolHandler(monitor,socket) if monitor.num_actors\
                       else HttpHandler(monitor,socket)
@@ -113,8 +116,9 @@ directly handled by the workers.'''
             
     def monitor_stop(self, monitor):
         if monitor.ioqueue is not None:
-            monitor.ioloop.remove_handler(self.socket)
-            self.socket.close(monitor.log)
+            socket = self.local['socket']
+            monitor.ioloop.remove_handler(socket)
+            socket.close(monitor.log)
 
 
 def createServer(callable = None, **params):

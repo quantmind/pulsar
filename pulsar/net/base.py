@@ -1,7 +1,6 @@
 import socket
 
 import pulsar
-from pulsar import async_func_call
 
 __all__ = ['NetStream','NetRequest','NetResponse','close_socket']
 

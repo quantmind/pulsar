@@ -1,7 +1,24 @@
 '''\
-An asynchronous testing application. It is used for testing pulsar.
-It can be run in parallel by specifying the number of test
-workers in the command line.
+An asynchronous parallel testing suite application. It is used for testing
+pulsar itself and can be used as a test suite for any application.
+
+Create a script on the top level directory of your library,
+let's call it ``runtests.py``::
+
+    from pulsar.apps import TestSuite
+    
+    if __name__ == '__main__':
+        TestSuite(description = 'Test suite for my library',
+                  modules = ('regression',
+                             ('examples','tests'))).start()
+        
+where the modules is an iterable for discovering test cases. Check the
+:attr:`TestSuite.modules` attribute for more details.
+
+In the above example
+the test suite will look for all python files in the ``regression`` module
+(in a recursive fashion), and for modules called ``tests`` in the `` example``
+module.
 '''
 import unittest
 import logging
@@ -18,11 +35,39 @@ from .case import *
 from .loader import *
 
 
+class test_server(object):
+    '''An utility for creating test servers'''
+    def __init__(self, callable, **kwargs):
+        self.callable = callable
+        self.kwargs = kwargs
+
+    def __call__(self):
+        import pulsar
+        arbiter = pulsar.arbiter()
+        cfg = arbiter.get('cfg')
+        s = self.callable(parse_console = False,
+                          loglevel = cfg.loglevel,
+                          **self.kwargs)
+        return self.result(s)
+    
+    def result(self, server):
+        return server
+
+
 class TestSuite(pulsar.Application):
     '''An asynchronous test suite which works like a task queue where each task
 is a group of tests specified in a test class.
 
-:parameter modules: An iterable over modules where to look for tests.
+:parameter modules: An iterable over modules where to look for tests. A module
+    can be a string or a two-element tuple. For example::
+    
+        suite = TestSuite(modules = ('regression',
+                                     ('examples','tests')))
+                                     
+    The loader will look into the ``regression`` module for all files and
+    directory, while it will look into the example directory for all
+    files or directories called ``tests``.
+    
 '''
     app = 'test'
     config_options_include = ('timeout','concurrency','workers','loglevel',
