@@ -90,7 +90,12 @@ of the :attr:`Actor.ioloop`'''
             return '{0} {1} {2}'.format(self.actor,self.name(),self.type)
         else:
             return 'mailbox'
-        
+    
+    def clone(self):
+        '''Get an instance of the mailbox to be used on a different process
+domain. By default it return ``self``.'''
+        return self
+    
     def __repr__(self):
         return self.__str__()
     
@@ -116,8 +121,8 @@ of the :attr:`Actor.ioloop`'''
  available when the mailbox is acting as an outbox.'''
         raise NotImplementedError
     
-    def read_message(self,  fd, events):
-        raise NotIMplementedError
+    def read_message(self, fd, events):
+        raise NotImplementedError
     
     def close(self):
         pass
@@ -137,12 +142,26 @@ class QueueMailbox(Mailbox):
     
     def put(self, request):
         try:
-            self.queue.put((self.id,request))
+            r = (request.receiver,pickle.dumps(request))
         except:
+            self.actor.critical('Could not serialize {0}'.format(request))
+            return
+        try:
+            self.queue.put((self.id,r))
+        except (IOError,TypeError):
             pass
         
     def read_message(self, fd, events):
-        yield events
+        aid = events[0]
+        # if the id is the same as the actor, than this is a message to yield
+        if aid == self.actor.aid: 
+            yield pickle.loads(events[1])
+        else:
+            # Otherwise put it back in the queue
+            try:
+                self.queue.put((self.id,events))
+            except (IOError,TypeError):
+                pass
         
     
 class SocketMailbox(Mailbox):
@@ -199,11 +218,6 @@ class SocketServerClient(object):
         return '{0} inbox client'.format(self.sock)
     
     
-def getNone(*args,**kwargs):
-    return None
-
-
-#class SocketServerMailbox(NonePickler,Mailbox):
 class SocketServerMailbox(Mailbox):
     '''An inbox for :class:`Actor` instances. If an address is provided,
 the communication is implemented using a socket, otherwise a unidirectional
@@ -223,6 +237,9 @@ pipe is created.'''
         
     def put(self, request):
         raise MailboxError('Cannot put messages')
+    
+    def clone(self):
+        return None
     
     def on_actor(self):
         self.sock = serverSocket()
@@ -304,7 +321,7 @@ class QueueWaker(object):
     def wake(self):
         try:
             self._queue.put((self._fd,None))
-        except IOError:
+        except (IOError,TypeError):
             pass
         
     def consume(self):
@@ -346,9 +363,7 @@ The interface is the same as the python epoll_ implementation.
         '''Wait for events. timeout in seconds (float)'''
         try:
             event = self._queue.get(timeout = timeout)
-        except Empty:
-            return self._empty
-        except IOError:
+        except (Empty,IOError,TypeError):
             return self._empty
         
         return (event,)

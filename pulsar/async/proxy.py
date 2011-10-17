@@ -157,9 +157,6 @@ class ActorMessage(Deferred):
         d['_callbacks'] = []
         return d    
     
-    def make_actor_callback(self, actor, caller):
-        return CallerCallBack(self, actor, caller)
-            
     @classmethod
     def actor_callback(cls, rid, result):
         r = cls.MESSAGES.pop(rid,None)
@@ -215,7 +212,7 @@ action ``notify`` with parameter ``"hello there!"``.
     def __init__(self, impl):
         self.aid = impl.aid
         self.remotes = impl.remotes
-        self.inbox = impl.inbox
+        self.inbox = impl.inbox.clone() if impl.inbox else None
         self.timeout = impl.timeout
         self.loglevel = impl.loglevel
         

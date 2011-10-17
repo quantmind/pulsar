@@ -1,10 +1,11 @@
 import sys
 import io
 import unittest
+import pickle
 from inspect import istraceback 
 
 from pulsar import async_pair, as_failure, CLEAR_ERRORS, WorkerRequest,\
-                    make_async, SafeAsync
+                    make_async, SafeAsync, Failure
 
 
 __all__ = ['TestRequest','TestResult']
@@ -86,9 +87,10 @@ class CallableTest(SafeAsync):
         self.funcname = funcname
         
     def _call(self):
-        return getattr(self.test, self.funcname)()
+        test = pickle.loads(self.test)(self.funcname)
+        return getattr(test, self.funcname)()
     
-    
+
 def async_arbiter(test, f, max_errors = 1):
     '''Check if *test* needs to be run on the arbiter process domain.
 It check if the test function *f* has the attribute *run_on_arbiter*
@@ -102,8 +104,17 @@ set to ``True``.
     if f is None:
         return f
     if getattr(f,'run_on_arbiter',False):
-        c = CallableTest(test,f.__name__,max_errors)
-        f = lambda : test.worker.arbiter.send(test.worker,'run',c)
+        worker = test.worker
+        try:
+            test.__class__.worker = None
+            tcls = pickle.dumps(test.__class__)
+        except:
+            f = lambda : Failure(sys.exc_info())
+        else:
+            c = CallableTest(tcls, f.__name__, max_errors)
+            f = lambda : worker.arbiter.send(worker, 'run', c)
+        finally:
+            test.__class__.worker = worker
     return async_pair(f,  max_errors = max_errors)
 
 

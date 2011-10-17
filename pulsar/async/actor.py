@@ -399,11 +399,11 @@ If the message needs acknowledgment, send the result back.'''
         receiver = self.get_actor(message.receiver)
         if not sender or not receiver:
             if not sender:
-                self.log.warn('message from an unknown actor "{0}"'\
-                              .format(message.sender))
+                self.log.warn('message "{0}" from an unknown actor "{1}"'\
+                              .format(message,message.sender))
             if not receiver:
-                self.log.warn('message for an unknown actor "{0}"'\
-                              .format(message.receiver))
+                self.log.warn('message "{0}" for an unknown actor "{1}"'\
+                              .format(message,message.receiver))
         else:
             return process_message(receiver,sender,message)
         

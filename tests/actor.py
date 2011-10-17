@@ -37,16 +37,21 @@ class TestActorThread(test.TestCase):
         yield self.stop()
     testStartStop.run_on_arbiter = True
         
-    def __testStartStopQueue(self):
+    def testStartStopQueue(self):
         '''Test start and stop for an actor using a I/O queue'''
+        arbiter = pulsar.arbiter()
         ioqueue = pulsar.Queue()
-        yield self.spawn(impl = self.impl, ioqueue = ioqueue)
+        yield self.spawn(impl = self.impl, name = 'queue',
+                         ioqueue = ioqueue)
         a = self.a
         self.assertTrue(isinstance(a,pulsar.ActorProxy))
         self.assertTrue(a.is_alive())
         self.assertEqual(a.impl.impl,self.impl)
+        r,outcome = pulsar.async_pair(a.send(arbiter,'ping'))
+        yield r
+        self.assertEqual(outcome.result,'pong')
         yield self.stop()
-    #testStartStopQueue.run_on_arbiter = True
+    testStartStopQueue.run_on_arbiter = True
     
     def testPing(self):
         arbiter = pulsar.arbiter()
@@ -86,6 +91,6 @@ class TestActorThread(test.TestCase):
         self.assertFalse(a.aid in self.arbiter.LIVE_ACTORS)
         
 
-#class TestActorProcess(TestActorThread):
-#    impl = 'process'        
+class TestActorProcess(TestActorThread):
+    impl = 'process'        
 
