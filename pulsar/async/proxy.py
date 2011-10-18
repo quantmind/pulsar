@@ -1,10 +1,11 @@
+import sys
 from time import time
 
 from pulsar import create_connection
 from pulsar.utils.py2py3 import iteritems
 from pulsar.utils.tools import gen_unique_id
 
-from .defer import Deferred, is_async, make_async, raise_failure
+from .defer import Deferred, is_async, make_async, raise_failure, Failure
 from .mailbox import SocketMailbox
 
 __all__ = ['ActorMessage',
@@ -50,7 +51,7 @@ the receiver eventloop.'''
         else:
             result = receiver.handle_message(sender, message)
     except Exception as e:
-        result = e
+        result = Failure(sys.exc_info())
         if receiver.log:
             receiver.log.critical('Error while processing message: {0}.'\
                               .format(e), exc_info=True)

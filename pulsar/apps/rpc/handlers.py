@@ -322,7 +322,7 @@ separated with a dot. Override :attr:`separator` to change this.
     '''Prefix to callable providing services.'''
     separator    = '.'
     '''Separator between subhandlers.'''
-    content_type = 'text/plain'
+    content_type = 'text/json'
     '''Default content type.'''
 
     def __init__(self, handler, path = None):

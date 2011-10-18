@@ -17,8 +17,7 @@ Open a new shell and launch python and type::
     >>>
     
 '''
-import pulsar
-from pulsar.apps import rpc
+from pulsar.apps import rpc, wsgi
 
 
 class Root(rpc.PulsarServerCommands):
@@ -41,9 +40,10 @@ class Calculator(rpc.JSONRPC):
 
 
 def server(**params):
-    root = Root().putSubHandler('calc',Calculator())
-    wsgi = pulsar.require('wsgi')
-    return wsgi.createServer(callable = root, **params)
+    root = rpc.RpcMiddleware(Root().putSubHandler('calc',Calculator()))
+    handler = wsgi.WsgiHandler()
+    handler.middleware.append(root)
+    return wsgi.createServer(callable = handler, **params)
 
 
 def start_server(**params):

@@ -1,25 +1,10 @@
 import unittest as test
 
-from pulsar import SERVER_SOFTWARE, Queue, Empty, async_pair
+from pulsar import SERVER_SOFTWARE
 from pulsar.net import HttpClient
 from pulsar.apps.test import test_server
 
 from .manage import server
-
-
-class PostRequest(object):
-
-    def __init__(self):
-        self.q = Queue()
-        
-    def __call__(self, worker, request):
-        self.q.put((worker.aid,worker.age,worker.nr))
-        
-    def get(self):
-        try:
-            return self.q.get(timeout = 0.5)
-        except Empty:
-            return None
         
 
 class TestHelloWorldExample(test.TestCase):

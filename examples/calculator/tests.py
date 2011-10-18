@@ -1,43 +1,43 @@
 import unittest as test
 
 from pulsar.apps import rpc
+from pulsar.apps.test import test_server
 
 from .manage import server
 
 
 class TestRpc(test.TestCase):
+    concurrency = 'thread'
     
-    def initTests(self):
-        s = self.__class__._server = server(bind = '127.0.0.1:0',
-                                            concurrency = 'process',
-                                            parse_console = False)
-        s.start()
-        monitor = self.arbiter.get_monitor(s.mid)
-        self.wait(lambda : not monitor.is_alive())
-        self.__class__.address = 'http://{0}:{1}'.format(*monitor.address)
+    @classmethod
+    def setUpClass(cls):
+        cls.name = 'calc_' + cls.concurrency
+        s = test_server(server,
+                        bind = '127.0.0.1:0',
+                        name = cls.name,
+                        concurrency = cls.concurrency)
+        r,outcome = cls.worker.run_on_arbiter(s)
+        yield r
+        app = outcome.result
+        cls.app = app
+        cls.uri = 'http://{0}:{1}'.format(*app.address)
         
-    def endTests(self):
-        monitor = self.arbiter.get_monitor(self._server.mid)
-        monitor.stop()
-        self.wait(lambda : monitor.aid in self.arbiter.monitors)
-        self.assertFalse(monitor.is_alive())
-        self.assertTrue(monitor.closed())
+    @classmethod
+    def tearDownClass(cls):
+        return cls.worker.arbiter.send(cls.worker,'kill_actor',cls.app.mid)
         
     def setUp(self):
-        self.p = rpc.JsonProxy(self.__class__.address)
+        self.p = rpc.JsonProxy(self.uri)
         
     def testHandler(self):
-        s = self._server
+        s = self.app
         self.assertTrue(s.callable)
         handler = s.callable
-        self.assertEqual(handler.content_type,'text/json')
-        self.assertEqual(handler.route,'/')
-        self.assertEqual(len(handler.subHandlers),1)
+        root = handler.middleware[0]
+        self.assertEqual(root.content_type,'text/json')
+        self.assertEqual(root.path,'/')
+        self.assertEqual(len(root.handler.subHandlers),1)
         self.assertTrue(s.mid)
-        monitor = self.arbiter.get_monitor(s.mid)
-        socket = monitor.socket
-        self.assertTrue(socket)
-        self.assertTrue(monitor.address)
         
     def testPing(self):
         result = self.p.ping()
