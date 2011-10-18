@@ -49,6 +49,7 @@ class Failure(object):
 
     List of (``errorType``, ``errvalue``, ``traceback``) occured during
     the execution of a :class:`Deferred`.
+    
 '''
     def __init__(self, err = None):
         self.should_stop = False
@@ -70,8 +71,9 @@ class Failure(object):
     def __getstate__(self):
         traces = []
         for exctype, value, tb in self:
-            st = traceback.format_exception(exctype, value, tb)
-            traces.append((exctype, value, st))
+            if istraceback(tb):
+                tb = traceback.format_exception(exctype, value, tb)
+            traces.append((exctype, value, tb))
         state = self.__dict__.copy()
         state['traces'] = traces
         return state
@@ -90,9 +92,12 @@ class Failure(object):
         elif N > 1:
             raise DeferredFailure('There were {0} failures during callbacks.'\
                                   .format(N))
-
+    @property
     def trace(self):
-        return self.traces[-1]
+        if self.traces:
+            return self.traces[-1]
+        else:
+            return (None,None,None)
                 
     def log(self, log = None):
         log = log or logger
@@ -173,16 +178,16 @@ This function is useful when someone whants to treat a value as a deferred::
     
 
 class SafeAsync(object):
-    
+    '''A callable class for running function on a remote actor.'''
     def __init__(self, max_errors = None):
         self.max_errors = max_errors
         
-    def _call(self):
+    def _call(self, actor):
         raise NotImplemented
     
-    def __call__(self):
+    def __call__(self, actor):
         try:
-            res = self._call()
+            res = self._call(actor)
         except:
             res = Failure(sys.exc_info())
         return make_async(res, max_errors = self.max_errors)
@@ -308,8 +313,11 @@ The function takes at most one argument, the result passed to the
     def callback(self, result = None):
         '''Run registered callbacks with the given *result*.
 This can only be run once. Later calls to this will raise
-:class:`pulsar.AlreadyCalledError`. If further callbacks are added after
-this point, :meth:`add_callback` will run the *callbacks* immediately.'''
+:class:`AlreadyCalledError`. If further callbacks are added after
+this point, :meth:`add_callback` will run the *callbacks* immediately.
+
+:return: the *result* input parameter
+'''
         if isinstance(result,Deferred):
             raise ValueError('Received a deferred instance from\
  callback function')
@@ -322,7 +330,7 @@ this point, :meth:`add_callback` will run the *callbacks* immediately.'''
         
     def is_failure(self):
         '''return ``True`` if the result is a failure. If the result is not
-ready it throws a :class:`pulsar.DeferredFailure` exception'''
+ready it throws a :class:`DeferredFailure` exception'''
         if not self.called:
             raise DeferredFailure('Deferred not called')
         return is_failure(self.result)
@@ -341,7 +349,7 @@ If the deferred was already started do nothing.
 
 :parameter ioloop: :class:`IOLoop` instance where to run the deferred.
 :parameter timeout: Optional timeout in seconds. If the deferred has not done within
-    this time period it will raise a :class:`pulsar.Timeout` exception.
+    this time period it will raise a :class:`Timeout` exception.
 :rtype: ``self``.
 
 A common usage pattern::
@@ -436,16 +444,23 @@ generator.'''
                 self.callback(self._last_result)
     
     def _resume(self, result = None):
+        '''Callback to restart the generator. If the result is an error
+and the generator should stop, return the errors so that callbacks
+can be chained. Otherwise keep consuming.'''
         if not self._should_stop(result):
             self._consume()
+        else:
+            return self._errors
             
-    def _should_stop(self, trace):
-        if is_failure(trace):
-            self._errors.append(trace)
+    def _should_stop(self, result):
+        if is_failure(result):
+            self._errors.append(result)
             if self.max_errors and len(self._errors) >= self.max_errors:
                 self.callback(self._errors)
                 return True
         else:
-            self._last_result = trace
+            self._last_result = result
+            if result == CLEAR_ERRORS:
+                self._errors = Failure()
             
             

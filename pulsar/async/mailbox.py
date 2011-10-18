@@ -144,7 +144,8 @@ class QueueMailbox(Mailbox):
         try:
             r = (request.receiver,pickle.dumps(request))
         except:
-            self.actor.critical('Could not serialize {0}'.format(request))
+            self.actor.log.critical('Could not serialize {0}'.format(request),
+                                    exc_info = True)
             return
         try:
             self.queue.put((self.id,r))

@@ -6,23 +6,12 @@ Distributed Task Queue
 
 .. automodule:: pulsar.apps.tasks
 
-Utilities
-=================
 
-TaskQueue Rpc Mixin
-~~~~~~~~~~~~~~~~~~~~~
-
-.. autoclass:: TaskQueueRpcMixin
-   :members:
-   :member-order: bysource
-   
-   
 API
 ===============
 
-
-Taskqueue and Scheduler
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Taskqueue
+~~~~~~~~~~~~~
 
 .. autoclass:: TaskQueue
    :members:
@@ -64,3 +53,10 @@ Task
    :members:
    :member-order: bysource
    
+
+TaskQueue Rpc Mixin
+~~~~~~~~~~~~~~~~~~~~~
+
+.. autoclass:: TaskQueueRpcMixin
+   :members:
+   :member-order: bysource

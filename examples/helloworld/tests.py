@@ -1,3 +1,4 @@
+'''Tests the "helloworld" example.'''
 import unittest as test
 
 from pulsar import SERVER_SOFTWARE

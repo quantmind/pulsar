@@ -13,6 +13,17 @@ If setproctitle_ is installed, pulsar will used to change the processes names. T
     pip install setproctitle
 
 
+Running Tests
+===================
+
+Inside the distribution directory type::
+
+    python runtests.py
+    
+For options and help type::
+
+    python runtests.py -h
+
 
 .. _setproctitle: http://code.google.com/p/py-setproctitle/
 .. _pypi: http://pypi.python.org/pypi/pulsar

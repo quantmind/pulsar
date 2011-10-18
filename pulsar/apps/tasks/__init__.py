@@ -1,11 +1,20 @@
 '''\
-A task-queue application for pulsar::
+An asynchronous task-queue built on top :class:`pulsar.Application` framework.
+By creating :class:`Job` classes in a similar way you can do for celery_,
+this application gives you all you need for running them with very
+little setup effort::
 
     from pulsar.apps import tasks
     
     tq = tasks.TaskQueue(tasks_path = 'path.to.tasks.*')
     tq.start()
     
+Tutorial
+================
+
+Jobs
+~~~~~~~~~~~~~~~~
+
 An application implements several :class:`Job`
 classes which specify the way each :class:`Task` is run.
 Each job class is a task-factory, therefore, a task is always associated
@@ -25,11 +34,12 @@ callable function::
             "Add two numbers"
             return a+b
             
-The *consumer* is passed by the task queue, while the remaining arguments are
-needed by your job implementation.
+The *consumer* is passed by the :class:`TaskQueue` and should be always
+the first positional argument in the callable function. The remaining arguments
+and/or key-valued parameters are needed by your job implementation.
 
 Task Class
-================
+~~~~~~~~~~~~~~~~~
 
 By default, tasks are constructed using an in-memory implementation of
 :class:`Task`. To use a different implementation, for example one that
@@ -67,7 +77,7 @@ to the :class:`TaskQueue` constructor::
 Task callbacks
 ~~~~~~~~~~~~~~~~~~~
 
-When creating your own task class all you need to override are the four
+When creating your own :class:`Task` class all you need to override are the four
 task callbacks:
 
 * :meth:`Task.on_created` called by the taskqueue when it creates a new task
@@ -76,6 +86,8 @@ task callbacks:
 * :meth:`Task.on_start` called by a worker when it starts the task.
 * :meth:`Task.on_finish` called by a worker when it ends the task.
 
+
+and :meth:`Task.get_task` classmethod for retrieving tasks instances.
 
 .. _task-state:
 
@@ -99,6 +111,8 @@ A :class:`Task` can have one of the following :attr:`Task.status` string:
 
     The set of states for which a :class:`Task` has finished:
     ``REVOKED``, ``FAILURE`` and ``SUCCESS``
+    
+.. _celery: http://celeryproject.org/
 '''
 import os
 from time import time

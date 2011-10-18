@@ -1,6 +1,6 @@
 
 class PulsarException(Exception):
-    '''base class of all Pulsar Exception'''
+    '''Base class of all Pulsar Exception'''
     
 class Timeout(PulsarException):
     '''Raised when a timeout occurs'''
@@ -35,7 +35,8 @@ class DeferredFailure(PulsarException):
     pass
 
 class AlreadyCalledError(PulsarException):
-    '''Raised when a Deferred instance receives more than one callback'''
+    '''Raised when a :class:`Deferred` instance receives more than
+one :meth:`Deferred.callback`.'''
 
 class AlreadyRegistered(PulsarException):
     pass

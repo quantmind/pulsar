@@ -1,5 +1,5 @@
 '''\
-A a JSON-RPC Server with a Task Queue.
+A a JSON-RPC Server with a Task Queue for processing tasks.
 To run the server type::
 
     python manage.py

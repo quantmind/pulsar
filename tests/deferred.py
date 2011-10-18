@@ -1,4 +1,4 @@
-'''Deferred and asynchronous tools'''
+'''Deferred and asynchronous tools.'''
 import unittest as test
 
 from pulsar import AlreadyCalledError, Deferred, async_pair

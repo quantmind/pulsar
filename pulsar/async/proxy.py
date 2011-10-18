@@ -125,6 +125,9 @@ class ActorMessage(Deferred):
     
     def __init__(self, sender, target, action, ack, args, kwargs):
         super(ActorMessage,self).__init__(rid = gen_unique_id()[:8])
+        # Set the event loop to be the one of the sender
+        # This way we can yield the deferred without kick starting callbacks
+        self._ioloop = sender.ioloop
         self.sender = actorid(sender)
         self.receiver = actorid(target)
         self.action = action
@@ -145,6 +148,7 @@ class ActorMessage(Deferred):
         #Remove the list of callbacks and lock
         d = self.__dict__.copy()
         d.pop('_lock',None)
+        d.pop('_ioloop',None)
         d['_callbacks'] = []
         return d    
     

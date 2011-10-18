@@ -1,3 +1,4 @@
+'''Tests the websocket middleware in pulsar.apps.ws.'''
 import unittest as test
 
 from pulsar.apps import ws

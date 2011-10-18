@@ -1,4 +1,4 @@
-'''tests the HttpClient in pulsar.net.client'''
+'''tests the HttpClient in pulsar.net.client.'''
 import unittest as test
 
 from pulsar.net import HttpClient

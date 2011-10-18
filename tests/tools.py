@@ -1,3 +1,4 @@
+'''Tests the tools and utilities in pulsar.utils.'''
 import unittest as test
 
 from pulsar.utils.tools import checkarity

@@ -598,8 +598,10 @@ the actor information to the caller.'''
         return 'pong'
     
     def actor_run(self, caller, callable):
-        '''Execute a callable in the worker process domain'''
-        return callable()
+        '''Execute a callable in the actor process domain. The callable
+must accept one positional argument, the :class:`Actor` executing the
+function.'''
+        return callable(self)
     
     def actor_kill_actor(self, caller, aid):
         return self.arbiter.kill_actor(aid)

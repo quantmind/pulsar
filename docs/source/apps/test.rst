@@ -12,6 +12,7 @@ API
 
 TestSuite
 ~~~~~~~~~~~~~~~~~~~
+
 .. autoclass:: TestSuite
    :members:
    :member-order: bysource
@@ -19,6 +20,16 @@ TestSuite
 
 TestRequest
 ~~~~~~~~~~~~~~~~~~~
+
 .. autoclass:: TestRequest
    :members:
    :member-order: bysource
+   
+   
+AsyncTestCaseMixin
+~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. autoclass:: AsyncTestCaseMixin
+   :members:
+   :member-order: bysource
+   

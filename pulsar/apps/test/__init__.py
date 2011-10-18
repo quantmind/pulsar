@@ -33,25 +33,7 @@ import pulsar.apps.tasks # Need to import for the task_queue_factory settings
 from .config import *
 from .case import *
 from .loader import *
-
-
-class test_server(object):
-    '''An utility for creating test servers'''
-    def __init__(self, callable, **kwargs):
-        self.callable = callable
-        self.kwargs = kwargs
-
-    def __call__(self):
-        import pulsar
-        arbiter = pulsar.arbiter()
-        cfg = arbiter.get('cfg')
-        s = self.callable(parse_console = False,
-                          loglevel = cfg.loglevel,
-                          **self.kwargs)
-        return self.result(s)
-    
-    def result(self, server):
-        return server
+from .utils import *
 
 
 class TestSuite(pulsar.Application):

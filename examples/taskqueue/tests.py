@@ -1,3 +1,4 @@
+'''Tests the "taskqueue" example.'''
 from time import time, sleep
 from datetime import datetime, timedelta
 import unittest as test
@@ -44,12 +45,53 @@ class TestTaskQueueMeta(test.TestCase):
         return monitor
         
     def testMeta(self):
+        '''Tests meta attributes of taskqueue'''
         tq = self.tq()
         app = tq.app
         self.assertTrue(app.registry)
         scheduler = app.scheduler
         self.assertTrue(scheduler.entries)
+        job = app.registry['runpycode']
+        self.assertEqual(job.type,'regular')
+        self.assertTrue(job.can_overlap)
+        id = job.make_task_id((),{})
+        self.assertTrue(id)
+        self.assertNotEqual(id,job.make_task_id((),{}))
     testMeta.run_on_arbiter = True
+    
+    def testIdNotOverlap(self):
+        '''Check `make_task_id` when `can_overlap` attribute is set to False.'''
+        from examples.taskqueue.sampletasks.sampletasks import NotOverLap
+        job = NotOverLap()
+        self.assertEqual(job.type,'regular')
+        self.assertFalse(job.can_overlap)
+        #
+        id = job.make_task_id((),{})
+        self.assertTrue(id)
+        self.assertEqual(id,job.make_task_id((),{}))
+        #
+        id = job.make_task_id((10,'bla'),{'p':45})
+        self.assertTrue(id)
+        self.assertEqual(id,job.make_task_id((10,'bla'),{'p':45}))
+        #
+        id = job.make_task_id((),{'p':45,'c':'bla'})
+        self.assertTrue(id)
+        self.assertEqual(id,job.make_task_id((),{'p':45,'c':'bla'}))
+        self.assertNotEqual(id,job.make_task_id((),{'p':45,'d':'bla'}))
+        self.assertNotEqual(id,job.make_task_id((),{'p':45,'c':'blas'}))
+        
+    def testNotOverlap(self):
+        tq = self.tq()
+        app = tq.app
+        self.assertTrue('notoverlap' in app.registry)
+        r1 = app.scheduler.queue_task(tq, 'notoverlap', (1,), {})
+        self.assertFalse(r1.needs_queuing())
+        self.assertTrue(r1._queued)
+        id = r1.id
+        r2 = app.scheduler.queue_task(tq, 'notoverlap', (1,), {})
+        self.assertFalse(r2._queued)
+        self.assertEqual(id,r2.id)
+    testNotOverlap.run_on_arbiter = True
         
     def testApplicationSimple(self):
         '''Here we test the application only, not the queue mechanism

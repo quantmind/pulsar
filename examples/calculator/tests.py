@@ -1,3 +1,4 @@
+'''Tests the RPC "calculator" example.'''
 import unittest as test
 
 from pulsar.apps import rpc

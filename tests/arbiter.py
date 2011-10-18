@@ -1,4 +1,4 @@
-'''Tests for arbiter and monitors'''
+'''Tests for arbiter and monitors.'''
 import unittest as test
 import os
 

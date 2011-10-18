@@ -1,31 +1,17 @@
+'''Tests actor and actor proxies.'''
 from time import sleep
 import unittest as test
 
 import pulsar
+from pulsar.apps.test import AsyncTestCaseMixin
 
 
 def sleepfunc():
     sleep(2)
     
 
-class TestActorThread(test.TestCase):
+class TestActorThread(test.TestCase, AsyncTestCaseMixin):
     impl = 'thread'
-    
-    def spawn(self, **kwargs):
-        arbiter = pulsar.arbiter()
-        self.a = pulsar.spawn(**kwargs)
-        yield pulsar.NOT_DONE
-        yield self.a.on_address
-        self.assertTrue(self.a.aid in arbiter.MANAGED_ACTORS)
-    
-    def stop(self):
-        arbiter = pulsar.arbiter()
-        a = self.a
-        yield a.send(arbiter,'stop')
-        while a.aid in arbiter.MANAGED_ACTORS:
-            yield pulsar.NOT_DONE
-        self.assertFalse(a.is_alive())
-        self.assertFalse(a.aid in arbiter.MANAGED_ACTORS)
         
     def testStartStop(self):
         '''Test start and stop for a standard actor'''

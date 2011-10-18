@@ -86,7 +86,7 @@ class CallableTest(SafeAsync):
         self.test = test
         self.funcname = funcname
         
-    def _call(self):
+    def _call(self, actor):
         test = pickle.loads(self.test)(self.funcname)
         return getattr(test, self.funcname)()
     

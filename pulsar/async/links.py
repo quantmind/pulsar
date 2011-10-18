@@ -11,7 +11,10 @@ class LocalData(object):
 
 
 class ActorLinkCallback(LocalData):
- 
+    '''Instances of this class are created by the
+:meth:`ActorLink.get_callback` method. This is a callable object
+which can be called back once only otherwise a :class:`AlreadyCalledError`
+exception will raise.'''
     def __init__(self, link, proxy, sender, action, args, kwargs):
         self.link = link
         self.proxy = proxy
@@ -21,23 +24,25 @@ class ActorLinkCallback(LocalData):
         self.kwargs = kwargs
         
     def __call__(self, *args, **kwargs):
-        if hasattr(self,'_message'):
-            raise AlreadyCalledError()
-        self.args += args
-        self.kwargs.update(kwargs)
-        msg = self.proxy.send(self.sender, self.action,
-                              *self.args, **self.kwargs)
-        self._message = make_async(msg)
+        if not hasattr(self,'_message'):
+            self.args += args
+            self.kwargs.update(kwargs)
+            msg = self.proxy.send(self.sender, self.action,
+                                  *self.args, **self.kwargs)
+            self._message = make_async(msg)
+        else:
+            raise AlreadyCalledError('Already called')
         return self._message
     
     def result(self):
         '''Call this function to get a result. If self was never called
 return a :class:`Deferred` already called with ``None``.'''
         if not hasattr(self,'_message'):
-            self._message = Deferred().callback(None)
+            d = Deferred()
+            self._message = d
+            d.callback(None)
         return self._message
         
-
 
 class ActorLink(object):
     '''Utility for sending messages to linked actors.

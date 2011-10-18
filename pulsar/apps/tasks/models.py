@@ -119,7 +119,14 @@ class Job(JobBase):
     An instance of a datetime.timedelta or ``None``. If set, it represents the
     time lag after which a task whch has not been processed expires.
     
-    Default ```None``.
+    Default ``None``.
+    
+.. attribute:: can_overlap
+
+    Boolean indicating if this job can generate overlapping tasks with same
+    input parameters.
+    
+    Default ``True``.
     
 .. attribute:: logger
 
@@ -141,11 +148,26 @@ implemented by subclasses.'''
     
     def make_task_id(self, args, kwargs):
         '''Get the task unique identifier.
-This can be overridden by Job implementation.'''
+This can be overridden by Job implementation.
+
+:parameter args: tuple of positional arguments passed to the job callable.
+:parameter kwargs: dictionary of key-valued parameters passed to
+    the job callable.
+:rtype: a native string.
+    
+Called by the :attr:`TaskQueue.scheduler` when creating a new task.
+'''
         if self.can_overlap:
             return create_task_id()
         else:
-            return sha1(self.name).hexdigest()[:8]
+            suffix = ''
+            if args:
+                suffix = 'args(' + ', '.join((str(a) for a in args)) + ')'
+            if kwargs:
+                suffix += 'kwargs(' + ', '.join('{0}= {1}'.\
+                            format(k,kwargs[k]) for k in sorted(kwargs)) + ')'
+            name = self.name + suffix
+            return sha1(name.encode('utf-8')).hexdigest()[:8]
     
     def on_same_id(self, task):
         '''Callback invocked when a task has an id equal to a task already

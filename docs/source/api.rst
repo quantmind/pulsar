@@ -94,7 +94,13 @@ ActorLink
    :members:
    :member-order: bysource
 
+ActorLinkCallback
+~~~~~~~~~~~~~~~~~~~~~~~~
 
+.. autoclass:: ActorLinkCallback
+   :members:
+   :member-order: bysource
+   
 .. _api-async-tools:
 
 Asyncronous Tools
@@ -207,7 +213,18 @@ IOQueue
    :members:
    :member-order: bysource
    
+
+Exceptions
+===================
+
+.. autoclass:: PulsarException
+   :members:
+   :member-order: bysource
    
+
+.. autoclass:: AlreadyCalledError
+   :members:
+   :member-order: bysource
    
 
 .. _api-apps:
