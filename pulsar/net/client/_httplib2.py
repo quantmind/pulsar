@@ -7,7 +7,8 @@ http://code.google.com/p/httplib2/
 '''
 import httplib2
 
-from .std import HttpClientBase
+
+from .std import HttpClient
 
 
 class Response(object):
@@ -17,7 +18,7 @@ class Response(object):
         self.content = content
 
     
-class HttpClient2(HttpClientBase):
+class HttpClient2(HttpClient):
     
     def __init__(self, proxy_info = None,
                  timeout = None, cache = None, headers = None):

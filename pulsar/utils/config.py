@@ -478,6 +478,16 @@ class Keepalive(Setting):
         """
 
 
+class HttpProxyServer(Setting):
+    name = "http_proxy"
+    section = "Http Client"
+    cli = ["--http-proxy"]
+    default = ''
+    desc = """\
+        The HTTP proxy server to use with HttpClient.    
+        """
+
+
 class Debug(Setting):
     name = "debug"
     section = "Debugging"

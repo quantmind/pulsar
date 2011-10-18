@@ -71,7 +71,8 @@ is a group of tests specified in a test class.
 '''
     app = 'test'
     config_options_include = ('timeout','concurrency','workers','loglevel',
-                              'worker_class','debug','task_queue_factory')
+                              'worker_class','debug','task_queue_factory',
+                              'http_proxy')
     default_logging_level = None
     cfg = {'timeout':300,
            #'concurrency':'thread',

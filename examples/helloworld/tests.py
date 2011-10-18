@@ -38,10 +38,10 @@ class TestHelloWorldExample(test.TestCase):
     def testResponse(self):
         c = HttpClient()
         resp = c.request(self.uri)
-        self.assertTrue(resp.status,200)
+        self.assertTrue(resp.status_code,200)
         content = resp.content
         self.assertEqual(content,b'Hello World!\n')
-        headers = resp.response.headers
+        headers = resp.headers
         self.assertTrue(headers)
         self.assertEqual(headers['content-type'],'text/plain')
         self.assertEqual(headers['server'],SERVER_SOFTWARE)

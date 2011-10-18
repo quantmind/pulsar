@@ -20,6 +20,10 @@ Open a new shell and launch python and type::
 from pulsar.apps import rpc, wsgi
 
 
+def divide(a,b):
+    '''Divide two numbers'''
+    return float(a) / float(b)
+
 class Root(rpc.PulsarServerCommands):
     pass
         
@@ -35,8 +39,7 @@ class Calculator(rpc.JSONRPC):
     def rpc_multiply(self, request, a, b):
         return float(a) * float(b)
     
-    def rpc_divide(self, request, a, b):
-        return float(a) / float(b)
+    rpc_divide = rpc.FromApi(divide)
 
 
 def server(**params):

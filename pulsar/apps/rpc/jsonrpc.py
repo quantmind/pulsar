@@ -185,19 +185,20 @@ usage is simple::
         if self.__version:
             data['jsonrpc'] = self.__version
         body = self._json.dumps(data)
-        try:
-            resp = self._http.request(self.__url,
-                                      method = "POST",
-                                      body = body)
-        except self._http.URLError as e:
-            raise pulsar.ConnectionError(str(e))
-        if resp.status == 200:
+        resp = self._http.request(self.__url,
+                                  method = "POST",
+                                  body = body)
+        content = resp.content
+        if resp.status_code == 200:
             if raw:
-                return resp.content
+                return content
             else:
-                return self.loads(resp.content)
+                return self.loads(content)
         else:
-            raise IOError(resp.reason)
+            if 'error' in content:
+                return self.loads(content)
+            else:
+                resp.raise_for_status()
         
     def get_params(self, *args, **kwargs):
         '''

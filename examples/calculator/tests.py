@@ -71,4 +71,7 @@ class TestRpc(test.TestCase):
     def testInvalidFunction(self):
         self.assertRaises(rpc.NoSuchFunction,self.p.foo,'ciao')
         
+    def testInternalError(self):
+        self.assertRaises(rpc.InternalError,self.p.calc.divide,'ciao','bo')
+        
 

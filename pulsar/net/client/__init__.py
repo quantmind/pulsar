@@ -1,6 +1,13 @@
 import pulsar
 
-from .std import HttpClient1, urlencode, getproxies_environment
+from .std import HttpClientHandler, HttpClient1, urlencode,\
+                 getproxies_environment, HttpClientResponse
+                 
+__all__ = ['HttpClientHandler',
+           'HttpClient',
+           'HttpClientResponse',
+           'urlencode']
+
 
 HttpClients={1:HttpClient1}
 try:
@@ -22,22 +29,20 @@ class AsyncHttpClient(object):
     def request(self, *args, **kwargs):
         return self.ioloop.add_callback(
             lambda : self.client.request(*args, **kwargs)
-        )
+        )        
         
-        
-
 
 def HttpClient(cache = None, proxy_info = None,
                timeout = None, type = 1, ioloop = None,
                async = False, handle_cookie = False):
-    '''Create a http client handler using different implementation.
-It can build a synchronous or an asyncronous handler build on top
+    '''Factory of :class:`HttpClientHandler` instances.
+It can build a synchronous or an asynchronous handler build on top
 of the :class:`pulsar.IOLoop`. 
     
 :parameter cache: Cache file. Default ``None``.
 :parameter proxy_info: Dictionary of proxies. Default ``None``.
 :parameter timeout: Connection timeout. Default ``None``.
-:parameter type: Handler implementation. Default ``1``.
+:parameter type: Request handler implementation. Default ``1``.
 :parameter async: Synchronous or Asynchronous. Default ``False``.
 '''
     if type not in HttpClients:
@@ -47,7 +52,8 @@ of the :class:`pulsar.IOLoop`.
     if proxy is None:
         proxy = getproxies_environment()
         
-    c = client(proxy_info = proxy, cache = cache, timeout = timeout, handle_cookie = handle_cookie)
+    c = client(proxy_info = proxy, cache = cache, timeout = timeout,
+               handle_cookie = handle_cookie)
     if async:
         return AsyncHttpClient(c, ioloop = ioloop)
     else:

@@ -97,37 +97,27 @@ class ActorMessage(Deferred):
     '''A message class which travels from :class:`Actor` to
 :class:`Actor` to perform a specific action.
 
-:param sender: The :class:`Actor` or :class:`ActorProxy` or actor id sending
-    the message.
-:param target: The :class:`Actor` or :class:`ActorProxy` or actor id receiving
-    the message.
-:param action: Action to perform on the receiving actor. It is a string which
-    is used to obtain the remote function.
-:parameter ack: Boolean indicating if message needs to be acknowledge by the
-    receiver.
-:param msg: Message to send.
-
-.. parameter:: sender
+.. attribute:: sender
 
     id of the actor sending the message.
     
-.. parameter:: receiver
+.. attribute:: receiver
 
     id of the actor receiving the message.
     
-.. parameter:: action
+.. attribute:: action
 
     action to be performed
     
-.. parameter:: args
+.. attribute:: args
 
     Positional arguments in the message body
     
-.. parameter:: kwargs
+.. attribute:: kwargs
 
     Optional arguments in the message body
     
-.. parameter:: ack
+.. attribute:: ack
 
     ``True`` if the message needs acknowledgment
 '''

@@ -169,8 +169,8 @@ Add a limited ammount of magic to RPC handlers.'''
                         key = '_{0}'.format(key)
                         attrs[key] = func
                         func = wrap_object_call(key,namefunc)
-                    else:
-                        func = wrap_function_call(func,namefunc)
+                    #else:
+                    #func = wrap_function_call(func,namefunc)
                     rpc[namefunc] = func
             for base in bases[::-1]:
                 if hasattr(base, 'rpcfunctions'):

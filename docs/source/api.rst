@@ -262,5 +262,25 @@ HttpResponse
    :member-order: bysource
    
 
+HttpClient
+~~~~~~~~~~~~~~~~~~~~
+
+.. autofunction:: HttpClient
+
+
+HttpClientHandler
+~~~~~~~~~~~~~~~~~~~~
+
+.. autoclass:: HttpClientHandler
+   :members:
+   :member-order: bysource
+   
+   
+HttpClientResponse
+~~~~~~~~~~~~~~~~~~~~
+
+.. autoclass:: HttpClientResponse
+   :members:
+   :member-order: bysource
 
    
