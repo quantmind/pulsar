@@ -140,6 +140,9 @@ Here ``a`` is actually a reference to the remote actor.
     driving the actor. Some actors may share the ioloop with other actors
     depending on their concurrency implementation.
 
+.. attribute:: loglevel
+
+    String indicating the logging level for the actor.
 '''
     INITIAL = 0X0
     RUN = 0x1

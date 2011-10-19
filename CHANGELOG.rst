@@ -6,8 +6,8 @@ Version Master
 * Added :mod:`pulsar.apps.ws`, an asynchronous websocket application for pulsar.
 * Asynchronous applications.
 * Created the :mod:`pulsar.net` module for internet primitive.
-* Added a windows service wrapper class for using pulsar with windows services.
-* Removed the `worker` module.
+* Added a wrapper class for using pulsar with windows services.
+* Removed the `pulsar.worker` module.
 * Moved `http.rpc` module to `apps`.
 * Introduced context manager for `pulsar.apps.tasks` to handle logs and exceptions.
 * **43 regression tests**

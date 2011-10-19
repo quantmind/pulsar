@@ -22,7 +22,6 @@ from pulsar.utils.py2py3 import *
 
 
 __all__ = ['Config',
-           #'DummyConfig',
            'Setting',
            'validate_string',
            'validate_callable',
@@ -32,7 +31,7 @@ __all__ = ['Config',
            'make_settings',
            'make_options']
 
-
+    
 KNOWN_SETTINGS = []
 KNOWN_SETTINGS_SET = set()
 

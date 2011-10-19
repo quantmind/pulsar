@@ -1,5 +1,7 @@
 '''\
-Pulsar Python Shell
+Pulsar Python Shell example::
+
+    python pshell.py
 '''
 import os
 import pulsar
@@ -7,4 +9,4 @@ import pulsar
 from pulsar.apps.shell import PulsarShell 
 
 if __name__ == '__main__':
-    PulsarShell(concurrency = 'thread').start()
+    PulsarShell().start()

@@ -108,8 +108,8 @@ action is required.'''
         self.cfg.set('workers',min(self.cfg.workers,len(self.tests)))
         
     def monitor_start(self, monitor):
-        '''When the monitor starts load all :test:`TestRequest` into the\
- in the :attr:`pulsar.Arbiter.ioqueue`.'''
+        '''When the monitor starts load all :class:`TestRequest` into the
+in the :attr:`pulsar.Actor.ioqueue`.'''
         self._results = TestResult()
         self._time_start = time.time()
         for _,testcls in self.tests:

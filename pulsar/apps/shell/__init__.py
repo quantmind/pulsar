@@ -64,10 +64,12 @@ class InteractiveConsole(code.InteractiveConsole):
 
 
 class PulsarShell(pulsar.Application):
+    #app = 'shell'
     cfg = {'timeout':300,
-           'worker_class':'base'}
+           #'workers': 1,
+           'concurrency': 'thread'}
     
-    def load(self):
+    def handler(self):
         imported_objects = {'pulsar':pulsar,
                             'arbiter':pulsar.arbiter(),
                             'spawn':pulsar.spawn,

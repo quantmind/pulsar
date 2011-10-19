@@ -188,7 +188,7 @@ usage is simple::
         resp = self._http.request(self.__url,
                                   method = "POST",
                                   body = body)
-        content = resp.content
+        content = resp.content.decode('utf-8')
         if resp.status_code == 200:
             if raw:
                 return content

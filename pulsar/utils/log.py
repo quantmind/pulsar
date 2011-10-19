@@ -1,6 +1,7 @@
 import sys
 from time import time
 import logging
+from multiprocessing import current_process
 
 from .system import platform
 
@@ -9,6 +10,7 @@ SERVER_NAME = 'Pulsar'
 
 __all__ = ['SERVER_NAME',
            'getLogger',
+           'process_global',
            'LogginMixin',
            'PickableMixin',
            'Silence',
@@ -27,7 +29,14 @@ LOG_LEVELS = {
     }
 
 
-_added_default_handler = False
+def process_global(name, val = None, setval = False):
+    p = current_process()
+    if not hasattr(p,'_pulsar_globals'):
+        p._pulsar_globals = {}
+    if setval:
+        p._pulsar_globals[name] = val
+    else:
+        return p._pulsar_globals.get(name)
 
 
 def getLogger(name = None):
@@ -111,7 +120,6 @@ class LogginMixin(object):
     
     def configure_logging(self, handlers = None):
         '''Configure logging'''
-        global _added_default_handler
         loglevel = self.loglevel
         try:
             self.loglevel = int(loglevel)
@@ -122,13 +130,14 @@ class LogginMixin(object):
         
         color = False
         handlers = handlers or []
-        if not handlers and not _added_default_handler:
-            _added_default_handler = True
+        if not handlers and not process_global('default_logging_handler'):
             if self.loglevel is None:
-                handlers.append(Silence())
+                hnd = Silence()
             else:
                 color = True
-                handlers.append(logging.StreamHandler())
+                hnd = logging.StreamHandler()
+            process_global('default_logging_handler',hnd,True)
+            handlers.append(hnd)
             
         f = self.logging_formatter(color) if color else None
         for h in handlers:

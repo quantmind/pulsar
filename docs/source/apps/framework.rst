@@ -12,4 +12,4 @@ such as web servers, task queues or any type asynchronous and/or parallel
 idea you may have.
 
 The idea is simple, you write a new application class by subclassing
-:pulsar:`Application` and by implementing some of the callbacks available.
+:class:`pulsar.Application` and by implementing some of the callbacks available.
