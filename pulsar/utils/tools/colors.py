@@ -21,7 +21,7 @@ for that particular invocation, which usually shows up as a bold or brighter
 version of the original color on most terminals.
 """
 import logging
-from pulsar import to_string
+from pulsar import to_string, platform
 
 __all__ = ['ColorFormatter']
 
@@ -56,7 +56,7 @@ class ColorFormatter(logging.Formatter):
               "default": "green"}
     
     def __init__(self, *args, **kwargs):
-        self.use_color = kwargs.pop('use_color',True)
+        self.use_color = kwargs.pop('use_color',not platform.isWindows())
         logging.Formatter.__init__(self, *args, **kwargs)
 
     def formatException(self, ei):

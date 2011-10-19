@@ -253,7 +253,23 @@ Application Monitor
 .. autoclass:: pulsar.ApplicationMonitor
    :members:
    :member-order: bysource
+   
+   
+.. _api-config:
 
+Config
+~~~~~~~~~~~~~~~~~
+
+.. autoclass:: pulsar.Config
+   :members:
+   :member-order: bysource
+   
+Setting
+~~~~~~~~~~~~~~~~~
+
+.. autoclass:: pulsar.Setting
+   :members:
+   :member-order: bysource
 
 .. _net:
 

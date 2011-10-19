@@ -24,5 +24,5 @@ class NotOverLap(tasks.Job):
     can_overlap = False
     
     def __call__(self, consumer, lag, *args, **kwargs):
-        sleep(lag)
+        time.sleep(lag)
         return 'OK'

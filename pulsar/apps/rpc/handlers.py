@@ -1,7 +1,7 @@
 import sys
 import inspect
 
-from pulsar import make_async, net, NOT_DONE, PickableMixin, to_bytestring
+from pulsar import make_async, net, NOT_DONE, LogginMixin, to_bytestring
 from pulsar.utils.tools import checkarity
 
 from .exceptions import *
@@ -183,7 +183,7 @@ Add a limited ammount of magic to RPC handlers.'''
         return make(cls, name, bases, attrs)
 
 
-BaseHandler = MetaRpcHandler('BaseRpcHandler',(PickableMixin,),{'virtual':True})
+BaseHandler = MetaRpcHandler('BaseRpcHandler',(LogginMixin,),{'virtual':True})
 
 
 class RpcHandler(BaseHandler):
@@ -203,7 +203,7 @@ class RpcHandler(BaseHandler):
         self.subHandlers = {}
         self.title = title or self.__class__.__name__
         self.documentation = documentation or ''
-        self.log = self.getLogger(**kwargs)
+        self.setlog(**kwargs)
         if subhandlers:
             for prefix,handler in subhandlers.items():
                 if inspect.isclass(handler):

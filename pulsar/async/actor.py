@@ -8,8 +8,7 @@ from threading import current_thread
 
 
 from pulsar import AlreadyCalledError, AlreadyRegistered,\
-                   ActorAlreadyStarted,\
-                   logerror, LogSelf, LogginMixin, system
+                   ActorAlreadyStarted, LogSelf, LogginMixin, system
 from pulsar.utils.py2py3 import iteritems, itervalues, pickle
 
 
@@ -177,14 +176,15 @@ Here ``a`` is actually a reference to the remote actor.
         self._linked_actors = {}
         self.age = age
         self.nr = 0
-        self.local = {}
         self._pool_timeout = pool_timeout
         self._name = name or self._name
         self.arbiter = arbiter
         self.monitor = monitor
         self._state = self.INITIAL
-        self.loglevel = impl.loglevel
-        self.log = self.getLogger()
+        if impl.loglevel is None and arbiter:
+            self.loglevel = arbiter.loglevel
+        else:
+            self.loglevel = impl.loglevel
         self._params = params or {}
         self._monitors = monitors or {}
         actor_links = {}
@@ -195,7 +195,6 @@ Here ``a`` is actually a reference to the remote actor.
         if arbiter:
             self._linked_actors[arbiter.aid] = arbiter
             self._repr = '{0} {1}'.format(self._name,self.aid)
-            self.log = LogSelf(self,self.log)
             if on_task:
                 self.on_task = on_task
             
@@ -362,8 +361,10 @@ logging is configured, the :attr:`Actor.inbox` and :attr:`Actor.outbox`
 are registered and the :attr:`Actor.ioloop` is initialised and started.'''
         if self._state == self.INITIAL:
             self._state = self.RUN
-            if self.isprocess():
-                self.configure_logging()
+            self.configure_logging()
+            # wrap the logger
+            if self.arbiter:
+                self.setlog(LogSelf(self,self.log))
             self.log.info('Starting')
             # ADD SELF TO THE EVENT LOOP TASKS
             self.ioloop = self.get_eventloop()
@@ -421,19 +422,15 @@ If the message needs acknowledgment, send the result back.'''
             self.ioqueue.put(('request',request))
         else:
             self.log.error("Trying to put a request on task queue,\
- but there isn't one!")
-            
-    def __getitem__(self,key):
-        return self._params[key]
-    
-    def __setitem__(self,key,val):
-        self._params[key] = val
-        
+ but there isn't one!")        
     def get(self, key, default = None):
         try:
-            return self.__getitem__(key)
+            return self._params[key]
         except KeyError:
             return default
+        
+    def set(self, key, value):
+        self._params[key] = value
         
     def run_on_arbiter(self, callable):
         '''Run a *callable* in the arbiter event loop.
@@ -551,12 +548,6 @@ status and performance.'''
             data.update({'uptime': time() - ioloop._started,
                          'event_loops': ioloop.num_loops})
         return self.on_info(data)
-        
-    def configure_logging(self):
-        if not self.loglevel:
-            if self.arbiter:
-                self.loglevel = self.arbiter.loglevel
-        super(Actor,self).configure_logging()
         
     ############################################################################
     # BUILT IN REMOTE FUNCTIONS

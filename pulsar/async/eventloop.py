@@ -9,7 +9,7 @@ import socket
 
 from pulsar.utils.system import IObase, IOpoll, close_on_exec, platform, Waker
 from pulsar.utils.tools import gen_unique_id
-from pulsar.utils.mixins import Synchronized
+from pulsar.utils.log import Synchronized
 from pulsar.utils.collections import WeakList
 
 from .defer import Deferred

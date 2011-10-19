@@ -109,6 +109,3 @@ class DjpCmsWSGIApplication(wsgi.WSGIApplication):
         '''Returns a callable application handler,
 used by a :class:`pulsar.Worker` to carry out its task.'''
         return self.callable.wsgi()
-
-    def configure_logging(self):
-        pass

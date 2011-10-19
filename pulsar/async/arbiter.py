@@ -18,15 +18,16 @@ from .proxy import ActorCallBacks
 from .defer import ThreadQueue
 
 
+process_global = pulsar.process_global
+
 __all__ = ['arbiter','spawn','Arbiter']
 
 
 def arbiter(daemonize = False):
-    p = current_process()
-    arbiter = getattr(p,'_arbiter',None)
+    arbiter = process_global('_arbiter')
     if not arbiter:
         arbiter = Arbiter.spawn(Arbiter,impl='monitor',daemonize=daemonize)
-        setattr(p,'_arbiter',arbiter)
+        process_global('_arbiter',arbiter,True)
     return arbiter
     
     
@@ -93,8 +94,7 @@ Users access the arbiter by the high level api::
     def spawn(cls, actorcls, **kwargs):
         '''Create a new :class:`Actor` and return its
 :class:`ActorProxyMonitor`.'''
-        p = current_process()
-        arbiter = getattr(p,'_arbiter',None)
+        arbiter = process_global('_arbiter')
         cls.lock.acquire()
         try:
             if arbiter:
@@ -141,24 +141,23 @@ Users access the arbiter by the high level api::
             pools.append(p.info(full))
         return ActorCallBacks(self,pools).add_callback(self._info)
     
-    def configure_logging(self,**kwargs):
+    def configure_logging(self, config = None):
         if self._monitors:
             monitor = list(self._monitors.values())[0]
-            monitor.configure_logging(**kwargs)
+            monitor.configure_logging(config = config)
+            self.setlog()
             self.loglevel = monitor.loglevel
         else:
-            super(Arbiter,self).configure_logging(**kwargs)
+            super(Arbiter,self).configure_logging(config = config)
  
     ############################################################################
     # OVERRIDE ACTOR HOOKS
     ############################################################################
     
     def on_init(self, daemonize = False, **kwargs):
-        p = current_process()
-        arbiter = getattr(p,'_arbiter',None)
-        if arbiter:
+        if process_global('_arbiter'):
             raise pulsar.PulsarException('Arbiter already created')
-        if p.daemon:
+        if current_process().daemon:
             raise pulsar.PulsarException(
                     'Cannot create the arbiter in a daemon process')
         PoolMixin.on_init(self,**kwargs)

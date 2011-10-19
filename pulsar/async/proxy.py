@@ -276,7 +276,7 @@ object including, aid (actor id), timeout and mailbox size.'''
                 'mailbox_size':self.mailbox.qsize()}
         
     def stop(self,sender):
-        '''Stop the remote arbiter'''
+        '''Stop the remote :class:`Actor`'''
         self.send(sender,'stop')
         
 
@@ -338,6 +338,10 @@ has registered its inbox address.
         '''Terminate life of underlying actor.'''
         self.impl.terminate()
     
+    def join(self, timeout = None):
+        '''Wait until the underlying actor terminates'''
+        self.impl.join(timeout = timeout)
+        
     def local_info(self):
         '''Return a dictionary containing information about the remote
 object including, aid (actor id), timeout mailbox size, last notified time and

@@ -128,6 +128,12 @@ After obtaining the result from the
         if should_stop:
             self.log.info("Auto-restarting worker.")
             self.stop()
+    
+    def configure_logging(self, config = None):
+        # Delegate to application
+        self.app.configure_logging(config = config)
+        self.loglevel = self.app.loglevel
+        self.setlog()
 
 
 class Worker(HandlerMixin,pulsar.Actor):
@@ -180,9 +186,6 @@ used for by the application for handling requests and sending back responses.
         data.update({'request processed': self.nr,
                      'max requests':self.cfg.max_requests})
         return data
-    
-    def configure_logging(self, **kwargs):
-        pass
 
 
 class ApplicationMonitor(HandlerMixin,pulsar.Monitor):
@@ -197,7 +200,7 @@ pulsar applications (subclasses of :class:`Application`).
         kwargs['num_actors'] = app.cfg.workers
         arbiter = pulsar.arbiter()
         if not arbiter.get('cfg'):
-            arbiter['cfg'] = app.cfg
+            arbiter.set('cfg',app.cfg)
         self.app_handler = app.handler()
         super(ApplicationMonitor,self).on_init(**kwargs)
         self.app.monitor_init(self)
@@ -230,10 +233,6 @@ updated actor parameters with information about the application.
                  'loglevel': self.app.loglevel,
                  'impl': self.app.cfg.concurrency,
                  'name':'{0}-worker'.format(self.app.name)}
-
-    def configure_logging(self, **kwargs):
-        self.app.configure_logging(**kwargs)
-        self.loglevel = self.app.loglevel
         
     def _info(self, result = None):
         info = super(ApplicationMonitor,self)._info(result)
@@ -241,7 +240,7 @@ updated actor parameters with information about the application.
         return info
     
 
-class Application(pulsar.PickableMixin):
+class Application(pulsar.LogginMixin):
     """\
 An application interface for configuring and loading
 the various necessities for any given server or distributed application running
@@ -567,18 +566,15 @@ doing anything.'''
         if monitor:
             monitor.stop()
     
-    def configure_logging(self):
-        """\
-        Set the log level and choose the destination for log output.
-        """
+    def configure_logging(self, config = None):
+        """Set the logging configuration as specified by the
+ :ref:`logconfig <setting-logconfig>` setting."""
         if self.cfg.debug:
             self.loglevel = logging.DEBUG
         else:
             self.loglevel = self.cfg.loglevel
-        handlers = []
-        if self.cfg.logfile and self.cfg.logfile != "-":
-            handlers.append(logging.FileHandler(self.cfg.logfile))
-        super(Application,self).configure_logging(handlers = handlers)
+        config = config or self.cfg.logconfig
+        super(Application,self).configure_logging(config = config)
 
     def actorlinks(self, links):
         if not links:

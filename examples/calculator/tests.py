@@ -7,15 +7,15 @@ from pulsar.apps.test import test_server
 from .manage import server
 
 
-class TestRpc(test.TestCase):
+class TestRpcThread(test.TestCase):
     concurrency = 'thread'
     
     @classmethod
     def setUpClass(cls):
-        cls.name = 'calc_' + cls.concurrency
+        name = 'calc_' + cls.concurrency
         s = test_server(server,
                         bind = '127.0.0.1:0',
-                        name = cls.name,
+                        name = name,
                         concurrency = cls.concurrency)
         r,outcome = cls.worker.run_on_arbiter(s)
         yield r
@@ -76,3 +76,5 @@ class TestRpc(test.TestCase):
         self.assertRaises(rpc.InternalError,self.p.calc.divide,'ciao','bo')
         
 
+class TestRpcProcess(TestRpcThread):
+    concurrency = 'process'

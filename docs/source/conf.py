@@ -36,7 +36,8 @@ release = version
 extensions = ['sphinx.ext.autodoc',
               'sphinx.ext.todo',
               'sphinx.ext.pngmath',
-              'sphinx.ext.viewcode']
+              'sphinx.ext.viewcode',
+              'pulsar.utils.sphinxext']
 
 # The suffix of source filenames.
 source_suffix = '.rst'

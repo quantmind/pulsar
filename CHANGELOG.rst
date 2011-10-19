@@ -10,7 +10,7 @@ Version Master
 * Removed the `pulsar.worker` module.
 * Moved `http.rpc` module to `apps`.
 * Introduced context manager for `pulsar.apps.tasks` to handle logs and exceptions.
-* **43 regression tests**
+* **55 regression tests**
 
 Version 0.1.0 - 2001-Aug-24
 =======================================

@@ -8,14 +8,15 @@ from pulsar.apps.test import test_server
 from .manage import server
         
 
-class TestHelloWorldExample(test.TestCase):
+class TestHelloWorldProcess(test.TestCase):
     concurrency = 'process'
     
     @classmethod
     def setUpClass(cls):
+        name = 'helloworld_' + cls.concurrency
         s = test_server(server,
                         bind = '127.0.0.1:0',
-                        name = 'helloworld',
+                        name = name,
                         concurrency = cls.concurrency)
         r,outcome = cls.worker.run_on_arbiter(s)
         yield r
@@ -29,10 +30,11 @@ class TestHelloWorldExample(test.TestCase):
     
     def testMeta(self):
         import pulsar
+        name = 'helloworld_' + self.concurrency
         arbiter = pulsar.arbiter()
         self.assertTrue(len(arbiter.monitors)>=2)
-        monitor = arbiter.monitors.get('helloworld')
-        self.assertEqual(monitor.name,'helloworld')
+        monitor = arbiter.monitors.get(name)
+        self.assertEqual(monitor.name,name)
         self.assertTrue(monitor.running())
     testMeta.run_on_arbiter = True
         
@@ -46,3 +48,8 @@ class TestHelloWorldExample(test.TestCase):
         self.assertTrue(headers)
         self.assertEqual(headers['content-type'],'text/plain')
         self.assertEqual(headers['server'],SERVER_SOFTWARE)
+
+
+class TestHelloWorldThread(TestHelloWorldProcess):
+    concurrency = 'thread'
+    

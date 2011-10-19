@@ -63,7 +63,7 @@ try:
         timeout = orm.DateTimeField(required = False)
         args = orm.PickleObjectField()
         kwargs = orm.PickleObjectField()
-        result = orm.PickleObjectField(required = False)
+        result = orm.PickleObjectField()
         logs = orm.CharField()
         
         class Meta:
@@ -114,8 +114,7 @@ try:
                     return task
             except cls.DoesNotExist:
                 pass
-    
-    
+          
     class Queue(grid.Queue):
         queue = orm.ListField(Task)
         

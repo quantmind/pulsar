@@ -65,7 +65,7 @@ def wrap_method(func):
         return func(*args, **kwargs)
     return _wrapped
 
-
+    
 def make_settings(app = None, include=None, exclude=None):
     '''Creates a dictionary of available settings for a given
 application *app*.
@@ -133,7 +133,8 @@ class DummyConfig(object):
 
 
 class Config(object):
-        
+    '''Dictionary containing :class:`Setting` parameters for
+fine tuning pulsar servers.'''
     def __init__(self, description = None, epilog = None,
                  app = None, include=None, exclude = None):
         self.settings = make_settings(app,include,exclude)
@@ -225,6 +226,8 @@ class Config(object):
             
             
 class SettingMeta(type):
+    '''A metaclass which collects all setting classes and put them
+in the global ``KNOWN_SETTINGS`` list.'''
     def __new__(cls, name, bases, attrs):
         super_new = super(SettingMeta, cls).__new__
         parents = [b for b in bases if isinstance(b, SettingMeta)]
@@ -253,6 +256,8 @@ BaseSettings =  SettingMeta('BaseSettings', (object, ), {})
 
 
 class Setting(BaseSettings):
+    '''A configuration parameter for pulsar. Parameters can be specified
+on the command line or on a config file.'''
     virtual = True
     nargs = None
     app = None
@@ -275,6 +280,7 @@ class Setting(BaseSettings):
         self.desc = self.desc or self.short   
         
     def add_argument(self, parser):
+        '''Add itself to the argparser.'''
         kwargs = {}
         if self.type and self.type != 'string':
             kwargs["type"] = self.type
@@ -293,6 +299,7 @@ class Setting(BaseSettings):
                            'metavar': self.meta or None,
                            'help': self.short})
         else:
+            # Not added to argparser
             return
         
         parser.add_argument(*args, **kwargs)
@@ -409,23 +416,9 @@ class Concurrency(Setting):
     cli = ["--concurrency"]
     default = "process"
     desc = """\
-        The type of concurrency to use: process or thread.
+        The type of concurrency to use: ``process`` or ``thread``.
         """
         
-
-class WorkerConnections(Setting):
-    name = "worker_connections"
-    section = "Worker Processes"
-    cli = ["--worker-connections"]
-    validator = validate_pos_int
-    type = int
-    default = 1000
-    desc = """\
-        The maximum number of simultaneous clients.
-        
-        This setting only affects the Eventlet and Gevent worker types.
-        """
-
 
 class MaxRequests(Setting):
     name = "max_requests"
@@ -638,6 +631,16 @@ class LogEvery(Setting):
     validator = validate_pos_int
     default = 0
     desc = """Log information every n seconds"""
+    
+    
+class LogConfig(Setting):
+    name = "logconfig"
+    default = None
+    desc = '''
+    The logging configuration dictionary.
+    
+    This settings can only be specified on a config file
+    '''
     
     
 class Procname(Setting):

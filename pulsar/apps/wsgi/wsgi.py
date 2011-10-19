@@ -19,7 +19,7 @@ def authorization(environ, start_response):
         return parse_authorization_header(header)
 
         
-class WsgiHandler(pulsar.PickableMixin):
+class WsgiHandler(pulsar.LogginMixin):
     '''An asynchronous handler for application conforming to python WSGI_.
     
 .. attribute: middleware
@@ -30,7 +30,7 @@ class WsgiHandler(pulsar.PickableMixin):
 .. _WSGI: http://www.python.org/dev/peps/pep-3333/
 '''
     def __init__(self, middleware = None, **kwargs):
-        self.log = self.getLogger(**kwargs)
+        self.setlog(**kwargs)
         self.middleware = middleware or []
         
     def __call__(self, environ, start_response):

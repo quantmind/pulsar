@@ -1,21 +1,25 @@
 import sys
+import copy
 from time import time
 import logging
-from multiprocessing import current_process
+from multiprocessing import current_process, Lock
 
-from .system import platform
+if sys.version_info < (2,7):
+    from pulsar.utils.fallbacks.dictconfig import dictConfig
+else:
+    from logging.config import dictConfig
+    
 
 SERVER_NAME = 'Pulsar'
+NOLOG = 100
 
 
 __all__ = ['SERVER_NAME',
            'getLogger',
            'process_global',
            'LogginMixin',
-           'PickableMixin',
-           'Silence',
+           'Synchronized',
            'LogSelf',
-           'logerror',
            'LogInformation']
 
 
@@ -29,7 +33,94 @@ LOG_LEVELS = {
     }
 
 
+LOGGING_CONFIG = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'formatters': {
+        'verbose': {
+            'format': '%(asctime)s [p=%(process)s,t=%(thread)s]\
+ [%(levelname)s] [%(name)s] %(message)s',
+            'datefmt': '%Y-%m-%d %H:%M:%S'
+        },
+        'verbose_color': {
+            '()': 'pulsar.utils.tools.ColorFormatter',
+            'format': '%(asctime)s [p=%(process)s,t=%(thread)s]\
+ [%(levelname)s] [%(name)s] %(message)s',
+            'datefmt': '%Y-%m-%d %H:%M:%S'
+        },
+        'simple': {
+            'format': '%(asctime)s %(levelname)s %(message)s',
+            'datefmt': '%Y-%m-%d %H:%M:%S'
+        },
+    },
+    'handlers': {
+        'silent': {
+            'class': 'pulsar.utils.log.Silence',
+        },
+        'console': {
+            'level': 'DEBUG',
+            'class': 'logging.StreamHandler',
+            'formatter': 'verbose_color'
+        }
+    },
+    'filters ': {},
+    'loggers': {}
+}
+
+
+def update_config(config, c):
+    for name in ('handlers','formatters','filters','loggers'):
+        if name in c:
+            config[name].update(c[name])
+
+
+class LocalMixin(object):
+    
+    @property
+    def local(self):
+        if not hasattr(self,'_local'):
+            self._local = {}
+        return self._local
+     
+    def __getstate__(self):
+        '''Remove the local dictionary.'''
+        d = self.__dict__.copy()
+        d.pop('_local',None)
+        return d
+    
+    
+class SynchronizedMixin(object):
+    
+    @property
+    def lock(self):
+        if '_lock' not in self.local:
+            self.local['_lock'] = Lock()
+        return self.local['_lock']
+    
+    @classmethod
+    def make(cls, f):
+        """Synchronization decorator for Synchronized member functions. """
+    
+        def _(self, *args, **kw):
+            lock = self.lock
+            lock.acquire()
+            try:
+                return f(self, *args, **kw)
+            finally:
+                lock.release()
+                
+        _.thread_safe = True
+        _.__doc__ = f.__doc__
+        
+        return _
+    
+    
+class Synchronized(LocalMixin,SynchronizedMixin):
+    pass
+
+
 def process_global(name, val = None, setval = False):
+    '''Access and set global variables for the current process.'''
     p = current_process()
     if not hasattr(p,'_pulsar_globals'):
         p._pulsar_globals = {}
@@ -43,20 +134,6 @@ def getLogger(name = None):
     '''Get logger name in "Pulsar" namespace'''
     name = '{0}.{1}'.format(SERVER_NAME,name) if name else SERVER_NAME
     return logging.getLogger(name)
-
-
-def logerror(func):
-    
-    def _(self,*args,**kwargs):
-        try:
-            return func(self,*args,**kwargs)
-        except Exception as e:
-            if self.log:
-                self.log.critical('"{0}" had an unhandled exception in function "{1}": {2}'\
-                                  .format(self,func.__name__,e),exc_info=sys.exc_info())
-            pass
-        
-    return _
 
 
 class LogSelf(object):
@@ -92,17 +169,20 @@ class Silence(logging.Handler):
         pass
     
 
-class LogginMixin(object):
+class LogginMixin(Synchronized):
+    '''A Mixin used throught the library. It provides built in logging object
+and utilities for pickle.'''
     loglevel = None
     default_logging_level = None
+    default_logging_config = None
     _class_code = None
+    
+    def setlog(self, log = None, **kwargs):
+        self.local['log'] = log or getLogger(self.class_code)
         
-    def getLogger(self, **kwargs):
-        if hasattr(self,'log'):
-            return self.log
-        else:
-            logger = kwargs.pop('logger',None)
-            return logger or getLogger(self.class_code)
+    @property
+    def log(self):
+        return self.local.get('log')      
     
     def __repr__(self):
         return self.class_code
@@ -118,66 +198,55 @@ class LogginMixin(object):
     def code(cls):
         return cls._class_code or cls.__name__
     
-    def configure_logging(self, handlers = None):
-        '''Configure logging'''
-        loglevel = self.loglevel
-        try:
-            self.loglevel = int(loglevel)
-        except (TypeError,ValueError):
-            lv = str(loglevel).lower()
-            self.loglevel = LOG_LEVELS.get(lv,self.default_logging_level)
-        logger = logging.getLogger()
-        
-        color = False
-        handlers = handlers or []
-        if not handlers and not process_global('default_logging_handler'):
-            if self.loglevel is None:
-                hnd = Silence()
-            else:
-                color = True
-                hnd = logging.StreamHandler()
-            process_global('default_logging_handler',hnd,True)
-            handlers.append(hnd)
-            
-        f = self.logging_formatter(color) if color else None
-        for h in handlers:
-            if f:
-                h.setFormatter(f)
-            logger.addHandler(h)
-            if self.loglevel is not None:
-                logger.setLevel(self.loglevel)
-
-    def logging_formatter(self, color = False):
-        format = '%(asctime)s [p=%(process)s,t=%(thread)s] [%(levelname)s] [%(name)s] %(message)s'
-        #format = r"%(asctime)s [%(process)d] [%(levelname)s] %(message)s"
-        datefmt = r"%Y-%m-%d %H:%M:%S"
-        if color and not platform.isWindows():
-            from pulsar.utils.tools import ColorFormatter as Formatter
-        else:
-            Formatter = logging.Formatter
-        return Formatter(format, datefmt)
-    
-    
-class PickableMixin(LogginMixin):
-    '''A Mixin used throught the library. It provides built in logging object
-and utilities for pickle.'''     
-    @property
-    def local(self):
-        if not hasattr(self,'_local'):
-            self._local = {}
-        return self._local
-     
-    def __getstate__(self):
-        d = self.__dict__.copy()
-        d.pop('log',None)
-        d.pop('_local',None)
-        return d
-    
     def __setstate__(self, state):
         self.__dict__ = state
-        self.log = getLogger(self.class_code)
         self.configure_logging()
+    
+    def configure_logging(self, config = None):
+        '''Configure logging. This function is invoked every time an
+instance of this class is unserialized (possibly in a different process domain).
+'''
+        logconfig = None
+        if not process_global('_config_logging'):
+            logconfig = copy.deepcopy(LOGGING_CONFIG)
+            if config:
+                update_config(logconfig,config)
+            process_global('_config_logging',logconfig,True)
+            
+        loglevel = self.loglevel
+        if loglevel is None:
+            loglevel = logging.NOTSET
+        else:
+            try:
+                loglevel = int(loglevel)
+            except (ValueError):
+                lv = str(loglevel).upper()
+                if lv in logging._levelNames:
+                    loglevel = logging._levelNames[lv]
+                else:
+                    loglevel = logging.NOTSET
+    
+        self.loglevel = loglevel
+
+        # No loggers configured. This means no logconfig setting
+        # parameter was used. Set up the root logger with default
+        # loggers 
+        if logconfig:
+            if not logconfig.get('root'):
+                if loglevel == logging.NOTSET:
+                    logconfig['root'] = {
+                                    'handlers':['silent']
+                                }
+                else:
+                    logconfig['root'] = {
+                                    'level': logging.getLevelName(loglevel),
+                                    'handlers':['console']
+                                }
+            dictConfig(logconfig)
         
+        self.setlog()
+        self.log.setLevel(self.loglevel)
+            
         
 class LogInformation(object):
     

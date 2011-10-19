@@ -15,7 +15,6 @@ ThreadQueue = queue.Queue
 
 from pulsar import AlreadyCalledError, DeferredFailure, Timeout,\
                      NOT_DONE, CLEAR_ERRORS
-from pulsar.utils.mixins import Synchronized
 
 
 __all__ = ['Deferred',
@@ -234,7 +233,7 @@ result as argument. Raise exceptions if result is one.'''
     return _
 
 
-class Deferred(Synchronized):
+class Deferred(object):
     """This is a callback which will be put off until later. The idea is the same
 as the ``twisted.defer.Deferred`` object.
 
@@ -404,7 +403,6 @@ The callback will occur once the generator has stopped
         self._last_result = None
         self._errors = Failure()
         
-    @Synchronized.make
     def next(self):
         return next(self.gen)
     

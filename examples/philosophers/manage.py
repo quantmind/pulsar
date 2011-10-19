@@ -46,7 +46,8 @@ def talk(self,msg,wait=False):
 
 
 def thinking(self,wait=False):
-    talk(self,'Thinking... Done {0} loops...'.format(self.nr),wait)
+    talk(self,'Thinking.......... eat {0} in {1} loops...'\
+         .format(self._eat,self._nr),wait)
 
 
 class Philosopher(pulsar.Actor):
@@ -54,9 +55,11 @@ class Philosopher(pulsar.Actor):
     def on_init(self, left_fork = None, right_fork = None, **kwargs):
         self.left_fork = left_fork
         self.right_fork = right_fork
-        self.nr = 0
+        self._nr = 0
+        self._eat = 0
         
     def on_task(self):
+        self._nr += 1
         try:
             self.left_fork.get(timeout=0.1)
         except pulsar.Empty:
@@ -70,11 +73,11 @@ class Philosopher(pulsar.Actor):
             return thinking(self)
         talk(self,'Got right fork')
         talk(self,'Eating...',lag*random.random())
+        self._eat += 1
         talk(self,'Put down left fork')
         self.left_fork.put(True)
         talk(self,'Put down right fork')
         self.right_fork.put(True)
-        self.nr += 1
         thinking(self,lag*random.random())
     
     #def configure_logging(self, **kwargs):

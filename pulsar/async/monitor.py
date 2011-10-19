@@ -47,6 +47,7 @@ It is used by both the :class:`Arbiter` and the :class:`Monitor` classes.
         arb.when_running.add_callback(do_something)
         arb.start()
 '''
+    JOIN_TIMEOUT = 1.0
     actor_class = Actor
     '''The class derived form :class:`Actor` which the monitor manages
 during its life time.
@@ -83,6 +84,7 @@ spawn method when creating new actors.'''
         linked = self._linked_actors
         for aid,actor in list(iteritems(ACTORS)):
             if not actor.is_alive():
+                actor.join(self.JOIN_TIMEOUT)
                 ACTORS.pop(aid)
                 linked.pop(aid,None)
             else:

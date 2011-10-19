@@ -6,7 +6,6 @@ from multiprocessing.queues import Empty, Queue
 
 from pulsar import create_connection, MailboxError, socket_pair, wrap_socket
 from pulsar.utils.tools import gen_unique_id
-from pulsar.utils.mixins import NonePickler
 from pulsar.utils.py2py3 import pickle
 
 
