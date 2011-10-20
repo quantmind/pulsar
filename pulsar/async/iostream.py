@@ -475,9 +475,10 @@ read from a non-blocking socket.
         if self._state is None:
             self._state = self.ioloop.ERROR | state
             self.ioloop.add_handler(
-                self.socket.fileno(), self._handle_events, self._state)
+                self, self._handle_events, self._state)
         elif not self._state & state:
             self._state = self._state | state
-            self.ioloop.update_handler(self.socket.fileno(), self._state)
+            self.ioloop.update_handler(
+                self.socket.fileno(), self._state)
 
 

@@ -11,6 +11,7 @@ from pulsar.utils.py2py3 import execfile
 from pulsar.utils.importer import import_module
 from pulsar.utils.log import LogInformation
 from pulsar.utils import system
+from pulsar.utils.config import Setting
 #from pulsar.utils import debug
 
 __all__ = ['Worker',
@@ -19,7 +20,9 @@ __all__ = ['Worker',
            'WorkerRequest',
            'Response',
            'require',
-           'ResponseError']
+           'ResponseError',
+           'Plugin',
+           'SettingPlugin']
 
 
 def require(appname):
@@ -367,7 +370,7 @@ By default it returns ``None``.'''
         return None
     
     def on_config(self):
-        '''Callback when configuration is loaded. This is a chanse to do
+        '''Callback when configuration is loaded. This is a chance to do
  an application specific check before the concurrent machinery is put into
  place. If it returns ``False`` the application will abort.'''
         pass
@@ -515,7 +518,8 @@ doing anything.'''
         return params
     
     def worker_start(self, worker):
-        '''Called by the :class:`Worker` after fork'''
+        '''Called by the :class:`Worker` :meth:`pulsar.Actor.on_start`
+:ref:`callback <actor-callbacks>` method.'''
         pass
     
     def worker_task(self, worker):
@@ -533,11 +537,14 @@ doing anything.'''
     # MONITOR CALLBAKS
     
     def monitor_init(self, monitor):
-        '''Callback by :class:`ApplicationMonitor` when initializing'''
+        '''Callback by :class:`ApplicationMonitor` when initializing.
+This is a chance to setup your application before the application
+monitor is added to the arbiter.'''
         pass
     
     def monitor_start(self, monitor):
-        '''Callback by :class:`ApplicationMonitor` when starting'''
+        '''Callback by :class:`ApplicationMonitor` when starting.
+The application is now in the arbiter but has not yet started.'''
         pass
     
     def monitor_task(self, monitor):
@@ -595,3 +602,20 @@ to be added to the monitor dictionary of remote functions.
     dictionaries.'''
         return None,None
     
+    
+class Plugin(object):
+    '''Base class for pulsar :class:`Application` plugins'''
+    settings = ()
+    '''List or tuple of :attr:`Setting.name` used by the plugin.'''
+    
+    
+class SettingPlugin(Setting,Plugin):
+    virtual = True
+    
+    def __init__(self):
+        self.settings = (self.name,)
+        Setting.__init__(self)
+        
+    def setup(self, app):
+        '''called by the application to setup the setting'''
+        pass

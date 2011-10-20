@@ -296,7 +296,9 @@ end of initialisation (after forking).'''
     
     def on_start(self):
         '''The :ref:`actor callback <actor-callbacks>` run once just before
-the actor starts (after forking) its event loop.'''
+the actor starts (after forking) its event loop. Every attribute is available,
+therefore this is a chance to setup to perform custom initialization
+before the actor starts running.'''
         pass
     
     def on_task(self):
@@ -364,7 +366,7 @@ are registered and the :attr:`Actor.ioloop` is initialised and started.'''
             self.configure_logging()
             # wrap the logger
             if self.arbiter:
-                self.setlog(LogSelf(self,self.log))
+                self.setlog(log = LogSelf(self,self.log))
             self.log.info('Starting')
             # ADD SELF TO THE EVENT LOOP TASKS
             self.ioloop = self.get_eventloop()
@@ -373,9 +375,9 @@ are registered and the :attr:`Actor.ioloop` is initialised and started.'''
                 self.outbox.register(self,inbox=False)
             if self.inbox:
                 self.inbox.register(self)
-            self.on_start()
             self.__tid = current_thread().ident
             self.__pid = os.getpid()
+            self.on_start()
             self._run()
     
     def get_eventloop(self):

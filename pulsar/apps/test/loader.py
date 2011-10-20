@@ -1,5 +1,7 @@
 import os
+import sys
 import unittest
+import logging
 import inspect
 from fnmatch import fnmatch
 
@@ -13,6 +15,9 @@ else:
     SkipTest = unittest.SkipTest
     
     
+default_logger = logging.getLogger('pulsar.apps.test.loader')
+    
+    
 __all__ = ['TestLoader','SkipTest']
     
 
@@ -21,18 +26,34 @@ class TestLoader(object):
 you give a *root* directory and a list of submodules where to look for tests.
 
 :parameter root: root path.
-:parameter modules: list of modules where to look for tests.
-''' 
+:parameter modules: list (or tuple) of modules where to look for tests.
+    A module can be a string indicating the **dotted** path relative to the
+    **root** directory or a two element tuple with the same dotted path as
+    first argument and a **pattern** which files must match in order to be
+    included in the search.
+    For example::
+    
+        modules = ['test']
+        
+    Lodas all tests from the ``test`` directory.
+    All top level modules will be added to the python ``path``.
+'''
     test_mapping = {'regression':'tests',
                     'benchmark':'benchmarks',
                     'profile':'profile'}
-    def __init__(self, root, modules, test_type = 'regression'):
+    
+    def __init__(self, root, modules, test_type = 'regression', logger = None):
+        self.log = logger or default_logger
         self.root = root
         self.test_type  = test_type
         if test_type not in self.test_mapping:
             raise ValueError('Test type {0} not available'.format(test_type)) 
         self.modules = modules
     
+    def __repr__(self):
+        return self.root
+    __str__ = __repr__
+        
     @property
     def testname(self):
         return self.test_mapping[self.test_type]
@@ -54,10 +75,20 @@ you give a *root* directory and a list of submodules where to look for tests.
             else:
                 name = m[0]
                 pattern = m[1]
-            absolute_path = os.path.join(self.root,name)
+            names = name.split('.')
+            absolute_path = os.path.join(self.root,*names)
             if os.path.isdir(absolute_path):
+                snames = names[:-1]
+                if snames:
+                    ppath = os.path.join(self.root,*snames)
+                    if not ppath in sys.path:
+                        sys.path.insert(0, ppath)
+                    name = names[-1]
                 for tag,mod in self.get_tests(absolute_path,name,pattern):
                     yield tag,mod
+            else:
+                raise ValueError('{0} cannot be found in {1} directory.'\
+                                 .format(name,self.root))
                 
     def get_tests(self, path, name, pattern, tags = ()):
         testname = self.testname
@@ -79,9 +110,12 @@ you give a *root* directory and a list of submodules where to look for tests.
                     tag = '.'.join(tags)
                     try:
                         module = import_module(subname)
+                    except ImportError:
+                        self.log.error('failed to import module {0}.\
+ Skipping.'.format(subname), exc_info = True)
                     except:
-                        print('failed to import module {0}. Skipping.'\
-                              .format(subname))
+                        self.log.critical('Failed to import module {0}.\
+ Skipping.'.format(subname), exc_info = True)    
                     else:
                         yield tag, module
                 elif os.path.isdir(subpath):

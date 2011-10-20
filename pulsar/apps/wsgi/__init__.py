@@ -31,6 +31,7 @@ from pulsar.net import HttpResponse
 
 from .handlers import *
 from .wsgi import *
+from .middleware import *
 
 
 class WSGIApplication(pulsar.Application):

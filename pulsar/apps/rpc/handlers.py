@@ -134,10 +134,10 @@ class RpcResponse(object):
                                    request.version,
                                    error=e)
         
-        response_headers = (
+        response_headers = [
                             ('Content-type', request.content_type),
                             ('Content-Length', str(len(result)))
-                            )
+                            ]
         self.start_response(status, response_headers)
         yield to_bytestring(result)
         
@@ -322,8 +322,6 @@ separated with a dot. Override :attr:`separator` to change this.
     '''Prefix to callable providing services.'''
     separator    = '.'
     '''Separator between subhandlers.'''
-    content_type = 'text/json'
-    '''Default content type.'''
 
     def __init__(self, handler, path = None):
         self.handler = handler 

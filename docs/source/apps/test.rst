@@ -17,6 +17,14 @@ TestSuite
    :members:
    :member-order: bysource
    
+   
+TestLoader
+~~~~~~~~~~~~~~~~~~~
+
+.. autoclass:: TestLoader
+   :members:
+   :member-order: bysource
+   
 
 TestRequest
 ~~~~~~~~~~~~~~~~~~~

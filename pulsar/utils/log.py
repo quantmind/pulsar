@@ -153,6 +153,10 @@ string representation of an instance.
         for func in self.LOGGING_FUNCTIONS:
             setattr(self,func,self._handle(func))
     
+    @property
+    def name(self):
+        return self.logger.name
+    
     def _msg(self, msg):
         return '{0} - {1}'.format(self.instance,msg)
     
@@ -178,7 +182,12 @@ and utilities for pickle.'''
     _class_code = None
     
     def setlog(self, log = None, **kwargs):
-        self.local['log'] = log or getLogger(self.class_code)
+        if not log:
+            name = getattr(self,'_log_name',self.class_code)
+            log = getLogger(name)
+        self.local['log'] = log
+        self._log_name = log.name
+        return log
         
     @property
     def log(self):

@@ -1,11 +1,17 @@
 import pulsar
 
-    
-class TestLabels(pulsar.Setting):
-    name = "labels"
+__all__ = ['TestOption']
+
+
+class TestOption(pulsar.Setting):
+    virtual = True
     app = 'test'
-    nargs = '*'
     section = "Test"
+    
+    
+class TestLabels(TestOption):
+    name = "labels"
+    nargs = '*'
     validator = pulsar.validate_list
     desc = """Optional test labels to run. If not provided\
  all tests are run.
@@ -13,10 +19,8 @@ class TestLabels(pulsar.Setting):
 To see available labels use the -l option."""
 
 
-class TestType(pulsar.Setting):
+class TestType(TestOption):
     name = "test_type"
-    app = 'test'
-    section = "Test"
     meta = "STRING"
     cli = ["--test-type"]
     validator = pulsar.validate_string
@@ -27,10 +31,8 @@ class TestType(pulsar.Setting):
     """
 
 
-class TestList(pulsar.Setting):
+class TestList(TestOption):
     name = "list_labels"
-    app = 'test'
-    section = "Test"
     meta = "STRING"
     cli = ['-l','--list_labels']
     action = 'store_true'

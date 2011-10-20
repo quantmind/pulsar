@@ -247,10 +247,14 @@ class Setting(BaseSettings):
     '''A configuration parameter for pulsar. Parameters can be specified
 on the command line or on a config file.'''
     virtual = True
+    '''If set to ``True`` the settings won't be loaded and it can be only used
+as base class for other settings.'''
+    name = None
+    '''The unique name used to access this setting.'''
     nargs = None
+    '''For positional arguments. Same usage as argparse.'''
     app = None
     '''Application specific settings'''
-    name = None
     value = None
     section = None
     '''Setting section, used for creating documentation.'''

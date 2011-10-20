@@ -1,5 +1,6 @@
 '''\
-An asynchronous parallel testing suite application. It is used for testing
+An asynchronous parallel testing suite :class:`pulsar.Application`.
+It is used for testing
 pulsar itself and can be used as a test suite for any application.
 
 Create a script on the top level directory of your library,
@@ -65,8 +66,8 @@ is a group of tests specified in a test class.
         return self
     
     def get_ioqueue(self):
-        '''Return the distributed task queue which produces tasks to
-be consumed by the workers.'''
+        #Return the distributed task queue which produces tasks to
+        #be consumed by the workers.
         queue = self.cfg.task_queue_factory
         return queue()
     
@@ -82,8 +83,8 @@ be consumed by the workers.'''
         return r._makeResult()
             
     def on_config(self):
-        '''Whene config is available load the tests and check what type of
-action is required.'''
+        #Whene config is available load the tests and check what type of
+        #action is required.
         pulsar.arbiter()
         test_type = self.cfg.test_type
         modules = getattr(self,'modules',None)
@@ -103,20 +104,25 @@ action is required.'''
             print('\n')
             return False
         
-        tags = self.cfg.labels
-        self.tests = list(loader.testclasses(tags))
-        self.cfg.set('workers',min(self.cfg.workers,len(self.tests)))
+        self.local['loader'] = loader
+        
+    def monitor_init(self, monitor):
+        pass
         
     def monitor_start(self, monitor):
-        '''When the monitor starts load all :class:`TestRequest` into the
-in the :attr:`pulsar.Actor.ioqueue`.'''
+        # When the monitor starts load all :class:`TestRequest` into the
+        # in the :attr:`pulsar.Actor.ioqueue`.
+        loader = self.local['loader']
+        tags = self.cfg.labels
+        self.tests = list(loader.testclasses(tags))
+        monitor.cfg.set('workers',min(self.cfg.workers,len(self.tests)))
         self._results = TestResult()
         self._time_start = time.time()
         for _,testcls in self.tests:
             monitor.put(TestRequest(testcls))
     
     def monitor_task(self, monitor):
-        '''Check if we got all results'''
+        #Check if we got all results
         if self._results.count == len(self.tests):
             time_taken = time.time() - self._time_start
             self.results_summary(time_taken)
@@ -130,6 +136,7 @@ in the :attr:`pulsar.Actor.ioqueue`.'''
         self._results.add(result)
     
     def results_summary(self, timeTaken):
+        '''Write the summuray of tests results.'''
         res = self.make_result()
         res.getDescription = lambda test : test
         stream = res.stream

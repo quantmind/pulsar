@@ -273,9 +273,10 @@ for the server as a whole.
                     # and should re-raise using the exc_info tuple
                     raise (exc_info[0], exc_info[1], exc_info[2])
                 else:
-                    # If exc_info is supplied, and no HTTP headers have been output
-                    # yet, start_response should replace the currently-stored HTTP
-                    # response headers with the newly-supplied ones. 
+                    # If exc_info is supplied, and no HTTP headers have been
+                    # output yet, start_response should replace the
+                    # currently-stored HTTP response headers with the
+                    # newly-supplied ones. 
                     self.headers = Headers()
             finally:
                 # Avoid circular reference
@@ -324,6 +325,8 @@ for the server as a whole.
                 self.__upgrade = self.headers['upgrade']
             
     def default_headers(self):
+        #if self.__clength is not None:
+        #    self.force_close()
         connection = "keep-alive" if self.should_keep_alive else "close"
         headers = Headers((('Server',self.version),
                            ('Date', format_date_time(time.time())),
@@ -332,7 +335,7 @@ for the server as a whole.
             headers['Transfer-Encoding'] = 'chunked'
         return headers
     
-    def send_headers(self,force=True):
+    def send_headers(self, force=True):
         if not self.__headers_sent:
             if self.__upgrade:
                 tosend = self.headers
