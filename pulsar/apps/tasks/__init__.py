@@ -184,7 +184,7 @@ tasks and managing scheduling of tasks.
     about task execution.
     
     Default: :class:`TaskInMemory`'''
-    
+    app = 'tasks'
     cfg = {'timeout':'3600'}
     
     @property

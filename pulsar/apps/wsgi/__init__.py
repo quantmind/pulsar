@@ -112,7 +112,7 @@ directly handled by the workers.'''
                                        monitor.ioloop.READ)
         else:
             # put the socket in the parameters to be passed to workers
-            monitor['socket'] = socket
+            monitor.set('socket',socket)
             
     def monitor_stop(self, monitor):
         if monitor.ioqueue is not None:

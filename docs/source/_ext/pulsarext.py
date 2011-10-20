@@ -1,4 +1,9 @@
+'''Sphinx extension for displaying Setting information
+'''
 from pulsar.utils.config import KNOWN_SETTINGS
+import pulsar.apps.wsgi
+import pulsar.apps.tasks
+import pulsar.apps.test
 
 from sphinx.util.compat import Directive
 from docutils import nodes, statemachine
@@ -13,13 +18,33 @@ class PulsarSettings(Directive):
     has_content = False
     required_arguments = 0
 
-    def text(self):
+    def sections(self):
+        sec = {}
+        sections = []
         for sett in KNOWN_SETTINGS:
-            desc = sett.desc.strip()
-            text = '.. _setting-{0}:\n\n\
-{0}\n=====================================\n\n\
-{1}\n'.format(sett.name,desc)
-            yield text
+            s = sett.section
+            if s not in sec:
+                sections.append(s)
+                sec[s] = [sett]
+            else:
+                sec[s].append(sett)
+        for s in sections:
+            yield s,sec[s]
+            
+    def text(self):
+        for s,settings in self.sections():
+            yield '.. _setting-section-{0}:\n\n\
+{0}\n=====================================\n\n'.format(s)
+            for sett in settings:
+                desc = sett.desc.strip() 
+                yield '.. _setting-{0}:\n\n\
+{0}\n~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n\n'.format(sett.name)
+                if sett.app:
+                    yield 'Setting for :mod:`pulsar.apps.' + sett.app +\
+                                '` application.\n'
+                if sett.cli:
+                    yield '*Command line*: ' + ','.join(sett.cli) + '\n'
+                yield desc + '\n'
             
     def run(self):
         env = self.state.document.settings.env            

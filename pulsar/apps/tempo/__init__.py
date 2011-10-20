@@ -15,3 +15,7 @@ def basescript():
 class Application(pulsar.Application):
     '''A benchmarking application for testing http servers'''
     
+    def worker_task(self, worker):
+        '''Run the script in a asynchronous fashion'''
+        pass
+    

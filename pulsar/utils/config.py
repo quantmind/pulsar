@@ -120,18 +120,6 @@ def make_options():
     return tuple(opts)
 
 
-class DummyConfig(object):
-
-    def __getstate__(self):
-        return self.__dict__.copy()
-    
-    def __setstate__(self, state):
-        self.__dict__ = state
-            
-    def __getattr__(self, name):
-        return None
-
-
 class Config(object):
     '''Dictionary containing :class:`Setting` parameters for
 fine tuning pulsar servers.'''
@@ -261,15 +249,19 @@ on the command line or on a config file.'''
     virtual = True
     nargs = None
     app = None
+    '''Application specific settings'''
     name = None
     value = None
     section = None
+    '''Setting section, used for creating documentation.'''
     cli = None
+    '''List of options, e.g. ``[-f, --foo]``.'''
     validator = None
     type = None
     meta = None
     action = None
     default = None
+    '''Default value'''
     short = None
     desc = None
     
@@ -395,19 +387,9 @@ class Workers(Setting):
     desc = """\
         The number of worker process for handling requests.
         
-        A positive integer generally in the 2-4 x $(NUM_CORES) range. You'll
-        want to vary this a bit to find the best for your particular
-        application's work load.
-        """
-
-
-class WorkerClass(Setting):
-    name = "worker_class"
-    section = "Worker Processes"
-    cli = ["-k", "--worker-class"]
-    default = ""
-    desc = """The type of workers to use. First it searches the relative path\
- pulsar.apps, and if it does not find it it searches as absolute path."""
+If you are using a multi-process concurrency, a number in the
+the 2-4 x $(NUM_CORES) range should be good. If you are using threads this
+number can be higher."""
 
 
 class Concurrency(Setting):
@@ -591,20 +573,6 @@ class TmpUploadDir(Setting):
         """
 
 
-class Logfile(Setting):
-    name = "logfile"
-    section = "Logging"
-    cli = ["--log-file"]
-    meta = "FILE"
-    validator = validate_string
-    default = "-"
-    desc = """\
-        The log file to write to.
-        
-        "-" means log to stdout.
-        """
-
-
 class Loglevel(Setting):
     name = "loglevel"
     section = "Logging"
@@ -635,6 +603,7 @@ class LogEvery(Setting):
     
 class LogConfig(Setting):
     name = "logconfig"
+    section = "Logging"
     default = None
     desc = '''
     The logging configuration dictionary.

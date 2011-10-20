@@ -23,7 +23,7 @@ class TempoScript(pulsar.Setting):
         
 class TempoRPS(pulsar.Setting):
     name = "request_per_second"
-    section = "Temp app"
+    section = "Tempo Application"
     meta = "STRING"
     cli = ["--rps"]
     validator = validate_posint_list

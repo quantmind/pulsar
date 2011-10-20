@@ -196,7 +196,7 @@ pulsar applications (subclasses of :class:`Application`).
         self.app = app
         self.cfg = app.cfg
         self.max_requests = 0
-        kwargs['actor_class'] = app.cfg.worker_class
+        kwargs['actor_class'] = Worker
         kwargs['num_actors'] = app.cfg.workers
         arbiter = pulsar.arbiter()
         if not arbiter.get('cfg'):

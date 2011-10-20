@@ -19,6 +19,7 @@ def validate_list(val):
 
 
 class TaskPath(pulsar.Setting):
+    app = 'tasks'
     name = "tasks_path"
     section = "Task Consumer"
     meta = "STRING"
@@ -31,6 +32,7 @@ class TaskPath(pulsar.Setting):
 
 
 class TaskQueueFactory(pulsar.Setting):
+    #app = 'tasks'
     name = "task_queue_factory"
     section = "Task Consumer"
     cli = ["-q", "--task-queue"]
