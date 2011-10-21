@@ -1,7 +1,12 @@
 '''\
 An asynchronous parallel testing suite :class:`pulsar.Application`.
 It is used for testing
-pulsar itself and can be used as a test suite for any application.
+pulsar itself and can be used as a test suite for any other library.
+
+.. _apps-test-intro:
+
+Introduction
+====================
 
 Create a script on the top level directory of your library,
 let's call it ``runtests.py``::
@@ -20,6 +25,33 @@ In the above example
 the test suite will look for all python files in the ``regression`` module
 (in a recursive fashion), and for modules called ``tests`` in the `` example``
 module.
+
+.. _apps-test-loading:
+
+Loading Tests
+=================
+
+Loading test cases is accomplished via the :class:`TestLoader` class. In
+this context we refer to an ``object`` as a ``module`` (including a
+directory module) or a ``class``.
+
+These are the rules for loading tests:
+
+* Directories that aren't packages are not inspected.
+* Any class that is a ``unittest.TestCase`` subclass is collected.
+* if an object starts with ``_`` or ``.`` that object will not be collected,
+  nor will any objects it contains.
+* If an object defines a ``__test__`` attribute that does not evaluate to True,
+  that object will not be collected, nor will any objects it contains.
+
+
+Test Case
+=============
+Only subclasses of  ``unittest.TestCase`` are collected by this application.
+When running a test, pulsar looks for two extra method: ``_pre_setup`` and
+``_post_teardown``. If the former is available, it is run just before the
+``setUp`` method while if the latter is available, it is run
+just after the ``tearDown`` method.
 '''
 import unittest
 import logging
@@ -47,10 +79,21 @@ is a group of tests specified in a test class.
         suite = TestSuite(modules = ('regression',
                                      ('examples','tests')))
                                      
-    The loader will look into the ``regression`` module for all files and
-    directory, while it will look into the example directory for all
+    The :class:`TestLoader` will look into the ``regression`` module for all
+    files and directory, while it will look into the example directory for all
     files or directories called ``tests``.
     
+    Alternatively it can ba a callable returning the iterable over modules. The
+    callable must accept one positional argument, the instance of the test
+    suite::
+    
+        def get_modules(suite):
+            ...
+            
+        suite = TestSuite(modules = get_modules)
+    
+:parameter result_class: Optional class for collecting test results. By default
+    it used the standard ``unittest.TextTestResult``.
 '''
     app = 'test'
     config_options_include = ('timeout','concurrency','workers','loglevel',
@@ -79,8 +122,12 @@ is a group of tests specified in a test class.
             sys.path.insert(0, path)
             
     def make_result(self):
-        r = unittest.TextTestRunner()
-        return r._makeResult()
+        result_class = getattr(self,'result_class',None)
+        if result_class:
+            return result_class()
+        else:
+            r = unittest.TextTestRunner()
+            return r._makeResult()
             
     def on_config(self):
         #Whene config is available load the tests and check what type of
@@ -91,6 +138,8 @@ is a group of tests specified in a test class.
         if not modules:
             raise ValueError('No modules specified. Please pass the modules\
  parameters to the TestSuite Constructor.')
+        if hasattr(modules,'__call__'):
+            modules = modules(self)
         loader = TestLoader(os.getcwd(),modules,test_type)
         
         # Listing labels

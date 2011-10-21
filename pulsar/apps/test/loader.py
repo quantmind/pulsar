@@ -37,6 +37,9 @@ you give a *root* directory and a list of submodules where to look for tests.
         
     Lodas all tests from the ``test`` directory.
     All top level modules will be added to the python ``path``.
+    
+The are very :ref:`simple rules <apps-test-loading>` followed for
+importing tests.
 '''
     test_mapping = {'regression':'tests',
                     'benchmark':'benchmarks',
@@ -93,7 +96,7 @@ you give a *root* directory and a list of submodules where to look for tests.
     def get_tests(self, path, name, pattern, tags = ()):
         testname = self.testname
         for sname in os.listdir(path):
-            if sname.startswith('_'):
+            if sname.startswith('_') or sname.startswith('.'):
                 continue
             subpath = os.path.join(path,sname)
             
@@ -105,18 +108,14 @@ you give a *root* directory and a list of submodules where to look for tests.
             
             subname = '{0}.{1}'.format(name,sname)
             
+            if not self.import_module(subname):
+                continue
+            
             if pattern:
                 if fnmatch(sname, pattern):
                     tag = '.'.join(tags)
-                    try:
-                        module = import_module(subname)
-                    except ImportError:
-                        self.log.error('failed to import module {0}.\
- Skipping.'.format(subname), exc_info = True)
-                    except:
-                        self.log.critical('Failed to import module {0}.\
- Skipping.'.format(subname), exc_info = True)    
-                    else:
+                    mod = self.import_module(subname)
+                    if mod:
                         yield tag, module
                 elif os.path.isdir(subpath):
                     for tag,mod in self.get_tests(subpath, subname, pattern,
@@ -125,18 +124,24 @@ you give a *root* directory and a list of submodules where to look for tests.
             else:
                 if os.path.isfile(subpath):
                     tag = '.'.join(tags+(sname,))
-                    try:
-                        module = import_module(subname)
-                    except:
-                        print('failed to import module {0}. Skipping.'\
-                              .format(subname))
-                    else:
-                        yield tag, module
+                    mod = self.import_module(subname)
+                    if mod:
+                        yield tag, mod
                 elif os.path.isdir(subpath):
                     for tag,mod in self.get_tests(subpath, subname, pattern,
                                                   tags+(sname,)):
                         yield tag,mod
-                    
         
+    def import_module(self, name):
+        try:
+            mod = import_module(name)
+            if getattr(mod,'__test__',True):
+                return mod
+        except ImportError:
+           self.log.error('failed to import module {0}. Skipping.'
+                          .format(name), exc_info = True)
+        except:
+           self.log.critical('Failed to import module {0}. Skipping.'
+                             .format(subname), exc_info = True)    
         
     

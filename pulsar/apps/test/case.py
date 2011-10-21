@@ -185,18 +185,31 @@ a class method ``setUpClass`` is defined. If so it runs it.'''
                 pass
             raise StopIteration
         
-        result, outcome = async_arbiter(test,test.setUp)()
-        yield result
-        if not add_failure(test, results, outcome.result):
-            result, outcome = async_arbiter(test,testMethod)()
+        success = True
+        if hasattr(test,'_pre_setup'):
+            result, outcome = async_arbiter(test,test._pre_setup)()
             yield result
             success = not add_failure(test, results, outcome.result)
-            result, outcome = async_arbiter(test,test.tearDown)()
+        
+        if success:
+            result, outcome = async_arbiter(test,test.setUp)()
+            yield result
+            if not add_failure(test, results, outcome.result):
+                result, outcome = async_arbiter(test,testMethod)()
+                yield result
+                success = not add_failure(test, results, outcome.result)
+                result, outcome = async_arbiter(test,test.tearDown)()
+                yield result
+                if add_failure(test, results, outcome.result):
+                    success = False
+            else:
+                success = False
+                
+        if hasattr(test,'_post_teardown'):
+            result, outcome = async_arbiter(test,test._post_teardown)()
             yield result
             if add_failure(test, results, outcome.result):
                 success = False
-        else:
-            success = False
     
         if success:
             results.addSuccess(test)
