@@ -13,7 +13,7 @@ from pulsar.utils.timeutils import timedelta_seconds
 try:
     from stdnet import orm
     from stdnet.utils import to_string
-    from stdnet.apps import grid
+    #from stdnet.apps import grid
     from djpcms.utils.text import nicename
     
     class PulsarServer(orm.StdModel):
@@ -115,8 +115,8 @@ try:
             except cls.DoesNotExist:
                 pass
           
-    class Queue(grid.Queue):
-        queue = orm.ListField(Task)
+    #class Queue(grid.Queue):
+    #    queue = orm.ListField(Task)
         
     
     class Script(orm.StdModel):

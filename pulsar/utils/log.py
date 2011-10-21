@@ -64,12 +64,13 @@ LOGGING_CONFIG = {
         }
     },
     'filters ': {},
-    'loggers': {}
+    'loggers': {},
+    'root': {}
 }
 
 
 def update_config(config, c):
-    for name in ('handlers','formatters','filters','loggers'):
+    for name in ('handlers','formatters','filters','loggers','root'):
         if name in c:
             config[name].update(c[name])
 
