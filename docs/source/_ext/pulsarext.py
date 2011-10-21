@@ -1,6 +1,6 @@
 '''Sphinx extension for displaying Setting information
 '''
-from pulsar.utils.config import KNOWN_SETTINGS
+from pulsar.utils.config import ordered_settings
 import pulsar.apps.wsgi
 import pulsar.apps.tasks
 import pulsar.apps.test
@@ -21,7 +21,7 @@ class PulsarSettings(Directive):
     def sections(self):
         sec = {}
         sections = []
-        for sett in KNOWN_SETTINGS:
+        for sett in ordered_settings():
             s = sett.section
             if s not in sec:
                 sections.append(s)

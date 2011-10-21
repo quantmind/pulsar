@@ -23,6 +23,7 @@ from pulsar.utils.py2py3 import *
 
 __all__ = ['Config',
            'Setting',
+           'ordered_settings',
            'validate_string',
            'validate_callable',
            'validate_bool',
@@ -32,8 +33,8 @@ __all__ = ['Config',
            'make_options']
 
     
-KNOWN_SETTINGS = []
-KNOWN_SETTINGS_SET = set()
+KNOWN_SETTINGS = {}
+KNOWN_SETTINGS_ORDER = []
 
 
 def def_start_server(server):
@@ -66,6 +67,11 @@ def wrap_method(func):
     return _wrapped
 
     
+def ordered_settings():
+    for name in KNOWN_SETTINGS_ORDER:
+        yield KNOWN_SETTINGS[name]
+        
+        
 def make_settings(app = None, include=None, exclude=None):
     '''Creates a dictionary of available settings for a given
 application *app*.
@@ -76,7 +82,7 @@ application *app*.
 :rtype: dictionary of :class:`pulsar.Setting` instances.'''
     settings = {}
     exclude = exclude or ()
-    for s in KNOWN_SETTINGS:
+    for s in ordered_settings():
         setting = s()
         if setting.app and setting.app != app:
             continue
@@ -122,7 +128,14 @@ def make_options():
 
 class Config(object):
     '''Dictionary containing :class:`Setting` parameters for
-fine tuning pulsar servers.'''
+fine tuning pulsar servers. It provides easy access to :attr:`Setting.value`
+attribute by exposing the :attr:`Setting.name` as attribute.
+
+.. attribute:: settings
+
+    Dictionary of all :class:`Settings` instances available. The
+    keys are given by the :attr:`Setting.name` attribute.
+'''
     def __init__(self, description = None, epilog = None,
                  app = None, include=None, exclude = None):
         self.settings = make_settings(app,include,exclude)
@@ -139,7 +152,7 @@ fine tuning pulsar servers.'''
     
     def __getattr__(self, name):
         if name not in self.settings:
-            if name in KNOWN_SETTINGS_SET:
+            if name in KNOWN_SETTINGS:
                 return None
             raise AttributeError("No configuration setting for: %s" % name)
         return self.settings[name].get()
@@ -155,6 +168,13 @@ fine tuning pulsar servers.'''
         self.settings[name].set(value)
 
     def parser(self):
+        '''Create the argparser_ for this configuration by adding all
+settings via the :meth:`Setting.add_argument`.
+
+:rtype: an instance of :class:`argparse.ArgumentParser`.
+        
+.. _argparser: http://docs.python.org/dev/library/argparse.html
+'''
         kwargs = {
             "description": self.description,
             "epilog": self.epilog
@@ -227,9 +247,14 @@ in the global ``KNOWN_SETTINGS`` list.'''
         
         new_class = super_new(cls, name, bases, attrs)
         new_class.fmt_desc(attrs['desc'] or '')
-        KNOWN_SETTINGS.append(new_class)
-        if new_class.name:
-            KNOWN_SETTINGS_SET.add(new_class.name)
+        if not new_class.name:
+            new_class.name = new_class.__name__.lower()
+        if new_class.name in KNOWN_SETTINGS_ORDER:
+            old_class = KNOWN_SETTINGS.pop(new_class.name)
+            new_class.order = old_class.order
+        else:
+            KNOWN_SETTINGS_ORDER.append(new_class.name)
+        KNOWN_SETTINGS[new_class.name] = new_class
         return new_class
 
     def fmt_desc(cls, desc):
@@ -256,6 +281,7 @@ as base class for other settings.'''
     app = None
     '''Application specific settings'''
     value = None
+    '''The actual value for this setting.'''
     section = None
     '''Setting section, used for creating documentation.'''
     cli = None
@@ -347,6 +373,12 @@ def validate_string(val):
 def validate_list(val):
     if val and not isinstance(val,list):
         raise TypeError("Not a list: %s" % val)
+    return val
+
+
+def validate_dict(val):
+    if val and not isinstance(val,dict):
+        raise TypeError("Not a dictionary: %s" % val)
     return val
 
 
@@ -608,7 +640,8 @@ class LogEvery(Setting):
 class LogConfig(Setting):
     name = "logconfig"
     section = "Logging"
-    default = None
+    default = {}
+    validator = validate_dict
     desc = '''
     The logging configuration dictionary.
     

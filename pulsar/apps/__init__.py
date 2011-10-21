@@ -323,6 +323,7 @@ its duties.
         nparams.update(params)
         self.callable = callable
         self.load_config(argv,**nparams)
+        self.configure_logging()
         if self.on_config() is not False:
             arbiter = pulsar.arbiter(self.cfg.daemon)
             monitor = arbiter.add_monitor(self.monitor_class,

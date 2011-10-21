@@ -1,8 +1,8 @@
 .. _apps-test:
 
-=====================
-Parallel Testing
-=====================
+================================
+Asynchronous Test Suite
+================================
 
 .. automodule:: pulsar.apps.test
 
