@@ -142,6 +142,6 @@ importing tests.
                           .format(name), exc_info = True)
         except:
            self.log.critical('Failed to import module {0}. Skipping.'
-                             .format(subname), exc_info = True)    
+                             .format(name), exc_info = True)    
         
     

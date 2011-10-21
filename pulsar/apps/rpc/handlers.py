@@ -3,6 +3,7 @@ import inspect
 
 from pulsar import make_async, net, NOT_DONE, LogginMixin, to_bytestring
 from pulsar.utils.tools import checkarity
+from pulsar.apps.wsgi import WsgiResponse
 
 from .exceptions import *
 
@@ -68,29 +69,17 @@ class RpcRequest(object):
         raise InternalError(msg)
     
 
-class RpcResponse(object):
-    __slots__ = ('request','start_response')
-    
-    def __init__(self, request, start_response):
-        self.request = request
-        self.start_response = start_response
-    
-    @property
-    def name(self):
-        return self.request.method
-    
-    def __repr__(self):
-        return self.name
+class RpcResponse(WsgiResponse):
         
     def critical(self, request, id, e):
         msg = 'Unhandled server exception %s: %s' % (e.__class__.__name__,e)
         self.handler.log.critical(msg,exc_info=sys.exc_info)
         raise InternalError(msg)
     
-    def __iter__(self):
+    def get_content(self):
         request = self.request
         handler = request.handler
-        status = '200 OK'
+        status = 200
         try:
             if not request.func:
                 msg = 'Function "{0}" not available.'.format(request.method)
@@ -109,7 +98,7 @@ class RpcResponse(object):
                 else:
                     raise
         except Exception as e:
-            status = '400 Bad Request'
+            status = 400
             result = e
             
         result = make_async(result)

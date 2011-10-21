@@ -325,8 +325,8 @@ for the server as a whole.
                 self.__upgrade = self.headers['upgrade']
             
     def default_headers(self):
-        #if self.__clength is not None:
-        #    self.force_close()
+        if self.__clength is not None:
+            self.force_close()
         connection = "keep-alive" if self.should_keep_alive else "close"
         headers = Headers((('Server',self.version),
                            ('Date', format_date_time(time.time())),

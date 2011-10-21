@@ -1,12 +1,14 @@
 import pulsar
 
 from .std import HttpClientHandler, HttpClient1, urlencode,\
-                 getproxies_environment, HttpClientResponse
+                 getproxies_environment, HttpClientResponse,\
+                 responses
                  
 __all__ = ['HttpClientHandler',
            'HttpClient',
            'HttpClientResponse',
-           'urlencode']
+           'urlencode',
+           'responses']
 
 
 HttpClients={1:HttpClient1}

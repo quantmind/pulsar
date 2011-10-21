@@ -2,9 +2,10 @@ import os
 
 import pulsar
 from pulsar.net.utils import parse_authorization_header
+from pulsar.net import responses
 
 
-__all__ = ['WsgiHandler']
+__all__ = ['WsgiHandler','WsgiResponse']
 
 
 EMPTY_DICT = {}
@@ -20,24 +21,82 @@ def authorization(environ, start_response):
 
 
 class WsgiResponse(object):
+    '''A WSGI response wrapper initialized by a WSGI request middleware.
     
-    def __init__(self, environ, start_response, middleware):
+.. attribute:: environ
+
+    the dictionary of WSGI enmvironment or a request object
+    with ``environ`` as attribute.
+    
+.. attribute:: start_response
+
+    The ``start_response`` WSGI callable
+    
+.. attribute:: middleware
+
+    The response middleware iterable
+'''
+    DEFAULT_STATUS_CODE = 200
+    DEFAULT_CONTENT_TYPE = 'text/plain'
+    
+    def __init__(self, environ, status = None, content = None,
+                 response_headers = None, content_type = None,
+                 encoding = None):
+        request = None
+        if not isinstance(environ,dict):
+            if hasattr(environ,'environ'):
+                request = environ
+                environ = request.environ
+            else:
+                raise ValueError('Not a valid environment {0}'.format(environ))
+        self.status_code = status or self.DEFAULT_STATUS_CODE
+        self.request = request
         self.environ = environ
-        self.start_response = start_response
-        self.middleware = middleware
+        self.content_type = content_type or self.DEFAULT_CONTENT_TYPE
+        if not content:
+            content = self.get_content()
+        elif isinstance(content,bytes):
+            content = (content,)
+        self.content = content
         
-    def __call__(self, status, response_headers, exc_info=None):
-        for middleware in self.middleware:
-            status = middleware(self.environ, status, response_headers)
-        self.start_response(status, response_headers, exc_info = exc_info)
+    def get_content(self):
+        return ()
+    
+    @property
+    def response(self):
+        return responses.get(self.status_code)
+        
+    def __str__(self):
+        return '{0} {1}'.format(self.status_code,self.response)
+            
+    def __repr__(self):
+        return '{0}({1})'.format(self.__class__.__name__,self)
+        
+    @property
+    def is_streamed(self):
+        """If the response is streamed (the response is not an iterable with
+a length information) this property is `True`.  In this case streamed
+means that there is no information about the number of iterations.
+This is usually `True` if a generator is passed to the response object."""
+        try:
+            len(self)
+        except TypeError:
+            return True
+        return False
+        
+    def __iter__(self):
+        return self.content
+    
+    def __len__(self):
+        len(self.content)
         
         
 class WsgiHandler(pulsar.LogginMixin):
-    '''An asynchronous handler for application conforming to python WSGI_.
+    '''An handler for application conforming to python WSGI_.
     
 .. attribute: middleware
 
-    List of WSGI middleware. The orther matter.
+    List of callable WSGI function which accept. The order matter.
     
     
 .. _WSGI: http://www.python.org/dev/peps/pep-3333/
@@ -50,14 +109,14 @@ class WsgiHandler(pulsar.LogginMixin):
     def __call__(self, environ, start_response):
         '''The WSGI callable'''
         #request = self.REQUEST(environ)
-        start_response = WsgiResponse(environ, start_response,
-                                      self.response_middleware)
         for middleware in self.middleware:
             response = middleware(environ, start_response)
             if response is not None:
+                if isinstance(response,WsgiResponse):
+                    for rm in self.response_middleware:
+                        rm(response)
+                    start_response(response.status_code,response.headers)
                 return response
-                # if a middleware has return break the loop and return what it
-                # returns
-        return []
+        return ()
     
 

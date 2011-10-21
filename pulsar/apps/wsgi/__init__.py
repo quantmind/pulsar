@@ -78,7 +78,7 @@ requests in the threaded workers.'''
                                        multiprocess = mp)
         # Create the response object
         response = HttpResponse(request)
-        # WSGI
+        # Get the data from the WSGI handler
         data = worker.app_handler(environ, response.start_response)
         yield response.write(data)
         yield response

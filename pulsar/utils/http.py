@@ -3,6 +3,7 @@ import time
 from .py2py3 import ispy3k, iteritems
 from .collections import DictPropertyMixin
 
+
 __all__ = ['urlparse',
            'unquote',
            'urlsplit',
@@ -37,7 +38,7 @@ else:
 
     
 class Headers(object):
-    
+    '''Utility for managing HTTP headers.'''
     def __init__(self, defaults=None):
         self._dict = {}
         self._keys = []
@@ -82,6 +83,13 @@ class Headers(object):
                 self._keys.append(key)
             self._dict[lkey] = value
         
+    def add(self, key, value):
+        lkey = key.lower()
+        values = self.as_list(key)
+        if value not in values:
+            values.append(value)
+            self[key] = values
+        
     def get(self, key, default=None):
         try:
             return self.__getitem__(key)
@@ -93,6 +101,15 @@ class Headers(object):
         h = 'HTTP/{0}.{1} {2}'.format(*vs) 
         f = ''.join(("{0}: {1}\r\n".format(n, v) for n, v in self))
         return '{0}\r\n{1}\r\n'.format(h,f)
+    
+    @property
+    def vary_headers(self):
+        return self.get('vary',[])
+        
+    def has_vary(self, header_query):
+        """Checks to see if the has a given header name in its Vary header.
+        """
+        return header_query.lower() in set(self.vary_headers)
         
         
 def parse_dict_header(value):
@@ -165,3 +182,4 @@ not given, otherwise an :class:`Authorization` object.
                 return
         return Authorization('digest', auth_map)
     
+

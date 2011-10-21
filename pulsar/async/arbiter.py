@@ -129,8 +129,8 @@ Users access the arbiter by the high level api::
         return dict(((mon.name,mon.proxy) for mon in itervalues(self.monitors)))
     
     def close_monitors(self):
-        '''Clase all :class:`Monitor` in the arbiter.'''
-        for pool in itervalues(self._monitors):
+        '''Clase all :class:`Monitor` instances in the arbiter.'''
+        for pool in list(itervalues(self._monitors)):
             pool.stop()
             
     def info(self, full = False):
