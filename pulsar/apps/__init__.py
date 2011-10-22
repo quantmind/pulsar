@@ -195,6 +195,9 @@ class ApplicationMonitor(HandlerMixin,pulsar.Monitor):
     '''A spcialized :class:`Monitor` implementation for managing
 pulsar applications (subclasses of :class:`Application`).
 '''
+    # For logging name
+    _class_code = 'appmonitor'
+    
     def on_init(self, app = None, **kwargs):
         self.app = app
         self.cfg = app.cfg

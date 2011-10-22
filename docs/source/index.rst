@@ -2,7 +2,7 @@
 Pulsar
 ==================================
 
-Pulsar is an event-driven networked library for python. Tested in Windows and Linux,
+An asynchronous concurrent framework for Python. Tested in Windows and Linux,
 it requires python 2.6 and up, including python 3.
 
 

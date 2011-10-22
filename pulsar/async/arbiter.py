@@ -296,17 +296,8 @@ the timeout. Stop the arbiter.'''
                                  .format(len(self.MANAGED_ACTORS)))
         return self.ioloop.stop()
     
-    def _close_message_queue(self):
+    def _close_message_queue(self):   
         return
-        while True:
-            try:
-                self.SIG_QUEUE.get(timeout = 0)
-                self.SIG_QUEUE.task_done()
-            except Empty:
-                self.SIG_QUEUE.join()
-                break
-            except:
-                pass
     
     def _info(self, result):
         server = super(Arbiter,self).info()
@@ -333,7 +324,7 @@ signal queue'''
             if sig not in system.SIG_NAMES:
                 self.log.info("Ignoring unknown signal: %s" % sig)
                 sig = None
-            else:        
+            else:
                 signame = system.SIG_NAMES.get(sig)
                 if sig in self.EXIT_SIGNALS:
                     raise self.HaltServer('Received Signal {0}.'\
@@ -352,9 +343,12 @@ signal queue'''
     def signal(self, sig, frame = None):
         signame = system.SIG_NAMES.get(sig,None)
         if signame:
-            self.log.info('Received and queueing signal {0}.'.format(signame))
-            self.SIG_QUEUE.put(sig)
-            self.ioloop.wake()
+            if self.ioloop.running():
+                self.log.info('Received and queueing signal {0}.'.format(signame))
+                self.SIG_QUEUE.put(sig)
+                self.ioloop.wake()
+            else:
+                exit(1)
         else:
             self.log.info('Received unknown signal "{0}". Skipping.'\
                           .format(sig))

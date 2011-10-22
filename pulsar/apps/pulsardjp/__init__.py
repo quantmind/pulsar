@@ -75,7 +75,6 @@ A tipical usage along these lines::
             func = getattr(self,name,self._load)
             func()
             sites = djpcms.sites
-            djpcms.init_logging(sites.settings)
             sites.load()
             self.finish(djpcms.sites)
         return djpcms.sites

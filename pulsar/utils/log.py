@@ -132,8 +132,11 @@ def process_global(name, val = None, setval = False):
 
 
 def getLogger(name = None):
-    '''Get logger name in "Pulsar" namespace'''
-    name = '{0}.{1}'.format(SERVER_NAME,name) if name else SERVER_NAME
+    '''Get logger name in "pulsar" namespace'''
+    prefix = SERVER_NAME.lower() + '.'
+    name = name or ''
+    if not name.startswith(prefix):
+        name = prefix + name
     return logging.getLogger(name)
 
 
@@ -206,7 +209,7 @@ and utilities for pickle.'''
     
     @classmethod
     def code(cls):
-        return cls._class_code or cls.__name__
+        return cls._class_code or cls.__name__.lower()
     
     def __setstate__(self, state):
         self.__dict__ = state

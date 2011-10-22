@@ -116,7 +116,7 @@ importing tests.
                     tag = '.'.join(tags)
                     mod = self.import_module(subname)
                     if mod:
-                        yield tag, module
+                        yield tag, mod
                 elif os.path.isdir(subpath):
                     for tag,mod in self.get_tests(subpath, subname, pattern,
                                                   tags+(sname,)):
