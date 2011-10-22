@@ -335,7 +335,8 @@ iteration of the :attr:`Actor.ioloop`.'''
     
     def running(self):
         '''``True`` if actor is running.'''
-        return self._state == self.RUN
+        return self.ioloop.running()
+        #return self._state == self.RUN
     
     def started(self):
         '''``True`` if actor has started. It does not necessarily

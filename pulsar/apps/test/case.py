@@ -103,8 +103,9 @@ set to ``True``.
 '''
     if f is None:
         return f
-    if getattr(f,'run_on_arbiter',False):
-        worker = test.worker
+    worker = test.worker
+    app = worker.app
+    if getattr(f, 'run_on_arbiter', False):
         try:
             test.__class__.worker = None
             tcls = pickle.dumps(test.__class__)
@@ -127,6 +128,10 @@ class TestRequest(WorkerRequest):
 '''
     def __init__(self, testcls):
         self.testcls = testcls
+        
+    def __repr__(self):
+        return self.testcls.__name__
+    __str__ = __repr__
     
     def monkey_patch(self, results):
         if not hasattr(results,'skipped'):
@@ -173,6 +178,7 @@ a class method ``setUpClass`` is defined. If so it runs it.'''
         worker.monitor.send(worker,'test_result',TestResult(results))
         
     def run_test(self, test, results):
+        '''Run a *test* function.'''
         testMethod = getattr(test, test._testMethodName)
         if (getattr(test.__class__, "__unittest_skip__", False) or
             getattr(testMethod, "__unittest_skip__", False)):
@@ -195,6 +201,7 @@ a class method ``setUpClass`` is defined. If so it runs it.'''
             result, outcome = async_arbiter(test,test.setUp)()
             yield result
             if not add_failure(test, results, outcome.result):
+                # Here we perform the actual test
                 result, outcome = async_arbiter(test,testMethod)()
                 yield result
                 success = not add_failure(test, results, outcome.result)

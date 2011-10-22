@@ -23,7 +23,23 @@ def file_descriptor(fd):
     else:
         return fd
         
-
+        
+class LoopGuard(object):
+    
+    def __init__(self, loop):
+        self.loop = loop
+        
+    def __enter__(self):
+        self.loop._running = True
+        return self
+        
+    def __exit__(self, type, value, traceback):
+        loop = self.loop
+        loop._running = False
+        loop._stopped = True
+        loop._on_exit.callback(loop)
+        
+        
 class IOLoop(IObase,Synchronized):
     """\
 A level-triggered I/O event loop adapted from tornado.
@@ -176,7 +192,6 @@ file descriptor *fd*.
             return False
         if self._running:
             return False
-        self._running = True
         return True
     
     def do_loop_tasks(self):
@@ -198,92 +213,89 @@ so that it can perform its tasks at each event loop. Check the
         """
         if not self._startup():
             return False
-        self.log.debug("Starting event loop")
-        self._started = time.time()
-        self._on_exit = Deferred()
-        while self._running:
-            poll_timeout = self.POLL_TIMEOUT
-            self.num_loops += 1
-            # Prevent IO event starvation by delaying new callbacks
-            # to the next iteration of the event loop.
-            callbacks = self._callbacks
-            if callbacks:
-                self._callbacks = []
-                _run_callback = self._run_callback 
-                for callback in callbacks:
-                    _run_callback(callback)
-
-            if self._callbacks:
-                poll_timeout = 0.0
-
-            if self._timeouts:
-                now = time.time()
-                while self._timeouts and self._timeouts[0].deadline <= now:
-                    timeout = self._timeouts.pop(0)
-                    self._run_callback(timeout.callback)
-                if self._timeouts:
-                    milliseconds = self._timeouts[0].deadline - now
-                    poll_timeout = min(milliseconds, poll_timeout)
-
-            # A chance to exit
-            if not self.running():
-                self.log.debug('Exiting event loop')
-                break
-
-            self.do_loop_tasks()
+        with LoopGuard(self) as guard:
+            self.log.debug("Starting event loop")
+            self._started = time.time()
+            self._on_exit = Deferred()
             
-            if self._blocking_signal_threshold is not None:
-                # clear alarm so it doesn't fire while poll is waiting for
-                # events.
-                signal.setitimer(signal.ITIMER_REAL, 0, 0)
-
-            try:
-                event_pairs = self._impl.poll(poll_timeout)
-            except Exception as e:
-                # Depending on python version and IOLoop implementation,
-                # different exception types may be thrown and there are
-                # two ways EINTR might be signaled:
-                # * e.errno == errno.EINTR
-                # * e.args is like (errno.EINTR, 'Interrupted system call')
-                if (getattr(e, 'errno', None) == errno.EINTR or
-                    (isinstance(getattr(e, 'args', None), tuple) and
-                     len(e.args) == 2 and e.args[0] == errno.EINTR)):
-                    continue
-                else:
-                    raise
-
-            if self._blocking_signal_threshold is not None:
-                signal.setitimer(signal.ITIMER_REAL,
-                                 self._blocking_signal_threshold, 0)
-
-            # Pop one fd at a time from the set of pending fds and run
-            # its handler. Since that handler may perform actions on
-            # other file descriptors, there may be reentrant calls to
-            # this IOLoop that update self._events
-            if event_pairs:
-                self._events.update(event_pairs)
-                _events = self._events
-                while _events:
-                    fd, events = _events.popitem()
-                    try:
-                        self._handlers[fd](fd, events)
-                    except (KeyboardInterrupt, SystemExit):
+            while self._running:
+                poll_timeout = self.POLL_TIMEOUT
+                self.num_loops += 1
+                # Prevent IO event starvation by delaying new callbacks
+                # to the next iteration of the event loop.
+                callbacks = self._callbacks
+                if callbacks:
+                    self._callbacks = []
+                    _run_callback = self._run_callback 
+                    for callback in callbacks:
+                        _run_callback(callback)
+    
+                if self._callbacks:
+                    poll_timeout = 0.0
+    
+                if self._timeouts:
+                    now = time.time()
+                    while self._timeouts and self._timeouts[0].deadline <= now:
+                        timeout = self._timeouts.pop(0)
+                        self._run_callback(timeout.callback)
+                    if self._timeouts:
+                        milliseconds = self._timeouts[0].deadline - now
+                        poll_timeout = min(milliseconds, poll_timeout)
+    
+                # A chance to exit
+                if not self.running():
+                    self.log.debug('Exiting event loop')
+                    break
+    
+                self.do_loop_tasks()
+                
+                if self._blocking_signal_threshold is not None:
+                    # clear alarm so it doesn't fire while poll is waiting for
+                    # events.
+                    signal.setitimer(signal.ITIMER_REAL, 0, 0)
+    
+                try:
+                    event_pairs = self._impl.poll(poll_timeout)
+                except Exception as e:
+                    # Depending on python version and IOLoop implementation,
+                    # different exception types may be thrown and there are
+                    # two ways EINTR might be signaled:
+                    # * e.errno == errno.EINTR
+                    # * e.args is like (errno.EINTR, 'Interrupted system call')
+                    if (getattr(e, 'errno', None) == errno.EINTR or
+                        (isinstance(getattr(e, 'args', None), tuple) and
+                         len(e.args) == 2 and e.args[0] == errno.EINTR)):
+                        continue
+                    else:
                         raise
-                    except (OSError, IOError) as e:
-                        if e.args[0] == errno.EPIPE:
-                            # Happens when the client closes the connection
-                            pass
-                        else:
+    
+                if self._blocking_signal_threshold is not None:
+                    signal.setitimer(signal.ITIMER_REAL,
+                                     self._blocking_signal_threshold, 0)
+    
+                # Pop one fd at a time from the set of pending fds and run
+                # its handler. Since that handler may perform actions on
+                # other file descriptors, there may be reentrant calls to
+                # this IOLoop that update self._events
+                if event_pairs:
+                    self._events.update(event_pairs)
+                    _events = self._events
+                    while _events:
+                        fd, events = _events.popitem()
+                        try:
+                            self._handlers[fd](fd, events)
+                        except (KeyboardInterrupt, SystemExit):
+                            raise
+                        except (OSError, IOError) as e:
+                            if e.args[0] == errno.EPIPE:
+                                # Happens when the client closes the connection
+                                pass
+                            else:
+                                self.log.error("Exception in I/O handler for fd %d",
+                                              fd, exc_info=True)
+                        except:
                             self.log.error("Exception in I/O handler for fd %d",
                                           fd, exc_info=True)
-                    except:
-                        self.log.error("Exception in I/O handler for fd %d",
-                                      fd, exc_info=True)
-        
-        self._stopped = True
-        self._on_exit.callback(self)
-        if self._blocking_signal_threshold is not None:
-            signal.setitimer(signal.ITIMER_REAL, 0, 0)
 
     def stop(self):
         '''Stop the loop after the current event loop iteration is complete.

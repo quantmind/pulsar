@@ -182,17 +182,16 @@ Users access the arbiter by the high level api::
         PoolMixin.on_start(self)
         
     def on_task(self):
-        if self.running():
-            sig = self._arbiter_task()
-            if sig is None:
-                self.manage_actors()
-                for m in list(itervalues(self._monitors)):
-                    if m.started():
-                        if not m.running():
-                            self.log.info('Removing monitor {0}'.format(m))
-                            self._monitors.pop(m.name)
-                    else:
-                        m.start()
+        sig = self._arbiter_task()
+        if sig is None:
+            self.manage_actors()
+            for m in list(itervalues(self._monitors)):
+                if m.started():
+                    if not m.running():
+                        self.log.info('Removing monitor {0}'.format(m))
+                        self._monitors.pop(m.name)
+                else:
+                    m.start()
     
     def on_manage_actor(self, actor):
         '''If an actor failed to notify itself to the arbiter for more than
@@ -212,10 +211,10 @@ the timeout. Stop the arbiter.'''
             
     def on_stop(self):
         '''Stop the pools the message queue and remaining actors.'''
-        self._close_message_queue()
         self.close_monitors()
         self.close_actors()
         self._stopping_start = time()
+        self._close_message_queue()
         return self._on_actors_stopped()
     
     def on_exit(self):
@@ -315,11 +314,7 @@ signal queue'''
         while True:
             try:
                 sig = self.SIG_QUEUE.get(timeout = self.SIG_TIMEOUT)
-            except Empty:
-                sig = None
-                break
-            except IOError:
-                sig = None
+            except (Empty,IOError):
                 break
             if sig not in system.SIG_NAMES:
                 self.log.info("Ignoring unknown signal: %s" % sig)
@@ -344,13 +339,14 @@ signal queue'''
         signame = system.SIG_NAMES.get(sig,None)
         if signame:
             if self.ioloop.running():
-                self.log.info('Received and queueing signal {0}.'.format(signame))
+                self.log.debug('Received and queueing signal {0}.'\
+                               .format(signame))
                 self.SIG_QUEUE.put(sig)
                 self.ioloop.wake()
             else:
                 exit(1)
         else:
-            self.log.info('Received unknown signal "{0}". Skipping.'\
+            self.log.debug('Received unknown signal "{0}". Skipping.'\
                           .format(sig))
 
     

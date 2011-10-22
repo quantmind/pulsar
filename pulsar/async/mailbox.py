@@ -290,6 +290,8 @@ pipe is created.'''
                 msg = self.buffer[:p]
                 del self.buffer[0:p+2]
                 yield pickle.loads(bytes(msg))
+            else:
+                break
             
         if toclose:
             ioloop.remove_handler(client)

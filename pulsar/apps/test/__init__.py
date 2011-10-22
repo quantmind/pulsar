@@ -39,7 +39,7 @@ These are the rules for loading tests:
 
 * Directories that aren't packages are not inspected.
 * Any class that is a ``unittest.TestCase`` subclass is collected.
-* if an object starts with ``_`` or ``.`` that object will not be collected,
+* if an object starts with ``_`` or ``.`` it won't be collected,
   nor will any objects it contains.
 * If an object defines a ``__test__`` attribute that does not evaluate to True,
   that object will not be collected, nor will any objects it contains.
@@ -225,7 +225,3 @@ is a group of tests specified in a test class.
         else:
             stream.write("\n")
 
-        
-def TestSuiteRunner(extractors):
-    return TestApplication(extractors = extractors)
-    
