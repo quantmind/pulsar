@@ -20,9 +20,7 @@ __all__ = ['Worker',
            'WorkerRequest',
            'Response',
            'require',
-           'ResponseError',
-           'Plugin',
-           'SettingPlugin']
+           'ResponseError']
 
 
 def require(appname):
@@ -607,19 +605,3 @@ to be added to the monitor dictionary of remote functions.
         return None,None
     
     
-class Plugin(object):
-    '''Base class for pulsar :class:`Application` plugins'''
-    settings = ()
-    '''List or tuple of :attr:`Setting.name` used by the plugin.'''
-    
-    
-class SettingPlugin(Setting,Plugin):
-    virtual = True
-    
-    def __init__(self):
-        self.settings = (self.name,)
-        Setting.__init__(self)
-        
-    def setup(self, app):
-        '''called by the application to setup the setting'''
-        pass

@@ -65,6 +65,7 @@ import pulsar.apps.tasks # Need to import for the task_queue_factory settings
 
 from .config import *
 from .case import *
+from .plugins.base import *
 from .loader import *
 from .utils import *
 
@@ -94,8 +95,10 @@ is a group of tests specified in a test class.
     
 :parameter result_class: Optional class for collecting test results. By default
     it used the standard ``unittest.TextTestResult``.
+:parameter plugins: Optional list of :class:`Plugin` instances
 '''
     app = 'test'
+    plugins = ()
     config_options_include = ('timeout','concurrency','workers','loglevel',
                               'worker_class','debug','task_queue_factory',
                               'http_proxy')
@@ -123,24 +126,27 @@ is a group of tests specified in a test class.
             
     def make_result(self):
         result_class = getattr(self,'result_class',None)
-        if result_class:
-            return result_class()
-        else:
-            r = unittest.TextTestRunner()
-            return r._makeResult()
+        return TestRunner(self.plugins,result_class)
             
     def on_config(self):
         #Whene config is available load the tests and check what type of
         #action is required.
         pulsar.arbiter()
-        test_type = self.cfg.test_type
         modules = getattr(self,'modules',None)
+        if not hasattr(self,'plugins'):
+            self.plugins = ()
+            
+        # Create a runner and configure it
+        plugins = TestRunner(self.plugins,False)
+        plugins.configure(self.cfg)
+        
         if not modules:
             raise ValueError('No modules specified. Please pass the modules\
  parameters to the TestSuite Constructor.')
         if hasattr(modules,'__call__'):
             modules = modules(self)
-        loader = TestLoader(os.getcwd(),modules,test_type)
+            
+        loader = TestLoader(os.getcwd(), modules, plugins, logger=self.log)
         
         # Listing labels
         if self.cfg.list_labels:
@@ -154,6 +160,7 @@ is a group of tests specified in a test class.
             return False
         
         self.local['loader'] = loader
+        
         
     def monitor_init(self, monitor):
         pass
@@ -187,8 +194,7 @@ is a group of tests specified in a test class.
     def results_summary(self, timeTaken):
         '''Write the summuray of tests results.'''
         res = self.make_result()
-        res.getDescription = lambda test : test
-        stream = res.stream
+        stream = res.result.stream
         result = self._results
         res.failures = result.failures
         res.errors = result.errors

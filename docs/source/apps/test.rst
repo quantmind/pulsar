@@ -26,6 +26,14 @@ TestLoader
    :member-order: bysource
    
 
+Plugin
+~~~~~~~~~~~~~~~~~~~
+
+.. autoclass:: Plugin
+   :members:
+   :member-order: bysource
+   
+   
 TestRequest
 ~~~~~~~~~~~~~~~~~~~
 

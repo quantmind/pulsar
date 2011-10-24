@@ -41,36 +41,41 @@ you give a *root* directory and a list of submodules where to look for tests.
 The are very :ref:`simple rules <apps-test-loading>` followed for
 importing tests.
 '''
-    test_mapping = {'regression':'tests',
-                    'benchmark':'benchmarks',
-                    'profile':'profile'}
-    
-    def __init__(self, root, modules, test_type = 'regression', logger = None):
+    def __init__(self, root, modules, plugins, logger = None):
+        self.plugins = plugins
         self.log = logger or default_logger
         self.root = root
-        self.test_type  = test_type
-        if test_type not in self.test_mapping:
-            raise ValueError('Test type {0} not available'.format(test_type)) 
         self.modules = modules
     
     def __repr__(self):
         return self.root
     __str__ = __repr__
         
-    @property
-    def testname(self):
-        return self.test_mapping[self.test_type]
+    def alltags(self, tag):
+        bits = tag.split('.')
+        tag,rest = bits[0],bits[1:]
+        yield tag
+        for b in rest:
+            tag += '.' + b
+            yield tag
     
     def testclasses(self, tags = None):
         for tag,mod in self.testmodules():
-            if tags and tag not in tags:
-                continue
+            if tags:
+                skip = True
+                for bit in self.alltags(tag):
+                    if bit in tags:
+                        skip = False
+                        break
+                if skip:
+                    continue
             for name in dir(mod):
                 obj = getattr(mod, name)
                 if inspect.isclass(obj) and issubclass(obj, unittest.TestCase):
                     yield tag,obj
             
     def testmodules(self):
+        '''Generator of tag, test modules pair'''
         for m in self.modules:
             if isinstance(m,str):
                 name = m
@@ -93,8 +98,7 @@ importing tests.
                 raise ValueError('{0} cannot be found in {1} directory.'\
                                  .format(name,self.root))
                 
-    def get_tests(self, path, name, pattern, tags = ()):
-        testname = self.testname
+    def get_tests(self, path, name, pattern, tags = (), parent = None):
         for sname in os.listdir(path):
             if sname.startswith('_') or sname.startswith('.'):
                 continue
@@ -107,36 +111,32 @@ importing tests.
                     continue
             
             subname = '{0}.{1}'.format(name,sname)
-            
-            if not self.import_module(subname):
+            module = self.import_module(subname,parent)
+            if not module:
                 continue
             
             if pattern:
                 if fnmatch(sname, pattern):
                     tag = '.'.join(tags)
-                    mod = self.import_module(subname)
-                    if mod:
-                        yield tag, mod
+                    yield tag, module
                 elif os.path.isdir(subpath):
                     for tag,mod in self.get_tests(subpath, subname, pattern,
-                                                  tags+(sname,)):
+                                                tags+(sname,), parent = module):
                         yield tag,mod
             else:
                 if os.path.isfile(subpath):
                     tag = '.'.join(tags+(sname,))
-                    mod = self.import_module(subname)
-                    if mod:
-                        yield tag, mod
+                    yield tag, module
                 elif os.path.isdir(subpath):
                     for tag,mod in self.get_tests(subpath, subname, pattern,
-                                                  tags+(sname,)):
+                                                tags+(sname,), parent = module):
                         yield tag,mod
         
-    def import_module(self, name):
+    def import_module(self, name, parent = None):
         try:
             mod = import_module(name)
             if getattr(mod,'__test__',True):
-                return mod
+                return self.plugins.import_module(mod,parent)
         except ImportError:
            self.log.error('failed to import module {0}. Skipping.'
                           .format(name), exc_info = True)

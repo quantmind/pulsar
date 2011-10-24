@@ -105,10 +105,10 @@ def make_options():
     
     for k in keys:
         setting = g_settings[k]
-        if not setting.cli:
+        if not setting.flags:
             continue
 
-        args = tuple(setting.cli)
+        args = tuple(setting.flags)
 
         kwargs = {
             "dest": setting.name,
@@ -243,7 +243,8 @@ in the global ``KNOWN_SETTINGS`` list.'''
             return super_new(cls, name, bases, attrs)            
     
         attrs["order"] = len(KNOWN_SETTINGS)
-        attrs["validator"] = wrap_method(attrs.get("validator",validate_string))
+        val = attrs.get("validator")
+        attrs["validator"] = wrap_method(val) if val else None
         
         new_class = super_new(cls, name, bases, attrs)
         new_class.fmt_desc(attrs['desc'] or '')
@@ -284,9 +285,13 @@ as base class for other settings.'''
     '''The actual value for this setting.'''
     section = None
     '''Setting section, used for creating documentation.'''
-    cli = None
-    '''List of options, e.g. ``[-f, --foo]``.'''
+    flags = None
+    '''List of options strings, e.g. ``[-f, --foo]``.'''
+    choices = None
+    '''Restrict the argument to the choices provided.'''
     validator = None
+    '''Validator for this setting. It provided it must be a fucntion
+accepting one positional argument, the value to validate.'''
     type = None
     meta = None
     action = None
@@ -307,8 +312,8 @@ as base class for other settings.'''
         if self.type and self.type != 'string':
             kwargs["type"] = self.type
             
-        if self.cli:
-            args = tuple(self.cli)
+        if self.flags:
+            args = tuple(self.flags)
             kwargs.update({"dest": self.name,
                            "action": self.action or "store",
                            "default": None,
@@ -333,9 +338,9 @@ as base class for other settings.'''
         return self.value
     
     def set(self, val):
-        if not hasattr(self.validator,'__call__'):
-            raise TypeError("Invalid validator: %s" % self.name)
-        self.value = self.validator(val)
+        if hasattr(self.validator,'__call__'):
+            val = self.validator(val)
+        self.value = val
 
 
 def validate_bool(val):
@@ -401,7 +406,7 @@ def validate_callable(arity):
 class ConfigFile(Setting):
     name = "config"
     section = "Config File"
-    cli = ["-c", "--config"]
+    flags = ["-c", "--config"]
     meta = "FILE"
     validator = validate_string
     default = 'config.py'
@@ -416,7 +421,7 @@ class ConfigFile(Setting):
 class Workers(Setting):
     name = "workers"
     section = "Worker Processes"
-    cli = ["-w", "--workers"]
+    flags = ["-w", "--workers"]
     validator = validate_pos_int
     type = int
     default = 1
@@ -431,7 +436,7 @@ number can be higher."""
 class Concurrency(Setting):
     name = "concurrency"
     section = "Worker Processes"
-    cli = ["--concurrency"]
+    flags = ["--concurrency"]
     default = "process"
     desc = """\
         The type of concurrency to use: ``process`` or ``thread``.
@@ -441,7 +446,7 @@ class Concurrency(Setting):
 class MaxRequests(Setting):
     name = "max_requests"
     section = "Worker Processes"
-    cli = ["--max-requests"]
+    flags = ["--max-requests"]
     validator = validate_pos_int
     type = int
     default = 0
@@ -460,7 +465,7 @@ class MaxRequests(Setting):
 class Timeout(Setting):
     name = "timeout"
     section = "Worker Processes"
-    cli = ["-t", "--timeout"]
+    flags = ["-t", "--timeout"]
     validator = validate_pos_int
     type = int
     default = 30
@@ -477,7 +482,7 @@ class Timeout(Setting):
 class Keepalive(Setting):
     name = "keepalive"
     section = "Worker Processes"
-    cli = ["--keep-alive"]
+    flags = ["--keep-alive"]
     validator = validate_pos_int
     type = int
     default = 2
@@ -491,7 +496,7 @@ class Keepalive(Setting):
 class HttpProxyServer(Setting):
     name = "http_proxy"
     section = "Http Client"
-    cli = ["--http-proxy"]
+    flags = ["--http-proxy"]
     default = ''
     desc = """\
         The HTTP proxy server to use with HttpClient.    
@@ -501,7 +506,7 @@ class HttpProxyServer(Setting):
 class Debug(Setting):
     name = "debug"
     section = "Debugging"
-    cli = ["--debug"]
+    flags = ["--debug"]
     validator = validate_bool
     action = "store_true"
     default = False
@@ -516,7 +521,7 @@ class Debug(Setting):
 class Daemon(Setting):
     name = "daemon"
     section = "Server Mechanics"
-    cli = ["-D", "--daemon"]
+    flags = ["-D", "--daemon"]
     validator = validate_bool
     action = "store_true"
     default = False
@@ -531,7 +536,7 @@ class Daemon(Setting):
 class Pidfile(Setting):
     name = "pidfile"
     section = "Server Mechanics"
-    cli = ["-p", "--pid"]
+    flags = ["-p", "--pid"]
     meta = "FILE"
     validator = validate_string
     default = None
@@ -545,7 +550,7 @@ class Pidfile(Setting):
 class User(Setting):
     name = "user"
     section = "Server Mechanics"
-    cli = ["-u", "--user"]
+    flags = ["-u", "--user"]
     meta = "USER"
     validator = validate_string
     default = None
@@ -561,7 +566,7 @@ class User(Setting):
 class Group(Setting):
     name = "group"
     section = "Server Mechanics"
-    cli = ["-g", "--group"]
+    flags = ["-g", "--group"]
     meta = "GROUP"
     validator = validate_string
     default = None
@@ -577,7 +582,7 @@ class Group(Setting):
 class Umask(Setting):
     name = "umask"
     section = "Server Mechanics"
-    cli = ["-m", "--umask"]
+    flags = ["-m", "--umask"]
     validator = validate_pos_int
     type = int
     default = 0
@@ -612,7 +617,7 @@ class TmpUploadDir(Setting):
 class Loglevel(Setting):
     name = "loglevel"
     section = "Logging"
-    cli = ["--log-level"]
+    flags = ["--log-level"]
     meta = "LEVEL"
     validator = validate_string
     default = "info"
@@ -631,7 +636,7 @@ Valid level names are:
 class LogEvery(Setting):
     name = "logevery"
     section = "Logging"
-    cli = ["--log-every"]
+    flags = ["--log-every"]
     validator = validate_pos_int
     default = 0
     desc = """Log information every n seconds"""
@@ -652,7 +657,7 @@ class LogConfig(Setting):
 class Procname(Setting):
     name = "proc_name"
     section = "Process Naming"
-    cli = ["-n", "--name"]
+    flags = ["-n", "--name"]
     meta = "STRING"
     validator = validate_string
     default = None
