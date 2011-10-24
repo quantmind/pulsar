@@ -22,7 +22,7 @@ To see available labels use the -l option."""
 class TestSize(TestOption):
     name = 'size'
     flags = ['--size']
-    choices = ('tiny','small','normal','big','huge')
+    #choices = ('tiny','small','normal','big','huge')
     default = 'normal'
     desc = """Optional test size."""
     

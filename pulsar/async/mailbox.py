@@ -196,7 +196,10 @@ send messages to a :class:`SocketServerMailbox`.'''
         
     def put(self, request):
         request = pickle.dumps(request) + crlf
-        return self.sock.send(request)
+        try:
+            return self.sock.send(request)
+        except socket.error as e:
+             self.close()
     
     def read_message(self, fd, events, client = None):
         raise MailboxError('Cannot read messages. This is an outbox only.')        

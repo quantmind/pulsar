@@ -64,6 +64,7 @@ import pulsar
 import pulsar.apps.tasks # Need to import for the task_queue_factory settings
 
 from .config import *
+from .result import *
 from .case import *
 from .plugins.base import *
 from .loader import *
@@ -124,9 +125,16 @@ is a group of tests specified in a test class.
         if path not in sys.path:
             sys.path.insert(0, path)
             
-    def make_result(self):
-        result_class = getattr(self,'result_class',None)
-        return TestRunner(self.plugins,result_class)
+    @property
+    def runner(self):
+        if 'runner' not in self.local:
+            result_class = getattr(self,'result_class',None)
+            r = unittest.TextTestRunner()
+            stream = r.stream
+            runner = TestRunner(self.plugins,stream,result_class)
+            runner.configure(self.cfg)
+            self.local['runner'] = runner
+        return self.local['runner'] 
             
     def on_config(self):
         #Whene config is available load the tests and check what type of
@@ -137,8 +145,7 @@ is a group of tests specified in a test class.
             self.plugins = ()
             
         # Create a runner and configure it
-        plugins = TestRunner(self.plugins,False)
-        plugins.configure(self.cfg)
+        runner = self.runner
         
         if not modules:
             raise ValueError('No modules specified. Please pass the modules\
@@ -146,7 +153,7 @@ is a group of tests specified in a test class.
         if hasattr(modules,'__call__'):
             modules = modules(self)
             
-        loader = TestLoader(os.getcwd(), modules, plugins, logger=self.log)
+        loader = TestLoader(os.getcwd(), modules, runner, logger=self.log)
         
         # Listing labels
         if self.cfg.list_labels:
@@ -161,7 +168,6 @@ is a group of tests specified in a test class.
         
         self.local['loader'] = loader
         
-        
     def monitor_init(self, monitor):
         pass
         
@@ -170,18 +176,21 @@ is a group of tests specified in a test class.
         # in the :attr:`pulsar.Actor.ioqueue`.
         loader = self.local['loader']
         tags = self.cfg.labels
-        self.tests = list(loader.testclasses(tags))
-        monitor.cfg.set('workers',min(self.cfg.workers,len(self.tests)))
-        self._results = TestResult()
-        self._time_start = time.time()
-        for _,testcls in self.tests:
-            monitor.put(TestRequest(testcls))
+        self.local['tests'] = tests = list(loader.testclasses(tags))
+        if tests:
+            monitor.cfg.set('workers',min(self.cfg.workers,len(tests)))
+            self._time_start = time.time()
+            for _,testcls in tests:
+                monitor.put(TestRequest(testcls))
+        else:
+            monitor.arbiter.stop()
     
     def monitor_task(self, monitor):
         #Check if we got all results
-        if self._results.count == len(self.tests):
+        runner = self.local['runner']
+        if runner.count == len(self.local['tests']):
             time_taken = time.time() - self._time_start
-            self.results_summary(time_taken)
+            runner.printSummary(time_taken)
             monitor.arbiter.stop()
             
     def handle_request(self, worker, request):
@@ -189,45 +198,5 @@ is a group of tests specified in a test class.
         yield request.response()
         
     def actor_test_result(self, sender, worker, result):
-        self._results.add(result)
+        self.runner.add(result)
     
-    def results_summary(self, timeTaken):
-        '''Write the summuray of tests results.'''
-        res = self.make_result()
-        stream = res.result.stream
-        result = self._results
-        res.failures = result.failures
-        res.errors = result.errors
-        res.printErrors()
-        run = result.testsRun
-        stream.writeln("Ran %d test%s in %.3fs" %
-                            (run, run != 1 and "s" or "", timeTaken))
-        stream.writeln()
-
-        expectedFails = unexpectedSuccesses = skipped = 0
-        results = map(len, (result.expectedFailures,
-                            result.unexpectedSuccesses,
-                            result.skipped))
-        expectedFails, unexpectedSuccesses, skipped = results
-
-        infos = []
-        if not result.wasSuccessful():
-            stream.write("FAILED")
-            failed, errored = map(len, (result.failures, result.errors))
-            if failed:
-                infos.append("failures=%d" % failed)
-            if errored:
-                infos.append("errors=%d" % errored)
-        else:
-            stream.write("OK")
-        if skipped:
-            infos.append("skipped=%d" % skipped)
-        if expectedFails:
-            infos.append("expected failures=%d" % expectedFails)
-        if unexpectedSuccesses:
-            infos.append("unexpected successes=%d" % unexpectedSuccesses)
-        if infos:
-            stream.writeln(" (%s)" % (", ".join(infos),))
-        else:
-            stream.write("\n")
-

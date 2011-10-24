@@ -19,7 +19,7 @@ class Repeat(test.TestOption):
     flags = ["--repeat"]
     validator = pulsar.validate_pos_int
     type = int
-    default = 100
+    default = 10
     desc = '''Default number of repetition when benchmarking.'''
 
 
@@ -56,7 +56,7 @@ class BenchTest(test.WrapTest):
             t += dt
             t2 += dt*dt
         mean = t/self.number
-        std = math.sqrt((t2 - t*t/self.number)/self.number)
+        std = math.sqrt((t2 - t*mean)/self.number)
         std = round(100*std/mean,2)
         return {'number': self.number,
                 'mean': mean,
@@ -75,22 +75,27 @@ class ProfileTest(object):
 
 class BenchMark(test.Plugin):
     '''Benchmarking addon for pulsar test suite.'''
+    profile = False
+    bench = False
+    repeat = 1
     
-    def setup(self, test, cfg):
-        self.cfg = cfg
-        number = getattr(test,'__number__',cfg.repeat)
-        if cfg.profile:
+    def configure(self, cfg):
+        self.profile = cfg.profile
+        self.bench = cfg.bench
+        self.repeat = cfg.repeat
+        
+    def getTest(self, test):
+        number = getattr(test,'__number__',self.repeat)
+        if self.profile:
             return ProfileTest(test,number)
-        elif cfg.bench:
+        elif self.bench:
             return BenchTest(test,number)
-        else:
-            return test
     
-    def import_module(self, mod, parent, cfg):
+    def import_module(self, mod, parent):
         b = '__benchmark__'
         bench = getattr(mod,b,getattr(parent,b,False))
         setattr(mod,b,bench)
-        if cfg.bench or cfg.profile:
+        if self.bench or self.profile:
             if bench:
                 return mod
         else:
@@ -100,8 +105,8 @@ class BenchMark(test.Plugin):
     def addSuccess(self, test):
         if not self.stream:
             return
-        if self.cfg.bench:
-            stream = self.stream
+        if self.bench:
+            stream = self.stream.handler('benchmark')
             result = test.result
             if result:
                 result['test'] = test
@@ -110,5 +115,5 @@ class BenchMark(test.Plugin):
                 .format(result))
             stream.flush()
             return True
-        elif self.cfg.profile:
+        elif self.profile:
             pass

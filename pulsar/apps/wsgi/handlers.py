@@ -32,11 +32,18 @@ class HttpPoolHandler(HttpHandler):
         self.worker.put(request)
 
 
-class Bind(pulsar.Setting):
+################################################################################
+#    WSGI SETTING
+################################################################################
+
+class WsgiSetting(pulsar.Setting):
+    virtual = True
     app = 'wsgi'
+    
+
+class Bind(WsgiSetting):
     name = "bind"
-    section = "Server Socket"
-    cli = ["-b", "--bind"]
+    flags = ["-b", "--bind"]
     meta = "ADDRESS"
     default = "127.0.0.1:{0}".format(pulsar.DEFAULT_PORT)
     desc = """\
@@ -45,24 +52,22 @@ class Bind(pulsar.Setting):
         A string of the form: 'HOST', 'HOST:PORT', 'unix:PATH'. An IP is a valid
         HOST.
         """
+
         
-class Sync(pulsar.Setting):
-    app = 'wsgi'
+class Sync(WsgiSetting):
     name = "synchronous"
-    section = "Server Socket"
-    cli = ["--sync"]
+    flags = ["--sync"]
     action = 'store_true'
     default = False
     validator = pulsar.validate_bool
     desc = """\
         Set the socket to synchronous (blocking) mode.
         """
+
         
-class Backlog(pulsar.Setting):
-    app = 'wsgi'
+class Backlog(WsgiSetting):
     name = "backlog"
-    section = "Server Socket"
-    cli = ["--backlog"]
+    flags = ["--backlog"]
     validator = pulsar.validate_pos_int
     type = int
     default = 2048
@@ -78,11 +83,22 @@ class Backlog(pulsar.Setting):
         """
 
 
-class Settings(pulsar.Setting):
-    app = 'wsgi'
+class Keepalive(WsgiSetting):
+    name = "keepalive"
+    flags = ["--keep-alive"]
+    validator = pulsar.validate_pos_int
+    type = int
+    default = 2
+    desc = """\
+        The number of seconds to wait for requests on a Keep-Alive connection.
+        
+        Generally set in the 1-5 seconds range.    
+        """
+        
+        
+class HttpParser(pulsar.Setting):
     name = "http_parser"
-    section = "Server Socket"
-    cli = ["--http-parser"]
+    flags = ["--http-parser"]
     desc = """\
         The HTTP Parser to use. By default it uses the fastest possible.    
         

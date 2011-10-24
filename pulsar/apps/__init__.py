@@ -7,7 +7,7 @@ from inspect import isgenerator
 
 import pulsar
 from pulsar import Empty, make_async, is_failure, async_pair, Failure
-from pulsar.utils.py2py3 import execfile
+from pulsar.utils.py2py3 import execfile, pickle
 from pulsar.utils.importer import import_module
 from pulsar.utils.log import LogInformation
 from pulsar.utils import system
@@ -232,11 +232,15 @@ updated actor parameters with information about the application.
 
 :rtype: a dictionary of parameters to be passed to the
     spawn method when creating new actors.'''
-        return  {'app':self.app,
-                 'timeout': self.app.cfg.timeout,
-                 'loglevel': self.app.loglevel,
-                 'impl': self.app.cfg.concurrency,
-                 'name':'{0}-worker'.format(self.app.name)}
+        app = self.app
+        c = app.cfg.concurrency
+        if c == 'thread':
+            app = pickle.loads(pickle.dumps(app))
+        return  {'app': app,
+                 'timeout': app.cfg.timeout,
+                 'loglevel': app.loglevel,
+                 'impl': c,
+                 'name':'{0}-worker'.format(app.name)}
         
     def _info(self, result = None):
         info = super(ApplicationMonitor,self)._info(result)

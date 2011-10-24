@@ -8,60 +8,16 @@ from pulsar import async_pair, as_failure, CLEAR_ERRORS, WorkerRequest,\
                     make_async, SafeAsync, Failure
 
 
-__all__ = ['TestRequest','TestResult']
+__all__ = ['TestRequest']
           
-
-class TestResult(object):
-    
-    def __init__(self, result = None):
-        if result:
-            self.testsRun = result.testsRun
-            self._count = 1
-            for attrname in ('failures','errors','skipped','expectedFailures',\
-                             'unexpectedSuccesses'):
-                val = []
-                for test,t in getattr(result,attrname,()):
-                    doc_first_line = test.shortDescription()
-                    if result.descriptions and doc_first_line:
-                        c = '\n'.join((str(test), doc_first_line))
-                    else:
-                        c = str(test)
-                    val.append((c,t))
-                setattr(self,attrname,val)
-        else:
-            self.failures = []
-            self.errors = []
-            self.skipped = []
-            self.expectedFailures = []
-            self.unexpectedSuccesses = []
-            self.testsRun = 0
-            self._count = 0
-    
-    @property
-    def count(self):
-        return self._count
-    
-    def add(self, result):
-        self._count += 1
-        self.testsRun += result.testsRun
-        self.failures.extend(result.failures)
-        self.errors.extend(result.errors)
-        self.skipped.extend(result.skipped)
-        self.expectedFailures.extend(result.expectedFailures)
-        self.unexpectedSuccesses.extend(result.unexpectedSuccesses)
-        
-    def wasSuccessful(self):
-        "Tells whether or not this result was a success"
-        return len(self.failures) == len(self.errors) == 0
-            
  
 class CallableTest(SafeAsync):
     
-    def __init__(self, pcls, class_method, funcname, max_errors, istest):
+    def __init__(self, test, class_method, funcname, max_errors, istest):
         super(CallableTest,self).__init__(max_errors)
         self.class_method = class_method
         self.istest = istest
-        self.pcls = pcls
+        self.test = test
         self.funcname = funcname
         
     def __repr__(self):
@@ -69,24 +25,17 @@ class CallableTest(SafeAsync):
     __str__ = __repr__
     
     def _call(self, actor):
-        self.prepare(actor)
+        self.test = pickle.loads(self.test)
+        self.test.worker = actor
+        self.prepare()
         return self.run()
     
-    def prepare(self, worker):
-        testcls = pickle.loads(self.pcls)
-        testcls.worker = worker
-        test = None
-        if self.class_method:
-            test_function = getattr(testcls,self.funcname)
-        else:
-            test = testcls(self.funcname)
-            if self.istest:
-                app = worker.app
-                for plugin in app.plugins:
-                    test = plugin.setup(test,app.cfg) or test
-            test_function = getattr(test,self.funcname)
-        self.test = test
-        self.test_function = test_function
+    def prepare(self):
+        if self.istest:
+            test = self.test
+            runner = test.worker.app.runner
+            self.test = runner.getTest(test)
+        self.test_function = getattr(self.test,self.funcname)
     
     def run(self):
         return self.test_function()
@@ -104,25 +53,23 @@ set to ``True``.
 '''
     if f is None:
         return f
-    worker = test.worker
-    class_method = True
-    if not isclass(test):
-        class_method = False
-        test = test.__class__
-    test.worker = None
-    try:
-        pcls = pickle.dumps(test)
-    except:
-        f = lambda : Failure(sys.exc_info())
-    else:
-        c = CallableTest(pcls, class_method, f.__name__, max_errors, istest)
-        if getattr(f, 'run_on_arbiter', False):
-            f = lambda : worker.arbiter.send(worker, 'run', c)
+    class_method = isclass(test)
+    if getattr(f, 'run_on_arbiter', False):
+        worker = test.worker
+        test.worker = None
+        try:
+            pcls = pickle.dumps(test)
+        except:
+            f = lambda : Failure(sys.exc_info())
         else:
-            c.prepare(worker)
-            f = c.run
-    finally:
-        test.worker = worker
+            c = CallableTest(pcls, class_method, f.__name__, max_errors, istest)
+            f = lambda : worker.arbiter.send(worker, 'run', c)
+        finally:
+            test.worker = worker
+    else:
+        c = CallableTest(test, class_method, f.__name__, max_errors, istest)
+        c.prepare()
+        f = c.run
     return async_pair(f,  max_errors = max_errors)
 
 
@@ -143,40 +90,45 @@ class TestRequest(WorkerRequest):
     def run(self, worker):
         '''Run tests from the :attr:`testcls`. First it checks if 
 a class method ``setUpClass`` is defined. If so it runs it.'''
+        # Reset the runner
+        worker.app.local.pop('runner', None)
+        runner = worker.app.runner
         loader = unittest.TestLoader()
-        results = worker.app.make_result()
         testcls = self.testcls
-        testcls.worker = worker
-        init = async_arbiter(testcls,getattr(testcls,'setUpClass',None))
-        end = async_arbiter(testcls,getattr(testcls,'tearDownClass',None))
-        should_stop = False
+        all_tests = loader.loadTestsFromTestCase(testcls)
         
-        if init:
-            test = self.testcls('setUpClass')
-            result,outcome = init()
-            yield result
-            should_stop = self.add_failure(test, results, outcome.result)
-
-        if not should_stop:            
-            for test in loader.loadTestsFromTestCase(testcls):
-                results.startTest(test)
-                yield self.run_test(test,results)
-                results.stopTest(test)
+        if all_tests.countTestCases():
+            testcls.worker = worker
+            init = async_arbiter(testcls,getattr(testcls,'setUpClass',None))
+            end = async_arbiter(testcls,getattr(testcls,'tearDownClass',None))
+            should_stop = False
             
-        if end:
-            result,outcome = end()
-            yield result
-            self.add_failure(test, results, outcome.result)
+            if init:
+                test = self.testcls('setUpClass')
+                result,outcome = init()
+                yield result
+                should_stop = self.add_failure(test, runner, outcome.result)
+    
+            if not should_stop:            
+                for test in all_tests:
+                    runner.startTest(test)
+                    yield self.run_test(test,runner)
+                    runner.stopTest(test)
+                
+            if end:
+                result,outcome = end()
+                yield result
+                self.add_failure(test, runner, outcome.result)
+            
+            del testcls.worker
+            
+            # Clear errors
+            yield CLEAR_ERRORS
         
-        del testcls.worker
+        # send runner result to monitor
+        worker.monitor.send(worker,'test_result',runner.result)
         
-        # Clear errors
-        yield CLEAR_ERRORS
-        
-        # send results to monitor
-        worker.monitor.send(worker,'test_result',TestResult(results))
-        
-    def run_test(self, test, results):
+    def run_test(self, test, runner):
         '''Run a *test* function.'''
         testMethod = getattr(test, test._testMethodName)
         if (getattr(test.__class__, "__unittest_skip__", False) or
@@ -185,7 +137,7 @@ a class method ``setUpClass`` is defined. If so it runs it.'''
             try:
                 reason = (getattr(test.__class__, '__unittest_skip_why__', '')
                             or getattr(testMethod, '__unittest_skip_why__', ''))
-                results.addSkip(test, reason)
+                runner.addSkip(test, reason)
             except:
                 pass
             raise StopIteration
@@ -194,21 +146,21 @@ a class method ``setUpClass`` is defined. If so it runs it.'''
         if hasattr(test,'_pre_setup'):
             result, outcome = async_arbiter(test,test._pre_setup)()
             yield result
-            success = not self.add_failure(test, results, outcome.result)
+            success = not self.add_failure(test, runner, outcome.result)
         
         if success:
             result, outcome = async_arbiter(test,test.setUp)()
             yield result
-            if not self.add_failure(test, results, outcome.result):
+            if not self.add_failure(test, runner, outcome.result):
                 # Here we perform the actual test
                 result, outcome = async_arbiter(test,testMethod,istest=True)()
                 yield result
-                success = not self.add_failure(test, results, outcome.result)
+                success = not self.add_failure(test, runner, outcome.result)
                 if success:
                     test.result = outcome.result
                 result, outcome = async_arbiter(test,test.tearDown)()
                 yield result
-                if self.add_failure(test, results, outcome.result):
+                if self.add_failure(test, runner, outcome.result):
                     success = False
             else:
                 success = False
@@ -216,13 +168,13 @@ a class method ``setUpClass`` is defined. If so it runs it.'''
         if hasattr(test,'_post_teardown'):
             result, outcome = async_arbiter(test,test._post_teardown)()
             yield result
-            if self.add_failure(test, results, outcome.result):
+            if self.add_failure(test, runner, outcome.result):
                 success = False
     
         if success:
-            results.addSuccess(test)
+            runner.addSuccess(test)
 
-    def add_failure(self, test, results, failure):
+    def add_failure(self, test, runner, failure):
         failure = as_failure(failure)
         if failure:
             for trace in failure:
@@ -230,9 +182,9 @@ a class method ``setUpClass`` is defined. If so it runs it.'''
                 try:
                     raise e
                 except test.failureException:
-                    results.addFailure(test, trace)
+                    runner.addFailure(test, trace)
                 except:
-                    results.addError(test, trace)
+                    runner.addError(test, trace)
             return True
         else:
             return False

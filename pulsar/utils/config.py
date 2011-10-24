@@ -280,7 +280,7 @@ as base class for other settings.'''
     nargs = None
     '''For positional arguments. Same usage as argparse.'''
     app = None
-    '''Application specific settings'''
+    '''Setting for a specific :class:`Application`.'''
     value = None
     '''The actual value for this setting.'''
     section = None
@@ -304,7 +304,9 @@ accepting one positional argument, the value to validate.'''
         if self.default is not None:
             self.set(self.default)
         self.short = self.short or self.desc
-        self.desc = self.desc or self.short   
+        self.desc = self.desc or self.short
+        if self.app and not self.section:
+            self.section = self.app
         
     def add_argument(self, parser):
         '''Add itself to the argparser.'''
@@ -476,20 +478,6 @@ class Timeout(Setting):
         you're sure of the repercussions for sync workers. For the non sync
         workers it just means that the worker process is still communicating and
         is not tied to the length of time required to handle a single request.
-        """
-
-
-class Keepalive(Setting):
-    name = "keepalive"
-    section = "Worker Processes"
-    flags = ["--keep-alive"]
-    validator = validate_pos_int
-    type = int
-    default = 2
-    desc = """\
-        The number of seconds to wait for requests on a Keep-Alive connection.
-        
-        Generally set in the 1-5 seconds range.    
         """
 
 

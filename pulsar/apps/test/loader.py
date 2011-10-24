@@ -41,8 +41,8 @@ you give a *root* directory and a list of submodules where to look for tests.
 The are very :ref:`simple rules <apps-test-loading>` followed for
 importing tests.
 '''
-    def __init__(self, root, modules, plugins, logger = None):
-        self.plugins = plugins
+    def __init__(self, root, modules, runner, logger = None):
+        self.runner = runner
         self.log = logger or default_logger
         self.root = root
         self.modules = modules
@@ -136,7 +136,7 @@ importing tests.
         try:
             mod = import_module(name)
             if getattr(mod,'__test__',True):
-                return self.plugins.import_module(mod,parent)
+                return self.runner.import_module(mod,parent)
         except ImportError:
            self.log.error('failed to import module {0}. Skipping.'
                           .format(name), exc_info = True)
