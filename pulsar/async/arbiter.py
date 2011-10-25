@@ -344,7 +344,8 @@ signal queue'''
                 self.SIG_QUEUE.put(sig)
                 self.ioloop.wake()
             else:
-                exit(1)
+                pass
+                #exit(1)
         else:
             self.log.debug('Received unknown signal "{0}". Skipping.'\
                           .format(sig))
