@@ -1,7 +1,7 @@
 import os
 
 import pulsar
-from pulsar.net.utils import parse_authorization_header
+from pulsar.utils.http import parse_authorization_header, Headers
 from pulsar.net import responses
 
 
@@ -39,7 +39,7 @@ class WsgiResponse(object):
     DEFAULT_STATUS_CODE = 200
     DEFAULT_CONTENT_TYPE = 'text/plain'
     
-    def __init__(self, environ, status = None, content = None,
+    def __init__(self, environ, start_response, status = None, content = None,
                  response_headers = None, content_type = None,
                  encoding = None):
         request = None
@@ -52,12 +52,17 @@ class WsgiResponse(object):
         self.status_code = status or self.DEFAULT_STATUS_CODE
         self.request = request
         self.environ = environ
+        self._start_response = start_response
         self.content_type = content_type or self.DEFAULT_CONTENT_TYPE
-        if not content:
+        self.headers = Headers(response_headers)
+        if content is None:
             content = self.get_content()
         elif isinstance(content,bytes):
             content = (content,)
         self.content = content
+        
+    def start_response(self):
+        return self._start_response(self.status_code,list(self.headers))
         
     def get_content(self):
         return ()
@@ -85,6 +90,8 @@ This is usually `True` if a generator is passed to the response object."""
         return False
         
     def __iter__(self):
+        if not self.is_streamed:
+            self.start_response()
         return self.content
     
     def __len__(self):
@@ -115,7 +122,6 @@ class WsgiHandler(pulsar.LogginMixin):
                 if isinstance(response,WsgiResponse):
                     for rm in self.response_middleware:
                         rm(response)
-                    start_response(response.status_code,response.headers)
                 return response
         return ()
     

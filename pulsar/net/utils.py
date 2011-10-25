@@ -213,7 +213,7 @@ def parse_dict_header(value):
     return result
 
 
-def parse_authorization_header(value):
+def __parse_authorization_header(value):
     """Parse an HTTP basic/digest authorization header transmitted by the web
     browser.  The return value is either `None` if the header was invalid or
     not given, otherwise an :class:`Authorization` object.

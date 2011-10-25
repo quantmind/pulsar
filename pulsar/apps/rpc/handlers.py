@@ -123,11 +123,12 @@ class RpcResponse(WsgiResponse):
                                    request.version,
                                    error=e)
         
-        response_headers = [
-                            ('Content-type', request.content_type),
-                            ('Content-Length', str(len(result)))
-                            ]
-        self.start_response(status, response_headers)
+        self.headers.extend((
+                             ('Content-type', request.content_type),
+                             ('Content-Length', str(len(result)))
+                             ))
+        
+        self.start_response()
         yield to_bytestring(result)
         
 
