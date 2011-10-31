@@ -108,8 +108,7 @@ try:
                 task = cls.objects.get(id = id)
                 if task.done() and remove:
                     task.delete()
-                    task.id = tasks.create_task_id()
-                    task.save()
+                    task.save_as_new(id = tasks.create_task_id())
                 else:
                     return task
             except cls.DoesNotExist:
