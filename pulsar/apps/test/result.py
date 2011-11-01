@@ -24,6 +24,9 @@ class TestObject(object):
         pass
     
     def getTest(self, test):
+        '''Given a test instance return a, possibly, modified test
+instance. This function can be used by plugins to modify the behaviour of test
+cases. By default it returns *test*.'''
         return test
     
     def stopTest(self, test):
