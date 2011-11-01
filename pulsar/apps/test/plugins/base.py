@@ -30,4 +30,5 @@ class Plugin(TestObject):
     
     
 class TestOptionPlugin(Plugin,TestOption):
+    '''Base class for test plugins with one option argument.'''
     virtual = True

@@ -15,15 +15,11 @@ MAX_BODY = 1024 * 128
 __all__ = ['IOStream','AsyncIOStream']
 
 
-def make_callback(callback):
+def make_callback(callback, description = None):
     if is_async(callback):
         return callback
-    d = Deferred()
-    if not callback:
-        callback = d.callback
-    else:
-        d.add_callback(callback)
-    return d
+    d = Deferred(description = description)
+    return d.add_callback(callback)
 
 
 class IOStream(object):
@@ -122,7 +118,8 @@ One common pattern of usage::
     
 """
         assert not self._read_callback, "Already reading"
-        d = make_callback(callback)
+        d = make_callback(callback,
+                          description = '{0} Read callback'.format(self))
         if self.closed():
             self._run_callback(d.callback, self._get_buffer())
             return

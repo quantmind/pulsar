@@ -151,7 +151,7 @@ def async_func_call(func, result, *args, **kwargs):
 async_value = lambda value : lambda result : value 
     
 
-def make_async(val = None, max_errors = None):
+def make_async(val = None, max_errors = None, description = None):
     '''Convert *val* into an :class:`Deferred` asynchronous instance
 so that callbacks can be attached to it.
 
@@ -167,9 +167,9 @@ This function is useful when someone whants to treat a value as a deferred::
 '''
     if not is_async(val):
         if isgenerator(val):
-            return DeferredGenerator(val,max_errors)
+            return DeferredGenerator(val,max_errors,description=description)
         else:
-            d = Deferred()
+            d = Deferred(description=description)
             d.callback(val)
             return d
     else:
@@ -239,8 +239,9 @@ as the ``twisted.defer.Deferred`` object.
 
 Use this class to return from functions which otherwise would block the
 program execution. Instead, it should return a Deferred."""
-    def __init__(self, rid = None):
+    def __init__(self, rid = None, description = None):
         self._called = False
+        self._description = description
         self.paused = 0
         self.rid = rid
         self._ioloop = None
@@ -248,6 +249,13 @@ program execution. Instead, it should return a Deferred."""
     
     def set_actor(self, actor):
         pass
+    
+    def __repr__(self):
+        d = self._description or ''
+        return d
+    
+    def __str__(self):
+        return self. __repr__()            
     
     @property
     def called(self):
@@ -272,8 +280,9 @@ program execution. Instead, it should return a Deferred."""
         """Add a callback as a callable function.
 The function takes at most one argument, the result passed to the
 :meth:`callback` method."""
-        self._callbacks.append(callback)
-        self._run_callbacks()
+        if hasattr(callback,'__call__'):
+            self._callbacks.append(callback)
+            self._run_callbacks()
         return self
         
     def _run_callbacks(self):
@@ -393,10 +402,10 @@ The callback will occur once the generator has stopped
 :parameter gen: a generator or iterable.
 :parameter max_errors: The maximum number of exceptions allowed before stopping.
     Default ``None``, no limit.'''
-    def __init__(self, gen, max_errors = None):
+    def __init__(self, gen, max_errors = None, description = None):
         self.gen = gen
         self.max_errors = max_errors
-        super(DeferredGenerator,self).__init__()
+        super(DeferredGenerator,self).__init__(description=description)
         
     def on_start(self):
         self._consumed = 0

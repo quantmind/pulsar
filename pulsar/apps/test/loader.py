@@ -37,6 +37,8 @@ you give a *root* directory and a list of submodules where to look for tests.
         
     Lodas all tests from the ``test`` directory.
     All top level modules will be added to the python ``path``.
+
+:parameter runner: Instance of the test runner.
     
 The are very :ref:`simple rules <apps-test-loading>` followed for
 importing tests.
@@ -59,8 +61,24 @@ importing tests.
             tag += '.' + b
             yield tag
     
+    def checktag(self, tag, import_tags):
+        '''return ``True`` if ``tag`` is in ``import_tags``.'''
+        if import_tags:
+            c = 0
+            alltags = list(self.alltags(tag))
+            for import_tag in import_tags:
+                allitags = list(self.alltags(import_tag))
+                for bit in alltags:
+                    if bit == import_tag:
+                        return 2
+                    elif bit in allitags:
+                        c = 1
+            return c
+        else:
+            return 2
+    
     def testclasses(self, tags = None):
-        for tag,mod in self.testmodules():
+        for tag,mod in self.testmodules(tags):
             if tags:
                 skip = True
                 for bit in self.alltags(tag):
@@ -74,7 +92,7 @@ importing tests.
                 if inspect.isclass(obj) and issubclass(obj, unittest.TestCase):
                     yield tag,obj
             
-    def testmodules(self):
+    def testmodules(self, tags = None):
         '''Generator of tag, test modules pair'''
         for m in self.modules:
             if isinstance(m,str):
@@ -92,13 +110,15 @@ importing tests.
                     if not ppath in sys.path:
                         sys.path.insert(0, ppath)
                     name = names[-1]
-                for tag,mod in self.get_tests(absolute_path,name,pattern):
+                for tag,mod in self.get_tests(absolute_path,name,pattern,
+                                              import_tags = tags):
                     yield tag,mod
             else:
                 raise ValueError('{0} cannot be found in {1} directory.'\
                                  .format(name,self.root))
                 
-    def get_tests(self, path, name, pattern, tags = (), parent = None):
+    def get_tests(self, path, name, pattern, import_tags = None,
+                  tags = (), parent = None):
         for sname in os.listdir(path):
             if sname.startswith('_') or sname.startswith('.'):
                 continue
@@ -110,27 +130,34 @@ importing tests.
                 else:
                     continue
             
-            subname = '{0}.{1}'.format(name,sname)
+            addtag = True
+            if pattern:
+                if fnmatch(sname, pattern):
+                    addtag = False
+                elif os.path.isfile(subpath):
+                    # skip the import
+                    continue
+                    
+            subname = '{0}.{1}'.format(name,sname)            
             module = self.import_module(subname,parent)
             if not module:
                 continue
             
-            if pattern:
-                if fnmatch(sname, pattern):
-                    tag = '.'.join(tags)
-                    yield tag, module
-                elif os.path.isdir(subpath):
-                    for tag,mod in self.get_tests(subpath, subname, pattern,
-                                                tags+(sname,), parent = module):
-                        yield tag,mod
-            else:
-                if os.path.isfile(subpath):
-                    tag = '.'.join(tags+(sname,))
-                    yield tag, module
-                elif os.path.isdir(subpath):
-                    for tag,mod in self.get_tests(subpath, subname, pattern,
-                                                tags+(sname,), parent = module):
-                        yield tag,mod
+            ctags = tags + (sname,) if addtag else tags
+            tag = '.'.join(ctags)
+            
+            c = self.checktag(tag, import_tags)
+            if not c:
+                continue
+            
+            if os.path.isfile(subpath) and c == 2:
+                tag = '.'.join(ctags)
+                yield tag, module
+            elif os.path.isdir(subpath):
+                for tag,mod in self.get_tests(subpath, subname, pattern,
+                                              import_tags, ctags,
+                                              parent = module):
+                    yield tag,mod
         
     def import_module(self, name, parent = None):
         try:

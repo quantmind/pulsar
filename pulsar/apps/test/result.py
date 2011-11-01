@@ -14,10 +14,24 @@ STDERR_LINE = '\nStderr:\n%s'
 
 
 class TestObject(object):
-    '''Base class for pulsar :class:`Application` plugins'''
+    '''Interface for all test classes which are part of of the
+:class:`TestRunner`.'''
     descriptions = None
     
     def configure(self, cfg):
+        '''Configure the *instance*. This method is called once just after
+construction.
+
+:paremeter cfg: instance of :class:`pulsar.Config`.
+'''
+        pass
+    
+    def on_start(self):
+        '''Called once by :class:`TestSuite` just before it starts running tests.'''
+        pass
+    
+    def on_end(self):
+        '''Called once by :class:`TestSuite` just before it stops.'''
         pass
     
     def startTest(self, test):
@@ -278,7 +292,7 @@ class TestResult(TestObject):
 
     
 class TestRunner(TestResultProxy):
-    
+    '''An asynchronous test runner'''
     def __init__(self, plugins, stream, writercls = None, descriptions=True):
         self.descriptions = descriptions
         self.plugins = []
@@ -296,14 +310,26 @@ class TestRunner(TestResultProxy):
         self.stream = stream
         self.result = result
         
-    def add(self, result):
-        self.result.add(result)
-        
     def configure(self, cfg):
         self.cfg = cfg
         for p in self.plugins:
             if p.configure(cfg):
                 break
+            
+    def on_start(self):
+        '''Called just before the test suite starts running tests.'''
+        for p in self.plugins:
+            if p.on_start():
+                break
+            
+    def on_end(self):
+        '''Called just before the test suite starts running tests.'''
+        for p in self.plugins:
+            if p.on_end():
+                break
+        
+    def add(self, result):
+        self.result.add(result)
     
     def import_module(self, mod, parent = None):
         for p in self.plugins:

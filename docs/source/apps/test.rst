@@ -26,6 +26,22 @@ TestLoader
    :member-order: bysource
    
 
+TestObject
+~~~~~~~~~~~~~~~~~~~~~
+
+.. autoclass:: TestObject
+   :members:
+   :member-order: bysource
+   
+   
+TestRunner
+~~~~~~~~~~~~~~~~~~~~~
+
+.. autoclass:: TestRunner
+   :members:
+   :member-order: bysource
+   
+   
 Plugin
 ~~~~~~~~~~~~~~~~~~~
 

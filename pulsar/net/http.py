@@ -34,7 +34,8 @@ class HttpRequest(TcpRequest):
     
     def on_init(self, kwargs):
         '''Set up event handler'''
-        self.on_headers = Deferred()
+        self.on_headers = Deferred(
+                description = '{0} on_header'.format(self.__class__.__name__))
         #Kick off the socket reading
         self._handle()
                 
@@ -74,7 +75,7 @@ adds the following 2 pulsar information:
 
 * ``pulsar.stream`` the :attr:`stream` attribute.
 * ``pulsar.actor`` the :class:`pulsar.Actor` serving the request.
-"""        
+"""
         parser = self.parser
         version = parser.get_version()
         input = BytesIO()
@@ -85,7 +86,7 @@ adds the following 2 pulsar information:
             "wsgi.input": input,
             "wsgi.errors": sys.stderr,
             "wsgi.version": version,
-            "wsgi.run_once": False,
+            "wsgi.run_once": True,
             "wsgi.url_scheme": parser.get_protocol(),
             "SERVER_SOFTWARE": pulsar.SERVER_SOFTWARE,
             "REQUEST_METHOD": parser.get_method(),
@@ -179,7 +180,10 @@ adds the following 2 pulsar information:
     def _handle(self, data = None):
         if data is not None:
             self.parser.execute(data,len(data))
-        if not self.parser.is_headers_complete():
+        # We wait far all the message to be parsed.
+        # Not sure it is the best way.
+        # if not self.parser.is_headers_complete():
+        if not self.parser.is_message_complete():
             self.stream.read(callback = self._handle)
         else:
             self.on_headers.callback(self.parser.get_headers())

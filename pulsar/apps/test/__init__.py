@@ -79,11 +79,12 @@ is a group of tests specified in a test class.
     can be a string or a two-element tuple. For example::
     
         suite = TestSuite(modules = ('regression',
-                                     ('examples','tests')))
+                                     ('examples','tests'),
+                                     ('apps','test_*')))
                                      
     The :class:`TestLoader` will look into the ``regression`` module for all
-    files and directory, while it will look into the example directory for all
-    files or directories called ``tests``.
+    files and directories, while it will look into the example directory for all
+    files or directories matching ``tests``.
     
     Alternatively it can ba a callable returning the iterable over modules. The
     callable must accept one positional argument, the instance of the test
@@ -127,6 +128,8 @@ is a group of tests specified in a test class.
             
     @property
     def runner(self):
+        '''Instance of :class:`TestRunner` driving the test case
+configuration and plugins.'''
         if 'runner' not in self.local:
             result_class = getattr(self,'result_class',None)
             r = unittest.TextTestRunner()
@@ -157,8 +160,14 @@ is a group of tests specified in a test class.
         
         # Listing labels
         if self.cfg.list_labels:
-            print('\nTEST LABELS\n')
-            for tag,mod in loader.testmodules():
+            tags = self.cfg.labels
+            if tags:
+                s = '' if len(tags) == 1 else 's'
+                print('\nTest labels for label{0} {1}\n'\
+                      .format(s,', '.join(tags)))
+            else:
+                print('\nAll test labels\n')
+            for tag,mod in loader.testmodules(tags):
                 doc = mod.__doc__
                 if doc:
                     tag = '{0} - {1}'.format(tag,doc)
@@ -178,18 +187,21 @@ is a group of tests specified in a test class.
         tags = self.cfg.labels
         self.local['tests'] = tests = list(loader.testclasses(tags))
         if tests:
+            self.runner.on_start()
             monitor.cfg.set('workers',min(self.cfg.workers,len(tests)))
             self._time_start = time.time()
             for _,testcls in tests:
                 monitor.put(TestRequest(testcls))
         else:
+            print('Could not find any tests.')
             monitor.arbiter.stop()
     
     def monitor_task(self, monitor):
         #Check if we got all results
-        runner = self.local['runner']
+        runner = self.runner
         if runner.count == len(self.local['tests']):
             time_taken = time.time() - self._time_start
+            runner.on_end()
             runner.printSummary(time_taken)
             monitor.arbiter.stop()
             

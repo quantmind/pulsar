@@ -17,8 +17,7 @@ class HttpHandler(object):
     def __call__(self, fd, events):
         client, addr = self.socket.accept()
         if client:
-            stream = self.iostream(actor = self.worker,
-                                   socket = client)
+            stream = self.iostream(actor = self.worker, socket = client)
             request = net.HttpRequest(stream, addr)
             self.handle(request)
 
