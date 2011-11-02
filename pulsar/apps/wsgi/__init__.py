@@ -44,11 +44,14 @@ It can be configured to run as a multiprocess or a multithreaded server.'''
     _name = 'wsgi'
     
     def handler(self):
-        return self.wsgi_handler(self.callable)
+        callable = self.callable
+        if getattr(callable,'wsgifactory',False):
+            callable = callable()
+        return self.wsgi_handler(callable)
     
     def wsgi_handler(self, hnd):
         if not isinstance(hnd,WsgiHandler):
-            if not isinstance(hnd,list):
+            if not isinstance(hnd,(list,tuple)):
                 hnd = [hnd]
             hnd = WsgiHandler(hnd)
         response_middleware = self.cfg.response_middleware or []

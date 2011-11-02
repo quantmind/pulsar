@@ -15,9 +15,6 @@ To use it:
 .. _stdnet: http://lsbardel.github.com/python-stdnet/
 '''
 import os
-import sys
-
-from pulsar.apps import wsgi
 
 from .models import *
 from .forms import *
@@ -31,9 +28,9 @@ def set_proxy_function(sites, proxy):
                 
 
 class SiteLoader(object):
-    '''An pickable utility for loading and configuring djpcms_ sites before 
- pulsar server starts. It can be used as the callable to be be passed to
- the ``run_pulsar`` command.
+    '''An utility calss for pickable callable instances for loading and
+configuring djpcms_ sites. It can be used as the callable to be be passed to
+:class:`pulsar.apps.wsgi.WsgiApplication` class.
  
  .. attribute:: name
  
@@ -54,6 +51,7 @@ A tipical usage along these lines::
  '''
     settings = None
     ENVIRON_NAME = 'PULSAR_SERVER_TYPE'
+    wsgifactory = True
     
     def __init__(self, name):
         self.loaded = None
@@ -88,24 +86,9 @@ A tipical usage along these lines::
     def finish(self, sites):
         '''Callback once the sites are loaded.'''
         pass
-    
-    def wsgi(self):
-        '''This function is invoked by self at the WSGI application
-when creating the wsgi handler.'''
-        from djpcms import http
-        return http.WSGI(self.sites())
         
     def get_settings(self):
         import djpcms
         if self.loaded:
             return djpcms.sites.settings
 
-
-class DjpCmsWSGIApplication(wsgi.WSGIApplication):
-    _name = 'djpcms'
-    
-    def handler(self):
-        '''Returns a callable application handler,
-used by a :class:`pulsar.Worker` to carry out its task.'''    
-        hnd = self.callable.wsgi()
-        return self.wsgi_handler(hnd)

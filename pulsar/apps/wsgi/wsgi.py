@@ -110,6 +110,8 @@ class WsgiHandler(pulsar.LogginMixin):
 '''
     def __init__(self, middleware = None, **kwargs):
         self.setlog(**kwargs)
+        if middleware:
+            middleware = list(middleware)
         self.middleware = middleware or []
         self.response_middleware = []
         

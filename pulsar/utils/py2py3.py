@@ -73,7 +73,9 @@ else: # Python 2
     import cPickle as pickle
     
     def native_str(s):
-        return s.encode('utf-8')
+        if isinstance(s,unicode):
+            return s.encode(UTF8)
+        return s
     
     def to_bytestring(s, encoding=UTF8, errors='strict'):
         if isinstance(s,unicode): 

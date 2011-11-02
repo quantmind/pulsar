@@ -9,4 +9,4 @@ class HttpClient(test.Plugin):
     def getTest(self, test):
         wsgi = getattr(test,'wsgi_handler',None)
         if wsgi:
-            test.client = HttpTestClientRequest(wsgi)
+            test.client = HttpTestClientRequest(wsgi())

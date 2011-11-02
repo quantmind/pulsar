@@ -1,4 +1,4 @@
-from pulsar.utils.py2py3 import BytesIO, ispy3k
+from pulsar.utils.py2py3 import BytesIO, ispy3k, native_str
 
 if ispy3k:
     from urllib.parse import urlparse, urlunparse, urlsplit, unquote,\
@@ -23,18 +23,18 @@ def encode_multipart(boundary, data):
     as an application/octet-stream; otherwise, str(value) will be sent.
     """
     lines = []
-    to_str = lambda s: smart_str(s, settings.DEFAULT_CHARSET)
-
     # Not by any means perfect, but good enough for our purposes.
-    is_file = lambda thing: hasattr(thing, "read") and callable(thing.read)
+    is_file = lambda thing: hasattr(thing, "read") and\
+                             hasattr(thing.read,'__call__')
 
     # Each bit of the multipart form data could be either a form value or a
     # file, or a *list* of form values and/or files. Remember that HTTP field
     # names can be duplicated!
     for (key, value) in data.items():
+        value = native_str(value)
         if is_file(value):
             lines.extend(encode_file(boundary, key, value))
-        elif not isinstance(value, basestring) and is_iterable(value):
+        elif not isinstance(value,str) and hasattr(value,'__iter__'):
             for item in value:
                 if is_file(item):
                     lines.extend(encode_file(boundary, key, item))
@@ -43,14 +43,14 @@ def encode_multipart(boundary, data):
                         '--' + boundary,
                         'Content-Disposition: form-data; name="%s"' % to_str(key),
                         '',
-                        to_str(item)
+                        item
                     ])
         else:
             lines.extend([
                 '--' + boundary,
-                'Content-Disposition: form-data; name="%s"' % to_str(key),
+                'Content-Disposition: form-data; name="{0}"'.format(key),
                 '',
-                to_str(value)
+                str(value)
             ])
 
     lines.extend([
