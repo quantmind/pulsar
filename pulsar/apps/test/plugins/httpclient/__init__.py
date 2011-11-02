@@ -7,4 +7,6 @@ from .request import HttpTestClientRequest
 class HttpClient(test.Plugin):
     
     def getTest(self, test):
-        test.get_client = HttpTestClientRequest
+        wsgi = getattr(test,'wsgi_handler',None)
+        if wsgi:
+            test.client = HttpTestClientRequest(wsgi)

@@ -122,8 +122,13 @@ class HttpTestClientRequest(object):
 
     def request(self, **request):
         "Construct a generic wsgi environ object."
-        return self._base_environ(**request)
+        environ = self._base_environ(**request) 
+        return self.handler(environ,None)
 
+    def start_response(self, status, response_headers, exc_info=None):
+        '''Mock the wsgi start_response callable'''
+        pass
+        
     def get(self, path, data={}, **extra):
         "Construct a GET request"
         parsed = urlparse(path)
@@ -162,3 +167,66 @@ class HttpTestClientRequest(object):
         r.update(extra)
         return self.request(**r)
     
+    def head(self, path, data={}, **extra):
+        "Construct a HEAD request."
+
+        parsed = urlparse(path)
+        r = {
+            'CONTENT_TYPE':    'text/html; charset=utf-8',
+            'PATH_INFO':       unquote(parsed[2]),
+            'QUERY_STRING':    urlencode(data, doseq=True) or parsed[4],
+            'REQUEST_METHOD': 'HEAD',
+            'wsgi.input':      FakePayload('')
+        }
+        r.update(extra)
+        return self.request(**r)
+
+    def options(self, path, data={}, **extra):
+        "Constrict an OPTIONS request"
+
+        parsed = urlparse(path)
+        r = {
+            'PATH_INFO':       unquote(parsed[2]),
+            'QUERY_STRING':    urlencode(data, doseq=True) or parsed[4],
+            'REQUEST_METHOD': 'OPTIONS',
+            'wsgi.input':      FakePayload('')
+        }
+        r.update(extra)
+        return self.request(**r)
+
+    def put(self, path, data={}, content_type=MULTIPART_CONTENT, **extra):
+        "Construct a PUT request."
+        if content_type is MULTIPART_CONTENT:
+            post_data = encode_multipart(BOUNDARY, data)
+        else:
+            post_data = data
+
+        # Make `data` into a querystring only if it's not already a string. If
+        # it is a string, we'll assume that the caller has already encoded it.
+        query_string = None
+        if not isinstance(data, basestring):
+            query_string = urlencode(data, doseq=True)
+
+        parsed = urlparse(path)
+        r = {
+            'CONTENT_LENGTH': len(post_data),
+            'CONTENT_TYPE':   content_type,
+            'PATH_INFO':      unquote(parsed[2]),
+            'QUERY_STRING':   query_string or parsed[4],
+            'REQUEST_METHOD': 'PUT',
+            'wsgi.input':     FakePayload(post_data),
+        }
+        r.update(extra)
+        return self.request(**r)
+
+    def delete(self, path, data={}, **extra):
+        "Construct a DELETE request."
+        parsed = urlparse(path)
+        r = {
+            'PATH_INFO':       unquote(parsed[2]),
+            'QUERY_STRING':    urlencode(data, doseq=True) or parsed[4],
+            'REQUEST_METHOD': 'DELETE',
+            'wsgi.input':      FakePayload('')
+        }
+        r.update(extra)
+        return self.request(**r)
