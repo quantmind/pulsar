@@ -74,7 +74,13 @@ def encode_file(boundary, key, file):
         file.read()
     ]
     
-    
+
+def fake_input(data = None):
+    data = data or ''
+    if not isinstance(data,bytes):
+        data = data.encode('utf-8')
+    return BytesIO(data)
+
 
 class HttpTestClientRequest(object):
     """
@@ -137,7 +143,7 @@ class HttpTestClientRequest(object):
             'PATH_INFO':       unquote(parsed[2]),
             'QUERY_STRING':    urlencode(data, doseq=True) or parsed[4],
             'REQUEST_METHOD': 'GET',
-            'wsgi.input':      BytesIO(b'')
+            'wsgi.input':      fake_input()
         }
         r.update(extra)
         return self.request(**r)
@@ -162,7 +168,7 @@ class HttpTestClientRequest(object):
             'PATH_INFO':      unquote(parsed[2]),
             'QUERY_STRING':   parsed[4],
             'REQUEST_METHOD': 'POST',
-            'wsgi.input':     FakePayload(post_data),
+            'wsgi.input':     fake_input(post_data),
         }
         r.update(extra)
         return self.request(**r)
@@ -176,7 +182,7 @@ class HttpTestClientRequest(object):
             'PATH_INFO':       unquote(parsed[2]),
             'QUERY_STRING':    urlencode(data, doseq=True) or parsed[4],
             'REQUEST_METHOD': 'HEAD',
-            'wsgi.input':      FakePayload('')
+            'wsgi.input':      fake_input()
         }
         r.update(extra)
         return self.request(**r)
@@ -189,7 +195,7 @@ class HttpTestClientRequest(object):
             'PATH_INFO':       unquote(parsed[2]),
             'QUERY_STRING':    urlencode(data, doseq=True) or parsed[4],
             'REQUEST_METHOD': 'OPTIONS',
-            'wsgi.input':      FakePayload('')
+            'wsgi.input':      fake_input()
         }
         r.update(extra)
         return self.request(**r)
@@ -214,7 +220,7 @@ class HttpTestClientRequest(object):
             'PATH_INFO':      unquote(parsed[2]),
             'QUERY_STRING':   query_string or parsed[4],
             'REQUEST_METHOD': 'PUT',
-            'wsgi.input':     FakePayload(post_data),
+            'wsgi.input':     fake_input(post_data),
         }
         r.update(extra)
         return self.request(**r)
@@ -226,7 +232,7 @@ class HttpTestClientRequest(object):
             'PATH_INFO':       unquote(parsed[2]),
             'QUERY_STRING':    urlencode(data, doseq=True) or parsed[4],
             'REQUEST_METHOD': 'DELETE',
-            'wsgi.input':      FakePayload('')
+            'wsgi.input':      fake_input()
         }
         r.update(extra)
         return self.request(**r)

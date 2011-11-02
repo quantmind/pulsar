@@ -201,10 +201,14 @@ adds the following 2 pulsar information:
             if not self.on_headers.called:
                 self.on_headers.callback(headers)
             if not self.parser.is_message_complete():
-                if headers.get("content-length"):
+                try:
+                    cl = int(headers.get("content-length") or 0)
+                except:
+                    cl = 0
+                if cl:
                     #if headers.get("Expect") == "100-continue":
                     #self.stream.write(b("HTTP/1.1 100 (Continue)\r\n\r\n"))
-                     self.stream.read(callback = self._handle)
+                    self.stream.read(callback = self._handle)
                 #elif headers.get('connection','').lower() == 'keep-alive':
                 #    self.stream.read(callback = self._handle)
                 else:

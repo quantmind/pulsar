@@ -436,7 +436,7 @@ generator.'''
                 elif result == CLEAR_ERRORS:
                     self._errors = Failure()
                 else:
-                    d = make_async(result)
+                    d = make_async(result, description = self._description)
                     if d.called:
                         consume = not self._should_stop(d.result)
                     else:
@@ -458,6 +458,7 @@ can be chained. Otherwise keep consuming.'''
             self._consume()
         else:
             return self._errors
+    _resume.description = 'Callback to resume a DeferredGenerator'
             
     def _should_stop(self, result):
         if is_failure(result):
