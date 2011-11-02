@@ -46,8 +46,6 @@ A tipical usage along these lines::
     import djpcms
     from pulsar.apps import pulsardjp
     
-    pt.add(module='siropy', down = ('clients',))
-    
     class SiteLoader(pulsardjp.SiteLoader):
         ...
     
@@ -67,10 +65,13 @@ A tipical usage along these lines::
         return d
         
     def __call__(self):
+        return self.sites()
+    
+    def sites(self):
         import djpcms
         if not self.loaded:
-            os.environ[self.ENVIRON_NAME] = self.name
             self.loaded = True
+            os.environ[self.ENVIRON_NAME] = self.name
             name = '_load_{0}'.format(self.name.lower())
             func = getattr(self,name,self._load)
             func()
@@ -80,20 +81,19 @@ A tipical usage along these lines::
         return djpcms.sites
             
     def _load(self):
+        # Standard loading method
         import djpcms
-        djpcms.MakeSite(os.getcwd(),
-                        settings = self.settings)
+        djpcms.MakeSite(os.getcwd(), settings = self.settings)
 
     def finish(self, sites):
         '''Callback once the sites are loaded.'''
         pass
     
     def wsgi(self):
-        '''This function is invoked by self at the end of its callable
-function to create the WSGI handler.'''
-        sites = self.__call__()
+        '''This function is invoked by self at the WSGI application
+when creating the wsgi handler.'''
         from djpcms import http
-        return http.WSGI(sites)
+        return http.WSGI(self.sites())
         
     def get_settings(self):
         import djpcms
@@ -106,5 +106,6 @@ class DjpCmsWSGIApplication(wsgi.WSGIApplication):
     
     def handler(self):
         '''Returns a callable application handler,
-used by a :class:`pulsar.Worker` to carry out its task.'''
-        return self.callable.wsgi()
+used by a :class:`pulsar.Worker` to carry out its task.'''    
+        hnd = self.callable.wsgi()
+        return self.wsgi_handler(hnd)

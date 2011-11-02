@@ -15,6 +15,7 @@ try:
     from stdnet.utils import to_string
     #from stdnet.apps import grid
     from djpcms.utils.text import nicename
+
     
     class PulsarServer(orm.StdModel):
         code = orm.SymbolField()
@@ -28,6 +29,7 @@ try:
         def this(self):
             return False
         this.boolean = True
+
 
     class JobModel(orm.FakeModel):
         

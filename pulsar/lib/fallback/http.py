@@ -156,7 +156,6 @@ class HttpParser(object):
         
     def execute(self, data, length):
         # end of body can be passed manually by putting a length of 0
-
         if length == 0:
             self.__on_message_complete = True
             return length

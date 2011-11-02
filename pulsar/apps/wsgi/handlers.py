@@ -95,7 +95,7 @@ class Keepalive(WsgiSetting):
         """
         
         
-class HttpParser(pulsar.Setting):
+class HttpParser(WsgiSetting):
     name = "http_parser"
     flags = ["--http-parser"]
     desc = """\
@@ -104,4 +104,12 @@ class HttpParser(pulsar.Setting):
         Specify `python` if you wich to use the pure python implementation    
         """
             
+    
+class ResponseMiddleware(WsgiSetting):
+    name = "response_middleware"
+    flags = ["--response-middleware"]
+    nargs = '*'
+    desc = """\
+    Response middleware to add to the wsgi handler    
+    """
     

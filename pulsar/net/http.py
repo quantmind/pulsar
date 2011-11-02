@@ -28,6 +28,18 @@ def on_headers(f):
     return _
 
 
+def on_body(f):
+    
+    def _(self, *args, **kwargs):
+        
+        if self.parser.is_message_complete():
+            return f(self, *args, **kwargs)
+    
+    _.__name__ = f.__name__
+    _.__doc__ = f.__doc__   # for sphinx
+    return _
+
+
 class HttpRequest(TcpRequest):
     '''A specialized :class:`TcpRequest` class for the HTTP protocol.'''
     default_parser = lib.HttpParser
@@ -36,6 +48,8 @@ class HttpRequest(TcpRequest):
         '''Set up event handler'''
         self.on_headers = Deferred(
                 description = '{0} on_header'.format(self.__class__.__name__))
+        self.on_body = Deferred(
+                description = '{0} on_body'.format(self.__class__.__name__))
         #Kick off the socket reading
         self._handle()
                 
@@ -67,7 +81,7 @@ class HttpRequest(TcpRequest):
                 return True
             return self.version == (1, 1)
    
-    @on_headers
+    @on_body
     def wsgi_environ(self, actor = None, **kwargs):
         """return a :ref:`WSGI <apps-wsgi>` compatible environ dictionary
 based on the current request. In addition to all standard WSGI entries it
@@ -180,13 +194,24 @@ adds the following 2 pulsar information:
     def _handle(self, data = None):
         if data is not None:
             self.parser.execute(data,len(data))
-        # We wait far all the message to be parsed.
-        # Not sure it is the best way.
-        # if not self.parser.is_headers_complete():
-        if not self.parser.is_message_complete():
+        if not self.parser.is_headers_complete():
             self.stream.read(callback = self._handle)
         else:
-            self.on_headers.callback(self.parser.get_headers())
+            headers = self.parser.get_headers()
+            if not self.on_headers.called:
+                self.on_headers.callback(headers)
+            if not self.parser.is_message_complete():
+                if headers.get("content-length"):
+                    #if headers.get("Expect") == "100-continue":
+                    #self.stream.write(b("HTTP/1.1 100 (Continue)\r\n\r\n"))
+                     self.stream.read(callback = self._handle)
+                #elif headers.get('connection','').lower() == 'keep-alive':
+                #    self.stream.read(callback = self._handle)
+                else:
+                    self.parser.execute(data,0)
+                    self._handle()
+            elif not self.on_body.called:
+                self.on_body.callback(self.parser.get_body())
         
 
 class HttpResponse(TcpResponse):

@@ -26,12 +26,15 @@ with "Hello World!" for every request::
 
 .. _WSGI: http://www.wsgi.org
 """
+from inspect import isclass
+
 import pulsar
 from pulsar.net import HttpResponse
+from pulsar.utils.importer import module_attribute
 
 from .handlers import *
 from .wsgi import *
-from .middleware import *
+from . import middleware
 
 
 class WSGIApplication(pulsar.Application):
@@ -39,6 +42,28 @@ class WSGIApplication(pulsar.Application):
 It can be configured to run as a multiprocess or a multithreaded server.'''
     app = 'wsgi'
     _name = 'wsgi'
+    
+    def handler(self):
+        return self.wsgi_handler(self.callable)
+    
+    def wsgi_handler(self, hnd):
+        if not isinstance(hnd,WsgiHandler):
+            if not isinstance(hnd,list):
+                hnd = [hnd]
+            hnd = WsgiHandler(hnd)
+        response_middleware = self.cfg.response_middleware or []
+        for m in response_middleware:
+            if '.' not in m:
+                mm = getattr(middleware,m,None)
+                if not mm:
+                    raise ValueError('Response middleware "{0}" not available'\
+                                     .format(m))
+            else:
+                mm = module_attribute(m)
+            if isclass(mm):
+                mm = mm()
+            hnd.response_middleware.append(mm)
+        return hnd
     
     def on_config(self):
         if not pulsar.platform.multiProcessSocket():
@@ -71,7 +96,7 @@ requests in the threaded workers.'''
                                        multithread = mt,
                                        multiprocess = mp)
         if not environ:
-            yield request.on_headers
+            yield request.on_body
             environ = request.wsgi_environ(
                                        actor = worker,
                                        multithread = mt,

@@ -24,13 +24,12 @@ response header.'''
         response.headers['Access-Control-Allow-Origin'] = self.origin
         if self.methods:
             response.headers['Access-Control-Allow-Methods'] = self.methods
-                       
+  
 
 class GZipMiddleware(object):
-    """
-    This middleware compresses content if the browser allows gzip compression.
-    It sets the Vary header accordingly, so that caches will base their storage
-    on the Accept-Encoding header.
+    """Response middleware for compressing content if the browser allows
+gzip compression. It sets the Vary header accordingly, so that caches will
+base their storage on the Accept-Encoding header.
     """
     def __init__(self, min_length = 200):
         self.min_length = min_length

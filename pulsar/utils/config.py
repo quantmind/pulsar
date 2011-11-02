@@ -183,11 +183,10 @@ settings via the :meth:`Setting.add_argument`.
         parser.add_argument('--version',
                             action='version',
                             version = __version__)
-        keys = self.settings.keys()
-        sorter = lambda x: (self.settings[x].section, self.settings[x].order)
-        
-        for k in sorted(keys,key=sorter):
-            self.settings[k].add_argument(parser)
+        setts = self.settings
+        sorter = lambda x: (setts[x].section, setts[x].order)
+        for k in sorted(setts,key=sorter):
+            setts[k].add_argument(parser)
         return parser
 
     @property
@@ -310,7 +309,7 @@ accepting one positional argument, the value to validate.'''
         
     def add_argument(self, parser):
         '''Add itself to the argparser.'''
-        kwargs = {}
+        kwargs = {'nargs':self.nargs}
         if self.type and self.type != 'string':
             kwargs["type"] = self.type
             
@@ -322,10 +321,10 @@ accepting one positional argument, the value to validate.'''
                            "help": "%s [%s]" % (self.short, self.default)})
             if kwargs["action"] != "store":
                 kwargs.pop("type",None)
+                kwargs.pop("nargs",None)
         elif self.nargs and self.name:
             args = (self.name,)
-            kwargs.update({'nargs':self.nargs,
-                           'metavar': self.meta or None,
+            kwargs.update({'metavar': self.meta or None,
                            'help': self.short})
         else:
             # Not added to argparser

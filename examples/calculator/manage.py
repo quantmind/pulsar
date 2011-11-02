@@ -44,9 +44,7 @@ class Calculator(rpc.JSONRPC):
 
 def server(**params):
     root = rpc.RpcMiddleware(Root().putSubHandler('calc',Calculator()))
-    handler = wsgi.WsgiHandler()
-    handler.middleware.append(root)
-    return wsgi.createServer(callable = handler, **params)
+    return wsgi.createServer(callable = root, **params)
 
 
 def start_server(**params):
