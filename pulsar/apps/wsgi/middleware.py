@@ -18,7 +18,7 @@ response header.'''
         self.origin = origin
         self.methods = methods
         
-    def __call__(self, response):
+    def __call__(self, environ, response, start_response):
         if response.status_code != 200:
             return
         response.headers['Access-Control-Allow-Origin'] = self.origin
@@ -34,7 +34,7 @@ base their storage on the Accept-Encoding header.
     def __init__(self, min_length = 200):
         self.min_length = min_length
         
-    def __call__(self, response):
+    def __call__(self, environ, response, start_response):
         # It's not worth compressing non-OK or really short responses.
         if response.status_code != 200 or response.is_streamed:
             return response

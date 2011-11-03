@@ -49,7 +49,7 @@ It can be configured to run as a multiprocess or a multithreaded server.'''
             callable = callable()
         return self.wsgi_handler(callable)
     
-    def wsgi_handler(self, hnd):
+    def wsgi_handler(self, hnd, resp_middleware = None):
         if not isinstance(hnd,WsgiHandler):
             if not isinstance(hnd,(list,tuple)):
                 hnd = [hnd]
@@ -66,6 +66,8 @@ It can be configured to run as a multiprocess or a multithreaded server.'''
             if isclass(mm):
                 mm = mm()
             hnd.response_middleware.append(mm)
+        if resp_middleware:
+            hnd.response_middleware.extend(resp_middleware)
         return hnd
     
     def on_config(self):

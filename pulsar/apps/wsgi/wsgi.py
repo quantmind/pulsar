@@ -121,9 +121,8 @@ class WsgiHandler(pulsar.LogginMixin):
         for middleware in self.middleware:
             response = middleware(environ, start_response)
             if response is not None:
-                if isinstance(response,WsgiResponse):
-                    for rm in self.response_middleware:
-                        rm(response)
+                for rm in self.response_middleware:
+                    rm(environ, response, start_response)
                 return response
         return ()
     
