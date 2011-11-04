@@ -42,11 +42,10 @@ Pulsar design allows for a host of different applications to be implemented
 in an elegant and efficient way. Out of the box it is shipped with the
 the following
 
-* Http server (with a RPC handler too)
-* A distributed Task Queue.
+* WSGI server (with a RPC handler too)
+* A distributed task queue.
 * Pulsar shell for asynchronous scripting (posix only).
 * Asynchronous testing suite.
-* A djpcms_ - pulsar integration for handling dynamic web applications.
 
 Design
 =============
@@ -68,7 +67,6 @@ many other open-source efforts.
 
 .. _gunicorn: http://gunicorn.org/
 .. _nodejs: http://nodejs.org/
-.. _djpcms: https://github.com/lsbardel/djpcms
 .. _twisted: http://twistedmatrix.com/trac/
 .. _tornado: http://www.tornadoweb.org/
 .. _celery: http://celeryproject.org/

@@ -35,7 +35,7 @@ class TaskQueueFactory(pulsar.Setting):
     #app = 'tasks'
     name = "task_queue_factory"
     section = "Task Consumer"
-    cli = ["-q", "--task-queue"]
+    flags = ["-q", "--task-queue"]
     default = "pulsar.Queue"
     desc = """The task queue factory to use."""
     

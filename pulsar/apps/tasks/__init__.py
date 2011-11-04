@@ -112,6 +112,20 @@ A :class:`Task` can have one of the following :attr:`Task.status` string:
     The set of states for which a :class:`Task` has finished:
     ``REVOKED``, ``FAILURE`` and ``SUCCESS``
     
+    
+Task queue
+~~~~~~~~~~~~~~
+
+By default the task queue is implemented using the multiprocessing.Queue
+from the standard python library. To specify a different queue you can
+use the ``task-queue`` flag from the command line::
+
+    python myserverscript.py --task-queue dotted.path.to.callable
+    
+or by setting the ``task_queue_factory`` parameter in the config file
+or in the :class:`TaskQueue` constructor.
+
+
 .. _celery: http://celeryproject.org/
 '''
 import os
