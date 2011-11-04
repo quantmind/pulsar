@@ -79,7 +79,7 @@ class RpcResponse(WsgiResponse):
     def get_content(self):
         request = self.request
         handler = request.handler
-        status = 200
+        status_code = 200
         try:
             if not request.func:
                 msg = 'Function "{0}" not available.'.format(request.method)
@@ -98,7 +98,7 @@ class RpcResponse(WsgiResponse):
                 else:
                     raise
         except Exception as e:
-            status = 400
+            status_code = 400
             result = e
             
         result = make_async(result)
@@ -118,18 +118,14 @@ class RpcResponse(WsgiResponse):
                 request.info('Successfully handled rpc function "{0}"'\
                                 .format(request.method))
         except Exception as e:
-            status = '500 Internal Server Error'
+            status_code = 500
             result = handler.dumps(request.id,
                                    request.version,
                                    error=e)
         
-        self.headers.extend((
-                             ('Content-type', request.content_type),
-                             ('Content-Length', str(len(result)))
-                             ))
-        
-        self.start_response()
-        yield to_bytestring(result)
+        self.status_code = status_code
+        self.content_type = request.content_type
+        yield self.on_content(to_bytestring(result))
         
 
 class MetaRpcHandler(type):
@@ -312,18 +308,27 @@ separated with a dot. Override :attr:`separator` to change this.
     '''Prefix to callable providing services.'''
     separator    = '.'
     '''Separator between subhandlers.'''
+    methods = ('get','post','put','head','delete','trace','connect')
 
-    def __init__(self, handler, path = None):
+    def __init__(self, handler, path = None, raise404 = True, methods = None):
         self.handler = handler 
         self.path = path or '/'
+        self.raise404 = raise404
+        self.methods = methods or self.methods
     
     def __call__(self, environ, start_response):
         '''The WSGI handler which consume the remote procedure call'''
         if environ['PATH_INFO'] == self.path:
+            method = environ['REQUEST_METHOD'].lower()
+            if method not in self.methods:
+                content = 'Method {0} not allowed'.format(method)
+                return WsgiResponse(405, content = content.encode('utf-8'))
             data = environ['wsgi.input'].read()
             hnd = self.handler
             method, args, kwargs, id, version = hnd.get_method_and_args(data)
             request = hnd.request(environ, method, args, kwargs, id, version)
-            return RpcResponse(request, start_response)
+            return RpcResponse(environ = request)
+        elif self.raise404:
+            return WsgiResponse(404)
         
         

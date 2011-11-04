@@ -32,7 +32,6 @@ Applications
    apps/websockets
    apps/test
    apps/shell
-   apps/pulsardjp
    
 
 Indices and tables

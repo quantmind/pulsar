@@ -9,8 +9,6 @@ from .defer import Deferred, is_async
 
 iologger = logging.getLogger('pulsar.iostream')
 
-MAX_BODY = 1024 * 128
-
 
 __all__ = ['IOStream','AsyncIOStream']
 
@@ -37,13 +35,15 @@ manipulated and adapted to pulsar :ref:`concurrent framework <design>`.
     If not supplied a new socket is created.
 :parameter kwargs: dictionary of auxiliar parameters passed to the
     :meth:`on_init` callback.
-'''
-    
+'''    
     def __init__(self, socket, max_buffer_size=None,
                  read_chunk_size = None, actor = None,
                  **kwargs):
         self.socket = socket
         self.socket.setblocking(self.blocking())
+        #self.MAX_BODY = 1024 * 128
+        # So we can send chunked with  Transfer-Encoding
+        self.MAX_BODY = 1024 * 127
         self.max_buffer_size = max_buffer_size or 104857600
         self.read_chunk_size = read_chunk_size or io.DEFAULT_BUFFER_SIZE
         self._read_buffer = deque()
@@ -300,7 +300,7 @@ On error closes the socket and raises an exception."""
                     # returning the number of bytes it was able to
                     # process.  Therefore we must not call socket.send
                     # with more than 128KB at a time.
-                    buff = self._get_buffer(self._write_buffer, MAX_BODY)
+                    buff = self._get_buffer(self._write_buffer, self.MAX_BODY)
                 else:
                     buff = self._write_buffer.popleft() or b'' 
                 num_bytes = self.socket.send(buff)

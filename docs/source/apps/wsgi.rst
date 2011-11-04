@@ -7,9 +7,6 @@ WSGI server
 .. automodule:: pulsar.apps.wsgi
 
 
-
-
-
 API
 =========
 

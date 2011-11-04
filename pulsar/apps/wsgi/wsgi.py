@@ -1,8 +1,13 @@
 import os
+from functools import partial
 
 import pulsar
-from pulsar.utils.http import parse_authorization_header, Headers
+from pulsar import make_async, Deferred, raise_failure
+from pulsar.utils.http import parse_authorization_header, Headers,\
+                                SimpleCookie, set_cookie
 from pulsar.net import responses
+
+from .middleware import is_streamed
 
 
 __all__ = ['WsgiHandler','WsgiResponse']
@@ -27,23 +32,32 @@ class WsgiResponse(object):
 
     the dictionary of WSGI enmvironment or a request object
     with ``environ`` as attribute.
+
+.. attribute:: status_code
+
+    Integer indicating the HTTP status, (i.e. 200)
+    
+.. attribute:: response
+
+    String indicating the HTTP status (i.e. 'OK')
+    
+.. attribute:: status
+
+    String indicating the HTTP status code and response (i.e. '200 OK')
     
 .. attribute:: start_response
 
     The ``start_response`` WSGI callable
-    
-.. attribute:: middleware
 
-    The response middleware iterable
 '''
     DEFAULT_STATUS_CODE = 200
     DEFAULT_CONTENT_TYPE = 'text/plain'
     
-    def __init__(self, environ, start_response, status = None, content = None,
+    def __init__(self, status = None, content = None,
                  response_headers = None, content_type = None,
-                 encoding = None):
+                 encoding = None, environ = None):
         request = None
-        if not isinstance(environ,dict):
+        if environ and not isinstance(environ,dict):
             if hasattr(environ,'environ'):
                 request = environ
                 environ = request.environ
@@ -52,17 +66,27 @@ class WsgiResponse(object):
         self.status_code = status or self.DEFAULT_STATUS_CODE
         self.request = request
         self.environ = environ
-        self._start_response = start_response
+        self.cookies = SimpleCookie()
         self.content_type = content_type or self.DEFAULT_CONTENT_TYPE
         self.headers = Headers(response_headers)
+        self.when_ready = Deferred()
+        orig_content = content
         if content is None:
             content = self.get_content()
         elif isinstance(content,bytes):
             content = (content,)
-        self.content = content
+        self._content_generator = content
+        self._content = None
+        if not self.is_streamed:
+            self.on_content(orig_content)
         
-    def start_response(self):
-        return self._start_response(self.status_code,list(self.headers))
+    def __call__(self, environ, start_response):
+        headers = self.headers
+        for c in self.cookies.values():
+            headers['Set-Cookie'] = c.OutputString()
+        headers = list(headers)
+        start_response(self.status, headers)
+        return self
         
     def get_content(self):
         return ()
@@ -70,9 +94,30 @@ class WsgiResponse(object):
     @property
     def response(self):
         return responses.get(self.status_code)
-        
-    def __str__(self):
+    
+    @property
+    def status(self):
         return '{0} {1}'.format(self.status_code,self.response)
+    
+    def __get_content(self):
+        c = self._content
+        if c is None:
+            return self._content_generator
+        elif isinstance(c,bytes):
+            return (c,)
+        else:
+            return c
+    def __set_content(self, c):
+        if self._content is None:
+            raise AttributeError('Cannot set content')
+        else:
+            if isinstance(c,bytes):
+                self.headers['Content-Length'] = str(len(c))
+            self._content = c
+    content =  property(__get_content, __set_content)
+    
+    def __str__(self):
+        return self.status
             
     def __repr__(self):
         return '{0}({1})'.format(self.__class__.__name__,self)
@@ -83,19 +128,35 @@ class WsgiResponse(object):
 a length information) this property is `True`.  In this case streamed
 means that there is no information about the number of iterations.
 This is usually `True` if a generator is passed to the response object."""
-        try:
-            len(self)
-        except TypeError:
-            return True
-        return False
+        return is_streamed(self.content)
         
     def __iter__(self):
-        if not self.is_streamed:
-            self.start_response()
-        return self.content
+        return iter(self.content)
     
     def __len__(self):
-        len(self.content)
+        return len(self.content)
+        
+    def on_content(self, content):
+        self.headers['Content-type'] = self.content_type
+        if isinstance(content,bytes):
+            self.headers['Content-Length'] = str(len(content))
+        self._content = content
+        self.when_ready.callback(self)
+        return self._content
+    
+    def set_cookie(self, key, **kwargs):
+        """
+        Sets a cookie.
+
+        ``expires`` can be a string in the correct format or a
+        ``datetime.datetime`` object in UTC. If ``expires`` is a datetime
+        object then ``max_age`` will be calculated.
+        """
+        set_cookie(self.cookies, key, **kwargs)
+
+    def delete_cookie(self, key, path='/', domain=None):
+        set_cookie(self.cookies, key, max_age=0, path=path, domain=domain,
+                   expires='Thu, 01-Jan-1970 00:00:00 GMT')
         
         
 class WsgiHandler(pulsar.LogginMixin):
@@ -103,27 +164,53 @@ class WsgiHandler(pulsar.LogginMixin):
     
 .. attribute: middleware
 
-    List of callable WSGI function which accept. The order matter.
+    List of callable WSGI middleware functions which accept
+    ``environ`` and ``start_response`` as arguments.
+    The order matter.
     
+.. attribute:: response_middleware
+
+    List of functions of the form::
     
+        def ..(environ, start_response, response):
+            ...
+            
+    where ``response`` is the first not ``None`` value returned by
+    the wsgi middleware.
+
+
 .. _WSGI: http://www.python.org/dev/peps/pep-3333/
 '''
-    def __init__(self, middleware = None, **kwargs):
+    msg404 = 'Could not find what you are looking for. Sorry.'
+    def __init__(self, middleware = None, msg404 = None, **kwargs):
         self.setlog(**kwargs)
         if middleware:
             middleware = list(middleware)
+        self.msg404 = msg404 or self.msg404
         self.middleware = middleware or []
         self.response_middleware = []
         
     def __call__(self, environ, start_response):
         '''The WSGI callable'''
-        #request = self.REQUEST(environ)
         for middleware in self.middleware:
             response = middleware(environ, start_response)
             if response is not None:
-                for rm in self.response_middleware:
-                    rm(environ, response, start_response)
+                if hasattr(response,'when_ready'):
+                    process = partial(self.process_response,
+                                      environ,
+                                      start_response)
+                    response.when_ready.add_callback(process)\
+                                       .add_callback(raise_failure)
+                else:
+                    self.process_response(environ, start_response, response)
                 return response
-        return ()
+        response =  WsgiResponse(404, content = self.msg404.encode('utf-8'))
+        self.process_response(environ, start_response, response)
+        return response
+                                    
+    def process_response(self, environ, start_response, response):
+        for rm in self.response_middleware:
+            rm(environ, start_response, response)
+        return response(environ, start_response)
     
 

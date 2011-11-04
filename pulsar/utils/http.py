@@ -1,4 +1,6 @@
 import time
+from datetime import datetime, timedelta
+from email.utils import formatdate
 
 from .py2py3 import ispy3k, iteritems
 from .collections import DictPropertyMixin
@@ -16,6 +18,7 @@ __all__ = ['urlparse',
 
 if ispy3k:
     from urllib.parse import urlparse, unquote, urlsplit
+    from http.cookies import SimpleCookie
     
     def bytes_to_str(b):
         return str(b, 'latin-1')
@@ -29,6 +32,7 @@ if ispy3k:
     
 else:
     from urlparse import urlparse, unquote, urlsplit
+    from Cookie import SimpleCookie
     
     def bytes_to_str(b):
         return b
@@ -38,7 +42,8 @@ else:
 
     
 class Headers(object):
-    '''Utility for managing HTTP headers.'''
+    '''Utility for managing HTTP headers. It has a dictionaru like interface
+with few extra functions to facilitate the insertion of multiple values.'''
     def __init__(self, defaults=None):
         self._dict = {}
         self._keys = []
@@ -71,19 +76,32 @@ class Headers(object):
     
     def __getitem__(self, key):
         return self._dict[key.lower()]
+    
+    def __delitem__(self, key):
+        key = key.lower()
+        del self._dict[key]
+        for k in self._keys:
+            if k.lower() == key:
+                self._keys.remove(k)
+                break
 
     def __setitem__(self, key, value):
         lkey = key.lower()
         if value:
             if isinstance(value, (tuple, list)):
                 value = ','.join(value)
-            if lkey in self._dict:
-                value = ','.join((self._dict[lkey],value))
-            else:
+            if lkey not in self._dict:
                 self._keys.append(key)
             self._dict[lkey] = value
+    
+    def as_list(self, key):
+        '''Return the value at *key* as a list of values.'''
+        value = self._dict.get(key.lower(),None)
+        return value.split(',') if value else []
         
     def add(self, key, value):
+        '''Add *value* to *key* header. If the header is already available,
+append the value to the list.'''
         lkey = key.lower()
         values = self.as_list(key)
         if value not in values:
@@ -183,3 +201,47 @@ not given, otherwise an :class:`Authorization` object.
         return Authorization('digest', auth_map)
     
 
+def cookie_date(epoch_seconds=None):
+    """Formats the time to ensure compatibility with Netscape's cookie
+    standard.
+
+    Accepts a floating point number expressed in seconds since the epoch in, a
+    datetime object or a timetuple.  All times in UTC.  The :func:`parse_date`
+    function can be used to parse such a date.
+
+    Outputs a string in the format ``Wdy, DD-Mon-YYYY HH:MM:SS GMT``.
+
+    :param expires: If provided that date is used, otherwise the current.
+    """
+    rfcdate = formatdate(epoch_seconds)
+    return '%s-%s-%s GMT' % (rfcdate[:7], rfcdate[8:11], rfcdate[12:25])
+
+
+def set_cookie(cookies, key, value='', max_age=None, expires=None, path='/',
+               domain=None, secure=False, httponly=False):
+    cookies[key] = value
+    if expires is not None:
+        if isinstance(expires, datetime):
+            delta = expires - expires.utcnow()
+            # Add one second so the date matches exactly (a fraction of
+            # time gets lost between converting to a timedelta and
+            # then the date string).
+            delta = delta + timedelta(seconds=1)
+            # Just set max_age - the max_age logic will set expires.
+            expires = None
+            max_age = max(0, delta.days * 86400 + delta.seconds)
+        else:
+            cookies[key]['expires'] = expires
+    if max_age is not None:
+        cookies[key]['max-age'] = max_age
+        # IE requires expires, so set it if hasn't been already.
+        if not expires:
+            cookies[key]['expires'] = cookie_date(time.time() + max_age)
+    if path is not None:
+        cookies[key]['path'] = path
+    if domain is not None:
+        cookies[key]['domain'] = domain
+    if secure:
+        cookies[key]['secure'] = True
+    if httponly:
+        cookies[key]['httponly'] = True

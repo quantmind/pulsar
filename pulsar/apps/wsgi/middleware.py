@@ -8,7 +8,15 @@ from pulsar.utils.py2py3 import BytesIO
 re_accepts_gzip = re.compile(r'\bgzip\b')
 
 
-__all__ = ['AccessControl','GZipMiddleware']
+__all__ = ['AccessControl','GZipMiddleware','is_streamed']
+
+
+def is_streamed(content):
+    try:
+        len(content)
+    except TypeError:
+        return True
+    return False
 
 
 class AccessControl(object):
@@ -18,7 +26,7 @@ response header.'''
         self.origin = origin
         self.methods = methods
         
-    def __call__(self, environ, response, start_response):
+    def __call__(self, environ, start_response, response):
         if response.status_code != 200:
             return
         response.headers['Access-Control-Allow-Origin'] = self.origin
@@ -34,19 +42,19 @@ base their storage on the Accept-Encoding header.
     def __init__(self, min_length = 200):
         self.min_length = min_length
         
-    def __call__(self, environ, response, start_response):
+    def __call__(self, environ, start_response, response):
         # It's not worth compressing non-OK or really short responses.
-        if response.status_code != 200 or response.is_streamed:
-            return response
+        content = response.content
+        if not content or response.status_code != 200 or is_streamed(content):
+            return
+        content = b''.join(content)
+        if len(content) < self.min_length:
+            return
         
         headers = response.headers
-        headers.add('Vary','Accept-Encoding')
-
         # Avoid gzipping if we've already got a content-encoding.
         if 'Content-Encoding' in response:
-            return response
-        
-        environ = response.environ
+            return
         
         # MSIE have issues with gzipped response of various content types.
         if "msie" in environ.get('HTTP_USER_AGENT', '').lower():
@@ -56,17 +64,16 @@ base their storage on the Accept-Encoding header.
 
         ae = environ.get('HTTP_ACCEPT_ENCODING', '')
         if not re_accepts_gzip.search(ae):
-            return response
-
-        content = response.content
-        if not content:
-            return response
-        
-        c = b''.join(content)
-        if len(c) < self.min_length:
             return
         
-        response.content = (self.compress_string(c),)
+        if hasattr(headers,'add'):
+            headers.add('Vary','Accept-Encoding')
+        else:
+            #TODO
+            #need to uppend
+            headers['Vary'] = 'Accept-Encoding'
+            
+        response.content = self.compress_string(content)
         response.headers['Content-Encoding'] = 'gzip'
     
     # From http://www.xhaus.com/alan/python/httpcomp.html#gzip

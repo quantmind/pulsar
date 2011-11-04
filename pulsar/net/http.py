@@ -247,6 +247,7 @@ https://github.com/joyent/node/blob/master/lib/http.js
         self.__should_keep_alive = self.request.should_keep_alive
         self.__status = None
         self.__headers_sent = False
+        self.__chunked = None
         
     @property
     def status(self):
@@ -259,15 +260,19 @@ https://github.com/joyent/node/blob/master/lib/http.js
     def is_chunked(self):
         '''Only use chunked responses when the client is
 speaking HTTP/1.1 or newer and there was no Content-Length header set.'''
-        if self.__clength is not None:
-            return False
-        elif self.request.version <= (1,0):
-            return False
-        elif self.status.startswith("304") or self.status.startswith("204"):
-            # Do not use chunked responses when the response is guaranteed to
-            # not have a response body.
-            return False
-        return True
+        if self.__chunked is None:
+            if self.request.version <= (1,0):
+                return False
+            elif self.status.startswith("304") or self.status.startswith("204"):
+                # Do not use chunked responses when the response is guaranteed to
+                # not have a response body.
+                return False
+            elif self.__clength is not None and\
+                     self.__clength <= self.stream.MAX_BODY: 
+                return False
+            return True
+        else:
+            return self.__chunked
     
     def force_close(self):
         self.__should_keep_alive = False
@@ -326,19 +331,30 @@ for the server as a whole.
         '''WSGI write function returned by the
 :meth:`HttpResponse.start_response` function.
 
-:parameter data: an iterable over bytes'''
-        ioloop = self.stream.ioloop
+:parameter data: an iterable over bytes.
+'''
+        stream = self.stream
+        ioloop = stream.ioloop
+        max_body = stream.MAX_BODY
         upgrade = self.__upgrade
-        if not upgrade:
-            if hasattr(data,'__len__'):
-                self.force_close()
         wb = self._write
         for b in data:
             # send headers only if there is data or it is an upgrade
             if b or upgrade:
                 yield self.send_headers()
                 if b:
-                    yield make_async(wb(b)).start(ioloop)
+                    if self.is_chunked():
+                        while b:
+                            tosend = b[:max_body]
+                            b = b[max_body:]
+                            head = "%X\r\n" % len(tosend)
+                            chunk = "".join((head.encode('utf-8'),
+                                             tosend, b'\r\n'))
+                            yield make_async(wb(chunk)).start(ioloop)
+                        chunk = b'0\r\n'
+                        yield make_async(wb(chunk)).start(ioloop)
+                    else:
+                        yield make_async(wb(b)).start(ioloop)
             else:
                 # release the loop
                 yield NOT_DONE
@@ -358,14 +374,17 @@ for the server as a whole.
                 self.__upgrade = self.headers['upgrade']
             
     def default_headers(self):
-        if self.__clength is not None:
+        headers = Headers([('Server',self.version),
+                           ('Date', format_date_time(time.time()))])
+        # Set chunked header if needed
+        if self.is_chunked():
+            self.__chunked = True
+            headers['Transfer-Encoding'] = 'chunked'
+            del self.headers['content-length']
+        else:
             self.force_close()
         connection = "keep-alive" if self.should_keep_alive else "close"
-        headers = Headers((('Server',self.version),
-                           ('Date', format_date_time(time.time())),
-                           ('Connection', connection)))
-        if self.is_chunked():
-            headers['Transfer-Encoding'] = 'chunked'
+        headers['Connection'] = connection
         return headers
     
     def send_headers(self, force=True):
