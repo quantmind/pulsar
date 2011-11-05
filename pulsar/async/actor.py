@@ -201,7 +201,7 @@ Here ``a`` is actually a reference to the remote actor.
         self.ioqueue = ioqueue
         #
         self.on_init(**kwargs)
-        
+    
     @property
     def proxy(self):
         '''Instance of a :class:`ActorProxy` holding a reference
@@ -282,6 +282,10 @@ their ids.'''
  I/O bound actors.
 '''
         return self.ioloop.POLL_TIMEOUT
+    
+    def is_arbiter(self):
+        '''Return ``True`` if ``self`` is the :class:`Arbiter`.'''
+        return False
     
     def __reduce__(self):
         raise pickle.PicklingError('{0} - Cannot pickle Actor instances'\

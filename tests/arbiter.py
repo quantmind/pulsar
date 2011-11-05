@@ -23,14 +23,20 @@ it fires a message with the result to its monitor.'''
 class TestArbiter(test.TestCase):
     
     def testArbiter(self):
-        self.assertRaises(pulsar.PulsarException,pulsar.arbiter)
         worker = self.worker
+        if worker.cfg.concurrency == 'process':
+            self.assertRaises(pulsar.PulsarException,pulsar.arbiter)
+        elif worker.cfg.concurrency == 'thread':
+            # In thread mode, the arbiter is accessible
+            a = pulsar.arbiter()
+            self.assertNotEqual(worker.tid,a.tid)
+            self.assertEqual(worker.pid,a.pid)
         arbiter = worker.arbiter
         self.assertTrue(arbiter)
         
     def testArbiterObject(self):
-        import pulsar
         arbiter = pulsar.arbiter()
+        self.assertTrue(arbiter.is_arbiter())
         self.assertEqual(arbiter.impl,'monitor')
         self.assertTrue(arbiter.monitors)
     testArbiterObject.run_on_arbiter = True

@@ -1,14 +1,12 @@
-import sys
 import zlib
 from libc.stdlib cimport *
 from cpython cimport PyBytes_FromStringAndSize
 
-ispy3k = sys.version_info[0] == 3
-
+    
 cdef inline bytes_to_str(b):
-    if ispy3k:
+    try:
         return str(b, 'latin1')
-    else:
+    except TypeError:
         return b
         
 

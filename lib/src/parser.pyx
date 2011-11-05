@@ -3,57 +3,23 @@
 # This file is part of http-parser released under the MIT license. 
 # See the NOTICE for more information.
 import os
+import sys
 from http cimport *
+
+ispy3k = sys.version_info[0] == 3
 
 if ispy3k:
     from urllib.parse import urlsplit
 else:
     from urlparse import urlsplit
-    
-    
-class Header(object):
-    '''A minimalist Header class'''
-    def __init__():
-        self._keys = []
-        self._data = {}
-        
-    def __iter__(self):
-        d = self._data
-        for k in self._keys:
-            yield k,d[k]
-            
-    def __contains__(self, key):
-        return key.lower() in self.data
-        
-     def __delitem__(self, key):
-        key = key.lower()
-        del self._data[key]
-        self._keys.remove(key)
-        
-    def __setitem__(self, key, value):
-        key = key.lower()
-        if key in self._data and value:
-            value = ', '.join((self._data[key],value))
-        else:
-            self._keys.append(key)
-        self._data[key] = value
-        
-    def __getitem__(self, key):
-        return self._data[key.lower()]
-        
-    def get(self, key, default=None):
-        try:
-            return self.__getitem__(key)
-        except KeyError:
-            return default
-        
+
     
 class _ParserData:
 
     def __init__(self, decompress=False):
         self.url = ""
         self.body = []
-        self.headers = Header()
+        self.headers = {}
         self.environ = {}
         
         self.decompress = decompress
@@ -217,8 +183,3 @@ the parser detect the type.
         """ return True if Transfer-Encoding header value is chunked"""
         te = self._data.headers.get('transfer-encoding', '').lower()
         return te == 'chunked'
-
-    def should_keep_alive(self):
-        """ return True if the connection should be kept alive
-        """
-        return http_should_keep_alive(&self._parser)

@@ -205,16 +205,28 @@ pulsar applications (subclasses of :class:`Application`).
         arbiter = pulsar.arbiter()
         if not arbiter.get('cfg'):
             arbiter.set('cfg',app.cfg)
-        self.app_handler = app.handler()
+        self.max_requests = None
+        self.information = LogInformation(self.cfg.logevery)
+        if not self.cfg.workers:
+            self.app_handler = app.handler()
+        else:
+            self.app_handler = app.monitor_handler()
         super(ApplicationMonitor,self).on_init(**kwargs)
         self.app.monitor_init(self)
     
     # Delegates Callbacks to the application    
     def on_start(self):
         self.app.monitor_start(self)
+        if not self.cfg.workers:
+            self.app.worker_start(self)            
         
     def monitor_task(self):
         self.app.monitor_task(self)
+        # There are no workers, the monitor do their job
+        if not self.cfg.workers:
+            if self.information.log():
+                self.log.info('Processed {0} requests'.format(self.nr))
+            self.app.worker_task(self)
             
     def on_stop(self):
         stp = make_async(self.app.monitor_stop(self))
@@ -505,6 +517,11 @@ The parameters overrriding order is the following:
 used by a :class:`Worker` to carry out its task. By default it
 returns the :attr:`Application.callable`.'''
         return self.callable
+    
+    def monitor_handler(self):
+        '''Returns a application handler for the monitor.
+By default it returns ``None``.'''
+        return None
     
     # MONITOR AND WORKER CALLBACKS
     

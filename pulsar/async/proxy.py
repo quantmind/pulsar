@@ -150,8 +150,11 @@ class ActorMessage(Deferred):
         d.pop('_lock',None)
         d.pop('_ioloop',None)
         d['_callbacks'] = []
-        return d    
+        return d
     
+    def __setstate__(self, state):
+        self.__dict__ = state
+        
     @classmethod
     def actor_callback(cls, rid, result):
         r = cls.MESSAGES.pop(rid,None)

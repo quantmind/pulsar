@@ -33,11 +33,15 @@ class TestRpcThread(test.TestCase):
     def testHandler(self):
         s = self.app
         self.assertTrue(s.callable)
-        handler = s.callable
-        root = handler.middleware[0]
+        middleware = s.callable
+        root = middleware.handler
         self.assertEqual(root.content_type,'text/json')
-        self.assertEqual(root.path,'/')
-        self.assertEqual(len(root.handler.subHandlers),1)
+        self.assertEqual(middleware.path,'/')
+        self.assertTrue(middleware.raise404)
+        self.assertEqual(len(root.subHandlers),1)
+        hnd = root.subHandlers['calc']
+        self.assertFalse(hnd.isroot())
+        self.assertEqual(hnd.subHandlers,{})
         self.assertTrue(s.mid)
         
     def testPing(self):

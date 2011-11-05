@@ -24,6 +24,9 @@ with "Hello World!" for every request::
         wsgi.createServer(callable = hello).start()
 
 
+For more information regarding WSGI check the pep3333_ specification.
+
+.. _pep3333: http://www.python.org/dev/peps/pep-3333/
 .. _WSGI: http://www.wsgi.org
 """
 from inspect import isclass

@@ -73,6 +73,9 @@ Users access the arbiter by the high level api::
     # ARBITER HIGH LEVEL API
     ############################################################################
     
+    def is_arbiter(self):
+        return True
+    
     def add_monitor(self, monitor_class, monitor_name, **kwargs):
         '''Add a new :class:`pulsar.Monitor` to the arbiter.
 

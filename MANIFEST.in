@@ -1,6 +1,8 @@
 include .gitignore
+include MANIFEST.in
 include LICENSE
 include README.rst
+include runtests.py
 include docs/make.bat
 include docs/Makefile
 include docs/source/conf.py

@@ -306,6 +306,10 @@ accepting one positional argument, the value to validate.'''
         self.desc = self.desc or self.short
         if self.app and not self.section:
             self.section = self.app
+            
+    def __str__(self):
+        return '{0} ({1})'.format(self.name,self.value)
+    __repr__ = __str__
         
     def add_argument(self, parser):
         '''Add itself to the argparser.'''

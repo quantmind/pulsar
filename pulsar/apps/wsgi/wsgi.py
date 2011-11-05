@@ -27,11 +27,11 @@ def authorization(environ, start_response):
 
 class WsgiResponse(object):
     '''A WSGI response wrapper initialized by a WSGI request middleware.
-    
-.. attribute:: environ
+Instances are callable using the standard WSGI call::
 
-    the dictionary of WSGI enmvironment or a request object
-    with ``environ`` as attribute.
+    response = WsgiResponse(200)
+    response(environ,start_response)
+    
 
 .. attribute:: status_code
 
@@ -45,9 +45,9 @@ class WsgiResponse(object):
 
     String indicating the HTTP status code and response (i.e. '200 OK')
     
-.. attribute:: start_response
+.. attribute:: environ
 
-    The ``start_response`` WSGI callable
+    The dictionary of WSGI environment if passed to the constructor.
 
 '''
     DEFAULT_STATUS_CODE = 200
@@ -178,8 +178,6 @@ class WsgiHandler(pulsar.LogginMixin):
     where ``response`` is the first not ``None`` value returned by
     the wsgi middleware.
 
-
-.. _WSGI: http://www.python.org/dev/peps/pep-3333/
 '''
     msg404 = 'Could not find what you are looking for. Sorry.'
     def __init__(self, middleware = None, msg404 = None, **kwargs):
@@ -211,6 +209,8 @@ class WsgiHandler(pulsar.LogginMixin):
     def process_response(self, environ, start_response, response):
         for rm in self.response_middleware:
             rm(environ, start_response, response)
-        return response(environ, start_response)
+        if hasattr(response,'__call__'):
+            return response(environ, start_response)
+        return self
     
 

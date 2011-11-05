@@ -10,6 +10,25 @@ WSGI server
 API
 =========
 
-.. autoclass:: pulsar.apps.wsgi.WSGIApplication
+WSGIApplication
+~~~~~~~~~~~~~~~~~~~~~
+
+.. autoclass:: WSGIApplication
+   :members:
+   :member-order: bysource
+   
+   
+WsgiHandler
+~~~~~~~~~~~~~~~~~~~~~
+
+.. autoclass:: WsgiHandler
+   :members:
+   :member-order: bysource
+   
+
+WsgiResponse
+~~~~~~~~~~~~~~~~~~~~~
+
+.. autoclass:: WsgiResponse
    :members:
    :member-order: bysource

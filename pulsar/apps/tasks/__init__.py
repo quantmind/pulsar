@@ -239,6 +239,9 @@ to check if the schedulter needs to perform a new run.'''
         import_modules(self.cfg.tasks_path)
         self.local['scheduler'] = Scheduler(self.task_class)
         return self
+    
+    def monitor_handler(self):
+        return self.handler()
             
     def handle_request(self, worker, task):
         '''Called by the worker to perform the *task* in the queue.'''

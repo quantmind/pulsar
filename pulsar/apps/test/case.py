@@ -26,6 +26,8 @@ class CallableTest(SafeAsync):
     
     def _call(self, actor):
         self.test = pickle.loads(self.test)
+        if actor.is_arbiter():
+            actor = actor.monitors['testsuite']
         self.test.worker = actor
         self.prepare()
         return self.run()

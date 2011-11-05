@@ -1,16 +1,16 @@
 Version Master
 =======================================
 * Overall code refactoring and a lot more documentation.
-* Complete redisign of :mod:`pulsar.apps.test` application.
+* Fully asynchronous applications.
+* Complete re-design of :mod:`pulsar.apps.test` application.
 * Added :class:`pulsar.Mailbox` classes for handling message passing between actors.
 * Added :mod:`pulsar.apps.ws`, an asynchronous websocket application for pulsar.
-* Asynchronous applications.
 * Created the :mod:`pulsar.net` module for internet primitive.
 * Added a wrapper class for using pulsar with windows services.
 * Removed the `pulsar.worker` module.
 * Moved `http.rpc` module to `apps`.
 * Introduced context manager for `pulsar.apps.tasks` to handle logs and exceptions.
-* **55 regression tests**
+* **61 regression tests**
 
 Version 0.1.0 - 2001-Aug-24
 =======================================

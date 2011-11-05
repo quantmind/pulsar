@@ -1,3 +1,40 @@
+'''\
+An asynchronous shell for experimenting with pulsar on the command line.
+The shell is available for posix operative systems only. Windows support
+to come at some point.
+
+To use write a little script, lets call it ``pshell.py``::
+
+    from pulsar.apps.shell import PulsarShell 
+    
+    if __name__ == '__main__':
+        PulsarShell().start()
+
+And run it::
+
+    python pshell.py
+    
+The shell has already ``pulsar``, ``arbiter`` and the :class:`Actor`
+class in the global dictionary::
+
+    >> pulsar.__version__
+    0.2.0
+    >> arbiter.is_arbiter()
+    True
+    >> arbiter.state
+    'running'
+    >> arbiter.MANAGED_ACTORS
+    {}
+    >> a = arbiter.spawn(Actor)
+    >> a.is_alive()
+    True
+    >> arbiter.MANAGED_ACTORS
+    {'3a67a186': 3a67a186}
+    >> arbiter.close_actors()
+    >> a.is_alive()
+    False
+    
+'''
 import os
 import sys
 import code
@@ -65,12 +102,18 @@ class InteractiveConsole(code.InteractiveConsole):
 
 class PulsarShell(pulsar.Application):
     #app = 'shell'
-    cfg = {'timeout':300,
-           #'workers': 1,
-           'concurrency': 'thread'}
+    cfg = {'timeout':5,
+           'workers':0,
+           'loglevel':'none',
+           'concurrency':'thread'}
+    
+    @property
+    def console(self):
+        return self.local['console']
     
     def handler(self):
-        imported_objects = {'pulsar':pulsar,
+        imported_objects = {'pshell':self,
+                            'pulsar':pulsar,
                             'arbiter':pulsar.arbiter(),
                             'spawn':pulsar.spawn,
                             'Actor':pulsar.Actor}
@@ -82,10 +125,10 @@ class PulsarShell(pulsar.Application):
             import rlcompleter
             readline.set_completer(rlcompleter.Completer(imported_objects).complete)
             readline.parse_and_bind("tab:complete")
-        self.console = InteractiveConsole(imported_objects)
+        self.local['console'] = InteractiveConsole(imported_objects)
         self.console.setup()
         return self
 
     def worker_task(self, worker):
-        self.console.interact(0.5*worker.timeout)
+        self.console.interact(0.1*worker.cfg.timeout)
 

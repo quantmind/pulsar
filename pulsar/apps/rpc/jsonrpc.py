@@ -43,8 +43,9 @@ class JSONRPC(RpcHandler):
 Design to comply with the `JSON-RPC 2.0`_ Specification.
 
 .. _`JSON-RPC 2.0`: http://groups.google.com/group/json-rpc/web/json-rpc-2-0'''
-    #content_type = 'text/json'
-    content_type = 'application/javascript'
+    content_type = 'text/json'
+    #content_type = 'application/javascript'
+    methods = ('post',)
     _json = JsonToolkit
         
     def get_method_and_args(self, data):

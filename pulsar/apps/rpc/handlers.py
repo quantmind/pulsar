@@ -223,6 +223,18 @@ identifier for the client, ``version`` is the version of the RPC protocol.
                                  .format(self.__class__.__name__,name))
         return getattr(self._parent,name)
     
+    def __getstate__(self):
+        d = super(RpcHandler,self).__getstate__()
+        if not self.isroot():
+            # Avoid duplicating handlers
+            d['_parent'] = True
+        return d
+    
+    def __setstate__(self, state):
+        super(RpcHandler,self).__setstate__(state)
+        for handler in self.subHandlers.values():
+            handler._parent = self
+        
     def get_handler(self, path):
         prefixes = path.split(self.separator)
         return self._get_handler(prefixes)
