@@ -1,4 +1,8 @@
-Version Master
+Development
+=======================================
+* **61 regression tests**
+
+Version 0.2.0 - 2011-Nov-05
 =======================================
 * Overall code refactoring and a lot more documentation.
 * Fully asynchronous applications.
@@ -12,7 +16,7 @@ Version Master
 * Introduced context manager for `pulsar.apps.tasks` to handle logs and exceptions.
 * **61 regression tests**
 
-Version 0.1.0 - 2001-Aug-24
+Version 0.1.0 - 2011-Aug-24
 =======================================
 
 * First (very) alpha release.

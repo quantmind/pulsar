@@ -1,5 +1,5 @@
 '''Concurrent server and message queues'''
-VERSION = (0, 2, 0)
+VERSION = (0, 3, 0)
 
 def get_version():
     return '.'.join(map(str,VERSION))
