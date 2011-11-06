@@ -47,14 +47,15 @@ class NetRequest(NetStream):
     '''A HTTP parser providing higher-level access to a readable,
 sequential io.RawIOBase object. You can use implementions of
 http_parser.reader (IterReader, StringReader, SocketReader) or 
-create your own.'''
-    default_parser = None
-    
+create your own.'''    
     def __init__(self, stream, client_addr = None, parsercls = None, **kwargs):
-        self.parsercls = parsercls or self.default_parser
+        self.parsercls = parsercls or self.default_parser()
         self.client_address = client_addr
         self.parser = self.get_parser(**kwargs)
         super(NetRequest,self).__init__(stream, **kwargs)
+        
+    def default_parser(self):
+        return None
         
     def get_parser(self, **kwargs):
         if self.parsercls:

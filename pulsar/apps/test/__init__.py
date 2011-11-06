@@ -103,7 +103,7 @@ is a group of tests specified in a test class.
     plugins = ()
     config_options_include = ('timeout','concurrency','workers','loglevel',
                               'worker_class','debug','task_queue_factory',
-                              'http_proxy')
+                              'http_proxy','http_client','http_py_parser')
     default_logging_level = None
     cfg = {'timeout':300,
            #'concurrency':'thread',

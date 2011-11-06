@@ -16,3 +16,10 @@ HTTP_RESPONSE = 1
 HTTP_BOTH = 2
 
 from . import fallback
+
+
+Http_Parser = HttpParser
+
+def setDefaultHttpParser(parser):
+    global Http_Parser
+    Http_Parser = parser

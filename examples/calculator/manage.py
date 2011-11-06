@@ -18,11 +18,26 @@ Open a new shell and launch python and type::
     
 '''
 from pulsar.apps import rpc, wsgi
+from pulsar.utils.py2py3 import range
+from random import normalvariate
 
 
 def divide(a,b):
     '''Divide two numbers'''
     return float(a) / float(b)
+
+
+def randompaths(num_paths = 1, size = 250, mu = 0, sigma = 1):
+    r = []
+    for p in range(num_paths):
+        v = 0
+        path = [v]
+        r.append(path)
+        for t in range(size):
+            v += normalvariate(mu,sigma)
+            path.append(v)
+    return r
+    
 
 class Root(rpc.PulsarServerCommands):
     pass
@@ -40,6 +55,8 @@ class Calculator(rpc.JSONRPC):
         return float(a) * float(b)
     
     rpc_divide = rpc.FromApi(divide)
+    
+    rpc_randompaths = rpc.FromApi(randompaths)
 
 
 def server(**params):

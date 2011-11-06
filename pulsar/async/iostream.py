@@ -41,9 +41,7 @@ manipulated and adapted to pulsar :ref:`concurrent framework <design>`.
                  **kwargs):
         self.socket = socket
         self.socket.setblocking(self.blocking())
-        #self.MAX_BODY = 1024 * 128
-        # So we can send chunked with  Transfer-Encoding
-        self.MAX_BODY = 1024 * 127
+        self.MAX_BODY = 1024 * 128
         self.max_buffer_size = max_buffer_size or 104857600
         self.read_chunk_size = read_chunk_size or io.DEFAULT_BUFFER_SIZE
         self._read_buffer = deque()
@@ -302,21 +300,9 @@ On error closes the socket and raises an exception."""
                     # with more than 128KB at a time.
                     buff = self._get_buffer(self._write_buffer, self.MAX_BODY)
                 else:
-                    buff = self._write_buffer.popleft() or b'' 
-                num_bytes = self.socket.send(buff)
-                if num_bytes == 0:
-                    # With OpenSSL, if we couldn't write the entire buffer,
-                    # the very same string object must be used on the
-                    # next call to send.  Therefore we suppress
-                    # merging the write buffer after an incomplete send.
-                    # A cleaner solution would be to set
-                    # SSL_MODE_ACCEPT_MOVING_WRITE_BUFFER, but this is
-                    # not yet accessible from python
-                    # (http://bugs.python.org/issue8240)
-                    self._write_buffer.appendleft(buff)
-                    self._write_buffer_frozen = True
-                    break
-                self._write_buffer_frozen = False
+                    buff = self._write_buffer.popleft() or b''
+                num_bytes = len(buff)
+                self.socket.sendall(buff)
                 tot_bytes += num_bytes
             except socket.error as e:
                 if e.args[0] in (errno.EWOULDBLOCK, errno.EAGAIN):

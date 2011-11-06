@@ -162,6 +162,7 @@ used for by the application for handling requests and sending back responses.
     # Delegates Callbacks to the application
          
     def on_start(self):
+        self.app.cfg.on_start()
         self.app.worker_start(self)
         try:
             self.cfg.worker_start(self)

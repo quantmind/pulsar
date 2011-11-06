@@ -41,9 +41,7 @@ def on_body(f):
 
 
 class HttpRequest(TcpRequest):
-    '''A specialized :class:`TcpRequest` class for the HTTP protocol.'''
-    default_parser = lib.HttpParser
-    
+    '''A specialized :class:`TcpRequest` class for the HTTP protocol.'''    
     def on_init(self, kwargs):
         '''Set up event handler'''
         self.on_headers = Deferred(
@@ -52,6 +50,9 @@ class HttpRequest(TcpRequest):
                 description = '{0} on_body'.format(self.__class__.__name__))
         #Kick off the socket reading
         self._handle()
+        
+    def default_parser(self):
+        return lib.Http_Parser
                 
     def get_parser(self, kind = None, **kwargs):
         kind = kind if kind is not None else lib.HTTP_BOTH
@@ -66,7 +67,7 @@ class HttpRequest(TcpRequest):
     @on_headers
     def headers(self):
         """ get request/response headers """ 
-        return self.parser.get_headers()
+        return Headers(self.parser.get_headers())
 
     @property
     def should_keep_alive(self):
@@ -74,7 +75,7 @@ class HttpRequest(TcpRequest):
         """
         headers = self.headers
         if headers:
-            hconn = headers.get('connection')
+            hconn = headers.get('connection','').lower()
             if hconn == "close":
                 return False
             elif hconn == "keep-alive":
@@ -96,17 +97,18 @@ adds the following 2 pulsar information:
         for b in parser.get_body():
             input.write(b)
         input.seek(0)
+        protocol = parser.get_protocol()
         environ = {
             "wsgi.input": input,
             "wsgi.errors": sys.stderr,
             "wsgi.version": version,
             "wsgi.run_once": True,
-            "wsgi.url_scheme": parser.get_protocol(),
+            "wsgi.url_scheme": protocol,
             "SERVER_SOFTWARE": pulsar.SERVER_SOFTWARE,
             "REQUEST_METHOD": parser.get_method(),
             "QUERY_STRING": parser.get_query_string(),
             "RAW_URI": parser.get_url(),
-            "SERVER_PROTOCOL": parser.get_protocol(),
+            "SERVER_PROTOCOL": protocol,
             "CONTENT_TYPE": "",
             "CONTENT_LENGTH": "",
             "wsgi.multithread": False,
@@ -335,7 +337,8 @@ for the server as a whole.
 '''
         stream = self.stream
         ioloop = stream.ioloop
-        max_body = stream.MAX_BODY
+        max_body = 65536
+        crlf = b'\r\n'
         upgrade = self.__upgrade
         wb = self._write
         for b in data:
@@ -347,11 +350,11 @@ for the server as a whole.
                         while b:
                             tosend = b[:max_body]
                             b = b[max_body:]
-                            head = "%X\r\n" % len(tosend)
-                            chunk = "".join((head.encode('utf-8'),
-                                             tosend, b'\r\n'))
+                            head = ("%X" % len(tosend)).encode('utf-8')
+                            chunk = head + crlf + tosend + crlf
+                            n = len(chunk)
                             yield make_async(wb(chunk)).start(ioloop)
-                        chunk = b'0\r\n'
+                        chunk = b'0' + crlf + crlf
                         yield make_async(wb(chunk)).start(ioloop)
                     else:
                         yield make_async(wb(b)).start(ioloop)
