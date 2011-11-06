@@ -6,6 +6,7 @@ from .std import HttpClientHandler, HttpClient1, urlencode,\
                  
 __all__ = ['HttpClientHandler',
            'HttpClient',
+           'HttpClients',
            'HttpClientResponse',
            'setDefaultClient',
            'urlencode',

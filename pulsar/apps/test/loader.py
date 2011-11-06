@@ -1,9 +1,9 @@
 import os
+import re
 import sys
 import unittest
 import logging
 import inspect
-from fnmatch import fnmatch
 
 from pulsar.utils.importer import import_module
 
@@ -101,7 +101,9 @@ importing tests.
             else:
                 name = m[0]
                 pattern = m[1]
-            names = name.split('.')
+                if '*' in pattern:
+                    pattern = re.compile(pattern.replace('*','(.*)'))
+            names = name.split('.') if name else ()
             absolute_path = os.path.join(self.root,*names)
             if os.path.isdir(absolute_path):
                 snames = names[:-1]
@@ -130,20 +132,35 @@ importing tests.
                 else:
                     continue
             
-            addtag = True
+            addtag = sname
+            npattern = pattern 
             if pattern:
-                if fnmatch(sname, pattern):
+                if hasattr(pattern,'search'):
+                    p = pattern.search(sname)
+                    if p:
+                        npattern = None
+                        addtag = p.groups(0)
+                    else:
+                        addtag = False
+                elif pattern == sname:
                     addtag = False
-                elif os.path.isfile(subpath):
+                    npattern = None
+                
+                if npattern and os.path.isfile(subpath):
                     # skip the import
                     continue
-                    
-            subname = '{0}.{1}'.format(name,sname)            
+            
+            if name:
+                subname = '{0}.{1}'.format(name,sname)
+            else:
+                tags = (sname,)
+                subname = sname
+                         
             module = self.import_module(subname,parent)
             if not module:
                 continue
             
-            ctags = tags + (sname,) if addtag else tags
+            ctags = tags + (addtag,) if addtag else tags
             tag = '.'.join(ctags)
             
             c = self.checktag(tag, import_tags)
@@ -154,7 +171,7 @@ importing tests.
                 tag = '.'.join(ctags)
                 yield tag, module
             elif os.path.isdir(subpath):
-                for tag,mod in self.get_tests(subpath, subname, pattern,
+                for tag,mod in self.get_tests(subpath, subname, npattern,
                                               import_tags, ctags,
                                               parent = module):
                     yield tag,mod

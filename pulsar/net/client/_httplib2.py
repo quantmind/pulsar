@@ -21,6 +21,11 @@ class Response(HttpClientResponse):
         response.pop('status',None)
         self.headers = response
         self.url = getattr(response, 'url', None)
+        
+    def raise_for_status(self):
+        if self.status_code >= 400:
+            raise HTTPError(self.url,self.status_code,self.content,
+                            self.headers,None)
 
     
 class HttpClient2(HttpClientHandler):
@@ -46,8 +51,10 @@ class HttpClient2(HttpClientHandler):
                                        body=body,
                                        headers=self.headers)
         except (HTTPError,URLError) as why:
+            why.url = uri
             return Response(why)
         else:
+            r.url = uri
             return Response(r,c)
     
     def add_credentials(self, username, password, domain = ''):
