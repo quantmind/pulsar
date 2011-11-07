@@ -1,10 +1,10 @@
 '''Tests the tools and utilities in pulsar.utils.'''
-import unittest as test
-
 from pulsar.utils.tools import checkarity
+from pulsar.utils.test import test
 
 
 __all__ = ['TestArityCheck']
+
 
 def f0(a,b):
     pass
@@ -48,7 +48,7 @@ class TestArityCheck(test.TestCase):
         
     def testArity2(self):
         self.assertEqual(checkarity(f2,(3,),{}),None)
-        self.assertEqual(checkarity(f2,(3,),{'c',4}),None)
+        self.assertEqual(checkarity(f2,(3,),{'c':4}),None)
         self.assertEqual(checkarity(f2,(3,4),{}),
                          '"f2" takes 1 positional parameters. 2 given.')
         self.assertEqual(checkarity(f2,(),{}),
@@ -59,5 +59,5 @@ class TestArityCheck(test.TestCase):
         self.assertEqual(checkarity(f2,(),{'a':3,'c':5}),None)
         self.assertEqual(checkarity(f2,(),{'b':3,'c':5}),
                          '"f2" has missing "a" parameter.')
-        self.assertEqual(checkarity(f2,(),{'a':3,'c':5, 'd':6}),None)
+        self.assertEqual(checkarity(f2,(),{'a':3,'c':5,'d':6}),None)
  

@@ -1,8 +1,6 @@
 '''tests the HttpClient in pulsar.net.client.'''
-import unittest as test
-
 from pulsar.net import HttpClient, HttpClients
-
+from pulsar.utils.test import test
 
 HTTPBIN_URL = 'http://httpbin.ep.io/'
 HTTPSBIN_URL = 'https://httpbin.ep.io/'
@@ -51,6 +49,6 @@ class TestStandardHttpClient(test.TestCase):
         self.assertRaises(r.HTTPError, r.raise_for_status)
         
         
-test.skipUnless(2 in HttpClients,'httplib2 not installed.')
+@test.skipUnless(2 in HttpClients,'httplib2 not installed.')
 class TestHttpClient2(TestStandardHttpClient):
     client = 2

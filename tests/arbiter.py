@@ -1,8 +1,8 @@
 '''Tests for arbiter and monitors.'''
-import unittest as test
 import os
 
 import pulsar
+from pulsar.utils.test import test
 
 
 class ActorA(pulsar.Actor):

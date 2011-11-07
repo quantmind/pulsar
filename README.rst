@@ -72,3 +72,12 @@ many other open-source efforts.
 .. _celery: http://celeryproject.org/
 .. _multiprocessing: http://docs.python.org/library/multiprocessing.html
 .. _`actors primitive`: http://en.wikipedia.org/wiki/Actor_model
+
+Running Tests
+==================
+Pulsar test suite uses the pulsar test applications. If you are using python 2.6
+you need to install unittest2_. To run the tests::
+
+    python runtests.py
+
+.. _unittest2: http://pypi.python.org/pypi/unittest2

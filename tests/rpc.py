@@ -1,7 +1,6 @@
 '''Tests the rpc middleware and utilities'''
-import unittest as test
-
 from pulsar.apps import rpc
+from pulsar.utils.test import test
 
 
 class rpcTest(test.TestCase):

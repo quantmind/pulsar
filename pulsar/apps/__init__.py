@@ -111,7 +111,7 @@ After obtaining the result from the
         should_stop = self.max_requests and self.nr >= self.max_requests        
         make_async(self._response_generator(request)).add_callback(
                lambda res : self.close_response(request,res,should_stop))\
-               .start(self.ioloop)
+               .start(self.ioloop, timeout = request.timeout)
         
     def close_response(self, request, response, should_stop):
         '''Close the response. This method should be called by the

@@ -1,11 +1,10 @@
 '''Tests the test suite and pulsar distribution.'''
 import os
-import unittest as test
 import threading
 import multiprocessing
 
 import pulsar
-
+from pulsar.utils.test import test
 
 class TestTest(test.TestCase):
     

@@ -1,9 +1,10 @@
 Development
 =======================================
+* Tests can be run in python 2.6 if ``unittest2`` package is installed.
 * Fixed chunked transfer encoding.
 * Fixed critical bug in socket server :class:`pulsar.Mailbox`. Each client connections
   has its own buffer.
-* **64 regression tests**
+* **67 regression tests**
 
 Version 0.2.0 - 2011-Nov-05
 =======================================

@@ -15,8 +15,9 @@ def close_socket(sock):
 
 class NetStream(object):
     
-    def __init__(self, stream, **kwargs):
+    def __init__(self, stream, timeout = None, **kwargs):
         self.stream = stream
+        self.timeout = timeout
         self.on_init(kwargs)
     
     def fileno(self):
@@ -71,7 +72,8 @@ create your own.'''
     def __init__(self, request, stream = None, **kwargs):
         pulsar.Response.__init__(self,request)
         stream = stream or self.request.stream
+        timeout = kwargs.pop('timeout',request.timeout)
         self.version = pulsar.SERVER_SOFTWARE
-        NetStream.__init__(self, stream, **kwargs)
+        NetStream.__init__(self, stream, timeout = timeout, **kwargs)
     
     

@@ -101,15 +101,20 @@ a class method ``setUpClass`` is defined. If so it runs it.'''
         
         if all_tests.countTestCases():
             testcls.worker = worker
-            init = async_arbiter(testcls,getattr(testcls,'setUpClass',None))
-            end = async_arbiter(testcls,getattr(testcls,'tearDownClass',None))
             should_stop = False
+            end = None
+            if not getattr(testcls, "__unittest_skip__", False):
+                init = async_arbiter(testcls,getattr(testcls,
+                                                     'setUpClass',None))
+                end = async_arbiter(testcls,getattr(testcls,
+                                                    'tearDownClass',None))
+                should_stop = False
             
-            if init:
-                test = self.testcls('setUpClass')
-                result,outcome = init()
-                yield result
-                should_stop = self.add_failure(test, runner, outcome.result)
+                if init:
+                    test = self.testcls('setUpClass')
+                    result,outcome = init()
+                    yield result
+                    should_stop = self.add_failure(test, runner, outcome.result)
     
             if not should_stop:            
                 for test in all_tests:

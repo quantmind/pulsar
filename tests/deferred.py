@@ -1,8 +1,6 @@
 '''Deferred and asynchronous tools.'''
-import unittest as test
-
 from pulsar import AlreadyCalledError, Deferred, async_pair
-
+from pulsar.utils.test import test
 
 class TestDeferred(test.TestCase):
     

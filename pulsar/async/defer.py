@@ -356,8 +356,9 @@ ready it throws a :class:`DeferredFailure` exception'''
 If the deferred was already started do nothing.
 
 :parameter ioloop: :class:`IOLoop` instance where to run the deferred.
-:parameter timeout: Optional timeout in seconds. If the deferred has not done within
-    this time period it will raise a :class:`Timeout` exception.
+:parameter timeout: Optional timeout in seconds. If the deferred has not
+    been called within this time period it will raise a :class:`Timeout`
+    exception and it won't add itself to the callbacks.
 :rtype: ``self``.
 
 A common usage pattern::
@@ -387,8 +388,8 @@ in :meth:`start`.'''
         if not self.called:
             try:
                 if self._timeout and time() - self._started > self._timeout:
-                    raise Timeout('Timeout {0} reached without results.\
- Aborting.'.format(self._timeout))
+                    raise Timeout('Deferred "{0}" not called.'.format(self),
+                                  self._timeout)
                 self._ioloop.add_callback(self._consume)
             except:
                 self.callback(sys.exc_info())

@@ -1,8 +1,7 @@
 '''Tests the RPC "calculator" example.'''
-import unittest as test
-
 from pulsar.apps import rpc
 from pulsar.apps.test import test_server
+from pulsar.utils.test import test
 
 from .manage import server
 

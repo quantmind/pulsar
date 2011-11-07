@@ -1,10 +1,9 @@
 '''Tests actor links api.'''
 from time import sleep
-import unittest as test
 
 import pulsar
 from pulsar.apps.test import AsyncTestCaseMixin
-
+from pulsar.utils.test import test
 
 def test_callable(a):
     return 'Hi from {0}'.format(a.aid)

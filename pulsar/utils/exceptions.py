@@ -4,6 +4,11 @@ class PulsarException(Exception):
     
 class Timeout(PulsarException):
     '''Raised when a timeout occurs'''
+    def __init__(self, msg, timeout = None):
+        self.timeout = timeout
+        if timeout:
+            msg = msg + ' Timeout {0} surpassed.'.format(self.timeout)
+        super(Timeout,self).__init__(msg)
 
 class ImproperlyConfigured(PulsarException):
     '''A :class:`PulsarException` raised when pulsar has inconsistent

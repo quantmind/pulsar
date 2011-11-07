@@ -44,6 +44,7 @@ class HttpRequest(TcpRequest):
     '''A specialized :class:`TcpRequest` class for the HTTP protocol.'''    
     def on_init(self, kwargs):
         '''Set up event handler'''
+        self.continue100 = False
         self.on_headers = Deferred(
                 description = '{0} on_header'.format(self.__class__.__name__))
         self.on_body = Deferred(
@@ -208,11 +209,13 @@ adds the following 2 pulsar information:
                 except:
                     cl = 0
                 if cl:
-                    #if headers.get("Expect") == "100-continue":
-                    #self.stream.write(b("HTTP/1.1 100 (Continue)\r\n\r\n"))
-                    self.stream.read(callback = self._handle)
-                #elif headers.get('connection','').lower() == 'keep-alive':
-                #    self.stream.read(callback = self._handle)
+                    if headers.get("expect") == "100-continue" and\
+                        not self.continue100:
+                        self.continue100 = True
+                        self.stream.write(b("HTTP/1.1 100 (Continue)\r\n\r\n"),
+                                          callback = self._handle)
+                    else:
+                        self.stream.read(callback = self._handle)
                 else:
                     self.parser.execute(data,0)
                     self._handle()

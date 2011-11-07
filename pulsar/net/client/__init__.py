@@ -53,7 +53,8 @@ of the :class:`pulsar.IOLoop`.
 :parameter cache: Cache file. Default ``None``.
 :parameter proxy_info: Dictionary of proxies. Default ``None``.
 :parameter timeout: Connection timeout. Default ``None``.
-:parameter type: Request handler implementation. Default ``1``.
+:parameter type: Request handler implementation. This can be an integer or a
+    tuple of integers. Default ``(2,1)``.
 :parameter async: Synchronous or Asynchronous. Default ``False``.
 '''
     type = type or _DefaultClient

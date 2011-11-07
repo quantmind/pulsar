@@ -1,7 +1,6 @@
 '''Tests the wsgi middleware in pulsar.apps.wsgi'''
-import unittest as test
-
 from pulsar.apps import wsgi
+from pulsar.utils.test import test
 
 
 class wsgiTest(test.TestCase):
