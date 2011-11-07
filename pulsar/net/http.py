@@ -344,6 +344,9 @@ for the server as a whole.
         crlf = b'\r\n'
         upgrade = self.__upgrade
         wb = self._write
+        timeout = self.timeout
+        _write = lambda chunk : make_async(wb(chunk)).start(ioloop,
+                                                     timeout = timeout)
         for b in data:
             # send headers only if there is data or it is an upgrade
             if b or upgrade:
@@ -356,11 +359,11 @@ for the server as a whole.
                             head = ("%X" % len(tosend)).encode('utf-8')
                             chunk = head + crlf + tosend + crlf
                             n = len(chunk)
-                            yield make_async(wb(chunk)).start(ioloop)
+                            yield _write(chunk)
                         chunk = b'0' + crlf + crlf
-                        yield make_async(wb(chunk)).start(ioloop)
+                        yield _write(chunk)
                     else:
-                        yield make_async(wb(b)).start(ioloop)
+                        yield _write(b)
             else:
                 # release the loop
                 yield NOT_DONE

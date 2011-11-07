@@ -164,7 +164,7 @@ and task scheduling."""
         task = self.make_request(job_name, targs, tkwargs, **kwargs)
         if task.needs_queuing():
             task._queued = True
-            monitor.put(task)
+            monitor.put(task.serialize_for_queue())
         else:
             task._queued = False
             self.log.info('task {0} already requested. Abort request.'\

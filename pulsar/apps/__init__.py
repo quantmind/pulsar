@@ -35,7 +35,7 @@ def require(appname):
 
 
 class WorkerRequest(object):
-    
+    timeout = None
     def response(self):
         return self
     
@@ -108,10 +108,12 @@ After obtaining the result from the
 :meth:`Application.handle_event_task` method, it invokes the
 :meth:`Worker.end_task` method to close the request.'''
         self.nr += 1
-        should_stop = self.max_requests and self.nr >= self.max_requests        
+        request = self.app.request_instance(request)
+        timeout = getattr(request,'timeout',None)
+        should_stop = self.max_requests and self.nr >= self.max_requests 
         make_async(self._response_generator(request)).add_callback(
                lambda res : self.close_response(request,res,should_stop))\
-               .start(self.ioloop, timeout = request.timeout)
+               .start(self.ioloop, timeout = timeout)
         
     def close_response(self, request, response, should_stop):
         '''Close the response. This method should be called by the
@@ -347,7 +349,7 @@ its duties.
             monitor = arbiter.add_monitor(self.monitor_class,
                                           self.name,
                                           app = self,
-                                          ioqueue = self.get_ioqueue())
+                                          ioqueue = self.ioqueue)
             self.mid = monitor.aid
             r,f = self.remote_functions()
             if r:
@@ -360,6 +362,17 @@ its duties.
     def name(self):
         '''Application name, It is unique and defines the application.'''
         return self._name
+    
+    @property
+    def ioqueue(self):
+        if 'queue' not in self.local:
+            self.local['queue'] = self.get_ioqueue()
+        return self.local['queue']
+    
+    def request_instance(self, request):
+        '''Given a request raiosed from an event, build the request for the
+ :meth:`handle_request` method. By default it returns ``request``.'''
+        return request
     
     def handle_message(self, sender, receiver, message):
         '''Handle messages for the *receiver*.'''
@@ -387,6 +400,15 @@ will have a :class:`IOLoop` instance based on the queue (via :class:`IOQueue`).
  
 By default it returns ``None``.'''
         return None
+    
+    def put(self, request):
+        queue = self.ioqueue
+        if queue:
+            self.log.debug('Put {0} on IO queue'.format(request))
+            queue.put(('request',request))
+        else:
+            self.log.error("Trying to put a request on task queue,\
+ but there isn't one!")
     
     def on_config(self):
         '''Callback when configuration is loaded. This is a chance to do

@@ -118,6 +118,7 @@ class RpcResponse(WsgiResponse):
                 request.info('Successfully handled rpc function "{0}"'\
                                 .format(request.method))
         except Exception as e:
+            handler.log.error('Could not serialize', exc_info = True)
             status_code = 500
             result = handler.dumps(request.id,
                                    request.version,

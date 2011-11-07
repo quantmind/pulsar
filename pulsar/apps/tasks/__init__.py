@@ -218,6 +218,9 @@ be consumed by the workers.'''
         queue = self.cfg.task_queue_factory
         return queue()
     
+    def request_instance(self, request):
+        return self.task_class.from_queue(request)
+    
     def __init__(self, task_class = None, **kwargs):
         self.tasks_statistics = {'total':0,
                                  'failures':0}

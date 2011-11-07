@@ -163,6 +163,13 @@ task needs to be queued.'''
     def on_same_id(self):
         self.delete()
     
+    def serialize_for_queue(self):
+        return self
+    
+    @classmethod
+    def from_queue(cls, task):
+        return task
+    
     @classmethod
     def get_task(cls, id, remove = False):
         '''Given a task *id* it retrieves a task instance or ``None`` if

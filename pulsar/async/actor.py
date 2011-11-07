@@ -429,7 +429,8 @@ If the message needs acknowledgment, send the result back.'''
             self.ioqueue.put(('request',request))
         else:
             self.log.error("Trying to put a request on task queue,\
- but there isn't one!")        
+ but there isn't one!")
+                
     def get(self, key, default = None):
         try:
             return self._params[key]
