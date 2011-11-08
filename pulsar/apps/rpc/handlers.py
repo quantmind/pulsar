@@ -68,6 +68,23 @@ class RpcRequest(object):
         self.log.critical(msg,exc_info=True)
         raise InternalError(msg)
     
+    def process(self):
+        if not self.func:
+            msg = 'Function "{0}" not available.'.format(self.method)
+            raise NoSuchFunction(msg)
+        try:
+            return self.func(self.handler,self,*self.args,**self.kwargs)
+        except TypeError as e:
+            msg = checkarity(self.func,
+                             self.args,
+                             self.kwargs,
+                             discount=2)
+            if msg:
+                msg = 'Invalid Parameters in rpc function: {0}'.format(msg)
+                raise InvalidParams(msg)
+            else:
+                raise
+    
 
 class RpcResponse(WsgiResponse):
         
@@ -81,22 +98,7 @@ class RpcResponse(WsgiResponse):
         handler = request.handler
         status_code = 200
         try:
-            if not request.func:
-                msg = 'Function "{0}" not available.'.format(request.method)
-                raise NoSuchFunction(msg)
-            try:
-                result = request.func(request.handler, request, *request.args,
-                                      **request.kwargs)
-            except TypeError as e:
-                msg = checkarity(request.func,
-                                 request.args,
-                                 request.kwargs,
-                                 discount=2)
-                if msg:
-                    msg = 'Invalid Parameters in rpc function: {0}'.format(msg)
-                    raise InvalidParams(msg)
-                else:
-                    raise
+            result = request.process()
         except Exception as e:
             status_code = 400
             result = e
@@ -126,7 +128,7 @@ class RpcResponse(WsgiResponse):
         
         self.status_code = status_code
         self.content_type = request.content_type
-        yield self.on_content(to_bytestring(result))
+        yield to_bytestring(result)
         
 
 class MetaRpcHandler(type):
@@ -328,6 +330,16 @@ separated with a dot. Override :attr:`separator` to change this.
         self.path = path or '/'
         self.raise404 = raise404
         self.methods = methods or self.methods
+        
+    def __str__(self):
+        return self.path
+    
+    def __repr__(self):
+        return '{0}({1})'.format(self.__class__.__name__,self)
+        
+    @property
+    def route(self):
+        return self.path
     
     def __call__(self, environ, start_response):
         '''The WSGI handler which consume the remote procedure call'''

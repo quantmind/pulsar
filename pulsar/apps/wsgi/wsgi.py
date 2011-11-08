@@ -2,7 +2,7 @@ import os
 from functools import partial
 
 import pulsar
-from pulsar import make_async, Deferred, raise_failure
+from pulsar import make_async, Deferred, raise_failure, NOT_DONE
 from pulsar.utils.http import parse_authorization_header, Headers,\
                                 SimpleCookie, set_cookie
 from pulsar.net import responses
@@ -24,6 +24,17 @@ def authorization(environ, start_response):
         header = environ[code]
         return parse_authorization_header(header)
 
+
+def generate_content(gen):
+    for data in gen:
+        if data is NOT_DONE:
+            yield b''
+        elif isinstance(data,bytes):
+            yield data
+        else:
+            for b in generate_content(data):
+                yield b
+                
 
 class WsgiResponse(object):
     '''A WSGI response wrapper initialized by a WSGI request middleware.
@@ -70,15 +81,18 @@ Instances are callable using the standard WSGI call::
         self.content_type = content_type or self.DEFAULT_CONTENT_TYPE
         self.headers = Headers(response_headers)
         self.when_ready = Deferred()
-        orig_content = content
+        
         if content is None:
             content = self.get_content()
-        elif isinstance(content,bytes):
+        elif isinstance(content, bytes):
             content = (content,)
-        self._content_generator = content
+        
         self._content = None
-        if not self.is_streamed:
-            self.on_content(orig_content)
+        self._content_generator = None
+        if is_streamed(content):
+            self._content_generator = content
+        else:
+            self.on_content(content)
         
     def __call__(self, environ, start_response):
         headers = self.headers
@@ -100,20 +114,18 @@ Instances are callable using the standard WSGI call::
         return '{0} {1}'.format(self.status_code,self.response)
     
     def __get_content(self):
-        c = self._content
-        if c is None:
-            return self._content_generator
-        elif isinstance(c,bytes):
-            return (c,)
+        return self._content
+    def __set_content(self, content):
+        cl = 0
+        if content is None:
+            content = ()
         else:
-            return c
-    def __set_content(self, c):
-        if self._content is None:
-            raise AttributeError('Cannot set content')
-        else:
-            if isinstance(c,bytes):
-                self.headers['Content-Length'] = str(len(c))
-            self._content = c
+            if isinstance(content,bytes):
+                content = (content,)
+            for c in content:
+                cl += len(c)
+        self.headers['Content-Length'] = str(cl)
+        self._content = content
     content =  property(__get_content, __set_content)
     
     def __str__(self):
@@ -130,19 +142,32 @@ means that there is no information about the number of iterations.
 This is usually `True` if a generator is passed to the response object."""
         return is_streamed(self.content)
         
+    def _generator(self):
+        content = b''
+        for b in generate_content(self._content_generator):
+            if b:
+                content += b
+            else:
+                yield b'' # release the eventloop
+        self.on_content(content)
+        self._content_generator = None
+        for c in self.content:
+            yield c
+                
     def __iter__(self):
-        return iter(self.content)
+        # we have a content generator
+        if self._content_generator:
+            return self._generator()
+        else:
+            return iter(self.content)
     
     def __len__(self):
         return len(self.content)
         
     def on_content(self, content):
         self.headers['Content-type'] = self.content_type
-        if isinstance(content,bytes):
-            self.headers['Content-Length'] = str(len(content))
-        self._content = content
+        self.content = content
         self.when_ready.callback(self)
-        return self._content
     
     def set_cookie(self, key, **kwargs):
         """
@@ -162,11 +187,12 @@ This is usually `True` if a generator is passed to the response object."""
 class WsgiHandler(pulsar.LogginMixin):
     '''An handler for application conforming to python WSGI_.
     
-.. attribute: middleware
+.. attribute:: middleware
 
-    List of callable WSGI middleware functions which accept
+    List of callable WSGI middleware callable which accept
     ``environ`` and ``start_response`` as arguments.
-    The order matter.
+    The order matter, since the response returned by the callable
+    is the non ``None`` value returned by a middleware.
     
 .. attribute:: response_middleware
 
@@ -176,7 +202,7 @@ class WsgiHandler(pulsar.LogginMixin):
             ...
             
     where ``response`` is the first not ``None`` value returned by
-    the wsgi middleware.
+    the middleware.
 
 '''
     msg404 = 'Could not find what you are looking for. Sorry.'
@@ -213,4 +239,10 @@ class WsgiHandler(pulsar.LogginMixin):
             return response(environ, start_response)
         return self
     
+    def get(self, route = '/'):
+        '''Fetch a middleware with the given *route*. If it is not found
+ return ``None``.'''
+        for m in self.middleware:
+            if getattr(m,'route',None) == route:
+                return m
 

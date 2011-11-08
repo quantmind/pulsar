@@ -152,6 +152,10 @@ used for by the application for handling requests and sending back responses.
 .. attribute:: cfg
 
     Configuration dictionary
+    
+.. attribute:: app_handler
+
+    The application handler obtained from :meth:`Application.handler`.
 
 """        
     def on_init(self, app = None, **kwargs):
@@ -369,6 +373,12 @@ its duties.
             self.local['queue'] = self.get_ioqueue()
         return self.local['queue']
     
+    def handler(self):
+        '''Returns the callable application handler which is stored in
+:attr:`Worker.app_handler`, used by :class:`Worker` to carry out its task.
+By default it returns the :attr:`Application.callable`.'''
+        return self.callable
+    
     def request_instance(self, request):
         '''Given a request raiosed from an event, build the request for the
  :meth:`handle_request` method. By default it returns ``request``.'''
@@ -534,12 +544,6 @@ The parameters overrriding order is the following:
             
     def init(self, opts):
         pass
-    
-    def handler(self):
-        '''Returns a callable application handler,
-used by a :class:`Worker` to carry out its task. By default it
-returns the :attr:`Application.callable`.'''
-        return self.callable
     
     def monitor_handler(self):
         '''Returns a application handler for the monitor.

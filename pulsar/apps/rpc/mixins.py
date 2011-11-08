@@ -7,7 +7,30 @@ __all__ = ['PulsarServerCommands']
 
 
 class PulsarServerCommands(JSONRPC):
-    '''Some useful commands to add to your JSONRPC server to get you started.'''
+    '''Some useful commands to add to your :class:`JSONRPC` handler to get you
+ started. It exposes the following functions:
+ 
+.. method:: ping()
+
+    Return ``pong``.
+    
+.. method:: server_info()
+
+    Return a dictionary of information regarding the server and workers.
+    It invokes the :meth:`extra_server_info` for adding custom information.
+    
+    :rtype: ``dict``.
+    
+.. method:: functions_list()
+
+    Return the list of functions available in the rpc handler
+    
+    :rtype: ``list``.
+    
+.. method:: kill_actor(aid)
+
+    :parameter aid: :attr:`pulsar.Actor.aid` of the actor to kill
+'''
     
     def rpc_ping(self, request):
         '''Ping the server'''

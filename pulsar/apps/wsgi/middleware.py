@@ -53,7 +53,7 @@ base their storage on the Accept-Encoding header.
         
         headers = response.headers
         # Avoid gzipping if we've already got a content-encoding.
-        if 'Content-Encoding' in response:
+        if 'Content-Encoding' in headers:
             return
         
         # MSIE have issues with gzipped response of various content types.
