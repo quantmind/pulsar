@@ -1,5 +1,5 @@
 '''\
-A a Simple Web-Socket example.
+A very Simple Web-Socket example.
 To run the server type::
 
     python manage.py
@@ -41,19 +41,13 @@ def page(environ, start_response):
         return [to_bytestring(data)]
 
 
-app = wsgi.WsgiHandler(\
-        middleware = (page,
-                      ws.WebSocket(handle)))
-
 
 def server(**kwargs):
+    app = wsgi.WsgiHandler(middleware = (page,
+                                         ws.WebSocket(handle)))
     return wsgi.createServer(callable = app,
                              **kwargs)
 
 
-def start_server(**params):
-    return server(**params).start()
-
-    
 if __name__ == '__main__':
-    start_server()
+    server().start()

@@ -28,7 +28,7 @@ class httpPythonParser(test.TestCase):
         if cls.worker.cfg.http_proxy:
             host = hostport(cls.worker.cfg.http_proxy)
         else:
-            host = self.host
+            host = cls.host
         cls.socket = pulsar.create_connection(host, blocking = True)
     
     @classmethod
@@ -36,11 +36,9 @@ class httpPythonParser(test.TestCase):
         cls.socket.close()
         
     def read(self, p):
-        size = self.bufsize
-        while size == self.bufsize:
+        while not p.is_message_complete():
             data = self.socket.recv(self.bufsize)
-            size = len(data)
-            p.execute(data,size)
+            p.execute(data,len(data))
     
     def testParser(self):
         p = self.get_parser()
