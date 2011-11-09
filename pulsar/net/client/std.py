@@ -62,6 +62,7 @@ class HttpClientResponse(object):
     status_code = None
     url = None
     HTTPError = HTTPError
+    URLError = URLError 
     
     def __str__(self):
         if self.status_code:
@@ -115,6 +116,7 @@ class ResponseStd(HttpClientResponse):
 
 class HttpClientHandler(object):
     '''Http client handler.'''
+    HTTPError = HTTPError
     URLError = URLError
     DEFAULT_HEADERS = [('User-agent', pulsar.SERVER_SOFTWARE),
                        ('Connection', 'Keep-Alive')]

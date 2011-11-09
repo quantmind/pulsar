@@ -1,5 +1,6 @@
 Version 0.2.1 - 2011-Nov-09
 =======================================
+* windowsservice wrapper handle pulsar command lines options.
 * Modified the WsgiResponse handling of streamed content.
 * Tests can be run in python 2.6 if ``unittest2`` package is installed.
 * Fixed chunked transfer encoding.
