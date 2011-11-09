@@ -1,10 +1,11 @@
-Development
+Version 0.2.1 - 2011-Nov-09
 =======================================
+* Modified the WsgiResponse handling of streamed content.
 * Tests can be run in python 2.6 if ``unittest2`` package is installed.
 * Fixed chunked transfer encoding.
 * Fixed critical bug in socket server :class:`pulsar.Mailbox`. Each client connections
   has its own buffer.
-* **67 regression tests**
+* **69 regression tests**
 
 Version 0.2.0 - 2011-Nov-05
 =======================================

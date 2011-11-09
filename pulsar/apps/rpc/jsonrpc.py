@@ -111,8 +111,7 @@ Lets say your RPC server is running at ``http://domain.name.com/``::
     
     def __init__(self, url, name = None, version = None,
                  proxies = None, id = None, data = None,
-                 timeout = None, client_software = None,
-                 **kwargs):
+                 client_software = None, **kwargs):
         self.__url = url
         self.__name = name
         self.__version = version or self.__class__.default_version
@@ -122,13 +121,17 @@ Lets say your RPC server is running at ``http://domain.name.com/``::
         self.local = {}
         self.setup(**kwargs)
         
-    def setup(self, http = None, **kwargs):
+    def setup(self, http = None, timeout = None, proxies = None, **kwargs):
         if not http:
             timeout = timeout if timeout is not None else self.default_timeout
             self.local['http'] = HttpClient(proxy_info = proxies,
                                             timeout = timeout)
         else:
             self.local['http'] = http
+    
+    @property
+    def http(self):
+        return self.local.get('http')
     
     def __get_path(self):
         return self.__name
@@ -200,9 +203,9 @@ usage is simple::
     def __call__(self, *args, **kwargs):
         data,raw = self._get_data(*args, **kwargs)
         body = self._json.dumps(data)
-        resp = self.local['http'].request(self.__url,
-                                          method = "POST",
-                                          body = body)
+        resp = self.http.request(self.__url,
+                                 method = "POST",
+                                 body = body)
         content = resp.content.decode('utf-8')
         if resp.status_code == 200:
             if raw:

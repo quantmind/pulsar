@@ -95,6 +95,8 @@ Instances are callable using the standard WSGI call::
             self.on_content(content)
         
     def __call__(self, environ, start_response):
+        if self.content is None:
+            raise ValueError('No content available')
         headers = self.headers
         for c in self.cookies.values():
             headers['Set-Cookie'] = c.OutputString()
@@ -143,10 +145,10 @@ This is usually `True` if a generator is passed to the response object."""
         return is_streamed(self.content)
         
     def _generator(self):
-        content = b''
+        content = []
         for b in generate_content(self._content_generator):
             if b:
-                content += b
+                content.append(b)
             else:
                 yield b'' # release the eventloop
         self.on_content(content)
@@ -165,7 +167,8 @@ This is usually `True` if a generator is passed to the response object."""
         return len(self.content)
         
     def on_content(self, content):
-        self.headers['Content-type'] = self.content_type
+        if self.content_type:
+            self.headers['Content-type'] = self.content_type
         self.content = content
         self.when_ready.callback(self)
     
