@@ -3,11 +3,11 @@ it requires python 2.6 and up, including python 3.
 With pulsar you can write asynchronous servers performing one or several
 activities in different threads and or processes.
 
-An example of a web server written with ``pulsar`` which responds 
-with "Hello World!" for every request::
+An example of a web server written with ``pulsar`` application
+framework which responds with "Hello World!" for every request::
 
     
-    import pulsar
+    from pulsar.apps import wsgi
     
     def hello(environ, start_response):
         '''Pulsar HTTP "Hello World!" application'''
@@ -22,8 +22,7 @@ with "Hello World!" for every request::
     
     
     if __name__ == '__main__':
-        wsgi = pulsar.require('wsgi')
-        return wsgi.createServer(callable = hello, **kwargs).run()
+        return wsgi.createServer(callable = hello).run()
     
     
 Pulsar's goal is to provide an easy way to build scalable network programs.

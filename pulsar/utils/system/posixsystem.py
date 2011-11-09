@@ -25,6 +25,12 @@ else:
 
 # The standard signal quit
 SIGQUIT = signal.SIGQUIT
+# Default maximum for the number of available file descriptors.
+MAXFD = 1024
+if (hasattr(os, "devnull")):
+   REDIRECT_TO = os.devnull
+else:
+   REDIRECT_TO = "/dev/null"
 
 def get_parent_id():
     return os.getppid()
@@ -115,7 +121,9 @@ def daemonize():
     else:
         os._exit(0)
     
-    maxfd = MAXFD
+    maxfd = resource.getrlimit(resource.RLIMIT_NOFILE)[1]
+    if (maxfd == resource.RLIM_INFINITY):
+        maxfd = MAXFD
 
     # Iterate through and close all file descriptors.
     for fd in range(0, maxfd):

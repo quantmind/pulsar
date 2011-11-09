@@ -2,8 +2,11 @@
 display the two famous words::
 
     python manage.py
+    
+To see options type::
+
+    python manage.py -h
 '''
-import pulsar
 from pulsar.apps import wsgi
 
 
@@ -19,11 +22,12 @@ def hello(environ, start_response):
     return iter([data])
 
 
-def server(**kwargs):
-    return wsgi.createServer(callable = hello, **kwargs)
+def server(description = None, **kwargs):
+    description = description or 'Pulsar Hello World Application'
+    return wsgi.WSGIApplication(callable = hello,
+                                description = description,
+                                **kwargs)
     
-def start_server(**params):
-    return server(**params).start()
 
 if __name__ == '__main__':
-    start_server()
+    server().start()

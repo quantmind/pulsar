@@ -181,7 +181,7 @@ Users access the arbiter by the high level api::
             if pidfile is not None:
                 p = Pidfile(cfg.pidfile)
                 p.create(self.pid)
-                self['pidfile'] = p
+                self.local['pidfile'] = p
         PoolMixin.on_start(self)
         
     def on_task(self):
