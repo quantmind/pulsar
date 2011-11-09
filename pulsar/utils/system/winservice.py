@@ -11,6 +11,7 @@ import win32api
 import servicemanager
 
 import pulsar
+from pulsar.utils.importer import import_module
 
 import multiprocessing
 
@@ -37,6 +38,7 @@ class PulsarService(win32serviceutil.ServiceFramework):
     _svc_name_ = 'PULSAR_%s' % pulsar.__version__
     _svc_display_name_ = "PULSAR %s server" % pulsar.__version__
     _svc_description_ = "Pulsar asynchronous server"
+    _command_lines = 'pulsar_command_line'
     
     def __init__(self, args):
         win32serviceutil.ServiceFramework.__init__(self,args)
@@ -51,9 +53,11 @@ class PulsarService(win32serviceutil.ServiceFramework):
         win32event.SetEvent(self.hWaitStop)
 
     def SvcDoRun(self):
-        self.setup()
+        mod = import_module(self._command_lines)
+        os.remove(os.path.abspath(mod.__file__))
+        self.setup(mod.argv)
     
-    def setup(self):
+    def setup(self,argv):
         raise NotImplementedError
         
     def main(self):
@@ -63,21 +67,25 @@ class PulsarService(win32serviceutil.ServiceFramework):
         while self.running:
             time.sleep(1)
         arbiter.log.info('%s - exiting up the service' % self._svc_name_)
-
+    
     @classmethod
     def run(cls, **params):
         argv = sys.argv
-        cdir = None
+        args = sys.argv[:1]
+        if len(sys.argv) > 2:
+            args += sys.argv[2:]
+        f = open(cls._command_lines+'.py','w')
+        f.write('argv = {0}'.format(args))
+        f.close()
+        argv = argv[:2]
         if not argv or not argv[0]:
-            print('bla')
             main_path = getattr(sys.modules['__main__'], '__file__', None)
-            path,script = os.path.split(main_path)                
-            sys.argv = [script,'start']
+            path,script = os.path.split(main_path)
+            argv = [script,'start']
+        sys.argv = argv
         cls.params = params
         win32api.SetConsoleCtrlHandler(ctrlHandler, True)
         win32serviceutil.HandleCommandLine(cls)
-        if cdir:
-            os.chdir(cdir)
 
 
     
