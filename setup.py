@@ -10,9 +10,6 @@ try:
     from lib.setup import libparams
 except ImportError:
     libparams = {'cmdclass': {}}
-#TODO
-#switch off extensions for now
-libparams = {'cmdclass': {}}
     
 from distutils.core import setup
 from distutils.command.install_data import install_data

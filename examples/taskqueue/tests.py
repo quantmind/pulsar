@@ -1,12 +1,12 @@
 '''Tests the "taskqueue" example.'''
 from time import time, sleep
 from datetime import datetime, timedelta
-import unittest as test
 
 import pulsar
 from pulsar.apps import tasks, rpc
 from pulsar.apps.test import test_server
 from pulsar.utils.timeutils import timedelta_seconds
+from pulsar.utils.test import test
 
 from .manage import createTaskQueue, server
 

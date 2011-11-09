@@ -15,8 +15,9 @@ def close_socket(sock):
 
 class NetStream(object):
     
-    def __init__(self, stream, **kwargs):
+    def __init__(self, stream, timeout = None, **kwargs):
         self.stream = stream
+        self.timeout = timeout
         self.on_init(kwargs)
     
     def fileno(self):
@@ -47,14 +48,15 @@ class NetRequest(NetStream):
     '''A HTTP parser providing higher-level access to a readable,
 sequential io.RawIOBase object. You can use implementions of
 http_parser.reader (IterReader, StringReader, SocketReader) or 
-create your own.'''
-    default_parser = None
-    
+create your own.'''    
     def __init__(self, stream, client_addr = None, parsercls = None, **kwargs):
-        self.parsercls = parsercls or self.default_parser
+        self.parsercls = parsercls or self.default_parser()
         self.client_address = client_addr
         self.parser = self.get_parser(**kwargs)
         super(NetRequest,self).__init__(stream, **kwargs)
+        
+    def default_parser(self):
+        return None
         
     def get_parser(self, **kwargs):
         if self.parsercls:
@@ -70,7 +72,8 @@ create your own.'''
     def __init__(self, request, stream = None, **kwargs):
         pulsar.Response.__init__(self,request)
         stream = stream or self.request.stream
+        timeout = kwargs.pop('timeout',request.timeout)
         self.version = pulsar.SERVER_SOFTWARE
-        NetStream.__init__(self, stream, **kwargs)
+        NetStream.__init__(self, stream, timeout = timeout, **kwargs)
     
     

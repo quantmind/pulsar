@@ -1,7 +1,6 @@
 '''Tests the websocket middleware in pulsar.apps.ws.'''
-import unittest as test
-
 from pulsar.apps import ws
+from pulsar.utils.test import test
 
 
 class WebSocketTest(test.TestCase):

@@ -41,17 +41,19 @@ def on_body(f):
 
 
 class HttpRequest(TcpRequest):
-    '''A specialized :class:`TcpRequest` class for the HTTP protocol.'''
-    default_parser = lib.HttpParser
-    
+    '''A specialized :class:`TcpRequest` class for the HTTP protocol.'''    
     def on_init(self, kwargs):
         '''Set up event handler'''
+        self.continue100 = False
         self.on_headers = Deferred(
                 description = '{0} on_header'.format(self.__class__.__name__))
         self.on_body = Deferred(
                 description = '{0} on_body'.format(self.__class__.__name__))
         #Kick off the socket reading
         self._handle()
+        
+    def default_parser(self):
+        return lib.Http_Parser
                 
     def get_parser(self, kind = None, **kwargs):
         kind = kind if kind is not None else lib.HTTP_BOTH
@@ -66,7 +68,7 @@ class HttpRequest(TcpRequest):
     @on_headers
     def headers(self):
         """ get request/response headers """ 
-        return self.parser.get_headers()
+        return Headers(self.parser.get_headers())
 
     @property
     def should_keep_alive(self):
@@ -74,7 +76,7 @@ class HttpRequest(TcpRequest):
         """
         headers = self.headers
         if headers:
-            hconn = headers.get('connection')
+            hconn = headers.get('connection','').lower()
             if hconn == "close":
                 return False
             elif hconn == "keep-alive":
@@ -96,17 +98,18 @@ adds the following 2 pulsar information:
         for b in parser.get_body():
             input.write(b)
         input.seek(0)
+        protocol = parser.get_protocol()
         environ = {
             "wsgi.input": input,
             "wsgi.errors": sys.stderr,
             "wsgi.version": version,
             "wsgi.run_once": True,
-            "wsgi.url_scheme": parser.get_protocol(),
+            "wsgi.url_scheme": protocol,
             "SERVER_SOFTWARE": pulsar.SERVER_SOFTWARE,
             "REQUEST_METHOD": parser.get_method(),
             "QUERY_STRING": parser.get_query_string(),
             "RAW_URI": parser.get_url(),
-            "SERVER_PROTOCOL": parser.get_protocol(),
+            "SERVER_PROTOCOL": protocol,
             "CONTENT_TYPE": "",
             "CONTENT_LENGTH": "",
             "wsgi.multithread": False,
@@ -206,11 +209,13 @@ adds the following 2 pulsar information:
                 except:
                     cl = 0
                 if cl:
-                    #if headers.get("Expect") == "100-continue":
-                    #self.stream.write(b("HTTP/1.1 100 (Continue)\r\n\r\n"))
-                    self.stream.read(callback = self._handle)
-                #elif headers.get('connection','').lower() == 'keep-alive':
-                #    self.stream.read(callback = self._handle)
+                    if headers.get("expect") == "100-continue" and\
+                        not self.continue100:
+                        self.continue100 = True
+                        self.stream.write(b("HTTP/1.1 100 (Continue)\r\n\r\n"),
+                                          callback = self._handle)
+                    else:
+                        self.stream.read(callback = self._handle)
                 else:
                     self.parser.execute(data,0)
                     self._handle()
@@ -335,9 +340,13 @@ for the server as a whole.
 '''
         stream = self.stream
         ioloop = stream.ioloop
-        max_body = stream.MAX_BODY
+        max_body = 65536
+        crlf = b'\r\n'
         upgrade = self.__upgrade
         wb = self._write
+        timeout = self.timeout
+        _write = lambda chunk : make_async(wb(chunk)).start(ioloop,
+                                                     timeout = timeout)
         for b in data:
             # send headers only if there is data or it is an upgrade
             if b or upgrade:
@@ -347,14 +356,14 @@ for the server as a whole.
                         while b:
                             tosend = b[:max_body]
                             b = b[max_body:]
-                            head = "%X\r\n" % len(tosend)
-                            chunk = "".join((head.encode('utf-8'),
-                                             tosend, b'\r\n'))
-                            yield make_async(wb(chunk)).start(ioloop)
-                        chunk = b'0\r\n'
-                        yield make_async(wb(chunk)).start(ioloop)
+                            head = ("%X" % len(tosend)).encode('utf-8')
+                            chunk = head + crlf + tosend + crlf
+                            n = len(chunk)
+                            yield _write(chunk)
+                        chunk = b'0' + crlf + crlf
+                        yield _write(chunk)
                     else:
-                        yield make_async(wb(b)).start(ioloop)
+                        yield _write(b)
             else:
                 # release the loop
                 yield NOT_DONE

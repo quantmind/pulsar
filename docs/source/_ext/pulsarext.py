@@ -42,8 +42,8 @@ class PulsarSettings(Directive):
                 if sett.app:
                     yield 'Setting for :mod:`pulsar.apps.' + sett.app +\
                                 '` application.\n'
-                if sett.cli:
-                    yield '*Command line*: ' + ','.join(sett.cli) + '\n'
+                if sett.flags:
+                    yield '*Command line*: ' + ','.join(sett.flags) + '\n'
                 yield desc + '\n'
             
     def run(self):

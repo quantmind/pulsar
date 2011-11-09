@@ -1,7 +1,30 @@
-# -*- coding: utf-8 -
-#
-# This file is part of http-parser released under the MIT license. 
-# See the NOTICE for more information.
+'''Original code from https://github.com/benoitc/http-parser
+
+2011 (c) Benoît Chesneau <benoitc@e-engura.org>
+
+Permission is hereby granted, free of charge, to any person
+obtaining a copy of this software and associated documentation
+files (the "Software"), to deal in the Software without
+restriction, including without limitation the rights to use,
+copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the
+Software is furnished to do so, subject to the following
+conditions:
+
+The above copyright notice and this permission notice shall be
+included in all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES
+OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT
+HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
+WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
+OTHER DEALINGS IN THE SOFTWARE.
+
+Modified and adapted for pulsar.
+'''
 import os
 import sys
 from http cimport *
@@ -110,10 +133,11 @@ the parser detect the type.
     def maybe_parse_url(self):
         raw_url = self.get_url()
         if not self._parsed_url and raw_url:
-            self._parsed_url = urlsplit(raw_url)
-            self._path =  self._parsed_url.path or ""
-            self._query_string = self._parsed_url.query or ""
-            self._fragment = self._parsed_url.fragments or ""
+            parts = urlsplit(raw_url)
+            self._parsed_url = parts
+            self._path = parts.path or ""
+            self._query_string = parts.query or ""
+            self._fragment = parts.fragment or ""
 
     def get_path(self):
         """ get path of the request (url without query string and
@@ -132,9 +156,14 @@ the parser detect the type.
         return self._fragment
 
     def get_headers(self):
-        """ get request/response headers, headers are returned in a
-        OrderedDict that allows you to get value using insensitive keys. """
-        return self._data.headers
+        """get request/response headers dictionary."""
+        return list(self._data.headers.items())
+    
+    def get_protocol(self):
+        return None
+    
+    def get_body(self):
+        return self._data.body
 
     def recv_body(self):
         """ return last chunk of the parsed body"""
@@ -144,7 +173,7 @@ the parser detect the type.
         return body
 
     def recv_body_into(self, barray):
-        """ Receive the last chunk of the parsed bodyand store the data
+        """ Receive the last chunk of the parsed body and store the data
         in a buffer rather than creating a new string. """
         l = len(barray)
         body = b''.join(self._data.body)

@@ -24,7 +24,7 @@ from .handlers import RpcHandler
 from .exceptions import exception, INTERNAL_ERROR
 
 
-__all__ = ['JSONRPC','JsonProxy']
+__all__ = ['JSONRPC','JsonProxy','LocalJsonProxy']
 
 
 class JsonToolkit(object):
@@ -49,11 +49,12 @@ Design to comply with the `JSON-RPC 2.0`_ Specification.
     _json = JsonToolkit
         
     def get_method_and_args(self, data):
-        req     = self._json.loads(data)
-        method  = req.get('method',None)
-        params  = req.get('params',None)
-        id      = req.get('id',None)
-        version = req.get('jsonrpc',None)
+        if not isinstance(data,dict):
+            data = self._json.loads(data)
+        method  = data.get('method',None)
+        params  = data.get('params',None)
+        id      = data.get('id',None)
+        version = data.get('jsonrpc',None)
         kwargs  = {}
         args    = ()
         if isinstance(params,dict):
@@ -110,18 +111,27 @@ Lets say your RPC server is running at ``http://domain.name.com/``::
     
     def __init__(self, url, name = None, version = None,
                  proxies = None, id = None, data = None,
-                 http = None, timeout = None):
-        self.__url     = url
-        self.__name    = name
+                 client_software = None, **kwargs):
+        self.__url = url
+        self.__name = name
         self.__version = version or self.__class__.default_version
-        self.__id      = id
-        self.__data    = data if data is not None else {}
+        self.client_software = client_software
+        self.__id = id
+        self.__data = data if data is not None else {}
+        self.local = {}
+        self.setup(**kwargs)
+        
+    def setup(self, http = None, timeout = None, proxies = None, **kwargs):
         if not http:
             timeout = timeout if timeout is not None else self.default_timeout
-            self._http    = HttpClient(proxy_info = proxies,
-                                       timeout = timeout)
+            self.local['http'] = HttpClient(proxy_info = proxies,
+                                            timeout = timeout)
         else:
-            self._http    = http
+            self.local['http'] = http
+    
+    @property
+    def http(self):
+        return self.local.get('http')
     
     def __get_path(self):
         return self.__name
@@ -150,9 +160,10 @@ Lets say your RPC server is running at ``http://domain.name.com/``::
         return self.__class__(self.__url,
                               name = name,
                               version = self.__version,
-                              http = self._http,
                               id = id,
-                              data = self.__data)
+                              data = self.__data,
+                              client_software = self.client_software,
+                              **self.local)
 
     def timeit(self, func, times, *args, **kwargs):
         '''Usefull little utility for timing responses from server. The
@@ -171,10 +182,10 @@ usage is simple::
             func(*args, **kwargs)
         return default_timer() - start            
         
-    def __call__(self, *args, **kwargs):
+    def _get_data(self, *args, **kwargs):
         func_name = self.__name
-        fs        = func_name.split('_')
-        raw       = False
+        fs = func_name.split('_')
+        raw = False
         if len(fs) > 1 and fs[0] == self.rawprefix:
             raw = True
             fs.pop(0)
@@ -186,10 +197,15 @@ usage is simple::
                 'id':      self.__id}
         if self.__version:
             data['jsonrpc'] = self.__version
+            
+        return data,raw
+    
+    def __call__(self, *args, **kwargs):
+        data,raw = self._get_data(*args, **kwargs)
         body = self._json.dumps(data)
-        resp = self._http.request(self.__url,
-                                  method = "POST",
-                                  body = body)
+        resp = self.http.request(self.__url,
+                                 method = "POST",
+                                 body = body)
         content = resp.content.decode('utf-8')
         if resp.status_code == 200:
             if raw:
@@ -228,3 +244,18 @@ usage is simple::
                 return res.get('result',None)
         return res
     
+    
+class LocalJsonProxy(JsonProxy):
+    
+    def setup(self, handler = None, environ = None, **kwargs):
+        self.local['handler'] = handler
+        self.local['environ'] = environ
+        
+    def __call__(self, *args, **kwargs):
+        data,raw = self._get_data(*args, **kwargs)
+        hnd = self.local['handler']
+        environ = self.local['environ']
+        method, args, kwargs, id, version = hnd.get_method_and_args(data)
+        request = hnd.request(environ, method, args, kwargs, id, version)
+        return request.process()
+        

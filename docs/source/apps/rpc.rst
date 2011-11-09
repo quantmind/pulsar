@@ -7,6 +7,17 @@ JSON-RPC
 .. automodule:: pulsar.apps.rpc
 
 
+Server Commands
+======================
+
+Included
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. autoclass:: PulsarServerCommands
+   :members:
+   :member-order: bysource
+
+
 
 API
 ===========

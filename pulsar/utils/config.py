@@ -189,6 +189,10 @@ settings via the :meth:`Setting.add_argument`.
             setts[k].add_argument(parser)
         return parser
 
+    def on_start(self):
+        for sett in self.settings.values():
+            sett.on_start()
+    
     @property
     def worker_class(self):
         uri = self.settings['worker_class'].get()
@@ -346,6 +350,9 @@ accepting one positional argument, the value to validate.'''
         if hasattr(self.validator,'__call__'):
             val = self.validator(val)
         self.value = val
+        
+    def on_start(self):
+        pass
 
 
 def validate_bool(val):
@@ -486,12 +493,45 @@ class Timeout(Setting):
 
 class HttpProxyServer(Setting):
     name = "http_proxy"
-    section = "Http Client"
+    section = "Http"
     flags = ["--http-proxy"]
     default = ''
     desc = """\
         The HTTP proxy server to use with HttpClient.    
         """
+        
+class HttpClient(Setting):
+    name = "http_client"
+    section = "Http"
+    flags = ["--http-client"]
+    type = int
+    default = 2
+    desc = """\
+        Set the python parser as default HTTP parser.    
+        """
+    
+    def on_start(self):
+        if self.value is not 2:
+            v = (self.value,)
+            if self.value is not 1:
+                v += (1,)
+            from pulsar.net import setDefaultClient
+            setDefaultClient(v)
+        
+class HttpParser(Setting):
+    name = "http_py_parser"
+    section = "Http"
+    flags = ["--http-py-parser"]
+    action = "store_true"
+    default = False
+    desc = """\
+        Set the python parser as default HTTP parser.    
+        """
+    
+    def on_start(self):
+        if self.value:
+            from pulsar.lib import setDefaultHttpParser, fallback
+            setDefaultHttpParser(fallback.HttpParser)
 
 
 class Debug(Setting):

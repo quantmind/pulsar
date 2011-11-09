@@ -1,8 +1,7 @@
 '''Tests the RPC "calculator" example.'''
-import unittest as test
-
 from pulsar.apps import rpc
 from pulsar.apps.test import test_server
+from pulsar.utils.test import test
 
 from .manage import server
 
@@ -28,7 +27,7 @@ class TestRpcThread(test.TestCase):
         return cls.worker.arbiter.send(cls.worker,'kill_actor',cls.app.mid)
         
     def setUp(self):
-        self.p = rpc.JsonProxy(self.uri)
+        self.p = rpc.JsonProxy(self.uri, timeout = 10)
         
     def testHandler(self):
         s = self.app
@@ -78,6 +77,13 @@ class TestRpcThread(test.TestCase):
         
     def testInternalError(self):
         self.assertRaises(rpc.InternalError,self.p.calc.divide,'ciao','bo')
+        
+    def testpaths(self):
+        '''Ftech a sizable ammount of data'''
+        result = self.p.calc.randompaths(num_paths = 200,
+                                         size = 1000,
+                                         mu = 1, sigma = 2)
+        self.assertTrue(result)
         
 
 class TestRpcProcess(TestRpcThread):

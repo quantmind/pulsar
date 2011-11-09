@@ -53,6 +53,7 @@ When running a test, pulsar looks for two extra method: ``_pre_setup`` and
 ``setUp`` method while if the latter is available, it is run
 just after the ``tearDown`` method.
 '''
+__test__ = False
 import unittest
 import logging
 import os
@@ -103,7 +104,7 @@ is a group of tests specified in a test class.
     plugins = ()
     config_options_include = ('timeout','concurrency','workers','loglevel',
                               'worker_class','debug','task_queue_factory',
-                              'http_proxy')
+                              'http_proxy','http_client','http_py_parser')
     default_logging_level = None
     cfg = {'timeout':300,
            #'concurrency':'thread',
@@ -151,8 +152,8 @@ configuration and plugins.'''
         runner = self.runner
         
         if not modules:
-            raise ValueError('No modules specified. Please pass the modules\
- parameters to the TestSuite Constructor.')
+            modules = ((None,'tests'),)
+
         if hasattr(modules,'__call__'):
             modules = modules(self)
             

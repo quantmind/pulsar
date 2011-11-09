@@ -18,7 +18,8 @@ class HttpHandler(object):
         client, addr = self.socket.accept()
         if client:
             stream = self.iostream(actor = self.worker, socket = client)
-            request = net.HttpRequest(stream, addr)
+            request = net.HttpRequest(stream, addr,
+                                      timeout = self.worker.cfg.keepalive)
             self.handle(request)
 
     def handle(self, request):
@@ -87,7 +88,7 @@ class Keepalive(WsgiSetting):
     flags = ["--keep-alive"]
     validator = pulsar.validate_pos_int
     type = int
-    default = 2
+    default = 5
     desc = """\
         The number of seconds to wait for requests on a Keep-Alive connection.
         

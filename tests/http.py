@@ -1,13 +1,22 @@
 '''Tests the http parser'''
-import unittest as test
+import io
 
 import pulsar
 from pulsar.utils.http import Headers
 from pulsar import lib
+from pulsar.utils.test import test
 
-
+def hostport(host):
+    hp = host.split(':')
+    if len(hp) == 2:
+        return hp[0],int(hp[1])
+    else:
+        return host,80
+    
 
 class httpPythonParser(test.TestCase):
+    host = ('httpbin.ep.io',80)
+    bufsize = io.DEFAULT_BUFFER_SIZE
     _lib = lib.fallback
     
     @classmethod
@@ -16,12 +25,20 @@ class httpPythonParser(test.TestCase):
     
     @classmethod
     def setUpClass(cls):
-        cls.socket = pulsar.create_connection(('httpbin.ep.io',80),
-                                              blocking = True)
+        if cls.worker.cfg.http_proxy:
+            host = hostport(cls.worker.cfg.http_proxy)
+        else:
+            host = cls.host
+        cls.socket = pulsar.create_connection(host, blocking = True)
     
     @classmethod
     def tearDownClass(cls):
         cls.socket.close()
+        
+    def read(self, p):
+        while not p.is_message_complete():
+            data = self.socket.recv(self.bufsize)
+            p.execute(data,len(data))
     
     def testParser(self):
         p = self.get_parser()
@@ -35,11 +52,7 @@ class httpPythonParser(test.TestCase):
         p = self.get_parser()
         s = self.socket
         s.send(b'GET / HTTP/1.1\r\nHost: httpbin.ep.io\r\n\r\n')
-        while True:
-            data = s.recv(1024)
-            if not data:
-                break
-            p.execute(data,len(data))
+        self.read(p)
         self.assertTrue(p.is_headers_complete())
         self.assertTrue(p.is_message_complete())
         headers = Headers(p.get_headers())
@@ -51,11 +64,7 @@ class httpPythonParser(test.TestCase):
         p = self.get_parser()
         s = self.socket
         s.send(b'POST /post HTTP/1.1\r\nHost: httpbin.ep.io\r\n\r\n')
-        while True:
-            data = s.recv(1024)
-            if not data:
-                break
-            p.execute(data,len(data))
+        self.read(p)
         self.assertTrue(p.is_headers_complete())
         self.assertTrue(p.is_message_complete())
         headers = Headers(p.get_headers())

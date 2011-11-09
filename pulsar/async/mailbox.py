@@ -210,15 +210,57 @@ send messages to a :class:`SocketServerMailbox`.'''
 
 
 class SocketServerClient(object):
-    __slots__ = ('sock',)
+    __slots__ = ('sock','buffer')
     def __init__(self, sock):
-        self.sock = sock
+        sock.setblocking(True)
+        self.sock = wrap_socket(sock)
+        self.buffer = bytearray()
         
     def fileno(self):
         return self.sock.fileno()
     
     def __str__(self):
         return '{0} inbox client'.format(self.sock)
+    
+    def recv(self, actor):
+        length = io.DEFAULT_BUFFER_SIZE
+        sock = self.sock
+        buffer = self.buffer
+        try:
+            chunk = sock.recv(length)
+        except socket.error:
+            chunk = None
+        
+        toclose = False
+        if chunk:
+            buffer.extend(chunk)
+            while len(chunk) > length:
+                chunk = sock.recv(length)
+                if not chunk:
+                    break
+                else:
+                    buffer.extend(chunk)
+        else:
+            toclose = True
+            
+        while buffer:
+            p = buffer.find(crlf)
+            if p >= 0:
+                msg = buffer[:p]
+                del buffer[0:p+2]
+                try:
+                    data = pickle.loads(bytes(msg))
+                except pickle.UnpicklingError:
+                    actor.log.error('Could not unpickle message',
+                                    exc_info = True)
+                    continue
+                yield data
+            else:
+                break
+            
+        if toclose:
+            actor.ioloop.remove_handler(self)
+            sock.close()
     
     
 class SocketServerMailbox(Mailbox):
@@ -246,7 +288,6 @@ pipe is created.'''
     
     def on_actor(self):
         self.sock = serverSocket()
-        self.buffer = bytearray()
         if self.type == 'outbox':
             raise ValueError('Trying to use {0} as outbox'\
                              .format(self.__class__.__name__))
@@ -259,46 +300,14 @@ pipe is created.'''
             client,_ = self.sock.accept()
             if not client:
                 self.actor.log.debug('Still no client. Aborting')
-                return
-            client = wrap_socket(client)
-            client.setblocking(True)
+                return ()
+            client = SocketServerClient(client)
             self.clients[client.fileno()] = client
             #self.actor.log.debug('Got inbox event on {0}, {1}'.format(fd,client))
-            ioloop.add_handler(SocketServerClient(client),
-                               self.on_message,
-                               ioloop.READ)
-            return
-        
-        length = io.DEFAULT_BUFFER_SIZE
-        try:
-            chunk = client.recv(length)
-        except socket.error:
-            chunk = None
-        
-        toclose = False
-        if chunk:
-            self.buffer.extend(chunk)
-            while len(chunk) > length:
-                chunk = client.recv(length)
-                if not chunk:
-                    break
-                else:
-                    self.buffer.extend(chunk)
-        else:
-            toclose = True
+            ioloop.add_handler(client, self.on_message, ioloop.READ)
+            return ()
             
-        while self.buffer:
-            p = self.buffer.find(crlf)
-            if p >= 0:
-                msg = self.buffer[:p]
-                del self.buffer[0:p+2]
-                yield pickle.loads(bytes(msg))
-            else:
-                break
-            
-        if toclose:
-            ioloop.remove_handler(client)
-            client.close()
+        return client.recv(self.actor)
         
     def close(self):
         if self.sock:

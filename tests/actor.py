@@ -1,9 +1,9 @@
 '''Tests actor and actor proxies.'''
 from time import sleep
-import unittest as test
 
 import pulsar
 from pulsar.apps.test import AsyncTestCaseMixin
+from pulsar.utils.test import test
 
 
 def sleepfunc():

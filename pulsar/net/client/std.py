@@ -4,7 +4,10 @@ The Standard Library Http Client
 This is a thin layer on top of urllib2 in python2 / urllib in Python 3
 It exposes the httplib1 class from the standard library.
 '''
+import io
+
 import pulsar
+from pulsar.utils.http import Headers
 from pulsar.utils.py2py3 import to_bytestring
 if pulsar.ispy3k:
     # Python 3
@@ -112,15 +115,15 @@ class ResponseStd(HttpClientResponse):
 
 class HttpClientHandler(object):
     '''Http client handler.'''
-    DEFAULT_HEADERS = {'user-agent': pulsar.SERVER_SOFTWARE}
+    URLError = URLError
+    DEFAULT_HEADERS = [('User-agent', pulsar.SERVER_SOFTWARE),
+                       ('Connection', 'Keep-Alive')]
     
-    def headers(self, headers):
-        d = self.DEFAULT_HEADERS.copy()
-        if not headers:
-            return d
-        else:
-            d.update(headers)
-        return d
+    def get_headers(self, headers):
+        d = Headers(self.DEFAULT_HEADERS)
+        if headers:
+            d.extend(headers)
+        return list(d)
     
     def request(self, url, **kwargs):
         '''Constructs and sends a request.
@@ -146,10 +149,15 @@ class HttpClientHandler(object):
 object.'''
         return self.request(url, method = 'GET')
     
+    def post(self, url, body = None):
+        if body:
+            body = to_bytestring(body)
+        return self.request(url, data = body, method = 'POST')
+    
     
 class HttpClient1(HttpClientHandler):
     '''Http handler from the standard library'''
-    URLError = URLError
+    type = 1
     def __init__(self, proxy_info = None,
                  timeout = None, cache = None,
                  headers = None, handle_cookie = False):
@@ -158,11 +166,14 @@ class HttpClient1(HttpClientHandler):
             cj = CookieJar()
             handlers.append(HTTPCookieProcessor(cj))
         self._opener = build_opener(*handlers)
+        self._opener.addheaders = self.get_headers(headers)    
         self.timeout = timeout
         
+    @property
+    def headers(self):
+        return self._opener.addheaders
+    
     def request(self, url, body=None, **kwargs):
-        if body:
-            body = to_bytestring(body)
         try:
             response = self._opener.open(url,data=body,timeout=self.timeout)
         except (HTTPError,URLError) as why:
