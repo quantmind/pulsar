@@ -74,7 +74,6 @@ def make_response(request, response, err = None):
     return response
 
 
-
 class HandlerMixin(object):
       
     def _response_generator(self, request):
@@ -190,10 +189,9 @@ used for by the application for handling requests and sending back responses.
         except:
             pass
         
-    def on_info(self, data):
-        data.update({'request processed': self.nr,
-                     'max requests':self.cfg.max_requests})
-        return data
+    def on_info(self, info):
+        info.update({'request processed': self.nr})
+        return self.app.on_info(self,info)
 
 
 class ApplicationMonitor(HandlerMixin,pulsar.Monitor):
@@ -241,6 +239,10 @@ pulsar applications (subclasses of :class:`Application`).
         
     def on_exit(self):
         self.app.monitor_exit(self)
+        try:
+            self.cfg.worker_exit(self)
+        except:
+            pass
     
     def clean_up(self):
         self.worker_class.clean_arbiter_loop(self,self.ioloop)
@@ -261,10 +263,10 @@ updated actor parameters with information about the application.
                  'impl': c,
                  'name':'{0}-worker'.format(app.name)}
         
-    def _info(self, result = None):
-        info = super(ApplicationMonitor,self)._info(result)
-        info.update({'default_timeout': self.cfg.timeout})
-        return info
+    def on_info(self, info):
+        info.update({'default_timeout': self.cfg.timeout,
+                     'max_requests': self.cfg.max_requests})
+        return self.app.on_info(self,info)
     
 
 class Application(pulsar.LogginMixin):
@@ -551,6 +553,8 @@ By default it returns ``None``.'''
         return None
     
     # MONITOR AND WORKER CALLBACKS
+    def on_info(self, worker, data):
+        return data
     
     def update_worker_paramaters(self, monitor, params):
         '''Called by the :class:`ApplicationMonitor` when

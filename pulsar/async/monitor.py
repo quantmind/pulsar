@@ -8,6 +8,7 @@ from pulsar.utils.py2py3 import iteritems, itervalues
 from .actor import Actor
 from .defer import make_async, Deferred, is_async
 from .proxy import ActorCallBacks
+from .mailbox import Queue
 
 
 __all__ = ['Monitor','PoolMixin']
@@ -163,7 +164,10 @@ You can also create a monitor with a distributed queue as IO mechanism::
     
     def isprocess(self):
         return False
-        
+    
+    def is_monitor(self):
+        return True
+    
     def monitor_task(self):
         '''Monitor specific task called by the :meth:`Monitor.on_task`
 :ref:`actor callback <actor-callbacks>` at each iteration in the event loop.
@@ -259,15 +263,21 @@ The implementation goes as following:
         if not result:
             result = [a.local_info() for a in self.MANAGED_ACTORS.values()] 
         tq = self.ioqueue
-        return {'actor_class':self.actor_class.code(),
+        data = {'actor_class':self.actor_class.code(),
                 'workers': result,
                 'num_actors':len(self.MANAGED_ACTORS),
                 'concurrency':self.cfg.concurrency,
                 'listen':str(self.socket),
                 'name':self.name,
-                'age':self.age,
-                'ioqueue': tq is not None,
-                'ioqueue_size': tq.qsize() if tq else None}
+                'age':self.age}
+        if tq is not None:
+            if isinstance(tq,Queue):
+                tqs = 'multiprocessing.Queue'
+            else:
+                tqs = str(tq)
+            data.update({'ioqueue': tqs,
+                         'ioqueue_size': tq.qsize()})
+        return self.on_info(data)
         
     def get_actor(self, aid):
         '''Delegate get_actor to the arbiter'''

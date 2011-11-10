@@ -349,9 +349,12 @@ class IOQueue(object):
     '''Epoll like class for a IO based on queues.
 The interface is the same as the python epoll_ implementation.
 
+
+
 .. _epoll: http://docs.python.org/library/select.html#epoll-objects'''
     def __init__(self, queue):
         self._queue = queue
+        self._socket = SocketServerMailbox()
         self._fds = set()
         self._empty = ()
         

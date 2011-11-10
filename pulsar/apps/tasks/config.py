@@ -42,3 +42,4 @@ class TaskQueueFactory(pulsar.Setting):
     def get(self):
         return module_attribute(self.value)
         return self.value
+    

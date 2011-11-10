@@ -156,6 +156,7 @@ Here ``a`` is actually a reference to the remote actor.
     DEFAULT_IMPLEMENTATION = 'process'
     MINIMUM_ACTOR_TIMEOUT = 10
     DEFAULT_ACTOR_TIMEOUT = 60
+    ACTOR_NOTIFY_PERIOD = 10
     # Send messages to arbiter not before the difference of
     # now and the last message time is greater than this tolerance
     # times timeout. So for a timeout of 30 seconds, the messages will
@@ -285,6 +286,10 @@ their ids.'''
     
     def is_arbiter(self):
         '''Return ``True`` if ``self`` is the :class:`Arbiter`.'''
+        return False
+    
+    def is_monitor(self):
+        '''Return ``True`` if ``self`` is a :class:`Monitor`.'''
         return False
     
     def __reduce__(self):
@@ -515,10 +520,9 @@ actions:
         if self.impl != 'monitor':
             nt = time()
             if hasattr(self,'last_notified'):
-                if not self.timeout:
-                    tole = self.DEFAULT_ACTOR_TIMEOUT
-                else:
-                    tole = self.ACTOR_TIMEOUT_TOLERANCE*self.timeout
+                timeout = self.timeout or self.DEFAULT_ACTOR_TIMEOUT
+                tole = min(self.ACTOR_TIMEOUT_TOLERANCE*timeout,
+                           self.ACTOR_NOTIFY_PERIOD)
                 if nt - self.last_notified < tole:
                     nt = None
             if nt:

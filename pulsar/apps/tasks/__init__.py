@@ -211,7 +211,7 @@ be scheduled. If so it makes the task requests.
 Check the :meth:`TaskQueue.monitor_task` callback
 for implementation.'''
         return self.local.get('scheduler')
-    
+        
     def get_ioqueue(self):
         '''Return the distributed task queue which produces tasks to
 be consumed by the workers.'''

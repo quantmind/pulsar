@@ -794,9 +794,8 @@ class WorkerExit(Setting):
     validator = validate_callable(1)
     type = "callable"
     default = staticmethod(def_worker_exit)
-    desc = """\
-        Called just after a worker has been exited.
+    desc = """Called just after a worker has been exited.
 
-        The callable needs to accept two instance variables for the Arbiter and
+        The callable needs to accept one variable for the
         the just-exited Worker.
         """

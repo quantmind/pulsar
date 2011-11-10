@@ -1,4 +1,5 @@
 import os
+import logging
 from functools import partial
 
 import pulsar
@@ -12,6 +13,8 @@ from .middleware import is_streamed
 
 __all__ = ['WsgiHandler','WsgiResponse']
 
+
+default_logger = logging.getLogger('pulsar.apps.wsgi')
 
 EMPTY_DICT = {}
 EMPTY_TUPLE = ()
@@ -94,6 +97,11 @@ Instances are callable using the standard WSGI call::
         else:
             self.on_content(content)
         
+    @property
+    def logger(self):
+        return self.environ['pulsar.actor'].log if self.environ\
+                         else default_logger
+                         
     def __call__(self, environ, start_response):
         if self.content is None:
             raise ValueError('No content available')
@@ -146,11 +154,18 @@ This is usually `True` if a generator is passed to the response object."""
         
     def _generator(self):
         content = []
-        for b in generate_content(self._content_generator):
-            if b:
-                content.append(b)
-            else:
-                yield b'' # release the eventloop
+        try:
+            for b in generate_content(self._content_generator):
+                if b:
+                    content.append(b)
+                else:
+                    yield b'' # release the eventloop
+        except:
+            # This is an unhandled exception, It is 500 Server Error
+            self.logger.critical('Unhandled exception during WSGI response',
+                                 exc_info = True)
+            self.status_code = 500
+            content = []
         self.on_content(content)
         self._content_generator = None
         for c in self.content:
@@ -236,11 +251,14 @@ class WsgiHandler(pulsar.LogginMixin):
         return response
                                     
     def process_response(self, environ, start_response, response):
-        for rm in self.response_middleware:
-            rm(environ, start_response, response)
-        if hasattr(response,'__call__'):
-            return response(environ, start_response)
-        return self
+        if hasattr(response,'status_code'):
+            for rm in self.response_middleware:
+                rm(environ, start_response, response)
+            if hasattr(response,'__call__'):
+                return response(environ, start_response)
+        else:
+            pass
+        return response
     
     def get(self, route = '/'):
         '''Fetch a middleware with the given *route*. If it is not found
