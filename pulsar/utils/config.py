@@ -194,14 +194,6 @@ settings via the :meth:`Setting.add_argument`.
             sett.on_start()
     
     @property
-    def worker_class(self):
-        uri = self.settings['worker_class'].get()
-        worker_class = system.load_worker_class(uri)
-        if hasattr(worker_class, "setup_class"):
-            worker_class.setup_class()
-        return worker_class
-    
-    @property
     def workers(self):
         return self.settings['workers'].get()
 

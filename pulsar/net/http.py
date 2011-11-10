@@ -340,7 +340,7 @@ for the server as a whole.
 '''
         stream = self.stream
         ioloop = stream.ioloop
-        max_body = 65536
+        MAX_CHUNK = 65536
         crlf = b'\r\n'
         upgrade = self.__upgrade
         wb = self._write
@@ -354,8 +354,8 @@ for the server as a whole.
                 if b:
                     if self.is_chunked():
                         while b:
-                            tosend = b[:max_body]
-                            b = b[max_body:]
+                            tosend = b[:MAX_CHUNK]
+                            b = b[MAX_CHUNK:]
                             head = ("%X" % len(tosend)).encode('utf-8')
                             chunk = head + crlf + tosend + crlf
                             n = len(chunk)

@@ -1,7 +1,3 @@
-# -*- coding: utf-8 -
-#
-# This file is part of gunicorn released under the MIT license. 
-# See the NOTICE for more information.
 import ctypes
 import signal
 from select import select as _select
@@ -12,7 +8,6 @@ from pulsar.utils.py2py3 import *
 __all__ = ['ALL_SIGNALS',
            'SIG_NAMES',
            'set_proctitle',
-           'load_worker_class',
            'set_owner_process',
            'parse_address',
            'IObase',
@@ -37,16 +32,6 @@ def all_signals():
 ALL_SIGNALS = tuple(all_signals())
 
 
-#if (hasattr(os, "devnull")):
-#    REDIRECT_TO = os.devnull
-#else:
-#    REDIRECT_TO = "/dev/null"#
-#
-#timeout_default = object()
-#CHUNK_SIZE = (16 * 1024)
-#MAX_BODY = 1024 * 132
-
-
 try:
     from setproctitle import setproctitle
     def set_proctitle(title):
@@ -55,23 +40,6 @@ try:
 except ImportError:
     def set_proctitle(title):
         return
-
-
-def load_worker_class(uri, base_loc = 'pulsar.apps'):
-    components = uri.split('.')
-    if len(components) == 1:
-        mod_name = '.'.join((base_loc,uri)) if uri else base_loc
-        try:
-            mod = import_module(mod_name)
-        except ImportError:
-            try:
-                mod = import_module(uri)
-            except ImportError: 
-                raise RuntimeError('Worker class uri "{0}" invalid or\
- not found'.format(uri))
-        return getattr(mod,'Worker')
-    else:
-        return module_attribute(uri, safe = False)
 
 
 def set_owner_process(uid,gid):
@@ -135,7 +103,7 @@ class IObase(object):
         
     
 class EpollProxy(object):
-    '''An epoll like class.'''
+    '''An epoll like class. Idea from tornado.'''
     def __init__(self):
         self.read_fds = set()
         self.write_fds = set()
