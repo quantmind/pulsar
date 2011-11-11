@@ -16,7 +16,7 @@ from .eventloop import IOLoop
 from .proxy import ActorProxy, ActorMessage, process_message,\
                     DEFAULT_MESSAGE_CHANNEL
 from .defer import make_async, raise_failure, async_pair
-from .mailbox import IOQueue
+from .mailbox import IOQueue, InboxThread
 
 
 __all__ = ['is_actor',
@@ -174,6 +174,7 @@ Here ``a`` is actually a reference to the remote actor.
         # Call on_init
         self.__ppid = ppid
         self._impl = impl
+        self._inbox = None
         self._linked_actors = {}
         self.age = age
         self.nr = 0
@@ -257,7 +258,7 @@ longer that timeout.'''
     @property
     def inbox(self):
         '''Messages inbox :class:`Mailbox`.'''
-        return self._impl.inbox
+        return self._inbox
     
     @property
     def outbox(self):
@@ -378,13 +379,12 @@ are registered and the :attr:`Actor.ioloop` is initialised and started.'''
             if self.arbiter:
                 self.setlog(log = LogSelf(self,self.log))
             self.log.info('Starting')
-            # ADD SELF TO THE EVENT LOOP TASKS
+            # GET REQUESTS EVENT LOOP
             self.ioloop = self.get_eventloop()
-            self.ioloop.add_loop_task(self)
+            # REGISTER OUTBOX
             if self.outbox:
                 self.outbox.register(self,inbox=False)
-            if self.inbox:
-                self.inbox.register(self)
+            self._inbox = InboxThread(self)
             self.__tid = current_thread().ident
             self.__pid = os.getpid()
             self.on_start()

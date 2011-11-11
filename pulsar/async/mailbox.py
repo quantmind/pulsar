@@ -2,14 +2,18 @@ import io
 import logging
 import socket
 import time
+import threading
 from multiprocessing.queues import Empty, Queue
 
 from pulsar import create_connection, MailboxError, socket_pair, wrap_socket
 from pulsar.utils.tools import gen_unique_id
 from pulsar.utils.py2py3 import pickle
 
+from .eventloop import IOLoop
 
-__all__ = ['mailbox','Mailbox','SocketServerMailbox','IOQueue','Empty','Queue']
+
+__all__ = ['mailbox','Mailbox','SocketServerMailbox','IOQueue',
+           'Empty','Queue','InboxThread']
 
 crlf = b'\r\n'
 
@@ -57,27 +61,33 @@ the initialization of :class:`ActorImpl`.
 '''
     actor = None
     type = None
+    ioloop = None
     
-    def register(self, actor, inbox = True):
+    def register(self, actor, ioloop = None, inbox = True):
         '''register *actor* with the mailbox.
-In doing so the :attr:`Actor.ioloop`
+In doing so the *ioloop* or the :attr:`Actor.ioloop`
 add the mailbox as read handler which wakes up on events to invoke
 :meth:`on_message`.
-This method is invoked during :meth:`Actor.start` after initialisation
+This method is invoked during :meth:`Actor.start` after initialization
 of the :attr:`Actor.ioloop`'''
         self.actor = actor
-        self.type = 'inbox' if inbox else 'outbox'
+        self.ioloop = ioloop or getattr(actor,'ioloop',None)
+        if self.ioloop:
+            self.type = 'inbox' if inbox else 'outbox'
+        else:
+            self.type = 'outbox'
         self.on_actor()
-        if inbox:
-            actor.ioloop.add_handler(self,
-                                     self.on_message,
-                                     actor.ioloop.READ)
+        # If an inbox add itself to the ioloop handlers
+        if self.type == 'inbox':
+            self.ioloop.add_handler(self,
+                                    self.on_message,
+                                    self.ioloop.READ)
             # the actor need to acknowledge the arbiter
             if actor.impl != 'monitor':
                 address = self.address()
                 actor.log.debug('Sending address {0} to arbiter'\
                                  .format(address))
-                actor.ioloop.add_callback(
+                self.ioloop.add_callback(
                     lambda : actor.arbiter.send(self.actor,
                                     'inbox_address', address))
     
@@ -167,9 +177,11 @@ class QueueMailbox(Mailbox):
 class SocketMailbox(Mailbox):
     '''A socket outbox for :class:`Actor` instances. This outbox
 send messages to a :class:`SocketServerMailbox`.'''
-    def __init__(self, address):
+    def __init__(self, address, proxy = None):
         self._address = address
         self.sock = None
+        if proxy:
+            self.register(proxy)
         
     def name(self):
         return str(self.sock or self._address)
@@ -388,5 +400,34 @@ The interface is the same as the python epoll_ implementation.
     def waker(self):
         return QueueWaker(self._queue)
     
-    
+
+class InboxThread(threading.Thread):
+    '''A Thread (or a dummy) for handling inbox messages.'''
+    def __init__(self, actor):
+        super(InboxThread,self).__init__()
+        self.daemon = True
+        self._inbox = actor._impl.inbox
+        if actor.ioqueue is not None and not actor.is_monitor():
+            self.ioloop = ioloop = IOLoop(pool_timeout = actor._pool_timeout,
+                                          logger = actor.log,
+                                          name = actor.name)
+        else:
+            self.ioloop = None
+            ioloop = actor.ioloop
+        if self._inbox:
+            self._inbox.register(actor, ioloop = ioloop)
+            self.address = self._inbox.address
+        ioloop.add_loop_task(actor)
+        self.start()
         
+    def stop(self):
+        if self.ioloop:
+            self.ioloop.stop()
+            
+    def run(self):
+        if self.ioloop:
+            self.ioloop.start()
+            
+    def clone(self):
+        return None
+    

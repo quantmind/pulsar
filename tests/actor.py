@@ -77,6 +77,6 @@ class TestActorThread(test.TestCase, AsyncTestCaseMixin):
         self.assertFalse(a.aid in self.arbiter.LIVE_ACTORS)
         
 
-class TestActorProcess(TestActorThread):
-    impl = 'process'        
+#class TestActorProcess(TestActorThread):
+#    impl = 'process'        
 

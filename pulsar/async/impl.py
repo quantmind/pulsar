@@ -63,9 +63,7 @@ and are shared between the :class:`Actor` and its
     
     def process_actor(self, arbiter):
         '''Called at initialization, it set up communication layers for the
-actor. In particular here is where the inbox and outbox handlers are created.
-The outbox is either based on a socket or a pipe, while the inbox could be
-a socket, a pipe or a queue.'''
+actor. In particular here is where the outbox handler is created.'''
         kwargs = self.a_kwargs
         monitor = kwargs.pop('monitor',None)
         if arbiter.inbox:
@@ -76,22 +74,7 @@ a socket, a pipe or a queue.'''
                        'monitor':monitor})
         
     def get_inbox(self, arbiter, monitor):
-        '''Create the inbox :class:`Mailbox`.
-
-:parameter arbiter: The :class:`Arbiter`
-:parameter monitor: Optional instance of the :class:`Monitor` supervising
-    the actor.
-:rtype: an instance of :class:`Mailbox`
-
-If a monitor is available, check if it has a task queue.
-If so the mailbox will be based on the queue since the actor
-won't have a select/epoll type ionput/output but one based on
-:class:`IOQueue`.
-'''
-        ioq = self.a_kwargs.get('ioqueue')
-        if ioq:
-            return mailbox(id = 'inbox', queue = ioq)
-        else:
+        if not arbiter or monitor:
             return SocketServerMailbox()
         
     def make_actor(self):
@@ -111,11 +94,6 @@ loop and therefore do not require an inbox.'''
         self.a_kwargs['arbiter'] = arbiter
         self.timeout = 0
         self.make_actor()
-        
-    def get_inbox(self, arbiter, monitor):
-        if not arbiter:
-            # This is the arbiter implementation
-            return SocketServerMailbox()
         
     def proxy_monitor(self):
         return None

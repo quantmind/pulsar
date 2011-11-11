@@ -321,8 +321,7 @@ has registered its inbox address.
 :parameter address: the address for the undrlying remote :attr:`Arbiter.inbox`
 '''
         if address:
-            self.inbox = SocketMailbox(address)
-            self.inbox.register(self,False)
+            self.inbox = SocketMailbox(address, self)
         self.on_address.callback(address)
         
     @property
