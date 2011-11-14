@@ -238,6 +238,8 @@ pipe is created.'''
             
     def close(self):
         self.unregister(self.actor)
+        if self.__hasloop:
+            self.ioloop.stop()
         if self.sock:
             self.ioloop.log.debug('shutting down {0}'.format(self))
             for c in self.clients:
@@ -245,9 +247,8 @@ pipe is created.'''
                     c.close()
                 except:
                     pass
+            self.ioloop.remove_handler(self)
             self.sock.close()
-        if self.__hasloop:
-            self.ioloop.stop()
 
     def run(self):
         if self.__hasloop:

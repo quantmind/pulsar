@@ -13,7 +13,8 @@ __all__ = ['urlparse',
            'bytes_to_str',
            'to_string',
            'parse_authorization_header',
-           'parse_dict_header']
+           'parse_dict_header',
+           'set_cookie']
 
 
 if ispy3k:

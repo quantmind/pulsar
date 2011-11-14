@@ -73,14 +73,16 @@ It can be configured to run as a multiprocess or a multithreaded server.'''
             hnd.response_middleware.extend(resp_middleware)
         return hnd
     
-    def on_config(self):
+    def concurrency(self, cfg):
         if not pulsar.platform.multiProcessSocket():
-            self.cfg.set('concurrency','thread')
+            return 'thread'
+        else:
+            return cfg.concurrency
     
     def get_ioqueue(self):
         '''If the concurrency is thread we create a task queue for processing
 requests in the threaded workers.''' 
-        if self.cfg.concurrency == 'process':
+        if self.concurrency(self.cfg) == 'process':
             return None
         else:
             return pulsar.ThreadQueue()
@@ -98,8 +100,9 @@ requests in the threaded workers.'''
         
     def handle_request(self, worker, request):
         cfg = worker.cfg
-        mt = cfg.concurrency == 'thread' and cfg.workers > 1
-        mp = cfg.concurrency == 'process' and cfg.workers > 1
+        concurrency = self.concurrency(cfg)
+        mt = concurrency == 'thread' and cfg.workers > 1
+        mp = concurrency == 'process' and cfg.workers > 1
         environ = request.wsgi_environ(actor = worker,
                                        multithread = mt,
                                        multiprocess = mp)

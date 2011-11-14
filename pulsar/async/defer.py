@@ -234,14 +234,22 @@ result as argument. Raise exceptions if result is one.'''
 
 
 class Deferred(object):
-    """This is a callback which will be put off until later. The idea is the same
-as the ``twisted.defer.Deferred`` object.
+    """This is a callback which will be put off until later.
+The idea is the same as the ``twisted.defer.Deferred`` object.
 
 Use this class to return from functions which otherwise would block the
-program execution. Instead, it should return a Deferred."""
+program execution. Instead, it should return a Deferred.
+
+.. attribute:: called
+
+    ``True`` if the deferred was called. In this case the asynchronous result
+    is ready and available in the attr:`result`.
+    
+"""
     def __init__(self, rid = None, description = None):
         self._called = False
         self._description = description
+        self._runningCallbacks = False
         self.paused = 0
         self.rid = rid
         self._ioloop = None
@@ -266,48 +274,52 @@ program execution. Instead, it should return a Deferred."""
         self.paused += 1
 
     def unpause(self):
-        """
-        Process all callbacks made since L{pause}() was called.
+        """Process all callbacks made since :meth:`pause` was called.
         """
         self.paused -= 1
-        if self.paused:
-            return
-        if self.called:
-            self._run_callbacks()
+        self._run_callbacks()
     
-    def add_callback(self, callback):
+    def add_callback(self, callback, raise_on_error = False):
         """Add a callback as a callable function.
 The function takes at most one argument, the result passed to the
 :meth:`callback` method."""
         if hasattr(callback,'__call__'):
             self._callbacks.append(callback)
+            if raise_on_error:
+                self._callbacks.append(raise_failure)
             self._run_callbacks()
         return self
         
     def _run_callbacks(self):
-        if self._called and self._callbacks:
-            callbacks = self._callbacks
-            while callbacks:
-                if isinstance(self.result,Failure):
-                    if self.result.should_stop:
-                        rasult.raise_all()
-                callback = callbacks.pop(0)
-                try:
-                    self._runningCallbacks = True
-                    try:
-                        self.result = callback(self.result)
-                    finally:
-                        self._runningCallbacks = False
-                    if isinstance(self.result, Deferred):
-                        # Add a pause and add new callback
-                        self.pause()
-                        self.result.add_callback(self._continue)
-                except:
-                    self.result = update_failure(self.result)
-                
+        if not self.called or self._runningCallbacks:
+            return
+        
+        if self.paused:
+            return
+        
+        while self._callbacks:
             if isinstance(self.result,Failure):
                 if self.result.should_stop:
                     self.result.raise_all()
+            callback = self._callbacks.pop(0)
+            try:
+                self._runningCallbacks = True
+                try:
+                    self.result = callback(self.result)
+                finally:
+                    self._runningCallbacks = False
+                if isinstance(self.result, Deferred):
+                    # Add a pause
+                    self.pause()
+                    # Add a callback to the result to resume callbacks
+                    self.result.add_callback(self._continue)
+                    break
+            except:
+                self.result = update_failure(self.result)
+            
+        if isinstance(self.result,Failure):
+            if self.result.should_stop:
+                self.result.raise_all()
     
     def add_callback_args(self, callback, *args, **kwargs):
         return self.add_callback(\
@@ -316,6 +328,7 @@ The function takes at most one argument, the result passed to the
     def _continue(self, result):
         self.result = result
         self.unpause()
+        return self.result
     
     def callback(self, result = None):
         '''Run registered callbacks with the given *result*.
