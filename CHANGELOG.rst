@@ -1,3 +1,10 @@
+Development
+=======================================
+* It is possible to access the actor :attr:`pulsar.Actor.ioloop` form the
+  current thread ``ioloop`` attribute.
+* Removed outbox and replaced inbox with :attr:`Actor.mailbox`.
+* **70 regression tests**
+
 Version 0.2.1 - 2011-Nov-09
 =======================================
 * windowsservice wrapper handle pulsar command lines options.

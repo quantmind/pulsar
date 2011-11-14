@@ -19,6 +19,7 @@ __all__ = ['SERVER_NAME',
            'process_global',
            'LogginMixin',
            'Synchronized',
+           'LocalMixin',
            'LogSelf',
            'LogInformation']
 

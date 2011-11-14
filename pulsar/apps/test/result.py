@@ -70,10 +70,11 @@ cases. By default it returns *test*.'''
     
     def getDescription(self, test):
         doc_first_line = test.shortDescription()
+        teststr = '{0}.{1}'.format(test.tag,test)
         if self.descriptions and doc_first_line:
-            return '\n'.join((str(test), doc_first_line))
+            return '\n'.join((teststr, doc_first_line))
         else:
-            return str(test)
+            return teststr
     
     
 class TestResultProxy(TestObject):
@@ -101,53 +102,61 @@ class TestStream(TestResultProxy):
         self.showAll = False
         self.dots = True
         
+    def configure(self, cfg):
+        verbosity = cfg.verbosity
+        self.showAll = verbosity > 1
+        self.dots = verbosity == 1
+        
     def handler(self, name):
         return self._handlers.get(name,self.stream)
     
     def startTest(self, test):
+        pass
+    
+    def head(self, test, v):
         if self.showAll:
-            self.stream.write(self.getDescription(test))
-            self.stream.write(" ... ")
+            v = self.getDescription(test) + ' ... ' + v + '\n'
+            self.stream.write(v)
             self.stream.flush()
             
     def addSuccess(self, test):
         if self.showAll:
-            self.stream.writeln("ok")
+            self.head(test,'ok')
         elif self.dots:
             self.stream.write('.')
             self.stream.flush()
             
     def addError(self, test, err):
         if self.showAll:
-            self.stream.writeln("ERROR")
+            self.head(test,"ERROR")
         elif self.dots:
             self.stream.write('E')
             self.stream.flush()
 
     def addFailure(self, test, err):
         if self.showAll:
-            self.stream.writeln("FAIL")
+            self.head(test,"FAIL")
         elif self.dots:
             self.stream.write('F')
             self.stream.flush()
 
     def addSkip(self, test, reason):
         if self.showAll:
-            self.stream.writeln("skipped {0!r}".format(reason))
+            self.head(test,"skipped {0!r}".format(reason))
         elif self.dots:
             self.stream.write("s")
             self.stream.flush()
 
     def addExpectedFailure(self, test, err):
         if self.showAll:
-            self.stream.writeln("expected failure")
+            self.head(test,"expected failure")
         elif self.dots:
             self.stream.write("x")
             self.stream.flush()
 
     def addUnexpectedSuccess(self, test):
         if self.showAll:
-            self.stream.writeln("unexpected success")
+            self.head(test,"unexpected success")
         elif self.dots:
             self.stream.write("u")
             self.stream.flush()

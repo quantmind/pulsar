@@ -46,6 +46,7 @@ class TestActorThread(test.TestCase, AsyncTestCaseMixin):
         yield r
         self.assertEqual(outcome.result,'pong')
         self.assertFalse(r.rid in pulsar.ActorMessage.MESSAGES)
+        yield self.async.assertEqual(self.a.send(arbiter,'ping'),'pong')
         yield self.stop()
     testPing.run_on_arbiter = True
         
@@ -77,6 +78,6 @@ class TestActorThread(test.TestCase, AsyncTestCaseMixin):
         self.assertFalse(a.aid in self.arbiter.LIVE_ACTORS)
         
 
-#class TestActorProcess(TestActorThread):
-#    impl = 'process'        
+class TestActorProcess(TestActorThread):
+    impl = 'process'        
 

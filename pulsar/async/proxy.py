@@ -3,17 +3,17 @@ from time import time
 
 from pulsar import create_connection
 from pulsar.utils.py2py3 import iteritems
+from pulsar.utils.log import LocalMixin
 from pulsar.utils.tools import gen_unique_id
 
 from .defer import Deferred, is_async, make_async, raise_failure, Failure
-from .mailbox import SocketMailbox
+from .mailbox import mailbox
 
 __all__ = ['ActorMessage',
            'ActorProxy',
            'ActorProxyMonitor',
            'get_proxy',
            'ActorCallBacks',
-           'process_message',
            'DEFAULT_MESSAGE_CHANNEL']
 
 
@@ -36,32 +36,6 @@ def get_proxy(obj, safe = False):
         
 def actorid(actor):
     return actor.aid if hasattr(actor,'aid') else actor
-        
-        
-def process_message(receiver, sender, message):
-    '''Process *message* received by *receiver* by performing the message
-action. If an acknowledgment is required, send back the result using
-the receiver eventloop.'''
-    ack = message.ack
-    try:
-        func = receiver.actor_functions.get(message.action,None)
-        if func:
-            ack = getattr(func,'ack',True)
-            result = func(receiver, sender, *message.args, **message.kwargs)
-        else:
-            result = receiver.handle_message(sender, message)
-    except Exception as e:
-        result = Failure(sys.exc_info())
-        if receiver.log:
-            receiver.log.critical('Error while processing message: {0}.'\
-                              .format(e), exc_info=True)
-    finally:
-        if ack:
-            make_async(result).start(receiver.ioloop)\
-            .add_callback(
-                    lambda res : sender.send(receiver, 'callback',\
-                                             message.rid, res))\
-            .add_callback(raise_failure)
 
 
 class ActorCallBacks(Deferred):
@@ -125,9 +99,9 @@ class ActorMessage(Deferred):
     
     def __init__(self, sender, target, action, ack, args, kwargs):
         super(ActorMessage,self).__init__(rid = gen_unique_id()[:8])
-        # Set the event loop to be the one of the sender
+        # Set the event loop to be the one of the sender inbox
         # This way we can yield the deferred without kick starting callbacks
-        self._ioloop = sender.ioloop
+        #self._ioloop = sender.messageloop
         self.sender = actorid(sender)
         self.receiver = actorid(target)
         self.action = action
@@ -148,7 +122,7 @@ class ActorMessage(Deferred):
         #Remove the list of callbacks and lock
         d = self.__dict__.copy()
         d.pop('_lock',None)
-        d.pop('_ioloop',None)
+        #d.pop('_ioloop',None)
         d['_callbacks'] = []
         return d
     
@@ -163,7 +137,7 @@ class ActorMessage(Deferred):
             
             
 
-class ActorProxy(object):
+class ActorProxy(LocalMixin):
     '''This is an important component in pulsar concurrent framework. An
 instance of this class behaves as a proxy for a remote `underlying` 
 :class:`Actor` instance.
@@ -210,9 +184,41 @@ action ``notify`` with parameter ``"hello there!"``.
     def __init__(self, impl):
         self.aid = impl.aid
         self.remotes = impl.remotes
-        self.inbox = impl.inbox.clone() if impl.inbox else None
+        # impl can be an actor or an actor impl,
+        # which does not have the address attribute
+        self.__address = getattr(impl,'address',None)
         self.timeout = impl.timeout
         self.loglevel = impl.loglevel
+        
+    def __get_address(self):
+        return self.__address
+    def __set_address(self, address):
+        '''Callback from the :class:`Arbiter` when the remote underlying actor
+has registered its inbox address.
+
+:parameter address: the address for the undrlying remote :attr:`Arbiter.inbox`
+'''
+        self.__address = address
+        m = self.local.pop('mailbox',None)
+        if m:
+            m.close()
+        if address:
+            self.on_address.callback(address)
+    address = property(__get_address,__set_address)
+    
+    @property
+    def on_address(self):
+        if 'on_address' not in self.local:
+            self.local['on_address'] = Deferred()
+        return self.local['on_address']
+        
+    @property
+    def mailbox(self):
+        '''Actor mailbox'''
+        if self.address:
+            if 'mailbox' not in self.local:
+                self.local['mailbox'] = mailbox(self, self.address)
+            return self.local['mailbox']
         
     def message(self, sender, action, *args, **kwargs):
         ack = False
@@ -241,14 +247,9 @@ When sending a message, first we check the ``sender`` outbox. If that is
 not available, we get the receiver ``inbox`` and hope it can carry the message.
 If there is no inbox either, abort the message passing and log a critical error.
 '''
-        mailbox = sender.outbox
-        # if the sender has no outbox, pick the receiver mailbox an hope
-        # for the best
+        mailbox = self.mailbox        
         if not mailbox:
-            mailbox = self.inbox
-        
-        if not mailbox:
-            sender.log.critical('Cannot send a message to {0}. There is no\
+            sender.log.critical('Cannot send a message to {0}. No\
  mailbox available.'.format(self))
             return
         
@@ -299,7 +300,7 @@ therefore remain in the process where they have been created.
     
 .. attribute:: on_address
 
-    A :class:`Deferred` called back when the inbox address is ready.
+    A :class:`Deferred` called back when the mailbox address is ready.
     You can use this funvtion in the following way::
     
         import pulsar
@@ -312,17 +313,6 @@ therefore remain in the process where they have been created.
         self.info = {'last_notified':time()}
         self.stopping_loops = 0
         super(ActorProxyMonitor,self).__init__(impl)
-        self.on_address = Deferred()
-    
-    def inbox_address(self, address):
-        '''Callback from the :class:`Arbiter` when the remote underlying actor
-has registered its inbox address.
-
-:parameter address: the address for the undrlying remote :attr:`Arbiter.inbox`
-'''
-        if address:
-            self.inbox = SocketMailbox(address, self)
-        self.on_address.callback(address)
         
     @property
     def notified(self):

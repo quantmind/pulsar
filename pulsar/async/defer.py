@@ -251,8 +251,7 @@ program execution. Instead, it should return a Deferred."""
         pass
     
     def __repr__(self):
-        d = self._description or ''
-        return d
+        return self._description or self.__class__.__name__
     
     def __str__(self):
         return self. __repr__()            
@@ -351,7 +350,7 @@ ready it throws a :class:`DeferredFailure` exception'''
                 raise DeferredFailure('Deferred not called')
         return self.result
 
-    def start(self, ioloop, timeout = None):
+    def start(self, ioloop, timeout = 5):
         '''Start running the deferred into an Event loop.
 If the deferred was already started do nothing.
 
@@ -359,6 +358,9 @@ If the deferred was already started do nothing.
 :parameter timeout: Optional timeout in seconds. If the deferred has not
     been called within this time period it will raise a :class:`Timeout`
     exception and it won't add itself to the callbacks.
+    
+    Default: 5
+    
 :rtype: ``self``.
 
 A common usage pattern::

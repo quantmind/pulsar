@@ -97,7 +97,7 @@ It should be instantiated after forking.
     
     def __init__(self, io = None, logger = None,
                  pool_timeout = None, commnads = None,
-                 name = None):
+                 name = None, ready = True):
         self._impl = io or IOpoll()
         self.POLL_TIMEOUT = pool_timeout if pool_timeout is not None\
                                  else self.POLL_TIMEOUT
@@ -117,6 +117,7 @@ It should be instantiated after forking.
         self._blocking_signal_threshold = None
         self._waker = self.get_waker()
         self._on_exit = None
+        self.ready = ready
         self.add_handler(self._waker,
                          lambda fd, events: self._waker.consume(),
                          self.READ)
@@ -249,6 +250,9 @@ so that it can perform its tasks at each event loop. Check the
     
                 self.do_loop_tasks()
                 
+                if not self.ready:
+                    continue
+                
                 if self._blocking_signal_threshold is not None:
                     # clear alarm so it doesn't fire while poll is waiting for
                     # events.
@@ -341,7 +345,7 @@ whether that callback was invoked before or after ioloop.start.'''
         """
         self._timeouts.remove(timeout)
 
-    def add_callback(self, callback):
+    def add_callback(self, callback, wake = True):
         """Calls the given callback on the next I/O loop iteration.
 
         It is safe to call this method from any thread at any time.
@@ -351,7 +355,8 @@ whether that callback was invoked before or after ioloop.start.'''
         control from other threads to the IOLoop's thread.
         """
         self._callbacks.append(callback)
-        self.wake()
+        if wake:
+            self.wake()
 
     def wake(self):
         '''Wake up the eventloop.'''

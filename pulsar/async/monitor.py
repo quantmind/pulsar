@@ -61,6 +61,9 @@ during its life time.
         self.actor_class = actor_class or self.actor_class
         self.when_running = Deferred()
         
+    def ready(self):
+        return True
+    
     def on_start(self):
         self.when_running.callback()
         
@@ -211,9 +214,9 @@ The implementation goes as following:
     def _make_name(self):
         return 'Monitor-{0}({1})'.format(self.actor_class.code(),self.aid)
     
-    def get_eventloop(self):
+    def get_requestloop(self):
         '''Return the arbiter event loop.'''
-        return self.arbiter.ioloop
+        return self.arbiter.requestloop
     
     def _stop_ioloop(self):
         return make_async()

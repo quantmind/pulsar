@@ -37,12 +37,32 @@ class CallableTest(SafeAsync):
             test = self.test
             runner = test.worker.app.runner
             self.test = runner.getTest(test)
+            self.test.async = AsyncAssert(self.test)
         self.test_function = getattr(self.test,self.funcname)
     
     def run(self):
         return self.test_function()
     
 
+class AsyncAssert(object):
+    __slots__ = ('test','name')
+    
+    def __init__(self, test, name = None):
+        self.test = test
+        self.name = name
+        
+    def __getattr__(self, name):
+        return AsyncAssert(self.test,name)
+    
+    def __call__(self, elem, *args):
+        return make_async(elem).add_callback(\
+                        lambda r : self._check_result(r,*args))
+    
+    def _check_result(self, result, *args):
+        func = getattr(self.test,self.name)
+        return func(result,*args)
+    
+    
 def async_arbiter(test, f, max_errors = 1, istest = False):
     '''Check if *test* needs to be run on the arbiter process domain.
 It check if the test function *f* has the attribute *run_on_arbiter*
@@ -82,8 +102,9 @@ class TestRequest(WorkerRequest):
 
     A :class:`unittest.TestCase` class to be run on this request.
 '''
-    def __init__(self, testcls):
+    def __init__(self, testcls, tag):
         self.testcls = testcls
+        self.tag = tag
         
     def __repr__(self):
         return self.testcls.__name__
@@ -97,6 +118,7 @@ a class method ``setUpClass`` is defined. If so it runs it.'''
         runner = worker.app.runner
         loader = unittest.TestLoader()
         testcls = self.testcls
+        testcls.tag = self.tag
         all_tests = loader.loadTestsFromTestCase(testcls)
         
         if all_tests.countTestCases():

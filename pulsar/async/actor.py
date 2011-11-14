@@ -13,10 +13,9 @@ from pulsar.utils.py2py3 import iteritems, itervalues, pickle
 
 
 from .eventloop import IOLoop
-from .proxy import ActorProxy, ActorMessage, process_message,\
-                    DEFAULT_MESSAGE_CHANNEL
+from .proxy import ActorProxy, ActorMessage, DEFAULT_MESSAGE_CHANNEL
 from .defer import make_async, raise_failure, async_pair
-from .mailbox import IOQueue, InboxThread
+from .mailbox import IOQueue, mailbox
 
 
 __all__ = ['is_actor',
@@ -174,7 +173,7 @@ Here ``a`` is actually a reference to the remote actor.
         # Call on_init
         self.__ppid = ppid
         self._impl = impl
-        self._inbox = None
+        self.__mailbox = None
         self._linked_actors = {}
         self.age = age
         self.nr = 0
@@ -195,7 +194,7 @@ Here ``a`` is actually a reference to the remote actor.
         
         # If arbiter available
         if arbiter:
-            self._linked_actors[arbiter.aid] = arbiter
+            #self._linked_actors[arbiter.aid] = arbiter
             self._repr = '{0} {1}'.format(self._name,self.aid)
             if on_task:
                 self.on_task = on_task
@@ -256,14 +255,24 @@ longer that timeout.'''
         return self._repr
         
     @property
-    def inbox(self):
+    def mailbox(self):
         '''Messages inbox :class:`Mailbox`.'''
-        return self._inbox
+        return self.__mailbox
     
     @property
-    def outbox(self):
-        '''Messages outbox :class:`Mailbox`.'''
-        return self._impl.outbox
+    def address(self):
+        return self.__mailbox.address
+    
+    @property
+    def ioloop(self):
+        '''The :class:`IOLoop` for I/O.'''
+        return self.mailbox.ioloop
+    
+    @property
+    def requestloop(self):
+        '''The :class:`IOLoop` to listen for requests. This is different from
+ :attr:`ioloop` for CPU-bound actors.'''
+        return self.__requestloop
         
     @property
     def fullname(self):
@@ -283,7 +292,7 @@ their ids.'''
  operation on the :meth:`Actor.on_task` method, a larger number is better for
  I/O bound actors.
 '''
-        return self.ioloop.POLL_TIMEOUT
+        return self.requestloop.POLL_TIMEOUT
     
     def is_arbiter(self):
         '''Return ``True`` if ``self`` is the :class:`Arbiter`.'''
@@ -292,6 +301,9 @@ their ids.'''
     def is_monitor(self):
         '''Return ``True`` if ``self`` is a :class:`Monitor`.'''
         return False
+    
+    def ready(self):
+        return self.arbiter.aid in self._linked_actors
     
     def __reduce__(self):
         raise pickle.PicklingError('{0} - Cannot pickle Actor instances'\
@@ -345,7 +357,7 @@ iteration of the :attr:`Actor.ioloop`.'''
     
     def running(self):
         '''``True`` if actor is running.'''
-        return self.ioloop.running()
+        return self.requestloop.running()
         #return self._state == self.RUN
     
     def started(self):
@@ -373,6 +385,7 @@ mean it is running.'''
 logging is configured, the :attr:`Actor.inbox` and :attr:`Actor.outbox`
 are registered and the :attr:`Actor.ioloop` is initialised and started.'''
         if self._state == self.INITIAL:
+            ct = current_thread()
             self._state = self.RUN
             self.configure_logging()
             # wrap the logger
@@ -380,25 +393,24 @@ are registered and the :attr:`Actor.ioloop` is initialised and started.'''
                 self.setlog(log = LogSelf(self,self.log))
             self.log.info('Starting')
             # GET REQUESTS EVENT LOOP
-            self.ioloop = self.get_eventloop()
-            # REGISTER OUTBOX
-            if self.outbox:
-                self.outbox.register(self,inbox=False)
-            self._inbox = InboxThread(self)
-            self.__tid = current_thread().ident
+            self.__requestloop = self.get_requestloop()
+            self.__mailbox = mailbox(self)
+            self.__tid = ct.ident
             self.__pid = os.getpid()
+            # Set the ioloop for the thread
+            ct.ioloop = self.ioloop
             self.on_start()
             self._run()
     
-    def get_eventloop(self):
+    def get_requestloop(self):
         ioq = self.ioqueue
+        ready = not ioq
         ioimpl = IOQueue(ioq) if ioq else None
         ioloop = IOLoop(io = ioimpl,
                         pool_timeout = self._pool_timeout,
                         logger = self.log,
-                        name = self.name)
-        
-        #add the ioqueue handler if needed
+                        name = self.name,
+                        ready = ready)
         if ioq:
             ioloop.add_handler('request',
                         lambda fd, request : self.handle_request(request),
@@ -406,22 +418,11 @@ are registered and the :attr:`Actor.ioloop` is initialised and started.'''
         self._init_runner()
         return ioloop
     
-    def message_arrived(self, message):
-        '''A new :class:`ActorMessage` has arrived in the :attr:`Actor.inbox`.
-Here we check the sender and the receiver (it may be not ``self`` if
-``self`` is the  :class:`Arbiter`) and perform the message action.
-If the message needs acknowledgment, send the result back.'''
-        sender = self.get_actor(message.sender)
-        receiver = self.get_actor(message.receiver)
-        if not sender or not receiver:
-            if not sender:
-                self.log.warn('message "{0}" from an unknown actor "{1}"'\
-                              .format(message,message.sender))
-            if not receiver:
-                self.log.warn('message "{0}" for an unknown actor "{1}"'\
-                              .format(message,message.receiver))
-        else:
-            return process_message(receiver,sender,message)
+    def link_actor(self, proxy):
+        self._linked_actors[proxy.aid] = proxy
+        #add the ioqueue handler if needed
+        if proxy == self.arbiter:
+            self.requestloop.ready = True
         
     def handle_message(self, sender, message):
         '''Handle a *message* from a *sender*.'''
@@ -460,14 +461,14 @@ If the message needs acknowledgment, send the result back.'''
     
     def stop(self):
         '''Stop the actor by stopping its :attr:`Actor.ioloop`
-and closing its :attr:`Actor.inbox` orderly. Once everything is closed
+and closing its :attr:`Actor.mailbox`. Once everything is closed
 properly this actor will go out of scope.'''
         if self._state == self.RUN:
             self._state = self.STOPPING
             self.log.info('stopping')
             stp = self.on_stop()
             if not stp:
-                stp = self.ioloop.stop()
+                stp = self.requestloop.stop()
             make_async(stp).add_callback(lambda r : self.close())\
                            .add_callback(raise_failure)
         
@@ -475,13 +476,7 @@ properly this actor will go out of scope.'''
         if self.stopping():
             self._state = self.CLOSE
             self.on_exit()
-            if not self.ioloop.remove_loop_task(self):
-                self.log.warn('"{0}" could not be removed from\
- eventloop'.format(self.fullname))
-            if self.inbox:
-                self.inbox.close()
-            if self.outbox:
-                self.outbox.close()
+            self.mailbox.close()
             self.log.info('exited')
             
     # LOW LEVEL API
@@ -555,10 +550,10 @@ status and performance.'''
                 'process':self.pid,
                 'isprocess':self.isprocess(),
                 'age':self.age}
-        ioloop = self.ioloop
-        if ioloop:
-            data.update({'uptime': time() - ioloop._started,
-                         'event_loops': ioloop.num_loops})
+        requestloop = self.requestloop
+        data.update({'uptime': time() - requestloop._started,
+                     'event_loops': requestloop.num_loops,
+                     'io_loops': self.ioloop.num_loops})
         return self.on_info(data)
         
     ############################################################################
@@ -574,6 +569,14 @@ status and performance.'''
             self.channels[name] = []
         ch = self.channels[name]
         ch.append(request)
+        
+    def actor_mailbox_address(self, actor, address):
+        '''The ``actor`` register its inbox ``address``.'''
+        if address:
+            self.log.debug('Registering actor {0} inbox address {1}'
+                           .format(actor,address))
+            actor.address = address
+    actor_mailbox_address.ack = False
     
     def actor_callback(self, caller, rid, result):
         '''Actor :ref:`remote function <remote-functions>` which sends
@@ -649,7 +652,7 @@ function.'''
     def _run(self):
         '''The run implementation which must be done by a derived class.'''
         try:
-            self.ioloop.start()
+            self.requestloop.start()
         except:
             self.log.critical("Unhandled exception exiting.", exc_info = True)
         finally:

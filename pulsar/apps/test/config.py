@@ -8,6 +8,14 @@ class TestOption(pulsar.Setting):
     app = 'test'
     section = "Test"
     
+
+class TestVerbosity(TestOption):
+    name = 'verbosity'
+    flags = ['--verbosity']
+    type = int
+    default = 1
+    desc = """Test verbosity, 0, 1, 2, 3"""
+    
     
 class TestLabels(TestOption):
     name = "labels"

@@ -230,14 +230,6 @@ the timeout. Stop the arbiter.'''
     ############################################################################
     # ADDITIONAL REMOTES
     ############################################################################
-    
-    def actor_inbox_address(self, actor, address):
-        '''The ``actor`` register its inbox ``address``.'''
-        if address:
-            self.log.debug('Registering actor {0} inbox address {1}'
-                           .format(actor,address))
-        actor.inbox_address(address)
-    actor_inbox_address.ack = False
         
     def actor_kill_actor(self, caller, aid):
         '''Remote function for ``caller`` to kill an actor with id ``aid``'''

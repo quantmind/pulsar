@@ -15,6 +15,17 @@ class TestTest(test.TestCase):
         if worker.isprocess():
             self.assertEqual(worker.pid,os.getpid())
         
+    def testMailbox(self):
+        worker = self.worker
+        mailbox = worker.mailbox
+        self.assertTrue(mailbox)
+        self.assertTrue(mailbox.ioloop)
+        self.assertTrue(mailbox.ioloop.running())
+        self.assertNotEqual(worker.requestloop,mailbox.ioloop)
+        self.assertNotEqual(worker.tid,mailbox.ident)
+        self.assertTrue(mailbox.address)
+        self.assertTrue(mailbox.sock)
+        
 
 class TestPulsar(test.TestCase):
     

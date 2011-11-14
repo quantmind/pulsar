@@ -39,6 +39,7 @@ class TestArbiter(test.TestCase):
         self.assertTrue(arbiter.is_arbiter())
         self.assertEqual(arbiter.impl,'monitor')
         self.assertTrue(arbiter.monitors)
+        self.assertEqual(arbiter.ioloop,arbiter.requestloop)
     testArbiterObject.run_on_arbiter = True
         
         

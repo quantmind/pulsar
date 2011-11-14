@@ -6,7 +6,6 @@ from pulsar.utils.tools import gen_unique_id
 from pulsar.utils.py2py3 import pickle
 
 from .iostream import AsyncIOStream
-from .mailbox import mailbox, IOQueue, SocketServerMailbox
 from .proxy import ActorProxyMonitor
 
 
@@ -47,8 +46,6 @@ and are shared between the :class:`Actor` and its
         self.loglevel = kwargs.pop('loglevel',None)
         self.remotes = actor_class.remotes
         self.a_kwargs = kwargs
-        self.inbox = self.get_inbox(arbiter,kwargs.get('monitor'))
-        self.outbox = None
         self.process_actor(arbiter)
        
     @property
@@ -64,18 +61,9 @@ and are shared between the :class:`Actor` and its
     def process_actor(self, arbiter):
         '''Called at initialization, it set up communication layers for the
 actor. In particular here is where the outbox handler is created.'''
-        kwargs = self.a_kwargs
-        monitor = kwargs.pop('monitor',None)
-        if arbiter.inbox:
-            self.outbox = mailbox(address = arbiter.inbox.address())
-        if monitor:
-            monitor = monitor.proxy
-        kwargs.update({'arbiter':arbiter.proxy,
-                       'monitor':monitor})
-        
-    def get_inbox(self, arbiter, monitor):
-        if not arbiter or monitor:
-            return SocketServerMailbox()
+        monitor = self.a_kwargs.pop('monitor',None)
+        self.a_kwargs.update({'arbiter':arbiter.proxy,
+                              'monitor':monitor.proxy if monitor else None})
         
     def make_actor(self):
         '''create an instance of :class:`Actor`. For standard actors, this

@@ -4,6 +4,7 @@ import logging
 import socket
 import errno
 from collections import deque
+from threading import current_thread
 
 from .defer import Deferred, is_async
 
@@ -83,7 +84,7 @@ manipulated and adapted to pulsar :ref:`concurrent framework <design>`.
             self.ioloop = actor.ioloop
         else:
             self.log = iologger
-            self.ioloop = None
+            self.ioloop = getattr(current_thread(),'ioloop',None)
         
     def blocking(self):
         '''Boolean indication if the socket is blocking.'''
@@ -384,15 +385,17 @@ read from a non-blocking socket.
         but is non-portable.
         """
         self._connecting = True
+        d = make_callback(callback,
+                  description = '{0} Connect callback'.format(self))
+        self._connect_callback = d.callback
         try:
             self.socket.connect(address)
         except socket.error as e:
             # In non-blocking mode connect() always raises an exception
             if e.args[0] not in (errno.EINPROGRESS, errno.EWOULDBLOCK):
                 raise
-        
-        self._connect_callback = self.wrap(callback)
         self._add_io_state(self.ioloop.WRITE)
+        return d
 
     def set_close_callback(self, callback):
         """Call the given callback when the stream is closed."""
