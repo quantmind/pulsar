@@ -18,7 +18,7 @@ def make_callback(callback, description = None):
     if is_async(callback):
         return callback
     d = Deferred(description = description)
-    return d.add_callback(callback)
+    return d.add_callback(callback, True)
 
 
 class IOStream(object):
