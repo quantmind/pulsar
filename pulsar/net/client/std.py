@@ -152,9 +152,7 @@ object.'''
         return self.request(url, method = 'GET')
     
     def post(self, url, body = None):
-        if body:
-            body = to_bytestring(body)
-        return self.request(url, data = body, method = 'POST')
+        return self.request(url, body = body, method = 'POST')
     
     
 class HttpClient1(HttpClientHandler):
@@ -176,8 +174,11 @@ class HttpClient1(HttpClientHandler):
         return self._opener.addheaders
     
     def request(self, url, body=None, **kwargs):
+        if body:
+            body = to_bytestring(body)
         try:
-            response = self._opener.open(url,data=body,timeout=self.timeout)
+            req = Request(url, body, dict(self.headers))
+            response = self._opener.open(req,timeout=self.timeout)
         except (HTTPError,URLError) as why:
             return ResponseStd(why)
         else:

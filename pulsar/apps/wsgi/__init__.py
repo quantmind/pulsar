@@ -115,7 +115,12 @@ requests in the threaded workers.'''
         # Create the response object
         response = HttpResponse(request)
         # Get the data from the WSGI handler
-        data = worker.app_handler(environ, response.start_response)
+        try:
+            data = worker.app_handler(environ, response.start_response)
+        except Exception as e:
+            worker.log.critical('Unhandled WSGI exception', exc_info = True)
+            # An unhadled exception in the handler
+            data = cfg.handle_http_error(environ, response.start_response, e)
         yield response.write(data)
         yield response
     

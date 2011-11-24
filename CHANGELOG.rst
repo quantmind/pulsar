@@ -1,5 +1,6 @@
 Development
 =======================================
+* Added new setting for configuring http responses when an unhandled error occurs (Issue #7). 
 * It is possible to access the actor :attr:`pulsar.Actor.ioloop` form the
   current thread ``ioloop`` attribute.
 * Removed outbox and replaced inbox with :attr:`Actor.mailbox`.

@@ -1,6 +1,9 @@
+import textwrap
+
 import pulsar
 from pulsar import net
 
+from .wsgi import WsgiResponse
 
 __all__ = ['HttpHandler','HttpPoolHandler']
 
@@ -31,6 +34,34 @@ class HttpPoolHandler(HttpHandler):
     def handle(self, request):
         self.worker.put(request)
 
+
+def handle_http_error(environ, start_response, e):
+    status_code = getattr(e,'status_code',500)
+    encoding = 'utf-8'
+    reason = '{0} {1}'.format(status_code,net.responses.get(status_code))
+    mesg = 'An exception has occured while evaluating your request.'
+    content = textwrap.dedent("""\
+    <!DOCTYPE html>
+    <html>
+      <head>
+        <title>{0[reason]}</title>
+      </head>
+      <body>
+        <h1>{0[reason]}</h1>
+        {0[mesg]}
+        <h3>{0[version]}</h3>
+      </body>
+    </html>
+    """).format({"reason": reason, "mesg": mesg,
+                 "version": pulsar.SERVER_SOFTWARE})
+    response = WsgiResponse(status_code,
+                            content.encode(encoding,'replace'),
+                            encoding = encoding,
+                            content_type = 'text/html')
+    response(environ, start_response)
+    return response
+    
+    
 
 ################################################################################
 #    WSGI SETTING
@@ -113,4 +144,16 @@ class ResponseMiddleware(WsgiSetting):
     desc = """\
     Response middleware to add to the wsgi handler    
     """
+    
+    
+class HttpError(WsgiSetting):
+    name = "handle_http_error"
+    validator = pulsar.validate_callable(3)
+    type = "callable"
+    default = staticmethod(handle_http_error)
+    desc = """\
+Render an error occured while serving the WSGI application.
+
+The callable needs to accept three instance variables for the environ
+dictionary, the start_response callable and the error instance."""
     

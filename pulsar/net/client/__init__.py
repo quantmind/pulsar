@@ -45,7 +45,8 @@ class AsyncHttpClient(object):
 
 def HttpClient(cache = None, proxy_info = None,
                timeout = None, type = None, ioloop = None,
-               async = False, handle_cookie = False):
+               async = False, handle_cookie = False,
+               headers = None):
     '''Factory of :class:`HttpClientHandler` instances.
 It can build a synchronous or an asynchronous handler build on top
 of the :class:`pulsar.IOLoop`. 
@@ -73,7 +74,7 @@ of the :class:`pulsar.IOLoop`.
         proxy = getproxies_environment()
         
     c = client(proxy_info = proxy, cache = cache, timeout = timeout,
-               handle_cookie = handle_cookie)
+               handle_cookie = handle_cookie, headers = headers)
     if async:
         return AsyncHttpClient(c, ioloop = ioloop)
     else:
