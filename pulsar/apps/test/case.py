@@ -8,7 +8,7 @@ from pulsar import async_pair, as_failure, CLEAR_ERRORS, WorkerRequest,\
                     make_async, SafeAsync, Failure
 
 
-__all__ = ['TestRequest']
+__all__ = ['TestRequest','run_on_arbiter']
           
  
 class CallableTest(SafeAsync):
@@ -19,7 +19,7 @@ class CallableTest(SafeAsync):
         self.istest = istest
         self.test = test
         self.funcname = funcname
-        
+    
     def __repr__(self):
         return self.funcname
     __str__ = __repr__
@@ -63,36 +63,48 @@ class AsyncAssert(object):
         return func(result,*args)
     
     
-def async_arbiter(test, f, max_errors = 1, istest = False):
-    '''Check if *test* needs to be run on the arbiter process domain.
+def run_on_arbiter(test, f, max_errors = 1, istest = False):
+    '''This internal function is used by the test runner for running a *test*
+on the :class:`pulsar.Arbiter` process domain.
 It check if the test function *f* has the attribute *run_on_arbiter*
-set to ``True``.
+set to ``True``, and if so the test is send to the arbiter. For example::
+
+    class mystest(unittest.TestCase):
+        
+        def testBla(self):
+            ...
+        testBla.run_on_arbiter = True
 
 :parameter test: Instance of a testcase
 :parameter f: function to test
 :parameter max_errors: number of allowed errors in generators.
-:rtype: an asynchronous pair.
+:rtype: an asynchronous pair (check :func:`pulsar.async_pair` for details)
 '''
-    if f is None:
-        return f
-    class_method = isclass(test)
-    if getattr(f, 'run_on_arbiter', False):
-        worker = test.worker
-        test.worker = None
-        try:
-            pcls = pickle.dumps(test)
-        except:
-            f = lambda : Failure(sys.exc_info())
+    try:
+        if f is None:
+            return f
+        class_method = isclass(test)
+        if getattr(f, 'run_on_arbiter', False):
+            worker = test.worker
+            test.worker = None
+            try:
+                pcls = pickle.dumps(test)
+            except:
+                f = lambda : Failure(sys.exc_info())
+            else:
+                c = CallableTest(pcls, class_method, f.__name__,
+                                 max_errors, istest)
+                f = lambda : worker.arbiter.send(worker, 'run', c)
+            finally:
+                test.worker = worker
         else:
-            c = CallableTest(pcls, class_method, f.__name__, max_errors, istest)
-            f = lambda : worker.arbiter.send(worker, 'run', c)
-        finally:
-            test.worker = worker
-    else:
-        c = CallableTest(test, class_method, f.__name__, max_errors, istest)
-        c.prepare()
-        f = c.run
-    return async_pair(f,  max_errors = max_errors)
+            c = CallableTest(test, class_method, f.__name__, max_errors, istest)
+            c.prepare()
+            f = c.run
+        return async_pair(f,  max_errors = max_errors)
+    except:
+        fail = Failure(sys.exc_info())
+        return lambda : async_pair(fail, max_errors = max_errors)
 
 
 class TestRequest(WorkerRequest):
@@ -111,7 +123,7 @@ class TestRequest(WorkerRequest):
     __str__ = __repr__
         
     def run(self, worker):
-        '''Run tests from the :attr:`testcls`. First it checks if 
+        '''Run all tests from the :attr:`testcls`. First it checks if 
 a class method ``setUpClass`` is defined. If so it runs it.'''
         # Reset the runner
         worker.app.local.pop('runner', None)
@@ -126,9 +138,9 @@ a class method ``setUpClass`` is defined. If so it runs it.'''
             should_stop = False
             end = None
             if not getattr(testcls, "__unittest_skip__", False):
-                init = async_arbiter(testcls,getattr(testcls,
+                init = run_on_arbiter(testcls,getattr(testcls,
                                                      'setUpClass',None))
-                end = async_arbiter(testcls,getattr(testcls,
+                end = run_on_arbiter(testcls,getattr(testcls,
                                                     'tearDownClass',None))
                 should_stop = False
             
@@ -173,21 +185,21 @@ a class method ``setUpClass`` is defined. If so it runs it.'''
         
         success = True
         if hasattr(test,'_pre_setup'):
-            result, outcome = async_arbiter(test,test._pre_setup)()
+            result, outcome = run_on_arbiter(test,test._pre_setup)()
             yield result
             success = not self.add_failure(test, runner, outcome.result)
         
         if success:
-            result, outcome = async_arbiter(test,test.setUp)()
+            result, outcome = run_on_arbiter(test,test.setUp)()
             yield result
             if not self.add_failure(test, runner, outcome.result):
                 # Here we perform the actual test
-                result, outcome = async_arbiter(test,testMethod,istest=True)()
+                result, outcome = run_on_arbiter(test,testMethod,istest=True)()
                 yield result
                 success = not self.add_failure(test, runner, outcome.result)
                 if success:
                     test.result = outcome.result
-                result, outcome = async_arbiter(test,test.tearDown)()
+                result, outcome = run_on_arbiter(test,test.tearDown)()
                 yield result
                 if self.add_failure(test, runner, outcome.result):
                     success = False
@@ -195,7 +207,7 @@ a class method ``setUpClass`` is defined. If so it runs it.'''
                 success = False
                 
         if hasattr(test,'_post_teardown'):
-            result, outcome = async_arbiter(test,test._post_teardown)()
+            result, outcome = run_on_arbiter(test,test._post_teardown)()
             yield result
             if self.add_failure(test, runner, outcome.result):
                 success = False

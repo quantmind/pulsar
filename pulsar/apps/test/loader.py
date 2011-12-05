@@ -156,7 +156,7 @@ importing tests.
                 tags = (sname,)
                 subname = sname
                          
-            module = self.import_module(subname,parent)
+            module = self.import_module(subname,subpath,parent)
             if not module:
                 continue
             
@@ -176,16 +176,23 @@ importing tests.
                                               parent = module):
                     yield tag,mod
         
-    def import_module(self, name, parent = None):
-        try:
-            mod = import_module(name)
-            if getattr(mod,'__test__',True):
-                return self.runner.import_module(mod,parent)
-        except ImportError:
-           self.log.error('failed to import module {0}. Skipping.'
-                          .format(name), exc_info = True)
-        except:
-           self.log.critical('Failed to import module {0}. Skipping.'
-                             .format(name), exc_info = True)    
+    def import_module(self, name, path, parent = None):
+        imp = True
+        if os.path.isdir(path):
+            imp = False
+            for sname in os.listdir(path):
+                if sname == '__init__.py':
+                    imp = True
+        if imp:
+            try:
+                mod = import_module(name)
+                if getattr(mod,'__test__',True):
+                    return self.runner.import_module(mod,parent)
+            except ImportError:
+               self.log.error('failed to import module {0}. Skipping.'
+                              .format(name), exc_info = True)
+            except:
+               self.log.critical('Failed to import module {0}. Skipping.'
+                                 .format(name), exc_info = True)    
+            
         
-    

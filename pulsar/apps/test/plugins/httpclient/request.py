@@ -82,6 +82,27 @@ def fake_input(data = None):
     return BytesIO(data)
 
 
+class Response(object):
+    
+    def __init__(self, environ):
+        self.environ = environ
+        self.status = None
+        self.response_headers = None
+        self.exc_info = None
+        self.response = None
+        
+    def __call__(self, status, response_headers, exc_info=None):
+        '''Mock the wsgi start_response callable'''
+        self.status = status
+        self.response_headers = response_headers
+        self.exc_info = exc_info
+        
+    @property
+    def status_code(self):
+        if self.status:
+            return int(self.status.split()[0])
+
+
 class HttpTestClientRequest(object):
     """
     Class that lets you create mock HTTP environment objects for use in testing.
@@ -95,13 +116,20 @@ class HttpTestClientRequest(object):
     Once you have a request object you can pass it to any view function,
     just as if that view had been hooked up using a URLconf.
     """
-    def __init__(self, handler, **defaults):
+    def __init__(self, handler_maker, **defaults):
         self.defaults = defaults
         self.cookies = SimpleCookie()
         self.errors = BytesIO()
-        self.handler = handler
+        self.handler_maker = handler_maker
+        self.response_data = None
+        
+    @property
+    def handler(self):
+        if not hasattr(self,'_handler'):
+            self._handler = self.handler_maker()
+        return self._handler
 
-    def _base_environ(self, **request):
+    def _base_environ(self, ajax = False, **request):
         """
         The base environment for a request.
         """
@@ -124,18 +152,18 @@ class HttpTestClientRequest(object):
         }
         environ.update(self.defaults)
         environ.update(request)
+        if ajax:
+            environ['HTTP_X_REQUESTED_WITH'] = 'XMLHttpRequest'
         return environ
 
     def request(self, **request):
         "Construct a generic wsgi environ object."
-        environ = self._base_environ(**request) 
-        return self.handler(environ,None)
-
-    def start_response(self, status, response_headers, exc_info=None):
-        '''Mock the wsgi start_response callable'''
-        pass
+        environ = self._base_environ(**request)
+        r = Response(environ)
+        r.response = self.handler(environ,r)
+        return r
         
-    def get(self, path, data={}, **extra):
+    def get(self, path, data={}, ajax = False, **extra):
         "Construct a GET request"
         parsed = urlparse(path)
         r = {

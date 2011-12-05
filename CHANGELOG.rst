@@ -1,20 +1,18 @@
 Development
 =======================================
-* Added new setting for configuring http responses when an unhandled error occurs (Issue #7). 
+* Catch errors in :func:`pulsar.apps.test.run_on_arbiter`.
+* Added new setting for configuring http responses when an unhandled error
+  occurs (Issue #7). 
 * It is possible to access the actor :attr:`pulsar.Actor.ioloop` form the
   current thread ``ioloop`` attribute.
 * Removed outbox and replaced inbox with :attr:`Actor.mailbox`.
-* **70 regression tests**
-
-Version 0.2.1 - 2011-Nov-09
-=======================================
 * windowsservice wrapper handle pulsar command lines options.
 * Modified the WsgiResponse handling of streamed content.
 * Tests can be run in python 2.6 if ``unittest2`` package is installed.
 * Fixed chunked transfer encoding.
 * Fixed critical bug in socket server :class:`pulsar.Mailbox`. Each client connections
   has its own buffer.
-* **69 regression tests**
+* **70 regression tests**
 
 Version 0.2.0 - 2011-Nov-05
 =======================================

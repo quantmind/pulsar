@@ -193,8 +193,10 @@ class SafeAsync(object):
         
         
 def async_pair(val, max_errors = None):
-    '''Convert val into an asynchronous pair or a function returning an
-asynchronous pair.
+    '''Convert *val* into an asynchronous pair or a function returning an
+asynchronous pair wich is a two element tuple with the first element being
+an asynchronous representation of *val* and the second a :class:`Deferred`
+which is called back once *val* is ready.
 
 :parameter val: A function or an object.
 :parameter max_errors: maximum number of errors allowed.

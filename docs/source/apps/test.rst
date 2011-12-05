@@ -65,3 +65,8 @@ AsyncTestCaseMixin
    :members:
    :member-order: bysource
    
+   
+run_on_arbiter
+~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. autofunction:: run_on_arbiter
