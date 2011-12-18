@@ -34,6 +34,8 @@ def generate_content(gen):
             yield b''
         elif isinstance(data,bytes):
             yield data
+        elif isinstance(data,str):
+            yield data.encode('utf-8')
         else:
             for b in generate_content(data):
                 yield b

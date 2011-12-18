@@ -6,6 +6,8 @@ from pulsar.utils.http import Headers
 from pulsar import lib
 from pulsar.utils.test import test
 
+BIN_HOST = 'httpbin.org'
+
 def hostport(host):
     hp = host.split(':')
     if len(hp) == 2:
@@ -15,7 +17,7 @@ def hostport(host):
     
 
 class httpPythonParser(test.TestCase):
-    host = ('httpbin.ep.io',80)
+    host = (BIN_HOST,80)
     bufsize = io.DEFAULT_BUFFER_SIZE
     _lib = lib.fallback
     

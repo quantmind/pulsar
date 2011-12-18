@@ -32,8 +32,8 @@ class wsgiTest(test.TestCase):
         self.assertFalse(r.when_ready.called)
         data = list(r)
         self.assertEqual(len(data),10)
-        for a,b in zip(data,stream):
-            self.assertEqual(a,b)
+        for l,a in enumerate(data):
+            self.assertEqual(a,('line {0}\n'.format(l+1)).encode('utf-8'))
         self.assertTrue(r.when_ready.called)
         self.assertFalse(r.is_streamed)
         

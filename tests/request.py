@@ -2,8 +2,10 @@
 from pulsar.net import HttpClient, HttpClients
 from pulsar.utils.test import test
 
-HTTPBIN_URL = 'http://httpbin.ep.io/'
-HTTPSBIN_URL = 'https://httpbin.ep.io/'
+from .http import BIN_HOST
+
+HTTPBIN_URL = 'http://' + BIN_HOST + '/'
+HTTPSBIN_URL = 'https://'+ BIN_HOST + '/'
 
 def httpbin(*suffix):
     """Returns url for HTTPBIN resource."""

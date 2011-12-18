@@ -12,7 +12,7 @@ Development
 * Fixed chunked transfer encoding.
 * Fixed critical bug in socket server :class:`pulsar.Mailbox`. Each client connections
   has its own buffer.
-* **70 regression tests**
+* **71 regression tests**
 
 Version 0.2.0 - 2011-Nov-05
 =======================================
