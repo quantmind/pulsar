@@ -1,4 +1,4 @@
-Development
+Version 0.2.1 - 2011-Dec-18
 =======================================
 * Catch errors in :func:`pulsar.apps.test.run_on_arbiter`.
 * Added new setting for configuring http responses when an unhandled error
