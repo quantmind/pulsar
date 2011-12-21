@@ -252,7 +252,7 @@ the timeout. Stop the arbiter.'''
         Initialize the arbiter. Start listening and set pidfile if needed.
         """
         try:
-            self['cfg'].when_ready(self)
+            self.get('cfg').when_ready(self)
         except:
             pass
         try:

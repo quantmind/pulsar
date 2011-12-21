@@ -32,17 +32,16 @@ class RpcRoot(rpc.PulsarServerCommands,
                                        code = code)
         
         
-def createTaskQueue(name = 'taskqueue', **params):
+def createTaskQueue(**params):
     return tasks.TaskQueue(tasks_path = TASK_PATHS,
-                           name = name,
                            script = __file__,
                            **params)
     
-def server(**params):
+def server(name = 'taskqueue', **params):
     # Create the taskqueue application with an rpc server
-    createTaskQueue(**params)
+    createTaskQueue(name = name, **params)
     return wsgi.createServer(RpcRoot(),
-                             name = 'rpc',
+                             name = '{0}_rpc'.format(name),
                              **params)
 
 

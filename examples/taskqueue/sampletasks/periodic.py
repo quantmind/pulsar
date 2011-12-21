@@ -13,7 +13,7 @@ class TestPeriodic(TestPeriodicJob):
     def __call__(self, consumer):
         return 'OK'
     
-    
+
 class TestPeriodicError(TestPeriodicJob):
     run_every = timedelta(seconds=6)
     def __call__(self, consumer):

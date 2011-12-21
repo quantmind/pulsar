@@ -59,8 +59,8 @@ class ActorLink(object):
         '''Get the :class:`ActorProxy` for the sender.'''
         proxy = sender.get_actor(self.name)
         if not proxy:
-            raise ValueError('Got a request from actor {0} which is\
- not linked with {1}.'.format(sender,self.name))
+            raise ValueError('Got a request from actor "{0}" which is\
+ not linked with "{1}".'.format(sender,self.name))
         return proxy
     
     def get_callback(self, sender, action, *args, **kwargs):

@@ -172,29 +172,34 @@ implemented by the monitor and workers.'''
 
 
 
-class TestTaskRpc(object):
-    concurrency = 'thread'
+class TestTaskRpc(test.TestCase):
+    '''Test a task queue with an RPC server'''
+    concurrency = 'process'
     timeout = 3
     
-    def initTests(self):
-        s = self.__class__._server = server(bind = '127.0.0.1:0',
-                                            concurrency = self.concurrency,
-                                            parse_console = False)
-        monitor = self.arbiter.get_monitor(s.mid)
-        self.wait(lambda : not monitor.is_alive())
-        self.__class__.address = 'http://{0}:{1}'.format(*monitor.address)
+    @classmethod
+    def setUpClass(cls):
+        s = test_server(server,
+                        concurrency = cls.concurrency,
+                        bind = '127.0.0.1:0',
+                        name = 'tqrpc')
+        r,outcome = cls.worker.run_on_arbiter(s)
+        yield r
+        app = outcome.result
+        cls.uri = 'http://{0}:{1}'.format(app.address)
         
-    def endTests(self):
-        monitor = self.arbiter.get_monitor(self._server.mid)
-        monitor.stop()
-        self.wait(lambda : monitor.name in self.arbiter.monitors)
-        self.assertFalse(monitor.is_alive())
-        self.assertTrue(monitor.closed())
-        
+    @classmethod
+    def tearDownClass(cls):
+        return cls.worker.arbiter.send(cls.worker,'kill_actor','tqrpc')
+    
     def setUp(self):
-        self.p = rpc.JsonProxy(self.address, timeout = self.timeout)
+        self.p = rpc.JsonProxy(self.uri, timeout = 10)
         
-    def testCodeTaskRun(self):
+    def testPing(self):
+        r = self.p.ping()
+        self.assertEqual(r,'pong')
+         
+    def __testCodeTaskRun(self):
         r = self.p.evalcode(code = CODE_TEST, N = 3)
         self.assertTrue(r)
         self.assertTrue(r['time_executed'])
@@ -209,11 +214,7 @@ class TestTaskRpc(object):
         self.assertTrue(app.mid in self.arbiter.monitors)
         tmonitor = self.arbiter.monitors[app.mid]
         self.assertEqual(app,tmonitor.app)
-        
-    def _testPing(self):
-        r = self.p.ping()
-        self.assertEqual(r,'pong')
-            
+          
     #def testEvalCode(self):
     #    r = self.p.evalcode(CODE_TEST,10)
     #    self.assertEqual(r,100)
