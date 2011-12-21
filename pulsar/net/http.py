@@ -389,7 +389,7 @@ for the server as a whole.
         if self.is_chunked():
             self.__chunked = True
             headers['Transfer-Encoding'] = 'chunked'
-            del self.headers['content-length']
+            self.headers.pop('content-length',None)
         else:
             self.force_close()
         connection = "keep-alive" if self.should_keep_alive else "close"

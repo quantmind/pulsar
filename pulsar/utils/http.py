@@ -121,6 +121,18 @@ append the value to the list.'''
         f = ''.join(("{0}: {1}\r\n".format(n, v) for n, v in self))
         return '{0}\r\n{1}\r\n'.format(h,f)
     
+    def pop(self, key, *arg):
+        if len(arg) > 1:
+            raise TypeError('pop expected at most 2 arguments, got {0}'\
+                            .format(len(arg)))
+        try:
+            del self[key]
+        except KeyError:
+            if arg:
+                return arg[0]
+            else:
+                raise
+    
     @property
     def vary_headers(self):
         return self.get('vary',[])

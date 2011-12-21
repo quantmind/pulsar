@@ -1,3 +1,9 @@
+Development
+======================
+* Fixed critical bug in :meth:`pulsar.net.HttpResponse.default_headers`
+* Added :meth:`pulsar.utils.http.Headers.pop` method.
+* **71 regression tests**
+
 Version 0.2.1 - 2011-Dec-18
 =======================================
 * Catch errors in :func:`pulsar.apps.test.run_on_arbiter`.
