@@ -119,14 +119,20 @@ class Job(JobBase):
     An instance of a datetime.timedelta or ``None``. If set, it represents the
     time lag after which a task whch has not been processed expires.
     
-    Default ``None``.
+    Default: ``None``.
     
 .. attribute:: can_overlap
 
     Boolean indicating if this job can generate overlapping tasks with same
     input parameters.
     
-    Default ``True``.
+    Default: ``True``.
+    
+.. attribute:: loglevel
+
+    Level of task logging
+    
+    Default: ``None``
     
 .. attribute:: logger
 
@@ -137,6 +143,7 @@ class Job(JobBase):
     type = "regular"
     timeout = None
     expires = None
+    loglevel = None
     logformatter = None
     can_overlap = True
     _ack = True

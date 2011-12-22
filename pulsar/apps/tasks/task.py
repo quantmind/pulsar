@@ -12,6 +12,21 @@ from .states import *
 
 
 __all__ = ['Task','TaskInMemory','nice_task_message']
+
+
+class TaskLoggingHandler(logging.Handler):
+
+    def __init__(self, job, task):
+        self.job = job
+        self.task = task
+        super(TaskLoggingHandler,self).__init__(job.loglevel)
+        
+    def emit(self, record):
+        msg = self.format_msg(record)
+        try:
+            self.task.emit_log(record)
+        except:
+            pass
     
 
 class TaskConsumer(object):
@@ -21,27 +36,28 @@ class TaskConsumer(object):
         self.worker = worker
         self.job = job
         self.task = task
-        self.handler = logging.StreamHandler(StringIO())
-        formatter = job.logformatter
-        if not formatter:
-            h = logging.getLogger().handlers
-            if h:
-                formatter = h[0].formatter
-        if formatter:
-            self.handler.setFormatter(formatter)
-        
-    def get_logs(self):
-        self.job.logger.removeHandler(self.handler)
-        return self.handler.stream.getvalue()
+        if job.loglevel is not None:
+            self.handler = TaskLoggingHandler(job, task)
+            formatter = job.logformatter
+            if not formatter:
+                h = logging.getLogger().handlers
+                if h:
+                    formatter = h[0].formatter
+            if formatter:
+                self.handler.setFormatter(formatter)
+        else:
+            self.handler = None
     
     def __enter__(self):
-        self.job.logger.addHandler(self.handler)
+        if self.handler is not None:
+            self.job.logger.addHandler(self.handler)
         return self
     
     def __exit__(self, type, value, traceback):
         if type:
             self.job.logger.critical('', exc_info = (type, value, traceback))
-        self.task.logs = self.get_logs()
+        if self.handler is not None:
+            self.job.logger.removeHandler(self.handler)
         if type:
             return make_async(self.task.finish(self.worker, exception = value))\
                     .add_callback(lambda r : value)
@@ -204,6 +220,11 @@ its execution'''
         pass
 
     def close(self):
+        pass
+    
+    def emit_log(self, record):
+        '''Implement the task logging emit method. By default it does nothing.
+It can be reimplemented to do something with the log record.'''
         pass
 
 
