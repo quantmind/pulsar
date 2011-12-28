@@ -2,7 +2,6 @@ import logging
 import traceback
 import time
 import signal
-import threading
 import errno
 import bisect
 import socket

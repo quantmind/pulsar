@@ -50,6 +50,14 @@ class TestActorThread(test.TestCase, AsyncTestCaseMixin):
         yield self.stop()
     testPing.run_on_arbiter = True
         
+    def testActorSpawn(self):
+        r = pulsar.spawn(impl = self.impl)
+        self.assertTrue(isinstance(r,pulsar.ActorMessage))
+        r, outcome = pulsar.async_pair(r)
+        yield r
+        ap = outcome.result
+        self.assertTrue(isinstance(ap,pulsar.ActorProxy))        
+        
     def __testInfo(self):
         a = spawn(Actor, impl = self.impl)
         cbk = self.Callback()

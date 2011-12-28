@@ -12,7 +12,7 @@ from pulsar.utils.tools import Pidfile
 from pulsar.utils.py2py3 import itervalues, iteritems
 
 from .impl import actor_impl
-from .actor import Actor
+from .actor import Actor, get_actor, send
 from .monitor import PoolMixin
 from .proxy import ActorCallBacks
 from .defer import ThreadQueue
@@ -24,20 +24,27 @@ __all__ = ['arbiter','spawn','Arbiter']
 
 
 def arbiter(daemonize = False):
+    '''Obtain the arbiter instance.'''
     arbiter = process_global('_arbiter')
     if not arbiter:
-        arbiter = Arbiter.spawn(Arbiter,impl='monitor',daemonize=daemonize)
+        arbiter = Arbiter.spawn(Arbiter,
+                                impl='monitor',
+                                daemonize=daemonize)
         process_global('_arbiter',arbiter,True)
     return arbiter
     
     
-def spawn(actorcls = None, **kwargs):
+def spawn(**kwargs):
     '''Create a new :class:`Actor` instance and return its proxy in the arbiter
 process domain.
 
 :param actorcls: :class:`Actor` or one of its subclasses.
 :rtype: instance of :class:`ActorProxyMonitor`'''
-    return arbiter().spawn(actorcls or Actor, **kwargs)
+    actor = get_actor()
+    if not isinstance(actor,Arbiter):
+        return send('arbiter', 'spawn', **kwargs)
+    else:
+        return actor.spawn(**kwargs)
 
 
 class Arbiter(PoolMixin,Actor):
@@ -94,9 +101,10 @@ Users access the arbiter by the high level api::
         return m
     
     @classmethod
-    def spawn(cls, actorcls, **kwargs):
+    def spawn(cls, actorcls = None, **kwargs):
         '''Create a new :class:`Actor` and return its
 :class:`ActorProxyMonitor`.'''
+        actorcls = actorcls or Actor
         arbiter = process_global('_arbiter')
         cls.lock.acquire()
         try:
@@ -230,7 +238,12 @@ the timeout. Stop the arbiter.'''
     ############################################################################
     # ADDITIONAL REMOTES
     ############################################################################
-        
+    def actor_spawn(self, caller, linked_actors = None, **kwargs):
+        linked_actors = linked_actors if linked_actors is not None else {}
+        linked_actors[caller.aid] = caller.proxy
+        p = self.spawn(linked_actors = linked_actors, **kwargs)
+        return p.proxy
+     
     def actor_kill_actor(self, caller, aid):
         '''Remote function for ``caller`` to kill an actor with id ``aid``'''
         a = self.get_actor(aid)

@@ -195,8 +195,8 @@ in the TaskQueueRpcMixin class'''
         
     @classmethod
     def tearDownClass(cls):
-        yield cls.worker.arbiter.send(cls.worker,'kill_actor',cls._name)
         yield cls.worker.arbiter.send(cls.worker,'kill_actor',cls._name_rpc)
+        yield cls.worker.arbiter.send(cls.worker,'kill_actor',cls._name)
         
     def setUp(self):
         self.p = rpc.JsonProxy(self.uri, timeout = self.timeout)
@@ -250,10 +250,10 @@ in the TaskQueueRpcMixin class'''
         r = self.p.server_info()
         m = dict(((m['name'],m) for m in r['monitors']))
         tq = m[self._name]
-        worker = tq['workers'][0]
-        aid = worker['aid']
-        r = self.p.kill_actor(aid)
-        self.assertTrue(r)
+        for worker in tq['workers']:
+            aid = worker['aid']
+            r = self.p.kill_actor(aid)
+            self.assertTrue(r)
             
 
 class TestTaskRpcThread(TestTaskRpc):

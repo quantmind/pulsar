@@ -112,8 +112,8 @@ class ActorMessage(Deferred):
             self.MESSAGES[self.rid] = self
         
     def __str__(self):
-        return '[{0}] - {1} {2} {3}'.format(self.rid,self.sender,self.action,
-                                            self.receiver)
+        return '[{0} - from {1}] - {3} {2}'.format(self.rid,self.sender,
+                                                   self.action,self.receiver)
     
     def __repr__(self):
         return self.__str__()
@@ -321,6 +321,10 @@ therefore remain in the process where they have been created.
     @property
     def pid(self):
         return self.impl.pid
+    
+    @property
+    def proxy(self):
+        return ActorProxy(self)
     
     def is_alive(self):
         '''True if underlying actor is alive'''

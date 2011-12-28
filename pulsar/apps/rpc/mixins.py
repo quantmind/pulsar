@@ -54,7 +54,7 @@ class PulsarServerCommands(JSONRPC):
         '''Kill and actor which match the id *aid*'''
         # get the worker serving the request
         actor = request.environ['pulsar.actor']
-        actor.arbiter.send(actor,'kill_actor',aid)
+        return actor.arbiter.send(actor,'kill_actor',aid)
         
     def extra_server_info(self, request, info):
         '''Add additional information to the info dictionary.'''

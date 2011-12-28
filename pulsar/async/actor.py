@@ -3,6 +3,7 @@ import os
 import signal
 from time import time
 import random
+import threading
 from multiprocessing import current_process
 from threading import current_thread
 
@@ -22,7 +23,7 @@ __all__ = ['is_actor',
            'Actor',
            'ActorMetaClass',
            'ActorBase',
-           'MAIN_THREAD']
+           'is_mainthread']
 
 
 EMPTY_TUPLE = ()
@@ -32,8 +33,33 @@ EMPTY_DICT = {}
 def is_actor(obj):
     return isinstance(obj,Actor)
 
-    
-MAIN_THREAD = current_thread()
+
+def is_mainthread(thread = None):
+    '''Check if thread is the main thread. If *thread* is not supplied check
+the current thread'''
+    thread = thread if thread is not None else current_thread() 
+    return isinstance(thread, threading._MainThread)
+
+
+def get_actor(thread = None):
+    thread = thread if thread is not None else current_thread()
+    return thread._actor
+
+
+def send(target, msg, **params):
+    '''Send a message *msg* to *target*.
+:parameter target: the actor id or name of the target actor.
+:parameter msg: the remote action to perform.
+:parameter params: dictionary of parameters to pass to the action.
+'''
+    actor = get_actor()
+    if isinstance(target,str):
+        tg = actor.get_actor(target)
+    else:
+        tg = target
+    if not tg:
+        raise ValueError('Cannot send message to {0}'.format(target))
+    return tg.send(actor,msg,**params)            
 
 
 class ActorMetaClass(type):
@@ -169,12 +195,12 @@ Here ``a`` is actually a reference to the remote actor.
                  on_task = None, ioqueue = None,
                  monitors = None, name = None, params = None,
                  age = 0, pool_timeout = None, ppid = None,
-                 **kwargs):
+                 linked_actors = None, **kwargs):
         # Call on_init
         self.__ppid = ppid
         self._impl = impl
         self.__mailbox = None
-        self._linked_actors = {}
+        self._linked_actors = linked_actors or {}
         self.age = age
         self.nr = 0
         self._pool_timeout = pool_timeout
@@ -382,8 +408,8 @@ mean it is running.'''
             
     def start(self):
         '''Called after forking to start the life of the actor. This is where
-logging is configured, the :attr:`Actor.inbox` and :attr:`Actor.outbox`
-are registered and the :attr:`Actor.ioloop` is initialised and started.'''
+logging is configured, the :attr:`Actor.mailbox` is registered and the
+:attr:`Actor.ioloop` is initialised and started.'''
         if self._state == self.INITIAL:
             ct = current_thread()
             self._state = self.RUN
@@ -394,15 +420,20 @@ are registered and the :attr:`Actor.ioloop` is initialised and started.'''
             self.log.info('Starting')
             # GET REQUESTS EVENT LOOP
             self.__requestloop = self.get_requestloop()
+            # Initialize mailbox. It will also initialize the ioloop
             self.__mailbox = mailbox(self)
             self.__tid = ct.ident
             self.__pid = os.getpid()
-            # Set the ioloop for the thread
             ct.ioloop = self.ioloop
             self.on_start()
             self._run()
     
     def get_requestloop(self):
+        '''Internal function called at the start of the actor. It build the
+event loop which will consume requests.
+
+If IO loop is based on a IO queue (CPU bounded workers)
+we bind the :meth:`handle_request` to the loop.'''
         ioq = self.ioqueue
         ready = not ioq
         ioimpl = IOQueue(ioq) if ioq else None
@@ -411,10 +442,14 @@ are registered and the :attr:`Actor.ioloop` is initialised and started.'''
                         logger = self.log,
                         name = self.name,
                         ready = ready)
+        # If IO loop is based on a IO queue (CPU bounded workers)
+        # we bind the :meth:`handle_request` to the loop.
         if ioq:
             ioloop.add_handler('request',
                         lambda fd, request : self.handle_request(request),
                         ioloop.READ)
+        #INJECT SELF INTO THE CURRENT THREAD
+        current_thread()._actor = self
         self._init_runner()
         return ioloop
     
@@ -460,7 +495,7 @@ are registered and the :attr:`Actor.ioloop` is initialised and started.'''
     ############################################################################
     
     def stop(self):
-        '''Stop the actor by stopping its :attr:`Actor.ioloop`
+        '''Stop the actor by stopping its :attr:`Actor.requestloop`
 and closing its :attr:`Actor.mailbox`. Once everything is closed
 properly this actor will go out of scope.'''
         if self._state == self.RUN:
@@ -469,8 +504,8 @@ properly this actor will go out of scope.'''
             stp = self.on_stop()
             if not stp:
                 stp = self.requestloop.stop()
-            make_async(stp).add_callback(lambda r : self.close())\
-                           .add_callback(raise_failure)
+            return make_async(stp).add_callback(lambda r : self.close())\
+                                  .add_callback(raise_failure)
         
     def close(self):
         if self.stopping():
@@ -633,8 +668,7 @@ function.'''
         if system.set_proctitle(proc_name):
             self.log.debug('Set process title to {0}'.format(proc_name))
         #system.set_owner_process(cfg.uid, cfg.gid)
-        current = self.current_thread()
-        if current == MAIN_THREAD:
+        if is_mainthread():
             self.log.debug('Installing signals')
             # The default signal handling function in signal
             sfun = getattr(self,'signal',None)
