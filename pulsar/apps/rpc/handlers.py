@@ -1,7 +1,8 @@
 import sys
 import inspect
 
-from pulsar import make_async, net, NOT_DONE, LogginMixin, to_bytestring
+from pulsar import make_async, net, NOT_DONE, LogginMixin, to_bytestring,\
+                    Failure
 from pulsar.utils.tools import checkarity
 from pulsar.apps.wsgi import WsgiResponse
 
@@ -108,7 +109,12 @@ class RpcResponse(WsgiResponse):
             yield b''
         result = result.result
         try:
-            if isinstance(result,Exception):
+            if isinstance(result,Failure):
+                result.log()
+                result = handler.dumps(request.id,
+                                       request.version,
+                                       error=result.trace[1])
+            elif isinstance(result,Exception):
                 handler.log.error(str(result),exc_info=True)
                 result = handler.dumps(request.id,
                                        request.version,
@@ -176,7 +182,10 @@ BaseHandler = MetaRpcHandler('BaseRpcHandler',(LogginMixin,),{'virtual':True})
 
 
 class RpcHandler(BaseHandler):
-    '''The base class for rpc handlers'''
+    '''The base class for rpc handlers.
+Sub-handlers for prefixed methods (e.g., system.listMethods)
+can be added with :meth:`putSubHandler`. By default, prefixes are
+separated with a dot. Override :attr:`separator` to change this.'''
     serve_as     = 'rpc'
     '''Prefix to callable providing services.'''
     separator    = '.'
@@ -307,17 +316,19 @@ identifier for the client, ``version`` is the version of the RPC protocol.
     
     
 class RpcMiddleware(BaseHandler):
-    '''A WSGI middleware for serving Remote procedure calls (RPC).
+    '''A WSGI_ middleware for serving :class:`RpcHandler`.
 
-Sub-handlers for prefixed methods (e.g., system.listMethods)
-can be added with :meth:`putSubHandler`. By default, prefixes are
-separated with a dot. Override :attr:`separator` to change this.
+.. attribute:: handler
 
+    An instance of :class:`RpcHandler`
+    
 .. attribute:: path
 
     The path where the RPC is located
     
     Default ``None``
+    
+.. _WSGI: http://www.wsgi.org/
 '''
     serve_as     = 'rpc'
     '''Prefix to callable providing services.'''

@@ -108,6 +108,8 @@ send messages to a :class:`SocketServerMailbox`.'''
 
 
 class SocketServerClient(object):
+    '''A client of :class:`Mailbox`. An instance of this class is created
+when a new connection is mad with :class:`Mailbox`.'''
     __slots__ = ('sock','buffer')
     def __init__(self, sock):
         sock.setblocking(True)
@@ -162,9 +164,9 @@ class SocketServerClient(object):
     
     
 class Mailbox(threading.Thread):
-    '''An inbox for :class:`Actor` instances. If an address is provided,
-the communication is implemented using a socket, otherwise a unidirectional
-pipe is created.'''
+    '''An socket inbox for :class:`Actor` instances. If the *actor* is a
+CPU bound worker (an actor which communicate with its monitor via a message
+queue), the mailbox will create its own :class:`IOLoop`.'''
     def __init__(self, actor):
         self.actor = actor
         self.sock = serverSocket()

@@ -5,13 +5,13 @@ from pulsar.apps import tasks
 
 class RunPyCode(tasks.Job):
     '''execute python code in *code*. There must be a *task_function*
-function defined.'''
-    def __call__(self, consumer, code, *args, **kwargs):
+function defined wich accept key-valued parameters only.'''
+    def __call__(self, consumer, code, **kwargs):
         code_local = compile(code, '<string>', 'exec')
         ns = {}
         exec(code_local,ns)
         func = ns['task_function']
-        return func(*args,**kwargs)
+        return func(**kwargs)
         
 
 class Addition(tasks.Job):

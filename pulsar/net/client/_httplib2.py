@@ -1,5 +1,5 @@
 '''\
-The Httplib2 clinet
+The Httplib2 client
 
 This is a thin layer on top of httplib2 python library.
 

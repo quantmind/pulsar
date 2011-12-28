@@ -80,7 +80,7 @@ This script pops up an alert box that says "You said: Hello, world".
         yield b''
         stream = self.stream
         self.on_open()
-        # kick of reading
+        # kick off reading
         self._handle()
         
     @property
@@ -163,7 +163,7 @@ a valid :class:`WebSocket` instance initialise as follow::
 See http://www.w3.org/TR/websockets/ for details on the
 JavaScript interface.
     """
-    VERSIONS = ('8',)
+    VERSIONS = ('8','13')
     WS_KEY = '258EAFA5-E914-47DA-95CA-C5AB0DC85B11'
     #magic string
     STATUS = "101 Switching Protocols"

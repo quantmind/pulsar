@@ -18,10 +18,10 @@ class WebSocketProtocolError(WebSocketError):
 __all__ = ['Frame','WebSocketError','WebSocketProtocolError','Parser']
 
 
-def Frame(version = 8, binary = True, close = False, message = b'',
-          **kwargs):
+def Frame(version = 8, binary = True, close = False, message = b'', **kwargs):
+    '''Return a websocket :class:`Frame` instance'''
     v = int(version)
-    if v == 8:
+    if v in (8,13):
         if close:
             f = Frame8(0x8,b'',fin=True)
         else:

@@ -171,53 +171,89 @@ implemented by the monitor and workers.'''
         #self.assertTrue(ff.total_run_count > nr)
 
 
-
-class TestTaskRpc(object):
-    concurrency = 'thread'
+class TestTaskRpc(test.TestCase):
+    '''Test the Rpc and Taskqueue server, including rpc commands
+in the TaskQueueRpcMixin class'''
+    concurrency = 'process'
     timeout = 3
     
-    def initTests(self):
-        s = self.__class__._server = server(bind = '127.0.0.1:0',
-                                            concurrency = self.concurrency,
-                                            parse_console = False)
-        monitor = self.arbiter.get_monitor(s.mid)
-        self.wait(lambda : not monitor.is_alive())
-        self.__class__.address = 'http://{0}:{1}'.format(*monitor.address)
+    @classmethod
+    def setUpClass(cls):
+        name = 'testtask_'+cls.concurrency
+        name_rpc = name + '_rpc'
+        s = test_server(server,
+                        name = name,
+                        bind = '127.0.0.1:0',
+                        concurrency = cls.concurrency,
+                        parse_console = False)
+        r,outcome = cls.worker.run_on_arbiter(s)
+        yield r
+        cls._name = name
+        cls._name_rpc = name_rpc
+        cls.app = outcome.result
+        cls.uri = 'http://{0}:{1}'.format(*cls.app.address)
         
-    def endTests(self):
-        monitor = self.arbiter.get_monitor(self._server.mid)
-        monitor.stop()
-        self.wait(lambda : monitor.name in self.arbiter.monitors)
-        self.assertFalse(monitor.is_alive())
-        self.assertTrue(monitor.closed())
+    @classmethod
+    def tearDownClass(cls):
+        yield cls.worker.arbiter.send(cls.worker,'kill_actor',cls._name)
+        yield cls.worker.arbiter.send(cls.worker,'kill_actor',cls._name_rpc)
         
     def setUp(self):
-        self.p = rpc.JsonProxy(self.address, timeout = self.timeout)
+        self.p = rpc.JsonProxy(self.uri, timeout = self.timeout)
         
-    def testCodeTaskRun(self):
-        r = self.p.evalcode(code = CODE_TEST, N = 3)
-        self.assertTrue(r)
-        self.assertTrue(r['time_executed'])
-        rr = self.p.get_task(id = r['id'])
-        self.assertTrue(rr)
-        
-    def _testActorLinks(self):
-        s = self._server
-        monitor = self.arbiter.monitors[s.mid]
-        self.assertTrue(monitor.actor_links)
-        app = monitor.actor_links['taskqueue']
-        self.assertTrue(app.mid in self.arbiter.monitors)
-        tmonitor = self.arbiter.monitors[app.mid]
-        self.assertEqual(app,tmonitor.app)
-        
-    def _testPing(self):
+    def testPing(self):
         r = self.p.ping()
         self.assertEqual(r,'pong')
+        
+    def testTaskQueueLink(self):
+        '''Check the task_queue_manager in the rpc handler.'''
+        app = self.app
+        self.assertEqual(app.name,self._name_rpc)
+        callable = app.callable
+        self.assertTrue(callable.handler.task_queue_manager)
+        task_queue_manager = callable.handler.task_queue_manager
+        self.assertEqual(task_queue_manager.name,self._name)
+        
+    def testRunPyCode(self):
+        r = self.p.runpycode(code = CODE_TEST, N = 3)
+        self.assertTrue(r)
+        self.assertTrue(r['time_executed'])
+        sleep(0.2)
+        rr = self.p.get_task(id = r['id'])
+        self.assertTrue(rr)
+        self.assertEqual(rr['status'],tasks.SUCCESS)
+        self.assertEqual(rr['result'],9)
+        
+    def testJobList(self):
+        r = self.p.job_list()
+        self.assertTrue(r)
+        self.assertTrue(isinstance(r,list))
+        d = dict(r)
+        pycode = d['runpycode']
+        self.assertEqual(pycode['type'],'regular')
+        
+    def testRunNewTask(self):
+        r = self.p.run_new_task(jobname = 'addition', a = 40, b = 50)
+        self.assertTrue(r)
+        self.assertTrue(r['time_executed'])
+        sleep(0.1)
+        rr = self.p.get_task(id = r['id'])
+        self.assertTrue(rr)
+        self.assertEqual(rr['status'],tasks.SUCCESS)
+        self.assertEqual(rr['result'],90)
+        
+    def testKillTaskWorker(self):
+        r = self.p.server_info()
+        m = dict(((m['name'],m) for m in r['monitors']))
+        tq = m[self._name]
+        worker = tq['workers'][0]
+        aid = worker['aid']
+        r = self.p.kill_actor(aid)
+        self.assertTrue(r)
             
-    #def testEvalCode(self):
-    #    r = self.p.evalcode(CODE_TEST,10)
-    #    self.assertEqual(r,100)
-    
+
+class TestTaskRpcThread(TestTaskRpc):
+    concurrency = 'thread'
     
     
 class TestSchedulerEntry(test.TestCase):

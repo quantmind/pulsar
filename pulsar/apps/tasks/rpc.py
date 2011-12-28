@@ -15,6 +15,9 @@ class TaskQueueRpcMixin(rpc.JSONRPC):
 To use this mixin, you need to have an :ref:`RPC application <apps-rpc>`
 and a :ref:`task queue <apps-tasks>` application installed in the arbiter.
 
+:parameter taskqueue: set the :attr:`task_queue_manager` attribute. It can be
+    a :class:`pulsar.apps.tasks.TaskQueue` instance or a name of a taskqueue.
+
 .. attribute:: task_queue_manager
 
     A :class:`pulsar.ActorLink` for facilitating the communication
@@ -45,26 +48,11 @@ It exposes the following functions:
     Retrieve a task from its ``id``.
     Returns ``None`` if the task is not available.
 '''
-    
-    task_queue_manager = pulsar.ActorLink('taskqueue')
-    
-    def task_request_parameters(self, request):
-        '''return a dictionary of parameters to be passed to the :class:`Task`
-class during construction. This function can be used to add information about
-the type of request, who made the request and so forth.'''
-        return {}
-    
-    def task_callback(self, request, jobname, ack = True, **kwargs):
-        '''Return a callable for running a task from *jobname* in
-the tsak queue.'''
-        funcname = 'addtask' if ack else 'addtask_noack'
-        request_params = self.task_request_parameters(request)
-        return self.task_queue_manager.get_callback(
-                                            request.environ,
-                                            funcname,
-                                            jobname = jobname,
-                                            task_extra = request_params,
-                                            **kwargs)    
+    def __init__(self, taskqueue, **kwargs):
+        if not isinstance(taskqueue,str):
+            taskqueue = taskqueue.name
+        self.task_queue_manager = pulsar.ActorLink(taskqueue)
+        super(TaskQueueRpcMixin,self).__init__(**kwargs)   
         
     def rpc_job_list(self, request, jobnames = None):
         '''Dictionary of information about the registered jobs. If
@@ -98,6 +86,32 @@ as long as it is registered in the job registry.
                                            'get_task',
                                            id).add_callback(task_to_json)
                            
+    def task_request_parameters(self, request):
+        '''Internal function which returns a dictionary of parameters
+to be passed to the :class:`Task` class during construction.
+
+This function can be overridden to add information about
+the type of request, who made the request and so forth. It must return
+a dictionary and it is called by the internal
+:meth:`TaskQueueRpcMixin.task_callback` method.
+
+By default it returns an empty dictionary.'''
+        return {}
     
+    def task_callback(self, request, jobname, ack = True, **kwargs):
+        '''Internal function which returns a callable for running a task
+from *jobname* in the task queue.'''
+        funcname = 'addtask' if ack else 'addtask_noack'
+        request_params = self.task_request_parameters(request)
+        return self.task_queue_manager.get_callback(
+                                            request.environ,
+                                            funcname,
+                                            jobname = jobname,
+                                            task_extra = request_params,
+                                            **kwargs) 
         
+    def task_run(self, request, jobname, ack = True, **kwargs):
+        '''Call :meth:`TaskQueueRpcMixin.task_callback` method and run
+the callback.'''
+        return self.task_callback(request, jobname, ack = ack, **kwargs)()
     

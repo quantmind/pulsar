@@ -146,9 +146,8 @@ attribute by exposing the :attr:`Setting.name` as attribute.
         return self.__dict__.copy()
     
     def __setstate__(self, state):
-        self.__dict__['settings'] = state['settings']
-        self.__dict__['description'] = state['description']
-        self.__dict__['epilog'] = state['epilog']
+        for k,v in state.items():
+            self.__dict__[k] = v
     
     def __getattr__(self, name):
         if name not in self.settings:

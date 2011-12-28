@@ -15,7 +15,8 @@ class should be sent to be run on the arbiter.'''
 
     def __call__(self, arbiter):
         cfg = arbiter.get('cfg')
-        s = self.callable(parse_console = False,
+        parse_console = self.kwargs.pop('parse_console',False)
+        s = self.callable(parse_console = parse_console,
                           loglevel = cfg.loglevel,
                           **self.kwargs)
         return self.result(s)

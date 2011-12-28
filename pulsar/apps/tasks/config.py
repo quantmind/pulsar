@@ -31,6 +31,19 @@ class TaskPath(pulsar.Setting):
         """
 
 
+#class TaskClass(pulsar.Setting):
+#    #app = 'tasks'
+#    name = "task_queue_factory"
+#    section = "Task Consumer"
+#    flags = ["-q", "--task-queue"]
+#    default = "pulsar.Queue"
+#    desc = """The task queue factory to use."""
+#    
+#    def get(self):
+#        return module_attribute(self.value)
+#        return self.value
+    
+
 class TaskQueueFactory(pulsar.Setting):
     #app = 'tasks'
     name = "task_queue_factory"
