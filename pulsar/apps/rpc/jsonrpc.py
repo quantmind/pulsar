@@ -246,7 +246,8 @@ usage is simple::
     
     
 class LocalJsonProxy(JsonProxy):
-    
+    '''A proxy class to use when accessing the rpc within the rpc application
+domain.'''
     def setup(self, handler = None, environ = None, **kwargs):
         self.local['handler'] = handler
         self.local['environ'] = environ

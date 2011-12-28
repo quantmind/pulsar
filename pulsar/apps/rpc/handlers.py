@@ -23,7 +23,7 @@ def wrap_object_call(fname,namefunc):
 
 
 def wrap_function_call(func,namefunc):
-    
+    #TODO: remove
     def _(self,*args,**kwargs):
         return func(self,*args,**kwargs)
     
