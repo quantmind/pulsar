@@ -214,6 +214,10 @@ in the TaskQueueRpcMixin class'''
         task_queue_manager = callable.handler.task_queue_manager
         self.assertEqual(task_queue_manager.name,self._name)
         
+    def testPing(self):
+        r = self.p.ping()
+        self.assertEqual(r,'pong')
+        
     def testRunPyCode(self):
         r = self.p.runpycode(code = CODE_TEST, N = 3)
         self.assertTrue(r)

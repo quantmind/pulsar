@@ -151,6 +151,8 @@ class TaskResponse(pulsar.Response):
         super(TaskResponse,self).__init__(request)
         
     def close(self):
+        '''Close the task request by invoking the :meth:`Task.finish`
+method.'''
         task = self.request
         return task.finish(self.worker, result = task.result)
 

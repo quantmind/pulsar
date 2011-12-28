@@ -29,9 +29,8 @@ class RpcRoot(rpc.PulsarServerCommands,
         return self.task_run(request, 'runpycode', code = code, **params)
         
         
-def createTaskQueue(name = 'taskqueue', **params):
+def createTaskQueue(**params):
     return tasks.TaskQueue(tasks_path = TASK_PATHS,
-                           name = name,
                            script = __file__,
                            **params)
 
