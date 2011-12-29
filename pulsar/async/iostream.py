@@ -158,24 +158,6 @@ this new callback.
     def on_write(self):
         self._handle_write()
     
-    def _handle_read(self):
-         while True:
-            try:
-                # Read from the socket until we get EWOULDBLOCK or equivalent.
-                # SSL sockets do some internal buffering, and if the data is
-                # sitting in the SSL object's buffer select() and friends
-                # can't see it; the only way to find out if it's there is to
-                # try to read it.
-                result = self.read_to_buffer()
-            except Exception:
-                self.close()
-                return
-            if result == 0:
-                break
-            else:
-                if self.read_from_buffer():
-                    return
-    
     def closed(self):
         '''Boolean indicating if the stream is closed.'''
         return self.socket is None
@@ -211,23 +193,6 @@ but is non-portable.
         """
         self.socket.connect(address)
     
-    def read_from_socket(self):
-        """Attempts to read from the socket.
-Returns the data read or ``None`` if there is nothing to read.
-May be overridden in subclasses."""
-        length = self._read_length or self.read_chunk_size
-        try:
-            chunk = self.socket.recv(length)
-        except socket.error as e:
-            if e.args[0] in (errno.EWOULDBLOCK, errno.EAGAIN):
-                return None
-            else:
-                raise
-        if not chunk:
-            self.close()
-            return None
-        return chunk
-    
     def read_to_buffer(self):
         """Reads from the socket and appends the result to the read buffer.
 Returns the number of bytes read.
@@ -236,35 +201,26 @@ Returns the number of bytes read.
     to read (i.e. the read returns EWOULDBLOCK or equivalent).
     
 On error closes the socket and raises an exception."""
-        try:
-            chunk = self.read_from_socket()
-        except socket.error as e:
-            # ssl.SSLError is a subclass of socket.error
-            self.log.warning("Read error on %d: %s",
-                             self.socket.fileno(), e)
-            self.close()
-            raise
-        if chunk is None:
-            return 0
-        self._read_buffer.append(chunk)
-        if self.read_buffer_size() >= self.max_buffer_size:
-            self.log.error("Reached maximum read buffer size")
-            self.close()
-            raise IOError("Reached maximum read buffer size")
-        return len(chunk)
-    
-    def read_from_buffer(self):
-        """Attempts to complete the currently-pending read from the buffer.
-
-        Returns True if the read was completed.
-        """
-        buffer = self._get_buffer(self._read_buffer)
-        callback = self._read_callback
-        if callback:
-            self._read_callback = None
-            self._read_bytes = None
-            self._run_callback(callback, buffer)
-            return True
+        length = self._read_length or self.read_chunk_size
+        # Read what is available in the buffer
+        while True:
+            try:
+                chunk = self.socket.recv(length)
+            except socket.error as e:
+                self.log.warning("Read error on %d: %s",
+                                 self.socket.fileno(), e)
+                self.close()
+                raise
+            if chunk is None:
+                break 
+            self._read_buffer.append(chunk)
+            if self.read_buffer_size() >= self.max_buffer_size:
+                self.log.error("Reached maximum read buffer size")
+                self.close()
+                raise IOError("Reached maximum read buffer size")
+            if len(chunk) < length:
+                break
+        return self.read_buffer_size()
     
     def read_buffer_size(self):
         '''Size of the reading buffer'''
@@ -288,7 +244,27 @@ On error closes the socket and raises an exception."""
             # Re-raise the exception so that IOLoop.handle_callback_exception
             # can see it and log the error
             raise
-        
+    
+    def _handle_read(self):
+        try:
+            # Read from the socket until we get EWOULDBLOCK or equivalent.
+            # SSL sockets do some internal buffering, and if the data is
+            # sitting in the SSL object's buffer select() and friends
+            # can't see it; the only way to find out if it's there is to
+            # try to read it.
+            result = self.read_to_buffer()
+        except Exception:
+            result = 0
+        if result == 0:
+            self.close()
+        buffer = self._get_buffer(self._read_buffer)
+            
+        callback = self._read_callback
+        if callback:
+            self._read_callback = None
+            self._read_bytes = None
+            self._run_callback(callback, buffer)
+            
     def _handle_write(self):
         tot_bytes = 0
         while self._write_buffer:
@@ -328,7 +304,6 @@ On error closes the socket and raises an exception."""
             self._write_callback = None
             self._run_callback(callback,num_bytes)
 
-        
     def _check_closed(self):
         if not self.socket:
             raise IOError("Stream is closed")

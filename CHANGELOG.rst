@@ -2,7 +2,9 @@ Development
 ======================
 * The current :class:`pulsar.Actor` is always available on the current thread
   ``actor`` attribute.
-* Added global :func:`pulsar.spawn` and :func:``pulsar.send`` functions for
+* Added :func:`pulsar.system.system_info` function which returns system information
+  regarding a running process. It requires psutil_.
+* Added global :func:`pulsar.spawn` and :func:`pulsar.send` functions for
   creating and communicating between :class:`pulsar.Actor`.
 * Fixed critical bug in :meth:`pulsar.net.HttpResponse.default_headers`.
 * Added :meth:`pulsar.utils.http.Headers.pop` method.
@@ -26,7 +28,8 @@ Version 0.2.1 - 2011-Dec-18
 
 Version 0.2.0 - 2011-Nov-05
 =======================================
-* Overall code refactoring and a lot more documentation.
+* A more stable pre-alpha release with overall code refactoring and a lot
+  more documentation.
 * Fully asynchronous applications.
 * Complete re-design of :mod:`pulsar.apps.test` application.
 * Added :class:`pulsar.Mailbox` classes for handling message passing between actors.
@@ -41,8 +44,10 @@ Version 0.2.0 - 2011-Nov-05
 Version 0.1.0 - 2011-Aug-24
 =======================================
 
-* First (very) alpha release.
+* First (very) pre-alpha release.
 * Working for python 2.6 and up, including python 3.
 * Five different applications: HTTP server, RPC server, distributed task queue,
   asynchronous test suite and asynchronous shell.
 * **35 regression tests**
+
+.. _psutil: http://code.google.com/p/psutil/

@@ -1,4 +1,5 @@
 '''Tests the tools and utilities in pulsar.utils.'''
+from pulsar import system
 from pulsar.utils.tools import checkarity
 from pulsar.utils.test import test
 
@@ -61,3 +62,9 @@ class TestArityCheck(test.TestCase):
                          '"f2" has missing "a" parameter.')
         self.assertEqual(checkarity(f2,(),{'a':3,'c':5,'d':6}),None)
  
+
+class TestSystemInfo(test.TestCase):
+    
+    def testMe(self):
+        info = system.system_info(self.worker.pid)
+        self.assertTrue(isinstance(info,dict))

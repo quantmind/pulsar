@@ -1,6 +1,7 @@
 import sys
 import os
 import signal
+import atexit
 from time import time
 import random
 import threading
@@ -20,6 +21,7 @@ from .mailbox import IOQueue, mailbox
 
 
 __all__ = ['is_actor',
+           'get_actor',
            'send',
            'Actor',
            'ActorMetaClass',
@@ -43,6 +45,7 @@ the current thread'''
 
 
 def get_actor(thread = None):
+    '''This function will return the actor running the current thread.'''
     thread = thread if thread is not None else current_thread()
     return thread.actor
 
@@ -473,7 +476,7 @@ if *proxy* is not a class:`ActorProxy` instance raise an exception.'''
     def put(self, request):
         '''Put a request into the actor :attr:`ioqueue` if available.'''
         if self.ioqueue:
-            self.log.debug('Put {0} on IO queue'.format(request))
+            self.log.debug('Put {0} into IO queue'.format(request))
             self.ioqueue.put(('request',request))
         else:
             self.log.error("Trying to put a request on task queue,\
@@ -587,14 +590,16 @@ actions:
     def info(self, full = False):
         '''return A dictionary of information related to the actor
 status and performance.'''
-        data = {'name':self.name,
-                'aid':self.aid[:8],
-                'pid':self.pid,
-                'ppid':self.ppid,
-                'thread':self.tid,
-                'process':self.pid,
-                'isprocess':self.isprocess(),
-                'age':self.age}
+        isp = self.isprocess()
+        data = {'name': self.name,
+                'actor_id': self.aid[:8],
+                'ppid': self.ppid,
+                'thread_id': self.tid,
+                'process_id': self.pid,
+                'isprocess': isp,
+                'age': self.age}
+        if isp:
+            data.update(system.system_info(self.pid))
         requestloop = self.requestloop
         data.update({'uptime': time() - requestloop._started,
                      'event_loops': requestloop.num_loops,
@@ -692,6 +697,7 @@ function.'''
                         signal.signal(sig, func)
                     except ValueError:
                         break
+            #atexit.register(self.stop)
     
     def _run(self):
         '''The run implementation which must be done by a derived class.'''
@@ -711,3 +717,4 @@ function.'''
     handle_int  = _signal_stop
     handle_quit = _signal_stop
     handle_term = _signal_stop
+    handle_break = _signal_stop

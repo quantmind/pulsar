@@ -63,8 +63,7 @@ create your own.'''
             return self.parsercls()
     
         
-    
-class NetResponse(NetStream,pulsar.Response):
+class NetResponse(NetStream, pulsar.Response):
     '''A HTTP parser providing higher-level access to a readable,
 sequential io.RawIOBase object. You can use implementions of
 http_parser.reader (IterReader, StringReader, SocketReader) or 

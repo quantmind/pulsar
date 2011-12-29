@@ -34,6 +34,17 @@ notified when a new connection is made, and then it goes to sleep.
 Pulsar uses the multiprocessing_ module from the standard python library and
 it can be configured to run in multi-processing or multi-threading mode.
 
+Installing
+============
+
+Pulsar is a stand alone python library which works for python 2.6 up to
+python 3.3.
+Installing pulsar can be done via `pip`::
+
+    pip install pulsar
+    
+`easy_install` or downloading the tarball from pypi_.
+
 
 Applications
 ==============
@@ -41,21 +52,48 @@ Pulsar design allows for a host of different applications to be implemented
 in an elegant and efficient way. Out of the box it is shipped with the
 the following
 
-* WSGI server (with a RPC handler too)
+* WSGI server (with a JSON-RPC handler too)
 * A distributed task queue.
 * Pulsar shell for asynchronous scripting (posix only).
 * Asynchronous testing suite.
+
 
 Design
 =============
 Pulsar internals are based on `actors primitive`_. Actors are the atoms of 
 pulsar's concurrent computation,they do not share state between them,
-communication is achieved via asynchronous inter-process message passing, implemented using
-the standard library ``multiprocessing.Queue`` class.
+communication is achieved via asynchronous inter-process message passing,
+implemented using the standard python socket library.
 Two special classes of actors are the ``Arbiter``, used as a singletone,
 and the ``Monitor``, a manager of several actors performing similar functions.
 
 More information about design and philosophy in the documentations.  
+
+
+Add-ons
+=========
+Pulsar check if some additional python libraries are available, either
+during installation or at runtime, and uses them to add new functionalities.
+
+* setproctitle_. If installed, pulsar will used to change the processes names.
+  To install::
+
+    pip install setproctitle
+    
+* psutil_. If installed, a ``system`` key is available in the dictionary returned by
+  Actor info method.
+
+Running Tests
+==================
+Pulsar test suite uses the pulsar test applications. If you are using python 2.6
+you need to install unittest2_. To run the tests::
+
+    python runtests.py
+
+For options and help type::
+
+    python runtests.py -h
+    
 
 Kudos
 ============
@@ -71,12 +109,7 @@ many other open-source efforts.
 .. _celery: http://celeryproject.org/
 .. _multiprocessing: http://docs.python.org/library/multiprocessing.html
 .. _`actors primitive`: http://en.wikipedia.org/wiki/Actor_model
-
-Running Tests
-==================
-Pulsar test suite uses the pulsar test applications. If you are using python 2.6
-you need to install unittest2_. To run the tests::
-
-    python runtests.py
-
 .. _unittest2: http://pypi.python.org/pypi/unittest2
+.. _setproctitle: http://code.google.com/p/py-setproctitle/
+.. _psutil: http://code.google.com/p/psutil/
+.. _pypi: http://pypi.python.org/pypi/pulsar

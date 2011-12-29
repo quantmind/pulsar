@@ -227,50 +227,6 @@ Exceptions
    :member-order: bysource
    
 
-.. _api-apps:
-
-Applications
-======================
-
-Application
-~~~~~~~~~~~~~~~~~
-
-.. autoclass:: pulsar.Application
-   :members:
-   :member-order: bysource
-   
-Application Worker
-~~~~~~~~~~~~~~~~~~~~~
-   
-.. autoclass:: pulsar.Worker
-   :members:
-   :member-order: bysource
-
-
-Application Monitor
-~~~~~~~~~~~~~~~~~~~~~
-   
-.. autoclass:: pulsar.ApplicationMonitor
-   :members:
-   :member-order: bysource
-   
-   
-.. _api-config:
-
-Config
-~~~~~~~~~~~~~~~~~
-
-.. autoclass:: pulsar.Config
-   :members:
-   :member-order: bysource
-   
-Setting
-~~~~~~~~~~~~~~~~~
-
-.. autoclass:: pulsar.Setting
-   :members:
-   :member-order: bysource
-
 .. _net:
 
 .. module:: pulsar.net

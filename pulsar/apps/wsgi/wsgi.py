@@ -88,7 +88,7 @@ Instances are callable using the standard WSGI call::
         self.when_ready = Deferred()
         
         if content is None:
-            content = self.get_content()
+            content = ()
         elif isinstance(content, bytes):
             content = (content,)
         
@@ -97,7 +97,7 @@ Instances are callable using the standard WSGI call::
         if is_streamed(content):
             self._content_generator = content
         else:
-            self.on_content(content)
+            self.content = content
         
     @property
     def logger(self):
@@ -114,9 +114,6 @@ Instances are callable using the standard WSGI call::
         start_response(self.status, headers)
         return self
         
-    def get_content(self):
-        return ()
-    
     @property
     def response(self):
         return responses.get(self.status_code)
@@ -128,16 +125,7 @@ Instances are callable using the standard WSGI call::
     def __get_content(self):
         return self._content
     def __set_content(self, content):
-        cl = 0
-        if content is None:
-            content = ()
-        else:
-            if isinstance(content,bytes):
-                content = (content,)
-            for c in content:
-                cl += len(c)
-        self.headers['Content-Length'] = str(cl)
-        self._content = content
+        self.on_content(content)
     content =  property(__get_content, __set_content)
     
     def __str__(self):
@@ -155,6 +143,7 @@ This is usually `True` if a generator is passed to the response object."""
         return is_streamed(self.content)
         
     def _generator(self):
+        #Called by the __iter__ method when the response is streamed.
         content = []
         try:
             for b in generate_content(self._content_generator):
@@ -162,14 +151,10 @@ This is usually `True` if a generator is passed to the response object."""
                     content.append(b)
                 else:
                     yield b'' # release the eventloop
-        except:
-            # This is an unhandled exception, It is 500 Server Error
-            self.logger.critical('Unhandled exception during WSGI response',
-                                 exc_info = True)
-            self.status_code = 500
-            content = []
-        self.on_content(content)
-        self._content_generator = None
+        except Exception as e:
+            pulsar.get_actor().cfg.handle_http_error(self, e)
+        else:
+            self.content = content
         for c in self.content:
             yield c
                 
@@ -184,10 +169,21 @@ This is usually `True` if a generator is passed to the response object."""
         return len(self.content)
         
     def on_content(self, content):
+        cl = 0
+        if content is None:
+            content = ()
+        else:
+            if isinstance(content,bytes):
+                content = (content,)
+            for c in content:
+                cl += len(c)
+        self.headers['Content-Length'] = str(cl)
         if self.content_type:
             self.headers['Content-type'] = self.content_type
-        self.content = content
-        self.when_ready.callback(self)
+        self._content_generator = None
+        self._content = content
+        if not self.when_ready.called:
+            self.when_ready.callback(self)
     
     def set_cookie(self, key, **kwargs):
         """

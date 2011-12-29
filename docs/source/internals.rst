@@ -5,6 +5,18 @@
 Internals
 =======================
 
+System
+=================
+
+.. _internals-system:
+
+.. module:: pulsar.utils.system
+
+System info
+~~~~~~~~~~~~~~~~~
+
+.. autofunction:: system_info
+
 
 .. _internals-tools:
 
@@ -19,7 +31,7 @@ checkarity
 .. autofunction:: checkarity
 
 
-retry_over_time
+retry over time
 ~~~~~~~~~~~~~~~~~
 
 .. autofunction:: retry_over_time

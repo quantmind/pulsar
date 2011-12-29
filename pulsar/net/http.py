@@ -93,6 +93,8 @@ adds the following 2 pulsar information:
 * ``pulsar.actor`` the :class:`pulsar.Actor` serving the request.
 """
         parser = self.parser
+        if not parser.is_headers_complete():
+            return None
         version = parser.get_version()
         input = BytesIO()
         for b in parser.get_body():
@@ -125,6 +127,7 @@ adds the following 2 pulsar information:
         url_scheme = "http"
         client = self.client_address or "127.0.0.1"
         forward = client
+        server = None
         url_scheme = "http"
         script_name = os.environ.get("SCRIPT_NAME", "")
 
@@ -170,7 +173,7 @@ adds the following 2 pulsar information:
         environ['REMOTE_ADDR'] = remote[0]
         environ['REMOTE_PORT'] = str(remote[1])
 
-        if is_string(server):
+        if server is not None:
             server =  server.split(":")
             if len(server) == 1:
                 if url_scheme == "http":
@@ -179,13 +182,14 @@ adds the following 2 pulsar information:
                     server.append("443")
                 else:
                     server.append('')
-        environ['SERVER_NAME'] = server[0]
-        environ['SERVER_PORT'] = server[1]
+            environ['SERVER_NAME'] = server[0]
+            environ['SERVER_PORT'] = server[1]
     
         path_info = parser.get_path()
-        if script_name:
-            path_info = path_info.split(script_name, 1)[1]
-        environ['PATH_INFO'] = unquote(path_info)
+        if path_info is not None:
+            if script_name:
+                path_info = path_info.split(script_name, 1)[1]
+            environ['PATH_INFO'] = unquote(path_info)
         environ['SCRIPT_NAME'] = script_name
     
         return environ
@@ -197,13 +201,19 @@ adds the following 2 pulsar information:
     def _handle(self, data = None):
         if data is not None:
             self.parser.execute(data,len(data))
+        complete = self.parser.is_message_complete()
         if not self.parser.is_headers_complete():
-            self.stream.read(callback = self._handle)
+            if complete:
+                # There is no more data. we stop here.
+                self.on_headers.callback(None)
+                self.on_body.callback(None)
+            else:
+                self.stream.read(callback = self._handle)
         else:
             headers = self.parser.get_headers()
             if not self.on_headers.called:
                 self.on_headers.callback(headers)
-            if not self.parser.is_message_complete():
+            if not complete:
                 try:
                     cl = int(headers.get("content-length") or 0)
                 except:
@@ -217,7 +227,7 @@ adds the following 2 pulsar information:
                     else:
                         self.stream.read(callback = self._handle)
                 else:
-                    self.parser.execute(data,0)
+                    self.parser.execute(b'',0)
                     self._handle()
             elif not self.on_body.called:
                 self.on_body.callback(self.parser.get_body())
@@ -254,6 +264,9 @@ https://github.com/joyent/node/blob/master/lib/http.js
         self.__headers_sent = False
         self.__chunked = None
         
+    def __repr__(self):
+        return '{0}({1})'.format(self.__class__.__name__,self.status) 
+    
     @property
     def status(self):
         return self.__status
@@ -295,15 +308,6 @@ speaking HTTP/1.1 or newer and there was no Content-Length header set.'''
     called by an error handler. 
     
 :rtype: The :meth:`HttpResponse.write` callable.
-    
-    
-New WSGI applications and frameworks should not use the write() callable
-if it is possible to avoid doing so. The write() callable is strictly a hack
-to support imperative streaming APIs.
-In general, applications should produce their output via their returned
-iterable, as this makes it possible for web servers to interleave other
-tasks in the same Python thread, potentially providing better throughput
-for the server as a whole.
 
 .. _pep3333: http://www.python.org/dev/peps/pep-3333/
 .. _2616: http://www.faqs.org/rfcs/rfc2616.html
@@ -336,6 +340,13 @@ for the server as a whole.
         '''WSGI write function returned by the
 :meth:`HttpResponse.start_response` function.
 
+New WSGI applications and frameworks should not use this callable
+if it is possible to avoid doing so.
+In general, applications should produce their output via their returned
+iterable, as this makes it possible for web servers to interleave other
+tasks in the same Python thread, potentially providing better throughput
+for the server as a whole.
+
 :parameter data: an iterable over bytes.
 '''
         stream = self.stream
@@ -367,6 +378,8 @@ for the server as a whole.
             else:
                 # release the loop
                 yield NOT_DONE
+        # We make sure we send the headers
+        yield self.send_headers()
     
     def _write(self, data, callback = None):
         return self.stream.write(data,callback)

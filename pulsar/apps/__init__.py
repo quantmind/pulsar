@@ -16,6 +16,7 @@ from pulsar.utils.config import Setting
 
 __all__ = ['Worker',
            'Application',
+           'ApplicationHandlerMixin',
            'ApplicationMonitor',
            'WorkerRequest',
            'Response',
@@ -53,7 +54,7 @@ class Response(object):
         pass
 
 
-class ResponseError(pulsar.PulsarException,Response):
+class ResponseError(pulsar.PulsarException, Response):
     
     def __init__(self, request, failure):
         pulsar.Response.__init__(self, request)
@@ -74,8 +75,12 @@ def make_response(request, response, err = None):
     return response
 
 
-class HandlerMixin(object):
-      
+class ApplicationHandlerMixin(object):
+    '''A mixin for both :class:`Worker` and :class:`ApplicationMonitor`.
+It implements :meth:`handle_request` and :meth:`close_response`
+used for by the :class:`Application` for handling requests and
+sending back responses.
+'''
     def _response_generator(self, request):
         try:
             self.cfg.pre_request(self, request)
@@ -138,11 +143,10 @@ After obtaining the result from the
         self.setlog()
 
 
-class Worker(HandlerMixin,pulsar.Actor):
+class Worker(ApplicationHandlerMixin,pulsar.Actor):
     """\
-Base class for a :class:`Actor` serving a :class:`Application`.
-It provides two new functions :meth:`handle_request` and :meth:`handle_response`
-used for by the application for handling requests and sending back responses.
+An :class:`Actor` class for serving an :class:`Application`.
+It provides two new methods inherited from :class:`ApplicationHandlerMixin`.
     
 .. attribute:: app
 
@@ -194,9 +198,9 @@ used for by the application for handling requests and sending back responses.
         return self.app.on_info(self,info)
 
 
-class ApplicationMonitor(HandlerMixin,pulsar.Monitor):
-    '''A spcialized :class:`Monitor` implementation for managing
-pulsar applications (subclasses of :class:`Application`).
+class ApplicationMonitor(ApplicationHandlerMixin, pulsar.Monitor):
+    '''A specialized :class:`Monitor` implementation for managing
+pulsar subclasses of :class:`Application`.
 '''
     # For logging name
     _class_code = 'appmonitor'

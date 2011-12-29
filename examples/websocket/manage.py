@@ -7,9 +7,15 @@ To run the server type::
 and open a web browser at http://localhost:8060    
 '''
 import os
+import sys
 import json
 from random import random
 import time
+
+p = lambda x : os.path.split(x)[0]
+path = p(p(p(os.path.abspath(__file__))))
+if path not in sys.path:
+    sys.path.insert(0,path)
 
 import pulsar
 from pulsar import net, to_bytestring

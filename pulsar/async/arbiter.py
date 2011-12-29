@@ -162,6 +162,10 @@ Users access the arbiter by the high level api::
         else:
             super(Arbiter,self).configure_logging(config = config)
  
+    @property
+    def cfg(self):
+        return self.get('cfg')
+    
     ############################################################################
     # OVERRIDE ACTOR HOOKS
     ############################################################################
@@ -344,7 +348,7 @@ signal queue'''
                     handler()
         return sig                
     
-    def signal(self, sig, frame = None):
+    def _signal(self, sig, frame = None):
         signame = system.SIG_NAMES.get(sig,None)
         if signame:
             if self.ioloop.running():

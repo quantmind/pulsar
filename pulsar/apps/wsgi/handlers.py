@@ -35,10 +35,18 @@ class HttpPoolHandler(HttpHandler):
         self.worker.put(request)
 
 
-def handle_http_error(environ, start_response, e):
-    status_code = getattr(e,'status_code',500)
+def handle_http_error(response, e):
+    '''The default handler for unhandled errors while serving an Http
+request.
+:parameter response: an instance of :class:`WsgiResponse`.
+:parameter e: the exception instance.
+'''
+    actor = pulsar.get_actor()
+    actor.log.critical('Unhandled exception during WSGI response',
+                        exc_info = True)
+    response.status_code = getattr(e,'status_code',500)
     encoding = 'utf-8'
-    reason = '{0} {1}'.format(status_code,net.responses.get(status_code))
+    reason = response.status
     mesg = 'An exception has occured while evaluating your request.'
     content = textwrap.dedent("""\
     <!DOCTYPE html>
@@ -54,13 +62,8 @@ def handle_http_error(environ, start_response, e):
     </html>
     """).format({"reason": reason, "mesg": mesg,
                  "version": pulsar.SERVER_SOFTWARE})
-    response = WsgiResponse(status_code,
-                            content.encode(encoding,'replace'),
-                            encoding = encoding,
-                            content_type = 'text/html')
-    response(environ, start_response)
+    response.content = content.encode(encoding,'replace')
     return response
-    
     
 
 ################################################################################
@@ -148,12 +151,12 @@ class ResponseMiddleware(WsgiSetting):
     
 class HttpError(WsgiSetting):
     name = "handle_http_error"
-    validator = pulsar.validate_callable(3)
+    validator = pulsar.validate_callable(2)
     type = "callable"
     default = staticmethod(handle_http_error)
     desc = """\
 Render an error occured while serving the WSGI application.
 
-The callable needs to accept three instance variables for the environ
-dictionary, the start_response callable and the error instance."""
+The callable needs to accept two instance variables for the response
+and the error instance."""
     

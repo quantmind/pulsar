@@ -1,6 +1,6 @@
 """
-Pulsar is shipped with a HTTP applications which conforms the python
-web server gateway interface (WSGI_).
+Pulsar is shipped with an HTTP :class:`pulsar.apps.Application` which conforms
+with the python web server gateway interface (WSGI_).
 
 The application can be used in conjunction with several web frameworks
 as well as the :ref:`pulsar RPC middleware <apps-rpc>` and
@@ -114,14 +114,17 @@ requests in the threaded workers.'''
                                        multiprocess = mp)
         # Create the response object
         response = HttpResponse(request)
-        # Get the data from the WSGI handler
-        try:
-            data = worker.app_handler(environ, response.start_response)
-        except Exception as e:
-            worker.log.critical('Unhandled WSGI exception', exc_info = True)
-            # An unhadled exception in the handler
-            data = cfg.handle_http_error(environ, response.start_response, e)
-        yield response.write(data)
+        if environ:
+            # Get the data from the WSGI handler
+            try:
+                data = worker.app_handler(environ, response.start_response)
+            except Exception as e:
+                worker.log.critical('Unhandled WSGI exception', exc_info = True)
+                # An unhadled exception in the handler
+                data = WsgiResponse(environ = environ)
+                cfg.handle_http_error(data, e)
+                data(environ, response.start_response)
+            yield response.write(data)
         yield response
     
     def monitor_init(self, monitor):
