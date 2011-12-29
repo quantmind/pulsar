@@ -1,5 +1,5 @@
 from multiprocessing import Process, current_process
-from threading import Thread
+from threading import Thread, current_thread
 
 from pulsar import system, wrap_socket, platform, socket_pair
 from pulsar.utils.tools import gen_unique_id
@@ -73,6 +73,9 @@ For the :class:`Arbiter` and for :class:`Monitor` instances it is
 called in the main process since those special actors always live in the
 main process.'''
         self.actor = self.actor_class(self,**self.a_kwargs)
+        ct = current_thread()
+        if not hasattr(ct,'actor'):
+            ct.actor = self.actor
     
     
 class ActorMonitorImpl(ActorImpl):

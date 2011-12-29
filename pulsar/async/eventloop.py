@@ -315,7 +315,6 @@ unit tests), you can start and stop the event loop like this::
 :meth:`start` will return after async_method has run its callback,
 whether that callback was invoked before or after ioloop.start.'''
         if self.running():
-            self.log.debug("Stopping event loop")
             self._running = False
             self.wake()
         return self._on_exit

@@ -26,6 +26,11 @@ class TestTest(test.TestCase):
         self.assertTrue(mailbox.address)
         self.assertTrue(mailbox.sock)
         
+    def testThreadInfo(self):
+        worker = self.worker
+        ct = threading.current_thread()
+        self.assertEqual(ct.actor,worker)
+        
 
 class TestPulsar(test.TestCase):
     

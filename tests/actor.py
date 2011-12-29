@@ -50,7 +50,7 @@ class TestActorThread(test.TestCase, AsyncTestCaseMixin):
         yield self.stop()
     testPing.run_on_arbiter = True
         
-    def testSpawnFromActor(self):
+    def testSpawnStopFromActor(self):
         '''Test the global spawn method from an actor domain other than the
 arbiter'''
         r = pulsar.spawn(impl = self.impl)
@@ -59,6 +59,13 @@ arbiter'''
         yield r
         ap = outcome.result
         self.assertTrue(isinstance(ap,pulsar.ActorProxy))
+        # Check that the new actor is linked with the current actor
+        self.assertEqual(ap,self.worker.get_actor(ap.aid))
+        # and now stop the new actor
+        r = pulsar.send(ap,'stop')
+        r, outcome = pulsar.async_pair(r)
+        yield r
+        self.assertEqual(self.worker.get_actor(ap.aid),None)
         
     def __testInfo(self):
         a = spawn(Actor, impl = self.impl)

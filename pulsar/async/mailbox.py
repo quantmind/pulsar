@@ -241,6 +241,7 @@ queue), the mailbox will create its own :class:`IOLoop`.'''
     def close(self):
         self.unregister(self.actor)
         if self.__hasloop:
+            self.ioloop.log.debug('Stop event loop for {0}'.format(self))
             self.ioloop.stop()
         if self.sock:
             self.ioloop.log.debug('shutting down {0}'.format(self))

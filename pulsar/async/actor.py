@@ -15,11 +15,12 @@ from pulsar.utils.py2py3 import iteritems, itervalues, pickle
 
 from .eventloop import IOLoop
 from .proxy import ActorProxy, ActorMessage, DEFAULT_MESSAGE_CHANNEL
-from .defer import make_async, raise_failure, async_pair
+from .defer import make_async, raise_failure, async_pair, Failure
 from .mailbox import IOQueue, mailbox
 
 
 __all__ = ['is_actor',
+           'send',
            'Actor',
            'ActorMetaClass',
            'ActorBase',
@@ -43,7 +44,7 @@ the current thread'''
 
 def get_actor(thread = None):
     thread = thread if thread is not None else current_thread()
-    return thread._actor
+    return thread.actor
 
 
 def send(target, msg, **params):
@@ -59,7 +60,7 @@ def send(target, msg, **params):
         tg = target
     if not tg:
         raise ValueError('Cannot send message to {0}'.format(target))
-    return tg.send(actor,msg,**params)            
+    return tg.send(actor,msg,**params)
 
 
 class ActorMetaClass(type):
@@ -429,11 +430,13 @@ logging is configured, the :attr:`Actor.mailbox` is registered and the
             self._run()
     
     def get_requestloop(self):
-        '''Internal function called at the start of the actor. It build the
+        '''Internal function called at the start of the actor. It builds the
 event loop which will consume requests.
 
 If IO loop is based on a IO queue (CPU bounded workers)
-we bind the :meth:`handle_request` to the loop.'''
+we bind the :meth:`handle_request` to the loop.
+
+This function is overridden by :class:`Monitor` to perform nothing.'''
         ioq = self.ioqueue
         ready = not ioq
         ioimpl = IOQueue(ioq) if ioq else None
@@ -448,16 +451,20 @@ we bind the :meth:`handle_request` to the loop.'''
             ioloop.add_handler('request',
                         lambda fd, request : self.handle_request(request),
                         ioloop.READ)
-        #INJECT SELF INTO THE CURRENT THREAD
-        current_thread()._actor = self
         self._init_runner()
         return ioloop
     
     def link_actor(self, proxy):
-        self._linked_actors[proxy.aid] = proxy
-        #add the ioqueue handler if needed
-        if proxy == self.arbiter:
-            self.requestloop.ready = True
+        '''Add the *proxy* to the :attr:`linked_actors` dictionary.
+if *proxy* is not a class:`ActorProxy` instance raise an exception.'''
+        if isinstance(proxy,ActorProxy):
+            self._linked_actors[proxy.aid] = proxy
+            #add the ioqueue handler if needed
+            if proxy == self.arbiter:
+                self.requestloop.ready = True
+        elif not isinstance(proxy,Failure):
+            raise ValueError('Received a bad actor proxy. Cannot link.')
+        return proxy
         
     def handle_message(self, sender, message):
         '''Handle a *message* from a *sender*.'''
@@ -500,10 +507,14 @@ and closing its :attr:`Actor.mailbox`. Once everything is closed
 properly this actor will go out of scope.'''
         if self._state == self.RUN:
             self._state = self.STOPPING
-            self.log.info('stopping')
+            self.log.debug('stopping')
             stp = self.on_stop()
+            #if the on stop method return something we don't close the event
+            #loops. It means they are owned by another actor.
             if not stp:
-                stp = self.requestloop.stop()
+                self.log.debug("Stopping request event loop")
+                stp = make_async(self.requestloop.stop()).add_callback(
+                                lambda r : self.mailbox.close())
             return make_async(stp).add_callback(lambda r : self.close())\
                                   .add_callback(raise_failure)
         
@@ -511,7 +522,6 @@ properly this actor will go out of scope.'''
         if self.stopping():
             self._state = self.CLOSE
             self.on_exit()
-            self.mailbox.close()
             self.log.info('exited')
             
     # LOW LEVEL API

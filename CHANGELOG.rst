@@ -1,6 +1,10 @@
 Development
 ======================
-* Fixed critical bug in :meth:`pulsar.net.HttpResponse.default_headers`
+* The current :class:`pulsar.Actor` is always available on the current thread
+  ``actor`` attribute.
+* Added global :func:`pulsar.spawn` and :func:``pulsar.send`` functions for
+  creating and communicating between :class:`pulsar.Actor`.
+* Fixed critical bug in :meth:`pulsar.net.HttpResponse.default_headers`.
 * Added :meth:`pulsar.utils.http.Headers.pop` method.
 * **81 regression tests**
 

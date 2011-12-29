@@ -42,7 +42,8 @@ process domain.
 :rtype: instance of :class:`ActorProxyMonitor`'''
     actor = get_actor()
     if not isinstance(actor,Arbiter):
-        return send('arbiter', 'spawn', **kwargs)
+        msg = send('arbiter', 'spawn', **kwargs)
+        return msg.add_callback(actor.link_actor)
     else:
         return actor.spawn(**kwargs)
 

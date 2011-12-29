@@ -4,7 +4,15 @@
 Design
 =====================
 
-The building block of pulsar is the :class:`pulsar.Actor` class.
+Pulsar is a concurrent framework for python. It implements a double layer
+of components for building a vast array of parallel and asynchronous
+applications.
+
+* The first layer is based on the building block of pulsar library,
+  the :class:`pulsar.Actor` class.
+* The second layer is the based on the :class:`pulsar.Application`
+  which is built on top of the :class:`pulsar.Actor` model.
+   
 
 Server Model
 ==================
