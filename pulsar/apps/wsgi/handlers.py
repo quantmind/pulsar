@@ -36,18 +36,26 @@ class HttpPoolHandler(HttpHandler):
 
 
 def handle_http_error(response, e):
-    '''The default handler for unhandled errors while serving an Http
-request.
+    '''The default handler for errors while serving an Http requests.
 :parameter response: an instance of :class:`WsgiResponse`.
 :parameter e: the exception instance.
 '''
     actor = pulsar.get_actor()
-    actor.log.critical('Unhandled exception during WSGI response',
-                        exc_info = True)
-    response.status_code = getattr(e,'status_code',500)
+    code = getattr(e,'status_code',500)
+    response.content_type = 'text/html'
+    if code == 500:
+        actor.log.critical('Unhandled exception during WSGI response',
+                           exc_info = True)
+        mesg = 'An exception has occured while evaluating your request.'
+    else:
+        actor.log.info('WSGI {0} status code'.format(code))
+        if code == 404:
+            mesg = 'Cannot find what you are looking for.'
+        else:
+            mesg = ''
+    response.status_code = code
     encoding = 'utf-8'
     reason = response.status
-    mesg = 'An exception has occured while evaluating your request.'
     content = textwrap.dedent("""\
     <!DOCTYPE html>
     <html>

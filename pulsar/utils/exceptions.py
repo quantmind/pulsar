@@ -51,9 +51,9 @@ class NotRegisteredWithServer(PulsarException):
 
 
 class BadHttpRequest(PulsarInternetException):
-    status = 500
-    def __init__(self, status = None, reason = ''):
-        self.status = status or self.status
+    status_code = 500
+    def __init__(self, status_code = None, reason = ''):
+        self.status_code = status_code or self.status_code
         super(BadHttpRequest,self).__init__(reason)
         
         

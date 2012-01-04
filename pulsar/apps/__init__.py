@@ -3,7 +3,7 @@ import os
 import sys
 import traceback
 import random
-from inspect import isgenerator
+from inspect import isgenerator, isfunction
 
 import pulsar
 from pulsar import Empty, make_async, is_failure, async_pair, Failure
@@ -81,6 +81,15 @@ It implements :meth:`handle_request` and :meth:`close_response`
 used for by the :class:`Application` for handling requests and
 sending back responses.
 '''
+    def handle_task(self):
+        if self.information.log():
+            self.log.info('Processed {0} requests'.format(self.nr))
+        try:
+            self.cfg.worker_task(self)
+        except:
+            pass
+        self.app.worker_task(self)
+        
     def _response_generator(self, request):
         try:
             self.cfg.pre_request(self, request)
@@ -179,9 +188,7 @@ It provides two new methods inherited from :class:`ApplicationHandlerMixin`.
             pass
     
     def on_task(self):
-        if self.information.log():
-            self.log.info('Processed {0} requests'.format(self.nr))
-        self.app.worker_task(self)
+        self.handle_task()
     
     def on_stop(self):
         self.app.worker_stop(self)
@@ -233,9 +240,7 @@ pulsar subclasses of :class:`Application`.
         self.app.monitor_task(self)
         # There are no workers, the monitor do their job
         if not self.cfg.workers:
-            if self.information.log():
-                self.log.info('Processed {0} requests'.format(self.nr))
-            self.app.worker_task(self)
+            self.handle_task()
             
     def on_stop(self):
         stp = make_async(self.app.monitor_stop(self))
@@ -503,13 +508,14 @@ The parameters overrriding order is the following:
         
         # Load up the config file if its found.
         if config and os.path.exists(config):
-            cfg = {
-                "__builtins__": __builtins__,
-                "__name__": "__config__",
-                "__file__": config,
-                "__doc__": None,
-                "__package__": None
-            }
+            #cfg = {
+            #    "__builtins__": __builtins__,
+            #    "__name__": "__config__",
+            #    "__file__": config,
+            #    "__doc__": None,
+            #    "__package__": None
+            #}
+            cfg = {}
             try:
                 execfile(config, cfg, cfg)
             except Exception:
@@ -528,6 +534,13 @@ The parameters overrriding order is the following:
                         sys.stderr.write("Invalid value for %s: %s\n\n"\
                                           % (k, v))
                         raise
+                    else:
+                        if isfunction(v):
+                            if v.__name__ in globals():
+                                v = globals()[v.__name__]
+                                self.cfg.set(k.lower(), v)
+                            else:
+                                globals()[v.__name__] = v
             
         # Update the configuration with any command line settings.
         if opts:

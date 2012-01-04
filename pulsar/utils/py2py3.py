@@ -23,7 +23,6 @@ if ispy3k: # Python 3
     i2b = lambda n : bytes((n,))
     
     from urllib import parse as urlparse
-    from io import StringIO
     
     class UnicodeMixin(object):
         

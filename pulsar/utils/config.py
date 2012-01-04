@@ -301,7 +301,11 @@ accepting one positional argument, the value to validate.'''
         self.desc = self.desc or self.short
         if self.app and not self.section:
             self.section = self.app
-            
+    
+    def __getstate__(self):
+        d = self.__dict__.copy()
+        return d
+    
     def __str__(self):
         return '{0} ({1})'.format(self.name,self.value)
     __repr__ = __str__
@@ -797,4 +801,16 @@ class WorkerExit(Setting):
 
         The callable needs to accept one variable for the
         the just-exited Worker.
+        """
+
+
+class WorkerTask(Setting):
+    name = "worker_task"
+    section = "Server Hooks"
+    validator = validate_callable(1)
+    type = "callable"
+    default = staticmethod(def_worker_exit)
+    desc = """Called at every event loop by the worker.
+
+        The callable needs to accept one variable for the Worker.
         """

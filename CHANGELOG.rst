@@ -8,7 +8,7 @@ Development
   creating and communicating between :class:`pulsar.Actor`.
 * Fixed critical bug in :meth:`pulsar.net.HttpResponse.default_headers`.
 * Added :meth:`pulsar.utils.http.Headers.pop` method.
-* **81 regression tests**
+* **87 regression tests**
 
 Version 0.2.1 - 2011-Dec-18
 =======================================

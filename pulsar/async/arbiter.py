@@ -348,7 +348,7 @@ signal queue'''
                     handler()
         return sig                
     
-    def _signal(self, sig, frame = None):
+    def signal(self, sig, frame = None):
         signame = system.SIG_NAMES.get(sig,None)
         if signame:
             if self.ioloop.running():

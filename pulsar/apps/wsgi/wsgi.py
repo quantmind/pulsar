@@ -46,7 +46,7 @@ class WsgiResponse(object):
 Instances are callable using the standard WSGI call::
 
     response = WsgiResponse(200)
-    response(environ,start_response)
+    response(environ, start_response)
     
 
 .. attribute:: status_code
@@ -88,7 +88,7 @@ Instances are callable using the standard WSGI call::
         self.when_ready = Deferred()
         
         if content is None:
-            content = ()
+            content = self.default_content()
         elif isinstance(content, bytes):
             content = (content,)
         
@@ -103,7 +103,12 @@ Instances are callable using the standard WSGI call::
     def logger(self):
         return self.environ['pulsar.actor'].log if self.environ\
                          else default_logger
-                         
+    
+    def default_content(self):
+        '''Called during initialization when the content given is ``None``.
+By default it returns an empty tuple. Overrides if you need to.'''
+        return ()
+    
     def __call__(self, environ, start_response):
         if self.content is None:
             raise ValueError('No content available')

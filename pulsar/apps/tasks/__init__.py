@@ -231,7 +231,7 @@ be consumed by the workers.'''
         
     def monitor_task(self, monitor):
         '''Override the :meth:`pulsar.Application.monitor_task` callback
-to check if the schedulter needs to perform a new run.'''
+to check if the scheduler needs to perform a new run.'''
         s = self.scheduler
         if s:
             if s.next_run <= datetime.now():

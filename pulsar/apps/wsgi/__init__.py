@@ -53,6 +53,7 @@ It can be configured to run as a multiprocess or a multithreaded server.'''
         return self.wsgi_handler(callable)
     
     def wsgi_handler(self, hnd, resp_middleware = None):
+        '''Build the wsgi handler'''
         if not isinstance(hnd,WsgiHandler):
             if not isinstance(hnd,(list,tuple)):
                 hnd = [hnd]
@@ -119,8 +120,7 @@ requests in the threaded workers.'''
             try:
                 data = worker.app_handler(environ, response.start_response)
             except Exception as e:
-                worker.log.critical('Unhandled WSGI exception', exc_info = True)
-                # An unhadled exception in the handler
+                # An exception in the handler
                 data = WsgiResponse(environ = environ)
                 cfg.handle_http_error(data, e)
                 data(environ, response.start_response)

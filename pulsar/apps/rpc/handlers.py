@@ -94,7 +94,7 @@ class RpcResponse(WsgiResponse):
         self.handler.log.critical(msg,exc_info=sys.exc_info)
         raise InternalError(msg)
     
-    def get_content(self):
+    def default_content(self):
         request = self.request
         handler = request.handler
         status_code = 200
