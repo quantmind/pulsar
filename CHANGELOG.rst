@@ -2,12 +2,16 @@ Development
 ======================
 * The current :class:`pulsar.Actor` is always available on the current thread
   ``actor`` attribute.
+* Trap errors in :meth:`pulsar.IOLoop.do_loop_tasks` to avoid having monitors
+  crashing the arbiter.
 * Added :func:`pulsar.system.system_info` function which returns system information
   regarding a running process. It requires psutil_.
 * Added global :func:`pulsar.spawn` and :func:`pulsar.send` functions for
   creating and communicating between :class:`pulsar.Actor`.
 * Fixed critical bug in :meth:`pulsar.net.HttpResponse.default_headers`.
 * Added :meth:`pulsar.utils.http.Headers.pop` method.
+* :class:`pulsar.Application` can specify a version which overrides
+  :attr:`pulsar.__version__`.
 * **87 regression tests**
 
 Version 0.2.1 - 2011-Dec-18

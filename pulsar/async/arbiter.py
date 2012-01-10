@@ -198,6 +198,8 @@ Users access the arbiter by the high level api::
         PoolMixin.on_start(self)
         
     def on_task(self):
+        '''Override the :class:`Actor.on_task` callback to perfrom the
+arbiter tasks at every iteration in the event loop.'''
         sig = self._arbiter_task()
         if sig is None:
             self.manage_actors()

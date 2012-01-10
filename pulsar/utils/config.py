@@ -137,10 +137,12 @@ attribute by exposing the :attr:`Setting.name` as attribute.
     keys are given by the :attr:`Setting.name` attribute.
 '''
     def __init__(self, description = None, epilog = None,
-                 app = None, include=None, exclude = None):
+                 version = None, app = None, include=None,
+                 exclude = None):
         self.settings = make_settings(app,include,exclude)
         self.description = description or 'Pulsar server'
         self.epilog = epilog or 'Have fun!'
+        self.version = version or __version__
         
     def __getstate__(self):
         return self.__dict__.copy()
@@ -181,7 +183,7 @@ settings via the :meth:`Setting.add_argument`.
         parser = argparse.ArgumentParser(**kwargs)
         parser.add_argument('--version',
                             action='version',
-                            version = __version__)
+                            version = self.version)
         setts = self.settings
         sorter = lambda x: (setts[x].section, setts[x].order)
         for k in sorted(setts,key=sorter):

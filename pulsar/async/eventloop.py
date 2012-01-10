@@ -203,7 +203,11 @@ For example, a :class:`pulsar.Actor` add itself to the event loop tasks
 so that it can perform its tasks at each event loop. Check the
 :meth:`pulsar.Actor` method.'''
         for task in self._loop_tasks:
-            task()
+            try:
+                task()
+            except:
+                self.log.critical('Unhandled exception in loop task',
+                                  exc_info = True)
         
     def start(self):
         """Starts the I/O loop.

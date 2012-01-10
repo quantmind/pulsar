@@ -331,6 +331,7 @@ its duties.
 
     full path of the script which starts the application or ``None``.
     If supplied it is used to setup the python path
+    
 """
     cfg = {}
     _name = None
@@ -348,7 +349,15 @@ its duties.
                  epilog = None,
                  argv = None,
                  script = None,
+                 version = None,
                  **params):
+        '''Initialize a new :class:`Application` and add its
+:class:`ApplicationMonitor` to the class:`pulsar.Arbiter`.
+
+:parameter version: Optional version number of the application.
+
+    Default: ``pulsar.__version__``
+'''
         self.description = description or self.description
         self.epilog = epilog or self.epilog
         self._name = name or self._name or self.__class__.__name__.lower()
@@ -357,7 +366,7 @@ its duties.
         nparams = self.cfg.copy()
         nparams.update(params)
         self.callable = callable
-        self.load_config(argv,**nparams)
+        self.load_config(argv,version=version,**nparams)
         self.configure_logging()
         if self.on_config() is not False:
             arbiter = pulsar.arbiter(self.cfg.daemon)
@@ -447,7 +456,8 @@ By default it returns ``None``.'''
     def add_timeout(self, deadline, callback):
         self.arbiter.ioloop.add_timeout(deadline, callback)
               
-    def load_config(self, argv, parse_console = True, **params):
+    def load_config(self, argv, version = None,
+                    parse_console = True, **params):
         '''Load the application configuration from a file and/or
 from the command line. Called during application initialization.
 
@@ -464,6 +474,7 @@ The parameters overrriding order is the following:
 '''
         self.cfg = pulsar.Config(self.description,
                                  self.epilog,
+                                 version,
                                  self.app,
                                  self.config_options_include,
                                  self.config_options_exclude)
