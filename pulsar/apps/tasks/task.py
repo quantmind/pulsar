@@ -106,8 +106,11 @@ Lower number higher precedence.'''
         '''Return the task context manager for execution.'''
         return TaskConsumer(self, queue, worker, job)
         
-    def start(self,worker):
-        '''Called by worker when the task start its execution.'''
+    def start(self, worker):
+        '''Called by the :class:`pulsar.Worker` *worker* when the task
+start its execution. If no timeout has occured the task will switch to
+a ``STARTED`` :attr:`Task.status` and invoke the :meth:`on_start`
+callback.'''
         self.time_start = datetime.now()
         timeout = self.revoked()
         self.timeout = timeout
@@ -130,7 +133,7 @@ Lower number higher precedence.'''
             self.on_finish(worker)
         return self
         
-    def to_queue(self):
+    def to_queue(self, schedulter = None):
         '''The task has been received by the scheduler. If its status
 is PENDING swicth to RECEIVED, save the task and return it. Otherwise
 returns nothing.'''
@@ -138,7 +141,7 @@ returns nothing.'''
         if self.status == PENDING:
             self.status = RECEIVED
             self._toqueue = True
-            self.on_received()
+            self.on_received(schedulter)
         return self
         
     def needs_queuing(self):
@@ -199,12 +202,15 @@ not available.'''
     # CALLBACKS
     ############################################################################
     
-    def on_created(self):
+    def on_created(self, scheduler = None):
         '''A :ref:`task callback <tasks-callbacks>` when the task has
-has been created.'''
+has been created.
+
+:parameter scheduler: the scheduler which created the task.
+'''
         pass
     
-    def on_received(self, worker = None):
+    def on_received(self, scheduler = None):
         '''A :ref:`task callback <tasks-callbacks>` when the task has
 has been received by the scheduler.'''
         pass

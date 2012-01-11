@@ -10,6 +10,7 @@ Development
   creating and communicating between :class:`pulsar.Actor`.
 * Fixed critical bug in :meth:`pulsar.net.HttpResponse.default_headers`.
 * Added :meth:`pulsar.utils.http.Headers.pop` method.
+* Allow :attr:`pulsar.apps.tasks.Job.can_overlap` to be a callable.
 * :class:`pulsar.Application` can specify a version which overrides
   :attr:`pulsar.__version__`.
 * **87 regression tests**

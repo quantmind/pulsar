@@ -253,7 +253,7 @@ to check if the scheduler needs to perform a new run.'''
         job = registry[task.name]
         with task.consumer(self,worker,job) as consumer:
             yield task.start(worker)
-            task.result = job(consumer, *task.args, **task.kwargs)
+            job(consumer, *task.args, **task.kwargs)
         yield TaskResponse(worker,task)
             
     def job_list(self, jobnames = None):

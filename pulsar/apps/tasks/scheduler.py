@@ -140,7 +140,7 @@ and task scheduling."""
             id = job.make_task_id(targs,tkwargs)
             task = TaskFactory.get_task(id, remove = True)
             if task:
-                return task.to_queue()
+                return task.to_queue(self)
             else:
                 if job.name in self.entries:
                     self.entries[job.name].next()
@@ -152,8 +152,10 @@ and task scheduling."""
                                    time_executed = time_executed,
                                    expiry = expiry, args = targs,
                                    kwargs = tkwargs,
-                                   status = PENDING, **kwargs)
-                return task.to_queue()
+                                   status = PENDING,
+                                   **kwargs)
+                task.on_created(self)
+                return task.to_queue(self)
         else:
             raise TaskNotAvailable(job_name)
         

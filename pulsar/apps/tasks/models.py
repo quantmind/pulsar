@@ -123,8 +123,9 @@ class Job(JobBase):
     
 .. attribute:: can_overlap
 
-    Boolean indicating if this job can generate overlapping tasks with same
-    input parameters.
+    Boolean indicating if this job can generate overlapping tasks. It can
+    also be a callable which accept the same input parameters as the job
+    callable function.
     
     Default: ``True``.
     
@@ -164,7 +165,10 @@ This can be overridden by Job implementation.
     
 Called by the :attr:`TaskQueue.scheduler` when creating a new task.
 '''
-        if self.can_overlap:
+        can_overlap = self.can_overlap
+        if hasattr(can_overlap,'__call__'):
+            can_overlap = can_overlap(args, kwargs)
+        if can_overlap:
             return create_task_id()
         else:
             suffix = ''
