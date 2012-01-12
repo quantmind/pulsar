@@ -4,8 +4,6 @@ import logging
 import inspect
 
 from pulsar.utils.py2py3 import iteritems
- 
-
 from pulsar.utils.tools import gen_unique_id
 
 
@@ -129,6 +127,12 @@ class Job(JobBase):
     
     Default: ``True``.
     
+.. attribute:: doc_syntax
+
+    The doc string syntax.
+    
+    Default: ``markdown``
+    
 .. attribute:: loglevel
 
     Level of task logging
@@ -146,6 +150,7 @@ class Job(JobBase):
     expires = None
     loglevel = None
     logformatter = None
+    doc_syntax = 'markdown'
     can_overlap = True
     _ack = True
         
@@ -167,7 +172,7 @@ Called by the :attr:`TaskQueue.scheduler` when creating a new task.
 '''
         can_overlap = self.can_overlap
         if hasattr(can_overlap,'__call__'):
-            can_overlap = can_overlap(args, kwargs)
+            can_overlap = can_overlap(*args, **kwargs)
         if can_overlap:
             return create_task_id()
         else:

@@ -212,7 +212,9 @@ value ``now`` can be passed.'''
             if name not in registry:
                 continue
             job = registry[name]
-            d = {'doc':job.__doc__, 'type':job.type}
+            d = {'doc':job.__doc__,
+                 'doc_syntax':job.doc_syntax,
+                 'type':job.type}
             if name in self.entries:
                 entry = self.entries[name]
                 _,next_time_to_run = self.next_scheduled(name)

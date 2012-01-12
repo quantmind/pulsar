@@ -11,6 +11,8 @@ Development
 * Fixed critical bug in :meth:`pulsar.net.HttpResponse.default_headers`.
 * Added :meth:`pulsar.utils.http.Headers.pop` method.
 * Allow :attr:`pulsar.apps.tasks.Job.can_overlap` to be a callable.
+* Added :attr:`pulsar.apps.tasks.Job.doc_syntax` attribute which defaults to
+  ``"markdown"``.
 * :class:`pulsar.Application` can specify a version which overrides
   :attr:`pulsar.__version__`.
 * **87 regression tests**
