@@ -17,21 +17,6 @@ Taskqueue
    :members:
    :member-order: bysource
 
-
-Job Registry
-~~~~~~~~~~~~~~~~~~~~~~
-
-.. autoclass:: JobRegistry
-   :members:
-   :member-order: bysource
-
-Job meta Class
-~~~~~~~~~~~~~~~~~~~~~~
-
-.. autoclass:: JobMetaClass
-   :members:
-   :member-order: bysource
-
 Job
 ~~~~~~~~~~~~~~~~~~~~~~
    
@@ -60,3 +45,36 @@ TaskQueue Rpc Mixin
 .. autoclass:: TaskQueueRpcMixin
    :members:
    :member-order: bysource
+   
+   
+Internal API
+===================
+
+Scheduler
+~~~~~~~~~~~~~
+
+.. autoclass:: Scheduler
+   :members:
+   :member-order: bysource
+   
+TaskConsumer
+~~~~~~~~~~~~~~~~~~~~~~
+
+.. autoclass:: TaskConsumer
+   :members:
+   :member-order: bysource
+
+Job Registry
+~~~~~~~~~~~~~~~~~~~~~~
+
+.. autoclass:: JobRegistry
+   :members:
+   :member-order: bysource
+
+Job meta Class
+~~~~~~~~~~~~~~~~~~~~~~
+
+.. autoclass:: JobMetaClass
+   :members:
+   :member-order: bysource
+   

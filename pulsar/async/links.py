@@ -45,12 +45,18 @@ return a :class:`Deferred` already called with ``None``.'''
         
 
 class ActorLink(object):
-    '''Utility for sending messages to linked actors.
+    '''A callable utility for sending :class:`ActorMessage`
+to linked :class:`Actor` instances.
     
 .. attribute:: name
 
     The :attr:`Actor.name` of the actor which will receive messages via
-    ``self`` from other actors.
+    the :class:`ActorLink` from other actors.
+    
+An example on how to use an :class:`ActorLink` can be found in the
+:class:`pulsar.apps.tasks.TaskQueueRpcMixin`, where the
+``task_queue_manager`` attribute is a lint to the
+:class:`pulsar.apps.tasks.TaskQueue`. 
 '''
     def __init__(self, name):
         self.name = name
@@ -64,7 +70,15 @@ class ActorLink(object):
         return proxy
     
     def get_callback(self, sender, action, *args, **kwargs):
-        '''Get an instance of :class:`ActorLinkCallback`'''
+        '''Create an :class:`ActorLinkCallback` for sending messages
+with additional parameters.
+
+:parameter sender: The :class:`Actor` sending the message.
+:parameter action: The *action* in the :class:`ActorMessage`.
+:parameter args: same as :attr:`ActorMessage.args`
+:parameter kwargs: same as :attr:`ActorMessage.kwargs`
+:rtype: an :class:`ActorLinkCallback`.
+'''
         if isinstance(sender,dict):
             # This is an environment dictionary
             local = sender

@@ -339,7 +339,9 @@ their ids.'''
         raise pickle.PicklingError('{0} - Cannot pickle Actor instances'\
                                    .format(self))
     
-    # HOOKS
+    ############################################################################
+    ##    HOOKS
+    ############################################################################
     
     def on_init(self, **kwargs):
         '''The :ref:`actor callback <actor-callbacks>` run once at the
@@ -378,6 +380,16 @@ iteration of the :attr:`Actor.ioloop`.'''
  :parameter data: dictionary of data with information about the actor.
  :rtype: a dictionary of pickable data.'''
         return data
+    
+    def on_message(self, message):
+        '''The :ref:`actor callback <actor-callbacks>` run when a new
+:class:`ActorMessage` *message* has been received by the :attr:`inbox`.'''
+        pass
+    
+    def on_message_processed(self, message, result):
+        '''The :ref:`actor callback <actor-callbacks>` run when an
+:class:`ActorMessage` *message* has been processed.'''
+        pass
     
     @property
     def state(self):

@@ -35,36 +35,6 @@ otherwise a queue is used.'''
         return mailbox
 
 
-def process_message(receiver, sender, message):
-    '''Process *message* received by *receiver* by performing the message
-action. If an acknowledgment is required, send back the result using
-the receiver eventloop.'''
-    ack = message.ack
-    try:
-        func = receiver.actor_functions.get(message.action,None)
-        if func:
-            ack = getattr(func,'ack',True)
-            result = func(receiver, sender, *message.args, **message.kwargs)
-        else:
-            result = receiver.handle_message(sender, message)
-    except Exception as e:
-        result = Failure(sys.exc_info())
-        if receiver.log:
-            receiver.log.critical('Error while processing message: {0}.'\
-                              .format(e), exc_info=True)
-    finally:
-        if ack:
-            if sender:
-                # Acknowledge the sender with the result.
-                make_async(result).start(receiver.ioloop)\
-                .add_callback(
-                        lambda res : sender.send(receiver, 'callback',\
-                                                 message.rid, res))\
-                .add_callback(raise_failure)
-            else:
-                receiver.log.error('message "{0}" from an unknown actor "{1}"'\
-                                   .format(message,message.sender))
-
 def serverSocket():
     '''Create the inbox, a TCP socket ready for
 accepting messages from other actors.'''
@@ -265,15 +235,44 @@ If the message needs acknowledgment, send the result back.'''
         actor = self.actor
         sender = actor.get_actor(message.sender)
         receiver = actor.get_actor(message.receiver)
-        #if not sender or not receiver:
-        #    #if not sender:
-        #    #    actor.log.warn('message "{0}" from an unknown actor "{1}"'\
-        #    #                  .format(message,message.sender))
         if not receiver:
             actor.log.warn('message "{0}" for an unknown actor "{1}"'\
                               .format(message,message.receiver))
-        else:
-            return process_message(receiver,sender,message)
+            return
+        
+        ack = message.ack
+        try:
+            receiver.on_message(message)
+        except:
+            pass
+        try:
+            func = receiver.actor_functions.get(message.action, None)
+            if func:
+                ack = getattr(func, 'ack', True)
+                result = func(receiver, sender, *message.args, **message.kwargs)
+            else:
+                result = receiver.handle_message(sender, message)
+        except Exception as e:
+            result = Failure(sys.exc_info())
+            if receiver.log:
+                receiver.log.critical('Unhandled error while processing\
+ message: {0}.'.format(e), exc_info=True)
+        finally:
+            if ack:
+                if sender:
+                    # Acknowledge the sender with the result.
+                    make_async(result).start(receiver.ioloop)\
+                    .add_callback(
+                            lambda res : sender.send(receiver, 'callback',\
+                                                     message.rid, res))\
+                    .add_callback(raise_failure)
+                else:
+                    receiver.log.error('message "{0}" from an unknown actor\
+ "{1}". Cannot acknowledge message.'.format(message,message.sender))
+            try:
+                receiver.on_message_processed(message, result)
+            except:
+                pass
             
 
 class MailBoxMonitor(object):
@@ -322,7 +321,6 @@ class QueueWaker(object):
 class IOQueue(object):
     '''Epoll like class for a IO based on queues.
 The interface is the same as the python epoll_ implementation.
-
 
 .. _epoll: http://docs.python.org/library/select.html#epoll-objects'''
     def __init__(self, queue):

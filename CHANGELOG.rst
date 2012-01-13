@@ -1,5 +1,10 @@
 Development
 ======================
+* Development status set to ``Pre-Alpha``.
+* This version brings several bug fixes, more tests, more docs, and improvements
+  in the :mod:`pulsar.apps.tasks` application.
+* Added :meth:`pulsar.apps.tasks.Job.send_to_queue` method for allowing
+  :meth:`pulsar.apps.tasks.Task` to create new tasks. 
 * The current :class:`pulsar.Actor` is always available on the current thread
   ``actor`` attribute.
 * Trap errors in :meth:`pulsar.IOLoop.do_loop_tasks` to avoid having monitors

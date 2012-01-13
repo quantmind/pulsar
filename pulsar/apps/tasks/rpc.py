@@ -11,9 +11,11 @@ def task_to_json(task):
 
 
 class TaskQueueRpcMixin(rpc.JSONRPC):
-    '''A mixin RPC class for communicating with a task queue.
-To use this mixin, you need to have an :ref:`RPC application <apps-rpc>`
-and a :ref:`task queue <apps-tasks>` application installed in the arbiter.
+    '''A :class:`pulsar.apps.rpc.JSONRPC` mixin for communicating with
+a :class:`TaskQueue`.
+To use it, you need to have an :ref:`RPC application <apps-rpc>`
+and a :ref:`task queue <apps-tasks>` application installed in the
+:class:`pulsar.Arbiter`.
 
 :parameter taskqueue: set the :attr:`task_queue_manager` attribute. It can be
     a :class:`pulsar.apps.tasks.TaskQueue` instance or a name of a taskqueue.
@@ -23,7 +25,7 @@ and a :ref:`task queue <apps-tasks>` application installed in the arbiter.
     A :class:`pulsar.ActorLink` for facilitating the communication
     from the rpc workers to the task queue.
     
-It exposes the following functions:
+It exposes the following remote functions:
 
 .. method:: job_list([jobnames=None])
 
@@ -54,29 +56,22 @@ It exposes the following functions:
         self.task_queue_manager = pulsar.ActorLink(taskqueue)
         super(TaskQueueRpcMixin,self).__init__(**kwargs)   
         
+    ############################################################################
+    ##    REMOTES
+    
     def rpc_job_list(self, request, jobnames = None):
-        '''Dictionary of information about the registered jobs. If
-*jobname* is passed, information regrading the specific job will be returned.'''
         return self.task_queue_manager(request.environ,
                                        'job_list',
                                        jobnames = jobnames)
     
     def rpc_next_scheduled_task(self, request, jobname = None):
-        '''Return a two elements tuple containing the job name of the next scheduled task
-and the time in seconds when the task will run.
-
-:parameter jobname: optional jobname.'''
         return self.task_queue_manager(request.environ,
                                        'next_scheduled',
                                        jobname = jobname)
         
     def rpc_run_new_task(self, request, jobname = None, ack = True, **kwargs):
-        '''Run a new task in the task queue. The task can be of any type
-as long as it is registered in the job registry.
-
-:parameter jobname: the name of the job to run.
-:parameter ack: if ``True`` the request will be send to the caller.
-:parameter kwargs: optional task parameters.'''
+        if not jobname:
+            raise ValueError('"jobname" is not specified!')
         result = self.task_callback(request, jobname, ack, **kwargs)()
         return result.add_callback(task_to_json)
         
@@ -85,22 +80,26 @@ as long as it is registered in the job registry.
             return self.task_queue_manager(request.actor,
                                            'get_task',
                                            id).add_callback(task_to_json)
-                           
+    
+    ############################################################################
+    ##    INTERNALS
+    
     def task_request_parameters(self, request):
         '''Internal function which returns a dictionary of parameters
-to be passed to the :class:`Task` class during construction.
+to be passed to the :class:`Task` class constructor.
 
 This function can be overridden to add information about
 the type of request, who made the request and so forth. It must return
 a dictionary and it is called by the internal
-:meth:`TaskQueueRpcMixin.task_callback` method.
+:meth:`task_callback` method.
 
 By default it returns an empty dictionary.'''
         return {}
     
     def task_callback(self, request, jobname, ack = True, **kwargs):
-        '''Internal function which returns a callable for running a task
-from *jobname* in the task queue.'''
+        '''Internal function which uses the :attr:`task_queue_manager`
+to create an :class:`pulsar.ActorLinkCallback` for running a task
+from *jobname* in the :class:`TaskQueue`.'''
         funcname = 'addtask' if ack else 'addtask_noack'
         request_params = self.task_request_parameters(request)
         return self.task_queue_manager.get_callback(
@@ -111,7 +110,7 @@ from *jobname* in the task queue.'''
                                             **kwargs) 
         
     def task_run(self, request, jobname, ack = True, **kwargs):
-        '''Call :meth:`TaskQueueRpcMixin.task_callback` method and run
+        '''Call :meth:`task_callback` method and run
 the callback.'''
         return self.task_callback(request, jobname, ack = ack, **kwargs)()
     

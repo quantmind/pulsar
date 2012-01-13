@@ -69,7 +69,9 @@ class ActorCallBacks(Deferred):
 
 class ActorMessage(Deferred):
     '''A message class which travels from :class:`Actor` to
-:class:`Actor` to perform a specific action.
+:class:`Actor` to perform a specific *action*. :class:`ActorMessage`
+are not directly initialized using the constructor, instead they are
+created by :meth:`ActorProxy.send` method.
 
 .. attribute:: sender
 
@@ -94,6 +96,11 @@ class ActorMessage(Deferred):
 .. attribute:: ack
 
     ``True`` if the message needs acknowledgment
+    
+.. attribute:: rid
+
+    :class:`ActorMessage` request id. This id used for managing remote
+    callbacks, if :attr:`ack` is ``True``.
 '''
     MESSAGES = {}
     
@@ -232,13 +239,13 @@ Send an :class:`ActorMessage` to the underlying actor
 (the receiver). This is the low level function call for
 communicating between actors.
 
-:parameter sender: the actor sending the message.
+:parameter sender: :class:`Actor` sending the message.
 :parameter action: the action of the message. If not provided,
     the message will be broadcasted by the receiving actor,
     otherwise a specific action will be performed.
     Default ``None``.
-:parameter args: non key-valued part of parameters of message body.
-:parameter kwargs: key-valued part of parameters of message body.
+:parameter args: non positional arguments of message body.
+:parameter kwargs: key-valued arguments of message body.
 :parameter ack: If ``True`` the receiving actor will send a callback.
     If the action is provided and available, this parameter will be overritten.
 :rtype: an instance of :class:`ActorMessage`.
@@ -285,7 +292,7 @@ object including, aid (actor id), timeout and mailbox size.'''
         
 
 class ActorProxyMonitor(ActorProxy):
-    '''A specialised :class:`pulsar.ActorProxy` class which contains additional
+    '''A specialized :class:`ActorProxy` class which contains additional
 information about the remote underlying :class:`pulsar.Actor`. Unlike the
 :class:`pulsar.ActorProxy` class, instances of this class are not pickable and
 therefore remain in the process where they have been created.

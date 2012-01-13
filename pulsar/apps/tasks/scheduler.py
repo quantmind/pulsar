@@ -51,8 +51,8 @@ class Schedule(object):
 
 
 class SchedulerEntry(object):
-    """A class which can be used as a schedule entry in a :class:`Scheduler` instance.
-    """
+    """A class which can be used as a schedule entry in a
+:class:`Scheduler` instance."""
     name = None
     '''Task name'''
     schedule = None
@@ -122,48 +122,23 @@ and task scheduling."""
     def entries(self):
         return self._entries
         
-    def make_request(self, job_name, targs = None, tkwargs = None,
-                     expiry = None, **kwargs):
-        '''Create a new task request.
+    def queue_task(self, monitor, jobname, targs = None, tkwargs = None,
+                   **params):
+        '''Create a new :class:`Task` which may or may not queued.
 
-:parameter job_name: the name of a :class:`Job` registered
-    with the application.
-:parameter targs: optional tuple of arguments for the task.
-:parameter tkwargs: optional dictionary of arguments for the task.
+:parameter monitor: the :class:`pulsar.ApplicationMonitor` running the
+    :class:`TaskQueue` application.
+:parameter jobname: the name of a :class:`Job` registered
+    with the :class:`TaskQueue` application.
+:parameter targs: optional tuple used for the positional arguments in the
+    task callable.
+:parameter tkwargs: optional dictionary used for the key-valued arguments
+    in the task callable.
+:parameter params: Additional parameters to be passed to the :class:`Task`
+    constructor (not its callable function).
     
 :rtype: an instance of :class:`Task`'''
-        if job_name in registry:
-            TaskFactory = self.TaskFactory
-            job = registry[job_name]
-            targs = targs or EMPTY_TUPLE
-            tkwargs = tkwargs or EMPTY_DICT
-            id = job.make_task_id(targs,tkwargs)
-            task = TaskFactory.get_task(id, remove = True)
-            if task:
-                return task.to_queue(self)
-            else:
-                if job.name in self.entries:
-                    self.entries[job.name].next()
-                time_executed = datetime.now()
-                expiry = get_datetime(expiry, time_executed)
-                if not expiry and job.timeout:
-                    expiry = time_executed + job.timeout
-                task = TaskFactory(id = id, name = job.name,
-                                   time_executed = time_executed,
-                                   expiry = expiry, args = targs,
-                                   kwargs = tkwargs,
-                                   status = PENDING,
-                                   **kwargs)
-                task.on_created(self)
-                return task.to_queue(self)
-        else:
-            raise TaskNotAvailable(job_name)
-        
-    def queue_task(self, monitor, job_name, targs = None, tkwargs = None,
-                   **kwargs):
-        '''Put a new task in the task queue. This function invokes
-:meth:`make_request` and check that the task can be inserted into the queue.'''
-        task = self.make_request(job_name, targs, tkwargs, **kwargs)
+        task = self._make_request(jobname, targs, tkwargs, **params)
         if task.needs_queuing():
             task._queued = True
             monitor.put(task.serialize_for_queue())
@@ -248,4 +223,38 @@ value ``now`` can be passed.'''
                 return (next_entry.name,max(next_time,0))
             
         return (jobname,None)
+    
+    ############################################################################
+    ##    PRIVATE METHODS
+    ############################################################################
+    
+    def _make_request(self, jobname, targs = None, tkwargs = None,
+                     expiry = None, **params):
+        if jobname in registry:
+            TaskFactory = self.TaskFactory
+            job = registry[jobname]
+            targs = targs or EMPTY_TUPLE
+            tkwargs = tkwargs or EMPTY_DICT
+            id = job.make_task_id(targs,tkwargs)
+            task = TaskFactory.get_task(id, remove = True)
+            if task:
+                return task.to_queue(self)
+            else:
+                if job.name in self.entries:
+                    self.entries[job.name].next()
+                time_executed = datetime.now()
+                expiry = get_datetime(expiry, time_executed)
+                if not expiry and job.timeout:
+                    expiry = time_executed + job.timeout
+                task = TaskFactory(id = id, name = job.name,
+                                   time_executed = time_executed,
+                                   expiry = expiry,
+                                   args = targs,
+                                   kwargs = tkwargs,
+                                   status = PENDING,
+                                   **params)
+                task.on_created(self)
+                return task.to_queue(self)
+        else:
+            raise TaskNotAvailable(jobname)
         

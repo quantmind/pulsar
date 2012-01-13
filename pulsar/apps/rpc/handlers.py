@@ -31,6 +31,17 @@ def wrap_function_call(func,namefunc):
     return _
 
 
+class rpcmethod(object):
+    __slots__ = ('handler','name')
+    def __init__(self, handler, name):
+        self.handler = handler
+        self.name = name
+        
+    def __call__(self, *args, **kwargs):
+        return self.handler.rpcfunctions[self.name]\
+                            (self.handler, *args, **kwargs)
+
+
 class RpcRequest(object):
     
     def __init__(self, environ, handler, method, func, args,
@@ -185,13 +196,14 @@ class RpcHandler(BaseHandler):
     '''The base class for rpc handlers.
 Sub-handlers for prefixed methods (e.g., system.listMethods)
 can be added with :meth:`putSubHandler`. By default, prefixes are
-separated with a dot. Override :attr:`separator` to change this.'''
+separated with a dot. Override :attr:`separator` to change this.
+'''
     serve_as     = 'rpc'
-    '''Prefix to callable providing services.'''
+    '''Prefix for class methods providing remote services. Default: ``rpc``.'''
     separator    = '.'
     '''Separator between subhandlers.'''
     content_type = 'text/plain'
-    '''Default content type.'''
+    '''Default content type. Default: ``"text/plain"``.'''
 
     def __init__(self, subhandlers = None,
                  title = None,
@@ -210,11 +222,18 @@ separated with a dot. Override :attr:`separator` to change this.'''
     
     @property
     def parent(self):
-        '''Return the parent :class:`RpcHandler` instance or ``None`` if this
+        '''The parent :class:`RpcHandler` or ``None`` if this
 is the root handler.'''
         return self._parent
     
+    @property
+    def root(self):
+        '''The root :class:`RpcHandler` or ``self`` if this
+is the root handler.'''
+        return self._parent.root if self._parent is not None else self
+    
     def isroot(self):
+        '''``True`` if this is the root handler.'''
         return self._parent == None
         
     def get_method_and_args(self, data):
@@ -223,17 +242,22 @@ implemented by subclasses. It should return a five elements tuple containing::
 
     method, args, kwargs, id, version
     
-where ``method`` is the function name, ``args`` are non-keyworded
-to pass to the function, ``kwargs`` are keyworded parameters, ``id`` is an
-identifier for the client, ``version`` is the version of the RPC protocol.
+where ``method`` is the function name, ``args`` are positional parameters
+for ``method``, ``kwargs`` are keyworded parameters for ``method``,
+``id`` is an identifier for the client,
+``version`` is the version of the RPC protocol.
     '''
         raise NotImplementedError
     
     def __getattr__(self, name):
-        if self.isroot():
+        if name in self.rpcfunctions:
+            return rpcmethod(self,name)
+        else:
+        #elif self.isroot:
             raise AttributeError("'{0}' object has no attribute '{1}'"\
                                  .format(self.__class__.__name__,name))
-        return getattr(self._parent,name)
+        #else:
+        #    return getattr(self.parent,name)
     
     def __getstate__(self):
         d = super(RpcHandler,self).__getstate__()
@@ -260,17 +284,17 @@ identifier for the client, ``version`` is the version of the RPC protocol.
         return handler
             
     def putSubHandler(self, prefix, handler):
-        '''Add a subhandler with prefix prefix
+        '''Add a sub :class:`RpcHandler` with prefix ``prefix``.
         
-:keyword prefix: a string defining the url of the subhandler
-:keyword handler: the sub-handler, an instance of :class:`Handler` 
+:keyword prefix: a string defining the prefix of the subhandler
+:keyword handler: the sub-handler.
         '''
         self.subHandlers[prefix] = handler
         handler._parent = self
         return self
 
     def getSubHandler(self, prefix):
-        '''Get a subhandler at ``prefix``
+        '''Get a sub :class:`RpcHandler` at ``prefix``.
         '''
         return self.subHandlers.get(prefix, None)
     
@@ -315,12 +339,12 @@ identifier for the client, ``version`` is the version of the RPC protocol.
         return '\n'.join(self._docs())
     
     
-class RpcMiddleware(BaseHandler):
-    '''A WSGI_ middleware for serving :class:`RpcHandler`.
+class RpcMiddleware(object):
+    '''A WSGI_ middleware for serving an :class:`RpcHandler`.
 
 .. attribute:: handler
 
-    An instance of :class:`RpcHandler`
+    The :class:`RpcHandler` to serve.
     
 .. attribute:: path
 
@@ -330,10 +354,6 @@ class RpcMiddleware(BaseHandler):
     
 .. _WSGI: http://www.wsgi.org/
 '''
-    serve_as     = 'rpc'
-    '''Prefix to callable providing services.'''
-    separator    = '.'
-    '''Separator between subhandlers.'''
     methods = ('get','post','put','head','delete','trace','connect')
 
     def __init__(self, handler, path = None, raise404 = True, methods = None):

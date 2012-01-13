@@ -57,6 +57,8 @@ used to customize the behaviour of the actor.
  * :meth:`pulsar.Actor.on_stop`.
  * :meth:`pulsar.Actor.on_exit`.
  * :meth:`pulsar.Actor.on_info`.
+ * :meth:`pulsar.Actor.on_message`.
+ * :meth:`pulsar.Actor.on_message_processed`.
 
 These functions do nothing in the :class:`pulsar.Actor` implementation. 
 

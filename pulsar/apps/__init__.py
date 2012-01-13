@@ -81,6 +81,12 @@ It implements :meth:`handle_request` and :meth:`close_response`
 used for by the :class:`Application` for handling requests and
 sending back responses.
 '''
+    def on_message(self, message):
+        self.app.on_actor_message(message)
+        
+    def on_message_processed(self, message, result):
+        self.app.on_actor_message_processed(message, result)
+        
     def handle_task(self):
         if self.information.log():
             self.log.info('Processed {0} requests'.format(self.nr))
@@ -639,6 +645,12 @@ The application is now in the arbiter but has not yet started.'''
     
     def monitor_exit(self, monitor):
         '''Callback by :class:`ApplicationMonitor` at each event loop'''
+        pass
+    
+    def on_actor_message(self, message):
+        pass
+        
+    def on_actor_message_processed(self, message, result):
         pass
     
     def start(self):

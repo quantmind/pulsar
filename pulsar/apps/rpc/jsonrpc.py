@@ -39,7 +39,7 @@ class JsonToolkit(object):
 
 
 class JSONRPC(RpcHandler):
-    '''Base class for JSON-RPC services.
+    '''A :class:`RpcHandler` for class for JSON-RPC services.
 Design to comply with the `JSON-RPC 2.0`_ Specification.
 
 .. _`JSON-RPC 2.0`: http://groups.google.com/group/json-rpc/web/json-rpc-2-0'''
@@ -49,6 +49,8 @@ Design to comply with the `JSON-RPC 2.0`_ Specification.
     _json = JsonToolkit
         
     def get_method_and_args(self, data):
+        '''Overrides the :meth:`RpcHandler:get_method_and_args` to obtain
+method data from the JSON *data* string.'''
         if not isinstance(data,dict):
             data = self._json.loads(data)
         method  = data.get('method',None)

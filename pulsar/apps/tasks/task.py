@@ -11,7 +11,7 @@ from .exceptions import *
 from .states import *
 
 
-__all__ = ['Task','TaskInMemory','nice_task_message']
+__all__ = ['Task','TaskInMemory','TaskConsumer','nice_task_message']
 
 
 class TaskLoggingHandler(logging.Handler):
@@ -30,7 +30,26 @@ class TaskLoggingHandler(logging.Handler):
     
 
 class TaskConsumer(object):
-    '''A context manager for consuming tasks'''
+    '''A context manager for consuming tasks. This is used by the
+:class:`Scheduler` in a ``with`` block to correctly handle exceptions
+and optional logging.
+
+.. attribute:: task
+
+    the :class:`Task` being consumed.
+    
+.. attribute:: job
+
+    the :class:`Job` which generated the :attr:`task`.
+    
+.. attribute:: queue
+
+    the :class:`TaskQueue` application.
+    
+.. attribute:: worker
+
+    the :class:`pulsar.apps.Worker` running the process.
+'''
     def __init__(self, task, queue, worker, job):
         self.queue = queue
         self.worker = worker
@@ -55,7 +74,9 @@ class TaskConsumer(object):
     
     def __exit__(self, type, value, traceback):
         if type:
-            self.job.logger.critical('', exc_info = (type, value, traceback))
+            self.job.logger.critical(
+                        'Critical while processing task {0}'.format(self.task),
+                        exc_info = (type, value, traceback))
         if self.handler is not None:
             self.job.logger.removeHandler(self.handler)
         if type:
@@ -68,17 +89,21 @@ class TaskConsumer(object):
 class Task(object):
     '''A Task interface.
 
+.. attribute:: id
+
+    :class:`Task` unique id.
+    
 .. attribute:: name
     
-    :class:`Job` name
+    :class:`Job` name.
     
 .. attribute:: status
 
-    The current :ref:`status string <task-state>` of task
+    The current :ref:`status string <task-state>` of task.
     
 .. attribute:: time_executed
 
-    date time when the task was executed
+    date time when the task was executed.
     
 .. attribute:: time_start
 
@@ -94,8 +119,16 @@ class Task(object):
     
 .. attribute:: timeout
     
-    A boolean indicating whether a timeout has occurred
+    A boolean indicating whether a timeout has occurred.
+    
+.. attribute:: from_task
+
+    Optional :attr:`Task.id` for the :class:`Task` which queued
+    this :class:`Task`. This is a usuful for monitoring the creation
+    of tasks within other tasks.
 '''
+    from_task = None
+    
     @property
     def state(self):
         '''Integer indicating :attr:`status` precedence.
@@ -131,6 +164,7 @@ callback.'''
                 self.status = SUCCESS
                 self.result = result
             self.on_finish(worker)
+            worker.app.broadcast('finish',self)
         return self
         
     def to_queue(self, schedulter = None):
@@ -245,7 +279,7 @@ class TaskInMemory(Task):
     
     def __init__(self, id = None, name = None, time_executed = None,
                  expiry = None, args = None, kwargs = None, ack = None,
-                 status = None, **params):
+                 status = None, from_task = None, **params):
         self.id = id
         self.name = name
         self.time_executed = time_executed
@@ -253,6 +287,7 @@ class TaskInMemory(Task):
         self.args = args
         self.kwargs = kwargs
         self.status = status
+        self.from_task = from_task
         self.params = params
         
     def __str__(self):

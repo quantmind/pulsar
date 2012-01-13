@@ -101,7 +101,7 @@ class Job(JobBase):
 .. attribute:: abstract
 
     If set to ``True`` (default is ``False``), the Job won't be registered
-    with the Job registry.
+    with the :class:`JobRegistry`.
     
 .. attribute:: autoregister
 
@@ -197,6 +197,24 @@ task is aborted.'''
  By default it returns ``True`` but it can be overridden so that its
  behaviour can change at runtime.'''
         return self._ack
+    
+    def send_to_queue(self, consumer, jobname, ack = True, **kwargs):
+        '''Send a new task request to the :class:`TaskQueue`
+from within another :class:`Task`.
+This allow for tasks acting as tasks factories.
+
+:parameter consumer: The :class:`TaskConsumer` handling the :class:`Task`.
+:parameter jobname: The name of the :class:`Job` to run.
+:parameter ack: if acknowledgment is needed. Default ``True``.
+:parameter kwargs: key-valued parameters for the task.
+:rtype: an :class:`pulsar.ActorMessage`.
+'''
+        worker = consumer.worker
+        oper = "addtask" if ack else "addtask_noack"
+        from_task = consumer.task.id
+        return worker.monitor.send(worker, oper, jobname,
+                                   {'from_task':from_task},
+                                   **kwargs)
     
 
 class PeriodicJob(Job):

@@ -34,9 +34,11 @@ callable function::
             "Add two numbers"
             return a+b
             
-The *consumer* is passed by the :class:`TaskQueue` and should be always
-the first positional argument in the callable function. The remaining arguments
-and/or key-valued parameters are needed by your job implementation.
+The *consumer*, instance of :class:`TaskConsumer`, is passed by the
+:class:`TaskQueue` and should always be the first positional argument in the
+callable function.
+The remaining positional arguments and/or key-valued parameters are needed by
+your job implementation.
 
 Task Class
 ~~~~~~~~~~~~~~~~~
@@ -113,10 +115,10 @@ A :class:`Task` can have one of the following :attr:`Task.status` string:
     ``REVOKED``, ``FAILURE`` and ``SUCCESS``
     
     
-Task queue
+Queue
 ~~~~~~~~~~~~~~
 
-By default the task queue is implemented using the multiprocessing.Queue
+By default the queue is implemented using the multiprocessing.Queue
 from the standard python library. To specify a different queue you can
 use the ``task-queue`` flag from the command line::
 
@@ -195,20 +197,24 @@ tasks and managing scheduling of tasks.
     Instance of a :class:`JobRegistry` containing all
     registered :class:`Job` instances.
 '''
-    task_class = TaskInMemory
-    '''A subclass of :class:`Task` for storing information
-    about task execution.
-    
-    Default: :class:`TaskInMemory`'''
     app = 'tasks'
     cfg = {'timeout':'3600'}
+    task_class = TaskInMemory
+    '''The :class:`Task` class for storing information about task execution.
+    
+Default: :class:`TaskInMemory`
+'''
+    scheduler_class = Scheduler
+    '''The scheduler class. Default: :class:`Scheduler`.'''
     
     @property
     def scheduler(self):
-        '''The scheduler is a producer of periodic tasks. At every event
-loop of the :class:`pulsar.ApplicationMonitor` running the task queue
-application, the application checks if a new periodic tasks need to
-be scheduled. If so it makes the task requests.
+        '''A :class:`Scheduler` which send task to the task queue and
+produces of periodic tasks according to their schedule of execution.
+
+At every event loop, the :class:`pulsar.ApplicationMonitor` running
+the :class:`TaskQueue` application, invokes the :meth:`Scheduler.tick`
+which check for tasks to be scheduled.
 
 Check the :meth:`TaskQueue.monitor_task` callback
 for implementation.'''
@@ -254,7 +260,7 @@ to check if the scheduler needs to perform a new run.'''
         with task.consumer(self,worker,job) as consumer:
             yield task.start(worker)
             task.result = job(consumer, *task.args, **task.kwargs)
-        yield TaskResponse(worker,task)
+        yield TaskResponse(worker, task)
             
     def job_list(self, jobnames = None):
         return self.scheduler.job_list(jobnames = jobnames)
@@ -273,3 +279,15 @@ to check if the scheduler needs to perform a new run.'''
 
     def remote_functions(self):
         return Remotes.remotes, Remotes.actor_functions
+    
+    def on_actor_message_processed(self, message, result):
+        '''handle the messaged processed callback when the message action
+is either "addtask" or "addtask_noack".
+When that is the case, the application broadcast the task id associated with
+the message request id.'''
+        if message.action in ('addtask','addtask_noack'):
+            pass
+
+    def broadcast(self, what, task):
+        ''''''
+        pass
