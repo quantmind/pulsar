@@ -288,7 +288,7 @@ class TestResult(TestObject):
             else:
                 msgLines = traceback.format_exception(exctype, value, tb)
         else:
-            msgLines = tb
+            msgLines = tb or []
 
         return ''.join(msgLines)
 
