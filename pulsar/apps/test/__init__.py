@@ -72,6 +72,10 @@ from .loader import *
 from .utils import *
 
 
+class ExitTest(Exception):
+    pass
+
+
 class TestSuite(pulsar.Application):
     '''An asynchronous test suite which works like a task queue where each task
 is a group of tests specified in a test class.
@@ -133,7 +137,9 @@ configuration and plugins.'''
             r = unittest.TextTestRunner()
             stream = r.stream
             runner = TestRunner(self.plugins,stream,result_class)
-            runner.configure(self.cfg)
+            abort_message = runner.configure(self.cfg)
+            if abort_message:
+                raise ExitTest(str(abort_message))
             self.local['runner'] = runner
         return self.local['runner'] 
             
@@ -146,7 +152,7 @@ configuration and plugins.'''
             self.plugins = ()
             
         # Create a runner and configure it
-        runner = self.runner
+        runner = self.runner            
         
         if not modules:
             modules = ((None,'tests'),)

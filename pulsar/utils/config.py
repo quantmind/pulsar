@@ -522,7 +522,7 @@ class HttpParser(Setting):
     action = "store_true"
     default = False
     desc = """\
-        Set the python parser as default HTTP parser.    
+    Set the python parser as default HTTP parser.    
         """
     
     def on_start(self):

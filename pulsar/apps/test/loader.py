@@ -171,10 +171,15 @@ importing tests.
                 tag = '.'.join(ctags)
                 yield tag, module
             elif os.path.isdir(subpath):
-                for tag,mod in self.get_tests(subpath, subname, npattern,
-                                              import_tags, ctags,
-                                              parent = module):
-                    yield tag,mod
+                counter = 0
+                for tags,mod in self.get_tests(subpath, subname, npattern,
+                                               import_tags, ctags,
+                                               parent = module):
+                    counter += 1
+                    yield tags,mod
+                # No submodules, just use the __init__
+                if not counter:
+                    yield tag, module
         
     def import_module(self, name, path, parent = None):
         imp = True
