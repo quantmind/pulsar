@@ -47,9 +47,11 @@ class BenchTest(test.WrapTest):
         
     def _call(self):
         testMethod = self.testMethod
+        testStartUp = getattr(self.test,'startUp',lambda : None)
         t = 0
         t2 = 0
         for r in range(self.number):
+            testStartUp()
             start = default_timer()
             testMethod()
             dt = default_timer() - start

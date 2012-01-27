@@ -15,15 +15,19 @@ STDERR_LINE = '\nStderr:\n%s'
 
 
 class TestObject(object):
-    '''Interface for all test classes which are part of of the
-:class:`TestRunner`.'''
+    '''Interface for all classes which are part of of the :class:`TestRunner`,
+including :class:`TestRunner` itself, :class:`TestResult`
+and :class:`Plugin`.'''
     descriptions = None
     
     def configure(self, cfg):
         '''Configure the *instance*. This method is called once just after
-construction.
+construction of a :class:`TestRunner` and can be used to configure the
+plugin. If it returns something other than ``None``
+(for example an abort message)
+it will stop the configuration of all subsequent plugins and quit the test.
 
-:paremeter cfg: instance of :class:`pulsar.Config`.
+:parameter cfg: instance of :class:`pulsar.Config`.
 '''
         pass
     
@@ -326,8 +330,9 @@ class TestRunner(TestResultProxy):
     def configure(self, cfg):
         self.cfg = cfg
         for p in self.plugins:
-            if p.configure(cfg):
-                break
+            c = p.configure(cfg)
+            if c:
+                return c 
             
     def on_start(self):
         '''Called just before the test suite starts running tests.'''
