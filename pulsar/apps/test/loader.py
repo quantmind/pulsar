@@ -119,44 +119,54 @@ importing tests.
                 raise ValueError('{0} cannot be found in {1} directory.'\
                                  .format(name,self.root))
                 
-    def get_tests(self, path, name, pattern, import_tags = None,
+    def get_tests(self, path, dotted_path, pattern, import_tags = None,
                   tags = (), parent = None):
-        for sname in os.listdir(path):
-            if sname.startswith('_') or sname.startswith('.'):
+        '''Collect python modules for testing and return a generator of
+tag,module pairs.
+
+:parameter path: directory path where to search. Files starting with ``_``
+    or ``.`` are excluded from the search, as well as non-python files.
+    
+:parameter dotted_path: the dotted python path equivalent of ``path``.
+
+:parameter parent: the parent module for the current one. This parameter
+    is passed by this function recursively.'''
+        for mod_name in os.listdir(path):
+            if mod_name.startswith('_') or mod_name.startswith('.'):
                 continue
-            subpath = os.path.join(path,sname)
+            mod_path = os.path.join(path, mod_name)
             
-            if os.path.isfile(subpath):
-                if sname.endswith('.py'):
-                    sname = sname.split('.')[0]
+            if os.path.isfile(mod_path):
+                if mod_name.endswith('.py'):
+                    mod_name = mod_name.split('.')[0]
                 else:
                     continue
             
-            addtag = sname
+            addtag = mod_name
             npattern = pattern 
             if pattern:
                 if hasattr(pattern,'search'):
-                    p = pattern.search(sname)
+                    p = pattern.search(mod_name)
                     if p:
                         npattern = None
                         addtag = p.groups(0)
                     else:
                         addtag = False
-                elif pattern == sname:
+                elif pattern == mod_name:
                     addtag = False
                     npattern = None
                 
-                if npattern and os.path.isfile(subpath):
+                if npattern and os.path.isfile(mod_path):
                     # skip the import
                     continue
             
-            if name:
-                subname = '{0}.{1}'.format(name,sname)
+            if dotted_path:
+                mod_dotted_path = '{0}.{1}'.format(dotted_path, mod_name)
             else:
-                tags = (sname,)
-                subname = sname
+                tags = (mod_name,)
+                mod_dotted_path = mod_name
                          
-            module = self.import_module(subname,subpath,parent)
+            module = self.import_module(mod_dotted_path, mod_path, parent)
             if not module:
                 continue
             
@@ -167,32 +177,37 @@ importing tests.
             if not c:
                 continue
             
-            if os.path.isfile(subpath) and c == 2:
-                tag = '.'.join(ctags)
-                yield tag, module
-            elif os.path.isdir(subpath):
+            counter = 0
+            if os.path.isdir(mod_path):
                 counter = 0
-                for tags,mod in self.get_tests(subpath, subname, npattern,
-                                               import_tags, ctags,
+                # Recursively import modules
+                for tag,mod in self.get_tests(mod_path,
+                                               mod_dotted_path,
+                                               npattern,
+                                               import_tags,
+                                               ctags,
                                                parent = module):
                     counter += 1
-                    yield tags,mod
-                # No submodules, just use the __init__
-                if not counter:
-                    yield tag, module
+                    yield tag,mod
+                    
+            # No submodules
+            if not counter and c == 2:
+                yield tag, module
         
     def import_module(self, name, path, parent = None):
         imp = True
         if os.path.isdir(path):
             imp = False
+            # import only if it has a __init__.py file
             for sname in os.listdir(path):
                 if sname == '__init__.py':
                     imp = True
+                    break
         if imp:
             try:
                 mod = import_module(name)
                 if getattr(mod,'__test__',True):
-                    return self.runner.import_module(mod,parent)
+                    return self.runner.import_module(mod, parent)
             except ImportError:
                self.log.error('failed to import module {0}. Skipping.'
                               .format(name), exc_info = True)

@@ -6,6 +6,7 @@ import errno
 import bisect
 import socket
 
+from pulsar import HaltServer
 from pulsar.utils.system import IObase, IOpoll, close_on_exec, platform, Waker
 from pulsar.utils.tools import gen_unique_id
 from pulsar.utils.log import Synchronized
@@ -205,6 +206,8 @@ so that it can perform its tasks at each event loop. Check the
         for task in self._loop_tasks:
             try:
                 task()
+            except HaltServer:
+                raise
             except:
                 self.log.critical('Unhandled exception in loop task',
                                   exc_info = True)

@@ -48,13 +48,14 @@ class BenchTest(test.WrapTest):
     def _call(self):
         testMethod = self.testMethod
         testStartUp = getattr(self.test,'startUp',lambda : None)
+        testGetTime = getattr(self.test,'getTime',lambda dt : dt)
         t = 0
         t2 = 0
         for r in range(self.number):
             testStartUp()
             start = default_timer()
             testMethod()
-            dt = default_timer() - start
+            dt = testGetTime(default_timer() - start)
             t += dt
             t2 += dt*dt
         mean = t/self.number
