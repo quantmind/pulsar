@@ -45,25 +45,39 @@ class BenchTest(test.WrapTest):
         super(BenchTest,self).__init__(test)
         self.number = number
         
+    def getSummary(self, number, total_time, total_time2, info):
+        mean = total_time/number
+        std = math.sqrt((total_time2 - total_time*mean)/number)
+        std = round(100*std/mean,2)
+        info.update({'number': number,
+                     'mean': mean,
+                     'std': '{0} %'.format(std)})
+        return info
+        
     def _call(self):
         testMethod = self.testMethod
         testStartUp = getattr(self.test,'startUp',lambda : None)
         testGetTime = getattr(self.test,'getTime',lambda dt : dt)
+        testGetInfo = getattr(self.test,'getInfo',
+                              lambda delta, dt, info_dict : None)
+        testGetSummary = getattr(self.test,'getSummary', None)
         t = 0
         t2 = 0
+        info = {}
         for r in range(self.number):
             testStartUp()
             start = default_timer()
             testMethod()
-            dt = testGetTime(default_timer() - start)
+            delta = default_timer() - start
+            dt = testGetTime(delta)
+            testGetInfo(delta, dt, info)
             t += dt
             t2 += dt*dt
-        mean = t/self.number
-        std = math.sqrt((t2 - t*mean)/self.number)
-        std = round(100*std/mean,2)
-        return {'number': self.number,
-                'mean': mean,
-                'std': '{0} %'.format(std)}
+        info = self.getSummary(self.number, t, t2, info)
+        if testGetSummary:
+            return testGetSummary(self.number, t, t2, info)
+        else:
+            return info
         
         
 class ProfileTest(object):
