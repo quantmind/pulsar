@@ -301,7 +301,8 @@ so that it can perform its tasks at each event loop. Check the
                                 # Happens when the client closes the connection
                                 pass
                             else:
-                                self.log.error("Exception in I/O handler for fd %d",
+                                self.log.error(
+                                    "Exception in I/O handler for fd %d",
                                               fd, exc_info=True)
                         except:
                             self.log.error("Exception in I/O handler for fd %d",

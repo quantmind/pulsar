@@ -6,7 +6,8 @@ import random
 from inspect import isgenerator, isfunction
 
 import pulsar
-from pulsar import Empty, make_async, is_failure, async_pair, Failure
+from pulsar import Empty, make_async, is_failure, async_pair, Failure,\
+                     HaltServer
 from pulsar.utils.py2py3 import execfile, pickle
 from pulsar.utils.importer import import_module
 from pulsar.utils.log import LogInformation
@@ -74,6 +75,24 @@ def make_response(request, response, err = None):
             response.exception = err.append(response.exception)
     return response
 
+
+def halt_server(f):
+    '''Halt server decorator'''
+    def _(self, *args, **kwargs):
+        try:
+            return f(self, *args, **kwargs)
+        except Exception as e:
+            if self.app.can_kill_arbiter:
+                msg = 'Unhadled exception in {0} application: {1}'\
+                        .format(self.app.name, e)
+                self.log.critical(msg, exc_info = True)
+                raise HaltServer(msg)
+            else:
+                raise
+    _.__name__ = f.__name__
+    _.__doc__ = f.__doc__
+    return _
+            
 
 class ApplicationHandlerMixin(object):
     '''A mixin for both :class:`Worker` and :class:`ApplicationMonitor`.
@@ -236,12 +255,14 @@ pulsar subclasses of :class:`Application`.
         super(ApplicationMonitor,self).on_init(**kwargs)
         self.app.monitor_init(self)
     
-    # Delegates Callbacks to the application    
+    # Delegates Callbacks to the application
+    @halt_server    
     def on_start(self):
         self.app.monitor_start(self)
         if not self.cfg.workers:
             self.app.worker_start(self)            
         
+    @halt_server
     def monitor_task(self):
         self.app.monitor_task(self)
         # There are no workers, the monitor do their job
@@ -311,7 +332,7 @@ its duties.
 
     A string indicating the application namespace for configuration parameters.
     
-    Default ``None``
+    Default: ``None``.
     
 .. attribute:: callable
 
@@ -326,7 +347,7 @@ its duties.
 
     dictionary of default configuration parameters.
     
-    Default: ``{}``
+    Default: ``{}``.
     
 .. attribute:: mid
 
@@ -338,6 +359,14 @@ its duties.
     full path of the script which starts the application or ``None``.
     If supplied it is used to setup the python path
     
+.. attribute:: can_kill_arbiter
+
+    If ``True``, an unhandled error in the application will shut down the
+    :class:`pulsar.Arbiter`. Check the :meth:`ApplicationMonitor.monitor_task`
+    method for implementation.
+    
+    Default: ``False``.
+    
 """
     cfg = {}
     _name = None
@@ -346,6 +375,7 @@ its duties.
     app = None
     config_options_include = None
     config_options_exclude = None
+    can_kill_arbiter = False
     monitor_class = ApplicationMonitor
     
     def __init__(self,
@@ -356,6 +386,7 @@ its duties.
                  argv = None,
                  script = None,
                  version = None,
+                 can_kill_arbiter = None,
                  **params):
         '''Initialize a new :class:`Application` and add its
 :class:`ApplicationMonitor` to the class:`pulsar.Arbiter`.
@@ -365,6 +396,8 @@ its duties.
     Default: ``pulsar.__version__``
 '''
         self.description = description or self.description
+        if can_kill_arbiter is not None:
+            self.can_kill_arbiter = bool(can_kill_arbiter) 
         self.epilog = epilog or self.epilog
         self._name = name or self._name or self.__class__.__name__.lower()
         self.script = script

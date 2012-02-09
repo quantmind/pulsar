@@ -121,7 +121,7 @@ by the remote actor calling the function. For example::
 ActorBase = ActorMetaClass('BaseActor',(object,),{})
 
 
-class Actor(ActorBase,LogginMixin):
+class Actor(ActorBase, LogginMixin):
     '''The base class for concurrent programming in pulsar. In computer science,
 the **Actor model** is a mathematical model of concurrent computation that
 treats *actors* as the universal primitives of computation.

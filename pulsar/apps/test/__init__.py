@@ -110,6 +110,7 @@ is a group of tests specified in a test class.
                               'worker_class','debug','task_queue_factory',
                               'http_proxy','http_client','http_py_parser')
     default_logging_level = None
+    can_kill_arbiter = True
     cfg = {'workers':1, 'loglevel':'none'}
     
     def handler(self):
@@ -215,4 +216,4 @@ configuration and plugins.'''
         
     def actor_test_result(self, sender, worker, result):
         self.runner.add(result)
-    
+

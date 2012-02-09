@@ -227,7 +227,11 @@ be consumed by the workers.'''
         return queue()
     
     def request_instance(self, request):
-        return self.task_class.from_queue(request)
+        try:
+            return self.task_class.from_queue(request)
+        except:
+            self.log.critical('Could not retrieve task "{0}"'.format(request))
+            raise
     
     def __init__(self, task_class = None, **kwargs):
         self.tasks_statistics = {'total':0,

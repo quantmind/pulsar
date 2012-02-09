@@ -352,7 +352,6 @@ The interface is the same as the python epoll_ implementation.
             event = self._queue.get(timeout = timeout)
         except (Empty,IOError,TypeError,EOFError):
             return self._empty
-        
         return (event,)
     
     def waker(self):

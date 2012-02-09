@@ -14,6 +14,8 @@ from pulsar.utils.py2py3 import range
 
 from pulsar.apps import test
 
+BENCHMARK_TEMPLATE = '{0[test]}\nRepeated {0[number]} times.\
+ Average {0[mean]} secs, Stdev {0[std]}.'
 
 class Repeat(test.TestOption):
     flags = ["--repeat"]
@@ -50,7 +52,7 @@ class BenchTest(test.WrapTest):
         std = math.sqrt((total_time2 - total_time*mean)/number)
         std = round(100*std/mean,2)
         info.update({'number': number,
-                     'mean': mean,
+                     'mean': '%.5f' % mean,
                      'std': '{0} %'.format(std)})
         return info
         
@@ -125,11 +127,10 @@ class BenchMark(test.Plugin):
         if self.bench:
             stream = self.stream.handler('benchmark')
             result = test.result
+            template = getattr(test,'benchmark_template',BENCHMARK_TEMPLATE)
             if result:
                 result['test'] = test
-            stream.writeln(\
-'{0[test]} repeated {0[number]} times. Average {0[mean]} Stdev {0[std]}'\
-                .format(result))
+            stream.writeln(template.format(result))
             stream.flush()
             return True
         elif self.profile:
