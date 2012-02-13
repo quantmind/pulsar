@@ -230,8 +230,8 @@ It controls when the periodic Job is run.'''
     def __init__(self, run_every = None):
         self.run_every = run_every or self.run_every
         if self.run_every is None:
-            raise NotImplementedError("Periodic Jobs must have\
- a run_every attribute set.")
+            raise NotImplementedError('Periodic Jobs must have\
+ a run_every attribute set, "{0}" does not have one'.format(self.name))
    
     def is_due(self, last_run_at):
         """Returns tuple of two items ``(is_due, next_time_to_run)``,

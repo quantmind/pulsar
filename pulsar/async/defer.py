@@ -57,6 +57,10 @@ class Failure(object):
         else:
             self.traces = []
             self.append(err)
+            
+    def __repr__(self):
+        return '\n\n'.join(self.format_all())
+    __str__ = __repr__
     
     def append(self, trace):
         '''Add new failure to self.'''
@@ -67,6 +71,15 @@ class Failure(object):
                 self.traces.append(trace)
         return self
     
+    def format_all(self):
+        for exctype, value, tb in self:
+            if istraceback(tb):
+                tb = traceback.format_exception(exctype, value, tb)
+            if tb:
+                yield '\n'.join(tb)
+            else:
+                yield str(value)
+                
     def __getstate__(self):
         traces = []
         for exctype, value, tb in self:
