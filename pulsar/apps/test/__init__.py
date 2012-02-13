@@ -172,10 +172,13 @@ configuration and plugins.'''
                       .format(s,', '.join(tags)))
             else:
                 print('\nAll test labels\n')
-            for tag,mod in loader.testmodules(tags):
-                doc = mod.__doc__
-                if doc:
-                    tag = '{0} - {1}'.format(tag,doc)
+            def _tags():
+                for tag,mod in loader.testmodules(tags):
+                    doc = mod.__doc__
+                    if doc:
+                        tag = '{0} - {1}'.format(tag,doc)
+                    yield tag
+            for tag in sorted(_tags()):
                 print(tag)
             print('\n')
             return False

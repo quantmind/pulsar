@@ -93,7 +93,7 @@ importing tests.
                     yield tag,obj
             
     def testmodules(self, tags = None):
-        '''Generator of tag, test modules pair'''
+        '''Generator of tag, test modules pairs.'''
         for m in self.modules:
             if isinstance(m,str):
                 name = m

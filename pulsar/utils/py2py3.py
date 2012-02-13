@@ -53,6 +53,9 @@ if ispy3k: # Python 3
         with open(filename, "r") as fh:
             exec(fh.read()+"\n", globals, locals)
             
+    def raise_error_trace(err,traceback):
+        raise err.with_traceback(traceback)
+            
 else: # Python 2
     ispy32 = False
     string_type = unicode
@@ -61,6 +64,7 @@ else: # Python 2
     iteritems = lambda d : d.iteritems()
     int_type = (types.IntType, types.LongType)
     from itertools import izip as zip, imap as map
+    from ._py2 import *
     range = xrange
     
     i2b = lambda n : chr(n)

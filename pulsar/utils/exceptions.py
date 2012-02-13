@@ -39,6 +39,7 @@ class ConnectionError(PulsarInternetException):
 class DeferredFailure(PulsarException):
     pass
 
+
 class AlreadyCalledError(PulsarException):
     '''Raised when a :class:`Deferred` instance receives more than
 one :meth:`Deferred.callback`.'''

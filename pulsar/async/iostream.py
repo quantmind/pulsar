@@ -234,8 +234,6 @@ On error closes the socket and raises an exception."""
         try:
             callback(*args, **kwargs)
         except:
-            self.log.error("Uncaught exception, closing connection.",
-                          exc_info=True)
             # Close the socket on an uncaught exception from a user callback
             # (It would eventually get closed when the socket object is
             # gc'd, but we don't want to rely on gc happening before we
@@ -417,8 +415,6 @@ read from a non-blocking socket.
                 self._state = state
                 self.ioloop.update_handler(self.socket.fileno(), self._state)
         except:
-            self.log.error("Uncaught exception, closing connection.",
-                           exc_info=True)
             self.close()
             raise
 

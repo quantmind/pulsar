@@ -7,6 +7,8 @@ import logging
 import traceback
 from inspect import isgenerator, isfunction, ismethod, istraceback
 from time import sleep, time
+from collections import namedtuple
+
 try:
     import queue
 except ImportError:
@@ -15,6 +17,7 @@ ThreadQueue = queue.Queue
 
 from pulsar import AlreadyCalledError, DeferredFailure, Timeout,\
                      NOT_DONE, CLEAR_ERRORS
+from pulsar.utils.py2py3 import raise_error_trace
 
 
 __all__ = ['Deferred',
@@ -34,10 +37,15 @@ __all__ = ['Deferred',
 
 logger = logging.getLogger('pulsar.async.defer')
 
+remote_stacktrace = namedtuple('remote_stacktrace', 'error_class error trace')
+
 
 def is_stack_trace(trace):
-    if isinstance(trace,tuple) and len(trace) == 3:
+    if isinstance(trace,remote_stacktrace):
         return True
+    elif isinstance(trace,tuple) and len(trace) == 3:
+        return istraceback(trace[2]) or\
+                 (trace[2] is None and isinstance(trace[1],trace[0]))
     return False
 
 
@@ -72,11 +80,14 @@ class Failure(object):
         for exctype, value, tb in self:
             if istraceback(tb):
                 tb = traceback.format_exception(exctype, value, tb)
-            traces.append((exctype, value, tb))
+            traces.append(remote_stacktrace(exctype, value, tb))
         state = self.__dict__.copy()
         state['traces'] = traces
         return state
-            
+    
+    def __getitem__(self, index):
+        return self.traces[index]
+    
     def __len__(self):
         return len(self.traces)
     
@@ -84,13 +95,19 @@ class Failure(object):
         return iter(self.traces)
     
     def raise_all(self):
-        self.log()
-        N = len(self.traces)
-        if N == 1:
-            raise DeferredFailure('There was one failure during callbacks.')
-        elif N > 1:
-            raise DeferredFailure('There were {0} failures during callbacks.'\
-                                  .format(N))
+        if self.traces and isinstance(self.traces[-1][1],Exception):
+            eclass, error, trace = self.traces.pop()
+            self.log()
+            raise_error_trace(error,trace)
+        else:
+            self.log()
+            N = len(self.traces)
+            if N == 1:
+                raise DeferredFailure(
+                    'There was one failure during callbacks.')
+            elif N > 1:
+                raise DeferredFailure(
+                    'There were {0} failures during callbacks.'.format(N))
     @property
     def trace(self):
         if self.traces:
@@ -126,7 +143,11 @@ def as_failure(data):
     elif is_stack_trace(data):
         return Failure(data)
     elif isinstance(data,Exception):
-        return Failure((data.__class__,data,None))
+        exc_info = sys.exc_info()
+        if data == exc_info[1]:
+            return Failure(exc_info)
+        else:
+            return Failure((data.__class__,data,None))
     
 
 def raise_failure(result):
@@ -296,28 +317,26 @@ The function takes at most one argument, the result passed to the
         if not self.called or self._runningCallbacks:
             return
         
-        if self.paused:
-            return
-        
-        while self._callbacks:
-            if isinstance(self.result,Failure):
-                if self.result.should_stop:
-                    self.result.raise_all()
-            callback = self._callbacks.pop(0)
-            try:
-                self._runningCallbacks = True
+        if not self.paused:        
+            while self._callbacks:
+                if isinstance(self.result,Failure):
+                    if self.result.should_stop:
+                        self.result.raise_all()
+                callback = self._callbacks.pop(0)
                 try:
-                    self.result = callback(self.result)
-                finally:
-                    self._runningCallbacks = False
-                if isinstance(self.result, Deferred):
-                    # Add a pause
-                    self.pause()
-                    # Add a callback to the result to resume callbacks
-                    self.result.add_callback(self._continue)
-                    break
-            except:
-                self.result = update_failure(self.result)
+                    self._runningCallbacks = True
+                    try:
+                        self.result = callback(self.result)
+                    finally:
+                        self._runningCallbacks = False
+                    if isinstance(self.result, Deferred):
+                        # Add a pause
+                        self.pause()
+                        # Add a callback to the result to resume callbacks
+                        self.result.add_callback(self._continue)
+                        break
+                except:
+                    self.result = update_failure(self.result)
             
         if isinstance(self.result,Failure):
             if self.result.should_stop:
@@ -344,8 +363,8 @@ this point, :meth:`add_callback` will run the *callbacks* immediately.
             raise ValueError('Received a deferred instance from\
  callback function')
         if self.called:
-            raise AlreadyCalledError
-        self.result = result
+            raise AlreadyCalledError('already called')
+        self.result = as_failure(result) or result
         self._called = True
         self._run_callbacks()
         return self.result
@@ -456,10 +475,14 @@ generator.'''
                 else:
                     d = make_async(result, description = self._description)
                     if d.called:
-                        consume = not self._should_stop(d.result)
-                    else:
-                        # the deferred is not ready.
-                        return d.add_callback(self._resume)\
+                        # the deferred was pased
+                        if d.paused:
+                            d = d.result
+                        else:
+                            consume = not self._should_stop(d.result)
+                            continue
+                    # the deferred is not ready.
+                    return d.add_callback(self._resume)\
                                 .start(self._ioloop, self._timeout)
         
         if consume:

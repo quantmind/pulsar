@@ -171,49 +171,56 @@ a class method ``setUpClass`` is defined. If so it runs it.'''
         
     def run_test(self, test, runner):
         '''Run a *test* function.'''
-        testMethod = getattr(test, test._testMethodName)
-        if (getattr(test.__class__, "__unittest_skip__", False) or
-            getattr(testMethod, "__unittest_skip__", False)):
-            # If the class or method was skipped.
-            try:
-                reason = (getattr(test.__class__, '__unittest_skip_why__', '')
-                            or getattr(testMethod, '__unittest_skip_why__', ''))
-                runner.addSkip(test, reason)
-            except:
-                pass
-            raise StopIteration
-        
-        success = True
-        if hasattr(test,'_pre_setup'):
-            result, outcome = run_on_arbiter(test,test._pre_setup)()
-            yield result
-            success = not self.add_failure(test, runner, outcome.result)
-        
-        if success:
-            result, outcome = run_on_arbiter(test,test.setUp)()
-            yield result
-            if not self.add_failure(test, runner, outcome.result):
-                # Here we perform the actual test
-                result, outcome = run_on_arbiter(test,testMethod,istest=True)()
+        try:
+            testMethod = getattr(test, test._testMethodName)
+            if (getattr(test.__class__, "__unittest_skip__", False) or
+                getattr(testMethod, "__unittest_skip__", False)):
+                # If the class or method was skipped.
+                try:
+                    reason = (getattr(test.__class__, '__unittest_skip_why__', '')
+                                or getattr(testMethod, '__unittest_skip_why__', ''))
+                    runner.addSkip(test, reason)
+                except:
+                    pass
+                raise StopIteration
+            
+            success = True
+            if hasattr(test,'_pre_setup'):
+                result, outcome = run_on_arbiter(test,test._pre_setup)()
                 yield result
                 success = not self.add_failure(test, runner, outcome.result)
-                if success:
-                    test.result = outcome.result
-                result, outcome = run_on_arbiter(test,test.tearDown)()
+            
+            if success:
+                result, outcome = run_on_arbiter(test,test.setUp)()
+                yield result
+                if not self.add_failure(test, runner, outcome.result):
+                    # Here we perform the actual test
+                    result, outcome = run_on_arbiter(test,testMethod,
+                                                     istest=True)()
+                    yield result
+                    success = not self.add_failure(test, runner, outcome.result)
+                    if success:
+                        test.result = outcome.result
+                    result, outcome = run_on_arbiter(test,test.tearDown)()
+                    yield result
+                    if self.add_failure(test, runner, outcome.result):
+                        success = False
+                else:
+                    success = False
+                    
+            if hasattr(test,'_post_teardown'):
+                result, outcome = run_on_arbiter(test,test._post_teardown)()
                 yield result
                 if self.add_failure(test, runner, outcome.result):
                     success = False
-            else:
-                success = False
-                
-        if hasattr(test,'_post_teardown'):
-            result, outcome = run_on_arbiter(test,test._post_teardown)()
-            yield result
-            if self.add_failure(test, runner, outcome.result):
-                success = False
-    
+        
+        except Exception as e:
+            self.add_failure(test, runner, e)
+            success = False
+        
         if success:
             runner.addSuccess(test)
+        
 
     def add_failure(self, test, runner, failure):
         failure = as_failure(failure)
