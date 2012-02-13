@@ -3,9 +3,10 @@ A task scheduler application with HTTP-RPC hooks
 '''
 from datetime import datetime
 import logging
+import traceback
 
 from pulsar.utils.py2py3 import StringIO
-from pulsar import make_async
+from pulsar import make_async, as_failure
 
 from .exceptions import *
 from .states import *
@@ -72,18 +73,22 @@ and optional logging.
             self.job.logger.addHandler(self.handler)
         return self
     
-    def __exit__(self, type, value, traceback):
+    def __exit__(self, type, value, trace):
+        result = value
         if type:
             self.job.logger.critical(
                         'Critical while processing task {0}'.format(self.task),
-                        exc_info = (type, value, traceback))
+                        exc_info = (type, value, trace))
+            result = as_failure((type, value, trace))
         if self.handler is not None:
             self.job.logger.removeHandler(self.handler)
         if type:
-            return make_async(self.task.finish(self.worker, exception = value))\
-                    .add_callback(lambda r : value)
+            return make_async(self.task.finish(self.worker,
+                                               exception = value,
+                                               result = result))\
+                    .add_callback(lambda r : result)
         else:
-            return value
+            return result
 
 
 class Task(object):
@@ -159,7 +164,7 @@ callback.'''
             self.time_end = datetime.now()
             if exception:
                 self.status = getattr(exception,'status',FAILURE)
-                self.result = str(exception)
+                self.result = str(result) if result else str(exception)
             else:
                 self.status = SUCCESS
                 self.result = result
