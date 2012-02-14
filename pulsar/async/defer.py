@@ -372,11 +372,16 @@ this point, :meth:`add_callback` will run the *callbacks* immediately.
 
 :return: the *result* input parameter
 '''
-        if isinstance(result,Deferred):
-            raise ValueError('Received a deferred instance from\
- callback function')
-        if self.called:
-            raise AlreadyCalledError('already called')
+        #TODO, this is a hack, not working properly yet, but required as
+        #unhandled exception stall the asynchronous engine
+        try:
+            if isinstance(result,Deferred):
+                raise ValueError('Received a deferred instance from\
+     callback function')
+            if self.called:
+                raise AlreadyCalledError('already called')
+        except Exception as e:
+            result = e
         self.result = as_failure(result) or result
         self._called = True
         self._run_callbacks()
@@ -488,7 +493,7 @@ generator.'''
                 else:
                     d = make_async(result, description = self._description)
                     if d.called:
-                        # the deferred was pased
+                        # the deferred was paused
                         if d.paused:
                             d = d.result
                         else:
