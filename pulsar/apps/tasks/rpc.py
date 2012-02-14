@@ -99,14 +99,17 @@ By default it returns an empty dictionary.'''
     def task_callback(self, request, jobname, ack = True, **kwargs):
         '''Internal function which uses the :attr:`task_queue_manager`
 to create an :class:`pulsar.ActorLinkCallback` for running a task
-from *jobname* in the :class:`TaskQueue`.'''
+from *jobname* in the :class:`TaskQueue`.
+The function returned by this method can be called with exactly
+the same ``args`` and ``kwargs`` as the callable method of the :class:`Job`
+(excluding the ``consumer``).'''
         funcname = 'addtask' if ack else 'addtask_noack'
         request_params = self.task_request_parameters(request)
         return self.task_queue_manager.get_callback(
                                             request.environ,
                                             funcname,
-                                            jobname = jobname,
-                                            task_extra = request_params,
+                                            jobname,
+                                            request_params,
                                             **kwargs) 
         
     def task_run(self, request, jobname, ack = True, **kwargs):
