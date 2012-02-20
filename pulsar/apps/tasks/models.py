@@ -1,4 +1,4 @@
-from datetime import datetime, date
+from datetime import datetime, date, timedelta
 from hashlib import sha1
 import logging
 import inspect
@@ -115,7 +115,7 @@ class Job(JobBase):
 .. attribute:: timeout
 
     An instance of a datetime.timedelta or ``None``. If set, it represents the
-    time lag after which a task whch has not been processed expires.
+    time lag after which a task which did not start expires.
     
     Default: ``None``.
     

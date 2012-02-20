@@ -133,6 +133,7 @@ class Task(object):
     of tasks within other tasks.
 '''
     from_task = None
+    stack_trace = None
     
     @property
     def state(self):
@@ -163,13 +164,13 @@ callback.'''
         if not self.time_end:
             self.time_end = datetime.now()
             if exception:
-                self.status = getattr(exception,'status',FAILURE)
+                self.status = getattr(exception, 'status', FAILURE)
                 self.result = str(result) if result else str(exception)
             else:
                 self.status = SUCCESS
                 self.result = result
             self.on_finish(worker)
-            worker.app.broadcast('finish',self)
+            worker.app.broadcast('finish', self)
         return self
         
     def to_queue(self, schedulter = None):
@@ -202,6 +203,15 @@ task needs to be queued.'''
                 return tm
         return None
     
+    def maybe_revoked(self):
+        '''Try to revoke a task. If succesful return ``True``.'''
+        if self.state > PRECEDENCE_MAPPING[STARTED]: 
+            tm = self.revoked()
+            if tm:
+                self.status = REVOKED
+                self.timeout = tm
+                return True
+        
     def execute2start(self):
         if self.time_start:
             return self.time_start - self.time_executed
@@ -232,7 +242,13 @@ task needs to be queued.'''
     def get_task(cls, id, remove = False):
         '''Given a task *id* it retrieves a task instance or ``None`` if
 not available.'''
-        raise NotImplementedError
+        raise NotImplementedError()
+    
+    @classmethod
+    def expire_tasks(cls, monitor):
+        '''Expire tasks which needs expiring. This method is called at each
+loop of the task scheduler.'''
+        raise NotImplementedError()
     
     def ack(self):
         return self
@@ -329,6 +345,13 @@ class TaskInMemory(Task):
             if task.done():
                 cls._TASKS.pop(id)
         return task
+    
+    @classmethod
+    def expire_tasks(cls, monitor):
+        tasks = cls._TASKS
+        for id in list(tasks):
+            task = tasks[id]
+            task.maybe_revoked()
 
 
 def nice_task_message(req, smart_time = None):

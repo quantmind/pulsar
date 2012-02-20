@@ -244,6 +244,7 @@ be consumed by the workers.'''
 to check if the scheduler needs to perform a new run.'''
         s = self.scheduler
         if s:
+            self.task_class.expire_tasks(monitor)
             if s.next_run <= datetime.now():
                 s.tick(monitor)
     

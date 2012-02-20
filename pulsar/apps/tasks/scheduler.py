@@ -147,7 +147,7 @@ and task scheduling."""
             self.log.info('task {0} already requested. Abort request.'\
                                   .format(task))
         return task
-
+    
     def tick(self, monitor, now = None):
         '''Run a tick, that is one iteration of the scheduler.
 Executes all due tasks calculate the time in seconds to wait before
