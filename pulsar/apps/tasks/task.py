@@ -151,9 +151,8 @@ start its execution. If no timeout has occured the task will switch to
 a ``STARTED`` :attr:`Task.status` and invoke the :meth:`on_start`
 callback.'''
         self.time_start = datetime.now()
-        timeout = self.revoked()
-        self.timeout = timeout
-        if timeout:
+        if self.maybe_revoked():
+            self.on_timeout(worker)
             raise TaskTimeout()
         else:
             self.status = STARTED
@@ -190,27 +189,19 @@ task needs to be queued.'''
         return self.__dict__.pop('_toqueue',False)
         
     def done(self):
-        '''Return ``True`` if the task has finished its execution.'''
-        if self.time_end:
-            return True
-        
-    def revoked(self):
-        '''Attempt to revoke the task, if the task is not in
-:attr:`READY_STATES`. It returns a timestamp if the revoke was successful.'''
-        if self.expiry:
-            tm = datetime.now()
-            if tm > self.expiry:
-                return tm
-        return None
+        '''Return ``True`` if the task has its staus in READY_STATES'''
+        return self.status in READY_STATES
     
     def maybe_revoked(self):
-        '''Try to revoke a task. If succesful return ``True``.'''
-        if self.state > PRECEDENCE_MAPPING[STARTED]: 
-            tm = self.revoked()
-            if tm:
+        '''Try to revoke a task. If succesful return the expiry.
+
+:rtype: ``None`` or a DateTime instance'''
+        if self.state > PRECEDENCE_MAPPING[STARTED] and self.expiry:
+            tm = datetime.now()
+            if tm > self.expiry:
                 self.status = REVOKED
                 self.timeout = tm
-                return True
+                return tm
         
     def execute2start(self):
         if self.time_start:
@@ -275,6 +266,10 @@ has been received by the scheduler.'''
 its execution'''
         pass
     
+    def on_timeout(self, worker=None):
+        '''A :ref:`task callback <tasks-callbacks>` when the task is expired'''
+        pass
+
     def on_finish(self, worker = None):
         '''A :ref:`task callback <tasks-callbacks>` when the task finish
 its execution'''
@@ -321,7 +316,11 @@ class TaskInMemory(Task):
     def on_start(self, worker=None):
         if worker:
             return worker.monitor.send(worker,'save_task',self)
-            
+        
+    def on_timeout(self, worker=None):
+        if worker:
+            return worker.monitor.send(worker,'save_task',self)
+                    
     def on_finish(self,worker=None):
         if worker:
             return worker.monitor.send(worker, 'save_task', self)
@@ -339,19 +338,13 @@ class TaskInMemory(Task):
         cls._TASKS[task.id] = task
     
     @classmethod
-    def get_task(cls,id,remove=False):
-        task = cls._TASKS.get(id,None)
+    def get_task(cls, id, remove=False):
+        task = cls._TASKS.get(id, None)
         if remove and task:
             if task.done():
                 cls._TASKS.pop(id)
         return task
     
-    @classmethod
-    def expire_tasks(cls, monitor):
-        tasks = cls._TASKS
-        for id in list(tasks):
-            task = tasks[id]
-            task.maybe_revoked()
 
 
 def nice_task_message(req, smart_time = None):
