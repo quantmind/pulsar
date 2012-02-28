@@ -44,6 +44,11 @@ class AlreadyCalledError(PulsarException):
     '''Raised when a :class:`Deferred` instance receives more than
 one :meth:`Deferred.callback`.'''
 
+
+class CannotCallBackError(PulsarException):
+    pass
+
+
 class AlreadyRegistered(PulsarException):
     pass
 

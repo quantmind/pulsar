@@ -134,9 +134,34 @@ when a new connection is mad with :class:`Mailbox`.'''
     
     
 class Mailbox(threading.Thread):
-    '''An socket inbox for :class:`Actor` instances. If the *actor* is a
+    '''A socket mailbox for :class:`Actor` instances. If the *actor* is a
 CPU bound worker (an actor which communicate with its monitor via a message
-queue), the mailbox will create its own :class:`IOLoop`.'''
+queue), the class:`Mailbox` will create its own :class:`IOLoop`.
+
+A :class:`Mailbox` is created during an :class:`Actor` startup, in the
+actor process domain.
+
+.. attribute:: actor
+
+    The :class:`Actor` which uses this :class:`Mailbox` to send and receive
+    :class:`ActorMessage`.
+    
+.. attribute:: sock
+
+    The socket which is initialised during construction with a random local
+    address.
+    
+.. attribute:: ioloop
+
+    The :class:`IOLoop` used by this mailbox for asynchronously sending and
+    receiving :class:`ActorMessage`. There are two possibilities:
+    
+    * The mailbox shares the eventloop with the :attr:`actor`. This is the
+      most common case, when the actor is not a CPU bound worker.
+    * The mailbox has its own eventloop. This is the case when the :attr:`actor`
+      is a CPU-bound worker, and uses its main event loop for communicating
+      with a queue rather than with a socket.
+'''
     def __init__(self, actor):
         self.actor = actor
         self.sock = serverSocket()
@@ -175,10 +200,17 @@ queue), the mailbox will create its own :class:`IOLoop`.'''
         return self.sock.fileno()
     
     def register(self, actor):
-        '''Register *actor* with this mailbox by sending its socket address.
-        '''
+        '''This class:`Mailbox` register with a remote *actor* by
+        
+* addint *actor* to the mailbox actor linked actors dictionary
+* sending its socket address.
+
+:parameter actor: an :class:`ActorProxy` to register with.
+:rtype: an :class:`ActorMessage`.
+'''
         self.actor.link_actor(actor)
-        return actor.send(self.actor,'mailbox_address',self.address)
+        msg = actor.send(self.actor, 'mailbox_address', self.address)
+        return msg.add_callback(lambda r: self.actor)
         
     def on_message(self, fd, events):
         '''Handle the message by parsing it and invoking
@@ -262,9 +294,8 @@ If the message needs acknowledgment, send the result back.'''
                 if sender:
                     # Acknowledge the sender with the result.
                     make_async(result).start(receiver.ioloop)\
-                    .add_callback(
-                            lambda res : sender.send(receiver, 'callback',\
-                                                     message.rid, res))\
+                    .add_callback(lambda res: self._send_callback(
+                            sender, receiver, message, res))\
                     .add_callback(raise_failure)
                 else:
                     receiver.log.error('message "{0}" from an unknown actor\
@@ -273,7 +304,11 @@ If the message needs acknowledgment, send the result back.'''
                 receiver.on_message_processed(message, result)
             except:
                 pass
-            
+    
+    def _send_callback(self, sender, receiver, message, result):
+        '''Send the callback to the server. It returns nothing since the
+message does not acknowledge'''
+        sender.send(receiver, 'callback', message.rid, result)
 
 class MailBoxMonitor(object):
     

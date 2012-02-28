@@ -25,12 +25,12 @@ class TestArbiter(test.TestCase):
     def testArbiter(self):
         worker = self.worker
         if worker.cfg.concurrency == 'process':
-            self.assertRaises(pulsar.PulsarException,pulsar.arbiter)
+            self.assertRaises(pulsar.PulsarException, pulsar.arbiter)
         elif worker.cfg.concurrency == 'thread':
             # In thread mode, the arbiter is accessible
             a = pulsar.arbiter()
-            self.assertNotEqual(worker.tid,a.tid)
-            self.assertEqual(worker.pid,a.pid)
+            self.assertNotEqual(worker.tid, a.tid)
+            self.assertEqual(worker.pid, a.pid)
         arbiter = worker.arbiter
         self.assertTrue(arbiter)
         
@@ -39,7 +39,7 @@ class TestArbiter(test.TestCase):
         self.assertTrue(arbiter.is_arbiter())
         self.assertEqual(arbiter.impl,'monitor')
         self.assertTrue(arbiter.monitors)
-        self.assertEqual(arbiter.ioloop,arbiter.requestloop)
+        self.assertEqual(arbiter.ioloop, arbiter.requestloop)
     testArbiterObject.run_on_arbiter = True
         
         

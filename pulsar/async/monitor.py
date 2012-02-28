@@ -3,10 +3,10 @@ import sys
 import time
 
 import pulsar
-from pulsar.utils.py2py3 import iteritems, itervalues
+from pulsar.utils.py2py3 import iteritems, itervalues, range
 
 from .actor import Actor
-from .defer import make_async, Deferred, is_async
+from .defer import make_async, Deferred
 from .proxy import ActorCallBacks
 from .mailbox import Queue
 
@@ -56,6 +56,7 @@ during its life time.
     Default: :class:`Actor`'''
     
     def on_init(self, actor_class = None, num_actors = 0, **kwargs):
+        self._spawing = 0
         self._managed_actors = {}
         self.num_actors = num_actors or 0
         self.actor_class = actor_class or self.actor_class
@@ -83,7 +84,8 @@ spawn method when creating new actors.'''
         return self._managed_actors
     
     def manage_actors(self):
-        """Remove actors not alive"""
+        '''Remove :class:`Actor` which are not alive from the
+:class:`PoolMixin.MANAGED_ACTORS`'''
         ACTORS = self.MANAGED_ACTORS
         linked = self._linked_actors
         for aid,actor in list(iteritems(ACTORS)):
@@ -99,9 +101,10 @@ spawn method when creating new actors.'''
         pass
     
     def spawn_actors(self):
-        '''Spawn new actors if needed'''
-        if self.num_actors:
-            while len(self.MANAGED_ACTORS) < self.num_actors:
+        '''Spawn new actors if needed.'''
+        to_spawn = self.num_actors - len(self.MANAGED_ACTORS)
+        if self.num_actors and to_spawn > 0 and not self._spawing:
+            for _ in range(to_spawn):
                 self.spawn_actor()
     
     def stop_actors(self):
@@ -111,14 +114,14 @@ as required."""
             num_to_kill = len(self.MANAGED_ACTORS) - self.num_actors
             for i in range(num_to_kill, 0, -1):
                 w, kage = 0, sys.maxsize
-                for worker in iteritems(self.MANAGED_ACTORS):
+                for worker in itervalues(self.MANAGED_ACTORS):
                     age = worker.age
                     if age < kage:
                         w, kage = w, age
                 self.stop_actor(w)
                 
     def stop_actor(self, actor):
-        raise NotImplementedError
+        raise NotImplementedError()
     
     def close_actors(self):
         for actor in itervalues(self.MANAGED_ACTORS):
@@ -137,13 +140,15 @@ as required."""
 class Monitor(PoolMixin,Actor):
     '''\
 A monitor is a special :class:`Actor` which shares
-the same event loop with the :class:`Arbiter`
-and therefore lives in the main process. The Arbiter manages monitors which
-in turn manage a set of :class:`Actor` performing similar tasks.
+the same :class:`IOLoop` with the :class:`Arbiter`
+and therefore lives in the main process domain.
+The Arbiter manages monitors which in turn manage a set of :class:`Actor`
+performing similar tasks.
 
-Therefore you may
-have a monitor managing actors for serving HTTP requests on a given port,
-another monitor managing actors consuming tasks from a task queue and so forth.
+In other words, you may have a monitor managing actors for serving HTTP
+requests on a given port, another monitor managing actors consuming tasks
+from a task queue and so forth. You can think of :class:`Monitor` as
+managers of pools of :class:`Actor`.
 
 Monitors are created by invoking the :meth:`Arbiter.add_monitor`
 functions and not by directly invoking the constructor. Therefore
@@ -181,10 +186,10 @@ By default it does nothing.'''
     def on_task(self):
         '''Overrides the :meth:`Actor.on_task`
 :ref:`actor callback <actor-callbacks>` to perform
-the monitor event loop tasks:
+the monitor :class:`IOLoop` tasks, which are:
 
- * maintain a responsive set of actors ready to perform their duty
- * perform its own task
+* To maintain a responsive set of actors ready to perform their duty.
+* To perform its own tasks.
 
 The implementation goes as following:
 
@@ -195,8 +200,8 @@ The implementation goes as following:
 * Call :meth:`Monitor.monitor_task` which performs the monitor specific
   task.
   
-  User should not override this method, and use
-  :meth:`Monitor.monitor_task` instead.'''
+Users shouldn't need to override this method, but use
+:meth:`Monitor.monitor_task` instead.'''
         self.manage_actors()
         if self.running():
             self.spawn_actors()
@@ -235,16 +240,20 @@ The implementation goes as following:
     def spawn_actor(self):
         '''Spawn a new actor and add its :class:`ActorProxyMonitor`
  to the :attr:`PoolMixin.MANAGED_ACTORS` dictionary.'''
-        worker = self.arbiter.spawn(
-                        self.actor_class,
-                        monitor = self,
-                        ioqueue = self.ioqueue,
-                        monitors = self.arbiter.get_all_monitors(),
-                        params = self._params,
-                        **self.actorparams())
-        monitor = self.arbiter.MANAGED_ACTORS[worker.aid]
-        self.MANAGED_ACTORS[worker.aid] = monitor
-        return worker
+        ad =  self.arbiter.spawn(self.actor_class,
+                                 monitor = self,
+                                 ioqueue = self.ioqueue,
+                                 monitors = self.arbiter.get_all_monitors(),
+                                 params = self._params,
+                                 **self.actorparams())
+        self._spawing += 1
+        return ad.add_callback(self._spawn_actor)
+    
+    def _spawn_actor(self, proxy):
+        self._spawing -= 1
+        monitor = self.arbiter.MANAGED_ACTORS[proxy.aid]
+        self.MANAGED_ACTORS[proxy.aid] = monitor
+        return proxy
     
     def stop_actor(self, actor):
         if not actor.is_alive():

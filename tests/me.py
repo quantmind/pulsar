@@ -28,6 +28,8 @@ class TestTest(test.TestCase):
         
     def testThreadInfo(self):
         worker = self.worker
+        actor = pulsar.get_actor()
+        self.assertEqual(actor,worker)
         ct = threading.current_thread()
         self.assertEqual(ct.actor,worker)
         

@@ -8,13 +8,13 @@ from multiprocessing.queues import Empty
 import pulsar
 from pulsar.utils import system
 from pulsar.utils.system import IObase
-from pulsar.utils.tools import Pidfile
+from pulsar.utils.tools import Pidfile, gen_unique_id
 from pulsar.utils.py2py3 import itervalues, iteritems
 
 from .impl import actor_impl
 from .actor import Actor, get_actor, send
 from .monitor import PoolMixin
-from .proxy import ActorCallBacks
+from .proxy import ActorCallBacks, ActorProxyDeferred
 from .defer import ThreadQueue
 
 
@@ -35,17 +35,22 @@ def arbiter(daemonize = False):
     
     
 def spawn(**kwargs):
-    '''Create a new :class:`Actor` instance and return its proxy in the arbiter
-process domain.
+    '''Spawn a new :class:`Actor` instance and return its a
+:class:`ActorProxyDeferred`. This method
+can be used from any actor domain. If not in the Arbiter domain, the method
+send a request to the actor to spawn a new actor.
 
-:param actorcls: :class:`Actor` or one of its subclasses.
-:rtype: instance of :class:`ActorProxyMonitor`'''
+:rtype: an :class:`ActorProxyDeferred`.'''
     actor = get_actor()
-    if not isinstance(actor,Arbiter):
-        msg = send('arbiter', 'spawn', **kwargs)
-        return msg.add_callback(actor.link_actor)
+    # The actor is not the Arbiter. We send a message to the Arbiter to spawn
+    # a new Actor
+    aid = gen_unique_id()[:8]
+    kwargs['aid'] = aid
+    if not isinstance(actor, Arbiter):
+        msg = send('arbiter', 'spawn', **kwargs).add_callback(actor.link_actor)
     else:
-        return actor.spawn(**kwargs)
+        msg = actor.spawn(**kwargs)
+    return ActorProxyDeferred(aid, msg)
 
 
 class Arbiter(PoolMixin,Actor):
@@ -102,7 +107,7 @@ Users access the arbiter by the high level api::
         return m
     
     @classmethod
-    def spawn(cls, actorcls = None, **kwargs):
+    def spawn(cls, actorcls = None, aid = None, **kwargs):
         '''Create a new :class:`Actor` and return its
 :class:`ActorProxyMonitor`.'''
         actorcls = actorcls or Actor
@@ -115,13 +120,16 @@ Users access the arbiter by the high level api::
                 kwargs['ppid'] = arbiter.ppid
             impl = kwargs.pop('impl',actorcls.DEFAULT_IMPLEMENTATION)
             timeout = max(kwargs.pop('timeout',cls.DEFAULT_ACTOR_TIMEOUT),
-                            cls.MINIMUM_ACTOR_TIMEOUT)
-            actor_maker = actor_impl(impl,actorcls,timeout,arbiter,kwargs)
+                          cls.MINIMUM_ACTOR_TIMEOUT)
+            actor_maker = actor_impl(impl, actorcls, timeout,
+                                     arbiter, aid, kwargs)
             monitor = actor_maker.proxy_monitor()
             # Add to the list of managed actors if this is a remote actor
             if monitor:
                 arbiter.MANAGED_ACTORS[actor_maker.aid] = monitor
                 actor_maker.start()
+                return monitor.on_address.add_callback(
+                                    lambda address: monitor.proxy)
                 return monitor
             else:
                 return actor_maker.actor
@@ -248,8 +256,9 @@ the timeout. Stop the arbiter.'''
     def actor_spawn(self, caller, linked_actors = None, **kwargs):
         linked_actors = linked_actors if linked_actors is not None else {}
         linked_actors[caller.aid] = caller.proxy
-        p = self.spawn(linked_actors = linked_actors, **kwargs)
-        return p.proxy
+        return self.spawn(linked_actors = linked_actors, **kwargs)
+        #p = self.spawn(linked_actors = linked_actors, **kwargs)
+        #return p.on_address.add_callback(lambda address: p.proxy)
      
     def actor_kill_actor(self, caller, aid):
         '''Remote function for ``caller`` to kill an actor with id ``aid``'''

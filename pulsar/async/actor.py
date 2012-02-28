@@ -57,13 +57,13 @@ def send(target, msg, **params):
 :parameter params: dictionary of parameters to pass to the action.
 '''
     actor = get_actor()
-    if isinstance(target,str):
+    if isinstance(target, str):
         tg = actor.get_actor(target)
     else:
         tg = target
     if not tg:
         raise ValueError('Cannot send message to {0}'.format(target))
-    return tg.send(actor,msg,**params)
+    return tg.send(actor, msg, **params)
 
 
 class ActorMetaClass(type):
@@ -472,7 +472,7 @@ This function is overridden by :class:`Monitor` to perform nothing.'''
     def link_actor(self, proxy):
         '''Add the *proxy* to the :attr:`linked_actors` dictionary.
 if *proxy* is not a class:`ActorProxy` instance raise an exception.'''
-        if isinstance(proxy,ActorProxy):
+        if isinstance(proxy, ActorProxy):
             self._linked_actors[proxy.aid] = proxy
             #add the ioqueue handler if needed
             if proxy == self.arbiter:
@@ -509,7 +509,7 @@ if *proxy* is not a class:`ActorProxy` instance raise an exception.'''
 :parameter callable: a pickable, therefore it must be a pickable callable object
     or a function.
 :rtype: a tuple of :class:`Deferred` instances'''
-        res = self.arbiter.send(self,'run',callable)
+        res = self.arbiter.send(self, 'run', callable)
         return async_pair(res)
         
     ############################################################################
@@ -588,12 +588,12 @@ actions:
 
         self.on_task()
     
-    def current_thread(self):
-        '''Return the current thread'''
-        return current_thread()
-    
-    def current_process(self):
-        return current_process()
+    #def current_thread(self):
+    #    '''Return the current thread'''
+    #    return current_thread()
+    #
+    #def current_process(self):
+    #    return current_process()
     
     def isprocess(self):
         '''boolean indicating if this is an actor on a child process.'''
@@ -633,12 +633,14 @@ status and performance.'''
         ch.append(request)
         
     def actor_mailbox_address(self, actor, address):
-        '''The ``actor`` register its inbox ``address``.'''
+        '''The ``actor`` register its mailbox ``address``.'''
         if address:
             self.log.debug('Registering actor {0} inbox address {1}'
-                           .format(actor,address))
+                           .format(actor, address))
             actor.address = address
-    actor_mailbox_address.ack = False
+            return True
+        return False
+    #actor_mailbox_address.ack = False
     
     def actor_callback(self, caller, rid, result):
         '''Actor :ref:`remote function <remote-functions>` which sends

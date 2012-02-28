@@ -1,7 +1,7 @@
 import sys
 from time import time
 
-from pulsar import create_connection
+from pulsar import create_connection, CannotCallBackError
 from pulsar.utils.py2py3 import iteritems
 from pulsar.utils.log import LocalMixin
 from pulsar.utils.tools import gen_unique_id
@@ -10,6 +10,7 @@ from .defer import Deferred, is_async, make_async, raise_failure, Failure
 from .mailbox import mailbox
 
 __all__ = ['ActorMessage',
+           'ActorProxyDeferred',
            'ActorProxy',
            'ActorProxyMonitor',
            'get_proxy',
@@ -122,6 +123,12 @@ created by :meth:`ActorProxy.send` method.
         return '[{0} - from {1}] - {3} {2}'.format(self.rid,self.sender,
                                                    self.action,self.receiver)
     
+    def add_callback(self, callback, raise_on_error = False):
+        if not self.ack:
+            raise CannotCallBackError('Cannot add callback to "{0}".\
+ It does not acknowledge'.format(self))
+        return super(ActorMessage,self).add_callback(callback, raise_on_error)
+    
     def __repr__(self):
         return self.__str__()
     
@@ -143,7 +150,18 @@ created by :meth:`ActorProxy.send` method.
             r.callback(result)
             
             
-
+class ActorProxyDeferred(Deferred):
+    
+    def __init__(self, aid, msg):
+        super(ActorProxyDeferred,self).__init__(rid = aid)
+        self.aid = aid
+        self._msg = msg.add_callback(self.callback)
+        
+    def __str__(self):
+        return '{0}({1})'.format(self.__class__,self.aid)
+    __repr__ = __str__
+    
+    
 class ActorProxy(LocalMixin):
     '''This is an important component in pulsar concurrent framework. An
 instance of this class behaves as a proxy for a remote `underlying` 
@@ -203,7 +221,7 @@ action ``notify`` with parameter ``"hello there!"``.
         '''Callback from the :class:`Arbiter` when the remote underlying actor
 has registered its inbox address.
 
-:parameter address: the address for the undrlying remote :attr:`Arbiter.inbox`
+:parameter address: the address for the underlying remote :attr:`Arbiter.inbox`
 '''
         self.__address = address
         m = self.local.pop('mailbox',None)
@@ -260,7 +278,7 @@ If there is no inbox either, abort the message passing and log a critical error.
  mailbox available.'.format(self))
             return
         
-        msg = self.message(sender,action,*args,**kwargs)
+        msg = self.message(sender, action, *args, **kwargs)
         try:
             mailbox.put(msg)
             return msg
@@ -292,10 +310,11 @@ object including, aid (actor id), timeout and mailbox size.'''
         
 
 class ActorProxyMonitor(ActorProxy):
-    '''A specialized :class:`ActorProxy` class which contains additional
+    '''A specialised :class:`ActorProxy` class which contains additional
 information about the remote underlying :class:`pulsar.Actor`. Unlike the
 :class:`pulsar.ActorProxy` class, instances of this class are not pickable and
-therefore remain in the process where they have been created.
+therefore remain in :class:`Arbiter` domain, which is the
+process where they have been created.
 
 .. attribute:: impl
 

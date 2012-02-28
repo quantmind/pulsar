@@ -12,14 +12,16 @@ from .proxy import ActorProxyMonitor
 __all__ = ['ActorImpl','actor_impl']
     
 
-def actor_impl(concurrency, actor_class, timeout, arbiter, kwargs):
+def actor_impl(concurrency, actor_class, timeout, arbiter, aid, kwargs):
     if concurrency == 'monitor':
-        return ActorMonitorImpl(concurrency,actor_class, timeout, arbiter,
+        return ActorMonitorImpl(concurrency,actor_class, timeout, arbiter, aid,
                                 kwargs)
     elif concurrency == 'thread':
-        return ActorThread(concurrency,actor_class, timeout, arbiter, kwargs)
+        return ActorThread(concurrency,actor_class, timeout, arbiter, aid,
+                           kwargs)
     elif concurrency == 'process':
-        return ActorProcess(concurrency, actor_class, timeout, arbiter, kwargs)
+        return ActorProcess(concurrency, actor_class, timeout, arbiter, aid,
+                            kwargs)
     else:
         raise ValueError('Concurrency {0} not supported by pulsar'\
                          .format(concurrency))
@@ -38,8 +40,10 @@ and are shared between the :class:`Actor` and its
 :parameter kwargs: additional key-valued arguments to be passed to the actor
     constructor.
 '''
-    def __init__(self, concurrency, actor_class, timeout, arbiter, kwargs):
-        self.aid = gen_unique_id()[:8] if arbiter else 'arbiter'
+    def __init__(self, concurrency, actor_class, timeout, arbiter, aid, kwargs):
+        if not aid:
+            aid = gen_unique_id()[:8] if arbiter else 'arbiter'
+        self.aid = aid
         self.impl = concurrency
         self.timeout = timeout
         self.actor_class = actor_class
