@@ -4,6 +4,8 @@
 build/*
 docs/build/*
 dist/*
+htmlcov/*
+.coverage
 .project
 .pydevproject
 cfg.py

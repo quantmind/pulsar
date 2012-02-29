@@ -212,62 +212,62 @@ class FrameParser(object):
         if self._buf:
             data = self._buf + data
         
+        if not data:
+            return frame
+        
         # No opcode yet
         if frame.opcode is None:
-            if len(data) > 1:
-                first_byte, second_byte = struct.unpack("BB", data[:2])
-                frame.fin = (first_byte >> 7) & 1
-                frame.rsv1 = (first_byte >> 6) & 1
-                frame.rsv2 = (first_byte >> 5) & 1
-                frame.rsv3 = (first_byte >> 4) & 1
-                frame.opcode = first_byte & 0xf
-                if frame.fin not in (0,1):
-                    raise WebSocketProtocolError('FIN must be 0 or 1')
-                if frame.rsv1 or frame.rsv2 or frame.rsv3:
-                    raise WebSocketProtocolError('RSV must be 0')
-                if not (second_byte & 0x80):
-                    raise WebSocketProtocolError(\
-                                'Unmasked frame. Abort connection')
-                payload_length = second_byte & 0x7f
-                
-                # All control frames MUST have a payload length of 125 bytes or less
-                if frame.opcode > 0x7 and payload_length > 125:
-                    raise WebSocketProtocolError('Frame too large')
-                
-                frame.payload_length = payload_length
-                data = data[2:]
-            else:
-                return self.save_buf(data)
+            first_byte, second_byte = struct.unpack("BB", data[:2])
+            frame.fin = (first_byte >> 7) & 1
+            frame.rsv1 = (first_byte >> 6) & 1
+            frame.rsv2 = (first_byte >> 5) & 1
+            frame.rsv3 = (first_byte >> 4) & 1
+            frame.opcode = first_byte & 0xf
+            if frame.fin not in (0,1):
+                raise WebSocketProtocolError('FIN must be 0 or 1')
+            if frame.rsv1 or frame.rsv2 or frame.rsv3:
+                raise WebSocketProtocolError('RSV must be 0')
+            if not (second_byte & 0x80):
+                raise WebSocketProtocolError(\
+                            'Unmasked frame. Abort connection')
+            payload_length = second_byte & 0x7f
+            
+            # All control frames MUST have a payload length of 125 bytes or less
+            if frame.opcode > 0x7 and payload_length > 125:
+                raise WebSocketProtocolError('Frame too large')
+            
+            frame.payload_length = payload_length
+            data = data[2:]
         
         if frame.masking_key is None:
             # All control frames MUST have a payload length of 125 bytes or less
             
             if frame.payload_length == 126:
                 if len(data) < 6: # 2 + 4 for mask
-                     return self.save_buf(data)
+                     return self.save_buf(frame, data)
                 d,data = d[:2] , d[2:]
                 frame.payload_length = struct.unpack("!H", d)[0]
             elif frame.payload_length == 127:
                 if len(data) < 12:  # 8 + 4 for mask
-                     return self.save_buf(data)
+                     return self.save_buf(frame, data)
                 d,data = d[:8] , d[8:]
                 frame.payload_length = struct.unpack("!Q", d)[0]
             elif len(data) < 4:
-                return self.save_buf(data)
+                return self.save_buf(frame, data)
             
             # The mask is 4 bits
             frame.masking_key,data = data[:4],data[4:]
                 
         if len(data) < frame.payload_length:
-            self.save_buf(data)
+            return self.save_buf(frame, data)
         #
         else:
             data = data[:frame.payload_length]
-            self.save_buf(data[frame.payload_length:])
+            self.save_buf(frame, data[frame.payload_length:])
             frame.body = frame.unmask(data)
+            return frame
             
-        return frame
-            
-    def save_buf(self, data):
+    def save_buf(self, frame, data):
         self._buf = data
+        return frame
         

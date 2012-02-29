@@ -115,6 +115,7 @@ class PulsarShell(pulsar.Application):
         imported_objects = {'pshell':self,
                             'pulsar':pulsar,
                             'arbiter':pulsar.arbiter(),
+                            'get_actor': pulsar.get_actor,
                             'spawn':pulsar.spawn,
                             'Actor':pulsar.Actor}
         try: # Try activating rlcompleter, because it's handy.

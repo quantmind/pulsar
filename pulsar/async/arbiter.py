@@ -35,12 +35,25 @@ def arbiter(daemonize = False):
     
     
 def spawn(**kwargs):
-    '''Spawn a new :class:`Actor` instance and return its a
+    '''Spawn a new :class:`Actor` instance and return an
 :class:`ActorProxyDeferred`. This method
-can be used from any actor domain. If not in the Arbiter domain, the method
-send a request to the actor to spawn a new actor.
+can be used from any :class:`Actor`. If not in the :class:`Arbiter` domain,
+the method send a request to the :class:`Arbiter` to spawn a new actor, once
+the arbiter creates the actor it returns the proxy to the original caller.
 
-:rtype: an :class:`ActorProxyDeferred`.'''
+:rtype: an :class:`ActorProxyDeferred`.
+
+A typical usage::
+
+    >>> a = spawn()
+    >>> a.aid
+    'ba42b02b'
+    >>> a.called
+    True
+    >>> p = a.result
+    >>> p.address
+    ('127.0.0.1', 46691)
+    '''
     actor = get_actor()
     # The actor is not the Arbiter. We send a message to the Arbiter to spawn
     # a new Actor

@@ -8,6 +8,8 @@ API
 
 .. autofunction:: spawn
 
+.. autofunction:: get_actor
+
 .. _api-actors:
 
 Actors
@@ -62,6 +64,15 @@ ActorProxy
 .. autoclass:: ActorProxy
    :members:
    :member-order: bysource
+   
+   
+ActorProxyDeferred
+~~~~~~~~~~~~~~~~~~~~
+
+.. autoclass:: ActorProxyDeferred
+   :members:
+   :member-order: bysource
+   
    
 ActorProxyMonitor
 ~~~~~~~~~~~~~~~~~~~~~~~~

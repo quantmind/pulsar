@@ -40,7 +40,7 @@ def page(environ, start_response):
     path = environ['PATH_INFO']
     if not path or path == '/':
         data = open(os.path.join(os.path.dirname(__file__), 
-                     'websocket.html')).read()
+                     'socketio.html')).read()
         data = data % environ
         start_response('200 OK', [('Content-Type', 'text/html'),
                                   ('Content-Length', str(len(data)))])

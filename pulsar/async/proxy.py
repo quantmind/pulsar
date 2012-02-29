@@ -151,7 +151,14 @@ created by :meth:`ActorProxy.send` method.
             
             
 class ActorProxyDeferred(Deferred):
-    
+    '''A :class:`Deferred` for an :class:`ActorProxy`. This instance will be
+obtain and :class:`ActorProxy` result once the remote :class:`Actor` is fully
+functional.
+
+.. attribute:: aid
+
+    The the remote :attr:`Actor` id
+'''
     def __init__(self, aid, msg):
         super(ActorProxyDeferred,self).__init__(rid = aid)
         self.aid = aid
