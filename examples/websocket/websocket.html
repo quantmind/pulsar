@@ -7,26 +7,25 @@
 <script>
 (function($) {
     $(document).ready(function() {
-	    var data = {};
-	    var s = new WebSocket("ws://%(HTTP_HOST)s/data");
-	    s.onopen = function() { 
-	        //alert('open');
-	        s.send('hi');
-	    };
-	    s.onmessage = function(e) {
-	      //alert('got ' + e.data);
-	      var data = $.parseJSON(e.data);
-	      $.plot('#holder', [data],
-	              {
-	                series: {
-	                  lines: { show: true, fill: true },
-	                },
-	                yaxis: { min: 0 },
-	              } );
-	
-	      s.send('');
-	    };
-	});
+        var data = {};
+        var s = new WebSocket("ws://%(HTTP_HOST)s/data");
+        s.onopen = function() {
+            s.send('hi');
+        };
+        s.onmessage = function(e) {
+          //alert('got ' + e.data);
+          var data = $.parseJSON(e.data);
+          $.plot('#holder', [data],
+                  {
+                    series: {
+                      lines: { show: true, fill: true },
+                    },
+                    yaxis: { min: 0 },
+                  } );
+
+          s.send('');
+        };
+    });
 }(jQuery));
 </script>
 </head>

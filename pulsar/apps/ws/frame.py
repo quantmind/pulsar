@@ -7,6 +7,13 @@ import pulsar
 from pulsar.utils.py2py3 import ispy3k, range, BytesIO, i2b
 
 
+__all__ = ['WebSocketError',
+           'WebSocketProtocolError',
+           'FrameParser',
+           'frame',
+           'frame_close']
+
+
 class WebSocketError(pulsar.BadHttpRequest):
     pass
 
@@ -15,12 +22,12 @@ class WebSocketProtocolError(WebSocketError):
     pass
 
 
-__all__ = ['Frame','WebSocketError','WebSocketProtocolError','Parser']
-
-
-def Frame(version = 8, binary = True, close = False, message = b'', **kwargs):
-    '''Return a websocket :class:`Frame` instance'''
-    v = int(version)
+def frame(version = None, binary = True, close = False, message = b'',
+          **kwargs):
+    '''Return a websocket :class:`Frame` instance.
+    
+:rtype: binary data'''
+    v = int(version or 8)
     if v in (8,13):
         if close:
             f = Frame8(0x8,b'',fin=True)
@@ -30,6 +37,10 @@ def Frame(version = 8, binary = True, close = False, message = b'', **kwargs):
         return f._msg
     else:
         raise NotImplementedError
+    
+    
+def frame_close(version = None):
+    return frame(version)
 
 
 class Frame8(object):
@@ -39,8 +50,8 @@ class Frame8(object):
         """Implements the framing protocol as defined by hybi_
 specification supporting protocol version 8::
     
-    >>> f = Frame(OPCODE_TEXT, 'hello world', os.urandom(4), fin=1)
-    >>> bytes = f.build()
+    >>> f = Frame(opcode, 'hello world', os.urandom(4), fin=1)
+    >>> data = f.build()
     >>> f = Frame()
     >>> f.parser.send(bytes[1])
     >>> f.parser.send(bytes[2])
@@ -180,30 +191,28 @@ using the simple masking algorithm::
     unmask = mask
 
 
-class Parser(object):
+class FrameParser(object):
     '''Parser for the version 8 protocol'''
-    FINS = (0,1)
+    __slots__ = ('_buf','_frame')
+    
     def __init__(self):
         self._buf = None
-        self.__frame = Frame8()
+        self._frame = Frame8()
         
-    @property
-    def frame(self):
-        return self.__frame
-    
     def get_frame(self):
-        if self.__frame.body is not None:
-            self.__frame = Frame8()        
-        return self.__frame
+        if self._frame.is_complete():
+            self._frame = Frame8()        
+        return self._frame
     
-    def execute(self, data, length):
+    def execute(self, data):
         # end of body can be passed manually by putting a length of 0
-        if length == 0:
-            return length
+        frame = self.get_frame()
+        if data is None:
+            return frame
         if self._buf:
             data = self._buf + data
         
-        frame = self.get_frame()
+        # No opcode yet
         if frame.opcode is None:
             if len(data) > 1:
                 first_byte, second_byte = struct.unpack("BB", data[:2])
@@ -212,7 +221,7 @@ class Parser(object):
                 frame.rsv2 = (first_byte >> 5) & 1
                 frame.rsv3 = (first_byte >> 4) & 1
                 frame.opcode = first_byte & 0xf
-                if frame.fin not in self.FINS:
+                if frame.fin not in (0,1):
                     raise WebSocketProtocolError('FIN must be 0 or 1')
                 if frame.rsv1 or frame.rsv2 or frame.rsv3:
                     raise WebSocketProtocolError('RSV must be 0')
@@ -250,11 +259,15 @@ class Parser(object):
             frame.masking_key,data = data[:4],data[4:]
                 
         if len(data) < frame.payload_length:
-            return self.save_buf(data)
+            self.save_buf(data)
+        #
         else:
             data = data[:frame.payload_length]
             self.save_buf(data[frame.payload_length:])
             frame.body = frame.unmask(data)
             
+        return frame
+            
     def save_buf(self, data):
         self._buf = data
+        

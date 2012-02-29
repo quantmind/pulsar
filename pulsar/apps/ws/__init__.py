@@ -1,17 +1,38 @@
-'''Pulsar comes with a server-side implementation of the WebSocket protocol.
-WebSockets_ allow for bidirectional communication between the browser
-and server.
+'''The :mod:`pulsar.apps.ws` contains a WSGI compatible implementation
+of the WebSocket_ protocol.
 
-The WebSocket protocol is still in development.  This module currently
-implements the hybi_-17 version of the protocol.  
-See this `browser compatibility table 
-<http://en.wikipedia.org/wiki/WebSockets#Browser_support>`_ on Wikipedia.
-   
-The implementation uses the WSGI middleware
-:class:`pulsar.apps.ws.WebSocket` which implements the handshake and the
-:class:`pulsar.apps.ws.WS` handler for the communication part. 
+WebSockets allow for bidirectional communication between the browser
+and server..The implementation uses the WSGI middleware
+:class:`WebSocket` which implements the handshake and the
+:class:`WS` handler for the communication part. 
 
-.. _WebSockets: http://dev.w3.org/html5/websockets/
-.. _hybi: http://tools.ietf.org/html/draft-ietf-hybi-thewebsocketprotocol-17
+.. _WebSocket: http://tools.ietf.org/html/rfc6455
+
+API
+==============
+
+WebSocket
+~~~~~~~~~~~~~~~~
+
+.. autoclass:: WebSocket
+   :members:
+   :member-order: bysource
+
+
+WebSocket Handler
+~~~~~~~~~~~~~~~~~~~~
+
+.. autoclass:: WS
+   :members:
+   :member-order: bysource
+
+Framing
+~~~~~~~~~~~~~~~~~~~
+
+.. autofunction:: frame_close
+
+
 '''
+from .frame import *
+from .handler import *
 from .middleware import *

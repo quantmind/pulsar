@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Websocket example in pulsar</title>
+<script src="http://ajax.googleapis.com/ajax/libs/jquery/1.7.1/jquery.min.js"></script>
+<script src="http://people.iola.dk/olau/flot/jquery.flot.js"></script>
+<script src="https://raw.github.com/LearnBoost/socket.io-client/master/dist/socket.io.js"></script>
+<script>
+(function($) {
+    $(document).ready(function() {
+	    var data = {};
+	    
+	    var s = io.connect("http://%(HTTP_HOST)s/data");
+	    s.on('connect', function() {
+	    	s.emit('hi!');
+	    });
+	    
+		s.on('message', function(msg) {
+		     //alert('got ' + e.data);
+		     var data = $.parseJSON(msg);
+		     $.plot('#holder', [data],
+		             {
+		               series: {
+		                 lines: { show: true, fill: true },
+		               },
+		               yaxis: { min: 0 },
+		             } );
+		     
+		     s.emit('');
+		 });
+    });
+}(jQuery));
+</script>
+<style>
+#frequency {
+    margin: 20px 10px;
+}
+</style>
+</head>
+<body>
+<h3>Plot</h3>
+<input id="frequency" placeholder="frequency in seconds">
+<div id="holder" style="width:600px;height:300px"></div>
+</body>
+</html>

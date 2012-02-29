@@ -9,137 +9,56 @@ import hashlib
 from functools import partial
 
 import pulsar
-from pulsar.utils.py2py3 import ispy3k, to_bytestring, native_str, BytesIO
-
-from .frame import *
-
-
-__all__ = ['WebSocket','WS']
-
-
-logger = logging.getLogger('websocket')
-
-
-def safe(self, func, *args, **kwargs):
-    try:
-        return func(*args, **kwargs)
-    except Exception:
-        logger.error("Uncaught exception in {0[PATH_INFO]}"\
-                        .format(self.environ), exc_info=True)
-        self._abort()
+from pulsar.utils.py2py3 import ispy3k, to_bytestring, native_str, BytesIO,\
+                                itervalues
+from pulsar.apps.wsgi import WsgiResponse
+                                
+if ispy3k:
+    from urllib.parse import parse_qs
+else:
+    from urlparse import parse_qs
 
 
-class WS(object):
-    '''Override :meth:`on_message` to handle incoming messages.
-You can also override :meth:`on_open` and :meth:`on_close` to handle opened
-and closed connections.
-Here is an example Web Socket handler that echos back all received messages
-back to the client::
+from .frame import FrameParser
 
-    class EchoWebSocket(websocket.WebSocketHandler):
-        def on_open(self):
-            print "WebSocket opened"
+
+__all__ = ['WebSocket', 'SocketIOMiddleware']
+
+
+class GeneralWebSocket(object):
+    namespace = ''
+    environ_version = None
     
-        def on_message(self, message):
-            self.write_message(u"You said: " + message)
+    def __init__(self, handle, namespace = None, clients = None):
+        self.handle = handle
+        self._clients = clients if clients is not None else {}
+        self.namespace = namespace if namespace is not None else self.namespace
     
-        def on_close(self):
-            print "WebSocket closed"
-            
-If you map the handler above to "/websocket" in your application, you can
-invoke it in JavaScript with::
-
-    var ws = new WebSocket("ws://localhost:8888/websocket");
-    ws.onopen = function() {
-       ws.send("Hello, world");
-    };
-    ws.onmessage = function (evt) {
-       alert(evt.data);
-    };
-
-This script pops up an alert box that says "You said: Hello, world".
-
-.. attribute: protocols
-
-    list of protocols from the handshake
-    
-.. attribute: extensions
-
-    list of extensions from the handshake
-'''
-    def __init__(self, environ, protocols, extensions):
-        self.environ = environ
-        self.version = environ.get('HTTP_SEC_WEBSOCKET_VERSION')
-        self.protocols = protocols
-        self.extensions = extensions
-        self.parser = Parser()
-        self.stream = environ['pulsar.stream']
-        
-    def __iter__(self):
-        #yield en empty string so that headers are sent
-        yield b''
-        stream = self.stream
-        self.on_open()
-        # kick off reading
-        self._handle()
-        
     @property
-    def client_terminated(self):
-        return self.stream.closed()
-        
-    def on_open(self):
-        """Invoked when a new WebSocket is opened."""
-        pass
+    def clients(self):
+        return frozenset(itervalues(self._clients))
 
-    def on_message(self, message):
-        """Handle incoming messages on the WebSocket.
-        This method must be overloaded
-        """
-        raise NotImplementedError
-
-    def on_close(self):
-        """Invoked when the WebSocket is closed."""
-        pass
+    def get_client(self, id = ''):
+        client = self._clients.get(id)
+        if client is None:
+            client = self.handle(self)
+            self._clients[client.id] = client
+        return client
     
-    def write_message(self, message, binary=False):
-        """Sends the given message to the client of this Web Socket."""
-        message = to_bytestring(message)
-        frame = Frame(version = self.version, message = message,
-                      binary = binary)
-        self.stream.write(frame)
+    def __call__(self, environ, start_response):
+        path = environ.get('PATH_INFO')
+        if not path.lstrip('/').startswith(self.namespace):
+            return
+        return self.handle_handshake(environ, start_response)
     
-    def close(self):
-        """Closes the WebSocket connection."""
-        frame = Frame(version = self.version, close = True)
-        self.stream.write(frame).add_callback(self._abort)
-        self._started_closing_handshake = True
-        
-    def abort(self, r = None):
-        self.stream.close()
-        
-    #################################################################    
-    # INTERNALS
-    #################################################################
-        
-    def _write_message(self, msg):
-        self.stream.write(msg)
+    def handle_handshake(self, environ, start_response, client = None):
+        raise NotImplementedError()
     
-    def _handle(self, data = None):
-        if data is not None:
-            safe(self, self.parser.execute, data, len(data))
-                
-        frame = self.parser.frame
-        if frame.is_complete():
-            if self.client_terminated:
-                return
-            safe(self, frame.on_complete, self)
-            
-        if not self.client_terminated:
-            self.stream.read(callback = self._handle)
+    def get_parser(self):
+        raise NotImplementedError()
             
     
-
-class WebSocket(object):
+class WebSocket(GeneralWebSocket):
     """A :ref:`WSGI <apps-wsgi>` middleware for serving web socket applications.
 It implements the protocol version 8 as specified at
 http://www.whatwg.org/specs/web-socket-protocol/.
@@ -153,7 +72,7 @@ a valid :class:`WebSocket` instance initialise as follow::
     class MyWebSocket(ws.WS):
         ...
     
-    wm = ws.WebSocket(handler = MyWebSocket())
+    wm = ws.WebSocket(handle = MyWebSocket())
         
     app = wsgi.WsgiHandler(middleware = (...,wm))
     
@@ -167,13 +86,13 @@ JavaScript interface.
     WS_KEY = '258EAFA5-E914-47DA-95CA-C5AB0DC85B11'
     #magic string
     STATUS = "101 Switching Protocols"
+    environ_version = 'HTTP_SEC_WEBSOCKET_VERSION'
     
-    def __init__(self, handle):
-        self.handle = handle
-    
-    def __call__(self, environ, start_response):
+    def handle_handshake(self, environ, start_response):
+        connections = environ.get("HTTP_CONNECTION", '').lower()\
+                                    .replace(' ','').split(',')
         if environ.get("HTTP_UPGRADE", '').lower() != "websocket" or \
-           environ.get("HTTP_CONNECTION", '').lower() != "upgrade":
+           'upgrade' not in connections:
             return
         
         if environ['REQUEST_METHOD'].upper() != 'GET':
@@ -189,7 +108,8 @@ JavaScript interface.
         
         version = environ.get('HTTP_SEC_WEBSOCKET_VERSION')
         if version not in self.VERSIONS:
-            raise WebSocketError('Unsupported WebSocket version')
+            raise WebSocketError('Unsupported WebSocket version {0}'\
+                                 .format(version))
         
         # Collect supported subprotocols
         subprotocols = environ.get('HTTP_SEC_WEBSOCKET_PROTOCOL')
@@ -223,8 +143,78 @@ JavaScript interface.
                             ','.join(ws_extensions)))
         
         start_response(self.STATUS, headers)
-        return self.handle(environ,ws_protocols,ws_extensions)
+        client = self.get_client()
+        return client.start(environ, ws_protocols, ws_extensions)
         
     def challenge_response(self, key):
         sha1 = hashlib.sha1(to_bytestring(key+self.WS_KEY))
         return native_str(base64.b64encode(sha1.digest()))
+    
+    def get_parser(self):
+        return FrameParser()
+
+
+class SocketIOMiddleware(GeneralWebSocket):
+    '''A WSGI middleware for socket.io_ client.
+    
+.. _socket.io: https://github.com/LearnBoost/socket.io-client
+'''
+    namespace = 'socket.io'
+    RE_REQUEST_URL = re.compile(r"""
+        ^/(?P<namespace>[^/]+)
+         /(?P<protocol_version>[^/]+)
+         /(?P<transport_id>[^/]+)
+         /(?P<session_id>[^/]+)/?$
+         """, re.X)
+    RE_HANDSHAKE_URL = re.compile(r"^/(?P<namespace>[^/]+)/1/$", re.X)
+    
+    handler_types = {
+        'websocket': WebSocket
+    }
+    
+    def __init__(self, handle, namespace = None):
+        super(SocketIOMiddleware, self).__init__(handle,namespace)
+        ht = self.handler_types
+        self._middlewares = dict(((k,ht[k](handle,\
+                                    clients = self._clients)) for k in ht))
+    
+    def handle_handshake(self, environ, start_response):
+        path = environ.get('PATH_INFO')
+        request_method = environ.get("REQUEST_METHOD")
+        request_tokens = self.RE_REQUEST_URL.match(path)
+        
+        # Parse request URL and QUERY_STRING and do handshake
+        if request_tokens:
+            request_tokens = request_tokens.groupdict()
+        else:
+            handshake_tokens = self.RE_HANDSHAKE_URL.match(path)
+            if handshake_tokens:
+                return self._io_handshake(environ, start_response,
+                                          handshake_tokens.groupdict())
+            else:
+                return
+
+        # Delegate to transport protocol
+        transport = self._middlewares.get(request_tokens["transport_id"])
+        return transport.handle_handshake(environ, start_response)
+        
+    ############################################################################
+    ##    Private
+    ############################################################################
+    
+    def _io_handshake(self, environ, start_response, tokens):
+        if tokens["namespace"] != self.namespace:
+            raise WebSocketError(400, "Namespace mismatch")
+        else:
+            client = self.get_client()
+            self._clients.pop(client.id)
+            data = "%s:15:10:%s" % (client.id, ",".join(self._middlewares))
+            args = parse_qs(environ.get("QUERY_STRING"))
+            if "jsonp" in args:
+                content_type = 'application/javascript'
+                data = 'io.j[%s]("%s");' % (args["jsonp"][0], data)
+            else:
+                content_type = 'text/plain'
+            return WsgiResponse(200,
+                                data.encode('utf-8'),
+                                content_type = content_type)

@@ -60,12 +60,16 @@ the following
 
 Design
 =============
-Pulsar internals are based on `actors primitive`_. Actors are the atoms of 
-pulsar's concurrent computation,they do not share state between them,
+Pulsar internals are based on `actors primitive`_. ``Actors`` are the *atoms* of 
+pulsar's concurrent computation, they do not share state between them,
 communication is achieved via asynchronous inter-process message passing,
 implemented using the standard python socket library.
+
 Two special classes of actors are the ``Arbiter``, used as a singletone,
 and the ``Monitor``, a manager of several actors performing similar functions.
+The Arbiter runs the main eventloop and it controls the life of all actors.
+Monitors manage group of actors performing similar functions, You can think
+of them as a pool of actors.
 
 More information about design and philosophy in the documentations.  
 
