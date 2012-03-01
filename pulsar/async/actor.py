@@ -50,11 +50,22 @@ def get_actor(thread = None):
     return thread.actor
 
 
-def send(target, msg, **params):
-    '''Send a message *msg* to *target*.
-:parameter target: the actor id or name of the target actor.
-:parameter msg: the remote action to perform.
-:parameter params: dictionary of parameters to pass to the action.
+def send(target, action, **params):
+    '''Send a message *action* to *target*.
+    
+:parameter target: the :class:`Actor` id or an :class:`ActorProxy` or name of
+    the target actor receiving the message.
+:parameter action: the action to perform on the remote :class:`Actor`.
+:parameter params: dictionary of parameters to pass to the remote *action*.
+:rtype: an :class:`ActorMessage` which is a :class:`Deferred` and therefore
+    can be used to attach callbacks.
+
+Typical example::
+
+    >>> a = spawn()
+    >>> r = a.add_callback(lambda p: send(p,'ping'))
+    >>> r.result
+    'pong'
 '''
     actor = get_actor()
     if isinstance(target, str):
@@ -63,7 +74,7 @@ def send(target, msg, **params):
         tg = target
     if not tg:
         raise ValueError('Cannot send message to {0}'.format(target))
-    return tg.send(actor, msg, **params)
+    return tg.send(actor, action, **params)
 
 
 class ActorMetaClass(type):

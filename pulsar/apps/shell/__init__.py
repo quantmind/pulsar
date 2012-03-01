@@ -112,12 +112,13 @@ class PulsarShell(pulsar.Application):
         return self.local['console']
     
     def handler(self):
-        imported_objects = {'pshell':self,
-                            'pulsar':pulsar,
-                            'arbiter':pulsar.arbiter(),
+        imported_objects = {'pshell': self,
+                            'pulsar': pulsar,
+                            'arbiter': pulsar.arbiter(),
                             'get_actor': pulsar.get_actor,
-                            'spawn':pulsar.spawn,
-                            'Actor':pulsar.Actor}
+                            'spawn': pulsar.spawn,
+                            'send': pulsar.send,
+                            'Actor': pulsar.Actor}
         try: # Try activating rlcompleter, because it's handy.
             import readline
         except ImportError:

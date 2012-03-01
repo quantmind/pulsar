@@ -7,7 +7,6 @@ from multiprocessing.queues import Empty
 
 import pulsar
 from pulsar.utils import system
-from pulsar.utils.system import IObase
 from pulsar.utils.tools import Pidfile, gen_unique_id
 from pulsar.utils.py2py3 import itervalues, iteritems
 
@@ -54,11 +53,11 @@ A typical usage::
     >>> p.address
     ('127.0.0.1', 46691)
     '''
+    aid = gen_unique_id()[:8]
+    kwargs['aid'] = aid
     actor = get_actor()
     # The actor is not the Arbiter. We send a message to the Arbiter to spawn
     # a new Actor
-    aid = gen_unique_id()[:8]
-    kwargs['aid'] = aid
     if not isinstance(actor, Arbiter):
         msg = send('arbiter', 'spawn', **kwargs).add_callback(actor.link_actor)
     else:
@@ -66,7 +65,7 @@ A typical usage::
     return ActorProxyDeferred(aid, msg)
 
 
-class Arbiter(PoolMixin,Actor):
+class Arbiter(PoolMixin, Actor):
     '''The Arbiter is a very special :class:`Actor`. It is used as
 singletone in the main process and it manages one or more
 :class:`Monitor`.  

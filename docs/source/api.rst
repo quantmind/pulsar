@@ -6,7 +6,21 @@
 API
 ==================
 
+High level functions
+=======================
+
+spawn
+~~~~~~~~~~~~~~
+
 .. autofunction:: spawn
+
+send
+~~~~~~~~~~~~~~
+
+.. autofunction:: send
+
+get_actor
+~~~~~~~~~~~~~~
 
 .. autofunction:: get_actor
 

@@ -162,8 +162,13 @@ functional.
     def __init__(self, aid, msg):
         super(ActorProxyDeferred,self).__init__(rid = aid)
         self.aid = aid
-        self._msg = msg.add_callback(self.callback)
+        self.proxy = None
+        self._msg = msg.add_callback(self._store_proxy)
         
+    def _store_proxy(self, proxy):
+        self.proxy = proxy
+        return self.callback(proxy)
+    
     def __str__(self):
         return '{0}({1})'.format(self.__class__,self.aid)
     __repr__ = __str__
