@@ -304,6 +304,10 @@ program execution. Instead, it should return a Deferred.
     def called(self):
         return self._called
     
+    @property
+    def running(self):
+        return self._running
+    
     def pause(self):
         """Stop processing until :meth:`unpause` is called.
         """
@@ -445,7 +449,11 @@ in :meth:`start`.'''
             except:
                 self.callback(sys.exc_info())
         
-            
+
+class MultiDeferred(Deferred):
+    pass    
+    
+    
 class DeferredGenerator(Deferred):
     '''A :class:`Deferred` for a generator (iterable) over deferred.
 The callback will occur once the generator has stopped
