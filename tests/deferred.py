@@ -2,7 +2,7 @@
 import sys
 
 from pulsar import AlreadyCalledError, Deferred, async_pair, is_async,\
-                     make_async, IOLoop, is_failure
+                     make_async, IOLoop, is_failure, MultiDeferred
 from pulsar.utils.test import test
 
 
@@ -36,10 +36,16 @@ class TestDeferred(test.TestCase):
         d = Deferred()
         self.assertEqual(d.rid,None)
         self.assertFalse(d.called)
+        self.assertFalse(d.running)
+        self.assertEqual(str(d),'Deferred')
         d.callback('ciao')
         self.assertTrue(d.called)
         self.assertEqual(d.result,'ciao')
         self.assertRaises(AlreadyCalledError,d.callback,'bla')
+        
+    def testWrongOperations(self):
+        d = Deferred()
+        self.assertRaises(RuntimeError, d.callback, Deferred())
 
     def testCallbacks(self):
         d,cbk = async_pair(Deferred())
@@ -153,6 +159,50 @@ class TestDeferred(test.TestCase):
         #self.assertEqual(a.result,d.result)
         
         
+class TestMultiDeferred(test.TestCase):
+    
+    def testSimple(self):
+        d = MultiDeferred()
+        self.assertFalse(d.called)
+        self.assertFalse(d._locked)
+        self.assertFalse(d._underlyings)
+        self.assertFalse(d._results)
+        d.lock()
+        self.assertTrue(d.called)
+        self.assertTrue(d._locked)
+        self.assertEqual(d.result,[])
+        self.assertRaises(RuntimeError, d.lock)
+        self.assertRaises(RuntimeError, d._finish)
+        
+    def testMulti(self):
+        d = MultiDeferred()
+        d1 = Deferred()
+        d2 = Deferred()
+        d.add(d1)
+        d.add(d2)
+        self.assertRaises(ValueError, d.add, 'bla')
+        self.assertRaises(RuntimeError, d._finish)
+        d.lock()
+        self.assertRaises(RuntimeError, d._finish)
+        self.assertRaises(RuntimeError, d.lock)
+        self.assertRaises(RuntimeError, d.add, d1)
+        self.assertFalse(d.called)
+        d2.callback('first')
+        self.assertFalse(d.called)
+        d1.callback('second')
+        self.assertTrue(d.called)
+        self.assertEqual(d.result,['second','first'])
+        
+    def testUpdate(self):
+        d1 = Deferred()
+        d2 = Deferred()
+        d = MultiDeferred()
+        d.update((d1,d2)).lock()
+        d1.callback('first')
+        d2.callback('second')
+        self.assertTrue(d.called)
+        self.assertEqual(d.result,['first','second'])
+    
         
         
         

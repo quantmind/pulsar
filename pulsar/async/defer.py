@@ -9,18 +9,19 @@ from inspect import isgenerator, isfunction, ismethod, istraceback
 from time import sleep, time
 from collections import namedtuple
 
-try:
+try:    #pragma nocover
     import queue
-except ImportError:
+except ImportError: #pragma nocover
     import Queue as queue
 ThreadQueue = queue.Queue
 
 from pulsar import AlreadyCalledError, DeferredFailure, Timeout,\
                      NOT_DONE, CLEAR_ERRORS
-from pulsar.utils.py2py3 import raise_error_trace
+from pulsar.utils.py2py3 import raise_error_trace, map
 
 
 __all__ = ['Deferred',
+           'MultiDeferred',
            'Failure',
            'DeferredGenerator',
            'SafeAsync',
@@ -295,7 +296,10 @@ program execution. Instead, it should return a Deferred.
         pass
     
     def __repr__(self):
-        return self._description or self.__class__.__name__
+        v = self._description or self.__class__.__name__
+        if self.called:
+            v += ' (called)'
+        return v
     
     def __str__(self):
         return self. __repr__()            
@@ -306,7 +310,7 @@ program execution. Instead, it should return a Deferred.
     
     @property
     def running(self):
-        return self._running
+        return self._runningCallbacks
     
     def pause(self):
         """Stop processing until :meth:`unpause` is called.
@@ -336,7 +340,7 @@ The function takes at most one argument, the result passed to the
         
         if not self.paused:        
             while self._callbacks:
-                if isinstance(self.result,Failure):
+                if isinstance(self.result ,Failure):
                     if self.result.should_stop:
                         self.result.raise_all()
                 callback = self._callbacks.pop(0)
@@ -377,10 +381,10 @@ this point, :meth:`add_callback` will run the *callbacks* immediately.
 :return: the *result* input parameter
 '''
         #TODO, this is a hack, not working properly yet, but required as
-        #unhandled exception stall the asynchronous engine
-        if isinstance(result,Deferred):
-            raise ValueError('Received a deferred instance from\
- callback function')
+        #un-handled exception stall the asynchronous engine
+        if isinstance(result, Deferred):
+            raise RuntimeError('Received a deferred instance from '
+                               'callback function')
         if self.called:
             raise AlreadyCalledError('already called')
         self.result = as_failure(result) or result
@@ -451,9 +455,58 @@ in :meth:`start`.'''
         
 
 class MultiDeferred(Deferred):
-    pass    
+    '''A :class:`Deferred` which depends on multiple other :class:`Deferred`.'''
+    def __init__(self, **kwargs):
+        self._underlyings = set()
+        self._results = []
+        self._locked = False
+        super(MultiDeferred,self).__init__(**kwargs)
     
+    def lock(self):
+        if self._locked:
+            raise RuntimeError(
+                        'MultiDeferred cannot be locked twice.')
+        self._locked = True
+        if not self._underlyings:
+            self._finish()
+        return self
+            
+    def add(self, d):
+        if not isinstance(d, Deferred):
+            raise ValueError('Expected a Deferred received %s' % d)
+        if self._locked:
+            raise RuntimeError(
+                        'MultiDeferred cannot add a dependent once locked.')
+        self._results.append(d)
+        if d not in self._underlyings:
+            self._underlyings.add(d)
+            d.add_callback_args(self._underlying_done, d)
+        return self
     
+    def update(self, deferred):
+        '''Update the multideferred with an iterable over :class:`Deferred`'''
+        for d in deferred:
+            self.add(d)
+        return self
+    
+    def _underlying_done(self, result, d):
+        self._underlyings.remove(d)
+        if self._locked and not self._underlyings and not self.called:
+            self._finish()
+        return result
+    
+    def _finish(self):
+        if not self._locked:
+            raise RuntimeError('MultiDeferred cannot finish until completed.')
+        if self._underlyings:
+            raise RuntimeError('MultiDeferred cannot finish whilst waiting for '
+                               'dependents %r' % self._underlyings)
+        if self.called:
+            raise RuntimeError('MultiDeferred done before finishing.')
+        result = [r.result for r in self._results]
+        return self.callback(result)            
+        
+        
 class DeferredGenerator(Deferred):
     '''A :class:`Deferred` for a generator (iterable) over deferred.
 The callback will occur once the generator has stopped
