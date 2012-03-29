@@ -6,19 +6,11 @@ import logging
 import inspect
 
 from pulsar.utils.importer import import_module
-
-
-if not hasattr(unittest,'SkipTest'):
-    class SkipTest(Exception):
-        pass
-else:
-    SkipTest = unittest.SkipTest
-    
     
 default_logger = logging.getLogger('pulsar.apps.test.loader')
     
     
-__all__ = ['TestLoader','SkipTest']
+__all__ = ['TestLoader']
     
 
 class TestLoader(object):
