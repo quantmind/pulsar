@@ -1,5 +1,6 @@
 import sys
 import traceback
+import unittest
 from inspect import istraceback
 from copy import deepcopy
 
@@ -29,6 +30,9 @@ it will stop the configuration of all subsequent plugins and quit the test.
 
 :parameter cfg: instance of :class:`pulsar.Config`.
 '''
+        pass
+    
+    def loadTestsFromTestCase(self, cls):
         pass
     
     def on_start(self):
@@ -326,6 +330,7 @@ class TestRunner(TestResultProxy):
         self.plugins.append(stream)
         self.stream = stream
         self.result = result
+        self.loader = unittest.TestLoader()
         
     def configure(self, cfg):
         self.cfg = cfg
@@ -333,7 +338,15 @@ class TestRunner(TestResultProxy):
             c = p.configure(cfg)
             if c:
                 return c 
-            
+    
+    def loadTestsFromTestCase(self, cls):
+        all_tests = self.loader.loadTestsFromTestCase(cls)
+        for p in self.plugins:
+            c = p.loadTestsFromTestCase(cls)
+            if c is not None:
+                return c
+        return all_tests
+        
     def on_start(self):
         '''Called just before the test suite starts running tests.'''
         for p in self.plugins:

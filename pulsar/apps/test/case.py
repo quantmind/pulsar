@@ -1,6 +1,5 @@
 import sys
 import io
-import unittest
 import pickle
 from inspect import istraceback, isclass
 
@@ -128,10 +127,9 @@ a class method ``setUpClass`` is defined. If so it runs it.'''
         # Reset the runner
         worker.app.local.pop('runner', None)
         runner = worker.app.runner
-        loader = unittest.TestLoader()
         testcls = self.testcls
         testcls.tag = self.tag
-        all_tests = loader.loadTestsFromTestCase(testcls)
+        all_tests = runner.loadTestsFromTestCase(testcls)
         
         if all_tests.countTestCases():
             testcls.worker = worker
