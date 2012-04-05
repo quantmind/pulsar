@@ -182,7 +182,7 @@ usage is simple::
         start = default_timer()
         for t in r:
             func(*args, **kwargs)
-        return default_timer() - start            
+        return default_timer() - start
         
     def _get_data(self, *args, **kwargs):
         func_name = self.__name
