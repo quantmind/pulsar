@@ -1,6 +1,7 @@
 import sys
 import traceback
 import unittest
+import logging
 from inspect import istraceback
 from copy import deepcopy
 
@@ -11,6 +12,7 @@ __all__ = ['TestObject',
            'TestResult']
 
 
+LOGGER = logging.getLogger('pulsar.apps.test')
 STDOUT_LINE = '\nStdout:\n%s'
 STDERR_LINE = '\nStderr:\n%s'
 
@@ -356,8 +358,13 @@ class TestRunner(TestResultProxy):
     def on_end(self):
         '''Called just before the test suite starts running tests.'''
         for p in self.plugins:
-            if p.on_end():
-                break
+            try:
+                if p.on_end():
+                    break
+            except:
+                LOGGER.critical('Unhandled exception while calling method'\
+                                ' "on_end" of plugin {0}'.format(p),
+                                exc_info=True)
         
     def add(self, result):
         self.result.add(result)

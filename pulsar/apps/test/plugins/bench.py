@@ -1,8 +1,6 @@
 import sys
 import time
 import math
-import cProfile as profiler
-import pstats
 
 if sys.platform == "win32":
     default_timer = time.clock
@@ -31,14 +29,6 @@ class Bench(test.TestOption):
     default = False
     validator = pulsar.validate_bool
     desc = '''Run benchmarks'''
-
-    
-class Profile(test.TestOption):
-    flags = ["--profile"]
-    action = "store_true"
-    default = False
-    validator = pulsar.validate_bool
-    desc = '''Profile benchmarks using the cProfile'''
 
         
 class BenchTest(test.WrapTest):
@@ -80,46 +70,31 @@ class BenchTest(test.WrapTest):
             return testGetSummary(self.number, t, t2, info)
         else:
             return info
-        
-        
-class ProfileTest(object):
-    
-    def __init__(self, test, number):
-        super(ProfileTest,self).__init__(test)
-        self.number = number
-        
-    def _call(self):
-        pass
-    
+
 
 class BenchMark(test.Plugin):
     '''Benchmarking addon for pulsar test suite.'''
-    profile = False
     bench = False
     repeat = 1
     
     def configure(self, cfg):
-        self.profile = cfg.profile
         self.bench = cfg.bench
         self.repeat = cfg.repeat
         
     def getTest(self, test):
         number = getattr(test,'__number__',self.repeat)
-        if self.profile:
-            return ProfileTest(test,number)
-        elif self.bench:
+        if self.bench:
             return BenchTest(test,number)
     
     def import_module(self, mod, parent):
         b = '__benchmark__'
         bench = getattr(mod,b,getattr(parent,b,False))
         setattr(mod,b,bench)
-        if self.bench or self.profile:
+        if self.bench:
             if bench:
                 return mod
         else:
-            if not bench:
-                return mod
+            return mod
     
     def addSuccess(self, test):
         if not self.stream:
@@ -133,5 +108,3 @@ class BenchMark(test.Plugin):
             stream.writeln(template.format(result))
             stream.flush()
             return True
-        elif self.profile:
-            pass

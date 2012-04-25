@@ -6,6 +6,7 @@ include runtests.py
 include docs/make.bat
 include docs/Makefile
 include docs/source/conf.py
+recursive-include pulsar/apps/tests/plugins/htmlfiles *
 recursive-include tests *.py
 recursive-include lib *.py
 recursive-include lib *.h

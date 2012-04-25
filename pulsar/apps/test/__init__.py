@@ -91,7 +91,7 @@ is a group of tests specified in a test class.
     files and directories, while it will look into the example directory for all
     files or directories matching ``tests``.
     
-    Alternatively it can ba a callable returning the iterable over modules. The
+    Alternatively it can be a callable returning the iterable over modules. The
     callable must accept one positional argument, the instance of the test
     suite::
     

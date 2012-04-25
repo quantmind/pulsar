@@ -112,6 +112,10 @@ class TestRequest(WorkerRequest):
 .. attribute:: testcls
 
     A :class:`unittest.TestCase` class to be run on this request.
+    
+.. attribute:: tag
+
+    A string indicating the tag associated with :attr:`testcls`.
 '''
     def __init__(self, testcls, tag):
         self.testcls = testcls
@@ -122,8 +126,13 @@ class TestRequest(WorkerRequest):
     __str__ = __repr__
         
     def run(self, worker):
-        '''Run all tests from the :attr:`testcls`. First it checks if 
-a class method ``setUpClass`` is defined. If so it runs it.'''
+        '''Run all test functions from the :attr:`testcls` using the
+following algorithm:
+
+* Run the class method ``setUpClass`` of :attr:`testcls` of if defined.
+* Call :meth:`run_test` for each test functions in :attr:`testcls`
+* Run the class method ``tearDownClass`` of :attr:`testcls` if defined.  
+'''
         # Reset the runner
         worker.app.local.pop('runner', None)
         runner = worker.app.runner
@@ -155,7 +164,7 @@ a class method ``setUpClass`` is defined. If so it runs it.'''
                     runner.stopTest(test)
                 
             if end:
-                result,outcome = end()
+                result, outcome = end()
                 yield result
                 self.add_failure(test, runner, outcome.result)
             
@@ -168,7 +177,15 @@ a class method ``setUpClass`` is defined. If so it runs it.'''
         worker.monitor.send(worker,'test_result',runner.result)
         
     def run_test(self, test, runner):
-        '''Run a *test* function.'''
+        '''\
+Run a *test* function using the following algorithm
+        
+* Run :meth:`_pre_setup` method if available in :attr:`testcls`.
+* Run :meth:`setUp` method in :attr:`testcls`.
+* Run the test function.
+* Run :meth:`tearDown` method in :attr:`testcls`.
+* Run :meth:`_post_teardown` method if available in :attr:`testcls`.
+'''
         try:
             testMethod = getattr(test, test._testMethodName)
             if (getattr(test.__class__, "__unittest_skip__", False) or
