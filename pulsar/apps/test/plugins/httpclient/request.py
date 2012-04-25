@@ -116,18 +116,12 @@ class HttpTestClientRequest(object):
     Once you have a request object you can pass it to any view function,
     just as if that view had been hooked up using a URLconf.
     """
-    def __init__(self, handler_maker, **defaults):
+    def __init__(self, handler, **defaults):
         self.defaults = defaults
         self.cookies = SimpleCookie()
         self.errors = BytesIO()
-        self.handler_maker = handler_maker
+        self.handler = handler
         self.response_data = None
-        
-    @property
-    def handler(self):
-        if not hasattr(self,'_handler'):
-            self._handler = self.handler_maker()
-        return self._handler
 
     def _base_environ(self, ajax = False, **request):
         """

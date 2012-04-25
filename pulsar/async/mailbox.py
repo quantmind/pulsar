@@ -17,6 +17,7 @@ from .defer import make_async, raise_failure, Failure
 __all__ = ['mailbox','Mailbox','IOQueue','Empty','Queue']
 
 crlf = b'\r\n'
+msg_separator = 3*crlf
 
 
 def mailbox(actor, address = None):
@@ -65,7 +66,7 @@ send messages to a :class:`SocketServerMailbox`.'''
         return self.sock.fileno()
         
     def put(self, request):
-        request = pickle.dumps(request) + crlf
+        request = pickle.dumps(request) + msg_separator
         try:
             return self.sock.send(request)
         except socket.error as e:
@@ -114,13 +115,13 @@ when a new connection is mad with :class:`Mailbox`.'''
             toclose = True
             
         while buffer:
-            p = buffer.find(crlf)
+            p = buffer.find(msg_separator)
             if p >= 0:
                 msg = buffer[:p]
-                del buffer[0:p+2]
+                del buffer[0:p+len(msg_separator)]
                 try:
                     data = pickle.loads(bytes(msg))
-                except pickle.UnpicklingError:
+                except (pickle.UnpicklingError, EOFError):
                     actor.log.error('Could not unpickle message',
                                     exc_info = True)
                     continue

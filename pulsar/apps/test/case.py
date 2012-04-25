@@ -187,19 +187,17 @@ Run a *test* function using the following algorithm
 * Run :meth:`_post_teardown` method if available in :attr:`testcls`.
 '''
         try:
+            success = True
             testMethod = getattr(test, test._testMethodName)
             if (getattr(test.__class__, "__unittest_skip__", False) or
                 getattr(testMethod, "__unittest_skip__", False)):
-                # If the class or method was skipped.
-                try:
-                    reason = (getattr(test.__class__, '__unittest_skip_why__', '')
-                                or getattr(testMethod, '__unittest_skip_why__', ''))
-                    runner.addSkip(test, reason)
-                except:
-                    pass
-                raise StopIteration
+                reason = (getattr(test.__class__,
+                                  '__unittest_skip_why__', '') or
+                          getattr(testMethod,
+                                  '__unittest_skip_why__', ''))
+                runner.addSkip(test, reason)
+                raise StopIteration()
             
-            success = True
             if hasattr(test,'_pre_setup'):
                 result, outcome = run_on_arbiter(test,test._pre_setup)()
                 yield result
@@ -229,6 +227,8 @@ Run a *test* function using the following algorithm
                 if self.add_failure(test, runner, outcome.result):
                     success = False
         
+        except StopIteration:
+            success = False
         except Exception as e:
             self.add_failure(test, runner, e)
             success = False
