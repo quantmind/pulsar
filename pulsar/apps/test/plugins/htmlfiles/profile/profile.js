@@ -1,7 +1,7 @@
 (function($) {
 	
 	$(document).ready(function() {
-		$("table.profile-table").tablesorter();
+		$("table.tablesorter").tablesorter();
     });
 	
 }(jQuery));

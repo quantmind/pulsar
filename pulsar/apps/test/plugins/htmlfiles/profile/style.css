@@ -1,0 +1,70 @@
+body {
+    font-family: georgia, serif;
+    font-size: 14px;
+    color: #222222;
+}
+h1 {
+    font-size: 200%;
+    font-weight: bold;
+    color: #333333;
+    margin-bottom: 10px
+}
+p {
+    font-size: 120%;
+}
+.container {
+    width: 100%;
+    float: left;
+}
+.content {
+    padding: 10px 20px;
+}
+#footer {
+    font-size: 85%;
+    font-family: verdana, sans-serif;
+    color: #666666;
+    font-style: italic;
+}
+
+table {
+    border: none;
+    border-collapse: collapse;
+}
+table.tablesorter {
+    border: none;
+    table-layout: auto;
+    font-family:arial;
+    background-color: #fff;
+    margin:10px 0 15px;
+    width: 100%;
+    text-align: left;
+}
+table.tablesorter thead tr th {
+    padding: 5px 7px;
+}
+table.tablesorter thead tr .header {
+    font-weight: bold;
+    cursor: pointer;
+}
+table.tablesorter tbody td {
+    padding: 5px 7px;
+    vertical-align: top;
+}
+table.tablesorter tbody tr.odd td {
+    background-color:#F0F0F6;
+}
+table.tablesorter tbody tr {
+    border-bottom: 1px solid #d4d4d4;
+}
+table.tablesorter thead tr th {
+    background-color: #8dbdd8;
+    border: 1px solid #fff;
+}
+table.tablesorter thead tr th:hover {
+    background-color: #C7DEEB;
+}
+table.tablesorter thead tr th.headerSortDown,
+table.tablesorter thead tr th.headerSortUp {
+    background-color: #275672;
+    color: #fff;
+}
