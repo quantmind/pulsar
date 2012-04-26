@@ -20,6 +20,7 @@ Development
   ``"markdown"``.
 * :class:`pulsar.Application` can specify a version which overrides
   :attr:`pulsar.__version__`.
+* Added Profile test plugin to :ref:`test application <apps-test>`.
 * **87 regression tests**
 
 Version 0.2.1 - 2011-Dec-18
