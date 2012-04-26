@@ -1,6 +1,6 @@
 Development
 ======================
-* Development status set to ``Pre-Alpha``.
+* Development status set to ``Alpha``.
 * This version brings several bug fixes, more tests, more docs, and improvements
   in the :mod:`pulsar.apps.tasks` application.
 * Added :meth:`pulsar.apps.tasks.Job.send_to_queue` method for allowing

@@ -11,7 +11,7 @@ __contact__   = "luca.sbardella@gmail.com"
 __homepage__  = "https://github.com/quantmind/pulsar"
 __docformat__ = "restructuredtext"
 CLASSIFIERS  = [
-                'Development Status :: 2 - Pre-Alpha',
+                'Development Status :: 3 - Alpha',
                 'Environment :: Web Environment',
                 'Framework :: Pulsar',
                 'Intended Audience :: Developers',
