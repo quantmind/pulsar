@@ -1,6 +1,7 @@
 import os
 import re
 import shutil
+import tempfile
 import cProfile as profiler
 import pstats
 
@@ -70,14 +71,15 @@ def data_stream(lines, num = None):
     
 class TestProfile(test.WrapTest):
     
-    def __init__(self, test, file):
-        self.file = file
+    def __init__(self, test, dir):
+        self.dir = dir
         super(TestProfile,self).__init__(test)
-        
-    def _call(self):  
+    
+    def _call(self):
         prof = profiler.Profile()
+        tmp = tempfile.mktemp(dir=self.dir)
         prof.runcall(self.testMethod)
-        prof.dump_stats(self.file)
+        prof.dump_stats(tmp)
     
     
 def copy_file(filename, target, context=None):
@@ -94,25 +96,28 @@ class Profile(test.Plugin):
     
     def configure(self, cfg):
         self.active = cfg.profile
-        if self.active:
-            name = cfg.profile_stats_path
-            dir, fname = os.path.split(name)
-            fname = '.'+fname
-            self.tmp = os.path.join(dir, fname)
-            self.profile_stats_path = name
+        self.profile_stats_path = cfg.profile_stats_path
         
     def getTest(self, test):
         if self.active:
-            return TestProfile(test, self.tmp)
+            return TestProfile(test, self.profile_stats_path)
     
+    def on_start(self):
+        if self.active:
+            if os.path.exists(self.profile_stats_path):
+                shutil.rmtree(self.profile_stats_path)
+            os.makedirs(self.profile_stats_path)
+        
     def on_end(self):
         if self.active:
-            out = StringIO()
-            stats = pstats.Stats(self.tmp,stream=out)
+            stats = pstats.Stats(stream=StringIO())
+            for file in os.listdir(self.profile_stats_path):
+                stats.add(os.path.join(self.profile_stats_path,file))
             stats.sort_stats('time', 'calls')
             stats.print_stats()
-            stats_str = out.getvalue()
-            os.remove(self.tmp)
+            stats_str = stats.stream.getvalue()
+            for files in self.stats.files:
+                os.unlink(file)
             stats_str = stats_str.split('\n')
             data = ''.join(make_stat_table(data_stream(stats_str[6:], 100)))
             template_file = os.path.abspath(__file__)
