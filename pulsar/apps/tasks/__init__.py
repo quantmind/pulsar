@@ -274,7 +274,7 @@ to check if the scheduler needs to perform a new run.'''
         global registry
         return registry
     
-    # Internals        
+    # Internals
     def _addtask(self, monitor, caller, jobname, task_extra, ack, args, kwargs):
         task = self.scheduler.queue_task(monitor, jobname, args, kwargs,
                                          **task_extra)

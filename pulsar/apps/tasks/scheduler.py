@@ -69,6 +69,10 @@ class SchedulerEntry(object):
         self.last_run_at = last_run_at or datetime.now()
         self.total_run_count = total_run_count or 0
 
+    def __repr__(self):
+        return self.name
+    __str__ = __repr__
+    
     @property
     def scheduled_last_run_at(self):
         '''The scheduled last run datetime. This is different from :attr:`last_run_at` only when :attr:`anchor` is set.'''
@@ -76,7 +80,8 @@ class SchedulerEntry(object):
         anchor = self.anchor
         if last_run_at and anchor:
             run_every = self.run_every
-            times = int(timedelta_seconds(last_run_at - anchor)/timedelta_seconds(run_every))
+            times = int(timedelta_seconds(last_run_at - anchor)\
+                            /timedelta_seconds(run_every))
             if times:
                 anchor += times*run_every
                 while anchor <= last_run_at:
@@ -148,17 +153,19 @@ and task scheduling."""
                                   .format(task))
         return task
     
-    def tick(self, monitor, now = None):
+    def tick(self, monitor, now=None):
         '''Run a tick, that is one iteration of the scheduler.
 Executes all due tasks calculate the time in seconds to wait before
 running a new :meth:`tick`. For testing purposes a :class:`datetime.datetime`
 value ``now`` can be passed.'''
+        # First we check for tasks which have timed out
+        self.TaskFactory.check_unready_tasks()
         remaining_times = []
         try:
             for entry in itervalues(self._entries):
-                is_due, next_time_to_run = entry.is_due(now = now)
+                is_due, next_time_to_run = entry.is_due(now=now)
                 if is_due:
-                    self.queue_task(monitor,entry.name)
+                    self.queue_task(monitor, entry.name)
                 if next_time_to_run:
                     remaining_times.append(next_time_to_run)
         except RuntimeError:
@@ -235,8 +242,8 @@ value ``now`` can be passed.'''
             job = registry[jobname]
             targs = targs or EMPTY_TUPLE
             tkwargs = tkwargs or EMPTY_DICT
-            id = job.make_task_id(targs,tkwargs)
-            task = TaskFactory.get_task(id, remove = True)
+            id = job.make_task_id(targs, tkwargs)
+            task = TaskFactory.get_task(id, remove=True)
             if task:
                 return task.to_queue(self)
             else:

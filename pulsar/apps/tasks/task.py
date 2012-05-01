@@ -5,7 +5,7 @@ from datetime import datetime
 import logging
 import traceback
 
-from pulsar.utils.py2py3 import StringIO
+from pulsar.utils.py2py3 import StringIO, itervalues
 from pulsar import make_async, as_failure
 
 from .exceptions import *
@@ -225,6 +225,12 @@ task needs to be queued.'''
     def serialize_for_queue(self):
         return self
     
+    def ack(self):
+        return self
+    
+    ############################################################################
+    ##    FACTORY METHODS
+    
     @classmethod
     def from_queue(cls, task):
         return task
@@ -236,13 +242,9 @@ not available.'''
         raise NotImplementedError()
     
     @classmethod
-    def expire_tasks(cls, monitor):
-        '''Expire tasks which needs expiring. This method is called at each
-loop of the task scheduler.'''
+    def check_unready_tasks(cls):
+        '''Check for expiries in all tasks in an un-ready state.'''
         raise NotImplementedError()
-    
-    def ack(self):
-        return self
     
     ############################################################################
     # CALLBACKS
@@ -345,7 +347,14 @@ class TaskInMemory(Task):
                 cls._TASKS.pop(id)
         return task
     
-
+    @classmethod
+    def check_unready_tasks(cls):
+        tasks = cls._TASKS
+        for task in list(itervalues(tasks)):
+            task.maybe_revoked()
+            if task.done():
+                tasks.pop(task.id,None)
+            
 
 def nice_task_message(req, smart_time = None):
     smart_time = smart_time or format_time

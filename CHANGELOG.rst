@@ -21,6 +21,8 @@ Development
 * :class:`pulsar.Application` can specify a version which overrides
   :attr:`pulsar.__version__`.
 * Added Profile test plugin to :ref:`test application <apps-test>`.
+* Task scheduler check for expired tasks via the
+  :meth:`pulsar.apps.tasks.Task.check_unready_tasks` method.
 * **87 regression tests**
 
 Version 0.2.1 - 2011-Dec-18
