@@ -1,10 +1,9 @@
 '''Event driven concurrent framework for Python'''
-VERSION = (0, 3, 0)
+VERSION = (0, 3, 0, 'alpha', 1)
 
-def get_version():
-    return '.'.join(map(str,VERSION))
+from .utils.version import get_version
 
-__version__   = get_version()
+__version__   = version = get_version(VERSION)
 __license__   = "BSD"
 __author__    = "Luca Sbardella"
 __contact__   = "luca.sbardella@gmail.com"
@@ -25,14 +24,18 @@ CLASSIFIERS  = [
                 'Programming Language :: Python :: 3.2',
                 'Programming Language :: Python :: 3.3',
                 'Topic :: Internet',
-                'Topic :: Software Development',
-                'Topic :: Utilities'
+                'Topic :: Utilities',
+                'Topic :: Software Development :: Libraries :: Python Modules',
+                'Topic :: Internet :: WWW/HTTP',
+                'Topic :: Internet :: WWW/HTTP :: WSGI',
+                'Topic :: Internet :: WWW/HTTP :: WSGI :: Server',
+                'Topic :: Internet :: WWW/HTTP :: Dynamic Content',
                 ]
 
 from .utils.log import *
 
 DEFAULT_PORT = 8060
-SERVER_SOFTWARE = "python-{0}/{1}".format(SERVER_NAME,get_version())
+SERVER_SOFTWARE = "python-{0}/{1}".format(SERVER_NAME, version)
 
 class NOT_DONE(object):
     pass
