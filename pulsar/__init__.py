@@ -1,5 +1,5 @@
 '''Event driven concurrent framework for Python'''
-VERSION = (0, 3, 0, 'alpha', 2)
+VERSION = (0, 3, 0, 'final', 0)
 
 from .utils.version import get_version
 
@@ -12,7 +12,6 @@ __docformat__ = "restructuredtext"
 CLASSIFIERS  = [
                 'Development Status :: 3 - Alpha',
                 'Environment :: Web Environment',
-                'Framework :: Pulsar',
                 'Intended Audience :: Developers',
                 'License :: OSI Approved :: BSD License',
                 'Operating System :: OS Independent',

@@ -1,5 +1,5 @@
-Development
-======================
+Version 0.3 - 2012-May-03
+============================
 * Development status set to ``Alpha``.
 * This version brings several bug fixes, more tests, more docs, and improvements
   in the :mod:`pulsar.apps.tasks` application.
@@ -25,7 +25,7 @@ Development
   :meth:`pulsar.apps.tasks.Task.check_unready_tasks` method.
 * PEP 386-compliant version number.
 * Setup does not fail when C extensions fail to compile.
-* **87 regression tests**
+* **95 regression tests**, **75% coverage**.
 
 Version 0.2.1 - 2011-Dec-18
 =======================================

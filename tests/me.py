@@ -39,7 +39,7 @@ class TestPulsar(test.TestCase):
     def test_version(self):
         self.assertTrue(pulsar.VERSION)
         self.assertTrue(pulsar.__version__)
-        self.assertEqual(pulsar.__version__,pulsar.get_version())
+        self.assertEqual(pulsar.__version__,pulsar.get_version(pulsar.VERSION))
         self.assertTrue(len(pulsar.VERSION) >= 2)
 
     def test_meta(self):

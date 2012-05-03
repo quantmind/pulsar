@@ -262,10 +262,7 @@ in the global ``KNOWN_SETTINGS`` list.'''
         
         
 # This works for Python 2 and Python 3
-BaseSettings =  SettingMeta('BaseSettings', (object, ), {})
-
-
-class Setting(BaseSettings):
+class Setting(SettingMeta('BaseSettings', (object,), {'virtual': True})):
     '''A configuration parameter for pulsar. Parameters can be specified
 on the command line or on a config file.'''
     virtual = True
