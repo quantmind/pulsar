@@ -6,9 +6,10 @@ from distutils.command.install import INSTALL_SCHEMES
 
 from lib.setup import libparams, BuildFailed
 
-PACKAGE_NAME  = 'pulsar'
+package_name  = 'pulsar'
+package_fullname = package_name
 root_dir      = os.path.split(os.path.abspath(__file__))[0]
-package_dir   = os.path.join(root_dir, PACKAGE_NAME)
+package_dir   = os.path.join(root_dir, package_name)
 
 class osx_install_data(install_data):
 
@@ -22,7 +23,7 @@ for scheme in INSTALL_SCHEMES.values():
 def get_module():
     if root_dir not in sys.path:
         sys.path.insert(0,root_dir)
-    return __import__(PACKAGE_NAME)
+    return __import__(package_name)
 
 mod = get_module()
 
@@ -61,15 +62,12 @@ if pieces[-1] == '':
 else:
     len_root_dir = len(pieces)
 
-for dirpath, dirnames, filenames in os.walk(package_dir):
-    # Ignore dirnames that start with '.'
-    for i, dirname in enumerate(dirnames):
-        if dirname.startswith('.'): del dirnames[i]
+for dirpath, _, filenames in os.walk(package_dir):
     if '__init__.py' in filenames:
         packages.append('.'.join(fullsplit(dirpath)[len_root_dir:]))
-    elif filenames:
-        rel_dir = get_rel_dir(dirpath,root_dir)
-        data_files.append([rel_dir, [os.path.join(dirpath, f) for f in filenames]])
+    elif filenames and not dirpath.endswith('__pycache__'):
+        rel_dir = get_rel_dir(dirpath, package_dir)
+        data_files.extend((os.path.join(rel_dir, f) for f in filenames))
 
 if len(sys.argv) > 1 and sys.argv[1] == 'bdist_wininst':
     for file_info in data_files:
@@ -86,7 +84,7 @@ def run_setup(with_cext):
     else:
         params['cmdclass']['install_data'] = install_data
     
-    params.update({'name': PACKAGE_NAME,
+    params.update({'name': package_fullname,
                    'version': mod.__version__,
                    'author': mod.__author__,
                    'author_email': mod.__contact__,
@@ -95,7 +93,7 @@ def run_setup(with_cext):
                    'description': mod.__doc__,
                    'long_description': read('README.rst'),
                    'packages': packages,
-                   'data_files': data_files,
+                   'package_data': {package_name: data_files},
                    'classifiers':  mod.CLASSIFIERS})
     setup(**params)
     
