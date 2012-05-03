@@ -2,16 +2,9 @@ include .gitignore
 include MANIFEST.in
 include LICENSE
 include README.rst
-include runtests.py
 include docs/make.bat
 include docs/Makefile
 include docs/source/conf.py
-recursive-include pulsar/apps/tests/plugins/htmlfiles *
-recursive-include tests *.py
-recursive-include lib *.py
-recursive-include lib *.h
-recursive-include lib *.c
-recursive-include lib *.pyx
+recursive-include pulsar/apps/test/plugins/htmlfiles *
+recursive-include lib *.py *.h *.c *.pyx *.pxd
 recursive-include docs *.rst
-recursive-include examples *.py
-recursive-include examples *.html

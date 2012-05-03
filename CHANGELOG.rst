@@ -24,6 +24,7 @@ Development
 * Task scheduler check for expired tasks via the
   :meth:`pulsar.apps.tasks.Task.check_unready_tasks` method.
 * PEP 386-compliant version number.
+* Setup does not fail when C extensions fail to compile.
 * **87 regression tests**
 
 Version 0.2.1 - 2011-Dec-18
