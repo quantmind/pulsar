@@ -130,7 +130,7 @@ Users access the arbiter by the high level api::
                 arbiter.actor_age += 1
                 kwargs['age'] = arbiter.actor_age
                 kwargs['ppid'] = arbiter.ppid
-            impl = kwargs.pop('impl',actorcls.DEFAULT_IMPLEMENTATION)
+            impl = kwargs.pop('impl', actorcls.DEFAULT_IMPLEMENTATION)
             timeout = max(kwargs.pop('timeout',cls.DEFAULT_ACTOR_TIMEOUT),
                           cls.MINIMUM_ACTOR_TIMEOUT)
             actor_maker = actor_impl(impl, actorcls, timeout,

@@ -241,10 +241,10 @@ Users shouldn't need to override this method, but use
         '''Spawn a new actor and add its :class:`ActorProxyMonitor`
  to the :attr:`PoolMixin.MANAGED_ACTORS` dictionary.'''
         ad =  self.arbiter.spawn(self.actor_class,
-                                 monitor = self,
-                                 ioqueue = self.ioqueue,
-                                 monitors = self.arbiter.get_all_monitors(),
-                                 params = self._params,
+                                 monitor=self,
+                                 ioqueue=self.ioqueue,
+                                 monitors=self.arbiter.get_all_monitors(),
+                                 params=self._params,
                                  **self.actorparams())
         self._spawing += 1
         return ad.add_callback(self._spawn_actor)

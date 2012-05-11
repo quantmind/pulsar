@@ -121,7 +121,7 @@ requests in the threaded workers.'''
                 data = worker.app_handler(environ, response.start_response)
             except Exception as e:
                 # An exception in the handler
-                data = WsgiResponse(environ = environ)
+                data = WsgiResponse(environ=environ)
                 cfg.handle_http_error(data, e)
                 data(environ, response.start_response)
             yield response.write(data)

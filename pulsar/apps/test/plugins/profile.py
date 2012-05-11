@@ -127,6 +127,7 @@ def copy_file(filename, target, context=None):
     
     
 class Profile(test.Plugin):
+    ''':class:`pulsar.apps.test.Plugin` for profiling test cases.'''
     active = False
     
     def configure(self, cfg):
@@ -137,6 +138,7 @@ class Profile(test.Plugin):
         self.profile_temp_path = os.path.join(dir, fname)
         
     def getTest(self, test):
+        # If active return a TestProfile instance wrapping the real test case.
         if self.active:
             return TestProfile(test, self.profile_temp_path)
     

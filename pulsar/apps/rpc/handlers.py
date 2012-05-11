@@ -383,7 +383,7 @@ class RpcMiddleware(object):
             hnd = self.handler
             method, args, kwargs, id, version = hnd.get_method_and_args(data)
             request = hnd.request(environ, method, args, kwargs, id, version)
-            return RpcResponse(environ = request)
+            return RpcResponse(environ=request)
         elif self.raise404:
             return WsgiResponse(404)
         
