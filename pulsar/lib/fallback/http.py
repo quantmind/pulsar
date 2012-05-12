@@ -30,7 +30,7 @@ import re
 import sys
 import zlib
 
-from pulsar.utils.http import *
+from pulsar.utils.httpurl import *
 
 
 __all__ = ['HttpParser',

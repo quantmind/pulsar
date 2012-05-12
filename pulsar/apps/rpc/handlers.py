@@ -1,8 +1,7 @@
 import sys
 import inspect
 
-from pulsar import make_async, net, NOT_DONE, LogginMixin, to_bytestring,\
-                    Failure
+from pulsar import make_async, net, NOT_DONE, LogginMixin, to_bytes, Failure
 from pulsar.utils.tools import checkarity
 from pulsar.apps.wsgi import WsgiResponse
 
@@ -145,7 +144,7 @@ class RpcResponse(WsgiResponse):
         
         self.status_code = status_code
         self.content_type = request.content_type
-        yield to_bytestring(result)
+        yield to_bytes(result)
         
 
 class MetaRpcHandler(type):

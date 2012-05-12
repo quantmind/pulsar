@@ -17,8 +17,8 @@ import textwrap
 import types
 
 from pulsar import __version__, SERVER_NAME
-from pulsar.utils import system
-from pulsar.utils.py2py3 import *
+from . import system
+from .httpurl import is_string_or_native_string, to_string
 
 
 __all__ = ['Config',
@@ -363,7 +363,7 @@ def validate_bool(val):
 
 
 def validate_pos_int(val):
-    if not isinstance(val,int_type):
+    if not isinstance(val, int):
         val = int(val, 0)
     else:
         # Booleans are ints!
@@ -376,7 +376,7 @@ def validate_pos_int(val):
 def validate_string(val):
     if val is None:
         return None
-    if not is_bytes_or_string(val):
+    if not is_string_or_native_string(val):
         raise TypeError("Not a string: %s" % val)
     return to_string(val).strip()
 

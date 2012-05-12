@@ -1,7 +1,7 @@
 import logging
 from uuid import uuid4
 
-from pulsar.utils.py2py3 import to_bytestring
+from pulsar import to_bytes
 
 from .frame import *
 
@@ -105,7 +105,7 @@ This script pops up an alert box that says "You said: Hello, world".
     def write_message(self, message, binary=False):
         """Sends the given message to the client of this Web Socket."""
         msg = frame(version = self.version,
-                    message = to_bytestring(message),
+                    message = to_bytes(message),
                     binary = binary)
         self.stream.write(msg)
     

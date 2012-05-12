@@ -5,8 +5,9 @@ from wsgiref.handlers import format_date_time
 from wsgiref.util import is_hop_by_hop
 
 import pulsar
-from pulsar import is_string, lib, Deferred, make_async, to_bytestring, NOT_DONE
-from pulsar.utils.http import Headers, unquote, to_string
+from pulsar import lib, Deferred, make_async, NOT_DONE
+from pulsar.utils.httpurl import Headers, unquote, to_bytes, is_string,\
+                                    to_string
 from pulsar.utils.py2py3 import BytesIO
 
 
@@ -422,7 +423,7 @@ for the server as a whole.
             data = tosend.flat(self.request.version,self.status)
             # headers are python native strings, therefore we need to convert
             # them to bytes before sending them
-            data = to_bytestring(data)
+            data = to_bytes(data)
             self.__headers_sent = data
             self._write(data, self.on_headers)
         return self.on_headers

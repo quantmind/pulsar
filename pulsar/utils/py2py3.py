@@ -22,8 +22,6 @@ if ispy3k: # Python 3
     import pickle
     i2b = lambda n : bytes((n,))
     
-    from urllib import parse as urlparse
-    
     class UnicodeMixin(object):
         
         def __unicode__(self):
@@ -34,16 +32,6 @@ if ispy3k: # Python 3
         
         def __repr__(self):
             return '%s: %s' % (self.__class__.__name__,self)
-    
-    def native_str(s):
-        if isinstance(s,bytes):
-            return s.decode(UTF8)
-        return s
-    
-    def to_bytestring(s, encoding=UTF8, errors='strict'):
-        if isinstance(s,bytes):
-            return s
-        return s.encode(encoding, errors)
     
     def execfile(filename, globals=None, locals=None):
         if globals is None:
@@ -69,23 +57,10 @@ else: # Python 2
     
     i2b = lambda n : chr(n)
     
-    import urlparse
     from cStringIO import StringIO
     BytesIO = StringIO
     
-    import cPickle as pickle
-    
-    def native_str(s):
-        if isinstance(s,unicode):
-            return s.encode(UTF8)
-        return s
-    
-    def to_bytestring(s, encoding=UTF8, errors='strict'):
-        if isinstance(s,unicode): 
-            return s.encode(encoding, errors)
-        else:
-            return s
-    
+    import cPickle as pickle    
     
     class UnicodeMixin(object):
         
@@ -99,20 +74,5 @@ else: # Python 2
             return '%s: %s' % (self.__class__.__name__,self)
     
 
-is_int = lambda x : isinstance(x,int_type)
-is_string = lambda x : isinstance(x,string_type)
-is_bytes_or_string = lambda x : isinstance(x,string_type) or isinstance(x,bytes)
-
-
-
-def to_string(s, encoding=UTF8, errors='strict'):
-    """Inverse of to_bytestring"""
-    if isinstance(s,bytes):
-        return s.decode(encoding,errors)
-    
-    if not is_string(s):
-        s = string_type(s)
-        
-    return s
 
         

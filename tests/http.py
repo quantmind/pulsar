@@ -2,7 +2,7 @@
 import io
 
 import pulsar
-from pulsar.utils.http import Headers
+from pulsar.utils.httpurl import Headers
 from pulsar import lib
 from pulsar.utils.test import test
 

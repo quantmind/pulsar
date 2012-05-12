@@ -9,8 +9,8 @@ import hashlib
 from functools import partial
 
 import pulsar
-from pulsar.utils.py2py3 import ispy3k, to_bytestring, native_str, BytesIO,\
-                                itervalues
+from pulsar.utils.httpurl import ispy3k, to_bytes, native_str, itervalues  
+from pulsar.utils.py2py3 import BytesIO
 from pulsar.apps.wsgi import WsgiResponse
                                 
 if ispy3k:
@@ -147,7 +147,7 @@ JavaScript interface.
         return client.start(environ, ws_protocols, ws_extensions)
         
     def challenge_response(self, key):
-        sha1 = hashlib.sha1(to_bytestring(key+self.WS_KEY))
+        sha1 = hashlib.sha1(to_bytes(key+self.WS_KEY))
         return native_str(base64.b64encode(sha1.digest()))
     
     def get_parser(self):

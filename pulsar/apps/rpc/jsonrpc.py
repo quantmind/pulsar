@@ -15,8 +15,7 @@ from timeit import default_timer
 
 import pulsar
 from pulsar.utils.tools import gen_unique_id
-from pulsar.net import HttpClient
-from pulsar.utils.http import to_string
+from pulsar.utils.httpurl import to_string, HttpClient
 from pulsar.utils.py2py3 import range
 from pulsar.utils.jsontools import DefaultJSONEncoder, DefaultJSONHook
 

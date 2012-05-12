@@ -22,7 +22,7 @@ def all_signals():
     for sig in dir(signal):
         if sig.startswith('SIG') and sig[3] != "_":
             val = getattr(signal,sig)
-            if is_int(val):
+            if isinstance(val, int):
                 name = sig[3:]
                 if name not in SKIP_SIGNALS:
                     SIG_NAMES[val] = name

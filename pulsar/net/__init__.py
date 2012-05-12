@@ -1,5 +1,4 @@
-'''\
-The ``net`` module provides you with asynchronous networked primitive
+'''The ``net`` module provides asynchronous networked primitive
 called ``stream``. It can be assessed by::
 
     from pulsar import net
@@ -7,7 +6,6 @@ called ``stream``. It can be assessed by::
 from .base import *
 from .tcp import *
 from .http import *
-from .client import *
 
 
 

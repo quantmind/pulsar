@@ -45,8 +45,7 @@ class CLEAR_ERRORS(object):
 from .utils.exceptions import *
 from .utils.sock import *
 from .utils import system
-from .utils.py2py3 import ispy3k, to_string, is_string, native_str,\
-                            to_bytestring
+from .utils.httpurl import ispy3k, to_string, native_str, to_bytes
 platform = system.platform
 
 from .utils.config import *

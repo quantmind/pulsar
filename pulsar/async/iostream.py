@@ -38,8 +38,7 @@ manipulated and adapted to pulsar :ref:`concurrent framework <design>`.
     :meth:`on_init` callback.
 '''    
     def __init__(self, socket, max_buffer_size=None,
-                 read_chunk_size = None, actor = None,
-                 **kwargs):
+                 read_chunk_size=None, actor=None, **kwargs):
         self.socket = socket
         self.socket.setblocking(self.blocking())
         self.MAX_BODY = 1024 * 128

@@ -4,9 +4,8 @@ from functools import partial
 
 import pulsar
 from pulsar import make_async, Deferred, raise_failure, NOT_DONE
-from pulsar.utils.http import parse_authorization_header, Headers,\
-                                SimpleCookie, set_cookie
-from pulsar.net import responses
+from pulsar.utils.httpurl import parse_authorization_header, Headers,\
+                                    SimpleCookie, set_cookie, responses
 
 from .middleware import is_streamed
 
