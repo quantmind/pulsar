@@ -7,8 +7,7 @@ from wsgiref.util import is_hop_by_hop
 import pulsar
 from pulsar import lib, Deferred, make_async, NOT_DONE
 from pulsar.utils.httpurl import Headers, unquote, to_bytes, is_string,\
-                                    to_string
-from pulsar.utils.py2py3 import BytesIO
+                                    to_string, BytesIO
 
 
 from .tcp import TcpRequest, TcpResponse

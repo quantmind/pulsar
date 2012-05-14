@@ -59,7 +59,15 @@ class TestHttpClient(test.TestCase):
         self.assertEqual(r.status_code, 200)
         self.assertEqual(r.response, 'OK')
         self.assertTrue(r.content)
-        self.assertEqual(r.url,httpbin())
+        self.assertEqual(r.url, httpbin())
+        
+    def test_http_200_get_data(self):
+        r = self.r.get(httpbin(httpurl.iri_to_uri('get',{'bla':'foo'})))
+        self.assertEqual(r.status_code, 200)
+        self.assertEqual(r.response, 'OK')
+        result = r.content_json()
+        self.assertEqual(result['args'], {'bla':'foo'})
+        self.assertEqual(r.url, httpbin(httpurl.iri_to_uri('get',{'bla':'foo'})))
         
     def test_http_400_get(self):
         '''Bad request 400'''
@@ -76,4 +84,12 @@ class TestHttpClient(test.TestCase):
         self.assertEqual(r.response, 'Not Found')
         self.assertEqual(r.content,b'')
         self.assertRaises(r.HTTPError, r.raise_for_status)
+        
+    def test_http_post(self):
+        data = {'bla': 'foo', 'unz': 'whatz', 'numero': '1'}
+        r = self.r.post(httpbin('post'), body=data)
+        self.assertEqual(r.status_code, 200)
+        self.assertEqual(r.response, 'OK')
+        result = r.content_json()
+        self.assertEqual(result['form'], data)
         

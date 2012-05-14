@@ -204,9 +204,7 @@ usage is simple::
     def __call__(self, *args, **kwargs):
         data,raw = self._get_data(*args, **kwargs)
         body = self._json.dumps(data)
-        resp = self.http.request(self.__url,
-                                 method = "POST",
-                                 body = body)
+        resp = self.http.post(self.__url, body=body)
         content = resp.content.decode('utf-8')
         if resp.status_code == 200:
             if raw:

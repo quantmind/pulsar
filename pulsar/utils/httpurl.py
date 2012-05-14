@@ -1,9 +1,19 @@
-'''Stand alone HTTP utilities and client library.
+'''Stand alone HTTP, URLS utilities and HTTP client library.
 This is a thin layer on top of urllib2 in python2 / urllib in Python 3.
+To create this module I've used several bits from around the opensorce community
+In particular:
+
+* urllib3_
+* request_
+
 '''
 import sys
 import string
 import time
+import json
+import mimetypes
+import codecs
+from uuid import uuid4
 from datetime import datetime, timedelta
 from email.utils import formatdate
 
@@ -11,11 +21,13 @@ ispy3k = sys.version_info >= (3,0)
 
 if ispy3k: # Python 3
     from urllib import request as urllibr
+    from http import client as httpclient
     from urllib.parse import quote, unquote, urlencode, urlparse, urlsplit,\
-                                parse_qs
+                                parse_qs, splitport
     from http.client import responses
     from http.cookiejar import CookieJar
     from http.cookies import SimpleCookie
+    from io import BytesIO, StringIO
     
     getproxies_environment = urllibr.getproxies_environment
     ascii_letters = string.ascii_letters
@@ -56,14 +68,17 @@ if ispy3k: # Python 3
         
 else:   # pragma : no cover
     import urllib2 as urllibr
-    from urllib import quote, unquote, urlencode, getproxies_environment
+    import httplib as httpclient
+    from urllib import quote, unquote, urlencode, getproxies_environment, \
+                        splitport
     from urlparse import urlparse, urlsplit, parse_qs
     from httplib import responses
     from cookielib import CookieJar
     from Cookie import SimpleCookie
+    from cStringIO import StringIO
     
+    BytesIO = StringIO
     ascii_letters = string.letters
-    
     range = xrange
     
     iteritems = lambda d : d.iteritems()
@@ -101,9 +116,9 @@ else:   # pragma : no cover
         else:
             return '%s' % s
     
-    
-escape = lambda s: quote(s, safe='~')
 
+####################################################    URI & IRI SUFF
+#
 # The reserved URI characters (RFC 3986 - section 2.2)
 URI_GEN_DELIMS = frozenset(':/?#[]@')
 URI_SUB_DELIMS = frozenset("!$&'()*+,;=")
@@ -112,12 +127,13 @@ URI_RESERVED_CHARS = ''.join(URI_RESERVED_SET)
 # The unreserved URI characters (RFC 3986 - section 2.3)
 URI_UNRESERVED_SET = frozenset(ascii_letters + string.digits + '-._~')
 
+escape = lambda s: quote(s, safe='~')
 urlquote = lambda iri: quote(iri, safe=URI_RESERVED_CHARS)
 
 def unquote_unreserved(uri):
     """Un-escape any percent-escape sequences in a URI that are unreserved
 characters. This leaves all reserved, illegal and non-ASCII bytes encoded."""
-    unreserved_set = UNRESERVED_SET
+    unreserved_set = URI_UNRESERVED_SET
     parts = uri.split('%')
     for i in range(1, len(parts)):
         h = parts[i][0:2]
@@ -141,7 +157,7 @@ Returns an ASCII native string containing the encoded result.'''
     iri = force_native_str(iri)
     if kwargs:
         iri = '%s?%s'%(iri,'&'.join(('%s=%s' % kv for kv in iteritems(kwargs))))
-    return urlquote(unquote_unreserved(uri))
+    return urlquote(unquote_unreserved(iri))
 
 
 ####################################################    HEADERS
@@ -190,8 +206,7 @@ def _header_field(name):
         else:
             yield bit[0] + bit[1:].lower()
             
-def header_field(name):
-    return '-'.join(_header_field(name))
+header_field = lambda name: '-'.join(_header_field(name))
 
 class Headers(dict):
     '''Utility for managing HTTP headers for both clients and servers.
@@ -293,42 +308,18 @@ append the value to the list.'''
     
     
 ####################################################    HTTP CLIENT
-class HttpClientResponse(object):
-    '''Instances of this class are returned from the
-:meth:`HttpClientHandler.request` method.
+class HttpConnectionError(Exception):
+    pass
 
-.. attribute:: status_code
 
-    Numeric `status code`_ of the response
-    
-.. attribute:: url
-
-    Url of request
-    
-.. attribute:: response
-
-    Status code description
-    
-.. attribute:: headers
-
-    List of response headers
-    
-.. attribute:: content
-
-    Body of response
-    
-.. attribute:: is_error
-
-    Boolean indicating if this is a response error.
-    
-.. _`status code`: http://www.w3.org/Protocols/rfc2616/rfc2616-sec10.html
-'''
-    _resp = None
-    status_code = None
-    url = None
+class HTTPResponse(httpclient.HTTPResponse):
     HTTPError = urllibr.HTTPError
-    URLError = urllibr.URLError 
+    URLError = urllibr.URLError
     
+    @property
+    def status_code(self):
+        return getattr(self, 'code', None)
+
     def __str__(self):
         if self.status_code:
             return '{0} {1}'.format(self.status_code,self.response)
@@ -338,9 +329,23 @@ class HttpClientResponse(object):
     def __repr__(self):
         return '{0}({1})'.format(self.__class__.__name__,self)
     
+    def content_string(self, charset=None):
+        return self.content.decode(charset or 'utf-8')
+    
+    def content_json(self, charset=None, **kwargs):
+        '''Decode content using json.'''
+        return json.loads(self.content_string(charset), **kwargs)
+    
+    @property
+    def content(self):
+        if not hasattr(self,'_content'):
+            self._content = self.read()
+        return getattr(self, '_content', None)
+    
     @property
     def is_error(self):
-        return isinstance(self._resp,Exception)
+        if self.closed:
+            return not (200 <= self.status_code < 300)
     
     @property
     def response(self):
@@ -351,50 +356,171 @@ class HttpClientResponse(object):
         """Raises stored :class:`HTTPError` or :class:`URLError`,
  if one occured."""
         if self.is_error:
-            raise self._resp
+            raise self.HTTPError(self.url, self.status_code,
+                                 self.content, self.headers, None)        
     
     
-class Response(HttpClientResponse):
-    status_code = None
-    
-    def __init__(self, response):
-        self._resp = response
-        self.status_code = getattr(response, 'code', None)
-        self.url = getattr(response, 'url', None)
+class HTTPConnection(httpclient.HTTPConnection):
+    response_class = HTTPResponse
     
     @property
-    def headers(self):
-        return getattr(self._resp,'headers',None)
+    def is_async(self):
+        return self.timeout == 0
     
-    @property
-    def content(self):
-        if not hasattr(self,'_content') and self._resp:
-            if hasattr(self._resp,'read'):
-                self._content = self._resp.read()
-            else:
-                self._content = b''
-        return getattr(self,'_content',None)
-    
-    def content_string(self):
-        return self.content.decode()
-    
-    
-class HttpClient(object):
-    '''Http handler from the standard library'''
-    HTTPError = urllibr.HTTPError
-    URLError = urllibr.URLError
-    DEFAULT_HEADERS = Headers('client',[('Connection', 'Keep-Alive'),
-                                        ('User-Agent', 'Python-httpurl')])
+    def getresponse(self):
+        return super(HTTPConnection, self).getresponse()
+
+
+class Request(urllibr.Request):
+    '''
+* Default is charset is "iso-8859-1" (latin-1) from section 3.7.1
+
+http://www.ietf.org/rfc/rfc2616.txt 
+    '''
+    default_charset = 'latin-1'
     _encode_url_methods = frozenset(['DELETE', 'GET', 'HEAD', 'OPTIONS'])
     _encode_body_methods = frozenset(['PATCH', 'POST', 'PUT', 'TRACE'])
+    DEFAULT_PORTS = {'http': 80, 'https': 443}
     
-    def __init__(self, proxy_info = None,
-                 timeout = None, cache = None,
-                 headers = None, handle_cookie = False):
-        dheaders = dict(self.DEFAULT_HEADERS)
+    def __init__(self, url, method=None, data=None, charset=None,
+                 encode_multipart=True, multipart_boundary=None,
+                 headers=None, **kwargs):
+        r = urlparse(url)
+        host, port = splitport(r.netloc)
+        if port and int(port) == self.DEFAULT_PORTS.get(r.scheme):
+            port = None
+        self.scheme = r.scheme
+        self.host = host
+        self.port = port
+        self.path = r.path
+        self.params = r.params
+        self.query = r.query
+        self.fragment = r.fragment
+        self.data = data
+        self.headers = {}
+        self._tunnel_host = None
+        self.connection = None
+        if headers:
+            for key, value in iteritems(headers):
+                self.add_header(key, value)
+        self.charset = charset or self.default_charset
+        self._encode(method, data, encode_multipart, multipart_boundary)
+    
+    def get_method(self):
+        return self.method
+    
+    def add_header(self, key, value):
+        self.headers[header_field(key)] = value
+    
+    @property
+    def full_url(self):
+        host = self.host
+        if self.port:
+            host = '%s:%s' % (host, self.port)
+        return urllibr.urlunparse((self.scheme, host, self.path,
+                                   self.params, self.query, self.fragment))
+    
+    def execute(self, connection, timeout=None):
+        if self.connection:
+            raise RuntimeError('Already executed')
+        if not connection.is_async and timeout:
+            connection.timeout = timeout
+        self.connection = connection
+        url = self.full_url
+        connection.request(self.method, url, self.data, self.headers)
+        response = connection.getresponse()
+        response.url = url
+        return response
+        
+    def _encode(self, method, body, encode_multipart, multipart_boundary):
+        if not method:
+            method = 'POST' if body else 'GET'
+        else:
+            method = method.upper()
+        self.method = method
+        if method in self._encode_url_methods:
+            self._encode_url(body)
+        else:
+            content_type = 'application/x-www-form-urlencoded'
+            if isinstance(body, dict):
+                if encode_multipart:
+                    body, content_type = encode_multipart_formdata(body,
+                                                    boundary=multipart_boundary,
+                                                    charset=self.charset)
+                else:
+                    body = urlencode(body)
+            elif body:
+                body = to_bytes(body, self.charset)
+            self.data = body
+            self.headers['Content-Type'] = content_type
+        
+    def _encode_url(self, body):
+        if isinstance(body, dict):
+            url += '?' + urlencode(fields)
+        elif body:
+            url = '%s?%s' % (url, to_string(body))
+            
+
+class HttpConnectionPool(object):
+    
+    def __init__(self, Connections, max_connections, timeout, schema,
+                 host, port=None):
+        self.Connections = Connections
+        self.schema = schema
+        self.host = host
+        self.port = port
+        self.timeout = timeout
+        self.max_connections = max_connections or 2**31
+        self._created_connections = 0
+        self._available_connections = []
+        self._in_use_connections = set()
+        
+    def get_connection(self):
+        "Get a connection from the pool"
+        try:
+            connection = self._available_connections.pop()
+        except IndexError:
+            connection = self.make_connection()
+            if self.timeout is not None:
+                connection.timeout = self.timeout
+        self._in_use_connections.add(connection)
+        return connection
+
+    def make_connection(self):
+        "Create a new connection"
+        if self._created_connections >= self.max_connections:
+            raise HttpConnectionError("Too many connections")
+        self._created_connections += 1
+        connection_class = self.Connections.get(self.schema)
+        c = connection_class(self.host, self.port)
+        if self.timeout is not None:
+            c.timeout = self.timeout
+        return c
+
+    def release(self, connection):
+        "Releases the connection back to the pool"
+        self._in_use_connections.remove(connection)
+        self._available_connections.append(connection)
+        
+        
+class HttpClient(object):
+    '''A client of a networked server'''
+    Connections = {'http': HTTPConnection}
+    HTTPError = urllibr.HTTPError
+    URLError = urllibr.URLError
+    DEFAULT_HTTP_HEADERS = Headers('client',[('Connection', 'Keep-Alive'),
+                                            ('User-Agent', 'Python-httpurl')])
+    
+    def __init__(self, proxy_info = None, timeout=None, cache = None,
+                 headers=None, handle_cookie=False, encode_multipart=True,
+                 multipart_boundary=None, max_connections=None):
+        self.poolmap = {}
+        self.timeout = timeout
+        self.max_connections = max_connections
+        dheaders = dict(self.DEFAULT_HTTP_HEADERS)
         if headers:
             dheaders.update(headers)
-        self.DEFAULT_HEADERS = dheaders
+        self.DEFAULT_HTTP_HEADERS = dheaders
         handlers = []
         if proxy_info:
             handlers.append(urllibr.ProxyHandler(proxy_info))
@@ -403,15 +529,16 @@ class HttpClient(object):
             handlers.append(urllibr.HTTPCookieProcessor(cj))
         self._opener = urllibr.build_opener(*handlers)
         #self._opener.addheaders = self.get_headers(headers)    
-        self.timeout = timeout
+        self.encode_multipart = encode_multipart
+        self.multipart_boundary = multipart_boundary or choose_boundary()
         
     def get_headers(self, headers=None):
         if headers:
-            d = self.DEFAULT_HEADERS.copy()
+            d = self.DEFAULT_HTTP_HEADERS.copy()
             d.extend(headers)
             return d
         else:
-            return self.DEFAULT_HEADERS
+            return self.DEFAULT_HTTP_HEADERS
     
     def get(self, url, body=None):
         '''Sends a GET request and returns a :class:`HttpClientResponse`
@@ -422,17 +549,31 @@ object.'''
         return self.request(url, body=body, method='POST')
     
     def request(self, url, body=None, method=None, headers=None,
-                timeout=None, **kwargs):
-        url, body, method = self._encode(url, body, method)
+                timeout=None, encode_multipart=None, **kwargs):
         try:
             headers = self.get_headers(headers)
-            timeout = timeout if timeout is not None else self.timeout
-            req = urllibr.Request(url, body, headers)
+            encode_multipart = encode_multipart if encode_multipart is not None\
+                                else self.encode_multipart
+            request = Request(url, method=method, data=body, headers=headers,
+                              encode_multipart=encode_multipart,
+                              multipart_boundary=self.multipart_boundary)
+            connection = self.get_connection(request)
+            return request.execute(connection, timeout)
             response = self._opener.open(req, timeout=timeout)
         except (self.HTTPError, self.URLError) as why:
             return Response(why)
         else:
             return Response(response)
+    
+    def get_connection(self, request):
+        key = (request.scheme, request.host, request.port)
+        pool = self.poolmap.get(key)
+        if pool is None:
+            pool = HttpConnectionPool(self.Connections,
+                                      self.max_connections,
+                                      self.timeout, *key)
+            self.poolmap[key] = pool
+        return pool.get_connection()
     
     def add_password(self, username, password, uri, realm=None):
         '''Add Basic HTTP Authentication to the opener'''
@@ -442,29 +583,65 @@ object.'''
             password_mgr = HTTPPasswordMgr()
         password_mgr.add_password(realm, uri, user, passwd)
         self._opener.add_handler(HTTPBasicAuthHandler(password_mgr))
-    
-    def _encode(self, url, body, method):
-        if not method:
-            method = 'POST' if body else 'GET'
-        else:
-            method = method.upper()    
-        if isinstance(body, dict):
-            if method in self._encode_body_methods:
-                body = '&'.join(('%s=%s' % (escape(k),escape(v))\
-                                        for k,v in iteritems(body)))
-                body = to_bytes(body)
-            else:
-                url = iri_to_uri(url, **body)
-        elif body:
-            if method in self._encode_url_methods:
-                url = '%s?%s' % (url, to_string(body))
-            else:
-                body = to_bytes(body)
-        if method in self._encode_url_methods:
-            body = None
-        return url, body, method
             
+
+####################################################    ENCODERS AND PARSERS
+def choose_boundary():
+    """
+    Our embarassingly-simple replacement for mimetools.choose_boundary.
+    """
+    return uuid4().hex
+
+def get_content_type(filename):
+    return mimetypes.guess_type(filename)[0] or 'application/octet-stream'
+
+def encode_multipart_formdata(fields, boundary=None, charset=None):
+    """
+    Encode a dictionary of ``fields`` using the multipart/form-data mime format.
+
+    :param fields:
+        Dictionary of fields or list of (key, value) field tuples.  The key is
+        treated as the field name, and the value as the body of the form-data
+        bytes. If the value is a tuple of two elements, then the first element
+        is treated as the filename of the form-data section.
+
+        Field names and filenames must be unicode.
+
+    :param boundary:
+        If not specified, then a random boundary will be generated using
+        :func:`mimetools.choose_boundary`.
+    """
+    charset = charset or Request.default_charset
+    body = BytesIO()
+    if boundary is None:
+        boundary = choose_boundary()
+    
+    if isinstance(fields, dict):
+        fields = iteritems(fields)
         
+    for fieldname, value in fields:
+        body.write(('--%s\r\n' % boundary).encode(charset))
+
+        if isinstance(value, tuple):
+            filename, data = value
+            body.write(('Content-Disposition: form-data; name="%s"; '
+                        'filename="%s"\r\n' % (fieldname, filename))\
+                       .encode())
+            body.write(('Content-Type: %s\r\n\r\n' %
+                       (get_content_type(filename))).encode(charset))
+        else:
+            data = value
+            body.write(('Content-Disposition: form-data; name="%s"\r\n'
+                        % (fieldname)).encode())
+            body.write(b'Content-Type: text/plain\r\n\r\n')
+
+        data = body.write(to_bytes(data))
+        body.write(b'\r\n')
+
+    body.write(('--%s--\r\n' % (boundary)).encode(charset))
+    content_type = 'multipart/form-data; boundary=%s' % boundary
+    return body.getvalue(), content_type
+
 def parse_dict_header(value):
     """Parse lists of key, value pairs as described by RFC 2068 Section 2 and
     convert them into a python dict:
