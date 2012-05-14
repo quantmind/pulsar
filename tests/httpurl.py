@@ -56,6 +56,7 @@ class TestHttpClient(test.TestCase):
          
     def test_http_200_get(self):
         r = self.r.get(httpbin())
+        
         self.assertEqual(r.status_code, 200)
         self.assertEqual(r.response, 'OK')
         self.assertTrue(r.content)

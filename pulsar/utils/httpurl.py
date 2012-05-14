@@ -13,6 +13,7 @@ import time
 import json
 import mimetypes
 import codecs
+import socket
 from uuid import uuid4
 from datetime import datetime, timedelta
 from email.utils import formatdate
@@ -272,6 +273,9 @@ the entity-header fields.'''
     def pop(self, key, *args):
         return super(Headers, self).pop(header_field(key), *args)
     
+    def copy(self):
+        return self.__class__(self.type, self)
+        
     def headers(self):
         return list(self.items())
     
@@ -308,6 +312,11 @@ append the value to the list.'''
     
     
 ####################################################    HTTP CLIENT
+_http_async_connections = {}
+def set_async_connection(scheme, handler):
+    global _http_async_connections
+    _http_async_connections[scheme] = handler
+    
 class HttpConnectionError(Exception):
     pass
 
@@ -316,6 +325,10 @@ class HTTPResponse(httpclient.HTTPResponse):
     HTTPError = urllibr.HTTPError
     URLError = urllibr.URLError
     
+    def __init__(self, *args, **kwargs):
+        self.callbacks = []
+        super(HTTPResponse, self).__init__(*args, **kwargs)
+        
     @property
     def status_code(self):
         return getattr(self, 'code', None)
@@ -351,6 +364,10 @@ class HTTPResponse(httpclient.HTTPResponse):
     def response(self):
         if self.status_code:
             return responses.get(self.status_code)
+    
+    def add_callback(self, callback):
+        self.callbacks.append(callback)
+        return self
         
     def raise_for_status(self):
         """Raises stored :class:`HTTPError` or :class:`URLError`,
@@ -366,6 +383,13 @@ class HTTPConnection(httpclient.HTTPConnection):
     @property
     def is_async(self):
         return self.timeout == 0
+
+
+class HTTPAsyncConnection(HTTPConnection):
+    
+    @property
+    def is_async(self):
+        return True
     
     def getresponse(self):
         return super(HTTPConnection, self).getresponse()
@@ -384,19 +408,20 @@ http://www.ietf.org/rfc/rfc2616.txt
     
     def __init__(self, url, method=None, data=None, charset=None,
                  encode_multipart=True, multipart_boundary=None,
-                 headers=None, **kwargs):
+                 headers=None, timeout=None, **kwargs):
         r = urlparse(url)
         host, port = splitport(r.netloc)
         if port and int(port) == self.DEFAULT_PORTS.get(r.scheme):
             port = None
-        self.scheme = r.scheme
+        self.type = r.scheme
         self.host = host
         self.port = port
-        self.path = r.path
+        self.selector = r.path
         self.params = r.params
         self.query = r.query
         self.fragment = r.fragment
         self.data = data
+        self.timeout = timeout
         self.headers = {}
         self._tunnel_host = None
         self.connection = None
@@ -417,21 +442,9 @@ http://www.ietf.org/rfc/rfc2616.txt
         host = self.host
         if self.port:
             host = '%s:%s' % (host, self.port)
-        return urllibr.urlunparse((self.scheme, host, self.path,
+        return urllibr.urlunparse((self.type, host, self.selector,
                                    self.params, self.query, self.fragment))
     
-    def execute(self, connection, timeout=None):
-        if self.connection:
-            raise RuntimeError('Already executed')
-        if not connection.is_async and timeout:
-            connection.timeout = timeout
-        self.connection = connection
-        url = self.full_url
-        connection.request(self.method, url, self.data, self.headers)
-        response = connection.getresponse()
-        response.url = url
-        return response
-        
     def _encode(self, method, body, encode_multipart, multipart_boundary):
         if not method:
             method = 'POST' if body else 'GET'
@@ -463,10 +476,10 @@ http://www.ietf.org/rfc/rfc2616.txt
 
 class HttpConnectionPool(object):
     
-    def __init__(self, Connections, max_connections, timeout, schema,
+    def __init__(self, Connections, max_connections, timeout, scheme,
                  host, port=None):
         self.Connections = Connections
-        self.schema = schema
+        self.scheme = scheme
         self.host = host
         self.port = port
         self.timeout = timeout
@@ -481,8 +494,6 @@ class HttpConnectionPool(object):
             connection = self._available_connections.pop()
         except IndexError:
             connection = self.make_connection()
-            if self.timeout is not None:
-                connection.timeout = self.timeout
         self._in_use_connections.add(connection)
         return connection
 
@@ -491,10 +502,18 @@ class HttpConnectionPool(object):
         if self._created_connections >= self.max_connections:
             raise HttpConnectionError("Too many connections")
         self._created_connections += 1
-        connection_class = self.Connections.get(self.schema)
+        if self.timeout == 0:
+            connection_class = _http_async_connections.get(self.scheme)
+            if not connection_class:
+                raise HttpConnectionError('Trying to create an asynchronous '\
+                                          'connection but there is no async '\
+                                          'handler registered')
+        else:
+            connection_class = self.Connections.get(self.schema)
         c = connection_class(self.host, self.port)
         if self.timeout is not None:
             c.timeout = self.timeout
+        c.connect()
         return c
 
     def release(self, connection):
@@ -502,43 +521,75 @@ class HttpConnectionPool(object):
         self._in_use_connections.remove(connection)
         self._available_connections.append(connection)
         
+
+class HttpHandler(urllibr.AbstractHTTPHandler):
+    '''A modified Http handler'''
+    def __init__(self, client, debuglevel=0):
+        super(HttpHandler, self).__init__(debuglevel)
+        self.client = client
         
-class HttpClient(object):
+    def http_open(self, req):
+        connection = self.client.get_connection(req)
+        return self.do_open(connection, req)
+    
+    def do_open(self, h, req):
+        headers = req.headers
+        if req._tunnel_host:
+            tunnel_headers = {}
+            proxy_auth_hdr = "Proxy-Authorization"
+            if proxy_auth_hdr in headers:
+                tunnel_headers[proxy_auth_hdr] = headers[proxy_auth_hdr]
+                # Proxy-Authorization should not be sent to origin
+                # server.
+                del headers[proxy_auth_hdr]
+            h.set_tunnel(req._tunnel_host, headers=tunnel_headers)
+
+        try:
+            h.request(req.get_method(), req.selector, req.data, headers)
+            r = h.getresponse()  # an HTTPResponse instance
+        except socket.error as err:
+            # This is an asynchronous socket
+            if err.errno != 10035:
+                self.client.close_connection(h)
+                raise URLError(err)
+        except:
+            self.client.close_connection(h)
+            raise
+        r.protocol = req.type
+        r.url = req.full_url
+        return r
+        
+    
+class HttpClient(urllibr.OpenerDirector):
     '''A client of a networked server'''
     Connections = {'http': HTTPConnection}
     HTTPError = urllibr.HTTPError
     URLError = urllibr.URLError
-    DEFAULT_HTTP_HEADERS = Headers('client',[('Connection', 'Keep-Alive'),
-                                            ('User-Agent', 'Python-httpurl')])
+    DEFAULT_HTTP_HEADERS = Headers('client',[('Connection', 'Keep-Alive')])
     
     def __init__(self, proxy_info = None, timeout=None, cache = None,
-                 headers=None, handle_cookie=False, encode_multipart=True,
+                 headers=None, encode_multipart=True, client_version=None,
                  multipart_boundary=None, max_connections=None):
+        super(HttpClient, self).__init__()
         self.poolmap = {}
         self.timeout = timeout
         self.max_connections = max_connections
-        dheaders = dict(self.DEFAULT_HTTP_HEADERS)
+        dheaders = self.DEFAULT_HTTP_HEADERS.copy()
+        dheaders['user-agent'] = client_version or 'Python-httpurl'
         if headers:
             dheaders.update(headers)
         self.DEFAULT_HTTP_HEADERS = dheaders
-        handlers = []
-        if proxy_info:
-            handlers.append(urllibr.ProxyHandler(proxy_info))
-        if handle_cookie:
-            cj = CookieJar()
-            handlers.append(urllibr.HTTPCookieProcessor(cj))
-        self._opener = urllibr.build_opener(*handlers)
-        #self._opener.addheaders = self.get_headers(headers)    
+        self.add_handler(urllibr.ProxyHandler(proxy_info))
+        self.add_handler(urllibr.HTTPCookieProcessor(CookieJar()))
+        self.add_handler(HttpHandler(self))
         self.encode_multipart = encode_multipart
         self.multipart_boundary = multipart_boundary or choose_boundary()
         
     def get_headers(self, headers=None):
+        d = self.DEFAULT_HTTP_HEADERS.copy()
         if headers:
-            d = self.DEFAULT_HTTP_HEADERS.copy()
             d.extend(headers)
-            return d
-        else:
-            return self.DEFAULT_HTTP_HEADERS
+        return d
     
     def get(self, url, body=None):
         '''Sends a GET request and returns a :class:`HttpClientResponse`
@@ -549,24 +600,40 @@ object.'''
         return self.request(url, body=body, method='POST')
     
     def request(self, url, body=None, method=None, headers=None,
-                timeout=None, encode_multipart=None, **kwargs):
-        try:
+                timeout=None, encode_multipart=None, allow_redirects=True,
+                **kwargs):
             headers = self.get_headers(headers)
             encode_multipart = encode_multipart if encode_multipart is not None\
                                 else self.encode_multipart
-            request = Request(url, method=method, data=body, headers=headers,
+            request = Request(url, method=method, data=body,
+                              headers=headers, timeout=timeout,
                               encode_multipart=encode_multipart,
                               multipart_boundary=self.multipart_boundary)
-            connection = self.get_connection(request)
-            return request.execute(connection, timeout)
-            response = self._opener.open(req, timeout=timeout)
-        except (self.HTTPError, self.URLError) as why:
-            return Response(why)
-        else:
-            return Response(response)
+            # pre-process request
+            protocol = request.type
+            meth_name = protocol+"_request"
+            for processor in self.process_request.get(protocol, ()):
+                meth = getattr(processor, meth_name)
+                request = meth(request)
+                
+            response = self._open(request, request.data)
+            return response.add_callback(self.post_process_response)
+            
+    def post_process_response(self, protocol, response):
+        # post-process response
+        protocol = request.protocol
+        meth_name = protocol+"_response"
+        for processor in self.process_response.get(protocol, []):
+            meth = getattr(processor, meth_name)
+            response = meth(req, response)
+            
+        return response
+        
+    def open(self, url, data=None, timeout=None):
+        return self.request(url, data, timeout=timeout)
     
     def get_connection(self, request):
-        key = (request.scheme, request.host, request.port)
+        key = (request.type, request.host, request.port)
         pool = self.poolmap.get(key)
         if pool is None:
             pool = HttpConnectionPool(self.Connections,
@@ -574,7 +641,7 @@ object.'''
                                       self.timeout, *key)
             self.poolmap[key] = pool
         return pool.get_connection()
-    
+            
     def add_password(self, username, password, uri, realm=None):
         '''Add Basic HTTP Authentication to the opener'''
         if realm is None:

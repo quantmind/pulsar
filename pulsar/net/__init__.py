@@ -6,6 +6,7 @@ called ``stream``. It can be assessed by::
 from .base import *
 from .tcp import *
 from .http import *
+from .client import *
 
 
 
