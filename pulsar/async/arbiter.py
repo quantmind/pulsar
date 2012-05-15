@@ -14,12 +14,17 @@ from .impl import actor_impl
 from .actor import Actor, get_actor, send
 from .monitor import PoolMixin
 from .proxy import ActorCallBacks, ActorProxyDeferred
-from .defer import ThreadQueue
+
+try:    #pragma nocover
+    import queue
+except ImportError: #pragma nocover
+    import Queue as queue
+ThreadQueue = queue.Queue
 
 
 process_global = pulsar.process_global
 
-__all__ = ['arbiter','spawn','Arbiter']
+__all__ = ['arbiter', 'spawn', 'Arbiter', 'ThreadQueue']
 
 
 def arbiter(daemonize = False):

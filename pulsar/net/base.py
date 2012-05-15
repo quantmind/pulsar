@@ -1,23 +1,23 @@
 import socket
 
 import pulsar
+from pulsar import Deferred
 
-__all__ = ['NetStream','NetRequest','NetResponse','close_socket']
-
-
-def close_socket(sock):
-    if sock:
-        try:
-            sock.close()
-        except socket.error:
-            pass
+__all__ = ['NetStream',
+           'NetRequest',
+           'NetResponse',
+           'ClientConnection',
+           'ClientResponse']
 
 
 class NetStream(object):
     '''Wraps an :class:`AsyncIOStream`'''
-    def __init__(self, stream, timeout=None, **kwargs):
+    def __init__(self, stream=None, timeout=None, **kwargs):
+        if stream is None:
+            stream = pulsar.AsyncIOStream()
         self.stream = stream
         self.timeout = timeout
+        self.events = {}
         self.on_init(kwargs)
     
     def fileno(self):
@@ -28,6 +28,8 @@ class NetStream(object):
         return self.stream.actor
             
     def close(self):
+        '''Close the :class:`NetStream` by calling the
+:meth:`on_close` method'''
         yield self.on_close()
         yield self.stream.close()
             
@@ -43,12 +45,40 @@ class NetStream(object):
     def __str__(self):
         return self.__repr__()
 
+    def async_event(self, event_name, callable, *args, **kwargs):
+        event = self.events.get(event_name)
+        if event is None:
+            self.events[event_name] = event = Deferred(description='%s %s'\
+                                                        % (self, event_name))
+            callable(*args, **kwargs).add_callback(event.callback)
+        return event
+    
 
+class ClientConnection(NetStream):
+    
+    def connect(self, address):
+        '''Connect to a remote address.'''
+        return self.async_event('connect',
+                                self.stream.connect,
+                                address,
+                                callback=self.on_connect,
+                                errback=self.on_connect_failure)
+    
+    def on_connect(self, result):
+        return result
+    
+    def on_connect_failure(self, failure):
+        failure.raise_all()
+    
+
+class ClientResponse(NetStream, Deferred):
+    
+    def __init__(self, *args, **kwargs):
+        super(NetStream, self).__init__(*args, **kwargs)
+        Deferred.__init__(self)
+        
+    
 class NetRequest(NetStream):
-    '''A HTTP parser providing higher-level access to a readable,
-sequential io.RawIOBase object. You can use implementions of
-http_parser.reader (IterReader, StringReader, SocketReader) or 
-create your own.'''    
     def __init__(self, stream, client_addr = None, parsercls = None, **kwargs):
         self.parsercls = parsercls or self.default_parser()
         self.client_address = client_addr
@@ -63,16 +93,11 @@ create your own.'''
             return self.parsercls()
     
         
-class NetResponse(NetStream, pulsar.Response):
-    '''A HTTP parser providing higher-level access to a readable,
-sequential io.RawIOBase object. You can use implementions of
-http_parser.reader (IterReader, StringReader, SocketReader) or 
-create your own.'''
-    def __init__(self, request, stream = None, **kwargs):
-        pulsar.Response.__init__(self,request)
-        stream = stream or self.request.stream
-        timeout = kwargs.pop('timeout',request.timeout)
-        self.version = pulsar.SERVER_SOFTWARE
-        NetStream.__init__(self, stream, timeout = timeout, **kwargs)
+class NetResponse(NetStream):
+    
+    def __init__(self, request, stream=None, **kwargs):
+        self.request = request
+        timeout = kwargs.pop('timeout', request.timeout)
+        super(NetResponse, self).__init__(stream, timeout=timeout, **kwargs)
     
     

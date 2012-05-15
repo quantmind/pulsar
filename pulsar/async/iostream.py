@@ -7,6 +7,7 @@ from collections import deque
 from threading import current_thread
 
 from pulsar.utils.system import IObase
+from pulsar import create_client_socket
 
 from .defer import Deferred, is_async
 
@@ -16,11 +17,12 @@ iologger = logging.getLogger('pulsar.iostream')
 __all__ = ['AsyncIOStream']
 
 
-def make_callback(callback, description = None):
-    if is_async(callback):
-        return callback
-    d = Deferred(description = description)
-    return d.add_callback(callback, True)
+def make_callback(callback, errback, description=None):
+    d = Deferred(description=description)
+    if callback:
+        return d.add_callback(callback, errback)
+    else:
+        return d
 
 
 class AsyncIOStream(IObase):
@@ -37,12 +39,17 @@ manipulated and adapted to pulsar :ref:`concurrent framework <design>`.
 :parameter kwargs: dictionary of auxiliar parameters passed to the
     :meth:`on_init` callback.
 '''
-    CONNECT = -1
-    def __init__(self, socket, max_buffer_size=None,
+    STATE_STRING = {IObase.READ: 'read',
+                    IObase.WRITE: 'write',
+                    IObase.NONE: 'idle'}
+    
+    _socket = None
+    _state = None
+    _connecting = False
+    MAX_BODY = 1024 * 128
+    def __init__(self, socket=None, max_buffer_size=None,
                  read_chunk_size=None, actor=None, **kwargs):
         self.socket = socket
-        self.socket.setblocking(0)
-        self.MAX_BODY = 1024 * 128
         self.max_buffer_size = max_buffer_size or 104857600
         self.read_chunk_size = read_chunk_size or io.DEFAULT_BUFFER_SIZE
         self._read_buffer = deque()
@@ -53,26 +60,30 @@ manipulated and adapted to pulsar :ref:`concurrent framework <design>`.
         self._write_callback = None
         self._close_callback = None
         self._connect_callback = None
-        self._connecting = False
-        self._state = self.NONE
         self.log = iologger
         self.ioloop = getattr(current_thread(),'ioloop',None)
     
     def __repr__(self):
-        fn = self.fileno() if self.socket else 'Closed'
-        return '{0}'.format(fn)
+        if self._socket:
+            return '%s %s' % (self._socket, self.state_code)
+        else:
+            return 'closed'
     
     def __str__(self):
-        fn = self.fileno() if self.socket else 'Closed'
-        return '{0}({1})'.format(self.__class__.__name__,fn)
+        return self.__repr__()
     
     @property
     def state(self):
         return self._state
     
+    @property
+    def state_code(self):
+        return self.STATE_STRING.get(self._state, 'unknown')
+    
     def fileno(self):
         '''Return the file descriptor of the socket.'''
-        return self.socket.fileno()
+        if self._socket:
+            return self._socket.fileno()
     
     def getsockname(self):
         '''Return the socket's own address. This is useful to find out the
@@ -80,8 +91,18 @@ manipulated and adapted to pulsar :ref:`concurrent framework <design>`.
     address returned depends on the address family.'''
         return self.socket.getsockname()
     
+    def _set_socket(self, sock):
+        self.close()
+        self._socket = sock
+        self._state = None
+        if self._socket is not None:
+            self._socket.setblocking(0)
+    def _get_socket(self):
+        return self._socket
+    socket = property(_get_socket, _set_socket)
+    
     #######################################################    ACTIONS
-    def connect(self, address, callback=None):
+    def connect(self, address, callback=None, errback=None):
         """Connects the socket to a remote address without blocking.
 May only be called if the socket passed to the constructor was
 not previously connected.  The address parameter is in the
@@ -93,22 +114,28 @@ connection is pending, in which case the data will be written
 as soon as the connection is ready.  Calling IOStream read
 methods before the socket is connected works on some platforms
 but is non-portable."""
-        if self._state == self.NONE:
-            self._state = self.CONNECT
-            d = make_callback(callback,
+        if self._state is None and not self._connecting:
+            if self.socket is None:
+                self.socket = create_client_socket(address)
+            #self._state = self.CONNECT
+            d = make_callback(callback, errback,
                       description = '%s Connect callback' % self)
             self._connect_callback = d.callback
             try:
-                self.socket.connect(address)
+                self._socket.connect(address)
             except socket.error as e:
                 # In non-blocking mode connect() always raises an exception
                 if e.args[0] not in (errno.EINPROGRESS, errno.EWOULDBLOCK):
                     raise
-            self._add_io_state(self.ioloop.WRITE)
+            self._connecting = True
+            self._add_io_state(self.WRITE)
             return d
         else:
-            raise RuntimeError('Cannot connect. Stete is %s.'\
-                               .format(self._state))
+            if self._state is not None:
+                raise RuntimeError('Cannot connect. State is %s.'\
+                                   .format(self.state_code))
+            else:
+                raise RuntimeError('Cannot connect while connecting.')
         
     def read(self, callback=None, length=None):
         """Reads data from the socket.
@@ -162,18 +189,18 @@ this new callback.
     
     def close(self):
         """Close this stream."""
-        if self.socket is not None:
+        if self._socket is not None:
             self.log.debug('Closing {0}'.format(self))
             if self._state is not None:
-                self.ioloop.remove_handler(self.socket.fileno())
-            self.socket.close()
-            self.socket = None
+                self.ioloop.remove_handler(self.fileno())
+            self._socket.close()
+            self._socket = None
             if self._close_callback:
                 self._run_callback(self._close_callback)
                 
     #######################################################    STATES
     def connecting(self):
-        return self._state == self.CONNECT
+        return self._connecting
     
     def reading(self):
         """Returns true if we are currently reading from the stream."""
@@ -356,22 +383,21 @@ On error closes the socket and raises an exception."""
             raise
 
     def _handle_connect(self):
-        if self._connect_callback is not None:
-            callback = self._connect_callback
-            self._connect_callback = None
-            self._run_callback(callback)
-        self._state = self.NONE
+        callback = self._connect_callback
+        self._connect_callback = None
+        self._run_callback(callback)
+        self._connecting = False
 
     def _add_io_state(self, state):
         if self.socket is None:
             # connection has been closed, so there can be no future events
             return
         if self._state is None:
-            self._state = self.ERROR | state
+            self._state = self.ioloop.ERROR | state
             self.ioloop.add_handler(
                 self, self._handle_events, self._state)
         elif not self._state & state:
             self._state = self._state | state
             self.ioloop.update_handler(
-                self.socket.fileno(), self._state)
+                self.fileno(), self._state)
 

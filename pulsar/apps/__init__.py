@@ -6,8 +6,8 @@ import random
 from inspect import isgenerator, isfunction
 
 import pulsar
-from pulsar import Empty, make_async, is_failure, async_pair, Failure,\
-                     HaltServer
+from pulsar import Empty, make_async, is_failure, Failure, HaltServer,\
+                     start_deferred
 from pulsar.utils.py2py3 import execfile, pickle
 from pulsar.utils.importer import import_module
 from pulsar.utils.log import LogInformation
@@ -125,9 +125,9 @@ sending back responses.
         except:
             response = ResponseError(request,sys.exc_info())
         
-        response, outcome = async_pair(response)
+        response = make_async(response)
         yield response
-        response = make_response(request, outcome.result)
+        response = make_response(request, response.result)
         yield response.close()
         yield response
         
@@ -148,10 +148,10 @@ After obtaining the result from the
         self.nr += 1
         request = self.app.request_instance(request)
         timeout = getattr(request,'timeout',None)
-        should_stop = self.max_requests and self.nr >= self.max_requests 
-        make_async(self._response_generator(request)).add_callback(
-               lambda res : self.close_response(request,res,should_stop))\
-               .start(self.ioloop, timeout = timeout)
+        should_stop = self.max_requests and self.nr >= self.max_requests
+        d = make_async(self._response_generator(request)).addBoth(
+               lambda res : self.close_response(request, res, should_stop))
+        start_deferred(self.ioloop, d, timeout=timeout)
         
     def close_response(self, request, response, should_stop):
         '''Close the response. This method should be called by the
@@ -270,8 +270,13 @@ pulsar subclasses of :class:`Application`.
             self.handle_task()
             
     def on_stop(self):
-        stp = make_async(self.app.monitor_stop(self))
-        return stp.add_callback(super(ApplicationMonitor,self).on_stop())
+        # First we stop the application
+        try:
+            result = self.app.monitor_stop(self)
+        except Exception as e:
+            result = e
+        stop = lambda r: super(ApplicationMonitor, self).on_stop()
+        return make_async(result).addBoth(stop)
         
     def on_exit(self):
         self.app.monitor_exit(self)

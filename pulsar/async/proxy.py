@@ -106,7 +106,8 @@ created by :meth:`ActorProxy.send` method.
     MESSAGES = {}
     
     def __init__(self, sender, target, action, ack, args, kwargs):
-        super(ActorMessage,self).__init__(rid = gen_unique_id()[:8])
+        super(ActorMessage,self).__init__()
+        self.rid = gen_unique_id()[:8]
         # Set the event loop to be the one of the sender inbox
         # This way we can yield the deferred without kick starting callbacks
         #self._ioloop = sender.messageloop
@@ -123,11 +124,11 @@ created by :meth:`ActorProxy.send` method.
         return '[{0} - from {1}] - {3} {2}'.format(self.rid,self.sender,
                                                    self.action,self.receiver)
     
-    def add_callback(self, callback, raise_on_error = False):
+    def add_callback(self, callback, errback=None):
         if not self.ack:
             raise CannotCallBackError('Cannot add callback to "{0}".\
  It does not acknowledge'.format(self))
-        return super(ActorMessage,self).add_callback(callback, raise_on_error)
+        return super(ActorMessage, self).add_callback(callback, errback)
     
     def __repr__(self):
         return self.__str__()
@@ -261,7 +262,7 @@ has registered its inbox address.
         ack = False
         if action in self.remotes:
             ack = self.remotes[action]
-        return ActorMessage(sender,self.aid,action,ack,args,kwargs)
+        return ActorMessage(sender, self.aid, action, ack, args, kwargs)
         
     def send(self, sender, action, *args, **kwargs):
         '''\

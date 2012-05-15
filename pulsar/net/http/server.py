@@ -8,9 +8,7 @@ import pulsar
 from pulsar import lib, Deferred, make_async, NOT_DONE
 from pulsar.utils.httpurl import Headers, unquote, to_bytes, is_string,\
                                     to_string, BytesIO
-
-
-from . import base
+from pulsar.net import base
 
 
 __all__ = ['HttpRequest','HttpResponse']

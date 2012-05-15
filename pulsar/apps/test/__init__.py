@@ -196,10 +196,10 @@ configuration and plugins.'''
         self.local['tests'] = tests = list(loader.testclasses(tags))
         if tests:
             self.runner.on_start()
-            monitor.cfg.set('workers',min(self.cfg.workers,len(tests)))
+            monitor.cfg.set('workers', min(self.cfg.workers,len(tests)))
             self._time_start = time.time()
-            for tag,testcls in tests:
-                monitor.put(TestRequest(testcls,tag))
+            for tag, testcls in tests:
+                monitor.put(TestRequest(testcls, tag))
         else:
             print('Could not find any tests.')
             monitor.arbiter.stop()

@@ -16,7 +16,7 @@ from pulsar.utils.py2py3 import iteritems, itervalues, pickle
 
 from .eventloop import IOLoop
 from .proxy import ActorProxy, ActorMessage, DEFAULT_MESSAGE_CHANNEL
-from .defer import make_async, raise_failure, async_pair, Failure
+from .defer import make_async, raise_failure, Failure
 from .mailbox import IOQueue, mailbox
 
 
@@ -34,7 +34,7 @@ EMPTY_DICT = {}
 
 
 def is_actor(obj):
-    return isinstance(obj,Actor)
+    return isinstance(obj, Actor)
 
 
 def is_mainthread(thread = None):
@@ -499,7 +499,7 @@ if *proxy* is not a class:`ActorProxy` instance raise an exception.'''
     def put(self, request):
         '''Put a request into the actor :attr:`ioqueue` if available.'''
         if self.ioqueue:
-            self.log.debug('Put {0} into IO queue'.format(request))
+            self.log.debug('Put %s into IO queue' % request)
             self.ioqueue.put(('request',request))
         else:
             self.log.error("Trying to put a request on task queue,\
@@ -519,9 +519,8 @@ if *proxy* is not a class:`ActorProxy` instance raise an exception.'''
 
 :parameter callable: a pickable, therefore it must be a pickable callable object
     or a function.
-:rtype: a tuple of :class:`Deferred` instances'''
-        res = self.arbiter.send(self, 'run', callable)
-        return async_pair(res)
+:rtype: a :class:`Deferred`'''
+        return self.arbiter.send(self, 'run', callable)
         
     ############################################################################
     # STOPPING

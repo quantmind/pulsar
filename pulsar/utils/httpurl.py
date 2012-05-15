@@ -160,6 +160,9 @@ Returns an ASCII native string containing the encoded result.'''
         iri = '%s?%s'%(iri,'&'.join(('%s=%s' % kv for kv in iteritems(kwargs))))
     return urlquote(unquote_unreserved(iri))
 
+def host_and_port(host):
+    host, port = splitport(host)
+    return host, int(port) if port else None
 
 ####################################################    HEADERS
 HEADER_FIELDS = {'general': frozenset(('Cache-Control', 'Connection', 'Date',
@@ -376,6 +379,16 @@ class HTTPResponse(httpclient.HTTPResponse):
             raise self.HTTPError(self.url, self.status_code,
                                  self.content, self.headers, None)        
     
+    def post_process_response(self, client, req):
+        # post-process response
+        protocol = request.protocol
+        meth_name = protocol+"_response"
+        for processor in client.process_response.get(protocol, []):
+            meth = getattr(processor, meth_name)
+            response = meth(req, response)
+            
+        return response
+    
     
 class HTTPConnection(httpclient.HTTPConnection):
     response_class = HTTPResponse
@@ -409,17 +422,9 @@ http://www.ietf.org/rfc/rfc2616.txt
     def __init__(self, url, method=None, data=None, charset=None,
                  encode_multipart=True, multipart_boundary=None,
                  headers=None, timeout=None, **kwargs):
-        r = urlparse(url)
-        host, port = splitport(r.netloc)
-        if port and int(port) == self.DEFAULT_PORTS.get(r.scheme):
-            port = None
-        self.type = r.scheme
-        self.host = host
-        self.port = port
-        self.selector = r.path
-        self.params = r.params
-        self.query = r.query
-        self.fragment = r.fragment
+        self.type, self.host, self.selector, self.params,\
+        self.query, self.fragment = urlparse(url)
+        self.full_url = self._get_full_url()
         self.data = data
         self.timeout = timeout
         self.headers = {}
@@ -434,17 +439,24 @@ http://www.ietf.org/rfc/rfc2616.txt
     def get_method(self):
         return self.method
     
+    def host_and_port(self):
+        return host_and_port(self.host)
+    
     def add_header(self, key, value):
         self.headers[header_field(key)] = value
     
     @property
-    def full_url(self):
-        host = self.host
-        if self.port:
-            host = '%s:%s' % (host, self.port)
-        return urllibr.urlunparse((self.type, host, self.selector,
-                                   self.params, self.query, self.fragment))
-    
+    def key(self):
+        #if self.has_proxy():
+        #    r = urlparse(self.selector)
+        #    host, port = splitport(r.netloc)
+        #    return (r.scheme, host, port)
+        #else:
+        #    host, port = self.host_port()
+        #    return (self.type, host, port)
+        host, port = self.host_and_port()
+        return (self.type, host, port)            
+            
     def _encode(self, method, body, encode_multipart, multipart_boundary):
         if not method:
             method = 'POST' if body else 'GET'
@@ -472,6 +484,10 @@ http://www.ietf.org/rfc/rfc2616.txt
             url += '?' + urlencode(fields)
         elif body:
             url = '%s?%s' % (url, to_string(body))
+            
+    def _get_full_url(self):
+        return urllibr.urlunparse((self.type, self.host, self.selector,
+                                   self.params, self.query, ''))
             
 
 class HttpConnectionPool(object):
@@ -513,13 +529,15 @@ class HttpConnectionPool(object):
         c = connection_class(self.host, self.port)
         if self.timeout is not None:
             c.timeout = self.timeout
-        c.connect()
         return c
 
     def release(self, connection):
         "Releases the connection back to the pool"
         self._in_use_connections.remove(connection)
         self._available_connections.append(connection)
+    
+    def remove(self, connection):
+        self._in_use_connections.remove(connection)
         
 
 class HttpHandler(urllibr.AbstractHTTPHandler):
@@ -533,6 +551,7 @@ class HttpHandler(urllibr.AbstractHTTPHandler):
         return self.do_open(connection, req)
     
     def do_open(self, h, req):
+        req.connection = h
         headers = req.headers
         if req._tunnel_host:
             tunnel_headers = {}
@@ -543,17 +562,16 @@ class HttpHandler(urllibr.AbstractHTTPHandler):
                 # server.
                 del headers[proxy_auth_hdr]
             h.set_tunnel(req._tunnel_host, headers=tunnel_headers)
-
         try:
             h.request(req.get_method(), req.selector, req.data, headers)
             r = h.getresponse()  # an HTTPResponse instance
         except socket.error as err:
             # This is an asynchronous socket
             if err.errno != 10035:
-                self.client.close_connection(h)
+                self.client.close_connection(req)
                 raise URLError(err)
         except:
-            self.client.close_connection(h)
+            self.client.close_connection(req)
             raise
         r.protocol = req.type
         r.url = req.full_url
@@ -602,38 +620,28 @@ object.'''
     def request(self, url, body=None, method=None, headers=None,
                 timeout=None, encode_multipart=None, allow_redirects=True,
                 **kwargs):
-            headers = self.get_headers(headers)
-            encode_multipart = encode_multipart if encode_multipart is not None\
-                                else self.encode_multipart
-            request = Request(url, method=method, data=body,
-                              headers=headers, timeout=timeout,
-                              encode_multipart=encode_multipart,
-                              multipart_boundary=self.multipart_boundary)
-            # pre-process request
-            protocol = request.type
-            meth_name = protocol+"_request"
-            for processor in self.process_request.get(protocol, ()):
-                meth = getattr(processor, meth_name)
-                request = meth(request)
-                
-            response = self._open(request, request.data)
-            return response.add_callback(self.post_process_response)
-            
-    def post_process_response(self, protocol, response):
-        # post-process response
-        protocol = request.protocol
-        meth_name = protocol+"_response"
-        for processor in self.process_response.get(protocol, []):
+        headers = self.get_headers(headers)
+        encode_multipart = encode_multipart if encode_multipart is not None\
+                            else self.encode_multipart
+        request = Request(url, method=method, data=body,
+                          headers=headers, timeout=timeout,
+                          encode_multipart=encode_multipart,
+                          multipart_boundary=self.multipart_boundary)
+        # pre-process request
+        protocol = request.type
+        meth_name = protocol+"_request"
+        for processor in self.process_request.get(protocol, ()):
             meth = getattr(processor, meth_name)
-            response = meth(req, response)
+            request = meth(request)
             
-        return response
+        response = self._open(request, request.data)
+        return response.post_process_response(self, request)
         
     def open(self, url, data=None, timeout=None):
         return self.request(url, data, timeout=timeout)
     
     def get_connection(self, request):
-        key = (request.type, request.host, request.port)
+        key = request.key
         pool = self.poolmap.get(key)
         if pool is None:
             pool = HttpConnectionPool(self.Connections,
@@ -641,7 +649,13 @@ object.'''
                                       self.timeout, *key)
             self.poolmap[key] = pool
         return pool.get_connection()
-            
+    
+    def close_connection(self, req):
+        key = req.key
+        pool = self.poolmap.get(key)
+        if pool:
+            pool.remove(req.connection)
+        
     def add_password(self, username, password, uri, realm=None):
         '''Add Basic HTTP Authentication to the opener'''
         if realm is None:

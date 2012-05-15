@@ -12,6 +12,7 @@ __all__ = ['Socket',
            'wrap_socket',
            'flush_socket',
            'create_socket',
+           'create_client_socket',
            'create_connection',
            'create_socket_address',
            'get_maxfd',
@@ -80,6 +81,8 @@ Otherwise a TypeError is raised.
         log.error("Can't connect to %s" % str(address))
     sys.exit(1)
     
+
+create_client_socket = lambda address: create_socket(address, bound=True)
 
 def wrap_socket(sock):
     '''Wrap a python socket with pulsar :class:`Socket`.'''
@@ -186,7 +189,16 @@ higher level tools for creating and reusing sockets already created.'''
     
     @property
     def name(self):
-        return self.sock.getsockname()
+        try:
+            return self.sock.getsockname()
+        except socket.error as e:
+            # In windows the function raises an exception if the socket
+            # is not connected
+            if not self.is_server() and os.name == 'nt'\
+                    and e.args[0] == errno.WSAEINVAL:
+                return ('0.0.0.0', 0)
+            else:
+                raise
     
     def __str__(self, name):
         return "<socket %d>" % self.sock.fileno()
@@ -238,7 +250,7 @@ class TCPSocket(Socket):
     FAMILY = socket.AF_INET
     
     def __str__(self):
-        return "http://%s:%d" % self.name
+        return "%s:%d" % self.name
     
     def set_options(self, sock, address, bound):
         sock.setsockopt(socket.IPPROTO_TCP, socket.TCP_NODELAY, 1)
@@ -251,7 +263,7 @@ class TCP6Socket(TCPSocket):
 
     def __str__(self):
         (host, port, fl, sc) = self.name
-        return "http://[%s]:%d" % (host, port)
+        return "[%s]:%d" % (host, port)
 
 
 if os.name == 'posix':

@@ -6,16 +6,16 @@ import errno
 import bisect
 import socket
 
-from pulsar import HaltServer
+from pulsar import HaltServer, Timeout
 from pulsar.utils.system import IObase, IOpoll, close_on_exec, platform, Waker
 from pulsar.utils.tools import gen_unique_id
 from pulsar.utils.log import Synchronized
 from pulsar.utils.structures import WeakList
 
-from .defer import Deferred
+from .defer import Deferred, is_async
 
 
-__all__ = ['IOLoop']
+__all__ = ['IOLoop', 'start_deferred']
 
 def file_descriptor(fd):
     if hasattr(fd,'fileno'):
@@ -434,3 +434,48 @@ class PeriodicCallback(object):
         if self._running:
             self.start()
 
+
+class start_deferred(object):
+    
+    def __init__(self, ioloop, deferred, timeout=5):
+        '''Start running the *deferred* into an Event loop.
+If the deferred was already started do nothing.
+
+:parameter ioloop: :class:`IOLoop` instance where to run the deferred.
+:parameter timeout: Optional timeout in seconds. If the deferred has not
+    been called within this time period it will raise a :class:`Timeout`
+    exception and it won't add itself to the callbacks.
+    
+    Default: 5
+    
+:rtype: ``self``.
+
+A common usage pattern::
+
+    def blocking_function():
+        ...
+        
+    def callback(result):
+        ...
+        
+    make_async(blocking_function).start(ioloop).add_callback(callback)
+'''
+        self._deferred = deferred
+        self._ioloop = ioloop
+        self._timeout = timeout
+        self._started = time.time()
+        self.__call__(False)
+    
+    def __call__(self, check_timeout=True):
+        if self._deferred.called:
+            self._deferred = self._deferred.result
+        if is_async(self._deferred):
+            try:
+                if check_timeout and self._timeout and\
+                        time.time() - self._started > self._timeout:
+                    raise Timeout('Deferred "%s" not called.'\
+                                  .format(self.deferred), self._timeout)
+                self._ioloop.add_callback(self)
+            except Exception as e:
+                self._deferred.callback(e)
+    

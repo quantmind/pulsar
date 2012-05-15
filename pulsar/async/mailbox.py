@@ -10,7 +10,7 @@ from pulsar import create_connection, MailboxError, socket_pair, wrap_socket
 from pulsar.utils.tools import gen_unique_id
 from pulsar.utils.py2py3 import pickle
 
-from .eventloop import IOLoop
+from .eventloop import IOLoop, start_deferred
 from .defer import make_async, raise_failure, Failure
 
 
@@ -20,7 +20,7 @@ crlf = b'\r\n'
 msg_separator = 3*crlf
 
 
-def mailbox(actor, address = None):
+def mailbox(actor, address=None):
     '''Creates a :class:`Mailbox` instances for :class:`Actor` instances.
 If an address is provided, the communication is implemented using a socket,
 otherwise a queue is used.'''   
@@ -268,8 +268,10 @@ If the message needs acknowledgment, send the result back.'''
         actor = self.actor
         sender = actor.get_actor(message.sender)
         receiver = actor.get_actor(message.receiver)
+        # The receiver could be different from the mail box actor. For
+        # example a monitor uses the same mailbox as the arbiter
         if not receiver:
-            actor.log.warn('message "{0}" for an unknown actor "{1}"'\
+            actor.log.warn('message "%s" for an unknown actor "%s"'\
                               .format(message,message.receiver))
             return
         
@@ -294,10 +296,10 @@ If the message needs acknowledgment, send the result back.'''
             if ack:
                 if sender:
                     # Acknowledge the sender with the result.
-                    make_async(result).start(receiver.ioloop)\
-                    .add_callback(lambda res: self._send_callback(
-                            sender, receiver, message, res))\
-                    .add_callback(raise_failure)
+                    callback = lambda res: self._send_callback(
+                                                sender, receiver, message, res)
+                    d = make_async(result).add_callback(callback,callback)
+                    start_deferred(receiver.ioloop, d)
                 else:
                     receiver.log.error('message "{0}" from an unknown actor\
  "{1}". Cannot acknowledge message.'.format(message,message.sender))

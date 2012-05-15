@@ -1,7 +1,7 @@
 '''Deferred and asynchronous tools.'''
 import sys
 
-from pulsar import AlreadyCalledError, Deferred, async_pair, is_async,\
+from pulsar import AlreadyCalledError, Deferred, is_async,\
                      make_async, IOLoop, is_failure, MultiDeferred
 from pulsar.utils.test import test
 
@@ -29,7 +29,11 @@ class Cbk(Deferred):
         except Exception as e:
             self.callback(e)
 
-
+def async_pair():
+    c = Cbk()
+    d = Deferred().add_callback(c.set_result)
+    return d, c
+    
 class TestDeferred(test.TestCase):
     
     def testSimple(self):
@@ -48,14 +52,14 @@ class TestDeferred(test.TestCase):
         self.assertRaises(RuntimeError, d.callback, Deferred())
 
     def testCallbacks(self):
-        d,cbk = async_pair(Deferred())
+        d,cbk = async_pair()
         self.assertFalse(d.called)
         d.callback('ciao')
         self.assertTrue(d.called)
         self.assertEqual(cbk.result,'ciao')
         
     def testError(self):
-        d,cbk = async_pair(Deferred())
+        d,cbk = async_pair()
         self.assertFalse(d.called)
         try:
             raise Exception('blabla exception')

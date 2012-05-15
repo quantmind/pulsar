@@ -3,17 +3,15 @@ import io
 import pickle
 from inspect import istraceback, isclass
 
-from pulsar import async_pair, as_failure, CLEAR_ERRORS, WorkerRequest,\
-                    make_async, SafeAsync, Failure
+from pulsar import as_failure, CLEAR_ERRORS, WorkerRequest, make_async, Failure
 
 
-__all__ = ['TestRequest','run_on_arbiter']
-          
- 
-class CallableTest(SafeAsync):
+__all__ = ['TestRequest','run_test_function']
+   
     
-    def __init__(self, test, class_method, funcname, max_errors, istest):
-        super(CallableTest,self).__init__(max_errors)
+class CallableTest(object):
+    
+    def __init__(self, test, class_method, funcname, istest):
         self.class_method = class_method
         self.istest = istest
         self.test = test
@@ -22,6 +20,13 @@ class CallableTest(SafeAsync):
     def __repr__(self):
         return self.funcname
     __str__ = __repr__
+    
+    def __call__(self, actor):
+        try:
+            res = self._call(actor)
+        except:
+            res = Failure(sys.exc_info())
+        return make_async(res, max_errors = self.max_errors)
     
     def _call(self, actor):
         self.test = pickle.loads(self.test)
@@ -37,7 +42,7 @@ class CallableTest(SafeAsync):
             runner = test.worker.app.runner
             self.test = runner.getTest(test)
             self.test.async = AsyncAssert(self.test)
-        self.test_function = getattr(self.test,self.funcname)
+        self.test_function = getattr(self.test, self.funcname)
     
     def run(self):
         return self.test_function()
@@ -62,7 +67,7 @@ class AsyncAssert(object):
         return func(result,*args)
     
     
-def run_on_arbiter(test, f, max_errors = 1, istest = False):
+def run_test_function(test, func, istest=False):
     '''This internal function is used by the test runner for running a *test*
 on the :class:`pulsar.Arbiter` process domain.
 It check if the test function *f* has the attribute *run_on_arbiter*
@@ -77,33 +82,31 @@ set to ``True``, and if so the test is send to the arbiter. For example::
 :parameter test: Instance of a testcase
 :parameter f: function to test
 :parameter max_errors: number of allowed errors in generators.
-:rtype: an asynchronous pair (check :func:`pulsar.async_pair` for details)
+:rtype: a :class:`Deferred`
 '''
     try:
-        if f is None:
-            return f
+        if func is None:
+            return func
         class_method = isclass(test)
-        if getattr(f, 'run_on_arbiter', False):
+        if getattr(func, 'run_on_arbiter', False):
             worker = test.worker
             test.worker = None
             try:
                 pcls = pickle.dumps(test)
             except:
-                f = lambda : Failure(sys.exc_info())
+                func = lambda : Failure(sys.exc_info())
             else:
-                c = CallableTest(pcls, class_method, f.__name__,
-                                 max_errors, istest)
-                f = lambda : worker.arbiter.send(worker, 'run', c)
+                c = CallableTest(pcls, class_method, func.__name__, istest)
+                result = worker.arbiter.send(worker, 'run', c)
             finally:
                 test.worker = worker
         else:
-            c = CallableTest(test, class_method, f.__name__, max_errors, istest)
+            c = CallableTest(test, class_method, func.__name__, istest)
             c.prepare()
-            f = c.run
-        return async_pair(f,  max_errors = max_errors)
-    except:
-        fail = Failure(sys.exc_info())
-        return lambda : async_pair(fail, max_errors = max_errors)
+            result = c.run()
+        return make_async(result)
+    except Exception as e:
+        return make_async(e)
 
 
 class TestRequest(WorkerRequest):
@@ -142,39 +145,34 @@ following algorithm:
         
         if all_tests.countTestCases():
             testcls.worker = worker
+            skip_tests = getattr(testcls, "__unittest_skip__", False)
             should_stop = False
-            end = None
-            if not getattr(testcls, "__unittest_skip__", False):
-                init = run_on_arbiter(testcls,getattr(testcls,
-                                                     'setUpClass',None))
-                end = run_on_arbiter(testcls,getattr(testcls,
-                                                    'tearDownClass',None))
-                should_stop = False
-            
-                if init:
-                    test = self.testcls('setUpClass')
-                    result,outcome = init()
-                    yield result
-                    should_stop = self.add_failure(test, runner, outcome.result)
+            test_cls = self.testcls('setUpClass')
+            if not skip_tests:
+                outcome = run_test_function(testcls ,getattr(testcls,
+                                                        'setUpClass',None))                
+                if outcome is not None:
+                    yield outcome
+                    should_stop = self.add_failure(test_cls, runner,
+                                                   outcome.result)
     
             if not should_stop:            
                 for test in all_tests:
                     runner.startTest(test)
-                    yield self.run_test(test,runner)
+                    yield self.run_test(test, runner)
                     runner.stopTest(test)
                 
-            if end:
-                result, outcome = end()
-                yield result
-                self.add_failure(test, runner, outcome.result)
+            if not skip_tests:
+                outcome = run_test_function(testcls,getattr(testcls,
+                                                        'tearDownClass',None))
+                if outcome is not None:
+                    yield outcome
+                    self.add_failure(test, runner, outcome.result)
             
             del testcls.worker
-            
-            # Clear errors
-            yield CLEAR_ERRORS
         
         # send runner result to monitor
-        worker.monitor.send(worker,'test_result',runner.result)
+        worker.monitor.send(worker, 'test_result', runner.result)
         
     def run_test(self, test, runner):
         '''\
@@ -199,31 +197,30 @@ Run a *test* function using the following algorithm
                 raise StopIteration()
             
             if hasattr(test,'_pre_setup'):
-                result, outcome = run_on_arbiter(test,test._pre_setup)()
-                yield result
+                outcome = run_test_function(test,test._pre_setup)
+                yield outcome
                 success = not self.add_failure(test, runner, outcome.result)
             
             if success:
-                result, outcome = run_on_arbiter(test,test.setUp)()
-                yield result
+                outcome = run_test_function(test,test.setUp)
+                yield outcome
                 if not self.add_failure(test, runner, outcome.result):
                     # Here we perform the actual test
-                    result, outcome = run_on_arbiter(test,testMethod,
-                                                     istest=True)()
-                    yield result
+                    outcome = run_test_function(test, testMethod, istest=True)
+                    yield outcome
                     success = not self.add_failure(test, runner, outcome.result)
                     if success:
                         test.result = outcome.result
-                    result, outcome = run_on_arbiter(test,test.tearDown)()
-                    yield result
+                    outcome = run_test_function(test,test.tearDown)
+                    yield outcome
                     if self.add_failure(test, runner, outcome.result):
                         success = False
                 else:
                     success = False
                     
             if hasattr(test,'_post_teardown'):
-                result, outcome = run_on_arbiter(test,test._post_teardown)()
-                yield result
+                outcome = run_test_function(test,test._post_teardown)
+                yield outcome
                 if self.add_failure(test, runner, outcome.result):
                     success = False
         
@@ -236,7 +233,6 @@ Run a *test* function using the following algorithm
         if success:
             runner.addSuccess(test)
         
-
     def add_failure(self, test, runner, failure):
         failure = as_failure(failure)
         if failure:
