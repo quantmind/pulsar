@@ -6,12 +6,14 @@ import errno
 from collections import deque
 from threading import current_thread
 
+from pulsar.utils.system import IObase
+
 from .defer import Deferred, is_async
 
 iologger = logging.getLogger('pulsar.iostream')
 
 
-__all__ = ['IOStream','AsyncIOStream']
+__all__ = ['AsyncIOStream']
 
 
 def make_callback(callback, description = None):
@@ -21,10 +23,8 @@ def make_callback(callback, description = None):
     return d.add_callback(callback, True)
 
 
-class IOStream(object):
-    '''An utility class to write to and read from a blocking socket.
-It is also used as base class for :class:`AsyncIOStream` its
-asynchronous equivalent counterpart.
+class AsyncIOStream(IObase):
+    '''An utility class to write to and read from a non-blocking socket.
 
 It supports :meth:`write` and :meth:`read` operations with `callbacks` which
 can be used to act when data has just been sent or has just been received.
@@ -36,11 +36,12 @@ manipulated and adapted to pulsar :ref:`concurrent framework <design>`.
     If not supplied a new socket is created.
 :parameter kwargs: dictionary of auxiliar parameters passed to the
     :meth:`on_init` callback.
-'''    
+'''
+    CONNECT = -1
     def __init__(self, socket, max_buffer_size=None,
                  read_chunk_size=None, actor=None, **kwargs):
         self.socket = socket
-        self.socket.setblocking(self.blocking())
+        self.socket.setblocking(0)
         self.MAX_BODY = 1024 * 128
         self.max_buffer_size = max_buffer_size or 104857600
         self.read_chunk_size = read_chunk_size or io.DEFAULT_BUFFER_SIZE
@@ -53,9 +54,9 @@ manipulated and adapted to pulsar :ref:`concurrent framework <design>`.
         self._close_callback = None
         self._connect_callback = None
         self._connecting = False
-        self._state = None
-        self.on_init(kwargs)
-        self.set_actor(actor)
+        self._state = self.NONE
+        self.log = iologger
+        self.ioloop = getattr(current_thread(),'ioloop',None)
     
     def __repr__(self):
         fn = self.fileno() if self.socket else 'Closed'
@@ -65,39 +66,51 @@ manipulated and adapted to pulsar :ref:`concurrent framework <design>`.
         fn = self.fileno() if self.socket else 'Closed'
         return '{0}({1})'.format(self.__class__.__name__,fn)
     
+    @property
+    def state(self):
+        return self._state
+    
     def fileno(self):
         '''Return the file descriptor of the socket.'''
         return self.socket.fileno()
-        
+    
     def getsockname(self):
         '''Return the socket's own address. This is useful to find out the
     port number of an IPv4/v6 socket, for instance. The format of the
     address returned depends on the address family.'''
         return self.socket.getsockname()
-
-    def set_actor(self, actor):
-        '''Set the :class:`pulsar.Actor` instance handling the io stream.'''
-        self.actor = actor
-        if actor:
-            self.log = actor.log or iologger
-            self.ioloop = actor.ioloop
+    
+    #######################################################    ACTIONS
+    def connect(self, address, callback=None):
+        """Connects the socket to a remote address without blocking.
+May only be called if the socket passed to the constructor was
+not previously connected.  The address parameter is in the
+same format as for socket.connect, i.e. a (host, port) tuple.
+If callback is specified, it will be called when the
+connection is completed.
+Note that it is safe to call IOStream.write while the
+connection is pending, in which case the data will be written
+as soon as the connection is ready.  Calling IOStream read
+methods before the socket is connected works on some platforms
+but is non-portable."""
+        if self._state == self.NONE:
+            self._state = self.CONNECT
+            d = make_callback(callback,
+                      description = '%s Connect callback' % self)
+            self._connect_callback = d.callback
+            try:
+                self.socket.connect(address)
+            except socket.error as e:
+                # In non-blocking mode connect() always raises an exception
+                if e.args[0] not in (errno.EINPROGRESS, errno.EWOULDBLOCK):
+                    raise
+            self._add_io_state(self.ioloop.WRITE)
+            return d
         else:
-            self.log = iologger
-            self.ioloop = getattr(current_thread(),'ioloop',None)
+            raise RuntimeError('Cannot connect. Stete is %s.'\
+                               .format(self._state))
         
-    def blocking(self):
-        '''Boolean indication if the socket is blocking.'''
-        return True
-    
-    def on_init(self, kwargs):
-        '''Called at initialization. Override if you need to.'''
-        pass
-    
-    def reading(self):
-        """Returns true if we are currently reading from the stream."""
-        return self._read_callback is not None
-        
-    def read(self, callback = None, length = None):
+    def read(self, callback=None, length=None):
         """Reads data from the socket.
 The callback will be called with chunks of data as they become available.
 If no callback is provided, the callback of the returned deferred instance
@@ -115,7 +128,7 @@ One common pattern of usage::
     io.read().add_callback(parse)
     
 """
-        assert not self._read_callback, "Already reading"
+        assert not self.reading(), "Already reading"
         d = make_callback(callback,
                           description = '{0} Read callback'.format(self))
         if self.closed():
@@ -123,9 +136,9 @@ One common pattern of usage::
             return
         self._read_callback = d.callback
         self._read_length = length
-        self.on_read()
+        self._add_io_state(self.ioloop.READ)
         return d
-        
+    
     def write(self, data, callback=None):
         """Write the given data to this stream. If callback is given,
 we call it when all of the buffered write data has been successfully
@@ -144,54 +157,37 @@ this new callback.
             return d
         self._write_callback = d.callback
         self._write_buffer.append(data)
-        self.on_write()
+        self._add_io_state(self.ioloop.WRITE)
         return d
-    
-    #############################################    
-    # CALLBACKS
-    #############################################
-    
-    def on_read(self):
-        self._handle_read()
-        
-    def on_write(self):
-        self._handle_write()
-    
-    def closed(self):
-        '''Boolean indicating if the stream is closed.'''
-        return self.socket is None
-    
-    def on_close(self):
-        '''Closing callback'''
-        pass
     
     def close(self):
         """Close this stream."""
         if self.socket is not None:
             self.log.debug('Closing {0}'.format(self))
-            self.on_close()
+            if self._state is not None:
+                self.ioloop.remove_handler(self.socket.fileno())
             self.socket.close()
             self.socket = None
             if self._close_callback:
                 self._run_callback(self._close_callback)
+                
+    #######################################################    STATES
+    def connecting(self):
+        return self._state == self.CONNECT
     
-    def connect(self, address, **kwargs):
-        """Connects the socket to a remote address.
+    def reading(self):
+        """Returns true if we are currently reading from the stream."""
+        return self._state == self.READ
 
-May only be called if the socket passed to the constructor was
-not previously connected.  The address parameter is in the
-same format as for socket.connect, i.e. a (host, port) tuple.
-If callback is specified, it will be called when the
-connection is completed.
-
-Note that it is safe to call IOStream.write while the
-connection is pending, in which case the data will be written
-as soon as the connection is ready.  Calling IOStream read
-methods before the socket is connected works on some platforms
-but is non-portable.
-        """
-        self.socket.connect(address)
+    def writing(self):
+        """Returns true if we are currently writing to the stream."""
+        return bool(self._write_buffer)
     
+    def closed(self):
+        '''Boolean indicating if the stream is closed.'''
+        return self.socket is None
+    
+    #######################################################    INTERNALS
     def read_to_buffer(self):
         """Reads from the socket and appends the result to the read buffer.
 Returns the number of bytes read.
@@ -224,10 +220,6 @@ On error closes the socket and raises an exception."""
     def read_buffer_size(self):
         '''Size of the reading buffer'''
         return sum(len(chunk) for chunk in self._read_buffer)
-    
-    ######################################################################
-    ##    INTERNALS
-    ######################################################################
     
     def _run_callback(self, callback, *args, **kwargs):
         try:
@@ -323,63 +315,9 @@ On error closes the socket and raises an exception."""
             buff = b''.join(prefix)
         return buff
         
-        
-class AsyncIOStream(IOStream):
-    """A specialized :class:`IOStream` class to write to and
-read from a non-blocking socket.
-    """
-    def blocking(self):
-        return False
-    
-    def on_read(self):
-        self._add_io_state(self.ioloop.READ)
-        
-    def on_write(self):
-        self._add_io_state(self.ioloop.WRITE)
-        
-    def on_close(self):
-        if self._state is not None:
-            self.ioloop.remove_handler(self.socket.fileno())
-
-    def connect(self, address, callback=None):
-        """Connects the socket to a remote address without blocking.
-
-        May only be called if the socket passed to the constructor was
-        not previously connected.  The address parameter is in the
-        same format as for socket.connect, i.e. a (host, port) tuple.
-        If callback is specified, it will be called when the
-        connection is completed.
-
-        Note that it is safe to call IOStream.write while the
-        connection is pending, in which case the data will be written
-        as soon as the connection is ready.  Calling IOStream read
-        methods before the socket is connected works on some platforms
-        but is non-portable.
-        """
-        self._connecting = True
-        d = make_callback(callback,
-                  description = '{0} Connect callback'.format(self))
-        self._connect_callback = d.callback
-        try:
-            self.socket.connect(address)
-        except socket.error as e:
-            # In non-blocking mode connect() always raises an exception
-            if e.args[0] not in (errno.EINPROGRESS, errno.EWOULDBLOCK):
-                raise
-        self._add_io_state(self.ioloop.WRITE)
-        return d
-
     def set_close_callback(self, callback):
         """Call the given callback when the stream is closed."""
         self._close_callback = self.wrap(callback)
-
-    def reading(self):
-        """Returns true if we are currently reading from the stream."""
-        return self._read_callback is not None
-
-    def writing(self):
-        """Returns true if we are currently writing to the stream."""
-        return bool(self._write_buffer)
 
     def _handle_events(self, fd, events):
         # This is the actual callback from the event loop
@@ -387,17 +325,17 @@ read from a non-blocking socket.
             self.log.warning("Got events for closed stream %d", fd)
             return
         try:
-            if events & self.ioloop.READ:
+            if events & self.READ:
                 self._handle_read()
             if not self.socket:
                 return
-            if events & self.ioloop.WRITE:
+            if events & self.WRITE:
                 if self._connecting:
                     self._handle_connect()
                 self._handle_write()
             if not self.socket:
                 return
-            if events & self.ioloop.ERROR:
+            if events & self.ERROR:
                 # We may have queued up a user callback in _handle_read or
                 # _handle_write, so don't close the IOStream until those
                 # callbacks have had a chance to run.
@@ -405,9 +343,9 @@ read from a non-blocking socket.
                 return
             state = self.ioloop.ERROR
             if self.reading():
-                state |= self.ioloop.READ
+                state |= self.READ
             if self.writing():
-                state |= self.ioloop.WRITE
+                state |= self.WRITE
             if state != self._state:
                 assert self._state is not None, \
                     "shouldn't happen: _handle_events without self._state"
@@ -422,19 +360,18 @@ read from a non-blocking socket.
             callback = self._connect_callback
             self._connect_callback = None
             self._run_callback(callback)
-        self._connecting = False
+        self._state = self.NONE
 
     def _add_io_state(self, state):
         if self.socket is None:
             # connection has been closed, so there can be no future events
             return
         if self._state is None:
-            self._state = self.ioloop.ERROR | state
+            self._state = self.ERROR | state
             self.ioloop.add_handler(
                 self, self._handle_events, self._state)
         elif not self._state & state:
             self._state = self._state | state
             self.ioloop.update_handler(
                 self.socket.fileno(), self._state)
-
 

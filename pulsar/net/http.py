@@ -10,7 +10,7 @@ from pulsar.utils.httpurl import Headers, unquote, to_bytes, is_string,\
                                     to_string, BytesIO
 
 
-from .tcp import TcpRequest, TcpResponse
+from . import base
 
 
 __all__ = ['HttpRequest','HttpResponse']
@@ -40,7 +40,7 @@ def on_body(f):
     return _
 
 
-class HttpRequest(TcpRequest):
+class HttpRequest(base.NetRequest):
     '''A specialized :class:`TcpRequest` class for the HTTP protocol.'''    
     def on_init(self, kwargs):
         '''Set up event handler'''
@@ -233,8 +233,8 @@ adds the following 2 pulsar information:
                 self.on_body.callback(self.parser.get_body())
         
 
-class HttpResponse(TcpResponse):
-    '''A specialized TcpResponse class for the HTTP protocol which conforms
+class HttpResponse(base.NetResponse):
+    '''A specialized NetResponse class for the HTTP protocol which conforms
 with Python WSGI for python 2 and 3.
 
  * Headers are python native strings (the ``str`` type, therefore strings in

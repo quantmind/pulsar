@@ -509,7 +509,7 @@ class HttpConnectionPool(object):
                                           'connection but there is no async '\
                                           'handler registered')
         else:
-            connection_class = self.Connections.get(self.schema)
+            connection_class = self.Connections.get(self.scheme)
         c = connection_class(self.host, self.port)
         if self.timeout is not None:
             c.timeout = self.timeout

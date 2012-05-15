@@ -14,13 +14,12 @@ class HttpHandler(object):
     def __init__(self, worker, socket):
         self.worker = worker
         self.socket = socket
-        self.iostream = pulsar.IOStream if self.worker.app.cfg.synchronous\
-                         else pulsar.AsyncIOStream
+        self.iostream = pulsar.AsyncIOStream
         
     def __call__(self, fd, events):
         client, addr = self.socket.accept()
         if client:
-            stream = self.iostream(actor = self.worker, socket = client)
+            stream = self.iostream(actor=self.worker, socket=client)
             request = net.HttpRequest(stream, addr,
                                       timeout = self.worker.cfg.keepalive)
             self.handle(request)

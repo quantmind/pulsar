@@ -40,7 +40,7 @@ class LoopGuard(object):
         loop._on_exit.callback(loop)
         
         
-class IOLoop(IObase,Synchronized):
+class IOLoop(IObase, Synchronized):
     """\
 A level-triggered I/O event loop adapted from tornado.
 

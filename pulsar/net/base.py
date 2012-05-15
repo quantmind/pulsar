@@ -14,8 +14,8 @@ def close_socket(sock):
 
 
 class NetStream(object):
-    
-    def __init__(self, stream, timeout = None, **kwargs):
+    '''Wraps an :class:`AsyncIOStream`'''
+    def __init__(self, stream, timeout=None, **kwargs):
         self.stream = stream
         self.timeout = timeout
         self.on_init(kwargs)

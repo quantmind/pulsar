@@ -41,8 +41,8 @@ def flush_socket(sock):
             r = client.recv(1024)
     
 
-def create_socket(address, log = None, backlog = 2048,
-                  bound = False, retry = 5, retry_lag = 2):
+def create_socket(address, log=None, backlog=2048,
+                  bound=False, retry=5, retry_lag=2):
     """Create a new server :class:`Socket` for the given address.
 If the address is a tuple, a TCP socket is created.
 If it is a string, a Unix socket is created.
@@ -62,7 +62,7 @@ Otherwise a TypeError is raised.
     
     for i in range(retry):
         try:
-            return sock_type(address, backlog = backlog, bound = bound)
+            return sock_type(address, backlog=backlog, bound=bound)
         except socket.error as e:
             if e.errno == errno.EADDRINUSE:
                 if log:
@@ -128,7 +128,7 @@ higher level tools for creating and reusing sockets already created.'''
                  is_server = None):
         self.backlog = backlog
         self._is_server = is_server if is_server is not None else not bound
-        self._init(fd,address,bound)
+        self._init(fd, address, bound)
         
     def _init(self, fd, address, bound):
         if fd is None:
