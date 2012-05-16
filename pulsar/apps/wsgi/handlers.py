@@ -9,7 +9,8 @@ __all__ = ['HttpHandler','HttpPoolHandler']
 
 
 class HttpHandler(object):
-    '''Handle HTTP requests and delegate the response to the worker'''
+    '''Handle HTTP events on the listening socket, build
+a :class:`HttpRequest` and delegates the handling to the worker.'''
 
     def __init__(self, worker, socket):
         self.worker = worker
@@ -21,7 +22,7 @@ class HttpHandler(object):
         if client:
             stream = self.iostream(actor=self.worker, socket=client)
             request = net.HttpRequest(stream, addr,
-                                      timeout = self.worker.cfg.keepalive)
+                                      timeout=self.worker.cfg.keepalive)
             self.handle(request)
 
     def handle(self, request):
@@ -40,7 +41,7 @@ def handle_http_error(response, e):
 :parameter e: the exception instance.
 '''
     actor = pulsar.get_actor()
-    code = getattr(e,'status_code',500)
+    code = getattr(e, 'status_code', 500)
     response.content_type = 'text/html'
     if code == 500:
         actor.log.critical('Unhandled exception during WSGI response',

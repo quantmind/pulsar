@@ -1,6 +1,7 @@
 """
-Pulsar is shipped with an HTTP :class:`pulsar.apps.Application` which conforms
-with the python web server gateway interface (WSGI_).
+Pulsar is shipped with an HTTP :class:`pulsar.apps.Application` for
+serving web applications which conforms with the python web server
+gateway interface (WSGI_).
 
 The application can be used in conjunction with several web frameworks
 as well as the :ref:`pulsar RPC middleware <apps-rpc>` and
@@ -21,14 +22,17 @@ with "Hello World!" for every request::
         return [data]
     
     if __name__ == '__main__':
-        wsgi.createServer(callable = hello).start()
+        wsgi.WSGIApplication(callable=hello).start()
 
 
 For more information regarding WSGI check the pep3333_ specification.
 
+This application uses the WSGI primitive in :mod:`pulsar.net`
+
 .. _pep3333: http://www.python.org/dev/peps/pep-3333/
 .. _WSGI: http://www.wsgi.org
 """
+import sys
 from inspect import isclass
 
 import pulsar
@@ -41,8 +45,6 @@ from . import middleware
 
 
 class WSGIApplication(pulsar.Application):
-    '''A WSGI application running on pulsar concurrent framework.
-It can be configured to run as a multiprocess or a multithreaded server.'''
     app = 'wsgi'
     _name = 'wsgi'
     
@@ -53,9 +55,14 @@ It can be configured to run as a multiprocess or a multithreaded server.'''
         return self.wsgi_handler(callable)
     
     def wsgi_handler(self, hnd, resp_middleware = None):
-        '''Build the wsgi handler'''
-        if not isinstance(hnd,WsgiHandler):
-            if not isinstance(hnd,(list,tuple)):
+        '''Build the wsgi handler from *hnd*. This function is called
+at start-up only.
+
+:parameter hnd: This is the WSGI handle which can be A :class:`WsgiHandler`,
+    a WSGI callable or a list WSGI callables.
+:parameter resp_middleware: Optional list of response middleware functions.'''
+        if not isinstance(hnd, WsgiHandler):
+            if not isinstance(hnd, (list,tuple)):
                 hnd = [hnd]
             hnd = WsgiHandler(hnd)
         response_middleware = self.cfg.response_middleware or []
@@ -75,6 +82,7 @@ It can be configured to run as a multiprocess or a multithreaded server.'''
         return hnd
     
     def concurrency(self, cfg):
+        '''The concurrency model.'''
         if not pulsar.platform.multiProcessSocket():
             return 'thread'
         else:
@@ -100,30 +108,41 @@ requests in the threaded workers.'''
                                       worker.ioloop.READ)
         
     def handle_request(self, worker, request):
+        '''handle the *request* by building the WSGI environment '''
         cfg = worker.cfg
         concurrency = self.concurrency(cfg)
         mt = concurrency == 'thread' and cfg.workers > 1
         mp = concurrency == 'process' and cfg.workers > 1
-        environ = request.wsgi_environ(actor = worker,
-                                       multithread = mt,
-                                       multiprocess = mp)
+        environ = request.wsgi_environ(actor=worker,
+                                       multithread=mt,
+                                       multiprocess=mp)
         if not environ:
             yield request.on_body
-            environ = request.wsgi_environ(
-                                       actor = worker,
-                                       multithread = mt,
-                                       multiprocess = mp)
+            environ = request.wsgi_environ(actor=worker,
+                                           multithread=mt,
+                                           multiprocess=mp)
         # Create the response object
         response = HttpResponse(request)
+        start_response = response.start_response
         if environ:
             # Get the data from the WSGI handler
             try:
-                data = worker.app_handler(environ, response.start_response)
+                data = worker.app_handler(environ, start_response)
             except Exception as e:
-                # An exception in the handler
-                data = WsgiResponse(environ=environ)
-                cfg.handle_http_error(data, e)
-                data(environ, response.start_response)
+                # we make sure headers where not sent
+                try:
+                    start_response('500 Internal Server Error', [],
+                                   sys.exc_info())
+                except:
+                    # The headers were sent already
+                    self.log.critical('Headers already sent!',
+                                      exc_info=sys.exc_info())
+                    data = iter([b'Critical Server Error'])
+                else:
+                    # Create the error response
+                    data = WsgiResponse(environ=environ)
+                    cfg.handle_http_error(data, e)
+            # delegate the writing of data to the response instance
             yield response.write(data)
         yield response
     
@@ -165,7 +184,3 @@ directly handled by the workers.'''
             monitor.ioloop.remove_handler(socket)
             socket.close(monitor.log)
 
-
-def createServer(callable = None, **params):
-    return WSGIApplication(callable = callable, **params)
-    

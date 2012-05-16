@@ -68,12 +68,11 @@ Instances are callable using the standard WSGI call::
     DEFAULT_STATUS_CODE = 200
     DEFAULT_CONTENT_TYPE = 'text/plain'
     
-    def __init__(self, status = None, content = None,
-                 response_headers = None, content_type = None,
-                 encoding = None, environ = None):
+    def __init__(self, status=None, content=None, response_headers=None,
+                 content_type=None, encoding=None, environ=None):
         request = None
-        if environ and not isinstance(environ,dict):
-            if hasattr(environ,'environ'):
+        if environ and not isinstance(environ, dict):
+            if hasattr(environ, 'environ'):
                 request = environ
                 environ = request.environ
             else:
@@ -85,12 +84,11 @@ Instances are callable using the standard WSGI call::
         self.content_type = content_type or self.DEFAULT_CONTENT_TYPE
         self.headers = Headers(response_headers)
         self.when_ready = Deferred()
-        
         if content is None:
+            # no content, get the default content
             content = self.default_content()
         elif isinstance(content, bytes):
             content = (content,)
-        
         self._content = None
         self._content_generator = None
         if is_streamed(content):

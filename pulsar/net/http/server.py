@@ -5,13 +5,13 @@ from wsgiref.handlers import format_date_time
 from wsgiref.util import is_hop_by_hop
 
 import pulsar
-from pulsar import lib, Deferred, make_async, NOT_DONE
+from pulsar import lib, Deferred, make_async, start_async, is_async, NOT_DONE
 from pulsar.utils.httpurl import Headers, unquote, to_bytes, is_string,\
                                     to_string, BytesIO
 from pulsar.net import base
 
 
-__all__ = ['HttpRequest','HttpResponse']
+__all__ = ['HttpRequest', 'HttpResponse', 'wsgi_iterator']
 
 
 def on_headers(f):
@@ -37,6 +37,15 @@ def on_body(f):
     _.__doc__ = f.__doc__   # for sphinx
     return _
 
+def wsgi_iterator(result, callback, *args, **kwargs):
+    result = start_async(make_async(result))
+    while is_async(result):
+        # yield empty bytes so that the loop is released
+        yield b''
+        result = start_async(make_async(result))
+    for chunk in callback(result, *args, **kwargs):
+        yield chunk
+            
 
 class HttpRequest(base.NetRequest):
     '''A specialized :class:`TcpRequest` class for the HTTP protocol.'''    
@@ -84,7 +93,10 @@ class HttpRequest(base.NetRequest):
     @on_body
     def wsgi_environ(self, actor = None, **kwargs):
         """return a :ref:`WSGI <apps-wsgi>` compatible environ dictionary
-based on the current request. In addition to all standard WSGI entries it
+based on the current request. If the reqi=uest headers are not ready it returns
+nothing.
+
+In addition to all standard WSGI entries it
 adds the following 2 pulsar information:
 
 * ``pulsar.stream`` the :attr:`stream` attribute.
@@ -352,35 +364,31 @@ for the server as a whole.
         MAX_CHUNK = 65536
         crlf = b'\r\n'
         upgrade = self.__upgrade
-        wb = self._write
-        timeout = self.timeout
-        _write = lambda chunk : make_async(wb(chunk)).start(ioloop,
-                                                     timeout = timeout)
+        _write = self._write
+        # loop over data-iterable
         for b in data:
-            # send headers only if there is data or it is an upgrade
-            if b or upgrade:
-                yield self.send_headers()
-                if b:
-                    if self.is_chunked():
-                        while b:
-                            tosend = b[:MAX_CHUNK]
-                            b = b[MAX_CHUNK:]
-                            head = ("%X" % len(tosend)).encode('utf-8')
-                            chunk = head + crlf + tosend + crlf
-                            n = len(chunk)
-                            yield _write(chunk)
-                        chunk = b'0' + crlf + crlf
-                        yield _write(chunk)
-                    else:
-                        yield _write(b)
+            # send headers only if there is data or it is an upgrade (websocket)
+            yield self.send_headers(force=b)
+            if b:
+                if self.is_chunked():
+                    while b:
+                        tosend = b[:MAX_CHUNK]
+                        b = b[MAX_CHUNK:]
+                        head = ("%X" % len(tosend)).encode('utf-8')
+                        chunk = head + crlf + tosend + crlf
+                        n = len(chunk)
+                        yield write(chunk)
+                    yield _write(b'0' + crlf + crlf)
+                else:
+                    yield _write(b)
             else:
-                # release the loop
+                # No data. Release the loop
                 yield NOT_DONE
         # We make sure we send the headers
         yield self.send_headers()
     
-    def _write(self, data, callback = None):
-        return self.stream.write(data,callback)
+    def _write(self, data, callback=None):
+        return self.stream.write(data, callback)
     
     def process_headers(self, headers):
         for name, value in headers:

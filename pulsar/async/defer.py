@@ -384,7 +384,10 @@ generator.'''
             return self._consume()
         else:
             if result == NOT_DONE:
-                result = Deferred()
+                # The NOT_DONE element indicate that we are waiting for some
+                # data and therefore we release the ioloop to give it time
+                # to obtain data.
+                return self
             else:
                 # Convert to async only if needed
                 result = maybe_async(result)

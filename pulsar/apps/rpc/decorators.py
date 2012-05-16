@@ -69,7 +69,7 @@ For example::
     
     
     
-def FromApi(func, doc = None, format = 'json', request_handler = None):
+def FromApi(func, doc=None, format='json', request_handler=None):
     '''\
 A decorator which exposes a function ``func`` as an rpc function.
 
@@ -83,16 +83,9 @@ A decorator which exposes a function ``func`` as an rpc function.
                  ``func``. It can be used to add additional parameters based
                  on request and format.'''
     def _(self, request, *args, **kwargs):
-        try:
-            if request_handler:
-                kwargs = request_handler(request,format,kwargs)
-            return func(*args,**kwargs)
-        except TypeError:
-            msg = checkarity(func,args,kwargs)
-            if msg:
-                raise InvalidParams(msg)
-            else:
-                raise
+        if request_handler:
+            kwargs = request_handler(request,format,kwargs)
+        return func(*args,**kwargs)
         
     _.__doc__ = doc or func.__doc__
     _.__name__ = func.__name__

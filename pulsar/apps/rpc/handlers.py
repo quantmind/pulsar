@@ -1,8 +1,9 @@
 import sys
 import inspect
 
-from pulsar import make_async, net, NOT_DONE, LogginMixin, to_bytes, Failure
+from pulsar import make_async, LogginMixin, to_bytes, Failure
 from pulsar.utils.tools import checkarity
+from pulsar.net import wsgi_iterator
 from pulsar.apps.wsgi import WsgiResponse
 
 from .exceptions import *
@@ -98,7 +99,7 @@ class RpcRequest(object):
     
 
 class RpcResponse(WsgiResponse):
-        
+    '''A specialised :class:`WsgiResponse` for RPC functions.'''
     def critical(self, request, id, e):
         msg = 'Unhandled server exception %s: %s' % (e.__class__.__name__,e)
         self.handler.log.critical(msg,exc_info=sys.exc_info)
@@ -106,29 +107,23 @@ class RpcResponse(WsgiResponse):
     
     def default_content(self):
         request = self.request
-        handler = request.handler
         status_code = 200
         try:
             result = request.process()
         except Exception as e:
             status_code = 400
             result = e
-            
-        result = make_async(result)
-        while not result.called:
-            yield b''
-        result = result.result
+        return wsgi_iterator(result, callback=self.write_content, status_code)
+    
+    def write_content(self, result, status_code):
+        request = self.request
+        handler = request.handler
         try:
-            if isinstance(result,Failure):
+            if isinstance(result, Failure):
                 result.log()
                 result = handler.dumps(request.id,
                                        request.version,
                                        error=result.trace[1])
-            elif isinstance(result,Exception):
-                handler.log.error(str(result),exc_info=True)
-                result = handler.dumps(request.id,
-                                       request.version,
-                                       error=result)
             else:
                 result = handler.dumps(request.id,
                                        request.version,
@@ -141,10 +136,10 @@ class RpcResponse(WsgiResponse):
             result = handler.dumps(request.id,
                                    request.version,
                                    error=e)
-        
+            
         self.status_code = status_code
         self.content_type = request.content_type
-        yield to_bytes(result)
+        return (to_bytes(result),)
         
 
 class MetaRpcHandler(type):
