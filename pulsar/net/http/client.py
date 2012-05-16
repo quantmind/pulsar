@@ -15,6 +15,7 @@ class HttpClientResponse(base.ClientResponse, httpurl.HTTPResponse):
     def post_process_response(self, client, req):
         call = super(HttpClientResponse, self).post_process_response
         self.add_callback(lambda r: call(client, req))
+        return self
 
     
 class HttpAsyncConnection(base.ClientConnection):
@@ -32,7 +33,7 @@ class HttpAsyncConnection(base.ClientConnection):
     def request(self, method, path, body, headers, first=True):
         if first:
             return self.connect().add_callback(
-                lambda r: self.request(method, path, body, headers, False))
+                lambda r: self.request(method, path, body, headers, r))
     
     def getresponse(self):
         '''This call should be after :meth:`request'''

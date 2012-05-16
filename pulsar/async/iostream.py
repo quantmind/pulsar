@@ -104,11 +104,11 @@ manipulated and adapted to pulsar :ref:`concurrent framework <design>`.
     #######################################################    ACTIONS
     def connect(self, address, callback=None, errback=None):
         """Connects the socket to a remote address without blocking.
-May only be called if the socket passed to the constructor was
-not previously connected.  The address parameter is in the
-same format as for socket.connect, i.e. a (host, port) tuple.
-If callback is specified, it will be called when the
-connection is completed.
+May only be called if the socket passed to the constructor was not available
+or it was not previously connected.  The address parameter is in the
+same format as for socket.connect, i.e. a (host, port) tuple or a string
+for unix sockets.
+If callback is specified, it will be called when the connection is completed.
 Note that it is safe to call IOStream.write while the
 connection is pending, in which case the data will be written
 as soon as the connection is ready.  Calling IOStream read
@@ -119,7 +119,7 @@ but is non-portable."""
                 self.socket = create_client_socket(address)
             #self._state = self.CONNECT
             d = make_callback(callback, errback,
-                      description = '%s Connect callback' % self)
+                      description = '%s connect callback' % self)
             self._connect_callback = d.callback
             try:
                 self._socket.connect(address)
@@ -137,7 +137,7 @@ but is non-portable."""
             else:
                 raise RuntimeError('Cannot connect while connecting.')
         
-    def read(self, callback=None, length=None):
+    def read(self, callback=None, errback=None, length=None):
         """Reads data from the socket.
 The callback will be called with chunks of data as they become available.
 If no callback is provided, the callback of the returned deferred instance
@@ -156,8 +156,8 @@ One common pattern of usage::
     
 """
         assert not self.reading(), "Already reading"
-        d = make_callback(callback,
-                          description = '{0} Read callback'.format(self))
+        d = make_callback(callback, errback,
+                          description='%s read callback' % self)
         if self.closed():
             self._run_callback(d.callback, self._get_buffer())
             return
@@ -166,7 +166,7 @@ One common pattern of usage::
         self._add_io_state(self.ioloop.READ)
         return d
     
-    def write(self, data, callback=None):
+    def write(self, data, callback=None, errback=None):
         """Write the given data to this stream. If callback is given,
 we call it when all of the buffered write data has been successfully
 written to the stream. If there was previously buffered write data and
@@ -176,7 +176,8 @@ this new callback.
 :parameter callback: Optional callback function with arity 0.
 :rtype: a :class:`pulsar.Deferred` instance.
         """
-        d = make_callback(callback)
+        d = make_callback(callback, errback,
+                          description='%s write callback' % self)
         try:
             self._check_closed()
         except:
@@ -261,6 +262,12 @@ On error closes the socket and raises an exception."""
             # can see it and log the error
             raise
     
+    def _handle_connect(self):
+        callback = self._connect_callback
+        self._connect_callback = None
+        self._run_callback(callback)
+        self._connecting = False
+        
     def _handle_read(self):
         try:
             # Read from the socket until we get EWOULDBLOCK or equivalent.
@@ -381,12 +388,6 @@ On error closes the socket and raises an exception."""
         except:
             self.close()
             raise
-
-    def _handle_connect(self):
-        callback = self._connect_callback
-        self._connect_callback = None
-        self._run_callback(callback)
-        self._connecting = False
 
     def _add_io_state(self, state):
         if self.socket is None:

@@ -3,7 +3,7 @@ import logging
 from functools import partial
 
 import pulsar
-from pulsar import make_async, Deferred, raise_failure, NOT_DONE
+from pulsar import make_async, Deferred, is_failure, NOT_DONE
 from pulsar.utils.httpurl import parse_authorization_header, Headers,\
                                     SimpleCookie, set_cookie, responses
 
@@ -243,8 +243,7 @@ class WsgiHandler(pulsar.LogginMixin):
                     process = partial(self.process_response,
                                       environ,
                                       start_response)
-                    response.when_ready.add_callback(process)\
-                                       .add_callback(raise_failure)
+                    response.when_ready.addBoth(process)
                 else:
                     self.process_response(environ, start_response, response)
                 return response
@@ -253,13 +252,13 @@ class WsgiHandler(pulsar.LogginMixin):
         return response
                                     
     def process_response(self, environ, start_response, response):
-        if hasattr(response,'status_code'):
+        if is_failure(response):
+            response.raise_all()
+        elif hasattr(response, 'status_code'):
             for rm in self.response_middleware:
                 rm(environ, start_response, response)
             if hasattr(response,'__call__'):
                 return response(environ, start_response)
-        else:
-            pass
         return response
     
     def get(self, route = '/'):

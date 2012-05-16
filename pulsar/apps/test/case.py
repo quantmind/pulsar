@@ -3,7 +3,7 @@ import io
 import pickle
 from inspect import istraceback, isclass
 
-from pulsar import as_failure, CLEAR_ERRORS, WorkerRequest, make_async, Failure
+from pulsar import is_failure, CLEAR_ERRORS, WorkerRequest, make_async, Failure
 
 
 __all__ = ['TestRequest','run_test_function']
@@ -49,9 +49,9 @@ class CallableTest(object):
     
 
 class AsyncAssert(object):
-    __slots__ = ('test','name')
+    __slots__ = ('test', 'name')
     
-    def __init__(self, test, name = None):
+    def __init__(self, test, name=None):
         self.test = test
         self.name = name
         
@@ -104,7 +104,7 @@ set to ``True``, and if so the test is send to the arbiter. For example::
             c = CallableTest(test, class_method, func.__name__, istest)
             c.prepare()
             result = c.run()
-        return make_async(result)
+        return make_async(result, max_errors=1)
     except Exception as e:
         return make_async(e)
 
@@ -234,8 +234,7 @@ Run a *test* function using the following algorithm
             runner.addSuccess(test)
         
     def add_failure(self, test, runner, failure):
-        failure = as_failure(failure)
-        if failure:
+        if is_failure(failure):
             for trace in failure:
                 e = trace[1]
                 try:

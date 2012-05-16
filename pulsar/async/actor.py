@@ -14,9 +14,9 @@ from pulsar import AlreadyCalledError, AlreadyRegistered,\
 from pulsar.utils.py2py3 import iteritems, itervalues, pickle
 
 
-from .eventloop import IOLoop
+from .eventloop import IOLoop, thread_ioloop
 from .proxy import ActorProxy, ActorMessage, DEFAULT_MESSAGE_CHANNEL
-from .defer import make_async, raise_failure, Failure
+from .defer import make_async, is_failure, Failure
 from .mailbox import IOQueue, mailbox
 
 
@@ -451,7 +451,8 @@ logging is configured, the :attr:`Actor.mailbox` is registered and the
             self.__mailbox = mailbox(self)
             self.__tid = ct.ident
             self.__pid = os.getpid()
-            ct.ioloop = self.ioloop
+            # inject the actor IO loop into the current thread object
+            thread_ioloop(self.ioloop)
             self.on_start()
             self._run()
     
@@ -488,7 +489,8 @@ if *proxy* is not a class:`ActorProxy` instance raise an exception.'''
             #add the ioqueue handler if needed
             if proxy == self.arbiter:
                 self.requestloop.ready = True
-        elif not isinstance(proxy,Failure):
+        elif not isinstance(proxy, Failure):
+            #TODO: better api here. Failure should not be here
             raise ValueError('Received a bad actor proxy. Cannot link.')
         return proxy
         
@@ -540,11 +542,12 @@ properly this actor will go out of scope.'''
                 self.log.debug("Stopping request event loop")
                 stp = make_async(self.requestloop.stop()).add_callback(
                                 lambda r : self.mailbox.close())
-            return make_async(stp).add_callback(lambda r : self.close())\
-                                  .add_callback(raise_failure)
+            return make_async(stp).addBoth(self.close)
         
-    def close(self):
-        if self.stopping():
+    def close(self, result=None):
+        if is_failure(result):
+            result.raise_all()
+        elif self.stopping():
             self._state = self.CLOSE
             self.on_exit()
             self.log.info('exited')
@@ -597,13 +600,6 @@ actions:
                 self.arbiter.send(self,'notify',info)
 
         self.on_task()
-    
-    #def current_thread(self):
-    #    '''Return the current thread'''
-    #    return current_thread()
-    #
-    #def current_process(self):
-    #    return current_process()
     
     def isprocess(self):
         '''boolean indicating if this is an actor on a child process.'''

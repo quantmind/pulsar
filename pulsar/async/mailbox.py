@@ -10,11 +10,11 @@ from pulsar import create_connection, MailboxError, socket_pair, wrap_socket
 from pulsar.utils.tools import gen_unique_id
 from pulsar.utils.py2py3 import pickle
 
-from .eventloop import IOLoop, start_deferred
-from .defer import make_async, raise_failure, Failure
+from .eventloop import IOLoop, start_async
+from .defer import make_async
 
 
-__all__ = ['mailbox','Mailbox','IOQueue','Empty','Queue']
+__all__ = ['mailbox', 'Mailbox', 'IOQueue', 'Empty', 'Queue']
 
 crlf = b'\r\n'
 msg_separator = 3*crlf
@@ -288,7 +288,7 @@ If the message needs acknowledgment, send the result back.'''
             else:
                 result = receiver.handle_message(sender, message)
         except Exception as e:
-            result = Failure(sys.exc_info())
+            result = e
             if receiver.log:
                 receiver.log.critical('Unhandled error while processing\
  message: {0}.'.format(e), exc_info=True)
@@ -299,7 +299,7 @@ If the message needs acknowledgment, send the result back.'''
                     callback = lambda res: self._send_callback(
                                                 sender, receiver, message, res)
                     d = make_async(result).add_callback(callback,callback)
-                    start_deferred(receiver.ioloop, d)
+                    start_async(d, receiver.ioloop)
                 else:
                     receiver.log.error('message "{0}" from an unknown actor\
  "{1}". Cannot acknowledge message.'.format(message,message.sender))

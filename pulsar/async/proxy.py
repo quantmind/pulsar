@@ -6,7 +6,7 @@ from pulsar.utils.py2py3 import iteritems
 from pulsar.utils.log import LocalMixin
 from pulsar.utils.tools import gen_unique_id
 
-from .defer import Deferred, is_async, make_async, raise_failure, Failure
+from .defer import Deferred, is_async, make_async
 from .mailbox import mailbox
 
 __all__ = ['ActorMessage',

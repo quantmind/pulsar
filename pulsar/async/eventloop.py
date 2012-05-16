@@ -5,6 +5,7 @@ import signal
 import errno
 import bisect
 import socket
+from threading import current_thread
 
 from pulsar import HaltServer, Timeout
 from pulsar.utils.system import IObase, IOpoll, close_on_exec, platform, Waker
@@ -12,10 +13,10 @@ from pulsar.utils.tools import gen_unique_id
 from pulsar.utils.log import Synchronized
 from pulsar.utils.structures import WeakList
 
-from .defer import Deferred, is_async
+from .defer import Deferred, is_async, maybe_async
 
 
-__all__ = ['IOLoop', 'start_deferred']
+__all__ = ['IOLoop', 'thread_ioloop', 'start_async']
 
 def file_descriptor(fd):
     if hasattr(fd,'fileno'):
@@ -23,6 +24,13 @@ def file_descriptor(fd):
     else:
         return fd
         
+def thread_ioloop(ioloop=None):
+    '''Returns the :class:`IOLoop` of the current thread if available.'''
+    ct = current_thread()
+    if ioloop is not None:
+        ct.ioloop = ioloop
+    return getattr(ct, 'ioloop', None)
+    
         
 class LoopGuard(object):
     
@@ -435,11 +443,11 @@ class PeriodicCallback(object):
             self.start()
 
 
-class start_deferred(object):
+class start_async(object):
     
-    def __init__(self, ioloop, deferred, timeout=5):
-        '''Start running the *deferred* into an Event loop.
-If the deferred was already started do nothing.
+    def __init__(self, value, ioloop=None, timeout=5):
+        '''Start running the *value* into an Event loop.
+If the value was already started do nothing.
 
 :parameter ioloop: :class:`IOLoop` instance where to run the deferred.
 :parameter timeout: Optional timeout in seconds. If the deferred has not
@@ -460,22 +468,34 @@ A common usage pattern::
         
     make_async(blocking_function).start(ioloop).add_callback(callback)
 '''
-        self._deferred = deferred
-        self._ioloop = ioloop
+        self._value = maybe_async(value)
+        self._value = value
+        self._ioloop = ioloop or thread_ioloop()
         self._timeout = timeout
-        self._started = time.time()
-        self.__call__(False)
+        self._async = None
+        self.__call__(False,False)
     
-    def __call__(self, check_timeout=True):
-        if self._deferred.called:
-            self._deferred = self._deferred.result
-        if is_async(self._deferred):
+    def is_async(self):
+        return is_async(self._value)
+    
+    def __call__(self, check_timeout=True, started=True):
+        async = self.is_async()
+        if not async:
+            return
+        new_value = self._value.start() 
+        if new_value is not self._value:
+            self._value = new_value
+            async = start_async(new_value, self._ioloop).is_async()
+        if async:
             try:
-                if check_timeout and self._timeout and\
-                        time.time() - self._started > self._timeout:
-                    raise Timeout('Deferred "%s" not called.'\
-                                  .format(self.deferred), self._timeout)
+                if check_timeout:
+                    dt = time.time() - self._started
+                    if self._timeout and dt > self._timeout:
+                        raise Timeout('Deferred "%s" not called.' % value,\
+                                          self._timeout)
+                else:
+                    self._started = time.time()
                 self._ioloop.add_callback(self)
             except Exception as e:
-                self._deferred.callback(e)
+                self._value.callback(e)
     

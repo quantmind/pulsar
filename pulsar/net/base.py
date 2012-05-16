@@ -73,8 +73,9 @@ class ClientConnection(NetStream):
 
 class ClientResponse(NetStream, Deferred):
     
-    def __init__(self, *args, **kwargs):
-        super(NetStream, self).__init__(*args, **kwargs)
+    def __init__(self, request, *args, **kwargs):
+        self.request = request
+        super(ClientResponse, self).__init__(*args, **kwargs)
         Deferred.__init__(self)
         
     

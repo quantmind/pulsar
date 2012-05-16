@@ -7,7 +7,7 @@ from inspect import isgenerator, isfunction
 
 import pulsar
 from pulsar import Empty, make_async, is_failure, Failure, HaltServer,\
-                     start_deferred
+                     start_async
 from pulsar.utils.py2py3 import execfile, pickle
 from pulsar.utils.importer import import_module
 from pulsar.utils.log import LogInformation
@@ -147,11 +147,12 @@ After obtaining the result from the
 :meth:`Worker.end_task` method to close the request.'''
         self.nr += 1
         request = self.app.request_instance(request)
-        timeout = getattr(request,'timeout',None)
+        timeout = getattr(request, 'timeout', None)
         should_stop = self.max_requests and self.nr >= self.max_requests
         d = make_async(self._response_generator(request)).addBoth(
                lambda res : self.close_response(request, res, should_stop))
-        start_deferred(self.ioloop, d, timeout=timeout)
+        # start the deferred in the actor loop
+        start_async(d, self.ioloop, timeout=timeout)
         
     def close_response(self, request, response, should_stop):
         '''Close the response. This method should be called by the
