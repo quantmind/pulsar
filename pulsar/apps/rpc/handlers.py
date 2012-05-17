@@ -113,7 +113,7 @@ class RpcResponse(WsgiResponse):
         except Exception as e:
             status_code = 400
             result = e
-        return wsgi_iterator(result, callback=self.write_content, status_code)
+        return wsgi_iterator(result, self.write_content, status_code)
     
     def write_content(self, result, status_code):
         request = self.request

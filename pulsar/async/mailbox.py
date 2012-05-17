@@ -298,7 +298,7 @@ If the message needs acknowledgment, send the result back.'''
                     # Acknowledge the sender with the result.
                     callback = lambda res: self._send_callback(
                                                 sender, receiver, message, res)
-                    d = make_async(result).add_callback(callback,callback)
+                    d = make_async(result).addBoth(callback)
                     start_async(d, receiver.ioloop)
                 else:
                     receiver.log.error('message "{0}" from an unknown actor\

@@ -69,9 +69,9 @@ class AsyncAssert(object):
     
 def run_test_function(test, func, istest=False):
     '''This internal function is used by the test runner for running a *test*
-on the :class:`pulsar.Arbiter` process domain.
-It check if the test function *f* has the attribute *run_on_arbiter*
-set to ``True``, and if so the test is send to the arbiter. For example::
+in an asynchronous way. It check if the test function *func* has the attribute
+*run_on_arbiter* set to ``True``, and if so the test is send to the arbiter.
+For example::
 
     class mystest(unittest.TestCase):
         
@@ -80,8 +80,9 @@ set to ``True``, and if so the test is send to the arbiter. For example::
         testBla.run_on_arbiter = True
 
 :parameter test: Instance of a testcase
-:parameter f: function to test
-:parameter max_errors: number of allowed errors in generators.
+:parameter func: function to test
+:parameter istest: boolean indicating if the function *func* is a test
+    case method.
 :rtype: a :class:`Deferred`
 '''
     try:
@@ -104,7 +105,9 @@ set to ``True``, and if so the test is send to the arbiter. For example::
             c = CallableTest(test, class_method, func.__name__, istest)
             c.prepare()
             result = c.run()
-        return make_async(result, max_errors=1)
+        name = test.__name__ if class_method else test.__class__.__name__
+        return make_async(result, max_errors=1, description='Test %s.%s' %\
+                           (name, func.__name__))
     except Exception as e:
         return make_async(e)
 

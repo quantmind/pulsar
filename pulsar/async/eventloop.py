@@ -470,32 +470,34 @@ A common usage pattern::
 '''
         self._value = maybe_async(value)
         self._value = value
+        self._last_value = value
         self._ioloop = ioloop or thread_ioloop()
         self._timeout = timeout
         self._async = None
-        self.__call__(False,False)
+        self.__call__(False)
     
-    def is_async(self):
-        return is_async(self._value)
+    def __repr__(self):
+        return self._value.__repr__()
     
-    def __call__(self, check_timeout=True, started=True):
-        async = self.is_async()
-        if not async:
+    def __call__(self, check_timeout=True):
+        if not is_async(self._value):
             return
-        new_value = self._value.start() 
-        if new_value is not self._value:
-            self._value = new_value
-            async = start_async(new_value, self._ioloop).is_async()
-        if async:
+        now = time.time()
+        if not check_timeout:
+            self._started = now
+        start_time = self._started
+        value = self._value.start()
+        if value is not self._last_value:
+            self._last_started = now
+            start_time = now
+        # This is the first call
+        if is_async(value):
             try:
                 if check_timeout:
-                    dt = time.time() - self._started
-                    if self._timeout and dt > self._timeout:
-                        raise Timeout('Deferred "%s" not called.' % value,\
-                                          self._timeout)
-                else:
-                    self._started = time.time()
+                    if self._timeout and now - start_time > self._timeout:
+                        raise Timeout('"%s" not called.' % value,\
+                                      self._timeout)
                 self._ioloop.add_callback(self)
             except Exception as e:
-                self._value.callback(e)
+                value.callback(e)
     

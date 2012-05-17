@@ -117,6 +117,8 @@ This function is useful when someone whants to treat a value as a deferred::
             d.callback(val)
             return d
     else:
+        if description:
+            val._description = description
         return val
 
 
@@ -392,7 +394,7 @@ generator.'''
                 # Convert to async only if needed
                 result = maybe_async(result)
             if is_async(result):
-                return result.addBoth(self._consume)
+                return result.addBoth(self._consume).start()
             else:
                 return self._consume(result)
     
