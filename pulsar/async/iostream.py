@@ -10,6 +10,7 @@ from pulsar.utils.system import IObase
 from pulsar import create_client_socket
 
 from .defer import Deferred, is_async
+from .eventloop import thread_ioloop, deferred_timeout
 
 iologger = logging.getLogger('pulsar.iostream')
 
@@ -18,6 +19,8 @@ __all__ = ['AsyncIOStream']
 
 
 def make_callback(callback, errback, description=None):
+    '''Create a :class:`Deferred` which will be called upon completion
+of an IO operation.'''
     d = Deferred(description=description)
     if callback:
         return d.add_callback(callback, errback)
@@ -48,7 +51,7 @@ manipulated and adapted to pulsar :ref:`concurrent framework <design>`.
     _connecting = False
     MAX_BODY = 1024 * 128
     def __init__(self, socket=None, max_buffer_size=None,
-                 read_chunk_size=None, actor=None, **kwargs):
+                 read_chunk_size=None, **kwargs):
         self.socket = socket
         self.max_buffer_size = max_buffer_size or 104857600
         self.read_chunk_size = read_chunk_size or io.DEFAULT_BUFFER_SIZE
@@ -61,7 +64,7 @@ manipulated and adapted to pulsar :ref:`concurrent framework <design>`.
         self._close_callback = None
         self._connect_callback = None
         self.log = iologger
-        self.ioloop = getattr(current_thread(),'ioloop',None)
+        self.ioloop = thread_ioloop()
     
     def __repr__(self):
         if self._socket:
@@ -92,11 +95,13 @@ manipulated and adapted to pulsar :ref:`concurrent framework <design>`.
         return self.socket.getsockname()
     
     def _set_socket(self, sock):
-        self.close()
-        self._socket = sock
-        self._state = None
-        if self._socket is not None:
-            self._socket.setblocking(0)
+        if self._socket is None:
+            self._socket = sock
+            self._state = None
+            if self._socket is not None:
+                self._socket.setblocking(0)
+        else:
+            raise RuntimeError('Cannot set socket. Close the existing one.')
     def _get_socket(self):
         return self._socket
     socket = property(_get_socket, _set_socket)
@@ -117,10 +122,6 @@ but is non-portable."""
         if self._state is None and not self._connecting:
             if self.socket is None:
                 self.socket = create_client_socket(address)
-            #self._state = self.CONNECT
-            d = make_callback(callback, errback,
-                      description = '%s connect callback' % self)
-            self._connect_callback = d.callback
             try:
                 self._socket.connect(address)
             except socket.error as e:
@@ -128,8 +129,10 @@ but is non-portable."""
                 if e.args[0] not in (errno.EINPROGRESS, errno.EWOULDBLOCK):
                     raise
             self._connecting = True
-            self._add_io_state(self.WRITE)
-            return d
+            d = make_callback(callback, errback,
+                      description = '%s connect callback' % self)
+            self._connect_callback = d.callback
+            return self._add_io_state(self.WRITE, d)
         else:
             if self._state is not None:
                 raise RuntimeError('Cannot connect. State is %s.'\
@@ -163,8 +166,7 @@ One common pattern of usage::
             return
         self._read_callback = d.callback
         self._read_length = length
-        self._add_io_state(self.ioloop.READ)
-        return d
+        return self._add_io_state(self.ioloop.READ, d)
     
     def write(self, data, callback=None, errback=None):
         """Write the given data to this stream. If callback is given,
@@ -185,8 +187,7 @@ this new callback.
             return d
         self._write_callback = d.callback
         self._write_buffer.append(data)
-        self._add_io_state(self.ioloop.WRITE)
-        return d
+        return self._add_io_state(self.ioloop.WRITE, d)
     
     def close(self):
         """Close this stream."""
@@ -389,7 +390,7 @@ On error closes the socket and raises an exception."""
             self.close()
             raise
 
-    def _add_io_state(self, state):
+    def _add_io_state(self, state, deferred):
         if self.socket is None:
             # connection has been closed, so there can be no future events
             return
@@ -401,4 +402,5 @@ On error closes the socket and raises an exception."""
             self._state = self._state | state
             self.ioloop.update_handler(
                 self.fileno(), self._state)
+        return deferred_timeout(deferred, self.ioloop).value
 

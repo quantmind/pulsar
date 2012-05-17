@@ -7,7 +7,7 @@ from inspect import isgenerator, isfunction
 
 import pulsar
 from pulsar import Empty, make_async, is_failure, Failure, HaltServer,\
-                     start_async
+                     deferred_timeout
 from pulsar.utils.py2py3 import execfile, pickle
 from pulsar.utils.importer import import_module
 from pulsar.utils.log import LogInformation
@@ -152,7 +152,8 @@ After obtaining the result from the
         d = make_async(self._response_generator(request)).addBoth(
                lambda res : self.close_response(request, res, should_stop))
         # start the deferred in the actor loop
-        start_async(d, self.ioloop, timeout=timeout)
+        if timeout:
+            deferred_timeout(d, self.ioloop, timeout)
         
     def close_response(self, request, response, should_stop):
         '''Close the response. This method should be called by the

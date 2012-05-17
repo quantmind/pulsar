@@ -327,6 +327,13 @@ their ids.'''
         return self._monitors
     
     @property
+    def cpubound(self):
+        if self.impl != 'monitor':
+            return self.mailbox.cpubound
+        else:
+            return False
+    
+    @property
     def pool_timeout(self):
         '''Timeout in seconds for waiting for events in the eventloop.
  A small number is suitable for :class:`Actor` performing CPU-bound
@@ -434,7 +441,7 @@ mean it is running.'''
         raise NotImplementedError
             
     def start(self):
-        '''Called after forking to start the life of the actor. This is where
+        '''Called after forking to start the actor's life. This is where
 logging is configured, the :attr:`Actor.mailbox` is registered and the
 :attr:`Actor.ioloop` is initialised and started.'''
         if self._state == self.INITIAL:
@@ -452,7 +459,8 @@ logging is configured, the :attr:`Actor.mailbox` is registered and the
             self.__tid = ct.ident
             self.__pid = os.getpid()
             # inject the actor IO loop into the current thread object
-            thread_ioloop(self.ioloop)
+            if self.cpubound:
+                thread_ioloop(self.ioloop)
             self.on_start()
             self._run()
     

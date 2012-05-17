@@ -100,9 +100,11 @@ so that callbacks can be attached to it.
 
 :parameter val: can be a generator or any other value. If a generator, a
     :class:`DeferredGenerator` instance will be returned.
+:parameter max_errors: the maximum number of errors tolerated if *val* is
+    a generator. Default `None`.
 :rtype: a :class:`Deferred` instance.
 
-This function is useful when someone whants to treat a value as a deferred::
+This function is useful when someone needs to treat a value as a deferred::
 
     v = ...
     make_async(v).add_callback(...)
@@ -284,9 +286,8 @@ this point, :meth:`add_callback` will run the *callbacks* immediately.
         self._run_callbacks()
         return self.result
         
-    def start(self):
-        '''This function should be called by the event loop to kick start
-the deferred evaluation.'''
+    def result_or_self(self):
+        '''Obtain the result if available, otherwise it returns self.'''
         return self if not self.called else self.result
         
     def wait(self, timeout = 1):
@@ -357,15 +358,14 @@ The callback will occur once the generator has stopped
         self._consumed = 0
         self.errors = Failure()
         self.deferred = Deferred()
-        self._started = False
         super(DeferredGenerator,self).__init__(description=description)
+        self._genvalue = self._consume()
     
-    def start(self):
-        if not self._started:
-            self._started = True
-            return self._consume()
+    def result_or_self(self):
+        if self.called:
+            return self.result
         else:
-            return super(DeferredGenerator, self).start()
+            return self._genvalue
         
     def _consume(self, last_result=None):
         '''override the deferred consume private method for handling the
@@ -388,14 +388,15 @@ generator.'''
             if result == NOT_DONE:
                 # The NOT_DONE element indicate that we are waiting for some
                 # data and therefore we release the ioloop to give it time
-                # to obtain data.
+                # to obtain data. We release the loop by returning self
                 return self
             else:
                 # Convert to async only if needed
                 result = maybe_async(result)
             if is_async(result):
-                return result.addBoth(self._consume).start()
+                return result.addBoth(self._consume).result_or_self()
             else:
+                # continue with the loop
                 return self._consume(result)
     
     def should_stop(self, failure):

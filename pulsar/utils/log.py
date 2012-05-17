@@ -163,7 +163,7 @@ string representation of an instance.
         return self.logger.name
     
     def _msg(self, msg):
-        return '{0} - {1}'.format(self.instance,msg)
+        return '%s - %s' % (self.instance, msg)
     
     def _handle(self, name):
         func = getattr(self.logger,name)

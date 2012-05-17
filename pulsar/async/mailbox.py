@@ -10,7 +10,7 @@ from pulsar import create_connection, MailboxError, socket_pair, wrap_socket
 from pulsar.utils.tools import gen_unique_id
 from pulsar.utils.py2py3 import pickle
 
-from .eventloop import IOLoop, start_async
+from .eventloop import IOLoop, deferred_timeout
 from .defer import make_async
 
 
@@ -174,13 +174,13 @@ actor process domain.
         # If the actor has a ioqueue (CPU bound actor) we create a new ioloop
         if actor.ioqueue is not None and not actor.is_monitor():
             self.__hasloop = True
-            self.__ioloop = IOLoop(pool_timeout = actor._pool_timeout,
-                                   logger = actor.log,
-                                   name = name)
+            self.__ioloop = IOLoop(pool_timeout=actor._pool_timeout,
+                                   logger=actor.log,
+                                   name=name)
         else:
             self.__hasloop = False
             self.__ioloop = actor.requestloop
-        
+        # add the on message handler for reading messages
         self.ioloop.add_handler(self,
                                 self.on_message,
                                 self.ioloop.READ)
@@ -188,6 +188,10 @@ actor process domain.
             self.register(actor.arbiter)
         # add start to the actor
         actor.requestloop.add_callback(self.start)
+    
+    @property
+    def cpubound(self):
+        return self.__hasloop
     
     @property
     def ioloop(self):
@@ -257,6 +261,8 @@ actor process domain.
             self.sock.close()
 
     def run(self):
+        '''Start the thread only if the mailbox has its own event loop. This
+is the case when the actor is a CPU bound worker.'''
         if self.__hasloop:
             self.ioloop.start()
             
@@ -299,7 +305,7 @@ If the message needs acknowledgment, send the result back.'''
                     callback = lambda res: self._send_callback(
                                                 sender, receiver, message, res)
                     d = make_async(result).addBoth(callback)
-                    start_async(d, receiver.ioloop)
+                    deferred_timeout(d, receiver.ioloop)
                 else:
                     receiver.log.error('message "{0}" from an unknown actor\
  "{1}". Cannot acknowledge message.'.format(message,message.sender))
@@ -361,6 +367,7 @@ class IOQueue(object):
 The interface is the same as the python epoll_ implementation.
 
 .. _epoll: http://docs.python.org/library/select.html#epoll-objects'''
+    cpubound = True
     def __init__(self, queue):
         self._queue = queue
         self._fds = set()

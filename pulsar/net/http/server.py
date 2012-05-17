@@ -5,7 +5,7 @@ from wsgiref.handlers import format_date_time
 from wsgiref.util import is_hop_by_hop
 
 import pulsar
-from pulsar import lib, Deferred, make_async, start_async, is_async, NOT_DONE
+from pulsar import lib, Deferred, make_async, is_async, NOT_DONE
 from pulsar.utils.httpurl import Headers, unquote, to_bytes, is_string,\
                                     to_string, BytesIO
 from pulsar.net import base
@@ -38,11 +38,11 @@ def on_body(f):
     return _
 
 def wsgi_iterator(result, callback, *args, **kwargs):
-    result = start_async(make_async(result))
+    result = make_async(result).get_result_or_self()
     while is_async(result):
         # yield empty bytes so that the loop is released
         yield b''
-        result = start_async(make_async(result))
+        result = result.get_result_or_self()
     for chunk in callback(result, *args, **kwargs):
         yield chunk
             

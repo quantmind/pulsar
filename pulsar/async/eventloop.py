@@ -16,7 +16,7 @@ from pulsar.utils.structures import WeakList
 from .defer import Deferred, is_async, maybe_async
 
 
-__all__ = ['IOLoop', 'thread_ioloop', 'start_async']
+__all__ = ['IOLoop', 'thread_ioloop', 'deferred_timeout']
 
 def file_descriptor(fd):
     if hasattr(fd,'fileno'):
@@ -28,6 +28,8 @@ def thread_ioloop(ioloop=None):
     '''Returns the :class:`IOLoop` of the current thread if available.'''
     ct = current_thread()
     if ioloop is not None:
+        if hasattr(ct,'ioloop'):
+            raise RuntimeError('A ioloop is already available on this thread')
         ct.ioloop = ioloop
     return getattr(ct, 'ioloop', None)
     
@@ -143,6 +145,10 @@ It should be instantiated after forking.
     def name(self):
         return self._name
 
+    @property
+    def cpubound(self):
+        return getattr(self._impl, 'cpubound', False)
+        
     def get_waker(self):
         return getattr(self._impl,'waker',Waker)()
         
@@ -232,6 +238,9 @@ so that it can perform its tasks at each event loop. Check the
             self.log.debug("Starting event loop")
             self._started = time.time()
             self._on_exit = Deferred()
+            # set self as the thread ioloop
+            if not self.cpubound:
+                thread_ioloop(self)
             
             while self._running:
                 poll_timeout = self.POLL_TIMEOUT
@@ -443,61 +452,30 @@ class PeriodicCallback(object):
             self.start()
 
 
-class start_async(object):
+class deferred_timeout(object):
     
     def __init__(self, value, ioloop=None, timeout=5):
-        '''Start running the *value* into an Event loop.
-If the value was already started do nothing.
-
-:parameter ioloop: :class:`IOLoop` instance where to run the deferred.
-:parameter timeout: Optional timeout in seconds. If the deferred has not
-    been called within this time period it will raise a :class:`Timeout`
-    exception and it won't add itself to the callbacks.
-    
-    Default: 5
-    
-:rtype: ``self``.
-
-A common usage pattern::
-
-    def blocking_function():
-        ...
-        
-    def callback(result):
-        ...
-        
-    make_async(blocking_function).start(ioloop).add_callback(callback)
-'''
         self._value = maybe_async(value)
-        self._value = value
-        self._last_value = value
         self._ioloop = ioloop or thread_ioloop()
         self._timeout = timeout
-        self._async = None
+        self._start = None
         self.__call__(False)
     
-    def __repr__(self):
-        return self._value.__repr__()
+    @property
+    def value(self):
+        return self._value
     
     def __call__(self, check_timeout=True):
-        if not is_async(self._value):
+        if self._value.called:
             return
-        now = time.time()
-        if not check_timeout:
-            self._started = now
-        start_time = self._started
-        value = self._value.start()
-        if value is not self._last_value:
-            self._last_started = now
-            start_time = now
-        # This is the first call
-        if is_async(value):
+        if check_timeout:
             try:
-                if check_timeout:
-                    if self._timeout and now - start_time > self._timeout:
-                        raise Timeout('"%s" not called.' % value,\
-                                      self._timeout)
-                self._ioloop.add_callback(self)
+                if time.time() - self._start > self._timeout:
+                    raise Timeout('"%s" not called.' % self._value,\
+                                  self._timeout)
             except Exception as e:
-                value.callback(e)
-    
+                self._value.callback(e)
+        else:
+            self._start = time.time()
+        self._ioloop.add_callback(self)
+        
