@@ -23,7 +23,7 @@ import re
 import sys
 import types
 
-from pulsar.utils.py2py3 import is_string
+from pulsar.utils.httpurl import is_string
 
 IDENTIFIER = re.compile('^[a-z_][a-z0-9_]*$', re.I)
 

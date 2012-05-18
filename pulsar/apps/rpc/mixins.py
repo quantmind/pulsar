@@ -1,5 +1,3 @@
-from pulsar.utils.py2py3 import iteritems
-
 from .jsonrpc import JSONRPC
 
 

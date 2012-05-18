@@ -4,7 +4,7 @@ import os
 import struct
 
 import pulsar
-from pulsar.utils.py2py3 import ispy3k, range, BytesIO, i2b
+from pulsar.utils.httpurl import ispy3k, range, BytesIO
 
 
 __all__ = ['WebSocketError',
@@ -13,6 +13,10 @@ __all__ = ['WebSocketError',
            'frame',
            'frame_close']
 
+if ispy3k:
+    i2b = lambda n : bytes((n,))
+else: # pragma : nocover
+    i2b = lambda n : chr(n)
 
 class WebSocketError(pulsar.BadHttpRequest):
     pass

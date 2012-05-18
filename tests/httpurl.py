@@ -76,7 +76,7 @@ class TestHttpClient(test.TestCase):
         self.assertEqual(r.status_code, 400)
         self.assertEqual(r.response, 'Bad Request')
         self.assertEqual(r.content,b'')
-        self.assertRaises(r.HTTPError, r.raise_for_status)
+        self.assertRaises(httpurl.HTTPError, r.raise_for_status)
         
     def test_http_404_get(self):
         '''Not Found 404'''
@@ -84,7 +84,7 @@ class TestHttpClient(test.TestCase):
         self.assertEqual(r.status_code, 404)
         self.assertEqual(r.response, 'Not Found')
         self.assertEqual(r.content,b'')
-        self.assertRaises(r.HTTPError, r.raise_for_status)
+        self.assertRaises(httpurl.HTTPError, r.raise_for_status)
         
     def test_http_post(self):
         data = {'bla': 'foo', 'unz': 'whatz', 'numero': '1'}

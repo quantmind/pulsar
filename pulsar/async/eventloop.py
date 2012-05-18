@@ -35,17 +35,27 @@ def thread_ioloop(ioloop=None):
     
         
 class LoopGuard(object):
-    
+    '''Context manager for the eventloop'''
     def __init__(self, loop):
         self.loop = loop
         
     def __enter__(self):
-        self.loop._running = True
+        loop = self.loop
+        loop.log.debug("Starting event loop")
+        loop._running = True
+        loop._tid = current_thread().ident
+        loop._started = time.time()
+        loop._on_exit = Deferred()
+        loop.num_loops = 0
+        # set self as the thread ioloop
+        if not loop.cpubound:
+            thread_ioloop(loop)
         return self
         
     def __exit__(self, type, value, traceback):
         loop = self.loop
         loop._running = False
+        loop._tid = None
         loop._stopped = True
         loop._on_exit.callback(loop)
         
@@ -101,7 +111,11 @@ It should be instantiated after forking.
     The timeout in seconds when polling with epol or select.
     
     Default: `0.5`
-    """
+    
+.. attribute:: tid
+
+    The thread id where the eventloop is running
+"""
     # Never use an infinite timeout here - it can stall epoll
     POLL_TIMEOUT = 0.5
     
@@ -120,9 +134,11 @@ It should be instantiated after forking.
         self._callbacks = []
         self._timeouts = []
         self._loop_tasks = WeakList()
+        self._starter = None
         self._started = None
         self._running = False
         self._stopped = False
+        self._tid = None
         self.num_loops = 0
         self._blocking_signal_threshold = None
         self._waker = self.get_waker()
@@ -148,9 +164,13 @@ It should be instantiated after forking.
     @property
     def cpubound(self):
         return getattr(self._impl, 'cpubound', False)
+    
+    @property
+    def tid(self):
+        return self._tid
         
     def get_waker(self):
-        return getattr(self._impl,'waker',Waker)()
+        return getattr(self._impl, 'waker', Waker)()
         
     def add_loop_task(self, task):
         '''Add a callable object to the list of tasks which are
@@ -199,14 +219,89 @@ file descriptor *fd*.
         except (OSError, IOError):
             self.log.error("Error deleting {0} from IOLoop"\
                            .format(fd), exc_info=True)
-
-    @Synchronized.make
-    def _startup(self):
-        if self._stopped:
-            self._stopped = False
+    
+    def start(self, starter=None):
+        if not self._startup(starter):
             return False
+        if starter: # just start
+            self._start()
+        elif self._starter:
+            self._starter.start()
+        else:
+            self._start()
+
+    def stop(self):
+        '''Stop the loop after the current event loop iteration is complete.
+If the event loop is not currently running, the next call to :meth:`start`
+will return immediately.
+
+To use asynchronous methods from otherwise-synchronous code (such as
+unit tests), you can start and stop the event loop like this::
+
+    ioloop = IOLoop()
+    async_method(ioloop=ioloop, callback=ioloop.stop)
+    ioloop.start()
+  
+:meth:`start` will return after async_method has run its callback,
+whether that callback was invoked before or after ioloop.start.'''
+        if self.running():
+            self._running = False
+            self.wake()
+        return self._on_exit
+
+    def running(self):
+        """Returns true if this IOLoop is currently running."""
+        return self._running
+    
+    def stopped(self):
+        '''Return ``True`` if the loop have been stopped.'''
+        return self._stopped
+
+    def add_timeout(self, deadline, callback):
+        """Calls the given callback at the time deadline from the I/O loop.
+
+        Returns a handle that may be passed to remove_timeout to cancel.
+        """
+        timeout = _Timeout(deadline, callback)
+        bisect.insort(self._timeouts, timeout)
+        return timeout
+
+    def remove_timeout(self, timeout):
+        """Cancels a pending timeout.
+
+        The argument is a handle as returned by add_timeout.
+        """
+        self._timeouts.remove(timeout)
+
+    def add_callback(self, callback, wake=True):
+        """Calls the given callback on the next I/O loop iteration.
+
+        It is safe to call this method from any thread at any time.
+        Note that this is the *only* method in IOLoop that makes this
+        guarantee; all other interaction with the IOLoop must be done
+        from that IOLoop's thread.  add_callback() may be used to transfer
+        control from other threads to the IOLoop's thread.
+        """
+        self._callbacks.append(callback)
+        if wake:
+            self.wake()
+
+    def wake(self):
+        '''Wake up the eventloop.'''
+        if not self.stopped():
+            self._waker.wake()
+            
+    ############################################################ INTERNALS
+    @Synchronized.make
+    def _startup(self, starter):
         if self._running:
             return False
+        if starter:
+            if self._starter and starter is not self._starter:
+                raise RuntimeError('Cannot start. It needs to be started '\
+                                   'by %s' % self._starter)
+            self._starter = starter
+        self._stopped = False
         return True
     
     def do_loop_tasks(self):
@@ -225,23 +320,14 @@ so that it can perform its tasks at each event loop. Check the
             except:
                 self.log.critical('Unhandled exception in loop task',
                                   exc_info = True)
-        
-    def start(self):
+                
+    def _start(self):
         """Starts the I/O loop.
 
         The loop will run until one of the I/O handlers calls stop(), which
         will make the loop stop after the current event iteration completes.
         """
-        if not self._startup():
-            return False
         with LoopGuard(self) as guard:
-            self.log.debug("Starting event loop")
-            self._started = time.time()
-            self._on_exit = Deferred()
-            # set self as the thread ioloop
-            if not self.cpubound:
-                thread_ioloop(self)
-            
             while self._running:
                 poll_timeout = self.POLL_TIMEOUT
                 self.num_loops += 1
@@ -324,67 +410,6 @@ so that it can perform its tasks at each event loop. Check the
                         except:
                             self.log.error("Exception in I/O handler for fd %d",
                                           fd, exc_info=True)
-
-    def stop(self):
-        '''Stop the loop after the current event loop iteration is complete.
-If the event loop is not currently running, the next call to :meth:`start`
-will return immediately.
-
-To use asynchronous methods from otherwise-synchronous code (such as
-unit tests), you can start and stop the event loop like this::
-
-    ioloop = IOLoop()
-    async_method(ioloop=ioloop, callback=ioloop.stop)
-    ioloop.start()
-  
-:meth:`start` will return after async_method has run its callback,
-whether that callback was invoked before or after ioloop.start.'''
-        if self.running():
-            self._running = False
-            self.wake()
-        return self._on_exit
-
-    def running(self):
-        """Returns true if this IOLoop is currently running."""
-        return self._running
-    
-    def stopped(self):
-        '''Return ``True`` if the loop have been stopped.'''
-        return self._stopped
-
-    def add_timeout(self, deadline, callback):
-        """Calls the given callback at the time deadline from the I/O loop.
-
-        Returns a handle that may be passed to remove_timeout to cancel.
-        """
-        timeout = _Timeout(deadline, callback)
-        bisect.insort(self._timeouts, timeout)
-        return timeout
-
-    def remove_timeout(self, timeout):
-        """Cancels a pending timeout.
-
-        The argument is a handle as returned by add_timeout.
-        """
-        self._timeouts.remove(timeout)
-
-    def add_callback(self, callback, wake = True):
-        """Calls the given callback on the next I/O loop iteration.
-
-        It is safe to call this method from any thread at any time.
-        Note that this is the *only* method in IOLoop that makes this
-        guarantee; all other interaction with the IOLoop must be done
-        from that IOLoop's thread.  add_callback() may be used to transfer
-        control from other threads to the IOLoop's thread.
-        """
-        self._callbacks.append(callback)
-        if wake:
-            self.wake()
-
-    def wake(self):
-        '''Wake up the eventloop.'''
-        if not self.stopped():
-            self._waker.wake()
 
     def _run_callback(self, callback):
         try:

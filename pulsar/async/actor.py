@@ -11,12 +11,11 @@ from threading import current_thread
 
 from pulsar import AlreadyCalledError, AlreadyRegistered,\
                    ActorAlreadyStarted, LogSelf, LogginMixin, system
-from pulsar.utils.py2py3 import iteritems, itervalues, pickle
-
 
 from .eventloop import IOLoop, thread_ioloop
 from .proxy import ActorProxy, ActorMessage, DEFAULT_MESSAGE_CHANNEL
-from .defer import make_async, is_failure, Failure
+from .defer import make_async, is_failure, Failure, iteritems, itervalues,\
+                     pickle
 from .mailbox import IOQueue, mailbox
 
 
@@ -37,14 +36,14 @@ def is_actor(obj):
     return isinstance(obj, Actor)
 
 
-def is_mainthread(thread = None):
+def is_mainthread(thread=None):
     '''Check if thread is the main thread. If *thread* is not supplied check
 the current thread'''
     thread = thread if thread is not None else current_thread() 
     return isinstance(thread, threading._MainThread)
 
 
-def get_actor(thread = None):
+def get_actor(thread=None):
     '''This function will return the actor running the current thread.'''
     thread = thread if thread is not None else current_thread()
     return thread.actor
@@ -438,7 +437,7 @@ mean it is running.'''
         return self._state >= self.CLOSE
     
     def handle_request(self, request):
-        raise NotImplementedError
+        raise NotImplementedError()
             
     def start(self):
         '''Called after forking to start the actor's life. This is where

@@ -5,7 +5,7 @@ from datetime import datetime
 import logging
 import traceback
 
-from pulsar.utils.py2py3 import StringIO, itervalues
+from pulsar.utils.httpurl import StringIO, itervalues
 from pulsar import make_async, as_failure
 
 from .exceptions import *

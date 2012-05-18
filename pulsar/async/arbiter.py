@@ -8,9 +8,9 @@ from multiprocessing.queues import Empty
 import pulsar
 from pulsar.utils import system
 from pulsar.utils.tools import Pidfile, gen_unique_id
-from pulsar.utils.py2py3 import itervalues, iteritems
 
 from .impl import actor_impl
+from .defer import itervalues, iteritems
 from .actor import Actor, get_actor, send
 from .monitor import PoolMixin
 from .proxy import ActorCallBacks, ActorProxyDeferred

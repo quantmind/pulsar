@@ -3,7 +3,7 @@ import signal
 from select import select as _select
 
 from pulsar.utils.importer import import_module, module_attribute
-from pulsar.utils.py2py3 import *
+from pulsar.utils.httpurl import iteritems
 
 __all__ = ['ALL_SIGNALS',
            'SIG_NAMES',

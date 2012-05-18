@@ -2,11 +2,10 @@ import sys
 from time import time
 
 from pulsar import create_connection, CannotCallBackError
-from pulsar.utils.py2py3 import iteritems
 from pulsar.utils.log import LocalMixin
 from pulsar.utils.tools import gen_unique_id
 
-from .defer import Deferred, is_async, make_async
+from .defer import Deferred, is_async, make_async, iteritems
 from .mailbox import mailbox
 
 __all__ = ['ActorMessage',

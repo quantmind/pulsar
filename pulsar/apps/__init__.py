@@ -7,8 +7,8 @@ from inspect import isgenerator, isfunction
 
 import pulsar
 from pulsar import Empty, make_async, is_failure, Failure, HaltServer,\
-                     deferred_timeout
-from pulsar.utils.py2py3 import execfile, pickle
+                     deferred_timeout, ispy3k
+from pulsar.async.defer import pickle
 from pulsar.utils.importer import import_module
 from pulsar.utils.log import LogInformation
 from pulsar.utils import system
@@ -25,6 +25,15 @@ __all__ = ['Worker',
            'ResponseError']
 
 
+if ispy3k:
+    def execfile(filename, globals=None, locals=None):
+        if globals is None:
+            globals = sys._getframe(1).f_globals
+        if locals is None:
+            locals = sys._getframe(1).f_locals
+        with open(filename, "r") as fh:
+            exec(fh.read()+"\n", globals, locals)
+    
 def require(appname):
     '''Shortcut function to load an application'''
     apps = appname.split('.')

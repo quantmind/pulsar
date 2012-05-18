@@ -44,8 +44,14 @@ class TestDeferred(test.TestCase):
         self.assertEqual(str(d), 'Deferred')
         d.callback('ciao')
         self.assertTrue(d.called)
+        self.assertTrue(' (called)' in str(d))
         self.assertEqual(d.result, 'ciao')
         self.assertRaises(AlreadyCalledError, d.callback, 'bla')
+        
+    def testBadCallback(self):
+        d = Deferred()
+        self.assertRaises(TypeError, d.add_callback, 3)
+        self.assertRaises(TypeError, d.add_callback, lambda r: r, 4)
         
     def testWrongOperations(self):
         d = Deferred()
@@ -135,6 +141,9 @@ class TestDeferred(test.TestCase):
         self.assertFalse(d.paused)
         self.assertTrue(a.called)
         self.assertTrue(is_failure(d.result))
+        
+    def testSafeAsync(self):
+        pass
         
         
 class TestMultiDeferred(test.TestCase):

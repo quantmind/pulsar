@@ -3,10 +3,10 @@ from threading import Thread, current_thread
 
 from pulsar import system, wrap_socket, platform, socket_pair
 from pulsar.utils.tools import gen_unique_id
-from pulsar.utils.py2py3 import pickle
 
 from .iostream import AsyncIOStream
 from .proxy import ActorProxyMonitor
+from .defer import pickle
 
 
 __all__ = ['ActorImpl','actor_impl']

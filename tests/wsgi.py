@@ -1,5 +1,5 @@
 '''Tests the wsgi middleware in pulsar.apps.wsgi'''
-from pulsar.utils.py2py3 import range, zip
+from pulsar.utils.httpurl import range, zip
 from pulsar.apps import wsgi
 from pulsar.utils.test import test
 

@@ -12,6 +12,12 @@ __all__ = ['HttpClient']
 
 class HttpClientResponse(base.ClientResponse, httpurl.HTTPResponse):
     
+    def start_request(self, result):
+        try:
+            self.request._send_request(method, path, body, headers)
+        except Exception as e:
+            self.callback(e)
+                
     def post_process_response(self, client, req):
         call = super(HttpClientResponse, self).post_process_response
         self.add_callback(lambda r: call(client, req))
@@ -21,31 +27,33 @@ class HttpClientResponse(base.ClientResponse, httpurl.HTTPResponse):
 class HttpAsyncConnection(base.ClientConnection):
     response_class = HttpClientResponse
     
-    def __init__(self, host, port=None, source_address=None):
-        self.host = host
-        self.port = port or self.default_port
-        self.source_address = source_address
-        super(HttpAsyncConnection, self).__init__()
-        
     def connect(self): 
         return super(HttpAsyncConnection, self).connect((self.host,self.port))
     
-    def request(self, method, path, body, headers, first=True):
-        if first:
-            return self.connect().add_callback(
-                lambda r: self.request(method, path, body, headers, r))
+    def request(self, method, path, body, headers):
+        # This would look much better as a generator, but we
+        # are using the same class a synchronous connection
+        self.response = r = HttpClientResponse(self)
+        return self.connect().add_callback(r.start_request, r.callback)
     
     def getresponse(self):
         '''This call should be after :meth:`request'''
-        return HttpClientResponse(self)
+        return self.__dict__.pop('response')
     
+    def callback_write(self, bytes_sent):
+        # We are gioing to start reading
+        
+        
     def on_connect(self, result):
         if self.source_address:
             self.stream.socket.bind(self.source_address)
             
     
 class HTTPConnection(HttpAsyncConnection, httpurl.HTTPConnection):
-    pass
+    
+    def __init__(self, *args, **kwargs):
+        httpurl.HTTPConnection.__init__(self, *args, **kwargs)
+        super(HTTPConnection, self).__init__()
 
 httpurl.set_async_connection('http', HTTPConnection)
 #httpurl.set_async_connection('http', HTTPsConnection)

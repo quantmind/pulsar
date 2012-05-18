@@ -9,8 +9,8 @@ import hashlib
 from functools import partial
 
 import pulsar
-from pulsar.utils.httpurl import ispy3k, to_bytes, native_str, itervalues  
-from pulsar.utils.py2py3 import BytesIO
+from pulsar.utils.httpurl import ispy3k, to_bytes, native_str,\
+                                 itervalues, BytesIO
 from pulsar.apps.wsgi import WsgiResponse
                                 
 if ispy3k:

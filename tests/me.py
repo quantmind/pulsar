@@ -6,14 +6,19 @@ import multiprocessing
 import pulsar
 from pulsar.utils.test import test
 
-class TestTest(test.TestCase):
+class TestTestWorker(test.TestCase):
     
     def testWorker(self):
-        worker = self.worker
+        worker = pulsar.get_actor()
+        self.assertTrue(pulsar.is_actor(worker))
         self.assertTrue(worker.running())
-        self.assertEqual(worker.tid,threading.current_thread().ident)
+        self.assertFalse(worker.closed())
+        self.assertFalse(worker.stopped())
+        self.assertEqual(worker.state, 'running')
+        self.assertEqual(worker.tid, threading.current_thread().ident)
         if worker.isprocess():
-            self.assertEqual(worker.pid,os.getpid())
+            self.assertEqual(worker.pid, os.getpid())
+        self.assertTrue(worker.cpubound)
         
     def testMailbox(self):
         worker = self.worker
@@ -21,10 +26,21 @@ class TestTest(test.TestCase):
         self.assertTrue(mailbox)
         self.assertTrue(mailbox.ioloop)
         self.assertTrue(mailbox.ioloop.running())
-        self.assertNotEqual(worker.requestloop,mailbox.ioloop)
-        self.assertNotEqual(worker.tid,mailbox.ident)
+        self.assertNotEqual(worker.requestloop, mailbox.ioloop)
+        self.assertNotEqual(worker.tid, mailbox.ioloop.tid)
         self.assertTrue(mailbox.address)
         self.assertTrue(mailbox.sock)
+        
+    def testIOloop(self):
+        worker = pulsar.get_actor()
+        ioloop = pulsar.thread_ioloop()
+        self.assertTrue(ioloop.running())
+        self.assertNotEqual(worker.requestloop, ioloop)
+        self.assertEqual(worker.ioloop, ioloop)
+        self.assertEqual(worker.tid, worker.requestloop.tid)
+        self.assertNotEqual(worker.tid, ioloop.tid)
+        self.assertTrue(str(ioloop))
+        self.assertFalse(ioloop.start())
         
     def testThreadInfo(self):
         worker = self.worker

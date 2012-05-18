@@ -7,7 +7,7 @@ import pstats
 
 import pulsar
 from pulsar.apps import test
-from pulsar.utils.py2py3 import StringIO
+from pulsar.utils.httpurl import StringIO
 
 other_filename = 'unknown'
 line_func = re.compile(r'(?P<line>\d+)\((?P<func>\w+)\)')

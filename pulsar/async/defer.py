@@ -9,7 +9,6 @@ from time import sleep, time
 from collections import namedtuple
 
 from pulsar import AlreadyCalledError, DeferredFailure, NOT_DONE
-from pulsar.utils.py2py3 import raise_error_trace, map, iteritems
 
 
 __all__ = ['Deferred',
@@ -20,7 +19,9 @@ __all__ = ['Deferred',
            'is_async',
            'maybe_async',
            'make_async',
-           'safe_async']
+           'safe_async',
+           'ispy3k']
+
 
 
 logger = logging.getLogger('pulsar.async.defer')
@@ -29,6 +30,21 @@ remote_stacktrace = namedtuple('remote_stacktrace', 'error_class error trace')
 
 pass_through = lambda result: result
 
+ispy3k = sys.version_info >= (3, 0)
+if ispy3k:
+    import pickle
+    iteritems = lambda d : d.items()
+    itervalues = lambda d : d.values()
+    def raise_error_trace(err,traceback):
+        raise err.with_traceback(traceback)
+    range = range
+else:   # pragma : nocover
+    import cPickle as pickle
+    from pulsar.utils._py2 import *
+    iteritems = lambda d : d.iteritems()
+    itervalues = lambda d : d.itervalues()
+    range = xrange
+    
 def iterdata(stream, start=0):
     '''Iterate over a stream which is either a dictionary or a list. This
 iterator is over key-value pairs for a dictionary, and index-value pairs
@@ -147,7 +163,7 @@ class Failure(object):
 '''
     def __init__(self, err=None):
         self.should_stop = False
-        if isinstance(err,self.__class__):
+        if isinstance(err, self.__class__):
             self.traces = copy(err.traces)
         else:
             self.traces = []
@@ -273,6 +289,9 @@ The function takes at most one argument, the result passed to the
         else:
             raise TypeError('callback must be callable')
         return self
+    
+    def add_errback(self, errback):
+        return self.add_callback(pass_through, errback)
         
     def addBoth(self, callback):
         return self.add_callback(callback, callback)
@@ -350,7 +369,7 @@ this point, :meth:`add_callback` will run the *callbacks* immediately.
 
     def _add_exception(self, e):
         if not isinstance(self.result, Failure):
-            self.result = Failure()
+            self.result = Failure(e)
         else:
             self.result.append(e)
 

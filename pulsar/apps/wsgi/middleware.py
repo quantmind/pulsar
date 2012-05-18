@@ -3,7 +3,7 @@
 import re
 from gzip import GzipFile
 
-from pulsar.utils.py2py3 import BytesIO
+from pulsar.utils.httpurl import BytesIO
 
 re_accepts_gzip = re.compile(r'\bgzip\b')
 

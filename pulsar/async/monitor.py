@@ -3,15 +3,14 @@ import sys
 import time
 
 import pulsar
-from pulsar.utils.py2py3 import iteritems, itervalues, range
 
 from .actor import Actor
-from .defer import make_async, Deferred
+from .defer import make_async, Deferred, iteritems, itervalues, range
 from .proxy import ActorCallBacks
 from .mailbox import Queue
 
 
-__all__ = ['Monitor','PoolMixin']
+__all__ = ['Monitor', 'PoolMixin']
 
 
 class PoolMixin(object):

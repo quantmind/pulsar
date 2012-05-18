@@ -1,3 +1,10 @@
+Development
+=====================
+* Refactored :class:`pulsar.Deferred` to be more similar to twisted. You
+  can add separate callbacks for handling errors.
+* The :class:`pulsar.Mailbox` does not derive from :class:`threading.Thread` so
+  that the eventloop can be restarted.
+
 Version 0.3 - 2012-May-03
 ============================
 * Development status set to ``Alpha``.

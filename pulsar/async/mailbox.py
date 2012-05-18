@@ -8,10 +8,9 @@ from multiprocessing.queues import Empty, Queue
 
 from pulsar import create_connection, MailboxError, socket_pair, wrap_socket
 from pulsar.utils.tools import gen_unique_id
-from pulsar.utils.py2py3 import pickle
 
 from .eventloop import IOLoop, deferred_timeout
-from .defer import make_async
+from .defer import make_async, pickle
 
 
 __all__ = ['mailbox', 'Mailbox', 'IOQueue', 'Empty', 'Queue']
@@ -134,7 +133,7 @@ when a new connection is mad with :class:`Mailbox`.'''
             sock.close()
     
     
-class Mailbox(threading.Thread):
+class Mailbox(object):
     '''A socket mailbox for :class:`Actor` instances. If the *actor* is a
 CPU bound worker (an actor which communicate with its monitor via a message
 queue), the class:`Mailbox` will create its own :class:`IOLoop`.
@@ -169,7 +168,7 @@ actor process domain.
         self.pending = {}
         self.clients = {}
         name = '{0} {1}:{2}'.format(actor,self.address[0],self.address[1])
-        threading.Thread.__init__(self, name = name)
+        self.thread = None
         self.daemon = True
         # If the actor has a ioqueue (CPU bound actor) we create a new ioloop
         if actor.ioqueue is not None and not actor.is_monitor():
@@ -260,11 +259,17 @@ actor process domain.
             self.ioloop.remove_handler(self)
             self.sock.close()
 
-    def run(self):
+    def start(self):
         '''Start the thread only if the mailbox has its own event loop. This
 is the case when the actor is a CPU bound worker.'''
         if self.__hasloop:
-            self.ioloop.start()
+            if self.thread and self.thread.is_alive():
+                raise RunTimeError('Cannot start mailbox. '\
+                                   'It has already started')
+            self.thread = threading.Thread(name=self.ioloop.name,
+                                           target=self.ioloop.start,
+                                           args=(self,))
+            self.thread.start()
             
     def message_arrived(self, message):
         '''A new :class:`ActorMessage` has arrived in the :attr:`Actor.inbox`.

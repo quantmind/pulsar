@@ -46,13 +46,22 @@ class NetStream(object):
         return self.__repr__()
 
     def async_event(self, event_name, callable, *args, **kwargs):
-        event = self.events.get(event_name)
-        if event is None:
-            self.events[event_name] = event = Deferred(description='%s %s'\
-                                                        % (self, event_name))
-            callable(*args, **kwargs).add_callback(event.callback)
-        return event
+        '''Register an asynchronous event with the event dictionary.
+        
+:parameter event_name: the name of the event used as key in the event
+    dictionary.'''
+        return callable(*args, **kwargs).add_callback(
+                                lambda r: self.event_callback(event_name, r),
+                                lambda r: self.event_errback(event_name, r))
     
+    def event_callback(self, event_name, result):
+        cbk = getattr(self, 'callback_%s' % event_name, None)
+        return cbk(result) if cbk else result
+    
+    def event_errback(self, event_name, failure):
+        cbk = getattr(self, 'errbackk_%' % event_name, None)
+        return cbk(failure) if cbk else failure.raise_all()
+
 
 class ClientConnection(NetStream):
     
@@ -60,22 +69,20 @@ class ClientConnection(NetStream):
         '''Connect to a remote address.'''
         return self.async_event('connect',
                                 self.stream.connect,
-                                address,
-                                callback=self.on_connect,
-                                errback=self.on_connect_failure)
+                                address)
+        
+    def send(self, data):
+        '''Connect to a remote address.'''
+        return self.async_event('write',
+                                self.stream.write,
+                                data)
     
-    def on_connect(self, result):
-        return result
     
-    def on_connect_failure(self, failure):
-        failure.raise_all()
-    
-
 class ClientResponse(NetStream, Deferred):
     
     def __init__(self, request, *args, **kwargs):
         self.request = request
-        super(ClientResponse, self).__init__(*args, **kwargs)
+        super(ClientResponse, self).__init__(self, *args, **kwargs)
         Deferred.__init__(self)
         
     

@@ -9,7 +9,7 @@ from threading import current_thread
 from pulsar.utils.system import IObase
 from pulsar import create_client_socket
 
-from .defer import Deferred, is_async
+from .defer import Deferred, is_async, is_failure
 from .eventloop import thread_ioloop, deferred_timeout
 
 iologger = logging.getLogger('pulsar.iostream')
@@ -37,7 +37,7 @@ can be used to act when data has just been sent or has just been received.
 This class was originally forked from tornado_ IOStream and subsequently
 manipulated and adapted to pulsar :ref:`concurrent framework <design>`.
 
-:parameter socket: Optional socket which may either be connected or unconnected.
+:attribute socket: socket which may either be connected or unconnected.
     If not supplied a new socket is created.
 :parameter kwargs: dictionary of auxiliar parameters passed to the
     :meth:`on_init` callback.
@@ -252,7 +252,9 @@ On error closes the socket and raises an exception."""
     
     def _run_callback(self, callback, *args, **kwargs):
         try:
-            callback(*args, **kwargs)
+            result = callback(*args, **kwargs)
+            if is_failure(result):
+                result.raise_all()
         except:
             # Close the socket on an uncaught exception from a user callback
             # (It would eventually get closed when the socket object is

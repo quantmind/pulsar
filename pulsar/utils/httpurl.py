@@ -32,6 +32,10 @@ if ispy3k: # Python 3
     
     getproxies_environment = urllibr.getproxies_environment
     ascii_letters = string.ascii_letters
+    zip = zip
+    map = map
+    range = range
+    
     iteritems = lambda d : d.items()
     itervalues = lambda d : d.values()
 
@@ -77,6 +81,7 @@ else:   # pragma : no cover
     from cookielib import CookieJar
     from Cookie import SimpleCookie
     from cStringIO import StringIO
+    from itertools import izip as zip, imap as map
     
     BytesIO = StringIO
     ascii_letters = string.letters
@@ -117,7 +122,9 @@ else:   # pragma : no cover
         else:
             return '%s' % s
     
-
+HTTPError = urllibr.HTTPError
+URLError = urllibr.URLError
+    
 ####################################################    URI & IRI SUFF
 #
 # The reserved URI characters (RFC 3986 - section 2.2)
@@ -325,8 +332,6 @@ class HttpConnectionError(Exception):
 
 
 class HTTPResponse(httpclient.HTTPResponse):
-    HTTPError = urllibr.HTTPError
-    URLError = urllibr.URLError
     
     def __init__(self, *args, **kwargs):
         self.callbacks = []
@@ -376,13 +381,14 @@ class HTTPResponse(httpclient.HTTPResponse):
         """Raises stored :class:`HTTPError` or :class:`URLError`,
  if one occured."""
         if self.is_error:
-            raise self.HTTPError(self.url, self.status_code,
-                                 self.content, self.headers, None)        
+            raise HTTPError(self.url, self.status_code,
+                            self.content, self.headers, None)        
     
     def post_process_response(self, client, req):
         # post-process response
-        protocol = request.protocol
+        protocol = req.type
         meth_name = protocol+"_response"
+        response = self
         for processor in client.process_response.get(protocol, []):
             meth = getattr(processor, meth_name)
             response = meth(req, response)
@@ -581,8 +587,6 @@ class HttpHandler(urllibr.AbstractHTTPHandler):
 class HttpClient(urllibr.OpenerDirector):
     '''A client of a networked server'''
     Connections = {'http': HTTPConnection}
-    HTTPError = urllibr.HTTPError
-    URLError = urllibr.URLError
     DEFAULT_HTTP_HEADERS = Headers('client',[('Connection', 'Keep-Alive')])
     
     def __init__(self, proxy_info = None, timeout=None, cache = None,
