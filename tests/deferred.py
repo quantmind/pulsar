@@ -9,7 +9,7 @@ from pulsar.utils.test import test
 class Cbk(Deferred):
     '''A deferred object'''
     def __init__(self, r = None):
-        super(Cbk,self).__init__()
+        super(Cbk, self).__init__()
         if r is not None:
             self.r = (r,)
         else:
@@ -30,36 +30,36 @@ class Cbk(Deferred):
             self.callback(e)
 
 def async_pair():
-    c = Cbk()
-    d = Deferred().add_callback(c.set_result)
+    c = Deferred()
+    d = Deferred().addBoth(c.callback)
     return d, c
+    
     
 class TestDeferred(test.TestCase):
     
     def testSimple(self):
         d = Deferred()
-        self.assertEqual(d.rid,None)
         self.assertFalse(d.called)
         self.assertFalse(d.running)
-        self.assertEqual(str(d),'Deferred')
+        self.assertEqual(str(d), 'Deferred')
         d.callback('ciao')
         self.assertTrue(d.called)
-        self.assertEqual(d.result,'ciao')
-        self.assertRaises(AlreadyCalledError,d.callback,'bla')
+        self.assertEqual(d.result, 'ciao')
+        self.assertRaises(AlreadyCalledError, d.callback, 'bla')
         
     def testWrongOperations(self):
         d = Deferred()
         self.assertRaises(RuntimeError, d.callback, Deferred())
 
     def testCallbacks(self):
-        d,cbk = async_pair()
+        d, cbk = async_pair()
         self.assertFalse(d.called)
         d.callback('ciao')
         self.assertTrue(d.called)
-        self.assertEqual(cbk.result,'ciao')
+        self.assertEqual(cbk.result, 'ciao')
         
     def testError(self):
-        d,cbk = async_pair()
+        d, cbk = async_pair()
         self.assertFalse(d.called)
         try:
             raise Exception('blabla exception')
@@ -67,6 +67,7 @@ class TestDeferred(test.TestCase):
             trace = sys.exc_info()
             d.callback(e)
         self.assertTrue(d.called)
+        self.assertTrue(cbk.called)
         self.assertEqual(cbk.result[-1],trace)
         
     def testDeferredCallback(self):
@@ -97,31 +98,17 @@ class TestDeferred(test.TestCase):
         result = d.callback('ciao')
         self.assertTrue(d.called)
         self.assertEqual(d.paused,1)
-        self.assertEqual(len(d._callbacks),1)
-        self.assertEqual(len(rd._callbacks),1)
+        self.assertEqual(len(d._callbacks), 2)
+        self.assertEqual(len(rd._callbacks), 1)
         #
         self.assertEqual(rd.r, ('ciao',))
         self.assertFalse(a.called)
-        a.start(ioloop)
-        self.assertFalse(a.called)
-        # do one loop
-        self.assertEqual(len(ioloop._callbacks),1)
-        ioloop._callbacks.pop()()
-        self.assertFalse(a.called)
-        self.assertEqual(d.paused,1)
-        self.assertEqual(d.result,rd)
-        self.assertEqual(len(d._callbacks),1)
         #
         # set callback
         rd.set_result('luca')
         self.assertTrue(a.called)
         self.assertFalse(d.paused)
         self.assertEqual(d.result,('ciao','luca','second'))
-        # do another loop
-        self.assertEqual(len(ioloop._callbacks),1)
-        ioloop._callbacks.pop()()
-        self.assertTrue(a.called)
-        self.assertEqual(a.result,d.result)
         
     def testDeferredErrorbackInGenerator(self):
         d = Deferred()
@@ -135,32 +122,19 @@ class TestDeferred(test.TestCase):
         a = make_async(_gen())
         result = d.callback('ciao')
         self.assertTrue(d.called)
-        self.assertEqual(d.paused,1)
-        self.assertEqual(len(d._callbacks),1)
-        self.assertEqual(len(rd._callbacks),1)
+        self.assertEqual(d.paused, 1)
+        # The generator has added its consume callback
+        self.assertEqual(len(d._callbacks), 2)
+        self.assertEqual(len(rd._callbacks), 1)
         #
         self.assertEqual(rd.r, ('ciao',))
         self.assertFalse(a.called)
-        a.start(ioloop)
-        self.assertFalse(a.called)
-        # do one loop
-        self.assertEqual(len(ioloop._callbacks),1)
-        ioloop._callbacks.pop()()
-        self.assertFalse(a.called)
-        self.assertEqual(d.paused,1)
-        self.assertEqual(d.result,rd)
-        self.assertEqual(len(d._callbacks),1)
         #
         # set Error back
         rd.set_error()
-        self.assertTrue(a.called)
         self.assertFalse(d.paused)
-        self.assertTrue(is_failure(d.result))
-        # do another loop
-        self.assertEqual(len(ioloop._callbacks),1)
-        ioloop._callbacks.pop()()
         self.assertTrue(a.called)
-        #self.assertEqual(a.result,d.result)
+        self.assertTrue(is_failure(d.result))
         
         
 class TestMultiDeferred(test.TestCase):
@@ -169,8 +143,8 @@ class TestMultiDeferred(test.TestCase):
         d = MultiDeferred()
         self.assertFalse(d.called)
         self.assertFalse(d._locked)
-        self.assertFalse(d._underlyings)
-        self.assertFalse(d._results)
+        self.assertFalse(d._deferred)
+        self.assertFalse(d._stream)
         d.lock()
         self.assertTrue(d.called)
         self.assertTrue(d._locked)
@@ -182,20 +156,20 @@ class TestMultiDeferred(test.TestCase):
         d = MultiDeferred()
         d1 = Deferred()
         d2 = Deferred()
-        d.add(d1)
-        d.add(d2)
-        self.assertRaises(ValueError, d.add, 'bla')
+        d.append(d1)
+        d.append(d2)
+        d.append('bla')
         self.assertRaises(RuntimeError, d._finish)
         d.lock()
         self.assertRaises(RuntimeError, d._finish)
         self.assertRaises(RuntimeError, d.lock)
-        self.assertRaises(RuntimeError, d.add, d1)
+        self.assertRaises(RuntimeError, d.append, d1)
         self.assertFalse(d.called)
         d2.callback('first')
         self.assertFalse(d.called)
         d1.callback('second')
         self.assertTrue(d.called)
-        self.assertEqual(d.result,['second','first'])
+        self.assertEqual(d.result,['second', 'first', 'bla'])
         
     def testUpdate(self):
         d1 = Deferred()

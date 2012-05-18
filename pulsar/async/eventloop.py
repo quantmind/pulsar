@@ -28,10 +28,10 @@ def thread_ioloop(ioloop=None):
     '''Returns the :class:`IOLoop` of the current thread if available.'''
     ct = current_thread()
     if ioloop is not None:
-        if hasattr(ct,'ioloop'):
+        if hasattr(ct,'_eventloop'):
             raise RuntimeError('A ioloop is already available on this thread')
-        ct.ioloop = ioloop
-    return getattr(ct, 'ioloop', None)
+        ct._eventloop = ioloop
+    return getattr(ct, '_eventloop', None)
     
         
 class LoopGuard(object):

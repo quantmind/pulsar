@@ -1,5 +1,4 @@
-'''A deferred module with almost the same API as twisted.
-'''
+'''A deferred module with almost the same API as twisted.'''
 import sys
 from copy import copy
 import logging
@@ -10,7 +9,7 @@ from time import sleep, time
 from collections import namedtuple
 
 from pulsar import AlreadyCalledError, DeferredFailure, NOT_DONE
-from pulsar.utils.py2py3 import raise_error_trace, map
+from pulsar.utils.py2py3 import raise_error_trace, map, iteritems
 
 
 __all__ = ['Deferred',
@@ -20,7 +19,6 @@ __all__ = ['Deferred',
            'is_failure',
            'is_async',
            'maybe_async',
-           #'async_func_call',
            'make_async',
            'safe_async']
 
@@ -29,6 +27,21 @@ logger = logging.getLogger('pulsar.async.defer')
 
 remote_stacktrace = namedtuple('remote_stacktrace', 'error_class error trace')
 
+pass_through = lambda result: result
+
+def iterdata(stream, start=0):
+    '''Iterate over a stream which is either a dictionary or a list. This
+iterator is over key-value pairs for a dictionary, and index-value pairs
+for a list.'''
+    if isinstance(stream, dict):
+        return iteritems(stream)
+    else:
+        return enumerate(stream, start)
+
+def is_generalised_generator(value):
+    '''Check if *value* is a generator. This is more general than the
+inspect.isgenerator function.'''
+    return hasattr(value, '__iter__') and not hasattr(value, '__len__')
 
 def is_stack_trace(trace):
     if isinstance(trace,remote_stacktrace):
@@ -74,10 +87,6 @@ def async_func_call(func, result, *args, **kwargs):
     else:
         return callback()
 
-async_value = lambda value : lambda result : value
- 
-pass_through = lambda result: result
-
 def safe_async(f):
     try:
         result = f()
@@ -86,6 +95,8 @@ def safe_async(f):
     return make_async(result)
 
 def maybe_async(val, description=None, max_errors=None):
+    '''Convert *val* into an asynchronous instance only if *val* is a generator
+or a function.'''
     if isgenerator(val):
         return DeferredGenerator(val, max_errors=max_errors,
                                  description=description)
@@ -124,6 +135,7 @@ This function is useful when someone needs to treat a value as a deferred::
         return val
 
 
+############################################################### Failure
 class Failure(object):
     '''Aggregate failures during :class:`Deferred` callbacks.
     
@@ -210,7 +222,8 @@ class Failure(object):
         for e in self:
             log.critical('', exc_info = e)
             
-            
+
+############################################################### Deferred            
 class Deferred(object):
     """This is a callback which will be put off until later.
 The idea is the same as the ``twisted.defer.Deferred`` object.
@@ -318,7 +331,7 @@ this point, :meth:`add_callback` will run the *callbacks* immediately.
                     # Add a pause
                     self._pause()
                     # Add a callback to the result to resume callbacks
-                    self.result.add_callback(self._continue)
+                    self.result.addBoth(self._continue)
                     break
     
     def _pause(self):
@@ -408,14 +421,22 @@ generator.'''
         return self.callback(result)
     
 
+############################################################### MultiDeferred
 class MultiDeferred(Deferred):
+    _locked = False
     
     def __init__(self, type=list):
-        self._locked = False
         self._deferred = {}
         self._stream = type()
+        if self.type not in ('list','dict'):
+            raise TypeError('Multideferred type container must be a dictionary '
+                            ' or a string')
         super(MultiDeferred, self).__init__()
         
+    @property
+    def type(self):
+        return self._stream.__class__.__name__
+    
     def lock(self):
         if self._locked:
             raise RuntimeError(self.__class__.__name__ +\
@@ -427,23 +448,31 @@ class MultiDeferred(Deferred):
     
     def update(self, stream):
         add = self._add
-        for key, value in iterdata(stream):
+        for key, value in iterdata(stream, len(self._stream)):
             add(key, value)
+        return self
+        
+    def append(self, value):
+        '''Append only works for a list type multideferred'''
+        if self.type == 'list':
+            self._add(len(self._stream), value)
+        else:
+            raise RuntimeError('Cannot append a value to a "dict" type '
+                               'multideferred')
         
     def _add(self, key, value):
         if self._locked:
             raise RuntimeError(self.__class__.__name__ +\
                                ' cannot add a dependent once locked.')
-        if isinstance(value, Deferred):
-            if value.called:
-                value = value.result
-            else:
-                self._add_deferred(key, value)
+        if is_async(value):
+            value = value.result_or_self()
+        if is_async(value):
+            self._add_deferred(key, value)
         else:
-            if isgenerator(value):
+            if is_generalised_generator(value):
                 value = list(value)
             if isinstance(value, (dict,list,tuple,set,frozenset)):
-                if isinstance(value,dict):
+                if isinstance(value, dict):
                     md = MultiDeferred(type=dict)
                 else:
                     md = MultiDeferred()

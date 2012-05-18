@@ -458,7 +458,11 @@ logging is configured, the :attr:`Actor.mailbox` is registered and the
             self.__mailbox = mailbox(self)
             self.__tid = ct.ident
             self.__pid = os.getpid()
-            # inject the actor IO loop into the current thread object
+            # inject the IO loop into the current thread object if this is
+            # a CPU bound actor. CPU bound actors runs two thread, one for the
+            # request loop and one for IO event loop. The request loop is used
+            # to pass task to the actor, while the IO loop for socket
+            # communication with other actors or with external networks.
             if self.cpubound:
                 thread_ioloop(self.ioloop)
             self.on_start()
