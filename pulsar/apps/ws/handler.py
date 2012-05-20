@@ -1,5 +1,6 @@
 import logging
 from uuid import uuid4
+from collections import deque
 
 from pulsar import to_bytes
 
@@ -14,9 +15,8 @@ LOGGER = logging.getLogger('websocket')
 def safe(self, func, *args, **kwargs):
     try:
         return func(*args, **kwargs)
-    except Exception:
-        LOGGER.error("Uncaught exception in {0[PATH_INFO]}"\
-                        .format(self.environ), exc_info=True)
+    except:
+        LOGGER.critical("Uncaught exception in %s" % self.path, exc_info=True)
         self.abort()
 
 
@@ -68,25 +68,43 @@ This script pops up an alert box that says "You said: Hello, world".
         self.middleware = middleware
         self.id = self._create_id()
         
-    def start(self, environ, protocols, extensions):
+    def start(self, environ, stream, version, protocols, extensions):
+        if self.started:
+            raise RuntimeError('Web socket handler already started')
         self.environ = environ
-        self.version = environ.get(self.middleware.environ_version)
+        self.version = version
         self.protocols = protocols
         self.extensions = extensions
         self.parser = self.middleware.get_parser()
-        self.stream = environ['pulsar.stream']
+        self.stream = stream
+        self.in_frames = deque()
+        self.out_frames = deque()
         return self
-        
+    
+    def __repr__(self):
+        return '%s %s (id=%s)' % (self.__class__.__name__, self.path, self.id)
+    
+    def __str__(self):
+        return self.__repr__()
+    
+    @property
+    def path(self):
+        return self.environ.get('PATH_INFO','')
+    
+    @property
+    def started(self):
+        return hasattr(self, 'environ')
+    
     def __iter__(self):
         #yield an empty string so that headers are sent
-        yield b''
-        self.on_open()
-        # kick off reading
-        self._handle()
+        yield self.on_open() or b''
+        for data in self._generator():
+            yield data
+        self.abort()
         
     @property
     def client_terminated(self):
-        return self.stream.closed()
+        return self.stream.closed
         
     def on_open(self):
         """Invoked when a new WebSocket is opened."""
@@ -94,20 +112,19 @@ This script pops up an alert box that says "You said: Hello, world".
 
     def on_message(self, message):
         """Handle incoming messages on the WebSocket.
-        This method must be overloaded
+        This method must be overloaded.
         """
         raise NotImplementedError()
 
     def on_close(self):
         """Invoked when the WebSocket is closed."""
         pass
-                
+    
     def write_message(self, message, binary=False):
         """Sends the given message to the client of this Web Socket."""
-        msg = frame(version = self.version,
-                    message = to_bytes(message),
-                    binary = binary)
-        self.stream.write(msg)
+        self.out_frames.append(frame(version=self.version,
+                                     message=to_bytes(message),
+                                     binary=binary))
     
     def close(self):
         """Closes the WebSocket connection."""
@@ -116,13 +133,35 @@ This script pops up an alert box that says "You said: Hello, world".
         self._started_closing_handshake = True
         
     def abort(self, r = None):
-        self.middleware._clients.discard(self)
-        self.stream.close()
+        self.middleware._clients.pop(self.id, None)
         
     #################################################################    
     # INTERNALS
     #################################################################
     
+    def _handle(self, data=None):
+        frame = safe(self, self.parser.execute, data)
+        if frame and frame.is_complete():
+            self.in_frames.append(frame)
+        d = self.stream.read()
+        if d:
+            d.add_callback(self._handle)
+    
+    def _generator(self):
+        # start the reading
+        self._handle()
+        in_frames = self.in_frames
+        while not self.client_terminated:
+            if in_frames:
+                frame = in_frames.popleft()
+                message = safe(self, frame.on_complete, self)
+                if message:
+                    self.write_message(message)
+            if self.out_frames:
+                yield self.out_frames.popleft()
+            else:
+                yield b''
+            
     def _create_id(self):
         while True:
             id = str(uuid4())[:8]
@@ -134,14 +173,4 @@ This script pops up an alert box that says "You said: Hello, world".
         
     def _write_message(self, msg):
         self.stream.write(msg)
-    
-    def _handle(self, data = None):
-        frame = safe(self, self.parser.execute, data)
-        if frame.is_complete():
-            if self.client_terminated:
-                return
-            safe(self, frame.on_complete, self)
-            
-        if not self.client_terminated:
-            self.stream.read(callback = self._handle)
         

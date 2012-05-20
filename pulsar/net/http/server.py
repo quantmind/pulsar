@@ -7,7 +7,7 @@ from wsgiref.util import is_hop_by_hop
 import pulsar
 from pulsar import lib, Deferred, make_async, is_async, NOT_DONE
 from pulsar.utils.httpurl import Headers, unquote, to_bytes, is_string,\
-                                    to_string, BytesIO
+                                    to_string, BytesIO, iteritems
 from pulsar.net import base
 
 
@@ -62,9 +62,8 @@ class HttpRequest(base.NetRequest):
     def default_parser(self):
         return lib.Http_Parser
                 
-    def get_parser(self, kind = None, **kwargs):
-        kind = kind if kind is not None else lib.HTTP_BOTH
-        return self.parsercls(kind)
+    def get_parser(self, **kwargs):
+        return self.parsercls(0)
     
     @property
     @on_headers
@@ -75,7 +74,7 @@ class HttpRequest(base.NetRequest):
     @on_headers
     def headers(self):
         """ get request/response headers """ 
-        return Headers(self.parser.get_headers())
+        return Headers(self.parser.get_headers(), kind='client')
 
     @property
     def should_keep_alive(self):
@@ -91,7 +90,7 @@ class HttpRequest(base.NetRequest):
             return self.version == (1, 1)
    
     @on_body
-    def wsgi_environ(self, actor = None, **kwargs):
+    def wsgi_environ(self, actor=None, **kwargs):
         """return a :ref:`WSGI <apps-wsgi>` compatible environ dictionary
 based on the current request. If the reqi=uest headers are not ready it returns
 nothing.
@@ -141,7 +140,10 @@ adds the following 2 pulsar information:
         url_scheme = "http"
         script_name = os.environ.get("SCRIPT_NAME", "")
 
-        for header, value in parser.get_headers():
+        headers = parser.get_headers()
+        if isinstance(headers, dict):
+            headers = iteritems(headers)
+        for header, value in headers:
             header = header.lower()
             if header == "expect":
                 # handle expect
@@ -208,9 +210,10 @@ adds the following 2 pulsar information:
     # INTERNALS
     #################################################################
     
-    def _handle(self, data = None):
+    def _handle(self, data=None):
         if data is not None:
-            self.parser.execute(data,len(data))
+            self.parser.execute(data, len(data))
+        stream = self.stream
         complete = self.parser.is_message_complete()
         if not self.parser.is_headers_complete():
             if complete:
@@ -218,8 +221,9 @@ adds the following 2 pulsar information:
                 self.on_headers.callback(None)
                 self.on_body.callback(None)
             else:
-                self.stream.read(callback = self._handle)
+                return stream.read().add_callback(self._handle)
         else:
+            # Headers are available
             headers = self.parser.get_headers()
             if not self.on_headers.called:
                 self.on_headers.callback(headers)
@@ -232,15 +236,15 @@ adds the following 2 pulsar information:
                     if headers.get("expect") == "100-continue" and\
                         not self.continue100:
                         self.continue100 = True
-                        self.stream.write(b("HTTP/1.1 100 (Continue)\r\n\r\n"),
-                                          callback = self._handle)
+                        d = stream.write(b"HTTP/1.1 100 (Continue)\r\n\r\n")
                     else:
-                        self.stream.read(callback = self._handle)
+                        d = self.stream.read()
+                    return d.add_callback(self._handle)
                 else:
                     self.parser.execute(b'',0)
-                    self._handle()
+                    return self._handle()
             elif not self.on_body.called:
-                self.on_body.callback(self.parser.get_body())
+                return self.on_body.callback(self.parser.get_body())
         
 
 class HttpResponse(base.NetResponse):
@@ -263,17 +267,16 @@ https://github.com/joyent/node/blob/master/lib/http.js
     middleware = []
     
     def on_init(self, kwargs):
-        self.headers = Headers()
-        self.on_headers = Deferred() # callback when headers are sent
-        #
-        # Internal flags
-        self.__clength = None
-        self.__upgrade = False
+        self.headers = self.default_headers()
         self.__should_keep_alive = self.request.should_keep_alive
         self.__status = None
         self.__headers_sent = False
-        self.__chunked = None
         
+    def default_headers(self):
+        return Headers((('Server',pulsar.SERVER_SOFTWARE),
+                        ('Date', format_date_time(time.time()))),
+                       kind='server')
+    
     def __repr__(self):
         return '{0}({1})'.format(self.__class__.__name__,self.status) 
     
@@ -285,22 +288,33 @@ https://github.com/joyent/node/blob/master/lib/http.js
     def should_keep_alive(self):
         return self.__should_keep_alive
     
+    @property
+    def content_length(self):
+        c = self.headers.get('Content-Length')
+        if c:
+            return int(c)
+    
+    @property
+    def upgrade(self):
+        return self.headers.get('Upgrade')
+    
+    @property
+    def chunked(self):
+        return self.headers.get('Transfer-Encoding') == 'chunked'
+    
     def is_chunked(self):
         '''Only use chunked responses when the client is
 speaking HTTP/1.1 or newer and there was no Content-Length header set.'''
-        if self.__chunked is None:
-            if self.request.version <= (1,0):
-                return False
-            elif self.status.startswith("304") or self.status.startswith("204"):
-                # Do not use chunked responses when the response is guaranteed to
-                # not have a response body.
-                return False
-            elif self.__clength is not None and\
-                     self.__clength <= self.stream.MAX_BODY: 
-                return False
-            return True
-        else:
-            return self.__chunked
+        if self.request.version <= (1,0):
+            return False
+        elif self.status.startswith("304") or self.status.startswith("204"):
+            # Do not use chunked responses when the response
+            # is guaranteed to not have a response body.
+            return False
+        elif self.content_length is not None and\
+                 self.content_length <= self.stream.MAX_BODY: 
+            return False
+        return True
     
     def force_close(self):
         self.__should_keep_alive = False
@@ -334,7 +348,7 @@ speaking HTTP/1.1 or newer and there was no Content-Length header set.'''
                     # output yet, start_response should replace the
                     # currently-stored HTTP response headers with the
                     # newly-supplied ones. 
-                    self.headers = Headers()
+                    self.headers = self.default_headers()
             finally:
                 # Avoid circular reference
                 exc_info = None
@@ -343,14 +357,14 @@ speaking HTTP/1.1 or newer and there was no Content-Length header set.'''
                         reason = "Response headers already sent!")
         
         self.__status = status
-        self.process_headers(response_headers)
+        self.headers.update(response_headers)
         return self.write
     
     def write(self, data):
         '''WSGI write function returned by the
 :meth:`HttpResponse.start_response` function.
 
-New WSGI applications and frameworks should not use this callable
+New WSGI applications and frameworks should not use this callable directly
 if it is possible to avoid doing so.
 In general, applications should produce their output via their returned
 iterable, as this makes it possible for web servers to interleave other
@@ -360,89 +374,56 @@ for the server as a whole.
 :parameter data: an iterable over bytes.
 '''
         stream = self.stream
-        ioloop = stream.ioloop
         MAX_CHUNK = 65536
-        crlf = b'\r\n'
-        upgrade = self.__upgrade
-        _write = self._write
+        write = self.stream.write
         # loop over data-iterable
         for b in data:
-            # send headers only if there is data or it is an upgrade (websocket)
             yield self.send_headers(force=b)
             if b:
-                if self.is_chunked():
+                if self.chunked:
                     while b:
-                        tosend = b[:MAX_CHUNK]
-                        b = b[MAX_CHUNK:]
-                        head = ("%X" % len(tosend)).encode('utf-8')
-                        chunk = head + crlf + tosend + crlf
-                        n = len(chunk)
+                        s, b = b[:MAX_CHUNK], b[MAX_CHUNK:]
+                        chunk = ("%X\r\n%s\r\n" % (len(s),s)).encode('utf-8')
                         yield write(chunk)
-                    yield _write(b'0' + crlf + crlf)
+                    yield write(b'0\r\n\r\n')
                 else:
-                    yield _write(b)
+                    yield write(b)
             else:
                 # No data. Release the loop
                 yield NOT_DONE
-        # We make sure we send the headers
-        yield self.send_headers()
+        yield self.close()
     
-    def _write(self, data, callback=None):
-        return self.stream.write(data, callback)
-    
-    def process_headers(self, headers):
-        for name, value in headers:
-            name = to_string(name).strip()
-            value = to_string(value).strip()
-            self.headers[name] = value
-            lname = name.lower()
-            if lname == "content-length":
-                self.__clength = int(value)
-            elif lname == 'upgrade':
-                self.__upgrade = self.headers['upgrade']
-            
-    def default_headers(self):
-        headers = Headers([('Server',self.version),
-                           ('Date', format_date_time(time.time()))])
-        # Set chunked header if needed
-        if self.is_chunked():
-            self.__chunked = True
-            headers['Transfer-Encoding'] = 'chunked'
-            self.headers.pop('content-length',None)
-        else:
-            self.force_close()
-        connection = "keep-alive" if self.should_keep_alive else "close"
-        headers['Connection'] = connection
-        return headers
-    
-    def send_headers(self, force=True):
-        if not self.__headers_sent:
-            if self.__upgrade:
-                tosend = self.headers
-            elif force:
-                tosend = self.default_headers()
-                tosend.extend(self.headers)
+    def get_headers(self, force=False):
+        ''''''
+        headers = self.headers
+        if self.upgrade:
+            return headers
+        elif force:
+            # Set chunked header if needed
+            if self.is_chunked():
+                headers['Transfer-Encoding'] = 'chunked'
+                self.headers.pop('content-length',None)
             else:
-                # No data no upgrade, don't send headers
-                return None
-            data = tosend.flat(self.request.version,self.status)
-            # headers are python native strings, therefore we need to convert
-            # them to bytes before sending them
-            data = to_bytes(data)
-            self.__headers_sent = data
-            self._write(data, self.on_headers)
-        return self.on_headers
+                self.force_close()
+            connection = "keep-alive" if self.should_keep_alive else "close"
+            headers['Connection'] = connection
+            return headers
+    
+    def send_headers(self, force=False):
+        if not self.__headers_sent:
+            tosend = self.get_headers(force)
+            if tosend:
+                data = tosend.flat(self.request.version, self.status)
+                # headers are strings, therefore we need
+                # to convert them to bytes before sending them
+                data = to_bytes(data)
+                self.__headers_sent = data
+                return self.stream.write(data)
         
-    def close(self):
+    def close(self, data_sent=None):
         '''Override close method so that the socket is closed only if
 there is no upgrade.'''
-        yield self.on_close()
-        if not self.__upgrade == 'websocket':
+        yield self.send_headers()
+        if not self.upgrade == 'websocket':
             yield self.stream.close()
-        yield self # return itself.
         
-    def on_close(self):
-        '''If status is available send headers.'''
-        if self.__status:
-            return self.send_headers()
-    

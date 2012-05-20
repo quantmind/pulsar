@@ -5,7 +5,8 @@ from functools import partial
 import pulsar
 from pulsar import make_async, Deferred, is_failure, NOT_DONE
 from pulsar.utils.httpurl import parse_authorization_header, Headers,\
-                                    SimpleCookie, set_cookie, responses
+                                    SimpleCookie, set_cookie, responses, \
+                                    iteritems
 
 from .middleware import is_streamed
 
@@ -112,7 +113,7 @@ By default it returns an empty tuple. Overrides if you need to.'''
         headers = self.headers
         for c in self.cookies.values():
             headers['Set-Cookie'] = c.OutputString()
-        headers = list(headers)
+        headers = list(iteritems(headers))
         start_response(self.status, headers)
         return self
         
@@ -175,7 +176,7 @@ This is usually `True` if a generator is passed to the response object."""
         if content is None:
             content = ()
         else:
-            if isinstance(content,bytes):
+            if isinstance(content, bytes):
                 content = (content,)
             for c in content:
                 cl += len(c)

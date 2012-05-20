@@ -146,17 +146,17 @@ from .states import *
 from .rpc import *
 
 
-class TaskResponse(pulsar.Response):
+class TaskResponse(object):
     
-    def __init__(self, worker, request):
+    def __init__(self, worker, task):
+        self.task = task
         self.worker = worker
-        super(TaskResponse,self).__init__(request)
         
     def close(self):
         '''Close the task request by invoking the :meth:`Task.finish`
 method.'''
-        task = self.request
-        return task.finish(self.worker, result = task.result)
+        task = self.task
+        return task.finish(self.worker, result=task.result)
 
 
 class Remotes(pulsar.ActorBase):

@@ -3,10 +3,10 @@ import sys
 from copy import copy
 import logging
 import traceback
-from collections import deque
+from threading import current_thread
+from collections import deque, namedtuple
 from inspect import isgenerator, isfunction, ismethod, istraceback
-from time import sleep, time
-from collections import namedtuple
+from time import sleep
 
 from pulsar import AlreadyCalledError, DeferredFailure, NOT_DONE
 
@@ -20,8 +20,21 @@ __all__ = ['Deferred',
            'maybe_async',
            'make_async',
            'safe_async',
-           'ispy3k']
+           'ispy3k',
+           'thread_ioloop']
 
+class EXIT_GENERATOR(object):
+    pass
+
+
+def thread_ioloop(ioloop=None):
+    '''Returns the :class:`IOLoop` of the current thread if available.'''
+    ct = current_thread()
+    if ioloop is not None:
+        if hasattr(ct,'_eventloop'):
+            raise RuntimeError('A ioloop is already available on this thread')
+        ct._eventloop = ioloop
+    return getattr(ct, '_eventloop', None)
 
 
 logger = logging.getLogger('pulsar.async.defer')
@@ -103,12 +116,12 @@ def async_func_call(func, result, *args, **kwargs):
     else:
         return callback()
 
-def safe_async(f):
+def safe_async(f, description=None, max_errors=None):
     try:
         result = f()
     except Exception as e:
         result = e
-    return make_async(result)
+    return make_async(result, max_errors=max_errors, description=description)
 
 def maybe_async(val, description=None, max_errors=None):
     '''Convert *val* into an asynchronous instance only if *val* is a generator
@@ -393,11 +406,11 @@ The callback will occur once the generator has stopped
         super(DeferredGenerator,self).__init__(description=description)
         self._genvalue = self._consume()
     
-    def result_or_self(self):
-        if self.called:
-            return self.result
-        else:
-            return self._genvalue
+    #def result_or_self(self):
+    #    if self.called:
+    #        return self.result
+    #    else:
+    #        return self._genvalue
         
     def _consume(self, last_result=None):
         '''override the deferred consume private method for handling the
@@ -418,18 +431,22 @@ generator.'''
             return self._consume()
         else:
             if result == NOT_DONE:
-                # The NOT_DONE element indicate that we are waiting for some
-                # data and therefore we release the ioloop to give it time
-                # to obtain data. We release the loop by returning self
+                # The NOT_DONE element indicate that we need to abort the
+                # generator and add a callback to the eventloop to resume the
+                # loop at the next iteration. Return self so that it can
+                # restart all its ancestors
+                ioloop = thread_ioloop()
+                ioloop.add_callback(self._consume, wake=False)
                 return self
             else:
                 # Convert to async only if needed
                 result = maybe_async(result)
             if is_async(result):
-                return result.addBoth(self._consume).result_or_self()
-            else:
-                # continue with the loop
-                return self._consume(result)
+                result = result.result_or_self()
+                if is_async(result):
+                    return result.addBoth(self._consume)
+            # continue with the loop
+            return self._consume(result)
     
     def should_stop(self, failure):
         self.errors.append(failure)

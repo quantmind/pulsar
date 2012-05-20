@@ -113,8 +113,7 @@ requests in the threaded workers.'''
         concurrency = self.concurrency(cfg)
         mt = concurrency == 'thread' and cfg.workers > 1
         mp = concurrency == 'process' and cfg.workers > 1
-        environ = request.wsgi_environ(actor=worker,
-                                       multithread=mt,
+        environ = request.wsgi_environ(multithread=mt,
                                        multiprocess=mp)
         if not environ:
             yield request.on_body
@@ -142,6 +141,7 @@ requests in the threaded workers.'''
                     # Create the error response
                     data = WsgiResponse(environ=environ)
                     cfg.handle_http_error(data, e)
+                    data(environ, start_response)
             # delegate the writing of data to the response instance
             yield response.write(data)
         yield response

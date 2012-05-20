@@ -7,18 +7,18 @@ from pulsar.utils.test import test
 from .manage import server
         
 
-class TestHelloWorldProcess(test.TestCase):
-    concurrency = 'process'
+class TestHelloWorldThread(test.TestCase):
+    concurrency = 'thread'
     
     @classmethod
     def setUpClass(cls):
         name = 'helloworld_' + cls.concurrency
         s = test_server(server,
-                        bind = '127.0.0.1:0',
-                        name = name,
-                        concurrency = cls.concurrency)
-        r,outcome = cls.worker.run_on_arbiter(s)
-        yield r
+                        bind='127.0.0.1:0',
+                        name=name,
+                        concurrency=cls.concurrency)
+        outcome = cls.worker.run_on_arbiter(s)
+        yield outcome
         app = outcome.result
         cls.app = app
         cls.uri = 'http://{0}:{1}'.format(*app.address)
@@ -49,6 +49,6 @@ class TestHelloWorldProcess(test.TestCase):
         self.assertEqual(headers['server'],SERVER_SOFTWARE)
 
 
-class TestHelloWorldThread(TestHelloWorldProcess):
-    concurrency = 'thread'
+class TestHelloWorldProcess(TestHelloWorldThread):
+    concurrency = 'process'
     

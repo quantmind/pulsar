@@ -46,13 +46,13 @@ def handle_http_error(response, e):
     if code == 500:
         actor.log.critical('Unhandled exception during WSGI response',
                            exc_info = True)
-        mesg = 'An exception has occured while evaluating your request.'
+        msg = 'An exception has occured while evaluating your request.'
     else:
         actor.log.info('WSGI {0} status code'.format(code))
         if code == 404:
-            mesg = 'Cannot find what you are looking for.'
+            msg = 'Cannot find what you are looking for.'
         else:
-            mesg = ''
+            msg = ''
     response.status_code = code
     encoding = 'utf-8'
     reason = response.status
@@ -64,13 +64,13 @@ def handle_http_error(response, e):
       </head>
       <body>
         <h1>{0[reason]}</h1>
-        {0[mesg]}
+        {0[msg]}
         <h3>{0[version]}</h3>
       </body>
     </html>
-    """).format({"reason": reason, "mesg": mesg,
+    """).format({"reason": reason, "msg": msg,
                  "version": pulsar.SERVER_SOFTWARE})
-    response.content = content.encode(encoding,'replace')
+    response.content = content.encode(encoding, 'replace')
     return response
     
 

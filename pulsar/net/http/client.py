@@ -42,7 +42,7 @@ class HttpAsyncConnection(base.ClientConnection):
     
     def callback_write(self, bytes_sent):
         # We are gioing to start reading
-        
+        pass
         
     def on_connect(self, result):
         if self.source_address:

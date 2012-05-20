@@ -101,7 +101,7 @@ else:   # pragma : no cover
             else:
                 return s
         else:
-            return unicode(value).encode(encoding, errors)
+            return unicode(s).encode(encoding, errors)
     
     def to_string(s, encoding=None, errors='strict'):
         """Inverse of to_bytes"""
@@ -174,7 +174,9 @@ def host_and_port(host):
 ####################################################    HEADERS
 HEADER_FIELDS = {'general': frozenset(('Cache-Control', 'Connection', 'Date',
                                        'Pragma', 'Trailer','Transfer-Encoding',
-                                       'Upgrade', 'Via','Warning')),
+                                       'Upgrade', 'Sec-WebSocket-Extensions',
+                                       'Sec-WebSocket-Protocol',
+                                       'Via','Warning')),
                  'request': frozenset(('Accept', 'Accept-Charset',
                                        'Accept-Encoding', 'Accept-Language',
                                        'Authorization', 'Expect', 'From',
@@ -182,10 +184,15 @@ HEADER_FIELDS = {'general': frozenset(('Cache-Control', 'Connection', 'Date',
                                        'If-None-Match', 'If-Range',
                                        'If-Unmodified-Since', 'Max-Forwards',
                                        'Proxy-Authorization', 'Range',
-                                       'Referer', 'TE', 'User-Agent')),
+                                       'Referer',
+                                       'Sec-WebSocket-Key',
+                                       'Sec-WebSocket-Version',
+                                       'TE', 'User-Agent')),
                  'response': frozenset(('Accept-Ranges', 'Age', 'ETag',
                                         'Location', 'Proxy-Authenticate',
-                                        'Retry-After', 'Server', 'Vary',
+                                        'Retry-After',
+                                        'Sec-WebSocket-Accept',
+                                        'Server', 'Vary',
                                         'WWW-Authenticate')),
                  'entity': frozenset(('Allow', 'Content-Encoding',
                                       'Content-Language', 'Content-Length',
@@ -197,27 +204,19 @@ CLIENT_HEADER_FIELDS = HEADER_FIELDS['general'].union(HEADER_FIELDS['entity'],
                                                       HEADER_FIELDS['request'])
 SERVER_HEADER_FIELDS = HEADER_FIELDS['general'].union(HEADER_FIELDS['entity'],
                                                       HEADER_FIELDS['response'])
-TYPE_HEADER_FIELDS = {'client': CLIENT_HEADER_FIELDS,
-                      'server': SERVER_HEADER_FIELDS}
 ALL_HEADER_FIELDS = CLIENT_HEADER_FIELDS.union(SERVER_HEADER_FIELDS)
+ALL_HEADER_FIELDS_DICT = dict(((k.lower(),k) for k in ALL_HEADER_FIELDS))
 
-def _capitalbits(col):
-    for field in col:
-        for bit in field.split('-'):
-            if bit.upper() == bit:
-                yield bit
-                
-CAPITAL_HEADER_BITS = frozenset(_capitalbits(ALL_HEADER_FIELDS))
+TYPE_HEADER_FIELDS = {'client': CLIENT_HEADER_FIELDS,
+                      'server': SERVER_HEADER_FIELDS,
+                      'both': ALL_HEADER_FIELDS}
 
-def _header_field(name):
-    for bit in name.split('-'):
-        bit = bit.upper()
-        if bit in CAPITAL_HEADER_BITS:
-            yield bit
-        else:
-            yield bit[0] + bit[1:].lower()
+header_type = {0: 'client', 1: 'server', 2: 'both'}
+header_type_to_int = dict(((v,k) for k,v in header_type.items()))
             
-header_field = lambda name: '-'.join(_header_field(name))
+def header_field(name):
+    return ALL_HEADER_FIELDS_DICT.get(name.lower())
+
 
 class Headers(dict):
     '''Utility for managing HTTP headers for both clients and servers.
@@ -231,15 +230,26 @@ The order in which header fields with differing field names are received is not
 significant. However, it is "good practice" to send general-header fields first,
 followed by request-header or response-header fields, and ending with
 the entity-header fields.'''    
-    def __init__(self, type='server', defaults=None):
-        self.type = type.lower()
-        self.all_headers = TYPE_HEADER_FIELDS.get(self.type)
+    def __init__(self, data=None, kind='server'):
+        if isinstance(kind, int):
+            kind = header_type.get(kind, 'both')
+        else:
+            kind = kind.lower()
+        self.kind = kind
+        self.all_headers = TYPE_HEADER_FIELDS.get(self.kind)
         if not self.all_headers:
-            raise ValueError('Header must be for client or server. '\
-                             'Passed "%s" instead' % type)
+            self.kind = 'both'
+            self.all_headers = TYPE_HEADER_FIELDS[self.kind]
         super(Headers, self).__init__()
-        if defaults is not None:
-            self.update(defaults)
+        if data:
+            self.update(data)
+    
+    def __repr__(self):
+        return '%s %s' % (self.kind, super(Headers,self).__repr__())
+    
+    @property
+    def kind_number(self):
+        return header_type_to_int.get(self.kind)
     
     def update(self, iterable):
         """Extend the headers with a dictionary or an iterable yielding keys and
@@ -275,7 +285,7 @@ the entity-header fields.'''
     def __setitem__(self, key, value):
         if value:
             key = header_field(key)
-            if key in self.all_headers:
+            if key and key in self.all_headers:
                 if isinstance(value, (tuple, list)):
                     value = ','.join(value)
                 super(Headers, self).__setitem__(key, value)
@@ -284,7 +294,7 @@ the entity-header fields.'''
         return super(Headers, self).pop(header_field(key), *args)
     
     def copy(self):
-        return self.__class__(self.type, self)
+        return self.__class__(self, type=self.type)
         
     def headers(self):
         return list(self.items())
@@ -307,9 +317,9 @@ append the value to the list.'''
         
     def flat(self, version, status):
         vs = version + (status,)
-        h = 'HTTP/{0}.{1} {2}'.format(*vs) 
-        f = ''.join(("{0}: {1}\r\n".format(n, v) for n, v in self))
-        return '{0}\r\n{1}\r\n'.format(h,f)
+        h = 'HTTP/%s.%s %s' % vs 
+        f = ''.join(("%s: %s\r\n" % kv for kv in iteritems(self)))
+        return '%s\r\n%s\r\n' % (h, f)
     
     @property
     def vary_headers(self):
@@ -587,7 +597,8 @@ class HttpHandler(urllibr.AbstractHTTPHandler):
 class HttpClient(urllibr.OpenerDirector):
     '''A client of a networked server'''
     Connections = {'http': HTTPConnection}
-    DEFAULT_HTTP_HEADERS = Headers('client',[('Connection', 'Keep-Alive')])
+    DEFAULT_HTTP_HEADERS = Headers([('Connection', 'Keep-Alive')],
+                                   kind='client')
     
     def __init__(self, proxy_info = None, timeout=None, cache = None,
                  headers=None, encode_multipart=True, client_version=None,

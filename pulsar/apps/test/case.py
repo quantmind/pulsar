@@ -3,7 +3,7 @@ import io
 import pickle
 from inspect import istraceback, isclass
 
-from pulsar import is_failure, CLEAR_ERRORS, WorkerRequest, make_async, Failure
+from pulsar import is_failure, CLEAR_ERRORS, make_async, safe_async
 
 
 __all__ = ['TestRequest','run_test_function']
@@ -22,11 +22,7 @@ class CallableTest(object):
     __str__ = __repr__
     
     def __call__(self, actor):
-        try:
-            res = self._call(actor)
-        except:
-            res = Failure(sys.exc_info())
-        return make_async(res, max_errors = self.max_errors)
+        return safe_async(lambda: self._call(actor), max_errors=1)
     
     def _call(self, actor):
         self.test = pickle.loads(self.test)
@@ -94,8 +90,8 @@ For example::
             test.worker = None
             try:
                 pcls = pickle.dumps(test)
-            except:
-                func = lambda : Failure(sys.exc_info())
+            except Exception as e:
+                result = e
             else:
                 c = CallableTest(pcls, class_method, func.__name__, istest)
                 result = worker.arbiter.send(worker, 'run', c)
@@ -112,8 +108,8 @@ For example::
         return make_async(e)
 
 
-class TestRequest(WorkerRequest):
-    '''A :class:`pulsar.WorkerRequest` class which wraps a test case class
+class TestRequest(object):
+    '''A class which wraps a test case class
     
 .. attribute:: testcls
 
@@ -170,7 +166,7 @@ following algorithm:
                                                         'tearDownClass',None))
                 if outcome is not None:
                     yield outcome
-                    self.add_failure(test, runner, outcome.result)
+                    self.add_failure(test_cls, runner, outcome.result)
             
             del testcls.worker
         

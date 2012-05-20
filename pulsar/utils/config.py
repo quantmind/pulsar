@@ -18,7 +18,7 @@ import types
 
 from pulsar import __version__, SERVER_NAME
 from . import system
-from .httpurl import is_string_or_native_string, to_string
+from .httpurl import is_string_or_native_string, to_string, to_bytes
 
 
 __all__ = ['Config',
@@ -202,7 +202,7 @@ settings via the :meth:`Setting.add_argument`.
     def address(self):
         bind = self.settings['bind']
         if bind:
-            return system.parse_address(to_bytestring(bind.get()))
+            return system.parse_address(to_bytes(bind.get()))
         
     @property
     def uid(self):

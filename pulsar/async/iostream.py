@@ -7,7 +7,7 @@ from collections import deque
 from threading import current_thread
 
 from pulsar.utils.system import IObase
-from pulsar import create_client_socket
+from pulsar import create_client_socket, wrap_socket
 
 from .defer import Deferred, is_async, is_failure
 from .eventloop import thread_ioloop, deferred_timeout
@@ -16,16 +16,6 @@ iologger = logging.getLogger('pulsar.iostream')
 
 
 __all__ = ['AsyncIOStream']
-
-
-def make_callback(callback, errback, description=None):
-    '''Create a :class:`Deferred` which will be called upon completion
-of an IO operation.'''
-    d = Deferred(description=description)
-    if callback:
-        return d.add_callback(callback, errback)
-    else:
-        return d
 
 
 class AsyncIOStream(IObase):
@@ -42,17 +32,13 @@ manipulated and adapted to pulsar :ref:`concurrent framework <design>`.
 :parameter kwargs: dictionary of auxiliar parameters passed to the
     :meth:`on_init` callback.
 '''
-    STATE_STRING = {IObase.READ: 'read',
-                    IObase.WRITE: 'write',
-                    IObase.NONE: 'idle'}
-    
     _socket = None
     _state = None
-    _connecting = False
     MAX_BODY = 1024 * 128
     def __init__(self, socket=None, max_buffer_size=None,
-                 read_chunk_size=None, **kwargs):
+                 read_chunk_size=None, timeout = 5, **kwargs):
         self.socket = socket
+        self.timeout = timeout
         self.max_buffer_size = max_buffer_size or 104857600
         self.read_chunk_size = read_chunk_size or io.DEFAULT_BUFFER_SIZE
         self._read_buffer = deque()
@@ -64,16 +50,35 @@ manipulated and adapted to pulsar :ref:`concurrent framework <design>`.
         self._close_callback = None
         self._connect_callback = None
         self.log = iologger
-        self.ioloop = thread_ioloop()
     
     def __repr__(self):
         if self._socket:
-            return '%s %s' % (self._socket, self.state_code)
+            return '%s (%s)' % (self._socket, self.state_code)
         else:
-            return 'closed'
+            return '(closed)'
     
     def __str__(self):
         return self.__repr__()
+    
+    #######################################################    STATES
+    @property
+    def connecting(self):
+        return self._connect_callback is not None
+    
+    @property
+    def reading(self):
+        """Returns true if we are currently reading from the stream."""
+        return self._read_callback is not None
+
+    @property
+    def writing(self):
+        """Returns true if we are currently writing to the stream."""
+        return bool(self._write_buffer)
+    
+    @property
+    def closed(self):
+        '''Boolean indicating if the stream is closed.'''
+        return self.socket is None
     
     @property
     def state(self):
@@ -81,7 +86,20 @@ manipulated and adapted to pulsar :ref:`concurrent framework <design>`.
     
     @property
     def state_code(self):
-        return self.STATE_STRING.get(self._state, 'unknown')
+        s = []
+        if self.closed:
+            return 'closed'
+        if self.connecting:
+            s.append('connecting')
+        if self.writing:
+            s.append('writing')
+        if self.reading:
+            s.append('reading')
+        return ' '.join(s) if s else 'idle'
+    
+    @property
+    def ioloop(self):
+        return thread_ioloop()
     
     def fileno(self):
         '''Return the file descriptor of the socket.'''
@@ -96,7 +114,7 @@ manipulated and adapted to pulsar :ref:`concurrent framework <design>`.
     
     def _set_socket(self, sock):
         if self._socket is None:
-            self._socket = sock
+            self._socket = wrap_socket(sock)
             self._state = None
             if self._socket is not None:
                 self._socket.setblocking(0)
@@ -107,7 +125,7 @@ manipulated and adapted to pulsar :ref:`concurrent framework <design>`.
     socket = property(_get_socket, _set_socket)
     
     #######################################################    ACTIONS
-    def connect(self, address, callback=None, errback=None):
+    def connect(self, address):
         """Connects the socket to a remote address without blocking.
 May only be called if the socket passed to the constructor was not available
 or it was not previously connected.  The address parameter is in the
@@ -119,7 +137,7 @@ connection is pending, in which case the data will be written
 as soon as the connection is ready.  Calling IOStream read
 methods before the socket is connected works on some platforms
 but is non-portable."""
-        if self._state is None and not self._connecting:
+        if self._state is None and not self.connecting:
             if self.socket is None:
                 self.socket = create_client_socket(address)
             try:
@@ -128,9 +146,7 @@ but is non-portable."""
                 # In non-blocking mode connect() always raises an exception
                 if e.args[0] not in (errno.EINPROGRESS, errno.EWOULDBLOCK):
                     raise
-            self._connecting = True
-            d = make_callback(callback, errback,
-                      description = '%s connect callback' % self)
+            d = Deferred(description = '%s connect callback' % self)
             self._connect_callback = d.callback
             return self._add_io_state(self.WRITE, d)
         else:
@@ -140,7 +156,7 @@ but is non-portable."""
             else:
                 raise RuntimeError('Cannot connect while connecting.')
         
-    def read(self, callback=None, errback=None, length=None):
+    def read(self, length=None):
         """Reads data from the socket.
 The callback will be called with chunks of data as they become available.
 If no callback is provided, the callback of the returned deferred instance
@@ -158,36 +174,40 @@ One common pattern of usage::
     io.read().add_callback(parse)
     
 """
-        assert not self.reading(), "Already reading"
-        d = make_callback(callback, errback,
-                          description='%s read callback' % self)
-        if self.closed():
-            self._run_callback(d.callback, self._get_buffer())
-            return
+        assert not self.reading, "Already reading"
+        d = Deferred(description='%s read callback' % self)
+        if self.closed:
+            data = self._get_buffer(self._read_buffer)
+            if data:
+                self._run_callback(d.callback, data)
+                return d
+            else:
+                return
         self._read_callback = d.callback
         self._read_length = length
-        return self._add_io_state(self.ioloop.READ, d)
+        return self._add_io_state(self.READ, d)
     
-    def write(self, data, callback=None, errback=None):
-        """Write the given data to this stream. If callback is given,
-we call it when all of the buffered write data has been successfully
-written to the stream. If there was previously buffered write data and
-an old write callback, that callback is simply overwritten with
-this new callback.
+    def write(self, data):
+        """Write the given data to this stream. If there was previously
+buffered write data and an old write callback, that callback is simply
+overwritten with this new callback.
 
 :parameter callback: Optional callback function with arity 0.
-:rtype: a :class:`pulsar.Deferred` instance.
+:rtype: a :class:`Deferred` instance.
         """
-        d = make_callback(callback, errback,
-                          description='%s write callback' % self)
-        try:
-            self._check_closed()
-        except:
-            d.add_callback(sys.exc_info())
+        if data:
+            d = Deferred(description='%s write callback' % self)
+            try:
+                self._check_closed()
+            except Exception as e:
+                d.callback(e)
+                return d
+            self._write_callback = d.callback
+            self._write_buffer.append(data)
+            self._handle_write()
+            if self._write_buffer:
+                return self._add_io_state(self.WRITE, d)
             return d
-        self._write_callback = d.callback
-        self._write_buffer.append(data)
-        return self._add_io_state(self.ioloop.WRITE, d)
     
     def close(self):
         """Close this stream."""
@@ -200,22 +220,6 @@ this new callback.
             if self._close_callback:
                 self._run_callback(self._close_callback)
                 
-    #######################################################    STATES
-    def connecting(self):
-        return self._connecting
-    
-    def reading(self):
-        """Returns true if we are currently reading from the stream."""
-        return self._state == self.READ
-
-    def writing(self):
-        """Returns true if we are currently writing to the stream."""
-        return bool(self._write_buffer)
-    
-    def closed(self):
-        '''Boolean indicating if the stream is closed.'''
-        return self.socket is None
-    
     #######################################################    INTERNALS
     def read_to_buffer(self):
         """Reads from the socket and appends the result to the read buffer.
@@ -269,7 +273,6 @@ On error closes the socket and raises an exception."""
         callback = self._connect_callback
         self._connect_callback = None
         self._run_callback(callback)
-        self._connecting = False
         
     def _handle_read(self):
         try:
@@ -367,7 +370,7 @@ On error closes the socket and raises an exception."""
             if not self.socket:
                 return
             if events & self.WRITE:
-                if self._connecting:
+                if self.connecting:
                     self._handle_connect()
                 self._handle_write()
             if not self.socket:
@@ -378,16 +381,16 @@ On error closes the socket and raises an exception."""
                 # callbacks have had a chance to run.
                 self.ioloop.add_callback(self.close)
                 return
-            state = self.ioloop.ERROR
-            if self.reading():
+            state = self.ERROR
+            if self.reading:
                 state |= self.READ
-            if self.writing():
+            if self.writing:
                 state |= self.WRITE
             if state != self._state:
                 assert self._state is not None, \
                     "shouldn't happen: _handle_events without self._state"
                 self._state = state
-                self.ioloop.update_handler(self.socket.fileno(), self._state)
+                self.ioloop.update_handler(self.fileno(), self._state)
         except:
             self.close()
             raise
@@ -397,12 +400,12 @@ On error closes the socket and raises an exception."""
             # connection has been closed, so there can be no future events
             return
         if self._state is None:
-            self._state = self.ioloop.ERROR | state
+            self._state = self.ERROR | state
             self.ioloop.add_handler(
                 self, self._handle_events, self._state)
         elif not self._state & state:
             self._state = self._state | state
             self.ioloop.update_handler(
                 self.fileno(), self._state)
-        return deferred_timeout(deferred, self.ioloop).value
+        return deferred_timeout(deferred, self.ioloop, timeout=self.timeout)
 

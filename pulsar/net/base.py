@@ -22,10 +22,6 @@ class NetStream(object):
     
     def fileno(self):
         return self.stream.fileno()
-    
-    @property
-    def actor(self):
-        return self.stream.actor
             
     def close(self):
         '''Close the :class:`NetStream` by calling the
@@ -102,10 +98,11 @@ class NetRequest(NetStream):
     
         
 class NetResponse(NetStream):
-    
+    '''Base class for responses'''
     def __init__(self, request, stream=None, **kwargs):
         self.request = request
         timeout = kwargs.pop('timeout', request.timeout)
+        stream = stream or request.stream
         super(NetResponse, self).__init__(stream, timeout=timeout, **kwargs)
     
     

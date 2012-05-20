@@ -1,10 +1,10 @@
 '''The :mod:`pulsar.apps.ws` contains a WSGI compatible implementation
 of the WebSocket_ protocol.
 
-WebSockets allow for bidirectional communication between the browser
-and server..The implementation uses the WSGI middleware
-:class:`WebSocket` which implements the handshake and the
-:class:`WS` handler for the communication part. 
+Web sockets allow for bidirectional communication between the browser
+and server. Pulsar implementation uses the WSGI middleware
+:class:`WebSocket` for the handshake and a class derived from
+:class:`WS` for the communication part. 
 
 .. _WebSocket: http://tools.ietf.org/html/rfc6455
 

@@ -215,7 +215,7 @@ configuration and plugins.'''
             
     def handle_request(self, worker, request):
         yield request.run(worker)
-        yield request.response()
+        yield request
         
     def actor_test_result(self, sender, worker, result):
         self.runner.add(result)

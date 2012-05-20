@@ -29,20 +29,12 @@ import os
 import re
 import sys
 import zlib
+from collections import deque
 
 from pulsar.utils.httpurl import *
 
 
-__all__ = ['HttpParser',
-           'HTTP_BOTH',
-           'HTTP_RESPONSE',
-           'HTTP_REQUEST']
-
-
-#same as http-parser
-HTTP_REQUEST = 0
-HTTP_RESPONSE = 1
-HTTP_BOTH = 2
+__all__ = ['HttpParser']
 
 
 METHOD_RE = re.compile("[A-Z0-9$-_.]{3,20}")
@@ -69,13 +61,10 @@ class InvalidChunkSize(Exception):
 class HttpParser(object):
     '''A python version of the http-parser'''
     def __init__(self, kind=2, decompress=False):
-        self.kind = kind
         self.decompress = decompress
-
         # errors vars
         self.errno = None
         self.errstr = ""
-        
         # protected variables
         self._buf = [] 
         self._version = None
@@ -88,7 +77,7 @@ class HttpParser(object):
         self._path = None
         self._query_string = None
         self._fragment= None
-        self._headers = Headers()
+        self._headers = Headers(kind=kind)
         self._chunked = False
         self._body = []
         self._trailers = None
@@ -103,6 +92,10 @@ class HttpParser(object):
         self.__on_message_complete = False
         
         self.__decompress_obj = None
+        
+    @property
+    def kind(self):
+        return self._headers.kind_number
         
     def get_version(self):
         return self._version
@@ -198,7 +191,7 @@ class HttpParser(object):
                 else:
                     self.__on_firstline = True
                     self._buf.append(data[:idx])
-                    first_line = bytes_to_str(b''.join(self._buf))
+                    first_line = to_string(b''.join(self._buf))
                     nb_parsed = nb_parsed + idx + 2
                     
                     rest = data[idx+2:]
@@ -312,14 +305,14 @@ class HttpParser(object):
             return False
 
         # Split lines on \r\n keeping the \r\n on each line
-        lines = [bytes_to_str(line) + "\r\n" for line in
-                data[:idx].split(b'\r\n')]
+        lines = deque(('%s\r\n' % to_string(line) for line in
+                       data[:idx].split(b'\r\n')))
        
         # Parse headers into key/value pairs paying attention
         # to continuation lines.
         while len(lines):
             # Parse initial header name : value pair.
-            curr = lines.pop(0)
+            curr = lines.popleft()
             if curr.find(":") < 0:
                 raise InvalidHeader("invalid line %s" % curr.strip())
             name, value = curr.split(":", 1)
@@ -330,7 +323,7 @@ class HttpParser(object):
             
             # Consume value continuation lines
             while len(lines) and lines[0].startswith((" ", "\t")):
-                value.append(lines.pop(0))
+                value.append(lines.popleft())
             value = ''.join(value).rstrip()
             
             # multiple headers

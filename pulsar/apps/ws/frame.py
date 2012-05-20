@@ -32,7 +32,7 @@ def frame(version = None, binary = True, close = False, message = b'',
     
 :rtype: binary data'''
     v = int(version or 8)
-    if v in (8,13):
+    if v in (8, 13):
         if close:
             f = Frame8(0x8,b'',fin=True)
         else:
@@ -52,7 +52,7 @@ class Frame8(object):
     def __init__(self, opcode=None, body=None, masking_key=None,
                  fin=0, rsv1=0, rsv2=0, rsv3=0):
         """Implements the framing protocol as defined by hybi_
-specification supporting protocol version 8::
+specification supporting protocol version 13::
     
     >>> f = Frame(opcode, 'hello world', os.urandom(4), fin=1)
     >>> data = f.build()
@@ -83,22 +83,21 @@ specification supporting protocol version 8::
         if opcode == 0x1:
             # UTF-8 data
             msg = self.body.decode("utf-8", "replace")
-            handler.on_message(msg)
+            return handler.on_message(msg)
         elif opcode == 0x2:
             # Binary data
-            handler.on_message(self.body)
+            return handler.on_message(self.body)
         elif opcode == 0x8:
             # Close
-            handler.close()
+            return handler.close()
         elif opcode == 0x9:
             # Ping
-            msg = self.__class__(0xA,data,fin=True)._msg
-            handler._write_message(msg)
+            return self.__class__(0xA,data,fin=True)._msg
         elif opcode == 0xA:
             # Pong
             pass
         else:
-            handler.abort()
+            return handler.abort()
     
     def set_body(self, body):
         self.body = body
@@ -227,10 +226,11 @@ class FrameParser(object):
             frame.rsv2 = (first_byte >> 5) & 1
             frame.rsv3 = (first_byte >> 4) & 1
             frame.opcode = first_byte & 0xf
-            if frame.fin not in (0,1):
+            if frame.fin not in (0, 1):
                 raise WebSocketProtocolError('FIN must be 0 or 1')
             if frame.rsv1 or frame.rsv2 or frame.rsv3:
-                raise WebSocketProtocolError('RSV must be 0')
+                pass
+                #raise WebSocketProtocolError('RSV must be 0')
             if not (second_byte & 0x80):
                 raise WebSocketProtocolError(\
                             'Unmasked frame. Abort connection')
@@ -260,7 +260,7 @@ class FrameParser(object):
                 return self.save_buf(frame, data)
             
             # The mask is 4 bits
-            frame.masking_key,data = data[:4],data[4:]
+            frame.masking_key, data = data[:4], data[4:]
                 
         if len(data) < frame.payload_length:
             return self.save_buf(frame, data)

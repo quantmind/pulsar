@@ -13,10 +13,9 @@ from pulsar.utils.tools import gen_unique_id
 from pulsar.utils.log import Synchronized
 from pulsar.utils.structures import WeakList
 
-from .defer import Deferred, is_async, maybe_async
+from .defer import Deferred, is_async, maybe_async, thread_ioloop
 
-
-__all__ = ['IOLoop', 'thread_ioloop', 'deferred_timeout']
+__all__ = ['IOLoop', 'deferred_timeout']
 
 def file_descriptor(fd):
     if hasattr(fd,'fileno'):
@@ -477,7 +476,7 @@ class PeriodicCallback(object):
             self.start()
 
 
-class deferred_timeout(object):
+class DeferredTimeout(object):
     
     def __init__(self, value, ioloop=None, timeout=5):
         self._value = maybe_async(value)
@@ -485,10 +484,6 @@ class deferred_timeout(object):
         self._timeout = timeout
         self._start = None
         self.__call__(False)
-    
-    @property
-    def value(self):
-        return self._value
     
     def __call__(self, check_timeout=True):
         if self._value.called:
@@ -504,3 +499,9 @@ class deferred_timeout(object):
             self._start = time.time()
         self._ioloop.add_callback(self)
         
+
+def deferred_timeout(value, ioloop=None, timeout=5):
+    if timeout:
+        return DeferredTimeout(value, ioloop, timeout)._value
+    else:
+        return value

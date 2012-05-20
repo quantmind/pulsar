@@ -6,7 +6,7 @@ import random
 from inspect import isgenerator, isfunction
 
 import pulsar
-from pulsar import Empty, make_async, is_failure, Failure, HaltServer,\
+from pulsar import Empty, make_async, is_failure, HaltServer,\
                      deferred_timeout, ispy3k
 from pulsar.async.defer import pickle
 from pulsar.utils.importer import import_module
@@ -15,14 +15,10 @@ from pulsar.utils import system
 from pulsar.utils.config import Setting
 #from pulsar.utils import debug
 
-__all__ = ['Worker',
-           'Application',
+__all__ = ['Application',
            'ApplicationHandlerMixin',
-           'ApplicationMonitor',
-           'WorkerRequest',
-           'Response',
-           'require',
-           'ResponseError']
+           'Worker',
+           'ApplicationMonitor']
 
 
 if ispy3k:
@@ -33,57 +29,6 @@ if ispy3k:
             locals = sys._getframe(1).f_locals
         with open(filename, "r") as fh:
             exec(fh.read()+"\n", globals, locals)
-    
-def require(appname):
-    '''Shortcut function to load an application'''
-    apps = appname.split('.')
-    if len(apps) == 1:
-        module = 'pulsar.apps.{0}'.format(appname)
-    else:
-        module = appname
-    mod = import_module(module)
-    return mod
-
-
-class WorkerRequest(object):
-    timeout = None
-    def response(self):
-        return self
-    
-    def close(self):
-        pass
-    
-    
-class Response(object):
-    '''A mixin for pulsar response classes'''
-    exception = None
-    def __init__(self, request):
-        self.request = request
-        
-    def close(self):
-        pass
-
-
-class ResponseError(pulsar.PulsarException, Response):
-    
-    def __init__(self, request, failure):
-        pulsar.Response.__init__(self, request)
-        self.exception = Failure(failure)
-    
-    def close(self):
-        return self.request.close()
-        
-        
-def make_response(request, response, err = None):
-    if is_failure(response):
-        response = ResponseError(request,response)
-    if err:
-        if not hasattr(response,'exception'):
-            response = ResponseError(request,err)
-        else:
-            response.exception = err.append(response.exception)
-    return response
-
 
 def halt_server(f):
     '''Halt server decorator'''
@@ -105,7 +50,7 @@ def halt_server(f):
 
 class ApplicationHandlerMixin(object):
     '''A mixin for both :class:`Worker` and :class:`ApplicationMonitor`.
-It implements :meth:`handle_request` and :meth:`close_response`
+It implements the :meth:`handle_request` actor method
 used for by the :class:`Application` for handling requests and
 sending back responses.
 '''
@@ -123,22 +68,6 @@ sending back responses.
         except:
             pass
         self.app.worker_task(self)
-        
-    def _response_generator(self, request):
-        try:
-            self.cfg.pre_request(self, request)
-        except Exception:
-            pass
-        try:
-            response = self.app.handle_request(self, request)
-        except:
-            response = ResponseError(request,sys.exc_info())
-        
-        response = make_async(response)
-        yield response
-        response = make_response(request, response.result)
-        yield response.close()
-        yield response
         
     def handle_message(self, sender, message):
         '''Handle a *message* from a *sender*.'''
@@ -158,35 +87,42 @@ After obtaining the result from the
         request = self.app.request_instance(request)
         timeout = getattr(request, 'timeout', None)
         should_stop = self.max_requests and self.nr >= self.max_requests
-        d = make_async(self._response_generator(request)).addBoth(
-               lambda res : self.close_response(request, res, should_stop))
-        # start the deferred in the actor loop
-        if timeout:
-            deferred_timeout(d, self.ioloop, timeout)
-        
-    def close_response(self, request, response, should_stop):
-        '''Close the response. This method should be called by the
-:meth:`Application.handle_response` once done.'''
-        response = make_response(request, response)
-        
-        if response and response.exception:
-            response.exception.log(self.log)
-                        
-        try:
-            self.cfg.post_request(self, request)
-        except:
-            pass
-        
-        if should_stop:
-            self.log.info("Auto-restarting worker.")
-            self.stop()
+        d = make_async(self._response_generator(request, should_stop))
+        return deferred_timeout(d, self.ioloop, timeout)
     
     def configure_logging(self, config = None):
         # Delegate to application
         self.app.configure_logging(config = config)
         self.loglevel = self.app.loglevel
         self.setlog()
-
+    
+    # Internals
+    def _response_generator(self, request, should_stop):
+        try:
+            self.cfg.pre_request(self, request)
+        except Exception:
+            pass
+        try:
+            response = self.app.handle_request(self, request)
+        except Exception as e:
+            response = e
+        response = make_async(response)
+        yield response
+        response = response.result
+        if is_failure(response):
+            response.log(self.log)
+        else:
+            close = getattr(response, 'close', None)
+            if hasattr(close,'__call__'):
+                yield close()
+        try:
+            self.cfg.post_request(self, request)
+        except:
+            pass
+        if should_stop:
+            self.log.info("Auto-restarting worker.")
+            self.stop()
+        
 
 class Worker(ApplicationHandlerMixin,pulsar.Actor):
     """\
@@ -455,13 +391,13 @@ By default it returns the :attr:`Application.callable`.'''
         return self.callable
     
     def request_instance(self, request):
-        '''Given a request raiosed from an event, build the request for the
- :meth:`handle_request` method. By default it returns ``request``.'''
+        '''Given a request raised from an event, build the request for the
+:meth:`handle_request` method. By default it returns ``request``.'''
         return request
     
     def handle_message(self, sender, receiver, message):
         '''Handle messages for the *receiver*.'''
-        handler = getattr(self,'actor_' + message.action,None)
+        handler = getattr(self, 'actor_' + message.action, None)
         if handler:
             return handler(sender, receiver, *message.args, **message.kwargs)
         else:
@@ -476,7 +412,7 @@ a *request*.
 :parameter request: an application specific request object.
 :rtype: It can be a generator, a :class:`Deferred` instance
     or the actual response.'''
-        raise NotImplementedError
+        raise NotImplementedError()
     
     def get_ioqueue(self):
         '''Returns an I/O distributed queue for the application if one

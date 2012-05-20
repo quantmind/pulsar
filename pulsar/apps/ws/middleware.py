@@ -19,7 +19,7 @@ else:
     from urlparse import parse_qs
 
 
-from .frame import FrameParser
+from .frame import FrameParser, WebSocketError
 
 
 __all__ = ['WebSocket', 'SocketIOMiddleware']
@@ -27,10 +27,13 @@ __all__ = ['WebSocket', 'SocketIOMiddleware']
 
 class GeneralWebSocket(object):
     namespace = ''
-    environ_version = None
+    extensions = ['x-webkit-deflate-frame']
     
-    def __init__(self, handle, namespace = None, clients = None):
+    def __init__(self, handle, namespace=None, clients=None, extensions=None):
         self.handle = handle
+        if extensions is None:
+            extensions = self.extensions
+        self.extensions = extensions
         self._clients = clients if clients is not None else {}
         self.namespace = namespace if namespace is not None else self.namespace
     
@@ -38,7 +41,7 @@ class GeneralWebSocket(object):
     def clients(self):
         return frozenset(itervalues(self._clients))
 
-    def get_client(self, id = ''):
+    def get_client(self, id=''):
         client = self._clients.get(id)
         if client is None:
             client = self.handle(self)
@@ -79,14 +82,13 @@ a valid :class:`WebSocket` instance initialise as follow::
     wsgi.createServer(callable = app).start()
 
 
-See http://www.w3.org/TR/websockets/ for details on the
-JavaScript interface.
+See http://tools.ietf.org/html/rfc6455 for the websocket server protocol and
+http://www.w3.org/TR/websockets/ for details on the JavaScript interface.
     """
     VERSIONS = ('8','13')
     WS_KEY = '258EAFA5-E914-47DA-95CA-C5AB0DC85B11'
     #magic string
     STATUS = "101 Switching Protocols"
-    environ_version = 'HTTP_SEC_WEBSOCKET_VERSION'
     
     def handle_handshake(self, environ, start_response):
         connections = environ.get("HTTP_CONNECTION", '').lower()\
@@ -96,15 +98,16 @@ JavaScript interface.
             return
         
         if environ['REQUEST_METHOD'].upper() != 'GET':
-            raise WebSocketError(400,reason = 'Method is not GET')
+            raise WebSocketError(400, reason='Method is not GET')
         
         key = environ.get('HTTP_SEC_WEBSOCKET_KEY')
         if key:
             ws_key = base64.b64decode(key.encode('latin-1'))
             if len(ws_key) != 16:
-                raise WebSocketError(400,"WebSocket key's length is invalid")
+                raise WebSocketError(400, "WebSocket key's length is invalid")
         else:
-            raise WebSocketError(400,"Not a valid HyBi WebSocket request")
+            raise WebSocketError(400, 'Not a valid HyBi WebSocket request. '
+                                      'Missing Sec-Websocket-Key header.')
         
         version = environ.get('HTTP_SEC_WEBSOCKET_VERSION')
         if version not in self.VERSIONS:
@@ -124,6 +127,7 @@ JavaScript interface.
         ws_extensions = []
         extensions = environ.get('HTTP_SEC_WEBSOCKET_EXTENSIONS')
         if extensions:
+            exts = self.extensions
             for ext in extensions.split(','):
                 ext = ext.strip()
                 if ext in exts:
@@ -144,7 +148,9 @@ JavaScript interface.
         
         start_response(self.STATUS, headers)
         client = self.get_client()
-        return client.start(environ, ws_protocols, ws_extensions)
+        stream = environ['pulsar.stream']
+        return client.start(environ, stream, version,
+                            ws_protocols, ws_extensions)
         
     def challenge_response(self, key):
         sha1 = hashlib.sha1(to_bytes(key+self.WS_KEY))
@@ -172,8 +178,9 @@ class SocketIOMiddleware(GeneralWebSocket):
         'websocket': WebSocket
     }
     
-    def __init__(self, handle, namespace = None):
-        super(SocketIOMiddleware, self).__init__(handle,namespace)
+    def __init__(self, handle, namespace=None, extensions=None):
+        super(SocketIOMiddleware, self).__init__(handle,namespace=namespace,
+                                                 extensions=extensions)
         ht = self.handler_types
         self._middlewares = dict(((k,ht[k](handle,\
                                     clients = self._clients)) for k in ht))

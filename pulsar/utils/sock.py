@@ -86,9 +86,12 @@ create_client_socket = lambda address: create_socket(address, bound=True)
 
 def wrap_socket(sock):
     '''Wrap a python socket with pulsar :class:`Socket`.'''
-    address = sock.getsockname()
-    sock_type = create_socket_address(address)
-    return sock_type(fd=sock,bound=True,backlog=None)
+    if sock and not isinstance(sock, Socket):
+        address = sock.getsockname()
+        sock_type = create_socket_address(address)
+        return sock_type(fd=sock,bound=True,backlog=None)
+    else:
+        return sock
 
 
 def socket_pair(backlog = 2048, log = None):

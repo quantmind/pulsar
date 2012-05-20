@@ -1,7 +1,7 @@
 Event driven concurrent framework for python. Tested in Windows and Linux,
 it requires python 2.6 and up, including python 3.
 With pulsar you can write asynchronous servers performing one or several
-activities in different threads and or processes.
+activities in different threads and/or processes.
 
 An example of a web server written with ``pulsar`` application
 framework which responds with "Hello World!" for every request::
