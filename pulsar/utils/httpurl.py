@@ -463,13 +463,6 @@ http://www.ietf.org/rfc/rfc2616.txt
     
     @property
     def key(self):
-        #if self.has_proxy():
-        #    r = urlparse(self.selector)
-        #    host, port = splitport(r.netloc)
-        #    return (r.scheme, host, port)
-        #else:
-        #    host, port = self.host_port()
-        #    return (self.type, host, port)
         host, port = self.host_and_port()
         return (self.type, host, port)            
             
@@ -596,6 +589,7 @@ class HttpHandler(urllibr.AbstractHTTPHandler):
     
 class HttpClient(urllibr.OpenerDirector):
     '''A client of a networked server'''
+    request_class = Request
     Connections = {'http': HTTPConnection}
     DEFAULT_HTTP_HEADERS = Headers([('Connection', 'Keep-Alive')],
                                    kind='client')
@@ -638,10 +632,10 @@ object.'''
         headers = self.get_headers(headers)
         encode_multipart = encode_multipart if encode_multipart is not None\
                             else self.encode_multipart
-        request = Request(url, method=method, data=body,
-                          headers=headers, timeout=timeout,
-                          encode_multipart=encode_multipart,
-                          multipart_boundary=self.multipart_boundary)
+        request = self.request_class(url, method=method, data=body,
+                                     headers=headers, timeout=timeout,
+                                     encode_multipart=encode_multipart,
+                                     multipart_boundary=self.multipart_boundary)
         # pre-process request
         protocol = request.type
         meth_name = protocol+"_request"
@@ -651,9 +645,6 @@ object.'''
             
         response = self._open(request, request.data)
         return response.post_process_response(self, request)
-        
-    def open(self, url, data=None, timeout=None):
-        return self.request(url, data, timeout=timeout)
     
     def get_connection(self, request):
         key = request.key

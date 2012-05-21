@@ -9,17 +9,32 @@ HttpClient = httpurl.HttpClient
 
 __all__ = ['HttpClient']
 
+class Request(base.NetRequest, httpurl.Request):
 
-class HttpClientResponse(base.ClientResponse, httpurl.HTTPResponse):
+    def default_parser(self):
+        return lib.Http_Parser
+        
+    
+class HttpClient(httpurl.HttpClient):
+    request_class = Request
+
+
+class HttpClientResponse(base.NetResponse, httpurl.HTTPResponse, Deferred):
     
     def start_request(self, result):
+        req = self.request
         try:
-            self.request._send_request(method, path, body, headers)
+            request._send_request(method, path, body, headers)
+            self.begin()
         except Exception as e:
             self.callback(e)
-                
+    
+    def begin(self, data=None):
+        if data is None:
+            self.stream.read().add_callback(self.begin)
+        
     def post_process_response(self, client, req):
-        call = super(HttpClientResponse, self).post_process_response
+        call = httpurl.HTTPResponse.post_process_response
         self.add_callback(lambda r: call(client, req))
         return self
 
