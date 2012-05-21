@@ -1,6 +1,10 @@
 '''tests the httpurl stand-alone script.'''
+from pulsar import make_async
 from pulsar.utils.test import test
+from pulsar.apps.test import test_server
 from pulsar.utils import httpurl
+
+from examples.httpbin.manage import server
 
 BIN_HOST = 'httpbin.org'
 HTTPBIN_URL = 'http://' + BIN_HOST + '/'
@@ -33,11 +37,6 @@ class TestHeaders(test.TestCase):
         self.assertEqual(tuple(h),('Connection', 'Content-Type'))
         h.update({'server': 'foo'})
         self.assertEqual(tuple(h),('Connection', 'Server', 'Content-Type'))
-        
-        
-def httpbin(*suffix):
-    """Returns url for HTTPBIN resource."""
-    return HTTPBIN_URL + '/'.join(suffix)
 
 
 def httpsbin(*suffix):
@@ -46,33 +45,75 @@ def httpsbin(*suffix):
 
 
 class TestHttpClient(test.TestCase):
+    HttpClient = httpurl.HttpClient
     
+    @classmethod
+    def setUpClass(cls):
+        s = test_server(server,
+                        bind='127.0.0.1:0',
+                        concurrency='thread',
+                        workers=0)
+        outcome = cls.worker.run_on_arbiter(s)
+        yield outcome
+        app = outcome.result
+        cls.app = app
+        cls.uri = 'http://{0}:{1}'.format(*app.address)
+        
+    @classmethod
+    def tearDownClass(cls):
+        return cls.worker.arbiter.send(cls.worker,'kill_actor',cls.app.mid)
+        
     def setUp(self):
         proxy = self.worker.cfg.http_proxy
         proxy_info = {}
         if proxy:
             proxy_info['http'] = proxy
-        self.r = httpurl.HttpClient(proxy_info=proxy_info)
-         
-    def test_http_200_get(self):
-        r = self.r.get(httpbin())
+        self.r = self.HttpClient(proxy_info=proxy_info)
         
+    def httpbin(self, *suffix):
+        if suffix:
+            return self.uri + '/' + '/'.join(suffix)
+        else:
+            return self.uri
+ 
+    def make_async(self, r):
+        return make_async(r)
+    
+    def test_http_200_get(self):
+        r = self.make_async(self.r.get(self.httpbin()))
+        yield r
+        r = r.result
         self.assertEqual(r.status_code, 200)
         self.assertEqual(r.response, 'OK')
         self.assertTrue(r.content)
-        self.assertEqual(r.url, httpbin())
+        self.assertEqual(r.url, self.httpbin())
         
     def test_http_200_get_data(self):
-        r = self.r.get(httpbin(httpurl.iri_to_uri('get',{'bla':'foo'})))
+        r = self.make_async(self.r.get(self.httpbin('get'),
+                                       body={'bla':'foo'}))
+        yield r
+        r = r.result
         self.assertEqual(r.status_code, 200)
         self.assertEqual(r.response, 'OK')
         result = r.content_json()
         self.assertEqual(result['args'], {'bla':'foo'})
-        self.assertEqual(r.url, httpbin(httpurl.iri_to_uri('get',{'bla':'foo'})))
+        self.assertEqual(r.url,
+                         self.httpbin(httpurl.iri_to_uri('get',{'bla':'foo'})))
+        
+    def test_http_200_gzip(self):
+        r = self.make_async(self.r.get(self.httpbin('gzip')))
+        yield r
+        r = r.result
+        self.assertEqual(r.status_code, 200)
+        self.assertEqual(r.response, 'OK')
+        content = r.content_json()
+        self.assertTrue(content['gzipped'])
         
     def test_http_400_get(self):
         '''Bad request 400'''
-        r = self.r.get(httpbin('status', '400'))
+        r = self.make_async(self.r.get(self.httpbin('status', '400')))
+        yield r
+        r = r.result
         self.assertEqual(r.status_code, 400)
         self.assertEqual(r.response, 'Bad Request')
         self.assertEqual(r.content,b'')
@@ -80,7 +121,9 @@ class TestHttpClient(test.TestCase):
         
     def test_http_404_get(self):
         '''Not Found 404'''
-        r = self.r.get(httpbin('status', '404'))
+        r = self.make_async(self.r.get(self.httpbin('status', '404')))
+        yield r
+        r = r.result
         self.assertEqual(r.status_code, 404)
         self.assertEqual(r.response, 'Not Found')
         self.assertEqual(r.content,b'')
@@ -88,9 +131,35 @@ class TestHttpClient(test.TestCase):
         
     def test_http_post(self):
         data = {'bla': 'foo', 'unz': 'whatz', 'numero': '1'}
-        r = self.r.post(httpbin('post'), body=data)
+        r = self.make_async(self.r.post(self.httpbin('post'), body=data))
+        yield r
+        r = r.result
         self.assertEqual(r.status_code, 200)
         self.assertEqual(r.response, 'OK')
         result = r.content_json()
         self.assertEqual(result['form'], data)
+        
+    def testRedirect(self):
+        r = self.make_async(self.r.get(self.httpbin('redirect','1')))
+        yield r
+        r = r.result
+        self.assertEqual(r.status_code, 302)
+        self.assertEqual(r.response, 'Found')
+        self.assertTrue(r.content)
+        
+    def test_Cookie(self):
+        r = self.make_async(self.r.get(self.httpbin('cookies','set',
+                                                    'bla','foo')))
+        yield r
+        r = r.result
+        self.assertEqual(r.status_code, 302)
+        location = self.httpbin('cookies')
+        self.assertEqual(r.headers['location'], location)
+        #r = self.make_async(self.r.get(self.httpbin('cookies')))
+        #yield r
+        #r = r.result
+        #self.assertEqual(r.status_code, 200)
+        #result = r.content_json()
+        #self.assertEqual(result['cookies']['key'],'bla')
+        #self.assertEqual(result['cookies']['value'],'foo')
         

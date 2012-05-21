@@ -1,13 +1,12 @@
 import socket
 
 import pulsar
-from pulsar import Deferred
+from pulsar import Deferred, deferred_timeout
 
 __all__ = ['NetStream',
            'NetRequest',
            'NetResponse',
-           'ClientConnection',
-           'ClientResponse']
+           'AsyncClientResponse']
 
 
 class NetStream(object):
@@ -57,9 +56,19 @@ class NetStream(object):
     def event_errback(self, event_name, failure):
         cbk = getattr(self, 'errbackk_%' % event_name, None)
         return cbk(failure) if cbk else failure.raise_all()
-
-
-class ClientConnection(NetStream):
+        
+    
+class NetRequest(NetStream):
+    def __init__(self, stream=None, parsercls=None, **kwargs):
+        pcls = parsercls or self.default_parser()
+        self.parser = self.get_parser(pcls, **kwargs) if pcls else None
+        super(NetRequest,self).__init__(stream, **kwargs)
+        
+    def default_parser(self):
+        return None
+        
+    def get_parser(self, parsercls, **kwargs):
+        return parsercls()
     
     def connect(self, address):
         '''Connect to a remote address.'''
@@ -73,29 +82,6 @@ class ClientConnection(NetStream):
                                 self.stream.write,
                                 data)
     
-    
-class ClientResponse(NetStream, Deferred):
-    
-    def __init__(self, request, *args, **kwargs):
-        self.request = request
-        super(ClientResponse, self).__init__(self, *args, **kwargs)
-        Deferred.__init__(self)
-        
-    
-class NetRequest(NetStream):
-    def __init__(self, stream, client_addr = None, parsercls = None, **kwargs):
-        self.parsercls = parsercls or self.default_parser()
-        self.client_address = client_addr
-        self.parser = self.get_parser(**kwargs)
-        super(NetRequest,self).__init__(stream, **kwargs)
-        
-    def default_parser(self):
-        return None
-        
-    def get_parser(self, **kwargs):
-        if self.parsercls:
-            return self.parsercls()
-    
         
 class NetResponse(NetStream):
     '''Base class for responses'''
@@ -105,4 +91,44 @@ class NetResponse(NetStream):
         stream = stream or request.stream
         super(NetResponse, self).__init__(stream, timeout=timeout, **kwargs)
     
+    def done(self):
+        raise NotImplementedError()
+    
+    @property
+    def parser(self):
+        return self.request.parser
+    
+    
+class AsyncClientResponse(NetResponse):
+    '''A class for managing clients asynchronous response'''
+    def __init__(self, *args, **kwargs):
+        self.passed = 0
+        self._event = Deferred()
+        super(AsyncClientResponse, self).__init__(*args, **kwargs)
+        
+    def read(self):
+        return self.parse()
+            
+    def parse(self, data=None):
+        parser = self.parser
+        if data is not None:
+            self.passed += 1
+            try:
+                parser.execute(data, len(data))
+            except Exception as e:
+                self.error(e)
+                return
+        if not self.done():
+            self.stream.read().add_callback(self.parse, self.error)
+        else:
+            self.finish()
+            self._event.callback(self)
+        return self._event
+    
+    def error(self, failure):
+        if not self._event.called:
+            self._event.callback(failure)
+    
+    def finish(self):
+        pass
     

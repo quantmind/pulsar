@@ -83,7 +83,7 @@ Instances are callable using the standard WSGI call::
         self.environ = environ
         self.cookies = SimpleCookie()
         self.content_type = content_type or self.DEFAULT_CONTENT_TYPE
-        self.headers = Headers(response_headers)
+        self.headers = Headers(response_headers, kind='client')
         self.when_ready = Deferred()
         if content is None:
             # no content, get the default content

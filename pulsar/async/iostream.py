@@ -170,7 +170,7 @@ One common pattern of usage::
     def parse(data):
         ...
         
-    io = IOStream(socket = sock)
+    io = AsyncIOStream(socket=sock)
     io.read().add_callback(parse)
     
 """

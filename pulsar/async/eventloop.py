@@ -500,7 +500,7 @@ class DeferredTimeout(object):
         self._ioloop.add_callback(self)
         
 
-def deferred_timeout(value, ioloop=None, timeout=5):
+def deferred_timeout(value, ioloop=None, timeout=3):
     if timeout:
         return DeferredTimeout(value, ioloop, timeout)._value
     else:

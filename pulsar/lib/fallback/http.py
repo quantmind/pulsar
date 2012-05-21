@@ -134,21 +134,6 @@ class HttpParser(object):
         self._partial_body = False
         return body
 
-    def recv_body_into(self, barray):
-        """ Receive the last chunk of the parsed bodyand store the data
-        in a buffer rather than creating a new string. """
-        l = len(barray)
-        body = b''.join(self._body)
-        m = min(len(body), l)
-        data, rest = body[:m], body[m:]
-        barray[0:m] = data
-        if not rest:
-            self._body = []
-            self._partial_body = False
-        else:
-            self._body = [rest]
-        return m
-
     def is_upgrade(self):
         """ Do we get upgrade header in the request. Useful for
         websockets """
@@ -204,11 +189,10 @@ class HttpParser(object):
                 if data:
                     self._buf.append(data)
                     data = b''
-
                 try:
                     to_parse = b''.join(self._buf)
                     ret = self._parse_headers(to_parse)
-                    if not ret:
+                    if ret is False:
                         return length
                     nb_parsed = nb_parsed + (len(to_parse) - ret)
                 except InvalidHeader as e:
@@ -336,16 +320,26 @@ class HttpParser(object):
         # detect now if body is sent by chunks.
         clen = self._headers.get('content-length')
         te = self._headers.get('transfer-encoding', '').lower()
-
-        if clen is not None:
+        self._chunked = (te == 'chunked')
+        if clen and not self._chunked:
             try:
-                self._clen_rest = self._clen = int(clen)
+                clen = int(clen)
             except ValueError:
-                pass
+                clen = None
+            else:
+                if clen < 0:  # ignore nonsensical negative lengths
+                    clen = None
         else:
-            self._chunked = (te == 'chunked')
-            if not self._chunked:
-                self._clen_rest = sys.maxsize
+            clen = None
+            
+        status = self._status_code
+        if status and (status == httpclient.NO_CONTENT or
+            status == httpclient.NOT_MODIFIED or
+            100 <= status < 200 or      # 1xx codes
+            self._method == "HEAD"):
+            clen = 0
+            
+        self._clen_rest = self._clen = clen
 
         # detect encoding and set decompress object 
         encoding = self._headers.get('content-encoding')
@@ -360,25 +354,21 @@ class HttpParser(object):
         return len(rest)
 
     def _parse_body(self):
+        data = b''.join(self._buf)
         if not self._chunked:
-            body_part = b''.join(self._buf)
-            self._clen_rest -= len(body_part)
-
+            if self._clen_rest is not None:
+                self._clen_rest -= len(data)
             # maybe decompress
             if self.__decompress_obj is not None:
-                body_part = self.__decompress_obj.decompress(body_part)
-
+                body_part = self.__decompress_obj.decompress(data)
             self._partial_body = True
-            self._body.append(body_part)
+            if data:
+                self._body.append(data)
             self._buf = []
-
-            if self._clen_rest <= 0:
+            if self._clen_rest is None or self._clen_rest <= 0:
                 self.__on_message_complete = True
-            return  
         else:
-            data = b''.join(self._buf)
             try:
-
                 size, rest = self._parse_chunk_size(data)
             except InvalidChunkSize as e:
                 self.errno = INVALID_CHUNK
@@ -390,8 +380,6 @@ class HttpParser(object):
 
             if size is None or len(rest) < size:
                 return None
-            
-
             body_part, rest = rest[:size], rest[size:]
             if len(rest) < 2:
                 self.errno = INVALID_CHUNK

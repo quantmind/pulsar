@@ -21,7 +21,7 @@ a :class:`HttpRequest` and delegates the handling to the worker.'''
         client, addr = self.socket.accept()
         if client:
             stream = self.iostream(actor=self.worker, socket=client)
-            request = net.HttpRequest(stream, addr,
+            request = net.HttpRequest(stream, client_address=addr,
                                       timeout=self.worker.cfg.keepalive)
             self.handle(request)
 

@@ -24,7 +24,7 @@ if ispy3k: # Python 3
     from urllib import request as urllibr
     from http import client as httpclient
     from urllib.parse import quote, unquote, urlencode, urlparse, urlsplit,\
-                                parse_qs, splitport
+                                parse_qs, splitport, urlunparse
     from http.client import responses
     from http.cookiejar import CookieJar
     from http.cookies import SimpleCookie
@@ -76,7 +76,7 @@ else:   # pragma : no cover
     import httplib as httpclient
     from urllib import quote, unquote, urlencode, getproxies_environment, \
                         splitport
-    from urlparse import urlparse, urlsplit, parse_qs
+    from urlparse import urlparse, urlsplit, parse_qs, urlunparse
     from httplib import responses
     from cookielib import CookieJar
     from Cookie import SimpleCookie
@@ -289,22 +289,26 @@ the entity-header fields.'''
                 if isinstance(value, (tuple, list)):
                     value = ','.join(value)
                 super(Headers, self).__setitem__(key, value)
-                
+    
+    def get(self, key, default=None):
+         return super(Headers, self).get(header_field(key),default)
+    
     def pop(self, key, *args):
         return super(Headers, self).pop(header_field(key), *args)
     
     def copy(self):
-        return self.__class__(self, type=self.type)
+        return self.__class__(self, kind=self.kind)
         
     def headers(self):
         return list(self.items())
     
-    def as_list(self, key):
+    def as_list(self, key, default=None):
         '''Return the value at *key* as a list of values.'''
         value = self.get(key)
-        value = self._dict.get(key.lower(),None)
-        return value.split(',') if value else []
-        
+        return value.split(',') if value else default
+    get_all = as_list
+    getheaders = as_list
+    
     def add(self, key, value):
         '''Add *value* to *key* header. If the header is already available,
 append the value to the list.'''
@@ -320,7 +324,7 @@ append the value to the list.'''
         h = 'HTTP/%s.%s %s' % vs 
         f = ''.join(("%s: %s\r\n" % kv for kv in iteritems(self)))
         return '%s\r\n%s\r\n' % (h, f)
-    
+         
     @property
     def vary_headers(self):
         return self.get('vary',[])
@@ -331,21 +335,12 @@ append the value to the list.'''
         return header_query.lower() in set(self.vary_headers)
     
     
-####################################################    HTTP CLIENT
-_http_async_connections = {}
-def set_async_connection(scheme, handler):
-    global _http_async_connections
-    _http_async_connections[scheme] = handler
-    
+####################################################    HTTP CLIENT    
 class HttpConnectionError(Exception):
     pass
 
 
-class HTTPResponse(httpclient.HTTPResponse):
-    
-    def __init__(self, *args, **kwargs):
-        self.callbacks = []
-        super(HTTPResponse, self).__init__(*args, **kwargs)
+class HTTPResponseMixin(object):
         
     @property
     def status_code(self):
@@ -375,7 +370,7 @@ class HTTPResponse(httpclient.HTTPResponse):
     
     @property
     def is_error(self):
-        if self.closed:
+        if self.status_code:
             return not (200 <= self.status_code < 300)
     
     @property
@@ -395,15 +390,11 @@ class HTTPResponse(httpclient.HTTPResponse):
                             self.content, self.headers, None)        
     
     def post_process_response(self, client, req):
-        # post-process response
-        protocol = req.type
-        meth_name = protocol+"_response"
-        response = self
-        for processor in client.process_response.get(protocol, []):
-            meth = getattr(processor, meth_name)
-            response = meth(req, response)
-            
-        return response
+        return client.post_process_response(req, self)
+    
+    
+class HTTPResponse(HTTPResponseMixin, httpclient.HTTPResponse):
+    pass
     
     
 class HTTPConnection(httpclient.HTTPConnection):
@@ -424,7 +415,7 @@ class HTTPAsyncConnection(HTTPConnection):
         return super(HTTPConnection, self).getresponse()
 
 
-class Request(urllibr.Request):
+class Request(object):
     '''
 * Default is charset is "iso-8859-1" (latin-1) from section 3.7.1
 
@@ -441,7 +432,7 @@ http://www.ietf.org/rfc/rfc2616.txt
         self.type, self.host, self.selector, self.params,\
         self.query, self.fragment = urlparse(url)
         self.full_url = self._get_full_url()
-        self.data = data
+        self.data = None
         self.timeout = timeout
         self.headers = {}
         self._tunnel_host = None
@@ -452,6 +443,17 @@ http://www.ietf.org/rfc/rfc2616.txt
         self.charset = charset or self.default_charset
         self._encode(method, data, encode_multipart, multipart_boundary)
     
+    def get_response(self, headers):
+        h = self.connection
+        h.request(self.get_method(), self.selector, self.data, headers)
+        r = h.getresponse()
+        r.protocol = self.type
+        r.url = self.full_url
+        return r
+    
+    def get_type(self):
+        return self.type
+    
     def get_method(self):
         return self.method
     
@@ -460,6 +462,17 @@ http://www.ietf.org/rfc/rfc2616.txt
     
     def add_header(self, key, value):
         self.headers[header_field(key)] = value
+    
+    def set_proxy(self, host, type):
+        if self.type == 'https' and not self._tunnel_host:
+            self._tunnel_host = self.host
+        else:
+            self.type = type
+            self.selector = self.full_url
+        self.host = host
+    
+    def has_proxy(self):
+        return self.selector == self.full_url
     
     @property
     def key(self):
@@ -489,13 +502,26 @@ http://www.ietf.org/rfc/rfc2616.txt
             self.headers['Content-Type'] = content_type
         
     def _encode_url(self, body):
+        query = self.query
         if isinstance(body, dict):
-            url += '?' + urlencode(fields)
+            if query:
+                query = parse_qs(query)
+                query.update(body)
+            else:
+                query = body    
+            query = urlencode(query)
         elif body:
-            url = '%s?%s' % (url, to_string(body))
+            if query:
+                query = parse_qs(query)
+                query.update(parse_qs(body))
+                query = urlencode(query)
+            else:
+                query = body
+        self.query = query
+        self.full_url = self._get_full_url()
             
     def _get_full_url(self):
-        return urllibr.urlunparse((self.type, self.host, self.selector,
+        return urlunparse((self.type, self.host, self.selector,
                                    self.params, self.query, ''))
             
 
@@ -527,14 +553,9 @@ class HttpConnectionPool(object):
         if self._created_connections >= self.max_connections:
             raise HttpConnectionError("Too many connections")
         self._created_connections += 1
-        if self.timeout == 0:
-            connection_class = _http_async_connections.get(self.scheme)
-            if not connection_class:
-                raise HttpConnectionError('Trying to create an asynchronous '\
-                                          'connection but there is no async '\
-                                          'handler registered')
-        else:
-            connection_class = self.Connections.get(self.scheme)
+        connection_class = self.Connections.get(self.scheme)
+        if not connection_class:
+            raise HttpConnectionError('Could not create connection')
         c = connection_class(self.host, self.port)
         if self.timeout is not None:
             c.timeout = self.timeout
@@ -552,7 +573,10 @@ class HttpConnectionPool(object):
 class HttpHandler(urllibr.AbstractHTTPHandler):
     '''A modified Http handler'''
     def __init__(self, client, debuglevel=0):
-        super(HttpHandler, self).__init__(debuglevel)
+        if ispy3k:
+            super(HttpHandler, self).__init__(debuglevel)
+        else:
+            urllibr.AbstractHTTPHandler.__init__(self, debuglevel)
         self.client = client
         
     def http_open(self, req):
@@ -572,8 +596,7 @@ class HttpHandler(urllibr.AbstractHTTPHandler):
                 del headers[proxy_auth_hdr]
             h.set_tunnel(req._tunnel_host, headers=tunnel_headers)
         try:
-            h.request(req.get_method(), req.selector, req.data, headers)
-            r = h.getresponse()  # an HTTPResponse instance
+            return req.get_response(headers)
         except socket.error as err:
             # This is an asynchronous socket
             if err.errno != 10035:
@@ -582,14 +605,12 @@ class HttpHandler(urllibr.AbstractHTTPHandler):
         except:
             self.client.close_connection(req)
             raise
-        r.protocol = req.type
-        r.url = req.full_url
-        return r
         
     
 class HttpClient(urllibr.OpenerDirector):
     '''A client of a networked server'''
     request_class = Request
+    client_version = 'Python-httpurl'
     Connections = {'http': HTTPConnection}
     DEFAULT_HTTP_HEADERS = Headers([('Connection', 'Keep-Alive')],
                                    kind='client')
@@ -597,12 +618,16 @@ class HttpClient(urllibr.OpenerDirector):
     def __init__(self, proxy_info = None, timeout=None, cache = None,
                  headers=None, encode_multipart=True, client_version=None,
                  multipart_boundary=None, max_connections=None):
-        super(HttpClient, self).__init__()
+        if ispy3k:
+            super(HttpClient, self).__init__()
+        else:
+            urllibr.OpenerDirector.__init__(self)
         self.poolmap = {}
         self.timeout = timeout
         self.max_connections = max_connections
         dheaders = self.DEFAULT_HTTP_HEADERS.copy()
-        dheaders['user-agent'] = client_version or 'Python-httpurl'
+        self.client_version = client_version or self.client_version
+        dheaders['user-agent'] = self.client_version
         if headers:
             dheaders.update(headers)
         self.DEFAULT_HTTP_HEADERS = dheaders
@@ -618,13 +643,13 @@ class HttpClient(urllibr.OpenerDirector):
             d.extend(headers)
         return d
     
-    def get(self, url, body=None):
+    def get(self, url, body=None, headers=None):
         '''Sends a GET request and returns a :class:`HttpClientResponse`
 object.'''
-        return self.request(url, body=body, method='GET')
+        return self.request(url, body=body, method='GET', headers=headers)
     
-    def post(self, url, body=None):
-        return self.request(url, body=body, method='POST')
+    def post(self, url, body=None, headers=None):
+        return self.request(url, body=body, method='POST', headers=headers)
     
     def request(self, url, body=None, method=None, headers=None,
                 timeout=None, encode_multipart=None, allow_redirects=True,
@@ -661,6 +686,14 @@ object.'''
         pool = self.poolmap.get(key)
         if pool:
             pool.remove(req.connection)
+        
+    def post_process_response(self, req, response):
+        protocol = req.type
+        meth_name = protocol+"_response"
+        for processor in self.process_response.get(protocol, []):
+            meth = getattr(processor, meth_name)
+            response = meth(req, response)
+        return response
         
     def add_password(self, username, password, uri, realm=None):
         '''Add Basic HTTP Authentication to the opener'''

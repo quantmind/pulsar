@@ -51,6 +51,7 @@ class HttpRequest(base.NetRequest):
     '''A specialized :class:`TcpRequest` class for the HTTP protocol.'''    
     def on_init(self, kwargs):
         '''Set up event handler'''
+        self.client_address = kwargs.get('client_address')
         self.continue100 = False
         self.on_headers = Deferred(
                 description = '{0} on_header'.format(self.__class__.__name__))
@@ -62,8 +63,8 @@ class HttpRequest(base.NetRequest):
     def default_parser(self):
         return lib.Http_Parser
                 
-    def get_parser(self, **kwargs):
-        return self.parsercls(0)
+    def get_parser(self, parsercls, **kwargs):
+        return parsercls(0)
     
     @property
     @on_headers
@@ -423,7 +424,7 @@ for the server as a whole.
     def close(self, data_sent=None):
         '''Override close method so that the socket is closed only if
 there is no upgrade.'''
-        yield self.send_headers()
+        yield self.send_headers(force=True)
         if not self.upgrade == 'websocket':
             yield self.stream.close()
         
