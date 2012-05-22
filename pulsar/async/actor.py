@@ -12,10 +12,10 @@ from threading import current_thread
 from pulsar import AlreadyCalledError, AlreadyRegistered,\
                    ActorAlreadyStarted, LogSelf, LogginMixin, system
 
-from .eventloop import IOLoop, thread_ioloop
+from .eventloop import IOLoop
 from .proxy import ActorProxy, ActorMessage, DEFAULT_MESSAGE_CHANNEL
 from .defer import make_async, is_failure, Failure, iteritems, itervalues,\
-                     pickle
+                     pickle, safe_async
 from .mailbox import IOQueue, mailbox
 
 
@@ -178,6 +178,16 @@ Here ``a`` is actually a reference to the remote actor.
     driving the actor. Some actors may share the ioloop with other actors
     depending on their concurrency implementation.
 
+.. attribute:: nr
+
+    The total number of requests served by the actor
+    
+.. attribute:: concurrent_requests
+
+    The current number of concurrent requests the actor is serving.
+    Depending on the actor type, this number can be very high or max 1
+    (CPU bound actors).
+     
 .. attribute:: loglevel
 
     String indicating the logging level for the actor.
@@ -209,6 +219,7 @@ Here ``a`` is actually a reference to the remote actor.
                  on_task = None, ioqueue = None,
                  monitors = None, name = None, params = None,
                  age = 0, pool_timeout = None, ppid = None,
+                 on_event = None,
                  linked_actors = None, **kwargs):
         # Call on_init
         self.__ppid = ppid
@@ -217,6 +228,7 @@ Here ``a`` is actually a reference to the remote actor.
         self._linked_actors = linked_actors or {}
         self.age = age
         self.nr = 0
+        self.concurrent_requests = 0
         self._pool_timeout = pool_timeout
         self._name = name or self._name
         self.arbiter = arbiter
@@ -238,6 +250,8 @@ Here ``a`` is actually a reference to the remote actor.
             self._repr = '{0} {1}'.format(self._name,self.aid)
             if on_task:
                 self.on_task = on_task
+            if on_event:
+                self.on_event = on_event
             
         self.ioqueue = ioqueue
         #
@@ -352,14 +366,34 @@ their ids.'''
     def ready(self):
         return self.arbiter.aid in self._linked_actors
     
+    def can_poll(self):
+        '''Check if the actor can poll requests. This is used by CPU
+bound actors.'''
+        return self.self.concurrent_requests < 1
+        
     def __reduce__(self):
         raise pickle.PicklingError('{0} - Cannot pickle Actor instances'\
                                    .format(self))
     
     ############################################################################
+    ##    EVENT HANDLING
+    ############################################################################
+    def handle_fd_event(self, fd, event):
+        '''This function should be used to handle event on file descriptors'''
+        self.nr += 1
+        self.concurrent_current_requests += 1
+        msg = safe_async(self.on_event, fd, event)
+        msg.add_callback(self.end_event) 
+        
+    def end_event(self, result):
+        self.concurrent_current_requests -= 1
+    
+    def handle_request(self, request):
+        raise NotImplementedError()
+    
+    ############################################################################
     ##    HOOKS
     ############################################################################
-    
     def on_init(self, **kwargs):
         '''The :ref:`actor callback <actor-callbacks>` run once at the
 end of initialisation (after forking).'''
@@ -375,6 +409,9 @@ before the actor starts running.'''
     def on_task(self):
         '''The :ref:`actor callback <actor-callbacks>` executed at each
 iteration of the :attr:`Actor.ioloop`.'''
+        pass
+    
+    def on_event(self, fd, event):
         pass
     
     def on_stop(self):
@@ -435,9 +472,6 @@ mean it is running.'''
     def stopped(self):
         '''``True`` if actor has exited.'''
         return self._state >= self.CLOSE
-    
-    def handle_request(self, request):
-        raise NotImplementedError()
             
     def start(self):
         '''Called after forking to start the actor's life. This is where
@@ -462,36 +496,26 @@ logging is configured, the :attr:`Actor.mailbox` is registered and the
             # request loop and one for IO event loop. The request loop is used
             # to pass task to the actor, while the IO loop for socket
             # communication with other actors or with external networks.
-            if self.cpubound:
-                self.log.debug('Registering IO loop with thread')
-                thread_ioloop(self.ioloop)
             self.on_start()
             self._run()
     
     def get_requestloop(self):
         '''Internal function called at the start of the actor. It builds the
-event loop which will consume requests.
-
-If IO loop is based on a IO queue (CPU bounded workers)
-we bind the :meth:`handle_request` to the loop.
-
+event loop which will consume events on file descriptors.
 This function is overridden by :class:`Monitor` to perform nothing.'''
         ioq = self.ioqueue
-        ready = not ioq
-        ioimpl = IOQueue(ioq) if ioq else None
-        ioloop = IOLoop(io = ioimpl,
-                        pool_timeout = self._pool_timeout,
-                        logger = self.log,
-                        name = self.name,
-                        ready = ready)
+        # build the IOqueue if this is  CPU bound actor
+        reqloop = IOLoop(io=IOQueue(ioq, self) if ioq else None,
+                         pool_timeout=self._pool_timeout,
+                         logger=self.log,
+                         name=self.name,
+                         ready=ready)
         # If IO loop is based on a IO queue (CPU bounded workers)
         # we bind the :meth:`handle_request` to the loop.
-        if ioq:
-            ioloop.add_handler('request',
-                        lambda fd, request : self.handle_request(request),
-                        ioloop.READ)
+        #if ioq:
+        #    ioloop.add_handler('request', self.handle_fd_event, ioloop.READ)
         self._init_runner()
-        return ioloop
+        return reqloop
     
     def link_actor(self, proxy):
         '''Add the *proxy* to the :attr:`linked_actors` dictionary.
@@ -519,11 +543,8 @@ if *proxy* is not a class:`ActorProxy` instance raise an exception.'''
             self.log.error("Trying to put a request on task queue,\
  but there isn't one!")
                 
-    def get(self, key, default = None):
-        try:
-            return self._params[key]
-        except KeyError:
-            return default
+    def get(self, key, default=None):
+        return self._params.get(key, default)
         
     def set(self, key, value):
         self._params[key] = value

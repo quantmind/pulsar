@@ -1,7 +1,8 @@
 '''Tests for arbiter and monitors.'''
 import os
-
+from threading import current_thread
 import pulsar
+from pulsar import send, spawn
 from pulsar.utils.test import test
 
 
@@ -35,12 +36,24 @@ class TestArbiter(test.TestCase):
         self.assertTrue(arbiter)
         
     def testArbiterObject(self):
+        '''Test the arbiter in its process domain'''
         arbiter = pulsar.arbiter()
         self.assertTrue(arbiter.is_arbiter())
         self.assertEqual(arbiter.impl,'monitor')
         self.assertTrue(arbiter.monitors)
         self.assertEqual(arbiter.ioloop, arbiter.requestloop)
     testArbiterObject.run_on_arbiter = True
+        
+    def testArbiterMessage(self):
+        tid = current_thread().ident
+        self.assertEqual(tid, self.worker.tid)
+        msg = send('arbiter', 'ping')
+        yield msg
+        self.assertEqual(tid, current_thread().ident)
+        self.assertEqual(msg.result, 'pong')
+        msg = send('arbiter', 'ping')
+        yield msg
+        self.assertEqual(msg.result, 'pong')
         
         
 class TestMonitor(object):

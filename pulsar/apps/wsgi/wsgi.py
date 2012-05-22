@@ -11,7 +11,7 @@ from pulsar.utils.httpurl import parse_authorization_header, Headers,\
 from .middleware import is_streamed
 
 
-__all__ = ['WsgiHandler','WsgiResponse']
+__all__ = ['WsgiHandler', 'WsgiResponse', 'handle_http_error']
 
 
 default_logger = logging.getLogger('pulsar.apps.wsgi')
@@ -255,3 +255,42 @@ class WsgiHandler(pulsar.LogginMixin):
             if getattr(m,'route',None) == route:
                 return m
 
+
+
+def handle_http_error(response, e):
+    '''The default handler for errors while serving an Http requests.
+:parameter response: an instance of :class:`WsgiResponse`.
+:parameter e: the exception instance.
+'''
+    actor = pulsar.get_actor()
+    code = getattr(e, 'status_code', 500)
+    response.content_type = 'text/html'
+    if code == 500:
+        actor.log.critical('Unhandled exception during WSGI response',
+                           exc_info = True)
+        msg = 'An exception has occured while evaluating your request.'
+    else:
+        actor.log.info('WSGI {0} status code'.format(code))
+        if code == 404:
+            msg = 'Cannot find what you are looking for.'
+        else:
+            msg = ''
+    response.status_code = code
+    encoding = 'utf-8'
+    reason = response.status
+    content = textwrap.dedent("""\
+    <!DOCTYPE html>
+    <html>
+      <head>
+        <title>{0[reason]}</title>
+      </head>
+      <body>
+        <h1>{0[reason]}</h1>
+        {0[msg]}
+        <h3>{0[version]}</h3>
+      </body>
+    </html>
+    """).format({"reason": reason, "msg": msg,
+                 "version": pulsar.SERVER_SOFTWARE})
+    response.content = content.encode(encoding, 'replace')
+    return response

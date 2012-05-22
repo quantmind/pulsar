@@ -9,13 +9,18 @@ from threading import current_thread
 from pulsar.utils.system import IObase
 from pulsar import create_client_socket, wrap_socket
 
-from .defer import Deferred, is_async, is_failure
-from .eventloop import thread_ioloop, deferred_timeout
+from .defer import Deferred, is_async, is_failure, thread_local_data
+from .eventloop import deferred_timeout
 
 iologger = logging.getLogger('pulsar.iostream')
 
 
-__all__ = ['AsyncIOStream']
+__all__ = ['AsyncIOStream', 'thread_ioloop']
+
+
+def thread_ioloop(ioloop=None):
+    '''Returns the :class:`IOLoop` on the current thread if available.'''
+    return thread_local_data('ioloop', ioloop)
 
 
 class AsyncIOStream(IObase):

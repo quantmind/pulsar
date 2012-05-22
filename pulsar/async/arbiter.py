@@ -61,8 +61,8 @@ A typical usage::
     aid = gen_unique_id()[:8]
     kwargs['aid'] = aid
     actor = get_actor()
-    # The actor is not the Arbiter. We send a message to the Arbiter to spawn
-    # a new Actor
+    # The actor is not the Arbiter domain.
+    # We send a message to the Arbiter to spawn a new Actor
     if not isinstance(actor, Arbiter):
         msg = send('arbiter', 'spawn', **kwargs).add_callback(actor.link_actor)
     else:

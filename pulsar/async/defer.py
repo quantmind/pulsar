@@ -3,12 +3,12 @@ import sys
 from copy import copy
 import logging
 import traceback
-from threading import current_thread
+from threading import current_thread, local
 from collections import deque, namedtuple
 from inspect import isgenerator, isfunction, ismethod, istraceback
 from time import sleep
 
-from pulsar import AlreadyCalledError, DeferredFailure, NOT_DONE
+from pulsar import AlreadyCalledError, DeferredFailure
 
 
 __all__ = ['Deferred',
@@ -21,21 +21,28 @@ __all__ = ['Deferred',
            'make_async',
            'safe_async',
            'ispy3k',
-           'thread_ioloop']
+           'thread_loop',
+           'thread_local_data',
+           'NOT_DONE']
 
-class EXIT_GENERATOR(object):
+# Special objects
+class NOT_DONE(object):
     pass
 
-
-def thread_ioloop(ioloop=None):
-    '''Returns the :class:`IOLoop` of the current thread if available.'''
+def thread_local_data(name, value=None):
     ct = current_thread()
-    if ioloop is not None:
-        if hasattr(ct,'_eventloop'):
-            raise RuntimeError('A ioloop is already available on this thread')
-        ct._eventloop = ioloop
-    return getattr(ct, '_eventloop', None)
+    if not hasattr(ct,'_pulsar_local'):
+        ct._pulsar_local = local()
+    loc = ct._pulsar_local
+    if value is not None:
+        if hasattr(loc, name):
+            raise RuntimeError('%s is already available on this thread'%name)
+        setattr(loc, name, value)
+    return getattr(loc, name)
 
+def thread_loop(ioloop=None):
+    '''Returns the :class:`IOLoop` on the current thread if available.'''
+    return thread_local_data('eventloop', ioloop)
 
 logger = logging.getLogger('pulsar.async.defer')
 
@@ -434,8 +441,8 @@ generator.'''
                 # The NOT_DONE element indicate that we need to abort the
                 # generator and add a callback to the eventloop to resume the
                 # loop at the next iteration. Return self so that it can
-                # restart all its ancestors
-                ioloop = thread_ioloop()
+                # restart all its ancestors.
+                ioloop = thread_loop()
                 ioloop.add_callback(self._consume, wake=False)
                 return self
             else:

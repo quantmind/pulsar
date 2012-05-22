@@ -158,16 +158,12 @@ functional.
 .. attribute:: aid
 
     The the remote :attr:`Actor` id
+     
 '''
     def __init__(self, aid, msg):
-        super(ActorProxyDeferred,self).__init__(rid = aid)
+        super(ActorProxyDeferred,self).__init__()
         self.aid = aid
-        self.proxy = None
-        self._msg = msg.add_callback(self._store_proxy)
-        
-    def _store_proxy(self, proxy):
-        self.proxy = proxy
-        return self.callback(proxy)
+        msg.add_callback(self.callback)
     
     def __str__(self):
         return '{0}({1})'.format(self.__class__,self.aid)

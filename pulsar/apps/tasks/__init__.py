@@ -226,7 +226,7 @@ be consumed by the workers.'''
         queue = self.cfg.task_queue_factory
         return queue()
     
-    def request_instance(self, request):
+    def request_instance(self, fd, request):
         try:
             return self.task_class.from_queue(request)
         except:
@@ -238,6 +238,12 @@ be consumed by the workers.'''
                                  'failures':0}
         self.task_class = task_class or self.task_class
         super(TaskQueue,self).__init__(**kwargs)
+        
+    def worker_start(self, worker):
+        worker.requestloop.add_handler(
+                    'request',
+                    self.handle_fd_event,
+                    worker.requestloop.READ)
         
     def monitor_task(self, monitor):
         '''Override the :meth:`pulsar.Application.monitor_task` callback

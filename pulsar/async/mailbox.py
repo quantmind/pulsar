@@ -10,7 +10,8 @@ from pulsar import create_connection, MailboxError, socket_pair, wrap_socket
 from pulsar.utils.tools import gen_unique_id
 
 from .eventloop import IOLoop, deferred_timeout
-from .defer import make_async, pickle
+from .defer import make_async, pickle, thread_loop
+from .iostream import thread_ioloop
 
 
 __all__ = ['mailbox', 'Mailbox', 'IOQueue', 'Empty', 'Queue']
@@ -162,13 +163,13 @@ actor process domain.
       is a CPU-bound worker, and uses its main event loop for communicating
       with a queue rather than with a socket.
 '''
+    thread = None
     def __init__(self, actor):
         self.actor = actor
         self.sock = serverSocket()
         self.pending = {}
         self.clients = {}
         name = '{0} {1}:{2}'.format(actor,self.address[0],self.address[1])
-        self.thread = None
         self.daemon = True
         # If the actor has a ioqueue (CPU bound actor) we create a new ioloop
         if actor.ioqueue is not None and not actor.is_monitor():
@@ -179,6 +180,7 @@ actor process domain.
         else:
             self.__hasloop = False
             self.__ioloop = actor.requestloop
+            
         # add the on message handler for reading messages
         self.ioloop.add_handler(self,
                                 self.on_message,
@@ -262,14 +264,15 @@ actor process domain.
     def start(self):
         '''Start the thread only if the mailbox has its own event loop. This
 is the case when the actor is a CPU bound worker.'''
-        if self.__hasloop:
+        if self.cpubound:
             if self.thread and self.thread.is_alive():
                 raise RunTimeError('Cannot start mailbox. '\
                                    'It has already started')
             self.thread = threading.Thread(name=self.ioloop.name,
-                                           target=self.ioloop.start,
-                                           args=(self,))
+                                           target=self._run)
             self.thread.start()
+        else:
+            self._run()
             
     def message_arrived(self, message):
         '''A new :class:`ActorMessage` has arrived in the :attr:`Actor.inbox`.
@@ -323,6 +326,14 @@ If the message needs acknowledgment, send the result back.'''
         '''Send the callback to the server. It returns nothing since the
 message does not acknowledge'''
         sender.send(receiver, 'callback', message.rid, result)
+        
+    ############################################################## INTERNALS
+    def _run(self):
+        thread_loop(self.actor.requestloop)
+        thread_ioloop(self.ioloop)
+        if self.thread is not None:
+            self.ioloop.start()
+
 
 class MailBoxMonitor(object):
     
@@ -373,8 +384,9 @@ The interface is the same as the python epoll_ implementation.
 
 .. _epoll: http://docs.python.org/library/select.html#epoll-objects'''
     cpubound = True
-    def __init__(self, queue):
+    def __init__(self, queue, actor=None):
         self._queue = queue
+        self._actor = actor
         self._fds = set()
         self._empty = ()
         
@@ -398,6 +410,9 @@ The interface is the same as the python epoll_ implementation.
     
     def poll(self, timeout = 0.5):
         '''Wait for events. timeout in seconds (float)'''
+        if self._actor:
+            if not self._actor.can_poll():
+                return self._empty
         try:
             event = self._queue.get(timeout = timeout)
         except (Empty,IOError,TypeError,EOFError):

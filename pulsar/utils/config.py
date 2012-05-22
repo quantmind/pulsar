@@ -72,19 +72,20 @@ def ordered_settings():
         yield KNOWN_SETTINGS[name]
         
         
-def make_settings(app = None, include=None, exclude=None):
-    '''Creates a dictionary of available settings for a given
-application *app*.
+def make_settings(apps = None, include=None, exclude=None):
+    '''Creates a dictionary of available settings for given
+applications *apps*.
 
-:parameter app: Optional application name.
+:parameter apps: Optional list of application names.
 :parameter include: Optional list of settings to include.
-:parameter app: Optional list of settings to exclude.
+:parameter exclude: Optional list of settings to exclude.
 :rtype: dictionary of :class:`pulsar.Setting` instances.'''
     settings = {}
     exclude = exclude or ()
+    apps = set(apps or ())
     for s in ordered_settings():
         setting = s()
-        if setting.app and setting.app != app:
+        if setting.app and setting.app not in apps:
             continue
         if include and setting.name not in include and not setting.app:
             continue
@@ -139,7 +140,7 @@ attribute by exposing the :attr:`Setting.name` as attribute.
     def __init__(self, description = None, epilog = None,
                  version = None, app = None, include=None,
                  exclude = None):
-        self.settings = make_settings(app,include,exclude)
+        self.settings = make_settings(app, include,exclude)
         self.description = description or 'Pulsar server'
         self.epilog = epilog or 'Have fun!'
         self.version = version or __version__

@@ -3,6 +3,7 @@
 import re
 from gzip import GzipFile
 
+import pulsar
 from pulsar.utils.httpurl import BytesIO
 
 re_accepts_gzip = re.compile(r'\bgzip\b')
@@ -83,3 +84,4 @@ base their storage on the Accept-Encoding header.
         zfile.write(s)
         zfile.close()
         return zbuf.getvalue()
+

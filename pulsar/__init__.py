@@ -36,10 +36,6 @@ from .utils.log import *
 DEFAULT_PORT = 8060
 SERVER_SOFTWARE = "python-{0}/{1}".format(SERVER_NAME, version)
 
-# Special objects
-class NOT_DONE(object):
-    pass
-
 class CLEAR_ERRORS(object):
     pass
 

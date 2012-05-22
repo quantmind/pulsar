@@ -13,7 +13,7 @@ from pulsar.utils.tools import gen_unique_id
 from pulsar.utils.log import Synchronized
 from pulsar.utils.structures import WeakList
 
-from .defer import Deferred, is_async, maybe_async, thread_ioloop
+from .defer import Deferred, is_async, maybe_async, thread_loop
 
 __all__ = ['IOLoop', 'deferred_timeout']
 
@@ -22,17 +22,7 @@ def file_descriptor(fd):
         return fd.fileno()
     else:
         return fd
-        
-def thread_ioloop(ioloop=None):
-    '''Returns the :class:`IOLoop` of the current thread if available.'''
-    ct = current_thread()
-    if ioloop is not None:
-        if hasattr(ct,'_eventloop'):
-            raise RuntimeError('A ioloop is already available on this thread')
-        ct._eventloop = ioloop
-    return getattr(ct, '_eventloop', None)
     
-        
 class LoopGuard(object):
     '''Context manager for the eventloop'''
     def __init__(self, loop):
@@ -46,9 +36,6 @@ class LoopGuard(object):
         loop._started = time.time()
         loop._on_exit = Deferred()
         loop.num_loops = 0
-        # set self as the thread ioloop
-        if not loop.cpubound:
-            thread_ioloop(loop)
         return self
         
     def __exit__(self, type, value, traceback):
@@ -480,7 +467,7 @@ class DeferredTimeout(object):
     
     def __init__(self, value, ioloop=None, timeout=5):
         self._value = maybe_async(value)
-        self._ioloop = ioloop or thread_ioloop()
+        self._ioloop = ioloop or thread_loop()
         self._timeout = timeout
         self._start = None
         self.__call__(False)

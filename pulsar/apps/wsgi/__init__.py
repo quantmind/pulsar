@@ -38,14 +38,61 @@ from inspect import isclass
 import pulsar
 from pulsar.net import HttpResponse
 from pulsar.utils.importer import module_attribute
+from pulsar.apps import socket
 
-from .handlers import *
 from .wsgi import *
 from . import middleware
 
-
-class WSGIApplication(pulsar.Application):
+class WsgiSetting(pulsar.Setting):
+    virtual = True
     app = 'wsgi'
+    
+class Keepalive(WsgiSetting):
+    name = "keepalive"
+    flags = ["--keep-alive"]
+    validator = pulsar.validate_pos_int
+    type = int
+    default = 5
+    desc = """\
+        The number of seconds to wait for requests on a Keep-Alive connection.
+        
+        Generally set in the 1-5 seconds range.    
+        """
+        
+        
+class HttpParser(WsgiSetting):
+    name = "http_parser"
+    flags = ["--http-parser"]
+    desc = """\
+        The HTTP Parser to use. By default it uses the fastest possible.    
+        
+        Specify `python` if you wich to use the pure python implementation    
+        """
+            
+    
+class ResponseMiddleware(WsgiSetting):
+    name = "response_middleware"
+    flags = ["--response-middleware"]
+    nargs = '*'
+    desc = """\
+    Response middleware to add to the wsgi handler    
+    """
+    
+    
+class HttpError(WsgiSetting):
+    name = "handle_http_error"
+    validator = pulsar.validate_callable(2)
+    type = "callable"
+    default = staticmethod(handle_http_error)
+    desc = """\
+Render an error occured while serving the WSGI application.
+
+The callable needs to accept two instance variables for the response
+and the error instance."""
+
+
+class WSGIApplication(socket.SocketServer):
+    cfg_apps = ('socket',)
     _name = 'wsgi'
     
     def handler(self):
@@ -80,32 +127,10 @@ at start-up only.
         if resp_middleware:
             hnd.response_middleware.extend(resp_middleware)
         return hnd
-    
-    def concurrency(self, cfg):
-        '''The concurrency model.'''
-        if not pulsar.platform.multiProcessSocket():
-            return 'thread'
-        else:
-            return cfg.concurrency
-    
-    def get_ioqueue(self):
-        '''If the concurrency is thread we create a task queue for processing
-requests in the threaded workers.''' 
-        if self.concurrency(self.cfg) == 'process':
-            return None
-        else:
-            return pulsar.ThreadQueue()
         
-    def worker_start(self, worker):
-        # If the worker is listening to a socket
-        # Add the socket handler to the event loop, otherwise do nothing.
-        socket = worker.get('socket')
-        if socket:
-            worker.log.info(socket.info())
-            socket.setblocking(False)
-            worker.ioloop.add_handler(socket,
-                                      HttpHandler(worker,socket),
-                                      worker.ioloop.READ)
+    def stream_request(self, stream, client_address):
+        return HttpRequest(stream, client_address=client_address,
+                           timeout=self.worker.cfg.keepalive)
         
     def handle_request(self, worker, request):
         '''handle the *request* by building the WSGI environment '''
@@ -146,41 +171,5 @@ requests in the threaded workers.'''
             yield response.write(data)
         yield response
     
-    def monitor_init(self, monitor):
-        # First we create the socket we listen to
-        address = self.cfg.address
-        if address:
-            socket = pulsar.create_socket(address, log=monitor.log,
-                                          backlog=self.cfg.backlog)
-        else:
-            raise pulsar.ImproperlyConfigured('\
- WSGI application with no address for socket')
-        self.address = socket.name
-        self.local['socket'] = socket
-        
-    def monitor_start(self, monitor):
-        '''If the concurrency model is thread, a new handler is
-added to the monitor event loop which listen for requests on
-the socket. Otherwise the monitor has no handlers since requests are
-directly handled by the workers.'''
-        # We have a task queue, This means the monitor itself listen for
-        # requests on the socket and delegate the handling to the
-        # workers
-        socket = self.local.get('socket')
-        if monitor.ioqueue is not None or not monitor.num_actors:
-            monitor.log.info(socket.info())
-            handler = HttpPoolHandler(monitor,socket) if monitor.num_actors\
-                      else HttpHandler(monitor,socket)
-            monitor.ioloop.add_handler(socket,
-                                       handler,
-                                       monitor.ioloop.READ)
-        else:
-            # put the socket in the parameters to be passed to workers
-            monitor.set('socket',socket)
-            
-    def monitor_stop(self, monitor):
-        if monitor.ioqueue is not None:
-            socket = self.local['socket']
-            monitor.ioloop.remove_handler(socket)
-            socket.close(monitor.log)
+
 

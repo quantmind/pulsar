@@ -18,8 +18,6 @@ class TestActorThread(test.TestCase, AsyncTestCaseMixin):
         yield self.spawn(impl = self.impl)
         a = self.a
         self.assertTrue(isinstance(a, pulsar.ActorProxy))
-        #self.assertTrue(a.is_alive())
-        #self.assertEqual(a.impl.impl,self.impl)
         yield self.stop()
     testStartStop.run_on_arbiter = True
         
@@ -31,10 +29,9 @@ class TestActorThread(test.TestCase, AsyncTestCaseMixin):
                          ioqueue = ioqueue)
         a = self.a
         self.assertTrue(isinstance(a,pulsar.ActorProxy))
-        #self.assertTrue(a.is_alive())
         self.assertEqual(a.impl.impl,self.impl)
-        r,outcome = pulsar.async_pair(a.send(arbiter,'ping'))
-        yield r
+        outcome = a.send(arbiter, 'ping')
+        yield outcome
         self.assertEqual(outcome.result,'pong')
         yield self.stop()
     testStartStopQueue.run_on_arbiter = True
@@ -42,31 +39,28 @@ class TestActorThread(test.TestCase, AsyncTestCaseMixin):
     def testPing(self):
         arbiter = pulsar.arbiter()
         yield self.spawn(impl = self.impl)
-        r,outcome = pulsar.async_pair(self.a.send(arbiter,'ping'))
-        yield r
+        outcome = self.a.send(arbiter, 'ping')
+        yield outcome
         self.assertEqual(outcome.result,'pong')
-        self.assertFalse(r.rid in pulsar.ActorMessage.MESSAGES)
-        yield self.async.assertEqual(self.a.send(arbiter,'ping'),'pong')
+        self.assertFalse(outcome.rid in pulsar.ActorMessage.MESSAGES)
+        yield self.async.assertEqual(self.a.send(arbiter,'ping'), 'pong')
         yield self.stop()
     testPing.run_on_arbiter = True
         
     def testSpawnStopFromActor(self):
         '''Test the global spawn method from an actor domain other than the
 arbiter'''
-        r = pulsar.spawn(impl = self.impl)
+        outcome = pulsar.spawn(impl = self.impl)
         # the result is an deferred message
-        self.assertTrue(isinstance(r, pulsar.ActorProxyDeferred))
-        r, outcome = pulsar.async_pair(r)
-        yield r
+        self.assertTrue(isinstance(outcome, pulsar.ActorProxyDeferred))
+        yield outcome
         ap = outcome.result
         self.assertTrue(isinstance(ap, pulsar.ActorProxy))
         # Check that the new actor is linked with the current actor
         self.assertEqual(ap, self.worker.get_actor(ap.aid))
         # and now stop the new actor
-        r = pulsar.send(ap, 'stop')
-        r, outcome = pulsar.async_pair(r)
-        yield r
-        # We should relly satisfy this one
+        outcome = pulsar.send(ap, 'stop')
+        yield outcome
         #self.assertEqual(self.worker.get_actor(ap.aid),None)
         
     def __testInfo(self):

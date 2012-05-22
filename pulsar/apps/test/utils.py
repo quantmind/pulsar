@@ -47,26 +47,32 @@ class CheckFailure(object):
 
 class AsyncTestCaseMixin(object):
     '''A mixin to use with :class:`unittest.TestCase` classes.'''
-    
+    a = None
     def spawn(self, **kwargs):
+        '''Spawn an actor and store its proxy in the as "a" attribute.
+To use, do a yeild::
+
+    yield self.start()
+    
+'''
         ad = pulsar.spawn(**kwargs)
         self.assertTrue(ad.aid)
         self.assertTrue(isinstance(ad, pulsar.ActorProxyDeferred))
-        r, outcome = pulsar.async_pair(ad)
-        yield r
-        a = outcome.result
+        yield ad
+        a = ad.result
         self.a = a
         self.assertEqual(a.aid, ad.aid)
     
     def stop(self):
         '''Stop the an actor and check if successful.'''
-        arbiter = pulsar.arbiter()
-        a = self.a
-        yield a.send(arbiter,'stop')
-        while a.aid in arbiter.MANAGED_ACTORS:
-            yield pulsar.NOT_DONE
-        #self.assertFalse(a.is_alive())
-        self.assertFalse(a.aid in arbiter.MANAGED_ACTORS)
+        if self.a:
+            arbiter = pulsar.arbiter()
+            a = self.a
+            yield a.send(arbiter,'stop')
+            while a.aid in arbiter.MANAGED_ACTORS:
+                yield pulsar.NOT_DONE
+            #self.assertFalse(a.is_alive())
+            self.assertFalse(a.aid in arbiter.MANAGED_ACTORS)
         
     def assertFailure(self, result, ExceptionType = None):
         '''Asynchronous assert of a :class:`pulsar.Failure`.

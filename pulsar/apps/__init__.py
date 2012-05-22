@@ -83,7 +83,9 @@ the actual implementation to :meth:`Application.handle_request` method.
 After obtaining the result from the
 :meth:`Application.handle_event_task` method, it invokes the
 :meth:`Worker.end_task` method to close the request.'''
+        # INCREASE THE NUMBER OF REQUESTS PROCESSED
         self.nr += 1
+        self.concurrent_current_requests += 1
         request = self.app.request_instance(request)
         timeout = getattr(request, 'timeout', None)
         should_stop = self.max_requests and self.nr >= self.max_requests
@@ -119,6 +121,7 @@ After obtaining the result from the
             self.cfg.post_request(self, request)
         except:
             pass
+        self.concurrent_current_requests -= 1
         if should_stop:
             self.log.info("Auto-restarting worker.")
             self.stop()
@@ -324,7 +327,7 @@ its duties.
     _name = None
     description = None
     epilog = None
-    app = None
+    cfg_apps = None
     config_options_include = None
     config_options_exclude = None
     can_kill_arbiter = False
@@ -357,7 +360,7 @@ its duties.
         nparams = self.cfg.copy()
         nparams.update(params)
         self.callable = callable
-        self.load_config(argv,version=version,**nparams)
+        self.load_config(argv,version=version, **nparams)
         self.configure_logging()
         if self.on_config() is not False:
             arbiter = pulsar.arbiter(self.cfg.daemon)
@@ -377,6 +380,12 @@ its duties.
     def name(self):
         '''Application name, It is unique and defines the application.'''
         return self._name
+    
+    def __repr__(self):
+        return self.name
+    
+    def __str__(self):
+        return self.name 
     
     @property
     def ioqueue(self):
@@ -463,10 +472,13 @@ The parameters overrriding order is the following:
  * the parameters in the optional configuration file
  * the parameters passed in the command line.
 '''
+        cfg_apps = set(self.cfg_apps or ())
+        cfg_apps.add(self.name)
+        self.cfg_apps = cfg_apps
         self.cfg = pulsar.Config(self.description,
                                  self.epilog,
                                  version,
-                                 self.app,
+                                 self.cfg_apps,
                                  self.config_options_include,
                                  self.config_options_exclude)
         
