@@ -87,7 +87,7 @@ spawn method when creating new actors.'''
 :class:`PoolMixin.MANAGED_ACTORS`'''
         ACTORS = self.MANAGED_ACTORS
         linked = self._linked_actors
-        for aid,actor in list(iteritems(ACTORS)):
+        for aid, actor in list(iteritems(ACTORS)):
             if not actor.is_alive():
                 actor.join(self.JOIN_TIMEOUT)
                 ACTORS.pop(aid)

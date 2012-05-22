@@ -66,7 +66,7 @@ base their storage on the Accept-Encoding header.
         if not re_accepts_gzip.search(ae):
             return
         
-        if hasattr(headers,'add'):
+        if hasattr(headers, 'add'):
             headers.add('Vary','Accept-Encoding')
         else:
             #TODO

@@ -40,6 +40,8 @@ class TestHelloWorldThread(test.TestCase):
     def testResponse(self):
         c = HttpClient()
         resp = c.request(self.uri)
+        yield resp
+        resp = resp.result
         self.assertTrue(resp.status_code,200)
         content = resp.content
         self.assertEqual(content,b'Hello World!\n')

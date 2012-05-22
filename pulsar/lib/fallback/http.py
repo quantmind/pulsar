@@ -84,13 +84,11 @@ class HttpParser(object):
         self._partial_body = False
         self._clen = None
         self._clen_rest = None
-        
         # private events
         self.__on_firstline = False
         self.__on_headers_complete = False
         self.__on_message_begin = False
         self.__on_message_complete = False
-        
         self.__decompress_obj = None
         
     @property
@@ -360,7 +358,7 @@ class HttpParser(object):
                 self._clen_rest -= len(data)
             # maybe decompress
             if self.__decompress_obj is not None:
-                body_part = self.__decompress_obj.decompress(data)
+                data = self.__decompress_obj.decompress(data)
             self._partial_body = True
             if data:
                 self._body.append(data)

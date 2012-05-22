@@ -171,12 +171,19 @@ def host_and_port(host):
     host, port = splitport(host)
     return host, int(port) if port else None
 
+####################################################    REQUEST METHODS
+ENCODE_URL_METHODS = frozenset(['DELETE', 'GET', 'HEAD', 'OPTIONS'])
+ENCODE_BODY_METHODS = frozenset(['PATCH', 'POST', 'PUT', 'TRACE'])
+    
 ####################################################    HEADERS
 HEADER_FIELDS = {'general': frozenset(('Cache-Control', 'Connection', 'Date',
                                        'Pragma', 'Trailer','Transfer-Encoding',
                                        'Upgrade', 'Sec-WebSocket-Extensions',
                                        'Sec-WebSocket-Protocol',
                                        'Via','Warning')),
+                 # The request-header fields allow the client to pass additional
+                 # information about the request, and about the client itself,
+                 # to the server.
                  'request': frozenset(('Accept', 'Accept-Charset',
                                        'Accept-Encoding', 'Accept-Language',
                                        'Authorization', 'Expect', 'From',
@@ -188,6 +195,9 @@ HEADER_FIELDS = {'general': frozenset(('Cache-Control', 'Connection', 'Date',
                                        'Sec-WebSocket-Key',
                                        'Sec-WebSocket-Version',
                                        'TE', 'User-Agent')),
+                 # The response-header fields allow the server to pass
+                 # additional information about the response which cannot be
+                 # placed in the Status- Line.
                  'response': frozenset(('Accept-Ranges', 'Age', 'ETag',
                                         'Location', 'Proxy-Authenticate',
                                         'Retry-After',
@@ -287,7 +297,7 @@ the entity-header fields.'''
             key = header_field(key)
             if key and key in self.all_headers:
                 if isinstance(value, (tuple, list)):
-                    value = ','.join(value)
+                    value = ', '.join(value)
                 super(Headers, self).__setitem__(key, value)
     
     def get(self, key, default=None):
@@ -305,7 +315,7 @@ the entity-header fields.'''
     def as_list(self, key, default=None):
         '''Return the value at *key* as a list of values.'''
         value = self.get(key)
-        return value.split(',') if value else default
+        return value.split(', ') if value else default
     get_all = as_list
     getheaders = as_list
     
@@ -314,7 +324,7 @@ the entity-header fields.'''
 append the value to the list.'''
         if value:
             key = header_field(key)
-            values = self.as_list(key)
+            values = self.as_list(key, [])
             if value not in values:
                 values.append(value)
                 self[key] = values
@@ -405,16 +415,6 @@ class HTTPConnection(httpclient.HTTPConnection):
         return self.timeout == 0
 
 
-class HTTPAsyncConnection(HTTPConnection):
-    
-    @property
-    def is_async(self):
-        return True
-    
-    def getresponse(self):
-        return super(HTTPConnection, self).getresponse()
-
-
 class Request(object):
     '''
 * Default is charset is "iso-8859-1" (latin-1) from section 3.7.1
@@ -422,17 +422,16 @@ class Request(object):
 http://www.ietf.org/rfc/rfc2616.txt 
     '''
     default_charset = 'latin-1'
-    _encode_url_methods = frozenset(['DELETE', 'GET', 'HEAD', 'OPTIONS'])
-    _encode_body_methods = frozenset(['PATCH', 'POST', 'PUT', 'TRACE'])
     DEFAULT_PORTS = {'http': 80, 'https': 443}
     
     def __init__(self, url, method=None, data=None, charset=None,
                  encode_multipart=True, multipart_boundary=None,
                  headers=None, timeout=None, **kwargs):
-        self.type, self.host, self.selector, self.params,\
+        self.type, self.host, self.path, self.params,\
         self.query, self.fragment = urlparse(url)
         self.full_url = self._get_full_url()
         self.data = None
+        self._has_proxy = False
         self.timeout = timeout
         self.headers = {}
         self._tunnel_host = None
@@ -443,6 +442,15 @@ http://www.ietf.org/rfc/rfc2616.txt
         self.charset = charset or self.default_charset
         self._encode(method, data, encode_multipart, multipart_boundary)
     
+    @property
+    def selector(self):
+        if self.has_proxy():
+            return self.full_url
+        elif self.query:
+            return '%s?%s' % (self.path,self.query)
+        else:
+            return self.path        
+        
     def get_response(self, headers):
         h = self.connection
         h.request(self.get_method(), self.selector, self.data, headers)
@@ -468,11 +476,11 @@ http://www.ietf.org/rfc/rfc2616.txt
             self._tunnel_host = self.host
         else:
             self.type = type
-            self.selector = self.full_url
+            self._has_proxy = True
         self.host = host
     
     def has_proxy(self):
-        return self.selector == self.full_url
+        return self._has_proxy
     
     @property
     def key(self):
@@ -485,11 +493,11 @@ http://www.ietf.org/rfc/rfc2616.txt
         else:
             method = method.upper()
         self.method = method
-        if method in self._encode_url_methods:
+        if method in ENCODE_URL_METHODS:
             self._encode_url(body)
         else:
             content_type = 'application/x-www-form-urlencoded'
-            if isinstance(body, dict):
+            if isinstance(body, (dict, list, tuple)):
                 if encode_multipart:
                     body, content_type = encode_multipart_formdata(body,
                                                     boundary=multipart_boundary,
@@ -521,7 +529,7 @@ http://www.ietf.org/rfc/rfc2616.txt
         self.full_url = self._get_full_url()
             
     def _get_full_url(self):
-        return urlunparse((self.type, self.host, self.selector,
+        return urlunparse((self.type, self.host, self.path,
                                    self.params, self.query, ''))
             
 
@@ -612,8 +620,10 @@ class HttpClient(urllibr.OpenerDirector):
     request_class = Request
     client_version = 'Python-httpurl'
     Connections = {'http': HTTPConnection}
-    DEFAULT_HTTP_HEADERS = Headers([('Connection', 'Keep-Alive')],
-                                   kind='client')
+    DEFAULT_HTTP_HEADERS = Headers([
+            ('Connection', 'Keep-Alive'),
+            ('Accept-Encoding', ('identity', 'deflate', 'compress', 'gzip'))],
+            kind='client')
     
     def __init__(self, proxy_info = None, timeout=None, cache = None,
                  headers=None, encode_multipart=True, client_version=None,

@@ -124,7 +124,7 @@ Users access the arbiter by the high level api::
         return m
     
     @classmethod
-    def spawn(cls, actorcls = None, aid = None, **kwargs):
+    def spawn(cls, actorcls=None, aid=None, **kwargs):
         '''Create a new :class:`Actor` and return its
 :class:`ActorProxyMonitor`.'''
         actorcls = actorcls or Actor
@@ -142,7 +142,7 @@ Users access the arbiter by the high level api::
                                      arbiter, aid, kwargs)
             monitor = actor_maker.proxy_monitor()
             # Add to the list of managed actors if this is a remote actor
-            if monitor:
+            if monitor is not None:
                 arbiter.MANAGED_ACTORS[actor_maker.aid] = monitor
                 actor_maker.start()
                 return monitor.on_address.add_callback(

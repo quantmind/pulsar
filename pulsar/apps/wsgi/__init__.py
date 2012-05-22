@@ -150,8 +150,8 @@ requests in the threaded workers.'''
         # First we create the socket we listen to
         address = self.cfg.address
         if address:
-            socket = pulsar.create_socket(address, log = monitor.log,
-                                          backlog = self.cfg.backlog)
+            socket = pulsar.create_socket(address, log=monitor.log,
+                                          backlog=self.cfg.backlog)
         else:
             raise pulsar.ImproperlyConfigured('\
  WSGI application with no address for socket')

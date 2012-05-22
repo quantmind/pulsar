@@ -79,6 +79,10 @@ class TestHttpClient(test.TestCase):
     def make_async(self, r):
         return make_async(r)
     
+    def testClient(self):
+        c = self.r
+        self.assertTrue('accept-encoding' in c.DEFAULT_HTTP_HEADERS)
+        
     def test_http_200_get(self):
         r = self.make_async(self.r.get(self.httpbin()))
         yield r
@@ -96,7 +100,7 @@ class TestHttpClient(test.TestCase):
         self.assertEqual(r.status_code, 200)
         self.assertEqual(r.response, 'OK')
         result = r.content_json()
-        self.assertEqual(result['args'], {'bla':'foo'})
+        self.assertEqual(result['args'], {'bla':['foo']})
         self.assertEqual(r.url,
                          self.httpbin(httpurl.iri_to_uri('get',{'bla':'foo'})))
         
@@ -108,6 +112,7 @@ class TestHttpClient(test.TestCase):
         self.assertEqual(r.response, 'OK')
         content = r.content_json()
         self.assertTrue(content['gzipped'])
+        self.assertTrue(r.headers['content-encoding'],'gzip')
         
     def test_http_400_get(self):
         '''Bad request 400'''
@@ -130,14 +135,16 @@ class TestHttpClient(test.TestCase):
         self.assertRaises(httpurl.HTTPError, r.raise_for_status)
         
     def test_http_post(self):
-        data = {'bla': 'foo', 'unz': 'whatz', 'numero': '1'}
+        data = (('bla', 'foo'), ('unz', 'whatz'),
+                ('numero', '1'), ('numero', '2'))
         r = self.make_async(self.r.post(self.httpbin('post'), body=data))
         yield r
         r = r.result
         self.assertEqual(r.status_code, 200)
         self.assertEqual(r.response, 'OK')
         result = r.content_json()
-        self.assertEqual(result['form'], data)
+        self.assertTrue(result['args'])
+        self.assertEqual(result['args']['numero'],['1','2'])
         
     def testRedirect(self):
         r = self.make_async(self.r.get(self.httpbin('redirect','1')))
@@ -145,7 +152,7 @@ class TestHttpClient(test.TestCase):
         r = r.result
         self.assertEqual(r.status_code, 302)
         self.assertEqual(r.response, 'Found')
-        self.assertTrue(r.content)
+        self.assertEqual(r.headers['location'], '/')
         
     def test_Cookie(self):
         r = self.make_async(self.r.get(self.httpbin('cookies','set',

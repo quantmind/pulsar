@@ -70,7 +70,7 @@ class HttpAsyncConnection(NetRequest):
         return lib.Http_Parser
     
     def get_parser(self, parsercls, **kwargs):
-        return parsercls(kind=1)
+        return parsercls(kind='server')
     
     def connect(self): 
         return super(HttpAsyncConnection, self).connect((self.host,self.port))

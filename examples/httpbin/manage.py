@@ -16,8 +16,8 @@ except ImportError:
     import sys
     sys.path.append('../../')
     
-from pulsar.apps import wsgi
-from pulsar.utils.httpurl import Headers, parse_qs, Request
+from pulsar.apps import wsgi, ws
+from pulsar.utils.httpurl import Headers, parse_qs, ENCODE_URL_METHODS
 from pulsar.utils.multipart import parse_form_data
 
 
@@ -35,16 +35,13 @@ def info_data(environ, **params):
     method = environ['REQUEST_METHOD']
     headers = getheaders(environ)
     args = {}
-    if method in Request._encode_url_methods:
+    if method in ENCODE_URL_METHODS:
         qs = environ.get('QUERY_STRING',{})
         if qs:
             args = parse_qs(qs)
     else:
         post, files = parse_form_data(environ)
         args = dict(post)
-        
-        data = {'headers': self.headers(environ),
-                'args': dict(post)}
     data = {'method': method, 'headers': headers, 'args': args}
     data.update(params)
     return jsonbytes(data)
@@ -94,7 +91,7 @@ class HttpBin(object):
             status = getattr(e,'status',500)
             return wsgi.WsgiResponse(status)
     
-    def redirect(self, location):
+    def redirect(self, location='/'):
         return wsgi.WsgiResponse(302,
                                  response_headers = (('location',location),))
         
@@ -114,27 +111,33 @@ class HttpBin(object):
     def request_get(self, environ, start_response, bits):
         if bits:
             raise HttpException(404)
-        qs = environ.get('QUERY_STRING',{})
-        if qs:
-            qs = parse_qs(qs)
-        data = {'headers': self.headers(environ),
-                'args': qs}
-        return self.response(jsonbytes(data))
+        return self.response(info_data(environ))
     
     @check_method('POST')
     def request_post(self, environ, start_response, bits):
         if bits:
             raise HttpException(404)
-        post, files = parse_form_data(environ)
-        data = {'headers': self.headers(environ),
-                'args': dict(post)}
-        return self.response(headers)
+        return self.response(info_data(environ))
     
     @check_method('PUT')
-    def request_get(self, environ, start_response, bits):
+    def request_put(self, environ, start_response, bits):
         if bits:
             raise HttpException(404)
         return self.response(info_data(environ))
+    
+    @check_method('GET')
+    def request_redirect(self, environ, start_response, bits):
+        if bits:
+            if len(bits) > 2:
+                raise HttpException(404)
+            num = int(bits[0])
+        else:
+            num = 1
+        num -= 1
+        if num > 0:
+            return self.redirect('/redirect/%s'%num)
+        else:
+            return self.redirect()
     
     @check_method('GET')
     def request_gzip(self, environ, start_response, bits):
@@ -142,7 +145,8 @@ class HttpBin(object):
             raise HttpException(404)
         data = self.response(info_data(environ, gzipped=True))
         middleware = wsgi.middleware.GZipMiddleware(10)
-        return middleware(environ, start_response, data)
+        middleware(environ, start_response, data)
+        return data
         
     @check_method('GET')
     def request_status(self, environ, start_response, bits):
@@ -152,11 +156,20 @@ class HttpBin(object):
             return wsgi.WsgiResponse(404)
 
 
+class handle(ws.WS):
+    
+    def on_message(self, msg):
+        path = self.path
+        if path == '/echo':
+            return msg
+        elif path == '/streaming':
+            return json.dumps([(i,random()) for i in range(100)])
+        
+        
 def server(description = None, **kwargs):
     description = description or 'Pulsar HttpBin'
-    return wsgi.WSGIApplication(callable=HttpBin(),
-                                description=description,
-                                **kwargs)
+    app = wsgi.WsgiHandler(middleware=(HttpBin(),))
+    return wsgi.WSGIApplication(app, description=description, **kwargs)
     
 
 if __name__ == '__main__':

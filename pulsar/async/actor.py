@@ -463,6 +463,7 @@ logging is configured, the :attr:`Actor.mailbox` is registered and the
             # to pass task to the actor, while the IO loop for socket
             # communication with other actors or with external networks.
             if self.cpubound:
+                self.log.debug('Registering IO loop with thread')
                 thread_ioloop(self.ioloop)
             self.on_start()
             self._run()

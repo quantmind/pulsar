@@ -78,7 +78,7 @@ called in the main process since those special actors always live in the
 main process.'''
         self.actor = self.actor_class(self,**self.a_kwargs)
         ct = current_thread()
-        if not hasattr(ct,'actor'):
+        if not hasattr(ct, 'actor'):
             ct.actor = self.actor
     
     
@@ -106,7 +106,7 @@ loop and therefore do not require an inbox.'''
 
 def init_actor(self,Impl,*args):
     Impl.__init__(self)
-    ActorImpl.__init__(self,*args)
+    ActorImpl.__init__(self, *args)
     self.daemon = True
         
         
