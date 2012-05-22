@@ -233,13 +233,16 @@ higher level tools for creating and reusing sockets already created.'''
     def bind(self, sock, address):
         sock.bind(address)
         
-    def close(self, log = None):
+    def close(self, log=None):
         try:
             self.sock.close()
         except socket.error as e:
             if log:
                 log.info("Error while closing socket %s" % str(e))
-        time.sleep(0.3)
+        try:
+            time.sleep(0.3)
+        except IOError:
+            pass
         
     def info(self):
         if self.is_server():

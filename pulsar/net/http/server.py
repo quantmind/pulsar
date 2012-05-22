@@ -7,11 +7,15 @@ from wsgiref.util import is_hop_by_hop
 import pulsar
 from pulsar import lib, Deferred, make_async, is_async, NOT_DONE
 from pulsar.utils.httpurl import Headers, unquote, to_bytes, is_string,\
-                                    to_string, BytesIO, iteritems
+                                    to_string, BytesIO, iteritems, \
+                                    has_empty_content
+from pulsar.utils import event
 from pulsar.net import base
 
 
 __all__ = ['HttpRequest', 'HttpResponse', 'wsgi_iterator']
+
+event.create('http-headers')
 
 
 def on_headers(f):
@@ -43,6 +47,7 @@ def wsgi_iterator(result, callback, *args, **kwargs):
         # yield empty bytes so that the loop is released
         yield b''
         result = result.get_result_or_self()
+    # The result is ready
     for chunk in callback(result, *args, **kwargs):
         yield chunk
             
@@ -308,7 +313,7 @@ https://github.com/joyent/node/blob/master/lib/http.js
 speaking HTTP/1.1 or newer and there was no Content-Length header set.'''
         if self.request.version <= (1,0):
             return False
-        elif self.status.startswith("304") or self.status.startswith("204"):
+        elif has_empty_content(int(self.status[:3])):
             # Do not use chunked responses when the response
             # is guaranteed to not have a response body.
             return False
@@ -379,19 +384,22 @@ for the server as a whole.
         write = self.stream.write
         # loop over data-iterable
         for b in data:
-            yield self.send_headers(force=b)
+            head = self.send_headers(force=b)
+            if head is not None:
+                yield head
             if b:
                 if self.chunked:
                     while b:
-                        s, b = b[:MAX_CHUNK], b[MAX_CHUNK:]
-                        chunk = ("%X\r\n%s\r\n" % (len(s),s)).encode('utf-8')
-                        yield write(chunk)
-                    yield write(b'0\r\n\r\n')
+                        chunk, b = b[:MAX_CHUNK], b[MAX_CHUNK:]
+                        head = ("%X\r\n" % len(chunk)).encode('utf-8')
+                        yield write(head + chunk + b'\r\n')
                 else:
                     yield write(b)
             else:
                 # No data. Release the loop
                 yield NOT_DONE
+        if self.chunked:
+            yield write(b'0\r\n\r\n')
         yield self.close()
     
     def get_headers(self, force=False):
@@ -414,6 +422,7 @@ for the server as a whole.
         if not self.__headers_sent:
             tosend = self.get_headers(force)
             if tosend:
+                event.fire('http-headers', tosend, sender=self)
                 data = tosend.flat(self.request.version, self.status)
                 # headers are strings, therefore we need
                 # to convert them to bytes before sending them

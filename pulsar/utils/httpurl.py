@@ -174,6 +174,16 @@ def host_and_port(host):
 ####################################################    REQUEST METHODS
 ENCODE_URL_METHODS = frozenset(['DELETE', 'GET', 'HEAD', 'OPTIONS'])
 ENCODE_BODY_METHODS = frozenset(['PATCH', 'POST', 'PUT', 'TRACE'])
+
+def has_empty_content(status, method=None):
+    '''204, 304 and 1xx codes have no content'''
+    if status == httpclient.NO_CONTENT or\
+            status == httpclient.NOT_MODIFIED or\
+            100 <= status < 200 or\
+            method == "HEAD":
+        return True
+    else:
+        return False
     
 ####################################################    HEADERS
 HEADER_FIELDS = {'general': frozenset(('Cache-Control', 'Connection', 'Date',

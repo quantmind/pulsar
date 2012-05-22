@@ -17,9 +17,12 @@ except ImportError:
     sys.path.append('../../')
     
 from pulsar.apps import wsgi, ws
-from pulsar.utils.httpurl import Headers, parse_qs, ENCODE_URL_METHODS
+from pulsar.utils.httpurl import Headers, parse_qs, ENCODE_URL_METHODS,\
+                                 responses, has_empty_content
 from pulsar.utils.multipart import parse_form_data
+from pulsar.utils import event
 
+error_messages = {404: '<p>The requested URL was not found on the server.</p>'}
 
 def jsonbytes(data):
     return json.dumps(data, indent=4).encode('utf-8')
@@ -81,15 +84,22 @@ class HttpBin(object):
             else:
                 path = path[1:]
                 bits = [bit for bit in path.split('/')]
-                method = getattr(self, 'request_%s' % bits[0], None)
+                name = bits[0].replace('-','_')
+                method = getattr(self, 'request_%s' % name, None)
                 if method:
                     bits.pop(0)
                     return method(environ, start_response, bits)
                 else:
                     raise HttpException(404)
-        except Exception as e:
-            status = getattr(e,'status',500)
-            return wsgi.WsgiResponse(status)
+        except HttpException as e:
+            status = e.status
+            if has_empty_content(status, environ['REQUEST_METHOD']):
+                return wsgi.WsgiResponse(status)
+            else:
+                content = error_messages.get(status,'')
+                title = responses.get(status)
+                content = '<h1>%s - %s</h1>%s' % (status, title, content)
+                return self.render(content, title=title, status=status)
     
     def redirect(self, location='/'):
         return wsgi.WsgiResponse(302,
@@ -100,12 +110,18 @@ class HttpBin(object):
         return wsgi.WsgiResponse(status, content=data,
                                  content_type=content_type)
     
-    def home(self, environ, start_response):
-        name = os.path.join(os.path.dirname(os.path.abspath(__file__)),
-                            'home.html')
+    def load(self, name):
+        name = os.path.join(os.path.dirname(os.path.abspath(__file__)),name)
         with open(name,'r') as file:
-            return self.response(file.read().encode('utf-8'),
-                                 content_type='text/html')
+            return file.read()
+                                 
+    def render(self, body, title='Pulsar Http', status=200):
+        template = self.load('template.html')
+        html = (template.format({'body': body, 'title': title})).encode('utf-8')
+        return self.response(html, status=status, content_type='text/html')
+        
+    def home(self, environ, start_response):
+        return self.render(self.load('home.html'))
     
     @check_method('GET')
     def request_get(self, environ, start_response, bits):
@@ -137,7 +153,7 @@ class HttpBin(object):
         if num > 0:
             return self.redirect('/redirect/%s'%num)
         else:
-            return self.redirect()
+            return self.redirect('/get')
     
     @check_method('GET')
     def request_gzip(self, environ, start_response, bits):
@@ -150,11 +166,33 @@ class HttpBin(object):
         
     @check_method('GET')
     def request_status(self, environ, start_response, bits):
-        if len(bits) == 1:
-            return wsgi.WsgiResponse(int(bits[0]))
-        else:
-            return wsgi.WsgiResponse(404)
+        number = int(bits[0]) if len(bits) == 1 else 404
+        raise HttpException(number)
 
+    @check_method('GET')
+    def request_response_headers(self, environ, start_response, bits):
+        if bits:
+            raise HttpException(404)
+        
+        class Gen:
+            headers=  None
+            def __call__(self, value, sender):
+                self.headers = value
+            def generate(self):
+                #yeidl a byte so that headers are sent
+                yield '{'
+                # we must have the headers now
+                headers = jsonbytes(dict(self.headers))
+                yield headers[1:]
+                
+        gen = Gen()
+        event.bind('http-headers', gen, once_only=True)            
+        data = wsgi.WsgiResponse(
+                            200,
+                            content=gen.generate(),
+                            content_type='application/json',
+                            start_response=start_response)
+        return data
 
 class handle(ws.WS):
     

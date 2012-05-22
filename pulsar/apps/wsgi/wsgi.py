@@ -68,9 +68,11 @@ Instances are callable using the standard WSGI call::
 '''
     DEFAULT_STATUS_CODE = 200
     DEFAULT_CONTENT_TYPE = 'text/plain'
-    
+    ENCODED_CONTENT_TYPE = ('text/plain', 'text/html', 'application/json')
     def __init__(self, status=None, content=None, response_headers=None,
-                 content_type=None, encoding=None, environ=None):
+                 content_type=None, encoding=None, environ=None,
+                 start_response=None):
+        self._start_response = start_response
         request = None
         if environ and not isinstance(environ, dict):
             if hasattr(environ, 'environ'):
@@ -85,17 +87,15 @@ Instances are callable using the standard WSGI call::
         self.content_type = content_type or self.DEFAULT_CONTENT_TYPE
         self.headers = Headers(response_headers, kind='server')
         self.when_ready = Deferred()
+        self._sent_headers = None
         if content is None:
             # no content, get the default content
             content = self.default_content()
         elif isinstance(content, bytes):
             content = (content,)
-        self._content = None
-        self._content_generator = None
-        if is_streamed(content):
-            self._content_generator = content
-        else:
-            self.content = content
+        self.content = content
+        if not self.is_streamed:
+            self.when_ready.callback(self)
         
     @property
     def logger(self):
@@ -108,13 +108,7 @@ By default it returns an empty tuple. Overrides if you need to.'''
         return ()
     
     def __call__(self, environ, start_response):
-        if self.content is None:
-            raise ValueError('No content available')
-        headers = self.headers
-        for c in self.cookies.values():
-            headers['Set-Cookie'] = c.OutputString()
-        headers = list(iteritems(headers))
-        start_response(self.status, headers)
+        self.start_server_response(start_response)
         return self
         
     @property
@@ -123,13 +117,7 @@ By default it returns an empty tuple. Overrides if you need to.'''
     
     @property
     def status(self):
-        return '{0} {1}'.format(self.status_code,self.response)
-    
-    def __get_content(self):
-        return self._content
-    def __set_content(self, content):
-        self.on_content(content)
-    content =  property(__get_content, __set_content)
+        return '{0} {1}'.format(self.status_code, self.response)
     
     def __str__(self):
         return self.status
@@ -149,21 +137,20 @@ This is usually `True` if a generator is passed to the response object."""
         #Called by the __iter__ method when the response is streamed.
         content = []
         try:
-            for b in generate_content(self._content_generator):
+            for b in generate_content(self.content):
                 if b:
                     content.append(b)
-                else:
-                    yield b'' # release the eventloop
+                    if len(content) == 1 and self._start_response:
+                        self.start_server_response(self._start_response)
+                yield b
         except Exception as e:
-            pulsar.get_actor().cfg.handle_http_error(self, e)
-        else:
-            self.content = content
-        for c in self.content:
-            yield c
+            if not content:
+                pulsar.get_actor().cfg.handle_http_error(self, e)
+        self.generated_content = content
+        self.when_ready.callback(self)
                 
     def __iter__(self):
-        # we have a content generator
-        if self._content_generator:
+        if self.is_streamed:
             return self._generator()
         else:
             return iter(self.content)
@@ -171,23 +158,6 @@ This is usually `True` if a generator is passed to the response object."""
     def __len__(self):
         return len(self.content)
         
-    def on_content(self, content):
-        cl = 0
-        if content is None:
-            content = ()
-        else:
-            if isinstance(content, bytes):
-                content = (content,)
-            for c in content:
-                cl += len(c)
-        self.headers['Content-Length'] = str(cl)
-        if self.content_type:
-            self.headers['Content-type'] = self.content_type
-        self._content_generator = None
-        self._content = content
-        if not self.when_ready.called:
-            self.when_ready.callback(self)
-    
     def set_cookie(self, key, **kwargs):
         """
         Sets a cookie.
@@ -201,6 +171,24 @@ This is usually `True` if a generator is passed to the response object."""
     def delete_cookie(self, key, path='/', domain=None):
         set_cookie(self.cookies, key, max_age=0, path=path, domain=domain,
                    expires='Thu, 01-Jan-1970 00:00:00 GMT')
+    
+    def get_headers(self):
+        headers = self.headers
+        if self.content_type:
+            headers['Content-type'] = self.content_type
+        if not self.is_streamed:
+            cl = 0
+            for c in self.content:
+                cl += len(c)
+            headers['Content-Length'] = str(cl)
+        for c in self.cookies.values():
+            headers['Set-Cookie'] = c.OutputString()
+        return list(iteritems(headers))
+        
+    def start_server_response(self, start_response):
+        if self._sent_headers is None:
+            self._sent_headers = self.get_headers()
+            start_response(self.status, self._sent_headers)
         
         
 class WsgiHandler(pulsar.LogginMixin):

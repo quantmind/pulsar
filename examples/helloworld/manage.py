@@ -7,6 +7,11 @@ To see options type::
 
     python manage.py -h
 '''
+try:
+    import pulsar
+except ImportError:
+    import sys
+    sys.path.append('../../')
 from pulsar.apps import wsgi
 
 

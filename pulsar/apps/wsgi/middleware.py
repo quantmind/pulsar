@@ -8,7 +8,7 @@ from pulsar.utils.httpurl import BytesIO
 re_accepts_gzip = re.compile(r'\bgzip\b')
 
 
-__all__ = ['AccessControl','GZipMiddleware','is_streamed']
+__all__ = ['AccessControl', 'GZipMiddleware', 'is_streamed']
 
 
 def is_streamed(content):
@@ -73,7 +73,7 @@ base their storage on the Accept-Encoding header.
             #need to uppend
             headers['Vary'] = 'Accept-Encoding'
             
-        response.content = self.compress_string(content)
+        response.content = (self.compress_string(content),)
         response.headers['Content-Encoding'] = 'gzip'
     
     # From http://www.xhaus.com/alan/python/httpcomp.html#gzip
