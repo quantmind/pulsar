@@ -6,28 +6,28 @@ from pulsar.utils.tools import gen_unique_id
 
 from .iostream import AsyncIOStream
 from .proxy import ActorProxyMonitor
+from .actor import get_actor
 from .defer import pickle
 
 
-__all__ = ['ActorImpl','actor_impl']
-    
+__all__ = ['Concurrency', 'concurrency']
 
-def actor_impl(concurrency, actor_class, timeout, arbiter, aid, kwargs):
-    if concurrency == 'monitor':
-        return ActorMonitorImpl(concurrency,actor_class, timeout, arbiter, aid,
-                                kwargs)
-    elif concurrency == 'thread':
-        return ActorThread(concurrency,actor_class, timeout, arbiter, aid,
-                           kwargs)
-    elif concurrency == 'process':
-        return ActorProcess(concurrency, actor_class, timeout, arbiter, aid,
-                            kwargs)
+
+def concurrency(kind, actor_class, timeout, arbiter, aid, params):
+    '''Function invoked by the :class:`Arbiter` when spawning a new
+:class:`Actor`.'''
+    if kind == 'monitor':
+        cls = MonitorConcurrency
+    elif kind == 'thread':
+        cls = ActorThread
+    elif kind == 'process':
+        cls = ActorProcess
     else:
-        raise ValueError('Concurrency {0} not supported by pulsar'\
-                         .format(concurrency))
+        raise ValueError('Concurrency %s not supported by pulsar' % kind)
+    return cls.make(kind, actor_class, timeout, arbiter, aid, params)
     
     
-class ActorImpl(object):
+class Concurrency(object):
     '''Actor implementation is responsible for the actual spawning of
 actors according to a concurrency implementation. Instances are pickable
 and are shared between the :class:`Actor` and its
@@ -40,21 +40,24 @@ and are shared between the :class:`Actor` and its
 :parameter kwargs: additional key-valued arguments to be passed to the actor
     constructor.
 '''
-    def __init__(self, concurrency, actor_class, timeout, arbiter, aid, kwargs):
+    @classmethod
+    def make(cls, kind, actor_class, timeout, arbiter, aid, kwargs):
+        self = cls()
         if not aid:
             aid = gen_unique_id()[:8] if arbiter else 'arbiter'
         self.aid = aid
-        self.impl = concurrency
+        self.impl = kind
         self.timeout = timeout
         self.actor_class = actor_class
         self.loglevel = kwargs.pop('loglevel',None)
         self.remotes = actor_class.remotes
         self.a_kwargs = kwargs
         self.process_actor(arbiter)
+        return self
        
     @property
     def name(self):
-        return '{0}({1})'.format(self.actor_class.code(),self.aid)
+        return '{0}({1})'.format(self.actor_class.code(), self.aid)
      
     def __str__(self):
         return self.name
@@ -68,27 +71,17 @@ actor. In particular here is where the outbox handler is created.'''
         monitor = self.a_kwargs.pop('monitor',None)
         self.a_kwargs.update({'arbiter':arbiter.proxy,
                               'monitor':monitor.proxy if monitor else None})
-        
-    def make_actor(self):
-        '''create an instance of :class:`Actor`. For standard actors, this
-function is called after forking, therefore in the new process
-(or thread if using a concurrency based on threads).
-For the :class:`Arbiter` and for :class:`Monitor` instances it is
-called in the main process since those special actors always live in the
-main process.'''
-        self.actor = self.actor_class(self,**self.a_kwargs)
-        ct = current_thread()
-        if not hasattr(ct, 'actor'):
-            ct.actor = self.actor
     
     
-class ActorMonitorImpl(ActorImpl):
+class MonitorConcurrency(Concurrency):
     '''An actor implementation for Monitors. Monitors live in the main process
 loop and therefore do not require an inbox.'''
     def process_actor(self, arbiter):
         self.a_kwargs['arbiter'] = arbiter
         self.timeout = 0
-        self.make_actor()
+        self.actor = self.actor_class(self, **self.a_kwargs)
+        if self.actor.is_arbiter():
+            get_actor(self.actor)
         
     def proxy_monitor(self):
         return None
@@ -104,31 +97,20 @@ loop and therefore do not require an inbox.'''
         return current_process().pid
 
 
-def init_actor(self,Impl,*args):
-    Impl.__init__(self)
-    ActorImpl.__init__(self, *args)
-    self.daemon = True
-        
-        
-class ActorProcess(Process,ActorImpl):
+class ActorConcurrency(Concurrency):
     
-    def __init__(self, *args):
-        init_actor(self, Process, *args)
-        
     def run(self):
-        self.make_actor()
+        self.actor = get_actor(self.actor_class(self, **self.a_kwargs))
         self.actor.start()
         
+
+class ActorProcess(ActorConcurrency, Process):
+    '''Actor on a process'''
+    pass
         
-class ActorThread(Thread,ActorImpl):
+        
+class ActorThread(ActorConcurrency, Thread):
     '''Actor on a thread'''
-    def __init__(self, *args):
-        init_actor(self, Thread, *args)
-        
-    def run(self):
-        self.make_actor()
-        self.actor.start()
-    
     def terminate(self):
         self.actor.stop()
     

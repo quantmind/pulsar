@@ -153,17 +153,20 @@ attribute by exposing the :attr:`Setting.name` as attribute.
             self.__dict__[k] = v
     
     def __getattr__(self, name):
-        if name not in self.settings:
-            if name in KNOWN_SETTINGS:
-                return None
-            raise AttributeError("No configuration setting for: %s" % name)
-        return self.settings[name].get()
+        return self.get(name)
     
     def __setattr__(self, name, value):
         if name != "settings" and name in self.settings:
             raise AttributeError("Invalid access!")
         super(Config, self).__setattr__(name, value)
-    
+
+    def get(self, name, default=None):
+        if name not in self.settings:
+            if name in KNOWN_SETTINGS:
+                return default
+            raise AttributeError("No configuration setting for: %s" % name)
+        return self.settings[name].get()
+            
     def set(self, name, value):
         if name not in self.settings:
             raise AttributeError("No configuration setting for: %s" % name)
@@ -468,7 +471,24 @@ class MaxRequests(Setting):
         restarts are disabled.
         """
 
-
+class Backlog(Setting):
+    name = "backlog"
+    section = "Worker Processes"
+    flags = ["--backlog"]
+    validator = validate_pos_int
+    type = int
+    default = 2048
+    desc = """\
+        The maximum number of concurrent requests.
+        This refers to the number of clients that can be waiting to be served.
+        Exceeding this number results in the client getting an error when
+        attempting to connect. It should only affect servers under significant
+        load.
+        
+        Must be a positive integer. Generally set in the 64-2048 range.    
+        """
+        
+        
 class Timeout(Setting):
     name = "timeout"
     section = "Worker Processes"
@@ -603,42 +623,7 @@ class Group(Setting):
         retrieved with a call to pwd.getgrnam(value) or None to not change
         the worker processes group.
         """
-
-
-class Umask(Setting):
-    name = "umask"
-    section = "Server Mechanics"
-    flags = ["-m", "--umask"]
-    validator = validate_pos_int
-    type = int
-    default = 0
-    desc = """\
-        A bit mask for the file mode on files written by Gunicorn.
         
-        Note that this affects unix socket permissions.
-        
-        A valid value for the os.umask(mode) call or a string compatible with
-        int(value, 0) (0 means Python guesses the base, so values like "0",
-        "0xFF", "0022" are valid for decimal, hex, and octal representations)
-        """
-
-
-class TmpUploadDir(Setting):
-    name = "tmp_upload_dir"
-    section = "Server Mechanics"
-    meta = "DIR"
-    validator = validate_string
-    default = None
-    desc = """\
-        Directory to store temporary request data as they are read.
-        
-        This may disappear in the near future.
-        
-        This path should be writable by the process permissions set for Gunicorn
-        workers. If not specified, Gunicorn will choose a system generated
-        temporary directory.
-        """
-
 
 class Loglevel(Setting):
     name = "loglevel"

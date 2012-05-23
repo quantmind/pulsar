@@ -9,7 +9,7 @@ import pulsar
 from pulsar.utils import system
 from pulsar.utils.tools import Pidfile, gen_unique_id
 
-from .impl import actor_impl
+from .concurrency import concurrency
 from .defer import itervalues, iteritems
 from .actor import Actor, get_actor, send
 from .monitor import PoolMixin
@@ -140,8 +140,8 @@ Users access the arbiter by the high level api::
             impl = kwargs.pop('impl', actorcls.DEFAULT_IMPLEMENTATION)
             timeout = max(kwargs.pop('timeout',cls.DEFAULT_ACTOR_TIMEOUT),
                           cls.MINIMUM_ACTOR_TIMEOUT)
-            actor_maker = actor_impl(impl, actorcls, timeout,
-                                     arbiter, aid, kwargs)
+            actor_maker = concurrency(impl, actorcls, timeout,
+                                      arbiter, aid, kwargs)
             monitor = actor_maker.proxy_monitor()
             # Add to the list of managed actors if this is a remote actor
             if monitor is not None:
@@ -149,7 +149,6 @@ Users access the arbiter by the high level api::
                 actor_maker.start()
                 return monitor.on_address.add_callback(
                                     lambda address: monitor.proxy)
-                return monitor
             else:
                 return actor_maker.actor
         finally:
@@ -188,10 +187,6 @@ Users access the arbiter by the high level api::
             self.loglevel = monitor.loglevel
         else:
             super(Arbiter,self).configure_logging(config = config)
- 
-    @property
-    def cfg(self):
-        return self.get('cfg')
     
     ############################################################################
     # OVERRIDE ACTOR HOOKS
@@ -214,14 +209,11 @@ Users access the arbiter by the high level api::
         self.SIG_QUEUE = ThreadQueue()
     
     def on_start(self):
-        cfg = self.get('cfg')
-        if cfg:
-            pidfile = cfg.pidfile
-        
-            if pidfile is not None:
-                p = Pidfile(cfg.pidfile)
-                p.create(self.pid)
-                self.local['pidfile'] = p
+        pidfile = self.get('pidfile')
+        if pidfile is not None:
+            p = Pidfile(pidfile)
+            p.create(self.pid)
+            self.local['pidfile'] = p
         PoolMixin.on_start(self)
         
     def on_task(self):
@@ -247,7 +239,7 @@ the timeout. Stop the arbiter.'''
                 if not actor.stopping_loops:
                     self.log.info(\
                         'Stopping {0}. Timeout surpassed.'.format(actor))
-                    actor.send(self,'stop')
+                    self.send(actor, 'stop')
             else:
                 self.log.warn(\
                         'Terminating {0}. Timeout surpassed.'.format(actor))
@@ -276,8 +268,6 @@ the timeout. Stop the arbiter.'''
         linked_actors = linked_actors if linked_actors is not None else {}
         linked_actors[caller.aid] = caller.proxy
         return self.spawn(linked_actors = linked_actors, **kwargs)
-        #p = self.spawn(linked_actors = linked_actors, **kwargs)
-        #return p.on_address.add_callback(lambda address: p.proxy)
      
     def actor_kill_actor(self, caller, aid):
         '''Remote function for ``caller`` to kill an actor with id ``aid``'''
@@ -300,7 +290,7 @@ the timeout. Stop the arbiter.'''
         Initialize the arbiter. Start listening and set pidfile if needed.
         """
         try:
-            self.get('cfg').when_ready(self)
+            self.cfg.get('when_ready')(self)
         except:
             pass
         try:

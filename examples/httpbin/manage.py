@@ -1,11 +1,6 @@
-'''Pulsar "Hello World!" application. It runs a HTTP server which
-display the two famous words::
+'''Pulsar HTTP test application::
 
     python manage.py
-    
-To see options type::
-
-    python manage.py -h
 '''
 import re
 import os
@@ -71,7 +66,7 @@ class check_method(object):
     
 
 class HttpBin(object):
-    
+    '''WSGI application running on the server'''
     def __call__(self, environ, start_response):
         '''Pulsar HTTP "Hello World!" application'''
         try:
@@ -207,7 +202,7 @@ class handle(ws.WS):
 def server(description = None, **kwargs):
     description = description or 'Pulsar HttpBin'
     app = wsgi.WsgiHandler(middleware=(HttpBin(),))
-    return wsgi.WSGIApplication(app, description=description, **kwargs)
+    return wsgi.WSGIServer(app, description=description, **kwargs)
     
 
 if __name__ == '__main__':

@@ -62,9 +62,8 @@ import time
 import inspect
 
 import pulsar
-import pulsar.apps.tasks # Need to import for the task_queue_factory settings
+from pulsar.apps import tasks
 
-from .config import *
 from .result import *
 from .case import *
 from .plugins.base import *
@@ -74,9 +73,44 @@ from .utils import *
 
 class ExitTest(Exception):
     pass
+    
+
+class TestVerbosity(TestOption):
+    name = 'verbosity'
+    flags = ['--verbosity']
+    type = int
+    default = 1
+    desc = """Test verbosity, 0, 1, 2, 3"""
+    
+    
+class TestLabels(TestOption):
+    name = "labels"
+    nargs = '*'
+    validator = pulsar.validate_list
+    desc = """Optional test labels to run. If not provided\
+ all tests are run.
+ 
+To see available labels use the -l option."""
 
 
-class TestSuite(pulsar.Application):
+class TestSize(TestOption):
+    name = 'size'
+    flags = ['--size']
+    #choices = ('tiny','small','normal','big','huge')
+    default = 'normal'
+    desc = """Optional test size."""
+    
+
+class TestList(TestOption):
+    name = "list_labels"
+    flags = ['-l','--list_labels']
+    action = 'store_true'
+    default = False
+    validator = pulsar.validate_bool
+    desc = """List all test labels without performing tests."""
+
+
+class TestSuite(tasks.CPUboundServer):
     '''An asynchronous test suite which works like a task queue where each task
 is a group of tests specified in a test class.
 
@@ -104,23 +138,15 @@ is a group of tests specified in a test class.
     it used the standard ``unittest.TextTestResult``.
 :parameter plugins: Optional list of :class:`Plugin` instances
 '''
-    app = 'test'
+    _app_name = 'test'
+    cfg_apps = ('cpubound',)
     plugins = ()
-    config_options_include = ('timeout','concurrency','workers','loglevel',
-                              'worker_class','debug','task_queue_factory',
-                              'http_proxy','http_client','http_py_parser')
-    default_logging_level = None
+    config_options_exclude = ('daemon','max_requests','user','group','pidfile')
     can_kill_arbiter = True
-    cfg = {'workers':1, 'loglevel':'none'}
+    cfg = {'loglevel': 'none', 'timeout': 0, 'backlog': 1}
     
     def handler(self):
         return self
-    
-    def get_ioqueue(self):
-        #Return the distributed task queue which produces tasks to
-        #be consumed by the workers.
-        queue = self.cfg.task_queue_factory
-        return queue()
     
     def python_path(self):
         #Override the python path so that we put the directory where the script
@@ -145,15 +171,15 @@ configuration and plugins.'''
         return self.local['runner'] 
             
     def on_config(self):
-        #Whene config is available load the tests and check what type of
+        #When config is available load the tests and check what type of
         #action is required.
         pulsar.arbiter()
-        modules = getattr(self,'modules',None)
-        if not hasattr(self,'plugins'):
+        modules = getattr(self, 'modules', None)
+        if not hasattr(self, 'plugins'):
             self.plugins = ()
             
         # Create a runner and configure it
-        runner = self.runner            
+        runner = self.runner
         
         if not modules:
             modules = ((None,'tests'),)
@@ -184,9 +210,6 @@ configuration and plugins.'''
             return False
         
         self.local['loader'] = loader
-        
-    def monitor_init(self, monitor):
-        pass
         
     def monitor_start(self, monitor):
         # When the monitor starts load all :class:`TestRequest` into the

@@ -15,7 +15,7 @@ from pulsar import AlreadyCalledError, AlreadyRegistered,\
 from .eventloop import IOLoop
 from .proxy import ActorProxy, ActorMessage, DEFAULT_MESSAGE_CHANNEL
 from .defer import make_async, is_failure, iteritems, itervalues,\
-                     pickle, safe_async
+                     pickle, safe_async, thread_local_data
 from .mailbox import IOQueue, mailbox
 
 
@@ -23,8 +23,8 @@ __all__ = ['is_actor',
            'get_actor',
            'send',
            'Actor',
-           'ActorMetaClass',
-           'ActorBase',
+           'RemoteMethods',
+           'RemoteMetaClass',
            'is_mainthread']
 
 
@@ -43,10 +43,9 @@ the current thread'''
     return isinstance(thread, threading._MainThread)
 
 
-def get_actor(thread=None):
+def get_actor(value=None):
     '''This function will return the actor running the current thread.'''
-    thread = thread if thread is not None else current_thread()
-    return thread.actor
+    return thread_local_data('actor', value=value)
 
 
 def send(target, action, **params):
@@ -66,18 +65,11 @@ Typical example::
     >>> r.result
     'pong'
 '''
-    actor = get_actor()
-    if isinstance(target, str):
-        tg = actor.get_actor(target)
-    else:
-        tg = target
-    if not tg:
-        raise ValueError('Cannot send message to {0}'.format(target))
-    return tg.send(actor, action, **params)
+    return get_actor().send(target, action, **params)
 
 
-class ActorMetaClass(type):
-    '''The actor metaclass performs a little amount of magic
+class RemoteMetaClass(type):
+    '''The :class:`Actor` metaclass performs a little amount of magic
 by collecting functions prefixed with ``actor_`` and placing them into
 the :class:`Actor.actor_functions` dictionary.
 These are the remote functions exposed by the actor.
@@ -94,7 +86,7 @@ by the remote actor calling the function. For example::
             
 '''
     def __new__(cls, name, bases, attrs):
-        make = super(ActorMetaClass, cls).__new__
+        make = super(RemoteMetaClass, cls).__new__
         fprefix = 'actor_'
         attrib  = '{0}functions'.format(fprefix)
         rattrib = 'remotes'
@@ -126,12 +118,10 @@ by the remote actor calling the function. For example::
         attrs.update({attrib: cont,
                       rattrib: remotes})
         return make(cls, name, bases, attrs)
-
     
-ActorBase = ActorMetaClass('BaseActor',(object,),{})
+RemoteMethods = RemoteMetaClass('RemoteMethods',(object,),{})
 
-
-class Actor(ActorBase, LogginMixin):
+class Actor(RemoteMethods, LogginMixin):
     '''The base class for concurrent programming in pulsar. In computer science,
 the **Actor model** is a mathematical model of concurrent computation that
 treats *actors* as the universal primitives of computation.
@@ -171,6 +161,11 @@ Here ``a`` is actually a reference to the remote actor.
     :ref:`io queue <configuration-ioqueue>` for information.
     
     Default ``None``.
+    
+.. attribute:: cpubound
+
+    Indicates if the :class:`Actor` is a CPU-bound worker or a I/O-bound one.
+    CPU-bound actors have a sperate event loop for handling I/O events.
     
 .. attribute:: ioloop
 
@@ -217,11 +212,11 @@ Here ``a`` is actually a reference to the remote actor.
     
     def __init__(self, impl, arbiter=None, monitor=None,
                  on_task=None, ioqueue=None, monitors=None,
-                 name=None, params = None,
-                 age = 0, pool_timeout = None, ppid = None,
-                 on_event = None,
-                 linked_actors = None, **kwargs):
-        # Call on_init
+                 name=None, params=None, age=0,
+                 pool_timeout=None, ppid=None, on_event=None,
+                 linked_actors=None, cfg=None,
+                 **kwargs):
+        self.cfg = cfg
         self.__ppid = ppid
         self._impl = impl
         self.__mailbox = None
@@ -243,20 +238,21 @@ Here ``a`` is actually a reference to the remote actor.
         actor_links = {}
         for a in itervalues(self._monitors):
             self._linked_actors[a.aid] = a
-        
-        # If arbiter available
-        if arbiter:
-            #self._linked_actors[arbiter.aid] = arbiter
+        if not self.is_arbiter():
             self._repr = '{0} {1}'.format(self._name,self.aid)
             if on_task:
                 self.on_task = on_task
             if on_event:
                 self.on_event = on_event
-            
         self.ioqueue = ioqueue
-        #
         self.on_init(**kwargs)
+        if self.cfg is None:
+            self.cfg = {}
     
+    def __repr__(self):
+        return self._repr
+    
+    ############################################################### PROPERTIES
     @property
     def proxy(self):
         '''Instance of a :class:`ActorProxy` holding a reference
@@ -305,9 +301,6 @@ longer that timeout.'''
         else:
             return self._make_name()
         
-    def __repr__(self):
-        return self._repr
-        
     @property
     def mailbox(self):
         '''Messages inbox :class:`Mailbox`.'''
@@ -355,6 +348,74 @@ their ids.'''
 '''
         return self.requestloop.POLL_TIMEOUT
     
+    @property
+    def state(self):
+        '''Current state description. One of ``initial``, ``running``,
+ ``stopping``, ``closed`` and ``terminated``.'''
+        return self.STATE_DESCRIPTION[self._state]
+    
+    ############################################################################
+    ##    HIGH LEVEL API METHODS
+    ############################################################################
+    def get(self, parameter, default=None):
+        '''retrive *parameter* form this :class:`Actor`.'''
+        return self._params.get(parameter, default)
+        
+    def set(self, parameter, value):
+        '''Set *parameter* value on this :class:`Actor`.'''
+        self._params[parameter] = value
+        
+    def send(self, target, action, *args, **params):
+        '''Send a message to *target* to perform *action* with given
+parameters *params*. It return a :class:`ActorMessage`.'''
+        if not isinstance(target, ActorProxy):
+            tg = self.get_actor(target)
+        else:
+            tg = target
+        if not tg:
+            raise ValueError('Cannot send message to {0}'.format(target))
+        return tg.receive_from(self, action, *args, **params)
+        
+    def put(self, request):
+        '''Put a *request* into the :attr:`ioqueue` if available.'''
+        if self.ioqueue:
+            self.log.debug('Put %s into IO queue' % request)
+            self.ioqueue.put(('request',request))
+        else:
+            self.log.error("Trying to put a request on task queue,\
+ but there isn't one!")
+        
+    def run_on_arbiter(self, callable):
+        '''Run a *callable* in the arbiter event loop.
+
+:parameter callable: a pickable, therefore it must be a pickable callable object
+    or a function.
+:rtype: a :class:`Deferred`'''
+        return self.send('arbiter', 'run', callable)
+    
+    ###############################################################  STATES
+    def running(self):
+        '''``True`` if actor is running.'''
+        return self.requestloop.running()
+        #return self._state == self.RUN
+    
+    def started(self):
+        '''``True`` if actor has started. It does not necessarily
+mean it is running.'''
+        return self._state >= self.RUN
+    
+    def stopping(self):
+        '''``True`` if actor is stopping.'''
+        return self._state == self.STOPPING
+    
+    def closed(self):
+        '''``True`` if actor has exited in an clean fashion.'''
+        return self._state == self.CLOSE
+    
+    def stopped(self):
+        '''``True`` if actor has exited.'''
+        return self._state >= self.CLOSE
+    
     def is_arbiter(self):
         '''Return ``True`` if ``self`` is the :class:`Arbiter`.'''
         return False
@@ -367,9 +428,10 @@ their ids.'''
         return self.arbiter.aid in self._linked_actors
     
     def can_poll(self):
-        '''Check if the actor can poll requests. This is used by CPU
-bound actors.'''
-        return self.self.concurrent_requests < 1
+        '''Check if the actor can poll requests. This is used by CPU-bound
+ actors only.'''
+        m = self.cfg.get('backlog', 0)
+        return self.concurrent_requests < m if m else True
         
     def __reduce__(self):
         raise pickle.PicklingError('{0} - Cannot pickle Actor instances'\
@@ -392,9 +454,6 @@ bound actors.'''
             result.log(self.log)
         return result
     
-    def handle_request(self, request):
-        raise NotImplementedError()
-    
     ############################################################################
     ##    HOOKS
     ############################################################################
@@ -416,6 +475,7 @@ iteration of the :attr:`Actor.ioloop`.'''
         pass
     
     def on_event(self, fd, event):
+        '''handle and event on a filedescriptor *fd*.'''
         pass
     
     def on_stop(self):
@@ -449,34 +509,9 @@ iteration of the :attr:`Actor.ioloop`.'''
 :class:`ActorMessage` *message* has been processed.'''
         pass
     
-    @property
-    def state(self):
-        '''Current state description. One of ``initial``, ``running``,
- ``stopping``, ``closed`` and ``terminated``.'''
-        return self.STATE_DESCRIPTION[self._state]
-    
-    def running(self):
-        '''``True`` if actor is running.'''
-        return self.requestloop.running()
-        #return self._state == self.RUN
-    
-    def started(self):
-        '''``True`` if actor has started. It does not necessarily
-mean it is running.'''
-        return self._state >= self.RUN
-    
-    def stopping(self):
-        '''``True`` if actor is stopping.'''
-        return self._state == self.STOPPING
-    
-    def closed(self):
-        '''``True`` if actor has exited in an clean fashion.'''
-        return self._state == self.CLOSE
-    
-    def stopped(self):
-        '''``True`` if actor has exited.'''
-        return self._state >= self.CLOSE
-            
+    ############################################################################
+    ##    INTERNALS
+    ############################################################################
     def start(self):
         '''Called after forking to start the actor's life. This is where
 logging is configured, the :attr:`Actor.mailbox` is registered and the
@@ -490,7 +525,7 @@ logging is configured, the :attr:`Actor.mailbox` is registered and the
                 self.setlog(log = LogSelf(self,self.log))
             self.log.info('Starting')
             # GET REQUESTS EVENT LOOP
-            self.__requestloop = self.get_requestloop()
+            self.__requestloop = self._get_requestloop()
             # Initialize mailbox. It will also initialize the ioloop
             self.__mailbox = mailbox(self)
             self.__tid = ct.ident
@@ -503,7 +538,7 @@ logging is configured, the :attr:`Actor.mailbox` is registered and the
             self.on_start()
             self._run()
     
-    def get_requestloop(self):
+    def _get_requestloop(self):
         '''Internal function called at the start of the actor. It builds the
 event loop which will consume events on file descriptors.
 This function is overridden by :class:`Monitor` to perform nothing.'''
@@ -513,39 +548,17 @@ This function is overridden by :class:`Monitor` to perform nothing.'''
                          logger=self.log,
                          name=self.name,
                          ready=not self.cpubound)
-        # If IO loop is based on a IO queue (CPU bounded workers)
-        # we bind the :meth:`handle_request` to the loop.
-        #if ioq:
-        #    ioloop.add_handler('request', self.handle_fd_event, ioloop.READ)
+        # If CPU bound add the request handler to the request loop
+        if self.cpubound:
+            reqloop.add_handler('request',
+                                self.handle_fd_event,
+                                reqloop.READ)
         self._init_runner()
         return reqloop
         
     def handle_message(self, sender, message):
         '''Handle a *message* from a *sender*.'''
         pass
-        
-    def put(self, request):
-        '''Put a request into the actor :attr:`ioqueue` if available.'''
-        if self.ioqueue:
-            self.log.debug('Put %s into IO queue' % request)
-            self.ioqueue.put(('request',request))
-        else:
-            self.log.error("Trying to put a request on task queue,\
- but there isn't one!")
-                
-    def get(self, key, default=None):
-        return self._params.get(key, default)
-        
-    def set(self, key, value):
-        self._params[key] = value
-        
-    def run_on_arbiter(self, callable):
-        '''Run a *callable* in the arbiter event loop.
-
-:parameter callable: a pickable, therefore it must be a pickable callable object
-    or a function.
-:rtype: a :class:`Deferred`'''
-        return self.arbiter.send(self, 'run', callable)
         
     ############################################################################
     # STOPPING
@@ -575,8 +588,6 @@ properly this actor will go out of scope.'''
             self.on_exit()
             self.log.info('exited')
             
-    # LOW LEVEL API
-    
     def _make_name(self):
         return '{0}({1})'.format(self.class_code,self.aid[:8])
     
@@ -590,6 +601,8 @@ properly this actor will go out of scope.'''
         '''Given an actor unique id return the actor proxy.'''
         if aid == self.aid:
             return self
+        elif aid == 'arbiter':
+            return self.arbiter
         elif aid in self._linked_actors:
             return self._linked_actors[aid]
         else:
@@ -620,7 +633,7 @@ actions:
                 self.last_notified = nt
                 info = self.info(True)
                 info['last_notified'] = nt
-                self.arbiter.send(self,'notify',info)
+                self.send('arbiter', 'notify', info)
 
         self.on_task()
     
@@ -650,7 +663,7 @@ status and performance.'''
     ############################################################################
     # BUILT IN REMOTE FUNCTIONS
     ############################################################################    
-    def action_message(self, request):
+    def actor_action(self, actor, request):
         # Do nothing for now
         return
         msg = request.msg
@@ -661,21 +674,20 @@ status and performance.'''
         ch.append(request)
         
     def actor_mailbox_address(self, actor, address):
-        '''The ``actor`` register its mailbox ``address``.'''
+        '''The *actor* register its mailbox ``address``.'''
         if address:
             self.log.debug('Registering actor {0} inbox address {1}'
                            .format(actor, address))
             actor.address = address
-            return True
+            return self.proxy
         return False
-    #actor_mailbox_address.ack = False
     
     def actor_callback(self, caller, rid, result):
         '''Actor :ref:`remote function <remote-functions>` which sends
 the a results back to an actor which previously accessed another remote
 function. Essentially this is the return statement in the pulsar concurrent
 framework'''
-        ActorMessage.actor_callback(rid,result)
+        ActorMessage.actor_callback(rid, result)
     actor_callback.ack = False
     
     def actor_stop(self, caller):
@@ -729,10 +741,10 @@ if *proxy* is not a class:`ActorProxy` instance raise an exception.'''
         
         random.seed()
         proc_name = self.DEF_PROC_NAME
-        cfg = self.get('cfg')
-        if cfg:
-            proc_name = cfg.proc_name or cfg.default_proc_name or proc_name
-        proc_name = "{0} - {1}".format(proc_name,self)
+        cfg = self.cfg
+        proc_name = cfg.get('proc_name') or cfg.get('default_proc_name')\
+                         or proc_name
+        proc_name = "{0} - {1}".format(proc_name, self)
         if system.set_proctitle(proc_name):
             self.log.debug('Set process title to {0}'.format(proc_name))
         #system.set_owner_process(cfg.uid, cfg.gid)

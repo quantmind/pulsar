@@ -123,9 +123,9 @@ def async_func_call(func, result, *args, **kwargs):
     else:
         return callback()
 
-def safe_async(f, args=(), description=None, max_errors=None):
+def safe_async(f, args=(), kwargs={}, description=None, max_errors=None):
     try:
-        result = f(*args)
+        result = f(*args, **kwargs)
     except Exception as e:
         result = e
     return make_async(result, max_errors=max_errors, description=description)
@@ -332,7 +332,7 @@ this point, :meth:`add_callback` will run the *callbacks* immediately.
             raise RuntimeError('Received a deferred instance from '
                                'callback function')
         elif self.called:
-            raise AlreadyCalledError('Deferred %s already called'.format(self))
+            raise AlreadyCalledError('Deferred %s already called' % self)
         self.result = as_failure(result)
         self._called = True
         self._run_callbacks()

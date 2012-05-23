@@ -6,18 +6,17 @@ import time
 import threading
 from multiprocessing.queues import Empty, Queue
 
-from pulsar import create_connection, MailboxError, socket_pair, wrap_socket
+from pulsar import create_connection, MailboxError, socket_pair, wrap_socket,\
+                    CannotCallBackError
 from pulsar.utils.tools import gen_unique_id
 
 from .eventloop import IOLoop, deferred_timeout
-from .defer import make_async, pickle, thread_loop
-from .iostream import thread_ioloop
+from .defer import Deferred, make_async, safe_async, pickle, thread_loop,\
+                    is_failure, ispy3k
+from .iostream import AsyncIOStream, thread_ioloop
 
 
-__all__ = ['mailbox', 'Mailbox', 'IOQueue', 'Empty', 'Queue']
-
-crlf = b'\r\n'
-msg_separator = 3*crlf
+__all__ = ['mailbox', 'Mailbox', 'IOQueue', 'Empty', 'Queue', 'ActorMessage']
 
 
 def mailbox(actor, address=None):
@@ -40,7 +39,7 @@ def serverSocket():
     '''Create the inbox, a TCP socket ready for
 accepting messages from other actors.'''
     # get a socket pair
-    w,s = socket_pair(backlog = 64)
+    w, s = socket_pair(backlog = 64)
     s.setblocking(True)
     r, _ = s.accept()
     r.close()
@@ -48,90 +47,165 @@ accepting messages from other actors.'''
     s.setblocking(False)
     return s
         
+
+def encode_message(msg):
+    data = (msg.rid,msg.sender,msg.receiver,msg.action,
+            msg.ack,msg.args,msg.kwargs)
+    bdata = pickle.dumps(data)
+    return ('*%s\r\n\r\n\r\n' % len(bdata)).encode('utf-8') + bdata
     
+def decode_message(buffer):
+    if not buffer:
+        return None, buffer
+    if buffer[:1] != b'*':
+        raise ValueError('Could not parse message')
+    separator = b'\r\n\r\n\r\n'
+    idx = buffer.find(separator)
+    if idx < 0:
+        return None, buffer
+    length = int(buffer[1:idx])
+    idx += len(separator)
+    total_length = idx + length
+    msg = None
+    if len(buffer) >= total_length:
+        data, buffer = buffer[idx:total_length:], buffer[total_length:]
+        if not ispy3k:
+            data = bytes(data)
+        args = pickle.loads(data)
+        msg = ActorMessage(*args)
+    return msg, buffer
+    
+    
+class ActorMessage(Deferred):
+    '''A message class which travels from :class:`Actor` to
+:class:`Actor` to perform a specific *action*. :class:`ActorMessage`
+are not directly initialized using the constructor, instead they are
+created by :meth:`ActorProxy.send` method.
+
+.. attribute:: sender
+
+    id of the actor sending the message.
+    
+.. attribute:: receiver
+
+    id of the actor receiving the message.
+    
+.. attribute:: action
+
+    action to be performed
+    
+.. attribute:: args
+
+    Positional arguments in the message body
+    
+.. attribute:: kwargs
+
+    Optional arguments in the message body
+    
+.. attribute:: ack
+
+    ``True`` if the message needs acknowledgment
+    
+.. attribute:: rid
+
+    :class:`ActorMessage` request id. This id used for managing remote
+    callbacks, if :attr:`ack` is ``True``.
+'''
+    MESSAGES = {}
+    
+    def __init__(self, rid, sender, target, action, ack, args, kwargs):
+        super(ActorMessage,self).__init__()
+        if rid is None:
+            rid = gen_unique_id()[:8]
+            if ack:
+                self.MESSAGES[rid] = self
+        self.rid = rid
+        self.sender = sender
+        self.receiver = target
+        self.action = action
+        self.args = args
+        self.kwargs = kwargs
+        self.ack = ack
+        
+    def __repr__(self):
+        return '%s %s %s' % (self.sender, self.action, self.receiver)
+        
+    def add_callback(self, callback, errback=None):
+        if not self.ack:
+            raise CannotCallBackError('Cannot add callback to "{0}".\
+ It does not acknowledge'.format(self))
+        return super(ActorMessage, self).add_callback(callback, errback)
+    
+    @classmethod
+    def actor_callback(cls, rid, result):
+        r = cls.MESSAGES.pop(rid, None)
+        if r:
+            r.callback(result)
+            
+            
 class MailboxProxy(object):
     '''A socket outbox for :class:`Actor` instances. This outbox
 send messages to a :class:`SocketServerMailbox`.'''
     def __init__(self, address):
-        try:
-            self.sock = create_connection(address,blocking=True)
-        except Exception as e:
-            raise MailboxError('Cannot register {0}. {1}'.format(self,e))
+        self.stream = AsyncIOStream()
+        self.stream.connect(address)
     
     @property
     def address(self):
-        return self.sock.getsockname()
+        return self.stream.getsockname()
     
     def fileno(self):
-        return self.sock.fileno()
+        return self.stream.fileno()
         
-    def put(self, request):
-        request = pickle.dumps(request) + msg_separator
-        try:
-            return self.sock.send(request)
-        except socket.error as e:
-             self.close()
+    def put(self, msg):
+        data = encode_message(msg)
+        self.stream.write(data)
     
     def close(self):
-        if self.sock:
-            self.sock.close()
-            self.sock = None
+        self.stream.close()
+        
 
-
-class SocketServerClient(object):
-    '''A client of :class:`Mailbox`. An instance of this class is created
-when a new connection is mad with :class:`Mailbox`.'''
-    __slots__ = ('sock','buffer')
-    def __init__(self, sock):
-        sock.setblocking(True)
-        self.sock = wrap_socket(sock)
+class MailboxClient(object):
+    '''A :class:`MailboxClient` is a read only socket which
+receives messages from a remote :class:`Actor`.
+An instance of this class is created when a new connection is made
+with a :class:`Mailbox`.'''
+    def __init__(self, mailbox, sock, client_address):
+        self.mailbox = mailbox
+        self.received = 0
+        # create an asyncronous iostream without timeout
+        self.stream = AsyncIOStream(sock, timeout=None)
+        self.client_address = client_address
         self.buffer = bytearray()
+        #kick off reading
+        self.read()
         
     def fileno(self):
-        return self.sock.fileno()
+        return self.stream.fileno()
     
     def __str__(self):
-        return '{0} inbox client'.format(self.sock)
-    
-    def recv(self, actor):
-        length = io.DEFAULT_BUFFER_SIZE
-        sock = self.sock
-        buffer = self.buffer
-        try:
-            chunk = sock.recv(length)
-        except socket.error:
-            chunk = None
+        return '%s' % self.stream
         
-        toclose = False
-        if chunk:
-            buffer.extend(chunk)
-            while len(chunk) > length:
-                chunk = sock.recv(length)
-                if not chunk:
-                    break
-                else:
-                    buffer.extend(chunk)
-        else:
-            toclose = True
-            
-        while buffer:
-            p = buffer.find(msg_separator)
-            if p >= 0:
-                msg = buffer[:p]
-                del buffer[0:p+len(msg_separator)]
-                try:
-                    data = pickle.loads(bytes(msg))
-                except (pickle.UnpicklingError, EOFError):
-                    actor.log.error('Could not unpickle message',
-                                    exc_info = True)
-                    continue
-                yield data
-            else:
-                break
-            
-        if toclose:
-            actor.ioloop.remove_handler(self)
-            sock.close()
+    def read(self):
+        self.stream.read().add_callback(self._parse, self._error)
+    
+    def _error(self, failure):
+        failure.log()
+        self.mailbox.clients.pop(self.fileno(), None)
+        self.stream.close()
+    
+    def _parse(self, data):
+        buffer = self.buffer
+        if data:
+            buffer.extend(data)
+        msg = True
+        while msg is not None:
+            msg, buffer = decode_message(buffer)
+            if msg is not None:
+                self.received += 1
+                self.mailbox.message_arrived(msg)
+        self.buffer = buffer
+        self.read()
     
     
 class Mailbox(object):
@@ -164,39 +238,35 @@ actor process domain.
       with a queue rather than with a socket.
 '''
     thread = None
+    _started = False
     def __init__(self, actor):
         self.actor = actor
         self.sock = serverSocket()
         self.pending = {}
         self.clients = {}
-        name = '{0} {1}:{2}'.format(actor,self.address[0],self.address[1])
-        self.daemon = True
+        self.name = '{0} mailbox {1}:{2}'.format(actor,*self.address)
         # If the actor has a ioqueue (CPU bound actor) we create a new ioloop
-        if actor.ioqueue is not None and not actor.is_monitor():
-            self.__hasloop = True
+        if self.cpubound:
             self.__ioloop = IOLoop(pool_timeout=actor._pool_timeout,
                                    logger=actor.log,
-                                   name=name)
-        else:
-            self.__hasloop = False
-            self.__ioloop = actor.requestloop
-            
+                                   name=self.name)
         # add the on message handler for reading messages
         self.ioloop.add_handler(self,
-                                self.on_message,
+                                self.on_connection,
                                 self.ioloop.READ)
-        if actor.arbiter:
-            self.register(actor.arbiter)
-        # add start to the actor
         actor.requestloop.add_callback(self.start)
+    
+    def __repr__(self):
+        return self.name
+    __str__ = __repr__
     
     @property
     def cpubound(self):
-        return self.__hasloop
+        return self.actor.cpubound
     
     @property
     def ioloop(self):
-        return self.__ioloop
+        return self.__ioloop if self.cpubound else self.actor.requestloop
     
     @property
     def address(self):
@@ -204,42 +274,20 @@ actor process domain.
     
     def fileno(self):
         return self.sock.fileno()
-    
-    def register(self, actor):
-        '''This class:`Mailbox` register with a remote *actor* by
         
-* addint *actor* to the mailbox actor linked actors dictionary
-* sending its socket address.
-
-:parameter actor: an :class:`ActorProxy` to register with.
-:rtype: an :class:`ActorMessage`.
-'''
-        self.actor.link_actor(actor)
-        msg = actor.send(self.actor, 'mailbox_address', self.address)
-        return msg.add_callback(lambda r: self.actor)
-        
-    def on_message(self, fd, events):
-        '''Handle the message by parsing it and invoking
-:meth:`Actor.message_arrived`'''
-        for message in self.read_message(fd, events):
-            self.message_arrived(message)
-    
-    def read_message(self, fd, events):
+    def on_connection(self, fd, events):
         '''Called when a new message has arrived.'''
         ioloop = self.actor.ioloop
         client = self.clients.get(fd)
         if not client:
-            client,_ = self.sock.accept()
+            client, client_address = self.sock.accept()
             if not client:
                 self.actor.log.debug('Still no client. Aborting')
-                return ()
-            client = SocketServerClient(client)
-            self.clients[client.fileno()] = client
-            #self.actor.log.debug('Got inbox event on {0}, {1}'.format(fd,client))
-            ioloop.add_handler(client, self.on_message, ioloop.READ)
-            return ()
-            
-        return client.recv(self.actor)
+            else:
+                client = MailboxClient(self, client, client_address)
+                self.clients[client.fileno()] = client
+        else:
+            self.actor.log.warn('This is a connection callback only!')
         
     def unregister(self, actor):
         if not self.ioloop.remove_loop_task(actor):
@@ -264,6 +312,9 @@ actor process domain.
     def start(self):
         '''Start the thread only if the mailbox has its own event loop. This
 is the case when the actor is a CPU bound worker.'''
+        if not self._started:
+            self._started = True
+            self._run()
         if self.cpubound:
             if self.thread and self.thread.is_alive():
                 raise RunTimeError('Cannot start mailbox. '\
@@ -271,68 +322,63 @@ is the case when the actor is a CPU bound worker.'''
             self.thread = threading.Thread(name=self.ioloop.name,
                                            target=self._run)
             self.thread.start()
-        else:
-            self._run()
             
     def message_arrived(self, message):
         '''A new :class:`ActorMessage` has arrived in the :attr:`Actor.inbox`.
 Here we check the sender and the receiver (it may be not ``self`` if
 ``self`` is the  :class:`Arbiter`) and perform the message action.
 If the message needs acknowledgment, send the result back.'''
+        return make_async(self._handle_message(message))
+    
+    ############################################################## INTERNALS
+    def _handle_message(self, message):
         actor = self.actor
         sender = actor.get_actor(message.sender)
         receiver = actor.get_actor(message.receiver)
+        ack = message.ack
         # The receiver could be different from the mail box actor. For
         # example a monitor uses the same mailbox as the arbiter
         if not receiver:
-            actor.log.warn('message "%s" for an unknown actor "%s"'\
-                              .format(message,message.receiver))
-            return
+            actor.log.warn('message "%s" for an unknown actor "%s"' %
+                              (message, message.receiver))
+            raise StopIteration()
         
         ack = message.ack
-        try:
-            receiver.on_message(message)
-        except:
-            pass
-        try:
-            func = receiver.actor_functions.get(message.action, None)
-            if func:
-                ack = getattr(func, 'ack', True)
-                result = func(receiver, sender, *message.args, **message.kwargs)
+        yield safe_async(receiver.on_message, args=(message,))
+        func = receiver.actor_functions.get(message.action, None)
+        if func:
+            ack = getattr(func, 'ack', True)
+            result = safe_async(func,
+                                args=(receiver, sender) + message.args,
+                                kwargs=message.kwargs)
+        else:
+            result = safe_async(receiver.handle_message,
+                                args=(sender, message))
+        yield result
+        result = result.result
+        if is_failure(result):
+            result.log()
+            raise StopIteration()
+        yield safe_async(receiver.on_message_processed, args=(message, result))
+        if ack:
+            if sender:
+                # Acknowledge the sender with the result.
+                yield receiver.send(sender, 'callback', message.rid, result)
             else:
-                result = receiver.handle_message(sender, message)
-        except Exception as e:
-            result = e
-            if receiver.log:
-                receiver.log.critical('Unhandled error while processing\
- message: {0}.'.format(e), exc_info=True)
-        finally:
-            if ack:
-                if sender:
-                    # Acknowledge the sender with the result.
-                    callback = lambda res: self._send_callback(
-                                                sender, receiver, message, res)
-                    d = make_async(result).addBoth(callback)
-                    deferred_timeout(d, receiver.ioloop)
-                else:
-                    receiver.log.error('message "{0}" from an unknown actor\
- "{1}". Cannot acknowledge message.'.format(message,message.sender))
-            try:
-                receiver.on_message_processed(message, result)
-            except:
-                pass
-    
-    def _send_callback(self, sender, receiver, message, result):
-        '''Send the callback to the server. It returns nothing since the
-message does not acknowledge'''
-        sender.send(receiver, 'callback', message.rid, result)
+                receiver.log.error('message "{0}" from an unknown actor '\
+                                   '"{1}". Cannot acknowledge.'\
+                                   .format(message,message.sender))
         
-    ############################################################## INTERNALS
     def _run(self):
         thread_loop(self.actor.requestloop)
         thread_ioloop(self.ioloop)
         if self.thread is not None:
             self.ioloop.start()
+        elif not self.actor.is_arbiter():
+            # We need to register this actor mailbox with the arbiter
+            msg = self.actor.send('arbiter', 'mailbox_address', self.address)
+            msg.add_callback(self.actor.link_actor,
+                             lambda r: r.raise_all())
 
 
 class MailBoxMonitor(object):

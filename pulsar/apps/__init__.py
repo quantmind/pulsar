@@ -141,7 +141,6 @@ It provides two new methods inherited from :class:`ApplicationHandlerMixin`.
     # Delegates Callbacks to the application
          
     def on_start(self):
-        #self.app.cfg.on_start()
         self.app.worker_start(self)
         try:
             self.cfg.worker_start(self)
@@ -178,8 +177,9 @@ pulsar subclasses of :class:`Application`.
         self.cfg = app.cfg
         self.max_requests = 0
         arbiter = pulsar.arbiter()
-        if not arbiter.get('cfg'):
-            arbiter.set('cfg',app.cfg)
+        # Set the arbiter config object if not available
+        if not arbiter.cfg:
+            arbiter.cfg = app.cfg
         self.max_requests = None
         self.information = LogInformation(self.cfg.logevery)
         app.monitor_init(self)
@@ -237,6 +237,7 @@ updated actor parameters with information about the application.
         return  {'app': app,
                  'timeout': app.cfg.timeout,
                  'loglevel': app.loglevel,
+                 'max_concurrent_requests': app.cfg.backlog,
                  'impl': c,
                  'name':'{0}-worker'.format(app.name)}
         
@@ -310,7 +311,7 @@ its duties.
     
 """
     cfg = {}
-    _name = None
+    _app_name = None
     description = None
     epilog = None
     cfg_apps = None
@@ -320,14 +321,14 @@ its duties.
     monitor_class = ApplicationMonitor
     
     def __init__(self,
-                 callable = None,
-                 name = None,
-                 description = None,
-                 epilog = None,
-                 argv = None,
-                 script = None,
-                 version = None,
-                 can_kill_arbiter = None,
+                 callable=None,
+                 description=None,
+                 name=None,
+                 epilog=None,
+                 argv=None,
+                 script=None,
+                 version=None,
+                 can_kill_arbiter=None,
                  **params):
         '''Initialize a new :class:`Application` and add its
 :class:`ApplicationMonitor` to the class:`pulsar.Arbiter`.
@@ -340,27 +341,32 @@ its duties.
         if can_kill_arbiter is not None:
             self.can_kill_arbiter = bool(can_kill_arbiter) 
         self.epilog = epilog or self.epilog
-        self._name = name or self._name or self.__class__.__name__.lower()
+        self._app_name = self._app_name or self.__class__.__name__.lower()
+        self._name = name or self._app_name
         self.script = script
         self.python_path()
         nparams = self.cfg.copy()
         nparams.update(params)
         self.callable = callable
-        self.load_config(argv,version=version, **nparams)
+        self.load_config(argv, version=version, **nparams)
         self.configure_logging()
         if self.on_config() is not False:
             arbiter = pulsar.arbiter(self.cfg.daemon)
             monitor = arbiter.add_monitor(self.monitor_class,
                                           self.name,
-                                          app = self,
-                                          ioqueue = self.ioqueue)
+                                          app=self,
+                                          ioqueue=self.ioqueue)
             self.mid = monitor.aid
-            r,f = self.remote_functions()
+            r, f = self.remote_functions()
             if r:
                 monitor.remotes = monitor.remotes.copy()
                 monitor.remotes.update(r)
                 monitor.actor_functions = monitor.actor_functions.copy()
                 monitor.actor_functions.update(f)
+    
+    @property
+    def app_name(self):
+        return self._app_name
     
     @property
     def name(self):
@@ -460,7 +466,7 @@ The parameters overrriding order is the following:
  * the parameters passed in the command line.
 '''
         cfg_apps = set(self.cfg_apps or ())
-        cfg_apps.add(self.name)
+        cfg_apps.add(self.app_name)
         self.cfg_apps = cfg_apps
         self.cfg = pulsar.Config(self.description,
                                  self.epilog,
@@ -573,21 +579,6 @@ By default it returns ``None``.'''
     # MONITOR AND WORKER CALLBACKS
     def on_info(self, worker, data):
         return data
-    
-    def update_worker_paramaters(self, monitor, params):
-        '''Called by the :class:`ApplicationMonitor` when
-returning from the :meth:`ApplicationMonitor.actorparams`
-and just before spawning a new worker for serving the application.
-
-:parameter monitor: instance of the monitor serving the application.
-:parameter params: the dictionary of parameters to updated (if needed).
-:rtype: the updated dictionary of parameters.
-
-This callback is a chance for the application to pass its own custom
-parameters to the workers before it is created.
-By default it returns *params* without
-doing anything.'''
-        return params
     
     def worker_start(self, worker):
         '''Called by the :class:`Worker` :meth:`pulsar.Actor.on_start`

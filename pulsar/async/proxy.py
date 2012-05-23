@@ -1,12 +1,10 @@
 import sys
 from time import time
 
-from pulsar import create_connection, CannotCallBackError
 from pulsar.utils.log import LocalMixin
-from pulsar.utils.tools import gen_unique_id
 
 from .defer import Deferred, is_async, make_async, iteritems
-from .mailbox import mailbox
+from .mailbox import mailbox, ActorMessage
 
 __all__ = ['ActorMessage',
            'ActorProxyDeferred',
@@ -37,7 +35,6 @@ def get_proxy(obj, safe = False):
 def actorid(actor):
     return actor.aid if hasattr(actor,'aid') else actor
 
-
 class ActorCallBacks(Deferred):
     
     def __init__(self, actor, requests):
@@ -65,89 +62,6 @@ class ActorCallBacks(Deferred):
             self.actor.ioloop.add_callback(self)
         else:
             self.callback(self._tmp_results)
-        
-
-class ActorMessage(Deferred):
-    '''A message class which travels from :class:`Actor` to
-:class:`Actor` to perform a specific *action*. :class:`ActorMessage`
-are not directly initialized using the constructor, instead they are
-created by :meth:`ActorProxy.send` method.
-
-.. attribute:: sender
-
-    id of the actor sending the message.
-    
-.. attribute:: receiver
-
-    id of the actor receiving the message.
-    
-.. attribute:: action
-
-    action to be performed
-    
-.. attribute:: args
-
-    Positional arguments in the message body
-    
-.. attribute:: kwargs
-
-    Optional arguments in the message body
-    
-.. attribute:: ack
-
-    ``True`` if the message needs acknowledgment
-    
-.. attribute:: rid
-
-    :class:`ActorMessage` request id. This id used for managing remote
-    callbacks, if :attr:`ack` is ``True``.
-'''
-    MESSAGES = {}
-    
-    def __init__(self, sender, target, action, ack, args, kwargs):
-        super(ActorMessage,self).__init__()
-        self.rid = gen_unique_id()[:8]
-        # Set the event loop to be the one of the sender inbox
-        # This way we can yield the deferred without kick starting callbacks
-        #self._ioloop = sender.messageloop
-        self.sender = actorid(sender)
-        self.receiver = actorid(target)
-        self.action = action
-        self.args = args
-        self.kwargs = kwargs
-        self.ack = ack
-        if self.ack:
-            self.MESSAGES[self.rid] = self
-        
-    def __str__(self):
-        return '[{0} - from {1}] - {3} {2}'.format(self.rid,self.sender,
-                                                   self.action,self.receiver)
-    
-    def add_callback(self, callback, errback=None):
-        if not self.ack:
-            raise CannotCallBackError('Cannot add callback to "{0}".\
- It does not acknowledge'.format(self))
-        return super(ActorMessage, self).add_callback(callback, errback)
-    
-    def __repr__(self):
-        return self.__str__()
-    
-    def __getstate__(self):
-        #Remove the list of callbacks and lock
-        d = self.__dict__.copy()
-        d.pop('_lock',None)
-        #d.pop('_ioloop',None)
-        d['_callbacks'] = []
-        return d
-    
-    def __setstate__(self, state):
-        self.__dict__ = state
-        
-    @classmethod
-    def actor_callback(cls, rid, result):
-        r = cls.MESSAGES.pop(rid,None)
-        if r:
-            r.callback(result)
             
             
 class ActorProxyDeferred(Deferred):
@@ -253,15 +167,8 @@ has registered its inbox address.
                 self.local['mailbox'] = mailbox(self, self.address)
             return self.local['mailbox']
         
-    def message(self, sender, action, *args, **kwargs):
-        ack = False
-        if action in self.remotes:
-            ack = self.remotes[action]
-        return ActorMessage(sender, self.aid, action, ack, args, kwargs)
-        
-    def send(self, sender, action, *args, **kwargs):
-        '''\
-Send an :class:`ActorMessage` to the underlying actor
+    def receive_from(self, sender, action, *args, **kwargs):
+        '''Send an :class:`ActorMessage` to the underlying actor
 (the receiver). This is the low level function call for
 communicating between actors.
 
@@ -280,19 +187,23 @@ When sending a message, first we check the ``sender`` outbox. If that is
 not available, we get the receiver ``inbox`` and hope it can carry the message.
 If there is no inbox either, abort the message passing and log a critical error.
 '''
-        mailbox = self.mailbox        
+        mailbox = self.mailbox
         if not mailbox:
             sender.log.critical('Cannot send a message to {0}. No\
  mailbox available.'.format(self))
             return
         
-        msg = self.message(sender, action, *args, **kwargs)
+        ack = False
+        if action in self.remotes:
+            ack = self.remotes[action]
+        msg = ActorMessage(None, actorid(sender), self.aid, action,
+                           ack, args, kwargs)
         try:
             mailbox.put(msg)
             return msg
         except Exception as e:
             sender.log.critical('Failed to send message {0}: {1}'.\
-                             format(msg,e), exc_info = True)
+                             format(msg,e), exc_info=True)
         
     def __repr__(self):
         return self.aid
@@ -314,7 +225,7 @@ object including, aid (actor id), timeout and mailbox size.'''
         
     def stop(self,sender):
         '''Stop the remote :class:`Actor`'''
-        self.send(sender,'stop')
+        self.receive_from(sender, 'stop')
         
 
 class ActorProxyMonitor(ActorProxy):

@@ -182,7 +182,6 @@ class LogginMixin(Synchronized):
     '''A Mixin used throught the library. It provides built in logging object
 and utilities for pickle.'''
     loglevel = None
-    default_logging_level = None
     default_logging_config = None
     _class_code = None
     

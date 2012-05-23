@@ -213,13 +213,13 @@ Users shouldn't need to override this method, but use
         self.close_actors()
         return make_async()
         
-    # OVERRIDES
+    # OVERRIDES INTERNALS
     
     def _make_name(self):
         return 'Monitor-{0}({1})'.format(self.actor_class.code(),self.aid)
     
-    def get_requestloop(self):
-        '''Return the arbiter event loop.'''
+    def _get_requestloop(self):
+        '''Return the arbiter request loop.'''
         return self.arbiter.requestloop
     
     def _stop_ioloop(self):

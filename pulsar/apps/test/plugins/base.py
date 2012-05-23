@@ -1,13 +1,18 @@
 import unittest
 
-from pulsar.apps.test.config import TestOption
+import pulsar
 from pulsar.apps.test.result import TestObject
 
 
 __all__ = ['WrapTest',
            'Plugin',
+           'TestOption',
            'TestOptionPlugin']
 
+class TestOption(pulsar.Setting):
+    virtual = True
+    app = 'test'
+    section = "Test"
 
 class WrapTest(object):
     
@@ -29,6 +34,6 @@ class Plugin(TestObject):
     settings = ()
     
     
-class TestOptionPlugin(Plugin,TestOption):
+class TestOptionPlugin(Plugin, TestOption):
     '''Base class for test plugins with one option argument.'''
     virtual = True

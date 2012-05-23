@@ -91,9 +91,9 @@ The callable needs to accept two instance variables for the response
 and the error instance."""
 
 
-class WSGIApplication(socket.SocketServer):
+class WSGIServer(socket.SocketServer):
     cfg_apps = ('socket',)
-    _name = 'wsgi'
+    _app_name = 'wsgi'
     
     def handler(self):
         callable = self.callable

@@ -135,17 +135,61 @@ from time import time
 from datetime import datetime
 
 import pulsar
-from pulsar.utils.importer import import_modules
+from pulsar import to_string
+from pulsar.utils.importer import import_modules, module_attribute
 
 from .exceptions import *
-from .config import *
 from .task import *
 from .models import *
 from .scheduler import Scheduler
 from .states import *
 from .rpc import *
 
+def validate_list(val):
+    if isinstance(val,list):
+        return val
+    elif isinstance(val,tuple):
+        return list(val)
+    else:
+        val = to_string(val).split(',')
+        vals = []
+        for v in to_string(val).split(','):
+            v = v.strip()
+            if v:
+                vals.append(v)
+        return vals
 
+
+class TaskQueueFactory(pulsar.Setting):
+    app = 'cpubound'
+    name = "task_queue_factory"
+    section = "Task Consumer"
+    flags = ["-q", "--task-queue"]
+    default = "pulsar.Queue"
+    desc = """The task queue factory to use."""
+    
+    def get(self):
+        return module_attribute(self.value)
+        return self.value
+    
+    
+class TaskSetting(pulsar.Setting):
+    virtual = True
+    app = 'tasks'
+    
+    
+class TaskPath(TaskSetting):
+    name = "tasks_path"
+    section = "Task Consumer"
+    meta = "STRING"
+    validator = validate_list
+    cli = ["--tasks-path"]
+    default = ['pulsar.apps.tasks.testing']
+    desc = """\
+        List of python dotted paths where tasks are located.
+        """
+    
+    
 class TaskResponse(object):
     
     def __init__(self, worker, task):
@@ -159,7 +203,18 @@ method.'''
         return task.finish(self.worker, result=task.result)
 
 
-class Remotes(pulsar.ActorBase):
+class CPUboundServer(pulsar.Application):
+    '''Base pulsar CPU-bound application server'''
+    _app_name = 'cpubound'
+    
+    def get_ioqueue(self):
+        '''Return the distributed task queue which produces tasks to
+be consumed by the workers.'''
+        queue = self.cfg.task_queue_factory
+        return queue()
+    
+    
+class Remotes(pulsar.RemoteMethods):
     
     def actor_tasks_list(self, caller):
         return self.app.tasks_list()
@@ -186,9 +241,9 @@ class Remotes(pulsar.ActorBase):
     
     def actor_next_scheduled(self, caller, jobname = None):
         return self.app.scheduler.next_scheduled(jobname = jobname)
-
-
-class TaskQueue(pulsar.Application):
+    
+    
+class TaskQueue(CPUboundServer):
     '''A :class:`pulsar.Application` for consuming
 tasks and managing scheduling of tasks.
     
@@ -197,8 +252,9 @@ tasks and managing scheduling of tasks.
     Instance of a :class:`JobRegistry` containing all
     registered :class:`Job` instances.
 '''
-    app = 'tasks'
-    cfg = {'timeout':'3600'}
+    _app_name = 'tasks'
+    cfg_apps = ('cpubound',)
+    cfg = {'timeout': '3600', 'backlog': 1}
     task_class = TaskInMemory
     '''The :class:`Task` class for storing information about task execution.
     
@@ -219,31 +275,13 @@ which check for tasks to be scheduled.
 Check the :meth:`TaskQueue.monitor_task` callback
 for implementation.'''
         return self.local.get('scheduler')
-        
-    def get_ioqueue(self):
-        '''Return the distributed task queue which produces tasks to
-be consumed by the workers.'''
-        queue = self.cfg.task_queue_factory
-        return queue()
     
-    def request_instance(self, fd, request):
+    def request_instance(self, worker, fd, request):
         try:
             return self.task_class.from_queue(request)
         except:
             self.log.critical('Could not retrieve task "{0}"'.format(request))
             raise
-    
-    def __init__(self, task_class = None, **kwargs):
-        self.tasks_statistics = {'total':0,
-                                 'failures':0}
-        self.task_class = task_class or self.task_class
-        super(TaskQueue,self).__init__(**kwargs)
-        
-    def worker_start(self, worker):
-        worker.requestloop.add_handler(
-                    'request',
-                    self.handle_fd_event,
-                    worker.requestloop.READ)
         
     def monitor_task(self, monitor):
         '''Override the :meth:`pulsar.Application.monitor_task` callback

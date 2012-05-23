@@ -19,25 +19,9 @@ class Bind(SocketSetting):
         HOST.
         """
         
-class Backlog(SocketSetting):
-    name = "backlog"
-    flags = ["--backlog"]
-    validator = pulsar.validate_pos_int
-    type = int
-    default = 2048
-    desc = """\
-        The maximum number of pending connections.    
-        
-        This refers to the number of clients that can be waiting to be served.
-        Exceeding this number results in the client getting an error when
-        attempting to connect. It should only affect servers under significant
-        load.
-        
-        Must be a positive integer. Generally set in the 64-2048 range.    
-        """
 
 class SocketServer(pulsar.Application):
-    _name = 'socket'
+    _app_name = 'socket'
     
     def monitor_init(self, monitor):
         # First we create the socket we listen to
@@ -50,15 +34,17 @@ class SocketServer(pulsar.Application):
         # Socket in thread concurrency has no workers
         if cfg.concurrency == 'thread':
             cfg.set('workers', 0)
-        monitor.num_actors = cfg.workers 
+        monitor.num_actors = cfg.workers
+        
+    def monitor_start(self, monitor):
+        address = self.cfg.address
         if address:
-            socket = pulsar.create_socket(address, log=monitor.log,
+            socket = pulsar.create_socket(address,
+                                          log=monitor.log,
                                           backlog=self.cfg.backlog)
         else:
             raise pulsar.ImproperlyConfigured('Could not open a socket. '
                                               'No address to bind to')
-        self.address = socket.name
-        # put the socket in the parameters to be passed to workers
         monitor.set('socket', socket)
     
     def client_request(self, stream, client_address):
@@ -71,11 +57,7 @@ address. This must be implemented by subclasses.'''
         if client:
             stream = AsyncIOStream(socket=client)
             return self.client_request(stream, client_address)
-        
-    def monitor_start(self, monitor):
-        if monitor.num_actors == 0:
-            self._register_handler(monitor)
-            
+             
     def worker_start(self, worker):
         self._register_handler(worker)
 

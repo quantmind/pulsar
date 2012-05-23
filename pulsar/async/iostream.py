@@ -41,7 +41,7 @@ manipulated and adapted to pulsar :ref:`concurrent framework <design>`.
     _state = None
     MAX_BODY = 1024 * 128
     def __init__(self, socket=None, max_buffer_size=None,
-                 read_chunk_size=None, timeout = 5, **kwargs):
+                 read_chunk_size=None, timeout=5, **kwargs):
         self.socket = socket
         self.timeout = timeout
         self.max_buffer_size = max_buffer_size or 104857600
@@ -152,7 +152,7 @@ but is non-portable."""
                 if e.args[0] not in (errno.EINPROGRESS, errno.EWOULDBLOCK):
                     raise
             d = Deferred(description = '%s connect callback' % self)
-            self._connect_callback = d.callback
+            self._connect_callback = d
             return self._add_io_state(self.WRITE, d)
         else:
             if self._state is not None:
@@ -184,11 +184,11 @@ One common pattern of usage::
         if self.closed:
             data = self._get_buffer(self._read_buffer)
             if data:
-                self._run_callback(d.callback, data)
+                self._may_run_callback(d, data)
                 return d
             else:
                 return
-        self._read_callback = d.callback
+        self._read_callback = d
         self._read_length = length
         return self._add_io_state(self.READ, d)
     
@@ -207,7 +207,7 @@ overwritten with this new callback.
             except Exception as e:
                 d.callback(e)
                 return d
-            self._write_callback = d.callback
+            self._write_callback = d
             self._write_buffer.append(data)
             self._handle_write()
             if self._write_buffer:
@@ -223,7 +223,7 @@ overwritten with this new callback.
             self._socket.close()
             self._socket = None
             if self._close_callback:
-                self._run_callback(self._close_callback)
+                self._may_run_callback(self._close_callback)
                 
     #######################################################    INTERNALS
     def read_to_buffer(self):
@@ -259,25 +259,30 @@ On error closes the socket and raises an exception."""
         '''Size of the reading buffer'''
         return sum(len(chunk) for chunk in self._read_buffer)
     
-    def _run_callback(self, callback, *args, **kwargs):
-        try:
-            result = callback(*args, **kwargs)
-            if is_failure(result):
-                result.raise_all()
-        except:
-            # Close the socket on an uncaught exception from a user callback
-            # (It would eventually get closed when the socket object is
-            # gc'd, but we don't want to rely on gc happening before we
-            # run out of file descriptors)
-            self.close()
-            # Re-raise the exception so that IOLoop.handle_callback_exception
-            # can see it and log the error
-            raise
+    def _may_run_callback(self, c, result=None):
+        if c.called:
+            # The callback has been already called! This must be a timeout
+            # Not sure what to do here
+            self.log.warn('%s had been called already')
+        else:
+            try:
+                result = c.callback(result)
+                if is_failure(result):
+                    result.raise_all()
+            except:
+                # Close the socket on an uncaught exception from a user callback
+                # (It would eventually get closed when the socket object is
+                # gc'd, but we don't want to rely on gc happening before we
+                # run out of file descriptors)
+                self.close()
+                # Re-raise the exception so that IOLoop.handle_callback_exception
+                # can see it and log the error
+                raise
     
     def _handle_connect(self):
         callback = self._connect_callback
         self._connect_callback = None
-        self._run_callback(callback)
+        self._may_run_callback(callback)
         
     def _handle_read(self):
         try:
@@ -297,7 +302,7 @@ On error closes the socket and raises an exception."""
         if callback:
             self._read_callback = None
             self._read_bytes = None
-            self._run_callback(callback, buffer)
+            self._may_run_callback(callback, buffer)
             
     def _handle_write(self):
         tot_bytes = 0
@@ -336,7 +341,7 @@ On error closes the socket and raises an exception."""
         if not self._write_buffer and self._write_callback:
             callback = self._write_callback
             self._write_callback = None
-            self._run_callback(callback,num_bytes)
+            self._may_run_callback(callback, num_bytes)
 
     def _check_closed(self):
         if not self.socket:
