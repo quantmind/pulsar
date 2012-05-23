@@ -210,11 +210,11 @@ file descriptor *fd*.
         if not self._startup(starter):
             return False
         if starter: # just start
-            self._start()
+            self._run()
         elif self._starter:
             self._starter.start()
         else:
-            self._start()
+            self._run()
 
     def stop(self):
         '''Stop the loop after the current event loop iteration is complete.
@@ -307,12 +307,9 @@ so that it can perform its tasks at each event loop. Check the
                 self.log.critical('Unhandled exception in loop task',
                                   exc_info = True)
                 
-    def _start(self):
-        """Starts the I/O loop.
-
-        The loop will run until one of the I/O handlers calls stop(), which
-        will make the loop stop after the current event iteration completes.
-        """
+    def _run(self):
+        """Runs the I/O loop until one of the I/O handlers calls stop(), which
+will make the loop stop after the current event iteration completes."""
         with LoopGuard(self) as guard:
             while self._running:
                 poll_timeout = self.POLL_TIMEOUT

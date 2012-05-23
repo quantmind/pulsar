@@ -36,7 +36,7 @@ import sys
 from inspect import isclass
 
 import pulsar
-from pulsar.net import HttpResponse
+from pulsar.net import HttpRequest, HttpResponse
 from pulsar.utils.importer import module_attribute
 from pulsar.apps import socket
 
@@ -128,14 +128,14 @@ at start-up only.
             hnd.response_middleware.extend(resp_middleware)
         return hnd
         
-    def stream_request(self, stream, client_address):
+    def client_request(self, stream, client_address):
         return HttpRequest(stream, client_address=client_address,
-                           timeout=self.worker.cfg.keepalive)
+                           timeout=self.cfg.keepalive)
         
     def handle_request(self, worker, request):
         '''handle the *request* by building the WSGI environment '''
         cfg = worker.cfg
-        concurrency = self.concurrency(cfg)
+        concurrency = cfg.concurrency
         mt = concurrency == 'thread' and cfg.workers > 1
         mp = concurrency == 'process' and cfg.workers > 1
         environ = request.wsgi_environ(multithread=mt,

@@ -1,11 +1,11 @@
 import os
+import textwrap
 import logging
 from functools import partial
 
 import pulsar
 from pulsar import make_async, Deferred, is_failure, NOT_DONE
-from pulsar.utils.httpurl import parse_authorization_header, Headers,\
-                                    SimpleCookie, set_cookie, responses, \
+from pulsar.utils.httpurl import Headers, SimpleCookie, set_cookie, responses,\
                                     iteritems
 
 from .middleware import is_streamed
@@ -18,14 +18,6 @@ default_logger = logging.getLogger('pulsar.apps.wsgi')
 
 EMPTY_DICT = {}
 EMPTY_TUPLE = ()
-
-    
-def authorization(environ, start_response):
-    """An `Authorization` middleware."""
-    code = 'HTTP_AUTHORIZATION'
-    if code in environ:
-        header = environ[code]
-        return parse_authorization_header(header)
 
 
 def generate_content(gen):

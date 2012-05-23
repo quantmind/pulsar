@@ -4,7 +4,7 @@ import re
 from gzip import GzipFile
 
 import pulsar
-from pulsar.utils.httpurl import BytesIO
+from pulsar.utils.httpurl import BytesIO, parse_authorization_header
 
 re_accepts_gzip = re.compile(r'\bgzip\b')
 
@@ -85,3 +85,12 @@ base their storage on the Accept-Encoding header.
         zfile.close()
         return zbuf.getvalue()
 
+
+def authorization(environ, start_response):
+    """An `Authorization` middleware."""
+    code = 'HTTP_AUTHORIZATION'
+    if code in environ:
+        header = environ[code]
+        return parse_authorization_header(header)
+    
+    

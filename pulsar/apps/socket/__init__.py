@@ -37,16 +37,19 @@ class Backlog(SocketSetting):
         """
 
 class SocketServer(pulsar.Application):
-        
+    _name = 'socket'
+    
     def monitor_init(self, monitor):
         # First we create the socket we listen to
         cfg = self.cfg
         address = cfg.address
+        # if the platform does not support multiprocessing sockets switch to
+        # thread concurrency
         if not pulsar.platform.multiProcessSocket():
             cfg.concurrency = 'thread'
-        # Socket not in threaded concurrency has no workers
+        # Socket in thread concurrency has no workers
         if cfg.concurrency == 'thread':
-            cfg.set('workers',0)
+            cfg.set('workers', 0)
         monitor.num_actors = cfg.workers 
         if address:
             socket = pulsar.create_socket(address, log=monitor.log,
@@ -58,37 +61,41 @@ class SocketServer(pulsar.Application):
         # put the socket in the parameters to be passed to workers
         monitor.set('socket', socket)
     
-    def stream_request(self, stream, client_address):
+    def client_request(self, stream, client_address):
+        '''Build a request instance from the connected stream and the client
+address. This must be implemented by subclasses.'''
         raise NotImplementedError()
     
-    def on_event(self, fd, events):
-        worker = get_actor()
-        client, client_address = actior.get('socket').accept()
+    def request_instance(self, worker, fd, events):
+        client, client_address = worker.get('socket').accept()
         if client:
             stream = AsyncIOStream(socket=client)
-            request = self.stream_request(stream, client_address)
-            self.handle_request(worker, request)
+            return self.client_request(stream, client_address)
+        
+    def monitor_start(self, monitor):
+        if monitor.num_actors == 0:
+            self._register_handler(monitor)
             
-    def register_handler(self, worker):
+    def worker_start(self, worker):
+        self._register_handler(worker)
+
+    def monitor_stop(self, monitor):
+        if monitor.num_actors == 0:
+            self._close_socket(monitor)
+    
+    def worker_stop(self, monitor):
+        self._close_socket(monitor)
+
+    ########################################################### INTERNALS
+    def _register_handler(self, worker):
+        '''Register the socket to the ioloop'''
         socket = worker.get('socket')
         worker.ioloop.add_handler(socket,
-                                  self.handle_fd_event,
+                                  worker.handle_fd_event,
                                   worker.ioloop.READ)
-    def close_socket(self, worker):
+    
+    def _close_socket(self, worker):
         socket = worker.get('socket')
         worker.ioloop.remove_handler(socket)
         socket.close(worker.log)
     
-    def monitor_start(self, monitor):
-        if monitor.num_actors == 0:
-            self.register_handler(monitor)
-            
-    def worker_start(self, worker):
-        self.register_handler(worker)
-
-    def monitor_stop(self, monitor):
-        if monitor.num_actors == 0:
-            self.close_socket(monitor)
-    
-    def worker_stop(self, monitor):
-        self.close_socket(monitor)

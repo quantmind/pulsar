@@ -123,9 +123,9 @@ def async_func_call(func, result, *args, **kwargs):
     else:
         return callback()
 
-def safe_async(f, description=None, max_errors=None):
+def safe_async(f, args=(), description=None, max_errors=None):
     try:
-        result = f()
+        result = f(*args)
     except Exception as e:
         result = e
     return make_async(result, max_errors=max_errors, description=description)

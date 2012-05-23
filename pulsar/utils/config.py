@@ -50,7 +50,7 @@ def default_process(worker):
 
 
 def def_pre_request(worker, req):
-    worker.log.debug("%s %s" % (req.method, req.path))
+    pass
 
 
 def def_post_request(worker, req):

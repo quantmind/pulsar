@@ -6,7 +6,7 @@ import random
 from inspect import isgenerator, isfunction
 
 import pulsar
-from pulsar import Empty, make_async, is_failure, HaltServer,\
+from pulsar import Empty, make_async, safe_async, is_failure, HaltServer,\
                      deferred_timeout, ispy3k
 from pulsar.async.defer import pickle
 from pulsar.utils.importer import import_module
@@ -59,6 +59,18 @@ sending back responses.
         
     def on_message_processed(self, message, result):
         self.app.on_actor_message_processed(message, result)
+    
+    def on_event(self, fd, event):
+        '''Override :meth:`pulsar.Actor.on_event` to delegate handling
+to the underlying :class:`Application`.'''
+        # Build the request instance
+        request = self.app.request_instance(self, fd, event)
+        # the request class may contain a timeout
+        timeout = getattr(request, 'timeout', None)
+        should_stop = self.max_requests and self.nr >= self.max_requests
+        d = safe_async(self._response_generator, args=(request, should_stop))
+        # if a timeout is available, we add the deferred to the requestloop
+        return deferred_timeout(d, self.requestloop, timeout)
         
     def handle_task(self):
         if self.information.log():
@@ -73,42 +85,17 @@ sending back responses.
         '''Handle a *message* from a *sender*.'''
         return self.app.handle_message(sender, self, message)
     
-    def handle_request(self, request):
-        '''Entry point for handling a request. This is a high level
-function which performs some pre-processing of *request* and delegates
-the actual implementation to :meth:`Application.handle_request` method.
-
-:parameter request: A request instance which is application specific.
-
-After obtaining the result from the
-:meth:`Application.handle_event_task` method, it invokes the
-:meth:`Worker.end_task` method to close the request.'''
-        # INCREASE THE NUMBER OF REQUESTS PROCESSED
-        self.nr += 1
-        self.concurrent_current_requests += 1
-        request = self.app.request_instance(request)
-        timeout = getattr(request, 'timeout', None)
-        should_stop = self.max_requests and self.nr >= self.max_requests
-        d = make_async(self._response_generator(request, should_stop))
-        return deferred_timeout(d, self.ioloop, timeout)
-    
     def configure_logging(self, config = None):
         # Delegate to application
         self.app.configure_logging(config = config)
         self.loglevel = self.app.loglevel
         self.setlog()
     
-    # Internals
+    ################################################################# Internals
     def _response_generator(self, request, should_stop):
-        try:
-            self.cfg.pre_request(self, request)
-        except Exception:
-            pass
-        try:
-            response = self.app.handle_request(self, request)
-        except Exception as e:
-            response = e
-        response = make_async(response)
+        yield safe_async(self.cfg.pre_request, args=(self, request))
+        # We don't care if it fails
+        response = safe_async(self.app.handle_request, args=(self, request))
         yield response
         response = response.result
         if is_failure(response):
@@ -116,18 +103,17 @@ After obtaining the result from the
         else:
             close = getattr(response, 'close', None)
             if hasattr(close,'__call__'):
-                yield close()
-        try:
-            self.cfg.post_request(self, request)
-        except:
-            pass
-        self.concurrent_current_requests -= 1
+                response = safe_async(close)
+                yield response
+                if is_failure(response.result):
+                    response.result.log(self.log)
+        yield safe_async(self.cfg.post_request, args=(self, request))
         if should_stop:
             self.log.info("Auto-restarting worker.")
             self.stop()
         
 
-class Worker(ApplicationHandlerMixin,pulsar.Actor):
+class Worker(ApplicationHandlerMixin, pulsar.Actor):
     """\
 An :class:`Actor` class for serving an :class:`Application`.
 It provides two new methods inherited from :class:`ApplicationHandlerMixin`.
@@ -187,23 +173,23 @@ pulsar subclasses of :class:`Application`.
     # For logging name
     _class_code = 'appmonitor'
     
-    def on_init(self, app = None, **kwargs):
+    def on_init(self, app=None, **kwargs):
         self.app = app
         self.cfg = app.cfg
         self.max_requests = 0
-        kwargs['actor_class'] = Worker
-        kwargs['num_actors'] = app.cfg.workers
         arbiter = pulsar.arbiter()
         if not arbiter.get('cfg'):
             arbiter.set('cfg',app.cfg)
         self.max_requests = None
         self.information = LogInformation(self.cfg.logevery)
+        app.monitor_init(self)
         if not self.cfg.workers:
             self.app_handler = app.handler()
         else:
             self.app_handler = app.monitor_handler()
+        kwargs['actor_class'] = Worker
+        kwargs['num_actors'] = app.cfg.workers
         super(ApplicationMonitor,self).on_init(**kwargs)
-        self.app.monitor_init(self)
     
     # Delegates Callbacks to the application
     @halt_server    
@@ -399,11 +385,6 @@ its duties.
 By default it returns the :attr:`Application.callable`.'''
         return self.callable
     
-    def request_instance(self, request):
-        '''Given a request raised from an event, build the request for the
-:meth:`handle_request` method. By default it returns ``request``.'''
-        return request
-    
     def handle_message(self, sender, receiver, message):
         '''Handle messages for the *receiver*.'''
         handler = getattr(self, 'actor_' + message.action, None)
@@ -412,6 +393,12 @@ By default it returns the :attr:`Application.callable`.'''
         else:
             receiver.log.error('Unknown action ' + message.action)
         
+    def request_instance(self, worker, fd, event):
+        '''Build a request class from a file descriptor *fd* and an *event*.
+The returned request instance is passed to the :meth:`handle_request`
+method.'''
+        return event
+    
     def handle_request(self, worker, request):
         '''This is the main function which needs to be implemented
 by actual applications. It is called by the *worker* to handle

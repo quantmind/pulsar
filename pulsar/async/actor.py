@@ -14,7 +14,7 @@ from pulsar import AlreadyCalledError, AlreadyRegistered,\
 
 from .eventloop import IOLoop
 from .proxy import ActorProxy, ActorMessage, DEFAULT_MESSAGE_CHANNEL
-from .defer import make_async, is_failure, Failure, iteritems, itervalues,\
+from .defer import make_async, is_failure, iteritems, itervalues,\
                      pickle, safe_async
 from .mailbox import IOQueue, mailbox
 
@@ -215,9 +215,9 @@ Here ``a`` is actually a reference to the remote actor.
     SIG_QUEUE = None
     _name = 'actor'
     
-    def __init__(self, impl, arbiter = None, monitor = None,
-                 on_task = None, ioqueue = None,
-                 monitors = None, name = None, params = None,
+    def __init__(self, impl, arbiter=None, monitor=None,
+                 on_task=None, ioqueue=None, monitors=None,
+                 name=None, params = None,
                  age = 0, pool_timeout = None, ppid = None,
                  on_event = None,
                  linked_actors = None, **kwargs):
@@ -342,7 +342,7 @@ their ids.'''
     @property
     def cpubound(self):
         if self.impl != 'monitor':
-            return self.mailbox.cpubound
+            return self.ioqueue is not None
         else:
             return False
     
@@ -379,14 +379,18 @@ bound actors.'''
     ##    EVENT HANDLING
     ############################################################################
     def handle_fd_event(self, fd, event):
-        '''This function should be used to handle event on file descriptors'''
+        '''This function should be used when registering events
+ on file descriptors'''
         self.nr += 1
-        self.concurrent_current_requests += 1
-        msg = safe_async(self.on_event, fd, event)
-        msg.add_callback(self.end_event) 
+        self.concurrent_requests += 1
+        msg = safe_async(self.on_event, args=(fd, event))
+        msg.addBoth(self.end_event) 
         
     def end_event(self, result):
-        self.concurrent_current_requests -= 1
+        self.concurrent_requests -= 1
+        if is_failure(result):
+            result.log(self.log)
+        return result
     
     def handle_request(self, request):
         raise NotImplementedError()
@@ -504,31 +508,17 @@ logging is configured, the :attr:`Actor.mailbox` is registered and the
 event loop which will consume events on file descriptors.
 This function is overridden by :class:`Monitor` to perform nothing.'''
         ioq = self.ioqueue
-        # build the IOqueue if this is  CPU bound actor
         reqloop = IOLoop(io=IOQueue(ioq, self) if ioq else None,
                          pool_timeout=self._pool_timeout,
                          logger=self.log,
                          name=self.name,
-                         ready=ready)
+                         ready=not self.cpubound)
         # If IO loop is based on a IO queue (CPU bounded workers)
         # we bind the :meth:`handle_request` to the loop.
         #if ioq:
         #    ioloop.add_handler('request', self.handle_fd_event, ioloop.READ)
         self._init_runner()
         return reqloop
-    
-    def link_actor(self, proxy):
-        '''Add the *proxy* to the :attr:`linked_actors` dictionary.
-if *proxy* is not a class:`ActorProxy` instance raise an exception.'''
-        if isinstance(proxy, ActorProxy):
-            self._linked_actors[proxy.aid] = proxy
-            #add the ioqueue handler if needed
-            if proxy == self.arbiter:
-                self.requestloop.ready = True
-        elif not isinstance(proxy, Failure):
-            #TODO: better api here. Failure should not be here
-            raise ValueError('Received a bad actor proxy. Cannot link.')
-        return proxy
         
     def handle_message(self, sender, message):
         '''Handle a *message* from a *sender*.'''
@@ -659,8 +649,7 @@ status and performance.'''
         
     ############################################################################
     # BUILT IN REMOTE FUNCTIONS
-    ############################################################################
-    
+    ############################################################################    
     def action_message(self, request):
         # Do nothing for now
         return
@@ -721,7 +710,18 @@ function.'''
     ############################################################################
     #    INTERNALS
     ############################################################################
+    def link_actor(self, proxy):
+        '''Add the *proxy* to the :attr:`linked_actors` dictionary.
+if *proxy* is not a class:`ActorProxy` instance raise an exception.'''
+        self._linked_actors[proxy.aid] = proxy
+        if proxy == self.arbiter:
+            self.requestloop.ready = True
+        return proxy
     
+    def spawn_failure(self, failure):
+        '''A problem occured while spawning a new actor. Log the error.'''
+        failure.log()
+        
     def _init_runner(self):
         '''Initialise the runner.'''
         if not self.isprocess():
