@@ -255,6 +255,7 @@ tasks and managing scheduling of tasks.
     _app_name = 'tasks'
     cfg_apps = ('cpubound',)
     cfg = {'timeout': '3600', 'backlog': 1}
+    remotes = Remotes
     task_class = TaskInMemory
     '''The :class:`Task` class for storing information about task execution.
     
@@ -325,9 +326,6 @@ to check if the scheduler needs to perform a new run.'''
         if ack:
             return task
 
-    def remote_functions(self):
-        return Remotes.remotes, Remotes.actor_functions
-    
     def on_actor_message_processed(self, message, result):
         '''handle the messaged processed callback when the message action
 is either "addtask" or "addtask_noack".

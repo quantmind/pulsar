@@ -11,12 +11,7 @@ __all__ = ['ActorMessage',
            'ActorProxy',
            'ActorProxyMonitor',
            'get_proxy',
-           'ActorCallBacks',
-           'DEFAULT_MESSAGE_CHANNEL']
-
-
-DEFAULT_MESSAGE_CHANNEL = '__message__'       
-        
+           'ActorCallBacks']
 
 
 def get_proxy(obj, safe = False):
@@ -193,7 +188,7 @@ If there is no inbox either, abort the message passing and log a critical error.
  mailbox available.'.format(self))
             return
         
-        ack = False
+        ack = True
         if action in self.remotes:
             ack = self.remotes[action]
         msg = ActorMessage(None, actorid(sender), self.aid, action,
@@ -281,7 +276,7 @@ process where they have been created.
     
     def join(self, timeout = None):
         '''Wait until the underlying actor terminates'''
-        self.impl.join(timeout = timeout)
+        self.impl.join(timeout=timeout)
         
     def local_info(self):
         '''Return a dictionary containing information about the remote

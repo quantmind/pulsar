@@ -127,7 +127,7 @@ It should be instantiated after forking.
         self._tid = None
         self.num_loops = 0
         self._blocking_signal_threshold = None
-        self._waker = self.get_waker()
+        self._waker = getattr(self._impl, 'waker', Waker)()
         self._on_exit = None
         self.ready = ready
         self.add_handler(self._waker,
@@ -155,9 +155,6 @@ It should be instantiated after forking.
     def tid(self):
         return self._tid
         
-    def get_waker(self):
-        return getattr(self._impl, 'waker', Waker)()
-        
     def add_loop_task(self, task):
         '''Add a callable object to the list of tasks which are
 executed at each iteration in the event loop.'''
@@ -183,8 +180,7 @@ file descriptor *fd*.
             fde = file_descriptor(fd)
             if fde not in self._handlers:
                 self._handlers[fde] = handler
-                self.log.debug('Registering fd {0} for "{1}"\
- with ioloop.'.format(fde,fd))
+                self.log.debug('Registering fd=%s "%s" with ioloop.'%(fde, fd))
                 self._impl.register(fde, events | self.ERROR)
                 return True
             else:
@@ -203,8 +199,7 @@ file descriptor *fd*.
         try:
             self._impl.unregister(fdd)
         except (OSError, IOError):
-            self.log.error("Error deleting {0} from IOLoop"\
-                           .format(fd), exc_info=True)
+            self.log.error("Error deleting %s from IOLoop" % fd, exc_info=True)
     
     def start(self, starter=None):
         if not self._startup(starter):

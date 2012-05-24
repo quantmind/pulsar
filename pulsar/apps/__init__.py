@@ -151,7 +151,7 @@ It provides two new methods inherited from :class:`ApplicationHandlerMixin`.
         self.handle_task()
     
     def on_stop(self):
-        self.app.worker_stop(self)
+        return self.app.worker_stop(self)
             
     def on_exit(self):
         self.app.worker_exit(self)
@@ -309,6 +309,13 @@ its duties.
     
     Default: ``False``.
     
+    
+.. attribute:: remotes
+
+    Optiona :class:`pulsar.RemoteMethods` class to provide additional
+    remote functions to be added to the monitor dictionary of remote functions.
+
+    Default: ``None``.
 """
     cfg = {}
     _app_name = None
@@ -318,6 +325,7 @@ its duties.
     config_options_include = None
     config_options_exclude = None
     can_kill_arbiter = False
+    remotes = None
     monitor_class = ApplicationMonitor
     
     def __init__(self,
@@ -357,12 +365,14 @@ its duties.
                                           app=self,
                                           ioqueue=self.ioqueue)
             self.mid = monitor.aid
-            r, f = self.remote_functions()
-            if r:
-                monitor.remotes = monitor.remotes.copy()
-                monitor.remotes.update(r)
-                monitor.actor_functions = monitor.actor_functions.copy()
-                monitor.actor_functions.update(f)
+            remotes = self.remotes
+            if self.remotes:
+                r, f = remotes.remotes, remotes.actor_functions
+                if r:
+                    monitor.remotes = monitor.remotes.copy()
+                    monitor.remotes.update(r)
+                    monitor.actor_functions = monitor.actor_functions.copy()
+                    monitor.actor_functions.update(f)
     
     @property
     def app_name(self):

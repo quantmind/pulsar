@@ -6,8 +6,8 @@ import time
 import threading
 from multiprocessing.queues import Empty, Queue
 
-from pulsar import create_connection, MailboxError, socket_pair, wrap_socket,\
-                    CannotCallBackError
+from pulsar import create_connection, MailboxError, server_socket,\
+                    wrap_socket, CannotCallBackError
 from pulsar.utils.tools import gen_unique_id
 
 from .eventloop import IOLoop, deferred_timeout
@@ -27,26 +27,13 @@ otherwise a queue is used.'''
         return MailboxProxy(address)
     else:
         if actor.is_monitor():
-            mailbox = MailBoxMonitor(actor)
+            mailbox = MonitorMailbox(actor)
         else:
             mailbox = Mailbox(actor)
         # Add the actor to the loop tasks
         mailbox.ioloop.add_loop_task(actor)
         return mailbox
 
-
-def serverSocket():
-    '''Create the inbox, a TCP socket ready for
-accepting messages from other actors.'''
-    # get a socket pair
-    w, s = socket_pair(backlog = 64)
-    s.setblocking(True)
-    r, _ = s.accept()
-    r.close()
-    w.close()
-    s.setblocking(False)
-    return s
-        
 
 def encode_message(msg):
     data = (msg.rid,msg.sender,msg.receiver,msg.action,
@@ -132,8 +119,8 @@ created by :meth:`ActorProxy.send` method.
         
     def add_callback(self, callback, errback=None):
         if not self.ack:
-            raise CannotCallBackError('Cannot add callback to "{0}".\
- It does not acknowledge'.format(self))
+            raise CannotCallBackError('Cannot add callback to "%s". '\
+                                      'It does not acknowledge' % self)
         return super(ActorMessage, self).add_callback(callback, errback)
     
     @classmethod
@@ -142,10 +129,24 @@ created by :meth:`ActorProxy.send` method.
         if r:
             r.callback(result)
             
-            
-class MailboxProxy(object):
-    '''A socket outbox for :class:`Actor` instances. This outbox
-send messages to a :class:`SocketServerMailbox`.'''
+
+class MailboxInterface(object):
+    address = None
+    actor = None
+    
+    def start(self):
+        pass
+    
+    def fileno(self):
+        pass
+    
+    def close(self):
+        pass
+    
+    
+class MailboxProxy(MailboxInterface):
+    '''A proxy for the :attr:`Actor.inbox` attribute. It is used by the
+:class:`ActorProxy` to send messages to the remote actor.'''
     def __init__(self, address):
         self.stream = AsyncIOStream()
         self.stream.connect(address)
@@ -186,8 +187,13 @@ with a :class:`Mailbox`.'''
     def __str__(self):
         return '%s' % self.stream
         
+    def close(self):
+        self.stream.close()
+        
     def read(self):
-        self.stream.read().add_callback(self._parse, self._error)
+        d = self.stream.read()
+        if not self.stream.closed:
+            d.add_callback(self._parse, self._error)
     
     def _error(self, failure):
         failure.log()
@@ -208,10 +214,11 @@ with a :class:`Mailbox`.'''
         self.read()
     
     
-class Mailbox(object):
-    '''A socket mailbox for :class:`Actor` instances. If the *actor* is a
-CPU bound worker (an actor which communicate with its monitor via a message
-queue), the class:`Mailbox` will create its own :class:`IOLoop`.
+class Mailbox(MailboxInterface):
+    '''Mailbox for an :class:`Actor`. If the actor is a
+:ref:`CPU bound worker <cpubound>`, the class:`Mailbox`
+creates its own :class:`IOLoop` which runs on a separate thread
+of execution.
 
 A :class:`Mailbox` is created during an :class:`Actor` startup, in the
 actor process domain.
@@ -236,15 +243,19 @@ actor process domain.
     * The mailbox has its own eventloop. This is the case when the :attr:`actor`
       is a CPU-bound worker, and uses its main event loop for communicating
       with a queue rather than with a socket.
+      
+.. attribute:: clients
+
+    A dictionary of :class:`MailboxClient` representing remote
+    :class:`Actor` communicating with this :class:`Mailbox`.
 '''
     thread = None
     _started = False
     def __init__(self, actor):
         self.actor = actor
-        self.sock = serverSocket()
-        self.pending = {}
+        self.sock = server_socket(backlog=64)
         self.clients = {}
-        self.name = '{0} mailbox {1}:{2}'.format(actor,*self.address)
+        self.name = '{0} mailbox {1}:{2}'.format(actor, *self.address)
         # If the actor has a ioqueue (CPU bound actor) we create a new ioloop
         if self.cpubound:
             self.__ioloop = IOLoop(pool_timeout=actor._pool_timeout,
@@ -254,6 +265,7 @@ actor process domain.
         self.ioloop.add_handler(self,
                                 self.on_connection,
                                 self.ioloop.READ)
+        # Kick start the mailbox in once the requestloop starts
         actor.requestloop.add_callback(self.start)
     
     def __repr__(self):
@@ -289,25 +301,24 @@ actor process domain.
         else:
             self.actor.log.warn('This is a connection callback only!')
         
-    def unregister(self, actor):
-        if not self.ioloop.remove_loop_task(actor):
-            actor.log.warn('"{0}" could not be removed from\
- eventloop'.format(self))
+    def unregister(self):
+        if not self.ioloop.remove_loop_task(self.actor):
+            self.actor.log.warn('"%s" could not be removed from eventloop'\
+                                 % self.actor)
             
     def close(self):
-        self.unregister(self.actor)
-        if self.__hasloop:
-            self.ioloop.log.debug('Stop event loop for {0}'.format(self))
+        '''Close the mailbox. This is called by the actor when
+shutting down.'''
+        self.unregister()
+        for c in self.clients.values():
+            c.close()
+        self.ioloop.remove_handler(self)
+        self.sock.close()
+        if self.cpubound:
             self.ioloop.stop()
-        if self.sock:
-            self.ioloop.log.debug('shutting down {0}'.format(self))
-            for c in self.clients:
-                try:
-                    c.close()
-                except:
-                    pass
-            self.ioloop.remove_handler(self)
-            self.sock.close()
+            # We join the thread
+            if threading.current_thread() != self.thread:
+                self.thread.join()
 
     def start(self):
         '''Start the thread only if the mailbox has its own event loop. This
@@ -342,18 +353,15 @@ If the message needs acknowledgment, send the result back.'''
             actor.log.warn('message "%s" for an unknown actor "%s"' %
                               (message, message.receiver))
             raise StopIteration()
-        
         ack = message.ack
         yield safe_async(receiver.on_message, args=(message,))
-        func = receiver.actor_functions.get(message.action, None)
-        if func:
-            ack = getattr(func, 'ack', True)
-            result = safe_async(func,
-                                args=(receiver, sender) + message.args,
-                                kwargs=message.kwargs)
-        else:
-            result = safe_async(receiver.handle_message,
-                                args=(sender, message))
+        func = receiver.actor_functions.get(message.action)
+        args = (receiver, sender)
+        if func is None:
+            args += (message.action)
+            func = receiver.handle_message
+        args += message.args
+        result = safe_async(func, args=args, kwargs=message.kwargs)                    
         yield result
         result = result.result
         if is_failure(result):
@@ -363,7 +371,9 @@ If the message needs acknowledgment, send the result back.'''
         if ack:
             if sender:
                 # Acknowledge the sender with the result.
-                yield receiver.send(sender, 'callback', message.rid, result)
+                # we don't yield the result since this message does not
+                # accept adding callbacks
+                receiver.send(sender, 'callback', message.rid, result)
             else:
                 receiver.log.error('message "{0}" from an unknown actor '\
                                    '"{1}". Cannot acknowledge.'\
@@ -381,12 +391,17 @@ If the message needs acknowledgment, send the result back.'''
                              lambda r: r.raise_all())
 
 
-class MailBoxMonitor(object):
-    
+class MonitorMailbox(MailboxInterface):
+    '''A :class:`Mailbox` for a :class:`Monitor`. This is a proxy for the
+arbiter inbox.'''
     def __init__(self, actor):
         self.actor = actor
         self.mailbox = actor.arbiter.mailbox
-        
+    
+    @property
+    def cpubound(self):
+        return self.actor.cpubound
+    
     @property
     def address(self):
         return self.mailbox.address
@@ -396,11 +411,11 @@ class MailBoxMonitor(object):
         return self.mailbox.ioloop
     
     def close(self):
-        self.mailbox.unregister(self.actor)
+        self.mailbox.unregister()
 
 
 class QueueWaker(object):
-    
+    '''A waker for :class:`IOQueue`. Used by CPU-bound actors.'''
     def __init__(self, queue):
         self._queue = queue
         self._fd = 'waker'

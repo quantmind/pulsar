@@ -10,7 +10,7 @@ from pulsar.utils import system
 from pulsar.utils.tools import Pidfile, gen_unique_id
 
 from .concurrency import concurrency
-from .defer import itervalues, iteritems
+from .defer import itervalues, iteritems, multi_async
 from .actor import Actor, get_actor, send
 from .monitor import PoolMixin
 from .proxy import ActorCallBacks, ActorProxyDeferred
@@ -39,9 +39,9 @@ def arbiter(daemonize = False):
     
     
 def spawn(**kwargs):
-    '''Spawn a new :class:`Actor` instance and return an
-:class:`ActorProxyDeferred`. This method
-can be used from any :class:`Actor`. If not in the :class:`Arbiter` domain,
+    '''Spawn a new :class:`Actor` and return an :class:`ActorProxyDeferred`.
+This method can be used from any :class:`Actor`.
+If not in the :class:`Arbiter` domain,
 the method send a request to the :class:`Arbiter` to spawn a new actor, once
 the arbiter creates the actor it returns the proxy to the original caller.
 
@@ -90,7 +90,6 @@ Users access the arbiter by the high level api::
 .. _twisted: http://twistedmatrix.com/trac/
 .. _tornado: http://www.tornadoweb.org/
 '''
-    CLOSE_TIMEOUT = 3
     STOPPING_LOOPS = 20
     SIG_TIMEOUT = 0.01
     EXIT_SIGNALS = (signal.SIGINT,
@@ -166,10 +165,11 @@ Users access the arbiter by the high level api::
         '''A dictionary of all :class:`Monitor` in the arbiter'''
         return dict(((mon.name,mon.proxy) for mon in itervalues(self.monitors)))
     
+    @multi_async
     def close_monitors(self):
-        '''Clase all :class:`Monitor` instances in the arbiter.'''
+        '''Close all :class:`Monitor` at once.'''
         for pool in list(itervalues(self._monitors)):
-            pool.stop()
+            yield pool.stop()
             
     def info(self, full = False):
         if not self.started():
@@ -214,7 +214,6 @@ Users access the arbiter by the high level api::
             p = Pidfile(pidfile)
             p.create(self.pid)
             self.local['pidfile'] = p
-        PoolMixin.on_start(self)
         
     def on_task(self):
         '''Override the :class:`Actor.on_task` callback to perfrom the
@@ -230,29 +229,31 @@ arbiter tasks at every iteration in the event loop.'''
                 else:
                     m.start()
     
-    def on_manage_actor(self, actor):
+    def manage_actor(self, actor):
         '''If an actor failed to notify itself to the arbiter for more than
 the timeout. Stop the arbiter.'''
-        gap = time() - actor.notified
-        if gap > actor.timeout:
-            if actor.stopping_loops < self.STOPPING_LOOPS:
-                if not actor.stopping_loops:
-                    self.log.info(\
-                        'Stopping {0}. Timeout surpassed.'.format(actor))
-                    self.send(actor, 'stop')
-            else:
-                self.log.warn(\
-                        'Terminating {0}. Timeout surpassed.'.format(actor))
-                actor.terminate()
-            actor.stopping_loops += 1
+        if self.running():
+            gap = time() - actor.notified
+            if gap > actor.timeout:
+                if actor.stopping_loops < self.STOPPING_LOOPS:
+                    if not actor.stopping_loops:
+                        self.log.info(\
+                            'Stopping {0}. Timeout surpassed.'.format(actor))
+                        self.send(actor, 'stop')
+                else:
+                    self.log.warn(\
+                            'Terminating {0}. Timeout surpassed.'.format(actor))
+                    actor.terminate()
+                    actor.join(self.JOIN_TIMEOUT)
+                actor.stopping_loops += 1
             
     def on_stop(self):
         '''Stop the pools the message queue and remaining actors.'''
-        self.close_monitors()
-        self.close_actors()
-        self._stopping_start = time()
-        self._close_message_queue()
-        return self._on_actors_stopped()
+        # close all monitors
+        yield self.close_monitors()
+        # close remaining actors
+        yield self.close_actors()
+        yield self._close_message_queue()
     
     def on_exit(self):
         p = self.get('pidfile')
@@ -318,15 +319,6 @@ the timeout. Stop the arbiter.'''
             self.log.info(_msg())
         self._close_signal = sig
         self.stop()
-            
-    def _on_actors_stopped(self):
-        if self.MANAGED_ACTORS:
-            if time() - self._stopping_start < self.CLOSE_TIMEOUT:
-                return self.ioloop.add_callback(self._on_actors_stopped)
-            else:
-                self.log.warning('There are {0} actors still alive.'\
-                                 .format(len(self.MANAGED_ACTORS)))
-        return self.ioloop.stop()
     
     def _close_message_queue(self):   
         return

@@ -16,7 +16,8 @@ __all__ = ['Socket',
            'create_connection',
            'create_socket_address',
            'get_maxfd',
-           'socket_pair']
+           'socket_pair',
+           'server_socket']
 
 logger = logging.getLogger('pulsar.sock')
 
@@ -126,6 +127,19 @@ which is bound to ``127.0.0.1`` at any available port.
     w.setblocking(0)
     return w,s    
     
+
+def server_socket(backlog=2048):
+    '''Create the inbox, a TCP socket ready for
+accepting messages from other actors.'''
+    # get a socket pair
+    w, s = socket_pair(backlog=backlog)
+    s.setblocking(True)
+    r, _ = s.accept()
+    r.close()
+    w.close()
+    s.setblocking(False)
+    return s
+
 
 class Socket(object):
     '''Wrapper class for a python socket. It provides with

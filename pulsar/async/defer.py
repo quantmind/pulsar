@@ -20,6 +20,8 @@ __all__ = ['Deferred',
            'maybe_async',
            'make_async',
            'safe_async',
+           'async',
+           'multi_async',
            'ispy3k',
            'thread_loop',
            'thread_local_data',
@@ -116,19 +118,35 @@ def is_async(obj):
     '''Check if *obj* is an asynchronous instance'''
     return isinstance(obj, Deferred)
 
-def async_func_call(func, result, *args, **kwargs):
-    callback = lambda : func(*args,**kwargs)
-    if is_async(result):
-        return result.add_callback(callback)
-    else:
-        return callback()
-
 def safe_async(f, args=(), kwargs={}, description=None, max_errors=None):
+    '''Execute function *f* safely and return an asynchronous result'''
     try:
         result = f(*args, **kwargs)
     except Exception as e:
         result = e
     return make_async(result, max_errors=max_errors, description=description)
+
+def async(func):
+    '''Asynchronous decorator for a function *func*'''
+    def _(*args, **kwargs):
+        return safe_async(func, args=args, kwargs=kwargs)
+    
+    _.__name__ = func.__name__
+    _.__doc__ = func.__doc__
+    return _
+
+def multi_async(func):
+    '''Decorator for a function *func* which returns an iterable over, possibly
+asynchronous, values. This decorator create an instance of a
+:class:`MultiDeferred` called once all asynchronous values have been caled.'''
+    def _(*args, **kwargs):
+        try:
+            return MultiDeferred(func(*args, **kwargs), type=list).lock()
+        except Exception as e:
+            return make_async(e)
+    _.__name__ = func.__name__
+    _.__doc__ = func.__doc__
+    return _
 
 def maybe_async(val, description=None, max_errors=None):
     '''Convert *val* into an asynchronous instance only if *val* is a generator
@@ -442,8 +460,7 @@ generator.'''
                 # generator and add a callback to the eventloop to resume the
                 # loop at the next iteration. Return self so that it can
                 # restart all its ancestors.
-                ioloop = thread_loop()
-                ioloop.add_callback(self._consume, wake=False)
+                thread_loop().add_callback(self._consume, wake=False)
                 return self
             else:
                 # Convert to async only if needed
@@ -468,13 +485,17 @@ generator.'''
 class MultiDeferred(Deferred):
     _locked = False
     
-    def __init__(self, type=list):
+    def __init__(self, data=None, type=None):
         self._deferred = {}
+        if not type:
+            type = type(data) if data is not None else list
         self._stream = type()
         if self.type not in ('list','dict'):
             raise TypeError('Multideferred type container must be a dictionary '
                             ' or a string')
         super(MultiDeferred, self).__init__()
+        if data:
+            self.update(data)
         
     @property
     def type(self):

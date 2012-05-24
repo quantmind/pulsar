@@ -13,9 +13,9 @@ from pulsar import AlreadyCalledError, AlreadyRegistered,\
                    ActorAlreadyStarted, LogSelf, LogginMixin, system
 
 from .eventloop import IOLoop
-from .proxy import ActorProxy, ActorMessage, DEFAULT_MESSAGE_CHANNEL
+from .proxy import ActorProxy, ActorMessage
 from .defer import make_async, is_failure, iteritems, itervalues,\
-                     pickle, safe_async, thread_local_data
+                     pickle, safe_async, async, thread_local_data
 from .mailbox import IOQueue, mailbox
 
 
@@ -44,16 +44,17 @@ the current thread'''
 
 
 def get_actor(value=None):
-    '''This function will return the actor running the current thread.'''
+    '''Returns the actor running the current thread.'''
     return thread_local_data('actor', value=value)
 
 
-def send(target, action, **params):
-    '''Send a message *action* to *target*.
+def send(target, action, *args, **params):
+    '''Send a message to *target* to perform a given *action*.
     
 :parameter target: the :class:`Actor` id or an :class:`ActorProxy` or name of
     the target actor receiving the message.
 :parameter action: the action to perform on the remote :class:`Actor`.
+:parameter args: positional arguments to pass to the remote action function.
 :parameter params: dictionary of parameters to pass to the remote *action*.
 :rtype: an :class:`ActorMessage` which is a :class:`Deferred` and therefore
     can be used to attach callbacks.
@@ -65,7 +66,7 @@ Typical example::
     >>> r.result
     'pong'
 '''
-    return get_actor().send(target, action, **params)
+    return get_actor().send(target, action, *args, **params)
 
 
 class RemoteMetaClass(type):
@@ -273,7 +274,7 @@ which can be shared across different processes (i.e. it is pickable).'''
     @property
     def impl(self):
         '''String indicating actor concurrency implementation
-("monitor", "thread", "process" or "greenlet").'''
+("monitor", "thread", "process").'''
         return self._impl.impl
     
     @property
@@ -396,8 +397,7 @@ parameters *params*. It return a :class:`ActorMessage`.'''
     ###############################################################  STATES
     def running(self):
         '''``True`` if actor is running.'''
-        return self.requestloop.running()
-        #return self._state == self.RUN
+        return self._state == self.RUN
     
     def started(self):
         '''``True`` if actor has started. It does not necessarily
@@ -423,6 +423,10 @@ mean it is running.'''
     def is_monitor(self):
         '''Return ``True`` if ``self`` is a :class:`Monitor`.'''
         return False
+    
+    def isprocess(self):
+        '''boolean indicating if this is an actor on a child process.'''
+        return self.impl == 'process'
     
     def ready(self):
         return self.arbiter.aid in self._linked_actors
@@ -556,40 +560,33 @@ This function is overridden by :class:`Monitor` to perform nothing.'''
         self._init_runner()
         return reqloop
         
-    def handle_message(self, sender, message):
-        '''Handle a *message* from a *sender*.'''
-        pass
-        
     ############################################################################
     # STOPPING
     ############################################################################
-    
-    def stop(self):
+    @async
+    def stop(self, force=False):
         '''Stop the actor by stopping its :attr:`Actor.requestloop`
 and closing its :attr:`Actor.mailbox`. Once everything is closed
 properly this actor will go out of scope.'''
-        if self._state == self.RUN:
+        if force or self._state == self.RUN:
+            self.set('stopping_start', time())
             self._state = self.STOPPING
             self.log.debug('stopping')
-            stp = self.on_stop()
-            #if the on stop method return something we don't close the event
-            #loops. It means they are owned by another actor.
-            if not stp:
-                self.log.debug("Stopping request event loop")
-                stp = make_async(self.requestloop.stop()).add_callback(
-                                lambda r : self.mailbox.close())
-            return make_async(stp).addBoth(self.close)
-        
-    def close(self, result=None):
-        if is_failure(result):
-            result.raise_all()
-        elif self.stopping():
+            # make safe user defined callbacks
+            yield safe_async(self.on_stop)
+            if not self.is_monitor():
+                # shutdown mailbox
+                yield self.mailbox.close()
+                # shutdown the request loop
+                yield self.requestloop.stop()
             self._state = self.CLOSE
-            self.on_exit()
+            # make safe user defined callbacks
+            yield safe_async(self.on_exit)
             self.log.info('exited')
+            self.set('stopping_end', time())
             
     def _make_name(self):
-        return '{0}({1})'.format(self.class_code,self.aid[:8])
+        return '%s(%s)' % (self.class_code, self.aid)
     
     def linked_actors(self):
         '''Iterator over linked-actor proxies (no moitors are yielded).'''
@@ -615,13 +612,7 @@ actions:
 * it notifies linked actors if required (arbiter only for now)
 * it executes the :meth:`Actor.on_task` callback.
 '''
-        # If this is not a monitor
-        # we notify to the arbiter we are still alive
-        # self.log.debug(self.state)
-        if not self.running():
-            return
-        
-        if self.impl != 'monitor':
+        if self.running():
             nt = time()
             if hasattr(self,'last_notified'):
                 timeout = self.timeout or self.DEFAULT_ACTOR_TIMEOUT
@@ -634,14 +625,9 @@ actions:
                 info = self.info(True)
                 info['last_notified'] = nt
                 self.send('arbiter', 'notify', info)
-
-        self.on_task()
+            self.on_task()
     
-    def isprocess(self):
-        '''boolean indicating if this is an actor on a child process.'''
-        return self.impl == 'process'
-    
-    def info(self, full = False):
+    def info(self, full=False):
         '''return A dictionary of information related to the actor
 status and performance.'''
         isp = self.isprocess()
@@ -662,16 +648,14 @@ status and performance.'''
         
     ############################################################################
     # BUILT IN REMOTE FUNCTIONS
-    ############################################################################    
-    def actor_action(self, actor, request):
-        # Do nothing for now
-        return
-        msg = request.msg
-        name = request.name or DEFAULT_MESSAGE_CHANNEL
-        if name not in self.channels:
-            self.channels[name] = []
-        ch = self.channels[name]
-        ch.append(request)
+    ############################################################################
+    def handle_message(self, sender, message, *args, **kwargs):
+        '''Handle a *message* from a *sender*.'''
+        message_handler = self.get_message_handler('message')
+        if message_handler:
+            return message_handler(sender, *args, **kwargs)
+        else:
+            return None
         
     def actor_mailbox_address(self, actor, address):
         '''The *actor* register its mailbox ``address``.'''

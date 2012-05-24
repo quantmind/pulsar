@@ -110,6 +110,12 @@ class TestList(TestOption):
     desc = """List all test labels without performing tests."""
 
 
+class Remotes(pulsar.RemoteMethods):
+    
+    def actor_test_result(self, sender, result):
+        self.app.runner.add(result)
+        
+        
 class TestSuite(tasks.CPUboundServer):
     '''An asynchronous test suite which works like a task queue where each task
 is a group of tests specified in a test class.
@@ -140,6 +146,7 @@ is a group of tests specified in a test class.
 '''
     _app_name = 'test'
     cfg_apps = ('cpubound',)
+    remotes = Remotes
     plugins = ()
     config_options_exclude = ('daemon','max_requests','user','group','pidfile')
     can_kill_arbiter = True
@@ -239,7 +246,4 @@ configuration and plugins.'''
     def handle_request(self, worker, request):
         yield request.run(worker)
         yield request
-        
-    def actor_test_result(self, sender, worker, result):
-        self.runner.add(result)
 

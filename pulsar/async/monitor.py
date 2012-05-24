@@ -5,7 +5,7 @@ import time
 import pulsar
 
 from .actor import Actor
-from .defer import make_async, Deferred, iteritems, itervalues, range
+from .defer import async, iteritems, itervalues, range, NOT_DONE
 from .proxy import ActorCallBacks
 from .mailbox import Queue
 
@@ -30,23 +30,8 @@ It is used by both the :class:`Arbiter` and the :class:`Monitor` classes.
     Number of actors to manage.
     
     Default ``0`` any number of actors.
-    
-.. attribute:: when_running
-
-    A :class:`Deferred` called back when running. Useful for adding
-    code when the mixin is not yet running. For example, lets take the
-    arbiter::
-    
-        import pulsar
-        
-        arb = pulsar.arbiter()
-        
-        def do_something():
-            ...
-            
-        arb.when_running.add_callback(do_something)
-        arb.start()
 '''
+    CLOSE_TIMEOUT = 3
     JOIN_TIMEOUT = 1.0
     actor_class = Actor
     '''The class derived form :class:`Actor` which the monitor manages
@@ -54,18 +39,18 @@ during its life time.
 
     Default: :class:`Actor`'''
     
-    def on_init(self, actor_class = None, num_actors = 0, **kwargs):
+    def on_init(self, actor_class=None, num_actors=0, **kwargs):
         self._spawing = 0
         self._managed_actors = {}
         self.num_actors = num_actors or 0
         self.actor_class = actor_class or self.actor_class
-        self.when_running = Deferred()
-        
+    
+    def __call__(self):
+        if self.running():
+            self.on_task()
+            
     def ready(self):
         return True
-    
-    def on_start(self):
-        self.when_running.callback()
         
     def actorparams(self):
         '''Return a dictionary of parameters to be passed to the
@@ -82,20 +67,34 @@ spawn method when creating new actors.'''
     def MANAGED_ACTORS(self):
         return self._managed_actors
     
-    def manage_actors(self):
+    def manage_actors(self, terminate=False, stop=False, manage=True):
         '''Remove :class:`Actor` which are not alive from the
-:class:`PoolMixin.MANAGED_ACTORS`'''
+:class:`PoolMixin.MANAGED_ACTORS` and return the number of actors still alive.
+
+:parameter terminate: if ``True`` force termination of alive actors.
+:parameter stop: if ``True`` stops all alive actor.
+:parameter manage: if ``True`` it checks if alive actors are still responsive.
+'''
         ACTORS = self.MANAGED_ACTORS
         linked = self._linked_actors
+        alive = 0
         for aid, actor in list(iteritems(ACTORS)):
             if not actor.is_alive():
                 actor.join(self.JOIN_TIMEOUT)
                 ACTORS.pop(aid)
                 linked.pop(aid,None)
             else:
-                self.on_manage_actor(actor)
-                
-    def on_manage_actor(self, actor):
+                alive += 1
+                if terminate:
+                    actor.terminate()
+                    actor.join(self.JOIN_TIMEOUT)
+                elif stop:
+                    actor.stop(self)
+                elif manage:
+                    self.manage_actor(actor)
+        return alive
+    
+    def manage_actor(self, actor):
         '''This function is overritten by the arbiter'''
         pass
     
@@ -122,25 +121,27 @@ as required."""
     def stop_actor(self, actor):
         raise NotImplementedError()
     
+    @async
     def close_actors(self):
-        for actor in itervalues(self.MANAGED_ACTORS):
-            if actor.is_alive():
-                actor.stop(self)
-    
-    def send(self, sender, action, *args, **kwargs):
-        '''The send method.'''
-        func = self.actor_functions.get(action)
-        if func:
-            return func(self,sender,*args,**kwargs)
-        else:
-            return self.channel_message(sender,*args,**kwargs)
+        '''Close all managed :class:`Actor`.'''
+        start = time.time()
+        # Stop all of them
+        to_stop = self.manage_actors(stop=True)
+        while to_stop:
+            yield NOT_DONE
+            to_stop = self.manage_actors(manage=False)
+            dt = time.time() - start
+            if dt > self.CLOSE_TIMEOUT:
+                self.log.warn('Cannot stop %s actors.' % to_stop)
+                to_stop = self.manage_actors(terminate=True)
+                self.log.warn('terminated %s actors.' % to_stop)
+                to_stop = 0
         
 
-class Monitor(PoolMixin,Actor):
-    '''\
-A monitor is a special :class:`Actor` which shares
-the same :class:`IOLoop` with the :class:`Arbiter`
-and therefore lives in the main process domain.
+class Monitor(PoolMixin, Actor):
+    '''A monitor is a special :class:`Actor` which shares
+the same :class:`IOLoop` with the :class:`Arbiter` and therefore lives in
+the main process domain.
 The Arbiter manages monitors which in turn manage a set of :class:`Actor`
 performing similar tasks.
 
@@ -166,8 +167,13 @@ You can also create a monitor with a distributed queue as IO mechanism::
                                      'mymonitor',
                                      ioqueue = Queue())
 
+Monitors with distributed queues manage CPU-bound :class:`Actors`.
 '''
     socket = None
+    
+    @property
+    def cpubound(self):
+        return False
     
     def isprocess(self):
         return False
@@ -202,16 +208,14 @@ The implementation goes as following:
 Users shouldn't need to override this method, but use
 :meth:`Monitor.monitor_task` instead.'''
         self.manage_actors()
-        if self.running():
-            self.spawn_actors()
-            self.stop_actors()
-            self.monitor_task()
+        self.spawn_actors()
+        self.stop_actors()
+        self.monitor_task()
             
     def on_stop(self):
-        '''Overrides the :meth:`Actor.on_task`
+        '''Overrides the :meth:`Actor.on_stop`
 :ref:`actor callback <actor-callbacks>` to stop managed actors.'''
-        self.close_actors()
-        return make_async()
+        return self.close_actors()
         
     # OVERRIDES INTERNALS
     
@@ -221,9 +225,6 @@ Users shouldn't need to override this method, but use
     def _get_requestloop(self):
         '''Return the arbiter request loop.'''
         return self.arbiter.requestloop
-    
-    def _stop_ioloop(self):
-        return make_async()
     
     def _run(self):
         pass

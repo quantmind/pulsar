@@ -1,5 +1,6 @@
 Development
 =====================
+* Much better handling of stopping servers.
 * Refactored :class:`pulsar.Deferred` to be more similar to twisted. You
   can add separate callbacks for handling errors.
 * The :class:`pulsar.Mailbox` does not derive from :class:`threading.Thread` so

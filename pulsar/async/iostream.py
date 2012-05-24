@@ -184,8 +184,7 @@ One common pattern of usage::
         if self.closed:
             data = self._get_buffer(self._read_buffer)
             if data:
-                self._may_run_callback(d, data)
-                return d
+                return self._may_run_callback(d, data)
             else:
                 return
         self._read_callback = d
@@ -217,7 +216,6 @@ overwritten with this new callback.
     def close(self):
         """Close this stream."""
         if self._socket is not None:
-            self.log.debug('Closing {0}'.format(self))
             if self._state is not None:
                 self.ioloop.remove_handler(self.fileno())
             self._socket.close()
@@ -305,6 +303,7 @@ On error closes the socket and raises an exception."""
             self._may_run_callback(callback, buffer)
             
     def _handle_write(self):
+        # keep count how many bytes we write
         tot_bytes = 0
         while self._write_buffer:
             try:
@@ -333,15 +332,15 @@ On error closes the socket and raises an exception."""
                     self._write_buffer_frozen = True
                     break
                 else:
-                    self.log.warning("Write error on %d: %s",
-                                    self.socket.fileno(), e)
+                    self.log.warning("Write error on %d." % self.fileno(),
+                                     exc_info=True)
                     self.close()
                     return
                 
         if not self._write_buffer and self._write_callback:
             callback = self._write_callback
             self._write_callback = None
-            self._may_run_callback(callback, num_bytes)
+            self._may_run_callback(callback, tot_bytes)
 
     def _check_closed(self):
         if not self.socket:

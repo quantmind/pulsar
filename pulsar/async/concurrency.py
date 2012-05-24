@@ -1,3 +1,4 @@
+import time
 from multiprocessing import Process, current_process
 from threading import Thread, current_thread
 
@@ -112,7 +113,9 @@ class ActorProcess(ActorConcurrency, Process):
 class ActorThread(ActorConcurrency, Thread):
     '''Actor on a thread'''
     def terminate(self):
-        self.actor.stop()
+        result = self.actor.stop(force=True)
+        while result.called:
+            time.sleep(0.1)
     
     @property    
     def pid(self):

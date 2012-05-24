@@ -171,7 +171,7 @@ following algorithm:
             del testcls.worker
         
         # send runner result to monitor
-        worker.send(worker.monitor, 'test_result', runner.result)
+        yield worker.send(worker.monitor, 'test_result', runner.result)
         
     def run_test(self, test, runner):
         '''\
