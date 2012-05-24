@@ -34,6 +34,7 @@ CLASSIFIERS  = [
 from .utils.log import *
 
 DEFAULT_PORT = 8060
+ASYNC_TIMEOUT = None
 SERVER_SOFTWARE = "python-{0}/{1}".format(SERVER_NAME, version)
 
 class CLEAR_ERRORS(object):

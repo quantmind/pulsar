@@ -150,7 +150,7 @@ is a group of tests specified in a test class.
     plugins = ()
     config_options_exclude = ('daemon','max_requests','user','group','pidfile')
     can_kill_arbiter = True
-    cfg = {'loglevel': 'none', 'timeout': 0, 'backlog': 1}
+    cfg = {'loglevel': 'none', 'timeout': 3600, 'backlog': 1}
     
     def handler(self):
         return self

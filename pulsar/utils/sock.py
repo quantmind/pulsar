@@ -27,9 +27,9 @@ ALLOWED_ERRORS = (errno.EAGAIN, errno.ECONNABORTED,
 MAXFD = 1024
 
 
-def create_connection(address, blocking = 0):
+def create_connection(address, blocking=0):
     sock_type = create_socket_address(address)
-    s = sock_type(is_server = False)
+    s = sock_type(is_server=False)
     s.sock.connect(address)
     s.sock.setblocking(blocking)
     return s
@@ -154,7 +154,7 @@ higher level tools for creating and reusing sockets already created.'''
         if fd is None:
             self._clean()
             sock = socket.socket(self.FAMILY, socket.SOCK_STREAM)
-        elif hasattr(fd,'fileno'):
+        elif hasattr(fd, 'fileno'):
             self.sock = fd
             return
         else:
@@ -167,7 +167,11 @@ higher level tools for creating and reusing sockets already created.'''
             self.sock = self.set_options(sock, address, bound)
         else:
             self.sock = sock
-        
+    
+    @property
+    def closed(self):
+        return self.sock == None
+    
     def __getstate__(self):
         d = self.__dict__.copy()
         d['fd'] = d.pop('sock').fileno()
@@ -176,7 +180,7 @@ higher level tools for creating and reusing sockets already created.'''
     def __setstate__(self, state):
         fd = state.pop('fd')
         self.__dict__ = state
-        self._init(fd,None,True)
+        self._init(fd, None, True)
     
     def is_server(self):
         return self._is_server
@@ -248,15 +252,17 @@ higher level tools for creating and reusing sockets already created.'''
         sock.bind(address)
         
     def close(self, log=None):
-        try:
-            self.sock.close()
-        except socket.error as e:
-            if log:
-                log.info("Error while closing socket %s" % str(e))
-        try:
-            time.sleep(0.3)
-        except IOError:
-            pass
+        if not self.closed:
+            try:
+                self.sock.close()
+            except socket.error as e:
+                if log:
+                    log.info("Error while closing socket %s" % str(e))
+            try:
+                time.sleep(0.3)
+            except IOError:
+                pass
+            self.sock = None
         
     def info(self):
         if self.is_server():
@@ -369,3 +375,4 @@ else:
             raise TypeError("Unable to create socket from: %r" % addr)
     
         return sock_type
+    

@@ -666,12 +666,12 @@ status and performance.'''
             return self.proxy
         return False
     
-    def actor_callback(self, caller, rid, result):
+    def actor_callback(self, caller, result):
         '''Actor :ref:`remote function <remote-functions>` which sends
 the a results back to an actor which previously accessed another remote
 function. Essentially this is the return statement in the pulsar concurrent
 framework'''
-        ActorMessage.actor_callback(rid, result)
+        return result
     actor_callback.ack = False
     
     def actor_stop(self, caller):
@@ -680,6 +680,7 @@ the actor by invoking the local :meth:`Actor.stop` method. This
 method only works if self is not the arbiter.'''
         if self.arbiter:
             return self.stop()
+    actor_stop.ack = False
         
     def actor_notify(self, caller, info):
         '''Actor :ref:`remote function <remote-functions>` for notifying

@@ -7,7 +7,7 @@ from collections import deque
 from threading import current_thread
 
 from pulsar.utils.system import IObase
-from pulsar import create_client_socket, wrap_socket
+from pulsar import create_client_socket, wrap_socket, ASYNC_TIMEOUT
 
 from .defer import Deferred, is_async, is_failure, thread_local_data
 from .eventloop import deferred_timeout
@@ -41,7 +41,7 @@ manipulated and adapted to pulsar :ref:`concurrent framework <design>`.
     _state = None
     MAX_BODY = 1024 * 128
     def __init__(self, socket=None, max_buffer_size=None,
-                 read_chunk_size=None, timeout=5, **kwargs):
+                 read_chunk_size=None, timeout=ASYNC_TIMEOUT, **kwargs):
         self.socket = socket
         self.timeout = timeout
         self.max_buffer_size = max_buffer_size or 104857600
@@ -418,3 +418,5 @@ On error closes the socket and raises an exception."""
                 self.fileno(), self._state)
         return deferred_timeout(deferred, self.ioloop, timeout=self.timeout)
 
+
+        

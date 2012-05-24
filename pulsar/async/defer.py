@@ -27,31 +27,6 @@ __all__ = ['Deferred',
            'thread_local_data',
            'NOT_DONE']
 
-# Special objects
-class NOT_DONE(object):
-    pass
-
-def thread_local_data(name, value=None):
-    ct = current_thread()
-    if not hasattr(ct,'_pulsar_local'):
-        ct._pulsar_local = local()
-    loc = ct._pulsar_local
-    if value is not None:
-        if hasattr(loc, name):
-            raise RuntimeError('%s is already available on this thread'%name)
-        setattr(loc, name, value)
-    return getattr(loc, name)
-
-def thread_loop(ioloop=None):
-    '''Returns the :class:`IOLoop` on the current thread if available.'''
-    return thread_local_data('eventloop', ioloop)
-
-logger = logging.getLogger('pulsar.async.defer')
-
-remote_stacktrace = namedtuple('remote_stacktrace', 'error_class error trace')
-
-pass_through = lambda result: result
-
 ispy3k = sys.version_info >= (3, 0)
 if ispy3k:
     import pickle
@@ -67,6 +42,31 @@ else:   # pragma : nocover
     itervalues = lambda d : d.itervalues()
     range = xrange
     
+# Special objects
+class NOT_DONE(object):
+    pass
+
+def thread_local_data(name, value=None):
+    ct = current_thread()
+    if not hasattr(ct,'_pulsar_local'):
+        ct._pulsar_local = local()
+    loc = ct._pulsar_local
+    if value is not None:
+        if hasattr(loc, name):
+            raise RuntimeError('%s is already available on this thread'%name)
+        setattr(loc, name, value)
+    return getattr(loc, name, None)
+
+def thread_loop(ioloop=None):
+    '''Returns the :class:`IOLoop` on the current thread if available.'''
+    return thread_local_data('eventloop', ioloop)
+
+logger = logging.getLogger('pulsar.async.defer')
+
+remote_stacktrace = namedtuple('remote_stacktrace', 'error_class error trace')
+
+pass_through = lambda result: result
+
 def iterdata(stream, start=0):
     '''Iterate over a stream which is either a dictionary or a list. This
 iterator is over key-value pairs for a dictionary, and index-value pairs

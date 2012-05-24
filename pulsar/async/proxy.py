@@ -187,18 +187,15 @@ If there is no inbox either, abort the message passing and log a critical error.
             sender.log.critical('Cannot send a message to {0}. No\
  mailbox available.'.format(self))
             return
-        
         ack = True
         if action in self.remotes:
             ack = self.remotes[action]
-        msg = ActorMessage(None, actorid(sender), self.aid, action,
+        msg = ActorMessage(action, actorid(sender), self.aid,
                            ack, args, kwargs)
-        try:
-            mailbox.put(msg)
-            return msg
-        except Exception as e:
-            sender.log.critical('Failed to send message {0}: {1}'.\
-                             format(msg,e), exc_info=True)
+        if ack:
+            return mailbox.execute(msg)
+        else:
+            return mailbox.send(msg)
         
     def __repr__(self):
         return self.aid

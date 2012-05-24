@@ -30,7 +30,7 @@ class SocketServer(pulsar.Application):
         # if the platform does not support multiprocessing sockets switch to
         # thread concurrency
         if not pulsar.platform.multiProcessSocket():
-            cfg.concurrency = 'thread'
+            cfg.set('concurrency', 'thread')
         # Socket in thread concurrency has no workers
         if cfg.concurrency == 'thread':
             cfg.set('workers', 0)

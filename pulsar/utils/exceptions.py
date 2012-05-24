@@ -36,6 +36,10 @@ class ConnectionError(PulsarInternetException):
     pass
     
 
+class CouldNotParse(PulsarInternetException):
+    pass
+
+
 class DeferredFailure(PulsarException):
     pass
 
