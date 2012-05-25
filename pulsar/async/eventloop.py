@@ -13,7 +13,8 @@ from pulsar.utils.tools import gen_unique_id
 from pulsar.utils.log import Synchronized
 from pulsar.utils.structures import WeakList
 
-from .defer import Deferred, is_async, maybe_async, thread_loop
+from .defer import Deferred, is_async, maybe_async, thread_loop, make_async,\
+                    log_failure
 
 __all__ = ['IOLoop', 'deferred_timeout']
 
@@ -295,7 +296,8 @@ so that it can perform its tasks at each event loop. Check the
 :meth:`pulsar.Actor` method.'''
         for task in self._loop_tasks:
             try:
-                task()
+                result = task()
+                loop_deferred(result, self)
             except HaltServer:
                 raise
             except:
@@ -391,7 +393,10 @@ will make the loop stop after the current event iteration completes."""
 
     def _run_callback(self, callback):
         try:
-            callback()
+            result = maybe_async(callback())
+            if is_async(result):
+                callback = LoopDeferred(result, self)
+                self.add_callback(callback)
         except (KeyboardInterrupt, SystemExit):
             raise
         except:
@@ -455,32 +460,41 @@ class PeriodicCallback(object):
             self.start()
 
 
-class DeferredTimeout(object):
-    
-    def __init__(self, value, ioloop=None, timeout=5):
-        self._value = maybe_async(value)
+class LoopDeferred(object):
+    '''A class for tracking uncalled :class:`Deferred`'''
+    def __init__(self, value, ioloop=None, timeout=None):
         self._ioloop = ioloop or thread_loop()
         self._timeout = timeout
         self._start = None
-        self.__call__(False)
+        self._value = value
     
-    def __call__(self, check_timeout=True):
+    def __call__(self):
         if self._value.called:
-            return
-        if check_timeout:
-            try:
-                if time.time() - self._start > self._timeout:
-                    raise Timeout('"%s" not called.' % self._value,\
-                                  self._timeout)
-            except Exception as e:
-                self._value.callback(e)
+            log_failure(self._value.result)
         else:
-            self._start = time.time()
-        self._ioloop.add_callback(self)
+            if self._timeout:
+                now = time.time()
+                if not self._start:
+                    self._start = now
+                try:
+                    if now - self._start > self._timeout:
+                        raise Timeout('"%s" not called.' % self._value,\
+                                      self._timeout)
+                except Exception as e:
+                    self._value.callback(e)
+            self._ioloop.add_callback(self)
+        return self
         
 
+def loop_deferred(value, ioloop=None, timeout=None):
+    value = maybe_async(value)
+    if is_async(value):
+        LoopDeferred(value, ioloop, timeout)()
+    
+    
 def deferred_timeout(value, ioloop=None, timeout=3):
     if timeout:
-        return DeferredTimeout(value, ioloop, timeout)._value
+        loop = LoopDeferred(value, ioloop, timeout)()
+        return loop._value
     else:
         return value

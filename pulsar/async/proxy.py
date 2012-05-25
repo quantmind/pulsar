@@ -1,10 +1,12 @@
 import sys
 from time import time
 
+from pulsar import CommandNotFound
 from pulsar.utils.log import LocalMixin
 
 from .defer import Deferred, is_async, make_async, iteritems
 from .mailbox import mailbox, ActorMessage
+from . import commands
 
 __all__ = ['ActorMessage',
            'ActorProxyDeferred',
@@ -125,7 +127,7 @@ action ``notify`` with parameter ``"hello there!"``.
 '''     
     def __init__(self, impl):
         self.aid = impl.aid
-        self.remotes = impl.remotes
+        self.commands_set = impl.commands_set
         # impl can be an actor or an actor impl,
         # which does not have the address attribute
         self.__address = getattr(impl,'address',None)
@@ -162,15 +164,13 @@ has registered its inbox address.
                 self.local['mailbox'] = mailbox(self, self.address)
             return self.local['mailbox']
         
-    def receive_from(self, sender, action, *args, **kwargs):
+    def receive_from(self, sender, command, *args, **kwargs):
         '''Send an :class:`ActorMessage` to the underlying actor
 (the receiver). This is the low level function call for
 communicating between actors.
 
 :parameter sender: :class:`Actor` sending the message.
-:parameter action: the action of the message. If not provided,
-    the message will be broadcasted by the receiving actor,
-    otherwise a specific action will be performed.
+:parameter command: the command of the message.
     Default ``None``.
 :parameter args: non positional arguments of message body.
 :parameter kwargs: key-valued arguments of message body.
@@ -187,12 +187,12 @@ If there is no inbox either, abort the message passing and log a critical error.
             sender.log.critical('Cannot send a message to {0}. No\
  mailbox available.'.format(self))
             return
-        ack = True
-        if action in self.remotes:
-            ack = self.remotes[action]
-        msg = ActorMessage(action, actorid(sender), self.aid,
-                           ack, args, kwargs)
-        if ack:
+        cmd = commands.get(command, self.commands_set)
+        if not cmd:
+            raise CommandNotFound(command)
+        msg = ActorMessage(cmd.__name__, actorid(sender),
+                           self.aid, args, kwargs)
+        if cmd.ack:
             return mailbox.execute(msg)
         else:
             return mailbox.send(msg)

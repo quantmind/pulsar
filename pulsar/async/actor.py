@@ -17,6 +17,7 @@ from .proxy import ActorProxy, ActorMessage
 from .defer import make_async, is_failure, iteritems, itervalues,\
                      pickle, safe_async, async, thread_local_data
 from .mailbox import IOQueue, mailbox
+from . import commands
 
 
 __all__ = ['is_actor',
@@ -237,8 +238,8 @@ Here ``a`` is actually a reference to the remote actor.
         self._params = params or {}
         self._monitors = monitors or {}
         actor_links = {}
-        for a in itervalues(self._monitors):
-            self._linked_actors[a.aid] = a
+        #for a in itervalues(self._monitors):
+        #    self._linked_actors[a.aid] = a
         if not self.is_arbiter():
             self._repr = '{0} {1}'.format(self._name,self.aid)
             if on_task:
@@ -276,6 +277,10 @@ which can be shared across different processes (i.e. it is pickable).'''
         '''String indicating actor concurrency implementation
 ("monitor", "thread", "process").'''
         return self._impl.impl
+    
+    @property
+    def commands_set(self):
+        return self._impl.commands_set
     
     @property
     def timeout(self):
@@ -365,6 +370,9 @@ their ids.'''
     def set(self, parameter, value):
         '''Set *parameter* value on this :class:`Actor`.'''
         self._params[parameter] = value
+        
+    def command(self, name):
+        return commands.get(name, self.commands_set)
         
     def send(self, target, action, *args, **params):
         '''Send a message to *target* to perform *action* with given
@@ -589,9 +597,9 @@ properly this actor will go out of scope.'''
         return '%s(%s)' % (self.class_code, self.aid)
     
     def linked_actors(self):
-        '''Iterator over linked-actor proxies (no moitors are yielded).'''
+        '''Iterator over linked-actor proxies.'''
         for a in itervalues(self._linked_actors):
-            if isinstance(a,ActorProxy):
+            if isinstance(a, ActorProxy):
                 yield a
             
     def get_actor(self, aid):
@@ -614,7 +622,7 @@ actions:
 '''
         if self.running():
             nt = time()
-            if hasattr(self,'last_notified'):
+            if hasattr(self, 'last_notified'):
                 timeout = self.timeout or self.DEFAULT_ACTOR_TIMEOUT
                 tole = min(self.ACTOR_TIMEOUT_TOLERANCE*timeout,
                            self.ACTOR_NOTIFY_PERIOD)
@@ -637,6 +645,7 @@ status and performance.'''
                 'thread_id': self.tid,
                 'process_id': self.pid,
                 'isprocess': isp,
+                'active_connections': self.mailbox.active_connections,
                 'age': self.age}
         if isp:
             data.update(system.system_info(self.pid))

@@ -8,7 +8,7 @@ from collections import deque, namedtuple
 from inspect import isgenerator, isfunction, ismethod, istraceback
 from time import sleep
 
-from pulsar import AlreadyCalledError, DeferredFailure
+from pulsar import AlreadyCalledError, DeferredFailure, HaltServer
 
 
 __all__ = ['Deferred',
@@ -16,6 +16,8 @@ __all__ = ['Deferred',
            'Failure',
            'as_failure',
            'is_failure',
+           'raise_failure',
+           'log_failure',
            'is_async',
            'maybe_async',
            'make_async',
@@ -116,6 +118,17 @@ exception, otherwise returns *value*.'''
     else:
         return value
     
+def raise_failure(f):
+    '''Decorator for raising failures'''
+    def _(*args, **kwargs):
+        r = f(*args, **kwargs)
+        if is_failure(r):
+            r.raise_all()
+        return r
+    _.__name__ = f.__name__
+    _.__doc__ = f.__doc__
+    return _
+
 def is_async(obj):
     '''Check if *obj* is an asynchronous instance'''
     return isinstance(obj, Deferred)
@@ -192,6 +205,10 @@ This function is useful when someone needs to treat a value as a deferred::
             val._description = description
         return val
 
+def log_failure(failure):
+    if is_failure(failure):
+        failure.log()
+    return failure
 
 ############################################################### Failure
 class Failure(object):
@@ -203,6 +220,7 @@ class Failure(object):
     the execution of a :class:`Deferred`.
     
 '''
+    logged = False
     def __init__(self, err=None):
         self.should_stop = False
         if isinstance(err, self.__class__):
@@ -276,9 +294,11 @@ class Failure(object):
             return (None,None,None)
                 
     def log(self, log = None):
-        log = log or logger
-        for e in self:
-            log.critical('', exc_info = e)
+        if not self.logged:
+            self.logged = True
+            log = log or logger
+            for e in self:
+                log.critical('', exc_info = e)
             
 
 ############################################################### Deferred            
@@ -450,7 +470,7 @@ generator.'''
         try:
             result = next(self.gen)
             self._consumed += 1
-        except KeyboardInterrupt:
+        except (KeyboardInterrupt, HaltServer):
             raise
         except StopIteration:
             return self.conclude(last_result)

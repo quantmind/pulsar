@@ -14,6 +14,7 @@ from .defer import itervalues, iteritems, multi_async
 from .actor import Actor, get_actor, send
 from .monitor import PoolMixin
 from .proxy import ActorCallBacks, ActorProxyDeferred
+from . import commands
 
 try:    #pragma nocover
     import queue
@@ -125,22 +126,26 @@ Users access the arbiter by the high level api::
         return m
     
     @classmethod
-    def spawn(cls, actorcls=None, aid=None, **kwargs):
+    def spawn(cls, actorcls=None, aid=None, commands_set=None, **kwargs):
         '''Create a new :class:`Actor` and return its
 :class:`ActorProxyMonitor`.'''
         actorcls = actorcls or Actor
         arbiter = process_global('_arbiter')
         cls.lock.acquire()
         try:
+            if commands_set is None:
+                commands_set = set(commands.actor_commands)
             if arbiter:
                 arbiter.actor_age += 1
                 kwargs['age'] = arbiter.actor_age
                 kwargs['ppid'] = arbiter.ppid
+            else:
+                commands_set.update(commands.arbiter_commands)
             impl = kwargs.pop('impl', actorcls.DEFAULT_IMPLEMENTATION)
             timeout = max(kwargs.pop('timeout',cls.DEFAULT_ACTOR_TIMEOUT),
                           cls.MINIMUM_ACTOR_TIMEOUT)
             actor_maker = concurrency(impl, actorcls, timeout,
-                                      arbiter, aid, kwargs)
+                                      arbiter, aid, commands_set, kwargs)
             monitor = actor_maker.proxy_monitor()
             # Add to the list of managed actors if this is a remote actor
             if monitor is not None:

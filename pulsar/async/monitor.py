@@ -47,7 +47,7 @@ during its life time.
     
     def __call__(self):
         if self.running():
-            self.on_task()
+            return self.on_task()
             
     def ready(self):
         return True
@@ -210,7 +210,7 @@ Users shouldn't need to override this method, but use
         self.manage_actors()
         self.spawn_actors()
         self.stop_actors()
-        self.monitor_task()
+        return self.monitor_task()
             
     def on_stop(self):
         '''Overrides the :meth:`Actor.on_stop`
@@ -244,6 +244,7 @@ Users shouldn't need to override this method, but use
                                  monitor=self,
                                  ioqueue=self.ioqueue,
                                  monitors=self.arbiter.get_all_monitors(),
+                                 commands_set=self.commands_set,
                                  params=self._params,
                                  **self.actorparams())
         self._spawing += 1

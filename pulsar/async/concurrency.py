@@ -14,7 +14,7 @@ from .defer import pickle
 __all__ = ['Concurrency', 'concurrency']
 
 
-def concurrency(kind, actor_class, timeout, arbiter, aid, params):
+def concurrency(kind, actor_class, timeout, arbiter, aid, commands_set, params):
     '''Function invoked by the :class:`Arbiter` when spawning a new
 :class:`Actor`.'''
     if kind == 'monitor':
@@ -25,7 +25,8 @@ def concurrency(kind, actor_class, timeout, arbiter, aid, params):
         cls = ActorProcess
     else:
         raise ValueError('Concurrency %s not supported by pulsar' % kind)
-    return cls.make(kind, actor_class, timeout, arbiter, aid, params)
+    return cls.make(kind, actor_class, timeout, arbiter, aid, commands_set,
+                    params)
     
     
 class Concurrency(object):
@@ -42,12 +43,14 @@ and are shared between the :class:`Actor` and its
     constructor.
 '''
     @classmethod
-    def make(cls, kind, actor_class, timeout, arbiter, aid, kwargs):
+    def make(cls, kind, actor_class, timeout, arbiter, aid, commands_set,
+             kwargs):
         self = cls()
         if not aid:
             aid = gen_unique_id()[:8] if arbiter else 'arbiter'
         self.aid = aid
         self.impl = kind
+        self.commands_set = commands_set
         self.timeout = timeout
         self.actor_class = actor_class
         self.loglevel = kwargs.pop('loglevel',None)

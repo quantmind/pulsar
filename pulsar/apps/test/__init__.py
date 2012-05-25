@@ -63,6 +63,7 @@ import inspect
 
 import pulsar
 from pulsar.apps import tasks
+from pulsar.async.commands import pulsar_command
 
 from .result import *
 from .case import *
@@ -110,10 +111,11 @@ class TestList(TestOption):
     desc = """List all test labels without performing tests."""
 
 
-class Remotes(pulsar.RemoteMethods):
-    
-    def actor_test_result(self, sender, result):
-        self.app.runner.add(result)
+test_commands = set()
+
+@pulsar_command(internal=True, commands_set=test_commands)
+def test_result(client, actor, sender, result):
+    actor.app.runner.add(result)
         
         
 class TestSuite(tasks.CPUboundServer):
@@ -146,7 +148,7 @@ is a group of tests specified in a test class.
 '''
     _app_name = 'test'
     cfg_apps = ('cpubound',)
-    remotes = Remotes
+    commands_set = test_commands
     plugins = ()
     config_options_exclude = ('daemon','max_requests','user','group','pidfile')
     can_kill_arbiter = True
@@ -241,7 +243,7 @@ configuration and plugins.'''
             time_taken = time.time() - self._time_start
             runner.on_end()
             runner.printSummary(time_taken)
-            monitor.arbiter.stop()
+            return monitor.arbiter.stop()
             
     def handle_request(self, worker, request):
         yield request.run(worker)

@@ -32,17 +32,18 @@ if ispy3k:
 
 def halt_server(f):
     '''Halt server decorator'''
+    def _halt(failure):
+        failure.log()
+        raise HaltServer('Unhandled exception application.')
+    
     def _(self, *args, **kwargs):
         try:
-            return f(self, *args, **kwargs)
+            result = make_async(f(self, *args, **kwargs))
         except Exception as e:
-            if self.app.can_kill_arbiter:
-                msg = 'Unhadled exception in {0} application: {1}'\
-                        .format(self.app.name, e)
-                self.log.critical(msg, exc_info = True)
-                raise HaltServer(msg)
-            else:
-                raise
+            result = make_async(e)
+        if self.app.can_kill_arbiter:
+            result.add_errback(_halt)
+        return result
     _.__name__ = f.__name__
     _.__doc__ = f.__doc__
     return _
@@ -200,10 +201,10 @@ pulsar subclasses of :class:`Application`.
         
     @halt_server
     def monitor_task(self):
-        self.app.monitor_task(self)
+        yield self.app.monitor_task(self)
         # There are no workers, the monitor do their job
         if not self.cfg.workers:
-            self.handle_task()
+            yield self.handle_task()
             
     def on_stop(self):
         # First we stop the application
@@ -325,7 +326,7 @@ its duties.
     config_options_include = None
     config_options_exclude = None
     can_kill_arbiter = False
-    remotes = None
+    commands_set = None
     monitor_class = ApplicationMonitor
     
     def __init__(self,
@@ -365,14 +366,8 @@ its duties.
                                           app=self,
                                           ioqueue=self.ioqueue)
             self.mid = monitor.aid
-            remotes = self.remotes
-            if self.remotes:
-                r, f = remotes.remotes, remotes.actor_functions
-                if r:
-                    monitor.remotes = monitor.remotes.copy()
-                    monitor.remotes.update(r)
-                    monitor.actor_functions = monitor.actor_functions.copy()
-                    monitor.actor_functions.update(f)
+            if self.commands_set:
+                monitor.commands_set.update(self.commands_set)
     
     @property
     def app_name(self):

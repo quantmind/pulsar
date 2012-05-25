@@ -32,6 +32,21 @@ class HaltServer(PulsarInternetException):
         self.signal = signal
 
 
+class CommandError(PulsarException):
+    '''Exception raised when executing a Command'''
+    pass
+
+
+class CommandNotFound(PulsarException):
+    
+    def __init__(self, name):
+        super(CommandNotFound, self).__init__(
+                            'Command "%s" not available' % name)
+        
+class AuthenticationError(PulsarException):
+    pass
+
+
 class ConnectionError(PulsarInternetException):
     pass
     

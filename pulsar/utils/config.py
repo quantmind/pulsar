@@ -22,6 +22,7 @@ from .httpurl import is_string_or_native_string, to_string, to_bytes
 
 __all__ = ['Config',
            'Setting',
+           'defaults',
            'ordered_settings',
            'validate_string',
            'validate_callable',
@@ -31,7 +32,19 @@ __all__ = ['Config',
            'make_settings',
            'make_options']
 
+class DefaultSettings:
     
+    def __init__(self):
+        # port for serving a socket
+        self.PORT = 8060
+        # timeout for asynchronous Input/Output
+        self.IO_TIMEOUT = 5
+        # Maximum number of concurrenct clients
+        self.BACKLOG = 2048
+        # Actors timeout
+        self.TIMEOUT = 30
+    
+defaults = DefaultSettings()
 KNOWN_SETTINGS = {}
 KNOWN_SETTINGS_ORDER = []
 
