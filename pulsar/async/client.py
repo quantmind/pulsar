@@ -1,3 +1,4 @@
+import io
 import logging
 
 from pulsar import create_connection, CouldNotParse
@@ -68,8 +69,7 @@ class SocketClient(object):
     def read(self, bytes_sent=None):
         if self.sock:
             if self.blocking:
-                data = self.sock.recv()
-                return self.parsedata(data)
+                return self._read_sync()
             else:
                 if self.on_connect is None:
                     return self._async_read()
@@ -101,6 +101,18 @@ class SocketClient(object):
     
     # INTERNALS
 
+    def _read_sync(self):
+        length = io.DEFAULT_BUFFER_SIZE
+        data = True
+        while data:
+            data = self.sock.recv(length)
+            if not data:
+                self.close()
+            else:
+                msg = self.parsedata(data)
+                if msg:
+                    return msg
+        
     def _async_write(self, data):
         self.on_connect = None
         return self.sock.write(data)

@@ -138,7 +138,16 @@ class PulsarClient(SocketClient):
         
     def ping(self):
         return self.execute(ActorMessage('ping'))
+    
+    def run(self, callable):
+        return self.execute(ActorMessage('run', args=(callable,)))
         
+    def info(self):
+        return self.execute(ActorMessage('info'))
+    
+    def shutdown(self):
+        return self.execute(ActorMessage('stop'))
+    
 
 class MailboxClient(SocketClient):
     '''A :class:`MailboxClient` is a socket which receives messages

@@ -1,5 +1,4 @@
-'''\
-Configuration utilities. originally from gunicorn_,
+'''Configuration utilities. originally from gunicorn_,
 adapted and modified for pulsar.
 
 Original Gunicorn Licence
@@ -593,6 +592,15 @@ class Pidfile(Setting):
         """
 
 
+class Password(Setting):
+    name = "password"
+    section = "Server Mechanics"
+    flags = ["--password"]
+    validator = validate_string
+    default = None
+    desc = """Set a password for the server"""
+        
+        
 class User(Setting):
     name = "user"
     section = "Server Mechanics"

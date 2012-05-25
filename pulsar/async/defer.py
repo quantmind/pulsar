@@ -46,6 +46,8 @@ else:   # pragma : nocover
 class NOT_DONE(object):
     pass
 
+EMPTY_DICT = {}
+
 def thread_local_data(name, value=None):
     ct = current_thread()
     if not hasattr(ct,'_pulsar_local'):
@@ -118,9 +120,11 @@ def is_async(obj):
     '''Check if *obj* is an asynchronous instance'''
     return isinstance(obj, Deferred)
 
-def safe_async(f, args=(), kwargs={}, description=None, max_errors=None):
+def safe_async(f, args=None, kwargs=None, description=None, max_errors=None):
     '''Execute function *f* safely and return an asynchronous result'''
     try:
+        kwargs = kwargs if kwargs is not None else EMPTY_DICT
+        args = args or ()
         result = f(*args, **kwargs)
     except Exception as e:
         result = e
