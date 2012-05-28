@@ -7,13 +7,14 @@ import threading
 from multiprocessing.queues import Empty, Queue
 
 from pulsar import create_connection, MailboxError, server_socket,\
-                    wrap_socket, CouldNotParse, CommandNotFound
+                    wrap_socket, CouldNotParse, CommandNotFound,\
+                    defaults
 from pulsar.utils.tools import gen_unique_id
 from pulsar.utils.httpurl import to_bytes
 
-from .defer import make_async, safe_async, pickle, thread_loop,\
+from .defer import make_async, safe_async, pickle, is_async,\
                     async, is_failure, ispy3k, raise_failure
-from .iostream import AsyncIOStream, thread_ioloop, SimpleSocketServer,\
+from .iostream import AsyncIOStream, SimpleSocketServer,\
                         Connection, SocketClient
 
 
@@ -21,12 +22,13 @@ __all__ = ['PulsarClient', 'mailbox', 'Mailbox', 'IOQueue',
            'Empty', 'Queue', 'ActorMessage']
 
 
-def mailbox(actor, address=None):
+def mailbox(actor=None, address=None):
     '''Creates a :class:`Mailbox` instances for :class:`Actor` instances.
 If an address is provided, the communication is implemented using a socket,
 otherwise a queue is used.'''   
     if address:
-        return PulsarClient.connect(address, socket_timeout=0)
+        return PulsarClient.connect(address,
+                                    socket_timeout=defaults.mailbox_timeout)
     else:
         if actor.is_monitor():
             return MonitorMailbox(actor)
@@ -113,7 +115,7 @@ created by :meth:`ActorProxy.send` method.
     def encode(self):
         data = (self.command, self.sender, self.receiver,
                 self.args, self.kwargs)
-        bdata = pickle.dumps(data)
+        bdata = pickle.dumps(data, protocol=2)
         return ('*%s\r\n\r\n\r\n' % len(bdata)).encode('utf-8') + bdata
         
     def __repr__(self):
@@ -189,7 +191,8 @@ with a :class:`Mailbox`.'''
                 yield ActorMessage('callback', sender=receiver,
                                    args=(result,))
         else:
-            yield self._NOTHING
+            # Yield empty data so nothing is returned to the client
+            yield b''
 
     
 class Mailbox(SimpleSocketServer):
@@ -217,18 +220,16 @@ of execution.'''
         
     def shut_down(self):
         self.unregister(self.actor)
-            
-    def on_start(self):
-        thread_loop(self.actor.requestloop)
-        thread_ioloop(self.ioloop)
         
-    def on_started(self):
+    def on_start(self):
         actor = self.actor
         self.register(actor)
         if not actor.is_arbiter():
-            msg = make_async(actor.send(actor.monitor,
-                                        'mailbox_address', self.address))
-            return msg.add_callback(actor.link_actor)
+            msg = actor.send(actor.monitor, 'mailbox_address', self.address)
+            if is_async(msg):
+                return msg.add_callback(actor.link_actor)
+            else:
+                return actor.link_actor(msg)
 
     def register(self, actor):
         self.ioloop.add_loop_task(actor)

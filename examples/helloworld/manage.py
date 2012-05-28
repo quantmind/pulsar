@@ -29,9 +29,9 @@ def hello(environ, start_response):
 
 def server(description = None, **kwargs):
     description = description or 'Pulsar Hello World Application'
-    return wsgi.WSGIApplication(callable=hello,
-                                description=description,
-                                **kwargs)
+    return wsgi.WSGIServer(callable=hello,
+                           description=description,
+                           **kwargs)
     
 
 if __name__ == '__main__':

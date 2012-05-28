@@ -1,9 +1,11 @@
 '''Tests the test suite and pulsar distribution.'''
 import os
-import threading
+import time
+from threading import current_thread
 import multiprocessing
 
 import pulsar
+from pulsar import defaults
 from pulsar.utils.test import test, run_on_arbiter
 
 class TestTestWorker(test.TestCase):
@@ -15,10 +17,20 @@ class TestTestWorker(test.TestCase):
         self.assertFalse(worker.closed())
         self.assertFalse(worker.stopped())
         self.assertEqual(worker.state, 'running')
-        self.assertEqual(worker.tid, threading.current_thread().ident)
-        if worker.isprocess():
-            self.assertEqual(worker.pid, os.getpid())
+        self.assertEqual(worker.tid, current_thread().ident)
+        self.assertEqual(worker.pid, os.getpid())
         self.assertTrue(worker.cpubound)
+        
+    def testWorkerMonitor(self):
+        worker = pulsar.get_actor()
+        monitor = worker.monitor
+        arbiter = worker.arbiter
+        mailbox = monitor.mailbox
+        self.assertEqual(mailbox, arbiter.mailbox)
+        if defaults.mailbox_timeout == 0:
+            self.assertTrue(mailbox.async)
+        else:
+            self.assertFalse(mailbox.async)
         
     def testMailbox(self):
         worker = pulsar.get_actor()
@@ -42,23 +54,47 @@ class TestTestWorker(test.TestCase):
         self.assertTrue(str(ioloop))
         self.assertFalse(ioloop.start())
         
-    def testThreadInfo(self):
+    def testNOT_DONE(self):
         worker = pulsar.get_actor()
-        ct = threading.current_thread()
-        self.assertEqual(ct.actor, worker)
+        count = worker.requestloop.num_loops
+        yield pulsar.NOT_DONE
+        self.assertFalse(worker.requestloop._callbacks)
+        self.assertEqual(worker.requestloop.num_loops, count+1)
+        yield pulsar.NOT_DONE
+        self.assertEqual(worker.requestloop.num_loops, count+2)
         
-    def testPingMonitor(self):
+    def testYield(self):
+        '''Yielding a deferred calling back on separate thread'''
         worker = pulsar.get_actor()
-        outcome = worker.send(worker.monitor, 'ping')
+        self.assertEqual(worker.tid, current_thread().ident)
+        yield pulsar.NOT_DONE
+        self.assertEqual(worker.tid, current_thread().ident)
+        d = pulsar.Deferred()
+        # We are calling back the deferred in the ioloop which is on a separate
+        # thread
+        def _callback():
+            d.callback(current_thread().ident)
+        worker.ioloop.add_timeout(time.time()+0.2, _callback)
+        yield d
+        self.assertNotEqual(d.result, worker.tid)
+        self.assertEqual(worker.ioloop.tid, d.result)
+        self.assertEqual(worker.tid, current_thread().ident)
+    
+    def testPingArbiter(self):
+        worker = pulsar.get_actor()
+        outcome = pulsar.make_async(worker.send(worker.arbiter, 'ping'))
+        yield outcome
+        self.assertEqual(outcome.result, 'pong')
+        outcome = pulsar.make_async(worker.send(worker.monitor, 'ping'))
         yield outcome
         self.assertEqual(outcome.result, 'pong')
         
-    @run_on_arbiter
-    def testSpawning(self):
-        arbiter = pulsar.get_actor()
-        self.assertEqual(arbiter.aid, 'arbiter')
-        self.assertEqual(len(arbiter.monitors), 1)
-        self.assertEqual(arbiter.monitors[0]._spawning, {})
+    #@run_on_arbiter
+    #def testSpawning(self):
+    #    arbiter = pulsar.get_actor()
+    #    self.assertEqual(arbiter.aid, 'arbiter')
+    #    self.assertEqual(len(arbiter.monitors), 1)
+    #    self.assertEqual(arbiter.monitors[0]._spawning, {})
 
 class TestPulsar(test.TestCase):
     

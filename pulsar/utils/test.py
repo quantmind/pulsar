@@ -18,14 +18,11 @@ from pulsar.async.defer import pickle
 class MockArbiter(pulsar.Arbiter):
     '''A mock Arbiter for Testing'''
     def _run(self):
+        run = super(MockArbiter, self)._run
         self._test_thread = threading.Thread(name='Mock arbiter thread',
-                                             target=self._run2)
+                                             target=run)
         self._test_thread.start()
     
-    def _run2(self):
-        pulsar.get_actor(self)
-        self._tid = self._test_thread.ident
-        super(MockArbiter, self)._run()
         
     
 def create_test_arbiter(test=True):

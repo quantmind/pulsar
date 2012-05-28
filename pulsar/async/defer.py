@@ -10,6 +10,8 @@ from time import sleep
 
 from pulsar import AlreadyCalledError, DeferredFailure, HaltServer
 
+from .access import thread_loop
+
 
 __all__ = ['Deferred',
            'MultiDeferred',
@@ -25,9 +27,8 @@ __all__ = ['Deferred',
            'async',
            'multi_async',
            'ispy3k',
-           'thread_loop',
-           'thread_local_data',
-           'NOT_DONE']
+           'NOT_DONE',
+           'STOP_ON_FAILURE']
 
 ispy3k = sys.version_info >= (3, 0)
 if ispy3k:
@@ -48,22 +49,10 @@ else:   # pragma : nocover
 class NOT_DONE(object):
     pass
 
+class STOP_ON_FAILURE(object):
+    pass
+
 EMPTY_DICT = {}
-
-def thread_local_data(name, value=None):
-    ct = current_thread()
-    if not hasattr(ct,'_pulsar_local'):
-        ct._pulsar_local = local()
-    loc = ct._pulsar_local
-    if value is not None:
-        if hasattr(loc, name):
-            raise RuntimeError('%s is already available on this thread'%name)
-        setattr(loc, name, value)
-    return getattr(loc, name, None)
-
-def thread_loop(ioloop=None):
-    '''Returns the :class:`IOLoop` on the current thread if available.'''
-    return thread_local_data('eventloop', ioloop)
 
 logger = logging.getLogger('pulsar.async.defer')
 
@@ -439,7 +428,7 @@ this point, :meth:`add_callback` will run the *callbacks* immediately.
 
 
 class DeferredGenerator(Deferred):
-    '''A :class:`Deferred` for a generator (iterable) over deferred.
+    '''A :class:`Deferred` for a generator over, possibly, deferred objects.
 The callback will occur once the generator has stopped
 (when it raises StopIteration).
 
@@ -455,11 +444,20 @@ The callback will occur once the generator has stopped
         self.errors = Failure()
         self.deferred = Deferred()
         super(DeferredGenerator,self).__init__(description=description)
+        self.loop = thread_loop()
         self._consume()
-        
+    
+    def _consume_in_thread(self, result=None):
+        if self.loop.tid != current_thread().ident:
+            self.loop.add_callback(lambda: self._consume(result), wake=False)
+            return result
+        else:
+            return self._consume(result)
+    
     def _consume(self, last_result=None):
         '''override the deferred consume private method for handling the
-generator.'''
+generator. Important! Callbacks are always added to the event loop on the
+current thread.'''
         if isinstance(last_result, Failure):
             if self.should_stop(last_result):
                 return self.conclude()
@@ -477,19 +475,19 @@ generator.'''
         else:
             if result == NOT_DONE:
                 # The NOT_DONE object indicates that the generator needs to
-                # abort so that the event loop can continue and resume the
-                # next event loop iteration. Return self so that it can
-                # restart all its ancestors.
-                thread_loop().add_callback(self._consume, wake=False)
+                # abort so that the event loop can continue. This generator
+                # will resume at the next event loop.
+                self.loop.add_callback(self._consume)
                 return self
             else:
-                # Convert to async only if needed
+                # Convert to an asynchronous instance only if needed
                 result = maybe_async(result)
             if is_async(result):
                 result = result.result_or_self()
+                # The result is an asynchronous instance
                 if is_async(result):
                     self._current = result
-                    return result.addBoth(self._consume)
+                    return result.addBoth(self._consume_in_thread)
             # continue with the loop
             return self._consume(result)
     

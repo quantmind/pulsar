@@ -113,9 +113,9 @@ class TestList(TestOption):
 
 test_commands = set()
 
-@pulsar_command(internal=True, commands_set=test_commands)
+@pulsar_command(internal=True, ack=False, commands_set=test_commands)
 def test_result(client, actor, sender, result):
-    actor.app.runner.add(result)
+    actor.app.add_result(actor, result)
         
         
 class TestSuite(tasks.CPUboundServer):
@@ -236,16 +236,17 @@ configuration and plugins.'''
             print('Could not find any tests.')
             monitor.arbiter.stop()
     
-    def monitor_task(self, monitor):
+    def handle_request(self, worker, request):
+        yield request.run(worker)
+        yield request
+        
+    def add_result(self, monitor, result):
         #Check if we got all results
         runner = self.runner
+        runner.add(result)
         if runner.count == len(self.local['tests']):
             time_taken = time.time() - self._time_start
             runner.on_end()
             runner.printSummary(time_taken)
             return monitor.arbiter.stop()
-            
-    def handle_request(self, worker, request):
-        yield request.run(worker)
-        yield request
 

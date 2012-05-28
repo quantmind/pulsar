@@ -11,21 +11,17 @@ from pulsar.utils.system import IObase
 from pulsar import create_socket, server_socket, create_client_socket,\
                      wrap_socket, defaults, create_connection, CouldNotParse
 
-from .defer import Deferred, is_async, is_failure, thread_local_data,\
-                    async, make_async, safe_async, log_failure
+from .defer import Deferred, is_async, is_failure, async, make_async,\
+                        safe_async, log_failure
 from .eventloop import IOLoop, loop_deferred
+from .access import PulsarThread, thread_ioloop
 
 iologger = logging.getLogger('pulsar.iostream')
 
 
-__all__ = ['AsyncIOStream', 'thread_ioloop']
+__all__ = ['AsyncIOStream']
 
-
-def thread_ioloop(ioloop=None):
-    '''Returns the :class:`IOLoop` on the current thread if available.'''
-    return thread_local_data('ioloop', ioloop)
-
-
+            
 class AsyncIOStream(IObase):
     '''An utility class to write to and read from a non-blocking socket.
 
@@ -164,7 +160,7 @@ but is non-portable."""
                                    .format(self.state_code))
             else:
                 raise RuntimeError('Cannot connect while connecting.')
-        
+    
     def read(self, length=None):
         """Reads data from the socket.
 The callback will be called with chunks of data as they become available.
@@ -183,7 +179,8 @@ One common pattern of usage::
     io.read().add_callback(parse)
     
 """
-        assert not self.reading, "Already reading"
+        if self.reading:
+            raise RuntimeError("Already reading")
         d = Deferred(description='%s read callback' % self)
         if self.closed:
             data = self._get_buffer(self._read_buffer)
@@ -243,8 +240,6 @@ On error closes the socket and raises an exception."""
             try:
                 chunk = self.socket.recv(length)
             except socket.error as e:
-                self.log.warning("Read error on %d: %s",
-                                 self.socket.fileno(), e)
                 self.close()
                 raise
             if chunk is None:
@@ -321,9 +316,9 @@ On error closes the socket and raises an exception."""
                     buff = self._get_buffer(self._write_buffer, self.MAX_BODY)
                 else:
                     buff = self._write_buffer.popleft() or b''
-                num_bytes = len(buff)
-                self.socket.sendall(buff)
-                tot_bytes += num_bytes
+                sent = self.socket.send(buff)
+                if sent == 0:
+                    raise socket.error()
             except socket.error as e:
                 if e.args[0] in (errno.EWOULDBLOCK, errno.EAGAIN):
                     # With OpenSSL, after send returns EWOULDBLOCK,
@@ -337,7 +332,7 @@ On error closes the socket and raises an exception."""
                     self._write_buffer_frozen = True
                     break
                 else:
-                    self.log.warning("Write error on %d." % self.fileno(),
+                    self.log.warning("Write error on %s.", self.fileno(),
                                      exc_info=True)
                     self.close()
                     return
@@ -471,7 +466,6 @@ class BaseSocket(object):
 class SocketClient(BaseSocket):
     '''Base class for socket clients with parsers. This class can be used for
 synchronous and asynchronous connections'''
-    _NOTHING = NOTHING
     parsercls = None
     log = iologger
     def __init__(self, socket, parsercls=None, socket_timeout=None):
@@ -510,7 +504,7 @@ synchronous and asynchronous connections'''
         '''Send data to remote server'''
         self.time_last = time.time()
         data = self.parser.encode(data)
-        return self.socket.sendall(data)
+        return self.socket.write(data)
         
     def read(self, result=None):
         '''Read data from socket'''
@@ -568,7 +562,7 @@ to send back data to the client.'''
                 # No data. the socket is closed.
                 # We raise socket.error
                 self.close()
-                raise socket.error('Scoket is closed')
+                raise socket.error('Socket is closed')
             else:
                 msg = self.parsedata(data)
                 if msg is not None:
@@ -631,12 +625,13 @@ the client or not.
         self.server.connections.discard(self)
     
     def on_end_message(self, result):
-        if result is not self._NOTHING:
-            r = safe_async(self.send, args=(result,))
-            if self.keep_reading:
-                return r.add_callback(self.read, self.close)
-            else:
-                return r.add_errback(self.close)
+        # If the result is empty the connection won't send back any data
+        r = safe_async(self.send, args=(result,)) if result\
+                 else make_async(result)
+        if self.keep_reading:
+            return r.add_callback(self.read, self.close)
+        else:
+            return r.addBoth(self.close)
         
     
 class SimpleSocketServer(BaseSocket):
@@ -722,10 +717,6 @@ servers using a socket in pulsar.
         '''callback just before the event loop starts.'''
         pass
     
-    def on_started(self):
-        '''callback once the event loop started.'''
-        pass
-    
     def on_connection(self, client):
         '''Callback when a new connection is made'''
         pass
@@ -745,24 +736,22 @@ servers using a socket in pulsar.
                 self.thread.join()
             
     ############################################################## INTERNALS
-    @async
     def _start(self):
-        # Called in the actor thread
+        # If onthread is true we start the event loop on a
+        # separate thread. 
         if self.onthread:
             if self.thread and self.thread.is_alive():
                 raise RunTimeError('Cannot start mailbox. '\
                                    'It has already started')
-            self.thread = Thread(name=self.name, target=self._run)
+            self.thread = PulsarThread(name=self.name, target=self._run)
             self.thread.start()
         if not self._started:
             self.ioloop.add_handler(self,
                                     self.new_connection,
                                     self.ioloop.READ)
-            yield self.on_start()
-            yield self.on_started()
+            return self.on_start()
         
     def _run(self):
-        self.on_start()
         self.ioloop.start()
 
     def new_connection(self, fd, events):
@@ -773,5 +762,5 @@ servers using a socket in pulsar.
         
     def unregister(self):
         if not self.ioloop.remove_loop_task(self.actor):
-            self.actor.log.warn('"%s" could not be removed from eventloop'\
-                                 % self.actor)
+            self.actor.log.warn('"%s" could not be removed from eventloop',
+                                self.actor)

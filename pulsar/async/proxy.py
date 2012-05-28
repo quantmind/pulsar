@@ -6,6 +6,7 @@ from pulsar.utils.log import LocalMixin
 
 from .defer import Deferred, is_async, make_async, iteritems
 from .mailbox import mailbox, ActorMessage
+from .access import get_actor 
 from . import commands
 
 __all__ = ['ActorMessage',
@@ -127,39 +128,15 @@ action ``notify`` with parameter ``"hello there!"``.
         self.commands_set = impl.commands_set
         # impl can be an actor or an actor impl,
         # which does not have the address attribute
-        self.__address = getattr(impl,'address',None)
+        self.address = getattr(impl, 'address', None)
         self.timeout = impl.timeout
         self.loglevel = impl.loglevel
-        
-    def __get_address(self):
-        return self.__address
-    def __set_address(self, address):
-        '''Callback from the :class:`Arbiter` when the remote underlying actor
-has registered its inbox address.
-
-:parameter address: the address for the underlying remote :attr:`Arbiter.inbox`
-'''
-        self.__address = address
-        m = self.local.pop('mailbox',None)
-        if m:
-            m.close()
-        if address:
-            self.on_address.callback(address)
-    address = property(__get_address,__set_address)
-    
-    @property
-    def on_address(self):
-        if 'on_address' not in self.local:
-            self.local['on_address'] = Deferred()
-        return self.local['on_address']
-        
+            
     @property
     def mailbox(self):
         '''Actor mailbox'''
         if self.address:
-            if 'mailbox' not in self.local:
-                self.local['mailbox'] = mailbox(self, self.address)
-            return self.local['mailbox']
+            return get_actor().proxy_mailbox(self.address)
         
     def receive_from(self, sender, command, *args, **kwargs):
         '''Send an :class:`ActorMessage` to the underlying actor

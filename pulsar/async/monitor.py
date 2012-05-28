@@ -8,7 +8,7 @@ from .actor import Actor
 from .concurrency import concurrency
 from .defer import async, iteritems, itervalues, range, NOT_DONE
 from .proxy import ActorCallBacks
-from .mailbox import Queue
+from .mailbox import Queue, mailbox
 from . import commands
 
 
@@ -139,9 +139,11 @@ as required."""
         raise NotImplementedError()
     
     def link_actor(self, proxy, address):
+        # Override the link_actor from Actor class
         proxy_monitor = self._spawning.pop(proxy.aid, None)
         if proxy_monitor is not None:
-            # The actor was spawned by this pool
+            # The actor was spawned by this pool and therefore it is managed by
+            # this pool
             proxy = proxy_monitor
             self.MANAGED_ACTORS[proxy.aid] = proxy_monitor
         proxy.address = address
@@ -275,12 +277,11 @@ Users shouldn't need to override this method, but use
     def _make_name(self):
         return 'Monitor-{0}({1})'.format(self.actor_class.code(),self.aid)
     
-    def _get_requestloop(self):
-        '''Return the arbiter request loop.'''
-        return self.arbiter.requestloop
-    
     def _run(self):
-        pass
+        self._requestloop = self.arbiter.requestloop
+        self._mailbox = mailbox(self)
+        self.setid()
+        self.on_start()
     
     @property
     def multithread(self):
@@ -335,8 +336,12 @@ Users shouldn't need to override this method, but use
                          'ioqueue_size': tq.qsize()})
         return self.on_info(data)
         
+    def proxy_mailbox(address):
+        return self.arbiter.proxy_mailboxes.get(address)
+    
     def link_actor(self, proxy, address):
         proxy = super(Monitor, self).link_actor(proxy, address)
+        # Add the proxy to the linked_actors in the arbiter
         self.arbiter._linked_actors[proxy.aid] = proxy
         return proxy
         

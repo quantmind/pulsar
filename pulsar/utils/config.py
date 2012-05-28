@@ -43,6 +43,8 @@ class DefaultSettings:
         self.BACKLOG = 2048
         # Actors timeout
         self.TIMEOUT = 30
+        # mailbox clients blocking
+        self.mailbox_timeout = None
     
 defaults = DefaultSettings()
 KNOWN_SETTINGS = {}

@@ -212,6 +212,16 @@ higher level tools for creating and reusing sockets already created.'''
     def _clean(self):
         pass
     
+    def write(self, data):
+        try:
+            sent = self.send(data)
+            if sent == 0:
+                raise socket.error()
+            return sent
+        except:
+            self.close()
+            raise
+        
     def accept(self):
         '''Wrap the socket accept method.'''
         client = None

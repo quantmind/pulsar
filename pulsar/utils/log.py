@@ -185,9 +185,9 @@ and utilities for pickle.'''
     default_logging_config = None
     _class_code = None
     
-    def setlog(self, log = None, **kwargs):
+    def setlog(self, log=None, **kwargs):
         if not log:
-            name = getattr(self,'_log_name',self.class_code)
+            name = getattr(self, '_log_name', self.class_code)
             log = getLogger(name)
         self.local['log'] = log
         self._log_name = log.name

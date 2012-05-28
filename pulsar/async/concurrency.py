@@ -7,7 +7,6 @@ from pulsar.utils.tools import gen_unique_id
 
 from .iostream import AsyncIOStream
 from .proxy import ActorProxyMonitor
-from .actor import get_actor
 from .defer import pickle
 
 
@@ -107,8 +106,8 @@ loop and therefore do not require an inbox.'''
 class ActorConcurrency(Concurrency):
     
     def run(self):
-        self.actor = get_actor(self.actor_class(self, **self.a_kwargs))
-        self.actor.start()
+        actor = self.actor_class(self, **self.a_kwargs)
+        actor.start()
         
 
 class ActorProcess(ActorConcurrency, Process):

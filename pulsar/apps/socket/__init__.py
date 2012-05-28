@@ -1,5 +1,5 @@
 import pulsar
-from pulsar import get_actor, AsyncIOStream
+from pulsar import AsyncIOStream
 
 
 class SocketSetting(pulsar.Setting):

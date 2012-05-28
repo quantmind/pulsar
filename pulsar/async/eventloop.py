@@ -1,3 +1,4 @@
+import os
 import logging
 import traceback
 import time
@@ -26,6 +27,42 @@ def file_descriptor(fd):
     else:
         return fd
     
+
+class ID:
+    cpubound = False
+    _name = None
+    _pid = None
+    _repr = ''
+    _tid = None
+    
+    def __repr__(self):
+        return self._repr
+    
+    def __str__(self):
+        return self._repr
+    
+    @property
+    def tid(self):
+        return self._tid
+    
+    @property
+    def pid(self):
+        return self._pid
+    
+    @property
+    def name(self):
+        return self._name
+    
+    @property
+    def fullname(self):
+        return self._repr
+    
+    def setid(self):
+        ct = current_thread()
+        self._tid = ct.ident
+        self._pid = os.getpid()
+    
+    
 class LoopGuard(object):
     '''Context manager for the eventloop'''
     def __init__(self, loop):
@@ -35,7 +72,7 @@ class LoopGuard(object):
         loop = self.loop
         loop.log.debug("Starting event loop")
         loop._running = True
-        loop._tid = current_thread().ident
+        loop.setid()
         loop._started = time.time()
         loop._on_exit = Deferred()
         loop.num_loops = 0
@@ -49,7 +86,7 @@ class LoopGuard(object):
         loop._on_exit.callback(loop)
         
         
-class IOLoop(IObase, Synchronized):
+class IOLoop(IObase, ID, Synchronized):
     """\
 A level-triggered I/O event loop adapted from tornado.
 
@@ -117,7 +154,12 @@ It should be instantiated after forking.
         self.log = logger or logging.getLogger('ioloop')
         if hasattr(self._impl, 'fileno'):
             close_on_exec(self._impl.fileno())
-        self._name = name
+        cname = self.__class__.__name__.lower()
+        self._name = name or cname
+        if self._name != cname:
+            self._repr = '%s - %s' % (cname, self._name)
+        else:
+            self._repr = self._name 
         self._handlers = {}
         self._events = {}
         self._callbacks = []
@@ -127,7 +169,6 @@ It should be instantiated after forking.
         self._started = None
         self._running = False
         self._stopped = False
-        self._tid = None
         self.num_loops = 0
         self._blocking_signal_threshold = None
         self._waker = getattr(self._impl, 'waker', Waker)()
@@ -137,26 +178,9 @@ It should be instantiated after forking.
                          lambda fd, events: self._waker.consume(),
                          self.READ)
         
-    def __str__(self):
-        if self.name:
-            return '{0} - {1}'.format(self.__class__.__name__,self.name)
-        else:
-            return self.__class__.__name__
-    
-    def __repr__(self):
-        return self.name or self.__class__.__name__
-    
-    @property
-    def name(self):
-        return self._name
-
     @property
     def cpubound(self):
         return getattr(self._impl, 'cpubound', False)
-    
-    @property
-    def tid(self):
-        return self._tid
         
     def add_loop_task(self, task):
         '''Add a callable object to the list of tasks which are
@@ -180,19 +204,17 @@ file descriptor *fd*.
     file descriptor *fd*.
 :rtype: ``True`` if the handler was succesfully added."""
         if fd is not None:
-            fde = file_descriptor(fd)
-            if fde not in self._handlers:
-                self._handlers[fde] = handler
-                self.log.debug('Registering fd=%s "%s" with ioloop.'%(fde, fd))
-                self._impl.register(fde, events | self.ERROR)
+            fdd = file_descriptor(fd)
+            if fdd not in self._handlers:
+                self._handlers[fdd] = handler
+                self._impl.register(fdd, events | self.ERROR)
                 return True
             else:
-                self.log.debug('Handler for "{0}"\
- already available.'.format(fd))
+                self.log.debug('Handler for %s already available.', fd)
 
     def update_handler(self, fd, events):
         """Changes the events we listen for fd."""
-        self._impl.modify(fd, events | self.ERROR)
+        self._impl.modify(file_descriptor(fd), events | self.ERROR)
 
     def remove_handler(self, fd):
         """Stop listening for events on fd."""
@@ -202,7 +224,7 @@ file descriptor *fd*.
         try:
             self._impl.unregister(fdd)
         except (OSError, IOError):
-            self.log.error("Error deleting %s from IOLoop" % fd, exc_info=True)
+            self.log.error("Error removing %s from IOLoop", fd, exc_info=True)
     
     def start(self, starter=None):
         if not self._startup(starter):
@@ -387,10 +409,10 @@ will make the loop stop after the current event iteration completes."""
                                 pass
                             else:
                                 self.log.error(
-                                    "Exception in I/O handler for fd %d",
+                                    "Exception in I/O handler for fd %s",
                                               fd, exc_info=True)
                         except:
-                            self.log.error("Exception in I/O handler for fd %d",
+                            self.log.error("Exception in I/O handler for fd %s",
                                           fd, exc_info=True)
 
     def _run_callback(self, callback):

@@ -136,6 +136,7 @@ from datetime import datetime
 
 import pulsar
 from pulsar import to_string
+from pulsar.async.commands import authenticated, pulsar_command, internal
 from pulsar.utils.importer import import_modules, module_attribute
 
 from .exceptions import *
@@ -213,34 +214,40 @@ be consumed by the workers.'''
         queue = self.cfg.task_queue_factory
         return queue()
     
+
+taskqueue_cmnds = set()
+
+@pulsar_command(commands_set=taskqueue_cmnds)
+def tasks_list(client, actor):
+    return actor.app.tasks_list()
+
+@pulsar_command(authenticated=True, commands_set=taskqueue_cmnds)
+def addtask(client, actor, caller, jobname, task_extra, *args, **kwargs):
+    kwargs.pop('ack', None)
+    return self.app._addtask(self, caller, jobname, task_extra, True,
+                             args, kwargs)
     
-class Remotes(pulsar.RemoteMethods):
-    
-    def actor_tasks_list(self, caller):
-        return self.app.tasks_list()
-    
-    def actor_addtask(self, caller, jobname, task_extra, *args, **kwargs):
-        kwargs.pop('ack',None)
-        return self.app._addtask(self, caller, jobname, task_extra, True,
-                                 args, kwargs)
-        
-    def actor_addtask_noack(self, caller, jobname, task_extra, *args, **kwargs):
-        kwargs.pop('ack',None)
-        return self.app._addtask(self, caller, jobname, task_extra, False,
-                                 args, kwargs)
-    actor_addtask_noack.ack = False
-    
-    def actor_save_task(self, caller, task):
-        self.app.task_class.save_task(task)
-    
-    def actor_get_task(self, caller, id):
-        return self.app.task_class.get_task(id)
-    
-    def actor_job_list(self, caller, jobnames = None):
-        return list(self.app.job_list(jobnames = jobnames))
-    
-    def actor_next_scheduled(self, caller, jobname = None):
-        return self.app.scheduler.next_scheduled(jobname = jobname)
+@pulsar_command(internal=True, ack=False, commands_set=taskqueue_cmnds)
+def addtask_noack(client, actor, caller, jobname, task_extra, *args, **kwargs):
+    kwargs.pop('ack',None)
+    return actor.app._addtask(self, caller, jobname, task_extra, False,
+                              args, kwargs)
+
+@pulsar_command(commands_set=taskqueue_cmnds)
+def save_task(client, actor, caller, task):
+    self.app.task_class.save_task(task)
+
+@pulsar_command(commands_set=taskqueue_cmnds)
+def get_task(client, actor, caller, id):
+    return self.app.task_class.get_task(id)
+
+@pulsar_command(commands_set=taskqueue_cmnds)
+def job_list(client, actor, caller, jobnames = None):
+    return list(self.app.job_list(jobnames = jobnames))
+
+@pulsar_command(commands_set=taskqueue_cmnds)
+def next_scheduled(client, actor, caller, jobname = None):
+    return self.app.scheduler.next_scheduled(jobname = jobname)
     
     
 class TaskQueue(CPUboundServer):
@@ -255,7 +262,7 @@ tasks and managing scheduling of tasks.
     _app_name = 'tasks'
     cfg_apps = ('cpubound',)
     cfg = {'timeout': '3600', 'backlog': 1}
-    remotes = Remotes
+    commands_set = taskqueue_cmnds
     task_class = TaskInMemory
     '''The :class:`Task` class for storing information about task execution.
     

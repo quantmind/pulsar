@@ -11,9 +11,10 @@ from pulsar.utils.tools import Pidfile, gen_unique_id
 from pulsar import HaltServer
 
 from .defer import itervalues, iteritems, multi_async
-from .actor import Actor, get_actor, send
+from .actor import Actor, send
 from .monitor import PoolMixin
 from .proxy import ActorCallBacks, ActorProxyDeferred
+from .access import get_actor
 from . import commands
 
 try:    #pragma nocover
@@ -175,7 +176,6 @@ Users access the arbiter by the high level api::
             if process_global('_arbiter'):
                 raise pulsar.PulsarException('Arbiter already created')
             os.environ["SERVER_SOFTWARE"] = pulsar.SERVER_SOFTWARE
-            get_actor(self)
         PoolMixin.on_init(self,**kwargs)
         self._close_signal = None
         if daemonize:
@@ -226,6 +226,7 @@ the timeout. Stop the arbiter.'''
     def on_stop(self):
         '''Stop the pools the message queue and remaining actors.'''
         # close all monitors
+        self.log.info('Shutting down server.')
         yield self.close_monitors()
         # close remaining actors
         yield self.close_actors()
@@ -246,6 +247,7 @@ the timeout. Stop the arbiter.'''
         """\
         Initialize the arbiter. Start listening and set pidfile if needed.
         """
+        self._on_run()
         try:
             self.cfg.get('when_ready')(self)
         except:
