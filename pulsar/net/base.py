@@ -1,7 +1,7 @@
 import socket
 
 import pulsar
-from pulsar import Deferred, deferred_timeout
+from pulsar import Deferred
 
 __all__ = ['NetStream',
            'NetRequest',

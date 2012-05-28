@@ -38,7 +38,7 @@ class DefaultSettings:
         # port for serving a socket
         self.PORT = 8060
         # timeout for asynchronous Input/Output
-        self.IO_TIMEOUT = 5
+        self.IO_TIMEOUT = None
         # Maximum number of concurrenct clients
         self.BACKLOG = 2048
         # Actors timeout

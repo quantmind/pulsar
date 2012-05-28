@@ -11,8 +11,7 @@ from pulsar import create_connection, MailboxError, server_socket,\
 from pulsar.utils.tools import gen_unique_id
 from pulsar.utils.httpurl import to_bytes
 
-from .eventloop import deferred_timeout
-from .defer import Deferred, make_async, safe_async, pickle, thread_loop,\
+from .defer import make_async, safe_async, pickle, thread_loop,\
                     async, is_failure, ispy3k, raise_failure
 from .iostream import AsyncIOStream, thread_ioloop, SimpleSocketServer,\
                         Connection, SocketClient
@@ -33,6 +32,9 @@ otherwise a queue is used.'''
             return MonitorMailbox(actor)
         else:
             return Mailbox.make(actor).start()
+
+def actorid(actor):
+    return actor.aid if hasattr(actor,'aid') else actor
 
 
 class MessageParser(object):
@@ -83,8 +85,8 @@ created by :meth:`ActorProxy.send` method.
     def __init__(self, command, sender=None, receiver=None,
                  args=None, kwargs=None):
         self.command = command
-        self.sender = sender
-        self.receiver = receiver
+        self.sender = actorid(sender)
+        self.receiver = actorid(receiver)
         self.args = args if args is not None else ()
         self.kwargs = kwargs if kwargs is not None else {}
     
@@ -165,13 +167,10 @@ with a :class:`Mailbox`.'''
     authenticated = False
     keep_reading = True        
     def on_parsed_data(self, message):
-        actor = self.actor
-        sender = actor.get_actor(message.sender)
-        receiver = actor.get_actor(message.receiver)
         # The receiver could be different from the mail box actor. For
         # example a monitor uses the same mailbox as the arbiter
-        if not receiver:
-            receiver = actor
+        receiver = self.actor.get_actor(message.receiver) or self.actor
+        sender = receiver.get_actor(message.sender)
         command = receiver.command(message.command)
         if not command:
             raise CommandNotFound(message.command)
@@ -184,9 +183,11 @@ with a :class:`Mailbox`.'''
         if command.ack:
             # Send back the result as an ActorMessage
             if is_failure(result):
-                yield ActorMessage('errback', args=(str(result),))
+                yield ActorMessage('errback', sender=receiver,
+                                   args=(str(result),))
             else:
-                yield ActorMessage('callback', args=(result,))
+                yield ActorMessage('callback', sender=receiver,
+                                   args=(result,))
         else:
             yield self._NOTHING
 
@@ -222,11 +223,12 @@ of execution.'''
         thread_ioloop(self.ioloop)
         
     def on_started(self):
-        self.register(self.actor)
-        if not self.actor.is_arbiter():
-            msg = make_async(self.actor.send('arbiter',
-                                             'mailbox_address', self.address))
-            return msg.add_callback(self.actor.link_actor)
+        actor = self.actor
+        self.register(actor)
+        if not actor.is_arbiter():
+            msg = make_async(actor.send(actor.monitor,
+                                        'mailbox_address', self.address))
+            return msg.add_callback(actor.link_actor)
 
     def register(self, actor):
         self.ioloop.add_loop_task(actor)

@@ -8,8 +8,8 @@ from multiprocessing.queues import Empty
 import pulsar
 from pulsar.utils import system
 from pulsar.utils.tools import Pidfile, gen_unique_id
+from pulsar import HaltServer
 
-from .concurrency import concurrency
 from .defer import itervalues, iteritems, multi_async
 from .actor import Actor, get_actor, send
 from .monitor import PoolMixin
@@ -32,10 +32,8 @@ def arbiter(daemonize = False):
     '''Obtain the arbiter instance.'''
     arbiter = process_global('_arbiter')
     if not arbiter:
-        arbiter = Arbiter.spawn(Arbiter,
-                                impl='monitor',
-                                daemonize=daemonize)
-        process_global('_arbiter',arbiter,True)
+        arbiter = Arbiter.make(daemonize=daemonize)
+        process_global('_arbiter', arbiter, True)
     return arbiter
     
     
@@ -97,9 +95,7 @@ Users access the arbiter by the high level api::
                     signal.SIGTERM,
                     signal.SIGABRT,
                     system.SIGQUIT)
-    HaltServer = pulsar.HaltServer
     lock = Lock()
-    _name = 'Arbiter'
     
     ############################################################################
     # ARBITER HIGH LEVEL API
@@ -115,49 +111,22 @@ Users access the arbiter by the high level api::
 :parameter monitor_name: a unique name for the monitor.
 :parameter kwargs: dictionary of key-valued parameters for the monitor.
 :rtype: an instance of a :class:`pulsar.Monitor`.'''
-        kwargs['impl'] = 'monitor'
         if monitor_name in self._monitors:
             raise KeyError('Monitor "{0}" already available'\
                            .format(monitor_name))
         kwargs['name'] = monitor_name
-        m = arbiter().spawn(monitor_class,**kwargs)
+        kwargs['aid'] = monitor_name
+        m = arbiter().spawn(monitor_class, **kwargs)
         self._linked_actors[m.aid] = m
         self._monitors[m.name] = m
         return m
     
     @classmethod
-    def spawn(cls, actorcls=None, aid=None, commands_set=None, **kwargs):
-        '''Create a new :class:`Actor` and return its
-:class:`ActorProxyMonitor`.'''
-        actorcls = actorcls or Actor
-        arbiter = process_global('_arbiter')
-        cls.lock.acquire()
-        try:
-            if commands_set is None:
-                commands_set = set(commands.actor_commands)
-            if arbiter:
-                arbiter.actor_age += 1
-                kwargs['age'] = arbiter.actor_age
-                kwargs['ppid'] = arbiter.ppid
-            else:
-                commands_set.update(commands.arbiter_commands)
-            impl = kwargs.pop('impl', actorcls.DEFAULT_IMPLEMENTATION)
-            timeout = max(kwargs.pop('timeout',cls.DEFAULT_ACTOR_TIMEOUT),
-                          cls.MINIMUM_ACTOR_TIMEOUT)
-            actor_maker = concurrency(impl, actorcls, timeout,
-                                      arbiter, aid, commands_set, kwargs)
-            monitor = actor_maker.proxy_monitor()
-            # Add to the list of managed actors if this is a remote actor
-            if monitor is not None:
-                arbiter.MANAGED_ACTORS[actor_maker.aid] = monitor
-                actor_maker.start()
-                return monitor.on_address.add_callback(
-                                    lambda address: monitor.proxy)
-            else:
-                return actor_maker.actor
-        finally:
-            cls.lock.release()
-            
+    def make(cls, commands_set = None, impl=None, **kwargs):
+        commands_set = set(commands_set or commands.actor_commands)
+        commands_set.update(commands.arbiter_commands)
+        return cls._spawn_actor(None, cls, 'arbiter', commands_set, **kwargs)
+    
     @property
     def close_signal(self):
         '''Return the signal that caused the arbiter to stop.'''
@@ -198,15 +167,17 @@ Users access the arbiter by the high level api::
     ############################################################################
     
     def on_init(self, daemonize = False, **kwargs):
-        if process_global('_arbiter'):
-            raise pulsar.PulsarException('Arbiter already created')
-        if current_process().daemon:
-            raise pulsar.PulsarException(
-                    'Cannot create the arbiter in a daemon process')
+        testing = kwargs.pop('__test_arbiter__',False)
+        if not testing:
+            if current_process().daemon:
+                raise pulsar.PulsarException(
+                        'Cannot create the arbiter in a daemon process')
+            if process_global('_arbiter'):
+                raise pulsar.PulsarException('Arbiter already created')
+            os.environ["SERVER_SOFTWARE"] = pulsar.SERVER_SOFTWARE
+            get_actor(self)
         PoolMixin.on_init(self,**kwargs)
-        self._repr = self._name
         self._close_signal = None
-        os.environ["SERVER_SOFTWARE"] = pulsar.SERVER_SOFTWARE
         if daemonize:
             system.daemonize()
         self.actor_age = 0
@@ -268,26 +239,6 @@ the timeout. Stop the arbiter.'''
             self._state = self.TERMINATE
     
     ############################################################################
-    # ADDITIONAL REMOTES
-    ############################################################################
-    def actor_spawn(self, caller, linked_actors = None, **kwargs):
-        linked_actors = linked_actors if linked_actors is not None else {}
-        linked_actors[caller.aid] = caller.proxy
-        return self.spawn(linked_actors = linked_actors, **kwargs)
-     
-    def actor_kill_actor(self, caller, aid):
-        '''Remote function for ``caller`` to kill an actor with id ``aid``'''
-        a = self.get_actor(aid)
-        if a:
-            if isinstance(a,Actor):
-                a.stop()
-            else:
-                a.send(self,'stop')
-            return 'stopped {0}'.format(a)
-        else:
-            self.log.info('Could not kill "{0}" no such actor'.format(aid))
-    
-    ############################################################################
     # INTERNALS
     ############################################################################
         
@@ -305,14 +256,12 @@ the timeout. Stop the arbiter.'''
             self._halt('Stop Iteration')
         except KeyboardInterrupt:
             self._halt('Keyboard Interrupt')
-        except self.HaltServer as e:
+        except HaltServer as e:
             self._halt(reason=str(e), sig=e.signal)
         except SystemExit:
             raise
         except:
-            self.log.critical("Unhandled exception in main loop.",
-                              exc_info = True)
-            self._halt()
+            self._halt("Unhandled exception in main loop.")
     
     def _halt(self, reason=None, sig=None):
         #halt the arbiter. If there no signal ``sig`` it is an unexpected exit
@@ -352,7 +301,7 @@ signal queue'''
             else:
                 signame = system.SIG_NAMES.get(sig)
                 if sig in self.EXIT_SIGNALS:
-                    raise self.HaltServer('Received Signal {0}.'\
+                    raise HaltServer('Received Signal {0}.'\
                                           .format(signame),sig)
                 handler = getattr(self, "handle_queued_%s"\
                                    % signame.lower(), None)
@@ -379,7 +328,5 @@ signal queue'''
         else:
             self.log.debug('Received unknown signal "{0}". Skipping.'\
                           .format(sig))
-
-    
 
     

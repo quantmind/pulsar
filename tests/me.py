@@ -4,7 +4,7 @@ import threading
 import multiprocessing
 
 import pulsar
-from pulsar.utils.test import test
+from pulsar.utils.test import test, run_on_arbiter
 
 class TestTestWorker(test.TestCase):
     
@@ -21,7 +21,7 @@ class TestTestWorker(test.TestCase):
         self.assertTrue(worker.cpubound)
         
     def testMailbox(self):
-        worker = self.worker
+        worker = pulsar.get_actor()
         mailbox = worker.mailbox
         self.assertTrue(mailbox)
         self.assertTrue(mailbox.ioloop)
@@ -29,7 +29,7 @@ class TestTestWorker(test.TestCase):
         self.assertNotEqual(worker.requestloop, mailbox.ioloop)
         self.assertNotEqual(worker.tid, mailbox.ioloop.tid)
         self.assertTrue(mailbox.address)
-        self.assertTrue(mailbox.sock)
+        self.assertTrue(mailbox.socket)
         
     def testIOloop(self):
         worker = pulsar.get_actor()
@@ -43,12 +43,22 @@ class TestTestWorker(test.TestCase):
         self.assertFalse(ioloop.start())
         
     def testThreadInfo(self):
-        worker = self.worker
-        actor = pulsar.get_actor()
-        self.assertEqual(actor,worker)
+        worker = pulsar.get_actor()
         ct = threading.current_thread()
-        self.assertEqual(ct.actor,worker)
+        self.assertEqual(ct.actor, worker)
         
+    def testPingMonitor(self):
+        worker = pulsar.get_actor()
+        outcome = worker.send(worker.monitor, 'ping')
+        yield outcome
+        self.assertEqual(outcome.result, 'pong')
+        
+    @run_on_arbiter
+    def testSpawning(self):
+        arbiter = pulsar.get_actor()
+        self.assertEqual(arbiter.aid, 'arbiter')
+        self.assertEqual(len(arbiter.monitors), 1)
+        self.assertEqual(arbiter.monitors[0]._spawning, {})
 
 class TestPulsar(test.TestCase):
     

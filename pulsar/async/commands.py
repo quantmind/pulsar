@@ -110,9 +110,9 @@ def run_code(client, code):
 def mailbox_address(client, actor, caller, address):
     '''The remote *caller* register its mailbox ``address``.'''
     if address:
-        client.log.debug('Registering actor %s inbox address %s'\
-                          % (actor, address))
-        caller.address = address
+        actor.log.debug('Registering actor %s inbox address %s'\
+                          % (caller, address))
+        actor.link_actor(caller, address)
         return client.actor.proxy
     else:
         raise CommandError('No address received')

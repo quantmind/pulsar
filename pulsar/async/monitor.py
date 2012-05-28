@@ -5,9 +5,11 @@ import time
 import pulsar
 
 from .actor import Actor
+from .concurrency import concurrency
 from .defer import async, iteritems, itervalues, range, NOT_DONE
 from .proxy import ActorCallBacks
 from .mailbox import Queue
+from . import commands
 
 
 __all__ = ['Monitor', 'PoolMixin']
@@ -34,13 +36,14 @@ It is used by both the :class:`Arbiter` and the :class:`Monitor` classes.
     CLOSE_TIMEOUT = 3
     JOIN_TIMEOUT = 1.0
     actor_class = Actor
+    DEFAULT_IMPLEMENTATION = 'monitor'
     '''The class derived form :class:`Actor` which the monitor manages
 during its life time.
 
     Default: :class:`Actor`'''
     
     def on_init(self, actor_class=None, num_actors=0, **kwargs):
-        self._spawing = 0
+        self._spawning = {}
         self._managed_actors = {}
         self.num_actors = num_actors or 0
         self.actor_class = actor_class or self.actor_class
@@ -49,18 +52,32 @@ during its life time.
         if self.running():
             return self.on_task()
             
+    def is_pool(self):
+        return True
+    
     def ready(self):
         return True
         
+    def spawn(self, actorcls=None, aid=None, commands_set=None, **kwargs):
+        '''Create a new :class:`Actor` and return its
+:class:`ActorProxyMonitor`.'''
+        actorcls = actorcls or self.actor_class
+        arbiter = self.arbiter or self
+        arbiter.actor_age += 1
+        kwargs['age'] = arbiter.actor_age
+        kwargs['ppid'] = arbiter.ppid
+        return self._spawn_actor(self, actorcls, aid, commands_set, **kwargs)
+    
     def actorparams(self):
         '''Return a dictionary of parameters to be passed to the
 spawn method when creating new actors.'''
-        return {}
+        arbiter = self.arbiter or self
+        return {'monitors': arbiter.get_all_monitors()}
         
     def get_actor(self, aid):
         a = Actor.get_actor(self, aid)
-        if not a and aid in self.MANAGED_ACTORS:
-            a = self.MANAGED_ACTORS[aid]
+        if not a:
+            a = self._spawning.get(aid)
         return a
                
     @property
@@ -82,7 +99,7 @@ spawn method when creating new actors.'''
             if not actor.is_alive():
                 actor.join(self.JOIN_TIMEOUT)
                 ACTORS.pop(aid)
-                linked.pop(aid,None)
+                linked.pop(aid, None)
             else:
                 alive += 1
                 if terminate:
@@ -101,9 +118,9 @@ spawn method when creating new actors.'''
     def spawn_actors(self):
         '''Spawn new actors if needed.'''
         to_spawn = self.num_actors - len(self.MANAGED_ACTORS)
-        if self.num_actors and to_spawn > 0 and not self._spawing:
+        if self.num_actors and to_spawn > 0 and not self._spawning:
             for _ in range(to_spawn):
-                self.spawn_actor()
+                self.spawn()
     
     def stop_actors(self):
         """Maintain the number of workers by spawning or killing
@@ -121,6 +138,16 @@ as required."""
     def stop_actor(self, actor):
         raise NotImplementedError()
     
+    def link_actor(self, proxy, address):
+        proxy_monitor = self._spawning.pop(proxy.aid, None)
+        if proxy_monitor is not None:
+            # The actor was spawned by this pool
+            proxy = proxy_monitor
+            self.MANAGED_ACTORS[proxy.aid] = proxy_monitor
+        proxy.address = address
+        self._linked_actors[proxy.aid] = proxy
+        return proxy
+    
     @async
     def close_actors(self):
         '''Close all managed :class:`Actor`.'''
@@ -137,6 +164,32 @@ as required."""
                 self.log.warn('terminated %s actors.' % to_stop)
                 to_stop = 0
         
+    @classmethod
+    def _spawn_actor(cls, monitor, actorcls, aid, commands_set, **kwargs):
+        '''Create a new :class:`Actor` and return its
+:class:`ActorProxyMonitor`.'''
+        commands_set = set(commands_set or commands.actor_commands)
+        if monitor:
+            params = monitor.actorparams()
+            params.update(kwargs)
+        else:
+            params = kwargs
+        impl = params.pop('concurrency', actorcls.DEFAULT_IMPLEMENTATION)
+        timeout = max(params.pop('timeout',cls.DEFAULT_ACTOR_TIMEOUT),
+                      cls.MINIMUM_ACTOR_TIMEOUT)
+        actor_maker = concurrency(impl, actorcls, timeout,
+                                  monitor, aid, commands_set,
+                                  params)
+        proxy_monitor = actor_maker.proxy_monitor()
+        # Add to the list of managed actors if this is a remote actor
+        if proxy_monitor is not None:
+            proxy_monitor.monitor = monitor
+            monitor._spawning[actor_maker.aid] = proxy_monitor
+            actor_maker.start()
+            return proxy_monitor.proxy
+        else:
+            return actor_maker.actor
+
 
 class Monitor(PoolMixin, Actor):
     '''A monitor is a special :class:`Actor` which shares
@@ -237,24 +290,14 @@ Users shouldn't need to override this method, but use
     def multiprocess(self):
         return self.cfg.concurrency == 'process'
     
-    def spawn_actor(self):
+    def actorparams(self):
         '''Spawn a new actor and add its :class:`ActorProxyMonitor`
  to the :attr:`PoolMixin.MANAGED_ACTORS` dictionary.'''
-        ad =  self.arbiter.spawn(self.actor_class,
-                                 monitor=self,
-                                 ioqueue=self.ioqueue,
-                                 monitors=self.arbiter.get_all_monitors(),
-                                 commands_set=self.commands_set,
-                                 params=self._params,
-                                 **self.actorparams())
-        self._spawing += 1
-        return ad.add_callback(self._spawn_actor)
-    
-    def _spawn_actor(self, proxy):
-        self._spawing -= 1
-        monitor = self.arbiter.MANAGED_ACTORS[proxy.aid]
-        self.MANAGED_ACTORS[proxy.aid] = monitor
-        return proxy
+        p = super(Monitor, self).actorparams()
+        p.update({'ioqueue': self.ioqueue,
+                  'commands_set': self.commands_set,
+                  'params': self._params})
+        return p
     
     def stop_actor(self, actor):
         if not actor.is_alive():
@@ -292,8 +335,16 @@ Users shouldn't need to override this method, but use
                          'ioqueue_size': tq.qsize()})
         return self.on_info(data)
         
+    def link_actor(self, proxy, address):
+        proxy = super(Monitor, self).link_actor(proxy, address)
+        self.arbiter._linked_actors[proxy.aid] = proxy
+        return proxy
+        
     def get_actor(self, aid):
         '''Delegate get_actor to the arbiter'''
-        return self.arbiter.get_actor(aid)
+        a = super(Monitor, self).get_actor(aid)
+        if a is None:
+            a = self.arbiter.get_actor(aid)
+        return a
         
     

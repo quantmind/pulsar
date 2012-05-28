@@ -28,9 +28,6 @@ def get_proxy(obj, safe = False):
             raise ValueError('"{0}" is not an actor or actor proxy.'\
                              .format(obj))
 
-        
-def actorid(actor):
-    return actor.aid if hasattr(actor,'aid') else actor
 
 class ActorCallBacks(Deferred):
     
@@ -190,8 +187,7 @@ If there is no inbox either, abort the message passing and log a critical error.
         cmd = commands.get(command, self.commands_set)
         if not cmd:
             raise CommandNotFound(command)
-        msg = ActorMessage(cmd.__name__, actorid(sender),
-                           self.aid, args, kwargs)
+        msg = ActorMessage(cmd.__name__, sender, self.aid, args, kwargs)
         if cmd.ack:
             return mailbox.execute(msg)
         else:
@@ -245,6 +241,7 @@ process where they have been created.
         a = pulsar.spawn()
         a.on_address.add_callback(...)
 '''
+    monitor = None
     def __init__(self, impl):
         self.impl = impl
         self.info = {'last_notified':time()}
@@ -271,7 +268,7 @@ process where they have been created.
         '''Terminate life of underlying actor.'''
         self.impl.terminate()
     
-    def join(self, timeout = None):
+    def join(self, timeout=None):
         '''Wait until the underlying actor terminates'''
         self.impl.join(timeout=timeout)
         

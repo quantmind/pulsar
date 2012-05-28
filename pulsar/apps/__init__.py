@@ -7,7 +7,7 @@ from inspect import isgenerator, isfunction
 
 import pulsar
 from pulsar import Empty, make_async, safe_async, is_failure, HaltServer,\
-                     deferred_timeout, ispy3k
+                     loop_deferred, ispy3k
 from pulsar.async.defer import pickle
 from pulsar.utils.importer import import_module
 from pulsar.utils.log import LogInformation
@@ -71,7 +71,7 @@ to the underlying :class:`Application`.'''
         should_stop = self.max_requests and self.nr >= self.max_requests
         d = safe_async(self._response_generator, args=(request, should_stop))
         # if a timeout is available, we add the deferred to the requestloop
-        return deferred_timeout(d, self.requestloop, timeout)
+        return loop_deferred(d, self.requestloop, timeout)
         
     def handle_task(self):
         if self.information.log():
@@ -231,16 +231,18 @@ updated actor parameters with information about the application.
 
 :rtype: a dictionary of parameters to be passed to the
     spawn method when creating new actors.'''
+        p = pulsar.Monitor.actorparams(self)
         app = self.app
-        c = app.cfg.concurrency
-        if c == 'thread':
+        impl = app.cfg.concurrency
+        if impl == 'thread':
             app = pickle.loads(pickle.dumps(app))
-        return  {'app': app,
-                 'timeout': app.cfg.timeout,
-                 'loglevel': app.loglevel,
-                 'max_concurrent_requests': app.cfg.backlog,
-                 'impl': c,
-                 'name':'{0}-worker'.format(app.name)}
+        p.update({'app': app,
+                  'timeout': app.cfg.timeout,
+                  'loglevel': app.loglevel,
+                  'max_concurrent_requests': app.cfg.backlog,
+                  'concurrency': impl,
+                  'name':'{0}-worker'.format(app.name)})
+        return p
         
     def on_info(self, info):
         info.update({'default_timeout': self.cfg.timeout,

@@ -16,7 +16,9 @@ from pulsar.utils.structures import WeakList
 from .defer import Deferred, is_async, maybe_async, thread_loop, make_async,\
                     log_failure
 
-__all__ = ['IOLoop', 'deferred_timeout']
+__all__ = ['IOLoop', 'loop_deferred']
+
+EXIT_EXCEPTIONS = (KeyboardInterrupt, SystemExit, HaltServer)
 
 def file_descriptor(fd):
     if hasattr(fd,'fileno'):
@@ -377,7 +379,7 @@ will make the loop stop after the current event iteration completes."""
                         fd, events = _events.popitem()
                         try:
                             self._handlers[fd](fd, events)
-                        except (KeyboardInterrupt, SystemExit):
+                        except EXIT_EXCEPTIONS:
                             raise
                         except (OSError, IOError) as e:
                             if e.args[0] == errno.EPIPE:
@@ -393,11 +395,8 @@ will make the loop stop after the current event iteration completes."""
 
     def _run_callback(self, callback):
         try:
-            result = maybe_async(callback())
-            if is_async(result):
-                callback = LoopDeferred(result, self)
-                self.add_callback(callback)
-        except (KeyboardInterrupt, SystemExit):
+            loop_deferred(callback(), self)
+        except EXIT_EXCEPTIONS:
             raise
         except:
             self.handle_callback_exception(callback)
@@ -461,16 +460,24 @@ class PeriodicCallback(object):
 
 
 class LoopDeferred(object):
-    '''A class for tracking uncalled :class:`Deferred`'''
+    '''A class for tracking uncalled :class:`Deferred`. INstances should be
+initialised via the :func:`loop_deferred` function.'''
     def __init__(self, value, ioloop=None, timeout=None):
+        self._value = value
         self._ioloop = ioloop or thread_loop()
         self._timeout = timeout
         self._start = None
-        self._value = value
+        self.count = 0
+    
+    @property
+    def value(self):
+        return self._value
     
     def __call__(self):
-        if self._value.called:
-            log_failure(self._value.result)
+        self.count += 1
+        result = self._value.result_or_self()
+        if not is_async(result):
+            log_failure(result)
         else:
             if self._timeout:
                 now = time.time()
@@ -489,12 +496,6 @@ class LoopDeferred(object):
 def loop_deferred(value, ioloop=None, timeout=None):
     value = maybe_async(value)
     if is_async(value):
-        LoopDeferred(value, ioloop, timeout)()
+        return LoopDeferred(value, ioloop, timeout)()
     
     
-def deferred_timeout(value, ioloop=None, timeout=3):
-    if timeout:
-        loop = LoopDeferred(value, ioloop, timeout)()
-        return loop._value
-    else:
-        return value

@@ -382,15 +382,17 @@ this point, :meth:`add_callback` will run the *callbacks* immediately.
         
     def result_or_self(self):
         '''Obtain the result if available, otherwise it returns self.'''
-        return self if not self.called else self.result
+        return self.result if self.called and not self.paused else self
         
     def wait(self, timeout = 1):
         '''Wait until *timeout* for a result to be available'''
-        if not self.called:
+        result = self.result_or_self()
+        if is_async(result):
             sleep(timeout)
-            if not self.called:
+            result = self.result_or_self()
+            if is_async(result):
                 raise DeferredFailure('Deferred not called')
-        return self.result
+        return result
     
     ##################################################    INTERNAL METHODS
     def _run_callbacks(self):
@@ -453,13 +455,7 @@ The callback will occur once the generator has stopped
         self.errors = Failure()
         self.deferred = Deferred()
         super(DeferredGenerator,self).__init__(description=description)
-        self._genvalue = self._consume()
-    
-    #def result_or_self(self):
-    #    if self.called:
-    #        return self.result
-    #    else:
-    #        return self._genvalue
+        self._consume()
         
     def _consume(self, last_result=None):
         '''override the deferred consume private method for handling the
@@ -480,9 +476,9 @@ generator.'''
             return self._consume()
         else:
             if result == NOT_DONE:
-                # The NOT_DONE element indicate that we need to abort the
-                # generator and add a callback to the eventloop to resume the
-                # loop at the next iteration. Return self so that it can
+                # The NOT_DONE object indicates that the generator needs to
+                # abort so that the event loop can continue and resume the
+                # next event loop iteration. Return self so that it can
                 # restart all its ancestors.
                 thread_loop().add_callback(self._consume, wake=False)
                 return self
@@ -492,6 +488,7 @@ generator.'''
             if is_async(result):
                 result = result.result_or_self()
                 if is_async(result):
+                    self._current = result
                     return result.addBoth(self._consume)
             # continue with the loop
             return self._consume(result)
@@ -512,7 +509,7 @@ class MultiDeferred(Deferred):
     def __init__(self, data=None, type=None):
         self._deferred = {}
         if not type:
-            type = type(data) if data is not None else list
+            type = data.__class__ if data is not None else list
         self._stream = type()
         if self.type not in ('list','dict'):
             raise TypeError('Multideferred type container must be a dictionary '

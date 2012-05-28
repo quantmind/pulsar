@@ -14,7 +14,7 @@ from .defer import pickle
 __all__ = ['Concurrency', 'concurrency']
 
 
-def concurrency(kind, actor_class, timeout, arbiter, aid, commands_set, params):
+def concurrency(kind, actor_class, timeout, monitor, aid, commands_set, params):
     '''Function invoked by the :class:`Arbiter` when spawning a new
 :class:`Actor`.'''
     if kind == 'monitor':
@@ -25,8 +25,8 @@ def concurrency(kind, actor_class, timeout, arbiter, aid, commands_set, params):
         cls = ActorProcess
     else:
         raise ValueError('Concurrency %s not supported by pulsar' % kind)
-    return cls.make(kind, actor_class, timeout, arbiter, aid, commands_set,
-                    params)
+    return cls.make(kind, actor_class, timeout, monitor, aid,
+                    commands_set, params)
     
     
 class Concurrency(object):
@@ -43,20 +43,22 @@ and are shared between the :class:`Actor` and its
     constructor.
 '''
     @classmethod
-    def make(cls, kind, actor_class, timeout, arbiter, aid, commands_set,
-             kwargs):
+    def make(cls, kind, actor_class, timeout, monitor, aid,
+             commands_set, kwargs):
         self = cls()
         if not aid:
-            aid = gen_unique_id()[:8] if arbiter else 'arbiter'
+            if monitor and monitor.is_arbiter():
+                aid = 'arbiter'
+            else:
+                aid = gen_unique_id()[:8]
         self.aid = aid
         self.impl = kind
         self.commands_set = commands_set
         self.timeout = timeout
         self.actor_class = actor_class
         self.loglevel = kwargs.pop('loglevel',None)
-        self.remotes = actor_class.remotes
         self.a_kwargs = kwargs
-        self.process_actor(arbiter)
+        self.process_actor(monitor)
         return self
        
     @property
@@ -69,12 +71,15 @@ and are shared between the :class:`Actor` and its
     def proxy_monitor(self):
         return ActorProxyMonitor(self)
     
-    def process_actor(self, arbiter):
+    def process_actor(self, monitor):
         '''Called at initialization, it set up communication layers for the
 actor. In particular here is where the outbox handler is created.'''
-        monitor = self.a_kwargs.pop('monitor',None)
-        self.a_kwargs.update({'arbiter':arbiter.proxy,
-                              'monitor':monitor.proxy if monitor else None})
+        if monitor.is_arbiter():
+            arbiter = monitor
+        else:
+            arbiter = monitor.arbiter
+        self.a_kwargs['arbiter'] = arbiter.proxy
+        self.a_kwargs['monitor'] = monitor.proxy
     
     
 class MonitorConcurrency(Concurrency):
@@ -84,8 +89,6 @@ loop and therefore do not require an inbox.'''
         self.a_kwargs['arbiter'] = arbiter
         self.timeout = 0
         self.actor = self.actor_class(self, **self.a_kwargs)
-        if self.actor.is_arbiter():
-            get_actor(self.actor)
         
     def proxy_monitor(self):
         return None

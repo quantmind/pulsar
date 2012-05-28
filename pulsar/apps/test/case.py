@@ -3,7 +3,7 @@ import io
 import pickle
 from inspect import istraceback, isclass
 
-from pulsar import is_failure, CLEAR_ERRORS, make_async, safe_async
+from pulsar import is_failure, CLEAR_ERRORS, make_async, safe_async, get_actor
 
 
 __all__ = ['TestRequest','run_test_function']
@@ -108,6 +108,23 @@ For example::
         return make_async(e)
 
 
+def run_test_function(test, func, istest=False):
+    if func is None:
+        return func
+    class_method = isclass(test)
+    if istest:
+        worker = get_actor()
+        runner = worker.app.runner
+        test = runner.getTest(test)
+        test.async = AsyncAssert(test)
+    test.istest = istest
+    test_function = getattr(test, func.__name__)
+    name = test.__name__ if class_method else test.__class__.__name__
+    return safe_async(test_function,
+                      max_errors=1,
+                      description='Test %s.%s' % (name, func.__name__))
+
+
 class TestRequest(object):
     '''A class which wraps a test case class
     
@@ -143,7 +160,6 @@ following algorithm:
         all_tests = runner.loadTestsFromTestCase(testcls)
         
         if all_tests.countTestCases():
-            testcls.worker = worker
             skip_tests = getattr(testcls, "__unittest_skip__", False)
             should_stop = False
             test_cls = self.testcls('setUpClass')
@@ -167,8 +183,6 @@ following algorithm:
                 if outcome is not None:
                     yield outcome
                     self.add_failure(test_cls, runner, outcome.result)
-            
-            del testcls.worker
         
         # send runner result to monitor
         yield worker.send(worker.monitor, 'test_result', runner.result)

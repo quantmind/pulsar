@@ -13,7 +13,7 @@ from pulsar import create_socket, server_socket, create_client_socket,\
 
 from .defer import Deferred, is_async, is_failure, thread_local_data,\
                     async, make_async, safe_async, log_failure
-from .eventloop import IOLoop, deferred_timeout
+from .eventloop import IOLoop, loop_deferred
 
 iologger = logging.getLogger('pulsar.iostream')
 
@@ -419,9 +419,10 @@ On error closes the socket and raises an exception."""
                 self, self._handle_events, self._state)
         elif not self._state & state:
             self._state = self._state | state
-            self.ioloop.update_handler(
-                self.fileno(), self._state)
-        return deferred_timeout(deferred, self.ioloop, timeout=self.timeout)
+            self.ioloop.update_handler(self, self._state)
+        # We make sure the IO callback are tracked in the event loop
+        d = loop_deferred(deferred, self.ioloop, timeout=self.timeout)
+        return d.value
 
 
 class NOTHING:
@@ -448,15 +449,19 @@ class BaseSocket(object):
     
     @property
     def address(self):
+        '''Socket address'''
         return self.socket.getsockname()
     
     def fileno(self):
+        """Return socket file number. Interface required by select/epoll"""
         return self.socket.fileno()
     
     def on_close(self, failure=None):
+        '''Callback just before closing the socket'''
         pass
     
     def close(self, msg=None):
+        '''Close this socket'''
         log_failure(msg)
         self.on_close(msg)
         self.socket.close()
@@ -550,6 +555,7 @@ to send back data to the client.'''
     
     ##    INTERNALS
     def _read_sync(self):
+        # Read from a blocking socket
         length = io.DEFAULT_BUFFER_SIZE
         data = True
         while data:
@@ -559,7 +565,10 @@ to send back data to the client.'''
                 self.close()
                 raise
             if not data:
+                # No data. the socket is closed.
+                # We raise socket.error
                 self.close()
+                raise socket.error('Scoket is closed')
             else:
                 msg = self.parsedata(data)
                 if msg is not None:
@@ -585,7 +594,7 @@ the client or not.
 
 '''
     keep_reading = False
-    def __init__(self, server, socket, client_address):
+    def __init__(self, socket, client_address, server):
         if not isinstance(socket, AsyncIOStream):
             socket = AsyncIOStream(socket, timeout=server.timeout)
         super(Connection, self).__init__(socket, server.parsercls)
@@ -593,9 +602,18 @@ the client or not.
         self.socket.set_close_callback(close_callback)
         self.server = server
         self.client_address = client_address
-        self.keep_reading = self.keep_reading and self.async
-        #kick off reading
+        server.connections.add(self)
+        server.on_connection(self)
+        self.handle()
+    
+    def setup(self):
+        pass
+
+    def handle(self):
         self.read()
+
+    def finish(self):
+        pass
     
     @property
     def actor(self):
@@ -612,17 +630,18 @@ the client or not.
     def on_close(self, failure=None):
         self.server.connections.discard(self)
     
-    @async
     def on_end_message(self, result):
         if result is not self._NOTHING:
-            yield self.send(result)
+            r = safe_async(self.send, args=(result,))
             if self.keep_reading:
-                yield self.read()
+                return r.add_callback(self.read, self.close)
+            else:
+                return r.add_errback(self.close)
         
     
 class SimpleSocketServer(BaseSocket):
-    '''A :class:`SimpleSocketServer` is the base class of all servers
-using a socket in pulsar.
+    '''A :class:`SimpleSocketServer` is the base class of all asynchronous
+servers using a socket in pulsar.
 
 .. attribute:: actor
 
@@ -715,8 +734,6 @@ using a socket in pulsar.
         pass
     
     def on_close(self, failure=None):
-        '''Close the mailbox. This is called by the actor when
-shutting down.'''
         self.shut_down()
         for c in list(self.connections):
             c.close()
@@ -735,7 +752,7 @@ shutting down.'''
             if self.thread and self.thread.is_alive():
                 raise RunTimeError('Cannot start mailbox. '\
                                    'It has already started')
-            self.thread = Thread(name=self.ioloop.name, target=self._run)
+            self.thread = Thread(name=self.name, target=self._run)
             self.thread.start()
         if not self._started:
             self.ioloop.add_handler(self,
@@ -750,14 +767,9 @@ shutting down.'''
 
     def new_connection(self, fd, events):
         '''Called when a new connecation is available.'''
-        ioloop = self.ioloop
         client, client_address = self.socket.accept()
-        if not client:
-            self.actor.log.debug('Still no client. Aborting')
-        else:
-            client = self.connection_class(self, client, client_address)
-            self.connections.add(client)
-            self.on_connection(client)
+        if client:
+            self.connection_class(client, client_address, self)
         
     def unregister(self):
         if not self.ioloop.remove_loop_task(self.actor):
