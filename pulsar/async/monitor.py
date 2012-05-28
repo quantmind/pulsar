@@ -179,18 +179,17 @@ as required."""
         impl = params.pop('concurrency', actorcls.DEFAULT_IMPLEMENTATION)
         timeout = max(params.pop('timeout',cls.DEFAULT_ACTOR_TIMEOUT),
                       cls.MINIMUM_ACTOR_TIMEOUT)
-        actor_maker = concurrency(impl, actorcls, timeout,
+        actor_proxy = concurrency(impl, actorcls, timeout,
                                   monitor, aid, commands_set,
                                   params)
-        proxy_monitor = actor_maker.proxy_monitor()
         # Add to the list of managed actors if this is a remote actor
-        if proxy_monitor is not None:
-            proxy_monitor.monitor = monitor
-            monitor._spawning[actor_maker.aid] = proxy_monitor
-            actor_maker.start()
-            return proxy_monitor.proxy
+        if isinstance(actor_proxy, Actor):
+            return actor_proxy
         else:
-            return actor_maker.actor
+            actor_proxy.monitor = monitor
+            monitor._spawning[actor_proxy.aid] = actor_proxy
+            actor_proxy.start()
+            return actor_proxy.proxy
 
 
 class Monitor(PoolMixin, Actor):

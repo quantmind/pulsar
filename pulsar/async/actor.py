@@ -17,14 +17,11 @@ from .proxy import ActorProxy, ActorMessage
 from .defer import make_async, is_failure, iteritems, itervalues,\
                      pickle, safe_async, async
 from .mailbox import IOQueue, mailbox
-from .access import set_local_data
+from .access import set_local_data, is_mainthread
 from . import commands
 
 
-__all__ = ['is_actor',
-           'send',
-           'Actor',
-           'is_mainthread']
+__all__ = ['is_actor', 'send', 'Actor']
 
 
 EMPTY_TUPLE = ()
@@ -33,13 +30,6 @@ EMPTY_DICT = {}
 
 def is_actor(obj):
     return isinstance(obj, Actor)
-
-
-def is_mainthread(thread=None):
-    '''Check if thread is the main thread. If *thread* is not supplied check
-the current thread'''
-    thread = thread if thread is not None else current_thread() 
-    return isinstance(thread, threading._MainThread)
 
 
 def send(target, action, *args, **params):
@@ -306,7 +296,7 @@ parameters *params*. It return a :class:`ActorMessage`.'''
     def put(self, request):
         '''Put a *request* into the :attr:`ioqueue` if available.'''
         if self.ioqueue:
-            self.log.debug('Puting %s into IO queue', request)
+            self.log.debug('Putting %s into IO queue', request)
             self.ioqueue.put(('request', request))
         else:
             self.log.error("Trying to put a request on task queue,\
@@ -616,8 +606,8 @@ This function is overridden by :class:`Monitor` to perform nothing.'''
                                           self._requestloop.READ)
         self._init_runner()
         self._mailbox = mailbox(self)
-        self.setid()
         set_local_data(self)
+        self.setid()
         self.on_start()
         self.log.info('Starting - address %s', self.mailbox.address)
             

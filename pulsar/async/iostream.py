@@ -416,8 +416,11 @@ On error closes the socket and raises an exception."""
             self._state = self._state | state
             self.ioloop.update_handler(self, self._state)
         # We make sure the IO callback are tracked in the event loop
-        d = loop_deferred(deferred, self.ioloop, timeout=self.timeout)
-        return d.value
+        if self.timeout:
+            return loop_deferred(deferred, self.ioloop,
+                                 timeout=self.timeout).value
+        else:
+            return deferred
 
 
 class NOTHING:

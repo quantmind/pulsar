@@ -1,16 +1,29 @@
-from threading import Thread, current_thread, local
+import threading
+from threading import Thread, current_thread
+from multiprocessing import current_process
 
 __all__ = ['thread_loop',
            'thread_ioloop',
            'get_actor',
            'set_local_data',
+           'is_mainthread',
            'PulsarThread',
            'thread_local_data']
 
+def is_mainthread(thread=None):
+    '''Check if thread is the main thread. If *thread* is not supplied check
+the current thread'''
+    thread = thread if thread is not None else current_thread() 
+    return isinstance(thread, threading._MainThread)
+
 def thread_local_data(name, value=None):
     ct = current_thread()
-    if not hasattr(ct,'_pulsar_local'):
-        ct._pulsar_local = local()
+    if is_mainthread(ct):
+        ct = current_process()
+        if not hasattr(ct, '_pulsar_local'):
+            ct._pulsar_local = plocal()
+    elif not hasattr(ct,'_pulsar_local'):
+        ct._pulsar_local = threading.local()
     loc = ct._pulsar_local
     if value is not None:
         if hasattr(loc, name):
@@ -45,3 +58,7 @@ class PulsarThread(Thread):
     def run(self):
         set_local_data(self.actor)
         super(PulsarThread, self).run()
+        
+        
+class plocal(object):
+    pass

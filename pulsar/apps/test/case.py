@@ -185,7 +185,8 @@ following algorithm:
                     self.add_failure(test_cls, runner, outcome.result)
         
         # send runner result to monitor
-        worker.send(worker.monitor, 'test_result', runner.result)
+        worker.send(worker.monitor, 'test_result', testcls.tag,
+                    testcls, runner.result)
         
     def run_test(self, test, runner):
         '''\

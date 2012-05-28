@@ -7,6 +7,7 @@ from pulsar.utils.httpurl import iteritems, to_string
 
 __all__ = ['ALL_SIGNALS',
            'SIG_NAMES',
+           'SKIP_SIGNALS',
            'set_proctitle',
            'set_owner_process',
            'parse_address',
@@ -16,7 +17,7 @@ __all__ = ['ALL_SIGNALS',
 
 
 SIG_NAMES = {}
-SKIP_SIGNALS = ('KILL','STOP')
+SKIP_SIGNALS = frozenset(('KILL','STOP','WINCH'))
 
 def all_signals():
     for sig in dir(signal):

@@ -255,3 +255,5 @@ object including, aid (actor id), timeout mailbox size, last notified time and
 process id.'''
         return self.info
 
+    def start(self):
+        self.impl.start()

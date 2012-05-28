@@ -317,7 +317,7 @@ signal queue'''
         return sig                
     
     def signal(self, sig, frame = None):
-        signame = system.SIG_NAMES.get(sig,None)
+        signame = system.SIG_NAMES.get(sig, None)
         if signame:
             if self.ioloop.running():
                 self.log.debug('Received and queueing signal {0}.'\

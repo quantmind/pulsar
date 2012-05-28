@@ -320,8 +320,9 @@ so that it can perform its tasks at each event loop. Check the
 :meth:`pulsar.Actor` method.'''
         for task in self._loop_tasks:
             try:
-                result = task()
-                loop_deferred(result, self)
+                task()
+                #result = task()
+                #loop_deferred(result, self)
             except HaltServer:
                 raise
             except:
@@ -340,6 +341,7 @@ will make the loop stop after the current event iteration completes."""
                 callbacks = self._callbacks
                 if callbacks:
                     self._callbacks = []
+                    #self.log.debug('Total of %s callbacks', len(callbacks))
                     _run_callback = self._run_callback 
                     for callback in callbacks:
                         _run_callback(callback)
@@ -417,7 +419,7 @@ will make the loop stop after the current event iteration completes."""
 
     def _run_callback(self, callback):
         try:
-            loop_deferred(callback(), self)
+            callback()
         except EXIT_EXCEPTIONS:
             raise
         except:
@@ -517,7 +519,7 @@ initialised via the :func:`loop_deferred` function.'''
 
 def loop_deferred(value, ioloop=None, timeout=None):
     value = maybe_async(value)
-    if is_async(value):
+    if timeout and is_async(value):
         return LoopDeferred(value, ioloop, timeout)()
     
     

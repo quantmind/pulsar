@@ -114,7 +114,8 @@ class TestList(TestOption):
 test_commands = set()
 
 @pulsar_command(internal=True, ack=False, commands_set=test_commands)
-def test_result(client, actor, sender, result):
+def test_result(client, actor, sender, tag, testcls, result):
+    actor.log.debug('Got a test results from %s.%s', tag, testcls.__name__)
     actor.app.add_result(actor, result)
         
         

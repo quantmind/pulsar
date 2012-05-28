@@ -16,6 +16,9 @@ class TestPulsarClient(test.TestCase):
         arbiter = actor.arbiter
         c = pulsar.PulsarClient.connect(arbiter.address)
         self.assertFalse(c.async)
+        m = actor.arbiter.mailbox
+        # They are two clients of the arbiter mailbox
+        self.assertNotEqual(c.address, m.address)
         return c
         
     def testPing(self):
@@ -24,6 +27,8 @@ class TestPulsarClient(test.TestCase):
         self.assertEqual(c.received, 1)
         self.assertEqual(c.ping(), 'pong')
         self.assertEqual(c.received, 2)
+        actor = pulsar.get_actor()
+        self.assertEqual(actor.arbiter.mailbox.ping(), 'pong')
         
     def testEcho(self):
         c = self.client()

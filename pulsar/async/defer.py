@@ -448,8 +448,11 @@ The callback will occur once the generator has stopped
         self._consume()
     
     def _consume_in_thread(self, result=None):
+        # When the generator finds an asynchronous object still waiting
+        # for results, it adds a callback to resume the generator at the
+        # next iteration in the eventloop.
         if self.loop.tid != current_thread().ident:
-            self.loop.add_callback(lambda: self._consume(result), wake=False)
+            self.loop.add_callback(lambda: self._consume(result))
             return result
         else:
             return self._consume(result)
@@ -477,7 +480,7 @@ current thread.'''
                 # The NOT_DONE object indicates that the generator needs to
                 # abort so that the event loop can continue. This generator
                 # will resume at the next event loop.
-                self.loop.add_callback(self._consume)
+                self.loop.add_callback(self._consume, wake=False)
                 return self
             else:
                 # Convert to an asynchronous instance only if needed
