@@ -79,7 +79,7 @@ inspect.isgenerator function.'''
     return hasattr(value, '__iter__') and not hasattr(value, '__len__')
 
 def is_stack_trace(trace):
-    if isinstance(trace,remote_stacktrace):
+    if isinstance(trace, remote_stacktrace):
         return True
     elif isinstance(trace,tuple) and len(trace) == 3:
         return istraceback(trace[2]) or\
@@ -132,8 +132,8 @@ def safe_async(f, args=None, kwargs=None, description=None, max_errors=None):
         kwargs = kwargs if kwargs is not None else EMPTY_DICT
         args = args or ()
         result = f(*args, **kwargs)
-    except Exception as e:
-        result = e
+    except:
+        result = sys.exc_info()
     return make_async(result, max_errors=max_errors, description=description)
 
 def async(func):

@@ -106,31 +106,32 @@ which is bound to ``127.0.0.1`` at any available port.
 :param log: optional python logger.
 :rtype: tuple with two instances of :class:`Socket`
 '''
-    w = socket.socket()
-    w.setsockopt(socket.IPPROTO_TCP, socket.TCP_NODELAY, 1)
+    remote_client = socket.socket()
+    remote_client.setsockopt(socket.IPPROTO_TCP, socket.TCP_NODELAY, 1)
     
     count = 0
     while 1:
         count += 1
-        s = create_socket(('127.0.0.1',0), log=log, backlog=backlog)
+        server = create_socket(('127.0.0.1',0), log=log, backlog=backlog)
         try:
-            w.connect(s.name)
+            # Connect the remote socket with the server socket
+            remote_client.connect(server.name)
             break
         except socket.error as e:
             if e[0] != errno.WSAEADDRINUSE:
                 raise
             if count >= 10:
-                s.close()
-                w.close()
+                remote_client.close()
+                server.close()
                 raise socket.error("Cannot bind socket pairs!")
-            s.close()
+            remote_client.close()
     
-    w = s.__class__(fd=w, bound=True, backlog=None)
-    w.setblocking(blocking)
-    return w, s    
+    remote_client = server.__class__(fd=remote_client, bound=True, backlog=None)
+    remote_client.setblocking(blocking)
+    return remote_client, server    
     
 def server_client_sockets(backlog=2048, blocking=0):
-    '''Create a TCP socket ready for accepting connections.'''
+    '''Create a server_connection, client pair.'''
     # get a socket pair
     client, server = socket_pair(backlog=backlog)
     server.setblocking(True)
@@ -213,6 +214,10 @@ higher level tools for creating and reusing sockets already created.'''
         pass
     
     def write(self, data):
+        '''Same as the socket send method but it close the connection if
+not data was sent. In this case it also raises a socket error.'''
+        if not data:
+            return 0
         try:
             sent = self.send(data)
             if sent == 0:
@@ -280,6 +285,7 @@ higher level tools for creating and reusing sockets already created.'''
         sock.bind(address)
         
     def close(self, log=None):
+        '''Shutdown and close the socket.'''
         if not self.closed:
             try:
                 self.sock.shutdown(socket.SHUT_RDWR)

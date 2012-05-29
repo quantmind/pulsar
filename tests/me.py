@@ -80,15 +80,15 @@ class TestTestWorker(unittest.TestCase):
         self.assertEqual(worker.ioloop.tid, d.result)
         self.assertEqual(worker.tid, current_thread().ident)
     
-    def testPingArbiter(self):
-        worker = pulsar.get_actor()
-        outcome = pulsar.make_async(worker.send(worker.arbiter, 'ping'))
-        yield outcome
-        self.assertEqual(outcome.result, 'pong')
-        outcome = pulsar.make_async(worker.send(worker.monitor, 'ping'))
-        yield outcome
-        self.assertEqual(outcome.result, 'pong')
-        
+    #def testPingArbiter(self):
+    #    worker = pulsar.get_actor()
+    #    outcome = pulsar.make_async(worker.send(worker.arbiter, 'ping'))
+    #    yield outcome
+    #    self.assertEqual(outcome.result, 'pong')
+    #    outcome = pulsar.make_async(worker.send(worker.monitor, 'ping'))
+    #    yield outcome
+    #    self.assertEqual(outcome.result, 'pong')
+    
     @run_on_arbiter
     def testSpawning(self):
         arbiter = pulsar.get_actor()
