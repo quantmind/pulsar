@@ -36,8 +36,11 @@ if ispy3k:
     import pickle
     iteritems = lambda d : d.items()
     itervalues = lambda d : d.values()
-    def raise_error_trace(err,traceback):
-        raise err.with_traceback(traceback)
+    def raise_error_trace(err, traceback):
+        if istraceback(traceback):
+            raise err.with_traceback(traceback)
+        else:
+            raise err
     range = range
 else:   # pragma : nocover
     import cPickle as pickle
@@ -272,7 +275,7 @@ class Failure(object):
         if self.traces and isinstance(self.traces[-1][1],Exception):
             eclass, error, trace = self.traces.pop()
             self.log()
-            raise_error_trace(error,trace)
+            raise_error_trace(error, trace)
         else:
             self.log()
             N = len(self.traces)

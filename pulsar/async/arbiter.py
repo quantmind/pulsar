@@ -29,13 +29,18 @@ process_global = pulsar.process_global
 __all__ = ['arbiter', 'spawn', 'Arbiter', 'ThreadQueue']
 
 
-def arbiter(daemonize = False):
+def arbiter(daemonize=False):
     '''Obtain the arbiter instance.'''
-    arbiter = process_global('_arbiter')
-    if not arbiter:
-        arbiter = Arbiter.make(daemonize=daemonize)
-        process_global('_arbiter', arbiter, True)
-    return arbiter
+    arbiter = get_actor()
+    if arbiter is None:
+        return get_actor(Arbiter.make(daemonize=daemonize))
+    elif isinstance(arbiter, Actor):
+        if arbiter.is_arbiter():
+            return arbiter
+        else:
+            raise pulsar.PulsarException()
+    else:
+        return None
     
     
 def spawn(**kwargs):
@@ -146,7 +151,7 @@ Users access the arbiter by the high level api::
         for pool in list(itervalues(self._monitors)):
             yield pool.stop()
             
-    def info(self, full = False):
+    def info(self, full=False):
         if not self.started():
             return
         pools = []
@@ -173,7 +178,7 @@ Users access the arbiter by the high level api::
             if current_process().daemon:
                 raise pulsar.PulsarException(
                         'Cannot create the arbiter in a daemon process')
-            if process_global('_arbiter'):
+            if isinstance(get_actor(), self.__class__):
                 raise pulsar.PulsarException('Arbiter already created')
             os.environ["SERVER_SOFTWARE"] = pulsar.SERVER_SOFTWARE
         PoolMixin.on_init(self,**kwargs)

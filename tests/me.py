@@ -27,10 +27,7 @@ class TestTestWorker(unittest.TestCase):
         arbiter = worker.arbiter
         mailbox = monitor.mailbox
         self.assertEqual(mailbox, arbiter.mailbox)
-        if defaults.mailbox_timeout == 0:
-            self.assertTrue(mailbox.async)
-        else:
-            self.assertFalse(mailbox.async)
+        self.assertTrue(mailbox.async)
         
     def testMailbox(self):
         worker = pulsar.get_actor()
@@ -80,21 +77,22 @@ class TestTestWorker(unittest.TestCase):
         self.assertEqual(worker.ioloop.tid, d.result)
         self.assertEqual(worker.tid, current_thread().ident)
     
-    #def testPingArbiter(self):
-    #    worker = pulsar.get_actor()
-    #    outcome = pulsar.make_async(worker.send(worker.arbiter, 'ping'))
-    #    yield outcome
-    #    self.assertEqual(outcome.result, 'pong')
-    #    outcome = pulsar.make_async(worker.send(worker.monitor, 'ping'))
-    #    yield outcome
-    #    self.assertEqual(outcome.result, 'pong')
-    
-    @run_on_arbiter
-    def testSpawning(self):
-        arbiter = pulsar.get_actor()
-        self.assertEqual(arbiter.aid, 'arbiter')
-        self.assertEqual(len(arbiter.monitors), 1)
-        self.assertEqual(arbiter.monitors['test']._spawning, {})
+    def testReconnect(self):
+        worker = pulsar.get_actor()
+        c = worker.arbiter.mailbox
+        c.close()
+        yield self.async.assertEqual(c.ping(), 'pong')
+        
+    def testPingArbiter(self):
+        worker = pulsar.get_actor()
+        c = worker.arbiter.mailbox
+        yield self.async.assertEqual(c.ping(), 'pong')
+        yield self.async.assertEqual(c.ping(), 'pong')
+        self.assertTrue(worker.send(worker.arbiter, 'notify', worker.info())>0)
+        yield self.async.assertEqual(c.ping(), 'pong')
+        c = worker.monitor.mailbox
+        yield self.async.assertEqual(c.ping(), 'pong')
+        yield self.async.assertEqual(c.echo('ciao'), 'ciao')
 
 
 class TestPulsar(unittest.TestCase):

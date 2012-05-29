@@ -1,5 +1,5 @@
 '''Tests the tools and utilities in pulsar.utils.'''
-from pulsar import system
+from pulsar import system, get_actor
 from pulsar.utils.tools import checkarity
 from pulsar.apps.test import unittest
 
@@ -66,5 +66,6 @@ class TestArityCheck(unittest.TestCase):
 class TestSystemInfo(unittest.TestCase):
     
     def testMe(self):
-        info = system.system_info(self.worker.pid)
+        worker = get_actor()
+        info = system.system_info(worker.pid)
         self.assertTrue(isinstance(info,dict))

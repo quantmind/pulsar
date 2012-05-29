@@ -27,8 +27,11 @@ def thread_local_data(name, value=None):
     loc = ct._pulsar_local
     if value is not None:
         if hasattr(loc, name):
-            raise RuntimeError('%s is already available on this thread'%name)
-        setattr(loc, name, value)
+            if getattr(loc, name) is not value:
+                raise RuntimeError(
+                            '%s is already available on this thread' % name)
+        else:
+            setattr(loc, name, value)
     return getattr(loc, name, None)
 
 def thread_loop(ioloop=None):

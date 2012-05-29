@@ -9,7 +9,7 @@ def testrun(actor):
     return actor.aid
 
 
-class TestPulsarClient(unittest.TestCase):
+class ClientMixin:
     
     def client(self):
         actor = pulsar.get_actor()
@@ -20,7 +20,9 @@ class TestPulsarClient(unittest.TestCase):
         # They are two clients of the arbiter mailbox
         self.assertNotEqual(c.address, m.address)
         return c
-        
+    
+class TestPulsarClient(unittest.TestCase, ClientMixin):
+    
     def testPing(self):
         c = self.client()
         self.assertEqual(c.ping(), 'pong')
@@ -28,19 +30,12 @@ class TestPulsarClient(unittest.TestCase):
         self.assertEqual(c.ping(), 'pong')
         self.assertEqual(c.received, 2)
         actor = pulsar.get_actor()
-        self.assertEqual(actor.arbiter.mailbox.ping(), 'pong')
         
     def testEcho(self):
         c = self.client()
         self.assertEqual(c.echo('Hello!'), 'Hello!')
         self.assertEqual(c.echo('Ciao!'), 'Ciao!')
         self.assertEqual(c.received, 2)
-        
-    def testQuit(self):
-        c = self.client()
-        self.assertEqual(c.ping(), 'pong')
-        self.assertEqual(c.quit(), True)
-        self.assertRaises(socket.error, c.ping)
         
     #def testRun(self):
     #    c = self.client()
@@ -53,6 +48,15 @@ class TestPulsarClient(unittest.TestCase):
         self.assertTrue(info)
         self.assertEqual(len(info['monitors']), 1)
         self.assertEqual(info['monitors'][0]['name'], 'test')
+        
+        
+class TestClosePulsarClient(unittest.TestCase, ClientMixin):
+    
+    def testQuit(self):
+        c = self.client()
+        self.assertEqual(c.ping(), 'pong')
+        self.assertEqual(c.quit(), True)
+        self.assertRaises(socket.error, c.ping)
         
     def testClose(self):
         c = self.client()

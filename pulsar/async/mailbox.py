@@ -15,7 +15,8 @@ from pulsar.utils.httpurl import to_bytes
 from .defer import make_async, safe_async, pickle, is_async,\
                     async, is_failure, ispy3k, raise_failure, CLEAR_ERRORS
 from .iostream import AsyncIOStream, SimpleSocketServer,\
-                        Connection, SocketClient
+                        Connection, ReconnectingClient, IOResponse
+from .access import get_actor
 
 
 __all__ = ['PulsarClient', 'mailbox', 'Mailbox', 'IOQueue',
@@ -27,8 +28,7 @@ def mailbox(actor=None, address=None):
 If an address is provided, the communication is implemented using a socket,
 otherwise a queue is used.'''   
     if address:
-        return PulsarClient.connect(address,
-                                    socket_timeout=defaults.mailbox_timeout)
+        return PulsarClient.connect(address, socket_timeout=0)
     else:
         if actor.is_monitor():
             return MonitorMailbox(actor)
@@ -122,7 +122,7 @@ created by :meth:`ActorProxy.send` method.
         return self.command
     
 
-class PulsarClient(SocketClient):
+class PulsarClient(ReconnectingClient):
     '''A proxy for the :attr:`Actor.inbox` attribute. It is used by the
 :class:`ActorProxy` to send messages to the remote actor.'''
     parsercls = MessageParser
@@ -159,38 +159,49 @@ class PulsarClient(SocketClient):
         return self.execute(ActorMessage('stop'))
     
 
-class MailboxConnection(Connection):
-    '''A :class:`MailboxClient` is a socket which receives messages
-from a remote :class:`Actor`.
-An instance of this class is created when a new connection is made
-with a :class:`Mailbox`.'''
-    authenticated = False
-    keep_reading = True        
-    def on_parsed_data(self, message):
+class MailboxResponse(IOResponse):
+    
+    def handle(self):
         # The receiver could be different from the mail box actor. For
         # example a monitor uses the same mailbox as the arbiter
-        receiver = self.actor.get_actor(message.receiver) or self.actor
+        message = self.request
+        actor = self.connection.actor
+        receiver = actor.get_actor(message.receiver) or actor
         sender = receiver.get_actor(message.sender)
         command = receiver.command(message.command)
-        if not command:
-            raise CommandNotFound(message.command)
-        args = message.args
-        if command.internal:
-            args = (sender,) + args
-        result = make_async(command(self, receiver, *args, **message.kwargs))
+        try:
+            if not command:
+                raise CommandNotFound(message.command)
+            args = message.args
+            if command.internal:
+                args = (sender,) + args
+            result = command(self, receiver, *args, **message.kwargs)
+        except:
+            result = sys.exc_info()
+        result = make_async(result)
         yield result
         result = result.result
         if command.ack:
             # Send back the result as an ActorMessage
             if is_failure(result):
                 yield CLEAR_ERRORS
-                yield ActorMessage('errback', sender=receiver, args=(result,))
+                m = ActorMessage('errback', sender=receiver, args=(result,))
             else:
-                yield ActorMessage('callback', sender=receiver, args=(result,))
+                m = ActorMessage('callback', sender=receiver, args=(result,))
+            yield self.parser.encode(m)
         else:
             # Yield empty data so nothing is returned to the client
             yield b''
 
+    
+class MailboxConnection(Connection):
+    '''A :class:`MailboxClient` is a socket which receives messages
+from a remote :class:`Actor`.
+An instance of this class is created when a new connection is made
+with a :class:`Mailbox`.'''
+    authenticated = False
+    response_class = MailboxResponse
+    
     
 class Mailbox(SimpleSocketServer):
     '''Mailbox for an :class:`Actor`. If the actor is a
@@ -222,9 +233,13 @@ of execution.'''
         actor = self.actor
         self.register(actor)
         if not actor.is_arbiter():
+            # The actor is not the arbiter. We need to register this mailbox
+            # with the actor monitor so that it can receive messages from it
             msg = actor.send(actor.monitor, 'mailbox_address', self.address)
             if is_async(msg):
                 return msg.add_callback(actor.link_actor)
+            elif is_failure(msg):
+                msg.raise_all()
             else:
                 return actor.link_actor(msg)
 

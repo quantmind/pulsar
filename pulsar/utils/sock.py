@@ -10,6 +10,7 @@ __all__ = ['Socket',
            'TCPSocket',
            'TCP6Socket',
            'wrap_socket',
+           'get_socket_timeout',
            'flush_socket',
            'create_socket',
            'create_client_socket',
@@ -28,6 +29,18 @@ ALLOWED_ERRORS = (errno.EAGAIN, errno.ECONNABORTED,
 MAXFD = 1024
 
 
+def get_socket_timeout(val):
+    '''Obtain a valid stocket timeout value from *val*'''
+    if val is None:
+        return val  # blocking socket
+    else:
+        val = float(val)
+    if val < 0:
+        return None # Negative values for blocking sockets
+    else:
+        ival = int(val)
+        return ival if ival == val else val
+    
 def create_connection(address, blocking=0):
     sock_type, address = create_socket_address(address)
     s = sock_type(is_server=False)
@@ -216,7 +229,7 @@ higher level tools for creating and reusing sockets already created.'''
     def write(self, data):
         '''Same as the socket send method but it close the connection if
 not data was sent. In this case it also raises a socket error.'''
-        if not data:
+        if self.closed or not data:
             return 0
         try:
             sent = self.send(data)

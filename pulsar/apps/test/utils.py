@@ -105,7 +105,6 @@ class should be sent to be run on the arbiter.'''
     
 
 class AsyncAssert(object):
-    __slots__ = ('test', 'name')
     
     def __init__(self, test=None, name=None):
         self.test = test
@@ -117,14 +116,14 @@ class AsyncAssert(object):
     def __getattr__(self, name):
         return self.__class__(test=self.test, name=name)
     
-    def __call__(self, elem, *args):
-        return make_async(elem).add_callback(\
-                        lambda r : self._check_result(r,*args))
+    def __call__(self, *args):
+        d = pulsar.MultiDeferred(args, type=list).lock()
+        return d.add_callback(self._check_result)
     
-    def _check_result(self, result, *args):
+    def _check_result(self, args):
         func = getattr(self.test, self.name)
-        return func(result, *args)
-    
+        return func(*args)
+        
     def __reduce__(self):
         return (self.__class__,())
             

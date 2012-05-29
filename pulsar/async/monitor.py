@@ -305,7 +305,7 @@ Users shouldn't need to override this method, but use
         else:
             return actor.proxy.stop()
         
-    def info(self, full = False):
+    def info(self, full=False):
         if full:
             requests = []
             proxy = self.proxy

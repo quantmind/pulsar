@@ -38,13 +38,13 @@ class DefaultSettings:
         # port for serving a socket
         self.PORT = 8060
         # timeout for asynchronous Input/Output
-        self.IO_TIMEOUT = 3
+        self.IO_TIMEOUT = None
         # Maximum number of concurrenct clients
         self.BACKLOG = 2048
         # Actors timeout
         self.TIMEOUT = 30
         # mailbox clients blocking
-        self.mailbox_timeout = 3
+        self.message_timeout = 3
     
 defaults = DefaultSettings()
 KNOWN_SETTINGS = {}
@@ -518,6 +518,18 @@ class Timeout(Setting):
         workers it just means that the worker process is still communicating and
         is not tied to the length of time required to handle a single request.
         """
+
+
+class MessageTimeout(Setting):
+    name = "message_timeout"
+    section = "Worker Processes"
+    flags = ["--message_timeout"]
+    type = int
+    default = defaults.message_timeout
+    desc = """\
+        Timeout in seconds for communication with pulsar actors.
+        A negative value corresponds to No timeout (blocking sockets) while
+        a value of 0 corresponds to non-blocking sockets."""
 
 
 class HttpProxyServer(Setting):

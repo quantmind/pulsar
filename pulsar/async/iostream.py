@@ -9,7 +9,8 @@ from threading import current_thread, Thread
 
 from pulsar.utils.system import IObase
 from pulsar import create_socket, server_socket, create_client_socket,\
-                     wrap_socket, defaults, create_connection, CouldNotParse
+                     wrap_socket, defaults, create_connection, CouldNotParse,\
+                     get_socket_timeout
 
 from .defer import Deferred, is_async, is_failure, async, make_async,\
                         safe_async, log_failure
@@ -19,7 +20,7 @@ from .access import PulsarThread, thread_ioloop
 iologger = logging.getLogger('pulsar.iostream')
 
 
-__all__ = ['AsyncIOStream']
+__all__ = ['AsyncIOStream', 'ClientSocket', 'Client']
 
             
 class AsyncIOStream(IObase):
@@ -317,6 +318,7 @@ On error closes the socket and raises an exception."""
                 sent = self.socket.send(buff)
                 if sent == 0:
                     raise socket.error()
+                tot_bytes += sent
             except socket.error as e:
                 if e.args[0] in (errno.EWOULDBLOCK, errno.EAGAIN):
                     # With OpenSSL, after send returns EWOULDBLOCK,
@@ -457,26 +459,33 @@ class BaseSocket(object):
         pass
     
     def close(self, msg=None):
-        '''Close this socket'''
+        '''Close this socket and log the failure if there was one.'''
         log_failure(msg)
         self.on_close(msg)
         self.socket.close()
         return msg
     
     
-class SocketClient(BaseSocket):
+class ClientSocket(BaseSocket):
     '''Base class for socket clients with parsers. This class can be used for
-synchronous and asynchronous connections'''
+synchronous and asynchronous socket for both a "client" socket and
+the server connection socket (the socket obtained from a server socket
+via the ``connect`` function).'''
     parsercls = None
     log = iologger
-    def __init__(self, socket, parsercls=None, socket_timeout=None):
-        if not isinstance(socket, AsyncIOStream):
-            if socket_timeout == 0:
-                socket = AsyncIOStream(socket)
-            else:
-                socket = wrap_socket(socket)
-                socket.settimeout(socket_timeout)
-        self.socket = socket
+    def __init__(self, socket, address, parsercls=None, socket_timeout=None):
+        '''Create a client or client-connection socket. A parser class
+is required in order to use :class:`SocketClient`.
+
+:parameter socket: a client or client-connection socket
+:parameter address: The address of the remote client/server
+:parameter parsercls: A class used for parsing messages.
+:parameter socket_timeout: A timeout in seconds for the socket. Same rules as
+    the ``socket.settimeout`` method in the standard library.
+'''
+        self.socket_timeout = get_socket_timeout(socket_timeout)
+        self.socket = self._get_socket(socket)
+        self.remote_address = address
         self.received = 0
         parsercls = parsercls or self.parsercls
         self.parser = parsercls()
@@ -488,7 +497,12 @@ synchronous and asynchronous connections'''
     @classmethod
     def connect(cls, address, parsercls=None, socket_timeout=None):
         socket = create_connection(address, blocking=True)
-        return cls(socket, parsercls=parsercls, socket_timeout=socket_timeout)
+        return cls(socket, address, parsercls=parsercls,
+                   socket_timeout=socket_timeout)
+    
+    @property
+    def closed(self):
+        return self.socket.closed
         
     @property
     def async(self):
@@ -507,17 +521,17 @@ synchronous and asynchronous connections'''
         data = self.parser.encode(data)
         return self.socket.write(data)
         
-    def read(self, result=None):
+    def read(self):
         '''Read data from socket'''
-        self.time_last = time.time()
-        if self.async:
-            return self._read_async()
-        else:
-            return self._read_sync()
+        try:
+            return self._read()
+        except socket.error:
+            self.close()
+            raise
                 
     def execute(self, data):
         '''Send and read data from socket'''
-        r = make_async(self.send(data)).add_callback(self.read)
+        r = make_async(self.send(data)).add_callback(self._read, self.close)
         return r.result_or_self()
     
     @run_callbacks('read')
@@ -555,66 +569,106 @@ to send back data to the client.'''
         return result
     
     ##    INTERNALS
-    def _read_sync(self):
-        # Read from a blocking socket
-        length = io.DEFAULT_BUFFER_SIZE
-        data = True
-        while data:
-            try:
-                data = self.socket.recv(length)
-            except socket.error as e:
-                self.close()
-                raise
-            if not data:
-                # No data. the socket is closed.
-                # We raise socket.error
-                self.close()
-                raise socket.error('Socket is closed')
+    def _read(self, result=None):
+        self.time_last = time.time()
+        if self.async:
+            r = self.socket.read()
+            if not self.socket.closed:
+                return r.add_callback(self.parsedata, self.close)
+            elif r:
+                return self.parsedata(r)
             else:
-                msg = self.parsedata(data)
-                if msg is not None:
-                    return msg
-    
-    def _read_async(self):
-        r = self.socket.read()
-        if not self.socket.closed:
-            return r.add_callback(self.parsedata, self.close)
-        elif r:
-            return self.parsedata(r)
+                raise socket.error('Cannot read. Asynchronous socket is closed')
+        else:
+            # Read from a blocking socket
+            length = io.DEFAULT_BUFFER_SIZE
+            data = True
+            while data:
+                data = self.socket.recv(length)
+                if not data:
+                    # No data. the socket is closed.
+                    # We raise socket.error
+                    raise socket.error('No data received. Socket is closed')
+                else:
+                    msg = self.parsedata(data)
+                    if msg is not None:
+                        return msg
+                    
+    def _get_socket(self, socket):
+        if not isinstance(socket, AsyncIOStream):
+            if self.socket_timeout == 0:
+                socket = AsyncIOStream(socket)
+            else:
+                socket = wrap_socket(socket)
+                socket.settimeout(self.socket_timeout)
+        return socket
         
     
-class Connection(SocketClient):
-    '''A client connection on a server. A connection first receive
-a request (data) and decide what to do with it. It can send back data to
-the client or not.
-
-..attribute:: keep_reading
-
-    Indicate that the :class:`Connection` will try to read the socket again
-    once it has finish to process a previous message.
-
-'''
-    keep_reading = False
-    def __init__(self, socket, client_address, server):
+class Client(ClientSocket):
+    
+    def reconnect(self):
+        if self.closed:
+            socket = create_connection(self.remote_address, blocking=True)
+            self.socket = self._get_socket(socket)
+        
+        
+class ReconnectingClient(Client):
+    
+    def send(self, data):
+        '''Send and read data from socket'''
+        self.reconnect()
+        return super(ReconnectingClient, self).send(data)
+    
+    
+class IOResponse(object):
+    
+    def __init__(self, connection, request):
+        self.connection = connection
+        self.request = request
+        
+    @property
+    def parser(self):
+        return self.connection.parser
+    
+    def handle(self):
+        return b''
+    
+    
+class Connection(ClientSocket):
+    '''An asynchronous client connection for a server.'''
+    response_class = IOResponse
+    def __init__(self, socket, address, server):
         if not isinstance(socket, AsyncIOStream):
             socket = AsyncIOStream(socket, timeout=server.timeout)
-        super(Connection, self).__init__(socket, server.parsercls)
+        super(Connection, self).__init__(socket, address, server.parsercls)
         close_callback = Deferred().add_callback(self.close)
         self.socket.set_close_callback(close_callback)
         self.server = server
-        self.client_address = client_address
         server.connections.add(self)
-        server.on_connection(self)
         self.handle()
     
-    def setup(self):
-        pass
-
     def handle(self):
-        self.read()
-
-    def finish(self):
-        pass
+        # Kick off reading
+        self.socket.read().add_callback(self._stream_data)
+        
+    def getresponse(self, request):
+        return self.response_class(self, request)
+    
+    def getrequest(self):
+        '''We got some data to parse'''
+        buffer = self.buffer
+        if not buffer:
+            return
+        try:
+            parsed_data, buffer = self.parser.decode(buffer)
+        except CouldNotParse:
+            self.log.warn('Could not parse data', exc_info=True)
+            parsed_data = None
+            buffer = bytearray()
+        self.buffer = buffer
+        if parsed_data:
+            self.received += 1
+        return parsed_data
     
     @property
     def actor(self):
@@ -624,22 +678,36 @@ the client or not.
     def log(self):
         return self.server.actor.log
     
-    #def __iter__(self):
-    #    '''Generator of data'''
-    #    pass
-    
     def on_close(self, failure=None):
         self.server.connections.discard(self)
-    
-    def on_end_message(self, result):
-        # If the result is empty the connection won't send back any data
-        r = safe_async(self.send, args=(result,)) if result\
-                 else make_async(result)
-        if self.keep_reading:
-            return r.add_callback(self.read, self.close)
-        else:
-            return r.addBoth(self.close)
         
+    # Internal
+    @async
+    def _stream_data(self, data=None):
+        # get new data
+        buffer = self.buffer
+        if data:
+            buffer.extend(data)
+        if buffer:
+            response = True
+            while response:
+                response = False
+                request = self.getrequest()
+                if request:
+                    # Get a message to send back
+                    response = self.getresponse(request)
+                    outcome = safe_async(response.handle)
+                    yield outcome
+                    data = outcome.result
+                    if is_failure(data):
+                        log_failure(data)
+                        data = b''
+                    if data:
+                        yield self.socket.write(data)
+        d = self.socket.read()
+        if d:
+            yield d.add_callback(self._stream_data)
+    
     
 class SimpleSocketServer(BaseSocket):
     '''A :class:`SimpleSocketServer` is the base class of all asynchronous
@@ -762,12 +830,9 @@ servers using a socket in pulsar.
         self.ioloop.start()
 
     def new_connection(self, fd, events):
-        '''Called when a new connecation is available.'''
+        '''Called when a new connection is available.'''
+        # obtain the client connection
         client, client_address = self.socket.accept()
         if client:
             self.connection_class(client, client_address, self)
         
-    def unregister(self):
-        if not self.ioloop.remove_loop_task(self.actor):
-            self.actor.log.warn('"%s" could not be removed from eventloop',
-                                self.actor)

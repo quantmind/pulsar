@@ -19,7 +19,6 @@ def run_test_function(test, func, istest=False):
         worker = get_actor()
         runner = worker.app.runner
         test = runner.getTest(test)
-        test.async = AsyncAssert()
     test.istest = istest
     test_function = getattr(test, func.__name__)
     name = test.__name__ if class_method else test.__class__.__name__
@@ -60,6 +59,7 @@ following algorithm:
         runner = worker.app.runner
         testcls = self.testcls
         testcls.tag = self.tag
+        testcls.async = AsyncAssert()
         all_tests = runner.loadTestsFromTestCase(testcls)
         
         if all_tests.countTestCases():
