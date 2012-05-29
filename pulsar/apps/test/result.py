@@ -298,7 +298,13 @@ class TestResult(TestObject):
             else:
                 msgLines = traceback.format_exception(exctype, value, tb)
         else:
-            msgLines = tb or []
+            msgLines = tb
+            
+        if not msgLines:
+            if value:
+                msgLines = [repr(value)]
+            else:
+                msgLines = ()
 
         return ''.join(msgLines)
 

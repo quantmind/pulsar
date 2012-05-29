@@ -2,14 +2,14 @@ import time
 import socket
 
 import pulsar
-from pulsar.utils.test import test
+from pulsar.apps.test import unittest
 
 # you need to pass functions, you cannot pass lambdas
 def testrun(actor):
     return actor.aid
 
 
-class TestPulsarClient(test.TestCase):
+class TestPulsarClient(unittest.TestCase):
     
     def client(self):
         actor = pulsar.get_actor()

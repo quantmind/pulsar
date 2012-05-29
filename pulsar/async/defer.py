@@ -237,6 +237,9 @@ class Failure(object):
                 self.traces.append(trace)
         return self
     
+    def clear(self):
+        self.traces = []
+    
     def format_all(self):
         for exctype, value, tb in self:
             if istraceback(tb):
@@ -366,7 +369,7 @@ this point, :meth:`add_callback` will run the *callbacks* immediately.
         if isinstance(result, Deferred):
             raise RuntimeError('Received a deferred instance from '
                                'callback function')
-        elif self.called:
+        elif self._called:
             raise AlreadyCalledError('Deferred %s already called' % self)
         self.result = as_failure(result)
         self._called = True
@@ -375,7 +378,7 @@ this point, :meth:`add_callback` will run the *callbacks* immediately.
         
     def result_or_self(self):
         '''Obtain the result if available, otherwise it returns self.'''
-        return self.result if self.called and not self.paused else self
+        return self.result if self._called and not self.paused else self
         
     def wait(self, timeout = 1):
         '''Wait until *timeout* for a result to be available'''
@@ -389,7 +392,7 @@ this point, :meth:`add_callback` will run the *callbacks* immediately.
     
     ##################################################    INTERNAL METHODS
     def _run_callbacks(self):
-        if not self.called or self._runningCallbacks or self.paused:
+        if not self._called or self._runningCallbacks or self.paused:
             return
         while self._callbacks:
             callbacks = self._callbacks.popleft()
@@ -496,7 +499,7 @@ current thread.'''
                     self._current = result
                     return result.addBoth(self._consume_in_thread)
             if result == CLEAR_ERRORS:
-                self.errors = Failure()
+                self.errors.clear()
                 result = None
             # continue with the loop
             return self._consume(result)

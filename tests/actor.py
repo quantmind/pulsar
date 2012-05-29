@@ -2,15 +2,14 @@
 from time import sleep
 
 import pulsar
-from pulsar.apps.test import AsyncTestCaseMixin
-from pulsar.utils.test import test
+from pulsar.apps.test import unittest, AsyncTestCaseMixin
 
 
 def sleepfunc():
     sleep(2)
     
 
-class TestActorThread(test.TestCase, AsyncTestCaseMixin):
+class TestActorThread(unittest.TestCase, AsyncTestCaseMixin):
     impl = 'thread'
         
     def testStartStop(self):

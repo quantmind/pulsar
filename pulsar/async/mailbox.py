@@ -127,15 +127,13 @@ class PulsarClient(SocketClient):
 :class:`ActorProxy` to send messages to the remote actor.'''
     parsercls = MessageParser
     
-    def on_parsed_data(self, msg):
+    def on_end_message(self, msg):
         '''Those two messages are special'''
-        if msg.command == 'callback':
+        if msg.command in ('callback', 'errback'):
             return msg.args[0]
-        elif msg.command == 'errback':
-            raise RuntimeError()
         else:
             return msg
-    
+        
     @raise_failure    
     def ping(self):
         return self.execute(ActorMessage('ping'))

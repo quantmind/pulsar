@@ -6,9 +6,9 @@ import multiprocessing
 
 import pulsar
 from pulsar import defaults
-from pulsar.utils.test import test, run_on_arbiter
+from pulsar.apps.test import unittest, run_on_arbiter
 
-class TestTestWorker(test.TestCase):
+class TestTestWorker(unittest.TestCase):
     
     def testWorker(self):
         worker = pulsar.get_actor()
@@ -94,9 +94,10 @@ class TestTestWorker(test.TestCase):
         arbiter = pulsar.get_actor()
         self.assertEqual(arbiter.aid, 'arbiter')
         self.assertEqual(len(arbiter.monitors), 1)
-        self.assertEqual(arbiter.monitors[0]._spawning, {})
+        self.assertEqual(arbiter.monitors['test']._spawning, {})
 
-class TestPulsar(test.TestCase):
+
+class TestPulsar(unittest.TestCase):
     
     def test_version(self):
         self.assertTrue(pulsar.VERSION)

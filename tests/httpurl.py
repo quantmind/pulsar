@@ -1,7 +1,6 @@
 '''tests the httpurl stand-alone script.'''
 from pulsar import make_async
-from pulsar.utils.test import test
-from pulsar.apps.test import test_server
+from pulsar.apps.test import unittest, test_server
 from pulsar.utils import httpurl
 
 from examples.httpbin.manage import server
@@ -11,7 +10,7 @@ HTTPBIN_URL = 'http://' + BIN_HOST + '/'
 HTTPSBIN_URL = 'https://'+ BIN_HOST + '/'
 
 
-class TestHeaders(test.TestCase):
+class TestHeaders(unittest.TestCase):
     
     def testServerHeader(self):
         h = httpurl.Headers()
@@ -44,7 +43,7 @@ def httpsbin(*suffix):
     return HTTPSBIN_URL + '/'.join(suffix)
 
 
-class TestHttpClient(test.TestCase):
+class TestHttpClient(unittest.TestCase):
     HttpClient = httpurl.HttpClient
     
     @classmethod

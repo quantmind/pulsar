@@ -61,6 +61,16 @@ import sys
 import time
 import inspect
 
+if sys.version_info >= (2,7):
+    import unittest
+else:
+    try:
+        import unittest2 as unittest
+    except ImportError:
+        print('To run tests in python 2.6 you need to install\
+ the unittest2 package')
+        exit(0)
+
 import pulsar
 from pulsar.apps import tasks
 from pulsar.async.commands import pulsar_command

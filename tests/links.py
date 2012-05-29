@@ -2,14 +2,13 @@
 from time import sleep
 
 import pulsar
-from pulsar.apps.test import AsyncTestCaseMixin
-from pulsar.utils.test import test
+from pulsar.apps.test import unittest, AsyncTestCaseMixin
 
 def test_callable(a):
     return 'Hi from {0}'.format(a.aid)
 
 
-class TestActorLinks(test.TestCase, AsyncTestCaseMixin):
+class TestActorLinks(unittest.TestCase, AsyncTestCaseMixin):
     impl = 'thread'
     
     def testArbiterLink(self):

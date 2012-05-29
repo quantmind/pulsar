@@ -1,10 +1,10 @@
 '''Tests the wsgi middleware in pulsar.apps.wsgi'''
 from pulsar.utils.httpurl import range, zip
 from pulsar.apps import wsgi
-from pulsar.utils.test import test
+from pulsar.apps.test import unittest
 
 
-class wsgiTest(test.TestCase):
+class wsgiTest(unittest.TestCase):
     
     def testResponse200(self):
         r = wsgi.WsgiResponse(200)

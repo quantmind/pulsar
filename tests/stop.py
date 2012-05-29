@@ -4,11 +4,11 @@ import os
 import threading
 
 import pulsar
-from pulsar.utils.test import test, arbiter_test, halt_server,\
+from pulsar.apps.test import unittest, arbiter_test, halt_server,\
                                 create_test_arbiter
         
     
-class TestArbiter(test.TestCase):
+class TestArbiter(unittest.TestCase):
 
     @arbiter_test
     def testMockArbiter(self):

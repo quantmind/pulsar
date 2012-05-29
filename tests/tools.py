@@ -1,7 +1,7 @@
 '''Tests the tools and utilities in pulsar.utils.'''
 from pulsar import system
 from pulsar.utils.tools import checkarity
-from pulsar.utils.test import test
+from pulsar.apps.test import unittest
 
 
 __all__ = ['TestArityCheck']
@@ -18,7 +18,7 @@ def f2(a,**kwargs):
     pass
 
 
-class TestArityCheck(test.TestCase):
+class TestArityCheck(unittest.TestCase):
     
     def testArity0(self):
         self.assertEqual(checkarity(f0,(3,4),{}),None)
@@ -63,7 +63,7 @@ class TestArityCheck(test.TestCase):
         self.assertEqual(checkarity(f2,(),{'a':3,'c':5,'d':6}),None)
  
 
-class TestSystemInfo(test.TestCase):
+class TestSystemInfo(unittest.TestCase):
     
     def testMe(self):
         info = system.system_info(self.worker.pid)

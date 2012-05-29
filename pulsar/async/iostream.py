@@ -542,6 +542,12 @@ synchronous and asynchronous connections'''
             r = make_async()
         return r.add_callback(self.on_end_message, self.close)
     
+    def on_parsed_data(self, data):
+        '''Callback once the reading of a successful message
+has completed. For server connection this is the opportunity
+to send back data to the client.'''
+        return data
+    
     def on_end_message(self, result):
         '''Callback once the reading of a successful message
 has completed. For server connection this is the opportunity

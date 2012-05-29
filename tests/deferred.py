@@ -3,7 +3,7 @@ import sys
 
 from pulsar import AlreadyCalledError, Deferred, is_async,\
                      make_async, IOLoop, is_failure, MultiDeferred
-from pulsar.utils.test import test
+from pulsar.apps.test import unittest
 
 
 class Cbk(Deferred):
@@ -35,7 +35,7 @@ def async_pair():
     return d, c
     
     
-class TestDeferred(test.TestCase):
+class TestDeferred(unittest.TestCase):
     
     def testSimple(self):
         d = Deferred()
@@ -146,7 +146,7 @@ class TestDeferred(test.TestCase):
         pass
         
         
-class TestMultiDeferred(test.TestCase):
+class TestMultiDeferred(unittest.TestCase):
     
     def testSimple(self):
         d = MultiDeferred()

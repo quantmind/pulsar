@@ -5,107 +5,10 @@ from inspect import istraceback, isclass
 
 from pulsar import is_failure, CLEAR_ERRORS, make_async, safe_async, get_actor
 
+from .utils import AsyncAssert
 
-__all__ = ['TestRequest','run_test_function']
-   
-    
-class CallableTest(object):
-    
-    def __init__(self, test, class_method, funcname, istest):
-        self.class_method = class_method
-        self.istest = istest
-        self.test = test
-        self.funcname = funcname
-    
-    def __repr__(self):
-        return self.funcname
-    __str__ = __repr__
-    
-    def __call__(self, actor):
-        return safe_async(lambda: self._call(actor), max_errors=1)
-    
-    def _call(self, actor):
-        self.test = pickle.loads(self.test)
-        if actor.is_arbiter():
-            actor = actor.monitors['testsuite']
-        self.test.worker = actor
-        self.prepare()
-        return self.run()
-    
-    def prepare(self):
-        if self.istest:
-            test = self.test
-            runner = test.worker.app.runner
-            self.test = runner.getTest(test)
-            self.test.async = AsyncAssert(self.test)
-        self.test_function = getattr(self.test, self.funcname)
-    
-    def run(self):
-        return self.test_function()
-    
 
-class AsyncAssert(object):
-    __slots__ = ('test', 'name')
-    
-    def __init__(self, test, name=None):
-        self.test = test
-        self.name = name
-        
-    def __getattr__(self, name):
-        return AsyncAssert(self.test,name)
-    
-    def __call__(self, elem, *args):
-        return make_async(elem).add_callback(\
-                        lambda r : self._check_result(r,*args))
-    
-    def _check_result(self, result, *args):
-        func = getattr(self.test,self.name)
-        return func(result,*args)
-    
-    
-def run_test_function(test, func, istest=False):
-    '''This internal function is used by the test runner for running a *test*
-in an asynchronous way. It check if the test function *func* has the attribute
-*run_on_arbiter* set to ``True``, and if so the test is send to the arbiter.
-For example::
-
-    class mystest(unittest.TestCase):
-        
-        def testBla(self):
-            ...
-        testBla.run_on_arbiter = True
-
-:parameter test: Instance of a testcase
-:parameter func: function to test
-:parameter istest: boolean indicating if the function *func* is a test
-    case method.
-:rtype: a :class:`Deferred`
-'''
-    try:
-        if func is None:
-            return func
-        class_method = isclass(test)
-        if getattr(func, 'run_on_arbiter', False):
-            worker = test.worker
-            test.worker = None
-            try:
-                pcls = pickle.dumps(test)
-            except Exception as e:
-                result = e
-            else:
-                c = CallableTest(pcls, class_method, func.__name__, istest)
-                result = worker.arbiter.send(worker, 'run', c)
-            finally:
-                test.worker = worker
-        else:
-            c = CallableTest(test, class_method, func.__name__, istest)
-            c.prepare()
-            result = c.run()
-        name = test.__name__ if class_method else test.__class__.__name__
-        return make_async(result, max_errors=1, description='Test %s.%s' %\
-                           (name, func.__name__))
-    except Exception as e:
-        return make_async(e)
+__all__ = ['TestRequest']
 
 
 def run_test_function(test, func, istest=False):
@@ -116,7 +19,7 @@ def run_test_function(test, func, istest=False):
         worker = get_actor()
         runner = worker.app.runner
         test = runner.getTest(test)
-        test.async = AsyncAssert(test)
+        test.async = AsyncAssert()
     test.istest = istest
     test_function = getattr(test, func.__name__)
     name = test.__name__ if class_method else test.__class__.__name__
@@ -126,7 +29,7 @@ def run_test_function(test, func, istest=False):
 
 
 class TestRequest(object):
-    '''A class which wraps a test case class
+    '''A class which wraps a test case class and runs all its test functions
     
 .. attribute:: testcls
 
@@ -183,6 +86,9 @@ following algorithm:
                 if outcome is not None:
                     yield outcome
                     self.add_failure(test_cls, runner, outcome.result)
+            
+            # Clear errors
+            yield CLEAR_ERRORS
         
         # send runner result to monitor
         worker.send(worker.monitor, 'test_result', testcls.tag,
@@ -216,7 +122,7 @@ Run a *test* function using the following algorithm
                 success = not self.add_failure(test, runner, outcome.result)
             
             if success:
-                outcome = run_test_function(test,test.setUp)
+                outcome = run_test_function(test, test.setUp)
                 yield outcome
                 if not self.add_failure(test, runner, outcome.result):
                     # Here we perform the actual test

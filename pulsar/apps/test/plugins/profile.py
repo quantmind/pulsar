@@ -4,6 +4,7 @@ import shutil
 import tempfile
 import cProfile as profiler
 import pstats
+from datetime import datetime
 
 import pulsar
 from pulsar.apps import test
@@ -162,7 +163,7 @@ class Profile(test.Plugin):
             stats_str = stats.stream.getvalue()
             self.remove_dir(self.profile_temp_path)
             stats_str = stats_str.split('\n')
-            run_info = ''
+            run_info = 'Executed %s.' % datetime.now().isoformat()
             for n, line in enumerate(stats_str):
                 b = 0
                 while b < len(line) and line[b] == ' ':
@@ -177,7 +178,7 @@ class Profile(test.Plugin):
                     except:
                         continue
                     else:
-                        run_info = line
+                        run_info += ' ' + line
             data = ''.join(make_stat_table(data_stream(stats_str[n+1:], 100)))
             self.remove_dir(self.profile_stats_path, build=True)
             for file in os.listdir(template_path):

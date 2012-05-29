@@ -282,13 +282,9 @@ higher level tools for creating and reusing sockets already created.'''
     def close(self, log=None):
         if not self.closed:
             try:
+                self.sock.shutdown(socket.SHUT_RDWR)
                 self.sock.close()
-            except socket.error as e:
-                if log:
-                    log.info("Error while closing socket %s" % str(e))
-            try:
-                time.sleep(0.3)
-            except IOError:
+            except socket.error:
                 pass
             self.sock = None
         

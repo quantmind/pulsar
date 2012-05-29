@@ -44,7 +44,7 @@ class DefaultSettings:
         # Actors timeout
         self.TIMEOUT = 30
         # mailbox clients blocking
-        self.mailbox_timeout = None
+        self.mailbox_timeout = 3
     
 defaults = DefaultSettings()
 KNOWN_SETTINGS = {}

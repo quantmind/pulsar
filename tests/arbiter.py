@@ -3,7 +3,7 @@ import os
 from threading import current_thread
 import pulsar
 from pulsar import send, spawn
-from pulsar.utils.test import test
+from pulsar.apps.test import unittest
 
 
 class ActorA(pulsar.Actor):
@@ -21,7 +21,7 @@ it fires a message with the result to its monitor.'''
         self.monitor.send(self.aid,result)
         
 
-class TestArbiter(test.TestCase):
+class TestArbiter(unittest.TestCase):
     
     def testArbiter(self):
         worker = self.worker

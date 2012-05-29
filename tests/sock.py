@@ -1,8 +1,8 @@
 import pulsar
-from pulsar.utils.test import test
+from pulsar.apps.test import unittest
 
 
-class TestSockUtils(test.TestCase):
+class TestSockUtils(unittest.TestCase):
     
     def testClient(self):
         sock = pulsar.create_client_socket(('',8080))

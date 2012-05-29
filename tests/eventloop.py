@@ -2,10 +2,10 @@ import time
 from threading import current_thread
 
 import pulsar
-from pulsar.utils.test import test
+from pulsar.apps.test import unittest
 
 
-class TestEventLoop(test.TestCase):
+class TestEventLoop(unittest.TestCase):
     
     def testIOloop(self):
         ioloop = pulsar.thread_ioloop()
