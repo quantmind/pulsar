@@ -28,7 +28,8 @@ __all__ = ['Deferred',
            'multi_async',
            'ispy3k',
            'NOT_DONE',
-           'STOP_ON_FAILURE']
+           'STOP_ON_FAILURE',
+           'CLEAR_ERRORS']
 
 ispy3k = sys.version_info >= (3, 0)
 if ispy3k:
@@ -50,6 +51,9 @@ class NOT_DONE(object):
     pass
 
 class STOP_ON_FAILURE(object):
+    pass
+
+class CLEAR_ERRORS(object):
     pass
 
 EMPTY_DICT = {}
@@ -491,6 +495,9 @@ current thread.'''
                 if is_async(result):
                     self._current = result
                     return result.addBoth(self._consume_in_thread)
+            if result == CLEAR_ERRORS:
+                self.errors = Failure()
+                result = None
             # continue with the loop
             return self._consume(result)
     

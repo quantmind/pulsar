@@ -264,9 +264,7 @@ On error closes the socket and raises an exception."""
             pass
         else:
             try:
-                result = c.callback(result)
-                if is_failure(result):
-                    result.raise_all()
+                c.callback(result)
             except:
                 # Close the socket on an uncaught exception from a user callback
                 # (It would eventually get closed when the socket object is

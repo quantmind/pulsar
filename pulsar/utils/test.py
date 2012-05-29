@@ -42,20 +42,30 @@ def halt_server(exception=None):
 class ObjectMethod:
     
     def __init__(self, obj, method):
-        self.testcls = obj.__class__
+        if hasattr(obj,'async'):
+            delattr(obj,'async')
+        self.test = pickle.dumps(obj)
         self.istest = obj.istest
-        self.method = method.__name__
+        self.method = method
         
     def __call__(self, actor):
-        test = self.testcls(self.method)
-        return test()
+        test = pickle.loads(self.test)
+        if self.istest:
+            worker = actor.monitors['test']
+            test = worker.app.runner.getTest(test)
+        test_function = getattr(test, self.method)
+        return test_function()
     
 def run_on_arbiter(f):
-    def _(self):
+    name = f.__name__
+    def _(obj):
         actor = pulsar.get_actor()
-        callable = ObjectMethod(self, f)
-        return actor.send('arbiter', 'run', callable)
-    _.__name__ = f.__name__
+        if actor.is_arbiter():
+            return pulsar.safe_async(f, args=(obj,))
+        else:
+            callable = ObjectMethod(obj, name)
+            return actor.send('arbiter', 'run', callable)
+    _.__name__ = name
     _.__doc__ = f.__doc__
     return _
     

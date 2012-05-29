@@ -89,12 +89,12 @@ class TestTestWorker(test.TestCase):
         yield outcome
         self.assertEqual(outcome.result, 'pong')
         
-    #@run_on_arbiter
-    #def testSpawning(self):
-    #    arbiter = pulsar.get_actor()
-    #    self.assertEqual(arbiter.aid, 'arbiter')
-    #    self.assertEqual(len(arbiter.monitors), 1)
-    #    self.assertEqual(arbiter.monitors[0]._spawning, {})
+    @run_on_arbiter
+    def testSpawning(self):
+        arbiter = pulsar.get_actor()
+        self.assertEqual(arbiter.aid, 'arbiter')
+        self.assertEqual(len(arbiter.monitors), 1)
+        self.assertEqual(arbiter.monitors[0]._spawning, {})
 
 class TestPulsar(test.TestCase):
     

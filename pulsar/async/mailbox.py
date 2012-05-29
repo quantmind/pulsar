@@ -13,7 +13,7 @@ from pulsar.utils.tools import gen_unique_id
 from pulsar.utils.httpurl import to_bytes
 
 from .defer import make_async, safe_async, pickle, is_async,\
-                    async, is_failure, ispy3k, raise_failure
+                    async, is_failure, ispy3k, raise_failure, CLEAR_ERRORS
 from .iostream import AsyncIOStream, SimpleSocketServer,\
                         Connection, SocketClient
 
@@ -185,11 +185,10 @@ with a :class:`Mailbox`.'''
         if command.ack:
             # Send back the result as an ActorMessage
             if is_failure(result):
-                yield ActorMessage('errback', sender=receiver,
-                                   args=(str(result),))
+                yield CLEAR_ERRORS
+                yield ActorMessage('errback', sender=receiver, args=(result,))
             else:
-                yield ActorMessage('callback', sender=receiver,
-                                   args=(result,))
+                yield ActorMessage('callback', sender=receiver, args=(result,))
         else:
             # Yield empty data so nothing is returned to the client
             yield b''
