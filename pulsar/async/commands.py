@@ -110,11 +110,9 @@ def run_code(client, code):
 def mailbox_address(client, actor, caller, address):
     '''The remote *caller* register its mailbox ``address``.'''
     if address:
-        actor.log.debug('Registering %s inbox address %s', caller, address)
-        actor.link_actor(caller, address)
-        return actor.proxy
-    else:
-        raise CommandError('No address received')
+        actor.log.debug('Registering %s inbox address %s', caller, address)    
+    actor.link_actor(caller, address)
+    return actor.proxy
 
 @internal
 def run(client, actor, caller, callable):
@@ -135,8 +133,8 @@ def notify(client, actor, caller, info):
 @pulsar_command(internal=True, commands_set=arbiter_commands)
 def spawn(client, actor, caller, linked_actors=None, **kwargs):
     linked_actors = linked_actors if linked_actors is not None else {}
-    linked_actors[caller.aid] = caller.proxy
-    return self.spawn(linked_actors=linked_actors, **kwargs)
+    linked_actors[caller.aid] = caller
+    return actor.spawn(linked_actors=linked_actors, **kwargs)
      
 @pulsar_command(authenticated=True, commands_set=arbiter_commands)
 def kill_actor(client, actor, aid):

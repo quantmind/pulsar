@@ -17,7 +17,7 @@ from .proxy import ActorProxy, ActorMessage
 from .defer import make_async, is_failure, iteritems, itervalues,\
                      pickle, safe_async, async
 from .mailbox import IOQueue, mailbox
-from .access import set_local_data, is_mainthread
+from .access import set_local_data, is_mainthread, get_actor
 from . import commands
 
 
@@ -171,14 +171,13 @@ Here ``a`` is actually a reference to the remote actor.
             self.loglevel = impl.loglevel
         self._params = params or {}
         self._monitors = monitors or {}
-        actor_links = {}
-        #for a in itervalues(self._monitors):
-        #    self._linked_actors[a.aid] = a
         if not self.is_arbiter():
             if on_task:
                 self.on_task = on_task
             if on_event:
                 self.on_event = on_event
+        else:
+            ioqueue = None
         self.ioqueue = ioqueue
         self.on_init(**kwargs)
         if self.cfg is None:
@@ -546,18 +545,18 @@ if *proxy* is not a class:`ActorProxy` instance raise an exception.'''
         if address:
             proxy.address = address
         if not proxy.address:
-            raise valueError('Linking with a actor without address')
+            raise ValueError('Linking with a actor without address')
         self._linked_actors[proxy.aid] = proxy 
         if proxy.aid == self.arbiter.aid:
             self.requestloop.ready = True
-        if self.monitor == proxy:
+        # If the proxy is the actor monitor, add allso the arbiter
+        # if the monitor is not the arbiter itself.
+        # This last check is crucial in order to recursive call
+        # causing stack overflow!
+        if self.monitor == proxy and self.monitor != self.arbiter:
             self.link_actor(self.arbiter, address)
         return proxy
     
-    def spawn_failure(self, failure):
-        '''A problem occured while spawning a new actor. Log the error.'''
-        failure.log()
-        
     def _init_runner(self):
         '''Initialise the runner.'''
         if not self.isprocess():

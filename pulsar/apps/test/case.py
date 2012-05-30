@@ -5,7 +5,7 @@ from inspect import istraceback, isclass
 
 from pulsar import is_failure, CLEAR_ERRORS, make_async, safe_async, get_actor
 
-from .utils import AsyncAssert
+from .utils import inject_async_assert
 
 
 __all__ = ['TestRequest']
@@ -59,7 +59,7 @@ following algorithm:
         runner = worker.app.runner
         testcls = self.testcls
         testcls.tag = self.tag
-        testcls.async = AsyncAssert()
+        inject_async_assert(testcls)
         all_tests = runner.loadTestsFromTestCase(testcls)
         
         if all_tests.countTestCases():
@@ -163,6 +163,6 @@ Run a *test* function using the following algorithm
                     runner.addFailure(test, trace)
                 except:
                     runner.addError(test, trace)
-            return True
+                return True
         else:
             return False

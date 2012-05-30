@@ -53,12 +53,14 @@ def thread_ioloop(ioloop=None):
     '''Returns the :class:`IOLoop` on the current thread if available.'''
     return thread_local_data('ioloop', ioloop)
 
-def get_actor(actor=None):
+get_actor = lambda: thread_local_data('actor')
+
+def set_actor(actor):
     '''Returns the actor running the current thread.'''
-    a = thread_local_data('actor', value=actor)
-    if actor is not None and actor.impl == 'thread':
+    actor = thread_local_data('actor', value=actor)
+    if actor.impl == 'thread':
         process_local_data('thread_actors')[actor.aid] = actor
-    return a
+    return actor
 
 def get_actor_from_id(aid):
     '''Retrieve an actor from its actor id. This function can be used by
@@ -68,7 +70,7 @@ actors with thread concurrency ince they live in the arbiter process domain.'''
         return actors.get(aid)
 
 def set_local_data(actor):
-    get_actor(actor)
+    set_actor(actor)
     thread_loop(actor.requestloop)
     thread_ioloop(actor.ioloop)
     

@@ -7,7 +7,7 @@ from inspect import isgenerator, isfunction
 
 import pulsar
 from pulsar import Empty, make_async, safe_async, is_failure, HaltServer,\
-                     loop_deferred, ispy3k
+                     loop_timeout, ispy3k
 from pulsar.async.defer import pickle
 from pulsar.utils.importer import import_module
 from pulsar.utils.log import LogInformation
@@ -69,9 +69,8 @@ to the underlying :class:`Application`.'''
         # the request class may contain a timeout
         timeout = getattr(request, 'timeout', None)
         should_stop = self.max_requests and self.nr >= self.max_requests
-        d = safe_async(self._response_generator, args=(request, should_stop))
-        # if a timeout is available, we add the deferred to the requestloop
-        return loop_deferred(d, self.requestloop, timeout)
+        result = self._response_generator(request, should_stop)
+        return loop_timeout(result, timeout)
         
     def handle_task(self):
         if self.information.log():

@@ -479,7 +479,8 @@ current thread.'''
             self._consumed += 1
         except (KeyboardInterrupt, HaltServer):
             raise
-        except StopIteration:
+        except StopIteration as e:
+            # The generator has finished producing data
             return self.conclude(last_result)
         except Exception as e:
             if self.should_stop(e):
@@ -512,6 +513,7 @@ current thread.'''
         return self.max_errors and len(self.errors) >= self.max_errors
         
     def conclude(self, last_result=None):
+        # Conclude the generator and callback the listeners
         result = last_result if not self.errors else self.errors
         return self.callback(result)
     

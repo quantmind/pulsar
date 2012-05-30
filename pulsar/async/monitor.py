@@ -4,6 +4,7 @@ import time
 
 import pulsar
 
+from .proxy import ActorProxyDeferred
 from .actor import Actor
 from .concurrency import concurrency
 from .defer import async, iteritems, itervalues, range, NOT_DONE
@@ -151,15 +152,25 @@ as required."""
     
     def link_actor(self, proxy, address):
         # Override the link_actor from Actor class
-        proxy_monitor = self._spawning.pop(proxy.aid, None)
-        if proxy_monitor is not None:
-            # The actor was spawned by this pool and therefore it is managed by
-            # this pool
-            proxy = proxy_monitor
+        if proxy.aid not in self._spawning:
+            raise RuntimeError('Could not retrieve proxy %s.' % proxy)
+        proxy_monitor = self._spawning.pop(proxy.aid)
+        on_address = proxy_monitor.on_address
+        delattr(proxy_monitor,'on_address')
+        try:
+            if not address:
+                raise valueError('No address received')
+        except:
+            on_address.callback(sys.exc_info())
+        else:
+            proxy_monitor.address = address
             self.MANAGED_ACTORS[proxy.aid] = proxy_monitor
-        proxy.address = address
-        self._linked_actors[proxy.aid] = proxy
-        return proxy
+            self._linked_actors[proxy.aid] = proxy
+            if self.arbiter:
+                # link also the arbiter
+                self.arbiter._linked_actors[proxy.aid] = proxy
+            on_address.callback(proxy_monitor.proxy)
+        return proxy_monitor.proxy
     
     @async
     def close_actors(self):
@@ -200,7 +211,7 @@ as required."""
             actor_proxy.monitor = monitor
             monitor._spawning[actor_proxy.aid] = actor_proxy
             actor_proxy.start()
-            return actor_proxy.proxy
+            return ActorProxyDeferred(actor_proxy)
 
 
 class Monitor(PoolMixin, Actor):
@@ -348,12 +359,6 @@ Users shouldn't need to override this method, but use
         
     def proxy_mailbox(address):
         return self.arbiter.proxy_mailboxes.get(address)
-    
-    def link_actor(self, proxy, address):
-        proxy = super(Monitor, self).link_actor(proxy, address)
-        # Add the proxy to the linked_actors in the arbiter
-        self.arbiter._linked_actors[proxy.aid] = proxy
-        return proxy
         
     def get_actor(self, aid):
         '''Delegate get_actor to the arbiter'''

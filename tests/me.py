@@ -20,6 +20,7 @@ class TestTestWorker(unittest.TestCase):
         self.assertEqual(worker.tid, current_thread().ident)
         self.assertEqual(worker.pid, os.getpid())
         self.assertTrue(worker.cpubound)
+        self.assertTrue(worker._impl.daemon)
         
     def testWorkerMonitor(self):
         worker = pulsar.get_actor()

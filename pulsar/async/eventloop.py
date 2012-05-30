@@ -1,4 +1,5 @@
 import os
+import sys
 import logging
 import traceback
 import time
@@ -17,7 +18,7 @@ from pulsar.utils.structures import WeakList
 from .defer import Deferred, is_async, maybe_async, thread_loop, make_async,\
                     log_failure
 
-__all__ = ['IOLoop', 'loop_deferred']
+__all__ = ['IOLoop', 'PeriodicCallback', 'loop_timeout']
 
 EXIT_EXCEPTIONS = (KeyboardInterrupt, SystemExit, HaltServer)
 
@@ -83,6 +84,7 @@ class LoopGuard(object):
         loop._running = False
         loop._tid = None
         loop._stopped = True
+        loop.log.debug('Exiting event loop')
         loop._on_exit.callback(loop)
         
         
@@ -360,7 +362,6 @@ will make the loop stop after the current event iteration completes."""
     
                 # A chance to exit
                 if not self.running():
-                    self.log.debug('Exiting event loop')
                     break
     
                 self.do_loop_tasks()
@@ -483,43 +484,24 @@ class PeriodicCallback(object):
             self.start()
 
 
-class LoopDeferred(object):
-    '''A class for tracking uncalled :class:`Deferred`. INstances should be
-initialised via the :func:`loop_deferred` function.'''
-    def __init__(self, value, ioloop=None, timeout=None):
-        self._value = value
-        self._ioloop = ioloop or thread_loop()
-        self._timeout = timeout
-        self._start = None
-        self.count = 0
+class _not_called_exception:
     
-    @property
-    def value(self):
-        return self._value
-    
-    def __call__(self):
-        self.count += 1
-        result = self._value.result_or_self()
-        if not is_async(result):
-            log_failure(result)
-        else:
-            if self._timeout:
-                now = time.time()
-                if not self._start:
-                    self._start = now
-                try:
-                    if now - self._start > self._timeout:
-                        raise Timeout('"%s" not called.' % self._value,\
-                                      self._timeout)
-                except Exception as e:
-                    self._value.callback(e)
-            self._ioloop.add_callback(self)
-        return self
+    def __init__(self, value):
+        self.value = value
         
-
-def loop_deferred(value, ioloop=None, timeout=None):
+    def __call__(self):
+        result = self.value.result_or_self()
+        if not result.called:
+            try:
+                raise Timeout('"%s" timed out.' % result)
+            except:
+                result.callback(sys.exc_info())
+        
+def loop_timeout(value, timeout, ioloop=None):
     value = maybe_async(value)
     if timeout and is_async(value):
-        return LoopDeferred(value, ioloop, timeout)()
+        ioloop = ioloop or thread_loop()
+        ioloop.add_timeout(time.time() + timeout, not_called_exception(value))
+    return value
     
     

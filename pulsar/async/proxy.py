@@ -68,10 +68,17 @@ functional.
     The the remote :attr:`Actor` id
      
 '''
-    def __init__(self, aid, msg):
+    def __init__(self, aid, msg=None):
         super(ActorProxyDeferred,self).__init__()
-        self.aid = aid
-        msg.add_callback(self.callback)
+        if msg is None:
+            # In this case aid is an instance of an ActorProxyMonitor
+            proxy = aid
+            self.aid = proxy.aid
+            proxy.on_address = self
+        else:
+            self.aid = aid
+            # simply listent for the calbacks and errorbacks
+            msg.addBoth(self.callback)
     
     def __str__(self):
         return '{0}({1})'.format(self.__class__,self.aid)
@@ -156,6 +163,8 @@ not available, we get the receiver ``inbox`` and hope it can carry the message.
 If there is no inbox either, abort the message passing and log a critical error.
 '''
         mailbox = self.mailbox
+        if sender is None:
+            sender = get_actor()
         if not mailbox:
             sender.log.critical('Cannot send a message to {0}. No\
  mailbox available.'.format(self))
@@ -187,7 +196,7 @@ object including, aid (actor id), timeout and mailbox size.'''
                 'timeout':self.timeout,
                 'mailbox_size':self.mailbox.qsize()}
         
-    def stop(self,sender):
+    def stop(self, sender=None):
         '''Stop the remote :class:`Actor`'''
         self.receive_from(sender, 'stop')
         

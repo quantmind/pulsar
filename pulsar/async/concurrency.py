@@ -68,6 +68,7 @@ and are shared between the :class:`Actor` and its
     def get_actor(self, monitor):
         '''Called at initialization, it set up communication layers for the
 actor. In particular here is where the outbox handler is created.'''
+        self.daemon = True
         if monitor.is_arbiter():
             arbiter = monitor
         else:
@@ -81,6 +82,7 @@ class MonitorConcurrency(Concurrency):
     '''An actor implementation for Monitors. Monitors live in the main process
 loop and therefore do not require an inbox.'''        
     def get_actor(self, arbiter):
+        # Override get_actor
         self.a_kwargs['arbiter'] = arbiter
         self.timeout = 0
         return self.actor_class(self, **self.a_kwargs)
@@ -97,7 +99,7 @@ loop and therefore do not require an inbox.'''
 
 
 class ActorConcurrency(Concurrency):
-    
+
     def run(self):
         actor = self.actor_class(self, **self.a_kwargs)
         actor.start()

@@ -1,4 +1,5 @@
 import sys
+from inspect import isclass
 
 import pulsar
 from pulsar.async import commands
@@ -51,15 +52,23 @@ def halt_server(exception=None):
     raise exception
     
 def run_on_arbiter(f):
-    '''Decorator for running a test function in the arbiter domain'''
+    '''Decorator for running a test function in the arbiter domain. This
+can be usefull to test Arbiter mechanics.'''
     name = f.__name__
     def _(obj):
         actor = pulsar.get_actor()
         if actor.is_arbiter():
+            # In the arbiter, simply execute the function
+            # First inject the AsyncAssert instance
+            inject_async_assert(obj)
             return pulsar.safe_async(f, args=(obj,))
         else:
+            # send the test case to the arbiter.
+            # At some point we will get a result or an error back in
+            # the test worker arbiter inbox.
             callable = ObjectMethod(obj, name)
-            return actor.send('arbiter', 'run', callable)
+            msg = actor.send('arbiter', 'run', callable)
+            return msg
     _.__name__ = name
     _.__doc__ = f.__doc__
     return _
@@ -129,23 +138,42 @@ class AsyncAssert(object):
             
 
 class ActorTestMixin(object):
-    '''A mixin to use with :class:`unittest.TestCase` classes.'''
+    '''A mixin for testing spawning of actors. Make sure this
+is the first class you derive from, before the unittest.TestCase, so that
+the tearDown method is overwritten.'''
     concurrency = 'thread'
     a = None
+    
+    @property
+    def all_spawned(self):
+        if not hasattr(self, '_spawned'):
+            self._spawned = []
+        return self._spawned
+        
     def spawn(self, concurrency=None, **kwargs):
         concurrency = concurrency or self.concurrency
         ad = pulsar.spawn(concurrency=concurrency,**kwargs)
         self.assertTrue(ad.aid)
         self.assertTrue(isinstance(ad, pulsar.ActorProxyDeferred))
         yield ad
-        a = ad.result
-        self.a = a
-        self.assertEqual(a.aid, ad.aid)
+        self.a = ad.result
+        self.all_spawned.append(self.a)
+        self.assertEqual(self.a.aid, ad.aid)
+        self.assertTrue(self.a.address)
     
-    def tearDown(self):
-        if self.a:
-            yield self.a.stop()
+    def stop_actors(self, *args):
+        all = args or self.all_spawned
+        if len(all) == 1:
+            return all[0].stop()
+        elif all:
+            return MultiDeferred((a.stop() for a in all)).lock()
             
+    def tearDown(self):
+        return self.stop_actors()
         
-
+        
+def inject_async_assert(obj):
+    tcls = obj if isclass(obj) else obj.__class__
+    if not hasattr(tcls,'async'):
+        tcls.async = AsyncAssert()
 

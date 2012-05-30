@@ -14,7 +14,7 @@ from pulsar import create_socket, server_socket, create_client_socket,\
 
 from .defer import Deferred, is_async, is_failure, async, make_async,\
                         safe_async, log_failure
-from .eventloop import IOLoop, loop_deferred
+from .eventloop import IOLoop, loop_timeout
 from .access import PulsarThread, thread_ioloop
 
 iologger = logging.getLogger('pulsar.iostream')
@@ -684,7 +684,7 @@ class Connection(ClientSocket):
     # Internal
     @async
     def _stream_data(self, data=None):
-        # get new data
+        # Data streaming
         buffer = self.buffer
         if data:
             buffer.extend(data)
@@ -732,7 +732,8 @@ servers using a socket in pulsar.
     
 .. attribute:: onthread
 
-    If ``True`` the server loop is on e separate thread of execution.
+    If ``True`` the server has its own :class:`IOLoop` running on a separate
+    thread of execution. Otherwise it shares the :attr:`actor.requestloop`
     
 .. attribute:: parsercls
 

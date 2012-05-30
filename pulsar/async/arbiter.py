@@ -2,7 +2,7 @@ from time import time
 import os
 import sys
 import signal
-from multiprocessing import current_process, Lock
+from multiprocessing import current_process
 from multiprocessing.queues import Empty
 
 import pulsar
@@ -14,7 +14,7 @@ from .defer import itervalues, iteritems, multi_async
 from .actor import Actor, send
 from .monitor import PoolMixin
 from .proxy import ActorCallBacks, ActorProxyDeferred
-from .access import get_actor
+from .access import get_actor, set_actor
 from . import commands
 
 try:    #pragma nocover
@@ -33,7 +33,7 @@ def arbiter(daemonize=False):
     '''Obtain the arbiter instance.'''
     arbiter = get_actor()
     if arbiter is None:
-        return get_actor(Arbiter.make(daemonize=daemonize))
+        return set_actor(Arbiter.make(daemonize=daemonize))
     elif isinstance(arbiter, Actor):
         if arbiter.is_arbiter():
             return arbiter
@@ -70,17 +70,15 @@ A typical usage::
     # We send a message to the Arbiter to spawn a new Actor
     if not isinstance(actor, Arbiter):
         msg = send('arbiter', 'spawn', **kwargs)\
-                        .add_callback(actor.link_actor,
-                                      actor.spawn_failure)
+                        .add_callback(actor.link_actor)
+        return ActorProxyDeferred(aid, msg)
     else:
-        msg = actor.spawn(**kwargs)
-    return ActorProxyDeferred(aid, msg)
+        return actor.spawn(**kwargs)
 
 
 class Arbiter(PoolMixin, Actor):
-    '''The Arbiter is a very special :class:`Actor`. It is used as
-singletone in the main process and it manages one or more
-:class:`Monitor`.  
+    '''The Arbiter is a special :class:`Monitor`. It is used as singletone
+in the main process and it manages one or more :class:`Monitor`.  
 It runs the main :class:`IOLoop` of your concurrent application.
 It is the equivalent of the gunicorn_ arbiter, the twisted_ reactor
 and the tornado_ eventloop.
@@ -101,17 +99,15 @@ Users access the arbiter by the high level api::
                     signal.SIGTERM,
                     signal.SIGABRT,
                     system.SIGQUIT)
-    lock = Lock()
     
     ############################################################################
     # ARBITER HIGH LEVEL API
     ############################################################################
-    
     def is_arbiter(self):
         return True
     
     def add_monitor(self, monitor_class, monitor_name, **kwargs):
-        '''Add a new :class:`pulsar.Monitor` to the arbiter.
+        '''Add a new :class:`Monitor` to the :class:`Arbiter`.
 
 :parameter monitor_class: a :class:`pulsar.Monitor` class.
 :parameter monitor_name: a unique name for the monitor.

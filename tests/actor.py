@@ -9,7 +9,7 @@ def sleepfunc():
     sleep(2)
     
 
-class TestActorThread(unittest.TestCase, ActorTestMixin):
+class TestActorThread(ActorTestMixin, unittest.TestCase):
     concurrency = 'thread'
     
     @run_on_arbiter
@@ -17,6 +17,30 @@ class TestActorThread(unittest.TestCase, ActorTestMixin):
         '''Test start and stop for a standard actor on the arbiter domain.'''
         yield self.spawn()
         proxy = self.a
+        arbiter = pulsar.get_actor()
+        proxy_monitor = arbiter.get_actor(proxy.aid)
+        self.assertEqual(proxy_monitor.aid, proxy.aid)
+        self.assertEqual(proxy_monitor.address, proxy.address)
+        yield self.async.assertEqual(arbiter.send(proxy, 'ping'), 'pong')
+        yield self.async.assertEqual(arbiter.send(proxy, 'echo', 'Hello!'),
+                                     'Hello!')
+        # We call the ActorTestMixin.stop_actors method here, since the
+        # ActorTestMixin.tearDown method is invoked on the test-worker domain
+        # (here we are in the arbiter domain)
+        yield self.stop_actors(self.a)
+        # lets join the
+        proxy_monitor.join(0.5)
+        self.assertFalse(proxy_monitor.is_alive())
+        
+    def testActorSpawn(self):
+        '''Test spawning from actor domain.'''
+        yield self.spawn()
+        proxy = self.a
+        actor = pulsar.get_actor()
+        self.assertEqual(actor.get_actor(proxy.aid), proxy)
+        yield self.async.assertEqual(actor.send(proxy, 'ping'), 'pong')
+        yield self.async.assertEqual(actor.send(proxy, 'echo', 'Hello!'),
+                                     'Hello!')
         
     def __testStartStopQueue(self):
         '''Test start and stop for an actor using a I/O queue'''
@@ -30,16 +54,6 @@ class TestActorThread(unittest.TestCase, ActorTestMixin):
         outcome = a.send(arbiter, 'ping')
         yield outcome
         self.assertEqual(outcome.result,'pong')
-        yield self.stop()
-    
-    def __testPing(self):
-        arbiter = pulsar.arbiter()
-        yield self.spawn(impl = self.impl)
-        outcome = self.a.send(arbiter, 'ping')
-        yield outcome
-        self.assertEqual(outcome.result,'pong')
-        self.assertFalse(outcome.rid in pulsar.ActorMessage.MESSAGES)
-        yield self.async.assertEqual(self.a.send(arbiter,'ping'), 'pong')
         yield self.stop()
         
     def __testSpawnStopFromActor(self):
