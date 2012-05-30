@@ -99,7 +99,7 @@ class RpcRequest(object):
     
 
 class RpcResponse(WsgiResponse):
-        
+    
     def critical(self, request, id, e):
         msg = 'Unhandled server exception %s: %s' % (e.__class__.__name__,e)
         self.handler.log.critical(msg,exc_info=sys.exc_info)
@@ -120,7 +120,7 @@ class RpcResponse(WsgiResponse):
             yield b''
         result = result.result
         try:
-            if isinstance(result,Failure):
+            if isinstance(result, Failure):
                 result.log()
                 result = handler.dumps(request.id,
                                        request.version,
@@ -204,6 +204,7 @@ separated with a dot. Override :attr:`separator` to change this.
     '''Separator between subhandlers.'''
     content_type = 'text/plain'
     '''Default content type. Default: ``"text/plain"``.'''
+    _info_exceptions = (Fault,)
 
     def __init__(self, subhandlers = None,
                  title = None,
@@ -232,6 +233,10 @@ is the root handler.'''
 is the root handler.'''
         return self._parent.root if self._parent is not None else self
     
+    @property
+    def info_exceptions(self):
+        return self.root._info_exceptions
+    
     def isroot(self):
         '''``True`` if this is the root handler.'''
         return self._parent == None
@@ -247,7 +252,7 @@ for ``method``, ``kwargs`` are keyworded parameters for ``method``,
 ``id`` is an identifier for the client,
 ``version`` is the version of the RPC protocol.
     '''
-        raise NotImplementedError
+        raise NotImplementedError()
     
     def __getattr__(self, name):
         if name in self.rpcfunctions:

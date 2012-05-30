@@ -15,7 +15,7 @@ class TestActorThread(test.TestCase, AsyncTestCaseMixin):
         
     def testStartStop(self):
         '''Test start and stop for a standard actor on the arbiter domain.'''
-        yield self.spawn(impl = self.impl)
+        yield self.spawn(impl=self.impl)
         a = self.a
         self.assertTrue(isinstance(a, pulsar.ActorProxy))
         #self.assertTrue(a.is_alive())

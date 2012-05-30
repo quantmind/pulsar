@@ -41,8 +41,7 @@ from . import middleware
 
 
 class WSGIApplication(pulsar.Application):
-    '''A WSGI application running on pulsar concurrent framework.
-It can be configured to run as a multiprocess or a multithreaded server.'''
+    '''A WSGI server running on pulsar concurrent framework.'''
     app = 'wsgi'
     _name = 'wsgi'
     

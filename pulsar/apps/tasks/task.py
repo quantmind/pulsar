@@ -76,9 +76,12 @@ and optional logging.
     def __exit__(self, type, value, trace):
         result = value
         if type:
-            self.job.logger.critical(
+            if type != TaskTimeout:
+                self.job.logger.critical(
                         'Critical while processing task {0}'.format(self.task),
                         exc_info = (type, value, trace))
+            else:
+                self.job.logger.info('"%s" task timed out' % self.task)
             result = as_failure((type, value, trace))
         if self.handler is not None:
             self.job.logger.removeHandler(self.handler)

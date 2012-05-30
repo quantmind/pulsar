@@ -11,6 +11,7 @@ class TestTest(test.TestCase):
     def testWorker(self):
         worker = self.worker
         self.assertTrue(worker.running())
+        self.assertEqual(worker.state, 'running')
         self.assertEqual(worker.tid,threading.current_thread().ident)
         if worker.isprocess():
             self.assertEqual(worker.pid,os.getpid())

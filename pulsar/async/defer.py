@@ -129,7 +129,7 @@ class Failure(object):
         else:
             return (None,None,None)
                 
-    def log(self, log = None):
+    def log(self, log=None):
         log = log or logger
         for e in self:
             log.critical('', exc_info = e)
@@ -559,7 +559,7 @@ generator.'''
                             continue
                     # the deferred is not ready.
                     return d.add_callback(self._resume)\
-                                .start(self._ioloop, self._timeout)
+                                .start(self._ioloop)
         
         if consume:
             if self._errors:

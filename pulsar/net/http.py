@@ -296,7 +296,8 @@ speaking HTTP/1.1 or newer and there was no Content-Length header set.'''
         self.__should_keep_alive = False
     
     def start_response(self, status, response_headers, exc_info=None):
-        '''WSGI compliant ``start_response`` callable, see pep3333_.
+        '''WSGI compliant ``start_response`` callable used by
+WSGI applications, see pep3333_.
         
 :parameter status: an HTTP "status" string like "200 OK" or "404 Not Found".
 :parameter response_headers: a list of ``(header_name, header_value)`` tuples.
@@ -340,7 +341,7 @@ speaking HTTP/1.1 or newer and there was no Content-Length header set.'''
         '''WSGI write function returned by the
 :meth:`HttpResponse.start_response` function.
 
-New WSGI applications and frameworks should not use this callable
+New WSGI applications and frameworks should not use this callable directly
 if it is possible to avoid doing so.
 In general, applications should produce their output via their returned
 iterable, as this makes it possible for web servers to interleave other
