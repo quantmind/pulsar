@@ -175,26 +175,16 @@ class ActorProxyMonitor(ActorProxy):
     '''A specialised :class:`ActorProxy` class which contains additional
 information about the remote underlying :class:`pulsar.Actor`. Unlike the
 :class:`pulsar.ActorProxy` class, instances of this class are not pickable and
-therefore remain in :class:`Arbiter` domain, which is the
+therefore remain in the :class:`Arbiter` process domain, which is the
 process where they have been created.
 
 .. attribute:: impl
 
-    Instance of the remote actor :class:`ActorImpl`
+    The :class:`Concurrency` instance for the remote :class:`Actor`.
     
 .. attribute:: info
 
-    Dictionary of information regarding the remote actor
-    
-.. attribute:: on_address
-
-    A :class:`Deferred` called back when the mailbox address is ready.
-    You can use this funvtion in the following way::
-    
-        import pulsar
-        
-        a = pulsar.spawn()
-        a.on_address.add_callback(...)
+    Dictionary of information regarding the remote :class:`Actor`
 '''
     monitor = None
     def __init__(self, impl):
@@ -224,8 +214,10 @@ process where they have been created.
         self.impl.terminate()
     
     def join(self, timeout=None):
-        '''Wait until the underlying actor terminates'''
+        '''Wait until the underlying actor terminates. If *timeout* is
+provided, it raises an exception if the timeout is reached.'''
         self.impl.join(timeout=timeout)
 
     def start(self):
+        '''Start the remote actor.'''
         self.impl.start()
