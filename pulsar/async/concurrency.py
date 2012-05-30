@@ -15,18 +15,24 @@ __all__ = ['Concurrency', 'concurrency']
 
 
 def concurrency(kind, actor_class, timeout, monitor, aid, commands_set, params):
-    '''Function invoked by the :class:`Arbiter` when spawning a new
-:class:`Actor`.'''
+    '''Function invoked by the :class:`Arbiter` or a :class:`Monitor` when
+spawning a new :class:`Actor`. It created a :class:`Concurrency` instance
+which handle the contruction and the lif of an :class:`Actor`.
+
+:paramater kind: Type of concurrency
+:paramater monitor: The monitor (or arbiter) managing the :class:`Actor`.
+:rtype: a :class:`Councurrency` instance
+'''
     if kind == 'monitor':
-        cls = MonitorConcurrency()
+        c = MonitorConcurrency()
     elif kind == 'thread':
-        cls = ActorThread()
+        c = ActorThread()
     elif kind == 'process':
-        cls = ActorProcess()
+        c = ActorProcess()
     else:
         raise ValueError('Concurrency %s not supported by pulsar' % kind)
-    return cls.make(kind, actor_class, timeout, monitor,
-                    aid, commands_set, params)
+    return c.make(kind, actor_class, timeout, monitor,
+                  aid, commands_set, params)
     
     
 class Concurrency(object):
