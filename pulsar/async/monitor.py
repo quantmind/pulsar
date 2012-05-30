@@ -8,7 +8,6 @@ from .proxy import ActorProxyDeferred
 from .actor import Actor
 from .concurrency import concurrency
 from .defer import async, iteritems, itervalues, range, NOT_DONE
-from .proxy import ActorCallBacks
 from .mailbox import Queue, mailbox
 from . import commands
 
@@ -327,22 +326,10 @@ Users shouldn't need to override this method, but use
         else:
             return actor.proxy.stop()
         
-    def info(self, full=False):
-        if full:
-            requests = []
-            proxy = self.proxy
-            for w in itervalues(self.MANAGED_ACTORS):
-                requests.append(proxy.info(w))
-            return ActorCallBacks(self,requests).add_callback(self._info)
-        else:
-            return self._info()
-        
-    def _info(self, result = None):
-        if not result:
-            result = [a.local_info() for a in self.MANAGED_ACTORS.values()] 
+    def info(self, full=False): 
         tq = self.ioqueue
         data = {'actor_class':self.actor_class.code(),
-                'workers': result,
+                'workers': [a.info for a in itervalues(self.MANAGED_ACTORS)],
                 'num_actors':len(self.MANAGED_ACTORS),
                 'concurrency':self.cfg.concurrency,
                 'listen':str(self.socket),

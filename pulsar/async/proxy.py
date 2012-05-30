@@ -13,8 +13,7 @@ __all__ = ['ActorMessage',
            'ActorProxyDeferred',
            'ActorProxy',
            'ActorProxyMonitor',
-           'get_proxy',
-           'ActorCallBacks']
+           'get_proxy']
 
 def get_proxy(obj, safe = False):
     if isinstance(obj,ActorProxy):
@@ -27,35 +26,6 @@ def get_proxy(obj, safe = False):
         else:
             raise ValueError('"{0}" is not an actor or actor proxy.'\
                              .format(obj))
-
-
-class ActorCallBacks(Deferred):
-    
-    def __init__(self, actor, requests):
-        super(ActorCallBacks,self).__init__()
-        self.actor = actor
-        self.requests = []
-        self._tmp_results = []
-        for r in requests:
-            if is_async(r):
-                self.requests.append(r)
-            else:
-                self._tmp_results.append(r)
-        actor.ioloop.add_callback(self)
-        
-    def __call__(self):
-        if self.requests:
-            nr = []
-            for r in self.requests:
-                if r.called:
-                    self._tmp_results.append(r.result)
-                else:
-                    nr.append(r)
-            self.requests = nr
-        if self.requests:
-            self.actor.ioloop.add_callback(self)
-        else:
-            self.callback(self._tmp_results)
             
             
 class ActorProxyDeferred(Deferred):
@@ -256,12 +226,6 @@ process where they have been created.
     def join(self, timeout=None):
         '''Wait until the underlying actor terminates'''
         self.impl.join(timeout=timeout)
-        
-    def local_info(self):
-        '''Return a dictionary containing information about the remote
-object including, aid (actor id), timeout mailbox size, last notified time and
-process id.'''
-        return self.info
 
     def start(self):
         self.impl.start()

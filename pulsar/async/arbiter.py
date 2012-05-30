@@ -13,7 +13,7 @@ from pulsar import HaltServer
 from .defer import itervalues, iteritems, multi_async
 from .actor import Actor, send
 from .monitor import PoolMixin
-from .proxy import ActorCallBacks, ActorProxyDeferred
+from .proxy import ActorProxyDeferred
 from .access import get_actor, set_actor
 from . import commands
 
@@ -147,13 +147,19 @@ Users access the arbiter by the high level api::
         for pool in list(itervalues(self._monitors)):
             yield pool.stop()
             
-    def info(self, full=False):
+    def info(self, full=True):
         if not self.started():
             return
-        pools = []
-        for p in itervalues(self.monitors):
-            pools.append(p.info(full))
-        return ActorCallBacks(self,pools).add_callback(self._info)
+        server = super(Arbiter,self).info()
+        monitors = [p.info(full) for p in itervalues(self.monitors)]
+        server.update({
+            'version':pulsar.__version__,
+            'name':pulsar.SERVER_NAME,
+            'number_of_monitors':len(self._monitors),
+            'number_of_actors':len(self.MANAGED_ACTORS),
+            'workers': [a.info for a in itervalues(self.MANAGED_ACTORS)]})
+        return {'server':server,
+                'monitors':result}
     
     def configure_logging(self, config = None):
         if self._monitors:
@@ -280,15 +286,6 @@ the timeout. Stop the arbiter.'''
     def _close_message_queue(self):   
         return
     
-    def _info(self, result):
-        server = super(Arbiter,self).info()
-        server.update({'version':pulsar.__version__,
-                       'name':pulsar.SERVER_NAME,
-                       'number_of_monitors':len(self._monitors),
-                       'number_of_actors':len(self.MANAGED_ACTORS)})
-        return {'server':server,
-                'monitors':result}
-
     def _arbiter_task(self):
         '''Called by the Event loop to perform the signal handling from the
 signal queue'''
