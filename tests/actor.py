@@ -2,25 +2,23 @@
 from time import sleep
 
 import pulsar
-from pulsar.apps.test import unittest, AsyncTestCaseMixin
+from pulsar.apps.test import unittest, ActorTestMixin, run_on_arbiter
 
 
 def sleepfunc():
     sleep(2)
     
 
-class TestActorThread(unittest.TestCase, AsyncTestCaseMixin):
-    impl = 'thread'
-        
-    def testStartStop(self):
+class TestActorThread(unittest.TestCase, ActorTestMixin):
+    concurrency = 'thread'
+    
+    @run_on_arbiter
+    def testSimpleSpawn(self):
         '''Test start and stop for a standard actor on the arbiter domain.'''
-        yield self.spawn(impl = self.impl)
-        a = self.a
-        self.assertTrue(isinstance(a, pulsar.ActorProxy))
-        yield self.stop()
-    testStartStop.run_on_arbiter = True
+        yield self.spawn()
+        proxy = self.a
         
-    def testStartStopQueue(self):
+    def __testStartStopQueue(self):
         '''Test start and stop for an actor using a I/O queue'''
         arbiter = pulsar.arbiter()
         ioqueue = pulsar.Queue()
@@ -33,9 +31,8 @@ class TestActorThread(unittest.TestCase, AsyncTestCaseMixin):
         yield outcome
         self.assertEqual(outcome.result,'pong')
         yield self.stop()
-    testStartStopQueue.run_on_arbiter = True
     
-    def testPing(self):
+    def __testPing(self):
         arbiter = pulsar.arbiter()
         yield self.spawn(impl = self.impl)
         outcome = self.a.send(arbiter, 'ping')
@@ -44,9 +41,8 @@ class TestActorThread(unittest.TestCase, AsyncTestCaseMixin):
         self.assertFalse(outcome.rid in pulsar.ActorMessage.MESSAGES)
         yield self.async.assertEqual(self.a.send(arbiter,'ping'), 'pong')
         yield self.stop()
-    testPing.run_on_arbiter = True
         
-    def testSpawnStopFromActor(self):
+    def __testSpawnStopFromActor(self):
         '''Test the global spawn method from an actor domain other than the
 arbiter'''
         outcome = pulsar.spawn(impl = self.impl)
@@ -90,6 +86,6 @@ arbiter'''
         self.assertFalse(a.aid in self.arbiter.LIVE_ACTORS)
         
 
-class TestActorProcess(TestActorThread):
-    impl = 'process'        
+#class TestActorProcess(TestActorThread):
+#    impl = 'process'        
 

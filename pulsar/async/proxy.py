@@ -16,7 +16,6 @@ __all__ = ['ActorMessage',
            'get_proxy',
            'ActorCallBacks']
 
-
 def get_proxy(obj, safe = False):
     if isinstance(obj,ActorProxy):
         return obj

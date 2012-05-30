@@ -45,19 +45,9 @@ class TestArbiter(unittest.TestCase):
         self.assertEqual(arbiter.impl, 'monitor')
         self.assertTrue(arbiter.monitors)
         self.assertEqual(arbiter.ioloop, arbiter.requestloop)
+        self.assertFalse(arbiter.cpubound)
         
-    def __testArbiterMessage(self):
-        tid = current_thread().ident
-        self.assertEqual(tid, self.worker.tid)
-        msg = send('arbiter', 'ping')
-        yield msg
-        self.assertEqual(tid, current_thread().ident)
-        self.assertEqual(msg.result, 'pong')
-        msg = send('arbiter', 'ping')
-        yield msg
-        self.assertEqual(msg.result, 'pong')
-        
-        
+
 class TestMonitor(object):
     
     def get_monitor(self,impl,name,actor=None):

@@ -9,7 +9,7 @@ __all__ = ['create_test_arbiter',
            'run_on_arbiter',
            'halt_server',
            'arbiter_test',
-           'AsyncTestCaseMixin',
+           'ActorTestMixin',
            'AsyncAssert',
            'test_server']
 
@@ -128,17 +128,13 @@ class AsyncAssert(object):
         return (self.__class__,())
             
 
-class AsyncTestCaseMixin(object):
+class ActorTestMixin(object):
     '''A mixin to use with :class:`unittest.TestCase` classes.'''
+    concurrency = 'thread'
     a = None
-    def spawn(self, **kwargs):
-        '''Spawn an actor and store its proxy in the as "a" attribute.
-To use, do a yeild::
-
-    yield self.start()
-    
-'''
-        ad = pulsar.spawn(**kwargs)
+    def spawn(self, concurrency=None, **kwargs):
+        concurrency = concurrency or self.concurrency
+        ad = pulsar.spawn(concurrency=concurrency,**kwargs)
         self.assertTrue(ad.aid)
         self.assertTrue(isinstance(ad, pulsar.ActorProxyDeferred))
         yield ad
@@ -146,16 +142,10 @@ To use, do a yeild::
         self.a = a
         self.assertEqual(a.aid, ad.aid)
     
-    def stop(self):
-        '''Stop the an actor and check if successful.'''
+    def tearDown(self):
         if self.a:
-            arbiter = pulsar.arbiter()
-            a = self.a
-            yield a.send(arbiter,'stop')
-            while a.aid in arbiter.MANAGED_ACTORS:
-                yield pulsar.NOT_DONE
-            #self.assertFalse(a.is_alive())
-            self.assertFalse(a.aid in arbiter.MANAGED_ACTORS)
+            yield self.a.stop()
+            
         
 
 

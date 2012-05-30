@@ -8,7 +8,7 @@ from pulsar.utils.tools import gen_unique_id
 from .iostream import AsyncIOStream
 from .proxy import ActorProxyMonitor
 from .defer import pickle
-from .access import get_actor
+from .access import get_actor, get_actor_from_id
 
 
 __all__ = ['Concurrency', 'concurrency']
@@ -111,9 +111,9 @@ class ActorProcess(ActorConcurrency, Process):
 class ActorThread(ActorConcurrency, Thread):
     '''Actor on a thread'''
     def terminate(self):
-        result = get_actor().stop(force=True)
-        while result.called:
-            time.sleep(0.1)
+        '''Called by the main thread to force termination.'''
+        actor = get_actor_from_id(self.aid)      
+        result = actor.stop(force=True)
     
     @property    
     def pid(self):

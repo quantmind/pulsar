@@ -93,20 +93,31 @@ spawn method when creating new actors.'''
 :parameter manage: if ``True`` it checks if alive actors are still responsive.
 '''
         ACTORS = self.MANAGED_ACTORS
+        SPAWNING = self._spawning
         linked = self._linked_actors
         alive = 0
-        for aid, actor in list(iteritems(ACTORS)):
+        items = list(iteritems(ACTORS))
+        # WHEN TERMINATING OR STOPPING WE INCLUDE THE ACTORS WHICH ARE
+        # SPAWNING
+        shutting_down = terminate or stop 
+        if shutting_down:
+            items.extend(iteritems(SPAWNING))
+        for aid, actor in items:
             if not actor.is_alive():
                 actor.join(self.JOIN_TIMEOUT)
-                ACTORS.pop(aid)
+                ACTORS.pop(aid, None)
+                SPAWNING.pop(aid, None)
                 linked.pop(aid, None)
             else:
                 alive += 1
-                if terminate:
-                    actor.terminate()
-                    actor.join(self.JOIN_TIMEOUT)
-                elif stop:
-                    actor.stop(self)
+                if shutting_down:
+                    # terminate if there is not mailbox (ther actor has
+                    # registered with its monitor yet).
+                    if terminate or actor.mailbox is None:
+                        actor.terminate()
+                        actor.join(self.JOIN_TIMEOUT)
+                    else:
+                        actor.stop(self)
                 elif manage:
                     self.manage_actor(actor)
         return alive

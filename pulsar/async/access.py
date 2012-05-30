@@ -16,15 +16,25 @@ the current thread'''
     thread = thread if thread is not None else current_thread() 
     return isinstance(thread, threading._MainThread)
 
+def process_local_data(name=None):
+    ct = current_process()
+    if not hasattr(ct, '_pulsar_local'):
+        ct._pulsar_local = plocal()
+    loc = ct._pulsar_local
+    if name:
+        return getattr(loc, name, None)
+    else:
+        return loc
+            
 def thread_local_data(name, value=None):
     ct = current_thread()
     if is_mainthread(ct):
-        ct = current_process()
-        if not hasattr(ct, '_pulsar_local'):
-            ct._pulsar_local = plocal()
+        loc = process_local_data()
     elif not hasattr(ct,'_pulsar_local'):
         ct._pulsar_local = threading.local()
-    loc = ct._pulsar_local
+        loc = ct._pulsar_local
+    else:
+        loc = ct._pulsar_local
     if value is not None:
         if hasattr(loc, name):
             if getattr(loc, name) is not value:
@@ -34,6 +44,7 @@ def thread_local_data(name, value=None):
             setattr(loc, name, value)
     return getattr(loc, name, None)
 
+    
 def thread_loop(ioloop=None):
     '''Returns the :class:`IOLoop` on the current thread if available.'''
     return thread_local_data('eventloop', ioloop)
@@ -42,9 +53,19 @@ def thread_ioloop(ioloop=None):
     '''Returns the :class:`IOLoop` on the current thread if available.'''
     return thread_local_data('ioloop', ioloop)
 
-def get_actor(value=None):
+def get_actor(actor=None):
     '''Returns the actor running the current thread.'''
-    return thread_local_data('actor', value=value)
+    a = thread_local_data('actor', value=actor)
+    if actor is not None and actor.impl == 'thread':
+        process_local_data('thread_actors')[actor.aid] = actor
+    return a
+
+def get_actor_from_id(aid):
+    '''Retrieve an actor from its actor id. This function can be used by
+actors with thread concurrency ince they live in the arbiter process domain.'''
+    actors = process_local_data('thread_actors')
+    if actors:
+        return actors.get(aid)
 
 def set_local_data(actor):
     get_actor(actor)
@@ -64,4 +85,5 @@ class PulsarThread(Thread):
         
         
 class plocal(object):
-    pass
+    def __init__(self):
+        self.thread_actors = {}
