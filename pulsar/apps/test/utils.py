@@ -2,6 +2,7 @@ import sys
 from inspect import isclass
 
 import pulsar
+from pulsar import is_failure
 from pulsar.async import commands
 from pulsar.async.defer import pickle
 
@@ -110,32 +111,43 @@ class should be sent to be run on the arbiter.'''
         return self.result(s)
     
     def result(self, server):
-        return server
+        return server        
     
-
-class AsyncAssert(object):
     
-    def __init__(self, test=None, name=None):
+class AsyncAssertTest(object):
+    
+    def __init__(self, a, test, name=None):
+        self.a = a
         self.test = test
         self.name = name
-    
-    def __get__(self, instance, instance_type=None):
-        return self.__class__(test=instance)
-            
+        
     def __getattr__(self, name):
-        return self.__class__(test=self.test, name=name)
+        return self.__class__(self.a, self.test, name=name)
     
     def __call__(self, *args):
         d = pulsar.MultiDeferred(args, type=list).lock()
         return d.add_callback(self._check_result)
     
     def _check_result(self, args):
-        func = getattr(self.test, self.name)
-        return func(*args)
+        func = getattr(self.a, self.name, None)
+        if func:
+            return func(self.test, *args)
+        else:
+            func = getattr(self.test, self.name)
+            return func(*args)
         
-    def __reduce__(self):
-        return (self.__class__,())
-            
+        
+class AsyncAssert(object):
+        
+    def __get__(self, instance, instance_type=None):
+        return AsyncAssertTest(self, instance)
+    
+    def assertRaises(self, test, excClass, value):
+        def _():
+            if is_failure(value):
+                value.raise_all()
+        test.assertRaises(excClass, _)
+        
 
 class ActorTestMixin(object):
     '''A mixin for testing spawning of actors. Make sure this

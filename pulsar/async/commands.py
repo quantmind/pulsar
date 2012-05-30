@@ -21,7 +21,7 @@ class pulsar_command:
         def command_function(client, actor, *args, **kwargs):
             if self.authenticated:
                 password = actor.cfg.get('password')
-                if password and not client.authenticated:
+                if password and not client.connection.authenticated:
                     raise AuthenticationError()
             return f(client, actor, *args, **kwargs)
         
@@ -54,10 +54,10 @@ Pulsar can be instructed to require a password before allowing clients to
 execute commands.'''
     p = actor.cfg.get('password')
     if p and p != password:
-        client.authenticated = False
+        client.connection.authenticated = False
         raise AuthenticationError()
     else:
-        client.authenticated = True
+        client.connection.authenticated = True
         return True
 
 @command
@@ -73,7 +73,7 @@ def echo(client, actor, message):
 def quit(client, actor):
     '''Ask the server to close the connection. The connection is closed as
 soon as all pending replies have been written to the client.'''
-    client.add_callback('sent', client.close)
+    client.connection.add_callback('sent', client.connection.close)
     return True
 
 @authenticated
@@ -91,7 +91,7 @@ def config(client, actor, setget, name, *value):
     setget = setget.lower()
     if setget == 'get':
         if len(values) > 0:
-            raise CommandError()
+            raise CommandError('"config get" accept only one parameter')
         return client.actor.cfg.get(name)
     elif setget == 'set':
         if len(values) > 1:

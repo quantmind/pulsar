@@ -42,6 +42,15 @@ class TestActorThread(ActorTestMixin, unittest.TestCase):
         yield self.async.assertEqual(actor.send(proxy, 'echo', 'Hello!'),
                                      'Hello!')
         
+    def testPasswordProtected(self):
+        yield self.spawn(cfg={'password': 'bla', 'param': 1})
+        proxy = self.a
+        actor = pulsar.get_actor()
+        yield self.async.assertEqual(actor.send(proxy, 'ping'), 'pong')
+        yield self.async.assertRaises(pulsar.AuthenticationError,
+                                      actor.send(proxy, 'shutdown'))
+        yield self.async.assertEqual(actor.send(proxy, 'auth', 'bla'), True)
+        
     def __testStartStopQueue(self):
         '''Test start and stop for an actor using a I/O queue'''
         arbiter = pulsar.arbiter()

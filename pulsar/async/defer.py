@@ -271,8 +271,9 @@ class Failure(object):
     def __iter__(self):
         return iter(self.traces)
     
-    def raise_all(self):
-        if self.traces and isinstance(self.traces[-1][1],Exception):
+    def raise_all(self, first=True):
+        pos = 0 if first else -1
+        if self.traces and isinstance(self.traces[pos][1],Exception):
             eclass, error, trace = self.traces.pop()
             self.log()
             raise_error_trace(error, trace)
@@ -588,9 +589,9 @@ class MultiDeferred(Deferred):
                     
     def _add_deferred(self, key, value):
         self._deferred[key] = value
-        value.add_callback_args(self._deferred_done, key)
+        value.addBoth(lambda result: self._deferred_done(key,result))
         
-    def _deferred_done(self, result, key):
+    def _deferred_done(self, key, result):
         self._deferred.pop(key, None)
         self._setitem(key, result)
         if self._locked and not self._deferred and not self.called:

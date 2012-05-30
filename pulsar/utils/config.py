@@ -86,7 +86,7 @@ def ordered_settings():
         yield KNOWN_SETTINGS[name]
         
         
-def make_settings(apps = None, include=None, exclude=None):
+def make_settings(apps=None, include=None, exclude=None):
     '''Creates a dictionary of available settings for given
 applications *apps*.
 
