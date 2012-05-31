@@ -13,6 +13,7 @@ __all__ = ['ActorMessage',
            'ActorProxyDeferred',
            'ActorProxy',
            'ActorProxyMonitor',
+           'ActorLink',
            'get_proxy']
 
 def get_proxy(obj, safe = False):
@@ -221,3 +222,52 @@ provided, it raises an exception if the timeout is reached.'''
     def start(self):
         '''Start the remote actor.'''
         self.impl.start()
+
+
+class ActorLink(object):
+    '''A callable utility for sending :class:`ActorMessage`
+to linked :class:`Actor` instances.
+.. attribute:: name
+
+The :attr:`Actor.name` of the actor which will receive messages via
+the :class:`ActorLink` from other actors.
+An example on how to use an :class:`ActorLink` can be found in the
+:class:`pulsar.apps.tasks.TaskQueueRpcMixin`, where the
+``task_queue_manager`` attribute is a lint to the
+:class:`pulsar.apps.tasks.TaskQueue`.
+'''
+    def __init__(self, name):
+        self.name = name
+        
+    def proxy(self, sender):
+        '''Get the :class:`ActorProxy` for the sender.'''
+        proxy = sender.get_actor(self.name)
+        if not proxy:
+            raise ValueError('Got a request from actor "{0}" which is\
+not linked with "{1}".'.format(sender,self.name))
+        return proxy
+    
+    def get_callback(self, sender, action, *args, **kwargs):
+        '''Create an :class:`ActorLinkCallback` for sending messages
+with additional parameters.
+
+:parameter sender: The :class:`Actor` sending the message.
+:parameter action: The *action* in the :class:`ActorMessage`.
+:parameter args: same as :attr:`ActorMessage.args`
+:parameter kwargs: same as :attr:`ActorMessage.kwargs`
+:rtype: an :class:`ActorLinkCallback`.
+'''
+        if isinstance(sender,dict):
+            # This is an environment dictionary
+            local = sender
+            sender = sender.get('pulsar.actor')
+        else:
+            local = kwargs.pop('local',None)
+        proxy = self.proxy(sender)
+        res = ActorLinkCallback(self, proxy, sender, action, args, kwargs)
+        if local:
+            res._local = local
+        return res
+        
+    def __call__(self, sender, action, *args, **kwargs):
+        return self.get_callback(sender, action, *args, **kwargs)()

@@ -5,9 +5,14 @@ import logging
 from multiprocessing import current_process, Lock
 
 if sys.version_info < (2,7):
-    from pulsar.utils.fallbacks.dictconfig import dictConfig
+    from .fallbacks._dictconfig import dictConfig
+    
+    class NullHandler(logging.Handler):
+        def emit(self, record):
+            pass
 else:
     from logging.config import dictConfig
+    from logging import NullHandler
     
 
 SERVER_NAME = 'Pulsar'
@@ -15,6 +20,8 @@ NOLOG = 100
 
 
 __all__ = ['SERVER_NAME',
+           'dictConfig',
+           'NullHandler',
            'getLogger',
            'process_global',
            'LogginMixin',
@@ -77,7 +84,8 @@ def update_config(config, c):
 
 
 class LocalMixin(object):
-    
+    '''The :class:`LocalMixin` defines "local" attributes which are
+removed when pickling the object'''
     @property
     def local(self):
         if not hasattr(self,'_local'):

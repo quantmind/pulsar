@@ -20,6 +20,19 @@ def is_streamed(content):
     return False
 
 
+def clean_path_middleware(environ, start_response):
+    '''Clean url and redirect if needed'''
+    path = environ['PATH_INFO']
+    if '//' in path:
+        url = re.sub("/+" , '/', path)
+        if not url.startswith('/'):
+            url = '/%s' % url
+        qs = environ['QUERY_STRING']
+        if qs and environ['method'] == 'GET':
+            url = '{0}?{1}'.format(url,qs)
+        raise pulsar.HttpRedirect(url)
+    
+    
 class AccessControl(object):
     '''A response middleware which add the ``Access-Control-Allow-Origin``
 response header.'''

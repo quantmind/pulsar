@@ -54,7 +54,7 @@ It exposes the following remote functions:
         if not isinstance(taskqueue,str):
             taskqueue = taskqueue.name
         self.task_queue_manager = pulsar.ActorLink(taskqueue)
-        super(TaskQueueRpcMixin,self).__init__(**kwargs)   
+        super(TaskQueueRpcMixin,self).__init__(**kwargs)
         
     ############################################################################
     ##    REMOTES
