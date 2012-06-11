@@ -490,18 +490,18 @@ class _not_called_exception:
         self.value = value
         
     def __call__(self):
-        result = self.value.result_or_self()
-        if not result.called:
+        if not self.value.called:
             try:
-                raise Timeout('"%s" timed out.' % result)
+                raise Timeout('"%s" timed out.' % self.value)
             except:
-                result.callback(sys.exc_info())
+                self.value.callback(sys.exc_info())
+        
         
 def loop_timeout(value, timeout, ioloop=None):
     value = maybe_async(value)
     if timeout and is_async(value):
         ioloop = ioloop or thread_loop()
-        ioloop.add_timeout(time.time() + timeout, not_called_exception(value))
+        ioloop.add_timeout(time.time() + timeout, _not_called_exception(value))
     return value
     
     
