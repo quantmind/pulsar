@@ -20,7 +20,10 @@ from .access import PulsarThread, thread_ioloop
 iologger = logging.getLogger('pulsar.iostream')
 
 
-__all__ = ['AsyncIOStream', 'ClientSocket', 'Client']
+__all__ = ['AsyncIOStream',
+           'ClientSocket',
+           'Client',
+           'AsyncSocketServer']
 
             
 class AsyncIOStream(IObase):
@@ -635,7 +638,17 @@ class IOResponse(object):
     
     
 class Connection(ClientSocket):
-    '''An asynchronous client connection for a server.'''
+    '''An asynchronous client connection for a class:`AsyncSocketServer`.
+The connection maintains the client socket open for as long as it is required.
+
+.. attribute:: server
+
+    The class class:`AsyncSocketServer` which created the connection
+    
+.. attribute:: response_class
+
+    Callable for building a Response object
+'''
     response_class = IOResponse
     def __init__(self, socket, address, server):
         if not isinstance(socket, AsyncIOStream):
@@ -709,9 +722,9 @@ class Connection(ClientSocket):
             yield d.add_callback(self._stream_data)
     
     
-class SimpleSocketServer(BaseSocket):
-    '''A :class:`SimpleSocketServer` is the base class of all asynchronous
-servers using a socket in pulsar.
+class AsyncSocketServer(BaseSocket):
+    '''A :class:`AsyncSocketServer` is the base class of all asynchronous
+servers using sockets for IO.
 
 .. attribute:: actor
 

@@ -169,3 +169,30 @@ class TestHttpClient(unittest.TestCase):
         #self.assertEqual(result['cookies']['key'],'bla')
         #self.assertEqual(result['cookies']['value'],'foo')
         
+
+    def test_parse_cookie(self):
+        self.assertEqual(httpurl.parse_cookie('invalid:key=true'), {})
+        
+    def test_far_expiration(self):
+        "Cookie will expire when an distant expiration time is provided"
+        response = Response(self.environ())
+        response.set_cookie('datetime', expires=datetime(2028, 1, 1, 4, 5, 6))
+        datetime_cookie = response.cookies['datetime']
+        self.assertEqual(datetime_cookie['expires'], 'Sat, 01-Jan-2028 04:05:06 GMT')
+
+    def test_max_age_expiration(self):
+        "Cookie will expire if max_age is provided"
+        response = Response(self.environ())
+        response.set_cookie('max_age', max_age=10)
+        max_age_cookie = response.cookies['max_age']
+        self.assertEqual(max_age_cookie['max-age'], 10)
+        self.assertEqual(max_age_cookie['expires'], http.cookie_date(time.time()+10))
+
+    def test_httponly_cookie(self):
+        response = Response(self.environ())
+        response.set_cookie('example', httponly=True)
+        example_cookie = response.cookies['example']
+        # A compat cookie may be in use -- check that it has worked
+        # both as an output string, and using the cookie attributes
+        self.assertTrue('; httponly' in str(example_cookie))
+        self.assertTrue(example_cookie['httponly'])

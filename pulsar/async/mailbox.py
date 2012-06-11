@@ -14,7 +14,7 @@ from pulsar.utils.httpurl import to_bytes
 
 from .defer import make_async, safe_async, pickle, is_async,\
                     async, is_failure, ispy3k, raise_failure, CLEAR_ERRORS
-from .iostream import AsyncIOStream, SimpleSocketServer,\
+from .iostream import AsyncIOStream, AsyncSocketServer,\
                         Connection, ReconnectingClient, IOResponse
 from .access import get_actor
 
@@ -203,7 +203,7 @@ with a :class:`Mailbox`.'''
     response_class = MailboxResponse
     
     
-class Mailbox(SimpleSocketServer):
+class Mailbox(AsyncSocketServer):
     '''Mailbox for an :class:`Actor`. If the actor is a
 :ref:`CPU bound worker <cpubound>`, the class:`Mailbox`
 creates its own :class:`IOLoop` which runs on a separate thread

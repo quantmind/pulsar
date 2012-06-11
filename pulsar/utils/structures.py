@@ -5,6 +5,19 @@ from collections import *
 if sys.version_info < (2,7):
     from .fallbacks._collections import *
     
+
+def isgenerator(value):
+    return hasattr(value,'__iter__') and not hasattr(value, '__len__')
+
+def aslist(value):
+    if isinstance(value, list):
+        return value
+    if isgenerator(value) or isinstance(value,(tuple,set,frozenset)):
+        return list(value)
+    else:
+        return [value]
+
+
 class WeakList(object):
     
     def __init__(self):
@@ -32,16 +45,7 @@ class WeakList(object):
                     yield obj
         else:
             raise StopIteration
-
-
-def aslist(value):
-    if isinstance(value,list):
-        return value
-    if isgenerator(value) or isinstance(value,(tuple,set,frozenset)):
-        return list(value)
-    else:
-        return [value]
-
+        
 
 class MultiValueDict(dict):
     """A subclass of dictionary customized to handle multiple

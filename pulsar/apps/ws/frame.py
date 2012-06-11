@@ -18,7 +18,8 @@ if ispy3k:
 else: # pragma : nocover
     i2b = lambda n : chr(n)
 
-class WebSocketError(pulsar.BadHttpRequest):
+
+class WebSocketError(pulsar.HttpException):
     pass
 
 
