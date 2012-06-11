@@ -668,7 +668,7 @@ The connection maintains the client socket open for as long as it is required.
         return self.response_class(self, request)
     
     def getrequest(self):
-        '''We got some data to parse'''
+        '''We got some data to parse. '''
         buffer = self.buffer
         if not buffer:
             return
