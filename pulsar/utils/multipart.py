@@ -9,9 +9,9 @@ import re
 import sys
 from tempfile import TemporaryFile
 from wsgiref.headers import Headers
-import re, sys
+from io import BytesIO
 
-from .httpurl import parse_qs, BytesIO
+from .httpurl import parse_qs
 from .structures import MultiValueDict
 
 

@@ -218,7 +218,7 @@ class WsgiHandler(pulsar.LogginMixin):
         for middleware in self.middleware:
             response = middleware(environ, start_response)
             if response is not None:
-                if hasattr(response,'when_ready'):
+                if hasattr(response, 'when_ready'):
                     process = partial(self.process_response,
                                       environ,
                                       start_response)

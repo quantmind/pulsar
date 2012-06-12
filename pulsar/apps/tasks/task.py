@@ -4,8 +4,9 @@ A task scheduler application with HTTP-RPC hooks
 from datetime import datetime
 import logging
 import traceback
+from io import StringIO
 
-from pulsar.utils.httpurl import StringIO, itervalues
+from pulsar.utils.httpurl import itervalues
 from pulsar import make_async, as_failure
 
 from .exceptions import *

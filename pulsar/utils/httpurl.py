@@ -18,6 +18,7 @@ import socket
 from uuid import uuid4
 from datetime import datetime, timedelta
 from email.utils import formatdate
+from io import BytesIO
 
 ispy3k = sys.version_info >= (3,0)
 
@@ -25,11 +26,10 @@ if ispy3k: # Python 3
     from urllib import request as urllibr
     from http import client as httpclient
     from urllib.parse import quote, unquote, urlencode, urlparse, urlsplit,\
-                                parse_qs, splitport, urlunparse, urljoin
+                             parse_qs, parse_qsl, splitport, urlunparse, urljoin
     from http.client import responses
     from http.cookiejar import CookieJar
     from http.cookies import SimpleCookie, BaseCookie, Morsel, CookieError
-    from io import BytesIO, StringIO
     
     string_type = str
     getproxies_environment = urllibr.getproxies_environment
@@ -76,17 +76,16 @@ if ispy3k: # Python 3
 else:   # pragma : no cover
     import urllib2 as urllibr
     import httplib as httpclient
-    from urllib import quote, unquote, urlencode, getproxies_environment, \
+    from urllib import quote, unquote, urlencode, getproxies_environment,\
                         splitport
-    from urlparse import urlparse, urlsplit, parse_qs, urlunparse, urljoin
+    from urlparse import urlparse, urlsplit, parse_qs, urlunparse, urljoin,\
+                         parse_qsl
     from httplib import responses
     from cookielib import CookieJar
     from Cookie import SimpleCookie, BaseCookie, Morsel, CookieError
-    from cStringIO import StringIO
     from itertools import izip as zip, imap as map
     
     string_type = unicode
-    BytesIO = StringIO
     ascii_letters = string.letters
     range = xrange
     
@@ -212,7 +211,8 @@ HEADER_FIELDS = {'general': frozenset(('Cache-Control', 'Connection', 'Date',
                                        'Referer',
                                        'Sec-WebSocket-Key',
                                        'Sec-WebSocket-Version',
-                                       'TE', 'User-Agent')),
+                                       'TE', 'User-Agent',
+                                       'X-Requested-With')),
                  # The response-header fields allow the server to pass
                  # additional information about the response which cannot be
                  # placed in the Status- Line.
@@ -221,7 +221,8 @@ HEADER_FIELDS = {'general': frozenset(('Cache-Control', 'Connection', 'Date',
                                         'Retry-After',
                                         'Sec-WebSocket-Accept',
                                         'Server', 'Vary',
-                                        'WWW-Authenticate')),
+                                        'WWW-Authenticate',
+                                        'X-Frame-Options')),
                  'entity': frozenset(('Allow', 'Content-Encoding',
                                       'Content-Language', 'Content-Length',
                                       'Content-Location', 'Content-MD5',
