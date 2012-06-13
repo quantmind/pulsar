@@ -36,7 +36,6 @@ import sys
 from inspect import isclass
 
 import pulsar
-from pulsar.net import HttpRequest, HttpResponse
 from pulsar.utils.importer import module_attribute
 from pulsar.apps import socket
 
@@ -130,12 +129,6 @@ at start-up only.
             hnd.response_middleware.extend(resp_middleware)
         return hnd
         
-    def client_request(self, stream, client_address):
-        return HttpRequest(stream, client_address=client_address,
-                           timeout=self.cfg.keepalive)
-        
-    def handle_request(self, worker, connection):
-        return connection.request()
     
 
 

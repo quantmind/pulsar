@@ -163,7 +163,7 @@ class HttpResponse(AsyncResponse):
         
     @property
     def environ(self):
-        return self.request.parsed_data
+        return self.parsed_data
     
     @property
     def status(self):
@@ -272,6 +272,8 @@ for the server as a whole.
         head = self.send_headers(force=True)
         if head is not None:
             yield head
+        if not self.keep_alive:
+            self.connection.close()
 
     def is_chunked(self):
         '''Only use chunked responses when the client is

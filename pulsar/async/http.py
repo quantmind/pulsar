@@ -11,7 +11,6 @@ from pulsar.net.base import NetRequest, AsyncClientResponse
 __all__ = ['HttpClient']
 
 
-    
 class AsyncHttpResponse(AsyncClientResponse, HTTPResponseMixin):
 
     def done(self):

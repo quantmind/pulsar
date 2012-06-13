@@ -449,11 +449,27 @@ class run_callbacks:
     
 
 class BaseSocket(object):
+    '''Base class for all socket handler.
     
+.. attribute:: address
+
+    Socket address
+    
+.. attribute:: on_closed
+
+    A :class:`Deferred` which receives a callback once the
+    :meth:`BaseSocket.close` is invoked
+.. '''
     @property
     def address(self):
         '''Socket address'''
         return self.socket.getsockname()
+    
+    @property
+    def on_closed(self):
+        if not hasattr(self, '_on_closed'):
+            self._on_closed = Deferred()
+        return self._on_closed
     
     def fileno(self):
         """Return socket file number. Interface required by select/epoll"""
@@ -465,10 +481,12 @@ class BaseSocket(object):
     
     def close(self, msg=None):
         '''Close this socket and log the failure if there was one.'''
-        log_failure(msg)
-        self.on_close(msg)
-        self.socket.close()
-        return msg
+        on_closed = self.on_closed
+        if on_closed.called:
+            log_failure(msg)
+            self.on_close(msg)
+            self.socket.close()
+            return on_closed.callback(msg)
     
     
 class ClientSocket(BaseSocket):
@@ -630,13 +648,19 @@ class ReconnectingClient(Client):
     
 
 class AsyncResponse(object):
+    '''Asynchronous response
     
-    def __init__(self, request):
-        self.request = request
-        
-    @property
-    def connection(self):
-        return self.request.connection
+.. attribute:: connection
+
+    The :class:`AsyncConnection` for this response
+    
+.. attribute:: parsed_data
+
+    Parsed data from remote client
+'''
+    def __init__(self, connection, parsed_data):
+        self.connection = connection
+        self.parsed_data = parsed_data
     
     @property
     def parser(self):
@@ -648,18 +672,6 @@ class AsyncResponse(object):
     
     def __iter__(self):
         yield b''
-    
-    
-class AsyncRequest(Deferred):
-    '''Signature for a IO response'''
-    def __init__(self, connection, parsed_data=None):
-        self.connection = connection
-        self.parsed_data = parsed_data
-        super(AsyncRequest, self).__init__()
-        
-    @property
-    def parser(self):
-        return self.connection.parser
     
     
 class AsyncConnection(ClientSocket):
@@ -676,7 +688,6 @@ A connection can handle many request/responses, one at the time.
     Callable for building a Response object
 '''
     response_class = AsyncResponse
-    _current_request = None
     def __init__(self, socket, address, server):
         if not isinstance(socket, AsyncIOStream):
             socket = AsyncIOStream(socket, timeout=server.timeout)
@@ -686,8 +697,6 @@ A connection can handle many request/responses, one at the time.
         self.socket.set_close_callback(close_callback)
         self.server = server
         server.connections.add(self)
-        # Fired once the connection is closed
-        self.on_closed = Deferred()
         self.handle()
     
     def handle(self):
@@ -742,9 +751,7 @@ more data in the buffer is required.'''
         parsed_data = self.request_data()
         if parsed_data:
             self.received += 1
-            request = self.request()
-            request.parsed_data = parsed_data
-            yield self.write(self.response_class(request))
+            yield self.write(self.response_class(self, parsed_data))
         d = self.socket.read()
         if d:
             yield d.add_callback(self._stream_data)
@@ -754,8 +761,6 @@ more data in the buffer is required.'''
         for data in response:
             if data:
                 socket.write(data)
-        # once the writing is done. callback the request
-        self.request(response)
     
 class AsyncSocketServer(BaseSocket):
     '''A :class:`AsyncSocketServer` is the base class of all asynchronous

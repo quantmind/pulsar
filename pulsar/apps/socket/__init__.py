@@ -30,7 +30,8 @@ class SocketServer(pulsar.Application):
         address = cfg.address
         # if the platform does not support multiprocessing sockets switch to
         # thread concurrency
-        if not pulsar.platform.multiProcessSocket():
+        if not pulsar.platform.multiProcessSocket()\
+            or cfg.concurrency == 'thread':
             cfg.set('workers', 0)
         monitor.num_actors = cfg.workers
         
@@ -46,11 +47,6 @@ class SocketServer(pulsar.Application):
                                               'No address to bind to')
         monitor.log.info('Listening on %s' % socket)
         monitor.set('socket', socket)
-    
-    def client_request(self, stream, client_address):
-        '''Build a request instance from the connected stream and the client
-address. This must be implemented by subclasses.'''
-        raise NotImplementedError()
     
     def request_instance(self, worker, fd, events):
         return worker.get('socket_server').accept()
@@ -71,6 +67,9 @@ address. This must be implemented by subclasses.'''
     
     def worker_stop(self, monitor):
         self._close_socket(monitor)
+        
+    def handle_request(self, worker, connection):
+        return connection.on_closed
 
     ########################################################### INTERNALS    
     def _close_socket(self, worker):
