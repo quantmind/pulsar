@@ -15,7 +15,7 @@ from pulsar.utils.httpurl import to_bytes
 from .defer import make_async, safe_async, pickle, is_async,\
                     async, is_failure, ispy3k, raise_failure, CLEAR_ERRORS
 from .iostream import AsyncIOStream, AsyncSocketServer,\
-                        Connection, ReconnectingClient, IOResponse
+                        AsyncConnection, ReconnectingClient, AsyncResponse
 from .access import get_actor
 
 
@@ -159,12 +159,12 @@ class PulsarClient(ReconnectingClient):
         return self.execute(ActorMessage('stop'))
     
 
-class MailboxResponse(IOResponse):
+class MailboxResponse(AsyncResponse):
     
-    def handle(self):
+    def __iter__(self):
         # The receiver could be different from the mail box actor. For
         # example a monitor uses the same mailbox as the arbiter
-        message = self.request
+        message = self.request.parsed_data
         actor = self.connection.actor
         receiver = actor.get_actor(message.receiver) or actor
         sender = receiver.get_actor(message.sender)
@@ -178,23 +178,20 @@ class MailboxResponse(IOResponse):
             result = command(self, receiver, *args, **message.kwargs)
         except:
             result = sys.exc_info()
-        result = make_async(result)
-        yield result
-        result = result.result
+        result = make_async(result).result_or_self()
+        while is_async(result):
+            yield b''
+            result = result.result_or_self()
         if command.ack:
             # Send back the result as an ActorMessage
             if is_failure(result):
-                yield CLEAR_ERRORS
                 m = ActorMessage('errback', sender=receiver, args=(result,))
             else:
                 m = ActorMessage('callback', sender=receiver, args=(result,))
             yield self.parser.encode(m)
-        else:
-            # Yield empty data so nothing is returned to the client
-            yield b''
 
     
-class MailboxConnection(Connection):
+class MailboxConnection(AsyncConnection):
     '''A :class:`MailboxClient` is a socket which receives messages
 from a remote :class:`Actor`.
 An instance of this class is created when a new connection is made
@@ -208,7 +205,7 @@ class Mailbox(AsyncSocketServer):
 :ref:`CPU bound worker <cpubound>`, the class:`Mailbox`
 creates its own :class:`IOLoop` which runs on a separate thread
 of execution.'''
-    parsercls = MessageParser
+    parser_class = MessageParser
     connection_class = MailboxConnection
     
     @classmethod

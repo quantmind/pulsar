@@ -41,6 +41,7 @@ from pulsar.utils.importer import module_attribute
 from pulsar.apps import socket
 
 from .wsgi import *
+from .server import HttpServer
 from . import middleware
 
 class WsgiSetting(pulsar.Setting):
@@ -94,6 +95,7 @@ and the error instance."""
 class WSGIServer(socket.SocketServer):
     cfg_apps = ('socket',)
     _app_name = 'wsgi'
+    socket_server_class = HttpServer
     
     def handler(self):
         callable = self.callable
@@ -132,44 +134,8 @@ at start-up only.
         return HttpRequest(stream, client_address=client_address,
                            timeout=self.cfg.keepalive)
         
-    def handle_request(self, worker, request):
-        '''handle the *request* by building the WSGI environment '''
-        cfg = worker.cfg
-        concurrency = cfg.concurrency
-        mt = concurrency == 'thread' and cfg.workers > 1
-        mp = concurrency == 'process' and cfg.workers > 1
-        environ = request.wsgi_environ(multithread=mt,
-                                       multiprocess=mp)
-        if not environ:
-            yield request.on_body
-            environ = request.wsgi_environ(actor=worker,
-                                           multithread=mt,
-                                           multiprocess=mp)
-        # Create the response object
-        response = HttpResponse(request)
-        start_response = response.start_response
-        if environ:
-            # Get the data from the WSGI handler
-            try:
-                data = worker.app_handler(environ, start_response)
-            except Exception as e:
-                # we make sure headers where not sent
-                try:
-                    start_response('500 Internal Server Error', [],
-                                   sys.exc_info())
-                except:
-                    # The headers were sent already
-                    self.log.critical('Headers already sent!',
-                                      exc_info=sys.exc_info())
-                    data = iter([b'Critical Server Error'])
-                else:
-                    # Create the error response
-                    data = WsgiResponse(environ=environ)
-                    cfg.handle_http_error(data, e)
-                    data(environ, start_response)
-            # delegate the writing of data to the response instance
-            yield response.write(data)
-        yield response
+    def handle_request(self, worker, connection):
+        return connection.request()
     
 
 

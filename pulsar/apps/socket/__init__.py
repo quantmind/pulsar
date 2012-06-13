@@ -22,6 +22,7 @@ class Bind(SocketSetting):
 
 class SocketServer(pulsar.Application):
     _app_name = 'socket'
+    socket_server_class = None
     
     def monitor_init(self, monitor):
         # First we create the socket we listen to
@@ -34,6 +35,7 @@ class SocketServer(pulsar.Application):
         monitor.num_actors = cfg.workers
         
     def monitor_start(self, monitor):
+        # Open the socket and bind to address
         address = self.cfg.address
         if address:
             socket = pulsar.create_socket(address,
@@ -42,6 +44,7 @@ class SocketServer(pulsar.Application):
         else:
             raise pulsar.ImproperlyConfigured('Could not open a socket. '
                                               'No address to bind to')
+        monitor.log.info('Listening on %s' % socket)
         monitor.set('socket', socket)
     
     def client_request(self, stream, client_address):
@@ -50,13 +53,17 @@ address. This must be implemented by subclasses.'''
         raise NotImplementedError()
     
     def request_instance(self, worker, fd, events):
-        client, client_address = worker.get('socket').accept()
-        if client:
-            stream = AsyncIOStream(socket=client)
-            return self.client_request(stream, client_address)
+        return worker.get('socket_server').accept()
              
     def worker_start(self, worker):
-        self._register_handler(worker)
+        # Start the worket by starting the socket server
+        if not self.socket_server_class:
+            raise TypeError('Socket server class not specified.')
+        socket = worker.get('socket')
+        s = self.socket_server_class(worker, socket).start()
+        # We add the file descriptor handler
+        s.on_connection_callbacks.append(worker.handle_fd_event)
+        worker.set('socket_server',s)
 
     def monitor_stop(self, monitor):
         if monitor.num_actors == 0:
@@ -65,14 +72,7 @@ address. This must be implemented by subclasses.'''
     def worker_stop(self, monitor):
         self._close_socket(monitor)
 
-    ########################################################### INTERNALS
-    def _register_handler(self, worker):
-        '''Register the socket to the ioloop'''
-        socket = worker.get('socket')
-        worker.ioloop.add_handler(socket,
-                                  worker.handle_fd_event,
-                                  worker.ioloop.READ)
-    
+    ########################################################### INTERNALS    
     def _close_socket(self, worker):
         socket = worker.get('socket')
         worker.ioloop.remove_handler(socket)

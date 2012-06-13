@@ -192,7 +192,7 @@ def has_empty_content(status, method=None):
     else:
         return False
     
-####################################################    HEADERS
+####################################################    HTTP HEADERS
 HEADER_FIELDS = {'general': frozenset(('Cache-Control', 'Connection', 'Date',
                                        'Pragma', 'Trailer','Transfer-Encoding',
                                        'Upgrade', 'Sec-WebSocket-Extensions',

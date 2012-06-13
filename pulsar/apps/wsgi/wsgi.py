@@ -40,6 +40,8 @@ Instances are callable using the standard WSGI call::
     response = WsgiResponse(200)
     response(environ, start_response)
     
+A :class:`WsgiResponse` is an iterable over bytes to send back to the requesting
+client.
 
 .. attribute:: status_code
 
@@ -120,7 +122,7 @@ By default it returns an empty tuple. Overrides if you need to.'''
     @property
     def is_streamed(self):
         """If the response is streamed (the response is not an iterable with
-a length information) this property is `True`.  In this case streamed
+length information) this property is `True`.  In this case streamed
 means that there is no information about the number of iterations.
 This is usually `True` if a generator is passed to the response object."""
         return is_streamed(self.content)
@@ -205,7 +207,7 @@ class WsgiHandler(pulsar.LogginMixin):
 
 '''
     msg404 = 'Could not find what you are looking for. Sorry.'
-    def __init__(self, middleware = None, msg404 = None, **kwargs):
+    def __init__(self, middleware=None, msg404=None, **kwargs):
         self.setlog(**kwargs)
         if middleware:
             middleware = list(middleware)

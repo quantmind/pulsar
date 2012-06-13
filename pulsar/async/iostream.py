@@ -23,6 +23,8 @@ iologger = logging.getLogger('pulsar.iostream')
 __all__ = ['AsyncIOStream',
            'ClientSocket',
            'Client',
+           'AsyncConnection',
+           'AsyncResponse',
            'AsyncSocketServer']
 
             
@@ -540,6 +542,15 @@ is required in order to use :class:`SocketClient`.
     @run_callbacks('read')
     def parsedata(self, data):
         '''We got some data to parse'''
+        parsed_data = self._parseddata(data)
+        if parsed_data:
+            self.received += 1
+            r = safe_async(self.on_parsed_data, args=(parsed_data,))
+        else:
+            r = make_async()
+        return r.add_callback(self.on_end_message, self.close)
+    
+    def _parsedata(self, data):
         buffer = self.buffer
         if data:
             buffer.extend(data)
@@ -552,12 +563,7 @@ is required in order to use :class:`SocketClient`.
             parsed_data = None
             buffer = bytearray()
         self.buffer = buffer
-        if parsed_data:
-            self.received += 1
-            r = safe_async(self.on_parsed_data, args=(parsed_data,))
-        else:
-            r = make_async()
-        return r.add_callback(self.on_end_message, self.close)
+        return parsed_data
     
     def on_parsed_data(self, data):
         '''Callback once the reading of a successful message
@@ -622,24 +628,44 @@ class ReconnectingClient(Client):
         self.reconnect()
         return super(ReconnectingClient, self).send(data)
     
+
+class AsyncResponse(object):
     
-class IOResponse(object):
-    
-    def __init__(self, connection, request):
-        self.connection = connection
+    def __init__(self, request):
         self.request = request
+        
+    @property
+    def connection(self):
+        return self.request.connection
+    
+    @property
+    def parser(self):
+        return self.connection.parser
+    
+    @property
+    def socket(self):
+        return self.connection.socket
+    
+    def __iter__(self):
+        yield b''
+    
+    
+class AsyncRequest(Deferred):
+    '''Signature for a IO response'''
+    def __init__(self, connection, parsed_data=None):
+        self.connection = connection
+        self.parsed_data = parsed_data
+        super(AsyncRequest, self).__init__()
         
     @property
     def parser(self):
         return self.connection.parser
     
-    def handle(self):
-        return b''
     
-    
-class Connection(ClientSocket):
+class AsyncConnection(ClientSocket):
     '''An asynchronous client connection for a class:`AsyncSocketServer`.
 The connection maintains the client socket open for as long as it is required.
+A connection can handle many request/responses, one at the time.
 
 .. attribute:: server
 
@@ -649,26 +675,40 @@ The connection maintains the client socket open for as long as it is required.
 
     Callable for building a Response object
 '''
-    response_class = IOResponse
+    response_class = AsyncResponse
+    _current_request = None
     def __init__(self, socket, address, server):
         if not isinstance(socket, AsyncIOStream):
             socket = AsyncIOStream(socket, timeout=server.timeout)
-        super(Connection, self).__init__(socket, address, server.parsercls)
+        super(AsyncConnection, self).__init__(socket, address,
+                                              server.parser_class)
         close_callback = Deferred().add_callback(self.close)
         self.socket.set_close_callback(close_callback)
         self.server = server
         server.connections.add(self)
+        # Fired once the connection is closed
+        self.on_closed = Deferred()
         self.handle()
     
     def handle(self):
+        '''Handle the connection. This function can be overwritten
+by subclasses.'''
         # Kick off reading
         self.socket.read().add_callback(self._stream_data)
         
-    def getresponse(self, request):
-        return self.response_class(self, request)
+    def request(self, response=None):
+        if self._current_request is None:
+            self._current_request = AsyncRequest(self)
+        request = self._current_request
+        if response is not None:
+            self._current_request = None
+            request.callback(response)
+        return request
     
-    def getrequest(self):
-        '''We got some data to parse. '''
+    def request_data(self):
+        '''This function is called when data to parse is available on the
+:attr:`ClientSocket.buffer`. It should return parsed data or ``None`` if
+more data in the buffer is required.'''
         buffer = self.buffer
         if not buffer:
             return
@@ -679,8 +719,6 @@ The connection maintains the client socket open for as long as it is required.
             parsed_data = None
             buffer = bytearray()
         self.buffer = buffer
-        if parsed_data:
-            self.received += 1
         return parsed_data
     
     @property
@@ -693,34 +731,31 @@ The connection maintains the client socket open for as long as it is required.
     
     def on_close(self, failure=None):
         self.server.connections.discard(self)
+        self.on_closed.callback(True)
         
     # Internal
     @async
     def _stream_data(self, data=None):
-        # Data streaming
         buffer = self.buffer
         if data:
             buffer.extend(data)
-        if buffer:
-            response = True
-            while response:
-                response = False
-                request = self.getrequest()
-                if request:
-                    # Get a message to send back
-                    response = self.getresponse(request)
-                    outcome = safe_async(response.handle)
-                    yield outcome
-                    data = outcome.result
-                    if is_failure(data):
-                        log_failure(data)
-                        data = b''
-                    if data:
-                        yield self.socket.write(data)
+        parsed_data = self.request_data()
+        if parsed_data:
+            self.received += 1
+            request = self.request()
+            request.parsed_data = parsed_data
+            yield self.write(self.response_class(request))
         d = self.socket.read()
         if d:
             yield d.add_callback(self._stream_data)
     
+    def write(self, response):
+        socket = self.socket
+        for data in response:
+            if data:
+                socket.write(data)
+        # once the writing is done. callback the request
+        self.request(response)
     
 class AsyncSocketServer(BaseSocket):
     '''A :class:`AsyncSocketServer` is the base class of all asynchronous
@@ -758,16 +793,17 @@ servers using sockets for IO.
 '''
     thread = None
     _started = False
-    connection_class = Connection
+    connection_class = AsyncConnection
     parser_class = None
-    def __init__(self, actor, socket, parsercls=None, onthread=False,
+    def __init__(self, actor, socket, parser_class=None, onthread=False,
                  timeout=defaults.IO_TIMEOUT):
         self.actor = actor
-        self.parser_class = parsercls or self.parsercls
+        self.parser_class = parser_class or self.parser_class
         self.socket = wrap_socket(socket)
         self.connections = set()
         self.onthread = onthread
         self.timeout = timeout
+        self.on_connection_callbacks = []
         # If the actor has a ioqueue (CPU bound actor) we create a new ioloop
         if self.onthread:
             self.__ioloop = IOLoop(pool_timeout=actor._pool_timeout,
@@ -806,10 +842,6 @@ servers using sockets for IO.
         '''callback just before the event loop starts.'''
         pass
     
-    def on_connection(self, client):
-        '''Callback when a new connection is made'''
-        pass
-    
     def shut_down(self):
         pass
     
@@ -846,7 +878,14 @@ servers using sockets for IO.
     def new_connection(self, fd, events):
         '''Called when a new connection is available.'''
         # obtain the client connection
+        for callback in self.on_connection_callbacks:
+            c = callback(fd, events)
+            if c is not None:
+                return c
+        return self.accept()
+    
+    def accept(self):
         client, client_address = self.socket.accept()
         if client:
-            self.connection_class(client, client_address, self)
+            return self.connection_class(client, client_address, self)
         

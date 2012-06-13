@@ -32,18 +32,17 @@ if ispy3k:
 
 def halt_server(f):
     '''Halt server decorator'''
-    def _halt(failure):
+    def _halt(failure, halt):
         failure.log()
-        raise HaltServer('Unhandled exception application.')
+        if halt:
+            raise HaltServer('Unhandled exception application.')
     
     def _(self, *args, **kwargs):
         try:
             result = make_async(f(self, *args, **kwargs))
         except Exception as e:
             result = make_async(e)
-        if self.app.can_kill_arbiter:
-            result.add_errback(_halt)
-        return result
+        return result.add_errback(lambda f: _halt(f, self.app.can_kill_arbiter))
     _.__name__ = f.__name__
     _.__doc__ = f.__doc__
     return _
@@ -195,6 +194,7 @@ pulsar subclasses of :class:`Application`.
     @halt_server    
     def on_start(self):
         self.app.monitor_start(self)
+        # If no workears are available invoke the worker start method too
         if not self.cfg.workers:
             self.app.worker_start(self)            
         
