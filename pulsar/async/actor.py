@@ -145,8 +145,7 @@ Here ``a`` is actually a reference to the remote actor.
                  on_task=None, ioqueue=None, monitors=None,
                  name=None, params=None, age=0,
                  pool_timeout=None, ppid=None, on_event=None,
-                 linked_actors=None, cfg=None,
-                 **kwargs):
+                 linked_actors=None, cfg=None, **kwargs):
         self.cfg = cfg
         self._ppid = ppid
         self._impl = impl
@@ -526,6 +525,7 @@ status and performance.'''
                 'thread_id': self.tid,
                 'process_id': self.pid,
                 'isprocess': isp,
+                'request processed': self.nr,
                 'active_connections': self.mailbox.active_connections,
                 'age': self.age}
         if isp:

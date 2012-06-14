@@ -52,7 +52,7 @@ class SocketServer(pulsar.Application):
         return worker.get('socket_server').accept()
              
     def worker_start(self, worker):
-        # Start the worket by starting the socket server
+        # Start the worker by starting the socket server
         if not self.socket_server_class:
             raise TypeError('Socket server class not specified.')
         socket = worker.get('socket')
@@ -60,20 +60,12 @@ class SocketServer(pulsar.Application):
         # We add the file descriptor handler
         s.on_connection_callbacks.append(worker.handle_fd_event)
         worker.set('socket_server',s)
-
-    def monitor_stop(self, monitor):
-        if monitor.num_actors == 0:
-            self._close_socket(monitor)
     
-    def worker_stop(self, monitor):
-        self._close_socket(monitor)
+    def worker_stop(self, worker):
+        s = worker.get('socket_server')
+        if s:
+            worker.ioloop.remove_handler(s.socket)
+            s.close()
         
     def handle_request(self, worker, connection):
         return connection.on_closed
-
-    ########################################################### INTERNALS    
-    def _close_socket(self, worker):
-        socket = worker.get('socket')
-        worker.ioloop.remove_handler(socket)
-        socket.close(worker.log)
-    

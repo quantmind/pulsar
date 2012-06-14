@@ -160,7 +160,6 @@ It provides two new methods inherited from :class:`ApplicationHandlerMixin`.
             pass
         
     def on_info(self, info):
-        info.update({'request processed': self.nr})
         return self.app.on_info(self,info)
 
 
@@ -206,13 +205,10 @@ pulsar subclasses of :class:`Application`.
             yield self.handle_task()
             
     def on_stop(self):
-        # First we stop the application
-        try:
-            result = self.app.monitor_stop(self)
-        except Exception as e:
-            result = e
-        stop = lambda r: super(ApplicationMonitor, self).on_stop()
-        return make_async(result).addBoth(stop)
+        if not self.cfg.workers:
+            yield self.app.worker_stop(self)
+        yield self.app.monitor_stop(self)
+        yield super(ApplicationMonitor, self).on_stop()
         
     def on_exit(self):
         self.app.monitor_exit(self)
