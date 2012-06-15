@@ -14,6 +14,8 @@ from pulsar.utils import event
 
 event.create('http-headers')
 
+__all__ = ['HttpServer', 'wsgi_iterator']
+
 
 def wsgi_iterator(result, callback, *args, **kwargs):
     result = make_async(result).get_result_or_self()

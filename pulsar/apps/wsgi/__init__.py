@@ -1,5 +1,4 @@
-"""
-Pulsar is shipped with an HTTP :class:`pulsar.apps.Application` for
+"""An HTTP :class:`pulsar.Application` for
 serving web applications which conforms with the python web server
 gateway interface (WSGI_).
 
@@ -22,12 +21,10 @@ with "Hello World!" for every request::
         return [data]
     
     if __name__ == '__main__':
-        wsgi.WSGIApplication(callable=hello).start()
+        wsgi.WSGIServer(callable=hello).start()
 
 
 For more information regarding WSGI check the pep3333_ specification.
-
-This application uses the WSGI primitive in :mod:`pulsar.net`
 
 .. _pep3333: http://www.python.org/dev/peps/pep-3333/
 .. _WSGI: http://www.wsgi.org
@@ -40,7 +37,7 @@ from pulsar.utils.importer import module_attribute
 from pulsar.apps import socket
 
 from .wsgi import *
-from .server import HttpServer
+from .server import *
 from . import middleware
 
 class WsgiSetting(pulsar.Setting):
@@ -52,12 +49,10 @@ class Keepalive(WsgiSetting):
     flags = ["--keep-alive"]
     validator = pulsar.validate_pos_int
     type = int
-    default = 5
+    default = 15
     desc = """\
-        The number of seconds to wait for requests on a Keep-Alive connection.
-        
-        Generally set in the 1-5 seconds range.    
-        """
+        The number of seconds to keep an idel HTTP keep-alive connection
+        connected."""
         
         
 class HttpParser(WsgiSetting):
@@ -94,7 +89,10 @@ and the error instance."""
 class WSGIServer(socket.SocketServer):
     cfg_apps = ('socket',)
     _app_name = 'wsgi'
-    socket_server_class = HttpServer
+    
+    def socket_server_class(self, worker, socket):
+        timeout = self.cfg.keepalive
+        return HttpServer(worker, socket, timeout=timeout)
     
     def handler(self):
         callable = self.callable

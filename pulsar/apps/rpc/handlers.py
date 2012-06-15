@@ -1,10 +1,9 @@
 import sys
 import inspect
 
-from pulsar import make_async, LogginMixin, to_bytes, Failure
+from pulsar import make_async, LogginMixin, to_bytes, is_failure
 from pulsar.utils.tools import checkarity
-from pulsar.net import wsgi_iterator
-from pulsar.apps.wsgi import WsgiResponse
+from pulsar.apps.wsgi import WsgiResponse, wsgi_iterator
 
 from .exceptions import *
 
@@ -119,7 +118,7 @@ class RpcResponse(WsgiResponse):
         request = self.request
         handler = request.handler
         try:
-            if isinstance(result, Failure):
+            if is_failure(result):
                 result.log()
                 result = handler.dumps(request.id,
                                        request.version,

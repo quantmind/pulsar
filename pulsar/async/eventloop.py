@@ -97,38 +97,6 @@ A level-triggered I/O event loop adapted from tornado.
     or else ``select``. It can be any other custom implementation as long as
     it has an ``epoll`` like interface. Pulsar ships with an additional
     I/O implementation based on distributed queue :class:`IOQueue`.
-    
-Example usage for a simple TCP server::
-
-    import errno
-    import functools
-    import ioloop
-    import socket
-
-    def connection_ready(sock, fd, events):
-        while True:
-            try:
-                connection, address = sock.accept()
-            except socket.error, e:
-                if e.args[0] not in (errno.EWOULDBLOCK, errno.EAGAIN):
-                    raise
-                return
-            connection.setblocking(0)
-            handle_connection(connection, address)
-
-    sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM, 0)
-    sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-    sock.setblocking(0)
-    sock.bind(("", port))
-    sock.listen(128)
-
-    io_loop = ioloop.IOLoop.instance()
-    callback = functools.partial(connection_ready, sock)
-    io_loop.add_handler(sock.fileno(), callback, io_loop.READ)
-    io_loop.start()
-
-When using the eventloop on a child process,
-It should be instantiated after forking.
 
 .. attribute:: num_lumps
 
@@ -147,9 +115,8 @@ It should be instantiated after forking.
     # Never use an infinite timeout here - it can stall epoll
     POLL_TIMEOUT = 0.5
     
-    def __init__(self, io = None, logger = None,
-                 pool_timeout = None, commnads = None,
-                 name = None, ready = True):
+    def __init__(self, io=None, logger=None, pool_timeout=None, commnads=None,
+                 name=None, ready=True):
         self._impl = io or IOpoll()
         self.POLL_TIMEOUT = pool_timeout if pool_timeout is not None\
                                  else self.POLL_TIMEOUT
@@ -179,7 +146,7 @@ It should be instantiated after forking.
         self.add_handler(self._waker,
                          lambda fd, events: self._waker.consume(),
                          self.READ)
-        
+    
     @property
     def cpubound(self):
         return getattr(self._impl, 'cpubound', False)
@@ -266,19 +233,16 @@ whether that callback was invoked before or after ioloop.start.'''
         return self._stopped
 
     def add_timeout(self, deadline, callback):
-        """Calls the given callback at the time deadline from the I/O loop.
-
-        Returns a handle that may be passed to remove_timeout to cancel.
-        """
+        """Add a timeout *callback*. A timeout callback  it is called
+at the time *deadline* from the :class:`IOLoop`.
+It returns an handle that may be passed to remove_timeout to cancel."""
         timeout = _Timeout(deadline, callback)
         bisect.insort(self._timeouts, timeout)
         return timeout
 
     def remove_timeout(self, timeout):
-        """Cancels a pending timeout.
-
-        The argument is a handle as returned by add_timeout.
-        """
+        """Cancels a pending *timeout*. The argument is an handle as returned
+by the :meth:`add_timeout` method."""
         self._timeouts.remove(timeout)
 
     def add_callback(self, callback, wake=True):
@@ -501,7 +465,7 @@ def loop_timeout(value, timeout, ioloop=None):
     value = maybe_async(value)
     if timeout and is_async(value):
         ioloop = ioloop or thread_loop()
-        ioloop.add_timeout(time.time() + timeout, _not_called_exception(value))
-    return value
+        return ioloop.add_timeout(time.time() + timeout,
+                                  _not_called_exception(value))
     
     

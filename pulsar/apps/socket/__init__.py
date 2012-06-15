@@ -48,9 +48,6 @@ class SocketServer(pulsar.Application):
         monitor.log.info('Listening on %s' % socket)
         monitor.set('socket', socket)
     
-    def request_instance(self, worker, fd, events):
-        return worker.get('socket_server').accept()
-             
     def worker_start(self, worker):
         # Start the worker by starting the socket server
         if not self.socket_server_class:
@@ -67,5 +64,6 @@ class SocketServer(pulsar.Application):
             worker.ioloop.remove_handler(s.socket)
             s.close()
         
-    def handle_request(self, worker, connection):
+    def on_event(self, worker, fd, events):
+        connection = worker.get('socket_server').accept()
         return connection.on_closed

@@ -7,6 +7,10 @@ Development
   element independent from each other.
 * The :class:`pulsar.Mailbox` does not derive from :class:`threading.Thread` so
   that the eventloop can be restarted.
+* Removed the :class:`ActorMetaClass`. Remote functions are specified using
+  a dictionary.
+* Socket and WSGI :class:`pulsar.Application` are built on top of the new
+  :class:`pulsar.AsyncSocketServer` framework class.
 
 Version 0.3 - 2012-May-03
 ============================

@@ -63,8 +63,7 @@ sending back responses.
     def on_event(self, fd, event):
         '''Override :meth:`pulsar.Actor.on_event` to delegate handling
 to the underlying :class:`Application`.'''
-        # Build the request instance
-        request = self.app.request_instance(self, fd, event)
+        return self.app.on_event(self, fd, event)
         # the request class may contain a timeout
         timeout = getattr(request, 'timeout', None)
         should_stop = self.max_requests and self.nr >= self.max_requests

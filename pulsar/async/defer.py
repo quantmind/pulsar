@@ -15,6 +15,7 @@ from .access import thread_loop
 
 __all__ = ['Deferred',
            'MultiDeferred',
+           'DeferredGenerator',
            'Failure',
            'as_failure',
            'is_failure',

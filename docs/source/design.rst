@@ -1,5 +1,7 @@
 .. _design:
 
+.. module:: pulsar
+
 =====================
 Design
 =====================
@@ -9,9 +11,9 @@ of components for building a vast array of parallel and asynchronous
 applications.
 
 * The first layer is based on the building block of pulsar library,
-  the :class:`pulsar.Actor` class.
-* The second layer is the based on the :class:`pulsar.Application`
-  which is built on top of the :class:`pulsar.Actor` model.
+  the :class:`Actor` class.
+* The second layer is the based on the :class:`Application`
+  which is built on top of the :class:`Actor` model.
    
 
 Server Model
@@ -28,8 +30,8 @@ Actors
 
 Event loop
 ~~~~~~~~~~~~~~~
-Each actor has its own instance of an :class:`pulsar.IOLoop` to perform its
-normal operations. The :attr:`pulsar.Actor.ioloop` is initiated just after
+Each actor has its own :class:`IOLoop` to perform its normal operations.
+The :attr:`Actor.ioloop` is initiated just after
 forking.
 Once the event loop is created, the actor add itself to
 :ref:`the event loop tasks <ioloop-tasks>`, so that it can perform
@@ -71,19 +73,19 @@ Remote functions
 Actor Callbacks
 ~~~~~~~~~~~~~~~~~~~~~~~~
 
-:class:`pulsar.Actor` exposes five callback functions which can be
+:class:`Actor` exposes five callback functions which can be
 used to customize the behaviour of the actor.
 
- * :meth:`pulsar.Actor.on_init` called just after initialization after forking.
- * :meth:`pulsar.Actor.on_start` called just before the actor event loop starts.
- * :meth:`pulsar.Actor.on_task` called at every actor event loop.
- * :meth:`pulsar.Actor.on_stop`.
- * :meth:`pulsar.Actor.on_exit`.
- * :meth:`pulsar.Actor.on_info`.
- * :meth:`pulsar.Actor.on_message`.
- * :meth:`pulsar.Actor.on_message_processed`.
+ * :meth:`Actor.on_init` called just after initialization after forking.
+ * :meth:`Actor.on_start` called just before the actor event loop starts.
+ * :meth:`Actor.on_task` called at every actor event loop.
+ * :meth:`Actor.on_stop`.
+ * :meth:`Actor.on_exit`.
+ * :meth:`Actor.on_info`.
+ * :meth:`Actor.on_message`.
+ * :meth:`Actor.on_message_processed`.
 
-These functions do nothing in the :class:`pulsar.Actor` implementation. 
+These functions do nothing in the :class:`Actor` implementation. 
 
 .. _gunicorn: http://gunicorn.org/
 
@@ -105,4 +107,4 @@ Application Framework
 =============================
 
 To aid the development of applications running on top of pulsar concurrent
-framework, the library ships with the :class:`pulsar.Application` class.
+framework, the library ships with the :class:`Application` class.

@@ -72,8 +72,6 @@ and are shared between the :class:`Actor` and its
         return self.name
     
     def get_actor(self, monitor):
-        '''Called at initialization, it set up communication layers for the
-actor. In particular here is where the outbox handler is created.'''
         self.daemon = True
         if monitor.is_arbiter():
             arbiter = monitor

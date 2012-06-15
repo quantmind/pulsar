@@ -11,17 +11,9 @@ it requires python 2.6 up to python 3.3 in a single code base.
    
    overview
    changelog
-   
-Concurrency Framework
-=========================
-
-.. toctree::
-   :maxdepth: 1
-   
    design
-   configuration
    api
-   internals
+   settings
    
 
 .. _apps-framework:
@@ -42,8 +34,7 @@ The idea is simple, you write a new application class by subclassing
 .. toctree::
    :maxdepth: 1
    
-   apps/api
-   settings
+   apps/socket
    apps/wsgi
    apps/rpc
    apps/tasks

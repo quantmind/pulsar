@@ -363,7 +363,8 @@ mean it is running.'''
     ############################################################################
     def handle_fd_event(self, fd, event):
         '''This function should be used when registering events
- on file descriptors'''
+ on file descriptors. It is called by the :attr:`requestloop` when an event
+ occurs on file descriptor *fd*.'''
         self.nr += 1
         self.concurrent_requests += 1
         msg = safe_async(self.on_event, args=(fd, event))
@@ -373,7 +374,11 @@ mean it is running.'''
         self.concurrent_requests -= 1
         if is_failure(result):
             result.log(self.log)
-        return result
+        max_requests = self.cfg.get('max_requests')
+        should_stop = max_requests and self.nr >= max_requests
+        if should_stop:
+            self.log.info("Auto-restarting worker.")
+            self.stop()
     
     ############################################################################
     ##    HOOKS

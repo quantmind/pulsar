@@ -58,14 +58,6 @@ TestRequest
    :member-order: bysource
    
    
-AsyncTestCaseMixin
-~~~~~~~~~~~~~~~~~~~~~~~~~
-
-.. autoclass:: AsyncTestCaseMixin
-   :members:
-   :member-order: bysource
-   
-   
 run_on_arbiter
 ~~~~~~~~~~~~~~~~~~~~~~~~
 
