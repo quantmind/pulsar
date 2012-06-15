@@ -305,15 +305,12 @@ class Failure(object):
 ############################################################### Deferred            
 class Deferred(object):
     """This is a callback which will be put off until later.
-The idea is the same as the ``twisted.defer.Deferred`` object.
-
-Use this class to return from functions which otherwise would block the
-program execution. Instead, it should return a Deferred.
+The implementation is very similar to the ``twisted.defer.Deferred`` object.
 
 .. attribute:: called
 
     ``True`` if the deferred was called. In this case the asynchronous result
-    is ready and available in the attr:`result`.
+    is ready and available in the :attr:`result`.
     
 """
     paused = 0
@@ -344,7 +341,8 @@ program execution. Instead, it should return a Deferred.
     def add_callback(self, callback, errback=None):
         """Add a callback as a callable function.
 The function takes at most one argument, the result passed to the
-:meth:`callback` method."""
+:meth:`callback` method. If the *errback* callable is provided it will
+be called when an exception occurs."""
         errback = errback if errback is not None else pass_through
         if hasattr(callback,'__call__') and hasattr(errback,'__call__'):
             self._callbacks.append((callback, errback))
@@ -354,9 +352,11 @@ The function takes at most one argument, the result passed to the
         return self
     
     def add_errback(self, errback):
+        '''Same as :meth:`add_callback` but only for errors.'''
         return self.add_callback(pass_through, errback)
         
     def addBoth(self, callback):
+        '''Equivalent to `self.add_callback(callback,callback)`.'''
         return self.add_callback(callback, callback)
                     
     def add_callback_args(self, callback, *args, **kwargs):

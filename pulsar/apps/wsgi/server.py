@@ -341,6 +341,7 @@ class HttpConnection(AsyncConnection):
             environ = wsgi_environ(self)
             # Rebuild the parser
             self.parser = self.server.parser_class()
+            environ['pulsar.connection'] = self
             return environ
     
     

@@ -47,7 +47,7 @@ def page(environ, start_response):
 
 def server(**kwargs):
     app = wsgi.WsgiHandler(middleware=(page, ws.WebSocket(handle)))
-    return wsgi.WSGIApplication(callable = app, **kwargs)
+    return wsgi.WSGIServer(callable=app, **kwargs)
 
 
 if __name__ == '__main__':

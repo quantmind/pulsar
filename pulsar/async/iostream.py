@@ -691,6 +691,10 @@ chunk of data to send back to the remote client.
         self.parsed_data = parsed_data
     
     @property
+    def server(self):
+        return self.connection.server
+    
+    @property
     def parser(self):
         return self.connection.parser
     
@@ -700,7 +704,7 @@ chunk of data to send back to the remote client.
     
     def __iter__(self):
         yield b''
-    
+        
     
 class AsyncConnection(ClientSocketHandler):
     '''An asynchronous client connection for a :class:`AsyncSocketServer`.
