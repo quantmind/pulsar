@@ -140,7 +140,7 @@ class HttpResponse(AsyncResponse):
     _status = None
     _headers_sent = None
     
-    def response_iterator(self):
+    def _response_iterator(self):
         environ = self.environ
         self.headers = self.connection.default_headers()
         worker = self.connection.actor
@@ -241,20 +241,8 @@ class HttpResponse(AsyncResponse):
         return self.connection.write
     
     def __iter__(self):
-        '''WSGI write function returned by the
-:meth:`HttpResponse.start_response` function.
-
-New WSGI applications and frameworks should not use this callable directly
-if it is possible to avoid doing so.
-In general, applications should produce their output via their returned
-iterable, as this makes it possible for web servers to interleave other
-tasks in the same Python thread, potentially providing better throughput
-for the server as a whole.
-
-:parameter data: an iterable over bytes.
-'''
         MAX_CHUNK = 65536
-        for b in self.response_iterator():
+        for b in self._response_iterator():
             head = self.send_headers(force=b)
             if head is not None:
                 yield head

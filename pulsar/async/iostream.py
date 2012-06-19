@@ -468,7 +468,7 @@ class BaseSocketHandler(object):
 .. attribute:: on_closed
 
     A :class:`Deferred` which receives a callback once the
-    :meth:`close` is invoked
+    :meth:`close` method is invoked
 .. '''
     def __new__(cls, *args, **kwargs):
         o = super(BaseSocketHandler, cls).__new__(cls)
@@ -779,7 +779,8 @@ more data in the buffer is required.'''
             parsed_data = self.request_data()
             if parsed_data:
                 self.received += 1
-                yield self.write(self.response_class(self, parsed_data))
+                response = self.response_class(self, parsed_data)
+                yield self.write(response)
             d = self.socket.read()
             if d:
                 yield d.add_callback(self._stream_data, self.close)
@@ -792,8 +793,7 @@ more data in the buffer is required.'''
     
     
 class AsyncSocketServer(BaseSocketHandler):
-    '''An :class:`AsyncSocketServer` is a :class:`BaseSocketHandler`
-the all asynchronous servers using sockets for IO.
+    '''A :class:`BaseSocketHandler` for asynchronous socket servers.
 
 .. attribute:: actor
 

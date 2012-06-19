@@ -18,7 +18,7 @@ different aspects of the concurrent framework. These primitive classes are:
 
 .. _pulsar_framework:
 
-A second layer of classes, forming the concurrent framework, is is built
+A second layer of classes, forming the concurrent framework, is built
 directly on top of :ref:`pulsar primitives <pulsar_primitives>`. These
 **framework** classes are:
 
