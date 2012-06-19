@@ -613,7 +613,7 @@ This function is overridden by :class:`Monitor` to perform nothing.'''
         set_local_data(self)
         self.setid()
         self.on_start()
-        self.log.info('Starting - address %s', self.mailbox.address)
+        self.log.info('Address %s', self.mailbox.address)
             
     def _run(self):
         '''The run implementation which must be done by a derived class.'''

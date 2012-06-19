@@ -203,6 +203,7 @@ This function is useful when someone needs to treat a value as a deferred::
         return val
 
 def log_failure(failure):
+    '''Log the *failure* if *failure* is a :class:`Failure`.'''
     if is_failure(failure):
         failure.log()
     return failure

@@ -272,19 +272,20 @@ setup using the :meth:`set_close_callback` method."""
     def _may_run_callback(self, c, result=None):
         if c.called:
             # The callback has been already called, do nothing
-            # TODO: decide what to do
+            # TODO: think about this in details.
             pass
         else:
             try:
-                c.callback(result)
+                # Make sure that any uncaught error is logged
+                log_failure(c.callback(result))
             except:
                 # Close the socket on an uncaught exception from a user callback
                 # (It would eventually get closed when the socket object is
                 # gc'd, but we don't want to rely on gc happening before we
                 # run out of file descriptors)
                 self.close()
-                # Re-raise the exception so that IOLoop.handle_callback_exception
-                # can see it and log the error
+                # Re-raise the exception so that
+                # IOLoop.handle_callback_exception can see it and log the error
                 raise
     
     def _handle_connect(self):
@@ -470,6 +471,7 @@ class BaseSocketHandler(object):
     A :class:`Deferred` which receives a callback once the
     :meth:`close` method is invoked
 .. '''
+    _closing_socket = False
     def __new__(cls, *args, **kwargs):
         o = super(BaseSocketHandler, cls).__new__(cls)
         o.on_closed = Deferred()
@@ -497,16 +499,17 @@ class BaseSocketHandler(object):
     
     def close(self, msg=None):
         '''Close this socket and log the failure if there was one.'''
-        on_closed = self.on_closed
-        if not on_closed.called:
-            if is_failure(msg):
-                if isinstance(msg.trace[1], Timeout):
-                    self.log.info('Closing %s on timeout.', self)
-                else:
-                    log_failure(msg)
-            self.on_close(msg)
-            self.socket.close()
-            return on_closed.callback(msg)
+        if self._closing_socket:
+            return msg
+        self._closing_socket = True
+        if is_failure(msg):
+            if isinstance(msg.trace[1], Timeout):
+                self.log.info('Closing %s on timeout.', self)
+            else:
+                log_failure(msg)
+        self.on_close(msg)
+        self.socket.close()
+        return self.on_closed.callback(msg)
     
     
 class ClientSocketHandler(BaseSocketHandler):
@@ -556,10 +559,7 @@ is required in order to use :class:`SocketClient`.
     
     
 class ClientSocket(ClientSocketHandler):
-    '''Base class for socket clients with parsers. This class can be used for
-synchronous and asynchronous socket for both a "client" socket and
-the server connection socket (the socket obtained from a server socket
-via the ``connect`` function).'''   
+    '''Base class for socket clients with parsers.'''   
     @classmethod
     def connect(cls, address, parsercls=None, socket_timeout=None):
         socket = create_connection(address, blocking=True)
@@ -595,7 +595,7 @@ via the ``connect`` function).'''
     @run_callbacks('read')
     def parsedata(self, data):
         '''We got some data to parse'''
-        parsed_data = self._parseddata(data)
+        parsed_data = self._parsedata(data)
         if parsed_data:
             self.received += 1
             r = safe_async(self.on_parsed_data, args=(parsed_data,))

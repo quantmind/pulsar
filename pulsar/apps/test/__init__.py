@@ -247,7 +247,7 @@ configuration and plugins.'''
             print('Could not find any tests.')
             monitor.arbiter.stop()
     
-    def handle_request(self, worker, request):
+    def on_event(self, worker, fd, request):
         yield request.run(worker)
         yield request
         
@@ -259,5 +259,6 @@ configuration and plugins.'''
             time_taken = time.time() - self._time_start
             runner.on_end()
             runner.printSummary(time_taken)
+            # Shut down the arbiter
             return monitor.arbiter.stop()
 

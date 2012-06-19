@@ -71,7 +71,7 @@ class LoopGuard(object):
         
     def __enter__(self):
         loop = self.loop
-        loop.log.debug("Starting event loop")
+        loop.log.debug("Starting %s", loop)
         loop._running = True
         loop.setid()
         loop._started = time.time()

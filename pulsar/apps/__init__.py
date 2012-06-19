@@ -581,6 +581,9 @@ By default it returns ``None``.'''
     def on_info(self, worker, data):
         return data
     
+    def on_event(self, worker, fd, events):
+        pass
+    
     def worker_start(self, worker):
         '''Called by the :class:`Worker` :meth:`pulsar.Actor.on_start`
 :ref:`callback <actor-callbacks>` method.'''
@@ -664,12 +667,3 @@ The application is now in the arbiter but has not yet started.'''
                     monitor.actor_links[self.name] = self
                     yield name, app
                     
-    def remote_functions(self):
-        '''Provide with additional remote functions
-to be added to the monitor dictionary of remote functions.
-
-:rtype: a two dimensional tuple of remotes and actor_functions
-    dictionaries.'''
-        return None,None
-    
-    

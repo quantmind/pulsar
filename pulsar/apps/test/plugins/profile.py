@@ -5,10 +5,10 @@ import tempfile
 import cProfile as profiler
 import pstats
 from datetime import datetime
+from io import StringIO
 
 import pulsar
 from pulsar.apps import test
-from pulsar.utils.httpurl import StringIO
 
 other_filename = 'unknown'
 line_func = re.compile(r'(?P<line>\d+)\((?P<func>\w+)\)')

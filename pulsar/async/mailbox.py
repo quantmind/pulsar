@@ -12,7 +12,7 @@ from pulsar import create_connection, MailboxError, server_socket,\
 from pulsar.utils.tools import gen_unique_id
 from pulsar.utils.httpurl import to_bytes
 
-from .defer import make_async, safe_async, pickle, is_async,\
+from .defer import make_async, safe_async, pickle, is_async, log_failure,\
                     async, is_failure, ispy3k, raise_failure, CLEAR_ERRORS
 from .iostream import AsyncIOStream, AsyncSocketServer,\
                         AsyncConnection, ReconnectingClient, AsyncResponse
@@ -164,7 +164,7 @@ class MailboxResponse(AsyncResponse):
     def __iter__(self):
         # The receiver could be different from the mail box actor. For
         # example a monitor uses the same mailbox as the arbiter
-        message = self.request.parsed_data
+        message = self.parsed_data
         actor = self.connection.actor
         receiver = actor.get_actor(message.receiver) or actor
         sender = receiver.get_actor(message.sender)
@@ -189,6 +189,9 @@ class MailboxResponse(AsyncResponse):
             else:
                 m = ActorMessage('callback', sender=receiver, args=(result,))
             yield self.parser.encode(m)
+        else:
+            # make sure we log any failure
+            log_failure(result)
 
     
 class MailboxConnection(AsyncConnection):
@@ -302,7 +305,7 @@ class QueueWaker(object):
     
         
 class IOQueue(object):
-    '''Epoll like class for a IO based on queues.
+    '''Epoll like class for a IO based on queues rather than sockets.
 The interface is the same as the python epoll_ implementation.
 
 .. _epoll: http://docs.python.org/library/select.html#epoll-objects'''
@@ -318,11 +321,11 @@ The interface is the same as the python epoll_ implementation.
         '''The underlying distributed queue used for I/O.'''
         return self._queue
 
-    def register(self, fd, events = None):
+    def register(self, fd, events=None):
         '''Register a fd descriptor with the io queue object'''
         self._fds.add(fd)
                 
-    def modify(self, fd, events = None):
+    def modify(self, fd, events=None):
         '''Modify a registered file descriptor'''
         self.unregister(fd)
         self.register(fd, events)
@@ -331,7 +334,7 @@ The interface is the same as the python epoll_ implementation.
         '''Remove a registered file descriptor from the ioqueue object.. '''
         self._fds.discard(fd)
     
-    def poll(self, timeout = 0.5):
+    def poll(self, timeout=0.5):
         '''Wait for events. timeout in seconds (float)'''
         if self._actor:
             if not self._actor.can_poll():

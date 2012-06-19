@@ -205,14 +205,13 @@ method.'''
 
 
 class CPUboundServer(pulsar.Application):
-    '''Base pulsar CPU-bound application server'''
+    '''A CPU-bound application server.'''
     _app_name = 'cpubound'
     
     def get_ioqueue(self):
         '''Return the distributed task queue which produces tasks to
 be consumed by the workers.'''
-        queue = self.cfg.task_queue_factory
-        return queue()
+        return self.cfg.task_queue_factory()         
     
 
 taskqueue_cmnds = set()

@@ -122,7 +122,7 @@ def run(client, actor, caller, callable):
 @pulsar_command(ack=False, internal=True)
 def stop(client, actor, caller):
     '''Stop the actor from running. Same as shut_down but for internal use'''
-    actor.stop()
+    return actor.stop()
     
 @pulsar_command(ack=False, internal=True)
 def notify(client, actor, caller, info):

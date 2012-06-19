@@ -33,7 +33,7 @@ It is used by both the :class:`Arbiter` and the :class:`Monitor` classes.
     
     Default ``0`` any number of actors.
 '''
-    CLOSE_TIMEOUT = 3
+    CLOSE_TIMEOUT = 30000000000000
     JOIN_TIMEOUT = 1.0
     actor_class = Actor
     DEFAULT_IMPLEMENTATION = 'monitor'
