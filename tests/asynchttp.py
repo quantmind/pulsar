@@ -1,11 +1,12 @@
 '''tests the httpurl stand-alone script.'''
-from pulsar import is_async, net
+import pulsar
+from pulsar import is_async
 
 from . import httpurl
 
 
 class TestHttpClient(httpurl.TestHttpClient):
-    HttpClient = net.HttpClient
+    HttpClient = pulsar.HttpClient
     
     def make_async(self, r):
         self.assertTrue(is_async(r))

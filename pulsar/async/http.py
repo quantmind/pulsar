@@ -5,13 +5,14 @@ import pulsar
 from pulsar import lib
 from pulsar.utils import httpurl
 from pulsar.utils.httpurl import Request, HTTPResponseMixin
-from pulsar.net.base import NetRequest, AsyncClientResponse
+
+from .iostream import AsyncResponse
 
 
 __all__ = ['HttpClient']
 
 
-class AsyncHttpResponse(AsyncClientResponse, HTTPResponseMixin):
+class AsyncHttpResponse(AsyncResponse, HTTPResponseMixin):
 
     def done(self):
         return self.parser.is_message_complete() 
@@ -63,7 +64,8 @@ class AsyncRequest(Request):
         return response
 
     
-class HttpAsyncConnection(NetRequest):
+#class HttpAsyncConnection(NetRequest):
+class HttpAsyncConnection(object):
     
     def default_parser(self):
         return lib.Http_Parser
