@@ -91,8 +91,8 @@ following algorithm:
             yield CLEAR_ERRORS
         
         # send runner result to monitor
-        worker.send(worker.monitor, 'test_result', testcls.tag,
-                    testcls, runner.result)
+        yield worker.send(worker.monitor, 'test_result', testcls.tag,
+                          testcls, runner.result)
         
     def run_test(self, test, runner):
         '''\

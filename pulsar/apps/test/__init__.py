@@ -125,6 +125,7 @@ test_commands = set()
 
 @pulsar_command(internal=True, ack=False, commands_set=test_commands)
 def test_result(client, actor, sender, tag, testcls, result):
+    '''Command for sending test results from test workers to the test monitor.'''
     actor.log.debug('Got a test results from %s.%s', tag, testcls.__name__)
     actor.app.add_result(actor, result)
         
@@ -248,8 +249,7 @@ configuration and plugins.'''
             monitor.arbiter.stop()
     
     def on_event(self, worker, fd, request):
-        yield request.run(worker)
-        yield request
+        return request.run(worker)
         
     def add_result(self, monitor, result):
         #Check if we got all results

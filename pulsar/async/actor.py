@@ -15,7 +15,7 @@ from pulsar import AlreadyCalledError, AlreadyRegistered,\
 from .eventloop import IOLoop, ID
 from .proxy import ActorProxy, ActorMessage
 from .defer import make_async, is_failure, iteritems, itervalues,\
-                     pickle, safe_async, async
+                     pickle, safe_async, async, log_failure
 from .mailbox import IOQueue, mailbox
 from .access import set_local_data, is_mainthread, get_actor
 from . import commands
@@ -368,12 +368,11 @@ mean it is running.'''
         self.nr += 1
         self.concurrent_requests += 1
         msg = safe_async(self.on_event, args=(fd, event))
-        msg.addBoth(self.end_event) 
+        msg.addBoth(self.end_event)
         
     def end_event(self, result):
         self.concurrent_requests -= 1
-        if is_failure(result):
-            result.log(self.log)
+        log_failure(result)
         max_requests = self.cfg.get('max_requests')
         should_stop = max_requests and self.nr >= max_requests
         if should_stop:
