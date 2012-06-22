@@ -4,7 +4,7 @@ import socket
 import pulsar
 from pulsar import lib
 from pulsar.utils import httpurl
-from pulsar.utils.httpurl import Request, HTTPResponseMixin
+from pulsar.utils.httpurl import HttpRequest, HttpResponse
 
 from .iostream import AsyncResponse
 
@@ -12,7 +12,7 @@ from .iostream import AsyncResponse
 __all__ = ['HttpClient']
 
 
-class AsyncHttpResponse(AsyncResponse, HTTPResponseMixin):
+class AsyncHttpResponse(AsyncResponse):
 
     def done(self):
         return self.parser.is_message_complete() 
@@ -52,7 +52,7 @@ class AsyncHttpResponse(AsyncResponse, HTTPResponseMixin):
         return self.status
     
     
-class AsyncRequest(Request):
+class AsyncRequest(HttpRequest):
     
     def get_response(self, headers):
         c = self.connection
@@ -81,7 +81,7 @@ class HttpAsyncConnection(object):
             self.stream.socket.bind(self.source_address)
             
     
-class HTTPConnection(HttpAsyncConnection, httpurl.HTTPConnection):
+class HTTPConnection(HttpAsyncConnection, httpurl.HttpConnection):
     
     def __init__(self, *args, **kwargs):
         httpurl.HTTPConnection.__init__(self, *args, **kwargs)
@@ -92,3 +92,4 @@ class HttpClient(httpurl.HttpClient):
     client_version = pulsar.SERVER_SOFTWARE
     request_class = AsyncRequest
     Connections = {'http': HTTPConnection}
+    

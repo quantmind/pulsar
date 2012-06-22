@@ -436,9 +436,6 @@ setup using the :meth:`set_close_callback` method."""
         return deferred
 
 
-class NOTHING:
-    pass
-
 class run_callbacks:
     
     def __init__(self, name):
@@ -557,7 +554,7 @@ is required in order to use :class:`SocketClient`.
     
     
 class ClientSocket(ClientSocketHandler):
-    '''Base class for socket clients with parsers.'''   
+    '''Synchronous/Asynchronous client for a remote server.'''   
     @classmethod
     def connect(cls, address, parsercls=None, socket_timeout=None):
         socket = create_connection(address, blocking=True)

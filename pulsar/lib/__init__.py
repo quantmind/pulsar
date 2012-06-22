@@ -1,7 +1,7 @@
 #First try local
 try:
     from ._pulsar import *
-    hasextensions = True    
+    hasextensions = True
 except ImportError:
     # Try Global
     try:
@@ -9,9 +9,7 @@ except ImportError:
         hasextensions = True
     except ImportError:
         hasextensions = False
-        from .fallback import *
-
-from . import fallback
+        from pulsar.utils.httpurl import HttpParser
 
 Http_Parser = HttpParser
 

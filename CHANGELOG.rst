@@ -1,6 +1,7 @@
 Development
 =====================
 * Overall refactoring of API and therefore incompatible with version 0.3.
+* Added the new :mod:`pulsar.utils.httpurl` module for HTTP tools and clients.
 * Refactored :class:`pulsar.Deferred` to be more similar to twisted. You
   can add separate callbacks for handling errors.
 * Added :class:`pulsar.MultiDeferred` for handling a group of asynchronous

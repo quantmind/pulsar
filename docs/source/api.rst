@@ -165,7 +165,13 @@ Deferred
    :members:
    :member-order: bysource
    
+Multi Deferred
+~~~~~~~~~~~~~~~~~~~~~~
 
+.. autoclass:: MultiDeferred
+   :members:
+   :member-order: bysource
+   
 Deferred Generator
 ~~~~~~~~~~~~~~~~~~~~~~
 
@@ -336,7 +342,7 @@ Exceptions
    :members:
    :member-order: bysource
      
-     
+      
 .. _internals:
 
 
@@ -367,11 +373,3 @@ retry over time
 .. autofunction:: retry_over_time
 
 
-.. module:: pulsar.utils.httpurl
-
-Headers
-~~~~~~~~~~~~~~
-
-.. autoclass:: Headers
-   :members:
-   :member-order: bysource

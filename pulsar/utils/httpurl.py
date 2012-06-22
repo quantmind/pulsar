@@ -1,12 +1,22 @@
-'''Stand alone HTTP, URLS utilities and HTTP client library.
+'''The module imports several classes and functions form the standard
+library in a python 2.6 to python 3.3 compatible fashion.
+The module also implements an :class:`HttpClient` class useful for handling
+synchronous and asynchronous HTTP requests.
+
+Stand alone HTTP, URLS utilities and HTTP client library.
 This is a thin layer on top of urllib2 in python2 / urllib in Python 3.
 To create this module I've used several bits from around the opensorce community
 In particular:
 
-* urllib3_
-* request_
+* http-parser_ for the :class:`HttpParser`
+* urllib3_ for http connection classes
+* request_ for inspiration and utilities
 
+.. _http-parser: https://github.com/benoitc/http-parser
+.. _urllib3: https://github.com/shazow/urllib3
+.. _request: https://github.com/kennethreitz/requests
 '''
+import os
 import sys
 import re
 import string
@@ -19,6 +29,8 @@ from uuid import uuid4
 from datetime import datetime, timedelta
 from email.utils import formatdate
 from io import BytesIO
+import zlib
+from collections import deque
 
 ispy3k = sys.version_info >= (3,0)
 
@@ -364,12 +376,426 @@ append the value to the list.'''
         return header_query.lower() in set(self.vary_headers)
     
     
-####################################################    HTTP CLIENT    
+###############################################################################
+##    HTTP PARSER
+###############################################################################
+METHOD_RE = re.compile("[A-Z0-9$-_.]{3,20}")
+VERSION_RE = re.compile("HTTP/(\d+).(\d+)")
+STATUS_RE = re.compile("(\d{3})\s*(\w*)")
+HEADER_RE = re.compile("[\x00-\x1F\x7F()<>@,;:\[\]={} \t\\\\\"]")
+
+# errors
+BAD_FIRST_LINE = 0
+INVALID_HEADER = 1
+INVALID_CHUNK = 2
+
+class InvalidRequestLine(Exception):
+    """ error raised when first line is invalid """
+
+
+class InvalidHeader(Exception):
+    """ error raised on invalid header """
+
+
+class InvalidChunkSize(Exception):
+    """ error raised when we parse an invalid chunk size """
+
+
+class HttpParser(object):
+    '''A python http parser.
+
+Original code from https://github.com/benoitc/http-parser
+
+2011 (c) Benoit Chesneau <benoitc@e-engura.org>
+
+Permission is hereby granted, free of charge, to any person
+obtaining a copy of this software and associated documentation
+files (the "Software"), to deal in the Software without
+restriction, including without limitation the rights to use,
+copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the
+Software is furnished to do so, subject to the following
+conditions:
+
+The above copyright notice and this permission notice shall be
+included in all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES
+OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT
+HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
+WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
+OTHER DEALINGS IN THE SOFTWARE.'''
+    def __init__(self, kind=2, decompress=False):
+        self.decompress = decompress
+        # errors vars
+        self.errno = None
+        self.errstr = ""
+        # protected variables
+        self._buf = [] 
+        self._version = None
+        self._method = None
+        self._server_protocol = None
+        self._status_code = None
+        self._status = None
+        self._reason = None
+        self._url = None
+        self._path = None
+        self._query_string = None
+        self._fragment= None
+        self._headers = Headers(kind=kind)
+        self._chunked = False
+        self._body = []
+        self._trailers = None
+        self._partial_body = False
+        self._clen = None
+        self._clen_rest = None
+        # private events
+        self.__on_firstline = False
+        self.__on_headers_complete = False
+        self.__on_message_begin = False
+        self.__on_message_complete = False
+        self.__decompress_obj = None
+        
+    @property
+    def kind(self):
+        return self._headers.kind_number
+        
+    def get_version(self):
+        return self._version
+
+    def get_method(self):
+        return self._method
+
+    def get_status_code(self):
+        return self._status_code
+
+    def get_url(self):
+        return self._url
+
+    def get_path(self):
+        return self._path
+
+    def get_query_string(self):
+        return self._query_string
+
+    def get_fragment(self):
+        return self._fragment
+
+    def get_headers(self):
+        return self._headers
+    
+    def get_protocol(self):
+        return self._server_protocol
+    
+    def get_body(self):
+        return self._body
+
+    def recv_body(self):
+        """ return last chunk of the parsed body"""
+        body = b''.join(self._body)
+        self._body = []
+        self._partial_body = False
+        return body
+
+    def is_upgrade(self):
+        """ Do we get upgrade header in the request. Useful for
+        websockets """
+        return self._headers.get('connection') == "upgrade"
+
+    def is_headers_complete(self):
+        """ return True if all headers have been parsed. """ 
+        return self.__on_headers_complete
+
+    def is_partial_body(self):
+        """ return True if a chunk of body have been parsed """
+        return self._partial_body
+
+    def is_message_begin(self):
+        """ return True if the parsing start """
+        return self.__on_message_begin
+
+    def is_message_complete(self):
+        """ return True if the parsing is done (we get EOF) """
+        return self.__on_message_complete
+
+    def is_chunked(self):
+        """ return True if Transfer-Encoding header value is chunked"""
+        return self._chunked
+        
+    def execute(self, data, length):
+        # end of body can be passed manually by putting a length of 0
+        if length == 0:
+            self.__on_message_complete = True
+            return length
+
+        # start to parse
+        nb_parsed = 0
+        while True:
+            if not self.__on_firstline:
+                idx = data.find(b'\r\n')
+                if idx < 0:
+                    self._buf.append(data)
+                    return len(data)
+                else:
+                    self.__on_firstline = True
+                    self._buf.append(data[:idx])
+                    first_line = to_string(b''.join(self._buf))
+                    nb_parsed = nb_parsed + idx + 2
+                    
+                    rest = data[idx+2:]
+                    data = b''
+                    if self._parse_firstline(first_line):
+                        self._buf = [rest]
+                    else:
+                        return nb_parsed
+            elif not self.__on_headers_complete:
+                if data:
+                    self._buf.append(data)
+                    data = b''
+                try:
+                    to_parse = b''.join(self._buf)
+                    ret = self._parse_headers(to_parse)
+                    if ret is False:
+                        return length
+                    nb_parsed = nb_parsed + (len(to_parse) - ret)
+                except InvalidHeader as e:
+                    self.errno = INVALID_HEADER 
+                    self.errstr = str(e)
+                    return nb_parsed
+            elif not self.__on_message_complete:
+                if not self.__on_message_begin:
+                    self.__on_message_begin = True
+
+                if data:
+                    self._buf.append(data)
+                    data = b''
+
+                ret = self._parse_body()
+                if ret is None:
+                    return length
+
+                elif ret < 0:
+                    return ret
+                elif ret == 0:
+                    self.__on_message_complete = True
+                    return length
+                else:
+                    nb_parsed = max(length, ret)
+
+            else:
+                return 0
+
+    def _parse_firstline(self, line):
+        try:
+            if self.kind == 2: # auto detect
+                try:
+                    self._parse_request_line(line)
+                except InvalidRequestLine:
+                    self._parse_response_line(line)
+            elif self.kind == 1:
+                self._parse_response_line(line)
+            elif self.kind == 0:
+                self._parse_request_line(line)
+        except InvalidRequestLine as e:
+            self.errno = BAD_FIRST_LINE
+            self.errstr = str(e)
+            return False
+        return True
+
+    def _parse_response_line(self, line):
+        bits = line.split(None, 1)
+        if len(bits) != 2:
+            raise InvalidRequestLine(line)
+            
+        # version 
+        matchv = VERSION_RE.match(bits[0])
+        if matchv is None:
+            raise InvalidRequestLine("Invalid HTTP version: %s" % bits[0])
+        self._version = (int(matchv.group(1)), int(matchv.group(2)))
+            
+        # status
+        matchs = STATUS_RE.match(bits[1])
+        if matchs is None:
+            raise InvalidRequestLine("Invalid status %" % bits[1])
+        
+        self._status = bits[1]
+        self._status_code = int(matchs.group(1))
+        self._reason = matchs.group(2)
+
+    def _parse_request_line(self, line):
+        bits = line.split(None, 2)
+        if len(bits) != 3:
+            raise InvalidRequestLine(line)
+
+        # Method
+        if not METHOD_RE.match(bits[0]):
+            raise InvalidRequestLine("invalid Method: %s" % bits[0])
+        self._method = bits[0].upper()
+
+        # URI
+        self._url = bits[1]
+        parts = urlsplit(bits[1])
+        self._path = parts.path or ""
+        self._query_string = parts.query or ""
+        self._fragment = parts.fragment or ""
+        self._server_protocol = bits[2]
+        
+        # Version
+        match = VERSION_RE.match(bits[2])
+        if match is None:
+            raise InvalidRequestLine("Invalid HTTP version: %s" % bits[2])
+        self._version = (int(match.group(1)), int(match.group(2)))
+    
+    def _parse_headers(self, data):
+        idx = data.find(b'\r\n\r\n')
+        if idx < 0: # we don't have all headers
+            return False
+
+        # Split lines on \r\n keeping the \r\n on each line
+        lines = deque(('%s\r\n' % to_string(line) for line in
+                       data[:idx].split(b'\r\n')))
+       
+        # Parse headers into key/value pairs paying attention
+        # to continuation lines.
+        while len(lines):
+            # Parse initial header name : value pair.
+            curr = lines.popleft()
+            if curr.find(":") < 0:
+                raise InvalidHeader("invalid line %s" % curr.strip())
+            name, value = curr.split(":", 1)
+            name = name.rstrip(" \t").upper()
+            if HEADER_RE.search(name):
+                raise InvalidHeader("invalid header name %s" % name)
+            name, value = name.strip(), [value.lstrip()]
+            
+            # Consume value continuation lines
+            while len(lines) and lines[0].startswith((" ", "\t")):
+                value.append(lines.popleft())
+            value = ''.join(value).rstrip()
+            
+            # multiple headers
+            if name in self._headers:
+                value = "%s,%s" % (self._headers[name], value)
+
+            # store new header value
+            self._headers[name] = value
+
+        # detect now if body is sent by chunks.
+        clen = self._headers.get('content-length')
+        te = self._headers.get('transfer-encoding', '').lower()
+        self._chunked = (te == 'chunked')
+        if clen and not self._chunked:
+            try:
+                clen = int(clen)
+            except ValueError:
+                clen = None
+            else:
+                if clen < 0:  # ignore nonsensical negative lengths
+                    clen = None
+        else:
+            clen = None
+            
+        status = self._status_code
+        if status and (status == httpclient.NO_CONTENT or
+            status == httpclient.NOT_MODIFIED or
+            100 <= status < 200 or      # 1xx codes
+            self._method == "HEAD"):
+            clen = 0
+            
+        self._clen_rest = self._clen = clen
+
+        # detect encoding and set decompress object 
+        encoding = self._headers.get('content-encoding')
+        if encoding == "gzip":
+            self.__decompress_obj = zlib.decompressobj(16+zlib.MAX_WBITS)
+        elif encoding == "deflate":
+            self.__decompress_obj = zlib.decompressobj()
+    
+        rest = data[idx+4:]
+        self._buf = [rest]
+        self.__on_headers_complete = True
+        return len(rest)
+
+    def _parse_body(self):
+        data = b''.join(self._buf)
+        if not self._chunked:
+            if self._clen_rest is not None:
+                self._clen_rest -= len(data)
+            # maybe decompress
+            if self.__decompress_obj is not None:
+                data = self.__decompress_obj.decompress(data)
+            self._partial_body = True
+            if data:
+                self._body.append(data)
+            self._buf = []
+            if self._clen_rest is None or self._clen_rest <= 0:
+                self.__on_message_complete = True
+        else:
+            try:
+                size, rest = self._parse_chunk_size(data)
+            except InvalidChunkSize as e:
+                self.errno = INVALID_CHUNK
+                self.errstr = "invalid chunk size [%s]" % str(e)
+                return -1
+
+            if size == 0:
+                return size
+
+            if size is None or len(rest) < size:
+                return None
+            body_part, rest = rest[:size], rest[size:]
+            if len(rest) < 2:
+                self.errno = INVALID_CHUNK
+                self.errstr = "chunk missing terminator [%s]" % data
+                return -1
+
+            # maybe decompress
+            if self.__decompress_obj is not None:
+                body_part = self.__decompress_obj.decompress(body_part)
+
+            self._partial_body = True
+            self._body.append(body_part)
+
+            self._buf = [rest[2:]]
+            return len(rest)
+
+    def _parse_chunk_size(self, data):
+        idx = data.find(b'\r\n')
+        if idx < 0:
+            return None, None
+        line, rest_chunk = data[:idx], data[idx+2:]
+        chunk_size = line.split(b';', 1)[0].strip()
+        try:
+            chunk_size = int(chunk_size, 16)
+        except ValueError:
+            raise InvalidChunkSize(chunk_size)
+
+        if chunk_size == 0:
+            self._parse_trailers(rest_chunk)
+            return 0, None
+        return chunk_size, rest_chunk
+
+    def _parse_trailers(self, data):
+        idx = data.find(b'\r\n\r\n')
+
+        if data[:2] == b'\r\n':
+            self._trailers = self._parse_headers(data[:idx])
+
+
+################################################################################
+##    HTTP CLIENT
+################################################################################    
 class HttpConnectionError(Exception):
     pass
 
 
-class HTTPResponseMixin(object):
+class HttpResponse(object):
+    
+    def __init__(self, request):
+        self.request = request 
         
     @property
     def status_code(self):
@@ -422,39 +848,31 @@ class HTTPResponseMixin(object):
         return client.post_process_response(req, self)
     
     
-class HTTPResponse(HTTPResponseMixin, httpclient.HTTPResponse):
-    pass
-    
-    
-class HTTPConnection(httpclient.HTTPConnection):
-    response_class = HTTPResponse
+class HttpConnection(object):
+    response_class = HttpResponse
     
     @property
     def is_async(self):
         return self.timeout == 0
 
 
-class Request(object):
-    '''
-* Default is charset is "iso-8859-1" (latin-1) from section 3.7.1
-
+class HttpRequest(object):
+    default_charset = 'latin-1'
+    '''Default is charset is "iso-8859-1" (latin-1) from section 3.7.1
 http://www.ietf.org/rfc/rfc2616.txt 
     '''
-    default_charset = 'latin-1'
-    DEFAULT_PORTS = {'http': 80, 'https': 443}
-    
+    connection = None
+    data = None
+    _tunnel_host = None
+    _has_proxy = False
     def __init__(self, url, method=None, data=None, charset=None,
                  encode_multipart=True, multipart_boundary=None,
                  headers=None, timeout=None, **kwargs):
         self.type, self.host, self.path, self.params,\
         self.query, self.fragment = urlparse(url)
         self.full_url = self._get_full_url()
-        self.data = None
-        self._has_proxy = False
         self.timeout = timeout
         self.headers = {}
-        self._tunnel_host = None
-        self.connection = None
         if headers:
             for key, value in iteritems(headers):
                 self.add_header(key, value)
@@ -553,7 +971,52 @@ http://www.ietf.org/rfc/rfc2616.txt
             
 
 class HttpConnectionPool(object):
+    '''Maintains a pool of connections'''
+    def __init__(self, Connections, max_connections, timeout, scheme,
+                 host, port=None):
+        self.Connections = Connections
+        self.scheme = scheme
+        self.host = host
+        self.port = port
+        self.timeout = timeout
+        self.max_connections = max_connections or 2**31
+        self._created_connections = 0
+        self._available_connections = []
+        self._in_use_connections = set()
+        
+    def get_connection(self):
+        "Get a connection from the pool"
+        try:
+            connection = self._available_connections.pop()
+        except IndexError:
+            connection = self.make_connection()
+        self._in_use_connections.add(connection)
+        return connection
+
+    def make_connection(self):
+        "Create a new connection"
+        if self._created_connections >= self.max_connections:
+            raise HttpConnectionError("Too many connections")
+        self._created_connections += 1
+        connection_class = self.Connections.get(self.scheme)
+        if not connection_class:
+            raise HttpConnectionError('Could not create connection')
+        c = connection_class(self.host, self.port)
+        if self.timeout is not None:
+            c.timeout = self.timeout
+        return c
+
+    def release(self, connection):
+        "Releases the connection back to the pool"
+        self._in_use_connections.remove(connection)
+        self._available_connections.append(connection)
     
+    def remove(self, connection):
+        self._in_use_connections.remove(connection)
+
+
+class HttpConnectionPool(object):
+    '''Maintains a pool of connections'''
     def __init__(self, Connections, max_connections, timeout, scheme,
                  host, port=None):
         self.Connections = Connections
@@ -634,11 +1097,25 @@ class HttpHandler(urllibr.AbstractHTTPHandler):
             raise
         
     
-class HttpClient(urllibr.OpenerDirector):
-    '''A client of a networked server'''
-    request_class = Request
+class HttpClient(object):
+    '''A client for an HTTP server which handles a pool of synchronous
+or asynchronous connections::
+
+    from pulsar.utils.httpurl HttpClient
+    
+    c = HttpClient()
+    r = c.get('http://bbc.co.uk')
+    
+.. attribute:: headers
+
+    Default headers for this :class:`HttpClient`
+    
+.. attribute:: timeout
+
+    Default timeout for the connecting sockets
+'''
+    request_class = HttpRequest
     client_version = 'Python-httpurl'
-    Connections = {'http': HTTPConnection}
     DEFAULT_HTTP_HEADERS = Headers([
             ('Connection', 'Keep-Alive'),
             ('Accept-Encoding', ('identity', 'deflate', 'compress', 'gzip'))],
@@ -672,21 +1149,41 @@ class HttpClient(urllibr.OpenerDirector):
             d.extend(headers)
         return d
     
-    def get(self, url, body=None, headers=None):
-        '''Sends a GET request and returns a :class:`HttpClientResponse`
-object.'''
-        return self.request(url, body=body, method='GET', headers=headers)
+    def get(self, url, method=None, **kwargs):
+        '''Sends a GET request and returns a :class:`HttpResponse`
+object.
+
+:params url: url for the new :class:`HttpRequest` object.
+:param \*\*kwargs: Optional arguments for the :meth:`request` method.
+'''
+        return self.request(url, method='GET', **kwargs)
     
-    def post(self, url, body=None, headers=None):
-        return self.request(url, body=body, method='POST', headers=headers)
+    def post(self, url, method=None, **kwargs):
+        '''Sends a POST request and returns a :class:`HttpResponse`
+object.
+
+:params url: url for the new :class:`HttpRequest` object.
+:param \*\*kwargs: Optional arguments for the :meth:`request` method.
+'''
+        return self.request(url, method='POST', **kwargs)
     
-    def request(self, url, body=None, method=None, headers=None,
+    def request(self, url, data=None, method=None, headers=None,
                 timeout=None, encode_multipart=None, allow_redirects=True,
-                **kwargs):
+                hooks=None):
+        '''Constructs and sends a :class:`HttpRequest`. It returns
+a :class:`HttpResponse` object.
+
+:param url: URL for the new :class:`HttpRequest`.
+:param method: optional method for the new :class:`HttpRequest`.
+:param data: optional dictionary or bytes to be sent either in the query string
+    for 'DELETE', 'GET', 'HEAD' and 'OPTIONS' methods or in the body
+    for 'PATCH', 'POST', 'PUT', 'TRACE' methods.
+'''
+        # Build default headers for this client
         headers = self.get_headers(headers)
         encode_multipart = encode_multipart if encode_multipart is not None\
                             else self.encode_multipart
-        request = self.request_class(url, method=method, data=body,
+        request = self.request_class(url, method=method, data=data,
                                      headers=headers, timeout=timeout,
                                      encode_multipart=encode_multipart,
                                      multipart_boundary=self.multipart_boundary)

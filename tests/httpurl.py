@@ -38,20 +38,15 @@ class TestHeaders(unittest.TestCase):
         self.assertEqual(tuple(h),('Connection', 'Server', 'Content-Type'))
 
 
-def httpsbin(*suffix):
-    """Returns url for HTTPSBIN resource."""
-    return HTTPSBIN_URL + '/'.join(suffix)
-
-
 class TestHttpClient(unittest.TestCase):
     HttpClient = httpurl.HttpClient
+    server_concurrency = 'process'
     
     @classmethod
     def setUpClass(cls):
         s = test_server(server,
                         bind='127.0.0.1:0',
-                        concurrency='thread',
-                        workers=0)
+                        concurrency=cls.server_concurrency)
         outcome = cls.worker.run_on_arbiter(s)
         yield outcome
         app = outcome.result

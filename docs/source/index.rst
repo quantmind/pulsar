@@ -13,6 +13,7 @@ it requires python 2.6 up to python 3.3 in a single code base.
    changelog
    design
    api
+   http
    settings
    
 
