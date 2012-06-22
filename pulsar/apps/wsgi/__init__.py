@@ -1,4 +1,4 @@
-"""An HTTP :class:`pulsar.Application` for
+"""A specialized :class:`pulsar.apps.socket.SocketServer` for
 serving web applications which conforms with the python web server
 gateway interface (WSGI_).
 

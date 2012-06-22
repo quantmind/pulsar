@@ -13,7 +13,7 @@ from pulsar import create_socket, server_socket, create_client_socket,\
                      get_socket_timeout, Timeout
 
 from .defer import Deferred, is_async, is_failure, async, make_async,\
-                        safe_async, log_failure
+                        safe_async, log_failure, NOT_DONE
 from .eventloop import IOLoop, loop_timeout
 from .access import PulsarThread, thread_ioloop
 
@@ -793,7 +793,9 @@ more data in the buffer is required.'''
         socket = self.socket
         for data in response:
             if data:
-                socket.write(data)
+                yield socket.write(data)
+            else:
+                yield NOT_DONE
     
     
 class AsyncSocketServer(BaseSocketHandler):

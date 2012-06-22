@@ -49,3 +49,11 @@ Headers
 .. autoclass:: Headers
    :members:
    :member-order: bysource
+   
+Utilities
+~~~~~~~~~~~~~~~~~
+
+.. autofunction:: iri_to_uri
+
+.. autofunction:: has_empty_content
+

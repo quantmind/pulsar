@@ -1,5 +1,5 @@
 '''tests the httpurl stand-alone script.'''
-from pulsar import make_async
+from pulsar import send, make_async
 from pulsar.apps.test import unittest, test_server
 from pulsar.utils import httpurl
 
@@ -14,14 +14,14 @@ class TestHeaders(unittest.TestCase):
     
     def testServerHeader(self):
         h = httpurl.Headers()
-        self.assertEqual(h.type, 'server')
+        self.assertEqual(h.kind, 'server')
         self.assertEqual(len(h), 0)
         h['content-type'] = 'text/html'
         self.assertEqual(len(h), 1)
         
     def testClientHeader(self):
-        h = httpurl.Headers('client')
-        self.assertEqual(h.type, 'client')
+        h = httpurl.Headers(kind='client')
+        self.assertEqual(h.kind, 'client')
         self.assertEqual(len(h), 0)
         h['content-type'] = 'text/html'
         self.assertEqual(len(h), 1)
@@ -39,30 +39,25 @@ class TestHeaders(unittest.TestCase):
 
 
 class TestHttpClient(unittest.TestCase):
+    app = None
     HttpClient = httpurl.HttpClient
     server_concurrency = 'process'
     
     @classmethod
     def setUpClass(cls):
+        # Create the Http bin server by sending this request to the arbiter
         s = test_server(server,
                         bind='127.0.0.1:0',
                         concurrency=cls.server_concurrency)
-        outcome = cls.worker.run_on_arbiter(s)
+        outcome = send('arbiter', 'run', s)
         yield outcome
-        app = outcome.result
-        cls.app = app
-        cls.uri = 'http://{0}:{1}'.format(*app.address)
+        cls.app = outcome.result
+        cls.uri = 'http://{0}:{1}'.format(*cls.app.address)
         
     @classmethod
     def tearDownClass(cls):
-        return cls.worker.arbiter.send(cls.worker,'kill_actor',cls.app.mid)
-        
-    def setUp(self):
-        proxy = self.worker.cfg.http_proxy
-        proxy_info = {}
-        if proxy:
-            proxy_info['http'] = proxy
-        self.r = self.HttpClient(proxy_info=proxy_info)
+        if cls.app is not None:
+            return send('arbiter', 'kill_actor', cls.app.mid)
         
     def httpbin(self, *suffix):
         if suffix:
@@ -74,7 +69,7 @@ class TestHttpClient(unittest.TestCase):
         return make_async(r)
     
     def testClient(self):
-        c = self.r
+        c = httpurl.HttpClient()
         self.assertTrue('accept-encoding' in c.DEFAULT_HTTP_HEADERS)
         
     def test_http_200_get(self):
@@ -191,3 +186,13 @@ class TestHttpClient(unittest.TestCase):
         # both as an output string, and using the cookie attributes
         self.assertTrue('; httponly' in str(example_cookie))
         self.assertTrue(example_cookie['httponly'])
+        
+        
+class TestExternal(unittest.TestCase):
+    
+    def setUp(self):
+        proxy = self.worker.cfg.http_proxy
+        proxy_info = {}
+        if proxy:
+            proxy_info['http'] = proxy
+        self.r = self.HttpClient(proxy_info=proxy_info)

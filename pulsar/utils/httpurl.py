@@ -12,6 +12,21 @@ In particular:
 * urllib3_ for http connection classes
 * request_ for inspiration and utilities
 
+This is a long stand-alone module which can be dropped in any library and used
+as it is.
+
+Usage
+===========
+making requests with the :class:`HttpClient` is simple. First you create
+a client, which can be as simple as::
+
+    >>> client = HttpClient()
+
+Then you can request a webpage, for example::
+
+    >>> r = client.request('http://www.bbc.co.uk')
+    
+
 .. _http-parser: https://github.com/benoitc/http-parser
 .. _urllib3: https://github.com/shazow/urllib3
 .. _request: https://github.com/kennethreitz/requests
@@ -1099,12 +1114,7 @@ class HttpHandler(urllibr.AbstractHTTPHandler):
     
 class HttpClient(object):
     '''A client for an HTTP server which handles a pool of synchronous
-or asynchronous connections::
-
-    from pulsar.utils.httpurl HttpClient
-    
-    c = HttpClient()
-    r = c.get('http://bbc.co.uk')
+or asynchronous connections.
     
 .. attribute:: headers
 
@@ -1113,6 +1123,21 @@ or asynchronous connections::
 .. attribute:: timeout
 
     Default timeout for the connecting sockets
+    
+.. attribute:: hooks
+
+    Dictionary of event-handling hooks (idea from request_).
+    
+.. attribute:: encode_multipart
+
+    Flag indicating if body data is encoded using the ``multipart/form-data``
+    encoding by default.
+    
+    Default: ``True``
+    
+.. attribute:: DEFAULT_HTTP_HEADERS
+
+    Default headers for this :class:`HttpClient`
 '''
     request_class = HttpRequest
     client_version = 'Python-httpurl'
@@ -1121,7 +1146,7 @@ or asynchronous connections::
             ('Accept-Encoding', ('identity', 'deflate', 'compress', 'gzip'))],
             kind='client')
     
-    def __init__(self, proxy_info = None, timeout=None, cache = None,
+    def __init__(self, proxy_info=None, timeout=None, cache=None,
                  headers=None, encode_multipart=True, client_version=None,
                  multipart_boundary=None, max_connections=None):
         if ispy3k:
@@ -1136,6 +1161,10 @@ or asynchronous connections::
         dheaders['user-agent'] = self.client_version
         if headers:
             dheaders.update(headers)
+        self.hooks = {'pre_request':[],
+                      'pre_send':[],
+                      'post_request':[],
+                      'response':[]}
         self.DEFAULT_HTTP_HEADERS = dheaders
         self.add_handler(urllibr.ProxyHandler(proxy_info))
         self.add_handler(urllibr.HTTPCookieProcessor(CookieJar()))

@@ -7,7 +7,7 @@ from inspect import isgenerator, isfunction
 
 import pulsar
 from pulsar import Empty, make_async, safe_async, is_failure, HaltServer,\
-                     loop_timeout, ispy3k
+                     loop_timeout, ispy3k, Deferred
 from pulsar.async.defer import pickle
 from pulsar.utils.importer import import_module
 from pulsar.utils.log import LogInformation
@@ -194,7 +194,8 @@ pulsar subclasses of :class:`Application`.
         self.app.monitor_start(self)
         # If no workears are available invoke the worker start method too
         if not self.cfg.workers:
-            self.app.worker_start(self)            
+            self.app.worker_start(self)
+        self.app.local['on_start'].callback(self.app)
         
     @halt_server
     def monitor_task(self):
@@ -208,6 +209,7 @@ pulsar subclasses of :class:`Application`.
             yield self.app.worker_stop(self)
         yield self.app.monitor_stop(self)
         yield super(ApplicationMonitor, self).on_stop()
+        self.app.local['on_stop'].callback(self.app)
         
     def on_exit(self):
         self.app.monitor_exit(self)
@@ -252,9 +254,14 @@ on :mod:`pulsar` concurrent framework.
 Applications can be of any sort or form and the library is shipped with several
 battery included examples in the :mod:`pulsar.apps` framework module.
 
-When creating a new application, a new :class:`ApplicationMonitor`
-instance is added to the :class:`Arbiter`, ready to perform
-its duties.
+These are the most important facts about a pulsar :class:`Application`
+
+ * Instances must be pickable. If non-pickable data needs to be add on an
+   :class:`Application` instance, it must be stored on the
+   :attr:`Application.local` dictionary.
+ * When a new :class:`Application` is initialized,
+   a new :class:`ApplicationMonitor` instance is added to the
+   :class:`Arbiter`, ready to perform its duties.
     
 :parameter callable: Initialise the :attr:`Application.callable` attribute.
 :parameter description: A string describing the application.
@@ -287,6 +294,11 @@ its duties.
     dictionary of default configuration parameters.
     
     Default: ``{}``.
+    
+.. attribute:: cfg_apps
+
+    Optional tuplen containing the names of configuration namespaces to
+    be included in the application config dictionary.
     
 .. attribute:: mid
 
@@ -344,10 +356,13 @@ its duties.
 '''
         self.description = description or self.description
         if can_kill_arbiter is not None:
-            self.can_kill_arbiter = bool(can_kill_arbiter) 
+            self.can_kill_arbiter = bool(can_kill_arbiter)
         self.epilog = epilog or self.epilog
         self._app_name = self._app_name or self.__class__.__name__.lower()
         self._name = name or self._app_name
+        # Add events
+        self.local['on_start'] = Deferred()
+        self.local['on_stop'] = Deferred()
         self.script = script
         self.python_path()
         nparams = self.cfg.copy()

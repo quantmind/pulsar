@@ -97,21 +97,24 @@ running on a separate thread and run the tet function on the arbiter thread.'''
 
 class test_server(object):
     '''An utility for creating test servers. An instance of this
-class should be sent to be run on the arbiter.'''
+class should be sent run on the arbiter::
+
+    s = test_server(callable)
+    send('arbiter', 'run', s)
+    
+The callable must return an :class:`pulsar.Application` server.
+'''
     def __init__(self, callable, **kwargs):
         self.callable = callable
         self.kwargs = kwargs
 
     def __call__(self, arbiter):
-        cfg = arbiter.get('cfg')
+        cfg = arbiter.cfg
         parse_console = self.kwargs.pop('parse_console',False)
-        s = self.callable(parse_console = parse_console,
-                          loglevel = cfg.loglevel,
-                          **self.kwargs)
-        return self.result(s)
-    
-    def result(self, server):
-        return server        
+        app = self.callable(parse_console = parse_console,
+                            loglevel = cfg.loglevel,
+                            **self.kwargs)
+        return app.local['on_start']
     
     
 class AsyncAssertTest(object):

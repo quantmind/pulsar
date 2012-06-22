@@ -1,3 +1,5 @@
+'''An application for asynchronous applications serving requests
+on a socket.'''
 import pulsar
 from pulsar import AsyncIOStream
 
@@ -21,15 +23,27 @@ class Bind(SocketSetting):
         
 
 class SocketServer(pulsar.Application):
+    '''An application for asynchronous applications serving requests
+on a socket. This is the base class of :class:`pulsar.apps.wsgi.WSGIServer`.
+
+.. attribute:: socket_server_class
+
+    Class or callable which returns the asynchronous socket server, usually
+    a subclass of :class:`pulsar.AsyncSocketServer`.
+    
+.. attribute:: address
+
+    The socket address, available once the application has started.
+    
+'''
     _app_name = 'socket'
     socket_server_class = None
+    address = None
     
     def monitor_init(self, monitor):
-        # First we create the socket we listen to
+        # if the platform does not support multiprocessing sockets set
+        # the number of workers to 0.
         cfg = self.cfg
-        address = cfg.address
-        # if the platform does not support multiprocessing sockets switch to
-        # thread concurrency
         if not pulsar.platform.multiProcessSocket()\
             or cfg.concurrency == 'thread':
             cfg.set('workers', 0)
@@ -47,6 +61,7 @@ class SocketServer(pulsar.Application):
                                               'No address to bind to')
         monitor.log.info('Listening on %s' % socket)
         monitor.set('socket', socket)
+        self.address = socket.name
     
     def worker_start(self, worker):
         # Start the worker by starting the socket server
@@ -56,7 +71,7 @@ class SocketServer(pulsar.Application):
         s = self.socket_server_class(worker, socket).start()
         # We add the file descriptor handler
         s.on_connection_callbacks.append(worker.handle_fd_event)
-        worker.set('socket_server',s)
+        worker.set('socket_server', s)
     
     def worker_stop(self, worker):
         s = worker.get('socket_server')

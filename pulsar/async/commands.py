@@ -139,12 +139,10 @@ def spawn(client, actor, caller, linked_actors=None, **kwargs):
 @pulsar_command(authenticated=True, commands_set=arbiter_commands)
 def kill_actor(client, actor, aid):
     '''Kill an actor with id ``aid``'''
-    a = self.get_actor(aid)
+    a = actor.get_actor(aid)
     if a:
-        if isinstance(a, Actor):
-            a.stop()
-        else:
-            a.send(self,'stop')
+        a.stop()
         return 'stopped {0}'.format(a)
     else:
-        self.log.info('Could not kill "{0}" no such actor'.format(aid))
+        self.log.info('Could not kill "%s" no such actor', aid)
+        
