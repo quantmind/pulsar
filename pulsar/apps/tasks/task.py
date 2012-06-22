@@ -9,6 +9,7 @@ from io import StringIO
 from pulsar.utils.httpurl import itervalues
 from pulsar import make_async, as_failure
 
+from .models import registry
 from .exceptions import *
 from .states import *
 
@@ -44,16 +45,12 @@ and optional logging.
 
     the :class:`Job` which generated the :attr:`task`.
     
-.. attribute:: queue
-
-    the :class:`TaskQueue` application.
-    
 .. attribute:: worker
 
     the :class:`pulsar.apps.Worker` running the process.
 '''
-    def __init__(self, task, queue, worker, job):
-        self.queue = queue
+    result = None
+    def __init__(self, task, worker, job):
         self.worker = worker
         self.job = job
         self.task = task
@@ -75,21 +72,17 @@ and optional logging.
         return self
     
     def __exit__(self, type, value, trace):
-        result = value
+        '''value is either an error or a non'''
+        task = self.task
         if type:
-            self.job.logger.critical(
-                        'Critical while processing task {0}'.format(self.task),
-                        exc_info = (type, value, trace))
-            result = as_failure((type, value, trace))
+            task.result = as_failure((type, value, trace),
+                                     'Critical while processing %s task' % task)
         if self.handler is not None:
             self.job.logger.removeHandler(self.handler)
-        if type:
-            return make_async(self.task.finish(self.worker,
-                                               exception = value,
-                                               result = result))\
-                    .add_callback(lambda r : result)
-        else:
-            return result
+        try:
+            self.result = task.finish(self.worker, result=task.result)
+        except Exception as e:
+            self.result = as_failure(e)
 
 
 class Task(object):
@@ -142,15 +135,27 @@ class Task(object):
 Lower number higher precedence.'''
         return PRECEDENCE_MAPPING.get(self.status,UNKNOWN_STATE)
     
-    def consumer(self, queue, worker, job):
+    def consumer(self, worker, job):
         '''Return the task context manager for execution.'''
-        return TaskConsumer(self, queue, worker, job)
+        return TaskConsumer(self, worker, job)
         
     def start(self, worker):
         '''Called by the :class:`pulsar.Worker` *worker* when the task
 start its execution. If no timeout has occured the task will switch to
 a ``STARTED`` :attr:`Task.status` and invoke the :meth:`on_start`
 callback.'''
+        job = registry[self.name]
+        with self.consumer(worker, job) as consumer:
+            yield task.start(worker)
+            result = job(consumer, *task.args, **task.kwargs)
+            if is_async(result):
+                yield result
+                result = result.result
+            self.result = result
+        # just in case this is a deferred
+        yield consumer.result
+        
+    def run(self, worker):
         self.time_start = datetime.now()
         if self.maybe_revoked():
             self.on_timeout(worker)
@@ -159,18 +164,19 @@ callback.'''
             self.status = STARTED
             return self.on_start(worker)
         
-    def finish(self, worker, exception = None, result = None):
+    def finish(self, worker, result):
         '''called when finishing the task.'''
         if not self.time_end:
             self.time_end = datetime.now()
-            if exception:
+            if is_failure(result):
+                result.log()
+                exception = result.trace[1]
                 self.status = getattr(exception, 'status', FAILURE)
                 self.result = str(result) if result else str(exception)
             else:
                 self.status = SUCCESS
                 self.result = result
             self.on_finish(worker)
-            worker.app.broadcast('finish', self)
         return self
         
     def to_queue(self, schedulter = None):
@@ -273,7 +279,7 @@ its execution'''
         '''A :ref:`task callback <tasks-callbacks>` when the task is expired'''
         pass
 
-    def on_finish(self, worker = None):
+    def on_finish(self, worker=None):
         '''A :ref:`task callback <tasks-callbacks>` when the task finish
 its execution'''
         pass

@@ -323,12 +323,16 @@ class HttpConnection(AsyncConnection):
     
     def request_data(self):
         data = bytes(self.buffer)
+        # If no data is available and the parser has no data
+        # return nothing so that the streaming is resumed
+        if self.parser.is_message_complete():
+            self.parser = self.server.parser_class()
+            if not data:
+                return
         self.buffer = bytearray()
         self.parser.execute(data, len(data))
         if self.parser.is_message_complete():
             environ = wsgi_environ(self)
-            # Rebuild the parser
-            self.parser = self.server.parser_class()
             environ['pulsar.connection'] = self
             return environ
     

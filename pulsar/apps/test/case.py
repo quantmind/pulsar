@@ -46,7 +46,7 @@ class TestRequest(object):
         return self.testcls.__name__
     __str__ = __repr__
         
-    def run(self, worker):
+    def start(self, worker):
         '''Run all test functions from the :attr:`testcls` using the
 following algorithm:
 
@@ -76,6 +76,7 @@ following algorithm:
     
             if not should_stop:            
                 for test in all_tests:
+                    worker.log.debug('Start %s test', test)
                     runner.startTest(test)
                     yield self.run_test(test, runner)
                     runner.stopTest(test)

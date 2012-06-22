@@ -101,17 +101,17 @@ def update_failure(f):
 def is_failure(value):
     return isinstance(value, Failure)
     
-def as_failure(value):
+def as_failure(value, msg=None):
     '''Convert *value* into a :class:`Failure` if it is a stack trace or an
 exception, otherwise returns *value*.'''
     if isinstance(value, Exception):
         exc_info = sys.exc_info()
         if value == exc_info[1]:
-            return Failure(exc_info)
+            return Failure(exc_info, msg)
         else:
-            return Failure((value.__class__, value, None))
+            return Failure((value.__class__, value, None), msg)
     elif is_stack_trace(value):
-        return Failure(value)
+        return Failure(value, msg)
     else:
         return value
     
@@ -219,8 +219,9 @@ class Failure(object):
     
 '''
     logged = False
-    def __init__(self, err=None):
+    def __init__(self, err=None, msg=None):
         self.should_stop = False
+        self.msg = msg or ''
         if isinstance(err, self.__class__):
             self.traces = copy(err.traces)
         else:
@@ -295,12 +296,12 @@ class Failure(object):
         else:
             return (None,None,None)
                 
-    def log(self, log = None):
+    def log(self, log=None):
         if not self.logged:
             self.logged = True
             log = log or logger
             for e in self:
-                log.critical('', exc_info = e)
+                log.critical(self.msg, exc_info=e)
             
 
 ############################################################### Deferred            
@@ -402,7 +403,7 @@ this point, :meth:`add_callback` will run the *callbacks* immediately.
             return
         while self._callbacks:
             callbacks = self._callbacks.popleft()
-            callback = callbacks[isinstance(self.result, Failure)]
+            callback = callbacks[is_failure(self.result)]
             try:
                 self._runningCallbacks = True
                 try:
@@ -462,9 +463,12 @@ The callback will occur once the generator has stopped
     
     def _consume_in_thread(self, result=None):
         # When the generator finds an asynchronous object still waiting
-        # for results, it adds a callback to resume the generator at the
+        # for results, it adds this callback to resume the generator at the
         # next iteration in the eventloop.
         if self.loop.tid != current_thread().ident:
+            # Generators are not thread-safe. If the callback is on a different
+            # thread we restart the generator on the original thread
+            # by adding a callback in the generator eventloop
             self.loop.add_callback(lambda: self._consume(result))
             return result
         else:

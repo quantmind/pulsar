@@ -135,7 +135,7 @@ from time import time
 from datetime import datetime
 
 import pulsar
-from pulsar import to_string
+from pulsar import to_string, safe_async
 from pulsar.async.commands import authenticated, pulsar_command, internal
 from pulsar.utils.importer import import_modules, module_attribute
 
@@ -211,7 +211,23 @@ class CPUboundServer(pulsar.Application):
     def get_ioqueue(self):
         '''Return the distributed task queue which produces tasks to
 be consumed by the workers.'''
-        return self.cfg.task_queue_factory()         
+        return self.cfg.task_queue_factory()
+    
+    def request_instance(self, worker, fd, request):
+        return request
+    
+    def on_event(self, worker, fd, request):
+        request = self.request_instance(worker, fd, request)
+        c = worker.get('current_requests')
+        if c is None:
+            c = []
+            worker.set('current_requests', c)
+        c.append(request)
+        yield safe_async(request.start, args=(worker,))
+        try:
+            c.remove(request)
+        except ValueError:
+            pass
     
 
 taskqueue_cmnds = set()
@@ -284,11 +300,7 @@ for implementation.'''
         return self.local.get('scheduler')
     
     def request_instance(self, worker, fd, request):
-        try:
-            return self.task_class.from_queue(request)
-        except:
-            self.log.critical('Could not retrieve task "{0}"'.format(request))
-            raise
+        return self.task_class.from_queue(request)
         
     def monitor_task(self, monitor):
         '''Override the :meth:`pulsar.Application.monitor_task` callback
@@ -309,16 +321,8 @@ to check if the scheduler needs to perform a new run.'''
     def monitor_handler(self):
         return self.handler()
             
-    def handle_request(self, worker, task):
-        '''Called by the worker to perform the *task* in the queue.'''
-        job = registry[task.name]
-        with task.consumer(self,worker,job) as consumer:
-            yield task.start(worker)
-            task.result = job(consumer, *task.args, **task.kwargs)
-        yield TaskResponse(worker, task)
-            
-    def job_list(self, jobnames = None):
-        return self.scheduler.job_list(jobnames = jobnames)
+    def job_list(self, jobnames=None):
+        return self.scheduler.job_list(jobnames=jobnames)
     
     @property
     def registry(self):
@@ -339,7 +343,3 @@ When that is the case, the application broadcast the task id associated with
 the message request id.'''
         if message.action in ('addtask','addtask_noack'):
             pass
-
-    def broadcast(self, what, task):
-        ''''''
-        pass

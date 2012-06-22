@@ -52,9 +52,9 @@ class MessageParser(object):
         
     
 class ActorMessage(object):
-    '''A message class which travels from :class:`Actor` to
+    '''A message which travels from :class:`Actor` to
 :class:`Actor` to perform a specific *command*. :class:`ActorMessage`
-are not directly initialized using the constructor, instead they are
+are not directly initialised using the constructor, instead they are
 created by :meth:`ActorProxy.send` method.
 
 .. attribute:: sender
@@ -76,14 +76,7 @@ created by :meth:`ActorProxy.send` method.
 .. attribute:: kwargs
 
     Optional arguments in the message body
-    
-.. attribute:: ack
-
-    ``True`` if the message needs acknowledgment
-    
 '''
-    MESSAGES = {}
-    
     def __init__(self, command, sender=None, receiver=None,
                  args=None, kwargs=None):
         self.command = command
@@ -340,7 +333,7 @@ The interface is the same as the python epoll_ implementation.
             if not self._actor.can_poll():
                 return self._empty
         try:
-            event = self._queue.get(timeout = timeout)
+            event = self._queue.get(timeout=timeout)
         except (Empty,IOError,TypeError,EOFError):
             return self._empty
         return (event,)

@@ -214,18 +214,15 @@ overwritten with this new callback.
 :rtype: a :class:`Deferred` instance.
         """
         if data:
+            self._check_closed()
             d = Deferred(description='%s write callback' % self)
-            try:
-                self._check_closed()
-            except Exception as e:
-                d.callback(e)
-                return d
             self._write_callback = d
             self._write_buffer.append(data)
-            self._handle_write()
+            tot_bytes = self._handle_write()
             if self._write_buffer:
                 return self._add_io_state(self.WRITE, d)
-            return d
+            else:
+                return tot_bytes
     sendall = write
     
     def close(self):
@@ -347,7 +344,8 @@ setup using the :meth:`set_close_callback` method."""
                     self.log.warning("Write error on %s.", self.fileno(),
                                      exc_info=True)
                     self.close()
-                    return
+                    return tot_bytes
+        return tot_bytes
                 
         if not self._write_buffer and self._write_callback:
             callback = self._write_callback
@@ -771,16 +769,25 @@ more data in the buffer is required.'''
     # Internal
     @async
     def _stream_data(self, data=None):
+        # New data received. Keep on parsing and
+        # writing responses until the parser returns nothing.
+        # If the connection is still open reads the socket and
+        # append this function as callback.
         if data:
             # record the time of this data
             self.time_last = time.time()
             buffer = self.buffer
             buffer.extend(data)
-            parsed_data = self.request_data()
-            if parsed_data:
-                self.received += 1
-                response = self.response_class(self, parsed_data)
-                yield self.write(response)
+            parsed_data = True
+            # IMPORTANT! Consume all data untill the parser returns nothing.
+            # Otherwise it slows down the sending and receiving of data
+            while parsed_data:
+                parsed_data = self.request_data()
+                if parsed_data:
+                    self.received += 1
+                    response = self.response_class(self, parsed_data)
+                    yield self.write(response)
+            # Read the socket
             d = self.socket.read()
             if d:
                 yield d.add_callback(self._stream_data, self.close)

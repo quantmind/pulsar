@@ -247,9 +247,6 @@ configuration and plugins.'''
         else:
             print('Could not find any tests.')
             monitor.arbiter.stop()
-    
-    def on_event(self, worker, fd, request):
-        return request.run(worker)
         
     def add_result(self, monitor, result):
         #Check if we got all results

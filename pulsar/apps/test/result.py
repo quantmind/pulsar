@@ -101,10 +101,11 @@ class TestResultProxy(TestObject):
     
 
 class TestStream(TestResultProxy):
+    '''handle the writing of test results'''
     separator1 = '=' * 70
     separator2 = '-' * 70
     
-    def __init__(self, stream, result, descriptions = True):
+    def __init__(self, stream, result, descriptions=True):
         self._handlers = {}
         self.stream = stream
         self.result = result
@@ -121,13 +122,16 @@ class TestStream(TestResultProxy):
         return self._handlers.get(name,self.stream)
     
     def startTest(self, test):
-        pass
-    
-    def head(self, test, v):
         if self.showAll:
-            v = self.getDescription(test) + ' ... ' + v + '\n'
+            v = self.getDescription(test) + ' ... '
             self.stream.write(v)
             self.stream.flush()
+    
+    def head(self, test, v):
+        #v = self.getDescription(test) + ' ... ' + v + '\n'
+        v += '\n'
+        self.stream.write(v)
+        self.stream.flush()
             
     def addSuccess(self, test):
         if self.showAll:

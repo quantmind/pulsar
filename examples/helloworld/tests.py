@@ -1,6 +1,5 @@
 '''Tests the "helloworld" example.'''
-from pulsar import SERVER_SOFTWARE
-from pulsar.net import HttpClient
+from pulsar import SERVER_SOFTWARE, HttpClient
 from pulsar.apps.test import test_server
 from pulsar.utils.test import test
 
