@@ -34,6 +34,7 @@ Then you can request a webpage, for example::
 import os
 import sys
 import re
+import io
 import string
 import time
 import json
@@ -46,6 +47,11 @@ from email.utils import formatdate
 from io import BytesIO
 import zlib
 from collections import deque
+
+try:
+    import ssl
+except (ImportError, AttributeError):
+    ssl = None
 
 ispy3k = sys.version_info >= (3,0)
 
@@ -153,6 +159,13 @@ else:   # pragma : no cover
     
 HTTPError = urllibr.HTTPError
 URLError = urllibr.URLError
+
+class SSLError(HTTPError):
+    "Raised when SSL certificate fails in an HTTPS connection."
+    pass
+
+class TooManyRedirects(HTTPError):
+    pass
     
 ####################################################    URI & IRI SUFF
 #
@@ -208,6 +221,7 @@ def remove_double_slash(route):
 ####################################################    REQUEST METHODS
 ENCODE_URL_METHODS = frozenset(['DELETE', 'GET', 'HEAD', 'OPTIONS'])
 ENCODE_BODY_METHODS = frozenset(['PATCH', 'POST', 'PUT', 'TRACE'])
+REDIRECT_CODES = (301, 302, 303, 307)
 
 def has_empty_content(status, method=None):
     '''204, 304 and 1xx codes have no content'''
@@ -230,7 +244,8 @@ HEADER_FIELDS = {'general': frozenset(('Cache-Control', 'Connection', 'Date',
                  # to the server.
                  'request': frozenset(('Accept', 'Accept-Charset',
                                        'Accept-Encoding', 'Accept-Language',
-                                       'Authorization', 'Expect', 'From',
+                                       'Authorization',
+                                       'Cookie', 'Expect', 'From',
                                        'Host', 'If-Match', 'If-Modified-Since',
                                        'If-None-Match', 'If-Range',
                                        'If-Unmodified-Since', 'Max-Forwards',
@@ -243,11 +258,16 @@ HEADER_FIELDS = {'general': frozenset(('Cache-Control', 'Connection', 'Date',
                  # The response-header fields allow the server to pass
                  # additional information about the response which cannot be
                  # placed in the Status- Line.
-                 'response': frozenset(('Accept-Ranges', 'Age', 'ETag',
-                                        'Location', 'Proxy-Authenticate',
+                 'response': frozenset(('Accept-Ranges',
+                                        'Age',
+                                        'ETag',
+                                        'Location',
+                                        'Proxy-Authenticate',
                                         'Retry-After',
                                         'Sec-WebSocket-Accept',
-                                        'Server', 'Vary',
+                                        'Server',
+                                        'Set-Cookie',
+                                        'Vary',
                                         'WWW-Authenticate',
                                         'X-Frame-Options')),
                  'entity': frozenset(('Allow', 'Content-Encoding',
@@ -807,14 +827,71 @@ class HttpConnectionError(Exception):
     pass
 
 
-class HttpResponse(object):
+class IORespone(object):
+    socket = None
     
-    def __init__(self, request):
-        self.request = request 
-        
     @property
-    def status_code(self):
-        return getattr(self, 'code', None)
+    def async(self):
+        return self.socket.timeout == 0
+    
+    def parsedata(self, data):
+        raise NotImplementedError()
+        
+    def read(self):
+        '''Read data from socket'''
+        try:
+            return self._read()
+        except socket.error:
+            self.close()
+            raise
+        
+    ##    INTERNALS
+    def _read(self, result=None):
+        if self.async:
+            r = self.socket.read()
+            if not self.socket.closed:
+                return r.add_callback(self.parsedata, self.close)
+            elif r:
+                return self.parsedata(r)
+            else:
+                raise socket.error('Cannot read. Asynchronous socket is closed')
+        else:
+            # Read from a blocking socket
+            length = io.DEFAULT_BUFFER_SIZE
+            data = True
+            while data:
+                data = self.socket.recv(length)
+                if not data:
+                    # No data. the socket is closed.
+                    # We raise socket.error
+                    raise socket.error('No data received. Socket is closed')
+                else:
+                    msg = self.parsedata(data)
+                    if msg is not None:
+                        return msg
+    
+class HttpResponse(IORespone):
+    '''An Http response object.
+    
+.. attribute:: status_code
+
+    Integer indicating the status code
+    
+.. attribute:: history
+
+    A list of :class:`HttpResponse` objects from the history of the
+    class:`HttpRequest`. Any redirect responses will end up here.
+'''
+    request = None
+    parser = None
+    history = None
+    will_close = False
+    parser_class = HttpParser
+    
+    def __init__(self, sock, debuglevel=0, method=None, url=None):
+        self.socket = sock
+        self.debuglevel = debuglevel
+        self._method = method
 
     def __str__(self):
         if self.status_code:
@@ -825,18 +902,22 @@ class HttpResponse(object):
     def __repr__(self):
         return '{0}({1})'.format(self.__class__.__name__,self)
     
-    def content_string(self, charset=None):
-        return self.content.decode(charset or 'utf-8')
-    
-    def content_json(self, charset=None, **kwargs):
-        '''Decode content using json.'''
-        return json.loads(self.content_string(charset), **kwargs)
-    
+    @property
+    def status_code(self):
+        if self.parser:
+            return self.parser.get_status_code()
+        
     @property
     def content(self):
-        if not hasattr(self,'_content'):
-            self._content = self.read()
-        return getattr(self, '_content', None)
+        if self.parser:
+            body = self.parser.get_body()
+            if body:
+                return b''.join(body)
+    
+    @property
+    def headers(self):
+        if self.parser:
+            return self.parser.get_headers()
     
     @property
     def is_error(self):
@@ -847,7 +928,22 @@ class HttpResponse(object):
     def response(self):
         if self.status_code:
             return responses.get(self.status_code)
+        
+    def content_string(self, charset=None):
+        '''Decode content as a string.'''
+        data = self.content
+        if data is not None:
+            return data.decode(charset or 'utf-8')
     
+    def content_json(self, charset=None, **kwargs):
+        '''Decode content as a JSON object.'''
+        return json.loads(self.content_string(charset), **kwargs)
+    
+    @property
+    def url(self):
+        if self.request is not None:
+           return self.request.full_url
+       
     def add_callback(self, callback):
         self.callbacks.append(callback)
         return self
@@ -862,13 +958,46 @@ class HttpResponse(object):
     def post_process_response(self, client, req):
         return client.post_process_response(req, self)
     
+    def begin(self, start=False):
+        '''Start reading the response. Called by the connection object.'''
+        if start and self.parser is None:
+            self.parser = self.parser_class(kind=1)
+            self.read()
+            return self
+            
+    def parsedata(self, data):
+        self.parser.execute(data, len(data))
+        if self.parser.is_message_complete():
+            headers = self.headers
+            self.cookies = CookieJar()
+            if 'set-cookie' in headers:
+                self.cookies.extract_cookies(self, self.request)
+            return self.request.conclude_response(self)
+        
+    def close(self):
+        self.socket.close()
+        
+    def info(self):
+        return self.headers
+
+    def getheaders(self, name):
+        self.headers.get(name)
+        
     
-class HttpConnection(object):
+class HttpConnection(httpclient.HTTPConnection):
     response_class = HttpResponse
     
+    def __init__(self, pool):
+        super(HttpConnection, self).__init__(pool.host, pool.port,
+                                             timeout=pool.timeout)
+        
     @property
     def is_async(self):
-        return self.timeout == 0
+        return self.socket.timeout == 0
+
+
+class HttpsConnection(HttpConnection):
+    pass
 
 
 class HttpRequest(object):
@@ -876,23 +1005,37 @@ class HttpRequest(object):
     '''Default is charset is "iso-8859-1" (latin-1) from section 3.7.1
 http://www.ietf.org/rfc/rfc2616.txt 
     '''
-    connection = None
-    data = None
     _tunnel_host = None
     _has_proxy = False
-    def __init__(self, url, method=None, data=None, charset=None,
-                 encode_multipart=True, multipart_boundary=None,
-                 headers=None, timeout=None, **kwargs):
+    def __init__(self, client, url, method, data=None, files=None,
+                 charset=None, encode_multipart=True, multipart_boundary=None,
+                 headers=None, timeout=None, hooks=None, 
+                 history=None, allow_redirects=False,
+                 max_redirects=10, **kwargs):
+        self.client = client
         self.type, self.host, self.path, self.params,\
         self.query, self.fragment = urlparse(url)
         self.full_url = self._get_full_url()
         self.timeout = timeout
         self.headers = {}
+        self.hooks = hooks
+        self.history = history
+        self.max_redirects = max_redirects
+        self.allow_redirects = allow_redirects
         if headers:
             for key, value in iteritems(headers):
                 self.add_header(key, value)
         self.charset = charset or self.default_charset
-        self._encode(method, data, encode_multipart, multipart_boundary)
+        self._encode(method, data, files, encode_multipart, multipart_boundary)
+        
+    def get_response(self, history=None):
+        '''Build a :class:`HttpResponse` form a ``connection`` instance.'''
+        self.connection = connection = self.client.get_connection(self)
+        connection.request(self.method, self.full_url, self.body, self.headers)
+        response = connection.getresponse()
+        response.history = history
+        response.request = self
+        return response.begin(True)
     
     @property
     def selector(self):
@@ -901,26 +1044,21 @@ http://www.ietf.org/rfc/rfc2616.txt
         elif self.query:
             return '%s?%s' % (self.path,self.query)
         else:
-            return self.path        
-        
-    def get_response(self, headers):
-        h = self.connection
-        h.request(self.get_method(), self.selector, self.data, headers)
-        r = h.getresponse()
-        r.protocol = self.type
-        r.url = self.full_url
-        return r
+            return self.path
     
     def get_type(self):
         return self.type
     
-    def get_method(self):
-        return self.method
-    
     def host_and_port(self):
         return host_and_port(self.host)
     
+    def has_header(self, key):
+        return key in self.headers
+    
     def add_header(self, key, value):
+        self.headers[header_field(key)] = value
+        
+    def add_unredirected_header(self, key, value):
         self.headers[header_field(key)] = value
     
     def set_proxy(self, host, type):
@@ -937,29 +1075,36 @@ http://www.ietf.org/rfc/rfc2616.txt
     @property
     def key(self):
         host, port = self.host_and_port()
-        return (self.type, host, port)            
+        return (self.type, host, port)
+    
+    def is_unverifiable(self):
+        # unverifiable == redirected
+        return bool(self.history)          
             
-    def _encode(self, method, body, encode_multipart, multipart_boundary):
+    def _encode(self, method, data, files,
+                encode_multipart, multipart_boundary):
         if not method:
             method = 'POST' if body else 'GET'
         else:
             method = method.upper()
         self.method = method
+        self.files = None
+        body = None
         if method in ENCODE_URL_METHODS:
-            self._encode_url(body)
+            self._encode_url(data)
         else:
             content_type = 'application/x-www-form-urlencoded'
-            if isinstance(body, (dict, list, tuple)):
+            if isinstance(data, (dict, list, tuple)):
                 if encode_multipart:
-                    body, content_type = encode_multipart_formdata(body,
+                    body, content_type = encode_multipart_formdata(data,
                                                     boundary=multipart_boundary,
                                                     charset=self.charset)
                 else:
-                    body = urlencode(body)
-            elif body:
-                body = to_bytes(body, self.charset)
-            self.data = body
+                    body = urlencode(data)
+            elif data:
+                body = to_bytes(data, self.charset)
             self.headers['Content-Type'] = content_type
+        self.body = body
         
     def _encode_url(self, body):
         query = self.query
@@ -983,14 +1128,59 @@ http://www.ietf.org/rfc/rfc2616.txt
     def _get_full_url(self):
         return urlunparse((self.type, self.host, self.path,
                                    self.params, self.query, ''))
+        
+    def get_full_url(self):
+        '''Needed so that this class is compatible with the Request class
+in the http.client module in the standard library.'''
+        return self.full_url
+    
+    def conclude_response(self, response):
+        headers = response.headers
+        if response.status_code in REDIRECT_CODES and 'location' in headers and\
+                self.allow_redirects:
+            history = response.history or []
+            if len(history) >= self.max_redirects:
+                raise TooManyRedirects()
+            history.append(response)
+            self.client.release_connection(self)
+            url = response.headers['location']
+            data = self.body
+            files = self.files
+            # Handle redirection without scheme (see: RFC 1808 Section 4)
+            if url.startswith('//'):
+                parsed_rurl = urlparse(r.url)
+                url = '%s:%s' % (parsed_rurl.scheme, url)
+            # Facilitate non-RFC2616-compliant 'location' headers
+            # (e.g. '/path/to/resource' instead of
+            # 'http://domain.tld/path/to/resource')
+            if not urlparse(url).netloc:
+                url = urljoin(r.url,
+                              # Compliant with RFC3986, we percent
+                              # encode the url.
+                              requote_uri(url))
+            # http://www.w3.org/Protocols/rfc2616/rfc2616-sec10.html#sec10.3.4
+            if response.status_code is 303:
+                method = 'GET'
+                data = None
+                files = None
+            else:
+                method = self.method
+            headers = self.headers
+            headers.pop('Cookie',None)
+            return request.client.request(
+                                    url, data=data, files=files,
+                                    headers=headers,
+                                    encode_multipart=self.encode_multipart,
+                                    history=history)
+        else:
+            return response
             
 
 class HttpConnectionPool(object):
     '''Maintains a pool of connections'''
-    def __init__(self, Connections, max_connections, timeout, scheme,
-                 host, port=None):
-        self.Connections = Connections
-        self.scheme = scheme
+    def __init__(self, max_connections, timeout, scheme, host, port=None,
+                 **params):
+        self.type = scheme
         self.host = host
         self.port = port
         self.timeout = timeout
@@ -998,6 +1188,7 @@ class HttpConnectionPool(object):
         self._created_connections = 0
         self._available_connections = []
         self._in_use_connections = set()
+        self.https_params = params 
         
     def get_connection(self):
         "Get a connection from the pool"
@@ -1013,112 +1204,42 @@ class HttpConnectionPool(object):
         if self._created_connections >= self.max_connections:
             raise HttpConnectionError("Too many connections")
         self._created_connections += 1
-        connection_class = self.Connections.get(self.scheme)
-        if not connection_class:
-            raise HttpConnectionError('Could not create connection')
-        c = connection_class(self.host, self.port)
-        if self.timeout is not None:
-            c.timeout = self.timeout
-        return c
-
-    def release(self, connection):
-        "Releases the connection back to the pool"
-        self._in_use_connections.remove(connection)
-        self._available_connections.append(connection)
-    
-    def remove(self, connection):
-        self._in_use_connections.remove(connection)
-
-
-class HttpConnectionPool(object):
-    '''Maintains a pool of connections'''
-    def __init__(self, Connections, max_connections, timeout, scheme,
-                 host, port=None):
-        self.Connections = Connections
-        self.scheme = scheme
-        self.host = host
-        self.port = port
-        self.timeout = timeout
-        self.max_connections = max_connections or 2**31
-        self._created_connections = 0
-        self._available_connections = []
-        self._in_use_connections = set()
-        
-    def get_connection(self):
-        "Get a connection from the pool"
-        try:
-            connection = self._available_connections.pop()
-        except IndexError:
-            connection = self.make_connection()
-        self._in_use_connections.add(connection)
-        return connection
-
-    def make_connection(self):
-        "Create a new connection"
-        if self._created_connections >= self.max_connections:
-            raise HttpConnectionError("Too many connections")
-        self._created_connections += 1
-        connection_class = self.Connections.get(self.scheme)
-        if not connection_class:
-            raise HttpConnectionError('Could not create connection')
-        c = connection_class(self.host, self.port)
-        if self.timeout is not None:
-            c.timeout = self.timeout
-        return c
-
-    def release(self, connection):
-        "Releases the connection back to the pool"
-        self._in_use_connections.remove(connection)
-        self._available_connections.append(connection)
-    
-    def remove(self, connection):
-        self._in_use_connections.remove(connection)
-        
-
-class HttpHandler(urllibr.AbstractHTTPHandler):
-    '''A modified Http handler'''
-    def __init__(self, client, debuglevel=0):
-        if ispy3k:
-            super(HttpHandler, self).__init__(debuglevel)
+        if self.type == 'https':
+            if not ssl:
+                raise SSLError("Can't connect to HTTPS URL because the SSL "
+                               "module is not available.")
+            return HttpsConnection(self)
         else:
-            urllibr.AbstractHTTPHandler.__init__(self, debuglevel)
-        self.client = client
-        
-    def http_open(self, req):
-        connection = self.client.get_connection(req)
-        return self.do_open(connection, req)
+            return HttpConnection(self)
+
+    def release(self, connection):
+        "Releases the connection back to the pool"
+        self._in_use_connections.remove(connection)
+        self._available_connections.append(connection)
     
-    def do_open(self, h, req):
-        req.connection = h
-        headers = req.headers
-        if req._tunnel_host:
-            tunnel_headers = {}
-            proxy_auth_hdr = "Proxy-Authorization"
-            if proxy_auth_hdr in headers:
-                tunnel_headers[proxy_auth_hdr] = headers[proxy_auth_hdr]
-                # Proxy-Authorization should not be sent to origin
-                # server.
-                del headers[proxy_auth_hdr]
-            h.set_tunnel(req._tunnel_host, headers=tunnel_headers)
-        try:
-            return req.get_response(headers)
-        except socket.error as err:
-            # This is an asynchronous socket
-            if err.errno != 10035:
-                self.client.close_connection(req)
-                raise URLError(err)
-        except:
-            self.client.close_connection(req)
-            raise
+    def remove(self, connection):
+        self._in_use_connections.remove(connection)
         
     
 class HttpClient(object):
     '''A client for an HTTP server which handles a pool of synchronous
 or asynchronous connections.
+The :attr:`key_file``, :attr:`cert_file`, :attr:`cert_reqs` and
+:attr:`ca_certs` parameters are only used if :mod:`ssl` is available
+and are fed into :meth:`ssl.wrap_socket` to upgrade the connection socket
+into an SSL socket.
     
 .. attribute:: headers
 
     Default headers for this :class:`HttpClient`
+    
+    Default: ``None``.
+    
+.. attribute:: cookies
+
+    Default cookies for this :class:`HttpClient`
+    
+    Default: ``None``.
     
 .. attribute:: timeout
 
@@ -1140,6 +1261,7 @@ or asynchronous connections.
     Default headers for this :class:`HttpClient`
 '''
     request_class = HttpRequest
+    response_class = HttpResponse
     client_version = 'Python-httpurl'
     DEFAULT_HTTP_HEADERS = Headers([
             ('Connection', 'Keep-Alive'),
@@ -1148,7 +1270,9 @@ or asynchronous connections.
     
     def __init__(self, proxy_info=None, timeout=None, cache=None,
                  headers=None, encode_multipart=True, client_version=None,
-                 multipart_boundary=None, max_connections=None):
+                 multipart_boundary=None, max_connections=None,
+                 key_file=None, cert_file=None, cert_reqs='CERT_NONE',
+                 ca_certs=None, cookies=None):
         if ispy3k:
             super(HttpClient, self).__init__()
         else:
@@ -1166,11 +1290,15 @@ or asynchronous connections.
                       'post_request':[],
                       'response':[]}
         self.DEFAULT_HTTP_HEADERS = dheaders
-        self.add_handler(urllibr.ProxyHandler(proxy_info))
-        self.add_handler(urllibr.HTTPCookieProcessor(CookieJar()))
-        self.add_handler(HttpHandler(self))
+        self.proxy_info = proxy_info
+        if self.proxy_info is None:
+            self.proxy_info = get_environ_proxies()
         self.encode_multipart = encode_multipart
         self.multipart_boundary = multipart_boundary or choose_boundary()
+        self.https_defaults = {'key_file': key_file,
+                               'cert_file': cert_file,
+                               'cert_reqs': cert_reqs,
+                               'ca_certs': ca_certs}
         
     def get_headers(self, headers=None):
         d = self.DEFAULT_HTTP_HEADERS.copy()
@@ -1196,9 +1324,9 @@ object.
 '''
         return self.request(url, method='POST', **kwargs)
     
-    def request(self, url, data=None, method=None, headers=None,
-                timeout=None, encode_multipart=None, allow_redirects=True,
-                hooks=None):
+    def request(self, url, data=None, files=None, method=None, headers=None,
+                timeout=None, encode_multipart=None, allow_redirects=False,
+                hooks=None, cookies=None, history=None, **kwargs):
         '''Constructs and sends a :class:`HttpRequest`. It returns
 a :class:`HttpResponse` object.
 
@@ -1207,36 +1335,53 @@ a :class:`HttpResponse` object.
 :param data: optional dictionary or bytes to be sent either in the query string
     for 'DELETE', 'GET', 'HEAD' and 'OPTIONS' methods or in the body
     for 'PATCH', 'POST', 'PUT', 'TRACE' methods.
+:param hooks:
 '''
         # Build default headers for this client
         headers = self.get_headers(headers)
+        cookies = cookies
+        if hooks:
+            new_hooks = hooks
+            for k, hs in self.hooks.items():
+                if k in hooks:
+                    hs = list(hs)
+                    hs.extend(hooks[k])
+                new_hooks[k] = hs
+            hooks = new_hooks
+        else:
+            hooks = self.hooks
         encode_multipart = encode_multipart if encode_multipart is not None\
                             else self.encode_multipart
-        request = self.request_class(url, method=method, data=data,
+        request = self.request_class(self, url, method, data=data, files=files,
                                      headers=headers, timeout=timeout,
                                      encode_multipart=encode_multipart,
-                                     multipart_boundary=self.multipart_boundary)
-        # pre-process request
-        protocol = request.type
-        meth_name = protocol+"_request"
-        for processor in self.process_request.get(protocol, ()):
-            meth = getattr(processor, meth_name)
-            request = meth(request)
-            
-        response = self._open(request, request.data)
-        return response.post_process_response(self, request)
+                                     multipart_boundary=self.multipart_boundary,
+                                     hooks=hooks,
+                                     allow_redirects=allow_redirects)
+        if cookies:
+            if not isinstance(cookies, CookieJar):
+                cookies = cookiejar_from_dict(cookies)
+                cookies.add_cookie_header(request)
+        return request.get_response(history=history)
     
-    def get_connection(self, request):
+    def get_connection(self, request, **kwargs):
         key = request.key
         pool = self.poolmap.get(key)
         if pool is None:
-            pool = HttpConnectionPool(self.Connections,
-                                      self.max_connections,
-                                      self.timeout, *key)
+            if request.type == 'https':
+                params = https_defaults
+                if kwargs:
+                    params = params.copy()
+                    params.update(kwargs)
+            else:
+                params = kwargs
+            pool = HttpConnectionPool(self.max_connections,
+                                      self.timeout, *key,
+                                      **params)
             self.poolmap[key] = pool
         return pool.get_connection()
     
-    def close_connection(self, req):
+    def release_connection(self, req):
         key = req.key
         pool = self.poolmap.get(key)
         if pool:
@@ -1260,7 +1405,23 @@ a :class:`HttpResponse` object.
         self._opener.add_handler(HTTPBasicAuthHandler(password_mgr))
             
 
-####################################################    ENCODERS AND PARSERS
+###############################################    UTILITIES, ENCODERS, PARSERS
+def get_environ_proxies():
+    """Return a dict of environment proxies. From requests_."""
+
+    proxy_keys = [
+        'all',
+        'http',
+        'https',
+        'ftp',
+        'socks',
+        'no'
+    ]
+
+    get_proxy = lambda k: os.environ.get(k) or os.environ.get(k.upper())
+    proxies = [(key, get_proxy(key + '_proxy')) for key in proxy_keys]
+    return dict([(key, val) for (key, val) in proxies if val])
+
 def choose_boundary():
     """
     Our embarassingly-simple replacement for mimetools.choose_boundary.
@@ -1418,6 +1579,20 @@ def http_date(epoch_seconds=None):
 
 #################################################################### COOKIE
 
+def cookiejar_from_dict(cookie_dict, cookiejar=None):
+    """Returns a CookieJar from a key/value dictionary.
+
+    :param cookie_dict: Dict of key/values to insert into CookieJar.
+    """
+    if cookiejar is None:
+        cookiejar = CookieJar()
+
+    if cookie_dict is not None:
+        for name in cookie_dict:
+            cookiejar.set_cookie(create_cookie(name, cookie_dict[name]))
+    return cookiejar
+
+
 def parse_cookie(cookie):
     if cookie == '':
         return {}
@@ -1452,7 +1627,7 @@ def cookie_date(epoch_seconds=None):
 
 def set_cookie(cookies, key, value='', max_age=None, expires=None, path='/',
                domain=None, secure=False, httponly=False):
-    '''Set cookies'''
+    '''Set a cookie key into the cookies dictionary *cookies*.'''
     cookies[key] = value
     if expires is not None:
         if isinstance(expires, datetime):

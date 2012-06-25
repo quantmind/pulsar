@@ -132,7 +132,7 @@ Run a *test* function using the following algorithm
                     success = not self.add_failure(test, runner, outcome.result)
                     if success:
                         test.result = outcome.result
-                    outcome = run_test_function(test,test.tearDown)
+                    outcome = run_test_function(test, test.tearDown)
                     yield outcome
                     if self.add_failure(test, runner, outcome.result):
                         success = False

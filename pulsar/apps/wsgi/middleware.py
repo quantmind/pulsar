@@ -4,12 +4,14 @@ import re
 from gzip import GzipFile
 
 import pulsar
-from pulsar.utils.httpurl import BytesIO, parse_authorization_header
+from pulsar.utils.httpurl import BytesIO, parse_authorization_header,\
+                                     parse_cookie
 
 re_accepts_gzip = re.compile(r'\bgzip\b')
 
 
-__all__ = ['AccessControl', 'GZipMiddleware', 'is_streamed']
+__all__ = ['AccessControl', 'GZipMiddleware',
+           'cookies_middleware', 'is_streamed']
 
 
 def is_streamed(content):
@@ -31,6 +33,19 @@ def clean_path_middleware(environ, start_response):
         if qs and environ['method'] == 'GET':
             url = '{0}?{1}'.format(url,qs)
         raise pulsar.HttpRedirect(url)
+    
+def cookies_middleware(environ, start_response):
+    '''Parse the ``HTTP_COOKIE`` key in the *environ*. The ``HTTP_COOKIE``
+string is replaced with a dictionary.'''
+    c = environ.get('HTTP_COOKIE', '')
+    if not isinstance(c, dict):
+        if not c:
+            c = {}
+        else:
+            if not isinstance(c, str):
+                c = c.encode('utf-8')
+            c = parse_cookie(c)
+        environ['HTTP_COOKIE'] = c
     
     
 class AccessControl(object):

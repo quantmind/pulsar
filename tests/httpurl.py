@@ -40,7 +40,7 @@ class TestHeaders(unittest.TestCase):
 
 class TestHttpClient(unittest.TestCase):
     app = None
-    HttpClient = httpurl.HttpClient
+    timeout = 3
     server_concurrency = 'process'
     
     @classmethod
@@ -58,22 +58,24 @@ class TestHttpClient(unittest.TestCase):
     def tearDownClass(cls):
         if cls.app is not None:
             return send('arbiter', 'kill_actor', cls.app.mid)
+    
+    def client(self, **kwargs):
+        kwargs['timeout'] = self.timeout
+        return httpurl.HttpClient(**kwargs)
         
     def httpbin(self, *suffix):
         if suffix:
             return self.uri + '/' + '/'.join(suffix)
         else:
             return self.uri
- 
-    def make_async(self, r):
-        return make_async(r)
     
     def testClient(self):
-        c = httpurl.HttpClient()
-        self.assertTrue('accept-encoding' in c.DEFAULT_HTTP_HEADERS)
+        http = self.client()
+        self.assertTrue('accept-encoding' in http.DEFAULT_HTTP_HEADERS)
         
     def test_http_200_get(self):
-        r = self.make_async(self.r.get(self.httpbin()))
+        http = self.client()
+        r = make_async(http.get(self.httpbin()))
         yield r
         r = r.result
         self.assertEqual(r.status_code, 200)
@@ -82,8 +84,8 @@ class TestHttpClient(unittest.TestCase):
         self.assertEqual(r.url, self.httpbin())
         
     def test_http_200_get_data(self):
-        r = self.make_async(self.r.get(self.httpbin('get'),
-                                       body={'bla':'foo'}))
+        http = self.client()
+        r = make_async(http.get(self.httpbin('get'), data={'bla':'foo'}))
         yield r
         r = r.result
         self.assertEqual(r.status_code, 200)
@@ -94,9 +96,11 @@ class TestHttpClient(unittest.TestCase):
                          self.httpbin(httpurl.iri_to_uri('get',{'bla':'foo'})))
         
     def test_http_200_gzip(self):
-        r = self.make_async(self.r.get(self.httpbin('gzip')))
+        http = self.client()
+        r = make_async(http.get(self.httpbin('gzip')))
         yield r
         r = r.result
+        headers = r.headers
         self.assertEqual(r.status_code, 200)
         self.assertEqual(r.response, 'OK')
         content = r.content_json()
@@ -105,28 +109,31 @@ class TestHttpClient(unittest.TestCase):
         
     def test_http_400_get(self):
         '''Bad request 400'''
-        r = self.make_async(self.r.get(self.httpbin('status', '400')))
+        http = self.client()
+        r = make_async(http.get(self.httpbin('status', '400')))
         yield r
         r = r.result
         self.assertEqual(r.status_code, 400)
         self.assertEqual(r.response, 'Bad Request')
-        self.assertEqual(r.content,b'')
+        self.assertTrue(r.content)
         self.assertRaises(httpurl.HTTPError, r.raise_for_status)
         
     def test_http_404_get(self):
         '''Not Found 404'''
-        r = self.make_async(self.r.get(self.httpbin('status', '404')))
+        http = self.client()
+        r = make_async(http.get(self.httpbin('status', '404')))
         yield r
         r = r.result
         self.assertEqual(r.status_code, 404)
         self.assertEqual(r.response, 'Not Found')
-        self.assertEqual(r.content,b'')
+        self.assertTrue(r.content)
         self.assertRaises(httpurl.HTTPError, r.raise_for_status)
         
     def test_http_post(self):
         data = (('bla', 'foo'), ('unz', 'whatz'),
                 ('numero', '1'), ('numero', '2'))
-        r = self.make_async(self.r.post(self.httpbin('post'), body=data))
+        http = self.client()
+        r = make_async(http.post(self.httpbin('post'), data=data))
         yield r
         r = r.result
         self.assertEqual(r.status_code, 200)
@@ -136,41 +143,40 @@ class TestHttpClient(unittest.TestCase):
         self.assertEqual(result['args']['numero'],['1','2'])
         
     def testRedirect(self):
-        r = self.make_async(self.r.get(self.httpbin('redirect','1')))
+        http = self.client()
+        r = make_async(http.get(self.httpbin('redirect','1')))
         yield r
         r = r.result
         self.assertEqual(r.status_code, 302)
         self.assertEqual(r.response, 'Found')
-        self.assertEqual(r.headers['location'], '/')
+        self.assertEqual(r.headers['location'], '/get')
         
     def test_Cookie(self):
-        r = self.make_async(self.r.get(self.httpbin('cookies','set',
-                                                    'bla','foo')))
+        http = self.client()
+        r = make_async(http.get(self.httpbin('cookies','set', 'bla', 'foo')))
         yield r
         r = r.result
         self.assertEqual(r.status_code, 302)
-        location = self.httpbin('cookies')
-        self.assertEqual(r.headers['location'], location)
-        #r = self.make_async(self.r.get(self.httpbin('cookies')))
-        #yield r
-        #r = r.result
-        #self.assertEqual(r.status_code, 200)
-        #result = r.content_json()
-        #self.assertEqual(result['cookies']['key'],'bla')
-        #self.assertEqual(result['cookies']['value'],'foo')
-        
+        self.assertTrue(r.headers['set-cookie'])
+        cookies = r.cookies
+        r = make_async(http.get(self.httpbin('cookies'), cookies=cookies))
+        yield r
+        r = r.result
+        self.assertEqual(r.status_code, 200)
+        result = r.content_json()
+        self.assertEqual(result['cookies']['bla'],'foo')
 
     def test_parse_cookie(self):
         self.assertEqual(httpurl.parse_cookie('invalid:key=true'), {})
         
-    def test_far_expiration(self):
+    def __test_far_expiration(self):
         "Cookie will expire when an distant expiration time is provided"
         response = Response(self.environ())
         response.set_cookie('datetime', expires=datetime(2028, 1, 1, 4, 5, 6))
         datetime_cookie = response.cookies['datetime']
         self.assertEqual(datetime_cookie['expires'], 'Sat, 01-Jan-2028 04:05:06 GMT')
 
-    def test_max_age_expiration(self):
+    def __test_max_age_expiration(self):
         "Cookie will expire if max_age is provided"
         response = Response(self.environ())
         response.set_cookie('max_age', max_age=10)
@@ -178,7 +184,7 @@ class TestHttpClient(unittest.TestCase):
         self.assertEqual(max_age_cookie['max-age'], 10)
         self.assertEqual(max_age_cookie['expires'], http.cookie_date(time.time()+10))
 
-    def test_httponly_cookie(self):
+    def __test_httponly_cookie(self):
         response = Response(self.environ())
         response.set_cookie('example', httponly=True)
         example_cookie = response.cookies['example']

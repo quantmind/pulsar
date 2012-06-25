@@ -218,7 +218,13 @@ class WsgiHandler(pulsar.LogginMixin):
     def __call__(self, environ, start_response):
         '''The WSGI callable'''
         for middleware in self.middleware:
-            response = middleware(environ, start_response)
+            try:
+                response = middleware(environ, start_response)
+            except:
+                # Unhandled exception in middleware. This coses an error 500
+                self.log.critical('Unhadled exception in request middleware',
+                                  exc_info=True)
+                response =  WsgiResponse(500)
             if response is not None:
                 if hasattr(response, 'when_ready'):
                     process = partial(self.process_response,

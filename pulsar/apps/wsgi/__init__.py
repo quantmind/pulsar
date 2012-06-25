@@ -38,7 +38,7 @@ from pulsar.apps import socket
 
 from .wsgi import *
 from .server import *
-from . import middleware
+from .middleware import *
 
 class WsgiSetting(pulsar.Setting):
     virtual = True

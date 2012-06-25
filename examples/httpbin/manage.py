@@ -71,7 +71,7 @@ class HttpBin(object):
         '''Pulsar HTTP "Hello World!" application'''
         try:
             path = environ.get('PATH_INFO')
-            if path == '/':
+            if not path or path == '/':
                 return self.home(environ, start_response)
             elif '//' in path:
                 path = re.sub('/+', '/', path)
@@ -158,6 +158,20 @@ class HttpBin(object):
         middleware = wsgi.middleware.GZipMiddleware(10)
         middleware(environ, start_response, data)
         return data
+    
+    @check_method('GET')
+    def request_cookies(self, environ, start_response, bits):
+        if bits:
+            if len(bits) == 3 and bits[0] == 'set':
+                key = bits[1]
+                value = bits[2]
+                if key and value:
+                    response = self.redirect('/cookies')
+                    response.set_cookie(key, value=value)
+                    return response
+            raise HttpException(404)
+        cookies = {'cookies': environ['HTTP_COOKIE']}
+        return self.response(jsonbytes(cookies))
         
     @check_method('GET')
     def request_status(self, environ, start_response, bits):
@@ -201,7 +215,8 @@ class handle(ws.WS):
         
 def server(description = None, **kwargs):
     description = description or 'Pulsar HttpBin'
-    app = wsgi.WsgiHandler(middleware=(HttpBin(),))
+    app = wsgi.WsgiHandler(middleware=(wsgi.cookies_middleware,
+                                       HttpBin(),))
     return wsgi.WSGIServer(app, description=description, **kwargs)
     
 
