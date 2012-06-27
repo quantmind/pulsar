@@ -165,6 +165,14 @@ class TestHttpClient(unittest.TestCase):
         self.assertEqual(r.status_code, 200)
         result = r.content_json()
         self.assertEqual(result['cookies']['bla'],'foo')
+        # Try by setting the cookie in the http client
+        http.cookies = cookies
+        r = make_async(http.get(self.httpbin('cookies')))
+        yield r
+        r = r.result
+        self.assertEqual(r.status_code, 200)
+        result = r.content_json()
+        self.assertEqual(result['cookies']['bla'],'foo')
 
     def test_parse_cookie(self):
         self.assertEqual(httpurl.parse_cookie('invalid:key=true'), {})

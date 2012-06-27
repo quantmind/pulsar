@@ -24,7 +24,7 @@ a client, which can be as simple as::
 
 Then you can request a webpage, for example::
 
-    >>> r = client.request('http://www.bbc.co.uk')
+    >>> r = client.get('http://www.bbc.co.uk')
     
 
 .. _http-parser: https://github.com/benoitc/http-parser
@@ -47,11 +47,6 @@ from email.utils import formatdate
 from io import BytesIO
 import zlib
 from collections import deque
-
-try:
-    import ssl
-except (ImportError, AttributeError):
-    ssl = None
 
 ispy3k = sys.version_info >= (3,0)
 
@@ -984,9 +979,7 @@ class HttpResponse(IORespone):
         self.headers.get(name)
         
     
-class HttpConnection(httpclient.HTTPConnection):
-    response_class = HttpResponse
-    
+class HttpConnection(httpclient.HTTPConnection):    
     def __init__(self, pool):
         super(HttpConnection, self).__init__(pool.host, pool.port,
                                              timeout=pool.timeout)
@@ -1001,10 +994,12 @@ class HttpsConnection(HttpConnection):
 
 
 class HttpRequest(object):
+    response_class = HttpResponse
     default_charset = 'latin-1'
     '''Default is charset is "iso-8859-1" (latin-1) from section 3.7.1
 http://www.ietf.org/rfc/rfc2616.txt 
     '''
+    
     _tunnel_host = None
     _has_proxy = False
     def __init__(self, client, url, method, data=None, files=None,
@@ -1167,13 +1162,17 @@ in the http.client module in the standard library.'''
                 method = self.method
             headers = self.headers
             headers.pop('Cookie',None)
+            # Build a new request
             return request.client.request(
                                     url, data=data, files=files,
                                     headers=headers,
                                     encode_multipart=self.encode_multipart,
                                     history=history)
         else:
-            return response
+            return self.on_response(response)
+        
+    def on_response(self, response):
+        return response
             
 
 class HttpConnectionPool(object):
@@ -1261,7 +1260,6 @@ into an SSL socket.
     Default headers for this :class:`HttpClient`
 '''
     request_class = HttpRequest
-    response_class = HttpResponse
     client_version = 'Python-httpurl'
     DEFAULT_HTTP_HEADERS = Headers([
             ('Connection', 'Keep-Alive'),
@@ -1279,6 +1277,8 @@ into an SSL socket.
             urllibr.OpenerDirector.__init__(self)
         self.poolmap = {}
         self.timeout = timeout
+        self._cookies = None
+        self.cookies = cookies
         self.max_connections = max_connections
         dheaders = self.DEFAULT_HTTP_HEADERS.copy()
         self.client_version = client_version or self.client_version
@@ -1301,6 +1301,8 @@ into an SSL socket.
                                'ca_certs': ca_certs}
         
     def get_headers(self, headers=None):
+        '''Returns a :class:`Header` obtained from combining
+:attr:`DEFAULT_HTTP_HEADERS` with *headers*.'''
         d = self.DEFAULT_HTTP_HEADERS.copy()
         if headers:
             d.extend(headers)
@@ -1339,7 +1341,6 @@ a :class:`HttpResponse` object.
 '''
         # Build default headers for this client
         headers = self.get_headers(headers)
-        cookies = cookies
         if hooks:
             new_hooks = hooks
             for k, hs in self.hooks.items():
@@ -1358,11 +1359,21 @@ a :class:`HttpResponse` object.
                                      multipart_boundary=self.multipart_boundary,
                                      hooks=hooks,
                                      allow_redirects=allow_redirects)
+        if self.cookies:
+            self.cookies.add_cookie_header(request)
         if cookies:
             if not isinstance(cookies, CookieJar):
                 cookies = cookiejar_from_dict(cookies)
-                cookies.add_cookie_header(request)
+            cookies.add_cookie_header(request)
         return request.get_response(history=history)
+    
+    def _set_cookies(self, cookies):
+        if cookies and not isinstance(cookies, CookieJar):
+            cookies = cookiejar_from_dict(cookies)
+        self._cookies = cookies or None
+    def _get_cookies(self):
+        return self._cookies
+    cookies = property(_get_cookies, _set_cookies)
     
     def get_connection(self, request, **kwargs):
         key = request.key
@@ -1379,7 +1390,9 @@ a :class:`HttpResponse` object.
                                       self.timeout, *key,
                                       **params)
             self.poolmap[key] = pool
-        return pool.get_connection()
+        connection = pool.get_connection()
+        connection.response_class = request.response_class
+        return connection
     
     def release_connection(self, req):
         key = req.key
