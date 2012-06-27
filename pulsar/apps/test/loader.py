@@ -3,7 +3,6 @@ import re
 import sys
 import unittest
 import logging
-import inspect
 
 from pulsar.utils.importer import import_module
     
@@ -13,6 +12,12 @@ default_logger = logging.getLogger('pulsar.apps.test.loader')
 __all__ = ['TestLoader']
     
 
+def issubclass_safe(cls, base_cls):
+    try:
+        return issubclass(cls, base_cls)
+    except TypeError:
+        return False
+    
 class TestLoader(object):
     '''Aggregate tests from a list of paths. The way it works is simple,
 you give a *root* directory and a list of submodules where to look for tests.
@@ -81,8 +86,8 @@ importing tests.
                     continue
             for name in dir(mod):
                 obj = getattr(mod, name)
-                if inspect.isclass(obj) and issubclass(obj, unittest.TestCase):
-                    yield tag,obj
+                if issubclass_safe(obj, unittest.TestCase):
+                    yield tag, obj
             
     def testmodules(self, tags = None):
         '''Generator of tag, test modules pairs.'''

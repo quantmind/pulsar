@@ -26,6 +26,12 @@ def run_test_function(test, func, istest=False):
                       max_errors=1,
                       description='Test %s.%s' % (name, func.__name__))
 
+def test_method(cls, method):
+    try:
+        return cls(method)
+    except ValueError:
+        return None
+    
 
 class TestRequest(object):
     '''A class which wraps a test case class and runs all its test functions
@@ -50,7 +56,7 @@ class TestRequest(object):
         '''Run all test functions from the :attr:`testcls` using the
 following algorithm:
 
-* Run the class method ``setUpClass`` of :attr:`testcls` of if defined.
+* Run the class method ``setUpClass`` of :attr:`testcls` if defined.
 * Call :meth:`run_test` for each test functions in :attr:`testcls`
 * Run the class method ``tearDownClass`` of :attr:`testcls` if defined.  
 '''
@@ -65,14 +71,12 @@ following algorithm:
         if all_tests.countTestCases():
             skip_tests = getattr(testcls, "__unittest_skip__", False)
             should_stop = False
-            test_cls = self.testcls('setUpClass')
-            if not skip_tests:
-                outcome = run_test_function(testcls ,getattr(testcls,
-                                                        'setUpClass',None))                
-                if outcome is not None:
-                    yield outcome
-                    should_stop = self.add_failure(test_cls, runner,
-                                                   outcome.result)
+            test_cls = test_method(testcls, 'setUpClass')
+            if test_cls and not skip_tests:
+                outcome = run_test_function(testcls,
+                                            getattr(testcls,'setUpClass'))                
+                yield outcome
+                should_stop = self.add_failure(test_cls, runner, outcome.result)
     
             if not should_stop:            
                 for test in all_tests:
@@ -81,12 +85,12 @@ following algorithm:
                     yield self.run_test(test, runner)
                     runner.stopTest(test)
                 
-            if not skip_tests:
+            test_cls = test_method(testcls, 'tearDownClass')
+            if test_cls and not skip_tests:
                 outcome = run_test_function(testcls,getattr(testcls,
-                                                        'tearDownClass',None))
-                if outcome is not None:
-                    yield outcome
-                    self.add_failure(test_cls, runner, outcome.result)
+                                                        'tearDownClass'))
+                yield outcome
+                self.add_failure(test_cls, runner, outcome.result)
             
             # Clear errors
             yield CLEAR_ERRORS
