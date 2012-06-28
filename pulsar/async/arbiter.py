@@ -147,19 +147,19 @@ Users access the arbiter by the high level api::
         for pool in list(itervalues(self._monitors)):
             yield pool.stop()
             
-    def info(self, full=True):
+    def info(self):
         if not self.started():
             return
         server = super(Arbiter,self).info()
-        monitors = [p.info(full) for p in itervalues(self.monitors)]
+        monitors = [p.info() for p in itervalues(self.monitors)]
         server.update({
             'version':pulsar.__version__,
             'name':pulsar.SERVER_NAME,
             'number_of_monitors':len(self._monitors),
             'number_of_actors':len(self.MANAGED_ACTORS),
             'workers': [a.info for a in itervalues(self.MANAGED_ACTORS)]})
-        return {'server':server,
-                'monitors':result}
+        return {'server': server,
+                'monitors': monitors}
     
     def configure_logging(self, config = None):
         if self._monitors:

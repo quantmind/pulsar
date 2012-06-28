@@ -15,7 +15,7 @@ from pulsar import AlreadyCalledError, AlreadyRegistered,\
 from .eventloop import IOLoop, ID
 from .proxy import ActorProxy, ActorMessage
 from .defer import make_async, is_failure, iteritems, itervalues,\
-                     pickle, safe_async, async, log_failure
+                     pickle, safe_async, async, log_failure, make_async
 from .mailbox import IOQueue, mailbox
 from .access import set_local_data, is_mainthread, get_actor
 from . import commands
@@ -289,7 +289,11 @@ parameters *params*. It return a :class:`ActorMessage`.'''
             tg = target
         if not tg:
             raise ValueError('Cannot send message to {0}'.format(target))
-        return tg.receive_from(self, action, *args, **params)
+        if isinstance(tg, ActorProxy):
+            return tg.receive_from(self, action, *args, **params)
+        else:
+            cmnd = commands.get(action)
+            return make_async(cmnd(None, tg, *args, **params))
         
     def put(self, request):
         '''Put a *request* into the :attr:`ioqueue` if available.'''
