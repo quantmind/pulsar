@@ -24,9 +24,9 @@ def generate_content(gen):
     for data in gen:
         if data is NOT_DONE:
             yield b''
-        elif isinstance(data,bytes):
+        elif isinstance(data, bytes):
             yield data
-        elif isinstance(data,str):
+        elif isinstance(data, str):
             yield data.encode('utf-8')
         else:
             for b in generate_content(data):
@@ -60,6 +60,7 @@ client.
     The dictionary of WSGI environment if passed to the constructor.
 
 '''
+    _started = False
     DEFAULT_STATUS_CODE = 200
     DEFAULT_CONTENT_TYPE = 'text/plain'
     ENCODED_CONTENT_TYPE = ('text/plain', 'text/html', 'application/json')
@@ -75,27 +76,38 @@ client.
             else:
                 raise ValueError('Not a valid environment {0}'.format(environ))
         self.status_code = status or self.DEFAULT_STATUS_CODE
+        self.encoding = encoding
         self.request = request
         self.environ = environ
         self.cookies = SimpleCookie()
         self.content_type = content_type or self.DEFAULT_CONTENT_TYPE
         self.headers = Headers(response_headers, kind='server')
-        self.when_ready = Deferred()
         self._sent_headers = None
-        if content is None:
-            # no content, get the default content
-            content = self.default_content()
-        elif isinstance(content, bytes):
-            content = (content,)
         self.content = content
-        if not self.is_streamed:
-            self.when_ready.callback(self)
         
     @property
     def logger(self):
         return self.environ['pulsar.actor'].log if self.environ\
                          else default_logger
     
+    def _get_content(self):
+        return self._content
+    def _set_content(self, content):
+        if not self._started:
+            if content is None:
+                # no content, get the default content
+                content = self.default_content()
+            elif isinstance(content, bytes):
+                content = (content,)
+            self._content = content
+            if self.is_streamed:
+                self.when_ready = Deferred()
+            elif hasattr(self, 'when_ready'):
+                delattr(self, 'when_ready')
+        else:
+            raise RuntimeError('Cannot set content. Already iterated')
+    content = property(_get_content, _set_content)
+            
     def default_content(self):
         '''Called during initialization when the content given is ``None``.
 By default it returns an empty tuple. Overrides if you need to.'''
@@ -144,6 +156,7 @@ This is usually `True` if a generator is passed to the response object."""
         self.when_ready.callback(self)
                 
     def __iter__(self):
+        self._started = True
         if self.is_streamed:
             return self._generator()
         else:

@@ -529,14 +529,15 @@ current thread.'''
 class MultiDeferred(Deferred):
     _locked = False
     
-    def __init__(self, data=None, type=None):
+    def __init__(self, data=None, type=None, fireOnOneErrback=False):
         self._deferred = {}
+        self._failures = Failure()
+        self.fireOnOneErrback = fireOnOneErrback
         if not type:
             type = data.__class__ if data is not None else list
+        if not issubclass(type,(list,dict)):
+            type = list
         self._stream = type()
-        if self.type not in ('list','dict'):
-            raise TypeError('Multideferred type container must be a dictionary '
-                            ' or a string')
         super(MultiDeferred, self).__init__()
         if data:
             self.update(data)
@@ -595,7 +596,7 @@ class MultiDeferred(Deferred):
                     
     def _add_deferred(self, key, value):
         self._deferred[key] = value
-        value.addBoth(lambda result: self._deferred_done(key,result))
+        value.addBoth(lambda result: self._deferred_done(key, result))
         
     def _deferred_done(self, key, result):
         self._deferred.pop(key, None)
@@ -612,10 +613,10 @@ class MultiDeferred(Deferred):
             raise RuntimeError(self.__class__.__name__ +\
                                ' cannot finish whilst waiting for '
                                'dependents %r' % self._deferred)
-        if self.called:
-            raise RuntimeError(self.__class__.__name__ +\
-                               ' done before finishing.')
-        self.callback(self._stream)
+        if self.fireOnOneErrback and self._failures:
+            self.callback(self._failures)
+        else:
+            self.callback(self._stream)
         
     def _setitem(self, key, value):
         stream = self._stream
@@ -623,3 +624,5 @@ class MultiDeferred(Deferred):
             stream.append(value)
         else:
             stream[key] = value
+        if is_failure(value):
+            self._failures.append(value)
