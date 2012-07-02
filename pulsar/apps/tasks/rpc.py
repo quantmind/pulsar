@@ -106,7 +106,7 @@ the same ``args`` and ``kwargs`` as the callable method of the :class:`Job`
 (excluding the ``consumer``).'''
         funcname = 'addtask' if ack else 'addtask_noack'
         request_params = self.task_request_parameters(request)
-        return self.task_queue_manager.get_callback(
+        return self.task_queue_manager.create_callback(
                                             request.environ,
                                             funcname,
                                             jobname,

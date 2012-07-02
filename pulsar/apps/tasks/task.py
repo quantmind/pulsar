@@ -146,8 +146,8 @@ a ``STARTED`` :attr:`Task.status` and invoke the :meth:`on_start`
 callback.'''
         job = registry[self.name]
         with self.consumer(worker, job) as consumer:
-            yield task.start(worker)
-            result = job(consumer, *task.args, **task.kwargs)
+            yield self.run(worker)
+            result = job(consumer, *self.args, **self.kwargs)
             if is_async(result):
                 yield result
                 result = result.result

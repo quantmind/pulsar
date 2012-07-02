@@ -219,12 +219,10 @@ class WsgiHandler(pulsar.LogginMixin):
     the middleware.
 
 '''
-    msg404 = 'Could not find what you are looking for. Sorry.'
-    def __init__(self, middleware=None, msg404=None, **kwargs):
+    def __init__(self, middleware=None, **kwargs):
         self.setlog(**kwargs)
         if middleware:
             middleware = list(middleware)
-        self.msg404 = msg404 or self.msg404
         self.middleware = middleware or []
         self.response_middleware = []
         
@@ -233,11 +231,9 @@ class WsgiHandler(pulsar.LogginMixin):
         for middleware in self.middleware:
             try:
                 response = middleware(environ, start_response)
-            except:
-                # Unhandled exception in middleware. This coses an error 500
-                self.log.critical('Unhadled exception in request middleware',
-                                  exc_info=True)
-                response =  WsgiResponse(500)
+            except Exception as e:
+                response = WsgiResponse(500)
+                pulsar.get_actor().cfg.handle_http_error(response, e)
             if response is not None:
                 if hasattr(response, 'when_ready'):
                     process = partial(self.process_response,
@@ -247,7 +243,8 @@ class WsgiHandler(pulsar.LogginMixin):
                 else:
                     self.process_response(environ, start_response, response)
                 return response
-        response =  WsgiResponse(404, content = self.msg404.encode('utf-8'))
+        response =  WsgiResponse(404)
+        pulsar.get_actor().cfg.handle_http_error(response)
         self.process_response(environ, start_response, response)
         return response
                                     
@@ -269,18 +266,19 @@ class WsgiHandler(pulsar.LogginMixin):
                 return m
 
 
-
-def handle_http_error(response, e):
+def handle_http_error(response, e=None):
     '''The default handler for errors while serving an Http requests.
 :parameter response: an instance of :class:`WsgiResponse`.
 :parameter e: the exception instance.
 '''
     actor = pulsar.get_actor()
-    code = getattr(e, 'status_code', 500)
+    code = 500
+    if e:
+        code = getattr(e, 'status_code', 500)
     response.content_type = 'text/html'
     if code == 500:
         actor.log.critical('Unhandled exception during WSGI response',
-                           exc_info = True)
+                           exc_info=True)
         msg = 'An exception has occured while evaluating your request.'
     else:
         actor.log.info('WSGI {0} status code'.format(code))

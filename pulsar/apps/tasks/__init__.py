@@ -236,33 +236,33 @@ taskqueue_cmnds = set()
 def tasks_list(client, actor):
     return actor.app.tasks_list()
 
-@pulsar_command(authenticated=True, commands_set=taskqueue_cmnds)
+@pulsar_command(internal=True, authenticated=True, commands_set=taskqueue_cmnds)
 def addtask(client, actor, caller, jobname, task_extra, *args, **kwargs):
     kwargs.pop('ack', None)
-    return self.app._addtask(self, caller, jobname, task_extra, True,
-                             args, kwargs)
+    return actor.app._addtask(actor, caller, jobname, task_extra, True,
+                              args, kwargs)
     
 @pulsar_command(internal=True, ack=False, commands_set=taskqueue_cmnds)
 def addtask_noack(client, actor, caller, jobname, task_extra, *args, **kwargs):
     kwargs.pop('ack',None)
-    return actor.app._addtask(self, caller, jobname, task_extra, False,
+    return actor.app._addtask(actor, caller, jobname, task_extra, False,
                               args, kwargs)
 
-@pulsar_command(commands_set=taskqueue_cmnds)
+@pulsar_command(internal=True, commands_set=taskqueue_cmnds)
 def save_task(client, actor, caller, task):
     self.app.task_class.save_task(task)
 
 @pulsar_command(commands_set=taskqueue_cmnds)
-def get_task(client, actor, caller, id):
-    return self.app.task_class.get_task(id)
+def get_task(client, actor, id):
+    return actor.app.task_class.get_task(id)
 
 @pulsar_command(commands_set=taskqueue_cmnds)
-def job_list(client, actor, caller, jobnames = None):
-    return list(self.app.job_list(jobnames = jobnames))
+def job_list(client, actor, jobnames=None):
+    return list(actor.app.job_list(jobnames = jobnames))
 
 @pulsar_command(commands_set=taskqueue_cmnds)
-def next_scheduled(client, actor, caller, jobname = None):
-    return self.app.scheduler.next_scheduled(jobname = jobname)
+def next_scheduled(client, actor, caller, jobname=None):
+    return actor.app.scheduler.next_scheduled(jobname=jobname)
     
     
 class TaskQueue(CPUboundServer):

@@ -166,6 +166,7 @@ class MailboxResponse(AsyncResponse):
             if not command:
                 raise CommandNotFound(message.command)
             args = message.args
+            # If this is an internal command add the sender information
             if command.internal:
                 args = (sender,) + args
             result = command(self, receiver, *args, **message.kwargs)
@@ -175,6 +176,7 @@ class MailboxResponse(AsyncResponse):
         while is_async(result):
             yield b''
             result = result.result_or_self()
+        log_failure(result)
         if command.ack:
             # Send back the result as an ActorMessage
             if is_failure(result):
@@ -182,9 +184,6 @@ class MailboxResponse(AsyncResponse):
             else:
                 m = ActorMessage('callback', sender=receiver, args=(result,))
             yield self.parser.encode(m)
-        else:
-            # make sure we log any failure
-            log_failure(result)
 
     
 class MailboxConnection(AsyncConnection):
