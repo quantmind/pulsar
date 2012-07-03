@@ -11,7 +11,7 @@ from pulsar.utils.httpurl import Headers, SimpleCookie, set_cookie, responses,\
 from .middleware import is_streamed
 
 
-__all__ = ['WsgiHandler', 'WsgiResponse', 'handle_http_error']
+__all__ = ['WsgiHandler', 'WsgiResponse', 'wsgi_iterator', 'handle_http_error']
 
 
 default_logger = logging.getLogger('pulsar.apps.wsgi')
@@ -20,7 +20,7 @@ EMPTY_DICT = {}
 EMPTY_TUPLE = ()
 
 
-def generate_content(gen):
+def wsgi_iterator(gen):
     for data in gen:
         if data is NOT_DONE:
             yield b''
@@ -90,6 +90,10 @@ client.
         return self.environ['pulsar.actor'].log if self.environ\
                          else default_logger
     
+    @property
+    def started(self):
+        return self._started
+    
     def _get_content(self):
         return self._content
     def _set_content(self, content):
@@ -143,7 +147,7 @@ This is usually `True` if a generator is passed to the response object."""
         #Called by the __iter__ method when the response is streamed.
         content = []
         try:
-            for b in generate_content(self.content):
+            for b in wsgi_iterator(self.content):
                 if b:
                     content.append(b)
                     if len(content) == 1 and self._start_response:

@@ -14,18 +14,8 @@ from pulsar.utils import event
 
 event.create('http-headers')
 
-__all__ = ['HttpServer', 'wsgi_iterator', 'WsgiActorLink']
+__all__ = ['HttpServer', 'WsgiActorLink']
 
-
-def wsgi_iterator(result, callback, *args, **kwargs):
-    result = make_async(result).get_result_or_self()
-    while is_async(result):
-        # yield empty bytes so that the loop is released
-        yield b''
-        result = result.get_result_or_self()
-    # The result is ready
-    for chunk in callback(result, *args, **kwargs):
-        yield chunk
 
 def wsgi_environ(self):
     """return a :ref:`WSGI <apps-wsgi>` compatible environ dictionary

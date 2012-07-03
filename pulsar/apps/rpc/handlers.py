@@ -1,9 +1,9 @@
 import sys
 import inspect
 
-from pulsar import make_async, LogginMixin, to_bytes, is_failure
+from pulsar import LogginMixin, to_bytes, is_failure, log_failure, is_async
 from pulsar.utils.tools import checkarity
-from pulsar.apps.wsgi import WsgiResponse, wsgi_iterator
+from pulsar.apps.wsgi import WsgiResponse
 
 from .exceptions import *
 
@@ -112,14 +112,16 @@ class RpcResponse(WsgiResponse):
         except Exception as e:
             status_code = 400
             result = e
-        return wsgi_iterator(result, self.write_content, status_code)
-    
-    def write_content(self, result, status_code):
-        request = self.request
         handler = request.handler
+        if is_async(result) and result.called:
+            result = result.result
+        while is_async(result):
+            yield b''
+            if result.called:
+                result = result.result
         try:
             if is_failure(result):
-                result.log()
+                log_failure(result)
                 result = handler.dumps(request.id,
                                        request.version,
                                        error=result.trace[1])
@@ -130,7 +132,7 @@ class RpcResponse(WsgiResponse):
                 request.info('Successfully handled rpc function "{0}"'\
                                 .format(request.method))
         except Exception as e:
-            handler.log.error('Could not serialize', exc_info = True)
+            handler.log.error('Could not serialize', exc_info=True)
             status_code = 500
             result = handler.dumps(request.id,
                                    request.version,
@@ -138,7 +140,7 @@ class RpcResponse(WsgiResponse):
             
         self.status_code = status_code
         self.content_type = request.content_type
-        return (to_bytes(result),)
+        yield result
         
 
 class MetaRpcHandler(type):
@@ -376,7 +378,7 @@ class RpcMiddleware(object):
             hnd = self.handler
             method, args, kwargs, id, version = hnd.get_method_and_args(data)
             request = hnd.request(environ, method, args, kwargs, id, version)
-            return RpcResponse(environ=request)
+            return RpcResponse(environ=request, start_response=start_response)
         elif self.raise404:
             return WsgiResponse(404)
         
