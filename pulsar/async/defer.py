@@ -22,6 +22,7 @@ __all__ = ['Deferred',
            'raise_failure',
            'log_failure',
            'is_async',
+           'async_object',
            'maybe_async',
            'make_async',
            'safe_async',
@@ -149,6 +150,13 @@ def async(func):
     _.__doc__ = func.__doc__
     return _
 
+def async_object(obj):
+    '''Obtain the result if available, otherwise it returns self.'''
+    if is_async(obj):
+        return obj.result if obj.called and not obj.paused else obj
+    else:
+        return obj
+    
 def multi_async(func):
     '''Decorator for a function *func* which returns an iterable over, possibly
 asynchronous, values. This decorator create an instance of a
@@ -527,15 +535,24 @@ current thread.'''
 
 ############################################################### MultiDeferred
 class MultiDeferred(Deferred):
+    '''A :class:`Deferred` for managing a stream if independent objects
+which may be :class:`Deferred`.
+
+.. attrubute:: lock
+
+    If ``True`` items can no longer be added to this :class:`MultiDeferred`
+'''
     _locked = False
     
-    def __init__(self, data=None, type=None, fireOnOneErrback=False):
+    def __init__(self, data=None, type=None, fireOnOneErrback=False,
+                 handle_value=None):
         self._deferred = {}
         self._failures = Failure()
         self.fireOnOneErrback = fireOnOneErrback
+        self.handle_value = handle_value
         if not type:
             type = data.__class__ if data is not None else list
-        if not issubclass(type,(list,dict)):
+        if not issubclass(type, (list, dict)):
             type = list
         self._stream = type()
         super(MultiDeferred, self).__init__()
@@ -573,27 +590,32 @@ class MultiDeferred(Deferred):
         if self._locked:
             raise RuntimeError(self.__class__.__name__ +\
                                ' cannot add a dependent once locked.')
-        if is_async(value):
-            value = value.result_or_self()
+        value = async_object(value)
         if is_async(value):
             self._add_deferred(key, value)
         else:
             if is_generalised_generator(value):
                 value = list(value)
-            if isinstance(value, (dict,list,tuple,set,frozenset)):
-                if isinstance(value, dict):
-                    md = MultiDeferred(type=dict)
-                else:
-                    md = MultiDeferred()
-                md.update(value)
-                md.lock()
-                value = md
-                if value.called:
-                    value = value.result
-                else:
+            # if an instance of an iterable create multiple objects
+            if isinstance(value, (dict, list, tuple, set, frozenset)):
+                value = self._make(value)
+                if is_async(value):
                     self._add_deferred(key, value)
+        if not is_async(value) and self.handle_value:
+            try:
+                val = self.handle_value(value)
+            except Exception as e:
+                value = as_failure(e)
+            else:
+                if val is not value:
+                    return self._add(key, val)
         self._setitem(key, value)
-                    
+    
+    def _make(self, value):
+        md = self.__class__(value, fireOnOneErrback=self.fireOnOneErrback,
+                            handle_value=self.handle_value)
+        return async_object(md.lock())
+        
     def _add_deferred(self, key, value):
         self._deferred[key] = value
         value.addBoth(lambda result: self._deferred_done(key, result))

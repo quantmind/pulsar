@@ -7,7 +7,7 @@ import traceback
 from io import StringIO
 
 from pulsar.utils.httpurl import itervalues
-from pulsar import make_async, as_failure, is_async
+from pulsar import make_async, as_failure, is_async, is_failure
 
 from .models import registry
 from .exceptions import *

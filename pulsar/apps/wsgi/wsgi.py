@@ -6,7 +6,7 @@ from functools import partial
 import pulsar
 from pulsar import make_async, Deferred, is_failure, NOT_DONE
 from pulsar.utils.httpurl import Headers, SimpleCookie, set_cookie, responses,\
-                                    iteritems
+                                    iteritems, has_empty_content, string_type
 
 from .middleware import is_streamed
 
@@ -27,10 +27,10 @@ def wsgi_iterator(gen, encoding=None):
             yield b''
         elif isinstance(data, bytes):
             yield data
-        elif isinstance(data, str):
+        elif isinstance(data, string_type):
             yield data.encode(encoding)
         else:
-            for b in generate_content(data):
+            for b in wsgi_iterator(data, encoding):
                 yield b
                 
 
@@ -96,6 +96,11 @@ client.
     def started(self):
         return self._started
     
+    @property
+    def method(self):
+        if self.environ:
+            return self.environ.get('REQUEST_METHOD')
+        
     def _get_content(self):
         return self._content
     def _set_content(self, content):
@@ -120,6 +125,7 @@ By default it returns an empty tuple. Overrides if you need to.'''
         return ()
     
     def __call__(self, environ, start_response):
+        self.environ = environ
         self.start_server_response(start_response)
         return self
         
@@ -152,7 +158,7 @@ This is usually `True` if a generator is passed to the response object."""
             for b in wsgi_iterator(self.content, self.encoding):
                 if b:
                     content.append(b)
-                    if len(content) == 1 and self._start_response:
+                    if len(content) == 1:
                         self.start_server_response(self._start_response)
                 yield b
         except Exception as e:
@@ -187,7 +193,9 @@ This is usually `True` if a generator is passed to the response object."""
     
     def get_headers(self):
         headers = self.headers
-        if self.content_type:
+        if has_empty_content(self.status_code, self.method):
+            headers.pop('content-type',None)
+        elif self.content_type:
             headers['Content-type'] = self.content_type
         if not self.is_streamed:
             cl = 0

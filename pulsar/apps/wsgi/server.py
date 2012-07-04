@@ -241,13 +241,14 @@ class HttpResponse(AsyncResponse):
                     while b:
                         chunk, b = b[:MAX_CHUNK], b[MAX_CHUNK:]
                         head = ("%X\r\n" % len(chunk)).encode('utf-8')
-                        yield head + chunk + b'\r\n'
+                        if b:
+                            yield head + chunk + b'\r\n'
+                        else:
+                            yield head + chunk + b'\r\n0\r\n\r\n'
                 else:
                     yield b
             else:
                 yield b''
-        if self.chunked:
-            yield b'0\r\n\r\n'
         # make sure we send the headers
         head = self.send_headers(force=True)
         if head is not None:
