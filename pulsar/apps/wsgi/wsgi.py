@@ -20,14 +20,15 @@ EMPTY_DICT = {}
 EMPTY_TUPLE = ()
 
 
-def wsgi_iterator(gen):
+def wsgi_iterator(gen, encoding=None):
+    encoding = encoding or 'utf-8'
     for data in gen:
         if data is NOT_DONE:
             yield b''
         elif isinstance(data, bytes):
             yield data
         elif isinstance(data, str):
-            yield data.encode('utf-8')
+            yield data.encode(encoding)
         else:
             for b in generate_content(data):
                 yield b
@@ -63,7 +64,8 @@ client.
     _started = False
     DEFAULT_STATUS_CODE = 200
     DEFAULT_CONTENT_TYPE = 'text/plain'
-    ENCODED_CONTENT_TYPE = ('text/plain', 'text/html', 'application/json')
+    ENCODED_CONTENT_TYPE = ('text/plain', 'text/html', 'application/json',
+                            'application/javascript')
     def __init__(self, status=None, content=None, response_headers=None,
                  content_type=None, encoding=None, environ=None,
                  start_response=None):
@@ -147,7 +149,7 @@ This is usually `True` if a generator is passed to the response object."""
         #Called by the __iter__ method when the response is streamed.
         content = []
         try:
-            for b in wsgi_iterator(self.content):
+            for b in wsgi_iterator(self.content, self.encoding):
                 if b:
                     content.append(b)
                     if len(content) == 1 and self._start_response:
