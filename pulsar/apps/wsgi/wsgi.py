@@ -6,12 +6,17 @@ from functools import partial
 import pulsar
 from pulsar import make_async, Deferred, is_failure, NOT_DONE
 from pulsar.utils.httpurl import Headers, SimpleCookie, set_cookie, responses,\
-                                    iteritems, has_empty_content, string_type
+                                    iteritems, has_empty_content, string_type,\
+                                    ispy3k
 
 from .middleware import is_streamed
 
+if ispy3k:
+    from functools import reduce
 
-__all__ = ['WsgiHandler', 'WsgiResponse', 'wsgi_iterator', 'handle_http_error']
+__all__ = ['WsgiHandler', 'WsgiResponse',
+           'WsgiResponseGenerator',
+           'wsgi_iterator', 'handle_http_error']
 
 
 default_logger = logging.getLogger('pulsar.apps.wsgi')
@@ -34,7 +39,24 @@ def wsgi_iterator(gen, encoding=None):
                 yield b
                 
 
-class WsgiResponse(object):
+class WsgiResponseGenerator(object):
+    
+    def __init__(self, environ=None, start_response=None):
+        self.environ = environ
+        self.start_response = start_response
+        self.middleware = []
+        
+    def __iter__(self):
+        raise NotImplementedError()
+    
+    def __call__(self, response):
+        '''Apply response middleware '''
+        response.middleware.extend(self.middleware)
+        for b in response(self.environ, self.start_response):
+            yield b
+    
+        
+class WsgiResponse(WsgiResponseGenerator):
     '''A WSGI response wrapper initialized by a WSGI request middleware.
 Instances are callable using the standard WSGI call::
 
@@ -69,18 +91,9 @@ client.
     def __init__(self, status=None, content=None, response_headers=None,
                  content_type=None, encoding=None, environ=None,
                  start_response=None):
-        self._start_response = start_response
-        request = None
-        if environ and not isinstance(environ, dict):
-            if hasattr(environ, 'environ'):
-                request = environ
-                environ = request.environ
-            else:
-                raise ValueError('Not a valid environment {0}'.format(environ))
+        super(WsgiResponse, self).__init__(environ, start_response)
         self.status_code = status or self.DEFAULT_STATUS_CODE
         self.encoding = encoding
-        self.request = request
-        self.environ = environ
         self.cookies = SimpleCookie()
         self.content_type = content_type or self.DEFAULT_CONTENT_TYPE
         self.headers = Headers(response_headers, kind='server')
@@ -95,6 +108,10 @@ client.
     @property
     def started(self):
         return self._started
+    
+    @property
+    def sent_headers(self):
+        return self._sent_headers
     
     @property
     def method(self):
@@ -125,9 +142,27 @@ By default it returns an empty tuple. Overrides if you need to.'''
         return ()
     
     def __call__(self, environ, start_response):
-        self.environ = environ
-        self.start_server_response(start_response)
+        '''This method should be called when ready to start the response.
+Return ``self`` for convenience::
+
+    for data in response(environ, start_response):
+        yield data
+'''
+        if self._sent_headers is None:
+            self.environ = environ
+            for rm in self.middleware:
+                try:
+                    rm(environ, self)
+                except:
+                    log = pulsar.get_actor().log
+                    log.error('Exception in response middleware', exc_info=True)
+            self._sent_headers = self.get_headers()
+            start_response(self.status, self._sent_headers)
         return self
+        
+    def length(self):
+        if not self.is_streamed:
+            return reduce(lambda x,y: x+len(y), self.content, 0)
         
     @property
     def response(self):
@@ -159,7 +194,8 @@ This is usually `True` if a generator is passed to the response object."""
                 if b:
                     content.append(b)
                     if len(content) == 1:
-                        self.start_server_response(self._start_response)
+                        # We make sure we send the headers
+                        self(self.environ, self.start_response)
                 yield b
         except Exception as e:
             if not content:
@@ -205,13 +241,8 @@ This is usually `True` if a generator is passed to the response object."""
         for c in self.cookies.values():
             headers['Set-Cookie'] = c.OutputString()
         return list(iteritems(headers))
-        
-    def start_server_response(self, start_response):
-        if self._sent_headers is None:
-            self._sent_headers = self.get_headers()
-            start_response(self.status, self._sent_headers)
-        
-        
+    
+    
 class WsgiHandler(pulsar.LogginMixin):
     '''An handler for application conforming to python WSGI_.
     
@@ -242,6 +273,7 @@ class WsgiHandler(pulsar.LogginMixin):
         
     def __call__(self, environ, start_response):
         '''The WSGI callable'''
+        response = None
         for middleware in self.middleware:
             try:
                 response = middleware(environ, start_response)
@@ -249,30 +281,15 @@ class WsgiHandler(pulsar.LogginMixin):
                 response = WsgiResponse(500)
                 pulsar.get_actor().cfg.handle_http_error(response, e)
             if response is not None:
-                if hasattr(response, 'when_ready'):
-                    process = partial(self.process_response,
-                                      environ,
-                                      start_response)
-                    response.when_ready.addBoth(process)
-                else:
-                    self.process_response(environ, start_response, response)
-                return response
-        response =  WsgiResponse(404)
-        pulsar.get_actor().cfg.handle_http_error(response)
-        self.process_response(environ, start_response, response)
-        return response
-                                    
-    def process_response(self, environ, start_response, response):
-        if is_failure(response):
-            response.raise_all()
-        elif hasattr(response, 'status_code'):
-            for rm in self.response_middleware:
-                rm(environ, start_response, response)
-            if hasattr(response,'__call__'):
-                return response(environ, start_response)
+                break
+        if response is None:
+            response = WsgiResponse(404)
+            pulsar.get_actor().cfg.handle_http_error(response)
+        if hasattr(response, 'middleware'):
+            response.middleware.extend(self.response_middleware)
         return response
     
-    def get(self, route = '/'):
+    def get(self, route='/'):
         '''Fetch a middleware with the given *route*. If it is not found
  return ``None``.'''
         for m in self.middleware:

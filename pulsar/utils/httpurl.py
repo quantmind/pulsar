@@ -1742,6 +1742,40 @@ def dump_cookie(key, value='', max_age=None, expires=None, path='/',
 cc_delim_re = re.compile(r'\s*,\s*')
 
 
+class accept_content_type(object):
+    
+    def __init__(self, values):
+        self._all = {}
+        self.update(values)
+        
+    def update(self, values):
+        if values:
+            all = self._all
+            accept_headers = cc_delim_re.split(values)
+            for h in accept_headers:
+                v = h.split('/')
+                if len(v) == 2:
+                    a, b = v
+                    if a in all:
+                        all[a].append(b)
+                    else:
+                        all[a] = [b]
+    
+    def __contains__(self, content_type):
+        a, b = content_type.split('/')
+        all = self._all
+        if a in all:
+            all = all[a]
+            if '*' in all:
+                return True
+            else:
+                return b in all
+        elif '*' in all:
+            return True
+        else:
+            return False
+            
+
 def patch_vary_headers(response, newheaders):
     """\
 Adds (or updates) the "Vary" header in the given HttpResponse object.
@@ -1775,3 +1809,40 @@ def has_vary_header(response, header_query):
     vary_headers = cc_delim_re.split(response['Vary'])
     existing_headers = set([header.lower() for header in vary_headers])
     return header_query.lower() in existing_headers
+
+
+class CacheControl(object):
+    '''
+    http://www.mnot.net/cache_docs/
+    
+.. attribute:: maxage
+
+    Specifies the maximum amount of time that a representation will be
+    considered fresh.
+    '''
+    def __init__(self, maxage=None, private=False,
+                 must_revalidate=False, proxy_revalidate=False,
+                 nostore=False):
+        self.maxage = maxage
+        self.private = private
+        self.must_revalidate = must_revalidate
+        self.proxy_revalidate = proxy_revalidate
+        self.nostore = nostore 
+        
+    def __call__(self, headers):
+        if self.nostore:
+            headers['cache-control'] = 'no-store'
+        elif self.maxage:
+            headers['cache-control'] = 'max-age=%s' % self.maxage
+            if self.private:
+                headers.add('cache-control', 'private')
+            else:
+                headers.add('cache-control', 'public')
+            if self.must_revalidate:
+                headers.add('cache-control', 'must-revalidate')
+            elif self.proxy_revalidate:
+                headers.add('cache-control', 'proxy-revalidate')
+        else:
+            headers['cache-control'] = 'no-cache'
+                
+        

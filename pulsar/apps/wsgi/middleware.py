@@ -47,61 +47,80 @@ string is replaced with a dictionary.'''
             c = parse_cookie(c)
         environ['HTTP_COOKIE'] = c
     
+def authorization(environ, start_response):
+    """An `Authorization` middleware."""
+    code = 'HTTP_AUTHORIZATION'
+    if code in environ:
+        header = environ[code]
+        return parse_authorization_header(header)
     
-class AccessControl(object):
+#####################################################    RESPONSE MIDDLEWARE
+class ResponseMiddleware(object):
+    
+    def version(self, environ):
+        return environ.get('wsgi.version')
+    
+    def available(self, environ, response):
+        return True
+    
+    def __call__(self, environ, response):
+        if response.sent_headers:
+            return
+        if not self.available(environ, response):
+            return
+        return self.execute(environ, response)
+    
+    def execute(self, environ, response):
+        pass
+    
+    
+class AccessControl(ResponseMiddleware):
     '''A response middleware which add the ``Access-Control-Allow-Origin``
 response header.'''
-    def __init__(self, origin = '*', methods = None):
+    def __init__(self, origin = '*', methods=None):
         self.origin = origin
         self.methods = methods
         
-    def __call__(self, environ, start_response, response):
-        if response.status_code != 200:
-            return
+    def available(self, environ, response):
+        return response.status_code == 200
+    
+    def execute(self, environ, response):
         response.headers['Access-Control-Allow-Origin'] = self.origin
         if self.methods:
             response.headers['Access-Control-Allow-Methods'] = self.methods
   
 
-class GZipMiddleware(object):
+class GZipMiddleware(ResponseMiddleware):
     """Response middleware for compressing content if the browser allows
 gzip compression. It sets the Vary header accordingly, so that caches will
 base their storage on the Accept-Encoding header.
     """
-    def __init__(self, min_length = 200):
+    def __init__(self, min_length=200):
         self.min_length = min_length
-        
-    def __call__(self, environ, start_response, response):
-        # It's not worth compressing non-OK or really short responses.
-        content = response.content
-        if not content or response.status_code != 200 or is_streamed(content):
-            return
-        content = b''.join(content)
-        if len(content) < self.min_length:
-            return
-        
-        headers = response.headers
-        # Avoid gzipping if we've already got a content-encoding.
-        if 'Content-Encoding' in headers:
-            return
-        
-        # MSIE have issues with gzipped response of various content types.
-        if "msie" in environ.get('HTTP_USER_AGENT', '').lower():
-            ctype = headers.get('Content-Type', '').lower()
-            if not ctype.startswith("text/") or "javascript" in ctype:
-                return
-
-        ae = environ.get('HTTP_ACCEPT_ENCODING', '')
-        if not re_accepts_gzip.search(ae):
-            return
-        
-        if hasattr(headers, 'add'):
-            headers.add('Vary','Accept-Encoding')
-        else:
-            #TODO
-            #need to uppend
-            headers['Vary'] = 'Accept-Encoding'
+    
+    def available(self, environ, response):
+        # It's not worth compressing non-OK or really short responses
+        if response.status_code == 200 and not response.is_streamed:
+            if response.length() < self.min_length:
+                return False
+            headers = response.headers
+            # Avoid gzipping if we've already got a content-encoding.
+            if 'Content-Encoding' in headers:
+                return False
+            # MSIE have issues with gzipped response of various content types.
+            if "msie" in environ.get('HTTP_USER_AGENT', '').lower():
+                ctype = headers.get('Content-Type', '').lower()
+                if not ctype.startswith("text/") or "javascript" in ctype:
+                    return False
+            ae = environ.get('HTTP_ACCEPT_ENCODING', '')
+            if not re_accepts_gzip.search(ae):
+                return False
+            return True
             
+    def execute(self, environ, response):
+        headers = response.headers
+        headers.add('Vary','Accept-Encoding')
+        content = b''.join(response.content)            
         response.content = (self.compress_string(content),)
         response.headers['Content-Encoding'] = 'gzip'
     
@@ -113,12 +132,4 @@ base their storage on the Accept-Encoding header.
         zfile.close()
         return zbuf.getvalue()
 
-
-def authorization(environ, start_response):
-    """An `Authorization` middleware."""
-    code = 'HTTP_AUTHORIZATION'
-    if code in environ:
-        header = environ[code]
-        return parse_authorization_header(header)
-    
     

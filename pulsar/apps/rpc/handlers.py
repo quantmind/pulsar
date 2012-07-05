@@ -99,6 +99,11 @@ class RpcRequest(object):
 
 class RpcResponse(WsgiResponse):
     '''A specialised :class:`WsgiResponse` for RPC functions.'''
+    def __init__(self, request, start_response):
+        self.request = request
+        super(RpcResponse, self).__init__(environ=request.environ,
+                                          start_response=start_response)
+        
     def critical(self, request, id, e):
         msg = 'Unhandled server exception %s: %s' % (e.__class__.__name__,e)
         self.handler.log.critical(msg,exc_info=sys.exc_info)
@@ -378,7 +383,7 @@ class RpcMiddleware(object):
             hnd = self.handler
             method, args, kwargs, id, version = hnd.get_method_and_args(data)
             request = hnd.request(environ, method, args, kwargs, id, version)
-            return RpcResponse(environ=request, start_response=start_response)
+            return RpcResponse(request, start_response)
         elif self.raise404:
             return WsgiResponse(404)
         
