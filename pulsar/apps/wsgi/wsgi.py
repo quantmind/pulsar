@@ -128,10 +128,6 @@ client.
             elif isinstance(content, bytes):
                 content = (content,)
             self._content = content
-            if self.is_streamed:
-                self.when_ready = Deferred()
-            elif hasattr(self, 'when_ready'):
-                delattr(self, 'when_ready')
         else:
             raise RuntimeError('Cannot set content. Already iterated')
     content = property(_get_content, _set_content)
@@ -201,7 +197,6 @@ This is usually `True` if a generator is passed to the response object."""
             if not content:
                 pulsar.get_actor().cfg.handle_http_error(self, e)
         self.generated_content = content
-        self.when_ready.callback(self)
                 
     def __iter__(self):
         self._started = True
