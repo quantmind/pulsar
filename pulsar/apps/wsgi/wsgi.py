@@ -99,11 +99,6 @@ client.
         self.headers = Headers(response_headers, kind='server')
         self._sent_headers = None
         self.content = content
-        
-    @property
-    def logger(self):
-        return self.environ['pulsar.actor'].log if self.environ\
-                         else default_logger
     
     @property
     def started(self):
