@@ -1,7 +1,8 @@
 import sys
 import inspect
 
-from pulsar import LogginMixin, to_bytes, is_failure, log_failure, is_async
+from pulsar import LogginMixin, to_bytes, is_failure, log_failure, is_async,\
+                    as_failure, async_object
 from pulsar.utils.tools import checkarity
 from pulsar.apps.wsgi import WsgiResponse
 
@@ -73,11 +74,6 @@ class RpcRequest(object):
     def info(self, msg):
         '''Do something with the message and request'''
         self.log.debug(msg)
-        
-    def critical(self, e):
-        msg = 'Unhandled server exception %s: %s' % (e.__class__.__name__,e)
-        self.log.critical(msg,exc_info=True)
-        raise InternalError(msg)
     
     def process(self):
         if not self.func:
@@ -103,11 +99,6 @@ class RpcResponse(WsgiResponse):
         self.request = request
         super(RpcResponse, self).__init__(environ=request.environ,
                                           start_response=start_response)
-        
-    def critical(self, request, id, e):
-        msg = 'Unhandled server exception %s: %s' % (e.__class__.__name__,e)
-        self.handler.log.critical(msg,exc_info=sys.exc_info)
-        raise InternalError(msg)
     
     def default_content(self):
         request = self.request
@@ -115,17 +106,15 @@ class RpcResponse(WsgiResponse):
         try:
             result = request.process()
         except Exception as e:
-            status_code = 400
-            result = e
+            result = as_failure(e)
         handler = request.handler
-        if is_async(result) and result.called:
-            result = result.result
+        result = async_object(result)
         while is_async(result):
             yield b''
-            if result.called:
-                result = result.result
+            result = async_object(result)
         try:
             if is_failure(result):
+                status_code = 400
                 log_failure(result)
                 result = handler.dumps(request.id,
                                        request.version,
