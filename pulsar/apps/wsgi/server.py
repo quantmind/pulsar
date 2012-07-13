@@ -11,6 +11,8 @@ from pulsar.utils.httpurl import Headers, iteritems, is_string, unquote,\
                                     has_empty_content, to_bytes
 from pulsar.utils import event
 
+from .wsgi import WsgiResponse
+
 
 event.create('http-headers')
 
@@ -129,29 +131,7 @@ class HttpResponse(AsyncResponse):
     '''Handle one HTTP response'''
     _status = None
     _headers_sent = None
-    
-    def _response_iterator(self):
-        environ = self.environ
-        self.headers = self.connection.default_headers()
-        worker = self.connection.actor
-        start_response = self.start_response
-        try:
-            return worker.app_handler(environ, start_response)
-        except Exception as e:
-            # we make sure headers where not sent
-            try:
-                start_response('500 Internal Server Error', [], sys.exc_info())
-            except:
-                # The headers were sent already
-                self.log.critical('Headers already sent!',
-                                  exc_info=sys.exc_info())
-                return iter([b'Critical Server Error'])
-            else:
-                # Create the error response
-                data = WsgiResponse(environ=environ)
-                worker.cfg.handle_http_error(data, e)
-                data(environ, start_response)
-                return data
+    MAX_CHUNK = 65536
         
     @property
     def environ(self):
@@ -231,31 +211,56 @@ class HttpResponse(AsyncResponse):
         return self.connection.write
     
     def __iter__(self):
-        MAX_CHUNK = 65536
-        for b in self._response_iterator():
-            head = self.send_headers(force=b)
-            if head is not None:
-                yield head
-            if b:
-                if self.chunked:
-                    while b:
-                        chunk, b = b[:MAX_CHUNK], b[MAX_CHUNK:]
-                        head = ("%X\r\n" % len(chunk)).encode('utf-8')
-                        if b:
-                            yield head + chunk + b'\r\n'
-                        else:
-                            yield head + chunk + b'\r\n0\r\n\r\n'
+        MAX_CHUNK = self.MAX_CHUNK
+        self.headers = self.connection.default_headers()
+        worker = self.connection.actor
+        try:
+            for b in worker.app_handler(self.environ, self.start_response):
+                head = self.send_headers(force=b)
+                if head is not None:
+                    yield head
+                if b:
+                    if self.chunked:
+                        while b:
+                            chunk, b = b[:MAX_CHUNK], b[MAX_CHUNK:]
+                            head = ("%X\r\n" % len(chunk)).encode('utf-8')
+                            if b:
+                                yield head + chunk + b'\r\n'
+                            else:
+                                yield head + chunk + b'\r\n0\r\n\r\n'
+                    else:
+                        yield b
                 else:
-                    yield b
+                    yield b''
+            keep_alive = self.keep_alive
+        except Exception as e:
+            # we make sure headers where not sent
+            keep_alive = False
+            try:
+                self.start_response('500 Internal Server Error', self.headers,
+                                    sys.exc_info())
+            except:
+                # The headers were sent already
+                self.log.critical('CRITICAL SERVER ERROR. '\
+                                  ' Headers already sent!',
+                                  exc_info=sys.exc_info())
+                yield b'CRITICAL SERVER ERROR'
             else:
-                yield b''
+                # Create the error response
+                data = worker.cfg.handle_http_error(WsgiResponse(), e)
+                for b in data(self.environ, self.start_response):
+                    head = self.send_headers(force=b)
+                    if head is not None:
+                        yield head
+                    yield b
+        #
         # make sure we send the headers
         head = self.send_headers(force=True)
         if head is not None:
             yield head
-        if not self.keep_alive:
+        if not keep_alive:
             self.connection.close()
-
+            
     def is_chunked(self):
         '''Only use chunked responses when the client is
 speaking HTTP/1.1 or newer and there was no Content-Length header set.'''
