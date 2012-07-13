@@ -2,10 +2,10 @@ Development
 =====================
 * Overall refactoring of API and therefore incompatible with version 0.3.
 * Added the new :mod:`pulsar.utils.httpurl` module for HTTP tools and clients.
-* Refactored :class:`pulsar.Deferred` to be more similar to twisted. You
+* Refactored :class:`pulsar.Deferred` to be more compatible with twisted. You
   can add separate callbacks for handling errors.
 * Added :class:`pulsar.MultiDeferred` for handling a group of asynchronous
-  element independent from each other.
+  elements independent from each other.
 * The :class:`pulsar.Mailbox` does not derive from :class:`threading.Thread` so
   that the eventloop can be restarted.
 * Removed the :class:`ActorMetaClass`. Remote functions are specified using

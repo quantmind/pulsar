@@ -10,7 +10,8 @@ from threading import current_thread
 
 
 from pulsar import AlreadyCalledError, AlreadyRegistered,\
-                   ActorAlreadyStarted, LogSelf, LogginMixin, system
+                   ActorAlreadyStarted, LogSelf, LogginMixin, system,\
+                   Config
 
 from .eventloop import IOLoop, ID
 from .proxy import ActorProxy, ActorMessage
@@ -447,7 +448,7 @@ logging is configured, the :attr:`Actor.mailbox` is registered and the
             self.configure_logging()
             # wrap the logger
             if self.arbiter:
-                self.setlog(log = LogSelf(self,self.log))
+                self.setlog(log=LogSelf(self,self.log))
             self._run()
     
     ############################################################################
@@ -597,8 +598,7 @@ if *proxy* is not a class:`ActorProxy` instance raise an exception.'''
 
     def _on_run(self):
         '''Internal function called at the start of the actor. It builds the
-event loop which will consume events on file descriptors.
-This function is overridden by :class:`Monitor` to perform nothing.'''
+event loop which will consume events on file descriptors.'''
         # Inject self as the actor of this thread
         ioq = self.ioqueue
         self._requestloop = IOLoop(io=IOQueue(ioq, self) if ioq else None,
@@ -616,6 +616,8 @@ This function is overridden by :class:`Monitor` to perform nothing.'''
         set_local_data(self)
         self.setid()
         self.on_start()
+        if isinstance(self.cfg, Config):
+            self.cfg.on_start()
         self.log.info('Address %s', self.mailbox.address)
             
     def _run(self):

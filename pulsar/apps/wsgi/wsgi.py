@@ -49,8 +49,13 @@ class WsgiResponseGenerator(object):
     def __iter__(self):
         raise NotImplementedError()
     
-    def __call__(self, response):
-        '''Apply response middleware '''
+    def __call__(self, environ, start_response):
+        self.start_response = start_response
+        self.environ = environ
+        return self
+        
+    def start(self, response):
+        '''Start the response generator'''
         response.middleware.extend(self.middleware)
         for b in response(self.environ, self.start_response):
             yield b
@@ -132,23 +137,23 @@ client.
 By default it returns an empty tuple. Overrides if you need to.'''
         return ()
     
-    def __call__(self, environ, start_response):
-        '''This method should be called when ready to start the response.
-Return ``self`` for convenience::
-
-    for data in response(environ, start_response):
-        yield data
-'''
+    def __call__(self, environ, start_response, middleware=False):
+        '''Make sure the headers are set.'''
         if self._sent_headers is None:
             self.environ = environ
-            for rm in self.middleware:
-                try:
-                    rm(environ, self)
-                except:
-                    log = pulsar.get_actor().log
-                    log.error('Exception in response middleware', exc_info=True)
-            self._sent_headers = self.get_headers()
-            start_response(self.status, self._sent_headers)
+            self.start_response = start_response
+            if middleware:
+                for rm in self.middleware:
+                    try:
+                        rm(environ, self)
+                    except:
+                        log = pulsar.get_actor().log
+                        log.error('Exception in response middleware',
+                                  exc_info=True)
+                self._sent_headers = headers = self.get_headers()
+            else:
+                headers = self.get_headers()
+            start_response(self.status, headers)
         return self
         
     def length(self):
@@ -186,7 +191,7 @@ This is usually `True` if a generator is passed to the response object."""
                     content.append(b)
                     if len(content) == 1:
                         # We make sure we send the headers
-                        self(self.environ, self.start_response)
+                        self(self.environ, self.start_response, True)
                 yield b
         except Exception as e:
             if not content:
@@ -198,6 +203,7 @@ This is usually `True` if a generator is passed to the response object."""
         if self.is_streamed:
             return self._generator()
         else:
+            self(self.environ, self.start_response, True)
             return iter(self.content)
     
     def __len__(self):
@@ -277,7 +283,8 @@ class WsgiHandler(pulsar.LogginMixin):
             pulsar.get_actor().cfg.handle_http_error(response)
         if hasattr(response, 'middleware'):
             response.middleware.extend(self.response_middleware)
-        return response
+        # invoke the wsgi start_response. This is important!
+        return response(environ, start_response)
     
     def get(self, route='/'):
         '''Fetch a middleware with the given *route*. If it is not found

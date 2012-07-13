@@ -39,6 +39,7 @@ import string
 import time
 import json
 import mimetypes
+import platform
 import codecs
 import socket
 from uuid import uuid4
@@ -994,6 +995,17 @@ class HttpsConnection(HttpConnection):
 
 
 class HttpRequest(object):
+    '''Http client request initialized by a call to the
+:class:`HttpClient.request` method.
+
+.. attribute:: client
+
+    The :class:`HttpClient` performing the request
+
+.. attribute:: type
+
+    The scheme of the of the URI requested. One of http, https
+    '''
     response_class = HttpResponse
     default_charset = 'latin-1'
     '''Default is charset is "iso-8859-1" (latin-1) from section 3.7.1
@@ -1258,6 +1270,10 @@ into an SSL socket.
 .. attribute:: DEFAULT_HTTP_HEADERS
 
     Default headers for this :class:`HttpClient`
+    
+.. attribute:: proxy_info
+
+    Dictionary of proxy servers for this client
 '''
     request_class = HttpRequest
     client_version = 'Python-httpurl'
@@ -1265,16 +1281,16 @@ into an SSL socket.
             ('Connection', 'Keep-Alive'),
             ('Accept-Encoding', ('identity', 'deflate', 'compress', 'gzip'))],
             kind='client')
+    # Default hosts not affected by proxy settings. This can be overwritten
+    # by specifying the "no" key in the proxy_info dictionary
+    no_proxy = set(('localhost', urllibr.localhost(), platform.node()))
     
     def __init__(self, proxy_info=None, timeout=None, cache=None,
                  headers=None, encode_multipart=True, client_version=None,
                  multipart_boundary=None, max_connections=None,
                  key_file=None, cert_file=None, cert_reqs='CERT_NONE',
-                 ca_certs=None, cookies=None):
-        if ispy3k:
-            super(HttpClient, self).__init__()
-        else:
-            urllibr.OpenerDirector.__init__(self)
+                 ca_certs=None, cookies=None, trust_env=True):
+        self.trust_env = trust_env
         self.poolmap = {}
         self.timeout = timeout
         self._cookies = None
@@ -1290,9 +1306,11 @@ into an SSL socket.
                       'post_request':[],
                       'response':[]}
         self.DEFAULT_HTTP_HEADERS = dheaders
-        self.proxy_info = proxy_info
-        if self.proxy_info is None:
+        self.proxy_info = dict(proxy_info or ())
+        if not self.proxy_info and self.trust_env:
             self.proxy_info = get_environ_proxies()
+        if 'no' not in self.proxy_info:
+            self.proxy_info['no'] = ','.join(self.no_proxy)
         self.encode_multipart = encode_multipart
         self.multipart_boundary = multipart_boundary or choose_boundary()
         self.https_defaults = {'key_file': key_file,
@@ -1359,6 +1377,8 @@ a :class:`HttpResponse` object.
                                      multipart_boundary=self.multipart_boundary,
                                      hooks=hooks,
                                      allow_redirects=allow_redirects)
+        # Set proxy if required
+        self.set_proxy(request)
         if self.cookies:
             self.cookies.add_cookie_header(request)
         if cookies:
@@ -1416,7 +1436,14 @@ a :class:`HttpResponse` object.
             password_mgr = HTTPPasswordMgr()
         password_mgr.add_password(realm, uri, user, passwd)
         self._opener.add_handler(HTTPBasicAuthHandler(password_mgr))
-            
+        
+    def set_proxy(self, request):
+        if request.type in self.proxy_info:
+            hostonly, _ = splitport(request.host)
+            no_proxy = self.proxy_info.get('no','').split(',')
+            if not any(map(hostonly.endswith, no_proxy)):
+                p = urlparse(self.proxy_info[request.type])
+                request.set_proxy(p.netloc, p.scheme)
 
 ###############################################    UTILITIES, ENCODERS, PARSERS
 def get_environ_proxies():

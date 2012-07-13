@@ -151,9 +151,9 @@ attribute by exposing the :attr:`Setting.name` as attribute.
     Dictionary of all :class:`Settings` instances available. The
     keys are given by the :attr:`Setting.name` attribute.
 '''
-    def __init__(self, description = None, epilog = None,
-                 version = None, app = None, include=None,
-                 exclude = None):
+    def __init__(self, description=None, epilog=None,
+                 version=None, app=None, include=None,
+                 exclude=None):
         self.settings = make_settings(app, include,exclude)
         self.description = description or 'Pulsar server'
         self.epilog = epilog or 'Have fun!'
@@ -359,11 +359,14 @@ accepting one positional argument, the value to validate.'''
         return self.value
     
     def set(self, val):
+        '''Set *val* as the value in this :class:`Setting`.'''
         if hasattr(self.validator,'__call__'):
             val = self.validator(val)
         self.value = val
         
     def on_start(self):
+        '''Called when pulsar server starts. It can be used to perform
+custom initialization for this :class:`Setting`.'''
         pass
 
 
@@ -538,8 +541,12 @@ class HttpProxyServer(Setting):
     flags = ["--http-proxy"]
     default = ''
     desc = """\
-        The HTTP proxy server to use with HttpClient.    
+        The HTTP proxy server to use with HttpClient.
         """
+    def on_start(self):
+        if self.value:
+            os.environ['http_proxy'] = self.value
+        
         
 class HttpClient(Setting):
     name = "http_client"
@@ -558,6 +565,7 @@ class HttpClient(Setting):
                 v += (1,)
             from pulsar.net import setDefaultClient
             setDefaultClient(v)
+
         
 class HttpParser(Setting):
     name = "http_py_parser"

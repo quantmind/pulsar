@@ -38,9 +38,16 @@ class TestHeaders(unittest.TestCase):
         self.assertEqual(tuple(h),('Connection', 'Server', 'Content-Type'))
 
 
-class TestHttpClient(unittest.TestCase):
-    app = None
+class HttpClientMixin(object):
     timeout = 3
+    
+    def client(self, **kwargs):
+        kwargs['timeout'] = self.timeout
+        return httpurl.HttpClient(**kwargs)
+    
+    
+class TestHttpClient(unittest.TestCase, HttpClientMixin):
+    app = None
     server_concurrency = 'process'
     
     @classmethod
@@ -58,10 +65,6 @@ class TestHttpClient(unittest.TestCase):
     def tearDownClass(cls):
         if cls.app is not None:
             return send('arbiter', 'kill_actor', cls.app.mid)
-    
-    def client(self, **kwargs):
-        kwargs['timeout'] = self.timeout
-        return httpurl.HttpClient(**kwargs)
         
     def httpbin(self, *suffix):
         if suffix:
@@ -202,11 +205,12 @@ class TestHttpClient(unittest.TestCase):
         self.assertTrue(example_cookie['httponly'])
         
         
-class TestExternal(unittest.TestCase):
+class TestExternal(unittest.TestCase, HttpClientMixin):
     
-    def setUp(self):
-        proxy = self.worker.cfg.http_proxy
-        proxy_info = {}
-        if proxy:
-            proxy_info['http'] = proxy
-        self.r = self.HttpClient(proxy_info=proxy_info)
+    def testBBC(self):
+        http = self.client()
+        r = make_async(http.get('http://www.bbc.co.uk'))
+        yield r
+        r = r.result
+        self.assertEqual(r.status_code, 200)
+        self.assertEqual(r.headers['content-type'], 'text/html')

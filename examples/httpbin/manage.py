@@ -156,7 +156,8 @@ class HttpBin(object):
             raise HttpException(404)
         data = self.response(info_data(environ, gzipped=True))
         middleware = wsgi.middleware.GZipMiddleware(10)
-        middleware(environ, start_response, data)
+        # Apply the gzip middleware
+        middleware(environ, data)
         return data
     
     @check_method('GET')
