@@ -102,6 +102,7 @@ if ispy3k: # Python 3
         else:
             return '%s' % s
         
+    from functools import reduce
 else:   # pragma : no cover
     import urllib2 as urllibr
     import httplib as httpclient
@@ -290,7 +291,7 @@ def header_field(name):
     return ALL_HEADER_FIELDS_DICT.get(name.lower())
 
 
-class Headers(dict):
+class Headers(object):
     '''Utility for managing HTTP headers for both clients and servers.
 It has a dictionary like interface
 with few extra functions to facilitate the insertion of multiple values.
@@ -302,7 +303,7 @@ The order in which header fields with differing field names are received is not
 significant. However, it is "good practice" to send general-header fields first,
 followed by request-header or response-header fields, and ending with
 the entity-header fields.'''    
-    def __init__(self, data=None, kind='server'):
+    def __init__(self, headers=None, kind='server'):
         if isinstance(kind, int):
             kind = header_type.get(kind, 'both')
         else:
@@ -312,91 +313,91 @@ the entity-header fields.'''
         if not self.all_headers:
             self.kind = 'both'
             self.all_headers = TYPE_HEADER_FIELDS[self.kind]
-        super(Headers, self).__init__()
-        if data:
-            self.update(data)
+        self._headers = {}
+        if headers is not None:
+            self.update(headers)
     
     def __repr__(self):
-        return '%s %s' % (self.kind, super(Headers,self).__repr__())
+        return '%s %s' % (self.kind, self._headers.__repr__())
+    
+    def __str__(self):
+        return '\r\n'.join(self._ordered())
+        
+    def __bytes__(self):
+        return str(self).encode('iso-8859-1')
+    
+    def __iter__(self):
+        headers = self._headers
+        for k, values in iteritems(headers):
+            for value in values:
+                yield k, value
+    
+    def __len__(self):
+        return reduce(lambda x, y: x + len(y), itervalues(self._headers), 0)
     
     @property
     def kind_number(self):
         return header_type_to_int.get(self.kind)
     
     def update(self, iterable):
-        """Extend the headers with a dictionary or an iterable yielding keys and
-        values.
-        """
+        """Extend the headers with a dictionary or an iterable yielding keys
+ and values."""
         if isinstance(iterable, dict):
             iterable = iteritems(iterable)
-        set = self.__setitem__
+        add = self.add_header
         for key, value in iterable:
-            set(key, value)
-        
-    def __iter__(self):
-        hf = HEADER_FIELDS
-        order = (('general',[]), ('request',[]), ('response',[]), ('entity',[]))
-        for key in super(Headers, self).__iter__():
-            for name, group in order:
-                if key in hf[name]:
-                    group.append(key)
-                    break
-        for _, group in order:
-            for k in group:
-                yield k
+            add(key, value)
 
     def __contains__(self, key):
-        return super(Headers, self).__contains__(header_field(key))
+        return header_field(key) in self._headers
     
     def __getitem__(self, key):
-        return super(Headers, self).__getitem__(header_field(key))
-    
+        return ', '.join(self._headers[header_field(key)])
+        
     def __delitem__(self, key):
-        return super(Headers, self).__delitem__(header_field(key))
+        self._headers.__delitem__(header_field(key))
 
     def __setitem__(self, key, value):
         if value:
             key = header_field(key)
             if key and key in self.all_headers:
-                if isinstance(value, (tuple, list)):
-                    value = ', '.join(value)
-                super(Headers, self).__setitem__(key, value)
+                if not isinstance(value, list):
+                    value = [value]
+                self._headers[key] = value
     
     def get(self, key, default=None):
-         return super(Headers, self).get(header_field(key),default)
+        if key in self:
+            return self.__getitem__(key)
+        else:
+            return default
+        
+    def get_all(self, key, default=None):
+        return self._headers.get(header_field(key), default)
     
     def pop(self, key, *args):
-        return super(Headers, self).pop(header_field(key), *args)
+        return self._headers.pop(header_field(key), *args)
     
     def copy(self):
         return self.__class__(self, kind=self.kind)
         
     def headers(self):
-        return list(self.items())
+        return list(self)
     
-    def as_list(self, key, default=None):
-        '''Return the value at *key* as a list of values.'''
-        value = self.get(key)
-        return value.split(', ') if value else default
-    get_all = as_list
-    getheaders = as_list
-    
-    def add(self, key, value):
+    def add_header(self, key, value, **params):
         '''Add *value* to *key* header. If the header is already available,
 append the value to the list.'''
         if value:
             key = header_field(key)
-            values = self.as_list(key, [])
+            values = self._headers.get(key, [])
             if value not in values:
                 values.append(value)
-                self[key] = values
+                self._headers[key] = values
         
     def flat(self, version, status):
-        vs = version + (status,)
-        h = 'HTTP/%s.%s %s' % vs 
-        f = ''.join(("%s: %s\r\n" % kv for kv in iteritems(self)))
-        return '%s\r\n%s\r\n' % (h, f)
-         
+    	'''Full headers bytes representation'''
+    	vs = version + (status, self)
+    	return ('HTTP/%s.%s %s\r\n%s' % vs).encode('iso-8859-1')
+    
     @property
     def vary_headers(self):
         return self.get('vary',[])
@@ -405,6 +406,21 @@ append the value to the list.'''
         """Checks to see if the has a given header name in its Vary header.
         """
         return header_query.lower() in set(self.vary_headers)
+       
+    def _ordered(self):
+        hf = HEADER_FIELDS
+        order = (('general',[]), ('request',[]), ('response',[]), ('entity',[]))
+        headers = self._headers
+        for key in headers:
+            for name, group in order:
+                if key in hf[name]:
+                    group.append(key)
+                    break
+        for _, group in order:
+            for k in group:
+                yield "%s: %s" % (k, ', '.join(headers[k]))
+        yield ''
+        yield ''
     
     
 ###############################################################################
@@ -1030,7 +1046,7 @@ http://www.ietf.org/rfc/rfc2616.txt
         self.max_redirects = max_redirects
         self.allow_redirects = allow_redirects
         if headers:
-            for key, value in iteritems(headers):
+            for key, value in headers:
                 self.add_header(key, value)
         self.charset = charset or self.default_charset
         self._encode(method, data, files, encode_multipart, multipart_boundary)
@@ -1279,7 +1295,10 @@ into an SSL socket.
     client_version = 'Python-httpurl'
     DEFAULT_HTTP_HEADERS = Headers([
             ('Connection', 'Keep-Alive'),
-            ('Accept-Encoding', ('identity', 'deflate', 'compress', 'gzip'))],
+            ('Accept-Encoding', 'identity'),
+            ('Accept-Encoding', 'deflate'),
+            ('Accept-Encoding', 'compress'),
+            ('Accept-Encoding', 'gzip')],
             kind='client')
     # Default hosts not affected by proxy settings. This can be overwritten
     # by specifying the "no" key in the proxy_info dictionary
@@ -1862,13 +1881,13 @@ class CacheControl(object):
         elif self.maxage:
             headers['cache-control'] = 'max-age=%s' % self.maxage
             if self.private:
-                headers.add('cache-control', 'private')
+                headers.add_header('cache-control', 'private')
             else:
-                headers.add('cache-control', 'public')
+                headers.add_header('cache-control', 'public')
             if self.must_revalidate:
-                headers.add('cache-control', 'must-revalidate')
+                headers.add_header('cache-control', 'must-revalidate')
             elif self.proxy_revalidate:
-                headers.add('cache-control', 'proxy-revalidate')
+                headers.add_header('cache-control', 'proxy-revalidate')
         else:
             headers['cache-control'] = 'no-cache'
                 

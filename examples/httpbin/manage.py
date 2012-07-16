@@ -69,10 +69,14 @@ class HttpBin(object):
     '''WSGI application running on the server'''
     def __call__(self, environ, start_response):
         '''Pulsar HTTP "Hello World!" application'''
+        response = self.request(environ)
+        return response(environ, start_response)
+    
+    def request(self, environ):
         try:
             path = environ.get('PATH_INFO')
             if not path or path == '/':
-                return self.home(environ, start_response)
+                return self.home(environ)
             elif '//' in path:
                 path = re.sub('/+', '/', path)
                 return self.redirect(path)
@@ -83,7 +87,7 @@ class HttpBin(object):
                 method = getattr(self, 'request_%s' % name, None)
                 if method:
                     bits.pop(0)
-                    return method(environ, start_response, bits)
+                    return method(environ, bits)
                 else:
                     raise HttpException(404)
         except HttpException as e:
@@ -115,29 +119,29 @@ class HttpBin(object):
         html = (template.format({'body': body, 'title': title})).encode('utf-8')
         return self.response(html, status=status, content_type='text/html')
         
-    def home(self, environ, start_response):
+    def home(self, environ):
         return self.render(self.load('home.html'))
     
     @check_method('GET')
-    def request_get(self, environ, start_response, bits):
+    def request_get(self, environ, bits):
         if bits:
             raise HttpException(404)
         return self.response(info_data(environ))
     
     @check_method('POST')
-    def request_post(self, environ, start_response, bits):
+    def request_post(self, environ, bits):
         if bits:
             raise HttpException(404)
         return self.response(info_data(environ))
     
     @check_method('PUT')
-    def request_put(self, environ, start_response, bits):
+    def request_put(self, environ, bits):
         if bits:
             raise HttpException(404)
         return self.response(info_data(environ))
     
     @check_method('GET')
-    def request_redirect(self, environ, start_response, bits):
+    def request_redirect(self, environ, bits):
         if bits:
             if len(bits) > 2:
                 raise HttpException(404)
@@ -151,7 +155,7 @@ class HttpBin(object):
             return self.redirect('/get')
     
     @check_method('GET')
-    def request_gzip(self, environ, start_response, bits):
+    def request_gzip(self, environ, bits):
         if bits:
             raise HttpException(404)
         data = self.response(info_data(environ, gzipped=True))
@@ -161,7 +165,7 @@ class HttpBin(object):
         return data
     
     @check_method('GET')
-    def request_cookies(self, environ, start_response, bits):
+    def request_cookies(self, environ, bits):
         if bits:
             if len(bits) == 3 and bits[0] == 'set':
                 key = bits[1]
@@ -175,17 +179,17 @@ class HttpBin(object):
         return self.response(jsonbytes(cookies))
         
     @check_method('GET')
-    def request_status(self, environ, start_response, bits):
+    def request_status(self, environ, bits):
         number = int(bits[0]) if len(bits) == 1 else 404
         raise HttpException(number)
 
     @check_method('GET')
-    def request_response_headers(self, environ, start_response, bits):
+    def request_response_headers(self, environ, bits):
         if bits:
             raise HttpException(404)
         
         class Gen:
-            headers=  None
+            headers = None
             def __call__(self, value, sender):
                 self.headers = value
             def generate(self):
@@ -200,8 +204,7 @@ class HttpBin(object):
         data = wsgi.WsgiResponse(
                             200,
                             content=gen.generate(),
-                            content_type='application/json',
-                            start_response=start_response)
+                            content_type='application/json')
         return data
 
 class handle(ws.WS):

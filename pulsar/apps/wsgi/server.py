@@ -6,7 +6,8 @@ from io import BytesIO
 
 import pulsar
 from pulsar import lib, make_async, is_async, AsyncSocketServer,\
-                        Deferred, AsyncConnection, AsyncResponse, DeferredSend
+                        Deferred, AsyncConnection, AsyncResponse, DeferredSend,\
+                        HttpException
 from pulsar.utils.httpurl import Headers, iteritems, is_string, unquote,\
                                     has_empty_content, to_bytes
 from pulsar.utils import event
@@ -131,7 +132,12 @@ class HttpResponse(AsyncResponse):
     '''Handle one HTTP response'''
     _status = None
     _headers_sent = None
+    headers = None
     MAX_CHUNK = 65536
+    
+    def default_headers(self):
+        return Headers([('Server', pulsar.SERVER_SOFTWARE),
+                        ('Date', format_date_time(time.time()))])
         
     @property
     def environ(self):
@@ -143,7 +149,8 @@ class HttpResponse(AsyncResponse):
     
     @property
     def upgrade(self):
-        return self.headers.get('Upgrade')
+        if self.headers:
+            return self.headers.get('Upgrade')
     
     @property
     def chunked(self):
@@ -171,6 +178,11 @@ class HttpResponse(AsyncResponse):
         
     def start_response(self, status, response_headers, exc_info=None):
         '''WSGI compliant ``start_response`` callable, see pep3333_.
+The application may call start_response more than once, if and only
+if the exc_info argument is provided.
+More precisely, it is a fatal error to call start_response without the exc_info
+argument if start_response has already been called within the current
+invocation of the application. 
         
 :parameter status: an HTTP "status" string like "200 OK" or "404 Not Found".
 :parameter response_headers: a list of ``(header_name, header_value)`` tuples.
@@ -193,26 +205,29 @@ class HttpResponse(AsyncResponse):
                     # already been sent, start_response must raise an error,
                     # and should re-raise using the exc_info tuple
                     raise (exc_info[0], exc_info[1], exc_info[2])
-                else:
-                    # If exc_info is supplied, and no HTTP headers have been
-                    # output yet, start_response should replace the
-                    # currently-stored HTTP response headers with the
-                    # newly-supplied ones. 
-                    self.headers = self.connection.default_headers()
             finally:
                 # Avoid circular reference
                 exc_info = None
-        elif self._headers_sent:
+        elif self._status:
             # Headers already sent. Raise error
             raise pulsar.HttpException("Response headers already sent!")
         
         self._status = status
+        if type(response_headers) is not list:
+            raise TypeError("Headers must be a list of name/value tuples")
+        self.headers = self.default_headers()
         self.headers.update(response_headers)
-        return self.connection.write
+        return self.write
+    
+    def write(self, data):
+        head = self.send_headers(force=data)
+        if head is not None:
+            self.connection.write((head,))
+        if data:
+            self.connection.write((data,))
     
     def __iter__(self):
         MAX_CHUNK = self.MAX_CHUNK
-        self.headers = self.connection.default_headers()
         worker = self.connection.actor
         try:
             for b in worker.app_handler(self.environ, self.start_response):
@@ -224,31 +239,28 @@ class HttpResponse(AsyncResponse):
                         while b:
                             chunk, b = b[:MAX_CHUNK], b[MAX_CHUNK:]
                             head = ("%X\r\n" % len(chunk)).encode('utf-8')
-                            if b:
-                                yield head + chunk + b'\r\n'
-                            else:
-                                yield head + chunk + b'\r\n0\r\n\r\n'
+                            yield head + chunk + b'\r\n'
                     else:
                         yield b
                 else:
                     yield b''
+            if self.chunked:
+                head = self.send_headers(force=True)
+                if head is not None:
+                    yield head
+                yield b'0\r\n\r\n'
             keep_alive = self.keep_alive
         except Exception as e:
-            # we make sure headers where not sent
             keep_alive = False
-            try:
-                self.start_response('500 Internal Server Error', self.headers,
-                                    sys.exc_info())
-            except:
-                # The headers were sent already
-                self.log.critical('CRITICAL SERVER ERROR. '\
-                                  ' Headers already sent!',
-                                  exc_info=sys.exc_info())
-                yield b'CRITICAL SERVER ERROR'
+            exc_info = sys.exc_info()
+            if self._headers_sent:
+                self.log.critical('Headers already sent', exc_info=exc_info)
+                yield b'CRITICAL SERVER ERROR. Please Contact the administrator'
             else:
                 # Create the error response
                 data = worker.cfg.handle_http_error(WsgiResponse(), e)
-                for b in data(self.environ, self.start_response):
+                for b in data(self.environ, self.start_response,
+                              exc_info=exc_info):
                     head = self.send_headers(force=b)
                     if head is not None:
                         yield head
@@ -278,14 +290,15 @@ speaking HTTP/1.1 or newer and there was no Content-Length header set.'''
     def get_headers(self, force=False):
         '''Get the headers to send only if *force* is ``True`` or this
 is an HTTP upgrade (websockets)'''
-        headers = self.headers
-        if self.upgrade:
-            return headers
-        elif force:
+        if self.upgrade or force:
+            if not self._status:
+                # we are sending headers but the start_response was not called
+                raise HttpException('Headers not set.')
+            headers = self.headers
             # Set chunked header if needed
             if self.is_chunked():
                 headers['Transfer-Encoding'] = 'chunked'
-                self.headers.pop('content-length', None)
+                headers.pop('content-length', None)
             connection = "keep-alive" if self.keep_alive else "close"
             headers['Connection'] = connection
             return headers
@@ -295,12 +308,9 @@ is an HTTP upgrade (websockets)'''
             tosend = self.get_headers(force)
             if tosend:
                 event.fire('http-headers', tosend, sender=self)
-                data = tosend.flat(self.version, self.status)
-                # headers are strings, therefore we need
-                # to convert them to bytes before sending them
-                data = to_bytes(data)
-                self._headers_sent = data
-                return data
+                vs = self.version + (self.status,)
+                self._headers_sent = tosend.flat(self.version, self.status)
+                return self._headers_sent
     
     def close(self, msg=None):
         self.connection._current_response = None
@@ -311,11 +321,6 @@ is an HTTP upgrade (websockets)'''
 class HttpConnection(AsyncConnection):
     '''Asynchronous HTTP Connection'''
     response_class = HttpResponse
-            
-    def default_headers(self):
-        return Headers((('Server',pulsar.SERVER_SOFTWARE),
-                        ('Date', format_date_time(time.time()))),
-                       kind='server')
     
     def request_data(self):
         data = bytes(self.buffer)

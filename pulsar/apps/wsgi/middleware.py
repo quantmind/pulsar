@@ -64,8 +64,6 @@ class ResponseMiddleware(object):
         return True
     
     def __call__(self, environ, response):
-        if response.sent_headers:
-            return
         if not self.available(environ, response):
             return
         return self.execute(environ, response)
@@ -77,7 +75,7 @@ class ResponseMiddleware(object):
 class AccessControl(ResponseMiddleware):
     '''A response middleware which add the ``Access-Control-Allow-Origin``
 response header.'''
-    def __init__(self, origin = '*', methods=None):
+    def __init__(self, origin='*', methods=None):
         self.origin = origin
         self.methods = methods
         
@@ -119,7 +117,7 @@ base their storage on the Accept-Encoding header.
             
     def execute(self, environ, response):
         headers = response.headers
-        headers.add('Vary','Accept-Encoding')
+        headers.add_header('Vary', 'Accept-Encoding')
         content = b''.join(response.content)            
         response.content = (self.compress_string(content),)
         response.headers['Content-Encoding'] = 'gzip'

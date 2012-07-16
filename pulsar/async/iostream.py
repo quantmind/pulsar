@@ -776,7 +776,7 @@ more data in the buffer is required.'''
             buffer = self.buffer
             buffer.extend(data)
             parsed_data = True
-            # IMPORTANT! Consume all data untill the parser returns nothing.
+            # IMPORTANT! Consume all data until the parser returns nothing.
             # Otherwise it slows down the sending and receiving of data
             while parsed_data:
                 parsed_data = self.request_data()

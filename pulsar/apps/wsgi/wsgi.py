@@ -6,8 +6,7 @@ from functools import partial
 import pulsar
 from pulsar import make_async, Deferred, is_failure, NOT_DONE
 from pulsar.utils.httpurl import Headers, SimpleCookie, set_cookie, responses,\
-                                    iteritems, has_empty_content, string_type,\
-                                    ispy3k
+                                    has_empty_content, string_type, ispy3k
 
 from .middleware import is_streamed
 
@@ -91,8 +90,6 @@ client.
     _started = False
     DEFAULT_STATUS_CODE = 200
     DEFAULT_CONTENT_TYPE = 'text/plain'
-    ENCODED_CONTENT_TYPE = ('text/plain', 'text/html', 'application/json',
-                            'application/javascript')
     def __init__(self, status=None, content=None, response_headers=None,
                  content_type=None, encoding=None, environ=None,
                  start_response=None):
@@ -102,16 +99,11 @@ client.
         self.cookies = SimpleCookie()
         self.content_type = content_type or self.DEFAULT_CONTENT_TYPE
         self.headers = Headers(response_headers, kind='server')
-        self._sent_headers = None
         self.content = content
     
     @property
     def started(self):
         return self._started
-    
-    @property
-    def sent_headers(self):
-        return self._sent_headers
     
     @property
     def method(self):
@@ -137,23 +129,17 @@ client.
 By default it returns an empty tuple. Overrides if you need to.'''
         return ()
     
-    def __call__(self, environ, start_response, middleware=False):
+    def __call__(self, environ, start_response, exc_info=None):
         '''Make sure the headers are set.'''
-        if self._sent_headers is None:
-            self.environ = environ
-            self.start_response = start_response
-            if middleware:
-                for rm in self.middleware:
-                    try:
-                        rm(environ, self)
-                    except:
-                        log = pulsar.get_actor().log
-                        log.error('Exception in response middleware',
-                                  exc_info=True)
-                self._sent_headers = headers = self.get_headers()
-            else:
-                headers = self.get_headers()
-            start_response(self.status, headers)
+        if not exc_info:
+            for rm in self.middleware:
+                try:
+                    rm(environ, self)
+                except:
+                    log = pulsar.get_actor().log
+                    log.error('Exception in response middleware',
+                              exc_info=True)
+        start_response(self.status, self.get_headers(), exc_info=exc_info)
         return self
         
     def length(self):
@@ -182,28 +168,13 @@ means that there is no information about the number of iterations.
 This is usually `True` if a generator is passed to the response object."""
         return is_streamed(self.content)
         
-    def _generator(self):
-        #Called by the __iter__ method when the response is streamed.
-        content = []
-        try:
-            for b in wsgi_iterator(self.content, self.encoding):
-                if b:
-                    content.append(b)
-                    if len(content) == 1:
-                        # We make sure we send the headers
-                        self(self.environ, self.start_response, True)
-                yield b
-        except Exception as e:
-            if not content:
-                pulsar.get_actor().cfg.handle_http_error(self, e)
-        self.generated_content = content
-                
     def __iter__(self):
+        if self._started:
+            raise RuntimeError('WsgiResponse can be iterated only once')
         self._started = True
         if self.is_streamed:
-            return self._generator()
+            return wsgi_iterator(self.content, self.encoding)
         else:
-            self(self.environ, self.start_response, True)
             return iter(self.content)
     
     def __len__(self):
@@ -236,7 +207,7 @@ This is usually `True` if a generator is passed to the response object."""
             headers['Content-Length'] = str(cl)
         for c in self.cookies.values():
             headers['Set-Cookie'] = c.OutputString()
-        return list(iteritems(headers))
+        return list(headers)
     
     
 class WsgiHandler(pulsar.LogginMixin):
@@ -271,20 +242,14 @@ class WsgiHandler(pulsar.LogginMixin):
         '''The WSGI callable'''
         response = None
         for middleware in self.middleware:
-            try:
-                response = middleware(environ, start_response)
-            except Exception as e:
-                response = WsgiResponse(500)
-                pulsar.get_actor().cfg.handle_http_error(response, e)
+            response = middleware(environ, start_response)
             if response is not None:
                 break
         if response is None:
-            response = WsgiResponse(404)
-            pulsar.get_actor().cfg.handle_http_error(response)
+            raise pulsar.Http404()
         if hasattr(response, 'middleware'):
             response.middleware.extend(self.response_middleware)
-        # invoke the wsgi start_response. This is important!
-        return response(environ, start_response)
+        return response
     
     def get(self, route='/'):
         '''Fetch a middleware with the given *route*. If it is not found
