@@ -2,15 +2,18 @@
 import array
 import os
 import struct
+from io import BytesIO
 
 import pulsar
-from pulsar.utils.httpurl import ispy3k, range, BytesIO
+from pulsar.utils.httpurl import ispy3k, range, to_bytes, is_string
 
 
 __all__ = ['WebSocketError',
            'WebSocketProtocolError',
+           'Frame',
            'FrameParser',
            'frame',
+           'frame_ping',
            'frame_close']
 
 if ispy3k:
@@ -27,31 +30,32 @@ class WebSocketProtocolError(WebSocketError):
     pass
 
 
-def frame(version = None, binary = True, close = False, message = b'',
-          **kwargs):
+def frame(version=None, message='', opcode=None, **kwargs):
     '''Return a websocket :class:`Frame` instance.
     
 :rtype: binary data'''
-    v = int(version or 8)
-    if v in (8, 13):
-        if close:
-            f = Frame8(0x8,b'',fin=True)
+    v = int(version or 13)
+    if v not in (8, 13):
+        raise WebSocketProtocolError('Version %s' % version)
+    if not opcode and message is not None:
+        if is_string(message):
+            message = to_bytes(message)
+            opcode = 0x1
         else:
-            opcode = 0x2 if binary else 0x1
-            f = Frame8(opcode,message,fin=True)
-        return f._msg
-    else:
-        raise NotImplementedError
+            opcode = 0x2
+    return Frame(version, opcode, message, **kwargs)
     
+def frame_ping(version=None):
+    return frame(opcode=0xA, final=True)
     
-def frame_close(version = None):
-    return frame(version)
+def frame_close(version=None):
+    return frame(opcode=0x8, final=True)
 
 
-class Frame8(object):
-    
-    def __init__(self, opcode=None, body=None, masking_key=None,
-                 fin=0, rsv1=0, rsv2=0, rsv3=0):
+class Frame(object):
+    msg = None
+    def __init__(self, version, opcode=None, body=None, masking_key=None,
+                 final=False, rsv1=0, rsv2=0, rsv3=0):
         """Implements the framing protocol as defined by hybi_
 specification supporting protocol version 13::
     
@@ -62,22 +66,18 @@ specification supporting protocol version 13::
     >>> f.parser.send(bytes[2])
     >>> f.parser.send(bytes[2:])
 """
+        self.version = version
         self.opcode = opcode
         self.masking_key = masking_key
-        self.fin = 0x1 if fin else 0
+        self.fin = 0x1 if final else 0
         self.rsv1 = rsv1
         self.rsv2 = rsv2
         self.rsv3 = rsv3
-        self._msg = None
         self.set_body(body)
-
-    @property
-    def version(self):
-        return 8
     
     @property
     def final(self):
-        return True if self.fin else False
+        return bool(self.fin)
     
     def on_complete(self, handler):
         opcode = self.opcode
@@ -93,7 +93,7 @@ specification supporting protocol version 13::
             return handler.close()
         elif opcode == 0x9:
             # Ping
-            return self.__class__(0xA,data,fin=True)._msg
+            return self.__class__(0xA,data,fin=True).msg
         elif opcode == 0xA:
             # Pong
             pass
@@ -106,7 +106,7 @@ specification supporting protocol version 13::
         if body is not None:
             self.payload_length = len(body)
             if self.opcode:
-                self._msg = self._build()
+                self.msg = self._build()
     
     def is_complete(self):
         return self.body is not None
@@ -199,26 +199,22 @@ class FrameParser(object):
     '''Parser for the version 8 protocol'''
     __slots__ = ('_buf','_frame')
     
-    def __init__(self):
+    def __init__(self, version):
         self._buf = None
-        self._frame = Frame8()
+        self._frame = frame(version, None)
         
     def get_frame(self):
         if self._frame.is_complete():
-            self._frame = Frame8()        
+            self._frame = frame(self._frame.version, None)        
         return self._frame
     
     def execute(self, data):
         # end of body can be passed manually by putting a length of 0
         frame = self.get_frame()
-        if data is None:
+        if not data:
             return frame
         if self._buf:
             data = self._buf + data
-        
-        if not data:
-            return frame
-        
         # No opcode yet
         if frame.opcode is None:
             first_byte, second_byte = struct.unpack("BB", data[:2])
@@ -242,34 +238,38 @@ class FrameParser(object):
                 raise WebSocketProtocolError('Frame too large')
             
             frame.payload_length = payload_length
-            data = data[2:]
+            frame.body, data = bytearray(data[:2]), data[2:]
         
         if frame.masking_key is None:
             # All control frames MUST have a payload length of 125 bytes or less
-            
+            d = None
             if frame.payload_length == 126:
                 if len(data) < 6: # 2 + 4 for mask
                      return self.save_buf(frame, data)
-                d,data = d[:2] , d[2:]
+                d, data = d[:2] , d[2:]
                 frame.payload_length = struct.unpack("!H", d)[0]
             elif frame.payload_length == 127:
                 if len(data) < 12:  # 8 + 4 for mask
                      return self.save_buf(frame, data)
-                d,data = d[:8] , d[8:]
+                d, data = d[:8] , d[8:]
                 frame.payload_length = struct.unpack("!Q", d)[0]
             elif len(data) < 4:
                 return self.save_buf(frame, data)
             
             # The mask is 4 bits
+            if d:
+                frame.body.extend(d)
             frame.masking_key, data = data[:4], data[4:]
+            frame.body.extend(frame.masking_key)
                 
         if len(data) < frame.payload_length:
             return self.save_buf(frame, data)
-        #
+        # We have a frame
         else:
             data = data[:frame.payload_length]
+            frame.body.extend(data)
             self.save_buf(frame, data[frame.payload_length:])
-            frame.body = frame.unmask(data)
+            frame.msg = frame.unmask(data)
             return frame
             
     def save_buf(self, frame, data):

@@ -254,7 +254,7 @@ invocation of the application.
             keep_alive = False
             exc_info = sys.exc_info()
             if self._headers_sent:
-                self.log.critical('Headers already sent', exc_info=exc_info)
+                worker.log.critical('Headers already sent', exc_info=exc_info)
                 yield b'CRITICAL SERVER ERROR. Please Contact the administrator'
             else:
                 # Create the error response
@@ -299,8 +299,9 @@ is an HTTP upgrade (websockets)'''
             if self.is_chunked():
                 headers['Transfer-Encoding'] = 'chunked'
                 headers.pop('content-length', None)
-            connection = "keep-alive" if self.keep_alive else "close"
-            headers['Connection'] = connection
+            if 'connection' not in headers:
+                connection = "keep-alive" if self.keep_alive else "close"
+                headers['Connection'] = connection
             return headers
     
     def send_headers(self, force=False):
@@ -308,7 +309,6 @@ is an HTTP upgrade (websockets)'''
             tosend = self.get_headers(force)
             if tosend:
                 event.fire('http-headers', tosend, sender=self)
-                vs = self.version + (self.status,)
                 self._headers_sent = tosend.flat(self.version, self.status)
                 return self._headers_sent
     

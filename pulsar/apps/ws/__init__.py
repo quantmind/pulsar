@@ -43,7 +43,7 @@ import hashlib
 from functools import partial
 
 import pulsar
-from pulsar import safe_async
+from pulsar import is_async, safe_async
 from pulsar.utils.httpurl import ispy3k, to_bytes, native_str,\
                                  itervalues, parse_qs
 from pulsar.apps.wsgi import WsgiResponse, wsgi_iterator
@@ -88,7 +88,7 @@ class GeneralWebSocket(object):
     
 class WebSocket(GeneralWebSocket):
     """A :ref:`WSGI <apps-wsgi>` middleware for serving web socket applications.
-It implements the protocol version 8 as specified at
+It implements the protocol version 13 as specified at
 http://www.whatwg.org/specs/web-socket-protocol/.
 
 Web Sockets are not standard HTTP connections. The "handshake" is HTTP,
@@ -113,8 +113,7 @@ http://www.w3.org/TR/websockets/ for details on the JavaScript interface.
     VERSIONS = ('8','13')
     WS_KEY = '258EAFA5-E914-47DA-95CA-C5AB0DC85B11'
     #magic string
-    STATUS = "101 Switching Protocols"
-    
+        
     def handle_handshake(self, environ, start_response):
         connections = environ.get("HTTP_CONNECTION", '').lower()\
                                     .replace(' ','').split(',')
@@ -171,8 +170,8 @@ http://www.w3.org/TR/websockets/ for details on the JavaScript interface.
             headers.append(('Sec-WebSocket-Extensions',
                             ','.join(ws_extensions)))
         
-        start_response(self.STATUS, headers)
-        return self.handle(self, environ, version, ws_protocols, ws_extensions)
+        return self.handle(version, ws_protocols, ws_extensions,
+                           environ=environ, response_headers=headers)
         
     def challenge_response(self, key):
         sha1 = hashlib.sha1(to_bytes(key+self.WS_KEY))
@@ -249,7 +248,7 @@ class SocketIOMiddleware(GeneralWebSocket):
                                 content_type = content_type)
     
     
-class WS(object):
+class WS(WsgiResponse):
     '''A web socket live connection. An instance of this calss maintain
 and open socket with a remote web-socket and exchange messages in
 an asynchronous fashion. A :class:`WS` is initialized by :class:`WebSocket`
@@ -293,28 +292,15 @@ This script pops up an alert box that says "You said: Hello, world".
 
     list of extensions from the handshake
 '''
-    def __init__(self, middleware, environ, version, protocols, extensions):
-        self.middleware = middleware
-        self.environ = environ
+    DEFAULT_STATUS_CODE = 101
+    DEFAULT_CONTENT_TYPE = None
+    
+    def __init__(self, version, protocols, extensions, content=None, **kwargs):
         self.version = version
         self.protocols = protocols
         self.extensions = extensions
-        self.connection = self.environ['pulsar.connection']
-    
-    def __repr__(self):
-        return '%s %s (id=%s)' % (self.__class__.__name__, self.path)
-    __str__ = __repr__
-        
-    @property
-    def path(self):
-        return self.environ.get('PATH_INFO','')
-    
-    @property
-    def started(self):
-        return hasattr(self, 'environ')
-    
-    def __iter__(self):
-        return wsgi_iterator(self._generator())
+        content = content if content is not None else self._generator()
+        super(WS, self).__init__(content=content, **kwargs)
         
     @property
     def client_terminated(self):
@@ -351,11 +337,35 @@ This script pops up an alert box that says "You said: Hello, world".
     #################################################################
     def _generator(self):
         socket = self.connection.socket
-        yield self.on_open() or b''
+        yield self.as_frame(self.on_open())
+        inbox = FrameParser(self.version)
         while not socket.closed:
             d = socket.read()
             yield d
-            frame = self.parser.execute(d.result)
-            if frame and frame.is_complete():
-                yield frame.on_complete(self)
+            frame = inbox.execute(d.result)
+            msg = frame.msg
+            if msg is not None:
+                opcode = frame.opcode
+                if opcode == 0x1 or opcode == 0x2:
+                    if opcode == 0x1:
+                        msg = msg.decode("utf-8", "replace")
+                    yield self.as_frame(self.on_message(msg))
+                elif opcode == 0x8:
+                    # Close
+                    yield self.close()
+                elif opcode == 0x9:
+                    # Ping
+                    yield ping()
+                elif opcode == 0xA:
+                    # Pong
+                    pass
+                else:
+                    yield self.close()
+                    
+    def as_frame(self, body):
+        if is_async(body):
+            return body.add_callback(self.as_frame)
+        elif not isinstance(body, Frame):
+            body = frame(self.version, body or '')
+        return body.msg
 

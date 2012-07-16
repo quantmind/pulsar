@@ -4,7 +4,7 @@ import logging
 from functools import partial
 
 import pulsar
-from pulsar import make_async, Deferred, is_failure, NOT_DONE
+from pulsar import async_object, is_async, is_failure, log_failure, NOT_DONE
 from pulsar.utils.httpurl import Headers, SimpleCookie, set_cookie, responses,\
                                     has_empty_content, string_type, ispy3k
 
@@ -29,29 +29,31 @@ def wsgi_iterator(gen, encoding=None):
     for data in gen:
         if data is NOT_DONE:
             yield b''
-        elif isinstance(data, bytes):
-            yield data
-        elif isinstance(data, string_type):
-            yield data.encode(encoding)
+        data = async_object(data)
+        while is_async(data):
+            yield b''
+            data = async_object(data)
+        if is_failure(data):
+            log_failure(data)
         else:
-            for b in wsgi_iterator(data, encoding):
-                yield b
+            if isinstance(data, bytes):
+                yield data
+            elif isinstance(data, string_type):
+                yield data.encode(encoding)
+            else:
+                for b in wsgi_iterator(data, encoding):
+                    yield b
                 
 
 class WsgiResponseGenerator(object):
     
-    def __init__(self, environ=None, start_response=None):
+    def __init__(self, environ, start_response):
         self.environ = environ
         self.start_response = start_response
         self.middleware = []
         
     def __iter__(self):
         raise NotImplementedError()
-    
-    def __call__(self, environ, start_response):
-        self.start_response = start_response
-        self.environ = environ
-        return self
         
     def start(self, response):
         '''Start the response generator'''
@@ -106,9 +108,19 @@ client.
         return self._started
     
     @property
+    def path(self):
+        if self.environ:
+            return self.environ.get('PATH_INFO','')
+    
+    @property
     def method(self):
         if self.environ:
             return self.environ.get('REQUEST_METHOD')
+        
+    @property
+    def connection(self):
+        if self.environ:
+            return self.environ.get('pulsar.connection')
         
     def _get_content(self):
         return self._content
@@ -246,9 +258,11 @@ class WsgiHandler(pulsar.LogginMixin):
             if response is not None:
                 break
         if response is None:
-            raise pulsar.Http404()
+            raise pulsar.Http404(environ.get('PATH_INFO','/'))
         if hasattr(response, 'middleware'):
             response.middleware.extend(self.response_middleware)
+        if hasattr(response, '__call__'):
+            response = response(environ, start_response)
         return response
     
     def get(self, route='/'):

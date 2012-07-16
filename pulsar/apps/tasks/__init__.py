@@ -238,13 +238,21 @@ def tasks_list(client, actor):
 
 @pulsar_command(internal=True, authenticated=True, commands_set=taskqueue_cmnds)
 def addtask(client, actor, caller, jobname, task_extra, *args, **kwargs):
+    '''Add a new task to the task queue.
+
+:parameter jobname: the job to run
+:parameter task_extra: Dictionary of extra parameters to pass to the Task
+    class constructor. Usually a empty dictionary.
+:parameter args: positional arguments for the callable Job.
+:parameter kwargs: keyed-valued arguments for the callable Job.
+'''
     kwargs.pop('ack', None)
     return actor.app._addtask(actor, caller, jobname, task_extra, True,
                               args, kwargs)
     
 @pulsar_command(internal=True, ack=False, commands_set=taskqueue_cmnds)
 def addtask_noack(client, actor, caller, jobname, task_extra, *args, **kwargs):
-    kwargs.pop('ack',None)
+    kwargs.pop('ack', None)
     return actor.app._addtask(actor, caller, jobname, task_extra, False,
                               args, kwargs)
 
