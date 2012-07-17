@@ -251,7 +251,7 @@ domain.'''
         self.local['environ'] = environ
         
     def __call__(self, *args, **kwargs):
-        data,raw = self._get_data(*args, **kwargs)
+        data, raw = self._get_data(*args, **kwargs)
         hnd = self.local['handler']
         environ = self.local['environ']
         method, args, kwargs, id, version = hnd.get_method_and_args(data)
