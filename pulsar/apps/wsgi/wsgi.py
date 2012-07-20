@@ -43,47 +43,47 @@ def wsgi_iterator(gen, encoding=None):
             else:
                 for b in wsgi_iterator(data, encoding):
                     yield b
-                
+
 
 class WsgiResponseGenerator(object):
-    
+
     def __init__(self, environ, start_response):
         self.environ = environ
         self.start_response = start_response
         self.middleware = []
-        
+
     def __iter__(self):
         raise NotImplementedError()
-        
+
     def start(self, response):
         '''Start the response generator'''
         response.middleware.extend(self.middleware)
         for b in response(self.environ, self.start_response):
             yield b
-    
-        
+
+
 class WsgiResponse(WsgiResponseGenerator):
     '''A WSGI response wrapper initialized by a WSGI request middleware.
 Instances are callable using the standard WSGI call::
 
     response = WsgiResponse(200)
     response(environ, start_response)
-    
+
 A :class:`WsgiResponse` is an iterable over bytes to send back to the requesting
 client.
 
 .. attribute:: status_code
 
     Integer indicating the HTTP status, (i.e. 200)
-    
+
 .. attribute:: response
 
     String indicating the HTTP status (i.e. 'OK')
-    
+
 .. attribute:: status
 
     String indicating the HTTP status code and response (i.e. '200 OK')
-    
+
 .. attribute:: environ
 
     The dictionary of WSGI environment if passed to the constructor.
@@ -102,26 +102,26 @@ client.
         self.content_type = content_type or self.DEFAULT_CONTENT_TYPE
         self.headers = Headers(response_headers, kind='server')
         self.content = content
-    
+
     @property
     def started(self):
         return self._started
-    
+
     @property
     def path(self):
         if self.environ:
             return self.environ.get('PATH_INFO','')
-    
+
     @property
     def method(self):
         if self.environ:
             return self.environ.get('REQUEST_METHOD')
-        
+
     @property
     def connection(self):
         if self.environ:
             return self.environ.get('pulsar.connection')
-        
+
     def _get_content(self):
         return self._content
     def _set_content(self, content):
@@ -135,12 +135,12 @@ client.
         else:
             raise RuntimeError('Cannot set content. Already iterated')
     content = property(_get_content, _set_content)
-            
+
     def default_content(self):
         '''Called during initialization when the content given is ``None``.
 By default it returns an empty tuple. Overrides if you need to.'''
         return ()
-    
+
     def __call__(self, environ, start_response, exc_info=None):
         '''Make sure the headers are set.'''
         if not exc_info:
@@ -153,25 +153,25 @@ By default it returns an empty tuple. Overrides if you need to.'''
                               exc_info=True)
         start_response(self.status, self.get_headers(), exc_info=exc_info)
         return self
-        
+
     def length(self):
         if not self.is_streamed:
             return reduce(lambda x,y: x+len(y), self.content, 0)
-        
+
     @property
     def response(self):
         return responses.get(self.status_code)
-    
+
     @property
     def status(self):
         return '{0} {1}'.format(self.status_code, self.response)
-    
+
     def __str__(self):
         return self.status
-            
+
     def __repr__(self):
         return '{0}({1})'.format(self.__class__.__name__,self)
-        
+
     @property
     def is_streamed(self):
         """If the response is streamed (the response is not an iterable with
@@ -179,7 +179,7 @@ length information) this property is `True`.  In this case streamed
 means that there is no information about the number of iterations.
 This is usually `True` if a generator is passed to the response object."""
         return is_streamed(self.content)
-        
+
     def __iter__(self):
         if self._started:
             raise RuntimeError('WsgiResponse can be iterated only once')
@@ -188,10 +188,10 @@ This is usually `True` if a generator is passed to the response object."""
             return wsgi_iterator(self.content, self.encoding)
         else:
             return iter(self.content)
-    
+
     def __len__(self):
         return len(self.content)
-        
+
     def set_cookie(self, key, **kwargs):
         """
         Sets a cookie.
@@ -205,7 +205,7 @@ This is usually `True` if a generator is passed to the response object."""
     def delete_cookie(self, key, path='/', domain=None):
         set_cookie(self.cookies, key, max_age=0, path=path, domain=domain,
                    expires='Thu, 01-Jan-1970 00:00:00 GMT')
-    
+
     def get_headers(self):
         headers = self.headers
         if has_empty_content(self.status_code, self.method):
@@ -220,25 +220,25 @@ This is usually `True` if a generator is passed to the response object."""
         for c in self.cookies.values():
             headers['Set-Cookie'] = c.OutputString()
         return list(headers)
-    
-    
+
+
 class WsgiHandler(pulsar.LogginMixin):
     '''An handler for application conforming to python WSGI_.
-    
+
 .. attribute:: middleware
 
     List of callable WSGI middleware callable which accept
     ``environ`` and ``start_response`` as arguments.
     The order matter, since the response returned by the callable
     is the non ``None`` value returned by a middleware.
-    
+
 .. attribute:: response_middleware
 
     List of functions of the form::
-    
+
         def ..(environ, start_response, response):
             ...
-            
+
     where ``response`` is the first not ``None`` value returned by
     the middleware.
 
@@ -249,7 +249,7 @@ class WsgiHandler(pulsar.LogginMixin):
             middleware = list(middleware)
         self.middleware = middleware or []
         self.response_middleware = []
-        
+
     def __call__(self, environ, start_response):
         '''The WSGI callable'''
         response = None
@@ -261,10 +261,8 @@ class WsgiHandler(pulsar.LogginMixin):
             raise pulsar.Http404(environ.get('PATH_INFO','/'))
         if hasattr(response, 'middleware'):
             response.middleware.extend(self.response_middleware)
-        if hasattr(response, '__call__'):
-            response = response(environ, start_response)
         return response
-    
+
     def get(self, route='/'):
         '''Fetch a middleware with the given *route*. If it is not found
  return ``None``.'''

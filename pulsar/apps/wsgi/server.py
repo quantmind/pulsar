@@ -53,7 +53,7 @@ adds the following 2 pulsar information:
         "CONTENT_LENGTH": "",
         "wsgi.multithread": False,
         "wsgi.multiprocess":False
-    }        
+    }
     # REMOTE_HOST and REMOTE_ADDR may not qualify the remote addr:
     # http://www.ietf.org/rfc/rfc3875
     url_scheme = "http"
@@ -87,12 +87,12 @@ adds the following 2 pulsar information:
         elif header == "content-length":
             environ['CONTENT_LENGTH'] = value
             continue
-    
+
         key = 'HTTP_' + header.upper().replace('-', '_')
         environ[key] = value
 
     environ['wsgi.url_scheme'] = url_scheme
-    
+
     if is_string(forward):
         # we only took the last one
         # http://en.wikipedia.org/wiki/X-Forwarded-For
@@ -102,7 +102,7 @@ adds the following 2 pulsar information:
         if len(remote) < 2:
             remote.append('80')
     else:
-        remote = forward 
+        remote = forward
 
     environ['REMOTE_ADDR'] = remote[0]
     environ['REMOTE_PORT'] = str(remote[1])
@@ -127,6 +127,9 @@ adds the following 2 pulsar information:
     environ['SCRIPT_NAME'] = script_name
     return environ
 
+def chunk_encoding(chunk, final=False):
+    head = ("%X\r\n" % len(chunk)).encode('utf-8')
+    return head + chunk + b'\r\n'
 
 class HttpResponse(AsyncResponse):
     '''Handle one HTTP response'''
@@ -134,38 +137,38 @@ class HttpResponse(AsyncResponse):
     _headers_sent = None
     headers = None
     MAX_CHUNK = 65536
-    
+
     def default_headers(self):
         return Headers([('Server', pulsar.SERVER_SOFTWARE),
                         ('Date', format_date_time(time.time()))])
-        
+
     @property
     def environ(self):
         return self.parsed_data
-    
+
     @property
     def status(self):
         return self._status
-    
+
     @property
     def upgrade(self):
         if self.headers:
             return self.headers.get('Upgrade')
-    
+
     @property
     def chunked(self):
         return self.headers.get('Transfer-Encoding') == 'chunked'
-    
+
     @property
     def content_length(self):
         c = self.headers.get('Content-Length')
         if c:
             return int(c)
-    
+
     @property
     def version(self):
         return self.environ.get('wsgi.version')
-    
+
     @property
     def keep_alive(self):
         """ return True if the connection should be kept alive"""
@@ -175,15 +178,15 @@ class HttpResponse(AsyncResponse):
         elif conn == "keep-alive":
             return True
         return self.version == (1, 1)
-        
+
     def start_response(self, status, response_headers, exc_info=None):
         '''WSGI compliant ``start_response`` callable, see pep3333_.
 The application may call start_response more than once, if and only
 if the exc_info argument is provided.
 More precisely, it is a fatal error to call start_response without the exc_info
 argument if start_response has already been called within the current
-invocation of the application. 
-        
+invocation of the application.
+
 :parameter status: an HTTP "status" string like "200 OK" or "404 Not Found".
 :parameter response_headers: a list of ``(header_name, header_value)`` tuples.
     It must be a Python list. Each header_name must be a valid HTTP header
@@ -191,8 +194,8 @@ invocation of the application.
     colon or other punctuation.
 :parameter exc_info: optional python ``sys.exc_info()`` tuple. This argument
     should be supplied by the application only if start_response is being
-    called by an error handler. 
-    
+    called by an error handler.
+
 :rtype: The :meth:`HttpResponse.write` callable.
 
 .. _pep3333: http://www.python.org/dev/peps/pep-3333/
@@ -211,35 +214,38 @@ invocation of the application.
         elif self._status:
             # Headers already sent. Raise error
             raise pulsar.HttpException("Response headers already sent!")
-        
+
         self._status = status
         if type(response_headers) is not list:
             raise TypeError("Headers must be a list of name/value tuples")
         self.headers = self.default_headers()
         self.headers.update(response_headers)
         return self.write
-    
+
     def write(self, data):
         head = self.send_headers(force=data)
         if head is not None:
             self.connection.write((head,))
         if data:
             self.connection.write((data,))
-    
+
     def __iter__(self):
         MAX_CHUNK = self.MAX_CHUNK
         worker = self.connection.actor
         try:
+            buffer = b''
             for b in worker.app_handler(self.environ, self.start_response):
                 head = self.send_headers(force=b)
                 if head is not None:
                     yield head
                 if b:
                     if self.chunked:
-                        while b:
+                        if buffer:
+                            b = buffer + b
+                        while len(b) >= MAX_CHUNK:
                             chunk, b = b[:MAX_CHUNK], b[MAX_CHUNK:]
-                            head = ("%X\r\n" % len(chunk)).encode('utf-8')
-                            yield head + chunk + b'\r\n'
+                            yield chunk_encoding(chunk)
+                        buffer = b
                     else:
                         yield b
                 else:
@@ -248,7 +254,9 @@ invocation of the application.
                 head = self.send_headers(force=True)
                 if head is not None:
                     yield head
-                yield b'0\r\n\r\n'
+                if buffer:
+                    yield chunk_encoding(buffer)
+                yield chunk_encoding('')
             keep_alive = self.keep_alive
         except Exception as e:
             keep_alive = False
@@ -272,7 +280,7 @@ invocation of the application.
             yield head
         if not keep_alive:
             self.connection.close()
-            
+
     def is_chunked(self):
         '''Only use chunked responses when the client is
 speaking HTTP/1.1 or newer and there was no Content-Length header set.'''
@@ -283,10 +291,10 @@ speaking HTTP/1.1 or newer and there was no Content-Length header set.'''
             # is guaranteed to not have a response body.
             return False
         elif self.content_length is not None and\
-                 self.content_length <= self.socket.MAX_BODY: 
+                 self.content_length <= self.socket.MAX_BODY:
             return False
         return True
-    
+
     def get_headers(self, force=False):
         '''Get the headers to send only if *force* is ``True`` or this
 is an HTTP upgrade (websockets)'''
@@ -303,7 +311,7 @@ is an HTTP upgrade (websockets)'''
                 connection = "keep-alive" if self.keep_alive else "close"
                 headers['Connection'] = connection
             return headers
-    
+
     def send_headers(self, force=False):
         if not self._headers_sent:
             tosend = self.get_headers(force)
@@ -311,17 +319,17 @@ is an HTTP upgrade (websockets)'''
                 event.fire('http-headers', tosend, sender=self)
                 self._headers_sent = tosend.flat(self.version, self.status)
                 return self._headers_sent
-    
+
     def close(self, msg=None):
         self.connection._current_response = None
         if not self.keep_alive:
             return self.connection.close(msg)
 
-        
+
 class HttpConnection(AsyncConnection):
     '''Asynchronous HTTP Connection'''
     response_class = HttpResponse
-    
+
     def request_data(self):
         data = bytes(self.buffer)
         # If no data is available and the parser has no data
@@ -336,15 +344,15 @@ class HttpConnection(AsyncConnection):
             environ = wsgi_environ(self)
             environ['pulsar.connection'] = self
             return environ
-    
-    
+
+
 class HttpServer(AsyncSocketServer):
     connection_class = HttpConnection
-    
+
     def parser_class(self):
         return lib.Http_Parser(kind=0)
-    
-    
+
+
 class WsgiActorLink(object):
     '''A callable utility for sending :class:`ActorMessage`
 to linked :class:`Actor` instances.
@@ -360,7 +368,7 @@ to linked :class:`Actor` instances.
 '''
     def __init__(self, actor_link_name):
         self.actor_link_name = actor_link_name
-        
+
     def proxy(self, sender):
         '''Get the :class:`ActorProxy` for the sender.'''
         proxy = sender.get_actor(self.actor_link_name)
@@ -368,7 +376,7 @@ to linked :class:`Actor` instances.
             raise ValueError('Got a request from actor "{0}" which is\
 not linked with "{1}".'.format(sender, self.actor_link_name))
         return proxy
-    
+
     def create_callback(self, environ, action, *args, **kwargs):
         '''Create an :class:`ActorLinkCallback` for sending messages
 with additional parameters.
@@ -382,6 +390,6 @@ with additional parameters.
         sender = environ.get('pulsar.connection').actor
         target = self.proxy(sender)
         return DeferredSend(sender, target, action, args, kwargs)
-        
+
     def __call__(self, sender, action, *args, **kwargs):
         return self.create_callback(sender, action, *args, **kwargs)()

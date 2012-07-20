@@ -25,12 +25,23 @@ from .exceptions import exception, INTERNAL_ERROR
 __all__ = ['JSONRPC','JsonProxy','LocalJsonProxy']
 
 
+class SimpleJson(object):
+
+    @classmethod
+    def dumps(cls, data, **kwargs):
+        return json.dumps(data, **kwargs)
+
+    @classmethod
+    def loads(cls, content):
+        return json.loads(to_string(content))
+
+
 class JsonToolkit(object):
-    
+
     @classmethod
     def dumps(cls, data, **kwargs):
         return json.dumps(data, cls=DefaultJSONEncoder, **kwargs)
-    
+
     @classmethod
     def loads(cls, content):
         return json.loads(to_string(content), object_hook=DefaultJSONHook)
@@ -45,7 +56,7 @@ Design to comply with the `JSON-RPC 2.0`_ Specification.
     #content_type = 'application/javascript'
     methods = ('post',)
     _json = JsonToolkit
-        
+
     def get_method_and_args(self, data):
         '''Overrides the :meth:`RpcHandler:get_method_and_args` to obtain
 method data from the JSON *data* string.'''
@@ -63,39 +74,37 @@ method data from the JSON *data* string.'''
         elif params:
             args = tuple(params)
         return method, args, kwargs, id, version
-    
+
     def dumps(self, id, version, result = None, error = None):
         '''Modify JSON dumps method to comply with
         JSON-RPC Specification 1.0 and 2.0
         '''
         res = {'id': id, "jsonrpc": version}
-        
         if error:
-            res['error'] = {'code':  getattr(error,'faultCode',INTERNAL_ERROR),
+            res['error'] = {'code': getattr(error,'faultCode',INTERNAL_ERROR),
                             'message': str(error),
                             'data': getattr(error,'data','')}
         else:
             res['result'] = result
-            
         return self._json.dumps(res)
-    
+
 
 class JsonProxy(object):
     '''A python Proxy class for :class:`JSONRPC` Servers.
-    
+
 :param url: server location
 :param version: JSONRPC server version. Default ``2.0``
 :param id: optional request id, generated if not provided. Default ``None``.
 :param data: Extra data to include in all requests. Default ``None``.
 :param http: optional http opener. If provided it must have the ``request``
     method available which must be of the form::
-    
+
         http.request(url, body=..., method=...)
-                 
+
     Default ``None``.
-     
+
 Lets say your RPC server is running at ``http://domain.name.com/``::
-  
+
     >>> a = JsonProxy('http://domain.name.com/')
     >>> a.add(3,4)
     7
@@ -108,7 +117,7 @@ Lets say your RPC server is running at ``http://domain.name.com/``::
     default_version = '2.0'
     default_timeout = 3
     _json = JsonToolkit
-    
+
     def __init__(self, url, name = None, version = None,
                  proxies = None, id = None, data = None,
                  client_software = None, **kwargs):
@@ -120,7 +129,7 @@ Lets say your RPC server is running at ``http://domain.name.com/``::
         self.__data = data if data is not None else {}
         self.local = {}
         self.setup(**kwargs)
-        
+
     def setup(self, http = None, timeout = None, proxies = None, **kwargs):
         if not http:
             timeout = timeout if timeout is not None else self.default_timeout
@@ -128,24 +137,24 @@ Lets say your RPC server is running at ``http://domain.name.com/``::
                                             timeout = timeout)
         else:
             self.local['http'] = http
-    
+
     @property
     def http(self):
         return self.local.get('http')
-    
+
     def __get_path(self):
         return self.__name
     path = property(__get_path)
-        
+
     def makeid(self):
         '''
         Can be re-implemented by your own Proxy
         '''
         return gen_unique_id()
-        
+
     def __str__(self):
         return self.__repr__()
-    
+
     def __repr__(self):
         if self.__id:
             d = '%s - %s' % (self.__url,self.__id)
@@ -181,7 +190,7 @@ usage is simple::
         for t in r:
             func(*args, **kwargs)
         return default_timer() - start
-        
+
     def _get_data(self, *args, **kwargs):
         func_name = self.__name
         fs = func_name.split('_')
@@ -190,16 +199,16 @@ usage is simple::
             raw = True
             fs.pop(0)
             func_name = '_'.join(fs)
-            
+
         params = self.get_params(*args, **kwargs)
         data = {'method':  func_name,
-                'params':  params, 
+                'params':  params,
                 'id':      self.__id}
         if self.__version:
             data['jsonrpc'] = self.__version
-            
+
         return data,raw
-    
+
     def __call__(self, *args, **kwargs):
         data,raw = self._get_data(*args, **kwargs)
         body = self._json.dumps(data)
@@ -215,7 +224,7 @@ usage is simple::
                 return self.loads(content)
             else:
                 resp.raise_for_status()
-        
+
     def get_params(self, *args, **kwargs):
         '''
         Create an array or positional or named parameters
@@ -229,7 +238,7 @@ usage is simple::
             return list(args)
         else:
             return kwargs
-    
+
     def loads(self, obj):
         res = self._json.loads(obj)
         if isinstance(res, dict):
@@ -241,15 +250,15 @@ usage is simple::
             else:
                 return res.get('result',None)
         return res
-    
-    
+
+
 class LocalJsonProxy(JsonProxy):
     '''A proxy class to use when accessing the rpc within the rpc application
 domain.'''
     def setup(self, handler = None, environ = None, **kwargs):
         self.local['handler'] = handler
         self.local['environ'] = environ
-        
+
     def __call__(self, *args, **kwargs):
         data, raw = self._get_data(*args, **kwargs)
         hnd = self.local['handler']
@@ -257,4 +266,3 @@ domain.'''
         method, args, kwargs, id, version = hnd.get_method_and_args(data)
         request = hnd.request(environ, method, args, kwargs, id, version)
         return request.process()
-        
