@@ -5,19 +5,19 @@ import unittest
 import logging
 
 from pulsar.utils.importer import import_module
-    
+
 default_logger = logging.getLogger('pulsar.apps.test.loader')
-    
-    
+
+
 __all__ = ['TestLoader']
-    
+
 
 def issubclass_safe(cls, base_cls):
     try:
         return issubclass(cls, base_cls)
     except TypeError:
         return False
-    
+
 class TestLoader(object):
     '''Aggregate tests from a list of paths. The way it works is simple,
 you give a *root* directory and a list of submodules where to look for tests.
@@ -29,14 +29,14 @@ you give a *root* directory and a list of submodules where to look for tests.
     first argument and a **pattern** which files must match in order to be
     included in the search.
     For example::
-    
+
         modules = ['test']
-        
+
     Lodas all tests from the ``test`` directory.
     All top level modules will be added to the python ``path``.
 
 :parameter runner: Instance of the test runner.
-    
+
 The are very :ref:`simple rules <apps-test-loading>` followed for
 importing tests.
 '''
@@ -45,11 +45,11 @@ importing tests.
         self.log = logger or default_logger
         self.root = root
         self.modules = modules
-    
+
     def __repr__(self):
         return self.root
     __str__ = __repr__
-        
+
     def alltags(self, tag):
         bits = tag.split('.')
         tag,rest = bits[0],bits[1:]
@@ -57,7 +57,7 @@ importing tests.
         for b in rest:
             tag += '.' + b
             yield tag
-    
+
     def checktag(self, tag, import_tags):
         '''return ``True`` if ``tag`` is in ``import_tags``.'''
         if import_tags:
@@ -73,7 +73,7 @@ importing tests.
             return c
         else:
             return 2
-    
+
     def testclasses(self, tags = None):
         for tag,mod in self.testmodules(tags):
             if tags:
@@ -88,11 +88,11 @@ importing tests.
                 obj = getattr(mod, name)
                 if issubclass_safe(obj, unittest.TestCase):
                     yield tag, obj
-            
-    def testmodules(self, tags = None):
+
+    def testmodules(self, tags=None):
         '''Generator of tag, test modules pairs.'''
         for m in self.modules:
-            if isinstance(m,str):
+            if isinstance(m, str):
                 name = m
                 pattern = None
             else:
@@ -115,7 +115,7 @@ importing tests.
             else:
                 raise ValueError('{0} cannot be found in {1} directory.'\
                                  .format(name,self.root))
-                
+
     def get_tests(self, path, dotted_path, pattern, import_tags = None,
                   tags = (), parent = None):
         '''Collect python modules for testing and return a generator of
@@ -123,7 +123,7 @@ tag,module pairs.
 
 :parameter path: directory path where to search. Files starting with ``_``
     or ``.`` are excluded from the search, as well as non-python files.
-    
+
 :parameter dotted_path: the dotted python path equivalent of ``path``.
 
 :parameter parent: the parent module for the current one. This parameter
@@ -132,15 +132,15 @@ tag,module pairs.
             if mod_name.startswith('_') or mod_name.startswith('.'):
                 continue
             mod_path = os.path.join(path, mod_name)
-            
+
             if os.path.isfile(mod_path):
                 if mod_name.endswith('.py'):
                     mod_name = mod_name.split('.')[0]
                 else:
                     continue
-            
+
             addtag = mod_name
-            npattern = pattern 
+            npattern = pattern
             if pattern:
                 if hasattr(pattern,'search'):
                     p = pattern.search(mod_name)
@@ -152,28 +152,28 @@ tag,module pairs.
                 elif pattern == mod_name:
                     addtag = False
                     npattern = None
-                
+
                 if npattern and os.path.isfile(mod_path):
                     # skip the import
                     continue
-            
+
             if dotted_path:
                 mod_dotted_path = '{0}.{1}'.format(dotted_path, mod_name)
             else:
                 tags = (mod_name,)
                 mod_dotted_path = mod_name
-                         
+
             module = self.import_module(mod_dotted_path, mod_path, parent)
             if not module:
                 continue
-            
+
             ctags = tags + (addtag,) if addtag else tags
             tag = '.'.join(ctags)
-            
+
             c = self.checktag(tag, import_tags)
             if not c:
                 continue
-            
+
             counter = 0
             if os.path.isdir(mod_path):
                 counter = 0
@@ -186,11 +186,11 @@ tag,module pairs.
                                                parent = module):
                     counter += 1
                     yield tag,mod
-                    
+
             # No submodules
             if not counter and c == 2:
                 yield tag, module
-        
+
     def import_module(self, name, path, parent = None):
         imp = True
         if os.path.isdir(path):
@@ -210,6 +210,5 @@ tag,module pairs.
                               .format(name), exc_info = True)
             except:
                self.log.critical('Failed to import module {0}. Skipping.'
-                                 .format(name), exc_info = True)    
-            
-        
+                                 .format(name), exc_info = True)
+
