@@ -135,60 +135,145 @@ from time import time
 from datetime import datetime
 
 import pulsar
-from pulsar.utils.importer import import_modules
+from pulsar import to_string, safe_async
+from pulsar.async.commands import authenticated, pulsar_command, internal
+from pulsar.utils.importer import import_modules, module_attribute
 
 from .exceptions import *
-from .config import *
 from .task import *
 from .models import *
 from .scheduler import Scheduler
 from .states import *
 from .rpc import *
 
+def validate_list(val):
+    if isinstance(val,list):
+        return val
+    elif isinstance(val,tuple):
+        return list(val)
+    else:
+        val = to_string(val).split(',')
+        vals = []
+        for v in to_string(val).split(','):
+            v = v.strip()
+            if v:
+                vals.append(v)
+        return vals
 
-class TaskResponse(pulsar.Response):
+
+class TaskQueueFactory(pulsar.Setting):
+    app = 'cpubound'
+    name = "task_queue_factory"
+    section = "Task Consumer"
+    flags = ["-q", "--task-queue"]
+    default = "pulsar.Queue"
+    desc = """The task queue factory to use."""
     
-    def __init__(self, worker, request):
+    def get(self):
+        return module_attribute(self.value)
+        return self.value
+    
+    
+class TaskSetting(pulsar.Setting):
+    virtual = True
+    app = 'tasks'
+    
+    
+class TaskPath(TaskSetting):
+    name = "tasks_path"
+    section = "Task Consumer"
+    meta = "STRING"
+    validator = validate_list
+    cli = ["--tasks-path"]
+    default = ['pulsar.apps.tasks.testing']
+    desc = """\
+        List of python dotted paths where tasks are located.
+        """
+    
+    
+class TaskResponse(object):
+    
+    def __init__(self, worker, task):
+        self.task = task
         self.worker = worker
-        super(TaskResponse,self).__init__(request)
         
     def close(self):
         '''Close the task request by invoking the :meth:`Task.finish`
 method.'''
-        task = self.request
-        return task.finish(self.worker, result = task.result)
+        task = self.task
+        return task.finish(self.worker, result=task.result)
 
 
-class Remotes(pulsar.ActorBase):
+class CPUboundServer(pulsar.Application):
+    '''A CPU-bound application server.'''
+    _app_name = 'cpubound'
     
-    def actor_tasks_list(self, caller):
-        return self.app.tasks_list()
+    def get_ioqueue(self):
+        '''Return the distributed task queue which produces tasks to
+be consumed by the workers.'''
+        return self.cfg.task_queue_factory()
     
-    def actor_addtask(self, caller, jobname, task_extra, *args, **kwargs):
-        kwargs.pop('ack',None)
-        return self.app._addtask(self, caller, jobname, task_extra, True,
-                                 args, kwargs)
-        
-    def actor_addtask_noack(self, caller, jobname, task_extra, *args, **kwargs):
-        kwargs.pop('ack',None)
-        return self.app._addtask(self, caller, jobname, task_extra, False,
-                                 args, kwargs)
-    actor_addtask_noack.ack = False
+    def request_instance(self, worker, fd, request):
+        return request
     
-    def actor_save_task(self, caller, task):
-        self.app.task_class.save_task(task)
+    def on_event(self, worker, fd, request):
+        request = self.request_instance(worker, fd, request)
+        c = worker.get('current_requests')
+        if c is None:
+            c = []
+            worker.set('current_requests', c)
+        c.append(request)
+        yield safe_async(request.start, args=(worker,))
+        try:
+            c.remove(request)
+        except ValueError:
+            pass
     
-    def actor_get_task(self, caller, id):
-        return self.app.task_class.get_task(id)
-    
-    def actor_job_list(self, caller, jobnames = None):
-        return list(self.app.job_list(jobnames = jobnames))
-    
-    def actor_next_scheduled(self, caller, jobname = None):
-        return self.app.scheduler.next_scheduled(jobname = jobname)
 
+taskqueue_cmnds = set()
 
-class TaskQueue(pulsar.Application):
+@pulsar_command(commands_set=taskqueue_cmnds)
+def tasks_list(client, actor):
+    return actor.app.tasks_list()
+
+@pulsar_command(internal=True, authenticated=True, commands_set=taskqueue_cmnds)
+def addtask(client, actor, caller, jobname, task_extra, *args, **kwargs):
+    '''Add a new task to the task queue.
+
+:parameter jobname: the job to run
+:parameter task_extra: Dictionary of extra parameters to pass to the Task
+    class constructor. Usually a empty dictionary.
+:parameter args: positional arguments for the callable Job.
+:parameter kwargs: keyed-valued arguments for the callable Job.
+'''
+    kwargs.pop('ack', None)
+    return actor.app._addtask(actor, caller, jobname, task_extra, True,
+                              args, kwargs)
+    
+@pulsar_command(internal=True, ack=False, commands_set=taskqueue_cmnds)
+def addtask_noack(client, actor, caller, jobname, task_extra, *args, **kwargs):
+    kwargs.pop('ack', None)
+    return actor.app._addtask(actor, caller, jobname, task_extra, False,
+                              args, kwargs)
+
+@pulsar_command(internal=True, commands_set=taskqueue_cmnds)
+def save_task(client, actor, caller, task):
+    self.app.task_class.save_task(task)
+
+@pulsar_command(commands_set=taskqueue_cmnds)
+def get_task(client, actor, id):
+    return actor.app.task_class.get_task(id)
+
+@pulsar_command(commands_set=taskqueue_cmnds)
+def job_list(client, actor, jobnames=None):
+    return list(actor.app.job_list(jobnames = jobnames))
+
+@pulsar_command(commands_set=taskqueue_cmnds)
+def next_scheduled(client, actor, caller, jobname=None):
+    return actor.app.scheduler.next_scheduled(jobname=jobname)
+    
+    
+class TaskQueue(CPUboundServer):
     '''A :class:`pulsar.Application` for consuming
 tasks and managing scheduling of tasks.
     
@@ -197,8 +282,10 @@ tasks and managing scheduling of tasks.
     Instance of a :class:`JobRegistry` containing all
     registered :class:`Job` instances.
 '''
-    app = 'tasks'
-    cfg = {'timeout':'3600'}
+    _app_name = 'tasks'
+    cfg_apps = ('cpubound',)
+    cfg = {'timeout': '3600', 'backlog': 1}
+    commands_set = taskqueue_cmnds
     task_class = TaskInMemory
     '''The :class:`Task` class for storing information about task execution.
     
@@ -219,25 +306,9 @@ which check for tasks to be scheduled.
 Check the :meth:`TaskQueue.monitor_task` callback
 for implementation.'''
         return self.local.get('scheduler')
-        
-    def get_ioqueue(self):
-        '''Return the distributed task queue which produces tasks to
-be consumed by the workers.'''
-        queue = self.cfg.task_queue_factory
-        return queue()
     
-    def request_instance(self, request):
-        try:
-            return self.task_class.from_queue(request)
-        except:
-            self.log.critical('Could not retrieve task "{0}"'.format(request))
-            raise
-    
-    def __init__(self, task_class = None, **kwargs):
-        self.tasks_statistics = {'total':0,
-                                 'failures':0}
-        self.task_class = task_class or self.task_class
-        super(TaskQueue,self).__init__(**kwargs)
+    def request_instance(self, worker, fd, request):
+        return self.task_class.from_queue(request)
         
     def monitor_task(self, monitor):
         '''Override the :meth:`pulsar.Application.monitor_task` callback
@@ -258,16 +329,8 @@ to check if the scheduler needs to perform a new run.'''
     def monitor_handler(self):
         return self.handler()
             
-    def handle_request(self, worker, task):
-        '''Called by the worker to perform the *task* in the queue.'''
-        job = registry[task.name]
-        with task.consumer(self,worker,job) as consumer:
-            yield task.start(worker)
-            task.result = job(consumer, *task.args, **task.kwargs)
-        yield TaskResponse(worker, task)
-            
-    def job_list(self, jobnames = None):
-        return self.scheduler.job_list(jobnames = jobnames)
+    def job_list(self, jobnames=None):
+        return self.scheduler.job_list(jobnames=jobnames)
     
     @property
     def registry(self):
@@ -281,9 +344,6 @@ to check if the scheduler needs to perform a new run.'''
         if ack:
             return task
 
-    def remote_functions(self):
-        return Remotes.remotes, Remotes.actor_functions
-    
     def on_actor_message_processed(self, message, result):
         '''handle the messaged processed callback when the message action
 is either "addtask" or "addtask_noack".
@@ -291,7 +351,3 @@ When that is the case, the application broadcast the task id associated with
 the message request id.'''
         if message.action in ('addtask','addtask_noack'):
             pass
-
-    def broadcast(self, what, task):
-        ''''''
-        pass

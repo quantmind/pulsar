@@ -93,4 +93,4 @@ class Platform(object):
         ''':rtype: a boolean indicating if support for multiprocess
  sockets is available.
         '''
-        return hasattr(socket,'fromfd')
+        return hasattr(socket, 'fromfd')

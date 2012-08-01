@@ -1,4 +1,5 @@
 import pulsar
+from pulsar.apps import wsgi
 from pulsar.apps import rpc
 
 
@@ -51,25 +52,25 @@ It exposes the following remote functions:
     Returns ``None`` if the task is not available.
 '''
     def __init__(self, taskqueue, **kwargs):
-        if not isinstance(taskqueue,str):
+        if not isinstance(taskqueue, str):
             taskqueue = taskqueue.name
-        self.task_queue_manager = pulsar.ActorLink(taskqueue)
-        super(TaskQueueRpcMixin,self).__init__(**kwargs)   
+        self.task_queue_manager = wsgi.WsgiActorLink(taskqueue)
+        super(TaskQueueRpcMixin,self).__init__(**kwargs)
         
     ############################################################################
     ##    REMOTES
     
-    def rpc_job_list(self, request, jobnames = None):
+    def rpc_job_list(self, request, jobnames=None):
         return self.task_queue_manager(request.environ,
                                        'job_list',
-                                       jobnames = jobnames)
+                                       jobnames=jobnames)
     
-    def rpc_next_scheduled_task(self, request, jobname = None):
+    def rpc_next_scheduled_task(self, request, jobname=None):
         return self.task_queue_manager(request.environ,
                                        'next_scheduled',
-                                       jobname = jobname)
+                                       jobname=jobname)
         
-    def rpc_run_new_task(self, request, jobname = None, ack = True, **kwargs):
+    def rpc_run_new_task(self, request, jobname=None, ack=True, **kwargs):
         if not jobname:
             raise ValueError('"jobname" is not specified!')
         result = self.task_callback(request, jobname, ack, **kwargs)()
@@ -105,7 +106,7 @@ the same ``args`` and ``kwargs`` as the callable method of the :class:`Job`
 (excluding the ``consumer``).'''
         funcname = 'addtask' if ack else 'addtask_noack'
         request_params = self.task_request_parameters(request)
-        return self.task_queue_manager.get_callback(
+        return self.task_queue_manager.create_callback(
                                             request.environ,
                                             funcname,
                                             jobname,

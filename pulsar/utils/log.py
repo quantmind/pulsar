@@ -5,9 +5,14 @@ import logging
 from multiprocessing import current_process, Lock
 
 if sys.version_info < (2,7):
-    from pulsar.utils.fallbacks.dictconfig import dictConfig
+    from .fallbacks._dictconfig import dictConfig
+    
+    class NullHandler(logging.Handler):
+        def emit(self, record):
+            pass
 else:
     from logging.config import dictConfig
+    from logging import NullHandler
     
 
 SERVER_NAME = 'Pulsar'
@@ -15,6 +20,8 @@ NOLOG = 100
 
 
 __all__ = ['SERVER_NAME',
+           'dictConfig',
+           'NullHandler',
            'getLogger',
            'process_global',
            'LogginMixin',
@@ -77,7 +84,8 @@ def update_config(config, c):
 
 
 class LocalMixin(object):
-    
+    '''The :class:`LocalMixin` defines "local" attributes which are
+removed when pickling the object'''
     @property
     def local(self):
         if not hasattr(self,'_local'):
@@ -163,7 +171,7 @@ string representation of an instance.
         return self.logger.name
     
     def _msg(self, msg):
-        return '{0} - {1}'.format(self.instance,msg)
+        return '%s - %s' % (self.instance, msg)
     
     def _handle(self, name):
         func = getattr(self.logger,name)
@@ -182,13 +190,12 @@ class LogginMixin(Synchronized):
     '''A Mixin used throught the library. It provides built in logging object
 and utilities for pickle.'''
     loglevel = None
-    default_logging_level = None
     default_logging_config = None
     _class_code = None
     
-    def setlog(self, log = None, **kwargs):
+    def setlog(self, log=None, **kwargs):
         if not log:
-            name = getattr(self,'_log_name',self.class_code)
+            name = getattr(self, '_log_name', self.class_code)
             log = getLogger(name)
         self.local['log'] = log
         self._log_name = log.name

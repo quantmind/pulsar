@@ -1,9 +1,9 @@
 '''Tests the websocket middleware in pulsar.apps.ws.'''
 from pulsar.apps import ws
-from pulsar.utils.test import test
+from pulsar.apps.test import unittest
 
 
-class WebSocketTest(test.TestCase):
+class WebSocketTest(unittest.TestCase):
     
     def testHyBiKey(self):
         w = ws.WebSocket(None)

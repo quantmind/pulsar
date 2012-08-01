@@ -6,89 +6,43 @@ import random
 from inspect import isgenerator, isfunction
 
 import pulsar
-from pulsar import Empty, make_async, is_failure, async_pair, Failure,\
-                     HaltServer
-from pulsar.utils.py2py3 import execfile, pickle
+from pulsar import Empty, make_async, safe_async, is_failure, HaltServer,\
+                     loop_timeout, ispy3k, Deferred
+from pulsar.async.defer import pickle
 from pulsar.utils.importer import import_module
 from pulsar.utils.log import LogInformation
 from pulsar.utils import system
 from pulsar.utils.config import Setting
 #from pulsar.utils import debug
 
-__all__ = ['Worker',
-           'Application',
+__all__ = ['Application',
            'ApplicationHandlerMixin',
-           'ApplicationMonitor',
-           'WorkerRequest',
-           'Response',
-           'require',
-           'ResponseError']
+           'Worker',
+           'ApplicationMonitor']
 
 
-def require(appname):
-    '''Shortcut function to load an application'''
-    apps = appname.split('.')
-    if len(apps) == 1:
-        module = 'pulsar.apps.{0}'.format(appname)
-    else:
-        module = appname
-    mod = import_module(module)
-    return mod
-
-
-class WorkerRequest(object):
-    timeout = None
-    def response(self):
-        return self
-    
-    def close(self):
-        pass
-    
-    
-class Response(object):
-    '''A mixin for pulsar response classes'''
-    exception = None
-    def __init__(self, request):
-        self.request = request
-        
-    def close(self):
-        pass
-
-
-class ResponseError(pulsar.PulsarException, Response):
-    
-    def __init__(self, request, failure):
-        pulsar.Response.__init__(self, request)
-        self.exception = Failure(failure)
-    
-    def close(self):
-        return self.request.close()
-        
-        
-def make_response(request, response, err = None):
-    if is_failure(response):
-        response = ResponseError(request,response)
-    if err:
-        if not hasattr(response,'exception'):
-            response = ResponseError(request,err)
-        else:
-            response.exception = err.append(response.exception)
-    return response
-
+if ispy3k:
+    def execfile(filename, globals=None, locals=None):
+        if globals is None:
+            globals = sys._getframe(1).f_globals
+        if locals is None:
+            locals = sys._getframe(1).f_locals
+        with open(filename, "r") as fh:
+            exec(fh.read()+"\n", globals, locals)
 
 def halt_server(f):
     '''Halt server decorator'''
+    def _halt(failure, halt):
+        failure.log()
+        if halt:
+            raise HaltServer('Unhandled exception application.')
+    
     def _(self, *args, **kwargs):
         try:
-            return f(self, *args, **kwargs)
+            result = make_async(f(self, *args, **kwargs))
         except Exception as e:
-            if self.app.can_kill_arbiter:
-                msg = 'Unhadled exception in {0} application: {1}'\
-                        .format(self.app.name, e)
-                self.log.critical(msg, exc_info = True)
-                raise HaltServer(msg)
-            else:
-                raise
+            result = make_async(e)
+        return result.add_errback(lambda f: _halt(f, self.app.can_kill_arbiter))
     _.__name__ = f.__name__
     _.__doc__ = f.__doc__
     return _
@@ -96,7 +50,7 @@ def halt_server(f):
 
 class ApplicationHandlerMixin(object):
     '''A mixin for both :class:`Worker` and :class:`ApplicationMonitor`.
-It implements :meth:`handle_request` and :meth:`close_response`
+It implements the :meth:`handle_request` actor method
 used for by the :class:`Application` for handling requests and
 sending back responses.
 '''
@@ -105,6 +59,16 @@ sending back responses.
         
     def on_message_processed(self, message, result):
         self.app.on_actor_message_processed(message, result)
+    
+    def on_event(self, fd, event):
+        '''Override :meth:`pulsar.Actor.on_event` to delegate handling
+to the underlying :class:`Application`.'''
+        return self.app.on_event(self, fd, event)
+        # the request class may contain a timeout
+        timeout = getattr(request, 'timeout', None)
+        should_stop = self.max_requests and self.nr >= self.max_requests
+        result = self._response_generator(request, should_stop)
+        return loop_timeout(result, timeout)
         
     def handle_task(self):
         if self.information.log():
@@ -115,69 +79,39 @@ sending back responses.
             pass
         self.app.worker_task(self)
         
-    def _response_generator(self, request):
-        try:
-            self.cfg.pre_request(self, request)
-        except Exception:
-            pass
-        try:
-            response = self.app.handle_request(self, request)
-        except:
-            response = ResponseError(request,sys.exc_info())
-        
-        response, outcome = async_pair(response)
-        yield response
-        response = make_response(request, outcome.result)
-        yield response.close()
-        yield response
-        
     def handle_message(self, sender, message):
         '''Handle a *message* from a *sender*.'''
         return self.app.handle_message(sender, self, message)
-    
-    def handle_request(self, request):
-        '''Entry point for handling a request. This is a high level
-function which performs some pre-processing of *request* and delegates
-the actual implementation to :meth:`Application.handle_request` method.
-
-:parameter request: A request instance which is application specific.
-
-After obtaining the result from the
-:meth:`Application.handle_event_task` method, it invokes the
-:meth:`Worker.end_task` method to close the request.'''
-        self.nr += 1
-        request = self.app.request_instance(request)
-        timeout = getattr(request,'timeout',None)
-        should_stop = self.max_requests and self.nr >= self.max_requests 
-        make_async(self._response_generator(request)).add_callback(
-               lambda res : self.close_response(request,res,should_stop))\
-               .start(self.ioloop, timeout = timeout)
-        
-    def close_response(self, request, response, should_stop):
-        '''Close the response. This method should be called by the
-:meth:`Application.handle_response` once done.'''
-        response = make_response(request, response)
-        
-        if response and response.exception:
-            response.exception.log(self.log)
-                        
-        try:
-            self.cfg.post_request(self, request)
-        except:
-            pass
-        
-        if should_stop:
-            self.log.info("Auto-restarting worker.")
-            self.stop()
     
     def configure_logging(self, config = None):
         # Delegate to application
         self.app.configure_logging(config = config)
         self.loglevel = self.app.loglevel
         self.setlog()
+    
+    ################################################################# Internals
+    def _response_generator(self, request, should_stop):
+        yield safe_async(self.cfg.pre_request, args=(self, request))
+        # We don't care if it fails
+        response = safe_async(self.app.handle_request, args=(self, request))
+        yield response
+        response = response.result
+        if is_failure(response):
+            response.log(self.log)
+        else:
+            close = getattr(response, 'close', None)
+            if hasattr(close,'__call__'):
+                response = safe_async(close)
+                yield response
+                if is_failure(response.result):
+                    response.result.log(self.log)
+        yield safe_async(self.cfg.post_request, args=(self, request))
+        if should_stop:
+            self.log.info("Auto-restarting worker.")
+            self.stop()
+        
 
-
-class Worker(ApplicationHandlerMixin,pulsar.Actor):
+class Worker(ApplicationHandlerMixin, pulsar.Actor):
     """\
 An :class:`Actor` class for serving an :class:`Application`.
 It provides two new methods inherited from :class:`ApplicationHandlerMixin`.
@@ -205,7 +139,6 @@ It provides two new methods inherited from :class:`ApplicationHandlerMixin`.
     # Delegates Callbacks to the application
          
     def on_start(self):
-        #self.app.cfg.on_start()
         self.app.worker_start(self)
         try:
             self.cfg.worker_start(self)
@@ -216,7 +149,7 @@ It provides two new methods inherited from :class:`ApplicationHandlerMixin`.
         self.handle_task()
     
     def on_stop(self):
-        self.app.worker_stop(self)
+        return self.app.worker_stop(self)
             
     def on_exit(self):
         self.app.worker_exit(self)
@@ -226,7 +159,6 @@ It provides two new methods inherited from :class:`ApplicationHandlerMixin`.
             pass
         
     def on_info(self, info):
-        info.update({'request processed': self.nr})
         return self.app.on_info(self,info)
 
 
@@ -237,41 +169,47 @@ pulsar subclasses of :class:`Application`.
     # For logging name
     _class_code = 'appmonitor'
     
-    def on_init(self, app = None, **kwargs):
+    def on_init(self, app=None, **kwargs):
         self.app = app
         self.cfg = app.cfg
         self.max_requests = 0
-        kwargs['actor_class'] = Worker
-        kwargs['num_actors'] = app.cfg.workers
         arbiter = pulsar.arbiter()
-        if not arbiter.get('cfg'):
-            arbiter.set('cfg',app.cfg)
+        # Set the arbiter config object if not available
+        if not arbiter.cfg:
+            arbiter.cfg = app.cfg
         self.max_requests = None
         self.information = LogInformation(self.cfg.logevery)
+        app.monitor_init(self)
         if not self.cfg.workers:
             self.app_handler = app.handler()
         else:
             self.app_handler = app.monitor_handler()
+        kwargs['actor_class'] = Worker
+        kwargs['num_actors'] = app.cfg.workers
         super(ApplicationMonitor,self).on_init(**kwargs)
-        self.app.monitor_init(self)
     
     # Delegates Callbacks to the application
     @halt_server    
     def on_start(self):
         self.app.monitor_start(self)
+        # If no workears are available invoke the worker start method too
         if not self.cfg.workers:
-            self.app.worker_start(self)            
+            self.app.worker_start(self)
+        self.app.local['on_start'].callback(self.app)
         
     @halt_server
     def monitor_task(self):
-        self.app.monitor_task(self)
+        yield self.app.monitor_task(self)
         # There are no workers, the monitor do their job
         if not self.cfg.workers:
-            self.handle_task()
+            yield self.handle_task()
             
     def on_stop(self):
-        stp = make_async(self.app.monitor_stop(self))
-        return stp.add_callback(super(ApplicationMonitor,self).on_stop())
+        if not self.cfg.workers:
+            yield self.app.worker_stop(self)
+        yield self.app.monitor_stop(self)
+        yield super(ApplicationMonitor, self).on_stop()
+        self.app.local['on_stop'].callback(self.app)
         
     def on_exit(self):
         self.app.monitor_exit(self)
@@ -289,15 +227,18 @@ updated actor parameters with information about the application.
 
 :rtype: a dictionary of parameters to be passed to the
     spawn method when creating new actors.'''
+        p = pulsar.Monitor.actorparams(self)
         app = self.app
-        c = app.cfg.concurrency
-        if c == 'thread':
+        impl = app.cfg.concurrency
+        if impl == 'thread':
             app = pickle.loads(pickle.dumps(app))
-        return  {'app': app,
-                 'timeout': app.cfg.timeout,
-                 'loglevel': app.loglevel,
-                 'impl': c,
-                 'name':'{0}-worker'.format(app.name)}
+        p.update({'app': app,
+                  'timeout': app.cfg.timeout,
+                  'loglevel': app.loglevel,
+                  'max_concurrent_requests': app.cfg.backlog,
+                  'concurrency': impl,
+                  'name':'{0}-worker'.format(app.name)})
+        return p
         
     def on_info(self, info):
         info.update({'default_timeout': self.cfg.timeout,
@@ -313,9 +254,14 @@ on :mod:`pulsar` concurrent framework.
 Applications can be of any sort or form and the library is shipped with several
 battery included examples in the :mod:`pulsar.apps` framework module.
 
-When creating a new application, a new :class:`ApplicationMonitor`
-instance is added to the :class:`Arbiter`, ready to perform
-its duties.
+These are the most important facts about a pulsar :class:`Application`
+
+ * Instances must be pickable. If non-pickable data needs to be add on an
+   :class:`Application` instance, it must be stored on the
+   :attr:`Application.local` dictionary.
+ * When a new :class:`Application` is initialized,
+   a new :class:`ApplicationMonitor` instance is added to the
+   :class:`Arbiter`, ready to perform its duties.
     
 :parameter callable: Initialise the :attr:`Application.callable` attribute.
 :parameter description: A string describing the application.
@@ -349,6 +295,11 @@ its duties.
     
     Default: ``{}``.
     
+.. attribute:: cfg_apps
+
+    Optional tuplen containing the names of configuration namespaces to
+    be included in the application config dictionary.
+    
 .. attribute:: mid
 
     The unique id of the :class:`ApplicationMonitor` managing the
@@ -367,26 +318,34 @@ its duties.
     
     Default: ``False``.
     
+    
+.. attribute:: remotes
+
+    Optiona :class:`pulsar.RemoteMethods` class to provide additional
+    remote functions to be added to the monitor dictionary of remote functions.
+
+    Default: ``None``.
 """
     cfg = {}
-    _name = None
+    _app_name = None
     description = None
     epilog = None
-    app = None
+    cfg_apps = None
     config_options_include = None
     config_options_exclude = None
     can_kill_arbiter = False
+    commands_set = None
     monitor_class = ApplicationMonitor
     
     def __init__(self,
-                 callable = None,
-                 name = None,
-                 description = None,
-                 epilog = None,
-                 argv = None,
-                 script = None,
-                 version = None,
-                 can_kill_arbiter = None,
+                 callable=None,
+                 description=None,
+                 name=None,
+                 epilog=None,
+                 argv=None,
+                 script=None,
+                 version=None,
+                 can_kill_arbiter=None,
                  **params):
         '''Initialize a new :class:`Application` and add its
 :class:`ApplicationMonitor` to the class:`pulsar.Arbiter`.
@@ -397,34 +356,44 @@ its duties.
 '''
         self.description = description or self.description
         if can_kill_arbiter is not None:
-            self.can_kill_arbiter = bool(can_kill_arbiter) 
+            self.can_kill_arbiter = bool(can_kill_arbiter)
         self.epilog = epilog or self.epilog
-        self._name = name or self._name or self.__class__.__name__.lower()
+        self._app_name = self._app_name or self.__class__.__name__.lower()
+        self._name = name or self._app_name
+        # Add events
+        self.local['on_start'] = Deferred()
+        self.local['on_stop'] = Deferred()
         self.script = script
         self.python_path()
         nparams = self.cfg.copy()
         nparams.update(params)
         self.callable = callable
-        self.load_config(argv,version=version,**nparams)
+        self.load_config(argv, version=version, **nparams)
         self.configure_logging()
         if self.on_config() is not False:
             arbiter = pulsar.arbiter(self.cfg.daemon)
             monitor = arbiter.add_monitor(self.monitor_class,
                                           self.name,
-                                          app = self,
-                                          ioqueue = self.ioqueue)
+                                          app=self,
+                                          ioqueue=self.ioqueue)
             self.mid = monitor.aid
-            r,f = self.remote_functions()
-            if r:
-                monitor.remotes = monitor.remotes.copy()
-                monitor.remotes.update(r)
-                monitor.actor_functions = monitor.actor_functions.copy()
-                monitor.actor_functions.update(f)
+            if self.commands_set:
+                monitor.commands_set.update(self.commands_set)
+    
+    @property
+    def app_name(self):
+        return self._app_name
     
     @property
     def name(self):
         '''Application name, It is unique and defines the application.'''
         return self._name
+    
+    def __repr__(self):
+        return self.name
+    
+    def __str__(self):
+        return self.name 
     
     @property
     def ioqueue(self):
@@ -438,19 +407,20 @@ its duties.
 By default it returns the :attr:`Application.callable`.'''
         return self.callable
     
-    def request_instance(self, request):
-        '''Given a request raiosed from an event, build the request for the
- :meth:`handle_request` method. By default it returns ``request``.'''
-        return request
-    
     def handle_message(self, sender, receiver, message):
         '''Handle messages for the *receiver*.'''
-        handler = getattr(self,'actor_' + message.action,None)
+        handler = getattr(self, 'actor_' + message.action, None)
         if handler:
             return handler(sender, receiver, *message.args, **message.kwargs)
         else:
             receiver.log.error('Unknown action ' + message.action)
         
+    def request_instance(self, worker, fd, event):
+        '''Build a request class from a file descriptor *fd* and an *event*.
+The returned request instance is passed to the :meth:`handle_request`
+method.'''
+        return event
+    
     def handle_request(self, worker, request):
         '''This is the main function which needs to be implemented
 by actual applications. It is called by the *worker* to handle
@@ -460,7 +430,7 @@ a *request*.
 :parameter request: an application specific request object.
 :rtype: It can be a generator, a :class:`Deferred` instance
     or the actual response.'''
-        raise NotImplementedError
+        raise NotImplementedError()
     
     def get_ioqueue(self):
         '''Returns an I/O distributed queue for the application if one
@@ -511,10 +481,13 @@ The parameters overrriding order is the following:
  * the parameters in the optional configuration file
  * the parameters passed in the command line.
 '''
+        cfg_apps = set(self.cfg_apps or ())
+        cfg_apps.add(self.app_name)
+        self.cfg_apps = cfg_apps
         self.cfg = pulsar.Config(self.description,
                                  self.epilog,
                                  version,
-                                 self.app,
+                                 self.cfg_apps,
                                  self.config_options_include,
                                  self.config_options_exclude)
         
@@ -623,20 +596,8 @@ By default it returns ``None``.'''
     def on_info(self, worker, data):
         return data
     
-    def update_worker_paramaters(self, monitor, params):
-        '''Called by the :class:`ApplicationMonitor` when
-returning from the :meth:`ApplicationMonitor.actorparams`
-and just before spawning a new worker for serving the application.
-
-:parameter monitor: instance of the monitor serving the application.
-:parameter params: the dictionary of parameters to updated (if needed).
-:rtype: the updated dictionary of parameters.
-
-This callback is a chance for the application to pass its own custom
-parameters to the workers before it is created.
-By default it returns *params* without
-doing anything.'''
-        return params
+    def on_event(self, worker, fd, events):
+        pass
     
     def worker_start(self, worker):
         '''Called by the :class:`Worker` :meth:`pulsar.Actor.on_start`
@@ -721,12 +682,3 @@ The application is now in the arbiter but has not yet started.'''
                     monitor.actor_links[self.name] = self
                     yield name, app
                     
-    def remote_functions(self):
-        '''Provide with additional remote functions
-to be added to the monitor dictionary of remote functions.
-
-:rtype: a two dimensional tuple of remotes and actor_functions
-    dictionaries.'''
-        return None,None
-    
-    

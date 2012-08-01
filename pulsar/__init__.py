@@ -1,5 +1,5 @@
 '''Event driven concurrent framework for Python'''
-VERSION = (0, 3, 1, 'alpha', 1)
+VERSION = (0, 4, 0, 'alpha', 1)
 
 from .utils.version import get_version
 
@@ -34,19 +34,13 @@ CLASSIFIERS  = [
 from .utils.log import *
 
 DEFAULT_PORT = 8060
+ASYNC_TIMEOUT = None
 SERVER_SOFTWARE = "python-{0}/{1}".format(SERVER_NAME, version)
-
-class NOT_DONE(object):
-    pass
-
-class CLEAR_ERRORS(object):
-    pass
 
 from .utils.exceptions import *
 from .utils.sock import *
 from .utils import system
-from .utils.py2py3 import ispy3k, to_string, is_string, native_str,\
-                            to_bytestring
+from .utils.httpurl import to_string, native_str, to_bytes
 platform = system.platform
 
 from .utils.config import *

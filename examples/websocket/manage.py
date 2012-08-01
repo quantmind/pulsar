@@ -18,41 +18,36 @@ if path not in sys.path:
     sys.path.insert(0,path)
 
 import pulsar
-from pulsar import net, to_bytestring
 from pulsar.apps import ws, wsgi
-from pulsar.utils.py2py3 import range
+from pulsar.utils.httpurl import range
 
 
 class handle(ws.WS):
     
     def on_message(self, msg):
-        path = self.environ['PATH_INFO']
+        path = self.path
         if path == '/echo':
-            self.write_message(msg)
-                
+            return msg
         elif path == '/data':
-            data = [(i,random()) for i in range(100)]
-            self.write_message(json.dumps(data))
+            return json.dumps([(i,random()) for i in range(100)])
 
 
 def page(environ, start_response):
     """ This resolves to the web page or the websocket depending on the path."""
-    path = environ['PATH_INFO']
+    path = environ.get('PATH_INFO')
     if not path or path == '/':
         data = open(os.path.join(os.path.dirname(__file__), 
                      'websocket.html')).read()
         data = data % environ
         start_response('200 OK', [('Content-Type', 'text/html'),
                                   ('Content-Length', str(len(data)))])
-        return [to_bytestring(data)]
+        return [pulsar.to_bytes(data)]
 
 
 
 def server(**kwargs):
-    app = wsgi.WsgiHandler(middleware = (page,
-                                         ws.WebSocket(handle)))
-    return wsgi.createServer(callable = app,
-                             **kwargs)
+    app = wsgi.WsgiHandler(middleware=(page, ws.WebSocket(handle)))
+    return wsgi.WSGIServer(callable=app, **kwargs)
 
 
 if __name__ == '__main__':

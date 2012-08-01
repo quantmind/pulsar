@@ -13,7 +13,7 @@ API
 WSGIApplication
 ~~~~~~~~~~~~~~~~~~~~~
 
-.. autoclass:: WSGIApplication
+.. autoclass:: WSGIServer
    :members:
    :member-order: bysource
    

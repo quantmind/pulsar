@@ -8,7 +8,7 @@ else:
     default_timer = time.time
     
 import pulsar
-from pulsar.utils.py2py3 import range
+from pulsar.utils.httpurl import range
 
 from pulsar.apps import test
 

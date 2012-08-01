@@ -4,7 +4,7 @@ class PulsarException(Exception):
     
 class Timeout(PulsarException):
     '''Raised when a timeout occurs'''
-    def __init__(self, msg, timeout = None):
+    def __init__(self, msg, timeout=None):
         self.timeout = timeout
         if timeout:
             msg = msg + ' Timeout {0} surpassed.'.format(self.timeout)
@@ -32,9 +32,28 @@ class HaltServer(PulsarInternetException):
         self.signal = signal
 
 
+class CommandError(PulsarException):
+    '''Exception raised when executing a Command'''
+    pass
+
+
+class CommandNotFound(PulsarException):
+    
+    def __init__(self, name):
+        super(CommandNotFound, self).__init__(
+                            'Command "%s" not available' % name)
+        
+class AuthenticationError(PulsarException):
+    pass
+
+
 class ConnectionError(PulsarInternetException):
     pass
     
+
+class CouldNotParse(PulsarInternetException):
+    pass
+
 
 class DeferredFailure(PulsarException):
     pass
@@ -56,12 +75,25 @@ class NotRegisteredWithServer(PulsarException):
     pass
 
 
-class BadHttpRequest(PulsarInternetException):
-    status_code = 500
-    def __init__(self, status_code = None, reason = ''):
-        self.status_code = status_code or self.status_code
-        super(BadHttpRequest,self).__init__(reason)
-        
-        
-class BadHttpResponse(BadHttpRequest):
-    pass
+##################################################################### HTTP
+class HttpException(Exception):
+    status = 500
+    def __init__(self, msg='', status=None, handler=None, strict=False):
+        self.status = status or self.status
+        self.handler = handler
+        self.strict = strict
+        super(HttpException,self).__init__(msg)
+
+
+class Http404(HttpException):
+    status = 404
+
+    
+class HttpRedirect(HttpException):
+    status = 302
+    def __init__(self, location):
+        self.location = location
+
+
+class PermissionDenied(HttpException):
+    status = 403

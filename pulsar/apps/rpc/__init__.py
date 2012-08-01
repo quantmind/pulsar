@@ -1,5 +1,4 @@
-'''\
-Asynchronous WSGI Remote Procedure Calls middleware. It implements a
+'''Asynchronous WSGI Remote Procedure Calls middleware. It implements a
 JSON-RPC_ server and client.
 
 RPC server
@@ -31,7 +30,7 @@ Then you create the WSGI Middleware::
 
     def server(**params):
         root = Root().putSubHandler('calc',Calculator())
-        return wsgi.createServer(callable = rpc.RpcMiddleware(root), **params)
+        return wsgi.createServer(callable=rpc.RpcMiddleware(root), **params)
     
     if __name__ == '__main__':
         server().start()

@@ -2,8 +2,9 @@ import time
 import logging
 from datetime import timedelta, datetime
 
-from pulsar.utils.py2py3 import itervalues, iteritems
-from pulsar.utils.timeutils import remaining, timedelta_seconds, humanize_seconds
+from pulsar.utils.httpurl import itervalues, iteritems
+from pulsar.utils.timeutils import remaining, timedelta_seconds,\
+                                     humanize_seconds
 
 from .models import registry
 from .exceptions import SchedulingError, TaskNotAvailable

@@ -1,6 +1,6 @@
-"""
-Pulsar is shipped with an HTTP :class:`pulsar.apps.Application` which conforms
-with the python web server gateway interface (WSGI_).
+"""A specialized :class:`pulsar.apps.socket.SocketServer` for
+serving web applications which conforms with the python web server
+gateway interface (WSGI_).
 
 The application can be used in conjunction with several web frameworks
 as well as the :ref:`pulsar RPC middleware <apps-rpc>` and
@@ -21,7 +21,7 @@ with "Hello World!" for every request::
         return [data]
     
     if __name__ == '__main__':
-        wsgi.createServer(callable = hello).start()
+        wsgi.WSGIServer(callable=hello).start()
 
 
 For more information regarding WSGI check the pep3333_ specification.
@@ -29,21 +29,72 @@ For more information regarding WSGI check the pep3333_ specification.
 .. _pep3333: http://www.python.org/dev/peps/pep-3333/
 .. _WSGI: http://www.wsgi.org
 """
+import sys
 from inspect import isclass
 
 import pulsar
-from pulsar.net import HttpResponse
 from pulsar.utils.importer import module_attribute
+from pulsar.apps import socket
 
-from .handlers import *
 from .wsgi import *
-from . import middleware
+from .server import *
+from .middleware import *
 
 
-class WSGIApplication(pulsar.Application):
-    '''A WSGI server running on pulsar concurrent framework.'''
+class WsgiSetting(pulsar.Setting):
+    virtual = True
     app = 'wsgi'
-    _name = 'wsgi'
+
+    
+class Keepalive(WsgiSetting):
+    name = "keepalive"
+    flags = ["--keep-alive"]
+    validator = pulsar.validate_pos_int
+    type = int
+    default = 15
+    desc = """\
+        The number of seconds to keep an idel HTTP keep-alive connection
+        connected."""
+        
+        
+class HttpParser(WsgiSetting):
+    name = "http_parser"
+    flags = ["--http-parser"]
+    desc = """\
+        The HTTP Parser to use. By default it uses the fastest possible.    
+        
+        Specify `python` if you wich to use the pure python implementation    
+        """
+            
+    
+class ResponseMiddleware(WsgiSetting):
+    name = "response_middleware"
+    flags = ["--response-middleware"]
+    nargs = '*'
+    desc = """\
+    Response middleware to add to the wsgi handler    
+    """
+    
+    
+class HttpError(WsgiSetting):
+    name = "handle_http_error"
+    validator = pulsar.validate_callable(2)
+    type = "callable"
+    default = staticmethod(handle_http_error)
+    desc = """\
+Render an error occured while serving the WSGI application.
+
+The callable needs to accept two instance variables for the response
+and the error instance."""
+
+
+class WSGIServer(socket.SocketServer):
+    cfg_apps = ('socket',)
+    _app_name = 'wsgi'
+    
+    def socket_server_class(self, worker, socket):
+        timeout = self.cfg.keepalive
+        return HttpServer(worker, socket, timeout=timeout)
     
     def handler(self):
         callable = self.callable
@@ -52,9 +103,14 @@ class WSGIApplication(pulsar.Application):
         return self.wsgi_handler(callable)
     
     def wsgi_handler(self, hnd, resp_middleware = None):
-        '''Build the wsgi handler'''
-        if not isinstance(hnd,WsgiHandler):
-            if not isinstance(hnd,(list,tuple)):
+        '''Build the wsgi handler from *hnd*. This function is called
+at start-up only.
+
+:parameter hnd: This is the WSGI handle which can be A :class:`WsgiHandler`,
+    a WSGI callable or a list WSGI callables.
+:parameter resp_middleware: Optional list of response middleware functions.'''
+        if not isinstance(hnd, WsgiHandler):
+            if not isinstance(hnd, (list,tuple)):
                 hnd = [hnd]
             hnd = WsgiHandler(hnd)
         response_middleware = self.cfg.response_middleware or []
@@ -72,99 +128,3 @@ class WSGIApplication(pulsar.Application):
         if resp_middleware:
             hnd.response_middleware.extend(resp_middleware)
         return hnd
-    
-    def concurrency(self, cfg):
-        if not pulsar.platform.multiProcessSocket():
-            return 'thread'
-        else:
-            return cfg.concurrency
-    
-    def get_ioqueue(self):
-        '''If the concurrency is thread we create a task queue for processing
-requests in the threaded workers.''' 
-        if self.concurrency(self.cfg) == 'process':
-            return None
-        else:
-            return pulsar.ThreadQueue()
-        
-    def worker_start(self, worker):
-        # If the worker is listening to a socket
-        # Add the socket handler to the event loop, otherwise do nothing.
-        socket = worker.get('socket')
-        if socket:
-            worker.log.info(socket.info())
-            socket.setblocking(False)
-            worker.ioloop.add_handler(socket,
-                                      HttpHandler(worker,socket),
-                                      worker.ioloop.READ)
-        
-    def handle_request(self, worker, request):
-        cfg = worker.cfg
-        concurrency = self.concurrency(cfg)
-        mt = concurrency == 'thread' and cfg.workers > 1
-        mp = concurrency == 'process' and cfg.workers > 1
-        environ = request.wsgi_environ(actor = worker,
-                                       multithread = mt,
-                                       multiprocess = mp)
-        if not environ:
-            yield request.on_body
-            environ = request.wsgi_environ(
-                                       actor = worker,
-                                       multithread = mt,
-                                       multiprocess = mp)
-        # Create the response object
-        response = HttpResponse(request)
-        if environ:
-            # Get the data from the WSGI handler
-            try:
-                data = worker.app_handler(environ, response.start_response)
-            except Exception as e:
-                # An exception in the handler
-                data = WsgiResponse(environ=environ)
-                cfg.handle_http_error(data, e)
-                data(environ, response.start_response)
-            yield response.write(data)
-        yield response
-    
-    def monitor_init(self, monitor):
-        # First we create the socket we listen to
-        address = self.cfg.address
-        if address:
-            socket = pulsar.create_socket(address, log = monitor.log,
-                                          backlog = self.cfg.backlog)
-        else:
-            raise pulsar.ImproperlyConfigured('\
- WSGI application with no address for socket')
-        self.address = socket.name
-        self.local['socket'] = socket
-        
-    def monitor_start(self, monitor):
-        '''If the concurrency model is thread, a new handler is
-added to the monitor event loop which listen for requests on
-the socket. Otherwise the monitor has no handlers since requests are
-directly handled by the workers.'''
-        # We have a task queue, This means the monitor itself listen for
-        # requests on the socket and delegate the handling to the
-        # workers
-        socket = self.local.get('socket')
-        if monitor.ioqueue is not None or not monitor.num_actors:
-            monitor.log.info(socket.info())
-            handler = HttpPoolHandler(monitor,socket) if monitor.num_actors\
-                      else HttpHandler(monitor,socket)
-            monitor.ioloop.add_handler(socket,
-                                       handler,
-                                       monitor.ioloop.READ)
-        else:
-            # put the socket in the parameters to be passed to workers
-            monitor.set('socket',socket)
-            
-    def monitor_stop(self, monitor):
-        if monitor.ioqueue is not None:
-            socket = self.local['socket']
-            monitor.ioloop.remove_handler(socket)
-            socket.close(monitor.log)
-
-
-def createServer(callable = None, **params):
-    return WSGIApplication(callable = callable, **params)
-    

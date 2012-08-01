@@ -1,9 +1,9 @@
 '''Tests the rpc middleware and utilities'''
 from pulsar.apps import rpc
-from pulsar.utils.test import test
+from pulsar.apps.test import unittest
 
 
-class rpcTest(test.TestCase):
+class rpcTest(unittest.TestCase):
     
     def testProxy(self):
         p = rpc.JsonProxy('http://127.0.0.1:8060',

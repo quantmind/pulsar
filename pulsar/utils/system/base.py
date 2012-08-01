@@ -3,10 +3,11 @@ import signal
 from select import select as _select
 
 from pulsar.utils.importer import import_module, module_attribute
-from pulsar.utils.py2py3 import *
+from pulsar.utils.httpurl import iteritems, to_string
 
 __all__ = ['ALL_SIGNALS',
            'SIG_NAMES',
+           'SKIP_SIGNALS',
            'set_proctitle',
            'set_owner_process',
            'parse_address',
@@ -16,13 +17,13 @@ __all__ = ['ALL_SIGNALS',
 
 
 SIG_NAMES = {}
-SKIP_SIGNALS = ('KILL','STOP')
+SKIP_SIGNALS = frozenset(('KILL','STOP','WINCH'))
 
 def all_signals():
     for sig in dir(signal):
         if sig.startswith('SIG') and sig[3] != "_":
             val = getattr(signal,sig)
-            if is_int(val):
+            if isinstance(val, int):
                 name = sig[3:]
                 if name not in SKIP_SIGNALS:
                     SIG_NAMES[val] = name

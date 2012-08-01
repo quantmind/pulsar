@@ -102,10 +102,8 @@ def dining():
     
         
 def start():
-    arbiter.when_running.add_callback(lambda r : dining())\
-                        .add_callback(pulsar.raise_failure)
+    arbiter.requestloop.add_callback(dining)
     arbiter.start()
-        
 
 if __name__ == '__main__':
     start()

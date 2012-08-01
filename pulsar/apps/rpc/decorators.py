@@ -71,17 +71,17 @@ A decorator which exposes a function ``func`` as an rpc function.
 
 :parameter func: The function to expose.
 :parameter doc: Optional doc string. If not provided the doc string of
-                ``func`` will be used.
+    ``func`` will be used.
 :parameter format: Optional output format. Only used if ``request_handler``
-                    is specified.
+    is specified.
 :parameter request_handler: function which takes ``request``, ``format`` and
-                 ``kwargs`` and return a new ``kwargs`` to be passed to
-                 ``func``. It can be used to add additional parameters based
-                 on request and format.'''
+     ``kwargs`` and return a new ``kwargs`` to be passed to
+     ``func``. It can be used to add additional parameters based
+     on request and format.'''
     def _(self, request, *args, **kwargs):
         if request_handler:
-            kwargs = request_handler(request,format,kwargs)
-        return func(*args,**kwargs)
+            kwargs = request_handler(request, format, kwargs)
+        return func(*args, **kwargs)
         
     _.__doc__ = doc or func.__doc__
     _.__name__ = func.__name__

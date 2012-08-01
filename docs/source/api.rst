@@ -6,6 +6,29 @@
 API
 ==================
 
+.. _pulsar_primitives:
+
+Pulsar is built on top of a set of **primitive** classes which handle the
+different aspects of the concurrent framework. These primitive classes are:
+
+* :class:`Deferred` the primitive for handling asynchronous execution.
+* :class:`Actor` the primitive for handling parallel execution.
+* :class:`IOLoop` the primitive for handling asynchronous events.
+* :class:`Socket` the primitive for sockets.
+
+.. _pulsar_framework:
+
+A second layer of classes, forming the concurrent framework, is built
+directly on top of :ref:`pulsar primitives <pulsar_primitives>`. These
+**framework** classes are:
+
+* :class:`Arbiter` manages the execution of pulsar-powered applications.
+* :class:`AsyncIOStream` the primitive for handling asynchronous IO on a :class:`Socket`.
+* :class:`AsyncSocketServer` base class for all asynchronous servers performing IO on
+  a :class:`Socket`.
+
+
+
 High level functions
 =======================
 
@@ -31,15 +54,7 @@ Actors
 
 At the core of the library we have the :class:`Actor` class which defines
 the primitive of pulsar concurrent framework. Actor's instances communicate
-with each other via messages in a *share-nothing architecture*. 
-
-Actor Metaclass
-~~~~~~~~~~~~~~~~~~~~
-
-.. autoclass:: ActorMetaClass
-   :members:
-   :member-order: bysource
-   
+with each other via messages in a *share-nothing architecture*.
    
 Actor
 ~~~~~~~~~~~~~~
@@ -104,10 +119,10 @@ ActorMessage
    :member-order: bysource
    
 
-ActorImpl
+Concurrency
 ~~~~~~~~~~~~~~~~~~~~~
 
-.. autoclass:: ActorImpl
+.. autoclass:: Concurrency
    :members:
    :member-order: bysource
 
@@ -119,13 +134,7 @@ ActorLink
    :members:
    :member-order: bysource
 
-ActorLinkCallback
-~~~~~~~~~~~~~~~~~~~~~~~~
 
-.. autoclass:: ActorLinkCallback
-   :members:
-   :member-order: bysource
-   
 .. _api-async-tools:
 
 Asyncronous Tools
@@ -143,10 +152,10 @@ Make Async
 .. autofunction:: make_async
 
 
-Asynchronous Pair
+Safe Async
 ~~~~~~~~~~~~~~~~~~~~
 
-.. autofunction:: async_pair
+.. autofunction:: safe_async
 
 
 Deferred
@@ -156,7 +165,13 @@ Deferred
    :members:
    :member-order: bysource
    
+Multi Deferred
+~~~~~~~~~~~~~~~~~~~~~~
 
+.. autoclass:: MultiDeferred
+   :members:
+   :member-order: bysource
+   
 Deferred Generator
 ~~~~~~~~~~~~~~~~~~~~~~
 
@@ -204,14 +219,6 @@ Socket
    :member-order: bysource
    
    
-IOStream
-~~~~~~~~~~~~~~~~~
-
-.. autoclass:: IOStream
-   :members:
-   :member-order: bysource
-   
-   
 AsyncIOStream
 ~~~~~~~~~~~~~~~~~
 
@@ -220,6 +227,34 @@ AsyncIOStream
    :member-order: bysource
 
 
+BaseSocketHandler
+~~~~~~~~~~~~~~~~~~~~~
+
+.. autoclass:: BaseSocketHandler
+   :members:
+   :member-order: bysource
+   
+AsyncSocketServer
+~~~~~~~~~~~~~~~~~~~~
+
+.. autoclass:: AsyncSocketServer
+   :members:
+   :member-order: bysource
+   
+AsyncConnection
+~~~~~~~~~~~~~~~~~~~~
+
+.. autoclass:: AsyncConnection
+   :members:
+   :member-order: bysource
+   
+AsyncResponse
+~~~~~~~~~~~~~~~~~~~~
+
+.. autoclass:: AsyncResponse
+   :members:
+   :member-order: bysource
+   
 Eventloop
 =================
 
@@ -229,18 +264,74 @@ IOLoop
 .. autoclass:: IOLoop
    :members:
    :member-order: bysource
-   
-   
+     
 IOQueue
 ~~~~~~~~~~~~~~~~~~~~
 
 .. autoclass:: IOQueue
    :members:
    :member-order: bysource
+ 
+PeriodicCallback
+~~~~~~~~~~~~~~~~~~~~~~~
+
+.. autoclass:: PeriodicCallback
+   :members:
+   :member-order: bysource
    
+   
+Application
+========================
+
+.. autoclass:: Application
+   :members:
+   :member-order: bysource
+
+
+Application Handler Mixin
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+   
+.. autoclass:: ApplicationHandlerMixin
+   :members:
+   :member-order: bysource
+   
+Application Worker
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+   
+.. autoclass:: Worker
+   :members:
+   :member-order: bysource
+
+
+Application Monitor
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+   
+.. autoclass:: ApplicationMonitor
+   :members:
+   :member-order: bysource
+   
+   
+.. _api-config:
+
+Utilities
+===============
+
+Config
+~~~~~~~~~~
+
+.. autoclass:: pulsar.Config
+   :members:
+   :member-order: bysource
+   
+Setting
+~~~~~~~~~~
+
+.. autoclass:: pulsar.Setting
+   :members:
+   :member-order: bysource
 
 Exceptions
-===================
+~~~~~~~~~~~~~~~
 
 .. autoclass:: PulsarException
    :members:
@@ -250,51 +341,35 @@ Exceptions
 .. autoclass:: AlreadyCalledError
    :members:
    :member-order: bysource
-   
-
-.. _net:
-
-.. module:: pulsar.net
-
-Net
-========================
-   
-
-HttpRequest
-~~~~~~~~~~~~~~~~~~~~
-
-.. autoclass:: HttpRequest
-   :members:
-   :member-order: bysource
-   
-  
-HttpResponse
-~~~~~~~~~~~~~~~~~~~~
-
-.. autoclass:: HttpResponse
-   :members:
-   :member-order: bysource
-   
-
-HttpClient
-~~~~~~~~~~~~~~~~~~~~
-
-.. autofunction:: HttpClient
+     
+      
+.. _internals:
 
 
-HttpClientHandler
-~~~~~~~~~~~~~~~~~~~~
+Internals
+=======================
 
-.. autoclass:: HttpClientHandler
-   :members:
-   :member-order: bysource
-   
-   
-HttpClientResponse
-~~~~~~~~~~~~~~~~~~~~
 
-.. autoclass:: HttpClientResponse
-   :members:
-   :member-order: bysource
+.. module:: pulsar.utils.system
 
-   
+System info
+~~~~~~~~~~~~~~~~~
+
+.. autofunction:: system_info
+
+
+
+.. module:: pulsar.utils.tools
+
+checkarity
+~~~~~~~~~~~~~~~~~
+
+.. autofunction:: checkarity
+
+
+retry over time
+~~~~~~~~~~~~~~~~~
+
+.. autofunction:: retry_over_time
+
+

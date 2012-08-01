@@ -1,5 +1,4 @@
-'''Operative system specific functions and classes
-'''
+'''Operative system specific functions and classes.'''
 from .runtime import Platform
 
 platform = Platform()

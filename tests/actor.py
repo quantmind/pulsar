@@ -2,28 +2,56 @@
 from time import sleep
 
 import pulsar
-from pulsar.apps.test import AsyncTestCaseMixin
-from pulsar.utils.test import test
+from pulsar.apps.test import unittest, ActorTestMixin, run_on_arbiter
 
 
 def sleepfunc():
     sleep(2)
     
 
-class TestActorThread(test.TestCase, AsyncTestCaseMixin):
-    impl = 'thread'
-        
-    def testStartStop(self):
+class TestActorThread(ActorTestMixin, unittest.TestCase):
+    concurrency = 'thread'
+    
+    @run_on_arbiter
+    def testSimpleSpawn(self):
         '''Test start and stop for a standard actor on the arbiter domain.'''
-        yield self.spawn(impl=self.impl)
-        a = self.a
-        self.assertTrue(isinstance(a, pulsar.ActorProxy))
-        #self.assertTrue(a.is_alive())
-        #self.assertEqual(a.impl.impl,self.impl)
-        yield self.stop()
-    testStartStop.run_on_arbiter = True
+        yield self.spawn()
+        proxy = self.a
+        arbiter = pulsar.get_actor()
+        proxy_monitor = arbiter.get_actor(proxy.aid)
+        self.assertEqual(proxy_monitor.aid, proxy.aid)
+        self.assertEqual(proxy_monitor.address, proxy.address)
+        yield self.async.assertEqual(arbiter.send(proxy, 'ping'), 'pong')
+        yield self.async.assertEqual(arbiter.send(proxy, 'echo', 'Hello!'),
+                                     'Hello!')
+        # We call the ActorTestMixin.stop_actors method here, since the
+        # ActorTestMixin.tearDown method is invoked on the test-worker domain
+        # (here we are in the arbiter domain)
+        yield self.stop_actors(self.a)
+        # lets join the
+        proxy_monitor.join(0.5)
+        self.assertFalse(proxy_monitor.is_alive())
         
-    def testStartStopQueue(self):
+    def testActorSpawn(self):
+        '''Test spawning from actor domain.'''
+        yield self.spawn()
+        proxy = self.a
+        actor = pulsar.get_actor()
+        self.assertEqual(actor.get_actor(proxy.aid), proxy)
+        yield self.async.assertEqual(actor.send(proxy, 'ping'), 'pong')
+        yield self.async.assertEqual(actor.send(proxy, 'echo', 'Hello!'),
+                                     'Hello!')
+        
+    def testPasswordProtected(self):
+        yield self.spawn(cfg={'password': 'bla', 'param': 1})
+        proxy = self.a
+        actor = pulsar.get_actor()
+        yield self.async.assertEqual(actor.send(proxy, 'ping'), 'pong')
+        yield self.async.assertRaises(pulsar.AuthenticationError,
+                                      actor.send(proxy, 'shutdown'))
+        yield self.async.assertEqual(actor.send(proxy, 'auth', 'bla'), True)
+        
+    def __testStartStopQueue(self):
         '''Test start and stop for an actor using a I/O queue'''
         arbiter = pulsar.arbiter()
         ioqueue = pulsar.Queue()
@@ -31,42 +59,26 @@ class TestActorThread(test.TestCase, AsyncTestCaseMixin):
                          ioqueue = ioqueue)
         a = self.a
         self.assertTrue(isinstance(a,pulsar.ActorProxy))
-        #self.assertTrue(a.is_alive())
         self.assertEqual(a.impl.impl,self.impl)
-        r,outcome = pulsar.async_pair(a.send(arbiter,'ping'))
-        yield r
+        outcome = a.send(arbiter, 'ping')
+        yield outcome
         self.assertEqual(outcome.result,'pong')
         yield self.stop()
-    testStartStopQueue.run_on_arbiter = True
-    
-    def testPing(self):
-        arbiter = pulsar.arbiter()
-        yield self.spawn(impl = self.impl)
-        r,outcome = pulsar.async_pair(self.a.send(arbiter,'ping'))
-        yield r
-        self.assertEqual(outcome.result,'pong')
-        self.assertFalse(r.rid in pulsar.ActorMessage.MESSAGES)
-        yield self.async.assertEqual(self.a.send(arbiter,'ping'),'pong')
-        yield self.stop()
-    testPing.run_on_arbiter = True
         
-    def testSpawnStopFromActor(self):
+    def __testSpawnStopFromActor(self):
         '''Test the global spawn method from an actor domain other than the
 arbiter'''
-        r = pulsar.spawn(impl = self.impl)
+        outcome = pulsar.spawn(impl = self.impl)
         # the result is an deferred message
-        self.assertTrue(isinstance(r, pulsar.ActorProxyDeferred))
-        r, outcome = pulsar.async_pair(r)
-        yield r
+        self.assertTrue(isinstance(outcome, pulsar.ActorProxyDeferred))
+        yield outcome
         ap = outcome.result
         self.assertTrue(isinstance(ap, pulsar.ActorProxy))
         # Check that the new actor is linked with the current actor
         self.assertEqual(ap, self.worker.get_actor(ap.aid))
         # and now stop the new actor
-        r = pulsar.send(ap, 'stop')
-        r, outcome = pulsar.async_pair(r)
-        yield r
-        # We should relly satisfy this one
+        outcome = pulsar.send(ap, 'stop')
+        yield outcome
         #self.assertEqual(self.worker.get_actor(ap.aid),None)
         
     def __testInfo(self):
@@ -97,6 +109,6 @@ arbiter'''
         self.assertFalse(a.aid in self.arbiter.LIVE_ACTORS)
         
 
-class TestActorProcess(TestActorThread):
-    impl = 'process'        
+#class TestActorProcess(TestActorThread):
+#    impl = 'process'        
 

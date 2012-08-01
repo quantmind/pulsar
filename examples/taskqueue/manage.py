@@ -1,5 +1,4 @@
-'''\
-A a JSON-RPC Server with a Task Queue for processing tasks.
+'''A a JSON-RPC Server with a Task Queue for processing tasks.
 To run the server type::
 
     python manage.py
@@ -15,7 +14,11 @@ Open a new shell and launch python and type::
     >>>
     
 '''
-import pulsar
+try:
+    import pulsar
+except ImportError:
+    import sys
+    sys.path.append('../../')
 from pulsar.apps import rpc, tasks, wsgi
 
 TASK_PATHS = ['sampletasks.*']
@@ -35,12 +38,12 @@ def createTaskQueue(**params):
                            **params)
 
     
-def server(name = 'taskqueue', **params):
+def server(name='taskqueue', **params):
     # Create the taskqueue application with an rpc server
-    tq = createTaskQueue(name = name, **params)
-    return wsgi.createServer(rpc.RpcMiddleware(RpcRoot(tq)),
-                             name = '{0}_rpc'.format(tq.name),
-                             **params)
+    tq = createTaskQueue(name=name, **params)
+    return wsgi.WSGIServer(rpc.RpcMiddleware(RpcRoot(tq)),
+                           name = '{0}_rpc'.format(tq.name),
+                           **params)
 
 
 def start_server(**params):

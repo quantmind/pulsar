@@ -1,5 +1,4 @@
-'''\
-Configuration utilities. originally from gunicorn_,
+'''Configuration utilities. originally from gunicorn_,
 adapted and modified for pulsar.
 
 Original Gunicorn Licence
@@ -17,12 +16,13 @@ import textwrap
 import types
 
 from pulsar import __version__, SERVER_NAME
-from pulsar.utils import system
-from pulsar.utils.py2py3 import *
+from . import system
+from .httpurl import is_string_or_native_string, to_string, to_bytes
 
 
 __all__ = ['Config',
            'Setting',
+           'defaults',
            'ordered_settings',
            'validate_string',
            'validate_callable',
@@ -32,7 +32,21 @@ __all__ = ['Config',
            'make_settings',
            'make_options']
 
+class DefaultSettings:
     
+    def __init__(self):
+        # port for serving a socket
+        self.PORT = 8060
+        # timeout for asynchronous Input/Output
+        self.IO_TIMEOUT = None
+        # Maximum number of concurrenct clients
+        self.BACKLOG = 2048
+        # Actors timeout
+        self.TIMEOUT = 30
+        # mailbox clients blocking
+        self.message_timeout = 3
+    
+defaults = DefaultSettings()
 KNOWN_SETTINGS = {}
 KNOWN_SETTINGS_ORDER = []
 
@@ -50,7 +64,7 @@ def default_process(worker):
 
 
 def def_pre_request(worker, req):
-    worker.log.debug("%s %s" % (req.method, req.path))
+    pass
 
 
 def def_post_request(worker, req):
@@ -72,19 +86,20 @@ def ordered_settings():
         yield KNOWN_SETTINGS[name]
         
         
-def make_settings(app = None, include=None, exclude=None):
-    '''Creates a dictionary of available settings for a given
-application *app*.
+def make_settings(apps=None, include=None, exclude=None):
+    '''Creates a dictionary of available settings for given
+applications *apps*.
 
-:parameter app: Optional application name.
+:parameter apps: Optional list of application names.
 :parameter include: Optional list of settings to include.
-:parameter app: Optional list of settings to exclude.
+:parameter exclude: Optional list of settings to exclude.
 :rtype: dictionary of :class:`pulsar.Setting` instances.'''
     settings = {}
     exclude = exclude or ()
+    apps = set(apps or ())
     for s in ordered_settings():
         setting = s()
-        if setting.app and setting.app != app:
+        if setting.app and setting.app not in apps:
             continue
         if include and setting.name not in include and not setting.app:
             continue
@@ -136,10 +151,10 @@ attribute by exposing the :attr:`Setting.name` as attribute.
     Dictionary of all :class:`Settings` instances available. The
     keys are given by the :attr:`Setting.name` attribute.
 '''
-    def __init__(self, description = None, epilog = None,
-                 version = None, app = None, include=None,
-                 exclude = None):
-        self.settings = make_settings(app,include,exclude)
+    def __init__(self, description=None, epilog=None,
+                 version=None, app=None, include=None,
+                 exclude=None):
+        self.settings = make_settings(app, include,exclude)
         self.description = description or 'Pulsar server'
         self.epilog = epilog or 'Have fun!'
         self.version = version or __version__
@@ -152,17 +167,20 @@ attribute by exposing the :attr:`Setting.name` as attribute.
             self.__dict__[k] = v
     
     def __getattr__(self, name):
-        if name not in self.settings:
-            if name in KNOWN_SETTINGS:
-                return None
-            raise AttributeError("No configuration setting for: %s" % name)
-        return self.settings[name].get()
+        return self.get(name)
     
     def __setattr__(self, name, value):
         if name != "settings" and name in self.settings:
             raise AttributeError("Invalid access!")
         super(Config, self).__setattr__(name, value)
-    
+
+    def get(self, name, default=None):
+        if name not in self.settings:
+            if name in KNOWN_SETTINGS:
+                return default
+            raise AttributeError("No configuration setting for: %s" % name)
+        return self.settings[name].get()
+            
     def set(self, name, value):
         if name not in self.settings:
             raise AttributeError("No configuration setting for: %s" % name)
@@ -202,7 +220,7 @@ settings via the :meth:`Setting.add_argument`.
     def address(self):
         bind = self.settings['bind']
         if bind:
-            return system.parse_address(to_bytestring(bind.get()))
+            return system.parse_address(to_bytes(bind.get()))
         
     @property
     def uid(self):
@@ -341,11 +359,14 @@ accepting one positional argument, the value to validate.'''
         return self.value
     
     def set(self, val):
+        '''Set *val* as the value in this :class:`Setting`.'''
         if hasattr(self.validator,'__call__'):
             val = self.validator(val)
         self.value = val
         
     def on_start(self):
+        '''Called when pulsar server starts. It can be used to perform
+custom initialization for this :class:`Setting`.'''
         pass
 
 
@@ -363,7 +384,7 @@ def validate_bool(val):
 
 
 def validate_pos_int(val):
-    if not isinstance(val,int_type):
+    if not isinstance(val, int):
         val = int(val, 0)
     else:
         # Booleans are ints!
@@ -376,7 +397,7 @@ def validate_pos_int(val):
 def validate_string(val):
     if val is None:
         return None
-    if not is_bytes_or_string(val):
+    if not is_string_or_native_string(val):
         raise TypeError("Not a string: %s" % val)
     return to_string(val).strip()
 
@@ -467,7 +488,24 @@ class MaxRequests(Setting):
         restarts are disabled.
         """
 
-
+class Backlog(Setting):
+    name = "backlog"
+    section = "Worker Processes"
+    flags = ["--backlog"]
+    validator = validate_pos_int
+    type = int
+    default = 2048
+    desc = """\
+        The maximum number of concurrent requests.
+        This refers to the number of clients that can be waiting to be served.
+        Exceeding this number results in the client getting an error when
+        attempting to connect. It should only affect servers under significant
+        load.
+        
+        Must be a positive integer. Generally set in the 64-2048 range.    
+        """
+        
+        
 class Timeout(Setting):
     name = "timeout"
     section = "Worker Processes"
@@ -485,14 +523,30 @@ class Timeout(Setting):
         """
 
 
+class MessageTimeout(Setting):
+    name = "message_timeout"
+    section = "Worker Processes"
+    flags = ["--message_timeout"]
+    type = int
+    default = defaults.message_timeout
+    desc = """\
+        Timeout in seconds for communication with pulsar actors.
+        A negative value corresponds to No timeout (blocking sockets) while
+        a value of 0 corresponds to non-blocking sockets."""
+
+
 class HttpProxyServer(Setting):
     name = "http_proxy"
     section = "Http"
     flags = ["--http-proxy"]
     default = ''
     desc = """\
-        The HTTP proxy server to use with HttpClient.    
+        The HTTP proxy server to use with HttpClient.
         """
+    def on_start(self):
+        if self.value:
+            os.environ['http_proxy'] = self.value
+        
         
 class HttpClient(Setting):
     name = "http_client"
@@ -511,6 +565,7 @@ class HttpClient(Setting):
                 v += (1,)
             from pulsar.net import setDefaultClient
             setDefaultClient(v)
+
         
 class HttpParser(Setting):
     name = "http_py_parser"
@@ -572,6 +627,15 @@ class Pidfile(Setting):
         """
 
 
+class Password(Setting):
+    name = "password"
+    section = "Server Mechanics"
+    flags = ["--password"]
+    validator = validate_string
+    default = None
+    desc = """Set a password for the server"""
+        
+        
 class User(Setting):
     name = "user"
     section = "Server Mechanics"
@@ -602,42 +666,7 @@ class Group(Setting):
         retrieved with a call to pwd.getgrnam(value) or None to not change
         the worker processes group.
         """
-
-
-class Umask(Setting):
-    name = "umask"
-    section = "Server Mechanics"
-    flags = ["-m", "--umask"]
-    validator = validate_pos_int
-    type = int
-    default = 0
-    desc = """\
-        A bit mask for the file mode on files written by Gunicorn.
         
-        Note that this affects unix socket permissions.
-        
-        A valid value for the os.umask(mode) call or a string compatible with
-        int(value, 0) (0 means Python guesses the base, so values like "0",
-        "0xFF", "0022" are valid for decimal, hex, and octal representations)
-        """
-
-
-class TmpUploadDir(Setting):
-    name = "tmp_upload_dir"
-    section = "Server Mechanics"
-    meta = "DIR"
-    validator = validate_string
-    default = None
-    desc = """\
-        Directory to store temporary request data as they are read.
-        
-        This may disappear in the near future.
-        
-        This path should be writable by the process permissions set for Gunicorn
-        workers. If not specified, Gunicorn will choose a system generated
-        temporary directory.
-        """
-
 
 class Loglevel(Setting):
     name = "loglevel"
