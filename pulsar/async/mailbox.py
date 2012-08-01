@@ -9,7 +9,6 @@ from multiprocessing.queues import Empty, Queue
 from pulsar import create_connection, MailboxError, server_socket,\
                     wrap_socket, CouldNotParse, CommandNotFound,\
                     defaults
-from pulsar.utils.tools import gen_unique_id
 from pulsar.utils.httpurl import to_bytes
 
 from .defer import make_async, safe_async, pickle, is_async, log_failure,\
@@ -26,7 +25,7 @@ __all__ = ['PulsarClient', 'mailbox', 'Mailbox', 'IOQueue',
 def mailbox(actor=None, address=None):
     '''Creates a :class:`Mailbox` instances for :class:`Actor` instances.
 If an address is provided, the communication is implemented using a socket,
-otherwise a queue is used.'''   
+otherwise a queue is used.'''
     if address:
         return PulsarClient.connect(address, socket_timeout=0)
     else:
@@ -40,17 +39,17 @@ def actorid(actor):
 
 
 class MessageParser(object):
-    
+
     def encode(self, msg):
         if isinstance(msg, ActorMessage):
             return msg.encode()
         else:
             return to_bytes(msg)
-        
+
     def decode(self, buffer):
         return ActorMessage.decode(buffer)
-        
-    
+
+
 class ActorMessage(object):
     '''A message which travels from :class:`Actor` to
 :class:`Actor` to perform a specific *command*. :class:`ActorMessage`
@@ -60,19 +59,19 @@ created by :meth:`ActorProxy.send` method.
 .. attribute:: sender
 
     id of the actor sending the message.
-    
+
 .. attribute:: receiver
 
     id of the actor receiving the message.
-    
+
 .. attribute:: command
 
     command to be performed
-    
+
 .. attribute:: args
 
     Positional arguments in the message body
-    
+
 .. attribute:: kwargs
 
     Optional arguments in the message body
@@ -84,7 +83,7 @@ created by :meth:`ActorProxy.send` method.
         self.receiver = actorid(receiver)
         self.args = args if args is not None else ()
         self.kwargs = kwargs if kwargs is not None else {}
-    
+
     @classmethod
     def decode(cls, buffer):
         separator = b'\r\n\r\n\r\n'
@@ -104,56 +103,56 @@ created by :meth:`ActorProxy.send` method.
             return cls(*args), buffer
         else:
             return None, buffer
-    
+
     def encode(self):
         data = (self.command, self.sender, self.receiver,
                 self.args, self.kwargs)
         bdata = pickle.dumps(data, protocol=2)
         return ('*%s\r\n\r\n\r\n' % len(bdata)).encode('utf-8') + bdata
-        
+
     def __repr__(self):
         return self.command
-    
+
 
 class PulsarClient(ReconnectingClient):
     '''A proxy for the :attr:`Actor.inbox` attribute. It is used by the
 :class:`ActorProxy` to send messages to the remote actor.'''
     parsercls = MessageParser
-    
+
     def on_end_message(self, msg):
         '''Those two messages are special'''
         if msg.command in ('callback', 'errback'):
             return msg.args[0]
         else:
             return msg
-        
-    @raise_failure    
+
+    @raise_failure
     def ping(self):
         return self.execute(ActorMessage('ping'))
-    
+
     @raise_failure
     def echo(self, message):
         return self.execute(ActorMessage('echo', args=(message,)))
-    
+
     @raise_failure
     def run_code(self, code):
         return self.execute(ActorMessage('run_code', args=(code,)))
-    
+
     @raise_failure
     def info(self):
         return self.execute(ActorMessage('info'))
-    
+
     @raise_failure
     def quit(self):
         return self.execute(ActorMessage('quit'))
-    
+
     @raise_failure
     def shutdown(self):
         return self.execute(ActorMessage('stop'))
-    
+
 
 class MailboxResponse(AsyncResponse):
-    
+
     def __iter__(self):
         # The receiver could be different from the mail box actor. For
         # example a monitor uses the same mailbox as the arbiter
@@ -185,7 +184,7 @@ class MailboxResponse(AsyncResponse):
                 m = ActorMessage('callback', sender=receiver, args=(result,))
             yield self.parser.encode(m)
 
-    
+
 class MailboxConnection(AsyncConnection):
     '''A :class:`MailboxClient` is a socket which receives messages
 from a remote :class:`Actor`.
@@ -193,8 +192,8 @@ An instance of this class is created when a new connection is made
 with a :class:`Mailbox`.'''
     authenticated = False
     response_class = MailboxResponse
-    
-    
+
+
 class Mailbox(AsyncSocketServer):
     '''Mailbox for an :class:`Actor`. If the actor is a
 :ref:`CPU bound worker <cpubound>`, the class:`Mailbox`
@@ -202,25 +201,25 @@ creates its own :class:`IOLoop` which runs on a separate thread
 of execution.'''
     parser_class = MessageParser
     connection_class = MailboxConnection
-    
+
     @classmethod
     def make(cls, actor, backlog=64):
         return super(Mailbox, cls).make(actor, backlog=backlog,
                                         onthread=actor.cpubound,
                                         timeout=None)
-    
+
     @property
     def name(self):
         return '%s mailbox %s:%s' %\
              (self.actor, self.address[0], self.address[1])
-    
+
     @property
     def cpubound(self):
         return self.actor.cpubound
-        
+
     def shut_down(self):
         self.unregister(self.actor)
-        
+
     def on_start(self):
         actor = self.actor
         self.register(actor)
@@ -237,7 +236,7 @@ of execution.'''
 
     def register(self, actor):
         self.ioloop.add_loop_task(actor)
-        
+
     def unregister(self, actor):
         if not self.ioloop.remove_loop_task(actor):
             self.actor.log.warn('"%s" could not be removed from eventloop'\
@@ -251,51 +250,51 @@ arbiter inbox.'''
         self.actor = actor
         self.mailbox = actor.arbiter.mailbox
         self.mailbox.register(self.actor)
-    
+
     @property
     def cpubound(self):
         return self.actor.cpubound
-    
+
     @property
     def address(self):
         return self.mailbox.address
-    
+
     @property
     def ioloop(self):
         return self.mailbox.ioloop
-    
+
     def start(self):
         pass
-    
+
     def close(self):
         self.mailbox.unregister(self.actor)
-        
+
 
 class QueueWaker(object):
     '''A waker for :class:`IOQueue`. Used by CPU-bound actors.'''
     def __init__(self, queue):
         self._queue = queue
         self._fd = 'waker'
-        
+
     def __str__(self):
         return '{0} {1}'.format(self.__class__.__name__,self._fd)
-    
+
     def fileno(self):
         return self._fd
-    
+
     def wake(self):
         try:
             self._queue.put((self._fd,None))
         except (IOError,TypeError):
             pass
-        
+
     def consume(self):
         pass
-    
+
     def close(self):
         pass
-    
-        
+
+
 class IOQueue(object):
     '''Epoll like class for a IO based on queues rather than sockets.
 The interface is the same as the python epoll_ implementation.
@@ -307,7 +306,7 @@ The interface is the same as the python epoll_ implementation.
         self._actor = actor
         self._fds = set()
         self._empty = ()
-        
+
     @property
     def queue(self):
         '''The underlying distributed queue used for I/O.'''
@@ -316,7 +315,7 @@ The interface is the same as the python epoll_ implementation.
     def register(self, fd, events=None):
         '''Register a fd descriptor with the io queue object'''
         self._fds.add(fd)
-                
+
     def modify(self, fd, events=None):
         '''Modify a registered file descriptor'''
         self.unregister(fd)
@@ -325,7 +324,7 @@ The interface is the same as the python epoll_ implementation.
     def unregister(self, fd):
         '''Remove a registered file descriptor from the ioqueue object.. '''
         self._fds.discard(fd)
-    
+
     def poll(self, timeout=0.5):
         '''Wait for events. timeout in seconds (float)'''
         if self._actor:
@@ -336,8 +335,7 @@ The interface is the same as the python epoll_ implementation.
         except (Empty,IOError,TypeError,EOFError):
             return self._empty
         return (event,)
-    
+
     def waker(self):
         return QueueWaker(self._queue)
-    
-     
+

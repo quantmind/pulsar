@@ -25,7 +25,7 @@ a client, which can be as simple as::
 Then you can request a webpage, for example::
 
     >>> r = client.get('http://www.bbc.co.uk')
-    
+
 
 .. _http-parser: https://github.com/benoitc/http-parser
 .. _urllib3: https://github.com/shazow/urllib3
@@ -59,20 +59,20 @@ if ispy3k: # Python 3
     from http.client import responses
     from http.cookiejar import CookieJar
     from http.cookies import SimpleCookie, BaseCookie, Morsel, CookieError
-    
+
     string_type = str
     getproxies_environment = urllibr.getproxies_environment
     ascii_letters = string.ascii_letters
     zip = zip
     map = map
     range = range
-    
+
     iteritems = lambda d : d.items()
     itervalues = lambda d : d.values()
 
     is_string = lambda s: isinstance(s, str)
     is_string_or_native_string = is_string
-    
+
     def to_bytes(s, encoding=None, errors='strict'):
         encoding = encoding or 'utf-8'
         if isinstance(s, bytes):
@@ -82,26 +82,26 @@ if ispy3k: # Python 3
                 return s
         else:
             return ('%s'%s).encode(encoding, errors)
-    
+
     def to_string(s, encoding=None, errors='strict'):
         """Inverse of to_bytes"""
         if isinstance(s, bytes):
             return s.decode(encoding or 'utf-8', errors)
         else:
             return '%s' % s
-        
+
     def native_str(s):
         if isinstance(s, bytes):
             return s.decode('utf-8')
         else:
             return s
-        
+
     def force_native_str(s):
         if isinstance(s, bytes):
             return s.decode('utf-8')
         else:
             return '%s' % s
-        
+
     from functools import reduce
 else:   # pragma : no cover
     import urllib2 as urllibr
@@ -114,17 +114,17 @@ else:   # pragma : no cover
     from cookielib import CookieJar
     from Cookie import SimpleCookie, BaseCookie, Morsel, CookieError
     from itertools import izip as zip, imap as map
-    
+
     string_type = unicode
     ascii_letters = string.letters
     range = xrange
-    
+
     iteritems = lambda d : d.iteritems()
     itervalues = lambda d : d.itervalues()
-    
+
     is_string = lambda s: isinstance(s, unicode)
     is_string_or_native_string = lambda s: isinstance(s, basestring)
-    
+
     def to_bytes(s, encoding=None, errors='strict'):
         encoding = encoding or 'utf-8'
         if isinstance(s, bytes):
@@ -134,26 +134,26 @@ else:   # pragma : no cover
                 return s
         else:
             return unicode(s).encode(encoding, errors)
-    
+
     def to_string(s, encoding=None, errors='strict'):
         """Inverse of to_bytes"""
         if isinstance(s, bytes):
             return s.decode(encoding or 'utf-8', errors)
         else:
             return unicode(s)
-        
+
     def native_str(s):
         if isinstance(s, unicode):
             return s.encode('utf-8')
         else:
             return s
-        
+
     def force_native_str(s):
         if isinstance(s, unicode):
             return s.encode('utf-8')
         else:
             return '%s' % s
-    
+
 HTTPError = urllibr.HTTPError
 URLError = urllibr.URLError
 
@@ -163,7 +163,7 @@ class SSLError(HTTPError):
 
 class TooManyRedirects(HTTPError):
     pass
-    
+
 ####################################################    URI & IRI SUFF
 #
 # The reserved URI characters (RFC 3986 - section 2.2)
@@ -229,7 +229,7 @@ def has_empty_content(status, method=None):
         return True
     else:
         return False
-    
+
 ####################################################    HTTP HEADERS
 HEADER_FIELDS = {'general': frozenset(('Cache-Control', 'Connection', 'Date',
                                        'Pragma', 'Trailer','Transfer-Encoding',
@@ -286,7 +286,7 @@ TYPE_HEADER_FIELDS = {'client': CLIENT_HEADER_FIELDS,
 
 header_type = {0: 'client', 1: 'server', 2: 'both'}
 header_type_to_int = dict(((v,k) for k,v in header_type.items()))
-            
+
 def header_field(name):
     return ALL_HEADER_FIELDS_DICT.get(name.lower())
 
@@ -302,7 +302,7 @@ Section 4.2
 The order in which header fields with differing field names are received is not
 significant. However, it is "good practice" to send general-header fields first,
 followed by request-header or response-header fields, and ending with
-the entity-header fields.'''    
+the entity-header fields.'''
     def __init__(self, headers=None, kind='server'):
         if isinstance(kind, int):
             kind = header_type.get(kind, 'both')
@@ -316,29 +316,29 @@ the entity-header fields.'''
         self._headers = {}
         if headers is not None:
             self.update(headers)
-    
+
     def __repr__(self):
         return '%s %s' % (self.kind, self._headers.__repr__())
-    
+
     def __str__(self):
         return '\r\n'.join(self._ordered())
-        
+
     def __bytes__(self):
         return str(self).encode('iso-8859-1')
-    
+
     def __iter__(self):
         headers = self._headers
         for k, values in iteritems(headers):
             for value in values:
                 yield k, value
-    
+
     def __len__(self):
         return reduce(lambda x, y: x + len(y), itervalues(self._headers), 0)
-    
+
     @property
     def kind_number(self):
         return header_type_to_int.get(self.kind)
-    
+
     def update(self, iterable):
         """Extend the headers with a dictionary or an iterable yielding keys
  and values."""
@@ -350,10 +350,10 @@ the entity-header fields.'''
 
     def __contains__(self, key):
         return header_field(key) in self._headers
-    
+
     def __getitem__(self, key):
         return ', '.join(self._headers[header_field(key)])
-        
+
     def __delitem__(self, key):
         self._headers.__delitem__(header_field(key))
 
@@ -364,25 +364,25 @@ the entity-header fields.'''
                 if not isinstance(value, list):
                     value = [value]
                 self._headers[key] = value
-    
+
     def get(self, key, default=None):
         if key in self:
             return self.__getitem__(key)
         else:
             return default
-        
+
     def get_all(self, key, default=None):
         return self._headers.get(header_field(key), default)
-    
+
     def pop(self, key, *args):
         return self._headers.pop(header_field(key), *args)
-    
+
     def copy(self):
         return self.__class__(self, kind=self.kind)
-        
+
     def headers(self):
         return list(self)
-    
+
     def add_header(self, key, value, **params):
         '''Add *value* to *key* header. If the header is already available,
 append the value to the list.'''
@@ -392,21 +392,21 @@ append the value to the list.'''
             if value not in values:
                 values.append(value)
                 self._headers[key] = values
-        
+
     def flat(self, version, status):
     	'''Full headers bytes representation'''
     	vs = version + (status, self)
     	return ('HTTP/%s.%s %s\r\n%s' % vs).encode('iso-8859-1')
-    
+
     @property
     def vary_headers(self):
         return self.get('vary',[])
-        
+
     def has_vary(self, header_query):
         """Checks to see if the has a given header name in its Vary header.
         """
         return header_query.lower() in set(self.vary_headers)
-       
+
     def _ordered(self):
         hf = HEADER_FIELDS
         order = (('general',[]), ('request',[]), ('response',[]), ('entity',[]))
@@ -421,8 +421,8 @@ append the value to the list.'''
                 yield "%s: %s" % (k, ', '.join(headers[k]))
         yield ''
         yield ''
-    
-    
+
+
 ###############################################################################
 ##    HTTP PARSER
 ###############################################################################
@@ -481,7 +481,7 @@ OTHER DEALINGS IN THE SOFTWARE.'''
         self.errno = None
         self.errstr = ""
         # protected variables
-        self._buf = [] 
+        self._buf = []
         self._version = None
         self._method = None
         self._server_protocol = None
@@ -505,11 +505,11 @@ OTHER DEALINGS IN THE SOFTWARE.'''
         self.__on_message_begin = False
         self.__on_message_complete = False
         self.__decompress_obj = None
-        
+
     @property
     def kind(self):
         return self._headers.kind_number
-        
+
     def get_version(self):
         return self._version
 
@@ -533,10 +533,10 @@ OTHER DEALINGS IN THE SOFTWARE.'''
 
     def get_headers(self):
         return self._headers
-    
+
     def get_protocol(self):
         return self._server_protocol
-    
+
     def get_body(self):
         return self._body
 
@@ -553,7 +553,7 @@ OTHER DEALINGS IN THE SOFTWARE.'''
         return self._headers.get('connection') == "upgrade"
 
     def is_headers_complete(self):
-        """ return True if all headers have been parsed. """ 
+        """ return True if all headers have been parsed. """
         return self.__on_headers_complete
 
     def is_partial_body(self):
@@ -571,7 +571,7 @@ OTHER DEALINGS IN THE SOFTWARE.'''
     def is_chunked(self):
         """ return True if Transfer-Encoding header value is chunked"""
         return self._chunked
-        
+
     def execute(self, data, length):
         # end of body can be passed manually by putting a length of 0
         if length == 0:
@@ -591,7 +591,7 @@ OTHER DEALINGS IN THE SOFTWARE.'''
                     self._buf.append(data[:idx])
                     first_line = to_string(b''.join(self._buf))
                     nb_parsed = nb_parsed + idx + 2
-                    
+
                     rest = data[idx+2:]
                     data = b''
                     if self._parse_firstline(first_line):
@@ -609,7 +609,7 @@ OTHER DEALINGS IN THE SOFTWARE.'''
                         return length
                     nb_parsed = nb_parsed + (len(to_parse) - ret)
                 except InvalidHeader as e:
-                    self.errno = INVALID_HEADER 
+                    self.errno = INVALID_HEADER
                     self.errstr = str(e)
                     return nb_parsed
             elif not self.__on_message_complete:
@@ -656,18 +656,18 @@ OTHER DEALINGS IN THE SOFTWARE.'''
         bits = line.split(None, 1)
         if len(bits) != 2:
             raise InvalidRequestLine(line)
-            
-        # version 
+
+        # version
         matchv = VERSION_RE.match(bits[0])
         if matchv is None:
             raise InvalidRequestLine("Invalid HTTP version: %s" % bits[0])
         self._version = (int(matchv.group(1)), int(matchv.group(2)))
-            
+
         # status
         matchs = STATUS_RE.match(bits[1])
         if matchs is None:
             raise InvalidRequestLine("Invalid status %" % bits[1])
-        
+
         self._status = bits[1]
         self._status_code = int(matchs.group(1))
         self._reason = matchs.group(2)
@@ -689,13 +689,13 @@ OTHER DEALINGS IN THE SOFTWARE.'''
         self._query_string = parts.query or ""
         self._fragment = parts.fragment or ""
         self._server_protocol = bits[2]
-        
+
         # Version
         match = VERSION_RE.match(bits[2])
         if match is None:
             raise InvalidRequestLine("Invalid HTTP version: %s" % bits[2])
         self._version = (int(match.group(1)), int(match.group(2)))
-    
+
     def _parse_headers(self, data):
         idx = data.find(b'\r\n\r\n')
         if idx < 0: # we don't have all headers
@@ -704,7 +704,7 @@ OTHER DEALINGS IN THE SOFTWARE.'''
         # Split lines on \r\n keeping the \r\n on each line
         lines = deque(('%s\r\n' % to_string(line) for line in
                        data[:idx].split(b'\r\n')))
-       
+
         # Parse headers into key/value pairs paying attention
         # to continuation lines.
         while len(lines):
@@ -717,12 +717,12 @@ OTHER DEALINGS IN THE SOFTWARE.'''
             if HEADER_RE.search(name):
                 raise InvalidHeader("invalid header name %s" % name)
             name, value = name.strip(), [value.lstrip()]
-            
+
             # Consume value continuation lines
             while len(lines) and lines[0].startswith((" ", "\t")):
                 value.append(lines.popleft())
             value = ''.join(value).rstrip()
-            
+
             # multiple headers
             if name in self._headers:
                 value = "%s,%s" % (self._headers[name], value)
@@ -744,23 +744,23 @@ OTHER DEALINGS IN THE SOFTWARE.'''
                     clen = None
         else:
             clen = None
-            
+
         status = self._status_code
         if status and (status == httpclient.NO_CONTENT or
             status == httpclient.NOT_MODIFIED or
             100 <= status < 200 or      # 1xx codes
             self._method == "HEAD"):
             clen = 0
-            
+
         self._clen_rest = self._clen = clen
 
-        # detect encoding and set decompress object 
+        # detect encoding and set decompress object
         encoding = self._headers.get('content-encoding')
         if encoding == "gzip":
             self.__decompress_obj = zlib.decompressobj(16+zlib.MAX_WBITS)
         elif encoding == "deflate":
             self.__decompress_obj = zlib.decompressobj()
-    
+
         rest = data[idx+4:]
         self._buf = [rest]
         self.__on_headers_complete = True
@@ -834,21 +834,24 @@ OTHER DEALINGS IN THE SOFTWARE.'''
 
 ################################################################################
 ##    HTTP CLIENT
-################################################################################    
+################################################################################
 class HttpConnectionError(Exception):
     pass
 
 
 class IORespone(object):
     socket = None
-    
+
     @property
     def async(self):
-        return self.socket.timeout == 0
-    
+        socket = self.socket
+        if not hasattr(socket, 'timeout'):
+            socket = socket._sock
+        return socket.timeout == 0
+
     def parsedata(self, data):
         raise NotImplementedError()
-        
+
     def read(self):
         '''Read data from socket'''
         try:
@@ -856,7 +859,7 @@ class IORespone(object):
         except socket.error:
             self.close()
             raise
-        
+
     ##    INTERNALS
     def _read(self, result=None):
         if self.async:
@@ -881,14 +884,14 @@ class IORespone(object):
                     msg = self.parsedata(data)
                     if msg is not None:
                         return msg
-    
+
 class HttpResponse(IORespone):
     '''An Http response object.
-    
+
 .. attribute:: status_code
 
     Integer indicating the status code
-    
+
 .. attribute:: history
 
     A list of :class:`HttpResponse` objects from the history of the
@@ -899,84 +902,86 @@ class HttpResponse(IORespone):
     history = None
     will_close = False
     parser_class = HttpParser
-    
-    def __init__(self, sock, debuglevel=0, method=None, url=None):
+
+    def __init__(self, sock, debuglevel=0, method=None, url=None,
+                 strict=None):
         self.socket = sock
         self.debuglevel = debuglevel
         self._method = method
+        self.strict=strict
 
     def __str__(self):
         if self.status_code:
             return '{0} {1}'.format(self.status_code,self.response)
         else:
             return '<None>'
-    
+
     def __repr__(self):
         return '{0}({1})'.format(self.__class__.__name__,self)
-    
+
     @property
     def status_code(self):
         if self.parser:
             return self.parser.get_status_code()
-        
+
     @property
     def content(self):
         if self.parser:
             body = self.parser.get_body()
             if body:
                 return b''.join(body)
-    
+
     @property
     def headers(self):
         if self.parser:
             return self.parser.get_headers()
-    
+
     @property
     def is_error(self):
         if self.status_code:
             return not (200 <= self.status_code < 300)
-    
+
     @property
     def response(self):
         if self.status_code:
             return responses.get(self.status_code)
-        
+
     def content_string(self, charset=None):
         '''Decode content as a string.'''
         data = self.content
         if data is not None:
             return data.decode(charset or 'utf-8')
-    
+
     def content_json(self, charset=None, **kwargs):
         '''Decode content as a JSON object.'''
         return json.loads(self.content_string(charset), **kwargs)
-    
+
     @property
     def url(self):
         if self.request is not None:
            return self.request.full_url
-       
+
     def add_callback(self, callback):
         self.callbacks.append(callback)
         return self
-        
+
     def raise_for_status(self):
         """Raises stored :class:`HTTPError` or :class:`URLError`,
  if one occured."""
         if self.is_error:
             raise HTTPError(self.url, self.status_code,
-                            self.content, self.headers, None)        
-    
+                            self.content, self.headers, None)
+
     def post_process_response(self, client, req):
         return client.post_process_response(req, self)
-    
+
     def begin(self, start=False):
         '''Start reading the response. Called by the connection object.'''
         if start and self.parser is None:
             self.parser = self.parser_class(kind=1)
             self.read()
             return self
-            
+
     def parsedata(self, data):
         self.parser.execute(data, len(data))
         if self.parser.is_message_complete():
@@ -985,33 +990,41 @@ class HttpResponse(IORespone):
             if 'set-cookie' in headers:
                 self.cookies.extract_cookies(self, self.request)
             return self.request.conclude_response(self)
-        
+
     def close(self):
         self.socket.close()
-        
+
     def info(self):
         return self.headers
 
     def getheaders(self, name):
         self.headers.get(name)
-        
-    
-class HttpConnection(httpclient.HTTPConnection):    
+
+
+class HttpConnection(httpclient.HTTPConnection):
+    '''Http Connection class'''
     def __init__(self, pool):
-        super(HttpConnection, self).__init__(pool.host, pool.port,
-                                             timeout=pool.timeout)
-        
+        if ispy3k:
+            super(HttpConnection, self).__init__(pool.host, pool.port,
+                                                 timeout=pool.timeout)
+        else:
+            httpclient.HTTPConnection.__init__(self, pool.host, pool.port,
+                                               timeout=pool.timeout)
+
     @property
     def is_async(self):
         return self.socket.timeout == 0
 
 
-class HttpsConnection(HttpConnection):
-    pass
+class HttpsConnection(httpclient.HTTPSConnection):
+
+    @property
+    def is_async(self):
+        return self.socket.timeout == 0
 
 
 class HttpRequest(object):
-    '''Http client request initialized by a call to the
+    '''Http client request initialised by a call to the
 :class:`HttpClient.request` method.
 
 .. attribute:: client
@@ -1025,14 +1038,14 @@ class HttpRequest(object):
     response_class = HttpResponse
     default_charset = 'latin-1'
     '''Default is charset is "iso-8859-1" (latin-1) from section 3.7.1
-http://www.ietf.org/rfc/rfc2616.txt 
+http://www.ietf.org/rfc/rfc2616.txt
     '''
-    
+
     _tunnel_host = None
     _has_proxy = False
     def __init__(self, client, url, method, data=None, files=None,
                  charset=None, encode_multipart=True, multipart_boundary=None,
-                 headers=None, timeout=None, hooks=None, 
+                 headers=None, timeout=None, hooks=None,
                  history=None, allow_redirects=False,
                  max_redirects=10, **kwargs):
         self.client = client
@@ -1050,7 +1063,7 @@ http://www.ietf.org/rfc/rfc2616.txt
                 self.add_header(key, value)
         self.charset = charset or self.default_charset
         self._encode(method, data, files, encode_multipart, multipart_boundary)
-        
+
     def get_response(self, history=None):
         '''Build a :class:`HttpResponse` form a ``connection`` instance.'''
         self.connection = connection = self.client.get_connection(self)
@@ -1059,7 +1072,7 @@ http://www.ietf.org/rfc/rfc2616.txt
         response.history = history
         response.request = self
         return response.begin(True)
-    
+
     @property
     def selector(self):
         if self.has_proxy():
@@ -1068,22 +1081,22 @@ http://www.ietf.org/rfc/rfc2616.txt
             return '%s?%s' % (self.path,self.query)
         else:
             return self.path
-    
+
     def get_type(self):
         return self.type
-    
+
     def host_and_port(self):
         return host_and_port(self.host)
-    
+
     def has_header(self, key):
         return key in self.headers
-    
+
     def add_header(self, key, value):
         self.headers[header_field(key)] = value
-        
+
     def add_unredirected_header(self, key, value):
         self.headers[header_field(key)] = value
-    
+
     def set_proxy(self, host, type):
         if self.type == 'https' and not self._tunnel_host:
             self._tunnel_host = self.host
@@ -1091,19 +1104,19 @@ http://www.ietf.org/rfc/rfc2616.txt
             self.type = type
             self._has_proxy = True
         self.host = host
-    
+
     def has_proxy(self):
         return self._has_proxy
-    
+
     @property
     def key(self):
         host, port = self.host_and_port()
         return (self.type, host, port)
-    
+
     def is_unverifiable(self):
         # unverifiable == redirected
-        return bool(self.history)          
-            
+        return bool(self.history)
+
     def _encode(self, method, data, files,
                 encode_multipart, multipart_boundary):
         if not method:
@@ -1128,7 +1141,7 @@ http://www.ietf.org/rfc/rfc2616.txt
                 body = to_bytes(data, self.charset)
             self.headers['Content-Type'] = content_type
         self.body = body
-        
+
     def _encode_url(self, body):
         query = self.query
         if isinstance(body, dict):
@@ -1136,7 +1149,7 @@ http://www.ietf.org/rfc/rfc2616.txt
                 query = parse_qs(query)
                 query.update(body)
             else:
-                query = body    
+                query = body
             query = urlencode(query)
         elif body:
             if query:
@@ -1147,16 +1160,16 @@ http://www.ietf.org/rfc/rfc2616.txt
                 query = body
         self.query = query
         self.full_url = self._get_full_url()
-            
+
     def _get_full_url(self):
         return urlunparse((self.type, self.host, self.path,
                                    self.params, self.query, ''))
-        
+
     def get_full_url(self):
         '''Needed so that this class is compatible with the Request class
 in the http.client module in the standard library.'''
         return self.full_url
-    
+
     def conclude_response(self, response):
         headers = response.headers
         if response.status_code in REDIRECT_CODES and 'location' in headers and\
@@ -1198,10 +1211,10 @@ in the http.client module in the standard library.'''
                                     history=history)
         else:
             return self.on_response(response)
-        
+
     def on_response(self, response):
         return response
-            
+
 
 class HttpConnectionPool(object):
     '''Maintains a pool of connections'''
@@ -1215,8 +1228,8 @@ class HttpConnectionPool(object):
         self._created_connections = 0
         self._available_connections = []
         self._in_use_connections = set()
-        self.https_params = params 
-        
+        self.https_params = params
+
     def get_connection(self):
         "Get a connection from the pool"
         try:
@@ -1243,11 +1256,11 @@ class HttpConnectionPool(object):
         "Releases the connection back to the pool"
         self._in_use_connections.remove(connection)
         self._available_connections.append(connection)
-    
+
     def remove(self, connection):
         self._in_use_connections.remove(connection)
-        
-    
+
+
 class HttpClient(object):
     '''A client for an HTTP server which handles a pool of synchronous
 or asynchronous connections.
@@ -1255,38 +1268,38 @@ The :attr:`key_file``, :attr:`cert_file`, :attr:`cert_reqs` and
 :attr:`ca_certs` parameters are only used if :mod:`ssl` is available
 and are fed into :meth:`ssl.wrap_socket` to upgrade the connection socket
 into an SSL socket.
-    
+
 .. attribute:: headers
 
     Default headers for this :class:`HttpClient`
-    
+
     Default: ``None``.
-    
+
 .. attribute:: cookies
 
     Default cookies for this :class:`HttpClient`
-    
+
     Default: ``None``.
-    
+
 .. attribute:: timeout
 
     Default timeout for the connecting sockets
-    
+
 .. attribute:: hooks
 
     Dictionary of event-handling hooks (idea from request_).
-    
+
 .. attribute:: encode_multipart
 
     Flag indicating if body data is encoded using the ``multipart/form-data``
     encoding by default.
-    
+
     Default: ``True``
-    
+
 .. attribute:: DEFAULT_HTTP_HEADERS
 
     Default headers for this :class:`HttpClient`
-    
+
 .. attribute:: proxy_info
 
     Dictionary of proxy servers for this client
@@ -1303,7 +1316,7 @@ into an SSL socket.
     # Default hosts not affected by proxy settings. This can be overwritten
     # by specifying the "no" key in the proxy_info dictionary
     no_proxy = set(('localhost', urllibr.localhost(), platform.node()))
-    
+
     def __init__(self, proxy_info=None, timeout=None, cache=None,
                  headers=None, encode_multipart=True, client_version=None,
                  multipart_boundary=None, max_connections=None,
@@ -1336,7 +1349,7 @@ into an SSL socket.
                                'cert_file': cert_file,
                                'cert_reqs': cert_reqs,
                                'ca_certs': ca_certs}
-        
+
     def get_headers(self, headers=None):
         '''Returns a :class:`Header` obtained from combining
 :attr:`DEFAULT_HTTP_HEADERS` with *headers*.'''
@@ -1344,7 +1357,7 @@ into an SSL socket.
         if headers:
             d.extend(headers)
         return d
-    
+
     def get(self, url, method=None, **kwargs):
         '''Sends a GET request and returns a :class:`HttpResponse`
 object.
@@ -1353,7 +1366,7 @@ object.
 :param \*\*kwargs: Optional arguments for the :meth:`request` method.
 '''
         return self.request(url, method='GET', **kwargs)
-    
+
     def post(self, url, method=None, **kwargs):
         '''Sends a POST request and returns a :class:`HttpResponse`
 object.
@@ -1362,7 +1375,7 @@ object.
 :param \*\*kwargs: Optional arguments for the :meth:`request` method.
 '''
         return self.request(url, method='POST', **kwargs)
-    
+
     def request(self, url, data=None, files=None, method=None, headers=None,
                 timeout=None, encode_multipart=None, allow_redirects=False,
                 hooks=None, cookies=None, history=None, **kwargs):
@@ -1405,7 +1418,7 @@ a :class:`HttpResponse` object.
                 cookies = cookiejar_from_dict(cookies)
             cookies.add_cookie_header(request)
         return request.get_response(history=history)
-    
+
     def _set_cookies(self, cookies):
         if cookies and not isinstance(cookies, CookieJar):
             cookies = cookiejar_from_dict(cookies)
@@ -1413,7 +1426,7 @@ a :class:`HttpResponse` object.
     def _get_cookies(self):
         return self._cookies
     cookies = property(_get_cookies, _set_cookies)
-    
+
     def get_connection(self, request, **kwargs):
         key = request.key
         pool = self.poolmap.get(key)
@@ -1432,13 +1445,13 @@ a :class:`HttpResponse` object.
         connection = pool.get_connection()
         connection.response_class = request.response_class
         return connection
-    
+
     def release_connection(self, req):
         key = req.key
         pool = self.poolmap.get(key)
         if pool:
             pool.remove(req.connection)
-        
+
     def post_process_response(self, req, response):
         protocol = req.type
         meth_name = protocol+"_response"
@@ -1446,7 +1459,7 @@ a :class:`HttpResponse` object.
             meth = getattr(processor, meth_name)
             response = meth(req, response)
         return response
-        
+
     def add_password(self, username, password, uri, realm=None):
         '''Add Basic HTTP Authentication to the opener'''
         if realm is None:
@@ -1455,7 +1468,7 @@ a :class:`HttpResponse` object.
             password_mgr = HTTPPasswordMgr()
         password_mgr.add_password(realm, uri, user, passwd)
         self._opener.add_handler(HTTPBasicAuthHandler(password_mgr))
-        
+
     def set_proxy(self, request):
         if request.type in self.proxy_info:
             hostonly, _ = splitport(request.host)
@@ -1510,10 +1523,10 @@ def encode_multipart_formdata(fields, boundary=None, charset=None):
     body = BytesIO()
     if boundary is None:
         boundary = choose_boundary()
-    
+
     if isinstance(fields, dict):
         fields = iteritems(fields)
-        
+
     for fieldname, value in fields:
         body.write(('--%s\r\n' % boundary).encode(charset))
 
@@ -1575,7 +1588,7 @@ class DictPropertyMixin(object):
     def __init__(self, data = None, properties = None):
         self.data = data or {}
         self.properties = properties or self.properties
-        
+
     def __getattr__(self, name):
         if name not in self.data:
             if name not in self.properties:
@@ -1583,16 +1596,16 @@ class DictPropertyMixin(object):
             else:
                 return None
         return self.data[name]
-    
-    
+
+
 class Authorization(DictPropertyMixin):
     """Represents an `Authorization` header sent by the client."""
 
     def __init__(self, auth_type, data=None):
         super(Authorization,self).__init__(data = data)
         self.type = auth_type
-        
-        
+
+
 def parse_authorization_header(value):
     """Parse an HTTP basic/digest authorization header transmitted by the web
 browser.  The return value is either `None` if the header was invalid or
@@ -1621,7 +1634,7 @@ not given, otherwise an :class:`Authorization` object.
             if not key in auth_map:
                 return
         return Authorization('digest', auth_map)
-    
+
 def http_date(epoch_seconds=None):
     """
     Formats the time to match the RFC1123 date format as specified by HTTP
@@ -1713,7 +1726,7 @@ def set_cookie(cookies, key, value='', max_age=None, expires=None, path='/',
         cookies[key]['secure'] = True
     if httponly:
         cookies[key]['httponly'] = True
-        
+
 class _ExtendedMorsel(Morsel):
     _reserved = {'httponly': 'HttpOnly'}
     _reserved.update(Morsel._reserved)
@@ -1729,8 +1742,8 @@ class _ExtendedMorsel(Morsel):
         if httponly:
             result += '; HttpOnly'
         return result
-    
-    
+
+
 def dump_cookie(key, value='', max_age=None, expires=None, path='/',
                 domain=None, secure=None, httponly=False, charset='utf-8',
                 sync_expires=True):
@@ -1789,11 +1802,11 @@ cc_delim_re = re.compile(r'\s*,\s*')
 
 
 class accept_content_type(object):
-    
+
     def __init__(self, values):
         self._all = {}
         self.update(values)
-        
+
     def update(self, values):
         if values:
             all = self._all
@@ -1806,7 +1819,7 @@ class accept_content_type(object):
                         all[a].append(b)
                     else:
                         all[a] = [b]
-    
+
     def __contains__(self, content_type):
         a, b = content_type.split('/')
         all = self._all
@@ -1820,7 +1833,7 @@ class accept_content_type(object):
             return True
         else:
             return False
-            
+
 
 def patch_vary_headers(response, newheaders):
     """\
@@ -1860,7 +1873,7 @@ def has_vary_header(response, header_query):
 class CacheControl(object):
     '''
     http://www.mnot.net/cache_docs/
-    
+
 .. attribute:: maxage
 
     Specifies the maximum amount of time that a representation will be
@@ -1873,8 +1886,8 @@ class CacheControl(object):
         self.private = private
         self.must_revalidate = must_revalidate
         self.proxy_revalidate = proxy_revalidate
-        self.nostore = nostore 
-        
+        self.nostore = nostore
+
     def __call__(self, headers):
         if self.nostore:
             headers['cache-control'] = 'no-store'
@@ -1890,5 +1903,4 @@ class CacheControl(object):
                 headers.add_header('cache-control', 'proxy-revalidate')
         else:
             headers['cache-control'] = 'no-cache'
-                
-        
+

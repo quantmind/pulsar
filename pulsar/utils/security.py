@@ -2,16 +2,19 @@
 Security related helpers such as secure password hashing tools.
 """
 from hashlib import sha1
+from uuid import uuid4
 import string
 from random import SystemRandom
 
-from .py2py3 import range
+from .httpurl import range, ascii_letters
 
-SALT_CHARS = string.letters + string.digits
+SALT_CHARS = ascii_letters + string.digits
 
 
 _sys_rng = SystemRandom()
 
+def gen_unique_id():
+    return str(uuid4())
 
 def gen_salt(length):
     """Generate a random string of SALT_CHARS with specified ``length``."""

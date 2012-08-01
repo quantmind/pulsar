@@ -55,7 +55,7 @@ values for the same key.
     def __init__(self, data = ()):
         if isinstance(data, dict):
             data = data.items()
-        key_to_list_mapping = ((k,aslist(v)) for k,v in data)
+        key_to_list_mapping = ((k, aslist(v)) for k, v in data)
         super(MultiValueDict, self).__init__(key_to_list_mapping)
 
     def __getitem__(self, key):
@@ -68,8 +68,9 @@ Raises KeyError if key is not found."""
     def __setitem__(self, key, value):
         if key in self:
             l = super(MultiValueDict, self).__getitem__(key)
-            # if value already there don't had it.
-            # I'm not sure this is the correct way of doing.
+            # if value already there don't add it.
+            # I'm not sure this is the correct way of doing thing but
+            # it makes sense not to have repeating items
             if value not in l:
                 l.append(value)
         else:
@@ -136,11 +137,7 @@ where value is the last item in the list associated with the key.
         return copy(self)
 
     def update(self, elem):
-        if isinstance(elem, MultiValueDict):
-            for key, values in elem.lists():
-                self.extend(key, values)
-        else:
-            if isinstance(elem,dict):
-                elem = elem.items()
-            for k,v in elem:
-                self[k] = v
+        if isinstance(elem, Mapping):
+            elem = elem.items()
+        for key, val in elem:
+            self.extend(key, aslist(val))
