@@ -19,7 +19,7 @@ def f2(a,**kwargs):
 
 
 class TestArityCheck(unittest.TestCase):
-    
+
     def testArity0(self):
         self.assertEqual(checkarity(f0,(3,4),{}),None)
         self.assertEqual(checkarity(f0,(3,),{}),
@@ -33,7 +33,7 @@ class TestArityCheck(unittest.TestCase):
                          '"f0" has missing "b" parameter.')
         self.assertEqual(checkarity(f0,(),{'a':3,'c':5, 'd':6}),
                          '"f0" takes 2 parameters. 3 given.')
-        
+
     def testArity1(self):
         self.assertEqual(checkarity(f1,(3,),{}),None)
         self.assertEqual(checkarity(f1,(3,4),{}),None)
@@ -46,7 +46,7 @@ class TestArityCheck(unittest.TestCase):
                          '"f1" does not accept "c" parameter.')
         self.assertEqual(checkarity(f1,(),{'a':3,'c':5, 'd':6}),
                          '"f1" takes at most 2 parameters. 3 given.')
-        
+
     def testArity2(self):
         self.assertEqual(checkarity(f2,(3,),{}),None)
         self.assertEqual(checkarity(f2,(3,),{'c':4}),None)
@@ -57,15 +57,16 @@ class TestArityCheck(unittest.TestCase):
         self.assertEqual(checkarity(f2,(4,5,6),{}),
                          '"f2" takes 1 positional parameters. 3 given.')
         self.assertEqual(checkarity(f2,(),{'a':3,'b':5}),None)
-        self.assertEqual(checkarity(f2,(),{'a':3,'c':5}),None)
+        self.assertEqual(checkarityf2,(),{'a':3,'c':5}),None)
         self.assertEqual(checkarity(f2,(),{'b':3,'c':5}),
                          '"f2" has missing "a" parameter.')
         self.assertEqual(checkarity(f2,(),{'a':3,'c':5,'d':6}),None)
- 
+
 
 class TestSystemInfo(unittest.TestCase):
-    
+
     def testMe(self):
         worker = get_actor()
         info = system.system_info(worker.pid)
         self.assertTrue(isinstance(info,dict))
+

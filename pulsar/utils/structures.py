@@ -1,10 +1,11 @@
 import sys
 import weakref
+from copy import copy
 from collections import *
 
 if sys.version_info < (2,7):
     from .fallbacks._collections import *
-    
+
 
 def isgenerator(value):
     return hasattr(value,'__iter__') and not hasattr(value, '__len__')
@@ -19,21 +20,21 @@ def aslist(value):
 
 
 class WeakList(object):
-    
+
     def __init__(self):
         self._list = []
-        
+
     def append(self, obj):
         if obj:
             self._list.append(weakref.ref(obj))
-        
+
     def remove(self, obj):
         wr = weakref.ref(obj)
         if wr in self._list:
             self._list.remove(wr)
             if wr not in self._list:
                 return obj
-        
+
     def __iter__(self):
         if self._list:
             ol = self._list
@@ -45,7 +46,7 @@ class WeakList(object):
                     yield obj
         else:
             raise StopIteration
-        
+
 
 class MultiValueDict(dict):
     """A subclass of dictionary customized to handle multiple
@@ -73,7 +74,7 @@ Raises KeyError if key is not found."""
                 l.append(value)
         else:
             super(MultiValueDict, self).__setitem__(key, [value])
-            
+
     def update(self, items):
         if isinstance(items, dict):
             items = iteritems(items)
@@ -89,10 +90,17 @@ Raises KeyError if key is not found."""
         except KeyError:
             return default
 
+    def pop(self, key, *arg):
+        if key in self:
+            l = super(MultiValueDict, self).pop(key)
+            return l[0] if len(l) == 1 else l
+        else:
+            return super(MultiValueDict, self).pop(key, *arg)
+
     def getlist(self, key):
         """Returns the list of values for the passed key."""
         return super(MultiValueDict, self).__getitem__(key)
-    
+
     def setlist(self, key, _list):
         if key in self:
             self.getlist(key).extend(_list)
@@ -126,7 +134,7 @@ where value is the last item in the list associated with the key.
 
     def copy(self):
         return copy(self)
-                    
+
     def update(self, elem):
         if isinstance(elem, MultiValueDict):
             for key, values in elem.lists():
