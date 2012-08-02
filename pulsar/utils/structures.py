@@ -52,11 +52,10 @@ class MultiValueDict(dict):
     """A subclass of dictionary customized to handle multiple
 values for the same key.
     """
-    def __init__(self, data = ()):
-        if isinstance(data, dict):
-            data = data.items()
-        key_to_list_mapping = ((k, aslist(v)) for k, v in data)
-        super(MultiValueDict, self).__init__(key_to_list_mapping)
+    def __init__(self, data=None):
+        super(MultiValueDict, self).__init__()
+        if data:
+            self.update(data)
 
     def __getitem__(self, key):
         """Returns the data value for this key. If the value is a list with
