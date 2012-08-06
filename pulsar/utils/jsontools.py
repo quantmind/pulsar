@@ -25,13 +25,13 @@ class JSONDateDecimalEncoder(json.JSONEncoder):
             return {'__date__':totimestamp(obj)}
         elif isinstance(obj, Decimal):
             return {'__decimal__':str(obj)}
-        elif hasattr(obj,'__dict__') and hasattr(obj,'__class__'):
-            d = obj.__dict__.copy()
-            d['__class__'] = obj.__class__.__name__
-            return d
+        #elif hasattr(obj,'__dict__') and hasattr(obj,'__class__'):
+        #    d = obj.__dict__.copy()
+        #    d['__class__'] = obj.__class__.__name__
+        #    return d
         else:
             raise ValueError("%r is not JSON serializable" % (obj,))
-        
+
 def date_decimal_hook(dct):
     if '__datetime__' in dct:
         return todatetime(dct['__datetime__'])
@@ -41,8 +41,8 @@ def date_decimal_hook(dct):
         return Decimal(dct['__decimal__'])
     else:
         return dct
-    
-    
+
+
 DefaultJSONEncoder = JSONDateDecimalEncoder
 DefaultJSONHook = date_decimal_hook
 
