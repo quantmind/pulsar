@@ -42,12 +42,15 @@ import mimetypes
 import platform
 import codecs
 import socket
+import traceback
+from base64 import b64encode, b64decode
 from uuid import uuid4
 from datetime import datetime, timedelta
 from email.utils import formatdate
 from io import BytesIO
 import zlib
 from collections import deque
+from copy import copy
 
 ispy3k = sys.version_info >= (3,0)
 
@@ -1023,7 +1026,26 @@ class HttpsConnection(httpclient.HTTPSConnection):
         return self.socket.timeout == 0
 
 
-class HttpRequest(object):
+class HttpBase(object):
+    HOOKS = ('args', 'pre_request', 'pre_send', 'post_request', 'response')
+
+    def register_hook(self, event, hook):
+        '''Register an event hook'''
+        self.hooks[event].append(hook)
+
+    def dispatch_hook(self, key, hooks, hook_data):
+        """Dispatches a hook dictionary on a given piece of data."""
+        if hooks and key in hooks:
+            for hook in hooks[key]:
+                try:
+                    _hook_data = hook(hook_data)
+                    if _hook_data is not None:
+                        hook_data = _hook_data
+                except Exception:
+                    traceback.print_exc()
+
+
+class HttpRequest(HttpBase):
     '''Http client request initialised by a call to the
 :class:`HttpClient.request` method.
 
@@ -1062,7 +1084,16 @@ http://www.ietf.org/rfc/rfc2616.txt
             for key, value in headers:
                 self.add_header(key, value)
         self.charset = charset or self.default_charset
-        self._encode(method, data, files, encode_multipart, multipart_boundary)
+        if not method:
+            method = 'POST' if data else 'GET'
+        else:
+            method = method.upper()
+        self.method = method
+        self.data = data if data is not None else {}
+        self.files = files
+        # Pre-request hook.
+        r = self.dispatch_hook('pre_request', self.hooks, self)
+        self.encode(encode_multipart, multipart_boundary)
 
     def get_response(self, history=None):
         '''Build a :class:`HttpResponse` form a ``connection`` instance.'''
@@ -1117,28 +1148,22 @@ http://www.ietf.org/rfc/rfc2616.txt
         # unverifiable == redirected
         return bool(self.history)
 
-    def _encode(self, method, data, files,
-                encode_multipart, multipart_boundary):
-        if not method:
-            method = 'POST' if body else 'GET'
-        else:
-            method = method.upper()
-        self.method = method
-        self.files = None
+    def encode(self, encode_multipart, multipart_boundary):
         body = None
-        if method in ENCODE_URL_METHODS:
-            self._encode_url(data)
+        if self.method in ENCODE_URL_METHODS:
+            self.files = None
+            self._encode_url(self.data)
         else:
             content_type = 'application/x-www-form-urlencoded'
-            if isinstance(data, (dict, list, tuple)):
+            if isinstance(self.data, (dict, list, tuple)):
                 if encode_multipart:
-                    body, content_type = encode_multipart_formdata(data,
+                    body, content_type = encode_multipart_formdata(self.data,
                                                     boundary=multipart_boundary,
                                                     charset=self.charset)
                 else:
-                    body = urlencode(data)
-            elif data:
-                body = to_bytes(data, self.charset)
+                    body = urlencode(self.data)
+            elif self.data:
+                body = to_bytes(self.data, self.charset)
             self.headers['Content-Type'] = content_type
         self.body = body
 
@@ -1261,17 +1286,14 @@ class HttpConnectionPool(object):
         self._in_use_connections.remove(connection)
 
 
-class HttpClient(object):
-    '''A client for an HTTP server which handles a pool of synchronous
+class HttpClient(HttpBase):
+    '''A client for an HTTP/HTTPS server which handles a pool of synchronous
 or asynchronous connections.
-The :attr:`key_file``, :attr:`cert_file`, :attr:`cert_reqs` and
-:attr:`ca_certs` parameters are only used if :mod:`ssl` is available
-and are fed into :meth:`ssl.wrap_socket` to upgrade the connection socket
-into an SSL socket.
 
 .. attribute:: headers
 
-    Default headers for this :class:`HttpClient`
+    Default headers for this :class:`HttpClient`. If supplied, it must be an
+    iterable over two-elements tuple.
 
     Default: ``None``.
 
@@ -1303,6 +1325,11 @@ into an SSL socket.
 .. attribute:: proxy_info
 
     Dictionary of proxy servers for this client
+
+The :attr:`key_file``, :attr:`cert_file`, :attr:`cert_reqs` and
+:attr:`ca_certs` parameters are only used if :mod:`ssl` is available
+and are fed into :meth:`ssl.wrap_socket` to upgrade the connection socket
+into an SSL socket.
 '''
     request_class = HttpRequest
     client_version = 'Python-httpurl'
@@ -1333,10 +1360,7 @@ into an SSL socket.
         dheaders['user-agent'] = self.client_version
         if headers:
             dheaders.update(headers)
-        self.hooks = {'pre_request':[],
-                      'pre_send':[],
-                      'post_request':[],
-                      'response':[]}
+        self.hooks = dict(((event, []) for event in self.HOOKS))
         self.DEFAULT_HTTP_HEADERS = dheaders
         self.proxy_info = dict(proxy_info or ())
         if not self.proxy_info and self.trust_env:
@@ -1392,13 +1416,10 @@ a :class:`HttpResponse` object.
         # Build default headers for this client
         headers = self.get_headers(headers)
         if hooks:
-            new_hooks = hooks
-            for k, hs in self.hooks.items():
-                if k in hooks:
-                    hs = list(hs)
-                    hs.extend(hooks[k])
-                new_hooks[k] = hs
-            hooks = new_hooks
+            chooks = dict(((e, copy(h)) for e, h in iteritems(self.hooks)))
+            for e, h in iteritems(hooks):
+                chooks[e].append(h)
+            hooks = chooks
         else:
             hooks = self.hooks
         encode_multipart = encode_multipart if encode_multipart is not None\
@@ -1477,6 +1498,62 @@ a :class:`HttpResponse` object.
                 p = urlparse(self.proxy_info[request.type])
                 request.set_proxy(p.netloc, p.scheme)
 
+
+###############################################    AUTH
+class Auth(object):
+    """Base class that all auth implementations derive from"""
+    type = None
+    def __call__(self, r):
+        raise NotImplementedError('Auth hooks must be callable.')
+
+    def authenticated(self, *args, **kwargs):
+        return False
+
+    def __str__(self):
+        return self.__repr__()
+
+
+class HTTPBasicAuth(Auth):
+    """Attaches HTTP Basic Authentication to the given Request object."""
+    def __init__(self, username, password):
+        self.username = username
+        self.password = password
+
+    @property
+    def type(self):
+        return 'basic'
+
+    def __call__(self, request):
+        request.headers['Authorization'] = basic_auth_str(self.username,
+                                                          self.password)
+
+    def authenticated(self, username, password):
+        return username==self.username and password==self.password
+
+    def __repr__(self):
+        return 'Basic: %s' % self.username
+
+
+class HTTPDigestAuth(Auth):
+    """Attaches HTTP Digest Authentication to the given Request object."""
+    def __init__(self, username, password):
+        self.username = username
+        self.password = password
+
+    @property
+    def type(self):
+        return 'digest'
+
+    def __call__(self, request):
+        request.register_hook('response', self.handle_401)
+
+    def __repr__(self):
+        return 'Digest: %' % self.username
+
+    def handle_401(self):
+        pass
+
+
 ###############################################    UTILITIES, ENCODERS, PARSERS
 def get_environ_proxies():
     """Return a dict of environment proxies. From requests_."""
@@ -1494,10 +1571,14 @@ def get_environ_proxies():
     proxies = [(key, get_proxy(key + '_proxy')) for key in proxy_keys]
     return dict([(key, val) for (key, val) in proxies if val])
 
+def addslash(url):
+    '''Add a slash at the beginning of *url*.'''
+    if not url.startswith('/'):
+        url = '/%s' % url
+    return url
+
 def choose_boundary():
-    """
-    Our embarassingly-simple replacement for mimetools.choose_boundary.
-    """
+    """Our embarassingly-simple replacement for mimetools.choose_boundary."""
     return uuid4().hex
 
 def get_content_type(filename):
@@ -1582,37 +1663,18 @@ def parse_dict_header(value):
         result[name] = value
     return result
 
+def basic_auth_str(username, password):
+    """Returns a Basic Auth string."""
+    b64 = b64encode(('%s:%s' % (username, password)).encode('latin1'))
+    return 'Basic ' + b64.strip().decode('latin1')
 
-class DictPropertyMixin(object):
-    properties = ()
-    def __init__(self, data = None, properties = None):
-        self.data = data or {}
-        self.properties = properties or self.properties
-
-    def __getattr__(self, name):
-        if name not in self.data:
-            if name not in self.properties:
-                raise AttributeError
-            else:
-                return None
-        return self.data[name]
-
-
-class Authorization(DictPropertyMixin):
-    """Represents an `Authorization` header sent by the client."""
-
-    def __init__(self, auth_type, data=None):
-        super(Authorization,self).__init__(data = data)
-        self.type = auth_type
-
-
-def parse_authorization_header(value):
+def parse_authorization_header(value, charset='utf-8'):
     """Parse an HTTP basic/digest authorization header transmitted by the web
 browser.  The return value is either `None` if the header was invalid or
-not given, otherwise an :class:`Authorization` object.
+not given, otherwise an :class:`Auth` object.
 
 :param value: the authorization header to parse.
-:return: a :class:`Authorization` object or `None`."""
+:return: a :class:`Auth` or `None`."""
     if not value:
         return
     try:
@@ -1622,18 +1684,18 @@ not given, otherwise an :class:`Authorization` object.
         return
     if auth_type == 'basic':
         try:
-            username, password = auth_info.decode('base64').split(':', 1)
+            up = b64decode(auth_info.encode('latin-1')).decode(charset)
+            username, password = up.split(':', 1)
         except Exception as e:
             return
-        return Authorization('basic', {'username': username,
-                                       'password': password})
+        return HTTPBasicAuth(username, password)
     elif auth_type == 'digest':
         auth_map = parse_dict_header(auth_info)
         for key in 'username', 'realm', 'nonce', 'uri', 'nc', 'cnonce', \
                    'response':
             if not key in auth_map:
                 return
-        return Authorization('digest', auth_map)
+        return HTTPDigestAuth(auth_map)
 
 def http_date(epoch_seconds=None):
     """

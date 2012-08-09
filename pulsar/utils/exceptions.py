@@ -1,7 +1,7 @@
 
 class PulsarException(Exception):
     '''Base class of all Pulsar Exception'''
-    
+
 class Timeout(PulsarException):
     '''Raised when a timeout occurs'''
     def __init__(self, msg, timeout=None):
@@ -21,12 +21,12 @@ class PulsarInternetException(PulsarException):
 
 class MailboxError(PulsarException):
     pass
-    
+
 class ActorAlreadyStarted(PulsarException):
     '''A :class:`PulsarException` raised when trying to start an actor already started'''
-    
+
 class HaltServer(PulsarInternetException):
-    
+
     def __init__(self, reason, signal=None):
         super(HaltServer,self).__init__(reason)
         self.signal = signal
@@ -38,18 +38,18 @@ class CommandError(PulsarException):
 
 
 class CommandNotFound(PulsarException):
-    
+
     def __init__(self, name):
         super(CommandNotFound, self).__init__(
                             'Command "%s" not available' % name)
-        
+
 class AuthenticationError(PulsarException):
     pass
 
 
 class ConnectionError(PulsarInternetException):
     pass
-    
+
 
 class CouldNotParse(PulsarInternetException):
     pass
@@ -78,17 +78,19 @@ class NotRegisteredWithServer(PulsarException):
 ##################################################################### HTTP
 class HttpException(Exception):
     status = 500
-    def __init__(self, msg='', status=None, handler=None, strict=False):
+    def __init__(self, msg='', status=None, handler=None, strict=False,
+                 headers=None):
         self.status = status or self.status
         self.handler = handler
         self.strict = strict
+        self.headers = headers
         super(HttpException,self).__init__(msg)
 
 
 class Http404(HttpException):
     status = 404
 
-    
+
 class HttpRedirect(HttpException):
     status = 302
     def __init__(self, location):
