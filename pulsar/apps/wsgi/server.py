@@ -131,6 +131,7 @@ def chunk_encoding(chunk, final=False):
     head = ("%X\r\n" % len(chunk)).encode('utf-8')
     return head + chunk + b'\r\n'
 
+
 class HttpResponse(AsyncResponse):
     '''Handle one HTTP response'''
     _status = None

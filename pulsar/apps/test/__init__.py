@@ -80,6 +80,7 @@ from .case import *
 from .plugins.base import *
 from .loader import *
 from .utils import *
+from .wsgi import *
 
 
 class ExitTest(Exception):

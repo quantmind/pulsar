@@ -1397,6 +1397,7 @@ and are fed into :meth:`ssl.wrap_socket` to upgrade the connection socket
 into an SSL socket.
 '''
     request_class = HttpRequest
+    connection_pool = HttpConnectionPool
     client_version = 'Python-httpurl'
     DEFAULT_HTTP_HEADERS = Headers([
             ('Connection', 'Keep-Alive'),
@@ -1524,9 +1525,9 @@ a :class:`HttpResponse` object.
                     params.update(kwargs)
             else:
                 params = kwargs
-            pool = HttpConnectionPool(self.max_connections,
-                                      self.timeout, *key,
-                                      **params)
+            pool = self.connection_pool(self.max_connections,
+                                        self.timeout, *key,
+                                        **params)
             self.poolmap[key] = pool
         connection = pool.get_connection()
         connection.response_class = request.response_class
