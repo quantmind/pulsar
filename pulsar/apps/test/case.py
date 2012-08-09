@@ -31,15 +31,15 @@ def test_method(cls, method):
         return cls(method)
     except ValueError:
         return None
-    
+
 
 class TestRequest(object):
     '''A class which wraps a test case class and runs all its test functions
-    
+
 .. attribute:: testcls
 
     A :class:`unittest.TestCase` class to be run on this request.
-    
+
 .. attribute:: tag
 
     A string indicating the tag associated with :attr:`testcls`.
@@ -47,18 +47,18 @@ class TestRequest(object):
     def __init__(self, testcls, tag):
         self.testcls = testcls
         self.tag = tag
-        
+
     def __repr__(self):
         return self.testcls.__name__
     __str__ = __repr__
-        
+
     def start(self, worker):
         '''Run all test functions from the :attr:`testcls` using the
 following algorithm:
 
 * Run the class method ``setUpClass`` of :attr:`testcls` if defined.
 * Call :meth:`run_test` for each test functions in :attr:`testcls`
-* Run the class method ``tearDownClass`` of :attr:`testcls` if defined.  
+* Run the class method ``tearDownClass`` of :attr:`testcls` if defined.
 '''
         # Reset the runner
         worker.app.local.pop('runner', None)
@@ -66,43 +66,44 @@ following algorithm:
         testcls = self.testcls
         testcls.tag = self.tag
         inject_async_assert(testcls)
+        testcls.cfg = worker.cfg
         all_tests = runner.loadTestsFromTestCase(testcls)
-        
+
         if all_tests.countTestCases():
             skip_tests = getattr(testcls, "__unittest_skip__", False)
             should_stop = False
             test_cls = test_method(testcls, 'setUpClass')
             if test_cls and not skip_tests:
                 outcome = run_test_function(testcls,
-                                            getattr(testcls,'setUpClass'))                
+                                            getattr(testcls,'setUpClass'))
                 yield outcome
                 should_stop = self.add_failure(test_cls, runner, outcome.result)
-    
-            if not should_stop:            
+
+            if not should_stop:
                 for test in all_tests:
                     worker.log.debug('Start %s test', test)
                     runner.startTest(test)
                     yield self.run_test(test, runner)
                     runner.stopTest(test)
-                
+
             test_cls = test_method(testcls, 'tearDownClass')
             if test_cls and not skip_tests:
                 outcome = run_test_function(testcls,getattr(testcls,
                                                         'tearDownClass'))
                 yield outcome
                 self.add_failure(test_cls, runner, outcome.result)
-            
+
             # Clear errors
             yield CLEAR_ERRORS
-        
+
         # send runner result to monitor
         yield worker.send(worker.monitor, 'test_result', testcls.tag,
                           testcls, runner.result)
-        
+
     def run_test(self, test, runner):
         '''\
 Run a *test* function using the following algorithm
-        
+
 * Run :meth:`_pre_setup` method if available in :attr:`testcls`.
 * Run :meth:`setUp` method in :attr:`testcls`.
 * Run the test function.
@@ -120,12 +121,12 @@ Run a *test* function using the following algorithm
                                   '__unittest_skip_why__', ''))
                 runner.addSkip(test, reason)
                 raise StopIteration()
-            
+
             if hasattr(test,'_pre_setup'):
                 outcome = run_test_function(test,test._pre_setup)
                 yield outcome
                 success = not self.add_failure(test, runner, outcome.result)
-            
+
             if success:
                 outcome = run_test_function(test, test.setUp)
                 yield outcome
@@ -142,22 +143,22 @@ Run a *test* function using the following algorithm
                         success = False
                 else:
                     success = False
-                    
+
             if hasattr(test,'_post_teardown'):
                 outcome = run_test_function(test,test._post_teardown)
                 yield outcome
                 if self.add_failure(test, runner, outcome.result):
                     success = False
-        
+
         except StopIteration:
             success = False
         except Exception as e:
             self.add_failure(test, runner, e)
             success = False
-        
+
         if success:
             runner.addSuccess(test)
-        
+
     def add_failure(self, test, runner, failure):
         if is_failure(failure):
             for trace in failure:

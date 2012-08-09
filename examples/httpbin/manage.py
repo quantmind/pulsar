@@ -155,9 +155,10 @@ class HttpBin(object):
                                  content_type=content_type,
                                  response_headers=headers)
 
-    def render(self, body, title='Pulsar Http', status=200, headers=None):
+    def render(self, body, title=None, status=200, headers=None):
         template = self.load('template.html')
-        html = (template.format({'body': body, 'title': title})).encode('utf-8')
+        title = title or 'Pulsar HttpBin'
+        html = (template % (title, body)).encode('utf-8')
         return self.response(html, status=status, content_type='text/html',
                              headers=headers)
 

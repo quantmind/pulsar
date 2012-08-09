@@ -3,7 +3,7 @@ adapted and modified for pulsar.
 
 Original Gunicorn Licence
 
-This file is part of gunicorn released under the MIT license. 
+This file is part of gunicorn released under the MIT license.
 See the NOTICE for more information.
 
 .. _gunicorn: http://gunicorn.org/
@@ -21,6 +21,7 @@ from .httpurl import is_string_or_native_string, to_string, to_bytes
 
 
 __all__ = ['Config',
+           'SimpleSetting',
            'Setting',
            'defaults',
            'ordered_settings',
@@ -33,7 +34,7 @@ __all__ = ['Config',
            'make_options']
 
 class DefaultSettings:
-    
+
     def __init__(self):
         # port for serving a socket
         self.PORT = 8060
@@ -45,7 +46,7 @@ class DefaultSettings:
         self.TIMEOUT = 30
         # mailbox clients blocking
         self.message_timeout = 3
-    
+
 defaults = DefaultSettings()
 KNOWN_SETTINGS = {}
 KNOWN_SETTINGS_ORDER = []
@@ -53,12 +54,12 @@ KNOWN_SETTINGS_ORDER = []
 
 def def_start_server(server):
     pass
-    
+
 
 def def_pre_exec(server):
     pass
-    
-    
+
+
 def default_process(worker):
     pass
 
@@ -73,19 +74,19 @@ def def_post_request(worker, req):
 
 def def_worker_exit(worker):
     pass
-    
-    
+
+
 def wrap_method(func):
     def _wrapped(instance, *args, **kwargs):
         return func(*args, **kwargs)
     return _wrapped
 
-    
+
 def ordered_settings():
     for name in KNOWN_SETTINGS_ORDER:
         yield KNOWN_SETTINGS[name]
-        
-        
+
+
 def make_settings(apps=None, include=None, exclude=None):
     '''Creates a dictionary of available settings for given
 applications *apps*.
@@ -117,7 +118,7 @@ def make_options():
         return (g_settings[k].section, g_settings[k].order)
 
     opts = []
-    
+
     for k in keys:
         setting = g_settings[k]
         if not setting.flags:
@@ -158,17 +159,17 @@ attribute by exposing the :attr:`Setting.name` as attribute.
         self.description = description or 'Pulsar server'
         self.epilog = epilog or 'Have fun!'
         self.version = version or __version__
-        
+
     def __getstate__(self):
         return self.__dict__.copy()
-    
+
     def __setstate__(self, state):
         for k,v in state.items():
             self.__dict__[k] = v
-    
+
     def __getattr__(self, name):
         return self.get(name)
-    
+
     def __setattr__(self, name, value):
         if name != "settings" and name in self.settings:
             raise AttributeError("Invalid access!")
@@ -180,7 +181,7 @@ attribute by exposing the :attr:`Setting.name` as attribute.
                 return default
             raise AttributeError("No configuration setting for: %s" % name)
         return self.settings[name].get()
-            
+
     def set(self, name, value):
         if name not in self.settings:
             raise AttributeError("No configuration setting for: %s" % name)
@@ -191,7 +192,7 @@ attribute by exposing the :attr:`Setting.name` as attribute.
 settings via the :meth:`Setting.add_argument`.
 
 :rtype: an instance of :class:`argparse.ArgumentParser`.
-        
+
 .. _argparser: http://docs.python.org/dev/library/argparse.html
 '''
         kwargs = {
@@ -211,7 +212,7 @@ settings via the :meth:`Setting.add_argument`.
     def on_start(self):
         for sett in self.settings.values():
             sett.on_start()
-    
+
     @property
     def workers(self):
         return self.settings['workers'].get()
@@ -221,19 +222,19 @@ settings via the :meth:`Setting.add_argument`.
         bind = self.settings['bind']
         if bind:
             return system.parse_address(to_bytes(bind.get()))
-        
+
     @property
     def uid(self):
         user = self.settings.get('user')
         if user:
             return system.get_uid(user.get())
-        
+
     @property
     def gid(self):
         group = self.settings.get('group')
         if group:
             return system.get_gid(group.get())
-        
+
     @property
     def proc_name(self):
         pn = self.settings.get('proc_name')
@@ -245,8 +246,8 @@ settings via the :meth:`Setting.add_argument`.
             pn = self.settings.get('default_proc_name')
             if pn:
                 return pn.get()
-            
-            
+
+
 class SettingMeta(type):
     '''A metaclass which collects all setting classes and put them
 in the global ``KNOWN_SETTINGS`` list.'''
@@ -254,12 +255,12 @@ in the global ``KNOWN_SETTINGS`` list.'''
         super_new = super(SettingMeta, cls).__new__
         parents = [b for b in bases if isinstance(b, SettingMeta)]
         if not parents or attrs.pop('virtual',False):
-            return super_new(cls, name, bases, attrs)            
-    
+            return super_new(cls, name, bases, attrs)
+
         attrs["order"] = len(KNOWN_SETTINGS)
         val = attrs.get("validator")
         attrs["validator"] = wrap_method(val) if val else None
-        
+
         new_class = super_new(cls, name, bases, attrs)
         new_class.fmt_desc(attrs['desc'] or '')
         if not new_class.name:
@@ -277,32 +278,59 @@ in the global ``KNOWN_SETTINGS`` list.'''
         setattr(cls, "desc", desc)
         lines = desc.splitlines()
         setattr(cls, "short", '' if not lines else lines[0])
-        
-        
+
+
+class SettingBase(object):
+    name = None
+    '''The unique name used to access this setting.'''
+    validator = None
+    '''Validator for this setting. It provided it must be a fucntion
+accepting one positional argument, the value to validate.'''
+    value = None
+    '''The actual value for this setting.'''
+    def __str__(self):
+        return '{0} ({1})'.format(self.name, self.value)
+    __repr__ = __str__
+
+    def set(self, val):
+        '''Set *val* as the value in this :class:`Setting`.'''
+        if hasattr(self.validator,'__call__'):
+            val = self.validator(val)
+        self.value = val
+
+    def get(self):
+        return self.value
+
+    def on_start(self):
+        '''Called when pulsar server starts. It can be used to perform
+custom initialization for this :class:`Setting`.'''
+        pass
+
+
+class SimpleSetting(SettingBase):
+
+    def __init__(self, name, value):
+        self.name = name
+        self.value = value
+
+
 # This works for Python 2 and Python 3
-class Setting(SettingMeta('BaseSettings', (object,), {'virtual': True})):
+class Setting(SettingMeta('BaseSettings', (SettingBase,), {'virtual': True})):
     '''A configuration parameter for pulsar. Parameters can be specified
 on the command line or on a config file.'''
     virtual = True
     '''If set to ``True`` the settings won't be loaded and it can be only used
 as base class for other settings.'''
-    name = None
-    '''The unique name used to access this setting.'''
     nargs = None
     '''For positional arguments. Same usage as argparse.'''
     app = None
     '''Setting for a specific :class:`Application`.'''
-    value = None
-    '''The actual value for this setting.'''
     section = None
     '''Setting section, used for creating documentation.'''
     flags = None
     '''List of options strings, e.g. ``[-f, --foo]``.'''
     choices = None
     '''Restrict the argument to the choices provided.'''
-    validator = None
-    '''Validator for this setting. It provided it must be a fucntion
-accepting one positional argument, the value to validate.'''
     type = None
     meta = None
     action = None
@@ -310,7 +338,7 @@ accepting one positional argument, the value to validate.'''
     '''Default value'''
     short = None
     desc = None
-    
+
     def __init__(self):
         if self.default is not None:
             self.set(self.default)
@@ -318,21 +346,17 @@ accepting one positional argument, the value to validate.'''
         self.desc = self.desc or self.short
         if self.app and not self.section:
             self.section = self.app
-    
+
     def __getstate__(self):
         d = self.__dict__.copy()
         return d
-    
-    def __str__(self):
-        return '{0} ({1})'.format(self.name,self.value)
-    __repr__ = __str__
-        
+
     def add_argument(self, parser):
         '''Add itself to the argparser.'''
         kwargs = {'nargs':self.nargs}
         if self.type and self.type != 'string':
             kwargs["type"] = self.type
-            
+
         if self.flags:
             args = tuple(self.flags)
             kwargs.update({"dest": self.name,
@@ -349,25 +373,11 @@ accepting one positional argument, the value to validate.'''
         else:
             # Not added to argparser
             return
-        
+
         parser.add_argument(*args, **kwargs)
-    
+
     def copy(self):
         return copy.copy(self)
-    
-    def get(self):
-        return self.value
-    
-    def set(self, val):
-        '''Set *val* as the value in this :class:`Setting`.'''
-        if hasattr(self.validator,'__call__'):
-            val = self.validator(val)
-        self.value = val
-        
-    def on_start(self):
-        '''Called when pulsar server starts. It can be used to perform
-custom initialization for this :class:`Setting`.'''
-        pass
 
 
 def validate_bool(val):
@@ -439,11 +449,11 @@ class ConfigFile(Setting):
     default = 'config.py'
     desc = """\
         The path to a Pulsar config file.
-        
+
         Only has an effect when specified on the command line or as part of an
-        application specific configuration.    
+        application specific configuration.
         """
-        
+
 
 class Workers(Setting):
     name = "workers"
@@ -454,7 +464,7 @@ class Workers(Setting):
     default = 1
     desc = """\
         The number of worker process for handling requests.
-        
+
 If you are using a multi-process concurrency, a number in the
 the 2-4 x $(NUM_CORES) range should be good. If you are using threads this
 number can be higher."""
@@ -468,7 +478,7 @@ class Concurrency(Setting):
     desc = """\
         The type of concurrency to use: ``process`` or ``thread``.
         """
-        
+
 
 class MaxRequests(Setting):
     name = "max_requests"
@@ -479,11 +489,11 @@ class MaxRequests(Setting):
     default = 0
     desc = """\
         The maximum number of requests a worker will process before restarting.
-        
+
         Any value greater than zero will limit the number of requests a work
         will process before automatically restarting. This is a simple method
         to help limit the damage of memory leaks.
-        
+
         If this is set to zero (the default) then the automatic worker
         restarts are disabled.
         """
@@ -501,11 +511,11 @@ class Backlog(Setting):
         Exceeding this number results in the client getting an error when
         attempting to connect. It should only affect servers under significant
         load.
-        
-        Must be a positive integer. Generally set in the 64-2048 range.    
+
+        Must be a positive integer. Generally set in the 64-2048 range.
         """
-        
-        
+
+
 class Timeout(Setting):
     name = "timeout"
     section = "Worker Processes"
@@ -515,7 +525,7 @@ class Timeout(Setting):
     default = 30
     desc = """\
         Workers silent for more than this many seconds are killed and restarted.
-        
+
         Generally set to thirty seconds. Only set this noticeably higher if
         you're sure of the repercussions for sync workers. For the non sync
         workers it just means that the worker process is still communicating and
@@ -546,8 +556,9 @@ class HttpProxyServer(Setting):
     def on_start(self):
         if self.value:
             os.environ['http_proxy'] = self.value
-        
-        
+            os.environ['https_proxy'] = self.value
+
+
 class HttpClient(Setting):
     name = "http_client"
     section = "Http"
@@ -555,9 +566,9 @@ class HttpClient(Setting):
     type = int
     default = 2
     desc = """\
-        Set the python parser as default HTTP parser.    
+        Set the python parser as default HTTP parser.
         """
-    
+
     def on_start(self):
         if self.value is not 2:
             v = (self.value,)
@@ -566,7 +577,7 @@ class HttpClient(Setting):
             from pulsar.net import setDefaultClient
             setDefaultClient(v)
 
-        
+
 class HttpParser(Setting):
     name = "http_py_parser"
     section = "Http"
@@ -574,9 +585,9 @@ class HttpParser(Setting):
     action = "store_true"
     default = False
     desc = """\
-    Set the python parser as default HTTP parser.    
+    Set the python parser as default HTTP parser.
         """
-    
+
     def on_start(self):
         if self.value:
             from pulsar.lib import setDefaultHttpParser, fallback
@@ -592,11 +603,11 @@ class Debug(Setting):
     default = False
     desc = """\
         Turn on debugging in the server.
-        
+
         This limits the number of worker processes to 1 and changes some error
         handling that's sent to clients.
         """
-        
+
 
 class Daemon(Setting):
     name = "daemon"
@@ -607,7 +618,7 @@ class Daemon(Setting):
     default = False
     desc = """\
         Daemonize the Pulsar process.
-        
+
         Detaches the server from the controlling terminal and enters the
         background.
         """
@@ -622,7 +633,7 @@ class Pidfile(Setting):
     default = None
     desc = """\
         A filename to use for the PID file.
-        
+
         If not set, no PID file will be written.
         """
 
@@ -634,8 +645,8 @@ class Password(Setting):
     validator = validate_string
     default = None
     desc = """Set a password for the server"""
-        
-        
+
+
 class User(Setting):
     name = "user"
     section = "Server Mechanics"
@@ -645,12 +656,12 @@ class User(Setting):
     default = None
     desc = """\
         Switch worker processes to run as this user.
-        
+
         A valid user id (as an integer) or the name of a user that can be
         retrieved with a call to pwd.getpwnam(value) or None to not change
         the worker process user.
         """
-        
+
 
 class Group(Setting):
     name = "group"
@@ -661,12 +672,12 @@ class Group(Setting):
     default = None
     desc = """\
         Switch worker process to run as this group.
-        
+
         A valid group id (as an integer) or the name of a user that can be
         retrieved with a call to pwd.getgrnam(value) or None to not change
         the worker processes group.
         """
-        
+
 
 class Loglevel(Setting):
     name = "loglevel"
@@ -676,7 +687,7 @@ class Loglevel(Setting):
     validator = validate_string
     default = "info"
     desc = """The granularity of log outputs.
-        
+
 Valid level names are:
 
  * debug
@@ -694,8 +705,8 @@ class LogEvery(Setting):
     validator = validate_pos_int
     default = 0
     desc = """Log information every n seconds"""
-    
-    
+
+
 class LogConfig(Setting):
     name = "logconfig"
     section = "Logging"
@@ -703,11 +714,11 @@ class LogConfig(Setting):
     validator = validate_dict
     desc = '''
     The logging configuration dictionary.
-    
+
     This settings can only be specified on a config file
     '''
-    
-    
+
+
 class Procname(Setting):
     name = "proc_name"
     section = "Process Naming"
@@ -717,12 +728,12 @@ class Procname(Setting):
     default = None
     desc = """\
         A base to use with setproctitle for process naming.
-        
+
         This affects things like ``ps`` and ``top``. If you're going to be
         running more than one instance of Pulsar you'll probably want to set a
         name to tell them apart. This requires that you install the setproctitle
         module.
-        
+
         It defaults to 'pulsar'.
         """
 
@@ -745,7 +756,7 @@ class WhenReady(Setting):
     default = staticmethod(def_start_server)
     desc = """\
         Called just after the server is started.
-        
+
         The callable needs to accept a single instance variable for the Arbiter.
         """
 
@@ -758,12 +769,12 @@ class Prefork(Setting):
     type = "callable"
     desc = """\
         Called just before a worker is forked.
-        
+
         The callable needs to accept two instance variables for the Arbiter and
         new Worker.
         """
-        
-    
+
+
 class Postfork(Setting):
     name = "post_fork"
     section = "Server Hooks"
@@ -772,7 +783,7 @@ class Postfork(Setting):
     default = staticmethod(default_process)
     desc = """\
         Called just after a worker has been forked.
-        
+
         The callable needs to accept two instance variables for the Arbiter and
         new Worker.
         """
@@ -786,7 +797,7 @@ class PreExec(Setting):
     default = staticmethod(def_pre_exec)
     desc = """\
         Called just before a new master process is forked.
-        
+
         The callable needs to accept a single instance variable for the Arbiter.
         """
 
@@ -799,7 +810,7 @@ class PreRequest(Setting):
     default = staticmethod(def_pre_request)
     desc = """\
         Called just before a worker processes the request.
-        
+
         The callable needs to accept two instance variables for the Worker and
         the Request.
         """

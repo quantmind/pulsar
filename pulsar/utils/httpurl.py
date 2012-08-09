@@ -52,7 +52,20 @@ import zlib
 from collections import deque
 from copy import copy
 
-ispy3k = sys.version_info >= (3,0)
+ispy3k = sys.version_info >= (3, 0)
+
+try:    # Compiled with SSL?
+    HTTPSConnection = object
+    BaseSSLError = None
+    ssl = None
+    if ispy3k:
+        from http.client import HTTPSConnection
+    else:
+        from httplib import HTTPSConnection
+    import ssl
+    BaseSSLError = ssl.SSLError
+except (ImportError, AttributeError):
+    pass
 
 if ispy3k: # Python 3
     from urllib import request as urllibr
@@ -62,6 +75,7 @@ if ispy3k: # Python 3
     from http.client import responses
     from http.cookiejar import CookieJar
     from http.cookies import SimpleCookie, BaseCookie, Morsel, CookieError
+    from functools import reduce
 
     string_type = str
     getproxies_environment = urllibr.getproxies_environment
@@ -69,10 +83,8 @@ if ispy3k: # Python 3
     zip = zip
     map = map
     range = range
-
     iteritems = lambda d : d.items()
     itervalues = lambda d : d.values()
-
     is_string = lambda s: isinstance(s, str)
     is_string_or_native_string = is_string
 
@@ -105,7 +117,6 @@ if ispy3k: # Python 3
         else:
             return '%s' % s
 
-    from functools import reduce
 else:   # pragma : no cover
     import urllib2 as urllibr
     import httplib as httpclient
@@ -121,10 +132,8 @@ else:   # pragma : no cover
     string_type = unicode
     ascii_letters = string.letters
     range = xrange
-
     iteritems = lambda d : d.iteritems()
     itervalues = lambda d : d.itervalues()
-
     is_string = lambda s: isinstance(s, unicode)
     is_string_or_native_string = lambda s: isinstance(s, basestring)
 
@@ -233,6 +242,9 @@ def has_empty_content(status, method=None):
     else:
         return False
 
+def is_succesful(status):
+    return status >= 200 and status < 300
+
 ####################################################    HTTP HEADERS
 HEADER_FIELDS = {'general': frozenset(('Cache-Control', 'Connection', 'Date',
                                        'Pragma', 'Trailer','Transfer-Encoding',
@@ -337,6 +349,10 @@ the entity-header fields.'''
 
     def __len__(self):
         return reduce(lambda x, y: x + len(y), itervalues(self._headers), 0)
+
+    def as_dict(self):
+        '''Convert this :class:`Headers` into a dictionary.'''
+        return dict(((k, ', '.join(v)) for k, v in iteritems(self._headers)))
 
     @property
     def kind_number(self):
@@ -1006,20 +1022,49 @@ class HttpResponse(IORespone):
 
 class HttpConnection(httpclient.HTTPConnection):
     '''Http Connection class'''
-    def __init__(self, pool):
-        if ispy3k:
-            super(HttpConnection, self).__init__(pool.host, pool.port,
-                                                 timeout=pool.timeout)
-        else:
-            httpclient.HTTPConnection.__init__(self, pool.host, pool.port,
-                                               timeout=pool.timeout)
+    tunnel_class = httpclient.HTTPResponse
+    def _tunnel(self):
+        response_class = self.response_class
+        self.response_class = self.tunnel_class
+        httpclient.HTTPConnection._tunnel(self)
+        self.response_class = response_class
 
     @property
     def is_async(self):
         return self.socket.timeout == 0
 
 
-class HttpsConnection(httpclient.HTTPSConnection):
+class HttpsConnection(HTTPSConnection):
+    '''Https Connection class.'''
+    tunnel_class = httpclient.HTTPResponse
+    def _tunnel(self):
+        response_class = self.response_class
+        self.response_class = self.tunnel_class
+        HTTPSConnection._tunnel(self)
+        self.response_class = response_class
+
+    def set_cert(self, key_file=None, cert_file=None,
+                 cert_reqs='CERT_NONE', ca_certs=None):
+        ssl_req_scheme = {
+            'CERT_NONE': ssl.CERT_NONE,
+            'CERT_OPTIONAL': ssl.CERT_OPTIONAL,
+            'CERT_REQUIRED': ssl.CERT_REQUIRED
+        }
+        self.key_file = key_file
+        self.cert_file = cert_file
+        self.cert_reqs = ssl_req_scheme.get(cert_reqs) or ssl.CERT_NONE
+        self.ca_certs = ca_certs
+
+    def __connect(self):
+        # Add certificate verification
+        sock = socket.create_connection((self.host, self.port), self.timeout)
+        # Wrap socket using verification with the root certs in
+        # trusted_root_certs
+        self.sock = ssl.wrap_socket(sock, self.key_file, self.cert_file,
+                                    cert_reqs=self.cert_reqs,
+                                    ca_certs=self.ca_certs)
+        if self.ca_certs:
+            match_hostname(self.sock.getpeercert(), self.host)
 
     @property
     def is_async(self):
@@ -1038,11 +1083,19 @@ class HttpBase(object):
         if hooks and key in hooks:
             for hook in hooks[key]:
                 try:
-                    _hook_data = hook(hook_data)
-                    if _hook_data is not None:
-                        hook_data = _hook_data
+                    hook(hook_data)
                 except Exception:
                     traceback.print_exc()
+
+    def add_basic_authentication(self, username, password):
+        '''Add a :class:`HTTPBasicAuth` handler to the *pre_requests* hooks.'''
+        self.register_hook('pre_request', HTTPBasicAuth(username, password))
+
+    def has_header(self, key):
+        return key in self.headers
+
+    def add_header(self, key, value):
+        self.headers.add_header(key, value)
 
 
 class HttpRequest(HttpBase):
@@ -1075,7 +1128,7 @@ http://www.ietf.org/rfc/rfc2616.txt
         self.query, self.fragment = urlparse(url)
         self.full_url = self._get_full_url()
         self.timeout = timeout
-        self.headers = {}
+        self.headers = Headers(kind='client')
         self.hooks = hooks
         self.history = history
         self.max_redirects = max_redirects
@@ -1092,13 +1145,22 @@ http://www.ietf.org/rfc/rfc2616.txt
         self.data = data if data is not None else {}
         self.files = files
         # Pre-request hook.
-        r = self.dispatch_hook('pre_request', self.hooks, self)
+        self.dispatch_hook('pre_request', self.hooks, self)
         self.encode(encode_multipart, multipart_boundary)
 
     def get_response(self, history=None):
-        '''Build a :class:`HttpResponse` form a ``connection`` instance.'''
+        '''Submit request and return a :attr:`response_class` instance.'''
         self.connection = connection = self.client.get_connection(self)
-        connection.request(self.method, self.full_url, self.body, self.headers)
+        if self._tunnel_host:
+            tunnel_headers = {}
+            proxy_auth_hdr = "Proxy-Authorization"
+            if proxy_auth_hdr in self.headers:
+                tunnel_headers[proxy_auth_hdr] = headers[proxy_auth_hdr]
+                self.headers.pop(proxy_auth_hdr)
+            connection.set_tunnel(self._tunnel_host, headers=tunnel_headers)
+        self.dispatch_hook('pre_send', self.hooks, self)
+        headers = self.headers.as_dict()
+        connection.request(self.method, self.full_url, self.body, headers)
         response = connection.getresponse()
         response.history = history
         response.request = self
@@ -1118,12 +1180,6 @@ http://www.ietf.org/rfc/rfc2616.txt
 
     def host_and_port(self):
         return host_and_port(self.host)
-
-    def has_header(self, key):
-        return key in self.headers
-
-    def add_header(self, key, value):
-        self.headers[header_field(key)] = value
 
     def add_unredirected_header(self, key, value):
         self.headers[header_field(key)] = value
@@ -1154,17 +1210,22 @@ http://www.ietf.org/rfc/rfc2616.txt
             self.files = None
             self._encode_url(self.data)
         else:
-            content_type = 'application/x-www-form-urlencoded'
-            if isinstance(self.data, (dict, list, tuple)):
-                if encode_multipart:
-                    body, content_type = encode_multipart_formdata(self.data,
+            content_type = self.headers.get('content-type')
+            if not content_type:
+                content_type = 'application/x-www-form-urlencoded'
+                if isinstance(self.data, (dict, list, tuple)):
+                    if encode_multipart:
+                        body, content_type = encode_multipart_formdata(
+                                                    self.data,
                                                     boundary=multipart_boundary,
                                                     charset=self.charset)
-                else:
-                    body = urlencode(self.data)
-            elif self.data:
-                body = to_bytes(self.data, self.charset)
-            self.headers['Content-Type'] = content_type
+                    else:
+                        body = urlencode(self.data)
+                elif self.data:
+                    body = to_bytes(self.data, self.charset)
+                self.headers['Content-Type'] = content_type
+            elif content_type == 'application/json':
+                body = json.dumps(self.data)
         self.body = body
 
     def _encode_url(self, body):
@@ -1273,9 +1334,13 @@ class HttpConnectionPool(object):
             if not ssl:
                 raise SSLError("Can't connect to HTTPS URL because the SSL "
                                "module is not available.")
-            return HttpsConnection(self)
+            con = HttpsConnection(host=self.host, port=self.port)
+            con.set_cert(**self.https_params)
         else:
-            return HttpConnection(self)
+            con = HttpConnection(host=self.host, port=self.port)
+        if self.timeout is not None:
+            con.timeout = self.timeout
+        return con
 
     def release(self, connection):
         "Releases the connection back to the pool"
@@ -1361,7 +1426,7 @@ into an SSL socket.
         if headers:
             dheaders.update(headers)
         self.hooks = dict(((event, []) for event in self.HOOKS))
-        self.DEFAULT_HTTP_HEADERS = dheaders
+        self.headers = dheaders
         self.proxy_info = dict(proxy_info or ())
         if not self.proxy_info and self.trust_env:
             self.proxy_info = get_environ_proxies()
@@ -1376,8 +1441,8 @@ into an SSL socket.
 
     def get_headers(self, headers=None):
         '''Returns a :class:`Header` obtained from combining
-:attr:`DEFAULT_HTTP_HEADERS` with *headers*.'''
-        d = self.DEFAULT_HTTP_HEADERS.copy()
+:attr:`headers` with *headers*.'''
+        d = self.headers.copy()
         if headers:
             d.extend(headers)
         return d
@@ -1403,14 +1468,14 @@ object.
     def request(self, url, data=None, files=None, method=None, headers=None,
                 timeout=None, encode_multipart=None, allow_redirects=False,
                 hooks=None, cookies=None, history=None, **kwargs):
-        '''Constructs and sends a :class:`HttpRequest`. It returns
+        '''Constructs, sends a :class:`HttpRequest` and returns
 a :class:`HttpResponse` object.
 
 :param url: URL for the new :class:`HttpRequest`.
-:param method: optional method for the new :class:`HttpRequest`.
 :param data: optional dictionary or bytes to be sent either in the query string
     for 'DELETE', 'GET', 'HEAD' and 'OPTIONS' methods or in the body
     for 'PATCH', 'POST', 'PUT', 'TRACE' methods.
+:param method: optional request method for the :class:`HttpRequest`.
 :param hooks:
 '''
         # Build default headers for this client
@@ -1453,7 +1518,7 @@ a :class:`HttpResponse` object.
         pool = self.poolmap.get(key)
         if pool is None:
             if request.type == 'https':
-                params = https_defaults
+                params = self.https_defaults
                 if kwargs:
                     params = params.copy()
                     params.update(kwargs)
