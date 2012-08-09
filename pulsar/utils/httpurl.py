@@ -48,6 +48,10 @@ from email.utils import formatdate
 from io import BytesIO
 import zlib
 from collections import deque
+try:
+    import ssl
+except ImportError:
+    ssl = None
 
 ispy3k = sys.version_info >= (3,0)
 
@@ -1017,7 +1021,14 @@ class HttpConnection(httpclient.HTTPConnection):
 
 
 class HttpsConnection(httpclient.HTTPSConnection):
-
+    '''Https Connection class'''
+    def __init__(self, pool):
+        https = pool.https_params
+        httpclient.HTTPSConnection.__init__(self, pool.host, pool.port,
+                                            timeout=pool.timeout,
+                                            key_file=https['key_file'],
+                                            cert_file=https['cert_file'])
+            
     @property
     def is_async(self):
         return self.socket.timeout == 0
@@ -1379,14 +1390,14 @@ object.
     def request(self, url, data=None, files=None, method=None, headers=None,
                 timeout=None, encode_multipart=None, allow_redirects=False,
                 hooks=None, cookies=None, history=None, **kwargs):
-        '''Constructs and sends a :class:`HttpRequest`. It returns
+        '''Constructs, sends a :class:`HttpRequest` and returns
 a :class:`HttpResponse` object.
 
 :param url: URL for the new :class:`HttpRequest`.
-:param method: optional method for the new :class:`HttpRequest`.
 :param data: optional dictionary or bytes to be sent either in the query string
     for 'DELETE', 'GET', 'HEAD' and 'OPTIONS' methods or in the body
     for 'PATCH', 'POST', 'PUT', 'TRACE' methods.
+:param method: optional request method for the :class:`HttpRequest`.
 :param hooks:
 '''
         # Build default headers for this client
@@ -1432,7 +1443,7 @@ a :class:`HttpResponse` object.
         pool = self.poolmap.get(key)
         if pool is None:
             if request.type == 'https':
-                params = https_defaults
+                params = self.https_defaults
                 if kwargs:
                     params = params.copy()
                     params.update(kwargs)
