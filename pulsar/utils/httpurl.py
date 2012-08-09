@@ -1021,7 +1021,7 @@ class HttpConnection(httpclient.HTTPConnection):
 
 
 class HttpsConnection(httpclient.HTTPSConnection):
-    '''Https Connection class'''
+    '''Https Connection class.'''
     def __init__(self, pool):
         https = pool.https_params
         httpclient.HTTPSConnection.__init__(self, pool.host, pool.port,
