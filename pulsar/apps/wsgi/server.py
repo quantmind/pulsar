@@ -1,13 +1,14 @@
 import sys
 import time
 import os
+import logging
 from wsgiref.handlers import format_date_time
 from io import BytesIO
 
 import pulsar
 from pulsar import lib, make_async, is_async, AsyncSocketServer,\
                         Deferred, AsyncConnection, AsyncResponse, DeferredSend,\
-                        HttpException
+                        HttpException, MAX_BODY
 from pulsar.utils.httpurl import Headers, iteritems, is_string, unquote,\
                                     has_empty_content, to_bytes
 from pulsar.utils import event
@@ -16,6 +17,8 @@ from .wsgi import WsgiResponse
 
 
 event.create('http-headers')
+
+logger = logging.getLogger('pulsar.wsgi')
 
 __all__ = ['HttpServer', 'WsgiActorLink']
 
@@ -232,10 +235,10 @@ invocation of the application.
 
     def __iter__(self):
         MAX_CHUNK = self.MAX_CHUNK
-        worker = self.connection.actor
+        wsgi_handler = self.connection.wsgi_handler
         try:
             buffer = b''
-            for b in worker.app_handler(self.environ, self.start_response):
+            for b in wsgi_handler(self.environ, self.start_response):
                 head = self.send_headers(force=b)
                 if head is not None:
                     yield head
@@ -263,7 +266,7 @@ invocation of the application.
             keep_alive = False
             exc_info = sys.exc_info()
             if self._headers_sent:
-                worker.log.critical('Headers already sent', exc_info=exc_info)
+                logger.critical('Headers already sent', exc_info=exc_info)
                 yield b'CRITICAL SERVER ERROR. Please Contact the administrator'
             else:
                 # Create the error response
@@ -285,14 +288,14 @@ invocation of the application.
     def is_chunked(self):
         '''Only use chunked responses when the client is
 speaking HTTP/1.1 or newer and there was no Content-Length header set.'''
+        cl = self.content_length
         if self.environ['wsgi.version'] <= (1,0):
             return False
         elif has_empty_content(int(self.status[:3])):
             # Do not use chunked responses when the response
             # is guaranteed to not have a response body.
             return False
-        elif self.content_length is not None and\
-                 self.content_length <= self.socket.MAX_BODY:
+        elif cl is not None and cl <= MAX_BODY:
             return False
         return True
 
@@ -331,6 +334,10 @@ class HttpConnection(AsyncConnection):
     '''Asynchronous HTTP Connection'''
     response_class = HttpResponse
 
+    @property
+    def wsgi_handler(self):
+        return self.actor.app_handler
+    
     def request_data(self):
         data = bytes(self.buffer)
         # If no data is available and the parser has no data

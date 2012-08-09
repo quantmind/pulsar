@@ -1495,7 +1495,7 @@ a :class:`HttpResponse` object.
                                      encode_multipart=encode_multipart,
                                      multipart_boundary=self.multipart_boundary,
                                      hooks=hooks,
-                                     allow_redirects=allow_redirects)
+                                     allow_redirects=allow_redirects, **kwargs)
         # Set proxy if required
         self.set_proxy(request)
         if self.cookies:

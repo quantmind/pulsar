@@ -26,9 +26,11 @@ __all__ = ['AsyncIOStream',
            'Client',
            'AsyncConnection',
            'AsyncResponse',
-           'AsyncSocketServer']
+           'AsyncSocketServer',
+           'MAX_BODY']
 
-            
+MAX_BODY = 1024 * 128
+
 class AsyncIOStream(IObase):
     ''':ref:`Framework class <pulsar_framework>` to write and read
 from a non-blocking socket. It is used everywhere in :mod:`pulsar` for
@@ -59,7 +61,6 @@ adapted to pulsar :ref:`concurrent framework <design>`.
     _close_callback = None
     _connect_callback = None
     
-    MAX_BODY = 1024 * 128
     def __init__(self, socket=None, max_buffer_size=None,
                  read_chunk_size=None, timeout=None):
         self.socket = socket
@@ -321,7 +322,7 @@ setup using the :meth:`set_close_callback` method."""
                     # returning the number of bytes it was able to
                     # process.  Therefore we must not call socket.send
                     # with more than 128KB at a time.
-                    buff = self._get_buffer(self._write_buffer, self.MAX_BODY)
+                    buff = self._get_buffer(self._write_buffer, MAX_BODY)
                 else:
                     buff = self._write_buffer.popleft() or b''
                 sent = self.socket.send(buff)
