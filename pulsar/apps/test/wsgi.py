@@ -1,63 +1,74 @@
 '''Classes for testing WSGI servers using the HttpClient'''
 from io import BytesIO
+import logging
 
+from pulsar import IStream
 from pulsar.utils.httpurl import HttpClient, HttpRequest, HttpConnectionPool,\
                                     HttpResponse, urlparse, HttpConnection,\
                                     HttpParser
-from pulsar.apps.wsgi import server
+from pulsar.apps.wsgi import server, handle_http_error
 #from .server import HttpResponse
 
 __all__ = ['HttpTestClient']
 
 
-class TestHttpServerConnection(object):
-    '''This is a simple class simulating a client connection on
-a Http server.'''
-    address = ('0.0.0.0',0)
-    
+class TestHttpServerConnection(IStream):
+    '''This is a simple class simulating a connection on
+a Http server. It contains the client response so that the
+write method simply write on the client response
+object.'''
     def __init__(self, client_response):
         self.client_response = client_response
         self.parser = HttpParser()
         for d in client_response.request_data:
             self.parser.execute(d, len(d))
-        
+
     @property
     def wsgi_handler(self):
         return self.client_response.request.client.wsgi_handler
-    
+
+    def handle_http_error(self, response, e):
+        return handle_http_error(self, response, e)
+
     def write(self, response):
         for data in response:
             if data:
                 self.client_response.parsedata(data)
-    
+
 
 class TestHttpResponse(HttpResponse):
     request = None
     server_response = None
-    
+
     def __init__(self, data):
         self.request_data = data
-    
+
     @property
     def environ(self):
         if self.server_response:
             return self.server_response.environ
-        
+
     def check(self):
+        '''Assert on status code'''
         request = self.request
         test = request.client.test
         test.assertEqual(request.status_code, self.status_code)
-        
+
     def read(self):
         request = self.request
         if not request:
             raise ValueError('request not available')
+        # Create the Dummy test connection
         c = TestHttpServerConnection(self)
+        # Get environment
         environ = server.wsgi_environ(c)
+        # Create the Server response
         self.server_response = server.HttpResponse(c, environ)
+        # Write the response
         c.write(self.server_response)
         self.check()
-        
+        return self
+
 
 class TestHttpConnection(HttpConnection):
 

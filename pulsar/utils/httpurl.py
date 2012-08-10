@@ -232,6 +232,7 @@ ENCODE_URL_METHODS = frozenset(['DELETE', 'GET', 'HEAD', 'OPTIONS'])
 ENCODE_BODY_METHODS = frozenset(['PATCH', 'POST', 'PUT', 'TRACE'])
 REDIRECT_CODES = (301, 302, 303, 307)
 
+
 def has_empty_content(status, method=None):
     '''204, 304 and 1xx codes have no content'''
     if status == httpclient.NO_CONTENT or\
@@ -398,6 +399,11 @@ the entity-header fields.'''
 
     def copy(self):
         return self.__class__(self, kind=self.kind)
+
+    def getheaders(self, key):
+        '''Required by cookielib. If the key is not available,
+it returns an empty list.'''
+        return self._headers.get(header_field(key), [])
 
     def headers(self):
         return list(self)
@@ -1004,20 +1010,13 @@ class HttpResponse(IORespone):
     def parsedata(self, data):
         self.parser.execute(data, len(data))
         if self.parser.is_message_complete():
-            headers = self.headers
-            self.cookies = CookieJar()
-            if 'set-cookie' in headers:
-                self.cookies.extract_cookies(self, self.request)
-            return self.request.conclude_response(self)
+            return self.request.client.build_response(self)
 
     def close(self):
         self.socket.close()
 
     def info(self):
         return self.headers
-
-    def getheaders(self, name):
-        self.headers.get(name)
 
 
 class HttpConnection(httpclient.HTTPConnection):
@@ -1097,6 +1096,9 @@ class HttpBase(object):
     def add_header(self, key, value):
         self.headers.add_header(key, value)
 
+    def get_header(self, key, default=None):
+        return self.headers.get(key, default)
+
 
 class HttpRequest(HttpBase):
     '''Http client request initialised by a call to the
@@ -1137,11 +1139,7 @@ http://www.ietf.org/rfc/rfc2616.txt
             for key, value in headers:
                 self.add_header(key, value)
         self.charset = charset or self.default_charset
-        if not method:
-            method = 'POST' if data else 'GET'
-        else:
-            method = method.upper()
-        self.method = method
+        self.method = method.upper()
         self.data = data if data is not None else {}
         self.files = files
         # Pre-request hook.
@@ -1211,6 +1209,7 @@ http://www.ietf.org/rfc/rfc2616.txt
             self._encode_url(self.data)
         else:
             content_type = self.headers.get('content-type')
+            # No content type given
             if not content_type:
                 content_type = 'application/x-www-form-urlencoded'
                 if isinstance(self.data, (dict, list, tuple)):
@@ -1224,8 +1223,11 @@ http://www.ietf.org/rfc/rfc2616.txt
                 elif self.data:
                     body = to_bytes(self.data, self.charset)
                 self.headers['Content-Type'] = content_type
-            elif content_type == 'application/json':
-                body = json.dumps(self.data)
+            elif content_type == 'application/json' and\
+                 not isinstance(self.data, bytes):
+                body = json.dumps(self.data).encode('latin-1')
+            else:
+                body = self.data
         self.body = body
 
     def _encode_url(self, body):
@@ -1255,48 +1257,6 @@ http://www.ietf.org/rfc/rfc2616.txt
         '''Needed so that this class is compatible with the Request class
 in the http.client module in the standard library.'''
         return self.full_url
-
-    def conclude_response(self, response):
-        headers = response.headers
-        if response.status_code in REDIRECT_CODES and 'location' in headers and\
-                self.allow_redirects:
-            history = response.history or []
-            if len(history) >= self.max_redirects:
-                raise TooManyRedirects()
-            history.append(response)
-            self.client.release_connection(self)
-            url = response.headers['location']
-            data = self.body
-            files = self.files
-            # Handle redirection without scheme (see: RFC 1808 Section 4)
-            if url.startswith('//'):
-                parsed_rurl = urlparse(r.url)
-                url = '%s:%s' % (parsed_rurl.scheme, url)
-            # Facilitate non-RFC2616-compliant 'location' headers
-            # (e.g. '/path/to/resource' instead of
-            # 'http://domain.tld/path/to/resource')
-            if not urlparse(url).netloc:
-                url = urljoin(r.url,
-                              # Compliant with RFC3986, we percent
-                              # encode the url.
-                              requote_uri(url))
-            # http://www.w3.org/Protocols/rfc2616/rfc2616-sec10.html#sec10.3.4
-            if response.status_code is 303:
-                method = 'GET'
-                data = None
-                files = None
-            else:
-                method = self.method
-            headers = self.headers
-            headers.pop('Cookie',None)
-            # Build a new request
-            return request.client.request(
-                                    url, data=data, files=files,
-                                    headers=headers,
-                                    encode_multipart=self.encode_multipart,
-                                    history=history)
-        else:
-            return self.on_response(response)
 
     def on_response(self, response):
         return response
@@ -1414,8 +1374,10 @@ into an SSL socket.
                  headers=None, encode_multipart=True, client_version=None,
                  multipart_boundary=None, max_connections=None,
                  key_file=None, cert_file=None, cert_reqs='CERT_NONE',
-                 ca_certs=None, cookies=None, trust_env=True):
+                 ca_certs=None, cookies=None, trust_env=True,
+                 store_cookies=True):
         self.trust_env = trust_env
+        self.store_cookies = store_cookies
         self.poolmap = {}
         self.timeout = timeout
         self._cookies = None
@@ -1448,25 +1410,70 @@ into an SSL socket.
             d.extend(headers)
         return d
 
-    def get(self, url, method=None, **kwargs):
+    def get(self, url, **kwargs):
         '''Sends a GET request and returns a :class:`HttpResponse`
 object.
 
 :params url: url for the new :class:`HttpRequest` object.
 :param \*\*kwargs: Optional arguments for the :meth:`request` method.
 '''
-        return self.request(url, method='GET', **kwargs)
+        return self.request('GET', url, **kwargs)
 
-    def post(self, url, method=None, **kwargs):
+    def options(self, url, **kwargs):
+        '''Sends a OPTIONS request and returns a :class:`HttpResponse`
+object.
+
+:params url: url for the new :class:`HttpRequest` object.
+:param \*\*kwargs: Optional arguments for the :meth:`request` method.
+'''
+        return self.request('OPTIONS', url, **kwargs)
+
+    def head(self, url, **kwargs):
+        '''Sends a HEAD request and returns a :class:`HttpResponse`
+object.
+
+:params url: url for the new :class:`HttpRequest` object.
+:param \*\*kwargs: Optional arguments for the :meth:`request` method.
+'''
+        return self.request('HEAD', url, **kwargs)
+
+    def post(self, url, **kwargs):
         '''Sends a POST request and returns a :class:`HttpResponse`
 object.
 
 :params url: url for the new :class:`HttpRequest` object.
 :param \*\*kwargs: Optional arguments for the :meth:`request` method.
 '''
-        return self.request(url, method='POST', **kwargs)
+        return self.request('POST', url, **kwargs)
 
-    def request(self, url, data=None, files=None, method=None, headers=None,
+    def put(self, url, **kwargs):
+        '''Sends a PUT request and returns a :class:`HttpResponse`
+object.
+
+:params url: url for the new :class:`HttpRequest` object.
+:param \*\*kwargs: Optional arguments for the :meth:`request` method.
+'''
+        return self.request('PUT', url, **kwargs)
+
+    def path(self, url, **kwargs):
+        '''Sends a PATH request and returns a :class:`HttpResponse`
+object.
+
+:params url: url for the new :class:`HttpRequest` object.
+:param \*\*kwargs: Optional arguments for the :meth:`request` method.
+'''
+        return self.request('PATCH', url, **kwargs)
+
+    def delete(self, url, **kwargs):
+        '''Sends a DELETE request and returns a :class:`HttpResponse`
+object.
+
+:params url: url for the new :class:`HttpRequest` object.
+:param \*\*kwargs: Optional arguments for the :meth:`request` method.
+'''
+        return self.request('DELETE', url, **kwargs)
+
+    def request(self, method, url, data=None, files=None, headers=None,
                 timeout=None, encode_multipart=None, allow_redirects=False,
                 hooks=None, cookies=None, history=None, **kwargs):
         '''Constructs, sends a :class:`HttpRequest` and returns
@@ -1539,23 +1546,6 @@ a :class:`HttpResponse` object.
         if pool:
             pool.remove(req.connection)
 
-    def post_process_response(self, req, response):
-        protocol = req.type
-        meth_name = protocol+"_response"
-        for processor in self.process_response.get(protocol, []):
-            meth = getattr(processor, meth_name)
-            response = meth(req, response)
-        return response
-
-    def add_password(self, username, password, uri, realm=None):
-        '''Add Basic HTTP Authentication to the opener'''
-        if realm is None:
-            password_mgr = HTTPPasswordMgrWithDefaultRealm()
-        else:
-            password_mgr = HTTPPasswordMgr()
-        password_mgr.add_password(realm, uri, user, passwd)
-        self._opener.add_handler(HTTPBasicAuthHandler(password_mgr))
-
     def set_proxy(self, request):
         if request.type in self.proxy_info:
             hostonly, _ = splitport(request.host)
@@ -1563,6 +1553,51 @@ a :class:`HttpResponse` object.
             if not any(map(hostonly.endswith, no_proxy)):
                 p = urlparse(self.proxy_info[request.type])
                 request.set_proxy(p.netloc, p.scheme)
+
+    def build_response(self, response):
+        request = response.request
+        headers = response.headers
+        if self.store_cookies:
+            response.cookies = CookieJar()
+            if 'set-cookie' in headers:
+                response.cookies.extract_cookies(response, request)
+        if response.status_code in REDIRECT_CODES and 'location' in headers and\
+                request.allow_redirects:
+            history = response.history or []
+            if len(history) >= request.max_redirects:
+                raise TooManyRedirects()
+            history.append(response)
+            self.release_connection(request)
+            url = response.headers['location']
+            data = request.body
+            files = request.files
+            # Handle redirection without scheme (see: RFC 1808 Section 4)
+            if url.startswith('//'):
+                parsed_rurl = urlparse(r.url)
+                url = '%s:%s' % (parsed_rurl.scheme, url)
+            # Facilitate non-RFC2616-compliant 'location' headers
+            # (e.g. '/path/to/resource' instead of
+            # 'http://domain.tld/path/to/resource')
+            if not urlparse(url).netloc:
+                url = urljoin(r.url,
+                              # Compliant with RFC3986, we percent
+                              # encode the url.
+                              requote_uri(url))
+            # http://www.w3.org/Protocols/rfc2616/rfc2616-sec10.html#sec10.3.4
+            if response.status_code is 303:
+                method = 'GET'
+                data = None
+                files = None
+            else:
+                method = request.method
+            headers = request.headers
+            headers.pop('Cookie', None)
+            # Build a new request
+            return self.request(method, url, data=data, files=files,
+                                headers=headers, history=history,
+                                encode_multipart=request.encode_multipart)
+        else:
+            return request.on_response(response)
 
 
 ###############################################    AUTH
@@ -1791,7 +1826,6 @@ def cookiejar_from_dict(cookie_dict, cookiejar=None):
         for name in cookie_dict:
             cookiejar.set_cookie(create_cookie(name, cookie_dict[name]))
     return cookiejar
-
 
 def parse_cookie(cookie):
     if cookie == '':

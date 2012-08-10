@@ -18,7 +18,6 @@ from .wsgi import WsgiResponse
 
 event.create('http-headers')
 
-logger = logging.getLogger('pulsar.wsgi')
 
 __all__ = ['HttpServer', 'WsgiActorLink']
 
@@ -26,14 +25,7 @@ __all__ = ['HttpServer', 'WsgiActorLink']
 def wsgi_environ(self):
     """return a :ref:`WSGI <apps-wsgi>` compatible environ dictionary
 based on the current request. If the reqi=uest headers are not ready it returns
-nothing.
-
-In addition to all standard WSGI entries it
-adds the following 2 pulsar information:
-
-* ``pulsar.stream`` the :attr:`stream` attribute.
-* ``pulsar.actor`` the :class:`pulsar.Actor` serving the request.
-"""
+nothing."""
     parser = self.parser
     version = parser.get_version()
     input = BytesIO()
@@ -64,7 +56,6 @@ adds the following 2 pulsar information:
     server = None
     url_scheme = "http"
     script_name = os.environ.get("SCRIPT_NAME", "")
-
     headers = parser.get_headers()
     if isinstance(headers, dict):
         headers = iteritems(headers)
@@ -90,12 +81,9 @@ adds the following 2 pulsar information:
         elif header == "content-length":
             environ['CONTENT_LENGTH'] = value
             continue
-
         key = 'HTTP_' + header.upper().replace('-', '_')
         environ[key] = value
-
     environ['wsgi.url_scheme'] = url_scheme
-
     if is_string(forward):
         # we only took the last one
         # http://en.wikipedia.org/wiki/X-Forwarded-For
@@ -106,10 +94,8 @@ adds the following 2 pulsar information:
             remote.append('80')
     else:
         remote = forward
-
     environ['REMOTE_ADDR'] = remote[0]
     environ['REMOTE_PORT'] = str(remote[1])
-
     if server is not None:
         server =  server.split(":")
         if len(server) == 1:
@@ -121,7 +107,6 @@ adds the following 2 pulsar information:
                 server.append('')
         environ['SERVER_NAME'] = server[0]
         environ['SERVER_PORT'] = server[1]
-
     path_info = parser.get_path()
     if path_info is not None:
         if script_name:
@@ -136,7 +121,7 @@ def chunk_encoding(chunk, final=False):
 
 
 class HttpResponse(AsyncResponse):
-    '''Handle one HTTP response'''
+    '''Handle an HTTP response for a :class:`HttpConnection`.'''
     _status = None
     _headers_sent = None
     headers = None
@@ -235,10 +220,10 @@ invocation of the application.
 
     def __iter__(self):
         MAX_CHUNK = self.MAX_CHUNK
-        wsgi_handler = self.connection.wsgi_handler
+        conn = self.connection
         try:
             buffer = b''
-            for b in wsgi_handler(self.environ, self.start_response):
+            for b in conn.wsgi_handler(self.environ, self.start_response):
                 head = self.send_headers(force=b)
                 if head is not None:
                     yield head
@@ -266,11 +251,13 @@ invocation of the application.
             keep_alive = False
             exc_info = sys.exc_info()
             if self._headers_sent:
-                logger.critical('Headers already sent', exc_info=exc_info)
+                conn.log.critical('Headers already sent', exc_info=exc_info)
                 yield b'CRITICAL SERVER ERROR. Please Contact the administrator'
             else:
                 # Create the error response
-                data = worker.cfg.handle_http_error(WsgiResponse(), e)
+                resp = WsgiResponse(
+                            content_type=self.environ.get('CONTENT_TYPE'))
+                data = conn.handle_http_error(resp, e)
                 for b in data(self.environ, self.start_response,
                               exc_info=exc_info):
                     head = self.send_headers(force=b)
@@ -331,13 +318,22 @@ is an HTTP upgrade (websockets)'''
 
 
 class HttpConnection(AsyncConnection):
-    '''Asynchronous HTTP Connection'''
+    '''An :class:`AsyncConnection` for HTTP servers. It produces
+a :class:`HttpResponse` at every client request.'''
     response_class = HttpResponse
 
     @property
     def wsgi_handler(self):
         return self.actor.app_handler
-    
+
+    def handle_http_error(self, response, e):
+        '''Handle an error during response.
+
+:parameter response: a :class:`WsgiResponse`.
+:parameter e: Error.
+'''
+        return self.actor.cfg.handle_http_error(self, response, e)
+
     def request_data(self):
         data = bytes(self.buffer)
         # If no data is available and the parser has no data

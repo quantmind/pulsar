@@ -6,11 +6,11 @@ The application can be used in conjunction with several web frameworks
 as well as the :ref:`pulsar RPC middleware <apps-rpc>` and
 the :ref:`websocket middleware <apps-ws>`.
 
-An example of a web server written with ``pulsar.apps.wsgi`` which responds 
-with "Hello World!" for every request:: 
+An example of a web server written with ``pulsar.apps.wsgi`` which responds
+with "Hello World!" for every request::
 
     from pulsar.apps import wsgi
-    
+
     def hello(environ, start_response):
         data = b"Hello World!"
         response_headers = (
@@ -19,7 +19,7 @@ with "Hello World!" for every request::
         )
         start_response("200 OK", response_headers)
         return [data]
-    
+
     if __name__ == '__main__':
         wsgi.WSGIServer(callable=hello).start()
 
@@ -45,7 +45,7 @@ class WsgiSetting(pulsar.Setting):
     virtual = True
     app = 'wsgi'
 
-    
+
 class Keepalive(WsgiSetting):
     name = "keepalive"
     flags = ["--keep-alive"]
@@ -55,30 +55,30 @@ class Keepalive(WsgiSetting):
     desc = """\
         The number of seconds to keep an idel HTTP keep-alive connection
         connected."""
-        
-        
+
+
 class HttpParser(WsgiSetting):
     name = "http_parser"
     flags = ["--http-parser"]
     desc = """\
-        The HTTP Parser to use. By default it uses the fastest possible.    
-        
-        Specify `python` if you wich to use the pure python implementation    
+        The HTTP Parser to use. By default it uses the fastest possible.
+
+        Specify `python` if you wich to use the pure python implementation
         """
-            
-    
+
+
 class ResponseMiddleware(WsgiSetting):
     name = "response_middleware"
     flags = ["--response-middleware"]
     nargs = '*'
     desc = """\
-    Response middleware to add to the wsgi handler    
+    Response middleware to add to the wsgi handler
     """
-    
-    
+
+
 class HttpError(WsgiSetting):
     name = "handle_http_error"
-    validator = pulsar.validate_callable(2)
+    validator = pulsar.validate_callable(3)
     type = "callable"
     default = staticmethod(handle_http_error)
     desc = """\
@@ -91,17 +91,17 @@ and the error instance."""
 class WSGIServer(socket.SocketServer):
     cfg_apps = ('socket',)
     _app_name = 'wsgi'
-    
+
     def socket_server_class(self, worker, socket):
         timeout = self.cfg.keepalive
         return HttpServer(worker, socket, timeout=timeout)
-    
+
     def handler(self):
         callable = self.callable
         if getattr(callable,'wsgifactory',False):
             callable = callable()
         return self.wsgi_handler(callable)
-    
+
     def wsgi_handler(self, hnd, resp_middleware = None):
         '''Build the wsgi handler from *hnd*. This function is called
 at start-up only.

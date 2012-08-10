@@ -6,7 +6,8 @@ import socket
 import errno
 import time
 
-__all__ = ['Socket',
+__all__ = ['IStream',
+           'Socket',
            'TCPSocket',
            'TCP6Socket',
            'wrap_socket',
@@ -40,14 +41,14 @@ def get_socket_timeout(val):
     else:
         ival = int(val)
         return ival if ival == val else val
-    
+
 def create_connection(address, blocking=0):
     sock_type, address = create_socket_address(address)
     s = sock_type(is_server=False)
     s.sock.connect(address)
     s.sock.setblocking(blocking)
     return s
-    
+
 
 def flush_socket(sock, length=None):
     length = length or io.DEFAULT_BUFFER_SIZE
@@ -56,7 +57,7 @@ def flush_socket(sock, length=None):
         r = client.recv(length)
         while len(r) > length:
             r = client.recv(length)
-    
+
 
 def create_socket(address, log=None, backlog=2048,
                   bound=False, retry=5, retry_lag=2):
@@ -76,7 +77,7 @@ Otherwise a TypeError is raised.
 :rtype: Instance of :class:`Socket`
     """
     sock_type, address = create_socket_address(address)
-    
+
     for i in range(retry):
         try:
             return sock_type(address, backlog=backlog, bound=bound)
@@ -92,11 +93,11 @@ Otherwise a TypeError is raised.
                 if log:
                     log.error("Retrying in {0} seconds.".format(retry_lag))
                 time.sleep(retry_lag)
-    
+
     if log:
         log.error("Can't connect to %s" % str(address))
     sys.exit(1)
-    
+
 
 create_client_socket = lambda address: create_socket(address, bound=True)
 
@@ -121,7 +122,7 @@ which is bound to ``127.0.0.1`` at any available port.
 '''
     remote_client = socket.socket()
     remote_client.setsockopt(socket.IPPROTO_TCP, socket.TCP_NODELAY, 1)
-    
+
     count = 0
     while 1:
         count += 1
@@ -138,11 +139,11 @@ which is bound to ``127.0.0.1`` at any available port.
                 server.close()
                 raise socket.error("Cannot bind socket pairs!")
             remote_client.close()
-    
+
     remote_client = server.__class__(fd=remote_client, bound=True, backlog=None)
     remote_client.setblocking(blocking)
-    return remote_client, server    
-    
+    return remote_client, server
+
 def server_client_sockets(backlog=2048, blocking=0):
     '''Create a server_connection, client pair.'''
     # get a socket pair
@@ -177,17 +178,45 @@ def recv_generator(sock, length=None):
             # if the data returned is less or equal length we stop
             if len(data) <= length:
                 data = None
-    
 
-class Socket(object):
+
+class IStream(object):
+    '''Interface for all streams.
+
+.. attribute: address
+
+    The address of the stream. This is susually the address of the listening
+    or writing socket.
+
+.. attribute: log
+
+    Logger instance
+'''
+    address = ('0.0.0.0', 0)
+    log = logging.getLogger('pulsar.IStream')
+
+    def close(self, msg=None):
+        '''Close the stream'''
+        pass
+
+    def fileno(self):
+        '''Return the file descriptor of the socket.'''
+        pass
+
+    def write(self, data):
+        '''Write *data* into the stream'''
+        raise NotImplementedError()
+
+
+class Socket(IStream):
     '''Wrapper class for a python socket. It provides with
 higher level tools for creating and reusing sockets already created.'''
     def __init__(self, address=None, backlog=2048, fd=None, bound=False,
-                 is_server = None):
+                 is_server=None):
         self.backlog = backlog
         self._is_server = is_server if is_server is not None else not bound
         self._init(fd, address, bound)
-        
+
     def _init(self, fd, address, bound):
         if fd is None:
             self._clean()
@@ -205,27 +234,27 @@ higher level tools for creating and reusing sockets already created.'''
             self.sock = self.set_options(sock, address, bound)
         else:
             self.sock = sock
-    
+
     @property
     def closed(self):
         return self.sock == None
-    
+
     def __getstate__(self):
         d = self.__dict__.copy()
         d['fd'] = d.pop('sock').fileno()
         return d
-    
+
     def __setstate__(self, state):
         fd = state.pop('fd')
         self.__dict__ = state
         self._init(fd, None, True)
-    
+
     def is_server(self):
         return self._is_server
-    
+
     def _clean(self):
         pass
-    
+
     def write(self, data):
         '''Same as the socket send method but it close the connection if
 not data was sent. In this case it also raises a socket error.'''
@@ -239,7 +268,7 @@ not data was sent. In this case it also raises a socket error.'''
         except:
             self.close()
             raise
-        
+
     def accept(self):
         '''Wrap the socket accept method.'''
         client = None
@@ -250,10 +279,14 @@ not data was sent. In this case it also raises a socket error.'''
                 raise
             else:
                 return None,None
-    
+
     def recv(self, length=None):
         return self.sock.recv(length or io.DEFAULT_BUFFER_SIZE)
-    
+
+    @property
+    def address(self):
+        return self.name
+
     @property
     def name(self):
         try:
@@ -266,10 +299,10 @@ not data was sent. In this case it also raises a socket error.'''
                 return ('0.0.0.0', 0)
             else:
                 raise
-    
+
     def __str__(self, name):
         return "<socket %d>" % self.sock.fileno()
-    
+
     def __repr__(self):
         s = str(self)
         v = "<socket %d>" % self.sock.fileno()
@@ -277,14 +310,13 @@ not data was sent. In this case it also raises a socket error.'''
             return '{0} {1}'.format(v,s)
         else:
             return s
-    
+
     def __getattr__(self, name):
         return getattr(self.sock, name)
-    
+
     def fileno(self):
-        '''Return the file descriptor of the socket.'''
         return self.sock.fileno()
-    
+
     def set_options(self, sock, address, bound):
         sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         if not bound:
@@ -293,10 +325,10 @@ not data was sent. In this case it also raises a socket error.'''
             sock.setblocking(0)
             sock.listen(self.backlog)
         return sock
-        
+
     def bind(self, sock, address):
         sock.bind(address)
-        
+
     def close(self, log=None):
         '''Shutdown and close the socket.'''
         if not self.closed:
@@ -306,7 +338,7 @@ not data was sent. In this case it also raises a socket error.'''
             except socket.error:
                 pass
             self.sock = None
-        
+
     def info(self):
         if self.is_server():
             return 'listening at {0}'.format(self)
@@ -315,12 +347,12 @@ not data was sent. In this case it also raises a socket error.'''
 
 
 class TCPSocket(Socket):
-    
+
     FAMILY = socket.AF_INET
-    
+
     def __str__(self):
         return "%s:%d" % self.name
-    
+
     def set_options(self, sock, address, bound):
         sock.setsockopt(socket.IPPROTO_TCP, socket.TCP_NODELAY, 1)
         return super(TCPSocket, self).set_options(sock, address, bound)
@@ -354,7 +386,7 @@ def create_tcp_socket_address(addr):
 
 if os.name == 'posix':
     import resource
-    
+
     def get_maxfd():
         maxfd = resource.getrlimit(resource.RLIMIT_NOFILE)[1]
         if (maxfd == resource.RLIM_INFINITY):
@@ -367,28 +399,28 @@ if os.name == 'posix':
             socket.inet_pton(socket.AF_INET6, addr)
         except socket.error: # not a valid address
             return False
-        return True    
+        return True
 
 
     class UnixSocket(Socket):
-        
+
         FAMILY = socket.AF_UNIX
-        
+
         def _clean(self):
             try:
                 os.remove(conf.address)
             except OSError:
                 pass
-        
+
         def __str__(self):
             return "unix:%s" % self.address
-            
+
         def bind(self, sock, address):
             old_umask = os.umask(self.conf.umask)
             sock.bind(address)
             system.chown(address, self.conf.uid, self.conf.gid)
             os.umask(old_umask)
-            
+
         def close(self):
             super(UnixSocket, self).close()
             os.unlink(self.name)
@@ -407,16 +439,16 @@ if os.name == 'posix':
                 sock_type = UnixSocket
             else:
                 raise TypeError("Unable to create socket from: %r" % addr)
-    
+
         return sock_type, addr
-    
+
 else:
     def get_maxfd():
         return MAXFD
-    
-    
+
+
     def is_ipv6(addr):
         return False
-    
+
     create_socket_address = create_tcp_socket_address
-    
+

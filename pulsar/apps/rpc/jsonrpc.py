@@ -14,8 +14,9 @@ import json
 from timeit import default_timer
 
 import pulsar
+from pulsar import HttpClient
 from pulsar.utils.security import gen_unique_id
-from pulsar.utils.httpurl import to_string, HttpClient, range
+from pulsar.utils.httpurl import to_string, range
 from pulsar.utils.jsontools import DefaultJSONEncoder, DefaultJSONHook
 
 from .handlers import RpcHandler
@@ -53,7 +54,6 @@ Design to comply with the `JSON-RPC 2.0`_ Specification.
 
 .. _`JSON-RPC 2.0`: http://groups.google.com/group/json-rpc/web/json-rpc-2-0'''
     content_type = 'text/json'
-    #content_type = 'application/javascript'
     methods = ('post',)
     _json = JsonToolkit
 
@@ -118,38 +118,36 @@ Lets say your RPC server is running at ``http://domain.name.com/``::
     default_timeout = 3
     _json = JsonToolkit
 
-    def __init__(self, url, name = None, version = None,
-                 proxies = None, id = None, data = None,
-                 client_software = None, **kwargs):
+    def __init__(self, url, name=None, version=None, id=None, data=None,
+                 **kwargs):
         self.__url = url
         self.__name = name
         self.__version = version or self.__class__.default_version
-        self.client_software = client_software
         self.__id = id
         self.__data = data if data is not None else {}
         self.local = {}
         self.setup(**kwargs)
 
-    def setup(self, http = None, timeout = None, proxies = None, **kwargs):
+    def setup(self, http=None, timeout=None, **kwargs):
         if not http:
             timeout = timeout if timeout is not None else self.default_timeout
-            self.local['http'] = HttpClient(proxy_info = proxies,
-                                            timeout = timeout)
-        else:
-            self.local['http'] = http
+            http = HttpClient(timeout=timeout, **kwargs)
+        self.local['http'] = http
+
+    @property
+    def url(self):
+        return self.__url
 
     @property
     def http(self):
         return self.local.get('http')
 
-    def __get_path(self):
+    @property
+    def path(self):
         return self.__name
-    path = property(__get_path)
 
     def makeid(self):
-        '''
-        Can be re-implemented by your own Proxy
-        '''
+        '''Can be re-implemented by your own Proxy'''
         return gen_unique_id()
 
     def __str__(self):
@@ -166,13 +164,8 @@ Lets say your RPC server is running at ``http://domain.name.com/``::
         if self.__name != None:
             name = "%s%s%s" % (self.__name, self.separator, name)
         id = self.makeid()
-        return self.__class__(self.__url,
-                              name = name,
-                              version = self.__version,
-                              id = id,
-                              data = self.__data,
-                              client_software = self.client_software,
-                              **self.local)
+        return self.__class__(self.__url, name=name, version=self.__version,
+                              id=id, data=self.__data, **self.local)
 
     def timeit(self, func, times, *args, **kwargs):
         '''Usefull little utility for timing responses from server. The
@@ -199,20 +192,17 @@ usage is simple::
             raw = True
             fs.pop(0)
             func_name = '_'.join(fs)
-
         params = self.get_params(*args, **kwargs)
-        data = {'method':  func_name,
-                'params':  params,
-                'id':      self.__id}
-        if self.__version:
-            data['jsonrpc'] = self.__version
-
-        return data,raw
+        data = {'method': func_name, 'params': params, 'id': self.__id,
+                'jsonrpc': self.__version}
+        return data, raw
 
     def __call__(self, *args, **kwargs):
-        data,raw = self._get_data(*args, **kwargs)
-        body = self._json.dumps(data)
-        resp = self.http.post(self.__url, body=body)
+        data, raw = self._get_data(*args, **kwargs)
+        body = self._json.dumps(data).encode('latin-1')
+        # Always make sure the content-type is application/json
+        self.http.headers['content-type'] = 'application/json'
+        resp = self.http.post(self.__url, data=body)
         content = resp.content.decode('utf-8')
         if resp.status_code == 200:
             if raw:

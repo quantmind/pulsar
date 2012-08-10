@@ -1,4 +1,5 @@
 import os
+import json
 import textwrap
 import logging
 from functools import partial
@@ -13,15 +14,14 @@ from .middleware import is_streamed
 if ispy3k:
     from functools import reduce
 
-__all__ = ['WsgiHandler', 'WsgiResponse',
+__all__ = ['WsgiHandler',
+           'WsgiResponse',
            'WsgiResponseGenerator',
-           'wsgi_iterator', 'handle_http_error']
+           'wsgi_iterator',
+           'handle_http_error']
 
 
 default_logger = logging.getLogger('pulsar.apps.wsgi')
-
-EMPTY_DICT = {}
-EMPTY_TUPLE = ()
 
 
 def wsgi_iterator(gen, encoding=None):
@@ -271,22 +271,27 @@ class WsgiHandler(pulsar.LogginMixin):
                 return m
 
 
-def handle_http_error(response, e=None):
+def handle_http_error(connection, response, e=None):
     '''The default handler for errors while serving an Http requests.
+
+:parameter connection: The :class:`HttpConnection` handling the request.
 :parameter response: an instance of :class:`WsgiResponse`.
 :parameter e: the exception instance.
+:return: bytes to send as response
 '''
-    actor = pulsar.get_actor()
     code = 500
     if e:
         code = getattr(e, 'status_code', 500)
-    response.content_type = 'text/html'
+    if has_empty_content(code):
+        return b''
+    if not response.content_type:
+        response.content_type = 'text/html'
     if code == 500:
-        actor.log.critical('Unhandled exception during WSGI response',
-                           exc_info=True)
+        connection.log.critical('Unhandled exception during WSGI response',
+                                exc_info=True)
         msg = 'An exception has occured while evaluating your request.'
     else:
-        actor.log.info('WSGI {0} status code'.format(code))
+        connection.log.info('WSGI %s status code', code)
         if code == 404:
             msg = 'Cannot find what you are looking for.'
         else:
@@ -294,19 +299,24 @@ def handle_http_error(response, e=None):
     response.status_code = code
     encoding = 'utf-8'
     reason = response.status
-    content = textwrap.dedent("""\
-    <!DOCTYPE html>
-    <html>
-      <head>
-        <title>{0[reason]}</title>
-      </head>
-      <body>
-        <h1>{0[reason]}</h1>
-        {0[msg]}
-        <h3>{0[version]}</h3>
-      </body>
-    </html>
-    """).format({"reason": reason, "msg": msg,
-                 "version": pulsar.SERVER_SOFTWARE})
+    if response.content_type == 'text/html':
+        content = textwrap.dedent("""\
+        <!DOCTYPE html>
+        <html>
+          <head>
+            <title>{0[reason]}</title>
+          </head>
+          <body>
+            <h1>{0[reason]}</h1>
+            {0[msg]}
+            <h3>{0[version]}</h3>
+          </body>
+        </html>
+        """).format({"reason": reason, "msg": msg,
+                     "version": pulsar.SERVER_SOFTWARE})
+    elif response.content_type == 'application/json':
+        content = json.dumps({'message': msg})
+    else:
+        content = msg
     response.content = content.encode(encoding, 'replace')
     return response
