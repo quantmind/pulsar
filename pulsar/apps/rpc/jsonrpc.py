@@ -20,7 +20,7 @@ from pulsar.utils.httpurl import to_string, range
 from pulsar.utils.jsontools import DefaultJSONEncoder, DefaultJSONHook
 
 from .handlers import RpcHandler
-from .exceptions import exception, INTERNAL_ERROR
+from .exceptions import exception, INTERNAL_ERROR, REQUIRES_AUTHENTICATION
 
 
 __all__ = ['JSONRPC','JsonProxy','LocalJsonProxy']
@@ -53,7 +53,7 @@ class JSONRPC(RpcHandler):
 Design to comply with the `JSON-RPC 2.0`_ Specification.
 
 .. _`JSON-RPC 2.0`: http://groups.google.com/group/json-rpc/web/json-rpc-2-0'''
-    content_type = 'text/json'
+    content_type = 'application/json'
     methods = ('post',)
     _json = JsonToolkit
 
@@ -75,15 +75,24 @@ method data from the JSON *data* string.'''
             args = tuple(params)
         return method, args, kwargs, id, version
 
-    def dumps(self, id, version, result = None, error = None):
+    def dumps(self, id, version, result=None, error=None):
         '''Modify JSON dumps method to comply with
         JSON-RPC Specification 1.0 and 2.0
         '''
         res = {'id': id, "jsonrpc": version}
         if error:
-            res['error'] = {'code': getattr(error,'faultCode',INTERNAL_ERROR),
-                            'message': str(error),
-                            'data': getattr(error,'data','')}
+            if hasattr(error, 'faultCode'):
+                code = error.faultCode
+                msg = getattr(error, 'faultString', str(error))
+            else:
+                msg = str(error)
+                if getattr(error, 'status', 403):
+                    code = REQUIRES_AUTHENTICATION
+                else:
+                    code = INTERNAL_ERROR
+            res['error'] =  {'code': code,
+                             'message': msg,
+                             'data': getattr(error,'data','')}
         else:
             res['result'] = result
         return self._json.dumps(res)
@@ -204,16 +213,16 @@ usage is simple::
         self.http.headers['content-type'] = 'application/json'
         resp = self.http.post(self.__url, data=body)
         content = resp.content.decode('utf-8')
-        if resp.status_code == 200:
-            if raw:
-                return content
-            else:
-                return self.loads(content)
-        else:
+        if resp.is_error:
             if 'error' in content:
                 return self.loads(content)
             else:
                 resp.raise_for_status()
+        else:
+            if raw:
+                return content
+            else:
+                return self.loads(content)
 
     def get_params(self, *args, **kwargs):
         '''
@@ -234,8 +243,8 @@ usage is simple::
         if isinstance(res, dict):
             if 'error' in res:
                 error = res['error']
-                code    = error.get('code',None)
-                message = error.get('message',None)
+                code    = error['code']
+                message = error['message']
                 raise exception(code, message)
             else:
                 return res.get('result',None)

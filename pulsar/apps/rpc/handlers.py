@@ -2,7 +2,7 @@ import sys
 import inspect
 
 from pulsar import LogginMixin, to_bytes, is_failure, log_failure, is_async,\
-                    as_failure, async_object
+                    as_failure, async_object, HttpException
 from pulsar.utils.tools import checkarity
 from pulsar.apps.wsgi import WsgiResponse, WsgiResponseGenerator
 
@@ -32,7 +32,7 @@ def wrap_function_call(func,namefunc):
 
 
 class rpcmethod(object):
-    __slots__ = ('handler','name')
+    __slots__ = ('handler', 'name')
     def __init__(self, handler, name):
         self.handler = handler
         self.name = name
@@ -77,8 +77,7 @@ class RpcRequest(object):
 
     def process(self):
         if not self.func:
-            msg = 'Function "{0}" not available.'.format(self.method)
-            raise NoSuchFunction(msg)
+            raise NoSuchFunction('Function "%s" not available.' % self.method)
         try:
             return self.func(self.handler,self,*self.args,**self.kwargs)
         except TypeError as e:
@@ -87,8 +86,7 @@ class RpcRequest(object):
                              self.kwargs,
                              discount=2)
             if msg:
-                msg = 'Invalid Parameters in rpc function: {0}'.format(msg)
-                raise InvalidParams(msg)
+                raise InvalidParams('Invalid Parameters. %s' % msg)
             else:
                 raise
 
@@ -113,11 +111,12 @@ class ResponseGenerator(WsgiResponseGenerator):
             result = async_object(result)
         try:
             if is_failure(result):
-                status_code = 400
+                e = result.trace[1]
+                status_code = getattr(e, 'status', 400)
                 log_failure(result)
                 result = handler.dumps(request.id,
                                        request.version,
-                                       error=result.trace[1])
+                                       error=e)
             else:
                 result = handler.dumps(request.id,
                                        request.version,
@@ -186,18 +185,30 @@ class RpcHandler(BaseHandler):
 Sub-handlers for prefixed methods (e.g., system.listMethods)
 can be added with :meth:`putSubHandler`. By default, prefixes are
 separated with a dot. Override :attr:`separator` to change this.
+
+.. attribute:: content_type
+    Default content type.
+
+    Default: ``"text/plain"``.
+
+.. attribute:: charset
+
+    The default chrset for this handler. Can be overritten by function
+    charset attribute.
+
+    Default: 'utf-8'.
 '''
     serve_as     = 'rpc'
     '''Prefix for class methods providing remote services. Default: ``rpc``.'''
     separator    = '.'
     '''Separator between subhandlers.'''
     content_type = 'text/plain'
+    '''charset'''
+    charset = 'utf-8'
     '''Default content type. Default: ``"text/plain"``.'''
     _info_exceptions = (Fault,)
 
-    def __init__(self, subhandlers = None,
-                 title = None,
-                 documentation = None,
+    def __init__(self, subhandlers=None, title=None, documentation=None,
                  **kwargs):
         self._parent = None
         self.subHandlers = {}
@@ -237,7 +248,7 @@ for ``method``, ``kwargs`` are keyworded parameters for ``method``,
 ``id`` is an identifier for the client,
 ``version`` is the version of the RPC protocol.
     '''
-        raise NotImplementedError
+        raise NotImplementedError()
 
     def __getattr__(self, name):
         if name in self.rpcfunctions:
@@ -261,18 +272,6 @@ for ``method``, ``kwargs`` are keyworded parameters for ``method``,
         for handler in self.subHandlers.values():
             handler._parent = self
 
-    def get_handler(self, path):
-        prefixes = path.split(self.separator)
-        return self._get_handler(prefixes)
-
-    def _get_handler(self, prefixes):
-        handler = self
-        for path in prefixes:
-            handler = handler.getSubHandler(path)
-            if not handler:
-                raise NoSuchFunction('Could not find path {0}'.format(path))
-        return handler
-
     def putSubHandler(self, prefix, handler):
         '''Add a sub :class:`RpcHandler` with prefix ``prefix``.
 
@@ -284,23 +283,25 @@ for ``method``, ``kwargs`` are keyworded parameters for ``method``,
         return self
 
     def getSubHandler(self, prefix):
-        '''Get a sub :class:`RpcHandler` at ``prefix``.
-        '''
-        return self.subHandlers.get(prefix, None)
+        '''Get a sub :class:`RpcHandler` at ``prefix``.'''
+        return self.subHandlers.get(prefix)
 
     def wrap_function_decorator(self, request, *args, **kwargs):
         return request.func(rpc.handler, request, *args,**kwargs)
 
     def request(self, environ, method, args, kwargs, id, version):
-        prefix_method = method.split(self.separator, 1)
-        if len(prefix_method) > 1:
-            # Found prefixes, get the subhandler
-            method = prefix_method[-1]
-            handler = self._get_handler(prefix_method[:-1])
-        else:
-            handler = self
+        bits = method.split(self.separator, 1)
+        handler = self
+        method_name = bits[-1]
+        for bit in bits[:-1]:
+            subhandler = handler.getSubHandler(bit)
+            if subhandler is None:
+                method_name = method
+                break
+            else:
+                handler = subhandler
         try:
-            func = handler.rpcfunctions[method]
+            func = handler.rpcfunctions[method_name]
         except:
             func = None
         return RpcRequest(environ, handler, method, func, args,
@@ -367,8 +368,7 @@ class RpcMiddleware(object):
         if environ['PATH_INFO'] == self.path:
             method = environ['REQUEST_METHOD'].lower()
             if method not in self.methods:
-                content = 'Method {0} not allowed'.format(method)
-                return WsgiResponse(405, content = content.encode('utf-8'))
+                raise HttpException(status=405)
             data = environ['wsgi.input'].read()
             hnd = self.handler
             method, args, kwargs, id, version = hnd.get_method_and_args(data)

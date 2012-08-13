@@ -964,7 +964,7 @@ class HttpResponse(IORespone):
     @property
     def is_error(self):
         if self.status_code:
-            return not (200 <= self.status_code < 300)
+            return not is_succesful(self.status_code)
 
     @property
     def response(self):

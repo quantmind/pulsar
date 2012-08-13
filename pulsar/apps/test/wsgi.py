@@ -48,12 +48,6 @@ class TestHttpResponse(HttpResponse):
         if self.server_response:
             return self.server_response.environ
 
-    def check(self):
-        '''Assert on status code'''
-        request = self.request
-        test = request.client.test
-        test.assertEqual(request.status_code, self.status_code)
-
     def read(self):
         request = self.request
         if not request:
@@ -66,7 +60,6 @@ class TestHttpResponse(HttpResponse):
         self.server_response = server.HttpResponse(c, environ)
         # Write the response
         c.write(self.server_response)
-        self.check()
         return self
 
 

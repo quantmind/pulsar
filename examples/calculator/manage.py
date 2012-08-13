@@ -3,7 +3,7 @@ A a JSON-RPC Server with some simple functions.
 To run the server type::
 
     python manage.py
-    
+
 Open a new shell and launch python and type::
 
     >>> from pulsar.apps import rpc
@@ -15,10 +15,10 @@ Open a new shell and launch python and type::
     >>> p.calc.add(3,4)
     7.0
     >>>
-    
+
 '''
 from pulsar.apps import rpc, wsgi
-from pulsar.utils.py2py3 import range
+from pulsar.utils.httpurl import range
 from random import normalvariate
 
 
@@ -37,37 +37,39 @@ def randompaths(num_paths = 1, size = 250, mu = 0, sigma = 1):
             v += normalvariate(mu,sigma)
             path.append(v)
     return r
-    
+
 
 class Root(rpc.PulsarServerCommands):
     pass
-        
-    
+
+
 class Calculator(rpc.JSONRPC):
-    
+
     def rpc_add(self, request, a, b):
         return float(a) + float(b)
-    
+
     def rpc_subtract(self, request, a, b):
         return float(a) - float(b)
-    
+
     def rpc_multiply(self, request, a, b):
         return float(a) * float(b)
-    
+
     rpc_divide = rpc.FromApi(divide)
-    
+
     rpc_randompaths = rpc.FromApi(randompaths)
 
 
+def wsgi_handler():
+    return rpc.RpcMiddleware(Root().putSubHandler('calc',Calculator()))
+
 def server(**params):
-    root = rpc.RpcMiddleware(Root().putSubHandler('calc',Calculator()))
-    return wsgi.createServer(callable = root, **params)
+    return wsgi.createServer(callable=wsgi_handler(), **params)
 
 
 def start_server(**params):
     return server(**params).start()
 
-    
+
 if __name__ == '__main__':
     start_server()
 
