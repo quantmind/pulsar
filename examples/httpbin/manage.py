@@ -219,8 +219,8 @@ class HttpBin(object):
            params=(('name', 'package'), ('value', 'pulsar')))
     def request_cookies_set(self, environ, bits):
         if len(bits) == 2:
-            key = bits[1]
-            value = bits[2]
+            key = bits[0]
+            value = bits[1]
             if key and value:
                 response = self.redirect('/cookies')
                 response.set_cookie(key, value=value)
