@@ -6,8 +6,8 @@ import random
 from inspect import isgenerator, isfunction
 
 import pulsar
-from pulsar import Empty, make_async, safe_async, is_failure, HaltServer,\
-                     loop_timeout, ispy3k, Deferred
+from pulsar import Actor, make_async, safe_async, is_failure, HaltServer,\
+                     Monitor, loop_timeout, ispy3k, Deferred, get_actor
 from pulsar.async.defer import pickle
 from pulsar.utils.importer import import_module
 from pulsar.utils.log import LogInformation
@@ -111,7 +111,7 @@ to the underlying :class:`Application`.'''
             self.stop()
         
 
-class Worker(ApplicationHandlerMixin, pulsar.Actor):
+class Worker(ApplicationHandlerMixin, Actor):
     """\
 An :class:`Actor` class for serving an :class:`Application`.
 It provides two new methods inherited from :class:`ApplicationHandlerMixin`.
@@ -162,7 +162,7 @@ It provides two new methods inherited from :class:`ApplicationHandlerMixin`.
         return self.app.on_info(self,info)
 
 
-class ApplicationMonitor(ApplicationHandlerMixin, pulsar.Monitor):
+class ApplicationMonitor(ApplicationHandlerMixin, Monitor):
     '''A specialized :class:`Monitor` implementation for managing
 pulsar subclasses of :class:`Application`.
 '''
@@ -186,7 +186,7 @@ pulsar subclasses of :class:`Application`.
             self.app_handler = app.monitor_handler()
         kwargs['actor_class'] = Worker
         kwargs['num_actors'] = app.cfg.workers
-        super(ApplicationMonitor,self).on_init(**kwargs)
+        super(ApplicationMonitor, self).on_init(**kwargs)
     
     # Delegates Callbacks to the application
     @halt_server    
@@ -227,7 +227,7 @@ updated actor parameters with information about the application.
 
 :rtype: a dictionary of parameters to be passed to the
     spawn method when creating new actors.'''
-        p = pulsar.Monitor.actorparams(self)
+        p = Monitor.actorparams(self)
         app = self.app
         impl = app.cfg.concurrency
         if impl == 'thread':
@@ -346,6 +346,7 @@ These are the most important facts about a pulsar :class:`Application`
                  script=None,
                  version=None,
                  can_kill_arbiter=None,
+                 parse_console=None,
                  **params):
         '''Initialize a new :class:`Application` and add its
 :class:`ApplicationMonitor` to the class:`pulsar.Arbiter`.
@@ -353,6 +354,9 @@ These are the most important facts about a pulsar :class:`Application`
 :parameter version: Optional version number of the application.
 
     Default: ``pulsar.__version__``
+    
+:parameter parse_console: flag for parsing console inputs. By default it parse
+    only if the arbiter has not yet started.
 '''
         self.description = description or self.description
         if can_kill_arbiter is not None:
@@ -368,7 +372,11 @@ These are the most important facts about a pulsar :class:`Application`
         nparams = self.cfg.copy()
         nparams.update(params)
         self.callable = callable
-        self.load_config(argv, version=version, **nparams)
+        if parse_console is None:
+            actor = get_actor()
+            parse_console = not actor or not actor.running
+        self.load_config(argv, version=version, parse_console=parse_console,
+                         **nparams)
         self.configure_logging()
         if self.on_config() is not False:
             arbiter = pulsar.arbiter(self.cfg.daemon)
@@ -465,8 +473,7 @@ By default it returns ``None``.'''
     def add_timeout(self, deadline, callback):
         self.arbiter.ioloop.add_timeout(deadline, callback)
               
-    def load_config(self, argv, version = None,
-                    parse_console = True, **params):
+    def load_config(self, argv, version=None, parse_console=True, **params):
         '''Load the application configuration from a file and/or
 from the command line. Called during application initialization.
 
