@@ -1,16 +1,15 @@
-'''The module imports several classes and functions form the standard
+'''This MASSIVE module imports several classes and functions form the standard
 library in a python 2.6 to python 3.3 compatible fashion.
-The module also implements an :class:`HttpClient` class useful for handling
-synchronous and asynchronous HTTP requests.
+On top of that, it implements the :class:`HttpClient` for handling synchronous
+and asynchronous HTTP requests in a pythonic way.
 
-Stand alone HTTP, URLS utilities and HTTP client library.
-This is a thin layer on top of urllib2 in python2 / urllib in Python 3.
-To create this module I've used several bits from around the opensorce community
-In particular:
+It is a thin layer on top of urllib2 in python2 / urllib in Python 3.
+Several opensource efforts have been used as source of snippes, inspiration
+and more:
 
-* http-parser_ for the :class:`HttpParser`
-* urllib3_ for http connection classes
-* request_ for inspiration and utilities
+* http-parser_
+* urllib3_
+* request_
 
 This is a long stand-alone module which can be dropped in any library and used
 as it is.
@@ -49,7 +48,7 @@ from datetime import datetime, timedelta
 from email.utils import formatdate
 from io import BytesIO
 import zlib
-from collections import deque
+from collections import deque, Mapping
 from copy import copy
 
 ispy3k = sys.version_info >= (3, 0)
@@ -222,6 +221,15 @@ def host_and_port(host):
     host, port = splitport(host)
     return host, int(port) if port else None
 
+def host_and_port_default(scheme, host):
+    host, port = splitport(host)
+    if not port:
+        if scheme == "http":
+            port = '80'
+        elif scheme == "https":
+            port = '443'
+    return host, port
+
 def remove_double_slash(route):
     if '//' in route:
         route = re.sub('/+', '/', route)
@@ -244,6 +252,7 @@ def has_empty_content(status, method=None):
         return False
 
 def is_succesful(status):
+    '''2xx status is succesful'''
     return status >= 200 and status < 300
 
 ####################################################    HTTP HEADERS
@@ -280,6 +289,7 @@ HEADER_FIELDS = {'general': frozenset(('Cache-Control', 'Connection', 'Date',
                                         'Sec-WebSocket-Accept',
                                         'Server',
                                         'Set-Cookie',
+                                        'Set-Cookie2',
                                         'Vary',
                                         'WWW-Authenticate',
                                         'X-Frame-Options')),
@@ -362,7 +372,7 @@ the entity-header fields.'''
     def update(self, iterable):
         """Extend the headers with a dictionary or an iterable yielding keys
  and values."""
-        if isinstance(iterable, dict):
+        if isinstance(iterable, Mapping):
             iterable = iteritems(iterable)
         add = self.add_header
         for key, value in iterable:
@@ -411,12 +421,14 @@ it returns an empty list.'''
     def add_header(self, key, value, **params):
         '''Add *value* to *key* header. If the header is already available,
 append the value to the list.'''
+        key = header_field(key)
         if value:
-            key = header_field(key)
             values = self._headers.get(key, [])
             if value not in values:
                 values.append(value)
                 self._headers[key] = values
+        else:
+            self._headers.pop(key, None)
 
     def flat(self, version, status):
     	'''Full headers bytes representation'''
@@ -934,6 +946,7 @@ class HttpResponse(IORespone):
         self.debuglevel = debuglevel
         self._method = method
         self.strict=strict
+        self.callbacks = []
 
     def __str__(self):
         if self.status_code:
@@ -1407,7 +1420,7 @@ into an SSL socket.
 :attr:`headers` with *headers*.'''
         d = self.headers.copy()
         if headers:
-            d.extend(headers)
+            d.update(headers)
         return d
 
     def get(self, url, **kwargs):
@@ -1417,6 +1430,7 @@ object.
 :params url: url for the new :class:`HttpRequest` object.
 :param \*\*kwargs: Optional arguments for the :meth:`request` method.
 '''
+        kwargs.setdefault('allow_redirects', True)
         return self.request('GET', url, **kwargs)
 
     def options(self, url, **kwargs):
@@ -1426,6 +1440,7 @@ object.
 :params url: url for the new :class:`HttpRequest` object.
 :param \*\*kwargs: Optional arguments for the :meth:`request` method.
 '''
+        kwargs.setdefault('allow_redirects', True)
         return self.request('OPTIONS', url, **kwargs)
 
     def head(self, url, **kwargs):
@@ -1595,7 +1610,8 @@ a :class:`HttpResponse` object.
             # Build a new request
             return self.request(method, url, data=data, files=files,
                                 headers=headers, history=history,
-                                encode_multipart=request.encode_multipart)
+                                encode_multipart=self.encode_multipart,
+                                allow_redirects=request.allow_redirects)
         else:
             return request.on_response(response)
 
@@ -1676,6 +1692,12 @@ def addslash(url):
     '''Add a slash at the beginning of *url*.'''
     if not url.startswith('/'):
         url = '/%s' % url
+    return url
+
+def appendslash(url):
+    '''Append a slash to *url* if it does not have one.'''
+    if not url.endswith('/'):
+        url = '%s/' % url
     return url
 
 def choose_boundary():

@@ -10,7 +10,8 @@ from pulsar import lib, make_async, is_async, AsyncSocketServer,\
                         Deferred, AsyncConnection, AsyncResponse, DeferredSend,\
                         HttpException, MAX_BODY
 from pulsar.utils.httpurl import Headers, iteritems, is_string, unquote,\
-                                    has_empty_content, to_bytes
+                                    has_empty_content, to_bytes,\
+                                    host_and_port_default
 from pulsar.utils import event
 
 from .wsgi import WsgiResponse
@@ -97,14 +98,7 @@ nothing."""
     environ['REMOTE_ADDR'] = remote[0]
     environ['REMOTE_PORT'] = str(remote[1])
     if server is not None:
-        server =  server.split(":")
-        if len(server) == 1:
-            if url_scheme == "http":
-                server.append("80")
-            elif url_scheme == "https":
-                server.append("443")
-            else:
-                server.append('')
+        server =  host_and_port_default(url_scheme, server)
         environ['SERVER_NAME'] = server[0]
         environ['SERVER_PORT'] = server[1]
     path_info = parser.get_path()
