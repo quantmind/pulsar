@@ -221,6 +221,15 @@ def host_and_port(host):
     host, port = splitport(host)
     return host, int(port) if port else None
 
+def host_and_port_default(scheme, host):
+    host, port = splitport(host)
+    if not port:
+        if scheme == "http":
+            port = '80'
+        elif scheme == "https":
+            port = '443'
+    return host, port
+
 def remove_double_slash(route):
     if '//' in route:
         route = re.sub('/+', '/', route)
@@ -1421,6 +1430,7 @@ object.
 :params url: url for the new :class:`HttpRequest` object.
 :param \*\*kwargs: Optional arguments for the :meth:`request` method.
 '''
+        kwargs.setdefault('allow_redirects', True)
         return self.request('GET', url, **kwargs)
 
     def options(self, url, **kwargs):
@@ -1430,6 +1440,7 @@ object.
 :params url: url for the new :class:`HttpRequest` object.
 :param \*\*kwargs: Optional arguments for the :meth:`request` method.
 '''
+        kwargs.setdefault('allow_redirects', True)
         return self.request('OPTIONS', url, **kwargs)
 
     def head(self, url, **kwargs):
@@ -1599,7 +1610,8 @@ a :class:`HttpResponse` object.
             # Build a new request
             return self.request(method, url, data=data, files=files,
                                 headers=headers, history=history,
-                                encode_multipart=request.encode_multipart)
+                                encode_multipart=self.encode_multipart,
+                                allow_redirects=request.allow_redirects)
         else:
             return request.on_response(response)
 
