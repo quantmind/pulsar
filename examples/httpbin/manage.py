@@ -165,7 +165,8 @@ class HttpBin(object):
     # ROUTE FUNCTIONS
 
     def home(self, environ):
-        data = '\n'.join((r.route.render() for r in itervalues(self.routes)))
+        data = '<ul>\n%s\n</ul>' % '\n'.join(
+                            (r.route.render() for r in itervalues(self.routes)))
         return self.render(data)
 
     @route('get', title='Returns GET data')
@@ -286,7 +287,7 @@ class handle(ws.WS):
             return json.dumps([(i,random()) for i in range(100)])
 
 
-def server(description = None, **kwargs):
+def server(description=None, **kwargs):
     description = description or 'Pulsar HttpBin'
     app = wsgi.WsgiHandler(middleware=(wsgi.cookies_middleware,
                                        wsgi.authorization_middleware,

@@ -239,7 +239,7 @@ invocation of the application.
                     yield head
                 if buffer:
                     yield chunk_encoding(buffer)
-                yield chunk_encoding('')
+                yield chunk_encoding(b'')
             keep_alive = self.keep_alive
         except Exception as e:
             keep_alive = False

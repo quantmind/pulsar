@@ -4,9 +4,17 @@
 <title>%s</title>
 <meta http-equiv='content-type' value='text/html;charset=utf8'>
 <style type='text/css' media='all'>
+html, body {
+    margin: 0;
+    padding: 0;
+}
 body {
     color: #222;
-    font-size: 16px;
+    background: #F0F9FF;
+    font-family: Optima,Segoe,"Segoe UI",Candara,Calibri,Arial,sans-serif;
+    font-size: 17px;
+    padding: 10px;
+    line-height: 24px;
 }
 a, a:visited {
     color: #003366;
@@ -14,11 +22,16 @@ a, a:visited {
 a:hover {
     color: #AD5700;
 }
+ul {
+    list-style: disc outside none;
+    margin: 0 0 9px 25px;
+    padding: 0;
+}
 </style>
 </head>
 <body>
 <h1>Pulsar httpbin</h1>
-<p>A HTTP server for testing clients.
+<p>An HTTP server for testing clients.
 Powered by <a href='https://github.com/quantmind/pulsar' target='_blank'>pulsar</a>.</p>
 %s
 </body>

@@ -86,7 +86,7 @@ method data from the JSON *data* string.'''
                 msg = getattr(error, 'faultString', str(error))
             else:
                 msg = str(error)
-                if getattr(error, 'status', 403):
+                if getattr(error, 'status', None) == 403:
                     code = REQUIRES_AUTHENTICATION
                 else:
                     code = INTERNAL_ERROR
