@@ -35,13 +35,8 @@ def arbiter(daemonize=False):
     arbiter = get_actor()
     if arbiter is None:
         return set_actor(Arbiter.make(daemonize=daemonize))
-    elif isinstance(arbiter, Actor):
-        if arbiter.is_arbiter():
-            return arbiter
-        else:
-            raise pulsar.PulsarException()
-    else:
-        return None
+    elif isinstance(arbiter, Actor) and arbiter.is_arbiter():
+        return arbiter
 
 
 def spawn(**kwargs):

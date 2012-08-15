@@ -372,22 +372,27 @@ These are the most important facts about a pulsar :class:`Application`
         nparams = self.cfg.copy()
         nparams.update(params)
         self.callable = callable
+        actor = get_actor()
         if parse_console is None:
-            actor = get_actor()
-            parse_console = not actor or not actor.running
+            parse_console = not actor or not actor.running            
         self.load_config(argv, version=version, parse_console=parse_console,
                          **nparams)
-        self.configure_logging()
-        if self.on_config() is not False:
-            arbiter = pulsar.arbiter(self.cfg.daemon)
-            monitor = arbiter.add_monitor(self.monitor_class,
-                                          self.name,
-                                          app=self,
-                                          ioqueue=self.ioqueue)
-            self.mid = monitor.aid
-            if self.commands_set:
-                monitor.commands_set.update(self.commands_set)
-    
+        self.mid = None
+        self(actor)
+            
+    def __call__(self, actor):
+        if not actor or actor.is_arbiter():
+            self.configure_logging()
+            if self.on_config() is not False:
+                arbiter = pulsar.arbiter(self.cfg.daemon)
+                monitor = arbiter.add_monitor(self.monitor_class,
+                                              self.name,
+                                              app=self,
+                                              ioqueue=self.ioqueue)
+                self.mid = monitor.aid
+                if self.commands_set:
+                    monitor.commands_set.update(self.commands_set)
+        
     @property
     def app_name(self):
         return self._app_name

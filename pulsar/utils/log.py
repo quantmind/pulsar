@@ -26,6 +26,7 @@ __all__ = ['SERVER_NAME',
            'process_global',
            'LogginMixin',
            'Synchronized',
+           'local_property',
            'LocalMixin',
            'LogSelf',
            'LogInformation']
@@ -95,8 +96,18 @@ removed when pickling the object'''
     def __getstate__(self):
         '''Remove the local dictionary.'''
         d = self.__dict__.copy()
-        d.pop('_local',None)
+        d.pop('_local', None)
         return d
+    
+
+def local_property(f):
+    name = f.__name__
+    def _(self):
+        local = self.local
+        if name not in local:
+            local[name] = f(self)
+        return local[name]
+    return property(_, doc=f.__doc__)
     
     
 class SynchronizedMixin(object):
@@ -125,7 +136,7 @@ class SynchronizedMixin(object):
         return _
     
     
-class Synchronized(LocalMixin,SynchronizedMixin):
+class Synchronized(LocalMixin, SynchronizedMixin):
     pass
 
 

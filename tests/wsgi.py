@@ -1,4 +1,6 @@
 '''Tests the wsgi middleware in pulsar.apps.wsgi'''
+import pickle
+
 from pulsar.utils.httpurl import range, zip
 from pulsar.apps import wsgi
 from pulsar.apps.test import unittest
@@ -45,4 +47,22 @@ class testWsgiApplication(unittest.TestCase):
     
     def testBuildWsgiApp(self):
         appserver = wsgi.WSGIServer()
+        self.assertEqual(appserver.mid, None)
+        self.assertEqual(appserver.callable, None)
+        
+    def testWsgiHandler(self):
+        hnd = wsgi.WsgiHandler(middleware=(wsgi.cookies_middleware,
+                                           wsgi.authorization_middleware))
+        self.assertEqual(len(hnd.middleware), 2)
+        hnd2 = pickle.loads(pickle.dumps(hnd))
+        self.assertEqual(len(hnd2.middleware), 2)
+        
+    def testHttpBinServer(self):
+        from examples.httpbin.manage import server
+        app = server(bind='127.0.0.1:0')
+        self.assertEqual(app.mid, None)
+        app2 = pickle.loads(pickle.dumps(app))
+        self.assertEqual(app2.mid, None)
+        self.assertEqual(len(app.callable.middleware),
+                         len(app2.callable.middleware))
         

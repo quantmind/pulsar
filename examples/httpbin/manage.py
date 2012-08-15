@@ -11,7 +11,7 @@ except ImportError:
     import sys
     sys.path.append('../../')
 
-from pulsar import HttpException
+from pulsar import HttpException, LocalMixin, local_property
 from pulsar.apps import wsgi, ws
 from pulsar.utils.structures import OrderedDict
 from pulsar.utils.httpurl import Headers, parse_qs, ENCODE_URL_METHODS,\
@@ -85,10 +85,11 @@ class route(object):
         return _
 
 
-class HttpBin(object):
+class HttpBin(LocalMixin):
     '''WSGI application running on the server'''
-    def __init__(self):
-        self.routes = OrderedDict(((r.route.key, r) for r in sorted(
+    @local_property
+    def routes(self):
+        return OrderedDict(((r.route.key, r) for r in sorted(
                                 self._routes(), key=lambda x: x.route.order)))
 
     @classmethod

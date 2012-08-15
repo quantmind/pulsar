@@ -3,8 +3,6 @@ from pulsar import send, make_async
 from pulsar.apps.test import unittest, test_server
 from pulsar.utils import httpurl
 
-from examples.httpbin.manage import server
-
 BIN_HOST = 'httpbin.org'
 HTTPBIN_URL = 'http://' + BIN_HOST + '/'
 HTTPSBIN_URL = 'https://'+ BIN_HOST + '/'
@@ -52,10 +50,9 @@ class TestHttpClient(unittest.TestCase, HttpClientMixin):
     
     @classmethod
     def setUpClass(cls):
-        # Create the Http bin server by sending this request to the arbiter
-        s = test_server(server,
-                        bind='127.0.0.1:0',
-                        concurrency=cls.server_concurrency)
+        # Create the HttpBin server by sending this request to the arbiter
+        from examples.httpbin.manage import server
+        s = server(bind='127.0.0.1:0', concurrency=cls.server_concurrency)
         outcome = send('arbiter', 'run', s)
         yield outcome
         cls.app = outcome.result
