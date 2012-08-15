@@ -1,5 +1,6 @@
 import os
 import re
+import time
 import shutil
 import tempfile
 import cProfile as profiler
@@ -44,20 +45,20 @@ class ProfileOption(test.TestOption):
     default = False
     validator = pulsar.validate_bool
     desc = '''Profile tests using the cProfile'''
-    
+
 class ProfilePathOption(test.TestOption):
     name = 'profile_stats_path'
     flags = ["--profile-stats-path"]
     default = 'htmlprof'
     desc = '''location of profile directory'''
     validator = absolute_file
-    
-    
+
+
 def make_header(headers):
     for h in headers:
         if h:
             yield '<p>{0}</p>'.format(h)
-            
+
 def make_stat_table(data):
     yield "<thead>\n<tr>\n"
     for head, description in headers:
@@ -69,8 +70,8 @@ def make_stat_table(data):
             yield '<td>{0}</td>'.format(col)
         yield '\n</tr>\n'
     yield '</tbody>'
-        
-    
+
+
 def data_stream(lines, num = None):
     if num:
         lines = lines[:num]
@@ -103,21 +104,21 @@ def data_stream(lines, num = None):
             else:
                 new_fields.extend(('', '', other_filename))
             yield new_fields
-    
-    
+
+
 class TestProfile(test.WrapTest):
-    
+
     def __init__(self, test, dir):
         self.dir = dir
         super(TestProfile,self).__init__(test)
-    
+
     def _call(self):
         prof = profiler.Profile()
         tmp = tempfile.mktemp(dir=self.dir)
         prof.runcall(self.testMethod)
         prof.dump_stats(tmp)
-    
-    
+
+
 def copy_file(filename, target, context=None):
     with open(os.path.join(template_path,filename),'r') as file:
         stream = file.read()
@@ -125,34 +126,37 @@ def copy_file(filename, target, context=None):
         stream = stream.format(context)
     with open(os.path.join(target,filename),'w') as file:
         file.write(stream)
-    
-    
+
+
 class Profile(test.Plugin):
     ''':class:`pulsar.apps.test.Plugin` for profiling test cases.'''
     active = False
-    
+
     def configure(self, cfg):
         self.active = cfg.profile
         self.profile_stats_path = cfg.profile_stats_path
         dir, name = os.path.split(self.profile_stats_path)
         fname = '.'+name
         self.profile_temp_path = os.path.join(dir, fname)
-        
+
     def getTest(self, test):
         # If active return a TestProfile instance wrapping the real test case.
         if self.active:
             return TestProfile(test, self.profile_temp_path)
-    
+
     def on_start(self):
         if self.active:
             self.remove_dir(self.profile_temp_path, build=True)
-        
+
     def remove_dir(self, dir, build=False):
+        sleep = 0
         if os.path.exists(dir):
             shutil.rmtree(dir)
+            sleep = 0.2
         if build:
-            os.makedirs(dir)
-        
+            time.sleep(sleep)
+            os.mkdir(dir)
+
     def on_end(self):
         if self.active:
             files = [os.path.join(self.profile_temp_path,file) for file in\
@@ -189,4 +193,3 @@ class Profile(test.Plugin):
                                'version': pulsar.__version__})
                 else:
                     copy_file(file, self.profile_stats_path)
-    

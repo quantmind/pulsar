@@ -6,8 +6,6 @@ from pulsar.apps.test.plugins import bench, profile
 
 
 if __name__ == '__main__':
-    TestSuite(description = 'Pulsar Asynchronous test suite',
-              modules = ('tests',
-                         ('examples','tests')),
-              plugins = (bench.BenchMark(),
-                         profile.Profile())).start()
+    TestSuite(description='Pulsar Asynchronous test suite',
+              modules=('tests', ('examples','tests')),
+              plugins=(bench.BenchMark(), profile.Profile())).start()

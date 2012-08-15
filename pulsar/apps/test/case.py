@@ -123,7 +123,7 @@ Run a *test* function using the following algorithm
                 raise StopIteration()
 
             if hasattr(test,'_pre_setup'):
-                outcome = run_test_function(test,test._pre_setup)
+                outcome = run_test_function(test, test._pre_setup)
                 yield outcome
                 success = not self.add_failure(test, runner, outcome.result)
 
