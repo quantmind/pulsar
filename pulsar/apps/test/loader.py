@@ -203,7 +203,7 @@ tag,module pairs.
         if imp:
             try:
                 mod = import_module(name)
-                if getattr(mod,'__test__',True):
+                if getattr(mod, '__test__', True):
                     return self.runner.import_module(mod, parent)
             except ImportError:
                self.log.error('failed to import module {0}. Skipping.'

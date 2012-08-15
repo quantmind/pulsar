@@ -79,7 +79,7 @@ class RpcRequest(object):
         if not self.func:
             raise NoSuchFunction('Function "%s" not available.' % self.method)
         try:
-            return self.func(self.handler,self,*self.args,**self.kwargs)
+            return self.func(self.handler, self, *self.args, **self.kwargs)
         except TypeError as e:
             msg = checkarity(self.func,
                              self.args,
