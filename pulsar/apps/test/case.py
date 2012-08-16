@@ -3,7 +3,7 @@ import io
 import pickle
 from inspect import istraceback, isclass
 
-from pulsar import is_failure, CLEAR_ERRORS, make_async, safe_async, get_actor
+from pulsar import is_failure, CLEAR_ERRORS, make_async, get_actor, async
 
 from .utils import inject_async_assert
 
@@ -11,7 +11,16 @@ from .utils import inject_async_assert
 __all__ = ['TestRequest']
 
 
+@async(max_errors=1, description='Test ')
 def run_test_function(test, func, istest=False):
+    '''Run function *func* which belong to *test*.
+
+:parameter test: test instance or class
+:parameter func: test function belonging to *test*
+:parameter istest: flag indicating if this is a test or a setup/teardown
+    function.
+:return: an asynchronous result
+'''
     if func is None:
         return func
     class_method = isclass(test)
@@ -21,10 +30,7 @@ def run_test_function(test, func, istest=False):
         test = runner.getTest(test)
     test.istest = istest
     test_function = getattr(test, func.__name__)
-    name = test.__name__ if class_method else test.__class__.__name__
-    return safe_async(test_function,
-                      max_errors=1,
-                      description='Test %s.%s' % (name, func.__name__))
+    return test_function()
 
 def test_method(cls, method):
     try:
@@ -80,11 +86,9 @@ following algorithm:
                 should_stop = self.add_failure(test_cls, runner, outcome.result)
 
             if not should_stop:
+                # Loop over all test cases in class
                 for test in all_tests:
-                    worker.log.debug('Start %s test', test)
-                    runner.startTest(test)
                     yield self.run_test(test, runner)
-                    runner.stopTest(test)
 
             test_cls = test_method(testcls, 'tearDownClass')
             if test_cls and not skip_tests:
@@ -112,6 +116,7 @@ Run a *test* function using the following algorithm
 '''
         try:
             success = True
+            runner.startTest(test)
             testMethod = getattr(test, test._testMethodName)
             if (getattr(test.__class__, "__unittest_skip__", False) or
                 getattr(testMethod, "__unittest_skip__", False)):
@@ -150,6 +155,7 @@ Run a *test* function using the following algorithm
                 if self.add_failure(test, runner, outcome.result):
                     success = False
 
+            runner.stopTest(test)
         except StopIteration:
             success = False
         except Exception as e:

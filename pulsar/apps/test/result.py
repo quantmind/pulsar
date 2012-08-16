@@ -374,8 +374,7 @@ class TestRunner(TestResultProxy):
                     break
             except:
                 LOGGER.critical('Unhandled exception while calling method'\
-                                ' "on_end" of plugin {0}'.format(p),
-                                exc_info=True)
+                                ' "on_end" of plugin %s', p, exc_info=True)
 
     def add(self, result):
         self.result.add(result)

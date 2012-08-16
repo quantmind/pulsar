@@ -765,7 +765,7 @@ more data in the buffer is required.'''
         self.server.connections.discard(self)
 
     # Internal
-    @async
+    @async()
     def _stream_data(self, data=None):
         # New data received. Keep on parsing and
         # writing responses until the parser returns nothing.

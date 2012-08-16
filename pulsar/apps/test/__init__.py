@@ -199,18 +199,13 @@ configuration and plugins.'''
         modules = getattr(self, 'modules', None)
         if not hasattr(self, 'plugins'):
             self.plugins = ()
-
         # Create a runner and configure it
         runner = self.runner
-
         if not modules:
             modules = ((None,'tests'),)
-
         if hasattr(modules,'__call__'):
             modules = modules(self)
-
         loader = TestLoader(os.getcwd(), modules, runner, logger=self.log)
-
         # Listing labels
         if self.cfg.list_labels:
             tags = self.cfg.labels
@@ -230,7 +225,6 @@ configuration and plugins.'''
                 print(tag)
             print('\n')
             return False
-
         self.local['loader'] = loader
 
     def monitor_start(self, monitor):

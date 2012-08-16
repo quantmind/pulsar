@@ -50,7 +50,7 @@ else:   # pragma : nocover
     iteritems = lambda d : d.iteritems()
     itervalues = lambda d : d.itervalues()
     range = xrange
-    
+
 # Special objects
 class NOT_DONE(object):
     pass
@@ -89,8 +89,8 @@ def is_stack_trace(trace):
     elif isinstance(trace,tuple) and len(trace) == 3:
         return istraceback(trace[2]) or\
                  (trace[2] is None and isinstance(trace[1],trace[0]))
-    return False    
-    
+    return False
+
 def update_failure(f):
     '''If *f* is an instance of :class:`Failure` add the current
  ``sys.exc_info`` otherwuise return a new :class:`Failure` with current
@@ -98,10 +98,10 @@ def update_failure(f):
     if not isinstance(f,Failure):
         f = Failure()
     return f.append(sys.exc_info())
-    
+
 def is_failure(value):
     return isinstance(value, Failure)
-    
+
 def as_failure(value, msg=None):
     '''Convert *value* into a :class:`Failure` if it is a stack trace or an
 exception, otherwise returns *value*.'''
@@ -115,17 +115,6 @@ exception, otherwise returns *value*.'''
         return Failure(value, msg)
     else:
         return value
-    
-def raise_failure(f):
-    '''Decorator for raising failures'''
-    def _(*args, **kwargs):
-        r = f(*args, **kwargs)
-        if is_failure(r):
-            r.raise_all()
-        return r
-    _.__name__ = f.__name__
-    _.__doc__ = f.__doc__
-    return _
 
 def is_async(obj):
     '''Check if *obj* is an asynchronous instance'''
@@ -141,34 +130,12 @@ def safe_async(f, args=None, kwargs=None, description=None, max_errors=None):
         result = sys.exc_info()
     return make_async(result, max_errors=max_errors, description=description)
 
-def async(func):
-    '''Asynchronous decorator for a function *func*'''
-    def _(*args, **kwargs):
-        return safe_async(func, args=args, kwargs=kwargs)
-    
-    _.__name__ = func.__name__
-    _.__doc__ = func.__doc__
-    return _
-
 def async_object(obj):
     '''Obtain the result if available, otherwise it returns self.'''
     if is_async(obj):
         return obj.result if obj.called and not obj.paused else obj
     else:
         return obj
-    
-def multi_async(func):
-    '''Decorator for a function *func* which returns an iterable over, possibly
-asynchronous, values. This decorator create an instance of a
-:class:`MultiDeferred` called once all asynchronous values have been caled.'''
-    def _(*args, **kwargs):
-        try:
-            return MultiDeferred(func(*args, **kwargs), type=list).lock()
-        except Exception as e:
-            return make_async(e)
-    _.__name__ = func.__name__
-    _.__doc__ = func.__doc__
-    return _
 
 def maybe_async(val, description=None, max_errors=None):
     '''Convert *val* into an asynchronous instance only if *val* is a generator
@@ -180,7 +147,7 @@ or a function.'''
         return safe_async(val)
     else:
         return val
-    
+
 def make_async(val=None, description=None, max_errors=None):
     '''Convert *val* into an :class:`Deferred` asynchronous instance
 so that callbacks can be attached to it.
@@ -195,7 +162,7 @@ This function is useful when someone needs to treat a value as a deferred::
 
     v = ...
     make_async(v).add_callback(...)
-    
+
 '''
     if not is_async(val):
         if isgenerator(val):
@@ -216,15 +183,56 @@ def log_failure(failure):
         failure.log()
     return failure
 
-############################################################### Failure
+############################################################### DECORATORS
+class async:
+    def __init__(self, max_errors=None, description=None):
+         self.max_errors = max_errors
+         self.description = description or ''
+
+    def __call__(self, func):
+        '''Asynchronous decorator for a function *func*'''
+        description = '%s%s' % (self.description, func.__name__)
+        def _(*args, **kwargs):
+            return safe_async(func, args=args, kwargs=kwargs,
+                              max_errors=self.max_errors,
+                              description=description)
+        _.__name__ = func.__name__
+        _.__doc__ = func.__doc__
+        return _
+
+def multi_async(func):
+    '''Decorator for a function *func* which returns an iterable over, possibly
+asynchronous, values. This decorator create an instance of a
+:class:`MultiDeferred` called once all asynchronous values have been caled.'''
+    def _(*args, **kwargs):
+        try:
+            return MultiDeferred(func(*args, **kwargs), type=list).lock()
+        except Exception as e:
+            return make_async(e)
+    _.__name__ = func.__name__
+    _.__doc__ = func.__doc__
+    return _
+
+def raise_failure(f):
+    '''Decorator for raising failures'''
+    def _(*args, **kwargs):
+        r = f(*args, **kwargs)
+        if is_failure(r):
+            r.raise_all()
+        return r
+    _.__name__ = f.__name__
+    _.__doc__ = f.__doc__
+    return _
+
+############################################################### FAILURE
 class Failure(object):
     '''Aggregate failures during :class:`Deferred` callbacks.
-    
+
 .. attribute:: traces
 
     List of (``errorType``, ``errvalue``, ``traceback``) occured during
     the execution of a :class:`Deferred`.
-    
+
 '''
     logged = False
     def __init__(self, err=None, msg=None):
@@ -235,11 +243,11 @@ class Failure(object):
         else:
             self.traces = []
             self.append(err)
-            
+
     def __repr__(self):
         return '\n\n'.join(self.format_all())
     __str__ = __repr__
-    
+
     def append(self, trace):
         '''Add new failure to self.'''
         if trace:
@@ -250,10 +258,10 @@ class Failure(object):
             elif is_stack_trace(trace):
                 self.traces.append(trace)
         return self
-    
+
     def clear(self):
         self.traces = []
-    
+
     def format_all(self):
         for exctype, value, tb in self:
             if istraceback(tb):
@@ -262,7 +270,7 @@ class Failure(object):
                 yield '\n'.join(tb)
             else:
                 yield str(value)
-                
+
     def __getstate__(self):
         traces = []
         for exctype, value, tb in self:
@@ -272,16 +280,16 @@ class Failure(object):
         state = self.__dict__.copy()
         state['traces'] = traces
         return state
-    
+
     def __getitem__(self, index):
         return self.traces[index]
-    
+
     def __len__(self):
         return len(self.traces)
-    
+
     def __iter__(self):
         return iter(self.traces)
-    
+
     def raise_all(self, first=True):
         pos = 0 if first else -1
         if self.traces and isinstance(self.traces[pos][1],Exception):
@@ -297,14 +305,14 @@ class Failure(object):
             elif N > 1:
                 raise DeferredFailure(
                     'There were {0} failures during callbacks.'.format(N))
-    
+
     @property
     def trace(self):
         if self.traces:
             return self.traces[-1]
         else:
             return (None,None,None)
-                
+
     def log(self, log=None):
         if not self.logged:
             self.logged = True
@@ -312,7 +320,7 @@ class Failure(object):
             for e in self:
                 log.critical(self.msg, exc_info=e)
 
-############################################################### Deferred            
+############################################################### Deferred
 class Deferred(object):
     """This is a callback which will be put off until later.
 The implementation is very similar to the ``twisted.defer.Deferred`` object.
@@ -321,33 +329,33 @@ The implementation is very similar to the ``twisted.defer.Deferred`` object.
 
     ``True`` if the deferred was called. In this case the asynchronous result
     is ready and available in the :attr:`result`.
-    
+
 """
     paused = 0
     _called = False
     _runningCallbacks = False
-    
+
     def __init__(self, description=None):
         self._description = description
         self._callbacks = deque()
-    
+
     def __repr__(self):
         v = self._description or self.__class__.__name__
         if self.called:
             v += ' (called)'
         return v
-    
+
     def __str__(self):
-        return self. __repr__()            
-    
+        return self. __repr__()
+
     @property
     def called(self):
         return self._called
-    
+
     @property
     def running(self):
         return self._runningCallbacks
-    
+
     def add_callback(self, callback, errback=None):
         """Add a callback as a callable function.
 The function takes at most one argument, the result passed to the
@@ -360,19 +368,19 @@ be called when an exception occurs."""
         else:
             raise TypeError('callback must be callable')
         return self
-    
+
     def add_errback(self, errback):
         '''Same as :meth:`add_callback` but only for errors.'''
         return self.add_callback(pass_through, errback)
-        
+
     def addBoth(self, callback):
         '''Equivalent to `self.add_callback(callback,callback)`.'''
         return self.add_callback(callback, callback)
-                    
+
     def add_callback_args(self, callback, *args, **kwargs):
         return self.add_callback(\
                 lambda result : callback(result,*args,**kwargs))
-    
+
     def callback(self, result=None):
         '''Run registered callbacks with the given *result*.
 This can only be run once. Later calls to this will raise
@@ -390,11 +398,11 @@ this point, :meth:`add_callback` will run the *callbacks* immediately.
         self._called = True
         self._run_callbacks()
         return self.result
-        
+
     def result_or_self(self):
         '''Obtain the result if available, otherwise it returns self.'''
         return self.result if self._called and not self.paused else self
-        
+
     def wait(self, timeout = 1):
         '''Wait until *timeout* for a result to be available'''
         result = self.result_or_self()
@@ -404,7 +412,7 @@ this point, :meth:`add_callback` will run the *callbacks* immediately.
             if is_async(result):
                 raise DeferredFailure('Deferred not called')
         return result
-    
+
     ##################################################    INTERNAL METHODS
     def _run_callbacks(self):
         if not self._called or self._runningCallbacks or self.paused:
@@ -427,7 +435,7 @@ this point, :meth:`add_callback` will run the *callbacks* immediately.
                     # Add a callback to the result to resume callbacks
                     self.result.addBoth(self._continue)
                     break
-    
+
     def _pause(self):
         """Stop processing until :meth:`unpause` is called."""
         self.paused += 1
@@ -436,7 +444,7 @@ this point, :meth:`add_callback` will run the *callbacks* immediately.
         """Process all callbacks made since :meth:`pause` was called."""
         self.paused -= 1
         self._run_callbacks()
-        
+
     def _continue(self, result):
         self.result = result
         self._unpause()
@@ -468,7 +476,7 @@ The callback will occur once the generator has stopped
         super(DeferredGenerator,self).__init__(description=description)
         self.loop = thread_loop()
         self._consume()
-    
+
     def _consume_in_thread(self, result=None):
         # When the generator finds an asynchronous object still waiting
         # for results, it adds this callback to resume the generator at the
@@ -481,7 +489,7 @@ The callback will occur once the generator has stopped
             return result
         else:
             return self._consume(result)
-    
+
     def _consume(self, last_result=None):
         '''override the deferred consume private method for handling the
 generator. Important! Callbacks are always added to the event loop on the
@@ -522,16 +530,16 @@ current thread.'''
                 result = None
             # continue with the loop
             return self._consume(result)
-    
+
     def should_stop(self, failure):
         self.errors.append(failure)
         return self.max_errors and len(self.errors) >= self.max_errors
-        
+
     def conclude(self, last_result=None):
         # Conclude the generator and callback the listeners
         result = last_result if not self.errors else self.errors
         return self.callback(result)
-    
+
 
 ############################################################### MultiDeferred
 class MultiDeferred(Deferred):
@@ -543,7 +551,7 @@ which may be :class:`Deferred`.
     If ``True`` items can no longer be added to this :class:`MultiDeferred`
 '''
     _locked = False
-    
+
     def __init__(self, data=None, type=None, fireOnOneErrback=False,
                  handle_value=None):
         self._deferred = {}
@@ -558,11 +566,11 @@ which may be :class:`Deferred`.
         super(MultiDeferred, self).__init__()
         if data:
             self.update(data)
-        
+
     @property
     def type(self):
         return self._stream.__class__.__name__
-    
+
     def lock(self):
         if self._locked:
             raise RuntimeError(self.__class__.__name__ +\
@@ -571,13 +579,13 @@ which may be :class:`Deferred`.
         if not self._deferred:
             self._finish()
         return self
-    
+
     def update(self, stream):
         add = self._add
         for key, value in iterdata(stream, len(self._stream)):
             add(key, value)
         return self
-        
+
     def append(self, value):
         '''Append only works for a list type multideferred'''
         if self.type == 'list':
@@ -585,7 +593,7 @@ which may be :class:`Deferred`.
         else:
             raise RuntimeError('Cannot append a value to a "dict" type '
                                'multideferred')
-        
+
     def _add(self, key, value):
         if self._locked:
             raise RuntimeError(self.__class__.__name__ +\
@@ -610,23 +618,23 @@ which may be :class:`Deferred`.
                 if val is not value:
                     return self._add(key, val)
         self._setitem(key, value)
-    
+
     def _make(self, value):
         md = self.__class__(value, fireOnOneErrback=self.fireOnOneErrback,
                             handle_value=self.handle_value)
         return async_object(md.lock())
-        
+
     def _add_deferred(self, key, value):
         self._deferred[key] = value
         value.addBoth(lambda result: self._deferred_done(key, result))
-        
+
     def _deferred_done(self, key, result):
         self._deferred.pop(key, None)
         self._setitem(key, result)
         if self._locked and not self._deferred and not self.called:
             self._finish()
         return result
-    
+
     def _finish(self):
         if not self._locked:
             raise RuntimeError(self.__class__.__name__ +\
@@ -639,7 +647,7 @@ which may be :class:`Deferred`.
             self.callback(self._failures)
         else:
             self.callback(self._stream)
-        
+
     def _setitem(self, key, value):
         stream = self._stream
         if isinstance(stream, list) and key == len(stream):

@@ -6,10 +6,15 @@ import tempfile
 import cProfile as profiler
 import pstats
 from datetime import datetime
-from io import StringIO
 
 import pulsar
+from pulsar.utils.httpurl import ispy3k
 from pulsar.apps import test
+
+if ispy3k:
+    from io import StringIO as Stream
+else:
+    from io import BytesIO as Stream
 
 other_filename = 'unknown'
 line_func = re.compile(r'(?P<line>\d+)\((?P<func>\w+)\)')
@@ -161,7 +166,9 @@ class Profile(test.Plugin):
         if self.active:
             files = [os.path.join(self.profile_temp_path,file) for file in\
                      os.listdir(self.profile_temp_path)]
-            stats = pstats.Stats(*files,**{'stream':StringIO()})
+            if not files:
+                return
+            stats = pstats.Stats(*files, **{'stream': Stream()})
             stats.sort_stats('time', 'calls')
             stats.print_stats()
             stats_str = stats.stream.getvalue()
