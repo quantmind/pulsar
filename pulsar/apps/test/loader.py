@@ -6,7 +6,7 @@ import logging
 
 from pulsar.utils.importer import import_module
 
-default_logger = logging.getLogger('pulsar.apps.test.loader')
+default_logger = logging.getLogger('pulsar.apps.test')
 
 
 __all__ = ['TestLoader']
@@ -40,7 +40,7 @@ you give a *root* directory and a list of submodules where to look for tests.
 The are very :ref:`simple rules <apps-test-loading>` followed for
 importing tests.
 '''
-    def __init__(self, root, modules, runner, logger = None):
+    def __init__(self, root, modules, runner, logger=None):
         self.runner = runner
         self.log = logger or default_logger
         self.root = root
@@ -74,7 +74,9 @@ importing tests.
         else:
             return 2
 
-    def testclasses(self, tags = None):
+    def testclasses(self, tags=None):
+        pt = ', '.join(tags) if tags else 'all'
+        self.log.info('Load test classes for %s tags', pt)
         for tag,mod in self.testmodules(tags):
             if tags:
                 skip = True

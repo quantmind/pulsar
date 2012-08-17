@@ -234,14 +234,22 @@ configuration and plugins.'''
         tags = self.cfg.labels
         self.local['tests'] = tests = list(loader.testclasses(tags))
         if tests:
+            self.log.info('loaded %s test classes', len(tests))
             self.runner.on_start()
-            monitor.cfg.set('workers', min(self.cfg.workers,len(tests)))
-            self._time_start = time.time()
-            for tag, testcls in tests:
-                monitor.put(TestRequest(testcls, tag))
+            monitor.cfg.set('workers', min(self.cfg.workers, len(tests)))
+            self._time_start = None
         else:
             print('Could not find any tests.')
             monitor.arbiter.stop()
+
+    def monitor_task(self, monitor):
+        if self._time_start is None:
+            tests = self.local['tests']
+            self.log.info('sending %s test classes to the task queue',
+                          len(tests))
+            self._time_start = time.time()
+            for tag, testcls in tests:
+                monitor.put(TestRequest(testcls, tag))
 
     def add_result(self, monitor, result):
         #Check if we got all results

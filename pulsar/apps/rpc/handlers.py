@@ -71,10 +71,6 @@ class RpcRequest(object):
     def content_type(self):
         return self.handler.content_type
 
-    def info(self, msg):
-        '''Do something with the message and request'''
-        self.log.debug(msg)
-
     def process(self):
         if not self.func:
             raise NoSuchFunction('Function "%s" not available.' % self.method)
@@ -121,8 +117,6 @@ class ResponseGenerator(WsgiResponseGenerator):
                 result = handler.dumps(request.id,
                                        request.version,
                                        result=result)
-                request.info('Successfully handled rpc function "{0}"'\
-                                .format(request.method))
         except Exception as e:
             handler.log.error('Could not serialize', exc_info=True)
             status_code = 500
