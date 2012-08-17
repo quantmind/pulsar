@@ -25,15 +25,6 @@ class TestHeaders(unittest.TestCase):
         self.assertEqual(len(h), 1)
         h['server'] = 'bla'
         self.assertEqual(len(h), 1)
-        
-    def testOrder(self):
-        h = httpurl.Headers()
-        h['content-type'] = 'text/html'
-        h['connection'] = 'close'
-        self.assertEqual(len(h), 2)
-        self.assertEqual(tuple(h),('Connection', 'Content-Type'))
-        h.update({'server': 'foo'})
-        self.assertEqual(tuple(h),('Connection', 'Server', 'Content-Type'))
 
 
 class HttpClientMixin(object):
@@ -147,9 +138,10 @@ class TestHttpClient(unittest.TestCase, HttpClientMixin):
         r = make_async(http.get(self.httpbin('redirect','1')))
         yield r
         r = r.result
-        self.assertEqual(r.status_code, 302)
-        self.assertEqual(r.response, 'Found')
-        self.assertEqual(r.headers['location'], '/get')
+        self.assertEqual(r.status_code, 200)
+        history = r.request.history
+        self.assertEqual(len(history), 1)
+        self.assertTrue(history[0].url.endswidth('/redirect/1'))
         
     def test_Cookie(self):
         http = self.client()

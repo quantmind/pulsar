@@ -364,9 +364,6 @@ These are the most important facts about a pulsar :class:`Application`
         self.epilog = epilog or self.epilog
         self._app_name = self._app_name or self.__class__.__name__.lower()
         self._name = name or self._app_name
-        # Add events
-        self.local['on_start'] = Deferred()
-        self.local['on_stop'] = Deferred()
         self.script = script
         self.python_path()
         nparams = self.cfg.copy()
@@ -380,8 +377,13 @@ These are the most important facts about a pulsar :class:`Application`
         self.mid = None
         self(actor)
             
-    def __call__(self, actor):
-        if not actor or actor.is_arbiter():
+    def __call__(self, actor=None):
+        if actor is None:
+            actor = get_actor()
+        if not self.mid and (not actor or actor.is_arbiter()):
+            # Add events
+            self.local['on_start'] = Deferred()
+            self.local['on_stop'] = Deferred()
             self.configure_logging()
             if self.on_config() is not False:
                 arbiter = pulsar.arbiter(self.cfg.daemon)
@@ -392,6 +394,7 @@ These are the most important facts about a pulsar :class:`Application`
                 self.mid = monitor.aid
                 if self.commands_set:
                     monitor.commands_set.update(self.commands_set)
+            return self.local['on_start']
         
     @property
     def app_name(self):

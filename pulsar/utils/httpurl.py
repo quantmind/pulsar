@@ -205,6 +205,17 @@ characters. This leaves all reserved, illegal and non-ASCII bytes encoded."""
             parts[i] = '%' + parts[i]
     return ''.join(parts)
 
+def requote_uri(uri):
+    """Re-quote the given URI.
+
+    This function passes the given URI through an unquote/quote cycle to
+    ensure that it is fully and consistently quoted.
+    """
+    # Unquote only the unreserved characters
+    # Then quote only illegal characters (do not quote reserved, unreserved,
+    # or '%')
+    return quote(unquote_unreserved(uri), safe="!#$%&'()*+,/:;=?@[]~")
+
 def iri_to_uri(iri, kwargs=None):
     '''Convert an Internationalized Resource Identifier (IRI) portion to a URI
 portion that is suitable for inclusion in a URL.
@@ -1017,8 +1028,7 @@ class HttpResponse(IORespone):
         '''Start reading the response. Called by the connection object.'''
         if start and self.parser is None:
             self.parser = self.parser_class(kind=1)
-            self.read()
-            return self
+            return self.read()
 
     def parsedata(self, data):
         self.parser.execute(data, len(data))
@@ -1159,7 +1169,7 @@ http://www.ietf.org/rfc/rfc2616.txt
         self.dispatch_hook('pre_request', self.hooks, self)
         self.encode(encode_multipart, multipart_boundary)
 
-    def get_response(self, history=None):
+    def get_response(self):
         '''Submit request and return a :attr:`response_class` instance.'''
         self.connection = connection = self.client.get_connection(self)
         if self._tunnel_host:
@@ -1173,7 +1183,6 @@ http://www.ietf.org/rfc/rfc2616.txt
         headers = self.headers.as_dict()
         connection.request(self.method, self.full_url, self.body, headers)
         response = connection.getresponse()
-        response.history = history
         response.request = self
         return response.begin(True)
 
@@ -1516,7 +1525,7 @@ a :class:`HttpResponse` object.
                                      headers=headers, timeout=timeout,
                                      encode_multipart=encode_multipart,
                                      multipart_boundary=self.multipart_boundary,
-                                     hooks=hooks,
+                                     hooks=hooks, history=history,
                                      allow_redirects=allow_redirects, **kwargs)
         # Set proxy if required
         self.set_proxy(request)
@@ -1526,7 +1535,7 @@ a :class:`HttpResponse` object.
             if not isinstance(cookies, CookieJar):
                 cookies = cookiejar_from_dict(cookies)
             cookies.add_cookie_header(request)
-        return request.get_response(history=history)
+        return request.get_response()
 
     def _set_cookies(self, cookies):
         if cookies and not isinstance(cookies, CookieJar):
@@ -1588,13 +1597,13 @@ a :class:`HttpResponse` object.
             files = request.files
             # Handle redirection without scheme (see: RFC 1808 Section 4)
             if url.startswith('//'):
-                parsed_rurl = urlparse(r.url)
+                parsed_rurl = urlparse(request.full_url)
                 url = '%s:%s' % (parsed_rurl.scheme, url)
             # Facilitate non-RFC2616-compliant 'location' headers
             # (e.g. '/path/to/resource' instead of
             # 'http://domain.tld/path/to/resource')
             if not urlparse(url).netloc:
-                url = urljoin(r.url,
+                url = urljoin(request.full_url,
                               # Compliant with RFC3986, we percent
                               # encode the url.
                               requote_uri(url))
