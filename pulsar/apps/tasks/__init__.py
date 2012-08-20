@@ -5,12 +5,13 @@ this application gives you all you need for running them with very
 little setup effort::
 
     from pulsar.apps import tasks
-    
-    tq = tasks.TaskQueue(tasks_path = 'path.to.tasks.*')
+
+    tq = tasks.TaskQueue(tasks_path='path.to.tasks.*')
     tq.start()
-    
+
 Tutorial
 ================
+
 
 Jobs
 ~~~~~~~~~~~~~~~~
@@ -27,13 +28,13 @@ To define a job is simple, subclass from :class:`Job` and implement the
 callable function::
 
     from pulsar.apps import tasks
-    
+
     class Addition(tasks.Job):
-    
+
         def __call__(self, consumer, a, b):
             "Add two numbers"
             return a+b
-            
+
 The *consumer*, instance of :class:`TaskConsumer`, is passed by the
 :class:`TaskQueue` and should always be the first positional argument in the
 callable function.
@@ -47,30 +48,29 @@ By default, tasks are constructed using an in-memory implementation of
 :class:`Task`. To use a different implementation, for example one that
 saves tasks on a database, subclass :class:`Task` and pass the new class
 to the :class:`TaskQueue` constructor::
-    
+
     from pulsar.apps import tasks
-    
+
     class TaskDatabase(tasks.Task):
-        
+
         def on_created(self):
             return save2db(self)
-        
+
         def on_received(self):
             return save2db(self)
-            
+
         def on_start(self):
             return save2db(self)
-            
+
         def on_finish(self):
             return save2db(self)
-            
+
         @classmethod
         def get_task(cls, id, remove = False):
             return taskfromdb(id)
-            
-            
-    tq = tasks.TaskQueue(task_class = TaskDatabase,
-                         tasks_path = 'path.to.tasks.*')
+
+
+    tq = tasks.TaskQueue(task_class=TaskDatabase, tasks_path='path.to.tasks.*')
     tq.start()
 
 
@@ -113,8 +113,8 @@ A :class:`Task` can have one of the following :attr:`Task.status` string:
 
     The set of states for which a :class:`Task` has finished:
     ``REVOKED``, ``FAILURE`` and ``SUCCESS``
-    
-    
+
+
 Queue
 ~~~~~~~~~~~~~~
 
@@ -123,7 +123,7 @@ from the standard python library. To specify a different queue you can
 use the ``task-queue`` flag from the command line::
 
     python myserverscript.py --task-queue dotted.path.to.callable
-    
+
 or by setting the ``task_queue_factory`` parameter in the config file
 or in the :class:`TaskQueue` constructor.
 
@@ -168,17 +168,17 @@ class TaskQueueFactory(pulsar.Setting):
     flags = ["-q", "--task-queue"]
     default = "pulsar.Queue"
     desc = """The task queue factory to use."""
-    
+
     def get(self):
         return module_attribute(self.value)
         return self.value
-    
-    
+
+
 class TaskSetting(pulsar.Setting):
     virtual = True
     app = 'tasks'
-    
-    
+
+
 class TaskPath(TaskSetting):
     name = "tasks_path"
     section = "Task Consumer"
@@ -189,14 +189,14 @@ class TaskPath(TaskSetting):
     desc = """\
         List of python dotted paths where tasks are located.
         """
-    
-    
+
+
 class TaskResponse(object):
-    
+
     def __init__(self, worker, task):
         self.task = task
         self.worker = worker
-        
+
     def close(self):
         '''Close the task request by invoking the :meth:`Task.finish`
 method.'''
@@ -207,15 +207,15 @@ method.'''
 class CPUboundServer(pulsar.Application):
     '''A CPU-bound application server.'''
     _app_name = 'cpubound'
-    
+
     def get_ioqueue(self):
         '''Return the distributed task queue which produces tasks to
 be consumed by the workers.'''
         return self.cfg.task_queue_factory()
-    
+
     def request_instance(self, worker, fd, request):
         return request
-    
+
     def on_event(self, worker, fd, request):
         request = self.request_instance(worker, fd, request)
         c = worker.get('current_requests')
@@ -228,7 +228,7 @@ be consumed by the workers.'''
             c.remove(request)
         except ValueError:
             pass
-    
+
 
 taskqueue_cmnds = set()
 
@@ -249,7 +249,7 @@ def addtask(client, actor, caller, jobname, task_extra, *args, **kwargs):
     kwargs.pop('ack', None)
     return actor.app._addtask(actor, caller, jobname, task_extra, True,
                               args, kwargs)
-    
+
 @pulsar_command(internal=True, ack=False, commands_set=taskqueue_cmnds)
 def addtask_noack(client, actor, caller, jobname, task_extra, *args, **kwargs):
     kwargs.pop('ack', None)
@@ -271,12 +271,12 @@ def job_list(client, actor, jobnames=None):
 @pulsar_command(commands_set=taskqueue_cmnds)
 def next_scheduled(client, actor, caller, jobname=None):
     return actor.app.scheduler.next_scheduled(jobname=jobname)
-    
-    
+
+
 class TaskQueue(CPUboundServer):
-    '''A :class:`pulsar.Application` for consuming
+    '''A :class:`pulsar.CPUboundServer` for consuming
 tasks and managing scheduling of tasks.
-    
+
 .. attribute:: registry
 
     Instance of a :class:`JobRegistry` containing all
@@ -288,12 +288,12 @@ tasks and managing scheduling of tasks.
     commands_set = taskqueue_cmnds
     task_class = TaskInMemory
     '''The :class:`Task` class for storing information about task execution.
-    
+
 Default: :class:`TaskInMemory`
 '''
     scheduler_class = Scheduler
     '''The scheduler class. Default: :class:`Scheduler`.'''
-    
+
     @property
     def scheduler(self):
         '''A :class:`Scheduler` which send task to the task queue and
@@ -306,10 +306,10 @@ which check for tasks to be scheduled.
 Check the :meth:`TaskQueue.monitor_task` callback
 for implementation.'''
         return self.local.get('scheduler')
-    
+
     def request_instance(self, worker, fd, request):
         return self.task_class.from_queue(request)
-        
+
     def monitor_task(self, monitor):
         '''Override the :meth:`pulsar.Application.monitor_task` callback
 to check if the scheduler needs to perform a new run.'''
@@ -317,7 +317,7 @@ to check if the scheduler needs to perform a new run.'''
         if s:
             if s.next_run <= datetime.now():
                 s.tick(monitor)
-    
+
     def handler(self):
         # Load the application callable, the task consumer
         if self.callable:
@@ -325,18 +325,18 @@ to check if the scheduler needs to perform a new run.'''
         import_modules(self.cfg.tasks_path)
         self.local['scheduler'] = Scheduler(self.task_class)
         return self
-    
+
     def monitor_handler(self):
         return self.handler()
-            
+
     def job_list(self, jobnames=None):
         return self.scheduler.job_list(jobnames=jobnames)
-    
+
     @property
     def registry(self):
         global registry
         return registry
-    
+
     # Internals
     def _addtask(self, monitor, caller, jobname, task_extra, ack, args, kwargs):
         task = self.scheduler.queue_task(monitor, jobname, args, kwargs,
@@ -349,5 +349,5 @@ to check if the scheduler needs to perform a new run.'''
 is either "addtask" or "addtask_noack".
 When that is the case, the application broadcast the task id associated with
 the message request id.'''
-        if message.action in ('addtask','addtask_noack'):
+        if message.action in ('addtask', 'addtask_noack'):
             pass

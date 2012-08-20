@@ -36,7 +36,7 @@ def halt_server(f):
         failure.log()
         if halt:
             raise HaltServer('Unhandled exception application.')
-    
+
     def _(self, *args, **kwargs):
         try:
             result = make_async(f(self, *args, **kwargs))
@@ -46,7 +46,7 @@ def halt_server(f):
     _.__name__ = f.__name__
     _.__doc__ = f.__doc__
     return _
-            
+
 
 class ApplicationHandlerMixin(object):
     '''A mixin for both :class:`Worker` and :class:`ApplicationMonitor`.
@@ -56,10 +56,10 @@ sending back responses.
 '''
     def on_message(self, message):
         self.app.on_actor_message(message)
-        
+
     def on_message_processed(self, message, result):
         self.app.on_actor_message_processed(message, result)
-    
+
     def on_event(self, fd, event):
         '''Override :meth:`pulsar.Actor.on_event` to delegate handling
 to the underlying :class:`Application`.'''
@@ -69,7 +69,7 @@ to the underlying :class:`Application`.'''
         should_stop = self.max_requests and self.nr >= self.max_requests
         result = self._response_generator(request, should_stop)
         return loop_timeout(result, timeout)
-        
+
     def handle_task(self):
         if self.information.log():
             self.log.info('Processed {0} requests'.format(self.nr))
@@ -78,17 +78,17 @@ to the underlying :class:`Application`.'''
         except:
             pass
         self.app.worker_task(self)
-        
+
     def handle_message(self, sender, message):
         '''Handle a *message* from a *sender*.'''
         return self.app.handle_message(sender, self, message)
-    
+
     def configure_logging(self, config = None):
         # Delegate to application
         self.app.configure_logging(config = config)
         self.loglevel = self.app.loglevel
         self.setlog()
-    
+
     ################################################################# Internals
     def _response_generator(self, request, should_stop):
         yield safe_async(self.cfg.pre_request, args=(self, request))
@@ -109,55 +109,55 @@ to the underlying :class:`Application`.'''
         if should_stop:
             self.log.info("Auto-restarting worker.")
             self.stop()
-        
+
 
 class Worker(ApplicationHandlerMixin, Actor):
     """\
 An :class:`Actor` class for serving an :class:`Application`.
 It provides two new methods inherited from :class:`ApplicationHandlerMixin`.
-    
+
 .. attribute:: app
 
     Instance of the :class:`Application` to be performed by the worker
-    
+
 .. attribute:: cfg
 
     Configuration dictionary
-    
+
 .. attribute:: app_handler
 
     The application handler obtained from :meth:`Application.handler`.
 
-"""        
+"""
     def on_init(self, app = None, **kwargs):
         self.app = app
         self.cfg = app.cfg
         self.max_requests = self.cfg.max_requests or sys.maxsize
         self.information = LogInformation(self.cfg.logevery)
         self.app_handler = app.handler()
-    
+
     # Delegates Callbacks to the application
-         
+
     def on_start(self):
         self.app.worker_start(self)
         try:
             self.cfg.worker_start(self)
         except:
             pass
-    
+
     def on_task(self):
         self.handle_task()
-    
+
     def on_stop(self):
         return self.app.worker_stop(self)
-            
+
     def on_exit(self):
         self.app.worker_exit(self)
         try:
             self.cfg.worker_exit(self)
         except:
             pass
-        
+
     def on_info(self, info):
         return self.app.on_info(self,info)
 
@@ -168,7 +168,7 @@ pulsar subclasses of :class:`Application`.
 '''
     # For logging name
     _class_code = 'appmonitor'
-    
+
     def on_init(self, app=None, **kwargs):
         self.app = app
         self.cfg = app.cfg
@@ -187,40 +187,40 @@ pulsar subclasses of :class:`Application`.
         kwargs['actor_class'] = Worker
         kwargs['num_actors'] = app.cfg.workers
         super(ApplicationMonitor, self).on_init(**kwargs)
-    
+
     # Delegates Callbacks to the application
-    @halt_server    
+    @halt_server
     def on_start(self):
         self.app.monitor_start(self)
         # If no workears are available invoke the worker start method too
         if not self.cfg.workers:
             self.app.worker_start(self)
         self.app.local['on_start'].callback(self.app)
-        
+
     @halt_server
     def monitor_task(self):
         yield self.app.monitor_task(self)
         # There are no workers, the monitor do their job
         if not self.cfg.workers:
             yield self.handle_task()
-            
+
     def on_stop(self):
         if not self.cfg.workers:
             yield self.app.worker_stop(self)
         yield self.app.monitor_stop(self)
         yield super(ApplicationMonitor, self).on_stop()
         self.app.local['on_stop'].callback(self.app)
-        
+
     def on_exit(self):
         self.app.monitor_exit(self)
         try:
             self.cfg.worker_exit(self)
         except:
             pass
-    
+
     def clean_up(self):
         self.worker_class.clean_arbiter_loop(self,self.ioloop)
-            
+
     def actorparams(self):
         '''Override the :meth:`Monitor.actorparams` method to
 updated actor parameters with information about the application.
@@ -239,12 +239,12 @@ updated actor parameters with information about the application.
                   'concurrency': impl,
                   'name':'{0}-worker'.format(app.name)})
         return p
-        
+
     def on_info(self, info):
         info.update({'default_timeout': self.cfg.timeout,
                      'max_requests': self.cfg.max_requests})
         return self.app.on_info(self,info)
-    
+
 
 class Application(pulsar.LogginMixin):
     """\
@@ -262,7 +262,7 @@ These are the most important facts about a pulsar :class:`Application`
  * When a new :class:`Application` is initialized,
    a new :class:`ApplicationMonitor` instance is added to the
    :class:`Arbiter`, ready to perform its duties.
-    
+
 :parameter callable: Initialise the :attr:`Application.callable` attribute.
 :parameter description: A string describing the application.
     It will be displayed on the command line.
@@ -273,52 +273,52 @@ These are the most important facts about a pulsar :class:`Application`
 :parameter params: a dictionary of configuration parameters which overrides
     the defaults and the `cfg` attribute. They will be overritten by
     a config file or command line arguments.
-    
+
 .. attribute:: app
 
     A string indicating the application namespace for configuration parameters.
-    
+
     Default: ``None``.
-    
+
 .. attribute:: callable
 
     A callable serving your application. The callable must be pickable,
     therefore it is either a function
     or a pickable object. If not provided, the application must
     implement the :meth:`handler` method.
-    
+
     Default ``None``
-    
+
 .. attribute:: cfg
 
     dictionary of default configuration parameters.
-    
+
     Default: ``{}``.
-    
+
 .. attribute:: cfg_apps
 
     Optional tuplen containing the names of configuration namespaces to
     be included in the application config dictionary.
-    
+
 .. attribute:: mid
 
     The unique id of the :class:`ApplicationMonitor` managing the
     application. Defined at runtime.
-    
+
 .. attribute:: script
 
     full path of the script which starts the application or ``None``.
     If supplied it is used to setup the python path
-    
+
 .. attribute:: can_kill_arbiter
 
     If ``True``, an unhandled error in the application will shut down the
     :class:`pulsar.Arbiter`. Check the :meth:`ApplicationMonitor.monitor_task`
     method for implementation.
-    
+
     Default: ``False``.
-    
-    
+
+
 .. attribute:: remotes
 
     Optiona :class:`pulsar.RemoteMethods` class to provide additional
@@ -336,7 +336,7 @@ These are the most important facts about a pulsar :class:`Application`
     can_kill_arbiter = False
     commands_set = None
     monitor_class = ApplicationMonitor
-    
+
     def __init__(self,
                  callable=None,
                  description=None,
@@ -354,7 +354,7 @@ These are the most important facts about a pulsar :class:`Application`
 :parameter version: Optional version number of the application.
 
     Default: ``pulsar.__version__``
-    
+
 :parameter parse_console: flag for parsing console inputs. By default it parse
     only if the arbiter has not yet started.
 '''
@@ -371,12 +371,12 @@ These are the most important facts about a pulsar :class:`Application`
         self.callable = callable
         actor = get_actor()
         if parse_console is None:
-            parse_console = not actor or not actor.running            
+            parse_console = not actor or not actor.running
         self.load_config(argv, version=version, parse_console=parse_console,
                          **nparams)
         self.mid = None
         self(actor)
-            
+
     def __call__(self, actor=None):
         if actor is None:
             actor = get_actor()
@@ -395,34 +395,34 @@ These are the most important facts about a pulsar :class:`Application`
                 if self.commands_set:
                     monitor.commands_set.update(self.commands_set)
             return self.local['on_start']
-        
+
     @property
     def app_name(self):
         return self._app_name
-    
+
     @property
     def name(self):
         '''Application name, It is unique and defines the application.'''
         return self._name
-    
+
     def __repr__(self):
         return self.name
-    
+
     def __str__(self):
-        return self.name 
-    
+        return self.name
+
     @property
     def ioqueue(self):
         if 'queue' not in self.local:
             self.local['queue'] = self.get_ioqueue()
         return self.local['queue']
-    
+
     def handler(self):
         '''Returns the callable application handler which is stored in
 :attr:`Worker.app_handler`, used by :class:`Worker` to carry out its task.
 By default it returns the :attr:`Application.callable`.'''
         return self.callable
-    
+
     def handle_message(self, sender, receiver, message):
         '''Handle messages for the *receiver*.'''
         handler = getattr(self, 'actor_' + message.action, None)
@@ -430,13 +430,13 @@ By default it returns the :attr:`Application.callable`.'''
             return handler(sender, receiver, *message.args, **message.kwargs)
         else:
             receiver.log.error('Unknown action ' + message.action)
-        
+
     def request_instance(self, worker, fd, event):
         '''Build a request class from a file descriptor *fd* and an *event*.
 The returned request instance is passed to the :meth:`handle_request`
 method.'''
         return event
-    
+
     def handle_request(self, worker, request):
         '''This is the main function which needs to be implemented
 by actual applications. It is called by the *worker* to handle
@@ -447,15 +447,15 @@ a *request*.
 :rtype: It can be a generator, a :class:`Deferred` instance
     or the actual response.'''
         raise NotImplementedError()
-    
+
     def get_ioqueue(self):
         '''Returns an I/O distributed queue for the application if one
 is needed. If a queue is returned, the application :class:`Worker`
 will have a :class:`IOLoop` instance based on the queue (via :class:`IOQueue`).
- 
+
 By default it returns ``None``.'''
         return None
-    
+
     def put(self, request):
         queue = self.ioqueue
         if queue:
@@ -464,23 +464,23 @@ By default it returns ``None``.'''
         else:
             self.log.error("Trying to put a request on task queue,\
  but there isn't one!")
-    
+
     def on_config(self):
         '''Callback when configuration is loaded. This is a chance to do
  an application specific check before the concurrent machinery is put into
  place. If it returns ``False`` the application will abort.'''
         pass
-    
+
     def python_path(self):
         #Insert the application directory at the top of the python path.
         fname = self.script or os.getcwd()
         path = os.path.split(fname)[0]
         if path not in sys.path:
             sys.path.insert(0, path)
-            
+
     def add_timeout(self, deadline, callback):
         self.arbiter.ioloop.add_timeout(deadline, callback)
-              
+
     def load_config(self, argv, version=None, parse_console=True, **params):
         '''Load the application configuration from a file and/or
 from the command line. Called during application initialization.
@@ -505,10 +505,10 @@ The parameters overrriding order is the following:
                                  self.cfg_apps,
                                  self.config_options_include,
                                  self.config_options_exclude)
-        
+
         overrides = {}
         specials = set()
-        
+
         # modify defaults and values of cfg with params
         for k, v in params.items():
             if v is not None:
@@ -519,12 +519,12 @@ The parameters overrriding order is the following:
                 except AttributeError:
                     if not self.add_to_overrides(k,v,overrides):
                         setattr(self,k,v)
-        
+
         try:
             config = self.cfg.config
         except AttributeError:
             config = None
-        
+
         # parse console args
         if parse_console:
             parser = self.cfg.parser()
@@ -535,15 +535,15 @@ The parameters overrriding order is the following:
                 config = None
         else:
             parser, opts = None,None
-        
+
         # optional settings from apps
         cfg = self.init(opts)
-        
+
         # Load up the any app specific configuration
         if cfg:
             for k, v in list(cfg.items()):
                 self.cfg.set(k.lower(), v)
-        
+
         # Load up the config file if its found.
         if config and os.path.exists(config):
             #cfg = {
@@ -560,8 +560,8 @@ The parameters overrriding order is the following:
                 print("Failed to read config file: %s" % config)
                 traceback.print_exc()
                 sys.exit(1)
-        
-            for k, v in cfg.items():                    
+
+            for k, v in cfg.items():
                 # Ignore unknown names
                 if k not in self.cfg.settings:
                     self.add_to_overrides(k,v,overrides)
@@ -579,18 +579,18 @@ The parameters overrriding order is the following:
                                 self.cfg.set(k.lower(), v)
                             else:
                                 globals()[v.__name__] = v
-            
+
         # Update the configuration with any command line settings.
         if opts:
             for k, v in opts.__dict__.items():
                 if v is None:
                     continue
                 self.cfg.set(k.lower(), v)
-                
+
         # Lastly, update the configuration with overrides
         for k,v in overrides.items():
             self.cfg.set(k, v)
-            
+
     def add_to_overrides(self, name, value, overrides):
         names = name.split('__')
         if len(names) == 2 and names[0] == self.name:
@@ -598,84 +598,84 @@ The parameters overrriding order is the following:
             if name in self.cfg.settings:
                 overrides[name] = value
                 return True
-            
+
     def init(self, opts):
         pass
-    
+
     def monitor_handler(self):
         '''Returns a application handler for the monitor.
 By default it returns ``None``.'''
         return None
-    
+
     # MONITOR AND WORKER CALLBACKS
     def on_info(self, worker, data):
         return data
-    
+
     def on_event(self, worker, fd, events):
         pass
-    
+
     def worker_start(self, worker):
         '''Called by the :class:`Worker` :meth:`pulsar.Actor.on_start`
 :ref:`callback <actor-callbacks>` method.'''
         pass
-    
+
     def worker_task(self, worker):
         '''Callback by the *worker* :meth:`Actor.on_task` callback.'''
         return
-            
+
     def worker_stop(self, worker):
         '''Called by the :class:`Worker` just after stopping.'''
         pass
-    
+
     def worker_exit(self, worker):
         '''Called by the :class:`Worker` just when exited.'''
         pass
-            
+
     # MONITOR CALLBAKS
-    
+
     def monitor_init(self, monitor):
         '''Callback by :class:`ApplicationMonitor` when initializing.
 This is a chance to setup your application before the application
 monitor is added to the arbiter.'''
         pass
-    
+
     def monitor_start(self, monitor):
         '''Callback by :class:`ApplicationMonitor` when starting.
 The application is now in the arbiter but has not yet started.'''
         pass
-    
+
     def monitor_task(self, monitor):
         '''Callback by :class:`ApplicationMonitor` at each event loop'''
         pass
-    
+
     def monitor_stop(self, monitor):
         '''Callback by :class:`ApplicationMonitor` at each event loop'''
         pass
-    
+
     def monitor_exit(self, monitor):
         '''Callback by :class:`ApplicationMonitor` at each event loop'''
         pass
-    
+
     def on_actor_message(self, message):
         pass
-        
+
     def on_actor_message_processed(self, message, result):
         pass
-    
+
     def start(self):
         '''Start the application if it wasn't already started.'''
         arbiter = pulsar.arbiter()
         if self.name in arbiter.monitors:
             arbiter.start()
         return self
-            
+
     def stop(self):
         '''Stop the application.'''
         arbiter = pulsar.arbiter()
         monitor = arbiter.get_monitor(self.mid)
         if monitor:
             monitor.stop()
-    
+
     def configure_logging(self, config = None):
         """Set the logging configuration as specified by the
  :ref:`logconfig <setting-logconfig>` setting."""
@@ -696,4 +696,3 @@ The application is now in the arbiter but has not yet started.'''
                     monitor = arbiter.monitors[app.mid]
                     monitor.actor_links[self.name] = self
                     yield name, app
-                    

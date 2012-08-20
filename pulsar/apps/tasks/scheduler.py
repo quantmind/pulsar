@@ -62,7 +62,7 @@ class SchedulerEntry(object):
     '''The time and date of when this task was last run.'''
     total_run_count = None
     '''Total number of times this periodic task has been executed.'''
-    
+
     def __init__(self, name, schedule, args=(), kwargs={},
                  last_run_at = None, total_run_count=None):
         self.name = name
@@ -73,7 +73,7 @@ class SchedulerEntry(object):
     def __repr__(self):
         return self.name
     __str__ = __repr__
-    
+
     @property
     def scheduled_last_run_at(self):
         '''The scheduled last run datetime. This is different from :attr:`last_run_at` only when :attr:`anchor` is set.'''
@@ -93,15 +93,15 @@ class SchedulerEntry(object):
             return anchor
         else:
             return last_run_at
-        
+
     @property
     def run_every(self):
         return self.schedule.run_every
-    
+
     @property
     def anchor(self):
         return self.schedule.anchor
-        
+
     def next(self, now = None):
         """Returns a new instance of the same class, but with
         its date and count fields updated. Function called by :class:`Scheduler`
@@ -113,23 +113,28 @@ class SchedulerEntry(object):
 
     def is_due(self, now = None):
         return self.schedule.is_due(self.scheduled_last_run_at, now = now)
-    
+
 
 class Scheduler(object):
     """Scheduler for periodic tasks. This class is the main driver of tasks
-and task scheduling."""
-    def __init__(self, TaskFactory):
+and task scheduling.
+
+.. attribute:: task_class
+
+    The :attr:`TaskQueue.task_class` for producing new :class:`Task`.
+
+"""
+    def __init__(self, task_class):
         self._entries = self.setup_schedule()
         self.next_run = datetime.now()
-        self.TaskFactory = TaskFactory
+        self.task_class = task_class
         self.log = logging.getLogger('pulsar.tasks.scheduler')
-        
+
     @property
     def entries(self):
         return self._entries
-        
-    def queue_task(self, monitor, jobname, targs = None, tkwargs = None,
-                   **params):
+
+    def queue_task(self, monitor, jobname, targs=None, tkwargs=None, **params):
         '''Create a new :class:`Task` which may or may not queued.
 
 :parameter monitor: the :class:`pulsar.ApplicationMonitor` running the
@@ -142,7 +147,7 @@ and task scheduling."""
     in the task callable.
 :parameter params: Additional parameters to be passed to the :class:`Task`
     constructor (not its callable function).
-    
+
 :rtype: an instance of :class:`Task`'''
         task = self._make_request(jobname, targs, tkwargs, **params)
         if task.needs_queuing():
@@ -153,14 +158,14 @@ and task scheduling."""
             self.log.info('task {0} already requested. Abort request.'\
                                   .format(task))
         return task
-    
+
     def tick(self, monitor, now=None):
         '''Run a tick, that is one iteration of the scheduler.
 Executes all due tasks calculate the time in seconds to wait before
 running a new :meth:`tick`. For testing purposes a :class:`datetime.datetime`
 value ``now`` can be passed.'''
         # First we check for tasks which have timed out
-        self.TaskFactory.check_unready_tasks()
+        self.task_class.check_unready_tasks()
         remaining_times = []
         try:
             for entry in itervalues(self._entries):
@@ -206,7 +211,7 @@ value ``now`` can be passed.'''
                           'run_every':run_every,
                           'runs_count':entry.total_run_count})
             yield (name,d)
-            
+
     def next_scheduled(self, jobname = None):
         if jobname:
             entry = self._entries.get(jobname,None)
@@ -229,22 +234,22 @@ value ``now`` can be passed.'''
                         next_entry = entry
             if next_entry:
                 return (next_entry.name,max(next_time,0))
-            
+
         return (jobname,None)
-    
+
     ############################################################################
     ##    PRIVATE METHODS
     ############################################################################
-    
+
     def _make_request(self, jobname, targs = None, tkwargs = None,
                      expiry = None, **params):
         if jobname in registry:
-            TaskFactory = self.TaskFactory
+            task_class = self.task_class
             job = registry[jobname]
             targs = targs or EMPTY_TUPLE
             tkwargs = tkwargs or EMPTY_DICT
             id = job.make_task_id(targs, tkwargs)
-            task = TaskFactory.get_task(id, remove=True)
+            task = task_class.get_task(id, remove=True)
             if task:
                 return task.to_queue(self)
             else:
@@ -254,15 +259,11 @@ value ``now`` can be passed.'''
                 expiry = get_datetime(expiry, time_executed)
                 if not expiry and job.timeout:
                     expiry = time_executed + job.timeout
-                task = TaskFactory(id = id, name = job.name,
-                                   time_executed = time_executed,
-                                   expiry = expiry,
-                                   args = targs,
-                                   kwargs = tkwargs,
-                                   status = PENDING,
-                                   **params)
+                task = task_class(id=id, name=job.name,
+                                  time_executed=time_executed, expiry=expiry,
+                                  args=targs, kwargs=tkwargs, status=PENDING,
+                                  **params)
                 task.on_created(self)
                 return task.to_queue(self)
         else:
             raise TaskNotAvailable(jobname)
-        

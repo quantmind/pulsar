@@ -19,14 +19,14 @@ Taskqueue
 
 Job
 ~~~~~~~~~~~~~~~~~~~~~~
-   
+
 .. autoclass:: Job
    :members:
    :member-order: bysource
-   
+
 Periodic Job
 ~~~~~~~~~~~~~~~~~~~~~~
-   
+
 .. autoclass:: PeriodicJob
    :members:
    :member-order: bysource
@@ -37,7 +37,7 @@ Task
 .. autoclass:: Task
    :members:
    :member-order: bysource
-   
+
 
 TaskQueue Rpc Mixin
 ~~~~~~~~~~~~~~~~~~~~~
@@ -45,10 +45,6 @@ TaskQueue Rpc Mixin
 .. autoclass:: TaskQueueRpcMixin
    :members:
    :member-order: bysource
-   
-   
-Internal API
-===================
 
 Scheduler
 ~~~~~~~~~~~~~
@@ -56,7 +52,7 @@ Scheduler
 .. autoclass:: Scheduler
    :members:
    :member-order: bysource
-   
+
 TaskConsumer
 ~~~~~~~~~~~~~~~~~~~~~~
 
@@ -77,4 +73,4 @@ Job meta Class
 .. autoclass:: JobMetaClass
    :members:
    :member-order: bysource
-   
+
