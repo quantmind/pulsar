@@ -141,15 +141,16 @@ class TestHttpClient(unittest.TestCase, HttpClientMixin):
         self.assertEqual(r.status_code, 200)
         history = r.request.history
         self.assertEqual(len(history), 1)
-        self.assertTrue(history[0].url.endswidth('/redirect/1'))
+        self.assertTrue(history[0].url.endswith('/redirect/1'))
         
     def test_Cookie(self):
         http = self.client()
         r = make_async(http.get(self.httpbin('cookies','set', 'bla', 'foo')))
         yield r
         r = r.result
-        self.assertEqual(r.status_code, 302)
-        self.assertTrue(r.headers['set-cookie'])
+        self.assertEqual(r.status_code, 200)
+        self.assertTrue(r.history)
+        self.assertTrue(r.history[0].headers['set-cookie'])
         cookies = r.cookies
         r = make_async(http.get(self.httpbin('cookies'), cookies=cookies))
         yield r

@@ -167,6 +167,7 @@ else:   # pragma : no cover
 
 HTTPError = urllibr.HTTPError
 URLError = urllibr.URLError
+request_host = urllibr.request_host
 
 class SSLError(HTTPError):
     "Raised when SSL certificate fails in an HTTPS connection."
@@ -933,6 +934,7 @@ class IORespone(object):
                     if msg is not None:
                         return msg
 
+
 class HttpResponse(IORespone):
     '''An Http response object.
 
@@ -995,6 +997,21 @@ class HttpResponse(IORespone):
         if self.status_code:
             return responses.get(self.status_code)
 
+    @property
+    def url(self):
+        if self.request is not None:
+           return self.request.full_url
+       
+    @property
+    def history(self):
+        if self.request is not None:
+           return self.request.history
+       
+    @property
+    def client(self):
+        if self.request is not None:
+            return self.request.client
+        
     def content_string(self, charset=None):
         '''Decode content as a string.'''
         data = self.content
@@ -1004,11 +1021,6 @@ class HttpResponse(IORespone):
     def content_json(self, charset=None, **kwargs):
         '''Decode content as a JSON object.'''
         return json.loads(self.content_string(charset), **kwargs)
-
-    @property
-    def url(self):
-        if self.request is not None:
-           return self.request.full_url
 
     def add_callback(self, callback):
         self.callbacks.append(callback)
@@ -1279,6 +1291,10 @@ http://www.ietf.org/rfc/rfc2616.txt
         '''Needed so that this class is compatible with the Request class
 in the http.client module in the standard library.'''
         return self.full_url
+    
+    def get_origin_req_host(self):
+        request = self.history[-1].request if self.history else self
+        return request_host(request)
 
     def on_response(self, response):
         return response
@@ -1402,7 +1418,6 @@ into an SSL socket.
         self.store_cookies = store_cookies
         self.poolmap = {}
         self.timeout = timeout
-        self._cookies = None
         self.cookies = cookies
         self.max_connections = max_connections
         dheaders = self.DEFAULT_HTTP_HEADERS.copy()
@@ -1538,9 +1553,12 @@ a :class:`HttpResponse` object.
         return request.get_response()
 
     def _set_cookies(self, cookies):
-        if cookies and not isinstance(cookies, CookieJar):
-            cookies = cookiejar_from_dict(cookies)
-        self._cookies = cookies or None
+        if cookies:
+            if not isinstance(cookies, CookieJar):
+                cookies = cookiejar_from_dict(cookies)
+        else:
+            cookies = CookieJar()
+        self._cookies = cookies
     def _get_cookies(self):
         return self._cookies
     cookies = property(_get_cookies, _set_cookies)
@@ -1582,9 +1600,10 @@ a :class:`HttpResponse` object.
         request = response.request
         headers = response.headers
         if self.store_cookies:
-            response.cookies = CookieJar()
+            #response.cookies = CookieJar()
             if 'set-cookie' in headers:
-                response.cookies.extract_cookies(response, request)
+                #response.cookies.extract_cookies(response, request)
+                self.cookies.extract_cookies(response, request)
         if response.status_code in REDIRECT_CODES and 'location' in headers and\
                 request.allow_redirects:
             history = response.history or []
