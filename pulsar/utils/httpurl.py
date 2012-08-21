@@ -1157,9 +1157,8 @@ http://www.ietf.org/rfc/rfc2616.txt
     _has_proxy = False
     def __init__(self, client, url, method, data=None, files=None,
                  charset=None, encode_multipart=True, multipart_boundary=None,
-                 headers=None, timeout=None, hooks=None,
-                 history=None, allow_redirects=False,
-                 max_redirects=10, **kwargs):
+                 headers=None, timeout=None, hooks=None, history=None,
+                 allow_redirects=False, max_redirects=10, **kwargs):
         self.client = client
         self.type, self.host, self.path, self.params,\
         self.query, self.fragment = urlparse(url)
@@ -1230,7 +1229,7 @@ http://www.ietf.org/rfc/rfc2616.txt
     @property
     def key(self):
         host, port = self.host_and_port()
-        return (self.type, host, port)
+        return (self.type, host, port, self.timeout)
 
     def is_unverifiable(self):
         # unverifiable == redirected
@@ -1302,8 +1301,7 @@ in the http.client module in the standard library.'''
 
 class HttpConnectionPool(object):
     '''Maintains a pool of connections'''
-    def __init__(self, max_connections, timeout, scheme, host, port=None,
-                 **params):
+    def __init__(self, max_connections, scheme, host, port, timeout, **params):
         self.type = scheme
         self.host = host
         self.port = port
@@ -1368,7 +1366,8 @@ or asynchronous connections.
 
 .. attribute:: timeout
 
-    Default timeout for the connecting sockets
+    Default timeout for the connecting sockets. If 0 it is an asynchronous
+    client.
 
 .. attribute:: hooks
 
@@ -1394,6 +1393,7 @@ The :attr:`key_file``, :attr:`cert_file`, :attr:`cert_reqs` and
 and are fed into :meth:`ssl.wrap_socket` to upgrade the connection socket
 into an SSL socket.
 '''
+    timeout = None
     request_class = HttpRequest
     connection_pool = HttpConnectionPool
     client_version = 'Python-httpurl'
@@ -1417,7 +1417,7 @@ into an SSL socket.
         self.trust_env = trust_env
         self.store_cookies = store_cookies
         self.poolmap = {}
-        self.timeout = timeout
+        self.timeout = timeout if timeout is not None else self.timeout
         self.cookies = cookies
         self.max_connections = max_connections
         dheaders = self.DEFAULT_HTTP_HEADERS.copy()
@@ -1513,8 +1513,8 @@ object.
         return self.request('DELETE', url, **kwargs)
 
     def request(self, method, url, data=None, files=None, headers=None,
-                timeout=None, encode_multipart=None, allow_redirects=False,
-                hooks=None, cookies=None, history=None, **kwargs):
+                encode_multipart=None, allow_redirects=False, hooks=None,
+                cookies=None, history=None, **kwargs):
         '''Constructs, sends a :class:`HttpRequest` and returns
 a :class:`HttpResponse` object.
 
@@ -1536,12 +1536,13 @@ a :class:`HttpResponse` object.
             hooks = self.hooks
         encode_multipart = encode_multipart if encode_multipart is not None\
                             else self.encode_multipart
+        if 'timeout' not in kwargs:
+            kwargs['timeout'] = self.timeout
         request = self.request_class(self, url, method, data=data, files=files,
-                                     headers=headers, timeout=timeout,
-                                     encode_multipart=encode_multipart,
-                                     multipart_boundary=self.multipart_boundary,
-                                     hooks=hooks, history=history,
-                                     allow_redirects=allow_redirects, **kwargs)
+                            headers=headers, encode_multipart=encode_multipart,
+                            multipart_boundary=self.multipart_boundary,
+                            hooks=hooks, history=history,
+                            allow_redirects=allow_redirects, **kwargs)
         # Set proxy if required
         self.set_proxy(request)
         if self.cookies:
@@ -1574,9 +1575,7 @@ a :class:`HttpResponse` object.
                     params.update(kwargs)
             else:
                 params = kwargs
-            pool = self.connection_pool(self.max_connections,
-                                        self.timeout, *key,
-                                        **params)
+            pool = self.connection_pool(self.max_connections, *key, **params)
             self.poolmap[key] = pool
         connection = pool.get_connection()
         connection.response_class = request.response_class
