@@ -109,6 +109,11 @@ A :class:`Task` can have one of the following :attr:`Task.status` string:
 * ``SUCCESS`` task execution has finished with success.
 
 
+.. attribute:: FULL_RUN_STATES
+
+    The set of states for which a :class:`Task` has run:
+    ``FAILURE`` and ``SUCCESS``
+
 .. attribute:: READY_STATES
 
     The set of states for which a :class:`Task` has finished:
@@ -218,16 +223,17 @@ be consumed by the workers.'''
 
     def on_event(self, worker, fd, request):
         request = self.request_instance(worker, fd, request)
-        c = worker.get('current_requests')
-        if c is None:
-            c = []
-            worker.set('current_requests', c)
-        c.append(request)
-        yield safe_async(request.start, args=(worker,))
-        try:
-            c.remove(request)
-        except ValueError:
-            pass
+        if request is not None:
+            c = worker.get('current_requests')
+            if c is None:
+                c = []
+                worker.set('current_requests', c)
+            c.append(request)
+            yield safe_async(request.start, args=(worker,))
+            try:
+                c.remove(request)
+            except ValueError:
+                pass
 
 
 taskqueue_cmnds = set()

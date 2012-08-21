@@ -118,7 +118,7 @@ class Task(object):
 
 .. attribute:: timeout
 
-    A boolean indicating whether a timeout has occurred.
+    A datetime or ``None`` indicating whether a timeout has occurred.
 
 .. attribute:: from_task
 
@@ -146,23 +146,19 @@ a ``STARTED`` :attr:`Task.status` and invoke the :meth:`on_start`
 callback.'''
         job = registry[self.name]
         with self.consumer(worker, job) as consumer:
-            yield self.run(worker)
-            result = job(consumer, *self.args, **self.kwargs)
-            if is_async(result):
-                yield result
-                result = result.result
-            self.result = result
+            if self.maybe_revoked():
+                yield self.on_timeout(worker)
+            else:
+                self.status = STARTED
+                self.time_start = datetime.now()
+                yield self.on_start(worker)
+                result = job(consumer, *self.args, **self.kwargs)
+                if is_async(result):
+                    yield result
+                    result = result.result
+                self.result = result
         # just in case this is a deferred
         yield consumer.result
-
-    def run(self, worker):
-        self.time_start = datetime.now()
-        if self.maybe_revoked():
-            self.on_timeout(worker)
-            raise TaskTimeout()
-        else:
-            self.status = STARTED
-            return self.on_start(worker)
 
     def finish(self, worker, result):
         '''called when finishing the task.'''
@@ -173,7 +169,8 @@ callback.'''
                 exception = result.trace[1]
                 self.status = getattr(exception, 'status', FAILURE)
                 self.result = str(result) if result else str(exception)
-            else:
+            # If the status is STARTED this is a succesful task
+            elif self.status == STARTED:
                 self.status = SUCCESS
                 self.result = result
             self.on_finish(worker)
@@ -200,15 +197,17 @@ task needs to be queued.'''
         return self.status in READY_STATES
 
     def maybe_revoked(self):
-        '''Try to revoke a task. If succesful return the expiry.
+        '''Try to revoke a task. It returns the :attr:`timeout` which is
+different from ``None`` only when the :class:`Task` has been revoked.
 
-:rtype: ``None`` or a DateTime instance'''
-        if self.status_code > PRECEDENCE_MAPPING[STARTED] and self.expiry:
-            tm = datetime.now()
-            if tm > self.expiry:
-                self.status = REVOKED
-                self.timeout = tm
-                return tm
+:rtype: ``None`` or a DateTime.'''
+        if not self.timeout:
+            if self.status_code > PRECEDENCE_MAPPING[STARTED] and self.expiry:
+                tm = datetime.now()
+                if tm > self.expiry:
+                    self.status = REVOKED
+                    self.timeout = tm
+        return self.timeout
 
     def execute2start(self):
         if self.time_start:
@@ -219,7 +218,9 @@ task needs to be queued.'''
             return self.time_end - self.time_executed
 
     def duration(self):
-        if self.time_end:
+        '''The :class:`Task` duration. Only available if the task status is in
+:attr:`FULL_RUN_STATES`.'''
+        if self.time_end and self.time_start:
             return self.time_end - self.time_start
 
     def tojson(self):
@@ -237,6 +238,7 @@ task needs to be queued.'''
 
     ############################################################################
     ##    FACTORY METHODS
+    ############################################################################
 
     @classmethod
     def from_queue(cls, task):
@@ -360,7 +362,7 @@ class TaskInMemory(Task):
         for task in list(itervalues(tasks)):
             task.maybe_revoked()
             if task.done():
-                tasks.pop(task.id,None)
+                tasks.pop(task.id, None)
 
 
 def nice_task_message(req, smart_time = None):
