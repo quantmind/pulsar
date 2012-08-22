@@ -92,9 +92,7 @@ class HttpTestConnectionPool(HttpConnectionPool):
 
 class HttpTestClientRequest(HttpRequest):
 
-    def __init__(self, client, url, method, status_code=200, ajax=False,
-                 **request):
-        self.status_code = status_code
+    def __init__(self, client, url, method, ajax=False, **request):
         super(HttpTestClientRequest, self).__init__(client, url, method,
                                                     **request)
         if ajax:
@@ -106,7 +104,10 @@ class HttpTestClient(HttpClient):
     request_class = HttpTestClientRequest
     connection_pool = HttpTestConnectionPool
 
-    def __init__(self, test, wsgi_handler, **kwargs):
+    def __init__(self, test, wsgi_handler, server_address='0.0.0.0', **kwargs):
         self.test = test
         self.wsgi_handler = wsgi_handler
+        host, port = host_and_port_default(server_address)
+        self.server_name = host
+        self.server_port = port
         super(HttpTestClient, self).__init__(**kwargs)

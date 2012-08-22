@@ -2,6 +2,7 @@ import sys
 import time
 import os
 import logging
+import socket
 from wsgiref.handlers import format_date_time
 from io import BytesIO
 
@@ -45,8 +46,10 @@ nothing."""
         "QUERY_STRING": parser.get_query_string(),
         "RAW_URI": parser.get_url(),
         "SERVER_PROTOCOL": protocol,
-        "CONTENT_TYPE": "",
-        "CONTENT_LENGTH": "",
+        'CONTENT_TYPE': '',
+        "CONTENT_LENGTH": '',
+        'SERVER_NAME': self.server_name,
+        'SERVER_PORT': self.server_port,
         "wsgi.multithread": False,
         "wsgi.multiprocess":False
     }
@@ -319,6 +322,14 @@ a :class:`HttpResponse` at every client request.'''
     @property
     def wsgi_handler(self):
         return self.actor.app_handler
+    
+    @property
+    def server_name(self):
+        return self.server.server_name
+    
+    @property
+    def server_port(self):
+        return self.server.server_port
 
     def handle_http_error(self, response, e):
         '''Handle an error during response.
@@ -347,6 +358,12 @@ a :class:`HttpResponse` at every client request.'''
 class HttpServer(AsyncSocketServer):
     connection_class = HttpConnection
 
+    def __init__(self, *args, **kwargs):
+        super(HttpServer, self).__init__(*args, **kwargs)
+        host, port = self.socket.getsockname()[:2]
+        self.server_name = socket.getfqdn(host)
+        self.server_port = port
+        
     def parser_class(self):
         return lib.Http_Parser(kind=0)
 
