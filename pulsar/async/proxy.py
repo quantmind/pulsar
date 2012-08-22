@@ -234,7 +234,7 @@ class DeferredSend(object):
         self.kwargs = kwargs
         
     def __call__(self, *args, **kwargs):
-        if not hasattr(self,'_message'):
+        if not hasattr(self, '_message'):
             self.args += args
             self.kwargs.update(kwargs)
             msg = self.target.receive_from(self.sender, self.action,

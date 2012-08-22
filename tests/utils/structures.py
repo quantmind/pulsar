@@ -2,7 +2,6 @@
 from pulsar.utils.structures import MultiValueDict
 from pulsar.apps.test import unittest
 
-
 class TestMultiValueDict(unittest.TestCase):
 
     def testConstructor(self):

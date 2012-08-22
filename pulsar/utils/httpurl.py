@@ -1301,12 +1301,12 @@ in the http.client module in the standard library.'''
 
 class HttpConnectionPool(object):
     '''Maintains a pool of connections'''
-    def __init__(self, max_connections, scheme, host, port, timeout, **params):
+    def __init__(self, client, scheme, host, port, timeout, **params):
+        self.client = client
         self.type = scheme
         self.host = host
         self.port = port
         self.timeout = timeout
-        self.max_connections = max_connections or 2**31
         self._created_connections = 0
         self._available_connections = []
         self._in_use_connections = set()
@@ -1323,7 +1323,7 @@ class HttpConnectionPool(object):
 
     def make_connection(self):
         "Create a new connection"
-        if self._created_connections >= self.max_connections:
+        if self._created_connections >= self.client.max_connections:
             raise HttpConnectionError("Too many connections")
         self._created_connections += 1
         if self.type == 'https':
@@ -1419,7 +1419,7 @@ into an SSL socket.
         self.poolmap = {}
         self.timeout = timeout if timeout is not None else self.timeout
         self.cookies = cookies
-        self.max_connections = max_connections
+        self.max_connections = max_connections or 2**31
         dheaders = self.DEFAULT_HTTP_HEADERS.copy()
         self.client_version = client_version or self.client_version
         dheaders['user-agent'] = self.client_version
@@ -1575,7 +1575,7 @@ a :class:`HttpResponse` object.
                     params.update(kwargs)
             else:
                 params = kwargs
-            pool = self.connection_pool(self.max_connections, *key, **params)
+            pool = self.connection_pool(self, *key, **params)
             self.poolmap[key] = pool
         connection = pool.get_connection()
         connection.response_class = request.response_class

@@ -1,6 +1,6 @@
 '''tests the httpurl stand-alone script.'''
-from pulsar import send, make_async
-from pulsar.apps.test import unittest, test_server
+from pulsar import send, make_async, HttpClient
+from pulsar.apps.test import unittest
 from pulsar.utils import httpurl
 
 BIN_HOST = 'httpbin.org'
@@ -32,7 +32,7 @@ class HttpClientMixin(object):
     
     def client(self, **kwargs):
         kwargs['timeout'] = self.timeout
-        return httpurl.HttpClient(**kwargs)
+        return HttpClient(**kwargs)
     
     
 class TestHttpClient(unittest.TestCase, HttpClientMixin):

@@ -6,40 +6,11 @@ from pulsar import LogginMixin, to_bytes, is_failure, log_failure, is_async,\
 from pulsar.utils.tools import checkarity
 from pulsar.apps.wsgi import WsgiResponse, WsgiResponseGenerator
 
+from .decorators import callrpc, wrap_object_call
 from .exceptions import *
 
 
-__all__ = ['RpcHandler','RpcMiddleware']
-
-
-def wrap_object_call(fname,namefunc):
-
-    def _(self,*args,**kwargs):
-        f = getattr(self,fname)
-        return f(*args,**kwargs)
-
-    _.__name__ = namefunc
-    return _
-
-
-def wrap_function_call(func,namefunc):
-    #TODO: remove
-    def _(self,*args,**kwargs):
-        return func(self,*args,**kwargs)
-
-    _.__name__ = namefunc
-    return _
-
-
-class rpcmethod(object):
-    __slots__ = ('handler', 'name')
-    def __init__(self, handler, name):
-        self.handler = handler
-        self.name = name
-
-    def __call__(self, *args, **kwargs):
-        return self.handler.rpcfunctions[self.name]\
-                            (self.handler, *args, **kwargs)
+__all__ = ['RpcHandler', 'RpcMiddleware']
 
 
 class RpcRequest(object):
@@ -64,27 +35,13 @@ class RpcRequest(object):
         return self.environ.get('user')
 
     @property
-    def actor(self):
-        return self.environ.get('pulsar.actor')
-
-    @property
     def content_type(self):
         return self.handler.content_type
 
     def process(self):
         if not self.func:
             raise NoSuchFunction('Function "%s" not available.' % self.method)
-        try:
-            return self.func(self.handler, self, *self.args, **self.kwargs)
-        except TypeError as e:
-            msg = checkarity(self.func,
-                             self.args,
-                             self.kwargs,
-                             discount=2)
-            if msg:
-                raise InvalidParams('Invalid Parameters. %s' % msg)
-            else:
-                raise
+        return callrpc(self.func, self.handler, self, self.args, self.kwargs)
 
 
 class ResponseGenerator(WsgiResponseGenerator):
@@ -123,8 +80,8 @@ class ResponseGenerator(WsgiResponseGenerator):
             result = handler.dumps(request.id,
                                    request.version,
                                    error=e)
-        response = WsgiResponse(status_code,
-                                result,
+        content = to_bytes(result)
+        response = WsgiResponse(status_code, content,
                                 content_type=request.content_type)
         for c in self.start(response):
             yield c
@@ -156,9 +113,7 @@ Add a limited ammount of magic to RPC handlers.'''
                     if not inspect.isfunction(func):
                         key = '_{0}'.format(key)
                         attrs[key] = func
-                        func = wrap_object_call(key,namefunc)
-                    #else:
-                    #func = wrap_function_call(func,namefunc)
+                        func = wrap_object_call(key, namefunc)
                     rpc[namefunc] = func
             for base in bases[::-1]:
                 if hasattr(base, 'rpcfunctions'):
@@ -242,17 +197,7 @@ for ``method``, ``kwargs`` are keyworded parameters for ``method``,
 ``id`` is an identifier for the client,
 ``version`` is the version of the RPC protocol.
     '''
-        raise NotImplementedError()
-
-    def __getattr__(self, name):
-        if name in self.rpcfunctions:
-            return rpcmethod(self,name)
-        else:
-        #elif self.isroot:
-            raise AttributeError("'{0}' object has no attribute '{1}'"\
-                                 .format(self.__class__.__name__,name))
-        #else:
-        #    return getattr(self.parent,name)
+        raise NotImplementedError()
 
     def __getstate__(self):
         d = super(RpcHandler,self).__getstate__()
@@ -359,7 +304,8 @@ class RpcMiddleware(object):
 
     def __call__(self, environ, start_response):
         '''The WSGI handler which consume the remote procedure call'''
-        if environ['PATH_INFO'] == self.path:
+        path = environ['PATH_INFO'] or '/'
+        if path == self.path:
             method = environ['REQUEST_METHOD'].lower()
             if method not in self.methods:
                 raise HttpException(status=405)

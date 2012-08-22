@@ -6,10 +6,13 @@ from pulsar.apps.test import unittest
 
 class TestSockUtils(unittest.TestCase):
     
-    def testClient(self):
+    def testClientSocket(self):
         sock = pulsar.create_client_socket(('',8080))
-        self.assertFalse(sock.is_server())
+        self.assertFalse(sock.is_server)
         self.assertEqual(sock.name,('0.0.0.0', 0))
+        sock2 = pulsar.create_client_socket('0.0.0.0:8080')
+        self.assertFalse(sock2.is_server)
+        self.assertEqual(sock2.name,('0.0.0.0', 0))
         
     def test_get_socket_timeout(self):
         self.assertEqual(pulsar.get_socket_timeout(None), None)

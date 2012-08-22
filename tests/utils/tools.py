@@ -3,36 +3,56 @@ from pulsar import system, get_actor
 from pulsar.utils.tools import checkarity
 from pulsar.apps.test import unittest
 
-
-__all__ = ['TestArityCheck']
-
-
-def f0(a,b):
+def f0(a, b):
     pass
 
-def f1(a, b = 0):
+def f0_discount(request, a, b):
     pass
 
-def f2(a,**kwargs):
+def f1(a, b=0):
+    pass
+
+def f2(a, **kwargs):
     # This fails curretly
     pass
+
+
+def arity_check(func, *args, **kwargs):
+    discount = kwargs.pop('discount', 0)
+    return checkarity(func, args, kwargs, discount=discount)
 
 
 class TestArityCheck(unittest.TestCase):
 
     def testArity0(self):
-        self.assertEqual(checkarity(f0,(3,4),{}),None)
-        self.assertEqual(checkarity(f0,(3,),{}),
+        self.assertEqual(arity_check(f0, 3, 4), None)
+        self.assertEqual(arity_check(f0, 3),
                          '"f0" takes 2 parameters. 1 given.')
-        self.assertEqual(checkarity(f0,(),{}),
+        self.assertEqual(arity_check(f0),
                          '"f0" takes 2 parameters. 0 given.')
-        self.assertEqual(checkarity(f0,(4,5,6),{}),
+        self.assertEqual(arity_check(f0, 4, 5, 6),
                          '"f0" takes 2 parameters. 3 given.')
-        self.assertEqual(checkarity(f0,(),{'a':3,'b':5}),None)
-        self.assertEqual(checkarity(f0,(),{'a':3,'c':5}),
+        self.assertEqual(arity_check(f0, a=3, b=5),None)
+        self.assertEqual(arity_check(f0, a=3, c=5),
                          '"f0" has missing "b" parameter.')
-        self.assertEqual(checkarity(f0,(),{'a':3,'c':5, 'd':6}),
+        self.assertEqual(arity_check(f0, a=3, c=5, d=6),
                          '"f0" takes 2 parameters. 3 given.')
+        
+    def testArity0WidthDiscount(self):
+        f0 = f0_discount
+        fname = f0.__name__
+        self.assertEqual(arity_check(f0, 3, 4, discount=1), None)
+        self.assertEqual(arity_check(f0, 3, discount=1),
+                         '"%s" takes 2 parameters. 1 given.' % fname)
+        self.assertEqual(arity_check(f0, discount=1),
+                         '"%s" takes 2 parameters. 0 given.' % fname)
+        self.assertEqual(arity_check(f0, 4, 5, 6, discount=1),
+                         '"%s" takes 2 parameters. 3 given.' % fname)
+        self.assertEqual(arity_check(f0, a=3, b=5, discount=1),None)
+        self.assertEqual(arity_check(f0, a=3, c=5, discount=1),
+                         '"%s" has missing "b" parameter.' % fname)
+        self.assertEqual(arity_check(f0, a=3, c=5, d=6, discount=1),
+                         '"%s" takes 2 parameters. 3 given.' % fname)
 
     def testArity1(self):
         self.assertEqual(checkarity(f1,(3,),{}),None)
@@ -57,7 +77,7 @@ class TestArityCheck(unittest.TestCase):
         self.assertEqual(checkarity(f2,(4,5,6),{}),
                          '"f2" takes 1 positional parameters. 3 given.')
         self.assertEqual(checkarity(f2,(),{'a':3,'b':5}),None)
-        self.assertEqual(checkarityf2,(),{'a':3,'c':5}),None)
+        self.assertEqual(checkarity(f2,(),{'a':3,'c':5}),None)
         self.assertEqual(checkarity(f2,(),{'b':3,'c':5}),
                          '"f2" has missing "a" parameter.')
         self.assertEqual(checkarity(f2,(),{'a':3,'c':5,'d':6}),None)

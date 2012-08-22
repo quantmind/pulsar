@@ -2,6 +2,9 @@
 '''
 from pulsar.utils.tools import checkarity
 
+from .exceptions import InvalidParams
+
+
 class AuthenticationException(Exception):
     pass
 
@@ -9,6 +12,13 @@ class AuthenticationException(Exception):
 class InstanceNotAvailable(Exception):
     pass
 
+
+def wrap_object_call(fname, namefunc):
+    def _(self,*args,**kwargs):
+        f = getattr(self,fname)
+        return f(*args,**kwargs)
+    _.__name__ = namefunc
+    return _
 
 def requires_authentication(f):
     '''Decorator for class view functions requiring authentication.'''
@@ -64,6 +74,12 @@ For example::
         
         return wrapper
     
+def rpcerror(func, args, kwargs, discount=0):
+    msg = checkarity(func, args, kwargs, discount=discount)
+    if msg:
+        raise InvalidParams('Invalid Parameters. %s' % msg)
+    else:
+        raise
     
 def FromApi(func, doc=None, format='json', request_handler=None):
     '''\
@@ -81,9 +97,21 @@ A decorator which exposes a function ``func`` as an rpc function.
     def _(self, request, *args, **kwargs):
         if request_handler:
             kwargs = request_handler(request, format, kwargs)
-        return func(*args, **kwargs)
+        try:
+            return func(*args, **kwargs)
+        except TypeError:
+            rpcerror(func, args, kwargs)
         
     _.__doc__ = doc or func.__doc__
     _.__name__ = func.__name__
-    
+    _.FromApi = True
     return _
+
+def callrpc(func, handler, self, args, kwargs):
+    try:
+        return func(self.handler, self, *self.args, **self.kwargs)
+    except TypeError as e:
+        if not getattr(func, 'FromApi', False):
+            rpcerror(func, args, kwargs, discount=2)
+        else:
+            raise

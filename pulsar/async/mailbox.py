@@ -204,7 +204,7 @@ of execution.'''
 
     @classmethod
     def make(cls, actor, backlog=64):
-        return super(Mailbox, cls).make(actor, backlog=backlog,
+        return super(Mailbox, cls).make(actor=actor, backlog=backlog,
                                         onthread=actor.cpubound,
                                         timeout=None)
 

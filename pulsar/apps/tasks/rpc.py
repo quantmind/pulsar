@@ -76,7 +76,7 @@ It exposes the following remote functions:
         result = self.task_callback(request, jobname, ack, **kwargs)()
         return result.add_callback(task_to_json)
         
-    def rpc_get_task(self, request, id = None):
+    def rpc_get_task(self, request, id=None):
         if id:
             return self.task_queue_manager(request.actor,
                                            'get_task',

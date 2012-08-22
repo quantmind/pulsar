@@ -264,7 +264,7 @@ def addtask_noack(client, actor, caller, jobname, task_extra, *args, **kwargs):
 
 @pulsar_command(internal=True, commands_set=taskqueue_cmnds)
 def save_task(client, actor, caller, task):
-    self.app.task_class.save_task(task)
+    return actor.app.task_class.save_task(task)
 
 @pulsar_command(commands_set=taskqueue_cmnds)
 def get_task(client, actor, id):
@@ -272,7 +272,7 @@ def get_task(client, actor, id):
 
 @pulsar_command(commands_set=taskqueue_cmnds)
 def job_list(client, actor, jobnames=None):
-    return list(actor.app.job_list(jobnames = jobnames))
+    return list(actor.app.job_list(jobnames=jobnames))
 
 @pulsar_command(commands_set=taskqueue_cmnds)
 def next_scheduled(client, actor, caller, jobname=None):

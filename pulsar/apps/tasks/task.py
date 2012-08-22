@@ -7,7 +7,7 @@ import traceback
 from io import StringIO
 
 from pulsar.utils.httpurl import itervalues
-from pulsar import make_async, as_failure, is_async, is_failure
+from pulsar import make_async, as_failure, is_async, is_failure, send
 
 from .models import registry
 from .exceptions import *
@@ -326,15 +326,15 @@ class TaskInMemory(Task):
 
     def on_start(self, worker=None):
         if worker:
-            return worker.monitor.send(worker, 'save_task', self)
+            return send(worker.monitor, 'save_task', self)
 
     def on_timeout(self, worker=None):
         if worker:
-            return worker.monitor.send(worker, 'save_task', self)
+            return send(worker.monitor, 'save_task', self)
 
     def on_finish(self, worker=None):
         if worker:
-            return worker.monitor.send(worker, 'save_task', self)
+            return send(worker.monitor, 'save_task', self)
 
     def delete(self):
         self._TASKS.pop(self.id, None)

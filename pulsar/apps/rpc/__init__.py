@@ -35,7 +35,7 @@ Then you create the WSGI Middleware::
     if __name__ == '__main__':
         server().start()
     
-.. _JSON-RPC: http://en.wikipedia.org/wiki/JSON-RPC
+.. _JSON-RPC: http://www.jsonrpc.org/specification
 '''
 from .exceptions import *
 from .handlers import *

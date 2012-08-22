@@ -3,7 +3,7 @@ import inspect
 __all__ = ['checkarity']
 
 
-def checkarity(func, args, kwargs, discount = 0):
+def checkarity(func, args, kwargs, discount=0):
     '''Check if arguments respect a given function arity and return
 a error message if the check did not pass, otherwise it returns ``None``.
 

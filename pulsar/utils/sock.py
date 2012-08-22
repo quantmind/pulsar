@@ -29,7 +29,6 @@ ALLOWED_ERRORS = (errno.EAGAIN, errno.ECONNABORTED,
 
 MAXFD = 1024
 
-
 def get_socket_timeout(val):
     '''Obtain a valid stocket timeout value from *val*'''
     if val is None:
@@ -49,7 +48,6 @@ def create_connection(address, blocking=0):
     s.sock.setblocking(blocking)
     return s
 
-
 def flush_socket(sock, length=None):
     length = length or io.DEFAULT_BUFFER_SIZE
     client, addr = sock.accept()
@@ -57,7 +55,6 @@ def flush_socket(sock, length=None):
         r = client.recv(length)
         while len(r) > length:
             r = client.recv(length)
-
 
 def create_socket(address, log=None, backlog=2048,
                   bound=False, retry=5, retry_lag=2):
@@ -77,7 +74,6 @@ Otherwise a TypeError is raised.
 :rtype: Instance of :class:`Socket`
     """
     sock_type, address = create_socket_address(address)
-
     for i in range(retry):
         try:
             return sock_type(address, backlog=backlog, bound=bound)
@@ -98,7 +94,6 @@ Otherwise a TypeError is raised.
         log.error("Can't connect to %s" % str(address))
     sys.exit(1)
 
-
 create_client_socket = lambda address: create_socket(address, bound=True)
 
 def wrap_socket(sock):
@@ -109,7 +104,6 @@ def wrap_socket(sock):
         return sock_type(fd=sock,bound=True,backlog=None)
     else:
         return sock
-
 
 def socket_pair(backlog=2048, log=None, blocking=0):
     '''Create a ``127.0.0.1`` (client,server) socket pair on any
@@ -167,7 +161,6 @@ def server_socket(backlog=2048, blocking=0):
     s.setblocking(blocking)
     return s
 
-
 def recv_generator(sock, length=None):
     length = length or io.DEFAULT_BUFFER_SIZE
     data = True
@@ -185,7 +178,7 @@ class IStream(object):
 
 .. attribute: address
 
-    The address of the stream. This is susually the address of the listening
+    The address of the stream. This is usually the address of the listening
     or writing socket.
 
 .. attribute: log
@@ -225,12 +218,12 @@ higher level tools for creating and reusing sockets already created.'''
             self.sock = fd
             return
         else:
-            if hasattr(socket,'fromfd'):
+            if hasattr(socket, 'fromfd'):
                 sock = socket.fromfd(fd, self.FAMILY, socket.SOCK_STREAM)
             else:
                 raise ValueError('Cannot create socket from file deascriptor.\
  Not implemented in your system')
-        if self.is_server():
+        if self.is_server:
             self.sock = self.set_options(sock, address, bound)
         else:
             self.sock = sock
@@ -249,6 +242,7 @@ higher level tools for creating and reusing sockets already created.'''
         self.__dict__ = state
         self._init(fd, None, True)
 
+    @property
     def is_server(self):
         return self._is_server
 
@@ -294,7 +288,7 @@ not data was sent. In this case it also raises a socket error.'''
         except socket.error as e:
             # In windows the function raises an exception if the socket
             # is not connected
-            if not self.is_server() and os.name == 'nt'\
+            if not self.is_server and os.name == 'nt'\
                     and e.args[0] == errno.WSAEINVAL:
                 return ('0.0.0.0', 0)
             else:
@@ -318,7 +312,9 @@ not data was sent. In this case it also raises a socket error.'''
         return self.sock.fileno()
 
     def set_options(self, sock, address, bound):
+        '''Options for a server socket'''
         sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+        # If the socket is not bound, bind it to the address
         if not bound:
             self.bind(sock, address)
         if self.backlog:
@@ -340,14 +336,13 @@ not data was sent. In this case it also raises a socket error.'''
             self.sock = None
 
     def info(self):
-        if self.is_server():
+        if self.is_server:
             return 'listening at {0}'.format(self)
         else:
             return 'client at {0}'.format(self)
 
 
 class TCPSocket(Socket):
-
     FAMILY = socket.AF_INET
 
     def __str__(self):
@@ -359,7 +354,6 @@ class TCPSocket(Socket):
 
 
 class TCP6Socket(TCPSocket):
-
     FAMILY = socket.AF_INET6
 
     def __str__(self):
@@ -368,20 +362,27 @@ class TCP6Socket(TCPSocket):
 
 
 def create_tcp_socket_address(addr):
+    if not isinstance(addr, tuple):
+        hp = addr.split(':')
+        if len(hp) == 2:
+            addr = tuple(hp)
     if isinstance(addr, tuple):
         if len(addr) != 2:
-            raise ValueError('TCP address mut be a (hot,port) tuple')
+            raise ValueError('TCP address must be a (host, port) tuple')
         host = addr[0]
+        try:
+            port = int(addr[1])
+        except:
+            raise ValueError('TCP address must be a (host, port) tuple')
         if not host:
             host = '0.0.0.0'
-            addr = (host, addr[1])
+        addr = (host, port)
         if is_ipv6(host):
             sock_type = TCP6Socket
         else:
             sock_type = TCPSocket
     else:
         raise TypeError("Unable to create socket from: %r" % addr)
-
     return sock_type, addr
 
 if os.name == 'posix':

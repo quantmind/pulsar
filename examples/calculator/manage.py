@@ -17,30 +17,44 @@ Open a new shell and launch python and type::
     >>>
 
 '''
-from pulsar.apps import rpc, wsgi
-from pulsar.utils.httpurl import range
 from random import normalvariate
 
+from pulsar.apps import rpc, wsgi
+from pulsar.utils.httpurl import range
 
-def divide(a,b):
+
+def divide(a, b):
     '''Divide two numbers'''
-    return float(a) / float(b)
+    return float(a)/float(b)
 
-
-def randompaths(num_paths = 1, size = 250, mu = 0, sigma = 1):
+def randompaths(num_paths=1, size=250, mu=0, sigma=1):
     r = []
     for p in range(num_paths):
         v = 0
         path = [v]
         r.append(path)
         for t in range(size):
-            v += normalvariate(mu,sigma)
+            v += normalvariate(mu, sigma)
             path.append(v)
     return r
 
 
+class RequestCheck:
+    
+    def __call__(self, request, name):
+        assert(str(request)==name)
+        assert(request.user==None)
+        return True
+
+
 class Root(rpc.PulsarServerCommands):
-    pass
+    
+    def rpc_dodgy_method(self, request):
+        '''This method will fails because the return object is not
+json serializable.'''
+        return Calculator
+    
+    rpc_check_request = RequestCheck()
 
 
 class Calculator(rpc.JSONRPC):
@@ -63,7 +77,7 @@ def wsgi_handler():
     return rpc.RpcMiddleware(Root().putSubHandler('calc',Calculator()))
 
 def server(**params):
-    return wsgi.createServer(callable=wsgi_handler(), **params)
+    return wsgi.WSGIServer(callable=wsgi_handler(), **params)
 
 
 def start_server(**params):

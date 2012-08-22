@@ -115,6 +115,8 @@ Users access the arbiter by the high level api::
         kwargs['name'] = monitor_name
         kwargs['aid'] = monitor_name
         m = arbiter().spawn(monitor_class, **kwargs)
+        # Monitors don't hold other monitors
+        m._monitors.clear()
         self._linked_actors[m.aid] = m
         self._monitors[m.name] = m
         return m

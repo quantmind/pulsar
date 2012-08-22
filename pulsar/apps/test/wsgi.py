@@ -1,8 +1,9 @@
 '''Classes for testing WSGI servers using the HttpClient'''
 from io import BytesIO
 import logging
+import socket
 
-from pulsar import IStream
+from pulsar import IStream, create_socket_address
 from pulsar.utils.httpurl import HttpClient, HttpRequest, HttpConnectionPool,\
                                     HttpResponse, urlparse, HttpConnection,\
                                     HttpParser
@@ -12,7 +13,7 @@ from pulsar.apps.wsgi import server, handle_http_error
 __all__ = ['HttpTestClient']
 
 
-class TestHttpServerConnection(IStream):
+class DummyHttpServerConnection(IStream):
     '''This is a simple class simulating a connection on
 a Http server. It contains the client response so that the
 write method simply write on the client response
@@ -26,6 +27,14 @@ object.'''
     @property
     def wsgi_handler(self):
         return self.client_response.request.client.wsgi_handler
+    
+    @property
+    def server_name(self):
+        return 'local-testing-server'
+    
+    @property
+    def server_port(self):
+        return 8888
 
     def handle_http_error(self, response, e):
         return handle_http_error(self, response, e)
@@ -53,7 +62,7 @@ class TestHttpResponse(HttpResponse):
         if not request:
             raise ValueError('request not available')
         # Create the Dummy test connection
-        c = TestHttpServerConnection(self)
+        c = DummyHttpServerConnection(self)
         # Get environment
         environ = server.wsgi_environ(c)
         # Create the Server response
@@ -104,10 +113,7 @@ class HttpTestClient(HttpClient):
     request_class = HttpTestClientRequest
     connection_pool = HttpTestConnectionPool
 
-    def __init__(self, test, wsgi_handler, server_address='0.0.0.0', **kwargs):
+    def __init__(self, test, wsgi_handler, **kwargs):
         self.test = test
         self.wsgi_handler = wsgi_handler
-        host, port = host_and_port_default(server_address)
-        self.server_name = host
-        self.server_port = port
         super(HttpTestClient, self).__init__(**kwargs)

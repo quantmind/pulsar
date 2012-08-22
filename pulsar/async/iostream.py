@@ -15,7 +15,7 @@ from pulsar import create_socket, server_socket, create_client_socket,\
 from .defer import Deferred, is_async, is_failure, async, make_async,\
                         safe_async, log_failure, NOT_DONE
 from .eventloop import IOLoop, loop_timeout
-from .access import PulsarThread, thread_ioloop
+from .access import PulsarThread, thread_ioloop, get_actor
 
 iologger = logging.getLogger('pulsar.iostream')
 
@@ -467,6 +467,7 @@ class BaseSocketHandler(IStream):
     A :class:`Deferred` which receives a callback once the
     :meth:`close` method is invoked
 .. '''
+    socket = None
     _closing_socket = False
     def __new__(cls, *args, **kwargs):
         o = super(BaseSocketHandler, cls).__new__(cls)
@@ -507,13 +508,21 @@ class BaseSocketHandler(IStream):
         self.socket.close()
         return self.on_closed.callback(msg)
 
-
+class SimpleParser:
+    
+    def encode(self, data):
+        return data
+    
+    def dencode(self, data):
+        return data
+    
+    
 class ClientSocketHandler(BaseSocketHandler):
     '''Base class for socket clients with parsers. This class can be used for
 synchronous and asynchronous socket for both a "client" socket and
 the server connection socket (the socket obtained from a server socket
 via the ``connect`` function).'''
-    parsercls = None
+    parsercls = SimpleParser
     log = iologger
     def __init__(self, socket, address, parsercls=None, socket_timeout=None):
         '''Create a client or client-connection socket. A parser class
@@ -851,8 +860,14 @@ class AsyncSocketServer(BaseSocketHandler):
                                    logger=actor.log)
 
     @classmethod
-    def make(cls, actor, bind=None, backlog=None, **kwargs):
-        backlog = backlog or actor.cfg.get('backlog', defaults.BACKLOG)
+    def make(cls, actor=None, bind=None, backlog=None, **kwargs):
+        if actor is None:
+            actor = get_actor()
+        if not backlog:
+            if actor:
+                backlog = actor.cfg.get('backlog', defaults.BACKLOG)
+            else:
+                backlog = defaults.BACKLOG
         if bind:
             socket = create_socket(bind, backlog=backlog)
         else:
@@ -886,10 +901,13 @@ class AsyncSocketServer(BaseSocketHandler):
     def shut_down(self):
         pass
 
-    def on_close(self, failure=None):
-        self.shut_down()
+    def quit_connections(self):
         for c in list(self.connections):
             c.close()
+            
+    def on_close(self, failure=None):
+        self.shut_down()
+        self.quit_connections()
         self.ioloop.remove_handler(self)
         if self.onthread:
             self.ioloop.stop()

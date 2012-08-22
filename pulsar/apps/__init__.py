@@ -18,7 +18,8 @@ from pulsar.utils.config import Setting
 __all__ = ['Application',
            'ApplicationHandlerMixin',
            'Worker',
-           'ApplicationMonitor']
+           'ApplicationMonitor',
+           'get_application']
 
 
 if ispy3k:
@@ -47,7 +48,16 @@ def halt_server(f):
     _.__doc__ = f.__doc__
     return _
 
-
+def get_application(name):
+    '''Invoked in the arbiter domain, this function will return
+the :class:`Application` associated with *name* if available.'''
+    actor = get_actor()
+    if actor and actor.is_arbiter():
+        monitor = actor._monitors.get(name)
+        if monitor:
+            return getattr(monitor, 'app', None) 
+    
+    
 class ApplicationHandlerMixin(object):
     '''A mixin for both :class:`Worker` and :class:`ApplicationMonitor`.
 It implements the :meth:`handle_request` actor method
@@ -195,7 +205,7 @@ pulsar subclasses of :class:`Application`.
         # If no workears are available invoke the worker start method too
         if not self.cfg.workers:
             self.app.worker_start(self)
-        self.app.local['on_start'].callback(self.app)
+        self.app.events['on_start'].callback(self.app)
 
     @halt_server
     def monitor_task(self):
@@ -209,7 +219,7 @@ pulsar subclasses of :class:`Application`.
             yield self.app.worker_stop(self)
         yield self.app.monitor_stop(self)
         yield super(ApplicationMonitor, self).on_stop()
-        self.app.local['on_stop'].callback(self.app)
+        self.app.events['on_stop'].callback(self.app)
 
     def on_exit(self):
         self.app.monitor_exit(self)
@@ -382,8 +392,8 @@ These are the most important facts about a pulsar :class:`Application`
             actor = get_actor()
         if not self.mid and (not actor or actor.is_arbiter()):
             # Add events
-            self.local['on_start'] = Deferred()
-            self.local['on_stop'] = Deferred()
+            events = {'on_start': Deferred(), 'on_stop': Deferred()}
+            self.local['events'] = events
             self.configure_logging()
             if self.on_config() is not False:
                 arbiter = pulsar.arbiter(self.cfg.daemon)
@@ -394,7 +404,9 @@ These are the most important facts about a pulsar :class:`Application`
                 self.mid = monitor.aid
                 if self.commands_set:
                     monitor.commands_set.update(self.commands_set)
-            return self.local['on_start']
+        events = self.events
+        if events:
+            return events['on_start']
 
     @property
     def app_name(self):
@@ -404,7 +416,16 @@ These are the most important facts about a pulsar :class:`Application`
     def name(self):
         '''Application name, It is unique and defines the application.'''
         return self._name
+    
+    @property
+    def monitor(self):
+        if self.mid:
+            return pulsar.arbiter()._monitors.get(self.mid)
 
+    @property
+    def events(self):
+        return self.local.get('events')
+    
     def __repr__(self):
         return self.name
 

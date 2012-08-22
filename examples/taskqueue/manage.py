@@ -28,22 +28,29 @@ class RpcRoot(rpc.PulsarServerCommands,
               tasks.TaskQueueRpcMixin):
     '''The rpc handler which communicates with the task queue'''
     
-    def rpc_runpycode(self, request, code = None, **params):
-        return self.task_run(request, 'runpycode', code = code, **params)
+    def rpc_runpycode(self, request, code=None, **params):
+        return self.task_run(request, 'runpycode', code=code, **params)
         
-        
-def createTaskQueue(**params):
-    return tasks.TaskQueue(tasks_path = TASK_PATHS,
-                           script = __file__,
-                           **params)
-
     
-def server(name='taskqueue', **params):
-    # Create the taskqueue application with an rpc server
-    tq = createTaskQueue(name=name, **params)
-    return wsgi.WSGIServer(rpc.RpcMiddleware(RpcRoot(tq)),
-                           name = '{0}_rpc'.format(tq.name),
-                           **params)
+class server:
+    
+    def __init__(self, name='taskqueue', **params):
+        self.name = name
+        self.params = params
+        
+    def __call__(self, actor):
+        name = self.name
+        params = self.params
+        tq = tasks.TaskQueue(name=name, tasks_path=TASK_PATHS,
+                             script=__file__, **params)
+        self.rpc = wsgi.WSGIServer(rpc.RpcMiddleware(RpcRoot(tq)),
+                                   name = '{0}_rpc'.format(tq.name),
+                                   **params)
+        return self.rpc()
+    
+    def start(self):
+        self()
+        return self.rpc.start()
 
 
 def start_server(**params):
