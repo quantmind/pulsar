@@ -163,8 +163,6 @@ and task scheduling.
 Executes all due tasks calculate the time in seconds to wait before
 running a new :meth:`tick`. For testing purposes a :class:`datetime.datetime`
 value ``now`` can be passed.'''
-        # First we check for tasks which have timed out
-        self.task_class.check_unready_tasks()
         remaining_times = []
         try:
             for entry in itervalues(self._entries):

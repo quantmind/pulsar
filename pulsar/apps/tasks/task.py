@@ -250,11 +250,6 @@ different from ``None`` only when the :class:`Task` has been revoked.
 not available.'''
         raise NotImplementedError()
 
-    @classmethod
-    def check_unready_tasks(cls):
-        '''Check for expiries in all tasks.'''
-        raise NotImplementedError()
-
     ############################################################################
     # CALLBACKS
     ############################################################################
@@ -355,14 +350,6 @@ class TaskInMemory(Task):
             if task.done():
                 cls._TASKS.pop(id)
         return task
-
-    @classmethod
-    def check_unready_tasks(cls):
-        tasks = cls._TASKS
-        for task in list(itervalues(tasks)):
-            task.maybe_revoked()
-            if task.done():
-                tasks.pop(task.id, None)
 
 
 def nice_task_message(req, smart_time = None):

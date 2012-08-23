@@ -196,19 +196,6 @@ class TaskPath(TaskSetting):
         """
 
 
-class TaskResponse(object):
-
-    def __init__(self, worker, task):
-        self.task = task
-        self.worker = worker
-
-    def close(self):
-        '''Close the task request by invoking the :meth:`Task.finish`
-method.'''
-        task = self.task
-        return task.finish(self.worker, result=task.result)
-
-
 class CPUboundServer(pulsar.Application):
     '''A CPU-bound application server.'''
     _app_name = 'cpubound'
@@ -237,10 +224,6 @@ be consumed by the workers.'''
 
 
 taskqueue_cmnds = set()
-
-@pulsar_command(commands_set=taskqueue_cmnds)
-def tasks_list(client, actor):
-    return actor.app.tasks_list()
 
 @pulsar_command(internal=True, authenticated=True, commands_set=taskqueue_cmnds)
 def addtask(client, actor, caller, jobname, task_extra, *args, **kwargs):

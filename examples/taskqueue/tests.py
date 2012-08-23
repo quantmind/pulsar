@@ -17,9 +17,19 @@ def task_function(N = 10, lag = 0.1):
     return N*N
 '''
 
+class TestTaskClasses(unittest.TestCase):
+    
+    def testTask(self):
+        self.assertRaises(NotImplementedError, tasks.Task.get_task, 1)
+        task = tasks.Task()
+        self.assertFalse(task.on_received())
+        self.assertFalse(task.on_start())
+        self.assertFalse(task.on_timeout())
+        self.assertFalse(task.on_finish())
+        
 
-class TestCase(unittest.TestCase):
-    concurrency = 'process'
+class TestTaskQueueOnThread(unittest.TestCase):
+    concurrency = 'thread'
     app = None
     
     @classmethod
@@ -49,10 +59,6 @@ class TestCase(unittest.TestCase):
             yield send('arbiter', 'kill_actor', cls.name_tq())
             yield send('arbiter', 'kill_actor', cls.name_rpc())
 
-
-class TestTaskQueueOnThread(TestCase):
-    concurrency = 'thread'
-
     @run_on_arbiter
     def testMeta(self):
         '''Tests meta attributes of taskqueue'''
@@ -68,6 +74,16 @@ class TestTaskQueueOnThread(TestCase):
         id = job.make_task_id((),{})
         self.assertTrue(id)
         self.assertNotEqual(id,job.make_task_id((),{}))
+        
+    @run_on_arbiter
+    def testRegistry(self):
+        app = get_application(self.name_tq())
+        self.assertTrue(isinstance(app.registry, dict))
+        regular = app.registry.regular()
+        periodic = app.registry.periodic()
+        self.assertTrue(regular)
+        self.assertTrue(periodic)
+        
         
     @run_on_arbiter
     def testRpcMeta(self):
