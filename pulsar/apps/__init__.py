@@ -32,22 +32,35 @@ if ispy3k:
         with open(filename, "r") as fh:
             exec(fh.read()+"\n", globals, locals)
 
-def halt_server(f):
-    '''Halt server decorator'''
-    def _halt(failure, halt):
-        failure.log()
-        if halt:
-            raise HaltServer('Unhandled exception application.')
 
-    def _(self, *args, **kwargs):
-        try:
-            result = make_async(f(self, *args, **kwargs))
-        except Exception as e:
-            result = make_async(e)
-        return result.add_errback(lambda f: _halt(f, self.app.can_kill_arbiter))
-    _.__name__ = f.__name__
-    _.__doc__ = f.__doc__
-    return _
+class safe_monitor:
+    '''Decorator for monitor and application functions'''    
+    def __init__(self, event=None):
+        self.event = event
+    
+    def _halt(self, failure, app):
+        failure.log()
+        if app.can_kill_arbiter:
+            raise HaltServer('Unhandled exception application.')
+        else:
+            return failure
+
+    def signal_event(self, result, app):
+        if self.event:
+            app.events[self.event].callback(result)
+        return result
+    
+    def __call__(self, f):
+        def _(*args, **kwargs):
+            app = args[0].app
+            result = safe_async(f, args, kwargs)
+            res = result.add_callback(lambda r: app,
+                                      lambda f: self._halt(f, app))
+            return res.addBoth(lambda r: self.signal_event(r, app))
+        _.__name__ = f.__name__
+        _.__doc__ = f.__doc__
+        return _
+
 
 def get_application(name):
     '''Invoked in the arbiter domain, this function will return
@@ -76,11 +89,6 @@ sending back responses.
         '''Override :meth:`pulsar.Actor.on_event` to delegate handling
 to the underlying :class:`Application`.'''
         return self.app.on_event(self, fd, event)
-        # the request class may contain a timeout
-        timeout = getattr(request, 'timeout', None)
-        should_stop = self.max_requests and self.nr >= self.max_requests
-        result = self._response_generator(request, should_stop)
-        return loop_timeout(result, timeout)
 
     def handle_task(self):
         if self.information.log():
@@ -100,27 +108,6 @@ to the underlying :class:`Application`.'''
         self.app.configure_logging(config = config)
         self.loglevel = self.app.loglevel
         self.setlog()
-
-    ################################################################# Internals
-    def _response_generator(self, request, should_stop):
-        yield safe_async(self.cfg.pre_request, args=(self, request))
-        # We don't care if it fails
-        response = safe_async(self.app.handle_request, args=(self, request))
-        yield response
-        response = response.result
-        if is_failure(response):
-            response.log(self.log)
-        else:
-            close = getattr(response, 'close', None)
-            if hasattr(close,'__call__'):
-                response = safe_async(close)
-                yield response
-                if is_failure(response.result):
-                    response.result.log(self.log)
-        yield safe_async(self.cfg.post_request, args=(self, request))
-        if should_stop:
-            self.log.info("Auto-restarting worker.")
-            self.stop()
 
 
 class Worker(ApplicationHandlerMixin, Actor):
@@ -201,16 +188,17 @@ pulsar subclasses of :class:`Application`.
         kwargs['num_actors'] = app.cfg.workers
         return super(ApplicationMonitor, self).on_init(**kwargs)
 
+    ############################################################################
     # Delegates Callbacks to the application
-    @halt_server
+    
+    @safe_monitor('on_start')
     def on_start(self):
         self.app.monitor_start(self)
         # If no workears are available invoke the worker start method too
         if not self.cfg.workers:
             self.app.worker_start(self)
-        self.app.events['on_start'].callback(self.app)
 
-    @halt_server
+    @safe_monitor()
     def monitor_task(self):
         yield self.app.monitor_task(self)
         # There are no workers, the monitor do their job
@@ -408,6 +396,10 @@ These are the most important facts about a pulsar :class:`Application`
         if events:
             return events['on_start']
 
+    @property
+    def app(self):
+        return self
+    
     @property
     def app_name(self):
         return self._app_name

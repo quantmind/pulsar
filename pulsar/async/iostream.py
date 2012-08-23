@@ -489,13 +489,13 @@ class BaseSocketHandler(BaseSocket):
         return self.on_closed.callback(msg)
 
 
-class SimpleParser:
-    
+class EchoParser:
+    '''A simple echo parser'''
     def encode(self, data):
         return data
     
-    def dencode(self, data):
-        return data
+    def decode(self, data):
+        return bytes(data), bytearray()
     
     
 class ClientSocketHandler(BaseSocketHandler):
@@ -503,23 +503,23 @@ class ClientSocketHandler(BaseSocketHandler):
 synchronous and asynchronous socket for both a "client" socket and
 the server connection socket (the socket obtained from a server socket
 via the ``connect`` function).'''
-    parsercls = SimpleParser
+    parser_class = EchoParser
     log = iologger
-    def __init__(self, socket, address, parsercls=None, timeout=None):
+    def __init__(self, socket, address, parser_class=None, timeout=None):
         '''Create a client or client-connection socket. A parser class
 is required in order to use :class:`SocketClient`.
 
 :parameter socket: a client or client-connection socket
 :parameter address: The address of the remote client/server
-:parameter parsercls: A class used for parsing messages.
+:parameter parser_class: A class used for parsing messages.
 :parameter timeout: A timeout in seconds for the socket. Same rules as
     the ``socket.settimeout`` method in the standard library.
 '''
         self._socket_timeout = get_socket_timeout(timeout)
         self._set_socket(socket)
         self.remote_address = address
-        parsercls = parsercls or self.parsercls
-        self.parser = parsercls()
+        parser_class = parser_class or self.parser_class
+        self.parser = parser_class()
         self.buffer = bytearray()
         self.callbacks = {}
 
@@ -543,9 +543,9 @@ is required in order to use :class:`SocketClient`.
 class ClientSocket(ClientSocketHandler):
     '''Synchronous/Asynchronous client for a remote server.'''
     @classmethod
-    def connect(cls, address, parsercls=None, timeout=None):
+    def connect(cls, address, parser_class=None, timeout=None):
         sock = create_connection(address)
-        return cls(sock, address, parsercls=parsercls, timeout=timeout)
+        return cls(sock, address, parser_class=parser_class, timeout=timeout)
 
     def add_callback(self, name, callback):
         callbacks = self.callbacks.get(name,[])
@@ -683,7 +683,7 @@ chunk of data to send back to the remote client.
         return self.connection.sock
 
     def __iter__(self):
-        yield b''
+        yield self.parsed_data
 
 
 class AsyncConnection(ClientSocketHandler):
@@ -804,7 +804,7 @@ class AsyncSocketServer(BaseSocketHandler):
     If ``True`` the server has its own :class:`IOLoop` running on a separate
     thread of execution. Otherwise it shares the :attr:`actor.requestloop`
 
-.. attribute:: parsercls
+.. attribute:: parser_class
 
     A class for encoding and decoding data
 
@@ -815,7 +815,7 @@ class AsyncSocketServer(BaseSocketHandler):
     thread = None
     _started = False
     connection_class = AsyncConnection
-    parser_class = None
+    parser_class = EchoParser
     def __init__(self, actor, socket, parser_class=None, onthread=False,
                  connection_class=None, timeout=None):
         self.actor = actor

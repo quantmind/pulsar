@@ -39,7 +39,7 @@ class TestTestWorker(unittest.TestCase):
         self.assertNotEqual(worker.requestloop, mailbox.ioloop)
         self.assertNotEqual(worker.tid, mailbox.ioloop.tid)
         self.assertTrue(mailbox.address)
-        self.assertTrue(mailbox.socket)
+        self.assertTrue(mailbox.sock)
         
     def testIOloop(self):
         worker = pulsar.get_actor()

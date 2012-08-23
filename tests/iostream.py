@@ -1,68 +1,61 @@
 import pulsar
 from pulsar.utils.httpurl import to_bytes, to_string
-from pulsar.apps.test import unittest
+from pulsar.apps import socket
+from pulsar.apps.test import unittest, run_on_arbiter
+        
 
-
-class EchoParser:
-    sep = b'\r\n\r\n'
-    def encode(self, data):
-        return to_bytes(data) + self.sep
-    
-    def decode(self, data):
-        p = data.find(self.sep)
-        if p != -1:
-            return to_string(data[:p]), data[p+len(self.sep):]
-        else:
-            return None, data
+class EchoServer(socket.SocketServer):
+    socket_server_class = pulsar.AsyncSocketServer 
     
 
 class TestPulsarStreams(unittest.TestCase):
+    concurrency = 'thread'
     server = None
     @classmethod
     def setUpClass(cls):
-        cls.server = pulsar.AsyncSocketServer.make(
-                                bind='127.0.0.1:0',
-                                parser_class=EchoParser)
-        cls.server.start()
-        # RELEASE THE LOOP
-        yield pulsar.NOT_DONE
+        s = EchoServer(name='echoserver', bind='127.0.0.1:0',
+                       concurrency=cls.concurrency)
+        outcome = pulsar.send('arbiter', 'run', s)
+        yield outcome
+        cls.server = outcome.result
         
     @classmethod
     def tearDownClass(cls):
         if cls.server:
-            cls.server.close()
-    
-    def setUp(self):
-        self.server.quit_connections()
+            yield pulsar.send('arbiter', 'kill_actor', cls.server.mid)
         
     def client(self, **kwargs):
-        return pulsar.ClientSocket.connect(self.server.address,
-                                           parsercls=EchoParser,
-                                           **kwargs)
+        return pulsar.ClientSocket.connect(self.server.address, **kwargs)
         
-        
+    @run_on_arbiter
     def testServer(self):
-        server = self.server
-        self.assertTrue(server.address)
-        self.assertEqual(server.gettimeout(), 0)
-        self.assertEqual(server.active_connections, 0)
-        self.assertTrue(server.started)
+        app = pulsar.get_application('echoserver')
+        self.assertTrue(app.address)
         
-    def __testClient(self):
+    def testSyncClient(self):
         client = self.client()
         self.assertEqual(client.remote_address, self.server.address)
+        self.assertFalse(client.async)
+        self.assertEqual(client.gettimeout(), None)
         self.assertTrue(client.sock)
+        client = self.client(timeout=3)
+        self.assertFalse(client.async)
+        self.assertEqual(client.gettimeout(), 3)
+        self.assertEqual(client.execute(b'ciao'), b'ciao')
+        self.assertEqual(client.received, 1)
+        self.assertEqual(client.execute(b'bla'), b'bla')
+        self.assertEqual(client.received, 2)
         
     def testAsyncClient(self):
         client = self.client(timeout=0)
         self.assertEqual(client.remote_address, self.server.address)
         self.assertEqual(client.gettimeout(), 0)
         self.assertTrue(client.async)
-        tot_bytes = client.send('ciao')
-        self.assertTrue(tot_bytes>4)
+        tot_bytes = client.send(b'ciao')
+        self.assertEqual(tot_bytes, 4)
         r = client.read()
         yield r
-        self.assertEqual(r.result, 'ciao')
+        self.assertEqual(r.result, b'ciao')
         
     
     

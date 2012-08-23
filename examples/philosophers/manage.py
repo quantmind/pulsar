@@ -53,13 +53,15 @@ class Eating_Period(pulsar.Setting):
     default = 2
     desc = """The average period of eating for a philosopher."""
     
+    
 class Waiting_Period(pulsar.Setting):
     flags = ["--waiting-period"]
     validator = pulsar.validate_pos_float
     default = 2
     desc = """The average period of waiting for a missing fork."""
     
-
+################################################################################
+##    PULSAR COMMANDS FOR DINING PHILOSOPHERS
 philosophers_cmommands = set()
 
 @pulsar_command(commands_set=philosophers_cmommands, ack=False)
@@ -83,6 +85,8 @@ def pickup_fork(client, actor, fork_right):
             return fork
 
 
+################################################################################
+##    DINING PHILOSOPHERS APP
 class DiningPhilosophers(pulsar.Application):
     description = 'Dining philosophers sit at a table around a bowl of '\
                   'spaghetti and waits for available forks.'

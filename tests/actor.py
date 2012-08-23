@@ -2,7 +2,8 @@
 from time import sleep
 
 import pulsar
-from pulsar.apps.test import unittest, ActorTestMixin, run_on_arbiter
+from pulsar.apps.test import unittest, ActorTestMixin, run_on_arbiter,\
+                                 dont_run_with_thread
 
 
 def sleepfunc():
@@ -109,6 +110,7 @@ arbiter'''
         self.assertFalse(a.aid in self.arbiter.LIVE_ACTORS)
         
 
-#class TestActorProcess(TestActorThread):
-#    impl = 'process'        
+@dont_run_with_thread
+class TestActorProcess(TestActorThread):
+    impl = 'process'        
 

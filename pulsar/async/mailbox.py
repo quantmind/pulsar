@@ -117,7 +117,7 @@ created by :meth:`ActorProxy.send` method.
 class PulsarClient(ReconnectingClient):
     '''A proxy for the :attr:`Actor.inbox` attribute. It is used by the
 :class:`ActorProxy` to send messages to the remote actor.'''
-    parsercls = MessageParser
+    parser_class = MessageParser
 
     def on_end_message(self, msg):
         '''Those two messages are special'''

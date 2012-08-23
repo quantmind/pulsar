@@ -893,11 +893,7 @@ class IORespone(object):
 
     @property
     def async(self):
-        socket = self.socket
-        timeout = getattr(socket, 'timeout', '')
-        if timeout is '':
-            timeout = socket._sock.timeout
-        return timeout == 0
+        return self.socket.gettimeout() == 0
 
     def parsedata(self, data):
         raise NotImplementedError()
@@ -1066,7 +1062,7 @@ class HttpConnection(httpclient.HTTPConnection):
 
     @property
     def is_async(self):
-        return self.sock.timeout == 0
+        return self.sock.gettimeout() == 0
 
 
 class HttpsConnection(HTTPSConnection):
@@ -1080,7 +1076,7 @@ class HttpsConnection(HTTPSConnection):
 
     @property
     def is_async(self):
-        return self.sock.timeout == 0
+        return self.sock.gettimeout() == 0
     
     def set_cert(self, key_file=None, cert_file=None,
                  cert_reqs='CERT_NONE', ca_certs=None):

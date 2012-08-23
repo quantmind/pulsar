@@ -27,6 +27,23 @@ class TestHeaders(unittest.TestCase):
         self.assertEqual(len(h), 1)
 
 
+class TestTools(unittest.TestCase):
+    
+    def test_to_bytes(self):
+        s = httpurl.to_bytes('ciao')
+        self.assertTrue(isinstance(s, bytes))
+        s2 = httpurl.to_bytes(s)
+        self.assertEqual(id(s), id(s2))
+        s3 = httpurl.to_bytes(s, 'latin-1')
+        self.assertEqual(s, s3)
+        self.assertNotEqual(id(s), id(s3))
+        
+    def test_native_str(self):
+        s = 'ciao'
+        s2 = httpurl.native_str(s)
+        self.assertEqual(id(s), id(s2))
+        
+
 class HttpClientMixin(object):
     timeout = 3
     
