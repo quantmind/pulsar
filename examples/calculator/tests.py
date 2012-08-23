@@ -1,7 +1,7 @@
 '''Tests the RPC "calculator" example.'''
 from pulsar import send
 from pulsar.apps import rpc
-from pulsar.apps.test import unittest
+from pulsar.apps.test import unittest, dont_run_with_thread
 
 from .manage import server
 
@@ -28,6 +28,12 @@ class TestRpcOnThread(unittest.TestCase):
         
     def setUp(self):
         self.p = rpc.JsonProxy(self.uri, timeout=self.client_timeout)
+        self.assertEqual(self.p.url, self.uri)
+        self.assertEqual(self.p.path, None)
+        proxy = self.p.bla
+        self.assertEqual(proxy.path, 'bla')
+        self.assertEqual(proxy.url, self.uri)
+        self.assertTrue(str(self.p))
         
     def testHandler(self):
         s = self.app
@@ -51,6 +57,10 @@ class TestRpcOnThread(unittest.TestCase):
     def testListOfFunctions(self):
         result = self.p.functions_list()
         self.assertTrue(result)
+        
+    def testTimeIt(self):
+        r = self.p.timeit('ping', 5)
+        self.assertTrue(r > 0)
         
     # Test Object method
     def test_check_request(self):
@@ -101,5 +111,6 @@ class TestRpcOnThread(unittest.TestCase):
         self.assertTrue(result)
         
 
+@dont_run_with_thread
 class TestRpcOnProcess(TestRpcOnThread):
     concurrency = 'process'

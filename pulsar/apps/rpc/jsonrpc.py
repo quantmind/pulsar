@@ -22,19 +22,7 @@ from pulsar.utils.jsontools import DefaultJSONEncoder, DefaultJSONHook
 from .handlers import RpcHandler
 from .exceptions import exception, INTERNAL_ERROR, REQUIRES_AUTHENTICATION
 
-
-__all__ = ['JSONRPC','JsonProxy','LocalJsonProxy']
-
-
-class SimpleJson(object):
-
-    @classmethod
-    def dumps(cls, data, **kwargs):
-        return json.dumps(data, **kwargs)
-
-    @classmethod
-    def loads(cls, content):
-        return json.loads(to_string(content))
+__all__ = ['JSONRPC', 'JsonProxy', 'LocalJsonProxy']
 
 
 class JsonToolkit(object):
@@ -76,9 +64,7 @@ method data from the JSON *data* string.'''
         return method, args, kwargs, id, version
 
     def dumps(self, id, version, result=None, error=None):
-        '''Modify JSON dumps method to comply with
-        JSON-RPC Specification 1.0 and 2.0
-        '''
+        '''Modify JSON dumps method to comply with JSON-RPC Specification 2.0'''
         res = {'id': id, "jsonrpc": version}
         if error:
             if hasattr(error, 'faultCode'):

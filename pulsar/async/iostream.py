@@ -10,7 +10,7 @@ from threading import current_thread, Thread
 from pulsar.utils.system import IObase
 from pulsar import create_socket, server_socket, create_client_socket,\
                      wrap_socket, defaults, create_connection, CouldNotParse,\
-                     get_socket_timeout, Timeout, IStream
+                     get_socket_timeout, Timeout, BaseSocket
 
 from .defer import Deferred, is_async, is_failure, async, make_async,\
                         safe_async, log_failure, NOT_DONE
@@ -30,8 +30,9 @@ __all__ = ['AsyncIOStream',
            'MAX_BODY']
 
 MAX_BODY = 1024 * 128
+    
 
-class AsyncIOStream(IObase):
+class AsyncIOStream(IObase, BaseSocket):
     ''':ref:`Framework class <pulsar_framework>` to write and read
 from a non-blocking socket. It is used everywhere in :mod:`pulsar` for
 handling asynchronous :meth:`write` and :meth:`read` operations with
@@ -45,11 +46,11 @@ adapted to pulsar :ref:`concurrent framework <design>`.
 
     A :class:`Socket` which might be connected or unconnected.
 
-.. attribute:: timeout
+.. attribute:: _read_callback_timeout
 
     A timeout in second which is used when waiting for a
     data to be available for reading. If timeout is a positive number,
-    everytime we the :class:`AsyncIOStream` perform a :meth:`read`
+    every time we the :class:`AsyncIOStream` perform a :meth:`read`
     operation a timeout is also created on the :attr:`ioloop`.
 '''
     _socket = None
@@ -63,8 +64,8 @@ adapted to pulsar :ref:`concurrent framework <design>`.
 
     def __init__(self, socket=None, max_buffer_size=None,
                  read_chunk_size=None, timeout=None):
-        self.socket = socket
-        self.timeout = timeout
+        self.sock = socket
+        self._read_callback_timeout = timeout
         self.max_buffer_size = max_buffer_size or 104857600
         self.read_chunk_size = read_chunk_size or io.DEFAULT_BUFFER_SIZE
         self._read_buffer = deque()
@@ -73,8 +74,8 @@ adapted to pulsar :ref:`concurrent framework <design>`.
         self.log = iologger
 
     def __repr__(self):
-        if self._socket:
-            return '%s (%s)' % (self._socket, self.state_code)
+        if self.sock:
+            return '%s (%s)' % (self.sock, self.state_code)
         else:
             return '(closed)'
 
@@ -98,8 +99,8 @@ adapted to pulsar :ref:`concurrent framework <design>`.
 
     @property
     def closed(self):
-        '''Boolean indicating if the :attr:`socket` is closed.'''
-        return self.socket is None
+        '''Boolean indicating if the :attr:`sock` is closed.'''
+        return self.sock is None
 
     @property
     def state(self):
@@ -121,29 +122,21 @@ adapted to pulsar :ref:`concurrent framework <design>`.
     @property
     def ioloop(self):
         return thread_ioloop()
-
-    def fileno(self):
-        '''Return the file descriptor of the :attr:`socket`.'''
-        if self._socket:
-            return self._socket.fileno()
-
-    def getsockname(self):
-        '''Return the socket's own address. This is useful to find out the
-    port number of an IPv4/v6 socket, for instance. The format of the
-    address returned depends on the address family.'''
-        return self.socket.getsockname()
+    
+    def settimeout(self, value):
+        pass
 
     def _set_socket(self, sock):
         if self._socket is None:
             self._socket = wrap_socket(sock)
             self._state = None
             if self._socket is not None:
-                self._socket.setblocking(0)
+                self._socket.settimeout(0)
         else:
             raise RuntimeError('Cannot set socket. Close the existing one.')
     def _get_socket(self):
         return self._socket
-    socket = property(_get_socket, _set_socket)
+    sock = property(_get_socket, _set_socket)
 
     #######################################################    ACTIONS
     def connect(self, address):
@@ -159,10 +152,10 @@ as soon as the connection is ready.  Calling IOStream read
 methods before the socket is connected works on some platforms
 but is non-portable."""
         if self._state is None and not self.connecting:
-            if self.socket is None:
-                self.socket = create_client_socket(address)
+            if self.sock is None:
+                self.sock = create_client_socket(address)
             try:
-                self._socket.connect(address)
+                self.sock.connect(address)
             except socket.error as e:
                 # In non-blocking mode connect() always raises an exception
                 if e.args[0] not in (errno.EINPROGRESS, errno.EWOULDBLOCK):
@@ -178,7 +171,7 @@ but is non-portable."""
                 raise RuntimeError('Cannot connect while connecting.')
 
     def read(self, length=None):
-        """Starts reading data from the :attr:`socket`. It returns a
+        """Starts reading data from the :attr:`sock`. It returns a
 :class:`Deferred` which will be called back will once data is available.
 If this function is called while this class:`AsyncIOStream` is already reading
 a RuntimeError occurs.
@@ -227,12 +220,12 @@ overwritten with this new callback.
     sendall = write
 
     def close(self):
-        """Close the :attr:`socket` and call the *callback* if it was
+        """Close the :attr:`sock` and call the *callback* if it was
 setup using the :meth:`set_close_callback` method."""
-        if self._socket is not None:
+        if self.sock is not None:
             if self._state is not None:
                 self.ioloop.remove_handler(self.fileno())
-            self._socket.close()
+            self.sock.close()
             self._socket = None
             if self._close_callback:
                 self._may_run_callback(self._close_callback)
@@ -249,7 +242,7 @@ setup using the :meth:`set_close_callback` method."""
         # Read what is available in the buffer
         while True:
             try:
-                chunk = self.socket.recv(length)
+                chunk = self.sock.recv(length)
             except socket.error as e:
                 self.close()
                 raise
@@ -325,7 +318,7 @@ setup using the :meth:`set_close_callback` method."""
                     buff = self._get_buffer(self._write_buffer, MAX_BODY)
                 else:
                     buff = self._write_buffer.popleft() or b''
-                sent = self.socket.send(buff)
+                sent = self.sock.send(buff)
                 if sent == 0:
                     raise socket.error()
                 tot_bytes += sent
@@ -354,7 +347,7 @@ setup using the :meth:`set_close_callback` method."""
             self._may_run_callback(callback, tot_bytes)
 
     def _check_closed(self):
-        if not self.socket:
+        if not self.sock:
             raise IOError("Stream is closed")
 
     def _get_buffer(self, dq, size = None):
@@ -377,19 +370,19 @@ setup using the :meth:`set_close_callback` method."""
 
     def _handle_events(self, fd, events):
         # This is the actual callback from the event loop
-        if not self.socket:
+        if not self.sock:
             self.log.warning("Got events for closed stream %d", fd)
             return
         try:
             if events & self.READ:
                 self._handle_read()
-            if not self.socket:
+            if not self.sock:
                 return
             if events & self.WRITE:
                 if self.connecting:
                     self._handle_connect()
                 self._handle_write()
-            if not self.socket:
+            if not self.sock:
                 return
             if events & self.ERROR:
                 # We may have queued up a user callback in _handle_read or
@@ -412,7 +405,7 @@ setup using the :meth:`set_close_callback` method."""
             raise
 
     def _add_io_state(self, state, deferred):
-        if self.socket is None:
+        if self.sock is None:
             # connection has been closed, so there can be no future events
             return
         if self._state is None:
@@ -426,13 +419,14 @@ setup using the :meth:`set_close_callback` method."""
             self._state = self._state | state
             self.ioloop.update_handler(self, self._state)
         # We make sure the IO callback are tracked in the event loop
-        if self.timeout and state == self.READ:
+        if self._read_callback_timeout and state == self.READ:
             if self._read_timeout:
                 try:
                     self.ioloop.remove_timeout(self._read_timeout)
                 except ValueError:
                     pass
-            self._read_timeout = loop_timeout(deferred, self.timeout,
+            self._read_timeout = loop_timeout(deferred,
+                                              self._read_callback_timeout,
                                               self.ioloop)
         return deferred
 
@@ -454,20 +448,15 @@ class run_callbacks:
         return _
 
 
-class BaseSocketHandler(IStream):
-    '''Base class for all socket handlers such as :class:`AsyncSocketServer`,
-:class:`AsyncConnection`.
-
-.. attribute:: address
-
-    Socket address
+class BaseSocketHandler(BaseSocket):
+    '''A :class:`BaseSocket` class for all socket handlers such as
+:class:`AsyncSocketServer`, :class:`AsyncConnection`.
 
 .. attribute:: on_closed
 
     A :class:`Deferred` which receives a callback once the
     :meth:`close` method is invoked
 .. '''
-    socket = None
     _closing_socket = False
     def __new__(cls, *args, **kwargs):
         o = super(BaseSocketHandler, cls).__new__(cls)
@@ -478,17 +467,8 @@ class BaseSocketHandler(IStream):
         return o
 
     @property
-    def address(self):
-        '''Socket address'''
-        return self.socket.getsockname()
-
-    @property
     def closed(self):
-        return self.socket.closed
-
-    def fileno(self):
-        """Return socket file number. Interface required by select/epoll"""
-        return self.socket.fileno()
+        return self.sock.closed
 
     def on_close(self, failure=None):
         '''Callback just before closing the socket'''
@@ -505,8 +485,9 @@ class BaseSocketHandler(IStream):
             else:
                 log_failure(msg)
         self.on_close(msg)
-        self.socket.close()
+        self.sock.close()
         return self.on_closed.callback(msg)
+
 
 class SimpleParser:
     
@@ -524,17 +505,17 @@ the server connection socket (the socket obtained from a server socket
 via the ``connect`` function).'''
     parsercls = SimpleParser
     log = iologger
-    def __init__(self, socket, address, parsercls=None, socket_timeout=None):
+    def __init__(self, socket, address, parsercls=None, timeout=None):
         '''Create a client or client-connection socket. A parser class
 is required in order to use :class:`SocketClient`.
 
 :parameter socket: a client or client-connection socket
 :parameter address: The address of the remote client/server
 :parameter parsercls: A class used for parsing messages.
-:parameter socket_timeout: A timeout in seconds for the socket. Same rules as
+:parameter timeout: A timeout in seconds for the socket. Same rules as
     the ``socket.settimeout`` method in the standard library.
 '''
-        self.socket_timeout = get_socket_timeout(socket_timeout)
+        self._socket_timeout = get_socket_timeout(timeout)
         self._set_socket(socket)
         self.remote_address = address
         parsercls = parsercls or self.parsercls
@@ -546,30 +527,25 @@ is required in order to use :class:`SocketClient`.
         return str(self.remote_address)
     __str__ = __repr__
 
-    @property
-    def async(self):
-        return isinstance(self.socket, AsyncIOStream)
-
-    def _set_socket(self, socket):
-        if not isinstance(socket, AsyncIOStream):
-            if self.socket_timeout == 0:
-                socket = AsyncIOStream(socket)
+    def _set_socket(self, sock):
+        if not isinstance(sock, AsyncIOStream):
+            if self._socket_timeout == 0:
+                sock = AsyncIOStream(sock)
             else:
-                socket = wrap_socket(socket)
-                socket.settimeout(self.socket_timeout)
-        self.socket = socket
+                sock = wrap_socket(sock)
+                sock.settimeout(self._socket_timeout)
+        self.sock = sock
         if self.async:
             close_callback = Deferred().add_callback(self.close)
-            self.socket.set_close_callback(close_callback)
+            self.sock.set_close_callback(close_callback)
 
 
 class ClientSocket(ClientSocketHandler):
     '''Synchronous/Asynchronous client for a remote server.'''
     @classmethod
-    def connect(cls, address, parsercls=None, socket_timeout=None):
-        socket = create_connection(address, blocking=True)
-        return cls(socket, address, parsercls=parsercls,
-                   socket_timeout=socket_timeout)
+    def connect(cls, address, parsercls=None, timeout=None):
+        sock = create_connection(address)
+        return cls(sock, address, parsercls=parsercls, timeout=timeout)
 
     def add_callback(self, name, callback):
         callbacks = self.callbacks.get(name,[])
@@ -582,7 +558,7 @@ class ClientSocket(ClientSocketHandler):
         '''Send data to remote server'''
         self.time_last = time.time()
         data = self.parser.encode(data)
-        return self.socket.write(data)
+        return self.sock.write(data)
 
     def read(self):
         '''Read data from socket'''
@@ -639,8 +615,8 @@ to send back data to the client.'''
     def _read(self, result=None):
         self.time_last = time.time()
         if self.async:
-            r = self.socket.read()
-            if not self.socket.closed:
+            r = self.sock.read()
+            if not self.closed:
                 return r.add_callback(self.parsedata, self.close)
             elif r:
                 return self.parsedata(r)
@@ -651,7 +627,7 @@ to send back data to the client.'''
             length = io.DEFAULT_BUFFER_SIZE
             data = True
             while data:
-                data = self.socket.recv(length)
+                data = self.sock.recv(length)
                 if not data:
                     # No data. the socket is closed.
                     # We raise socket.error
@@ -666,14 +642,13 @@ class Client(ClientSocket):
 
     def reconnect(self):
         if self.closed:
-            socket = create_connection(self.remote_address, blocking=True)
-            self._set_socket(socket)
+            sock = create_connection(self.remote_address, blocking=True)
+            self._set_socket(sock)
 
 
 class ReconnectingClient(Client):
 
     def send(self, data):
-        '''Send and read data from socket'''
         self.reconnect()
         return super(ReconnectingClient, self).send(data)
 
@@ -704,8 +679,8 @@ chunk of data to send back to the remote client.
         return self.connection.parser
 
     @property
-    def socket(self):
-        return self.connection.socket
+    def sock(self):
+        return self.connection.sock
 
     def __iter__(self):
         yield b''
@@ -724,10 +699,10 @@ A connection can handle several request/responses until it is closed.
     response_class = AsyncResponse
     '''Class or callable for building an :class:`AsyncResponse` object.'''
 
-    def __init__(self, socket, address, server, timeout=None):
-        if not isinstance(socket, AsyncIOStream):
-            socket = AsyncIOStream(socket, timeout=server.timeout)
-        super(AsyncConnection, self).__init__(socket, address,
+    def __init__(self, sock, address, server, timeout=None):
+        if not isinstance(sock, AsyncIOStream):
+            sock = AsyncIOStream(sock, timeout=server.timeout)
+        super(AsyncConnection, self).__init__(sock, address,
                                               server.parser_class)
         self.server = server
         server.connections.add(self)
@@ -735,7 +710,7 @@ A connection can handle several request/responses until it is closed.
 
     def handle(self):
         # Kick off reading
-        self.socket.read().add_callback(self._stream_data)
+        self.sock.read().add_callback(self._stream_data)
 
     def request(self, response=None):
         if self._current_request is None:
@@ -795,15 +770,15 @@ more data in the buffer is required.'''
                     response = self.response_class(self, parsed_data)
                     yield self.write(response)
             # Read the socket
-            d = self.socket.read()
+            d = self.sock.read()
             if d:
                 yield d.add_callback(self._stream_data, self.close)
 
     def write(self, response):
-        socket = self.socket
+        sock = self.sock
         for data in response:
             if data:
-                yield socket.write(data)
+                yield sock.write(data)
             else:
                 yield NOT_DONE
 
@@ -814,10 +789,6 @@ class AsyncSocketServer(BaseSocketHandler):
 .. attribute:: actor
 
     The :class:`Actor` powering this :class:`AsyncSocketServer`.
-
-.. attribute:: socket
-
-    The socket.
 
 .. attribute:: ioloop
 
@@ -846,10 +817,11 @@ class AsyncSocketServer(BaseSocketHandler):
     connection_class = AsyncConnection
     parser_class = None
     def __init__(self, actor, socket, parser_class=None, onthread=False,
-                 timeout=None):
+                 connection_class=None, timeout=None):
         self.actor = actor
         self.parser_class = parser_class or self.parser_class
-        self.socket = wrap_socket(socket)
+        self.connection_class = connection_class or self.connection_class
+        self.sock = wrap_socket(socket)
         self.connections = set()
         self.onthread = onthread
         self.timeout = timeout
@@ -877,6 +849,10 @@ class AsyncSocketServer(BaseSocketHandler):
     @property
     def name(self):
         return '%s %s' % (self.actor, self.address)
+    
+    @property
+    def started(self):
+        return self._started
 
     def __repr__(self):
         return self.name
@@ -888,11 +864,14 @@ class AsyncSocketServer(BaseSocketHandler):
 
     @property
     def ioloop(self):
-        return self.__ioloop if self.onthread else self.actor.requestloop
+        return self.__ioloop if self.onthread else self.actor_ioloop()
 
     @property
     def active_connections(self):
         return len(self.connections)
+    
+    def actor_ioloop(self):
+        return self.actor.ioloop
 
     def on_start(self):
         '''callback just before the event loop starts.'''
@@ -921,11 +900,12 @@ class AsyncSocketServer(BaseSocketHandler):
         # separate thread.
         if self.onthread:
             if self.thread and self.thread.is_alive():
-                raise RunTimeError('Cannot start mailbox. '\
+                raise RunTimeError('Cannot start socket server. '\
                                    'It has already started')
             self.thread = PulsarThread(name=self.name, target=self._run)
             self.thread.start()
         if not self._started:
+            self._started = True
             self.ioloop.add_handler(self,
                                     self.new_connection,
                                     self.ioloop.READ)
@@ -944,7 +924,7 @@ class AsyncSocketServer(BaseSocketHandler):
         return self.accept()
 
     def accept(self):
-        client, client_address = self.socket.accept()
+        client, client_address = self.sock.accept()
         if client:
             return self.connection_class(client, client_address, self,
                                          timeout=self.timeout)

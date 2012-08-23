@@ -894,9 +894,10 @@ class IORespone(object):
     @property
     def async(self):
         socket = self.socket
-        if not hasattr(socket, 'timeout'):
-            socket = socket._sock
-        return socket.timeout == 0
+        timeout = getattr(socket, 'timeout', '')
+        if timeout is '':
+            timeout = socket._sock.timeout
+        return timeout == 0
 
     def parsedata(self, data):
         raise NotImplementedError()
@@ -1065,7 +1066,7 @@ class HttpConnection(httpclient.HTTPConnection):
 
     @property
     def is_async(self):
-        return self.socket.timeout == 0
+        return self.sock.timeout == 0
 
 
 class HttpsConnection(HTTPSConnection):
@@ -1077,6 +1078,10 @@ class HttpsConnection(HTTPSConnection):
         HTTPSConnection._tunnel(self)
         self.response_class = response_class
 
+    @property
+    def is_async(self):
+        return self.sock.timeout == 0
+    
     def set_cert(self, key_file=None, cert_file=None,
                  cert_reqs='CERT_NONE', ca_certs=None):
         ssl_req_scheme = {
@@ -1099,10 +1104,6 @@ class HttpsConnection(HTTPSConnection):
                                     ca_certs=self.ca_certs)
         if self.ca_certs:
             match_hostname(self.sock.getpeercert(), self.host)
-
-    @property
-    def is_async(self):
-        return self.socket.timeout == 0
 
 
 class HttpBase(object):

@@ -1,6 +1,6 @@
 '''Tests the "helloworld" example.'''
-from pulsar import send, SERVER_SOFTWARE, HttpClient, arbiter
-from pulsar.apps.test import unittest, run_on_arbiter
+from pulsar import send, SERVER_SOFTWARE, HttpClient, get_application
+from pulsar.apps.test import unittest, run_on_arbiter, dont_run_with_thread
 
 from .manage import server
         
@@ -10,9 +10,13 @@ class TestHelloWorldThread(unittest.TestCase):
     concurrency = 'thread'
     
     @classmethod
+    def name(cls):
+        return 'helloworld_' + cls.concurrency
+    
+    @classmethod
     def setUpClass(cls):
-        name = 'helloworld_' + cls.concurrency
-        s = server(bind='127.0.0.1:0', name=name, concurrency=cls.concurrency)
+        s = server(bind='127.0.0.1:0', name=cls.name(),
+                   concurrency=cls.concurrency)
         outcome = send('arbiter', 'run', s)
         yield outcome
         cls.app = outcome.result
@@ -26,12 +30,9 @@ class TestHelloWorldThread(unittest.TestCase):
     
     @run_on_arbiter
     def testMeta(self):
-        name = 'helloworld_' + self.concurrency
-        a = arbiter()
-        self.assertTrue(len(a.monitors)>=2)
-        monitor = a.monitors.get(name)
-        self.assertEqual(monitor.name,name)
-        self.assertTrue(monitor.running())
+        app = get_application(self.name())
+        self.assertEqual(app.name, self.name())
+        self.assertTrue(app.monitor.running())
         
     def testResponse(self):
         c = HttpClient()
@@ -43,10 +44,11 @@ class TestHelloWorldThread(unittest.TestCase):
         self.assertEqual(content, b'Hello World!\n')
         headers = resp.headers
         self.assertTrue(headers)
-        self.assertEqual(headers['content-type'],'text/plain')
+        self.assertEqual(headers['content-type'], 'text/plain')
         self.assertEqual(headers['server'], SERVER_SOFTWARE)
 
 
+@dont_run_with_thread
 class TestHelloWorldProcess(TestHelloWorldThread):
     concurrency = 'process'
     

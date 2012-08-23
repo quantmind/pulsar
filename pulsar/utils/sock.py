@@ -7,6 +7,7 @@ import errno
 import time
 
 __all__ = ['IStream',
+           'BaseSocket',
            'Socket',
            'TCPSocket',
            'TCP6Socket',
@@ -116,7 +117,6 @@ which is bound to ``127.0.0.1`` at any available port.
 '''
     remote_client = socket.socket()
     remote_client.setsockopt(socket.IPPROTO_TCP, socket.TCP_NODELAY, 1)
-
     count = 0
     while 1:
         count += 1
@@ -201,7 +201,40 @@ class IStream(object):
         raise NotImplementedError()
 
 
-class Socket(IStream):
+class BaseSocket(IStream):
+    sock = None
+    
+    def getsockname(self):
+        try:
+            return self.sock.getsockname()
+        except socket.error as e:
+            # In windows the function raises an exception if the socket
+            # is not connected
+            if os.name == 'nt' and e.args[0] == errno.WSAEINVAL:
+                return ('0.0.0.0', 0)
+            else:
+                raise
+    
+    def settimeout(self, value):
+        self.sock.settimeout(value)
+        
+    def gettimeout(self):
+        return self.sock.gettimeout()
+    
+    @property
+    def async(self):
+        return self.gettimeout() == 0
+    
+    @property
+    def address(self):
+        return self.getsockname()
+    
+    def fileno(self):
+        if self.sock:
+            return self.sock.fileno()
+    
+    
+class Socket(BaseSocket):
     '''Wrapper class for a python socket. It provides with
 higher level tools for creating and reusing sockets already created.'''
     def __init__(self, address=None, backlog=2048, fd=None, bound=False,
@@ -278,21 +311,8 @@ not data was sent. In this case it also raises a socket error.'''
         return self.sock.recv(length or io.DEFAULT_BUFFER_SIZE)
 
     @property
-    def address(self):
-        return self.name
-
-    @property
     def name(self):
-        try:
-            return self.sock.getsockname()
-        except socket.error as e:
-            # In windows the function raises an exception if the socket
-            # is not connected
-            if not self.is_server and os.name == 'nt'\
-                    and e.args[0] == errno.WSAEINVAL:
-                return ('0.0.0.0', 0)
-            else:
-                raise
+        return self.address
 
     def __str__(self, name):
         return "<socket %d>" % self.sock.fileno()
@@ -307,9 +327,6 @@ not data was sent. In this case it also raises a socket error.'''
 
     def __getattr__(self, name):
         return getattr(self.sock, name)
-
-    def fileno(self):
-        return self.sock.fileno()
 
     def set_options(self, sock, address, bound):
         '''Options for a server socket'''

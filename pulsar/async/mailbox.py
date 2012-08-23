@@ -27,7 +27,7 @@ def mailbox(actor=None, address=None):
 If an address is provided, the communication is implemented using a socket,
 otherwise a queue is used.'''
     if address:
-        return PulsarClient.connect(address, socket_timeout=0)
+        return PulsarClient.connect(address, timeout=0)
     else:
         if actor.is_monitor():
             return MonitorMailbox(actor)
@@ -217,6 +217,9 @@ of execution.'''
     def cpubound(self):
         return self.actor.cpubound
 
+    def actor_ioloop(self):
+        return self.actor.requestloop
+    
     def shut_down(self):
         self.unregister(self.actor)
 

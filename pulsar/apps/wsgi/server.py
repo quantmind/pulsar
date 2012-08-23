@@ -360,7 +360,7 @@ class HttpServer(AsyncSocketServer):
 
     def __init__(self, *args, **kwargs):
         super(HttpServer, self).__init__(*args, **kwargs)
-        host, port = self.socket.getsockname()[:2]
+        host, port = self.sock.getsockname()[:2]
         self.server_name = socket.getfqdn(host)
         self.server_port = port
         

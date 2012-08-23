@@ -12,8 +12,7 @@ __all__ = ['create_test_arbiter',
            'halt_server',
            'arbiter_test',
            'ActorTestMixin',
-           'AsyncAssert',
-           'test_server']
+           'AsyncAssert']
 
 
 class MockArbiter(pulsar.Arbiter):
@@ -93,28 +92,6 @@ running on a separate thread and run the tet function on the arbiter thread.'''
     _.__name__ = f.__name__
     _.__doc__ = f.__doc__
     return _
-    
-    
-class test_server(object):
-    '''An utility for creating test servers. An instance of this
-class should be sent run on the arbiter::
-
-    s = test_server(callable)
-    send('arbiter', 'run', s)
-    
-The callable must return an :class:`pulsar.Application` server.
-'''
-    def __init__(self, callable, **kwargs):
-        self.callable = callable
-        self.kwargs = kwargs
-
-    def __call__(self, arbiter):
-        cfg = arbiter.cfg
-        parse_console = self.kwargs.pop('parse_console',False)
-        app = self.callable(parse_console = parse_console,
-                            loglevel = cfg.loglevel,
-                            **self.kwargs)
-        return app.local['on_start']
     
     
 class AsyncAssertTest(object):
