@@ -14,12 +14,13 @@ class TaskQueueException(pulsar.PulsarException):
 
 
 class TaskException(TaskQueueException):
-    pass
+    task_name = None
 
 
 class TaskNotAvailable(TaskException):
     MESSAGE = 'Task {0} is not registered. Check your settings.'
     def __init__(self, task_name):
+        self.task_name = task_name
         super(TaskNotAvailable,self).__init__(self.MESSAGE.format(task_name))
 
 

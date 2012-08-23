@@ -82,6 +82,12 @@ from .loader import *
 from .utils import *
 from .wsgi import *
 
+def dont_run_with_thread(obj):
+    c = pulsar.get_actor().cfg.concurrency
+    d = unittest.skipUnless(c=='process',
+                            'Run only when concurrency is process')
+    return d(obj)
+
 
 class ExitTest(Exception):
     pass

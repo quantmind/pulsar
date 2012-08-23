@@ -93,8 +93,8 @@ running on a separate thread and run the tet function on the arbiter thread.'''
     _.__name__ = f.__name__
     _.__doc__ = f.__doc__
     return _
-
-
+    
+    
 class test_server(object):
     '''An utility for creating test servers. An instance of this
 class should be sent run on the arbiter::

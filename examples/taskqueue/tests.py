@@ -2,10 +2,10 @@
 from time import time, sleep
 from datetime import datetime, timedelta
 
-from pulsar import send, get_application
+from pulsar import send, get_application, get_actor, NOT_DONE
 from pulsar.apps import tasks, rpc
 from pulsar.utils.timeutils import timedelta_seconds
-from pulsar.apps.test import unittest, run_on_arbiter
+from pulsar.apps.test import unittest, run_on_arbiter, dont_run_with_thread
 
 from .manage import server
 
@@ -21,18 +21,24 @@ def task_function(N = 10, lag = 0.1):
 class TestCase(unittest.TestCase):
     concurrency = 'process'
     app = None
-
+    
+    @classmethod
+    def name_tq(cls):
+        return 'testtask_'+cls.concurrency
+    
+    @classmethod
+    def name_rpc(cls):
+        return cls.name_tq() + '_rpc'
+    
     @classmethod
     def setUpClass(cls):
         # The name of the task queue application
-        name_tq = 'testtask_'+cls.concurrency
-        name_rpc = name_tq + '_rpc'
-        s = server(name_tq, bind ='127.0.0.1:0', concurrency=cls.concurrency)
+        s = server(cls.name_tq(),
+                   bind ='127.0.0.1:0',
+                   concurrency=cls.concurrency)
         outcome = send('arbiter', 'run', s)
         yield outcome
         app = outcome.result
-        cls.name_tq = name_tq
-        cls.name_rpc = name_rpc
         cls.app = app
         uri = 'http://{0}:{1}'.format(*cls.app.address)
         cls.proxy = rpc.JsonProxy(uri)
@@ -40,8 +46,8 @@ class TestCase(unittest.TestCase):
     @classmethod
     def tearDownClass(cls):
         if cls.app:
-            yield send('arbiter', 'kill_actor', cls.name_tq)
-            yield send('arbiter', 'kill_actor', cls.name_rpc)
+            yield send('arbiter', 'kill_actor', cls.name_tq())
+            yield send('arbiter', 'kill_actor', cls.name_rpc())
 
 
 class TestTaskQueueOnThread(TestCase):
@@ -50,9 +56,9 @@ class TestTaskQueueOnThread(TestCase):
     @run_on_arbiter
     def testMeta(self):
         '''Tests meta attributes of taskqueue'''
-        app = get_application(self.name_tq)
+        app = get_application(self.name_tq())
         self.assertTrue(app)
-        self.assertEqual(app.name, self.name_tq)
+        self.assertEqual(app.name, self.name_tq())
         self.assertTrue(app.registry)
         scheduler = app.scheduler
         self.assertTrue(scheduler.entries)
@@ -65,24 +71,24 @@ class TestTaskQueueOnThread(TestCase):
         
     @run_on_arbiter
     def testRpcMeta(self):
-        app = get_application(self.name_rpc)
+        app = get_application(self.name_rpc())
         self.assertTrue(app)
-        self.assertEqual(app.name, self.name_rpc)
+        self.assertEqual(app.name, self.name_rpc())
         rpc = app.callable
         root = rpc.handler
         tq = root.task_queue_manager
-        self.assertEqual(tq.actor_link_name, self.name_tq)
+        self.assertEqual(tq.actor_link_name, self.name_tq())
 
     @run_on_arbiter
     def testCheckNextRun(self):
-        app = get_application(self.name_tq)
+        app = get_application(self.name_tq())
         scheduler = app.scheduler
         scheduler.tick(app)
         self.assertTrue(scheduler.next_run > datetime.now())
         
     @run_on_arbiter
     def testNotOverlap(self):
-        app = get_application(self.name_tq)
+        app = get_application(self.name_tq())
         self.assertTrue('notoverlap' in app.registry)
         r1 = app.scheduler.queue_task(app.monitor, 'notoverlap', (1,), {})
         self.assertFalse(r1.needs_queuing())
@@ -92,10 +98,10 @@ class TestTaskQueueOnThread(TestCase):
         self.assertFalse(r2._queued)
         self.assertEqual(id,r2.id)
         
-    def testRpc(self):
+    def test_rpc_ping(self):
         self.assertEqual(self.proxy.ping(), 'pong')
         
-    def testRpc_job_list(self):
+    def test_rpc_job_list(self):
         jobs = self.proxy.job_list()
         self.assertTrue(jobs)
         self.assertTrue(isinstance(jobs, list))
@@ -103,7 +109,73 @@ class TestTaskQueueOnThread(TestCase):
         pycode = d['runpycode']
         self.assertEqual(pycode['type'], 'regular')
         jobs = self.proxy.job_list(jobnames=['runpycode'])
-        self.assertTrue(len(jobs), 1)
+        self.assertEqual(len(jobs), 1)
+        jobs = self.proxy.job_list(jobnames=['xxxxxx'])
+        self.assertEqual(len(jobs), 0)
+        
+    def test_rpc_next_scheduled_tasks(self):
+        next = self.proxy.next_scheduled_tasks()
+        self.assertTrue(next)
+        self.assertEqual(len(next), 2)
+        next = self.proxy.next_scheduled_tasks(jobnames=['testperiodic'])
+        self.assertTrue(next)
+        self.assertEqual(len(next), 2)
+        self.assertEqual(next[0], 'testperiodic')
+        self.assertTrue(next[1] >= 0)
+        
+    def test_run_new_task_Error(self):
+        self.assertRaises(rpc.InvalidParams, self.proxy.run_new_task)
+        self.assertRaises(rpc.InvalidParams, self.proxy.run_new_task,
+                          jobname='xxxx', bla='foo')
+        
+    def test_run_new_task_RunPyCode(self):
+        '''Run a new task from the *runpycode* task factory.'''
+        r = self.proxy.run_new_task(jobname='runpycode', code=CODE_TEST, N=3)
+        self.assertTrue(r)
+        self.assertTrue(r['id'])
+        self.assertTrue(r['time_executed'])
+        while r['status'] in tasks.UNREADY_STATES:
+            yield NOT_DONE
+            r = self.proxy.get_task(id=r['id'])
+        self.assertEqual(r['status'], tasks.SUCCESS)
+        self.assertEqual(r['result'], 9)
+        
+    def test_run_new_task_addition(self):
+        r = self.proxy.run_new_task(jobname='addition', a=40, b=50)
+        self.assertTrue(r)
+        self.assertTrue(r['time_executed'])
+        while r['status'] in tasks.UNREADY_STATES:
+            yield NOT_DONE
+            r = self.proxy.get_task(id=r['id'])
+        self.assertEqual(r['status'], tasks.SUCCESS)
+        self.assertEqual(r['result'], 90)
+        
+    def test_run_new_task_periodicerror(self):
+        r = self.proxy.run_new_task(jobname='testperiodicerror')
+        while r['status'] in tasks.UNREADY_STATES:
+            yield NOT_DONE
+            r = self.proxy.get_task(id=r['id'])
+        self.assertEqual(r['status'], tasks.FAILURE)
+        self.assertTrue('kaputt' in r['result'])
+        
+    def test_run_new_task_asynchronous(self):
+        r = self.proxy.run_new_task(jobname='asynchronous', loops=3)
+        while r['status'] in tasks.UNREADY_STATES:
+            yield NOT_DONE
+            r = self.proxy.get_task(id=r['id'])
+        self.assertEqual(r['status'], tasks.SUCCESS)
+        result = r['result']
+        self.assertEqual(result['loops'], 3)
+        self.assertEqual(result['end']-result['start'], 3)
+        
+    def test_run_new_task_expiry(self):
+        r = self.proxy.run_new_task(jobname='addition', a=40, b=50,
+                                    meta_data={'expiry': time()})
+        self.assertTrue(r)
+        while r['status'] in tasks.UNREADY_STATES:
+            yield NOT_DONE
+            r = self.proxy.get_task(id=r['id'])
+        self.assertEqual(r['status'], tasks.REVOKED)
         
     def __testIdNotOverlap(self):
         '''Check `make_task_id` when `can_overlap` attribute is set to False.'''
@@ -199,30 +271,6 @@ in the TaskQueueRpcMixin class'''
     concurrency = 'process'
     timeout = 3
 
-    @classmethod
-    def setUpClass(cls):
-        name = 'testtask_'+cls.concurrency
-        name_rpc = name + '_rpc'
-        s = server(name, bind ='127.0.0.1:0', concurrency=cls.concurrency)
-        r,outcome = cls.worker.run_on_arbiter(s)
-        yield r
-        cls._name = name
-        cls._name_rpc = name_rpc
-        cls.app = outcome.result
-        cls.uri = 'http://{0}:{1}'.format(*cls.app.address)
-
-    @classmethod
-    def tearDownClass(cls):
-        yield cls.worker.arbiter.send(cls.worker,'kill_actor',cls._name_rpc)
-        yield cls.worker.arbiter.send(cls.worker,'kill_actor',cls._name)
-
-    def setUp(self):
-        self.p = rpc.JsonProxy(self.uri, timeout = self.timeout)
-
-    def testPing(self):
-        r = self.p.ping()
-        self.assertEqual(r,'pong')
-
     def testTaskQueueLink(self):
         '''Check the task_queue_manager in the rpc handler.'''
         app = self.app
@@ -230,31 +278,7 @@ in the TaskQueueRpcMixin class'''
         callable = app.callable
         self.assertTrue(callable.handler.task_queue_manager)
         task_queue_manager = callable.handler.task_queue_manager
-        self.assertEqual(task_queue_manager.name,self._name)
-
-    def testPing(self):
-        r = self.p.ping()
-        self.assertEqual(r,'pong')
-
-    def testRunPyCode(self):
-        r = self.p.runpycode(code = CODE_TEST, N = 3)
-        self.assertTrue(r)
-        self.assertTrue(r['time_executed'])
-        sleep(0.2)
-        rr = self.p.get_task(id = r['id'])
-        self.assertTrue(rr)
-        self.assertEqual(rr['status'],tasks.SUCCESS)
-        self.assertEqual(rr['result'],9)
-        
-    def testRunNewTask(self):
-        r = self.p.run_new_task(jobname = 'addition', a = 40, b = 50)
-        self.assertTrue(r)
-        self.assertTrue(r['time_executed'])
-        sleep(0.1)
-        rr = self.p.get_task(id = r['id'])
-        self.assertTrue(rr)
-        self.assertEqual(rr['status'],tasks.SUCCESS)
-        self.assertEqual(rr['result'],90)
+        self.assertEqual(task_queue_manager.name,self._name)
 
     def testKillTaskWorker(self):
         r = self.p.server_info()
@@ -310,3 +334,6 @@ class TestSchedulerEntry(object):
 
         self._testAnchored(entry, timedelta(seconds = 1))
 
+@dont_run_with_thread
+class TestTaskQueueOnProcess(TestTaskQueueOnThread):
+    concurrency = 'process'

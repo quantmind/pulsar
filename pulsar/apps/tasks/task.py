@@ -7,7 +7,7 @@ import traceback
 from io import StringIO
 
 from pulsar.utils.httpurl import itervalues
-from pulsar import make_async, as_failure, is_async, is_failure, send
+from pulsar import maybe_async, as_failure, is_async, is_failure, send
 
 from .models import registry
 from .exceptions import *
@@ -152,7 +152,7 @@ callback.'''
                 self.status = STARTED
                 self.time_start = datetime.now()
                 yield self.on_start(worker)
-                result = job(consumer, *self.args, **self.kwargs)
+                result = maybe_async(job(consumer, *self.args, **self.kwargs))
                 if is_async(result):
                     yield result
                     result = result.result
@@ -245,7 +245,7 @@ different from ``None`` only when the :class:`Task` has been revoked.
         return task
 
     @classmethod
-    def get_task(cls, id, remove = False):
+    def get_task(cls, id, remove=False):
         '''Given a task *id* it retrieves a task instance or ``None`` if
 not available.'''
         raise NotImplementedError()
@@ -259,7 +259,7 @@ not available.'''
     # CALLBACKS
     ############################################################################
 
-    def on_created(self, scheduler = None):
+    def on_created(self, scheduler=None):
         '''A :ref:`task callback <tasks-callbacks>` when the task has
 has been created.
 

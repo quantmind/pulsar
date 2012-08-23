@@ -179,7 +179,9 @@ Here ``a`` is actually a reference to the remote actor.
         else:
             ioqueue = None
         self.ioqueue = ioqueue
-        self.on_init(**kwargs)
+        kwargs = self.on_init(**kwargs)
+        if kwargs:
+            self.local.update(kwargs)
         if self.cfg is None:
             self.cfg = {}
 
@@ -481,9 +483,6 @@ properly this actor will go out of scope.'''
             self.on_exit()
             self.set('stopping_end', time())
             self.log.info('Exited')
-
-    def _make_name(self):
-        return '%s(%s)' % (self.class_code, self.aid)
 
     def linked_actors(self):
         '''Iterator over linked-actor proxies.'''

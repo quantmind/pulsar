@@ -172,7 +172,7 @@ Users access the arbiter by the high level api::
     # OVERRIDE ACTOR HOOKS
     ############################################################################
 
-    def on_init(self, daemonize = False, **kwargs):
+    def on_init(self, daemonize=False, **kwargs):
         testing = kwargs.pop('__test_arbiter__',False)
         if not testing:
             if current_process().daemon:
@@ -181,13 +181,13 @@ Users access the arbiter by the high level api::
             if isinstance(get_actor(), self.__class__):
                 raise pulsar.PulsarException('Arbiter already created')
             os.environ["SERVER_SOFTWARE"] = pulsar.SERVER_SOFTWARE
-        PoolMixin.on_init(self,**kwargs)
         self._close_signal = None
         if daemonize:
             system.daemonize()
         self.actor_age = 0
         self.reexec_pid = 0
         self.SIG_QUEUE = ThreadQueue()
+        return PoolMixin.on_init(self, **kwargs)
 
     def on_start(self):
         pidfile = self.get('pidfile')

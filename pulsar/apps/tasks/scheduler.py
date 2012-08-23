@@ -19,13 +19,12 @@ EMPTY_DICT = {}
 
 
 def get_datetime(expiry, start):
-    if expiry:
-        if isinstance(expiry,datetime):
-            return expiry
-        elif isinstance(expiry,timedelta):
-            return start + expiry
-        else:
-            return datetime.fromtimestamp(expiry)
+    if isinstance(expiry, datetime):
+        return expiry
+    elif isinstance(expiry, timedelta):
+        return start + expiry
+    else:
+        return datetime.fromtimestamp(expiry)
 
 
 class Schedule(object):
@@ -205,44 +204,43 @@ value ``now`` can be passed.'''
                  'type':job.type}
             if name in self.entries:
                 entry = self.entries[name]
-                _,next_time_to_run = self.next_scheduled(name)
+                _,next_time_to_run = self.next_scheduled((name,))
                 run_every = 86400*job.run_every.days + job.run_every.seconds
                 d.update({'next_run':next_time_to_run,
                           'run_every':run_every,
                           'runs_count':entry.total_run_count})
             yield (name,d)
 
-    def next_scheduled(self, jobname = None):
-        if jobname:
-            entry = self._entries.get(jobname,None)
-            if entry:
-                _, next_time_to_run = entry.is_due()
-                return (jobname,max(next_time_to_run,0))
+    def next_scheduled(self, jobnames=None):
+        if jobnames:
+            entries = (self._entries.get(name, None) for name in jobnames)
         else:
-            next_entry = None
-            next_time = None
-            for entry in itervalues(self._entries):
-                is_due, next_time_to_run = entry.is_due()
-                if is_due:
-                    next_time = 0
+            entries = itervalues(self._entries)
+        next_entry = None
+        next_time = None
+        for entry in entries:
+            if entry is None:
+                continue
+            is_due, next_time_to_run = entry.is_due()
+            if is_due:
+                next_time = 0
+                next_entry = entry
+                break
+            elif next_time_to_run is not None:
+                if next_time is None or next_time_to_run < next_time:
+                    next_time = next_time_to_run
                     next_entry = entry
-                    break
-                else:
-                    if next_time_to_run == None or \
-                       next_time_to_run < next_time:
-                        next_time = next_time_to_run
-                        next_entry = entry
-            if next_entry:
-                return (next_entry.name,max(next_time,0))
-
-        return (jobname,None)
+        if next_entry:
+            return (next_entry.name, max(next_time, 0))
+        else:
+            return (jobnames, None)
 
     ############################################################################
     ##    PRIVATE METHODS
     ############################################################################
 
-    def _make_request(self, jobname, targs = None, tkwargs = None,
-                     expiry = None, **params):
+    def _make_request(self, jobname, targs=None, tkwargs=None, expiry=None,
+                      **params):
         if jobname in registry:
             task_class = self.task_class
             job = registry[jobname]
@@ -256,9 +254,10 @@ value ``now`` can be passed.'''
                 if job.name in self.entries:
                     self.entries[job.name].next()
                 time_executed = datetime.now()
-                expiry = get_datetime(expiry, time_executed)
-                if not expiry and job.timeout:
-                    expiry = time_executed + job.timeout
+                if expiry is not None:
+                    expiry = get_datetime(expiry, time_executed)
+                elif job.timeout:
+                    expiry = get_datetime(job.timeout, time_executed)
                 task = task_class(id=id, name=job.name,
                                   time_executed=time_executed, expiry=expiry,
                                   args=targs, kwargs=tkwargs, status=PENDING,

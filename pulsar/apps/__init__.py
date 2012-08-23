@@ -16,6 +16,7 @@ from pulsar.utils.config import Setting
 #from pulsar.utils import debug
 
 __all__ = ['Application',
+           'MultiApp',
            'ApplicationHandlerMixin',
            'Worker',
            'ApplicationMonitor',
@@ -140,12 +141,13 @@ It provides two new methods inherited from :class:`ApplicationHandlerMixin`.
     The application handler obtained from :meth:`Application.handler`.
 
 """
-    def on_init(self, app = None, **kwargs):
+    def on_init(self, app=None, **kwargs):
         self.app = app
         self.cfg = app.cfg
         self.max_requests = self.cfg.max_requests or sys.maxsize
         self.information = LogInformation(self.cfg.logevery)
         self.app_handler = app.handler()
+        return kwargs
 
     # Delegates Callbacks to the application
 
@@ -197,7 +199,7 @@ pulsar subclasses of :class:`Application`.
             self.app_handler = app.monitor_handler()
         kwargs['actor_class'] = Worker
         kwargs['num_actors'] = app.cfg.workers
-        super(ApplicationMonitor, self).on_init(**kwargs)
+        return super(ApplicationMonitor, self).on_init(**kwargs)
 
     # Delegates Callbacks to the application
     @halt_server
@@ -249,7 +251,7 @@ updated actor parameters with information about the application.
                   'max_concurrent_requests': app.cfg.backlog,
                   'concurrency': impl,
                   'name':'{0}-worker'.format(app.name)})
-        return p
+        return app.actorparams(self, p)
 
     def on_info(self, info):
         info.update({'default_timeout': self.cfg.timeout,
@@ -634,6 +636,10 @@ By default it returns ``None``.'''
         pass
 
     # MONITOR CALLBAKS
+    def actorparams(self, monitor, params):
+        '''A chance to override the actor parameters before a new
+:class:`Worker` is spawned'''
+        return params
 
     def monitor_init(self, monitor):
         '''Callback by :class:`ApplicationMonitor` when initializing.
@@ -698,3 +704,18 @@ The application is now in the arbiter but has not yet started.'''
                     monitor = arbiter.monitors[app.mid]
                     monitor.actor_links[self.name] = self
                     yield name, app
+
+
+class MultiApp:
+    
+    def __init__(self, name='taskqueue', **params):
+        self.name = name
+        self.params = params
+        self.apps = []
+        
+    def __call__(self, actor=None):
+        raise NotImplementedError()
+        
+    def start(self):
+        for app in self.apps:
+            app.start()

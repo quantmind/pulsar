@@ -31,6 +31,7 @@ __all__ = ['Config',
            'validate_bool',
            'validate_list',
            'validate_pos_int',
+           'validate_pos_float',
            'make_settings',
            'make_options']
 
@@ -214,7 +215,7 @@ settings via the :meth:`Setting.add_argument`.
                             version = self.version)
         setts = self.settings
         sorter = lambda x: (setts[x].section, setts[x].order)
-        for k in sorted(setts,key=sorter):
+        for k in sorted(setts, key=sorter):
             setts[k].add_argument(parser)
         return parser
 
@@ -355,6 +356,8 @@ as base class for other settings.'''
         self.desc = self.desc or self.short
         if self.app and not self.section:
             self.section = self.app
+        if not self.section:
+            self.section = 'unknown'
 
     def __getstate__(self):
         d = self.__dict__.copy()
@@ -401,7 +404,6 @@ def validate_bool(val):
     else:
         raise ValueError("Invalid boolean: %s" % val)
 
-
 def validate_pos_int(val):
     if not isinstance(val, int):
         val = int(val, 0)
@@ -412,6 +414,11 @@ def validate_pos_int(val):
         raise ValueError("Value must be positive: %s" % val)
     return val
 
+def validate_pos_float(val):
+    val = float(val)
+    if val < 0:
+        raise ValueError("Value must be positive: %s" % val)
+    return val
 
 def validate_string(val):
     if val is None:

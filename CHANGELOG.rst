@@ -1,7 +1,7 @@
 Development
 =====================
-* Overall refactoring of API and therefore incompatible with version 0.3.
-* Added the new :mod:`pulsar.utils.httpurl` module for HTTP tools and clients.
+* Overall refactoring of API and therefore incompatible with previous versions.
+* Added the new :mod:`pulsar.utils.httpurl` module for HTTP tools and HTTP clients.
 * Refactored :class:`pulsar.Deferred` to be more compatible with twisted. You
   can add separate callbacks for handling errors.
 * Added :class:`pulsar.MultiDeferred` for handling a group of asynchronous
@@ -12,7 +12,7 @@ Development
   a dictionary.
 * Socket and WSGI :class:`pulsar.Application` are built on top of the new
   :class:`pulsar.AsyncSocketServer` framework class.
-* **112 regression tests**, **71% coverage**.
+* **141 regression tests**, **71% coverage**.
 
 Version 0.3 - 2012-May-03
 ============================

@@ -1,6 +1,10 @@
+from collections import Mapping
+
 import pulsar
 from pulsar.apps import wsgi
 from pulsar.apps import rpc
+
+from .exceptions import TaskNotAvailable
 
 
 __all__ = ['TaskQueueRpcMixin']
@@ -8,8 +12,15 @@ __all__ = ['TaskQueueRpcMixin']
 
 def task_to_json(task):
     if task:
-        return task.tojson()
-
+        if pulsar.is_failure(task):
+            err = task.trace[1]
+            if isinstance(err, TaskNotAvailable):
+                raise rpc.InvalidParams('Job "%s" is not available.'\
+                                        % err.task_name)
+        else:
+            task = task.tojson()
+    return task
+    
 
 class TaskQueueRpcMixin(rpc.JSONRPC):
     '''A :class:`pulsar.apps.rpc.JSONRPC` mixin for communicating with
@@ -59,32 +70,31 @@ It exposes the following remote functions:
         
     ############################################################################
     ##    REMOTES
-    
     def rpc_job_list(self, request, jobnames=None):
         return self.task_queue_manager(request.environ,
                                        'job_list',
                                        jobnames=jobnames)
     
-    def rpc_next_scheduled_task(self, request, jobname=None):
+    def rpc_next_scheduled_tasks(self, request, jobnames=None):
         return self.task_queue_manager(request.environ,
                                        'next_scheduled',
-                                       jobname=jobname)
+                                       jobnames=jobnames)
         
-    def rpc_run_new_task(self, request, jobname=None, ack=True, **kwargs):
+    def rpc_run_new_task(self, request, jobname=None, ack=True,
+                         meta_data=None, **kwargs):
         if not jobname:
-            raise ValueError('"jobname" is not specified!')
-        result = self.task_callback(request, jobname, ack, **kwargs)()
-        return result.add_callback(task_to_json)
+            raise rpc.InvalidParams('"jobname" is not specified!')
+        result = self.task_callback(request, jobname, ack, meta_data, **kwargs)
+        return result().addBoth(task_to_json)
         
     def rpc_get_task(self, request, id=None):
         if id:
-            return self.task_queue_manager(request.actor,
+            return self.task_queue_manager(request.environ,
                                            'get_task',
                                            id).add_callback(task_to_json)
     
     ############################################################################
     ##    INTERNALS
-    
     def task_request_parameters(self, request):
         '''Internal function which returns a dictionary of parameters
 to be passed to the :class:`Task` class constructor.
@@ -97,7 +107,8 @@ a dictionary and it is called by the internal
 By default it returns an empty dictionary.'''
         return {}
     
-    def task_callback(self, request, jobname, ack = True, **kwargs):
+    def task_callback(self, request, jobname, ack=True, meta_data=None,
+                      **kwargs):
         '''Internal function which uses the :attr:`task_queue_manager`
 to create an :class:`pulsar.ActorLinkCallback` for running a task
 from *jobname* in the :class:`TaskQueue`.
@@ -106,15 +117,11 @@ the same ``args`` and ``kwargs`` as the callable method of the :class:`Job`
 (excluding the ``consumer``).'''
         funcname = 'addtask' if ack else 'addtask_noack'
         request_params = self.task_request_parameters(request)
+        if isinstance(meta_data, Mapping):
+            request_params.update(meta_data)
         return self.task_queue_manager.create_callback(
                                             request.environ,
                                             funcname,
                                             jobname,
                                             request_params,
-                                            **kwargs) 
-        
-    def task_run(self, request, jobname, ack = True, **kwargs):
-        '''Call :meth:`task_callback` method and run
-the callback.'''
-        return self.task_callback(request, jobname, ack = ack, **kwargs)()
-    
+                                            **kwargs)

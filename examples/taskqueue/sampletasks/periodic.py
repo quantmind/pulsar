@@ -21,8 +21,7 @@ class TestPeriodicError(TestPeriodicJob):
     
 
 class AnchoredEveryHour(TestPeriodicJob):
-    anchor    = anchorDate(minute = 25)
-    
+    anchor    = anchorDate(minute=25)
     def __call__(self, consumer):
         raise Exception('kaputt')
     

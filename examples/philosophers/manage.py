@@ -6,105 +6,156 @@ for resolving them.
 The problem
 ===================
 
-Five silent philosophers sit at a table around a bowl of spaghetti.
+Five silent philosophers sit at a round table with each a bowl of spaghetti.
 A fork is placed between each pair of adjacent philosophers.
 
 
-        P  f  P
-      f         f
-    P      O      P
-       f        f
-           P
+         P     P
+         O  f  O
+        f       f
+     P O         O P
+         f     f 
+            O
+            P
            
-Each philosopher `P` must alternately think and eat.
+Each philosopher ``P`` must alternately think and eat from his bowl ``O``.
 Eating is not limited by the amount of spaghetti left: assume an infinite
 supply.
 
-However, a philosopher can only eat while holding both the fork to the left and
-the fork to the right.
+However, a philosopher can only eat while holding both the fork ``f`` to
+the left and the fork to the right.
 Each philosopher can pick up an adjacent fork, when available, and put it down,
 when holding it. These are separate actions: forks must be picked up and put
 down one by one.
 
 This implementation will just work. No starvation or dead-lock.
+
+There are two parameters:
+
+* Average eating period, the higher the more time is spend eating
+* Average waiting period, the higher the more frequent philosophers
+    get a chance to eat.
 '''
-import pulsar
 import random
 import time
-
-arbiter = pulsar.arbiter()
-lag = 2
-
-
-def talk(self,msg,wait=False):
-    self.log.info(msg)
-    if wait:
-        try:
-            time.sleep(wait)
-        except IOError:
-            pass
-
-
-def thinking(self,wait=False):
-    talk(self,'Thinking.......... eat {0} in {1} loops...'\
-         .format(self._eat,self._nr),wait)
-
-
-class Philosopher(pulsar.Actor):
-        
-    def on_init(self, left_fork = None, right_fork = None, **kwargs):
-        self.left_fork = left_fork
-        self.right_fork = right_fork
-        self._nr = 0
-        self._eat = 0
-        
-    def on_task(self):
-        self._nr += 1
-        try:
-            self.left_fork.get(timeout=0.1)
-        except pulsar.Empty:
-            return thinking(self)
-        talk(self,'Got left fork')
-        try:
-            self.right_fork.get(timeout = 0.5)
-        except pulsar.Empty:
-            talk(self,'Put down left fork')
-            self.left_fork.put(True)
-            return thinking(self)
-        talk(self,'Got right fork')
-        talk(self,'Eating...',lag*random.random())
-        self._eat += 1
-        talk(self,'Put down left fork')
-        self.left_fork.put(True)
-        talk(self,'Put down right fork')
-        self.right_fork.put(True)
-        thinking(self,lag*random.random())
+try:
+    import pulsar
+except ImportError:
+    import sys
+    sys.path.append('../../')
+    import pulsar
+from pulsar.async.commands import pulsar_command
     
-    #def configure_logging(self, **kwargs):
-    #    pass
+
+class Eating_Period(pulsar.Setting):
+    flags = ["--eating-period"]
+    validator = pulsar.validate_pos_float
+    default = 2
+    desc = """The average period of eating for a philosopher."""
     
-     
-def dining():
-    # Create 5 forks queues and spawn 5 philosophers
-    forks = []
-    for i in range(5):
-        f = pulsar.Queue(maxsize = 1) 
-        f.put(True)
-        forks.append(f)
-    forks.append(forks[0])
-    for i in range(5):
-        arbiter.spawn(Philosopher,
-                      pool_timeout = 0.01, # All time spent on `on_task`
-                      name = 'philosopher-{0}'.format(i+1),
-                      left_fork = forks[i],
-                      right_fork = forks[i+1],
-                      loglevel = 'info')
+class Waiting_Period(pulsar.Setting):
+    flags = ["--waiting-period"]
+    validator = pulsar.validate_pos_float
+    default = 2
+    desc = """The average period of waiting for a missing fork."""
     
+
+philosophers_cmommands = set()
+
+@pulsar_command(commands_set=philosophers_cmommands, ack=False)
+def putdown_fork(client, actor, fork):
+    self = actor.app
+    try:
+        self.not_available_forks.remove(fork)
+    except KeyError:
+        self.log.error('Putting down a fork which was already available')    
+
+@pulsar_command(commands_set=philosophers_cmommands)
+def pickup_fork(client, actor, fork_right):
+    self = actor.app
+    num_philosophers = self.cfg.workers
+    fork_left = fork_right - 1
+    if fork_left == 0:
+        fork_left = num_philosophers 
+    for fork in (fork_right, fork_left):
+        if fork not in self.not_available_forks:
+            self.not_available_forks.add(fork)
+            return fork
+
+
+class DiningPhilosophers(pulsar.Application):
+    description = 'Dining philosophers sit at a table around a bowl of '\
+                  'spaghetti and waits for available forks.'
+    commands_set = philosophers_cmommands
+    cfg = {'workers': 5}
+    
+    def monitor_init(self, monitor):
+        self.not_available_forks = set()
         
-def start():
-    arbiter.requestloop.add_callback(dining)
-    arbiter.start()
+    def worker_task(self, philosopher):
+        # Task performed at each loop in the philosopher I/O loop
+        local = philosopher.local
+        eaten = local.get('eaten', 0)
+        forks = local['forks']
+        started_waiting = philosopher.local.get('started_waiting', 0)
+        if forks:
+            max_eat_period = 2*self.cfg.eating_period
+            if len(forks) == 2:
+                eaten += 1
+                philosopher.log.info('Eating... So far %s times', eaten)
+                try:
+                    time.sleep(max_eat_period*random.random())
+                except IOError:
+                    pass
+                local['eaten'] = eaten
+                philosopher.log.debug('Eaten %s times.', eaten)
+                self.release_forks(philosopher)
+            elif len(forks) == 1:
+                waiting_period = 2*self.cfg.waiting_period*random.random()
+                if started_waiting == 0:
+                    local['started_waiting'] = time.time()
+                elif time.time() - started_waiting > waiting_period:
+                    self.release_forks(philosopher)
+                else:
+                    self.check_forks(philosopher)
+            elif len(forks) > 2:
+                talk(philosopher, 'I have more than 2 forks!!!')
+                self.release_forks(philosopher)
+        else:
+            self.check_forks(philosopher)
+        
+    def check_forks(self, philosopher):
+        '''The philosopher has less than two forks. Check if forks are
+available.'''
+        right_fork = philosopher.local['number']
+        philosopher.send(philosopher.monitor, 'pickup_fork', right_fork)\
+                   .add_callback_args(self.got_fork, philosopher)
+    
+    def release_forks(self, philosopher):
+        forks = philosopher.local['forks']
+        philosopher.local['forks'] = []
+        philosopher.local['started_waiting'] = 0
+        for fork in forks:
+            philosopher.log.debug('Putting down fork %s', fork)
+            philosopher.send(philosopher.monitor, 'putdown_fork', fork)
+    
+    def got_fork(self, fork, philosopher):
+        if fork:
+            forks = philosopher.local['forks']
+            if fork in forks:
+                philosopher.log.error('Got fork %s which I already have' % fork)
+            else:
+                philosopher.log.debug('Got fork %s.' % fork)
+                forks.append(fork)
+    
+    def actorparams(self, monitor, params):
+        number = len(monitor.MANAGED_ACTORS) + len(monitor.SPAWNING_ACTORS) + 1
+        name = 'Philosopher %s' % number
+        params.update({'name': name,
+                       'number': number,
+                       'forks': []})
+        return params
+    
 
 if __name__ == '__main__':
-    start()
-    
+    DiningPhilosophers().start()

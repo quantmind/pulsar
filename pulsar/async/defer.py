@@ -379,7 +379,7 @@ be called when an exception occurs."""
 
     def add_callback_args(self, callback, *args, **kwargs):
         return self.add_callback(\
-                lambda result : callback(result,*args,**kwargs))
+                lambda result : callback(result, *args, **kwargs))
 
     def callback(self, result=None):
         '''Run registered callbacks with the given *result*.

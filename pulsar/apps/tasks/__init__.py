@@ -275,8 +275,8 @@ def job_list(client, actor, jobnames=None):
     return list(actor.app.job_list(jobnames=jobnames))
 
 @pulsar_command(commands_set=taskqueue_cmnds)
-def next_scheduled(client, actor, caller, jobname=None):
-    return actor.app.scheduler.next_scheduled(jobname=jobname)
+def next_scheduled(client, actor, jobnames=None):
+    return actor.app.scheduler.next_scheduled(jobnames=jobnames)
 
 
 class TaskQueue(CPUboundServer):

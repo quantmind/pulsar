@@ -32,26 +32,20 @@ class RpcRoot(rpc.PulsarServerCommands,
         return self.task_run(request, 'runpycode', code=code, **params)
         
     
-class server:
+class server(pulsar.MultiApp):
     
-    def __init__(self, name='taskqueue', **params):
-        self.name = name
-        self.params = params
-        
-    def __call__(self, actor):
+    def __call__(self, actor=None):
         name = self.name
         params = self.params
         tq = tasks.TaskQueue(name=name, tasks_path=TASK_PATHS,
                              script=__file__, **params)
-        self.rpc = wsgi.WSGIServer(rpc.RpcMiddleware(RpcRoot(tq)),
-                                   name = '{0}_rpc'.format(tq.name),
-                                   **params)
-        return self.rpc()
+        self.apps.append(tq)
+        rpcs = wsgi.WSGIServer(rpc.RpcMiddleware(RpcRoot(tq)),
+                               name = '{0}_rpc'.format(tq.name),
+                               **params)
+        self.apps.append(rpcs)
+        return rpcs(actor)
     
-    def start(self):
-        self()
-        return self.rpc.start()
-
 
 def start_server(**params):
     return server(**params).start()

@@ -47,6 +47,7 @@ during its life time.
         self._managed_actors = {}
         self.num_actors = num_actors or 0
         self.actor_class = actor_class or self.actor_class
+        return kwargs
 
     def __call__(self):
         if self.running():
@@ -83,6 +84,10 @@ spawn method when creating new actors.'''
     @property
     def MANAGED_ACTORS(self):
         return self._managed_actors
+    
+    @property
+    def SPAWNING_ACTORS(self):
+        return self._spawning
 
     def manage_actors(self, terminate=False, stop=False, manage=True):
         '''Remove :class:`Actor` which are not alive from the
@@ -123,11 +128,12 @@ spawn method when creating new actors.'''
         return alive
 
     def manage_actor(self, actor):
-        '''This function is overritten by the arbiter'''
+        '''This function is overwritten by the arbiter'''
         pass
 
     def spawn_actors(self):
-        '''Spawn new actors if needed.'''
+        '''Spawn new actors if needed. If the :class:`PoolMixin` is spawning
+do nothing.'''
         to_spawn = self.num_actors - len(self.MANAGED_ACTORS)
         if self.num_actors and to_spawn > 0 and not self._spawning:
             for _ in range(to_spawn):
@@ -189,8 +195,10 @@ as required."""
 
     @classmethod
     def _spawn_actor(cls, monitor, actorcls, aid, commands_set, **kwargs):
-        '''Create a new :class:`Actor` and return its
-:class:`ActorProxyMonitor`.'''
+        # Internal function which spawns a new Actor and return its
+        # ActorProxyMonitor.
+        # *monitor* can be either the ariber or a monitor
+        # *actorcls* is the Actor class
         commands_set = set(commands_set or commands.actor_commands)
         if monitor:
             params = monitor.actorparams()
@@ -293,10 +301,6 @@ Users shouldn't need to override this method, but use
         return self.close_actors()
 
     # OVERRIDES INTERNALS
-
-    def _make_name(self):
-        return 'Monitor-{0}({1})'.format(self.actor_class.code(),self.aid)
-
     def _run(self):
         self._requestloop = self.arbiter.requestloop
         self._mailbox = mailbox(self)
