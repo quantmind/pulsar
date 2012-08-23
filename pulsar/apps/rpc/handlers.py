@@ -94,7 +94,6 @@ Add a limited ammount of magic to RPC handlers.'''
         make = super(MetaRpcHandler, cls).__new__
         if attrs.pop('virtual',None):
             return make(cls,name,bases,attrs)
-
         funcprefix = attrs.get('serve_as',None)
         if not funcprefix:
             for base in bases[::-1]:
@@ -102,7 +101,6 @@ Add a limited ammount of magic to RPC handlers.'''
                     funcprefix = base.serve_as
                     if funcprefix:
                         break
-
         rpc = {}
         if funcprefix:
             fprefix = '%s_' % funcprefix

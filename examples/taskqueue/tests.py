@@ -44,7 +44,7 @@ class TestCase(unittest.TestCase):
             yield send('arbiter', 'kill_actor', cls.name_rpc)
 
 
-class TestTaskQueueMeta(TestCase):
+class TestTaskQueueOnThread(TestCase):
     concurrency = 'thread'
 
     @run_on_arbiter
@@ -264,10 +264,6 @@ in the TaskQueueRpcMixin class'''
             aid = worker['aid']
             r = self.p.kill_actor(aid)
             self.assertTrue(r)
-
-
-class TestTaskRpcThread(TestTaskRpc):
-    concurrency = 'thread'
 
 
 #class TestSchedulerEntry(unittest.TestCase):

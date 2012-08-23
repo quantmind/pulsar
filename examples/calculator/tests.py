@@ -14,8 +14,7 @@ class TestRpcOnThread(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         name = 'calc_' + cls.concurrency
-        s = server(bind='127.0.0.1:0', name=name,
-                   concurrency=cls.concurrency)
+        s = server(bind='127.0.0.1:0', name=name, concurrency=cls.concurrency)
         outcome = send('arbiter', 'run', s)
         yield outcome
         app = outcome.result
@@ -102,5 +101,5 @@ class TestRpcOnThread(unittest.TestCase):
         self.assertTrue(result)
         
 
-#class TestRpcProcess(TestRpcThread):
-#    concurrency = 'process'
+class TestRpcOnProcess(TestRpcOnThread):
+    concurrency = 'process'

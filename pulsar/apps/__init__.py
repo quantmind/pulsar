@@ -50,7 +50,8 @@ def halt_server(f):
 
 def get_application(name):
     '''Invoked in the arbiter domain, this function will return
-the :class:`Application` associated with *name* if available.'''
+the :class:`Application` associated with *name* if available. If not in the
+:class:`Arbiter` domain it returns nothing.'''
     actor = get_actor()
     if actor and actor.is_arbiter():
         monitor = actor._monitors.get(name)
@@ -257,21 +258,20 @@ updated actor parameters with information about the application.
 
 
 class Application(pulsar.LogginMixin):
-    """\
-An application interface for configuring and loading
+    """An application interface for configuring and loading
 the various necessities for any given server or distributed application running
 on :mod:`pulsar` concurrent framework.
-Applications can be of any sort or form and the library is shipped with several
-battery included examples in the :mod:`pulsar.apps` framework module.
+Applications can be of any sorts or forms and the library is shipped with
+several battery included examples in the :mod:`pulsar.apps` framework module.
 
 These are the most important facts about a pulsar :class:`Application`
 
- * Instances must be pickable. If non-pickable data needs to be add on an
-   :class:`Application` instance, it must be stored on the
-   :attr:`Application.local` dictionary.
- * When a new :class:`Application` is initialized,
-   a new :class:`ApplicationMonitor` instance is added to the
-   :class:`Arbiter`, ready to perform its duties.
+* Instances must be pickable. If non-pickable data needs to be add on an
+  :class:`Application` instance, it must be stored on the
+  :attr:`Application.local` dictionary.
+* When a new :class:`Application` is initialized,
+  a new :class:`ApplicationMonitor` instance is added to the
+  :class:`Arbiter`, ready to perform its duties.
 
 :parameter callable: Initialise the :attr:`Application.callable` attribute.
 :parameter description: A string describing the application.
@@ -307,9 +307,11 @@ These are the most important facts about a pulsar :class:`Application`
 
 .. attribute:: cfg_apps
 
-    Optional tuplen containing the names of configuration namespaces to
+    Optional tuple containing names of configuration namespaces to
     be included in the application config dictionary.
 
+    Default: ``None``
+    
 .. attribute:: mid
 
     The unique id of the :class:`ApplicationMonitor` managing the
@@ -339,6 +341,7 @@ These are the most important facts about a pulsar :class:`Application`
     cfg = {}
     _app_name = None
     description = None
+    mid = None
     epilog = None
     cfg_apps = None
     config_options_include = None
@@ -356,7 +359,7 @@ These are the most important facts about a pulsar :class:`Application`
                  script=None,
                  version=None,
                  can_kill_arbiter=None,
-                 parse_console=None,
+                 parse_console=True,
                  **params):
         '''Initialize a new :class:`Application` and add its
 :class:`ApplicationMonitor` to the class:`pulsar.Arbiter`.
@@ -379,13 +382,8 @@ These are the most important facts about a pulsar :class:`Application`
         nparams = self.cfg.copy()
         nparams.update(params)
         self.callable = callable
-        actor = get_actor()
-        if parse_console is None:
-            parse_console = not actor or not actor.running
-        self.load_config(argv, version=version, parse_console=parse_console,
-                         **nparams)
-        self.mid = None
-        self(actor)
+        self.load_config(argv, version, parse_console, nparams)
+        self()
 
     def __call__(self, actor=None):
         if actor is None:
@@ -502,7 +500,7 @@ By default it returns ``None``.'''
     def add_timeout(self, deadline, callback):
         self.arbiter.ioloop.add_timeout(deadline, callback)
 
-    def load_config(self, argv, version=None, parse_console=True, **params):
+    def load_config(self, argv, version, parse_console, params):
         '''Load the application configuration from a file and/or
 from the command line. Called during application initialization.
 
@@ -512,7 +510,6 @@ from the command line. Called during application initialization.
 The parameters overrriding order is the following:
 
  * default parameters.
- * the :attr:`cfg` attribute.
  * the *params* passed in the initialization.
  * the parameters in the optional configuration file
  * the parameters passed in the command line.
@@ -526,10 +523,20 @@ The parameters overrriding order is the following:
                                  self.cfg_apps,
                                  self.config_options_include,
                                  self.config_options_exclude)
-
         overrides = {}
         specials = set()
-
+        # get the actor if available
+        actor = get_actor()
+        if actor and actor.running:
+            parse_console = False
+            for k, v in actor.cfg.items():
+                if v is not None:
+                    k = k.lower()
+                    try:
+                        self.cfg.set(k, v)
+                        self.cfg.settings[k].default = v
+                    except AttributeError:
+                        pass
         # modify defaults and values of cfg with params
         for k, v in params.items():
             if v is not None:
@@ -540,12 +547,10 @@ The parameters overrriding order is the following:
                 except AttributeError:
                     if not self.add_to_overrides(k,v,overrides):
                         setattr(self,k,v)
-
         try:
             config = self.cfg.config
         except AttributeError:
             config = None
-
         # parse console args
         if parse_console:
             parser = self.cfg.parser()
@@ -555,33 +560,14 @@ The parameters overrriding order is the following:
             except AttributeError:
                 config = None
         else:
-            parser, opts = None,None
-
-        # optional settings from apps
-        cfg = self.init(opts)
-
-        # Load up the any app specific configuration
-        if cfg:
-            for k, v in list(cfg.items()):
-                self.cfg.set(k.lower(), v)
-
+            parser, opts = None, None
         # Load up the config file if its found.
         if config and os.path.exists(config):
-            #cfg = {
-            #    "__builtins__": __builtins__,
-            #    "__name__": "__config__",
-            #    "__file__": config,
-            #    "__doc__": None,
-            #    "__package__": None
-            #}
             cfg = {}
             try:
                 execfile(config, cfg, cfg)
             except Exception:
-                print("Failed to read config file: %s" % config)
-                traceback.print_exc()
-                sys.exit(1)
-
+                raise RuntimeError("Failed to read config file: %s" % config)
             for k, v in cfg.items():
                 # Ignore unknown names
                 if k not in self.cfg.settings:
@@ -600,14 +586,12 @@ The parameters overrriding order is the following:
                                 self.cfg.set(k.lower(), v)
                             else:
                                 globals()[v.__name__] = v
-
         # Update the configuration with any command line settings.
         if opts:
             for k, v in opts.__dict__.items():
                 if v is None:
                     continue
                 self.cfg.set(k.lower(), v)
-
         # Lastly, update the configuration with overrides
         for k,v in overrides.items():
             self.cfg.set(k, v)
@@ -619,9 +603,6 @@ The parameters overrriding order is the following:
             if name in self.cfg.settings:
                 overrides[name] = value
                 return True
-
-    def init(self, opts):
-        pass
 
     def monitor_handler(self):
         '''Returns a application handler for the monitor.

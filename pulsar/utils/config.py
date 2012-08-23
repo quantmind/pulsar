@@ -17,7 +17,8 @@ import types
 
 from pulsar import __version__, SERVER_NAME
 from . import system
-from .httpurl import is_string_or_native_string, to_string, to_bytes
+from .httpurl import is_string_or_native_string, to_string, to_bytes,\
+                        iteritems
 
 
 __all__ = ['Config',
@@ -86,7 +87,6 @@ def ordered_settings():
     for name in KNOWN_SETTINGS_ORDER:
         yield KNOWN_SETTINGS[name]
 
-
 def make_settings(apps=None, include=None, exclude=None):
     '''Creates a dictionary of available settings for given
 applications *apps*.
@@ -108,7 +108,6 @@ applications *apps*.
             continue
         settings[setting.name] = setting.copy()
     return settings
-
 
 def make_options():
     g_settings = make_settings(exclude=('version',))
@@ -160,6 +159,16 @@ attribute by exposing the :attr:`Setting.name` as attribute.
         self.epilog = epilog or 'Have fun!'
         self.version = version or __version__
 
+    def __iter__(self):
+        return iter(self.settings)
+    
+    def __len__(self):
+        return len(self.settings)
+    
+    def items(self):
+        for k, setting in iteritems(self.settings):
+            yield k, setting.value
+    
     def __getstate__(self):
         return self.__dict__.copy()
 
