@@ -5,13 +5,13 @@
 import re
 import os
 import json
+import sys
 try:
     import pulsar
 except ImportError:
-    import sys
     sys.path.append('../../')
 
-from pulsar import HttpException, LocalMixin, local_property
+from pulsar import HttpException, LocalMixin, local_property, version
 from pulsar.apps import wsgi, ws
 from pulsar.utils.structures import OrderedDict
 from pulsar.utils.httpurl import Headers, parse_qs, ENCODE_URL_METHODS,\
@@ -19,6 +19,8 @@ from pulsar.utils.httpurl import Headers, parse_qs, ENCODE_URL_METHODS,\
                                  itervalues
 from pulsar.utils.multipart import parse_form_data
 from pulsar.utils import event
+
+pyversion = '.'.join(map(str,sys.version_info[:3]))
 
 error_messages = {404: '<p>The requested URL was not found on the server.</p>'}
 
@@ -159,7 +161,7 @@ class HttpBin(LocalMixin):
     def render(self, body, title=None, status=200, headers=None):
         template = self.load('template.html')
         title = title or 'Pulsar HttpBin'
-        html = (template % (title, body)).encode('utf-8')
+        html = (template % (title, version, body, pyversion)).encode('utf-8')
         return self.response(html, status=status, content_type='text/html',
                              headers=headers)
 

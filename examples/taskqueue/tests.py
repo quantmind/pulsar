@@ -20,7 +20,9 @@ def task_function(N = 10, lag = 0.1):
 class TestTaskClasses(unittest.TestCase):
     
     def testTask(self):
-        self.assertRaises(NotImplementedError, tasks.Task.get_task, 1)
+        self.assertRaises(NotImplementedError, tasks.Task.get_task, None, 1)
+        self.assertRaises(NotImplementedError, tasks.Task.save_task, None, 1)
+        self.assertRaises(NotImplementedError, tasks.Task.delete_tasks, None, 1)
         task = tasks.Task()
         self.assertFalse(task.on_received())
         self.assertFalse(task.on_start())
@@ -84,7 +86,6 @@ class TestTaskQueueOnThread(unittest.TestCase):
         self.assertTrue(regular)
         self.assertTrue(periodic)
         
-        
     @run_on_arbiter
     def testRpcMeta(self):
         app = get_application(self.name_rpc())
@@ -107,12 +108,52 @@ class TestTaskQueueOnThread(unittest.TestCase):
         app = get_application(self.name_tq())
         self.assertTrue('notoverlap' in app.registry)
         r1 = app.scheduler.queue_task(app.monitor, 'notoverlap', (1,), {})
-        self.assertFalse(r1.needs_queuing())
         self.assertTrue(r1._queued)
-        id = r1.id
         r2 = app.scheduler.queue_task(app.monitor, 'notoverlap', (1,), {})
         self.assertFalse(r2._queued)
-        self.assertEqual(id,r2.id)
+        id = r1.id
+        self.assertEqual(id, r2.id)
+        # We need to make sure the first task is completed
+        get_task = app.scheduler.get_task
+        while get_task(id).status in tasks.UNREADY_STATES:
+            yield NOT_DONE
+        self.assertEqual(get_task(id).status, tasks.SUCCESS)
+    
+    @run_on_arbiter    
+    def testIdNotOverlap(self):
+        '''Check `make_task_id` when `can_overlap` attribute is set to False.'''
+        app = get_application(self.name_tq())
+        job = app.registry['notoverlap']
+        self.assertEqual(job.type, 'regular')
+        self.assertFalse(job.can_overlap)
+        #
+        id = job.make_task_id((),{})
+        self.assertTrue(id)
+        self.assertEqual(id, job.make_task_id((),{}))
+        #
+        id = job.make_task_id((10,'bla'),{'p':45})
+        self.assertTrue(id)
+        self.assertEqual(id,job.make_task_id((10,'bla'),{'p':45}))
+        #
+        id = job.make_task_id((),{'p':45,'c':'bla'})
+        self.assertTrue(id)
+        self.assertEqual(id,job.make_task_id((),{'p':45,'c':'bla'}))
+        self.assertNotEqual(id,job.make_task_id((),{'p':45,'d':'bla'}))
+        self.assertNotEqual(id,job.make_task_id((),{'p':45,'c':'blas'}))
+        
+    @run_on_arbiter
+    def testDeleteTask(self):
+        app = get_application(self.name_tq())
+        r1 = app.scheduler.queue_task(app.monitor, 'addition', (1,4), {})
+        id = r1.id
+        get_task = app.scheduler.get_task
+        while get_task(id).status in tasks.UNREADY_STATES:
+            yield NOT_DONE
+        r2 = get_task(id, remove=True)
+        self.assertEqual(r1.id, r2.id)
+        self.assertEqual(get_task(id), None)
+        self.assertEqual(get_task(r1), r1)
+        app.scheduler.delete_tasks()
         
     def test_rpc_ping(self):
         self.assertEqual(self.proxy.ping(), 'pong')
@@ -192,92 +233,6 @@ class TestTaskQueueOnThread(unittest.TestCase):
             yield NOT_DONE
             r = self.proxy.get_task(id=r['id'])
         self.assertEqual(r['status'], tasks.REVOKED)
-        
-    def __testIdNotOverlap(self):
-        '''Check `make_task_id` when `can_overlap` attribute is set to False.'''
-        from examples.taskqueue.sampletasks.sampletasks import NotOverLap
-        job = NotOverLap()
-        self.assertEqual(job.type,'regular')
-        self.assertFalse(job.can_overlap)
-        #
-        id = job.make_task_id((),{})
-        self.assertTrue(id)
-        self.assertEqual(id,job.make_task_id((),{}))
-        #
-        id = job.make_task_id((10,'bla'),{'p':45})
-        self.assertTrue(id)
-        self.assertEqual(id,job.make_task_id((10,'bla'),{'p':45}))
-        #
-        id = job.make_task_id((),{'p':45,'c':'bla'})
-        self.assertTrue(id)
-        self.assertEqual(id,job.make_task_id((),{'p':45,'c':'bla'}))
-        self.assertNotEqual(id,job.make_task_id((),{'p':45,'d':'bla'}))
-        self.assertNotEqual(id,job.make_task_id((),{'p':45,'c':'blas'}))
-
-    def __testApplicationSimple(self):
-        '''Here we test the application only, not the queue mechanism
-implemented by the monitor and workers.'''
-        # create a request
-        tq = self.tq()
-        app = tq.app
-        self.assertTrue('runpycode' in app.registry)
-        r = app.scheduler.queue_task(tq, 'runpycode', (CODE_TEST,), {'N': 10})
-        self.assertTrue(r)
-        self.assertTrue(r.id)
-        self.assertTrue(r.time_executed)
-        self.assertEqual(r.args,(CODE_TEST,))
-        self.assertEqual(r.kwargs,{'N': 10})
-        while not r.done():
-            yield pulsar.NOT_DONE # Give a chance to perform the task
-            r = app.task_class.get_task(r.id)
-        self.assertTrue(r.time_start)
-        self.assertTrue(r.status,tasks.SUCCESS)
-        self.assertEqual(r.result,100)
-        self.assertTrue(r.time_end)
-        self.assertTrue(r.time_end>r.time_start)
-        d = timedelta_seconds(r.duration())
-        self.assertTrue(d > 0.1)
-
-    def __testApplicationSimpleError(self):
-        tq = self.tq()
-        app = tq.app
-        r = app.scheduler.queue_task(tq, 'runpycode', (CODE_TEST,),{'N': 'bla'})
-        self.assertTrue(r)
-        self.assertTrue(r.id)
-        self.assertTrue(r.time_executed)
-        self.assertEqual(r.args,(CODE_TEST,))
-        self.assertEqual(r.kwargs,{'N': 'bla'})
-        while not r.done():
-            yield pulsar.NOT_DONE # Give a chance to perform the task
-            r = app.task_class.get_task(r.id)
-        self.assertTrue(r.time_start)
-        self.assertTrue(r.status,tasks.FAILURE)
-        self.assertTrue(r.result.startswith("can't multiply sequence"))
-        self.assertTrue(r.time_end)
-        self.assertTrue(r.time_end>r.time_start)
-        d = timedelta_seconds(r.duration())
-        self.assertTrue(d > 0.1)
-
-    def __testTimeout(self):
-        '''we set an expire to the task'''
-        td = arbiter()
-        tq = self.tq()
-        app = tq.app
-        r = app.scheduler.queue_task(tq, 'runpycode',
-                                     (CODE_TEST,),{'N': 2, 'lag': 2},
-                                     expiry=time())
-        while not r.done():
-            yield pulsar.NOT_DONE # Give a chance to perform the task
-            r = app.task_class.get_task(r.id)
-        self.assertTrue(r.timeout)
-        self.assertEqual(r.status,tasks.REVOKED)
-
-    #def testRunning(self):
-    #    ff = self.tq.scheduler.entries['sampletasks.fastandfurious']
-    #    nr = ff.total_run_count
-    #    self.assertTrue(nr)
-        #self.sleep(5)
-        #self.assertTrue(ff.total_run_count > nr)
 
 
 #class TestTaskRpc(unittest.TestCase):

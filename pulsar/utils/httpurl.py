@@ -104,15 +104,15 @@ if ispy3k: # Python 3
         else:
             return '%s' % s
 
-    def native_str(s):
+    def native_str(s, encoding=None):
         if isinstance(s, bytes):
-            return s.decode('utf-8')
+            return s.decode(encoding or 'utf-8')
         else:
             return s
 
-    def force_native_str(s):
+    def force_native_str(s, encoding=None):
         if isinstance(s, bytes):
-            return s.decode('utf-8')
+            return s.decode(encoding or 'utf-8')
         else:
             return '%s' % s
 
@@ -153,15 +153,15 @@ else:   # pragma : no cover
         else:
             return unicode(s)
 
-    def native_str(s):
+    def native_str(s, encoding=None):
         if isinstance(s, unicode):
-            return s.encode('utf-8')
+            return s.encode(encoding or 'utf-8')
         else:
             return s
 
-    def force_native_str(s):
+    def force_native_str(s, encoding=None):
         if isinstance(s, unicode):
-            return s.encode('utf-8')
+            return s.encode(encoding or 'utf-8')
         else:
             return '%s' % s
 
@@ -173,7 +173,10 @@ class SSLError(HTTPError):
     "Raised when SSL certificate fails in an HTTPS connection."
     pass
 
-class TooManyRedirects(HTTPError):
+class HTTPurlError(Exception):
+    pass
+
+class TooManyRedirects(HTTPurlError):
     pass
 
 ####################################################    URI & IRI SUFF
@@ -638,7 +641,7 @@ OTHER DEALINGS IN THE SOFTWARE.'''
                 else:
                     self.__on_firstline = True
                     self._buf.append(data[:idx])
-                    first_line = to_string(b''.join(self._buf))
+                    first_line = native_str(b''.join(self._buf), 'iso-8859-1')
                     nb_parsed = nb_parsed + idx + 2
 
                     rest = data[idx+2:]
@@ -749,10 +752,9 @@ OTHER DEALINGS IN THE SOFTWARE.'''
         idx = data.find(b'\r\n\r\n')
         if idx < 0: # we don't have all headers
             return False
-
+        chunk = native_str(data[:idx], 'iso-8859-1')
         # Split lines on \r\n keeping the \r\n on each line
-        lines = deque(('%s\r\n' % to_string(line) for line in
-                       data[:idx].split(b'\r\n')))
+        lines = deque(('%s\r\n' % line for line in chunk.split('\r\n')))
 
         # Parse headers into key/value pairs paying attention
         # to continuation lines.
@@ -946,7 +948,6 @@ class HttpResponse(IORespone):
 '''
     request = None
     parser = None
-    history = None
     will_close = False
     parser_class = HttpParser
 
@@ -1410,9 +1411,10 @@ into an SSL socket.
                  multipart_boundary=None, max_connections=None,
                  key_file=None, cert_file=None, cert_reqs='CERT_NONE',
                  ca_certs=None, cookies=None, trust_env=True,
-                 store_cookies=True):
+                 store_cookies=True, max_redirects=10):
         self.trust_env = trust_env
         self.store_cookies = store_cookies
+        self.max_redirects = max_redirects
         self.poolmap = {}
         self.timeout = timeout if timeout is not None else self.timeout
         self.cookies = cookies
@@ -1511,7 +1513,7 @@ object.
 
     def request(self, method, url, data=None, files=None, headers=None,
                 encode_multipart=None, allow_redirects=False, hooks=None,
-                cookies=None, history=None, **kwargs):
+                cookies=None, history=None, max_redirects=None, **kwargs):
         '''Constructs, sends a :class:`HttpRequest` and returns
 a :class:`HttpResponse` object.
 
@@ -1535,10 +1537,15 @@ a :class:`HttpResponse` object.
                             else self.encode_multipart
         if 'timeout' not in kwargs:
             kwargs['timeout'] = self.timeout
+        if max_redirects is None:
+            max_redirects = self.max_redirects
         request = self.request_class(self, url, method, data=data, files=files,
-                            headers=headers, encode_multipart=encode_multipart,
+                            headers=headers,
+                            encode_multipart=encode_multipart,
                             multipart_boundary=self.multipart_boundary,
-                            hooks=hooks, history=history,
+                            hooks=hooks,
+                            history=history,
+                            max_redirects=max_redirects,
                             allow_redirects=allow_redirects, **kwargs)
         # Set proxy if required
         self.set_proxy(request)
@@ -1602,7 +1609,7 @@ a :class:`HttpResponse` object.
                 self.cookies.extract_cookies(response, request)
         if response.status_code in REDIRECT_CODES and 'location' in headers and\
                 request.allow_redirects:
-            history = response.history or []
+            history = request.history or []
             if len(history) >= request.max_redirects:
                 raise TooManyRedirects()
             history.append(response)
@@ -1633,8 +1640,10 @@ a :class:`HttpResponse` object.
             headers.pop('Cookie', None)
             # Build a new request
             return self.request(method, url, data=data, files=files,
-                                headers=headers, history=history,
+                                headers=headers,
                                 encode_multipart=self.encode_multipart,
+                                history=history,
+                                max_redirects=request.max_redirects,
                                 allow_redirects=request.allow_redirects)
         else:
             return request.on_response(response)

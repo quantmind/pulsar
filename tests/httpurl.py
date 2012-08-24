@@ -1,5 +1,5 @@
 '''tests the httpurl stand-alone script.'''
-from pulsar import send, make_async, HttpClient
+from pulsar import send, make_async, safe_async, is_failure, HttpClient
 from pulsar.apps.test import unittest
 from pulsar.utils import httpurl
 
@@ -45,7 +45,7 @@ class TestTools(unittest.TestCase):
         
 
 class HttpClientMixin(object):
-    timeout = 3
+    timeout = 10
     
     def client(self, **kwargs):
         kwargs['timeout'] = self.timeout
@@ -160,6 +160,27 @@ class TestHttpClient(unittest.TestCase, HttpClientMixin):
         history = r.request.history
         self.assertEqual(len(history), 1)
         self.assertTrue(history[0].url.endswith('/redirect/1'))
+        
+    def testRedirect2(self):
+        http = self.client()
+        r = safe_async(http.get, (self.httpbin('redirect', '5'),),
+                                {'max_redirects':2})
+        # do this so that the test suite does not fail on the test
+        yield r.addBoth(lambda f: [f])
+        r = r.result[0]
+        self.assertTrue(is_failure(r))
+        self.assertTrue(isinstance(r.trace[1], httpurl.TooManyRedirects))
+        
+    def testResponseHeaders(self):
+        http = self.client()
+        r = make_async(http.get(self.httpbin('response-headers')))
+        yield r
+        r = r.result
+        self.assertEqual(r.status_code, 200)
+        result = r.content_json()
+        self.assertEqual(result['Transfer-Encoding'], 'chunked')
+        parser = r.parser
+        self.assertTrue(parser.is_chunked())
         
     def test_Cookie(self):
         http = self.client()

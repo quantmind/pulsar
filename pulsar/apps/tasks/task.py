@@ -176,7 +176,7 @@ callback.'''
             self.on_finish(worker)
         return self
 
-    def to_queue(self, schedulter = None):
+    def to_queue(self, schedulter=None):
         '''The task has been received by the scheduler. If its status
 is PENDING swicth to RECEIVED, save the task and return it. Otherwise
 returns nothing.'''
@@ -190,7 +190,7 @@ returns nothing.'''
     def needs_queuing(self):
         '''called after calling :meth:`to_queue`, it return ``True`` if the
 task needs to be queued.'''
-        return self.__dict__.pop('_toqueue',False)
+        return self.__dict__.pop('_toqueue', False)
 
     def done(self):
         '''Return ``True`` if the task has its staus in READY_STATES'''
@@ -227,9 +227,6 @@ different from ``None`` only when the :class:`Task` has been revoked.
         '''Convert the task instance into a JSON-serializable dictionary.'''
         return self.__dict__.copy()
 
-    def on_same_id(self):
-        self.delete()
-
     def serialize_for_queue(self):
         return self
 
@@ -239,15 +236,18 @@ different from ``None`` only when the :class:`Task` has been revoked.
     ############################################################################
     ##    FACTORY METHODS
     ############################################################################
-
     @classmethod
-    def from_queue(cls, task):
-        return task
-
-    @classmethod
-    def get_task(cls, id, remove=False):
+    def get_task(cls, scheduler, id):
         '''Given a task *id* it retrieves a task instance or ``None`` if
 not available.'''
+        raise NotImplementedError()
+    
+    @classmethod
+    def save_task(cls, scheduler, task):
+        raise NotImplementedError()
+        
+    @classmethod
+    def delete_tasks(cls, scheduler, task):
         raise NotImplementedError()
 
     ############################################################################
@@ -291,8 +291,7 @@ It can be reimplemented to do something with the log record.'''
 
 
 class TaskInMemory(Task):
-    '''An in memory implementation of a Task'''
-    _TASKS = {}
+    '''An in memory implementation of a Task.'''
     time_start = None
     time_end = None
     stack_trace = None
@@ -315,9 +314,9 @@ class TaskInMemory(Task):
     def __str__(self):
         return '{0}({1})'.format(self.name,self.id)
 
-    def on_received(self,worker=None):
+    def on_received(self, scheduler=None):
         # Called by the scheduler
-        self.__class__.save_task(self)
+        self.save_task(scheduler, self)
 
     def on_start(self, worker=None):
         if worker:
@@ -331,28 +330,37 @@ class TaskInMemory(Task):
         if worker:
             return send(worker.monitor, 'save_task', self)
 
-    def delete(self):
-        self._TASKS.pop(self.id, None)
-
     @classmethod
-    def save_task(cls, task):
-        if task.id in cls._TASKS:
-            t = cls._TASKS[task.id]
+    def task_container(cls, scheduler):
+        if not hasattr(scheduler, '_TASKS'):
+            scheduler._TASKS = {}
+        return scheduler._TASKS
+    
+    @classmethod
+    def save_task(cls, scheduler, task):
+        TASKS = cls.task_container(scheduler)
+        if task.id in TASKS:
+            t = TASKS[task.id]
             if t.status_code < task.status_code:
                 # we don't save here. Could by concurrency lags
                 return
-        cls._TASKS[task.id] = task
+        TASKS[task.id] = task
 
     @classmethod
-    def get_task(cls, id, remove=False):
-        task = cls._TASKS.get(id, None)
-        if remove and task:
-            if task.done():
-                cls._TASKS.pop(id)
-        return task
+    def delete_tasks(cls, scheduler, ids=None):
+        TASKS = cls.task_container(scheduler)
+        if ids:
+            for id in ids:
+                TASKS.pop(id, None)
+        else:
+            TASKS.clear()
+        
+    @classmethod
+    def get_task(cls, scheduler, id):
+        return cls.task_container(scheduler).get(id)
 
 
-def nice_task_message(req, smart_time = None):
+def nice_task_message(req, smart_time=None):
     smart_time = smart_time or format_time
     status = req['status'].lower()
     user = req.get('user',None)

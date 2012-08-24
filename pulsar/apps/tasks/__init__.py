@@ -247,11 +247,15 @@ def addtask_noack(client, actor, caller, jobname, task_extra, *args, **kwargs):
 
 @pulsar_command(internal=True, commands_set=taskqueue_cmnds)
 def save_task(client, actor, caller, task):
-    return actor.app.task_class.save_task(task)
+    return actor.app.scheduler.save_task(task)
+
+@pulsar_command(internal=True, commands_set=taskqueue_cmnds)
+def delete_tasks(client, actor, caller, ids):
+    return actor.app.scheduler.delete_tasks(ids)
 
 @pulsar_command(commands_set=taskqueue_cmnds)
 def get_task(client, actor, id):
-    return actor.app.task_class.get_task(id)
+    return actor.app.scheduler.get_task(id)
 
 @pulsar_command(commands_set=taskqueue_cmnds)
 def job_list(client, actor, jobnames=None):
@@ -297,7 +301,7 @@ for implementation.'''
         return self.local.get('scheduler')
 
     def request_instance(self, worker, fd, request):
-        return self.task_class.from_queue(request)
+        return self.scheduler.get_task(request)
 
     def monitor_task(self, monitor):
         '''Override the :meth:`pulsar.Application.monitor_task` callback

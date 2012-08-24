@@ -154,8 +154,7 @@ and task scheduling.
             monitor.put(task.serialize_for_queue())
         else:
             task._queued = False
-            self.log.info('task {0} already requested. Abort request.'\
-                                  .format(task))
+            self.log.info('Task %s already requested, abort.', task)
         return task
 
     def tick(self, monitor, now=None):
@@ -233,6 +232,22 @@ value ``now`` can be passed.'''
         else:
             return (jobnames, None)
 
+    def get_task(self, id, remove=False):
+        if isinstance(id, self.task_class):
+            task = id
+        else:
+            task = self.task_class.get_task(self, id)
+        if task and remove:
+            if task.done():
+                self.delete_tasks([task.id])
+        return task
+    
+    def save_task(self, task):
+        return self.task_class.save_task(self, task)
+    
+    def delete_tasks(self, ids=None):
+        return self.task_class.delete_tasks(self, ids)
+    
     ############################################################################
     ##    PRIVATE METHODS
     ############################################################################
@@ -245,7 +260,7 @@ value ``now`` can be passed.'''
             targs = targs or EMPTY_TUPLE
             tkwargs = tkwargs or EMPTY_DICT
             id = job.make_task_id(targs, tkwargs)
-            task = task_class.get_task(id, remove=True)
+            task = self.get_task(id, remove=True)
             if task:
                 return task.to_queue(self)
             else:

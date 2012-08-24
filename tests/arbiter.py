@@ -33,7 +33,7 @@ class TestArbiter(unittest.TestCase):
         
     def testArbiter(self):
         worker = pulsar.get_actor()
-        self.assertRaises(pulsar.PulsarException, pulsar.arbiter)
+        self.assertEqual(pulsar.arbiter(), None)
         arbiter = worker.arbiter
         self.assertTrue(arbiter)
         

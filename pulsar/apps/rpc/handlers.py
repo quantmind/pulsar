@@ -284,10 +284,9 @@ class RpcMiddleware(object):
 '''
     methods = ('get','post','put','head','delete','trace','connect')
 
-    def __init__(self, handler, path = None, raise404 = True, methods = None):
+    def __init__(self, handler, path=None, methods=None):
         self.handler = handler
         self.path = path or '/'
-        self.raise404 = raise404
         self.methods = methods or self.methods
 
     def __str__(self):
@@ -312,6 +311,4 @@ class RpcMiddleware(object):
             method, args, kwargs, id, version = hnd.get_method_and_args(data)
             request = hnd.request(environ, method, args, kwargs, id, version)
             return ResponseGenerator(request, start_response)
-        elif self.raise404:
-            return WsgiResponse(404)
 

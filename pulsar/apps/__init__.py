@@ -522,7 +522,8 @@ The parameters overrriding order is the following:
         # get the actor if available
         actor = get_actor()
         if actor and actor.running:
-            parse_console = False
+            if argv is None:
+                parse_console = False
             for k, v in actor.cfg.items():
                 if v is not None:
                     k = k.lower()
