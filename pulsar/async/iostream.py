@@ -431,23 +431,6 @@ setup using the :meth:`set_close_callback` method."""
         return deferred
 
 
-class run_callbacks:
-
-    def __init__(self, name):
-        self.name = name
-
-    def __call__(self, f):
-        def _(*args, **kwargs):
-            r = safe_async(f, args=args, kwargs=kwargs)
-            callbacks = args[0].callbacks.pop(self.name, None)
-            if callbacks:
-                for callback in callbacks:
-                    r.add_callback(callback)
-            return r.result_or_self()
-        _.__name__ = f.__name__
-        return _
-
-
 class BaseSocketHandler(BaseSocket):
     '''A :class:`BaseSocket` class for all socket handlers such as
 :class:`AsyncSocketServer`, :class:`AsyncConnection`.
@@ -521,7 +504,6 @@ is required in order to use :class:`SocketClient`.
         parser_class = parser_class or self.parser_class
         self.parser = parser_class()
         self.buffer = bytearray()
-        self.callbacks = {}
 
     def __repr__(self):
         return str(self.remote_address)
@@ -547,13 +529,6 @@ class ClientSocket(ClientSocketHandler):
         sock = create_connection(address)
         return cls(sock, address, parser_class=parser_class, timeout=timeout)
 
-    def add_callback(self, name, callback):
-        callbacks = self.callbacks.get(name,[])
-        callbacks.append(callback)
-        self.callbacks[name] = callbacks
-        return self
-
-    @run_callbacks('sent')
     def send(self, data):
         '''Send data to remote server'''
         self.time_last = time.time()
@@ -573,7 +548,6 @@ class ClientSocket(ClientSocketHandler):
         r = make_async(self.send(data)).add_callback(self._read, self.close)
         return r.result_or_self()
 
-    @run_callbacks('read')
     def parsedata(self, data):
         '''We got some data to parse'''
         parsed_data = self._parsedata(data)

@@ -18,6 +18,7 @@ class ClientMixin:
         self.assertFalse(c.async)
         m = actor.arbiter.mailbox
         # They are two clients of the arbiter mailbox
+        self.assertEqual(c.remote_address, m.remote_address)
         self.assertNotEqual(c.address, m.address)
         return c
     
@@ -55,7 +56,7 @@ class TestClosePulsarClient(unittest.TestCase, ClientMixin):
     def testQuit(self):
         c = self.client()
         self.assertEqual(c.ping(), 'pong')
-        self.assertEqual(c.quit(), True)
+        self.assertRaises(socket.error, c.quit)
         self.assertRaises(socket.error, c.ping)
         
     def testClose(self):

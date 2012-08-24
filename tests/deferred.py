@@ -159,7 +159,7 @@ class TestMultiDeferred(unittest.TestCase):
         self.assertTrue(d._locked)
         self.assertEqual(d.result,[])
         self.assertRaises(RuntimeError, d.lock)
-        self.assertRaises(RuntimeError, d._finish)
+        self.assertRaises(AlreadyCalledError, d._finish)
         
     def testMulti(self):
         d = MultiDeferred()

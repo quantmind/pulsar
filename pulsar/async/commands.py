@@ -69,12 +69,11 @@ def echo(client, actor, message):
     '''Returns mmessage'''
     return message
 
-@command
+@pulsar_command(ack=False)
 def quit(client, actor):
     '''Ask the server to close the connection. The connection is closed as
 soon as all pending replies have been written to the client.'''
-    client.connection.add_callback('sent', client.connection.close)
-    return True
+    client.connection.close()
 
 @authenticated
 def info(client, actor):

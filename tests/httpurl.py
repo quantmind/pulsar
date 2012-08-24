@@ -80,6 +80,7 @@ class TestHttpClient(unittest.TestCase, HttpClientMixin):
     def testClient(self):
         http = self.client()
         self.assertTrue('accept-encoding' in http.DEFAULT_HTTP_HEADERS)
+        self.assertEqual(http.timeout, self.timeout)
         
     def test_http_200_get(self):
         http = self.client()
@@ -162,27 +163,33 @@ class TestHttpClient(unittest.TestCase, HttpClientMixin):
         
     def test_Cookie(self):
         http = self.client()
-        r = make_async(http.get(self.httpbin('cookies','set', 'bla', 'foo')))
+        r = make_async(http.get(self.httpbin('cookies', 'set', 'bla', 'foo')))
         yield r
         r = r.result
         self.assertEqual(r.status_code, 200)
         self.assertTrue(r.history)
         self.assertTrue(r.history[0].headers['set-cookie'])
-        cookies = r.cookies
-        r = make_async(http.get(self.httpbin('cookies'), cookies=cookies))
-        yield r
-        r = r.result
-        self.assertEqual(r.status_code, 200)
-        result = r.content_json()
-        self.assertEqual(result['cookies']['bla'],'foo')
-        # Try by setting the cookie in the http client
-        http.cookies = cookies
         r = make_async(http.get(self.httpbin('cookies')))
         yield r
         r = r.result
         self.assertEqual(r.status_code, 200)
         result = r.content_json()
+        self.assertTrue(result['cookies'])
         self.assertEqual(result['cookies']['bla'],'foo')
+        # Try without saving cookies
+        http = self.client(store_cookies=False)
+        r = make_async(http.get(self.httpbin('cookies', 'set', 'bla', 'foo')))
+        yield r
+        r = r.result
+        self.assertEqual(r.status_code, 200)
+        self.assertTrue(r.history)
+        self.assertTrue(r.history[0].headers['set-cookie'])
+        r = make_async(http.get(self.httpbin('cookies')))
+        yield r
+        r = r.result
+        self.assertEqual(r.status_code, 200)
+        result = r.content_json()
+        self.assertFalse(result['cookies'])
 
     def test_parse_cookie(self):
         self.assertEqual(httpurl.parse_cookie('invalid:key=true'), {})
