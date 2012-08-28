@@ -566,7 +566,7 @@ The parameters overrriding order is the following:
             for k, v in cfg.items():
                 # Ignore unknown names
                 if k not in self.cfg.settings:
-                    self.add_to_overrides(k,v,overrides)
+                    self.add_to_overrides(k, v, overrides)
                 else:
                     try:
                         self.cfg.set(k.lower(), v)

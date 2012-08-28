@@ -25,6 +25,14 @@ class TestHeaders(unittest.TestCase):
         self.assertEqual(len(h), 1)
         h['server'] = 'bla'
         self.assertEqual(len(h), 1)
+        
+    def test_accept_content_type(self):
+        accept = httpurl.accept_content_type()
+        self.assertTrue('text/html' in accept)
+        accept = httpurl.accept_content_type(
+                        'text/*, text/html, text/html;level=1, */*')
+        self.assertTrue('text/html' in accept)
+        self.assertTrue('text/plain' in accept)
 
 
 class TestTools(unittest.TestCase):

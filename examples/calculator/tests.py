@@ -42,7 +42,6 @@ class TestRpcOnThread(unittest.TestCase):
         root = middleware.handler
         self.assertEqual(root.content_type, 'application/json')
         self.assertEqual(middleware.path,'/')
-        self.assertTrue(middleware.raise404)
         self.assertEqual(len(root.subHandlers), 1)
         hnd = root.subHandlers['calc']
         self.assertFalse(hnd.isroot())

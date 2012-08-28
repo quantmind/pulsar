@@ -290,7 +290,8 @@ HEADER_FIELDS = {'general': frozenset(('Cache-Control', 'Connection', 'Date',
                                        'Referer',
                                        'Sec-WebSocket-Key',
                                        'Sec-WebSocket-Version',
-                                       'TE', 'User-Agent',
+                                       'TE',
+                                       'User-Agent',
                                        'X-Requested-With')),
                  # The response-header fields allow the server to pass
                  # additional information about the response which cannot be
@@ -328,8 +329,16 @@ TYPE_HEADER_FIELDS = {'client': CLIENT_HEADER_FIELDS,
 header_type = {0: 'client', 1: 'server', 2: 'both'}
 header_type_to_int = dict(((v,k) for k,v in header_type.items()))
 
-def header_field(name):
-    return ALL_HEADER_FIELDS_DICT.get(name.lower())
+def header_field(name, HEADERS_SET=None):
+    name = name.lower()
+    if name.startswith('x-'):
+        return name
+    else:
+        header = ALL_HEADER_FIELDS_DICT.get(name)
+        if header and HEADERS_SET:
+            return header if header in HEADERS_SET else None
+        else:
+            return header
 
 
 class Headers(object):
@@ -403,12 +412,11 @@ the entity-header fields.'''
         self._headers.__delitem__(header_field(key))
 
     def __setitem__(self, key, value):
-        if value:
-            key = header_field(key)
-            if key and key in self.all_headers:
-                if not isinstance(value, list):
-                    value = [value]
-                self._headers[key] = value
+        key = header_field(key, self.all_headers)
+        if key and value:
+            if not isinstance(value, list):
+                value = [value]
+            self._headers[key] = value
 
     def get(self, key, default=None):
         if key in self:
@@ -436,14 +444,14 @@ it returns an empty list.'''
     def add_header(self, key, value, **params):
         '''Add *value* to *key* header. If the header is already available,
 append the value to the list.'''
-        key = header_field(key)
-        if value:
+        key = header_field(key, self.all_headers)
+        if key and value:
             values = self._headers.get(key, [])
             if value not in values:
                 values.append(value)
                 self._headers[key] = values
-        else:
-            self._headers.pop(key, None)
+        #else:
+        #    self._headers.pop(key, None)
 
     def flat(self, version, status):
     	'''Full headers bytes representation'''
@@ -1540,13 +1548,14 @@ a :class:`HttpResponse` object.
         if max_redirects is None:
             max_redirects = self.max_redirects
         request = self.request_class(self, url, method, data=data, files=files,
-                            headers=headers,
-                            encode_multipart=encode_multipart,
-                            multipart_boundary=self.multipart_boundary,
-                            hooks=hooks,
-                            history=history,
-                            max_redirects=max_redirects,
-                            allow_redirects=allow_redirects, **kwargs)
+                                     headers=headers,
+                                     encode_multipart=encode_multipart,
+                                     multipart_boundary=self.multipart_boundary,
+                                     hooks=hooks,
+                                     history=history,
+                                     max_redirects=max_redirects,
+                                     allow_redirects=allow_redirects,
+                                     **kwargs)
         # Set proxy if required
         self.set_proxy(request)
         if self.cookies:
@@ -2020,7 +2029,7 @@ cc_delim_re = re.compile(r'\s*,\s*')
 
 class accept_content_type(object):
 
-    def __init__(self, values):
+    def __init__(self, values=None):
         self._all = {}
         self.update(values)
 
@@ -2038,8 +2047,12 @@ class accept_content_type(object):
                         all[a] = [b]
 
     def __contains__(self, content_type):
-        a, b = content_type.split('/')
         all = self._all
+        if not all:
+            # If no Accept header field is present, then it is assumed that the
+            # client accepts all media types.
+            return True
+        a, b = content_type.split('/')
         if a in all:
             all = all[a]
             if '*' in all:
