@@ -22,13 +22,14 @@ memory_size = dict(((s,1 << (i+1)*10) for i,s in enumerate(memory_symbols)))
 
 
 def convert_bytes(b):
+    '''Convert a number of bytes into a human readable memory usage'''
     if b is None:
         return '#NA'
     for s in reversed(memory_symbols):
         if b >= memory_size[s]:
             value = float(b) / memory_size[s]
             return '%.1f%sB' % (value, s)
-    return "%sB" % n
+    return "%sB" % b
     
     
 def system_info(pid):

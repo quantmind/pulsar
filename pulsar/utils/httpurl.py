@@ -102,7 +102,7 @@ if ispy3k: # Python 3
         if isinstance(s, bytes):
             return s.decode(encoding or 'utf-8', errors)
         else:
-            return '%s' % s
+            return str(s)
 
     def native_str(s, encoding=None):
         if isinstance(s, bytes):

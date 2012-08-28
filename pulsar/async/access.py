@@ -8,6 +8,7 @@ __all__ = ['thread_loop',
            'set_local_data',
            'is_mainthread',
            'PulsarThread',
+           'process_local_data',
            'thread_local_data']
 
 def is_mainthread(thread=None):
@@ -17,9 +18,12 @@ the current thread'''
     return isinstance(thread, threading._MainThread)
 
 def process_local_data(name=None):
+    '''Fetch the current process local data dictionary. If *name* is not
+``None`` it returns the value at *name*, otherwise it return the process data
+dictionary.'''
     ct = current_process()
     if not hasattr(ct, '_pulsar_local'):
-        ct._pulsar_local = plocal()
+        ct._pulsar_local = ProcessLocal()
     loc = ct._pulsar_local
     if name:
         return getattr(loc, name, None)
@@ -87,5 +91,11 @@ class PulsarThread(Thread):
         
         
 class plocal(object):
+    pass
+        
+class ProcessLocal(object):
     def __init__(self):
         self.thread_actors = {}
+        
+    def local(self):
+        return plocal()
