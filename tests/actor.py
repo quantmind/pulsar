@@ -9,7 +9,13 @@ from pulsar.apps.test import unittest, ActorTestMixin, run_on_arbiter,\
 def sleepfunc():
     sleep(2)
     
-
+def on_task(self):
+    # put something on a queue, just for coverage.
+    self.put(None)
+    
+def check_actor(actor):
+    assert(actor.on_task()==None)
+    
 class TestActorThread(ActorTestMixin, unittest.TestCase):
     concurrency = 'thread'
     
@@ -35,13 +41,15 @@ class TestActorThread(ActorTestMixin, unittest.TestCase):
         
     def testActorSpawn(self):
         '''Test spawning from actor domain.'''
-        yield self.spawn()
+        yield self.spawn(on_task=on_task, concurrency='thread')
         proxy = self.a
         actor = pulsar.get_actor()
+        # The current actor is linked with the actor just spawned
         self.assertEqual(actor.get_actor(proxy.aid), proxy)
         yield self.async.assertEqual(actor.send(proxy, 'ping'), 'pong')
         yield self.async.assertEqual(actor.send(proxy, 'echo', 'Hello!'),
                                      'Hello!')
+        yield actor.send(proxy, 'run', check_actor)
         
     def testPasswordProtected(self):
         yield self.spawn(cfg={'password': 'bla', 'param': 1})

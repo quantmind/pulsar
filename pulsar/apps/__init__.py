@@ -79,12 +79,6 @@ It implements the :meth:`handle_request` actor method
 used for by the :class:`Application` for handling requests and
 sending back responses.
 '''
-    def on_message(self, message):
-        self.app.on_actor_message(message)
-
-    def on_message_processed(self, message, result):
-        self.app.on_actor_message_processed(message, result)
-
     def on_event(self, fd, event):
         '''Override :meth:`pulsar.Actor.on_event` to delegate handling
 to the underlying :class:`Application`.'''

@@ -40,11 +40,14 @@ class TestArbiter(unittest.TestCase):
     @run_on_arbiter
     def testArbiterObject(self):
         '''Test the arbiter in its process domain'''
-        arbiter = pulsar.arbiter()
+        arbiter = pulsar.get_actor()
         self.assertTrue(arbiter.is_arbiter())
         self.assertEqual(arbiter.impl, 'monitor')
         self.assertTrue(arbiter.monitors)
         self.assertEqual(arbiter.ioloop, arbiter.requestloop)
         self.assertFalse(arbiter.cpubound)
+        self.assertEqual(arbiter.close_signal, None)
+        info = arbiter.info()
+        self.assertTrue(info)
         
 

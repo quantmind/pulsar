@@ -305,6 +305,7 @@ Users shouldn't need to override this method, but use
         self._requestloop = self.arbiter.requestloop
         self._mailbox = mailbox(self)
         self.setid()
+        self._state = self.RUN
         self.on_start()
 
     @property

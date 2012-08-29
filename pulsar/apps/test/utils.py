@@ -1,5 +1,6 @@
 import sys
 from inspect import isclass
+import threading
 
 import pulsar
 from pulsar import is_failure
@@ -40,10 +41,9 @@ def create_test_arbiter(test=True):
     '''Create an instance of MockArbiter for testing'''
     commands_set = set(commands.actor_commands)
     commands_set.update(commands.arbiter_commands)
-    actor_maker = pulsar.concurrency('monitor', MockArbiter, 1000,
-                                     None, 'arbiter', commands_set,
-                                     {'__test_arbiter__': test})
-    arbiter = actor_maker.actor
+    arbiter = pulsar.concurrency('monitor', MockArbiter, 1000,
+                                 None, 'arbiter', commands_set,
+                                 {'__test_arbiter__': test})
     arbiter.start()
     return arbiter
     
@@ -76,19 +76,20 @@ can be usefull to test Arbiter mechanics.'''
 def arbiter_test(f):
     '''Decorator for testing arbiter mechanics. It creates a mock arbiter
 running on a separate thread and run the tet function on the arbiter thread.'''
-    @pulsar.async
+    d = pulsar.Deferred()
     def work(self):
-        outcome = pulsar.safe_async(f, args= (self,))
-        yield outcome
+        yield f(self)
         yield self.arbiter.stop()
-        self.d.callback(outcome.result)
-        
+    @pulsar.async
+    def safe(self):
+        yield work(self)
+        d.callback(True)
     def _(self):
         self.arbiter = create_test_arbiter()
-        self.d = pulsar.Deferred()
-        self.arbiter.ioloop.add_callback(lambda: work(self))
-        yield self.d
-    
+        while not self.arbiter.started:
+            yield pulsar.NOT_DONE
+        self.arbiter.ioloop.add_callback(lambda: safe(self))
+        yield d
     _.__name__ = f.__name__
     _.__doc__ = f.__doc__
     return _

@@ -121,15 +121,17 @@ Here ``a`` is actually a reference to the remote actor.
     String indicating the logging level for the actor.
 '''
     INITIAL = 0X0
-    RUN = 0x1
-    STOPPING = 0x2
-    CLOSE = 0x3
-    TERMINATE = 0x4
+    STARTING = 0X1
+    RUN = 0x2
+    STOPPING = 0x3
+    CLOSE = 0x4
+    TERMINATE = 0x5
     STATE_DESCRIPTION = {0x0:'initial',
-                         0x1:'running',
-                         0x2:'stopping',
-                         0x3:'closed',
-                         0x4:'terminated'}
+                         0x1:'starting',
+                         0x2:'running',
+                         0x3:'stopping',
+                         0x4:'closed',
+                         0x5:'terminated'}
     DEFAULT_IMPLEMENTATION = 'process'
     MINIMUM_ACTOR_TIMEOUT = 10
     DEFAULT_ACTOR_TIMEOUT = 60
@@ -173,9 +175,9 @@ Here ``a`` is actually a reference to the remote actor.
         self._monitors = monitors or {}
         if not self.is_arbiter():
             if on_task:
-                self.on_task = on_task
+                self.on_task = lambda : on_task(self)
             if on_event:
-                self.on_event = on_event
+                self.on_event = lambda fd, event: on_event(self, fd, event)
         else:
             ioqueue = None
         self.ioqueue = ioqueue
@@ -431,22 +433,12 @@ iteration of the :attr:`Actor.ioloop`.'''
  :rtype: a dictionary of pickable data.'''
         return data
 
-    def on_message(self, message):
-        '''The :ref:`actor callback <actor-callbacks>` run when a new
-:class:`ActorMessage` *message* has been received by the :attr:`inbox`.'''
-        pass
-
-    def on_message_processed(self, message, result):
-        '''The :ref:`actor callback <actor-callbacks>` run when an
-:class:`ActorMessage` *message* has been processed.'''
-        pass
-
     def start(self):
         '''Called after forking to start the actor's life. This is where
 logging is configured, the :attr:`Actor.mailbox` is registered and the
 :attr:`Actor.ioloop` is initialised and started.'''
         if self._state == self.INITIAL:
-            self._state = self.RUN
+            self._state = self.STARTING
             self.configure_logging()
             # wrap the logger
             if self.arbiter:
@@ -471,7 +463,7 @@ logging is configured, the :attr:`Actor.mailbox` is registered and the
         '''Stop the actor by stopping its :attr:`Actor.requestloop`
 and closing its :attr:`Actor.mailbox`. Once everything is closed
 properly this actor will go out of scope.'''
-        if force or self._state == self.RUN:
+        if force or self._state in (self.STARTING, self.RUN):
             self.set('stopping_start', time())
             self._state = self.STOPPING
             # make safe user defined callbacks
@@ -614,6 +606,7 @@ event loop which will consume events on file descriptors.'''
         self._mailbox = mailbox(self)
         set_local_data(self)
         self.setid()
+        self._state = self.RUN
         self.on_start()
         if isinstance(self.cfg, Config):
             self.cfg.on_start()

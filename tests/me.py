@@ -1,6 +1,7 @@
 '''Tests the test suite and pulsar distribution.'''
 import os
 import time
+import pickle
 from threading import current_thread
 import multiprocessing
 
@@ -8,12 +9,17 @@ import pulsar
 from pulsar import defaults
 from pulsar.apps.test import unittest, run_on_arbiter
 
+def simple_function(actor):
+    return 'success'
+
 class TestTestWorker(unittest.TestCase):
     
     def testWorker(self):
         worker = pulsar.get_actor()
         self.assertTrue(pulsar.is_actor(worker))
         self.assertTrue(worker.running())
+        self.assertTrue(worker.ready())
+        self.assertFalse(worker.stopping())
         self.assertFalse(worker.closed())
         self.assertFalse(worker.stopped())
         self.assertEqual(worker.state, 'running')
@@ -21,6 +27,7 @@ class TestTestWorker(unittest.TestCase):
         self.assertEqual(worker.pid, os.getpid())
         self.assertTrue(worker.cpubound)
         self.assertTrue(worker._impl.daemon)
+        self.assertFalse(worker.is_pool())
         
     def testWorkerMonitor(self):
         worker = pulsar.get_actor()
@@ -94,7 +101,19 @@ class TestTestWorker(unittest.TestCase):
         c = worker.monitor.mailbox
         yield self.async.assertEqual(c.ping(), 'pong')
         yield self.async.assertEqual(c.echo('ciao'), 'ciao')
-
+        
+    def test_run_on_arbiter(self):
+        actor = pulsar.get_actor()
+        result = actor.run_on_arbiter(simple_function)
+        yield result
+        self.assertEqual(result.result, 'success')
+        
+    def test_bad_send(self):
+        self.assertRaises(ValueError, pulsar.send, 'vcghdvchdgcvshcd', 'ping')
+        
+    #def testPickle(self):
+    #    self.assertRaises(pickle.PicklingError, pickle.dumps,
+    #                      pulsar.get_actor())
 
 class TestPulsar(unittest.TestCase):
     
