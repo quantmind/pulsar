@@ -11,7 +11,7 @@ from pulsar.utils.system import IObase
 from pulsar import create_socket, server_socket, create_client_socket,\
                      wrap_socket, defaults, create_connection, CouldNotParse,\
                      get_socket_timeout, Timeout, BaseSocket
-
+from pulsar.utils.httpurl import IOClientRead
 from .defer import Deferred, is_async, is_failure, async, make_async,\
                         safe_async, log_failure, NOT_DONE
 from .eventloop import IOLoop, loop_timeout
@@ -297,9 +297,8 @@ setup using the :meth:`set_close_callback` method."""
         if result == 0:
             self.close()
         buffer = self._get_buffer(self._read_buffer)
-
-        callback = self._read_callback
-        if callback:
+        if self.reading:
+            callback = self._read_callback
             self._read_callback = None
             self._read_bytes = None
             self._may_run_callback(callback, buffer)
@@ -522,8 +521,10 @@ is required in order to use :class:`SocketClient`.
             self.sock.set_close_callback(close_callback)
 
 
-class ClientSocket(ClientSocketHandler):
-    '''Synchronous/Asynchronous client for a remote server.'''
+class ClientSocket(ClientSocketHandler, IOClientRead):
+    '''Synchronous/Asynchronous client for a remote server. This client
+maintain a connection with remote server and exchange data by writing and
+reading from the same socket connection.'''
     @classmethod
     def connect(cls, address, parser_class=None, timeout=None):
         sock = create_connection(address)
@@ -535,14 +536,6 @@ class ClientSocket(ClientSocketHandler):
         data = self.parser.encode(data)
         return self.sock.write(data)
 
-    def read(self):
-        '''Read data from socket'''
-        try:
-            return self._read()
-        except socket.error:
-            self.close()
-            raise
-
     def execute(self, data):
         '''Send and read data from socket'''
         r = make_async(self.send(data)).add_callback(self._read, self.close)
@@ -553,10 +546,7 @@ class ClientSocket(ClientSocketHandler):
         parsed_data = self._parsedata(data)
         if parsed_data:
             self.received += 1
-            r = safe_async(self.on_parsed_data, args=(parsed_data,))
-        else:
-            r = make_async()
-        return r.add_callback(self.on_end_message, self.close)
+            return parsed_data
 
     def _parsedata(self, data):
         buffer = self.buffer
@@ -572,44 +562,6 @@ class ClientSocket(ClientSocketHandler):
             buffer = bytearray()
         self.buffer = buffer
         return parsed_data
-
-    def on_parsed_data(self, data):
-        '''Callback once the reading of a successful message
-has completed. For server connection this is the opportunity
-to send back data to the client.'''
-        return data
-
-    def on_end_message(self, result):
-        '''Callback once the reading of a successful message
-has completed. For server connection this is the opportunity
-to send back data to the client.'''
-        return result
-
-    ##    INTERNALS
-    def _read(self, result=None):
-        self.time_last = time.time()
-        if self.async:
-            r = self.sock.read()
-            if not self.closed:
-                return r.add_callback(self.parsedata, self.close)
-            elif r:
-                return self.parsedata(r)
-            else:
-                raise socket.error('Cannot read. Asynchronous socket is closed')
-        else:
-            # Read from a blocking socket
-            length = io.DEFAULT_BUFFER_SIZE
-            data = True
-            while data:
-                data = self.sock.recv(length)
-                if not data:
-                    # No data. the socket is closed.
-                    # We raise socket.error
-                    raise socket.error('No data received. Socket is closed')
-                else:
-                    msg = self.parsedata(data)
-                    if msg is not None:
-                        return msg
 
 
 class Client(ClientSocket):

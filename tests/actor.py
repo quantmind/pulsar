@@ -16,6 +16,25 @@ def on_task(self):
 def check_actor(actor):
     assert(actor.on_task()==None)
     
+    
+class TestProxy(unittest.TestCase):
+    
+    def test_get_proxy(self):
+        self.assertRaises(ValueError, pulsar.get_proxy, 'shcbjsbcjcdcd')
+        self.assertEqual(pulsar.get_proxy('shcbjsbcjcdcd', safe=True), None)
+    
+    def test_dummy_proxy(self):
+        actor = pulsar.get_actor()
+        self.assertRaises(ValueError, pulsar.concurrency, 'bla',
+                          pulsar.Actor, 5, actor, None, set(), {})
+        impl = pulsar.concurrency('thread', pulsar.Actor, 5, actor, None,
+                                  set(), {})
+        p = pulsar.ActorProxy(impl)
+        self.assertEqual(p.address, None)
+        self.assertEqual(p.receive_from(None, 'dummy'), None)
+        self.assertEqual(str(p), p.aid)
+        
+    
 class TestActorThread(ActorTestMixin, unittest.TestCase):
     concurrency = 'thread'
     

@@ -93,10 +93,6 @@ to the underlying :class:`Application`.'''
             pass
         self.app.worker_task(self)
 
-    def handle_message(self, sender, message):
-        '''Handle a *message* from a *sender*.'''
-        return self.app.handle_message(sender, self, message)
-
     def configure_logging(self, config = None):
         # Delegate to application
         self.app.configure_logging(config = config)
@@ -430,14 +426,6 @@ These are the most important facts about a pulsar :class:`Application`
 By default it returns the :attr:`Application.callable`.'''
         return self.callable
 
-    def handle_message(self, sender, receiver, message):
-        '''Handle messages for the *receiver*.'''
-        handler = getattr(self, 'actor_' + message.action, None)
-        if handler:
-            return handler(sender, receiver, *message.args, **message.kwargs)
-        else:
-            receiver.log.error('Unknown action ' + message.action)
-
     def request_instance(self, worker, fd, event):
         '''Build a request class from a file descriptor *fd* and an *event*.
 The returned request instance is passed to the :meth:`handle_request`
@@ -649,12 +637,6 @@ The application is now in the arbiter but has not yet started.'''
 
     def monitor_exit(self, monitor):
         '''Callback by :class:`ApplicationMonitor` at each event loop'''
-        pass
-
-    def on_actor_message(self, message):
-        pass
-
-    def on_actor_message_processed(self, message, result):
         pass
 
     def start(self):

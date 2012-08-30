@@ -119,12 +119,14 @@ class PulsarClient(ReconnectingClient):
 :class:`ActorProxy` to send messages to the remote actor.'''
     parser_class = MessageParser
 
-    def on_end_message(self, msg):
-        '''Those two messages are special'''
-        if msg.command in ('callback', 'errback'):
-            return msg.args[0]
-        else:
-            return msg
+    def parsedata(self, data):
+        msg = super(PulsarClient, self).parsedata(data)
+        if msg:
+            # Those two messages are special
+            if msg.command in ('callback', 'errback'):
+                return msg.args[0] or ''
+            else:
+                return msg
 
     @raise_failure
     def ping(self):

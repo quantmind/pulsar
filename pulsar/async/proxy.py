@@ -137,8 +137,8 @@ If there is no inbox either, abort the message passing and log a critical error.
         if sender is None:
             sender = get_actor()
         if not mailbox:
-            sender.log.critical('Cannot send a message to {0}. No\
- mailbox available.'.format(self))
+            sender.log.critical('Cannot send a message to %s. No\
+ mailbox available.' % self)
             return
         cmd = commands.get(command, self.commands_set)
         if not cmd:

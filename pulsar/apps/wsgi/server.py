@@ -10,9 +10,9 @@ import pulsar
 from pulsar import lib, make_async, is_async, AsyncSocketServer,\
                         Deferred, AsyncConnection, AsyncResponse, DeferredSend,\
                         HttpException, MAX_BODY
-from pulsar.utils.httpurl import Headers, iteritems, is_string, unquote,\
+from pulsar.utils.httpurl import Headers, is_string, unquote,\
                                     has_empty_content, to_bytes,\
-                                    host_and_port_default
+                                    host_and_port_default, mapping_iterator
 from pulsar.utils import event
 
 from .wsgi import WsgiResponse
@@ -60,9 +60,7 @@ nothing."""
     server = None
     url_scheme = "http"
     script_name = os.environ.get("SCRIPT_NAME", "")
-    headers = parser.get_headers()
-    if isinstance(headers, dict):
-        headers = iteritems(headers)
+    headers = mapping_iterator(parser.get_headers())
     for header, value in headers:
         header = header.lower()
         if header == "expect":

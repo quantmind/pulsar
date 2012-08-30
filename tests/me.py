@@ -7,7 +7,7 @@ import multiprocessing
 
 import pulsar
 from pulsar import defaults
-from pulsar.apps.test import unittest, run_on_arbiter
+from pulsar.apps.test import unittest, run_on_arbiter, TestSuite
 
 def simple_function(actor):
     return 'success'
@@ -26,6 +26,7 @@ class TestTestWorker(unittest.TestCase):
         self.assertEqual(worker.tid, current_thread().ident)
         self.assertEqual(worker.pid, os.getpid())
         self.assertTrue(worker.cpubound)
+        self.assertTrue(worker.mailbox.cpubound)
         self.assertTrue(worker._impl.daemon)
         self.assertFalse(worker.is_pool())
         
@@ -36,6 +37,16 @@ class TestTestWorker(unittest.TestCase):
         mailbox = monitor.mailbox
         self.assertEqual(mailbox, arbiter.mailbox)
         self.assertTrue(mailbox.async)
+        
+    @run_on_arbiter
+    def testTestSuiteMonitor(self):
+        arbiter = pulsar.get_actor()
+        self.assertEqual(len(arbiter.monitors), 1)
+        monitor = list(arbiter.monitors.values())[0]
+        app = monitor.app
+        self.assertTrue(isinstance(app, TestSuite))
+        self.assertFalse(monitor.cpubound)
+        self.assertFalse(monitor.mailbox.cpubound)
         
     def testMailbox(self):
         worker = pulsar.get_actor()

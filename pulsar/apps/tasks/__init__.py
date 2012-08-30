@@ -176,7 +176,6 @@ class TaskQueueFactory(pulsar.Setting):
 
     def get(self):
         return module_attribute(self.value)
-        return self.value
 
 
 class TaskSetting(pulsar.Setting):
@@ -336,11 +335,3 @@ to check if the scheduler needs to perform a new run.'''
                                          **task_extra)
         if ack:
             return task
-
-    def on_actor_message_processed(self, message, result):
-        '''handle the messaged processed callback when the message action
-is either "addtask" or "addtask_noack".
-When that is the case, the application broadcast the task id associated with
-the message request id.'''
-        if message.action in ('addtask', 'addtask_noack'):
-            pass

@@ -6,7 +6,7 @@ from pulsar import system, wrap_socket, platform, socket_pair
 from pulsar.utils.security import gen_unique_id
 
 from .iostream import AsyncIOStream
-from .proxy import ActorProxyMonitor
+from .proxy import ActorProxyMonitor, get_proxy
 from .defer import pickle
 from .access import get_actor, get_actor_from_id
 
@@ -77,8 +77,8 @@ and are shared between the :class:`Actor` and its
             arbiter = monitor
         else:
             arbiter = monitor.arbiter
-        self.a_kwargs['arbiter'] = arbiter.proxy
-        self.a_kwargs['monitor'] = monitor.proxy
+        self.a_kwargs['arbiter'] = get_proxy(arbiter)
+        self.a_kwargs['monitor'] = get_proxy(monitor)
         return ActorProxyMonitor(self)
 
 

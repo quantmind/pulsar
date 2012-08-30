@@ -12,7 +12,6 @@ from pulsar import AlreadyCalledError, DeferredFailure, HaltServer
 
 from .access import thread_loop
 
-
 __all__ = ['Deferred',
            'MultiDeferred',
            'DeferredGenerator',
@@ -402,16 +401,6 @@ this point, :meth:`add_callback` will run the *callbacks* immediately.
     def result_or_self(self):
         '''Obtain the result if available, otherwise it returns self.'''
         return self.result if self._called and not self.paused else self
-
-    def wait(self, timeout = 1):
-        '''Wait until *timeout* for a result to be available'''
-        result = self.result_or_self()
-        if is_async(result):
-            sleep(timeout)
-            result = self.result_or_self()
-            if is_async(result):
-                raise DeferredFailure('Deferred not called')
-        return result
 
     ##################################################    INTERNAL METHODS
     def _run_callbacks(self):

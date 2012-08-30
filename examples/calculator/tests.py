@@ -20,6 +20,7 @@ class TestRpcOnThread(unittest.TestCase):
         app = outcome.result
         cls.app = app
         cls.uri = 'http://{0}:{1}'.format(*app.address)
+        cls.p = rpc.JsonProxy(cls.uri, timeout=cls.client_timeout)
         
     @classmethod
     def tearDownClass(cls):
@@ -27,7 +28,6 @@ class TestRpcOnThread(unittest.TestCase):
             return send('arbiter', 'kill_actor', cls.app.mid)
         
     def setUp(self):
-        self.p = rpc.JsonProxy(self.uri, timeout=self.client_timeout)
         self.assertEqual(self.p.url, self.uri)
         self.assertEqual(self.p.path, None)
         proxy = self.p.bla
@@ -58,7 +58,7 @@ class TestRpcOnThread(unittest.TestCase):
         self.assertTrue(result)
         
     def testTimeIt(self):
-        r = self.p.timeit('server_info', 5)
+        r = self.p.timeit('ping', 5)
         self.assertTrue(r > 0)
         
     # Test Object method
@@ -110,6 +110,6 @@ class TestRpcOnThread(unittest.TestCase):
         self.assertTrue(result)
         
 
-#@dont_run_with_thread
+@dont_run_with_thread
 class TestRpcOnProcess(TestRpcOnThread):
     concurrency = 'process'

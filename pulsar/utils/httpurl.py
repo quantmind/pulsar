@@ -179,6 +179,11 @@ class HTTPurlError(Exception):
 class TooManyRedirects(HTTPurlError):
     pass
 
+def mapping_iterator(iterable):
+    if isinstance(iterable, Mapping):
+        iterable = iteritems(iterable)
+    return iterable
+
 ####################################################    URI & IRI SUFF
 #
 # The reserved URI characters (RFC 3986 - section 2.2)
@@ -404,8 +409,7 @@ the entity-header fields.'''
         """Extend the headers with a dictionary or an iterable yielding keys
 and values. If append is set to ``True``, existing headers are appended
 rather than replaced."""
-        if isinstance(iterable, Mapping):
-            iterable = iteritems(iterable)
+        iterable = mapping_iterator(iterable)
         if append:        
             add = self.add_header
             for key, value in iterable:
@@ -908,14 +912,17 @@ class HttpConnectionError(Exception):
     pass
 
 
-class IORespone(object):
-    socket = None
+class IOClientRead(object):
+    sock = None
 
     @property
     def async(self):
-        return self.socket.gettimeout() == 0
+        return self.sock.gettimeout() == 0
 
     def parsedata(self, data):
+        '''This function is called once data is available on the socket.
+If the parser is expecting more data, it should return ``None`` so that
+this :class:`IOClientRead` can submit another read request.'''
         raise NotImplementedError()
 
     def read(self):
@@ -926,11 +933,11 @@ class IORespone(object):
             self.close()
             raise
 
-    ##    INTERNALS
+    ## INTERNALS
     def _read(self, result=None):
         if self.async:
-            r = self.socket.read()
-            if not self.socket.closed:
+            r = self.sock.read()
+            if not self.sock.closed:
                 return r.add_callback(self._got_data, self.close)
             elif r:
                 return self.parsedata(r)
@@ -941,7 +948,7 @@ class IORespone(object):
             length = io.DEFAULT_BUFFER_SIZE
             data = True
             while data:
-                data = self.socket.recv(length)
+                data = self.sock.recv(length)
                 if not data:
                     # No data. the socket is closed.
                     # We raise socket.error
@@ -959,7 +966,7 @@ class IORespone(object):
             return msg
 
 
-class HttpResponse(IORespone):
+class HttpResponse(IOClientRead):
     '''An Http response object.
 
 .. attribute:: status_code
@@ -978,7 +985,7 @@ class HttpResponse(IORespone):
 
     def __init__(self, sock, debuglevel=0, method=None, url=None,
                  strict=None):
-        self.socket = sock
+        self.sock = sock
         self.debuglevel = debuglevel
         self._method = method
         self.strict=strict
@@ -1063,7 +1070,7 @@ class HttpResponse(IORespone):
             return self.request.client.build_response(self)
 
     def close(self):
-        self.socket.close()
+        self.sock.close()
 
     def info(self):
         return self.headers

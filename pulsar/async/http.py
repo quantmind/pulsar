@@ -1,6 +1,4 @@
 '''Asynchronous HTTP client'''
-import socket
-
 import pulsar
 from pulsar import lib
 from pulsar.utils import httpurl
