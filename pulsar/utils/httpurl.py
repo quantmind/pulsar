@@ -921,7 +921,7 @@ class IORespone(object):
         if self.async:
             r = self.socket.read()
             if not self.socket.closed:
-                return r.add_callback(self.parsedata, self.close)
+                return r.add_callback(self._got_data, self.close)
             elif r:
                 return self.parsedata(r)
             else:
@@ -940,6 +940,13 @@ class IORespone(object):
                     msg = self.parsedata(data)
                     if msg is not None:
                         return msg
+    
+    def _got_data(self, data):
+        msg = self.parsedata(data)
+        if msg is None:
+            return self._read()
+        else:
+            return msg
 
 
 class HttpResponse(IORespone):

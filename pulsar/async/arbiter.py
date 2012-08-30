@@ -71,7 +71,7 @@ A typical usage::
     else:
         return actor.spawn(**kwargs)
 
-
+    
 class Arbiter(PoolMixin, Actor):
     '''The Arbiter is a special :class:`Monitor`. It is used as singletone
 in the main process and it manages one or more :class:`Monitor`.

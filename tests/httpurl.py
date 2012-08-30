@@ -59,7 +59,14 @@ class HttpClientMixin(object):
         kwargs['timeout'] = self.timeout
         return HttpClient(**kwargs)
     
+
+def request_callback(result):
+    return result
     
+def request(r):
+    return make_async(r).addBoth(request_callback)
+
+
 class TestHttpClient(unittest.TestCase, HttpClientMixin):
     app = None
     server_concurrency = 'process'
@@ -150,7 +157,7 @@ class TestHttpClient(unittest.TestCase, HttpClientMixin):
         data = (('bla', 'foo'), ('unz', 'whatz'),
                 ('numero', '1'), ('numero', '2'))
         http = self.client()
-        r = make_async(http.post(self.httpbin('post'), data=data))
+        r = request(http.post(self.httpbin('post'), data=data))
         yield r
         r = r.result
         self.assertEqual(r.status_code, 200)

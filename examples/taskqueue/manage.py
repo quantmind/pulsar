@@ -47,10 +47,8 @@ class server(pulsar.MultiApp):
         return rpcs(actor)
     
 
-def start_server(**params):
-    return server(**params).start()
-
-    
 if __name__ == '__main__':
-    start_server()
+    server = server()
+    server()
+    server.start()
 

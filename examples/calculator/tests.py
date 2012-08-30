@@ -58,7 +58,7 @@ class TestRpcOnThread(unittest.TestCase):
         self.assertTrue(result)
         
     def testTimeIt(self):
-        r = self.p.timeit('ping', 5)
+        r = self.p.timeit('server_info', 5)
         self.assertTrue(r > 0)
         
     # Test Object method
@@ -110,6 +110,6 @@ class TestRpcOnThread(unittest.TestCase):
         self.assertTrue(result)
         
 
-@dont_run_with_thread
+#@dont_run_with_thread
 class TestRpcOnProcess(TestRpcOnThread):
     concurrency = 'process'

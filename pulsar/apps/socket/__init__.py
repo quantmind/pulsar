@@ -76,7 +76,7 @@ on a socket. This is the base class of :class:`pulsar.apps.wsgi.WSGIServer`.
     def worker_stop(self, worker):
         s = worker.get('socket_server')
         if s:
-            worker.ioloop.remove_handler(s.socket)
+            worker.ioloop.remove_handler(s)
             s.close()
         
     def on_event(self, worker, fd, events):

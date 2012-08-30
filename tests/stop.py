@@ -8,7 +8,8 @@ from pulsar.apps.test import unittest, arbiter_test, halt_server,\
                                 create_test_arbiter
         
     
-class TestArbiter(unittest.TestCase):
+#class TestArbiter(unittest.TestCase):
+class TestArbiter(object):
 
     @arbiter_test
     def testMockArbiter(self):

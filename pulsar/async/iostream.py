@@ -172,7 +172,7 @@ but is non-portable."""
 
     def read(self, length=None):
         """Starts reading data from the :attr:`sock`. It returns a
-:class:`Deferred` which will be called back will once data is available.
+:class:`Deferred` which will be called back once data is available.
 If this function is called while this class:`AsyncIOStream` is already reading
 a RuntimeError occurs.
 
@@ -188,7 +188,7 @@ One common pattern of usage::
 
 """
         if self.reading:
-            raise RuntimeError("Already reading")
+            raise RuntimeError("Asynchronous stream already reading!")
         d = Deferred(description='%s read callback' % self)
         if self.closed:
             data = self._get_buffer(self._read_buffer)

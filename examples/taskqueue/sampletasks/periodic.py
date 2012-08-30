@@ -15,7 +15,7 @@ class TestPeriodic(TestPeriodicJob):
     
 
 class TestPeriodicError(TestPeriodicJob):
-    run_every = timedelta(seconds=6)
+    run_every = timedelta(seconds=60)
     def __call__(self, consumer):
         raise Exception('kaputt')
     

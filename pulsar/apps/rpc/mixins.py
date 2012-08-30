@@ -1,4 +1,4 @@
-from pulsar import send
+from pulsar import send, make_async
 
 from .jsonrpc import JSONRPC
 
@@ -42,7 +42,7 @@ class PulsarServerCommands(JSONRPC):
     
     def rpc_server_info(self, request):
         '''Dictionary of information about the server'''
-        info = send('arbiter', 'info')
+        info = make_async(send('arbiter', 'info'))
         return info.add_callback(lambda res: self.extra_server_info(
                                                        request, res))
     

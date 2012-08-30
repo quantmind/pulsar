@@ -32,9 +32,13 @@ This implementation will just work. No starvation or dead-lock.
 
 There are two parameters:
 
-* Average eating period, the higher the more time is spend eating
+* Average eating period, the higher the more time is spend eating.
 * Average waiting period, the higher the more frequent philosophers
     get a chance to eat.
+    
+To run the example, simply type::
+
+    pulsar manage.py
 '''
 import random
 import time
@@ -105,6 +109,7 @@ class DiningPhilosophers(pulsar.Application):
         if forks:
             max_eat_period = 2*self.cfg.eating_period
             if len(forks) == 2:
+                local['thinking'] = 0
                 eaten += 1
                 philosopher.log.info('Eating... So far %s times', eaten)
                 try:
@@ -123,9 +128,13 @@ class DiningPhilosophers(pulsar.Application):
                 else:
                     self.check_forks(philosopher)
             elif len(forks) > 2:
-                talk(philosopher, 'I have more than 2 forks!!!')
+                philosopher.log.critical('I have more than 2 forks!!!')
                 self.release_forks(philosopher)
         else:
+            thinking = local.get('thinking', 0)
+            if not thinking:
+                philosopher.log.warn('Thinking...')
+            local['thinking'] = thinking + 1
             self.check_forks(philosopher)
         
     def check_forks(self, philosopher):
