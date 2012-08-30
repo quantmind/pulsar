@@ -329,10 +329,17 @@ TYPE_HEADER_FIELDS = {'client': CLIENT_HEADER_FIELDS,
 header_type = {0: 'client', 1: 'server', 2: 'both'}
 header_type_to_int = dict(((v,k) for k,v in header_type.items()))
 
+def capfirst(x):
+    x = x.strip()
+    if x:
+        return x[0].upper() + x[1:].lower()
+    else:
+        return x
+    
 def header_field(name, HEADERS_SET=None):
     name = name.lower()
     if name.startswith('x-'):
-        return name
+        return '-'.join((b for b in (capfirst(n) for n in name.split('-')) if b))
     else:
         header = ALL_HEADER_FIELDS_DICT.get(name)
         if header and HEADERS_SET:
@@ -393,14 +400,19 @@ the entity-header fields.'''
     def kind_number(self):
         return header_type_to_int.get(self.kind)
 
-    def update(self, iterable):
+    def update(self, iterable, append=False):
         """Extend the headers with a dictionary or an iterable yielding keys
- and values."""
+and values. If append is set to ``True``, existing headers are appended
+rather than replaced."""
         if isinstance(iterable, Mapping):
             iterable = iteritems(iterable)
-        add = self.add_header
-        for key, value in iterable:
-            add(key, value)
+        if append:        
+            add = self.add_header
+            for key, value in iterable:
+                add(key, value)
+        else:
+            for key, value in iterable:
+                self[key] = value
 
     def __contains__(self, key):
         return header_field(key) in self._headers
@@ -810,16 +822,14 @@ OTHER DEALINGS IN THE SOFTWARE.'''
             100 <= status < 200 or      # 1xx codes
             self._method == "HEAD"):
             clen = 0
-
         self._clen_rest = self._clen = clen
-
         # detect encoding and set decompress object
-        encoding = self._headers.get('content-encoding')
-        if encoding == "gzip":
-            self.__decompress_obj = zlib.decompressobj(16+zlib.MAX_WBITS)
-        elif encoding == "deflate":
-            self.__decompress_obj = zlib.decompressobj()
-
+        if self.decompress:
+            encoding = self._headers.get('content-encoding')
+            if encoding == "gzip":
+                self.__decompress_obj = zlib.decompressobj(16+zlib.MAX_WBITS)
+            elif encoding == "deflate":
+                self.__decompress_obj = zlib.decompressobj()
         rest = data[idx+4:]
         self._buf = [rest]
         self.__on_headers_complete = True
@@ -972,7 +982,6 @@ class HttpResponse(IORespone):
         self.debuglevel = debuglevel
         self._method = method
         self.strict=strict
-        self.callbacks = []
 
     def __str__(self):
         if self.status_code:
@@ -1035,10 +1044,6 @@ class HttpResponse(IORespone):
         '''Decode content as a JSON object.'''
         return json.loads(self.content_string(charset), **kwargs)
 
-    def add_callback(self, callback):
-        self.callbacks.append(callback)
-        return self
-
     def raise_for_status(self):
         """Raises stored :class:`HTTPError` or :class:`URLError`,
  if one occured."""
@@ -1046,13 +1051,10 @@ class HttpResponse(IORespone):
             raise HTTPError(self.url, self.status_code,
                             self.content, self.headers, None)
 
-    def post_process_response(self, client, req):
-        return client.post_process_response(req, self)
-
-    def begin(self, start=False):
+    def begin(self, start=False, decompress=True):
         '''Start reading the response. Called by the connection object.'''
         if start and self.parser is None:
-            self.parser = self.parser_class(kind=1)
+            self.parser = self.parser_class(kind=1, decompress=decompress)
             return self.read()
 
     def parsedata(self, data):
@@ -1208,7 +1210,7 @@ http://www.ietf.org/rfc/rfc2616.txt
         connection.request(self.method, self.full_url, self.body, headers)
         response = connection.getresponse()
         response.request = self
-        return response.begin(True)
+        return response.begin(True, self.client.decompress)
 
     @property
     def selector(self):
@@ -1253,27 +1255,27 @@ http://www.ietf.org/rfc/rfc2616.txt
         if self.method in ENCODE_URL_METHODS:
             self.files = None
             self._encode_url(self.data)
-        else:
+        elif isinstance(self.data, bytes):
+            body = self.data
+        elif is_string(self.data):
+            body = to_bytes(self.data, self.charset)
+        elif self.data:
             content_type = self.headers.get('content-type')
             # No content type given
             if not content_type:
                 content_type = 'application/x-www-form-urlencoded'
-                if isinstance(self.data, (dict, list, tuple)):
-                    if encode_multipart:
-                        body, content_type = encode_multipart_formdata(
-                                                    self.data,
-                                                    boundary=multipart_boundary,
-                                                    charset=self.charset)
-                    else:
-                        body = urlencode(self.data)
-                elif self.data:
-                    body = to_bytes(self.data, self.charset)
+                if encode_multipart:
+                    body, content_type = encode_multipart_formdata(
+                                                self.data,
+                                                boundary=multipart_boundary,
+                                                charset=self.charset)
+                else:
+                    body = urlencode(self.data)
                 self.headers['Content-Type'] = content_type
-            elif content_type == 'application/json' and\
-                 not isinstance(self.data, bytes):
+            elif content_type == 'application/json':
                 body = json.dumps(self.data).encode('latin-1')
             else:
-                body = self.data
+                body = json.dumps(self.data).encode('latin-1')
         self.body = body
 
     def _encode_url(self, body):
@@ -1426,13 +1428,14 @@ into an SSL socket.
                  multipart_boundary=None, max_connections=None,
                  key_file=None, cert_file=None, cert_reqs='CERT_NONE',
                  ca_certs=None, cookies=None, trust_env=True,
-                 store_cookies=True, max_redirects=10):
+                 store_cookies=True, max_redirects=10, decompress=True):
         self.trust_env = trust_env
         self.store_cookies = store_cookies
         self.max_redirects = max_redirects
         self.poolmap = {}
         self.timeout = timeout if timeout is not None else self.timeout
         self.cookies = cookies
+        self.decompress = decompress
         self.max_connections = max_connections or 2**31
         dheaders = self.DEFAULT_HTTP_HEADERS.copy()
         self.client_version = client_version or self.client_version
@@ -1444,8 +1447,8 @@ into an SSL socket.
         self.proxy_info = dict(proxy_info or ())
         if not self.proxy_info and self.trust_env:
             self.proxy_info = get_environ_proxies()
-        if 'no' not in self.proxy_info:
-            self.proxy_info['no'] = ','.join(self.no_proxy)
+            if 'no' not in self.proxy_info:
+                self.proxy_info['no'] = ','.join(self.no_proxy)
         self.encode_multipart = encode_multipart
         self.multipart_boundary = multipart_boundary or choose_boundary()
         self.https_defaults = {'key_file': key_file,
@@ -1610,7 +1613,7 @@ a :class:`HttpResponse` object.
     def set_proxy(self, request):
         if request.type in self.proxy_info:
             hostonly, _ = splitport(request.host)
-            no_proxy = self.proxy_info.get('no','').split(',')
+            no_proxy = [n for n in self.proxy_info.get('no','').split(',') if n]
             if not any(map(hostonly.endswith, no_proxy)):
                 p = urlparse(self.proxy_info[request.type])
                 request.set_proxy(p.netloc, p.scheme)

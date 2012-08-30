@@ -22,7 +22,7 @@ framework which responds with "Hello World!" for every request::
     
     
     if __name__ == '__main__':
-        return wsgi.WSGIApplication(callable=hello).run()
+        return wsgi.WSGIServer(callable=hello).start()
     
     
 Pulsar's goal is to provide an easy way to build scalable network programs.
@@ -52,10 +52,16 @@ Pulsar design allows for a host of different applications to be implemented
 in an elegant and efficient way. Out of the box it is shipped with the
 the following
 
-* WSGI server (with a JSON-RPC handler too)
+* Socket servers.
+* WSGI server (with a JSON-RPC handler too).
 * A distributed task queue.
 * Pulsar shell for asynchronous scripting (posix only).
-* Asynchronous testing suite.
+* Asynchronous test suite.
+
+Examples
+=============
+Check out the ``examples`` directory for various working applications created using
+pulsar alone.
 
 
 Design

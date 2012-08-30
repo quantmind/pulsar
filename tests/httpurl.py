@@ -50,15 +50,7 @@ class TestTools(unittest.TestCase):
         s = 'ciao'
         s2 = httpurl.native_str(s)
         self.assertEqual(id(s), id(s2))
-        
 
-class HttpClientMixin(object):
-    timeout = 10
-    
-    def client(self, **kwargs):
-        kwargs['timeout'] = self.timeout
-        return HttpClient(**kwargs)
-    
 
 def request_callback(result):
     return result
@@ -67,25 +59,43 @@ def request(r):
     return make_async(r).addBoth(request_callback)
 
 
-class TestHttpClient(unittest.TestCase, HttpClientMixin):
+class TestHttpClient(unittest.TestCase):
     app = None
-    server_concurrency = 'process'
+    with_proxy = False
+    proxy_app = None
+    timeout = 10
     
     @classmethod
     def setUpClass(cls):
         # Create the HttpBin server by sending this request to the arbiter
+        from examples.proxyserver.manage import server as pserver
         from examples.httpbin.manage import server
-        s = server(bind='127.0.0.1:0', concurrency=cls.server_concurrency)
+        concurrency = cls.cfg.concurrency
+        s = server(bind='127.0.0.1:0', concurrency=concurrency)
         outcome = send('arbiter', 'run', s)
         yield outcome
         cls.app = outcome.result
         cls.uri = 'http://{0}:{1}'.format(*cls.app.address)
+        if cls.with_proxy:
+            s = pserver(bind='127.0.0.1:0', concurrency=concurrency)
+            outcome = send('arbiter', 'run', s)
+            yield outcome
+            cls.proxy_app = outcome.result
+            cls.proxy_uri = 'http://{0}:{1}'.format(*cls.proxy_app.address)
         
     @classmethod
     def tearDownClass(cls):
         if cls.app is not None:
-            return send('arbiter', 'kill_actor', cls.app.mid)
+            yield send('arbiter', 'kill_actor', cls.app.mid)
+        if cls.proxy_app is not None:
+            yield send('arbiter', 'kill_actor', cls.proxy_app.mid)
         
+    def client(self, **kwargs):
+        kwargs['timeout'] = self.timeout
+        if self.with_proxy:
+            kwargs['proxy_info'] = {'http': self.proxy_uri}
+        return HttpClient(**kwargs)
+    
     def httpbin(self, *suffix):
         if suffix:
             return self.uri + '/' + '/'.join(suffix)
@@ -96,6 +106,8 @@ class TestHttpClient(unittest.TestCase, HttpClientMixin):
         http = self.client()
         self.assertTrue('accept-encoding' in http.DEFAULT_HTTP_HEADERS)
         self.assertEqual(http.timeout, self.timeout)
+        if self.with_proxy:
+            self.assertEqual(http.proxy_info, {'http': self.proxy_uri})
         
     def test_http_200_get(self):
         http = self.client()
@@ -199,12 +211,14 @@ class TestHttpClient(unittest.TestCase, HttpClientMixin):
         
     def test_Cookie(self):
         http = self.client()
+        # First set the cookies
         r = make_async(http.get(self.httpbin('cookies', 'set', 'bla', 'foo')))
         yield r
         r = r.result
         self.assertEqual(r.status_code, 200)
         self.assertTrue(r.history)
         self.assertTrue(r.history[0].headers['set-cookie'])
+        # Now check if I get them
         r = make_async(http.get(self.httpbin('cookies')))
         yield r
         r = r.result
@@ -254,13 +268,9 @@ class TestHttpClient(unittest.TestCase, HttpClientMixin):
         self.assertTrue('; httponly' in str(example_cookie))
         self.assertTrue(example_cookie['httponly'])
         
-        
-class TestExternal(unittest.TestCase, HttpClientMixin):
-    
-    def testBBC(self):
-        http = self.client()
-        r = make_async(http.get('http://www.bbc.co.uk'))
-        yield r
-        r = r.result
-        self.assertEqual(r.status_code, 200)
-        self.assertEqual(r.headers['content-type'], 'text/html')
+
+class TestHttpClientWithProxy(TestHttpClient):
+    app = None
+    with_proxy = True
+    proxy_app = None
+    server_concurrency = 'process'

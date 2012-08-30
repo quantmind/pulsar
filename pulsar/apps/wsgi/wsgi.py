@@ -91,7 +91,6 @@ client.
 '''
     _started = False
     DEFAULT_STATUS_CODE = 200
-    DEFAULT_CONTENT_TYPE = 'text/plain'
     def __init__(self, status=None, content=None, response_headers=None,
                  content_type=None, encoding=None, environ=None,
                  start_response=None):
@@ -99,9 +98,10 @@ client.
         self.status_code = status or self.DEFAULT_STATUS_CODE
         self.encoding = encoding
         self.cookies = SimpleCookie()
-        self.content_type = content_type or self.DEFAULT_CONTENT_TYPE
         self.headers = Headers(response_headers, kind='server')
         self.content = content
+        if content_type is not None:
+            self.content_type = content_type
 
     @property
     def started(self):
@@ -135,6 +135,12 @@ client.
         else:
             raise RuntimeError('Cannot set content. Already iterated')
     content = property(_get_content, _set_content)
+    
+    def _get_content_type(self):
+        return self.headers.get('content-type')
+    def _set_content_type(self, typ):
+        self.headers['content-type'] = typ
+    content_type = property(_get_content_type, _set_content_type)
 
     def default_content(self):
         '''Called during initialization when the content given is ``None``.
@@ -153,6 +159,9 @@ By default it returns an empty tuple. Overrides if you need to.'''
                               exc_info=True)
         start_response(self.status, self.get_headers(), exc_info=exc_info)
         return self
+    
+    def start(self):
+        self.__call__(self.environ, self.start_response)
 
     def length(self):
         if not self.is_streamed:
@@ -164,7 +173,7 @@ By default it returns an empty tuple. Overrides if you need to.'''
 
     @property
     def status(self):
-        return '{0} {1}'.format(self.status_code, self.response)
+        return '%s %s' % (self.status_code, self.response)
 
     def __str__(self):
         return self.status
@@ -210,8 +219,6 @@ This is usually `True` if a generator is passed to the response object."""
         headers = self.headers
         if has_empty_content(self.status_code, self.method):
             headers.pop('content-type',None)
-        elif self.content_type:
-            headers['Content-type'] = self.content_type
         if not self.is_streamed:
             cl = 0
             for c in self.content:
@@ -271,7 +278,12 @@ class WsgiHandler(pulsar.LogginMixin):
                 return m
 
 
-def handle_http_error(connection, response, e=None):
+error_messages = {
+    500: 'An exception has occurred while evaluating your request.',
+    404: 'Cannot find what you are looking for.'
+}
+
+def handle_http_error(connection, response, error=None, encoding='utf-8'):
     '''The default handler for errors while serving an Http requests.
 
 :parameter connection: The :class:`HttpConnection` handling the request.
@@ -279,26 +291,16 @@ def handle_http_error(connection, response, e=None):
 :parameter e: the exception instance.
 :return: bytes to send as response
 '''
-    code = 500
-    if e:
-        code = getattr(e, 'status_code', 500)
-    if has_empty_content(code):
-        return b''
-    if not response.content_type:
-        response.content_type = 'text/html'
-    if code == 500:
+    response.status_code = getattr(error, 'status', 500)
+    msg = error_messages.get(response.status_code, '')
+    if response.status_code == 500:
         connection.log.critical('Unhandled exception during WSGI response',
                                 exc_info=True)
-        msg = 'An exception has occured while evaluating your request.'
     else:
-        connection.log.info('WSGI %s status code', code)
-        if code == 404:
-            msg = 'Cannot find what you are looking for.'
-        else:
-            msg = ''
-    response.status_code = code
-    encoding = 'utf-8'
-    reason = response.status
+        connection.log.info('WSGI %s status code', response.status_code)
+    if has_empty_content(response.status_code):
+        msg = ''
+        response.content_type = None
     if response.content_type == 'text/html':
         content = textwrap.dedent("""\
         <!DOCTYPE html>
@@ -312,7 +314,7 @@ def handle_http_error(connection, response, e=None):
             <h3>{0[version]}</h3>
           </body>
         </html>
-        """).format({"reason": reason, "msg": msg,
+        """).format({"reason": response.status, "msg": msg,
                      "version": pulsar.SERVER_SOFTWARE})
     elif response.content_type == 'application/json':
         content = json.dumps({'message': msg})

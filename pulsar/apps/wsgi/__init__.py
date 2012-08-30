@@ -78,7 +78,7 @@ class ResponseMiddleware(WsgiSetting):
 
 class HttpError(WsgiSetting):
     name = "handle_http_error"
-    validator = pulsar.validate_callable(3)
+    validator = pulsar.validate_callable(4)
     type = "callable"
     default = staticmethod(handle_http_error)
     desc = """\
