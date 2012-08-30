@@ -209,6 +209,10 @@ arbiter tasks at every iteration in the event loop.'''
                         self._monitors.pop(m.name)
                 else:
                     m.start()
+        try:
+            self.cfg.arbiter_task(self)
+        except:
+            pass
 
     def manage_actor(self, actor):
         '''If an actor failed to notify itself to the arbiter for more than

@@ -461,7 +461,6 @@ The callback will occur once the generator has stopped
         self.max_errors = max(1, max_errors) if max_errors else 0
         self._consumed = 0
         self.errors = Failure()
-        self.deferred = Deferred()
         super(DeferredGenerator,self).__init__(description=description)
         self.loop = thread_loop()
         self._consume()
@@ -512,7 +511,6 @@ current thread.'''
                 result = result.result_or_self()
                 # The result is an asynchronous instance
                 if is_async(result):
-                    self._current = result
                     return result.addBoth(self._consume_in_thread)
             if result == CLEAR_ERRORS:
                 self.errors.clear()

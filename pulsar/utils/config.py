@@ -869,3 +869,15 @@ class WorkerTask(Setting):
 
         The callable needs to accept one variable for the Worker.
         """
+        
+        
+class ArbiterTask(Setting):
+    name = "arbiter_task"
+    section = "Server Hooks"
+    validator = validate_callable(1)
+    type = "callable"
+    default = staticmethod(def_worker_exit)
+    desc = """Called at every event loop by the arbiter.
+
+        The callable needs to accept one variable for the Arbiter.
+        """

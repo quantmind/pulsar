@@ -154,7 +154,7 @@ class PulsarClient(ReconnectingClient):
 
 
 class MailboxResponse(AsyncResponse):
-
+    __slots__ = ('connection', 'parsed_data')
     def __iter__(self):
         # The receiver could be different from the mail box actor. For
         # example a monitor uses the same mailbox as the arbiter
