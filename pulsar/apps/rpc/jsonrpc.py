@@ -15,6 +15,7 @@ from timeit import default_timer
 
 import pulsar
 from pulsar import HttpClient
+from pulsar.utils.structures import AttributeDictionary
 from pulsar.utils.security import gen_unique_id
 from pulsar.utils.httpurl import to_string, range
 from pulsar.utils.jsontools import DefaultJSONEncoder, DefaultJSONHook
@@ -120,14 +121,14 @@ Lets say your RPC server is running at ``http://domain.name.com/``::
         self.__version = version or self.__class__.default_version
         self.__id = id
         self.__data = data if data is not None else {}
-        self.local = {}
+        self.local = AttributeDictionary()
         self.setup(**kwargs)
 
     def setup(self, http=None, timeout=None, **kwargs):
         if not http:
             timeout = timeout if timeout is not None else self.default_timeout
             http = HttpClient(timeout=timeout, **kwargs)
-        self.local['http'] = http
+        self.local.http = http
 
     @property
     def url(self):
@@ -135,7 +136,7 @@ Lets say your RPC server is running at ``http://domain.name.com/``::
 
     @property
     def http(self):
-        return self.local.get('http')
+        return self.local.http
 
     @property
     def path(self):
@@ -160,7 +161,7 @@ Lets say your RPC server is running at ``http://domain.name.com/``::
             name = "%s%s%s" % (self.__name, self.separator, name)
         id = self.makeid()
         return self.__class__(self.__url, name=name, version=self.__version,
-                              id=id, data=self.__data, **self.local)
+                              id=id, data=self.__data, **self.local.all())
 
     def timeit(self, func, times, *args, **kwargs):
         '''Usefull little utility for timing responses from server. The
@@ -240,14 +241,14 @@ usage is simple::
 class LocalJsonProxy(JsonProxy):
     '''A proxy class to use when accessing the rpc within the rpc application
 domain.'''
-    def setup(self, handler = None, environ = None, **kwargs):
-        self.local['handler'] = handler
-        self.local['environ'] = environ
+    def setup(self, handler=None, environ=None, **kwargs):
+        self.local.handler = handler
+        self.local.environ = environ
 
     def __call__(self, *args, **kwargs):
         data, raw = self._get_data(*args, **kwargs)
-        hnd = self.local['handler']
-        environ = self.local['environ']
+        hnd = self.local.handler
+        environ = self.local.environ
         method, args, kwargs, id, version = hnd.get_method_and_args(data)
         request = hnd.request(environ, method, args, kwargs, id, version)
         return request.process()

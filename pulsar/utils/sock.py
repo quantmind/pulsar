@@ -219,7 +219,8 @@ class BaseSocket(IStream):
         self.sock.settimeout(value)
         
     def gettimeout(self):
-        return self.sock.gettimeout()
+        if self.sock:
+            return self.sock.gettimeout()
     
     @property
     def async(self):

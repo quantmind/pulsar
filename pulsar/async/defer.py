@@ -43,12 +43,14 @@ if ispy3k:
         else:
             raise err
     range = range
+    can_generate = lambda gen: hasattr(gen, '__next__')
 else:   # pragma : nocover
     import cPickle as pickle
     from pulsar.utils._py2 import *
     iteritems = lambda d : d.iteritems()
     itervalues = lambda d : d.itervalues()
     range = xrange
+    can_generate = lambda gen: hasattr(gen, 'next')
 
 # Special objects
 class NOT_DONE(object):
@@ -451,27 +453,25 @@ this point, :meth:`add_callback` will run the *callbacks* immediately.
 class DeferredGenerator(Deferred):
     '''A :class:`Deferred` for a generator over, possibly, deferred objects.
 The callback will occur once the generator has stopped
-(when it raises StopIteration).
+(when it raises StopIteration), or a preset maximum number of errors has
+occurred.
 
-:parameter gen: a generator or iterable.
+:parameter gen: a generator.
 :parameter max_errors: The maximum number of exceptions allowed before
     stopping the generator and raise exceptions. By default the
-    generator will continue regardless of errors, and raise them at the
-    end (if any).'''
+    generator will continue regardless of errors, accumulating them into
+    the final result.
+'''
     def __init__(self, gen, max_errors=None, description=None):
         self.gen = gen
+        if not can_generate(gen):
+            raise TypeError('DeferredGenerator requires an iterable')
         self.max_errors = max(1, max_errors) if max_errors else 0
         self._consumed = 0
         self.errors = Failure()
         super(DeferredGenerator,self).__init__(description=description)
-        #
-        from pulsar import get_actor
-        actor = get_actor()
-        if actor.is_arbiter():
-            actor.log.warn('Entered deferred generator %s', self)
-        #
         self.loop = thread_loop()
-        self._consume()
+        self._consume() # kick off data generation
 
     def _consume_in_thread(self, result=None):
         # When the generator finds an asynchronous object still waiting
@@ -532,14 +532,9 @@ current thread.'''
 
     def conclude(self, last_result=None):
         # Conclude the generator and callback the listeners
-        from pulsar import get_actor
-        actor = get_actor()
-        if actor.is_arbiter():
-            actor.log.info('Consumed %s %s times', self, self._consumed)
         result = last_result if not self.errors else self.errors
         self.gen = None
         self.errors = None
-        self.loop = None
         return self.callback(result)
 
 

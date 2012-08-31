@@ -533,9 +533,9 @@ reading from the same socket connection.'''
         self.time_last = time.time()
         data = self.parser.encode(data)
         return self.sock.write(data)
-
+        
     def execute(self, data):
-        '''Send and read data from socket'''
+        '''Send and read data from socket.'''
         r = make_async(self.send(data)).add_callback(self._read, self.close)
         return r.result_or_self()
 
@@ -634,9 +634,8 @@ A connection can handle several request/responses until it is closed.
 
     @async(max_errors=1, description='Async client connection generator')
     def handle(self):
-        # Kick off reading
         while not self.closed:
-            yield self.sock.read().add_callback(self._got_data, self.close)
+            yield self.sock.read().add_callback(self._write_data, self.close)
 
     def request(self, response=None):
         if self._current_request is None:
@@ -675,7 +674,7 @@ more data in the buffer is required.'''
         self.server.connections.discard(self)
 
     # Internal
-    def _got_data(self, data=None):
+    def _write_data(self, data=None):
         # New data received. Keep on parsing and
         # writing responses until the parser returns nothing.
         # If the connection is still open reads the socket and
@@ -692,19 +691,18 @@ more data in the buffer is required.'''
                 parsed_data = self.request_data()
                 if parsed_data:
                     self.received += 1
-                    response = self.response_class(self, parsed_data)
-                    for d in self.write(response):
-                        yield d
+                    # The response is iterable (same as WSGI response)
+                    for data in self.response_class(self, parsed_data):
+                        if data:
+                            yield self.write(data)
+                        else: # The response is not ready. release the loop
+                            yield NOT_DONE
         else:
             self.close()
 
-    def write(self, response):
-        sock = self.sock
-        for data in response:
-            if data:
-                yield sock.write(data)
-            else:
-                yield NOT_DONE
+    def write(self, data):
+        '''Write data to socket.'''
+        return self.sock.write(data)
 
 
 class AsyncSocketServer(BaseSocketHandler):

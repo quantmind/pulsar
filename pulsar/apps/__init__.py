@@ -1,19 +1,13 @@
 import logging
 import os
 import sys
-import traceback
-import random
-from inspect import isgenerator, isfunction
+from inspect import isfunction
 
 import pulsar
 from pulsar import Actor, make_async, safe_async, is_failure, HaltServer,\
-                     Monitor, loop_timeout, ispy3k, Deferred, get_actor
+                     Monitor, loop_timeout, Deferred, get_actor
 from pulsar.async.defer import pickle
-from pulsar.utils.importer import import_module
 from pulsar.utils.log import LogInformation
-from pulsar.utils import system
-from pulsar.utils.config import Setting
-#from pulsar.utils import debug
 
 __all__ = ['Application',
            'MultiApp',
@@ -21,16 +15,6 @@ __all__ = ['Application',
            'Worker',
            'ApplicationMonitor',
            'get_application']
-
-
-if ispy3k:
-    def execfile(filename, globals=None, locals=None):
-        if globals is None:
-            globals = sys._getframe(1).f_globals
-        if locals is None:
-            locals = sys._getframe(1).f_locals
-        with open(filename, "r") as fh:
-            exec(fh.read()+"\n", globals, locals)
 
 
 class safe_monitor:
@@ -93,7 +77,7 @@ to the underlying :class:`Application`.'''
             pass
         self.app.worker_task(self)
 
-    def configure_logging(self, config = None):
+    def configure_logging(self, config=None):
         # Delegate to application
         self.app.configure_logging(config = config)
         self.loglevel = self.app.loglevel
@@ -370,8 +354,7 @@ These are the most important facts about a pulsar :class:`Application`
             actor = get_actor()
         if not self.mid and (not actor or actor.is_arbiter()):
             # Add events
-            events = {'on_start': Deferred(), 'on_stop': Deferred()}
-            self.local['events'] = events
+            self.local.events = {'on_start': Deferred(), 'on_stop': Deferred()}
             self.configure_logging()
             if self.on_config() is not False:
                 arbiter = pulsar.arbiter(self.cfg.daemon)
@@ -406,7 +389,7 @@ These are the most important facts about a pulsar :class:`Application`
 
     @property
     def events(self):
-        return self.local.get('events')
+        return self.local.events
     
     def __repr__(self):
         return self.name
@@ -417,8 +400,8 @@ These are the most important facts about a pulsar :class:`Application`
     @property
     def ioqueue(self):
         if 'queue' not in self.local:
-            self.local['queue'] = self.get_ioqueue()
-        return self.local['queue']
+            self.local.queue = self.get_ioqueue()
+        return self.local.queue
 
     def handler(self):
         '''Returns the callable application handler which is stored in
@@ -501,9 +484,11 @@ The parameters overrriding order is the following:
                                  self.config_options_exclude)
         overrides = {}
         specials = set()
-        # get the actor if available
+        # get the actor if available and override default cfg values with those
+        # from the actor
         actor = get_actor()
         if actor and actor.running:
+            # actor available and running. unless argv is set, skip parsing
             if argv is None:
                 parse_console = False
             for k, v in actor.cfg.items():
@@ -522,47 +507,22 @@ The parameters overrriding order is the following:
                     self.cfg.set(k, v)
                     self.cfg.settings[k].default = v
                 except AttributeError:
-                    if not self.add_to_overrides(k,v,overrides):
+                    if not self.add_to_overrides(k, v, overrides):
                         setattr(self,k,v)
-        try:
-            config = self.cfg.config
-        except AttributeError:
-            config = None
         # parse console args
         if parse_console:
             parser = self.cfg.parser()
             opts = parser.parse_args(argv)
-            try:
-                config = opts.config or config
-            except AttributeError:
-                config = None
+            config = getattr(opts, 'config', None)
+            if config is not None and self.cfg.config:
+                self.cfg.config = config
         else:
             parser, opts = None, None
+        #
         # Load up the config file if its found.
-        if config and os.path.exists(config):
-            cfg = {}
-            try:
-                execfile(config, cfg, cfg)
-            except Exception:
-                raise RuntimeError("Failed to read config file: %s" % config)
-            for k, v in cfg.items():
-                # Ignore unknown names
-                if k not in self.cfg.settings:
-                    self.add_to_overrides(k, v, overrides)
-                else:
-                    try:
-                        self.cfg.set(k.lower(), v)
-                    except:
-                        sys.stderr.write("Invalid value for %s: %s\n\n"\
-                                          % (k, v))
-                        raise
-                    else:
-                        if isfunction(v):
-                            if v.__name__ in globals():
-                                v = globals()[v.__name__]
-                                self.cfg.set(k.lower(), v)
-                            else:
-                                globals()[v.__name__] = v
+        for k, v in self.cfg.import_from_module():
+            self.add_to_overrides(k, v, overrides)
+        #
         # Update the configuration with any command line settings.
         if opts:
             for k, v in opts.__dict__.items():

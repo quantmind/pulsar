@@ -207,11 +207,12 @@ invocation of the application.
         return self.write
 
     def write(self, data):
+        '''The write function required by WSGI specification.'''
         head = self.send_headers(force=data)
-        if head is not None:
-            self.connection.write((head,))
+        if head:
+            self.connection.write(head)
         if data:
-            self.connection.write((data,))
+            self.connection.write(data)
 
     def __iter__(self):
         MAX_CHUNK = self.MAX_CHUNK

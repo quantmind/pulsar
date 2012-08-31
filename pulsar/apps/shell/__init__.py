@@ -109,7 +109,7 @@ class PulsarShell(pulsar.Application):
     
     @property
     def console(self):
-        return self.local['console']
+        return self.local.console
     
     def handler(self):
         imported_objects = {'pshell': self,
@@ -127,7 +127,7 @@ class PulsarShell(pulsar.Application):
             import rlcompleter
             readline.set_completer(rlcompleter.Completer(imported_objects).complete)
             readline.parse_and_bind("tab:complete")
-        self.local['console'] = InteractiveConsole(imported_objects)
+        self.local.console = InteractiveConsole(imported_objects)
         self.console.setup()
         return self
 

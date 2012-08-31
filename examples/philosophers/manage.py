@@ -103,58 +103,59 @@ class DiningPhilosophers(pulsar.Application):
     def worker_task(self, philosopher):
         # Task performed at each loop in the philosopher I/O loop
         local = philosopher.local
-        eaten = local.get('eaten', 0)
-        forks = local['forks']
-        started_waiting = philosopher.local.get('started_waiting', 0)
+        eaten = local.eaten or 0
+        forks = local.forks
+        started_waiting = local.started_waiting or 0
         if forks:
             max_eat_period = 2*self.cfg.eating_period
             if len(forks) == 2:
-                local['thinking'] = 0
+                local.thinking = 0
                 eaten += 1
-                philosopher.log.info('Eating... So far %s times', eaten)
+                philosopher.log.info("%s eating... So far %s times",
+                                     philosopher.name, eaten)
                 try:
                     time.sleep(max_eat_period*random.random())
                 except IOError:
                     pass
-                local['eaten'] = eaten
-                philosopher.log.debug('Eaten %s times.', eaten)
+                local.eaten = eaten
                 self.release_forks(philosopher)
             elif len(forks) == 1:
                 waiting_period = 2*self.cfg.waiting_period*random.random()
                 if started_waiting == 0:
-                    local['started_waiting'] = time.time()
+                    local.started_waiting = time.time()
                 elif time.time() - started_waiting > waiting_period:
                     self.release_forks(philosopher)
                 else:
                     self.check_forks(philosopher)
             elif len(forks) > 2:
-                philosopher.log.critical('I have more than 2 forks!!!')
+                philosopher.log.critical('%s has more than 2 forks!!!',
+                                         philosopher.name)
                 self.release_forks(philosopher)
         else:
-            thinking = local.get('thinking', 0)
+            thinking = local.thinking or 0
             if not thinking:
-                philosopher.log.warn('Thinking...')
-            local['thinking'] = thinking + 1
+                philosopher.log.warn('%s thinking...', philosopher.name)
+            local.thinking = thinking + 1
             self.check_forks(philosopher)
         
     def check_forks(self, philosopher):
         '''The philosopher has less than two forks. Check if forks are
 available.'''
-        right_fork = philosopher.local['number']
+        right_fork = philosopher.local.number
         philosopher.send(philosopher.monitor, 'pickup_fork', right_fork)\
                    .add_callback_args(self.got_fork, philosopher)
     
     def release_forks(self, philosopher):
-        forks = philosopher.local['forks']
-        philosopher.local['forks'] = []
-        philosopher.local['started_waiting'] = 0
+        forks = philosopher.local.forks
+        philosopher.local.forks = []
+        philosopher.local.started_waiting = 0
         for fork in forks:
             philosopher.log.debug('Putting down fork %s', fork)
             philosopher.send(philosopher.monitor, 'putdown_fork', fork)
     
     def got_fork(self, fork, philosopher):
         if fork:
-            forks = philosopher.local['forks']
+            forks = philosopher.local.forks
             if fork in forks:
                 philosopher.log.error('Got fork %s which I already have' % fork)
             else:

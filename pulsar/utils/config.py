@@ -19,6 +19,7 @@ from pulsar import __version__, SERVER_NAME
 from . import system
 from .httpurl import is_string_or_native_string, to_string, to_bytes,\
                         iteritems
+from .importer import import_system_file
 
 
 __all__ = ['Config',
@@ -152,10 +153,12 @@ attribute by exposing the :attr:`Setting.name` as attribute.
     Dictionary of all :class:`Settings` instances available. The
     keys are given by the :attr:`Setting.name` attribute.
 '''
+    exclude_from_config = set(('config',))
+    
     def __init__(self, description=None, epilog=None,
                  version=None, app=None, include=None,
                  exclude=None):
-        self.settings = make_settings(app, include,exclude)
+        self.settings = make_settings(app, include, exclude)
         self.description = description or 'Pulsar server'
         self.epilog = epilog or 'Have fun!'
         self.version = version or __version__
@@ -219,6 +222,29 @@ settings via the :meth:`Setting.add_argument`.
             setts[k].add_argument(parser)
         return parser
 
+    def import_from_module(self, mod=None):
+        if mod:
+            self.set('config', mod)
+        try:
+            mod = import_system_file(self.config)
+        except Exception as e:
+            raise RuntimeError('Failed to read config file "%s". %s' %\
+                               (self.config, e))
+        unknowns = []
+        if mod:
+            for k in dir(mod):
+                # Skip private functions and attributes
+                kl = k.lower()
+                if k.startswith('_') or kl in self.exclude_from_config:
+                    continue
+                val = getattr(mod, k)
+                # add unknown names to list
+                if kl not in self.settings:
+                    unknowns.append((k, val))
+                else:
+                    self.set(kl, val)
+        return unknowns
+        
     def on_start(self):
         for sett in self.settings.values():
             sett.on_start()

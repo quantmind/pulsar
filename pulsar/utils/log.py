@@ -14,6 +14,7 @@ else:
     from logging.config import dictConfig
     from logging import NullHandler
     
+from .structures import AttributeDictionary
 
 SERVER_NAME = 'Pulsar'
 NOLOG = 100
@@ -90,7 +91,7 @@ removed when pickling the object'''
     @property
     def local(self):
         if not hasattr(self,'_local'):
-            self._local = {}
+            self._local = AttributeDictionary()
         return self._local
      
     def __getstate__(self):
@@ -105,8 +106,8 @@ def local_property(f):
     def _(self):
         local = self.local
         if name not in local:
-            local[name] = f(self)
-        return local[name]
+            setattr(local, name, f(self))
+        return getattr(local, name)
     return property(_, doc=f.__doc__)
     
     
@@ -115,8 +116,8 @@ class SynchronizedMixin(object):
     @property
     def lock(self):
         if '_lock' not in self.local:
-            self.local['_lock'] = Lock()
-        return self.local['_lock']
+            self.local._lock = Lock()
+        return self.local._lock
     
     @classmethod
     def make(cls, f):
@@ -208,13 +209,13 @@ and utilities for pickle.'''
         if not log:
             name = getattr(self, '_log_name', self.class_code)
             log = getLogger(name)
-        self.local['log'] = log
+        self.local.log = log
         self._log_name = log.name
         return log
         
     @property
     def log(self):
-        return self.local.get('log')      
+        return self.local.log      
     
     def __repr__(self):
         return self.class_code

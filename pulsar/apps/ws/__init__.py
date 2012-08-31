@@ -43,7 +43,7 @@ import hashlib
 from functools import partial
 
 import pulsar
-from pulsar import is_async, safe_async
+from pulsar import is_async, safe_async, is_failure
 from pulsar.utils.httpurl import ispy3k, to_bytes, native_str,\
                                  itervalues, parse_qs
 from pulsar.apps.wsgi import WsgiResponse, wsgi_iterator
@@ -171,7 +171,8 @@ http://www.w3.org/TR/websockets/ for details on the JavaScript interface.
                             ','.join(ws_extensions)))
         
         return self.handle(version, ws_protocols, ws_extensions,
-                           environ=environ, response_headers=headers)
+                           environ=environ, response_headers=headers,
+                           start_response=start_response)
         
     def challenge_response(self, key):
         sha1 = hashlib.sha1(to_bytes(key+self.WS_KEY))
@@ -245,7 +246,7 @@ class SocketIOMiddleware(GeneralWebSocket):
                 content_type = 'text/plain'
             return WsgiResponse(200,
                                 data.encode('utf-8'),
-                                content_type = content_type)
+                                content_type=content_type)
     
     
 class WS(WsgiResponse):
@@ -336,13 +337,16 @@ This script pops up an alert box that says "You said: Hello, world".
     # INTERNALS
     #################################################################
     def _generator(self):
-        socket = self.connection.socket
+        self.start()
+        sock = self.connection.sock
         yield self.as_frame(self.on_open())
         inbox = FrameParser(self.version)
-        while not socket.closed:
-            d = socket.read()
-            yield d
-            frame = inbox.execute(d.result)
+        while not sock.closed:
+            outcome = sock.read()
+            yield outcome
+            if is_failure(outcome.result):
+                break
+            frame = inbox.execute(outcome.result)
             msg = frame.msg
             if msg is not None:
                 opcode = frame.opcode

@@ -441,8 +441,8 @@ logging is configured, the :attr:`Actor.mailbox` is registered and the
             self._state = self.STARTING
             self.configure_logging()
             # wrap the logger
-            if self.arbiter:
-                self.setlog(log=LogSelf(self,self.log))
+            #if self.arbiter:
+            #    self.setlog(log=LogSelf(self,self.log))
             self._run()
 
     ############################################################################

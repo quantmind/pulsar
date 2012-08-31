@@ -1,10 +1,11 @@
 import sys
 from time import time
+from collections import deque
 
 from pulsar import CommandNotFound
 from pulsar.utils.log import LocalMixin
 
-from .defer import Deferred, is_async, make_async, iteritems, AlreadyCalledError
+from .defer import Deferred, is_async, make_async, AlreadyCalledError
 from .mailbox import mailbox, ActorMessage
 from .access import get_actor 
 from . import commands
@@ -99,7 +100,8 @@ action ``notify`` with parameter ``"hello there!"``.
 .. attribute:: timeout
 
     the value of the underlying :attr:`pulsar.Actor.timeout` attribute
-'''     
+'''
+    last_msg = None
     def __init__(self, impl):
         self.aid = impl.aid
         self.commands_set = impl.commands_set
@@ -133,21 +135,43 @@ When sending a message, first we check the ``sender`` outbox. If that is
 not available, we get the receiver ``inbox`` and hope it can carry the message.
 If there is no inbox either, abort the message passing and log a critical error.
 '''
-        mailbox = self.mailbox
         if sender is None:
             sender = get_actor()
-        if not mailbox:
+        if not self.mailbox:
             sender.log.critical('Cannot send a message to %s. No\
- mailbox available.' % self)
+ mailbox available.', self)
             return
         cmd = commands.get(command, self.commands_set)
         if not cmd:
             raise CommandNotFound(command)
         msg = ActorMessage(cmd.__name__, sender, self.aid, args, kwargs)
-        if cmd.ack:
-            return mailbox.execute(msg)
-        else:
-            return mailbox.send(msg)
+        cbk = self.queue(cmd, msg)
+        self.consume_next()
+        return cbk
+    
+    def queue(self, cmd, msg):
+        cbk = Deferred()
+        if self.local.queue is None:
+            self.local.queue = deque()
+        self.local.queue.append((cmd, msg, cbk))
+        cbk.addBoth(self.got_result)
+        return cbk
+        
+    def got_result(self, result):
+        # Got the result, ping the consumer so it can process
+        # requests from the queue
+        self.local.processing = False
+        self.consume_next()
+        return result
+    
+    def consume_next(self):
+        if not self.local.processing and self.local.queue:
+            self.local.processing = True
+            cmd, msg, cbk = self.local.queue.popleft()
+            send = self.mailbox.execute if cmd.ack else self.mailbox.send
+            msg = send(msg)
+            msg.addBoth(cbk.callback) if is_async(msg) else cbk.callback(msg)
+            return cbk
         
     def __repr__(self):
         return self.aid

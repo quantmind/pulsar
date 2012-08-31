@@ -33,10 +33,10 @@ X-Forwarded-For header. To perform more processing on headers you can add
     @property
     def http_client(self):
         if 'http' not in self.local:
-            self.local['http'] = HttpClient(timeout=self.timeout,
+            self.local.http = HttpClient(timeout=self.timeout,
                                             decompress=False,
                                             store_cookies=False)
-        return self.local['http']
+        return self.local.http
         
     def __call__(self, environ, start_response):
         uri = environ['RAW_URI']

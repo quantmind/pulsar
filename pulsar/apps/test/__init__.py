@@ -188,15 +188,15 @@ is a group of tests specified in a test class.
         '''Instance of :class:`TestRunner` driving the test case
 configuration and plugins.'''
         if 'runner' not in self.local:
-            result_class = getattr(self,'result_class',None)
+            result_class = getattr(self, 'result_class', None)
             r = unittest.TextTestRunner()
             stream = r.stream
             runner = TestRunner(self.plugins, stream,result_class)
             abort_message = runner.configure(self.cfg)
             if abort_message:
                 raise ExitTest(str(abort_message))
-            self.local['runner'] = runner
-        return self.local['runner']
+            self.local.runner = runner
+        return self.local.runner
 
     def on_config(self):
         #When config is available load the tests and check what type of
@@ -231,14 +231,14 @@ configuration and plugins.'''
                 print(tag)
             print('\n')
             return False
-        self.local['loader'] = loader
+        self.local.loader = loader
 
     def monitor_start(self, monitor):
         # When the monitor starts load all :class:`TestRequest` into the
         # in the :attr:`pulsar.Actor.ioqueue`.
-        loader = self.local['loader']
+        loader = self.local.loader
         tags = self.cfg.labels
-        self.local['tests'] = tests = list(loader.testclasses(tags))
+        self.local.tests = tests = list(loader.testclasses(tags))
         if tests:
             self.log.info('loaded %s test classes', len(tests))
             self.runner.on_start()
@@ -250,7 +250,7 @@ configuration and plugins.'''
 
     def monitor_task(self, monitor):
         if self._time_start is None:
-            tests = self.local['tests']
+            tests = self.local.tests
             self.log.info('sending %s test classes to the task queue',
                           len(tests))
             self._time_start = time.time()
@@ -261,7 +261,7 @@ configuration and plugins.'''
         #Check if we got all results
         runner = self.runner
         runner.add(result)
-        if runner.count == len(self.local['tests']):
+        if runner.count == len(self.local.tests):
             time_taken = time.time() - self._time_start
             runner.on_end()
             runner.printSummary(time_taken)

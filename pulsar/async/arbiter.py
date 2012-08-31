@@ -193,7 +193,7 @@ Users access the arbiter by the high level api::
         if pidfile is not None:
             p = Pidfile(pidfile)
             p.create(self.pid)
-            self.local['pidfile'] = p
+            self.local.pidfile = p
 
     def on_task(self):
         '''Override the :class:`Actor.on_task` callback to perform the

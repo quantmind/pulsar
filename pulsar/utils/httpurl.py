@@ -115,6 +115,14 @@ if ispy3k: # Python 3
             return s.decode(encoding or 'utf-8')
         else:
             return '%s' % s
+        
+    def execfile(filename, globals=None, locals=None):
+        if globals is None:
+            globals = sys._getframe(1).f_globals
+        if locals is None:
+            locals = sys._getframe(1).f_locals
+        with open(filename, "r") as fh:
+            exec(fh.read()+"\n", globals, locals)
 
 else:   # pragma : no cover
     import urllib2 as urllibr
@@ -935,6 +943,8 @@ this :class:`IOClientRead` can submit another read request.'''
 
     ## INTERNALS
     def _read(self, result=None):
+        if not self.sock:
+            return
         if self.async:
             r = self.sock.read()
             if not self.sock.closed:

@@ -297,7 +297,7 @@ which check for tasks to be scheduled.
 
 Check the :meth:`TaskQueue.monitor_task` callback
 for implementation.'''
-        return self.local.get('scheduler')
+        return self.local.scheduler
 
     def request_instance(self, worker, fd, request):
         return self.scheduler.get_task(request)
@@ -315,7 +315,7 @@ to check if the scheduler needs to perform a new run.'''
         if self.callable:
             self.callable()
         import_modules(self.cfg.tasks_path)
-        self.local['scheduler'] = Scheduler(self.task_class)
+        self.local.scheduler = Scheduler(self.task_class)
         return self
 
     def monitor_handler(self):

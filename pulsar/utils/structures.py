@@ -5,6 +5,8 @@ from collections import *
 
 if sys.version_info < (2,7):
     from .fallbacks._collections import *
+    
+from .httpurl import mapping_iterator
 
 
 def isgenerator(value):
@@ -140,3 +142,31 @@ where value is the last item in the list associated with the key.
             elem = elem.items()
         for key, val in elem:
             self.extend(key, aslist(val))
+
+
+class AttributeDictionary(object):
+    
+    def __contains__(self, name):
+        return name in self.__dict__
+    
+    def __len__(self):
+        return len(self.__dict__)
+    
+    def __iter__(self):
+        return iter(self.__dict__)
+    
+    def __getattr__(self, name):
+        return self.__dict__.get(name)
+    
+    def __setattr__(self, name, value):
+        self.__dict__[name] = value
+        
+    def update(self, iterable):
+        for name, value in mapping_iterator(iterable):
+            setattr(self, name, value)
+    
+    def all(self):
+        return self.__dict__
+    
+    def pop(self, name):
+        return self.__dict__.pop(name, None)

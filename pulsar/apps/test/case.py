@@ -67,7 +67,7 @@ following algorithm:
 * Run the class method ``tearDownClass`` of :attr:`testcls` if defined.
 '''
         # Reset the runner
-        worker.app.local.pop('runner', None)
+        worker.app.local.pop('runner')
         runner = worker.app.runner
         testcls = self.testcls
         testcls.tag = self.tag

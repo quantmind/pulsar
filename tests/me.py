@@ -6,11 +6,21 @@ from threading import current_thread
 import multiprocessing
 
 import pulsar
-from pulsar import defaults
+from pulsar import defaults, send
 from pulsar.apps.test import unittest, run_on_arbiter, TestSuite
 
 def simple_function(actor):
     return 'success'
+
+class wait:
+    
+    def __init__(self, period=0.5):
+        self.period = period
+        
+    def __call__(self, actor):
+        time.sleep(self.period)
+        return self.period
+
 
 class TestTestWorker(unittest.TestCase):
     
@@ -104,14 +114,13 @@ class TestTestWorker(unittest.TestCase):
         
     def testPingArbiter(self):
         worker = pulsar.get_actor()
-        c = worker.arbiter.mailbox
-        yield self.async.assertEqual(c.ping(), 'pong')
-        yield self.async.assertEqual(c.ping(), 'pong')
-        self.assertTrue(worker.send(worker.arbiter, 'notify', worker.info())>0)
-        yield self.async.assertEqual(c.ping(), 'pong')
-        c = worker.monitor.mailbox
-        yield self.async.assertEqual(c.ping(), 'pong')
-        yield self.async.assertEqual(c.echo('ciao'), 'ciao')
+        yield self.async.assertEqual(send('arbiter', 'ping'), 'pong')
+        yield self.async.assertEqual(send('arbiter', 'ping'), 'pong')
+        outcome = worker.send('arbiter', 'notify', worker.info())
+        yield outcome
+        self.assertTrue(outcome.result>0)
+        yield self.async.assertEqual(send('arbiter', 'ping'), 'pong')
+        yield self.async.assertEqual(send('arbiter', 'echo', 'ciao'), 'ciao')
         
     def test_run_on_arbiter(self):
         actor = pulsar.get_actor()
@@ -120,7 +129,16 @@ class TestTestWorker(unittest.TestCase):
         self.assertEqual(result.result, 'success')
         
     def test_bad_send(self):
+        # The target does not exists
         self.assertRaises(ValueError, pulsar.send, 'vcghdvchdgcvshcd', 'ping')
+        
+    def test_multiple_execute(self):
+        result1 = pulsar.send('arbiter', 'run', wait(0.3))
+        result2 = pulsar.send('arbiter', 'ping')
+        yield result1
+        yield result2
+        self.assertEqual(result1.result, 0.3)
+        self.assertEqual(result2.result, 'pong')
         
     #def testPickle(self):
     #    self.assertRaises(pickle.PicklingError, pickle.dumps,
