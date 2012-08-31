@@ -186,7 +186,7 @@ def log_failure(failure):
 class async:
     def __init__(self, max_errors=None, description=None):
          self.max_errors = max_errors
-         self.description = description or ''
+         self.description = description or 'async decorator for '
 
     def __call__(self, func):
         '''Asynchronous decorator for a function *func*'''
@@ -413,6 +413,8 @@ this point, :meth:`add_callback` will run the *callbacks* immediately.
                 self._runningCallbacks = True
                 try:
                     self.result = callback(self.result)
+                    if isgenerator(self.result):
+                        self.result = DeferredGenerator(self.result)
                 finally:
                     self._runningCallbacks = False
             except Exception as e:
@@ -462,6 +464,12 @@ The callback will occur once the generator has stopped
         self._consumed = 0
         self.errors = Failure()
         super(DeferredGenerator,self).__init__(description=description)
+        #
+        from pulsar import get_actor
+        actor = get_actor()
+        if actor.is_arbiter():
+            actor.log.warn('Entered deferred generator %s', self)
+        #
         self.loop = thread_loop()
         self._consume()
 
@@ -524,7 +532,14 @@ current thread.'''
 
     def conclude(self, last_result=None):
         # Conclude the generator and callback the listeners
+        from pulsar import get_actor
+        actor = get_actor()
+        if actor.is_arbiter():
+            actor.log.info('Consumed %s %s times', self, self._consumed)
         result = last_result if not self.errors else self.errors
+        self.gen = None
+        self.errors = None
+        self.loop = None
         return self.callback(result)
 
 

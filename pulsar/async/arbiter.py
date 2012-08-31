@@ -171,7 +171,6 @@ Users access the arbiter by the high level api::
     ############################################################################
     # OVERRIDE ACTOR HOOKS
     ############################################################################
-
     def on_init(self, daemonize=False, **kwargs):
         testing = kwargs.pop('__test_arbiter__',False)
         if not testing:
@@ -294,7 +293,7 @@ signal queue'''
         sig = None
         while True:
             try:
-                sig = self.SIG_QUEUE.get(timeout = self.SIG_TIMEOUT)
+                sig = self.SIG_QUEUE.get(timeout=self.SIG_TIMEOUT)
             except (Empty,IOError):
                 break
             if sig not in system.SIG_NAMES:
@@ -316,7 +315,7 @@ signal queue'''
                     handler()
         return sig
 
-    def signal(self, sig, frame = None):
+    def signal(self, sig, frame=None):
         signame = system.SIG_NAMES.get(sig, None)
         if signame:
             if self.ioloop.running():

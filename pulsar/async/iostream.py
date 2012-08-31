@@ -408,11 +408,9 @@ setup using the :meth:`set_close_callback` method."""
             # connection has been closed, so there can be no future events
             return
         if self._state is None:
-            # If the state was not set, we need to add the handler to the
-            # event loop
+            # If the state was not set add the handler to the event loop
             self._state = self.ERROR | state
-            self.ioloop.add_handler(
-                self, self._handle_events, self._state)
+            self.ioloop.add_handler(self, self._handle_events, self._state)
         elif not self._state & state:
             # update the handler
             self._state = self._state | state
@@ -634,9 +632,11 @@ A connection can handle several request/responses until it is closed.
         server.connections.add(self)
         self.handle()
 
+    @async(max_errors=1, description='Async client connection generator')
     def handle(self):
         # Kick off reading
-        self.sock.read().add_callback(self._stream_data)
+        while not self.closed:
+            yield self.sock.read().add_callback(self._got_data, self.close)
 
     def request(self, response=None):
         if self._current_request is None:
@@ -675,8 +675,7 @@ more data in the buffer is required.'''
         self.server.connections.discard(self)
 
     # Internal
-    @async()
-    def _stream_data(self, data=None):
+    def _got_data(self, data=None):
         # New data received. Keep on parsing and
         # writing responses until the parser returns nothing.
         # If the connection is still open reads the socket and
@@ -694,11 +693,10 @@ more data in the buffer is required.'''
                 if parsed_data:
                     self.received += 1
                     response = self.response_class(self, parsed_data)
-                    yield self.write(response)
-            # Read the socket
-            d = self.sock.read()
-            if d:
-                yield d.add_callback(self._stream_data, self.close)
+                    for d in self.write(response):
+                        yield d
+        else:
+            self.close()
 
     def write(self, response):
         sock = self.sock

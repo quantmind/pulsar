@@ -185,6 +185,8 @@ class MailboxResponse(AsyncResponse):
             else:
                 m = ActorMessage('callback', sender=receiver, args=(result,))
             yield self.parser.encode(m)
+        else:
+            yield b''
 
 
 class MailboxConnection(AsyncConnection):

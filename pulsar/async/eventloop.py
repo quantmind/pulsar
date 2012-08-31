@@ -286,7 +286,7 @@ so that it can perform its tasks at each event loop. Check the
 :meth:`pulsar.Actor` method.'''
         for task in self._loop_tasks:
             try:
-                task()
+                result = task()
                 #result = task()
                 #loop_deferred(result, self)
             except HaltServer:
