@@ -191,7 +191,7 @@ configuration and plugins.'''
             result_class = getattr(self, 'result_class', None)
             r = unittest.TextTestRunner()
             stream = r.stream
-            runner = TestRunner(self.plugins, stream,result_class)
+            runner = TestRunner(self.plugins, stream, result_class)
             abort_message = runner.configure(self.cfg)
             if abort_message:
                 raise ExitTest(str(abort_message))

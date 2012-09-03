@@ -74,7 +74,6 @@ following algorithm:
         inject_async_assert(testcls)
         testcls.cfg = worker.cfg
         all_tests = runner.loadTestsFromTestCase(testcls)
-
         if all_tests.countTestCases():
             skip_tests = getattr(testcls, "__unittest_skip__", False)
             should_stop = False
@@ -84,22 +83,18 @@ following algorithm:
                                             getattr(testcls,'setUpClass'))
                 yield outcome
                 should_stop = self.add_failure(test_cls, runner, outcome.result)
-
             if not should_stop:
                 # Loop over all test cases in class
                 for test in all_tests:
                     yield self.run_test(test, runner)
-
             test_cls = test_method(testcls, 'tearDownClass')
             if test_cls and not skip_tests:
                 outcome = run_test_function(testcls,getattr(testcls,
                                                         'tearDownClass'))
                 yield outcome
                 self.add_failure(test_cls, runner, outcome.result)
-
             # Clear errors
             yield CLEAR_ERRORS
-
         # send runner result to monitor
         yield worker.send(worker.monitor, 'test_result', testcls.tag,
                           testcls, runner.result)

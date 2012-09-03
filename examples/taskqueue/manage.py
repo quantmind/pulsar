@@ -19,6 +19,7 @@ try:
 except ImportError:
     import sys
     sys.path.append('../../')
+    import pulsar
 from pulsar.apps import rpc, tasks, wsgi
 
 TASK_PATHS = ['sampletasks.*']

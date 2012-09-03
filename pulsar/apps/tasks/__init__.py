@@ -210,10 +210,10 @@ be consumed by the workers.'''
     def on_event(self, worker, fd, request):
         request = self.request_instance(worker, fd, request)
         if request is not None:
-            c = worker.get('current_requests')
+            c = self.local.current_requests
             if c is None:
                 c = []
-                worker.set('current_requests', c)
+                self.local.current_requests = c
             c.append(request)
             yield safe_async(request.start, args=(worker,))
             try:

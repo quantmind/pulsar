@@ -79,7 +79,7 @@ to the underlying :class:`Application`.'''
 
     def configure_logging(self, config=None):
         # Delegate to application
-        self.app.configure_logging(config = config)
+        self.app.configure_logging(config=config)
         self.loglevel = self.app.loglevel
         self.setlog()
 
@@ -102,6 +102,10 @@ It provides two new methods inherited from :class:`ApplicationHandlerMixin`.
     The application handler obtained from :meth:`Application.handler`.
 
 """
+    @property
+    def class_code(self):
+        return 'worker %s' % self.app.name
+    
     def on_init(self, app=None, **kwargs):
         self.app = app
         self.cfg = app.cfg
@@ -141,8 +145,10 @@ class ApplicationMonitor(ApplicationHandlerMixin, Monitor):
 pulsar subclasses of :class:`Application`.
 '''
     # For logging name
-    _class_code = 'appmonitor'
-
+    @property
+    def class_code(self):
+        return 'monitor %s' % self.app.name
+    
     def on_init(self, app=None, **kwargs):
         self.app = app
         self.cfg = app.cfg

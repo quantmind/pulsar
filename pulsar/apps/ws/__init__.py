@@ -45,11 +45,12 @@ from functools import partial
 import pulsar
 from pulsar import is_async, safe_async, is_failure, AsyncResponse
 from pulsar.utils.httpurl import ispy3k, to_bytes, native_str,\
-                                 itervalues, parse_qs
+                                 itervalues, parse_qs, WEBSOCKET_VERSION
 from pulsar.apps.wsgi import WsgiResponse, wsgi_iterator
 
 from .frame import *
 
+WEBSOCKET_GUID = '258EAFA5-E914-47DA-95CA-C5AB0DC85B11'
 
 class GeneralWebSocket(object):
     namespace = ''
@@ -76,12 +77,41 @@ class GeneralWebSocket(object):
             return
         return self.handle_handshake(environ, start_response)
     
-    def handle_handshake(self, environ, start_response, client = None):
+    def handle_handshake(self, environ, start_response):
         raise NotImplementedError()
     
-    def get_parser(self):
-        raise NotImplementedError()
-            
+    def upgrade_connection(self, environ, version):
+        '''Upgrade the connection so it handles the websocket protocol.'''
+        connection = environ['pulsar.connection']
+        connection.environ = environ
+        #connection.read_timeout = 0
+        connection.parser = FrameParser(version)
+        connection.response_class = self.on_message
+        
+    def on_message(self, connection, frame):
+        rframe = frame.on_received()
+        if rframe:
+            yield rframe.msg
+        elif frame.is_close:
+            # Close
+            connection.close()
+        elif frame.is_data:
+            yield self.as_frame(connection,
+                                 self.handle.on_message(
+                                            connection.environ, frame.body))
+
+    def as_frame(self, connection, body):
+        if body:
+            if is_async(body):
+                return body.add_callback(lambda b: self.as_frame(connection, b))
+            elif not isinstance(body, Frame):
+                # If the body is not a frame, build a final frame from it.
+                body = Frame(body, version=connection.parser.version,
+                             final=True)
+            return body.msg
+        else:
+            return b''
+        
     
 class WebSocket(GeneralWebSocket):
     """A :ref:`WSGI <apps-wsgi>` middleware for serving web socket applications.
@@ -106,34 +136,38 @@ a valid :class:`WebSocket` instance initialise as follow::
 
 See http://tools.ietf.org/html/rfc6455 for the websocket server protocol and
 http://www.w3.org/TR/websockets/ for details on the JavaScript interface.
-    """
-    VERSIONS = ('8','13')
-    WS_KEY = '258EAFA5-E914-47DA-95CA-C5AB0DC85B11'
-    #magic string
-        
+    """        
     def handle_handshake(self, environ, start_response):
         connections = environ.get("HTTP_CONNECTION", '').lower()\
                                     .replace(' ','').split(',')
         if environ.get("HTTP_UPGRADE", '').lower() != "websocket" or \
            'upgrade' not in connections:
             return
-        
         if environ['REQUEST_METHOD'].upper() != 'GET':
-            raise WebSocketError(400, reason='Method is not GET')
-        
+            raise WebSocketError('Method is not GET', status=400)
         key = environ.get('HTTP_SEC_WEBSOCKET_KEY')
         if key:
-            ws_key = base64.b64decode(key.encode('latin-1'))
+            try:
+                ws_key = base64.b64decode(key.encode('latin-1'))
+            except:
+                ws_key = ''
             if len(ws_key) != 16:
-                raise WebSocketError(400, "WebSocket key's length is invalid")
+                raise WebSocketError("WebSocket key's length is invalid",
+                                     status=400)
         else:
-            raise WebSocketError(400, 'Not a valid HyBi WebSocket request. '
-                                      'Missing Sec-Websocket-Key header.')
-        
+            raise WebSocketError('Not a valid HyBi WebSocket request. '
+                                 'Missing Sec-Websocket-Key header.',
+                                 status=400)
         version = environ.get('HTTP_SEC_WEBSOCKET_VERSION')
-        if version not in self.VERSIONS:
+        if version:
+            try:
+                version = int(version)
+            except:
+                pass
+        if version not in WEBSOCKET_VERSION:
             raise WebSocketError('Unsupported WebSocket version {0}'\
-                                 .format(version))
+                                 .format(version),
+                                 status=400)
         # Collect supported subprotocols
         subprotocols = environ.get('HTTP_SEC_WEBSOCKET_PROTOCOL')
         ws_protocols = []
@@ -164,18 +198,13 @@ http://www.w3.org/TR/websockets/ for details on the JavaScript interface.
             headers.append(('Sec-WebSocket-Extensions',
                             ','.join(ws_extensions)))
         self.handle.on_handshake(environ, headers)
-        WebSocketResponse(self.handle, version, environ, headers)
-        response = WsgiResponse(101,
-                                content=self.yieldzero(),
-                                response_headers=headers)
+        self.upgrade_connection(environ, version)
+        response = WsgiResponse(101, content=(), response_headers=headers)
         response(environ, start_response)
         return response
         
-    def yieldzero(self):
-        yield b''
-        
     def challenge_response(self, key):
-        sha1 = hashlib.sha1(to_bytes(key+self.WS_KEY))
+        sha1 = hashlib.sha1(to_bytes(key+WEBSOCKET_GUID))
         return native_str(base64.b64encode(sha1.digest()))
     
     def get_parser(self):
@@ -249,8 +278,8 @@ class SocketIOMiddleware(GeneralWebSocket):
                                 content_type=content_type)
     
 
-class WebSocketResponse(AsyncResponse):
-    '''A web socket live connection. An instance of this calss maintain
+class WS(object):
+    '''A web socket handler. An instance of this class maintain
 and open socket with a remote web-socket and exchange messages in
 an asynchronous fashion. A :class:`WS` is initialized by :class:`WebSocket`
 middleware at every new web-socket connection.
@@ -292,58 +321,7 @@ This script pops up an alert box that says "You said: Hello, world".
 .. attribute: extensions
 
     list of extensions from the handshake
-'''
-    def __init__(self, handle, version, environ, headers):
-        self.handle = handle
-        self.environ = environ
-        self.headers = headers
-        #Upgrade connection parser and response_class
-        connection = environ['pulsar.connection']
-        connection.parser = FrameParser(version)
-        connection.response_class = self
-        
-    @property
-    def parser(self):
-        return self._parser
-    
-    def __call__(self, connection, frame):
-        rframe = frame.on_received()
-        if rframe:
-            return rframe.msg
-        elif frame.is_close:
-            # Close
-            return self.close()
-        elif frame.is_data:
-            return self.as_frame(self.handle.on_message(
-                                                self.environ, frame.body))
-        
-    @property
-    def client_terminated(self):
-        return self.stream.closed
-    
-    def write_message(self, message, binary=False):
-        """Sends the given message to the client of this Web Socket."""
-        self.out_frames.append(frame(version=self.version,
-                                     message=to_bytes(message),
-                                     binary=binary))
-    
-    def close(self):
-        """Closes the WebSocket connection."""
-        msg = frame_close(version=self.version)
-        self.stream.write(frame).add_callback(self._abort)
-        self._started_closing_handshake = True
-                    
-    def as_frame(self, body):
-        if body:
-            if is_async(body):
-                return body.add_callback(self.as_frame)
-            elif not isinstance(body, Frame):
-                body = Frame(body, version=self.version)
-            return body.msg
-
-
-class WS(object):
-    
+'''    
     def on_handshake(self, environ, headers):
         pass
     
@@ -360,4 +338,8 @@ class WS(object):
     def on_close(self, environ):
         """Invoked when the WebSocket is closed."""
         pass
+    
+    def close(self, environ, msg=None):
+        connection = environ['pulsar.connection']
+        return Frame.close(msg, version=connection.parser.version)
     

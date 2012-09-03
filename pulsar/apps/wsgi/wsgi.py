@@ -221,7 +221,8 @@ This is usually `True` if a generator is passed to the response object."""
         headers = self.headers
         if has_empty_content(self.status_code, self.method):
             headers.pop('content-type', None)
-        if not self.is_streamed:
+            headers.pop('content-length', None)
+        elif not self.is_streamed:
             cl = 0
             for c in self.content:
                 cl += len(c)
@@ -295,11 +296,15 @@ def handle_http_error(connection, response, error=None, encoding='utf-8'):
 '''
     response.status_code = getattr(error, 'status', 500)
     msg = error_messages.get(response.status_code, '')
+    path = ''
+    if response.environ:
+        path = ' @ path %s' % response.environ.get('PATH_INFO','/')
     if response.status_code == 500:
-        connection.log.critical('Unhandled exception during WSGI response',
-                                exc_info=True)
+        connection.log.critical('Unhandled exception during WSGI response %s',
+                                path, exc_info=True)
     else:
-        connection.log.info('WSGI %s status code', response.status_code)
+        connection.log.info('WSGI %s status code %s',
+                            response.status_code, path)
     if has_empty_content(response.status_code):
         msg = ''
         response.content_type = None

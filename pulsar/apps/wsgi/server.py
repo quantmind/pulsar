@@ -197,7 +197,6 @@ invocation of the application.
         elif self._status:
             # Headers already sent. Raise error
             raise pulsar.HttpException("Response headers already sent!")
-
         self._status = status
         if type(response_headers) is not list:
             raise TypeError("Headers must be a list of name/value tuples")
@@ -235,13 +234,6 @@ invocation of the application.
                         yield b
                 else:
                     yield b''
-            if self.chunked:
-                head = self.send_headers(force=True)
-                if head is not None:
-                    yield head
-                if buffer:
-                    yield chunk_encoding(buffer)
-                yield chunk_encoding(b'')
             keep_alive = self.keep_alive
         except Exception as e:
             keep_alive = False
@@ -252,19 +244,25 @@ invocation of the application.
             else:
                 # Create the error response
                 resp = WsgiResponse(
-                            content_type=self.environ.get('CONTENT_TYPE'))
+                            content_type=self.environ.get('CONTENT_TYPE'),
+                            environ=self.environ)
                 data = conn.handle_http_error(resp, e)
                 for b in data(self.environ, self.start_response,
                               exc_info=exc_info):
-                    head = self.send_headers(force=b)
+                    head = self.send_headers(force=True)
                     if head is not None:
                         yield head
                     yield b
-        #
-        # make sure we send the headers
-        head = self.send_headers(force=True)
-        if head is not None:
-            yield head
+        else:
+            # make sure we send the headers
+            head = self.send_headers(force=True)
+            if head is not None:
+                yield head
+            if self.chunked:
+                if buffer:
+                    yield chunk_encoding(buffer)
+                yield chunk_encoding(b'')
+        # close connection if required
         if not keep_alive:
             self.connection.close()
 

@@ -11,13 +11,11 @@ import sys
 import json
 from random import random
 import time
-
-p = lambda x : os.path.split(x)[0]
-path = p(p(p(os.path.abspath(__file__))))
-if path not in sys.path:
-    sys.path.insert(0,path)
-
-import pulsar
+try:
+    import pulsar
+except ImportError:
+    sys.path.append('../../')
+    import pulsar
 from pulsar.apps import ws, wsgi
 from pulsar.utils.httpurl import range
 
@@ -25,7 +23,7 @@ from pulsar.utils.httpurl import range
 class handle(ws.WS):
     
     def on_message(self, environ, msg):
-        path = response.environ.get('PATH_INFO')
+        path = environ.get('PATH_INFO')
         if path == '/echo':
             return msg
         elif path == '/data':

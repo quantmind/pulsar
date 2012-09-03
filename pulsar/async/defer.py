@@ -512,14 +512,9 @@ current thread.'''
                 # will resume at the next event loop.
                 self.loop.add_callback(self._consume, wake=False)
                 return self
-            else:
-                # Convert to an asynchronous instance only if needed
-                result = maybe_async(result)
+            result = async_object(maybe_async(result))
             if is_async(result):
-                result = result.result_or_self()
-                # The result is an asynchronous instance
-                if is_async(result):
-                    return result.addBoth(self._consume_in_thread)
+                return result.addBoth(self._consume_in_thread)
             if result == CLEAR_ERRORS:
                 self.errors.clear()
                 result = None

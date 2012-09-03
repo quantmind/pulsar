@@ -284,6 +284,7 @@ def is_succesful(status):
     return status >= 200 and status < 300
 
 ####################################################    HTTP HEADERS
+WEBSOCKET_VERSION = (8, 13)
 HEADER_FIELDS = {'general': frozenset(('Cache-Control', 'Connection', 'Date',
                                        'Pragma', 'Trailer','Transfer-Encoding',
                                        'Upgrade', 'Sec-WebSocket-Extensions',
@@ -437,7 +438,7 @@ rather than replaced."""
 
     def __setitem__(self, key, value):
         key = header_field(key, self.all_headers)
-        if key and value:
+        if key and value is not None:
             if not isinstance(value, list):
                 value = [value]
             self._headers[key] = value
@@ -661,7 +662,7 @@ OTHER DEALINGS IN THE SOFTWARE.'''
         if length == 0:
             self.__on_message_complete = True
             return length
-
+        data = bytes(data)
         # start to parse
         nb_parsed = 0
         while True:
@@ -1196,14 +1197,11 @@ http://www.ietf.org/rfc/rfc2616.txt
         self.query, self.fragment = urlparse(url)
         self.full_url = self._get_full_url()
         self.timeout = timeout
-        self.headers = Headers(kind='client')
+        self.headers = client.get_headers(self, headers)
         self.hooks = hooks
         self.history = history
         self.max_redirects = max_redirects
         self.allow_redirects = allow_redirects
-        if headers:
-            for key, value in headers:
-                self.add_header(key, value)
         self.charset = charset or self.default_charset
         self.method = method.upper()
         self.data = data if data is not None else {}
@@ -1473,10 +1471,25 @@ into an SSL socket.
                                'cert_reqs': cert_reqs,
                                'ca_certs': ca_certs}
 
-    def get_headers(self, headers=None):
+    @property
+    def websocket_key(self):
+        if not hasattr(self, '_websocket_key'):
+            self._websocket_key = native_str(b64encode(os.urandom(16)),
+                                             'latin-1')
+        return self._websocket_key
+            
+    def get_headers(self, request, headers=None):
         '''Returns a :class:`Header` obtained from combining
 :attr:`headers` with *headers*.'''
-        d = self.headers.copy()
+        if request.type in ('ws','wss'):
+            d = Headers((('Connection', 'Upgrade'),
+                         ('Upgrade', 'websocket'),
+                         ('Sec-WebSocket-Version', str(max(WEBSOCKET_VERSION))),
+                         ('Sec-WebSocket-Key', self.websocket_key),
+                         ('user-agent', self.client_version)),
+                         kind='client')
+        else:
+            d = self.headers.copy()
         if headers:
             d.update(headers)
         return d
@@ -1559,8 +1572,6 @@ a :class:`HttpResponse` object.
 :param method: optional request method for the :class:`HttpRequest`.
 :param hooks:
 '''
-        # Build default headers for this client
-        headers = self.get_headers(headers)
         if hooks:
             chooks = dict(((e, copy(h)) for e, h in iteritems(self.hooks)))
             for e, h in iteritems(hooks):

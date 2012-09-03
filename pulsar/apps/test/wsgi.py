@@ -64,7 +64,7 @@ class TestHttpResponse(HttpResponse):
         # Create the Dummy test connection
         c = DummyHttpServerConnection(self)
         # Get environment
-        environ = server.wsgi_environ(c)
+        environ = server.wsgi_environ(c, c.parser)
         # Create the Server response
         self.server_response = server.HttpResponse(c, environ)
         # Write the response

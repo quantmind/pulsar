@@ -30,24 +30,23 @@ else: # pragma : nocover
     def is_text_data(data):
         return True
 
-
 def int2bytes(*ints):
     '''convert a series of integers into bytes'''
     return b''.join((i2b(i) for i in ints))
-
-    
-class WebSocketError(pulsar.HttpException):
-    pass
-
-
-class WebSocketProtocolError(WebSocketError):
-    pass
 
 def get_version(version):
     version = int(version or DEFAULT_VERSION)
     if version not in SUPPORTED_VERSIONS:
         raise WebSocketProtocolError('Version %s not supported.' % version)
     return version
+
+
+class WebSocketError(pulsar.HttpException):
+    pass
+
+
+class WebSocketProtocolError(WebSocketError):
+    pass
     
     
 class Frame(object):

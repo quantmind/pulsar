@@ -549,7 +549,7 @@ if *proxy* is not a class:`ActorProxy` instance raise an exception.'''
         self._linked_actors[proxy.aid] = proxy
         if proxy.aid == self.arbiter.aid:
             self.requestloop.ready = True
-        # If the proxy is the actor monitor, add allso the arbiter
+        # If the proxy is the actor monitor, add the arbiter
         # if the monitor is not the arbiter itself.
         # This last check is crucial in order to recursive call
         # causing stack overflow!
@@ -561,7 +561,6 @@ if *proxy* is not a class:`ActorProxy` instance raise an exception.'''
         '''Initialise the runner.'''
         if not self.isprocess():
             return
-
         random.seed()
         proc_name = self.DEF_PROC_NAME
         cfg = self.cfg

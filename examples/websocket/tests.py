@@ -25,6 +25,7 @@ class WebSocketTest(unittest.TestCase):
         yield outcome
         cls.app = outcome.result
         cls.uri = 'http://{0}:{1}'.format(*cls.app.address)
+        cls.ws_uri = 'ws://{0}:{1}/data'.format(*cls.app.address)
         
     @classmethod
     def tearDownClass(cls):
@@ -48,12 +49,31 @@ class WebSocketTest(unittest.TestCase):
         self.assertEqual(v, "s3pPLMBiTxaQ9kYGzzhZRbK+xOo=")
         
     def testUpgrade(self):
-        c = HttpClient(timeout=None)
-        outcome = c.get('%s/data' % self.uri)
+        c = HttpClient()
+        outcome = c.get(self.ws_uri)
         yield outcome
         response = outcome.result
-        self.assertEqual(response.status_code, 200)
-    
+        self.assertEqual(response.status_code, 101)
+        #
+        outcome = c.post(self.ws_uri)
+        yield outcome
+        response = outcome.result
+        self.assertEqual(response.status_code, 400)
+        #
+        outcome = c.get(self.ws_uri, headers=[('Sec-Websocket-Key','')])
+        yield outcome
+        response = outcome.result
+        self.assertEqual(response.status_code, 400)
+        #
+        outcome = c.get(self.ws_uri, headers=[('Sec-Websocket-Key','bla')])
+        yield outcome
+        response = outcome.result
+        self.assertEqual(response.status_code, 400)
+        #
+        outcome = c.get(self.ws_uri, headers=[('Sec-Websocket-version','xxx')])
+        yield outcome
+        response = outcome.result
+        self.assertEqual(response.status_code, 400)
     
 class FrameTest(unittest.TestCase):
     
