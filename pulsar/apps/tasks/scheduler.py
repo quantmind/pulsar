@@ -170,8 +170,8 @@ value ``now`` can be passed.'''
                     self.queue_task(monitor, entry.name)
                 if next_time_to_run:
                     remaining_times.append(next_time_to_run)
-        except RuntimeError:
-            pass
+        except:
+            self.log.error('Error in task scheduler', exc_info=True)
         self.next_run = now or datetime.now()
         if remaining_times:
             self.next_run += timedelta(seconds = min(remaining_times))
@@ -196,9 +196,13 @@ value ``now`` can be passed.'''
             if name not in registry:
                 continue
             job = registry[name]
+            can_overlap = job.can_overlap
+            if hasattr(can_overlap, '__call__'):
+                can_overlap = 'maybe'
             d = {'doc':job.__doc__,
                  'doc_syntax':job.doc_syntax,
-                 'type':job.type}
+                 'type':job.type,
+                 'can_overlap': can_overlap}
             if name in self.entries:
                 entry = self.entries[name]
                 _,next_time_to_run = self.next_scheduled((name,))
@@ -237,10 +241,10 @@ value ``now`` can be passed.'''
             task = id
         else:
             task = self.task_class.get_task(self, id)
-        if task and remove:
-            if task.done():
-                self.delete_tasks([task.id])
-        return task
+        if task and task.done() and remove:
+            self.delete_tasks([task.id])
+        else:
+            return task
     
     def save_task(self, task):
         return self.task_class.save_task(self, task)

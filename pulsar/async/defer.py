@@ -514,6 +514,9 @@ current thread.'''
                 return self
             result = async_object(maybe_async(result))
             if is_async(result):
+                # The result is asynchronous and it is not ready yet.
+                # We pause the generator and attach a callback to continue
+                # on the same thread.
                 return result.addBoth(self._consume_in_thread)
             if result == CLEAR_ERRORS:
                 self.errors.clear()
