@@ -27,13 +27,15 @@ default_logger = logging.getLogger('pulsar.apps.wsgi')
 def wsgi_iterator(gen, encoding=None):
     encoding = encoding or 'utf-8'
     for data in gen:
-        if data is NOT_DONE:
-            yield b''
         data = async_object(data)
         while is_async(data):
             yield b''
             data = async_object(data)
-        if is_failure(data):
+        if data is NOT_DONE:
+            yield b''
+        elif data is None:
+            continue
+        elif is_failure(data):
             log_failure(data)
         else:
             if isinstance(data, bytes):
@@ -218,7 +220,7 @@ This is usually `True` if a generator is passed to the response object."""
     def get_headers(self):
         headers = self.headers
         if has_empty_content(self.status_code, self.method):
-            headers.pop('content-type',None)
+            headers.pop('content-type', None)
         if not self.is_streamed:
             cl = 0
             for c in self.content:

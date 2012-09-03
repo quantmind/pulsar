@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 import array
 import os
-import struct
+from struct import pack, unpack
 from io import BytesIO
 
 import pulsar
@@ -12,16 +12,30 @@ __all__ = ['WebSocketError',
            'WebSocketProtocolError',
            'Frame',
            'FrameParser',
-           'frame',
-           'frame_ping',
-           'frame_close']
+           'i2b',
+           'int2bytes']
+
+DEFAULT_VERSION = 13
+SUPPORTED_VERSIONS = (DEFAULT_VERSION,)
 
 if ispy3k:
     i2b = lambda n : bytes((n,))
+    
+    def is_text_data(data):
+        return isinstance(data, str)
+            
 else: # pragma : nocover
     i2b = lambda n : chr(n)
+    
+    def is_text_data(data):
+        return True
 
 
+def int2bytes(*ints):
+    '''convert a series of integers into bytes'''
+    return b''.join((i2b(i) for i in ints))
+
+    
 class WebSocketError(pulsar.HttpException):
     pass
 
@@ -29,33 +43,18 @@ class WebSocketError(pulsar.HttpException):
 class WebSocketProtocolError(WebSocketError):
     pass
 
-
-def frame(version=None, message='', opcode=None, **kwargs):
-    '''Return a websocket :class:`Frame` instance.
+def get_version(version):
+    version = int(version or DEFAULT_VERSION)
+    if version not in SUPPORTED_VERSIONS:
+        raise WebSocketProtocolError('Version %s not supported.' % version)
+    return version
     
-:rtype: binary data'''
-    v = int(version or 13)
-    if v not in (8, 13):
-        raise WebSocketProtocolError('Version %s' % version)
-    if not opcode and message is not None:
-        if is_string(message):
-            message = to_bytes(message)
-            opcode = 0x1
-        else:
-            opcode = 0x2
-    return Frame(version, opcode, message, **kwargs)
     
-def frame_ping(version=None):
-    return frame(opcode=0xA, final=True)
-    
-def frame_close(version=None):
-    return frame(opcode=0x8, final=True)
-
-
 class Frame(object):
-    msg = None
-    def __init__(self, version, opcode=None, body=None, masking_key=None,
-                 final=False, rsv1=0, rsv2=0, rsv3=0):
+    __slots__ = ('fin', 'opcode', 'masking_key', 'rsv1', 'rsv2', 'rsv3',
+                 'msg', 'version', 'payload_length', 'body')
+    def __init__(self, message=None, opcode=None, version=None,
+                 masking_key=None, final=False, rsv1=0, rsv2=0, rsv3=0):
         """Implements the framing protocol as defined by hybi_
 specification supporting protocol version 13::
     
@@ -66,62 +65,68 @@ specification supporting protocol version 13::
     >>> f.parser.send(bytes[2])
     >>> f.parser.send(bytes[2:])
 """
+        self.version = get_version(version)
+        if opcode is None and message is not None:
+            opcode = 0x1 if is_text_data(message) else 0x2
+        message = to_bytes(message or b'')
+        self.payload_length = len(message)
+        if opcode is None:
+            raise WebSocketProtocolError('opcode not available')
         self.version = version
         self.opcode = opcode
+        if masking_key:
+            masking_key = to_bytes(masking_key)
+            if len(masking_key) != 4:
+                raise WebSocketProtocolError('Masking key must be 4 bytes long')
         self.masking_key = masking_key
         self.fin = 0x1 if final else 0
         self.rsv1 = rsv1
         self.rsv2 = rsv2
         self.rsv3 = rsv3
-        self.set_body(body)
+        self.body = message
+        self.msg = self.build_frame(message)
+        
+    @classmethod
+    def ping(cls, body=None, version=None):
+        return cls(body, 0x9, final=True, version=version)
+    
+    @classmethod
+    def pong(cls, body=None, version=None):
+        return cls(body, 0xA, final=True, version=version)
+    
+    @classmethod
+    def close(cls, body=None, version=None):
+        return cls(body, 0x8, final=True, version=version)
+    
+    @classmethod
+    def continuation(cls, body=None, **kwargs):
+        return cls(body, 0, **kwargs)
     
     @property
     def final(self):
         return bool(self.fin)
     
-    def on_complete(self, handler):
-        opcode = self.opcode
-        if opcode == 0x1:
-            # UTF-8 data
-            msg = self.body.decode("utf-8", "replace")
-            return handler.on_message(msg)
-        elif opcode == 0x2:
-            # Binary data
-            return handler.on_message(self.body)
-        elif opcode == 0x8:
-            # Close
-            return handler.close()
-        elif opcode == 0x9:
-            # Ping
-            return self.__class__(0xA,data,fin=True).msg
-        elif opcode == 0xA:
-            # Pong
-            pass
-        else:
-            return handler.abort()
+    @property
+    def masked(self):
+        return bool(self.masking_key)
     
-    def set_body(self, body):
-        self.body = body
-        self.payload_length = None
-        if body is not None:
-            self.payload_length = len(body)
-            if self.opcode:
-                self.msg = self._build()
+    @property
+    def is_data(self):
+        return self.opcode in (0x1, 0x2)
     
-    def is_complete(self):
-        return self.body is not None
+    @property
+    def is_close(self):
+        return self.opcode == 0x8
     
-    def _build(self):
-        """Builds a frame from the instance's attributes.
-        """
+    def on_received(self):
+        if self.opcode == 0x9:
+            return self.pong(self.body, self.version)
+    
+    def build_frame(self, message):
+        """Builds a frame from the instance's attributes."""
         header = BytesIO()
-
-        if self.fin > 0x1:
-            raise WebSocketProtocolError('FIN bit parameter must be 0 or 1')
-
         if 0x3 <= self.opcode <= 0x7 or 0xB <= self.opcode:
             raise WebSocketProtocolError('Opcode cannot be a reserved opcode')
-    
         ## +-+-+-+-+-------+
         ## |F|R|R|R| opcode|
         ## |I|S|S|S|  (4)  |
@@ -133,7 +138,6 @@ specification supporting protocol version 13::
                        | (self.rsv2 << 5)
                        | (self.rsv3 << 4)
                        | self.opcode)))
-
         ##                 +-+-------------+-------------------------------+
         ##                 |M| Payload len |    Extended payload length    |
         ##                 |A|     (7)     |             (16/63)           |
@@ -146,19 +150,17 @@ specification supporting protocol version 13::
             mask_bit = 1 << 7
         else:
             mask_bit = 0
-
         length = self.payload_length 
         if length < 126:
             header.write(i2b(mask_bit | length))
         elif length < (1 << 16):
             header.write(i2b(mask_bit | 126))
-            header.write(struct.pack('!H', length))
+            header.write(pack('!H', length))
         elif length < (1 << 63):
             header.write(i2b(mask_bit | 127))
-            header.write(struct.pack('!Q', length))
+            header.write(pack('!Q', length))
         else:
             raise WebSocketProtocolError('Frame too large')
-
         ## + - - - - - - - - - - - - - - - +-------------------------------+
         ## |                               |Masking-key, if MASK set to 1  |
         ## +-------------------------------+-------------------------------+
@@ -169,11 +171,10 @@ specification supporting protocol version 13::
         ## |                     Payload Data continued ...                |
         ## +---------------------------------------------------------------+
         if not self.masking_key:
-            header.write(self.body)
+            header.write(message)
         else:
             header.write(self.masking_key)
-            header.write(self.mask(self.body))
-        
+            header.write(self.mask(message))
         return header.getvalue()
                 
     def mask(self, data):
@@ -185,94 +186,95 @@ using the simple masking algorithm::
 """
         masked = bytearray(data)
         key = self.masking_key
-        if not ispy3k:
+        if not ispy3k:  #pragma    nocover
             key = map(ord, key)
-            
         for i in range(len(data)):
             masked[i] = masked[i] ^ key[i%4]
         return masked
-
     unmask = mask
 
 
+class ParsedFrame(Frame):
+    def build_frame(self, msg):
+        return bytearray(msg)
+    
+    
 class FrameParser(object):
-    '''Parser for the version 8 protocol'''
-    __slots__ = ('_buf','_frame')
-    
-    def __init__(self, version):
+    '''Parser for the version 8 protocol'''    
+    def __init__(self, version=None):
+        self.version = get_version(version)
+        self._frame = None
         self._buf = None
-        self._frame = frame(version, None)
-        
-    def get_frame(self):
-        if self._frame.is_complete():
-            self._frame = frame(self._frame.version, None)        
-        return self._frame
     
-    def execute(self, data):
+    def decode(self, data):
+        return self.execute(data), bytearray()
+    
+    def execute(self, data, length=None):
         # end of body can be passed manually by putting a length of 0
-        frame = self.get_frame()
         if not data:
-            return frame
+            return None
+        frame = self._frame
         if self._buf:
             data = self._buf + data
         # No opcode yet
-        if frame.opcode is None:
-            first_byte, second_byte = struct.unpack("BB", data[:2])
-            frame.fin = (first_byte >> 7) & 1
-            frame.rsv1 = (first_byte >> 6) & 1
-            frame.rsv2 = (first_byte >> 5) & 1
-            frame.rsv3 = (first_byte >> 4) & 1
-            frame.opcode = first_byte & 0xf
-            if frame.fin not in (0, 1):
+        if frame is None:
+            if len(data) < 2:
+                return self.save_buf(frame, data)
+            first_byte, second_byte = unpack("BB", data[:2])
+            fin = (first_byte >> 7) & 1
+            rsv1 = (first_byte >> 6) & 1
+            rsv2 = (first_byte >> 5) & 1
+            rsv3 = (first_byte >> 4) & 1
+            opcode = first_byte & 0xf
+            if fin not in (0, 1):
                 raise WebSocketProtocolError('FIN must be 0 or 1')
-            if frame.rsv1 or frame.rsv2 or frame.rsv3:
-                pass
-                #raise WebSocketProtocolError('RSV must be 0')
             if not (second_byte & 0x80):
                 raise WebSocketProtocolError(\
-                            'Unmasked frame. Abort connection')
+                            'Unmasked client frame. Abort connection')
             payload_length = second_byte & 0x7f
-            
             # All control frames MUST have a payload length of 125 bytes or less
-            if frame.opcode > 0x7 and payload_length > 125:
+            if opcode > 0x7 and payload_length > 125:
                 raise WebSocketProtocolError('Frame too large')
-            
+            msg, data = data[:2], data[2:]
+            frame = ParsedFrame(msg, opcode, self.version, final=fin,
+                                rsv1=rsv1, rsv2=rsv2, rsv3=rsv3)
             frame.payload_length = payload_length
-            frame.body, data = bytearray(data[:2]), data[2:]
-        
+        #   
         if frame.masking_key is None:
             # All control frames MUST have a payload length of 125 bytes or less
             d = None
             if frame.payload_length == 126:
                 if len(data) < 6: # 2 + 4 for mask
                      return self.save_buf(frame, data)
-                d, data = d[:2] , d[2:]
-                frame.payload_length = struct.unpack("!H", d)[0]
+                d, data = data[:2] , data[2:]
+                frame.payload_length = unpack("!H", d)[0]
             elif frame.payload_length == 127:
                 if len(data) < 12:  # 8 + 4 for mask
                      return self.save_buf(frame, data)
-                d, data = d[:8] , d[8:]
-                frame.payload_length = struct.unpack("!Q", d)[0]
+                d, data = data[:8] , data[8:]
+                frame.payload_length = unpack("!Q", d)[0]
             elif len(data) < 4:
                 return self.save_buf(frame, data)
-            
             # The mask is 4 bits
             if d:
-                frame.body.extend(d)
+                frame.msg.extend(d)
             frame.masking_key, data = data[:4], data[4:]
-            frame.body.extend(frame.masking_key)
+            frame.msg.extend(frame.masking_key)
                 
         if len(data) < frame.payload_length:
             return self.save_buf(frame, data)
         # We have a frame
         else:
             data = data[:frame.payload_length]
-            frame.body.extend(data)
-            self.save_buf(frame, data[frame.payload_length:])
-            frame.msg = frame.unmask(data)
+            frame.msg.extend(data)
+            self.save_buf(None, data[frame.payload_length:])
+            data = bytes(frame.unmask(data))
+            if frame.opcode == 0x1:
+                data = data.decode("utf-8", "replace")
+            frame.body = data
             return frame
             
     def save_buf(self, frame, data):
+        self._frame = frame
         self._buf = data
-        return frame
         

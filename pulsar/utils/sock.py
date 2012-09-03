@@ -85,15 +85,14 @@ Otherwise a TypeError is raised.
             elif e.errno == errno.EADDRNOTAVAIL:
                 if log:
                     log.error("Invalid address: %s" % str(address))
-                sys.exit(1)
+                raise RuntimeError("Invalid address: %s" % str(address))
             if i < retry:
                 if log:
                     log.error("Retrying in {0} seconds.".format(retry_lag))
                 time.sleep(retry_lag)
+    raise RuntimeError("Can't connect to %s. Tried %s times." %
+                       (str(address), retry))
 
-    if log:
-        log.error("Can't connect to %s" % str(address))
-    sys.exit(1)
 
 create_client_socket = lambda address: create_socket(address, bound=True)
 

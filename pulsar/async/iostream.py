@@ -209,11 +209,11 @@ overwritten with this new callback.
         """
         if data:
             self._check_closed()
-            d = Deferred(description='%s write callback' % self)
-            self._write_callback = d
             self._write_buffer.append(data)
             tot_bytes = self._handle_write()
             if self._write_buffer:
+                d = Deferred(description='%s write callback' % self)
+                self._write_callback = d
                 return self._add_io_state(self.WRITE, d)
             else:
                 return tot_bytes
@@ -416,7 +416,7 @@ setup using the :meth:`set_close_callback` method."""
             self._state = self._state | state
             self.ioloop.update_handler(self, self._state)
         # We make sure the IO callback are tracked in the event loop
-        if self._read_callback_timeout and state == self.READ:
+        if state == self.READ:
             if self._read_timeout:
                 try:
                     self.ioloop.remove_timeout(self._read_timeout)
@@ -461,7 +461,9 @@ class BaseSocketHandler(BaseSocket):
         self._closing_socket = True
         if is_failure(msg):
             if isinstance(msg.trace[1], Timeout):
-                self.log.info('Closing %s on timeout.', self)
+                if not msg.logged:
+                    msg.logged = True
+                    self.log.info('Closing %s on timeout.', self)
             else:
                 log_failure(msg)
         self.on_close(msg)
@@ -630,13 +632,36 @@ A connection can handle several request/responses until it is closed.
                                               server.parser_class)
         self.server = server
         server.connections.add(self)
-        self.handle()
+        self.handle().add_errback(self.close)
 
     @async(max_errors=1, description='Async client connection generator')
     def handle(self):
         while not self.closed:
-            yield self.sock.read().add_callback(self._write_data, self.close)
+            outcome = self.sock.read()
+            yield outcome
+            # if we sare here it means no errors occurred so far
+            self.time_last = time.time()
+            buffer = self.buffer
+            buffer.extend(outcome.result)
+            parsed_data = True
+            # IMPORTANT! Consume all data until the parser returns nothing.
+            while parsed_data:
+                parsed_data = self.request_data()
+                if parsed_data:
+                    self.received += 1
+                    # The response is iterable (same as WSGI response)
+                    for data in self.response_class(self, parsed_data):
+                        if data:
+                            yield self.write(data)
+                        else: # The response is not ready. release the loop
+                            yield NOT_DONE
 
+    def _get_timeout(self):
+        return self.sock._read_callback_timeout
+    def _set_timeout(self, value):
+        self.sock._read_callback_timeout = value
+    read_timeout = property(_get_timeout, _set_timeout) 
+    
     def request(self, response=None):
         if self._current_request is None:
             self._current_request = AsyncRequest(self)
@@ -653,6 +678,7 @@ more data in the buffer is required.'''
         buffer = self.buffer
         if not buffer:
             return
+        self.parser.connection = self
         try:
             parsed_data, buffer = self.parser.decode(buffer)
         except CouldNotParse:
@@ -672,33 +698,6 @@ more data in the buffer is required.'''
 
     def on_close(self, failure=None):
         self.server.connections.discard(self)
-
-    # Internal
-    def _write_data(self, data=None):
-        # New data received. Keep on parsing and
-        # writing responses until the parser returns nothing.
-        # If the connection is still open reads the socket and
-        # append this function as callback.
-        if data:
-            # record the time of this data
-            self.time_last = time.time()
-            buffer = self.buffer
-            buffer.extend(data)
-            parsed_data = True
-            # IMPORTANT! Consume all data until the parser returns nothing.
-            # Otherwise it slows down the sending and receiving of data
-            while parsed_data:
-                parsed_data = self.request_data()
-                if parsed_data:
-                    self.received += 1
-                    # The response is iterable (same as WSGI response)
-                    for data in self.response_class(self, parsed_data):
-                        if data:
-                            yield self.write(data)
-                        else: # The response is not ready. release the loop
-                            yield NOT_DONE
-        else:
-            self.close()
 
     def write(self, data):
         '''Write data to socket.'''
@@ -846,6 +845,7 @@ class AsyncSocketServer(BaseSocketHandler):
         return self.accept()
 
     def accept(self):
+        '''Accept a new connection from a remote client'''
         client, client_address = self.sock.accept()
         if client:
             return self.connection_class(client, client_address, self,

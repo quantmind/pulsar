@@ -311,10 +311,8 @@ will make the loop stop after the current event iteration completes."""
                     _run_callback = self._run_callback
                     for callback in callbacks:
                         _run_callback(callback)
-
-                if self._callbacks:
-                    poll_timeout = 0.0
-
+                #if self._callbacks:
+                #    poll_timeout = 0.0
                 if self._timeouts:
                     now = time.time()
                     while self._timeouts and self._timeouts[0].deadline <= now:
@@ -323,21 +321,16 @@ will make the loop stop after the current event iteration completes."""
                     if self._timeouts:
                         milliseconds = self._timeouts[0].deadline - now
                         poll_timeout = min(milliseconds, poll_timeout)
-
                 # A chance to exit
                 if not self.running():
                     break
-
                 self.do_loop_tasks()
-
                 if not self.ready:
                     continue
-
                 if self._blocking_signal_threshold is not None:
                     # clear alarm so it doesn't fire while poll is waiting for
                     # events.
                     signal.setitimer(signal.ITIMER_REAL, 0, 0)
-
                 try:
                     event_pairs = self._impl.poll(poll_timeout)
                 except Exception as e:
@@ -352,11 +345,9 @@ will make the loop stop after the current event iteration completes."""
                         continue
                     else:
                         raise
-
                 if self._blocking_signal_threshold is not None:
                     signal.setitimer(signal.ITIMER_REAL,
                                      self._blocking_signal_threshold, 0)
-
                 # Pop one fd at a time from the set of pending fds and run
                 # its handler. Since that handler may perform actions on
                 # other file descriptors, there may be reentrant calls to

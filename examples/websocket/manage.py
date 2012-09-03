@@ -24,8 +24,8 @@ from pulsar.utils.httpurl import range
 
 class handle(ws.WS):
     
-    def on_message(self, msg):
-        path = self.path
+    def on_message(self, environ, msg):
+        path = response.environ.get('PATH_INFO')
         if path == '/echo':
             return msg
         elif path == '/data':
@@ -46,7 +46,7 @@ def page(environ, start_response):
 
 
 def server(**kwargs):
-    app = wsgi.WsgiHandler(middleware=(page, ws.WebSocket(handle)))
+    app = wsgi.WsgiHandler(middleware=(page, ws.WebSocket(handle())))
     return wsgi.WSGIServer(callable=app, **kwargs)
 
 

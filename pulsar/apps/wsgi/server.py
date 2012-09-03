@@ -24,11 +24,10 @@ event.create('http-headers')
 __all__ = ['HttpServer', 'WsgiActorLink']
 
 
-def wsgi_environ(self):
+def wsgi_environ(connection, parser):
     """return a :ref:`WSGI <apps-wsgi>` compatible environ dictionary
 based on the current request. If the reqi=uest headers are not ready it returns
 nothing."""
-    parser = self.parser
     version = parser.get_version()
     input = BytesIO()
     for b in parser.get_body():
@@ -48,15 +47,15 @@ nothing."""
         "SERVER_PROTOCOL": protocol,
         'CONTENT_TYPE': '',
         "CONTENT_LENGTH": '',
-        'SERVER_NAME': self.server_name,
-        'SERVER_PORT': self.server_port,
+        'SERVER_NAME': connection.server_name,
+        'SERVER_PORT': connection.server_port,
         "wsgi.multithread": False,
         "wsgi.multiprocess":False
     }
     # REMOTE_HOST and REMOTE_ADDR may not qualify the remote addr:
     # http://www.ietf.org/rfc/rfc3875
     url_scheme = "http"
-    forward = self.address
+    forward = connection.address
     server = None
     url_scheme = "http"
     script_name = os.environ.get("SCRIPT_NAME", "")
@@ -217,6 +216,7 @@ invocation of the application.
     def __iter__(self):
         MAX_CHUNK = self.MAX_CHUNK
         conn = self.connection
+        self.environ['pulsar.connection'] = self.connection
         try:
             buffer = b''
             for b in conn.wsgi_handler(self.environ, self.start_response):
@@ -338,22 +338,22 @@ a :class:`HttpResponse` at every client request.'''
 '''
         return self.actor.cfg.handle_http_error(self, response, e)
 
-    def request_data(self):
-        data = bytes(self.buffer)
-        # If no data is available and the parser has no data
-        # return nothing so that the streaming is resumed
-        if self.parser.is_message_complete():
-            self.parser = self.server.parser_class()
-            if not data:
-                return
-        self.buffer = bytearray()
-        self.parser.execute(data, len(data))
-        if self.parser.is_message_complete():
-            environ = wsgi_environ(self)
-            environ['pulsar.connection'] = self
-            return environ
 
-
+class HttpParser:
+    connection = None
+    def __init__(self):
+        self.p = lib.Http_Parser(kind=0)
+        
+    def decode(self, data):
+        if self.p.is_message_complete():
+            self.p = lib.Http_Parser(kind=0)
+        if data:
+            self.p.execute(data, len(data))
+            if self.p.is_message_complete():
+                return wsgi_environ(self.connection, self.p), bytearray()
+        return None, bytearray()
+    
+    
 class HttpServer(AsyncSocketServer):
     connection_class = HttpConnection
 
@@ -364,7 +364,7 @@ class HttpServer(AsyncSocketServer):
         self.server_port = port
         
     def parser_class(self):
-        return lib.Http_Parser(kind=0)
+        return HttpParser()
 
 
 class WsgiActorLink(object):
