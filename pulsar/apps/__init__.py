@@ -622,12 +622,9 @@ The application is now in the arbiter but has not yet started.'''
     def configure_logging(self, config = None):
         """Set the logging configuration as specified by the
  :ref:`logconfig <setting-logconfig>` setting."""
-        if self.cfg.debug:
-            self.loglevel = logging.DEBUG
-        else:
-            self.loglevel = self.cfg.loglevel
+        self.loglevel = self.cfg.loglevel
         config = config or self.cfg.logconfig
-        super(Application,self).configure_logging(config = config)
+        super(Application,self).configure_logging(config=config)
 
     def actorlinks(self, links):
         if not links:
