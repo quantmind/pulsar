@@ -169,6 +169,7 @@ If there is no inbox either, abort the message passing and log a critical error.
             self.local.processing = True
             cmd, msg, cbk = self.local.queue.popleft()
             send = self.mailbox.execute if cmd.ack else self.mailbox.send
+            print('%s sending %s to %s' % (get_actor(), msg.command, self.mailbox))
             msg = send(msg)
             msg.addBoth(cbk.callback) if is_async(msg) else cbk.callback(msg)
             return cbk

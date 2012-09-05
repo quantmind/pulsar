@@ -187,8 +187,11 @@ One common pattern of usage::
     io.read().add_callback(parse)
 
 """
+        print('%s starting reading from %s' % (get_actor(), str(self.address)))
         if self.reading:
-            raise RuntimeError("Asynchronous stream already reading!")
+            print('%s already reading from %s' % (get_actor(), str(self.address)))
+            raise RuntimeError("Asynchronous stream %s already reading!" %
+                               str(self.address))
         d = Deferred(description='%s read callback' % self)
         if self.closed:
             data = self._get_buffer(self._read_buffer)
@@ -300,7 +303,7 @@ setup using the :meth:`set_close_callback` method."""
         if self.reading:
             callback = self._read_callback
             self._read_callback = None
-            self._read_bytes = None
+            print('%s done reading from %s' % (get_actor(), str(self.address)))
             self._may_run_callback(callback, buffer)
 
     def _handle_write(self):

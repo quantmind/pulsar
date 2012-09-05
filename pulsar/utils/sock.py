@@ -160,17 +160,6 @@ def server_socket(backlog=2048, blocking=0):
     s.setblocking(blocking)
     return s
 
-def recv_generator(sock, length=None):
-    length = length or io.DEFAULT_BUFFER_SIZE
-    data = True
-    while data:
-        data = sock.recv(length)
-        if data:
-            yield data
-            # if the data returned is less or equal length we stop
-            if len(data) <= length:
-                data = None
-
 
 class IStream(object):
     '''Interface for all streams.

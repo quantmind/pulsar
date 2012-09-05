@@ -82,7 +82,7 @@ class TestRpcOnThread(unittest.TestCase):
         result = self.p.calc.divide(50, 25)
         self.assertEqual(result, 2)
         
-    def testInfo(self):
+    def testAInfo(self):
         result = self.p.server_info()
         self.assertTrue('server' in result)
         server = result['server']
