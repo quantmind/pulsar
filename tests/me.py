@@ -6,7 +6,7 @@ from threading import current_thread
 import multiprocessing
 
 import pulsar
-from pulsar import defaults, send
+from pulsar import defaults, send, is_async
 from pulsar.apps.test import unittest, run_on_arbiter, TestSuite
 
 def simple_function(actor):
@@ -116,9 +116,11 @@ class TestTestWorker(unittest.TestCase):
         worker = pulsar.get_actor()
         yield self.async.assertEqual(send('arbiter', 'ping'), 'pong')
         yield self.async.assertEqual(send('arbiter', 'ping'), 'pong')
-        outcome = worker.send('arbiter', 'notify', worker.info())
-        yield outcome
-        self.assertTrue(outcome.result>0)
+        result = worker.send('arbiter', 'notify', worker.info())
+        if is_async(result):
+            yield outcome
+            result = outcome.result
+        self.assertTrue(result>0)
         yield self.async.assertEqual(send('arbiter', 'ping'), 'pong')
         yield self.async.assertEqual(send('arbiter', 'echo', 'ciao'), 'ciao')
         

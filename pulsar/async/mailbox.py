@@ -231,13 +231,8 @@ of execution.'''
         if not actor.is_arbiter():
             # The actor is not the arbiter. We need to register this mailbox
             # with the actor monitor so that it can receive messages from it
-            msg = actor.send(actor.monitor, 'mailbox_address', self.address)
-            if is_async(msg):
-                return msg.add_callback(actor.link_actor)
-            elif is_failure(msg):
-                msg.raise_all()
-            else:
-                return actor.link_actor(msg)
+            return actor.send(actor.monitor, 'mailbox_address', self.address)\
+                        .add_callback(actor.link_actor)
 
     def register(self, actor):
         self.ioloop.add_loop_task(actor)

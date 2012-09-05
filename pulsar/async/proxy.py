@@ -145,34 +145,10 @@ If there is no inbox either, abort the message passing and log a critical error.
         if not cmd:
             raise CommandNotFound(command)
         msg = ActorMessage(cmd.__name__, sender, self.aid, args, kwargs)
-        cbk = self.queue(cmd, msg)
-        self.consume_next()
-        return cbk
-    
-    def queue(self, cmd, msg):
-        cbk = Deferred()
-        if self.local.queue is None:
-            self.local.queue = deque()
-        self.local.queue.append((cmd, msg, cbk))
-        cbk.addBoth(self.got_result)
-        return cbk
-        
-    def got_result(self, result):
-        # Got the result, ping the consumer so it can process
-        # requests from the queue
-        self.local.processing = False
-        self.consume_next()
-        return result
-    
-    def consume_next(self):
-        if not self.local.processing and self.local.queue:
-            self.local.processing = True
-            cmd, msg, cbk = self.local.queue.popleft()
-            send = self.mailbox.execute if cmd.ack else self.mailbox.send
-            print('%s sending %s to %s' % (get_actor(), msg.command, self.mailbox))
-            msg = send(msg)
-            msg.addBoth(cbk.callback) if is_async(msg) else cbk.callback(msg)
-            return cbk
+        #sender.log.debug('%s %s queuing %s for %s', id(self),
+        #                 self.mailbox.address, msg.command, self.mailbox)
+        send = self.mailbox.execute if cmd.ack else self.mailbox.send
+        return send(msg)
         
     def __repr__(self):
         return self.aid
@@ -215,7 +191,7 @@ process where they have been created.
     monitor = None
     def __init__(self, impl):
         self.impl = impl
-        self.info = {'last_notified':time()}
+        self.info = {'last_notified': time()}
         self.stopping_loops = 0
         super(ActorProxyMonitor,self).__init__(impl)
         

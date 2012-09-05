@@ -187,9 +187,7 @@ One common pattern of usage::
     io.read().add_callback(parse)
 
 """
-        print('%s starting reading from %s' % (get_actor(), str(self.address)))
         if self.reading:
-            print('%s already reading from %s' % (get_actor(), str(self.address)))
             raise RuntimeError("Asynchronous stream %s already reading!" %
                                str(self.address))
         d = Deferred(description='%s read callback' % self)
@@ -303,7 +301,6 @@ setup using the :meth:`set_close_callback` method."""
         if self.reading:
             callback = self._read_callback
             self._read_callback = None
-            print('%s done reading from %s' % (get_actor(), str(self.address)))
             self._may_run_callback(callback, buffer)
 
     def _handle_write(self):
@@ -525,9 +522,14 @@ is required in order to use :class:`SocketClient`.
 
 
 class ClientSocket(ClientSocketHandler, IOClientRead):
-    '''Synchronous/Asynchronous client for a remote server. This client
+    '''Synchronous/Asynchronous client for a remote socket server. This client
 maintain a connection with remote server and exchange data by writing and
 reading from the same socket connection.'''
+    def __init__(self, *args, **kwargs):
+        super(ClientSocket, self).__init__(*args, **kwargs)
+        self.exec_queue = deque()
+        self.processing = None
+        
     @classmethod
     def connect(cls, address, parser_class=None, timeout=None):
         sock = create_connection(address)
@@ -540,16 +542,47 @@ reading from the same socket connection.'''
         return self.sock.write(data)
         
     def execute(self, data):
-        '''Send and read data from socket.'''
-        r = make_async(self.send(data)).add_callback(self._read, self.close)
-        return r.result_or_self()
-
+        '''Send and read data from socket. It makes sure commands are queued
+and executed in an orderly fashion. For asynchronous connection it returns
+a :class:`Deferred` called once data has been received from the server and
+parsed.'''
+        if self.async:
+            cbk = Deferred()
+            if data:
+                self.exec_queue.append((data, cbk))
+                cbk.addBoth(self._got_result)
+                self._consume_next()
+            else:
+                cbk.callback(None)
+            return cbk
+        elif data:
+            self.send(data)
+            return self._read()
+        
     def parsedata(self, data):
         '''We got some data to parse'''
         parsed_data = self._parsedata(data)
         if parsed_data:
             self.received += 1
             return parsed_data
+        
+    def _consume_next(self):
+        if not self.processing and self.exec_queue:
+            self.processing = True
+            data, cbk = self.exec_queue.popleft()
+            msg = self.send(data)
+            if is_async(msg):
+                msg.add_callback(self._read, self.close)
+            else:
+                msg = self._read()
+            msg.addBoth(cbk.callback) if is_async(msg) else cbk.callback(msg)
+        
+    def _got_result(self, result):
+        # Got the result, ping the consumer so it can process
+        # requests from the queue
+        self.processing = False
+        self._consume_next()
+        return result
 
     def _parsedata(self, data):
         buffer = self.buffer

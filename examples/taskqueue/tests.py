@@ -149,8 +149,9 @@ class TestTaskQueueOnThread(unittest.TestCase):
         get_task = app.scheduler.get_task
         while get_task(id).status in tasks.UNREADY_STATES:
             yield NOT_DONE
-        r2 = get_task(id, remove=True)
+        r2 = get_task(id)
         self.assertEqual(r1.id, r2.id)
+        r2 = get_task(id, remove=True)
         self.assertEqual(get_task(id), None)
         self.assertEqual(get_task(r1), r1)
         app.scheduler.delete_tasks()

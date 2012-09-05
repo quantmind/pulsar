@@ -35,8 +35,10 @@ class TestHelloWorldThread(unittest.TestCase):
         self.assertTrue(app.monitor.running())
         
     def testResponse(self):
-        c = HttpClient(timeout=1)
-        resp = c.get(self.uri)
+        c = HttpClient()
+        outcome = c.get(self.uri)
+        yield outcome
+        resp = outcome.result
         self.assertTrue(resp.status_code, 200)
         content = resp.content
         self.assertEqual(content, b'Hello World!\n')

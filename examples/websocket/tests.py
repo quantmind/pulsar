@@ -5,11 +5,12 @@ import struct
 from pulsar import send, HttpClient
 from pulsar.apps.ws import Frame, WebSocket, int2bytes, i2b,\
                             WebSocketProtocolError, FrameParser
-from pulsar.apps.test import unittest
+from pulsar.apps.test import unittest, dont_run_with_thread
 
 from .manage import server
 
-class WebSocketTest(unittest.TestCase):
+
+class WebSocketThreadTest(unittest.TestCase):
     app = None
     concurrency = 'thread'
     
@@ -74,6 +75,12 @@ class WebSocketTest(unittest.TestCase):
         yield outcome
         response = outcome.result
         self.assertEqual(response.status_code, 400)
+    
+
+@dont_run_with_thread
+class WebSocketProcessTest(WebSocketThreadTest):
+    concurrency = 'process'
+    
     
 class FrameTest(unittest.TestCase):
     

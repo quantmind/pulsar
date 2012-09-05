@@ -90,7 +90,7 @@ class LocalMixin(object):
 removed when pickling the object'''
     @property
     def local(self):
-        if not hasattr(self,'_local'):
+        if not hasattr(self, '_local'):
             self._local = AttributeDictionary()
         return self._local
      
