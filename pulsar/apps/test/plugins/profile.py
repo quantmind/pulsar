@@ -115,13 +115,14 @@ class TestProfile(test.WrapTest):
 
     def __init__(self, test, dir):
         self.dir = dir
-        super(TestProfile,self).__init__(test)
+        super(TestProfile, self).__init__(test)
 
     def _call(self):
-        prof = profiler.Profile()
-        tmp = tempfile.mktemp(dir=self.dir)
-        prof.runcall(self.testMethod)
-        prof.dump_stats(tmp)
+        self.prof = profiler.Profile()
+        self.prof.enable()
+        self.tmp = tempfile.mktemp(dir=self.dir)
+        self.original_test.stop_profiling = lambda: prof.dump_stats(self.tmp)
+        self.testMethod()
 
 
 def copy_file(filename, target, context=None):
@@ -148,6 +149,9 @@ class Profile(test.Plugin):
         # If active return a TestProfile instance wrapping the real test case.
         if self.active:
             return TestProfile(test, self.profile_temp_path)
+        
+    def stopTest(self, test):
+        test.stop_profiling()
 
     def on_start(self):
         if self.active:

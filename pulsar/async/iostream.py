@@ -160,9 +160,9 @@ but is non-portable."""
                 # In non-blocking mode connect() always raises an exception
                 if e.args[0] not in (errno.EINPROGRESS, errno.EWOULDBLOCK):
                     raise
-            d = Deferred(description = '%s connect callback' % self)
-            self._connect_callback = d
-            return self._add_io_state(self.WRITE, d)
+            self._connect_callback = Deferred(description = '%s connect' % self)
+            self._add_io_state(self.WRITE)
+            return self._connect_callback
         else:
             if self._state is not None:
                 raise RuntimeError('Cannot connect. State is %s.'\
@@ -190,16 +190,22 @@ One common pattern of usage::
         if self.reading:
             raise RuntimeError("Asynchronous stream %s already reading!" %
                                str(self.address))
-        d = Deferred(description='%s read callback' % self)
         if self.closed:
-            data = self._get_buffer(self._read_buffer)
-            if data:
-                return self._may_run_callback(d, data)
-            else:
-                return
-        self._read_callback = d
-        self._read_length = length
-        return self._add_io_state(self.READ, d)
+            return self._get_buffer(self._read_buffer)
+        else:
+            self._read_callback = Deferred(description='%s read' % self)
+            self._read_length = length
+            self._add_io_state(self.READ)
+            if self._read_timeout:
+                try:
+                    self.ioloop.remove_timeout(self._read_timeout)
+                except ValueError:
+                    pass
+            self._read_timeout = loop_timeout(self._read_callback,
+                                              self._read_callback_timeout,
+                                              self.ioloop)
+            return self._read_callback
+    recv = read
 
     def write(self, data):
         """Write the given *data* to this stream. If there was previously
@@ -213,9 +219,9 @@ overwritten with this new callback.
             self._write_buffer.append(data)
             tot_bytes = self._handle_write()
             if self._write_buffer:
-                d = Deferred(description='%s write callback' % self)
-                self._write_callback = d
-                return self._add_io_state(self.WRITE, d)
+                self._write_callback = Deferred(description='%s write' % self)
+                self._add_io_state(self.WRITE)
+                return self._write_callback
             else:
                 return tot_bytes
     sendall = write
@@ -403,7 +409,7 @@ setup using the :meth:`set_close_callback` method."""
             self.close()
             raise
 
-    def _add_io_state(self, state, deferred):
+    def _add_io_state(self, state):
         if self.sock is None:
             # connection has been closed, so there can be no future events
             return
@@ -415,17 +421,6 @@ setup using the :meth:`set_close_callback` method."""
             # update the handler
             self._state = self._state | state
             self.ioloop.update_handler(self, self._state)
-        # We make sure the IO callback are tracked in the event loop
-        if state == self.READ:
-            if self._read_timeout:
-                try:
-                    self.ioloop.remove_timeout(self._read_timeout)
-                except ValueError:
-                    pass
-            self._read_timeout = loop_timeout(deferred,
-                                              self._read_callback_timeout,
-                                              self.ioloop)
-        return deferred
 
 
 class BaseSocketHandler(BaseSocket):
@@ -440,7 +435,8 @@ class BaseSocketHandler(BaseSocket):
     _closing_socket = False
     def __new__(cls, *args, **kwargs):
         o = super(BaseSocketHandler, cls).__new__(cls)
-        o.on_closed = Deferred()
+        o.on_closed = Deferred(
+                        description='on_closed BaseSocketHandler callback')
         o.time_started = time.time()
         o.time_last = o.time_started
         o.received = 0

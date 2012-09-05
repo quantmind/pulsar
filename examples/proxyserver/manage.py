@@ -10,7 +10,7 @@ try:
 except ImportError:
     sys.path.append('../../')
 
-from pulsar import HttpException, LocalMixin, HttpClient, async_object,\
+from pulsar import HttpException, LocalMixin, HttpClient, maybe_async,\
                     is_async, is_failure
 from pulsar.apps import wsgi
 from pulsar.utils.httpurl import Headers
@@ -71,10 +71,10 @@ request uri.'''
         return headers
         
     def response_generator(self, response, wsgi_response):
-        response = async_object(response)
+        response = maybe_async(response)
         while is_async(response):
             yield b''
-            response = async_object(response)
+            response = maybe_async(response)
         content = None
         if is_failure(response):
             wsgi_response.status_code = 500

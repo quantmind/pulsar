@@ -46,6 +46,7 @@ functional.
             # In this case aid is an instance of an ActorProxyMonitor
             proxy = aid
             self.aid = proxy.aid
+            # callback for the mailbox
             proxy.on_address = self
         else:
             self.aid = aid
@@ -53,7 +54,7 @@ functional.
             msg.addBoth(self.callback)
     
     def __str__(self):
-        return '{0}({1})'.format(self.__class__,self.aid)
+        return '%s(%s)' % (self.__class__, self.aid)
     __repr__ = __str__
     
     

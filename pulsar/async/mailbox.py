@@ -11,7 +11,7 @@ from pulsar import create_connection, MailboxError, server_socket,\
                     defaults
 from pulsar.utils.httpurl import to_bytes
 
-from .defer import make_async, safe_async, pickle, is_async, log_failure,\
+from .defer import maybe_async, pickle, is_async, log_failure,\
                     async, is_failure, ispy3k, raise_failure, CLEAR_ERRORS
 from .iostream import AsyncIOStream, AsyncSocketServer,\
                         AsyncConnection, ReconnectingClient, AsyncResponse
@@ -173,10 +173,10 @@ class MailboxResponse(AsyncResponse):
             result = command(self, receiver, *args, **message.kwargs)
         except:
             result = sys.exc_info()
-        result = make_async(result).result_or_self()
+        result = maybe_async(result)
         while is_async(result):
             yield b''
-            result = result.result_or_self()
+            result = maybe_async(result)
         log_failure(result)
         if command.ack:
             # Send back the result as an ActorMessage

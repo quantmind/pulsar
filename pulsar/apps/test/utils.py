@@ -3,13 +3,14 @@ from inspect import isclass
 import threading
 
 import pulsar
-from pulsar import is_failure
+from pulsar import is_failure, async, get_actor
 from pulsar.async import commands
 from pulsar.async.defer import pickle
 
 
 __all__ = ['create_test_arbiter',
            'run_on_arbiter',
+           'run_test_function',
            'halt_server',
            'arbiter_test',
            'ActorTestMixin',
@@ -25,15 +26,23 @@ class MockArbiter(pulsar.Arbiter):
         self._test_thread.start()
     
 
+NOT_TEST_METHODS = ('setUp', 'tearDown', '_pre_setup', '_post_teardown',
+                    'setUpClass', 'tearDownClass')
+
 class ObjectMethod:
     
-    def __init__(self, obj, method):
-        self.test = obj
-        self.method = method
+    def __init__(self, test, method_name):
+        self.test = test
+        self.method_name = method_name
         
+    @async(max_errors=1, description='Test ')
     def __call__(self, actor):
         test = self.test
-        test_function = getattr(test, self.method)
+        if self.method_name not in NOT_TEST_METHODS:
+            worker = get_actor()
+            runner = worker.app.runner
+            test = runner.getTest(test)
+        test_function = getattr(test, self.method_name)
         return test_function()
     
         
@@ -53,25 +62,37 @@ def halt_server(exception=None):
     
 def run_on_arbiter(f):
     '''Decorator for running a test function in the arbiter domain. This
-can be usefull to test Arbiter mechanics.'''
+can be useful to test Arbiter mechanics.'''
     name = f.__name__
     def _(obj):
-        actor = pulsar.get_actor()
-        if actor.is_arbiter():
-            # In the arbiter, simply execute the function
+        callable = ObjectMethod(obj, name)
+        actor = get_actor()
+        if actor.is_monitor():
+            # In the test monitor, simply execute the function
             # First inject the AsyncAssert instance
             inject_async_assert(obj)
-            return pulsar.safe_async(f, args=(obj,))
+            return callable(actor)
         else:
-            # send the test case to the arbiter.
-            # At some point we will get a result or an error back in
-            # the test worker arbiter inbox.
-            callable = ObjectMethod(obj, name)
-            msg = actor.send('arbiter', 'run', callable)
-            return msg
+            return actor.send(actor.monitor, 'run', callable)
+    _.test_function = True
     _.__name__ = name
     _.__doc__ = f.__doc__
     return _
+
+
+def run_test_function(test, func):
+    '''Run function *func* which belong to *test*.
+
+:parameter test: test instance or class
+:parameter func: test function belonging to *test*
+:return: an asynchronous result
+'''
+    if func is None:
+        return func
+    if not getattr(func, 'test_function', False):
+        func = ObjectMethod(test, func.__name__)
+    return func(get_actor())
+
     
 def arbiter_test(f):
     '''Decorator for testing arbiter mechanics. It creates a mock arbiter

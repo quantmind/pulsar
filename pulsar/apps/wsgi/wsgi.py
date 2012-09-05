@@ -5,7 +5,7 @@ import logging
 from functools import partial
 
 import pulsar
-from pulsar import async_object, is_async, is_failure, log_failure, NOT_DONE
+from pulsar import maybe_async, is_async, is_failure, log_failure, NOT_DONE
 from pulsar.utils.httpurl import Headers, SimpleCookie, set_cookie, responses,\
                                     has_empty_content, string_type, ispy3k
 
@@ -27,10 +27,10 @@ default_logger = logging.getLogger('pulsar.apps.wsgi')
 def wsgi_iterator(gen, encoding=None):
     encoding = encoding or 'utf-8'
     for data in gen:
-        data = async_object(data)
+        data = maybe_async(data)
         while is_async(data):
             yield b''
-            data = async_object(data)
+            data = maybe_async(data)
         if data is NOT_DONE:
             yield b''
         elif data is None:

@@ -50,7 +50,7 @@ it will stop the configuration of all subsequent plugins and quit the test.
         pass
 
     def getTest(self, test):
-        '''Given a test instance return a, possibly, modified test
+        '''Given a test-function instance return a, possibly, modified test
 instance. This function can be used by plugins to modify the behaviour of test
 cases. By default it returns *test*.'''
         return test

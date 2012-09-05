@@ -21,7 +21,6 @@ __all__ = ['Deferred',
            'raise_failure',
            'log_failure',
            'is_async',
-           'async_object',
            'maybe_async',
            'make_async',
            'safe_async',
@@ -131,23 +130,22 @@ def safe_async(f, args=None, kwargs=None, description=None, max_errors=None):
         result = sys.exc_info()
     return make_async(result, max_errors=max_errors, description=description)
 
-def async_object(obj):
-    '''Obtain the result if available, otherwise it returns self.'''
-    if is_async(obj):
-        return obj.result if obj.called and not obj.paused else obj
-    else:
-        return obj
-
 def maybe_async(val, description=None, max_errors=None):
     '''Convert *val* into an asynchronous instance only if *val* is a generator
-or a function.'''
+or a function. If *val* is asynchronous it check that if it has a result. In
+this case it return the result itself.'''
     if isgenerator(val):
-        return DeferredGenerator(val, max_errors=max_errors,
-                                 description=description)
-    elif isfunction(val) or ismethod(val):
-        return safe_async(val)
+        val = DeferredGenerator(val, max_errors=max_errors,
+                                description=description)
+    if isfunction(val) or ismethod(val):
+        try:
+            val = maybe_async(val())
+        except:
+            val = sys.exc_info()
+    if is_async(val):
+        return val.result_or_self()
     else:
-        return val
+        return as_failure(val)
 
 def make_async(val=None, description=None, max_errors=None):
     '''Convert *val* into an :class:`Deferred` asynchronous instance
@@ -165,17 +163,12 @@ This function is useful when someone needs to treat a value as a deferred::
     make_async(v).add_callback(...)
 
 '''
+    val = maybe_async(val, description, max_errors)
     if not is_async(val):
-        if isgenerator(val):
-            return DeferredGenerator(val, max_errors=max_errors,
-                                     description=description)
-        else:
-            d = Deferred(description=description)
-            d.callback(val)
-            return d
+        d = Deferred(description=description)
+        d.callback(val)
+        return d
     else:
-        if description:
-            val._description = description
         return val
 
 def log_failure(failure):
@@ -403,6 +396,7 @@ this point, :meth:`add_callback` will run the *callbacks* immediately.
     def result_or_self(self):
         '''Obtain the result if available, otherwise it returns self.'''
         return self.result if self._called and not self.paused else self
+        #return self.result if self._called else self
 
     ##################################################    INTERNAL METHODS
     def _run_callbacks(self):
@@ -414,9 +408,7 @@ this point, :meth:`add_callback` will run the *callbacks* immediately.
             try:
                 self._runningCallbacks = True
                 try:
-                    self.result = callback(self.result)
-                    if isgenerator(self.result):
-                        self.result = DeferredGenerator(self.result)
+                    self.result = maybe_async(callback(self.result))
                 finally:
                     self._runningCallbacks = False
             except Exception as e:
@@ -471,9 +463,9 @@ occurred.
         self.errors = Failure()
         super(DeferredGenerator,self).__init__(description=description)
         self.loop = thread_loop()
-        self._consume() # kick off data generation
+        self._consume()
 
-    def _consume_in_thread(self, result=None):
+    def _resume_in_thread(self, result=None):
         # When the generator finds an asynchronous object still waiting
         # for results, it adds this callback to resume the generator at the
         # next iteration in the eventloop.
@@ -482,9 +474,11 @@ occurred.
             # thread we restart the generator on the original thread
             # by adding a callback in the generator eventloop
             self.loop.add_callback(lambda: self._consume(result))
-            return result
         else:
-            return self._consume(result)
+            self._consume(result)
+        # IMPORTANT! We return the original result.
+        # Otherwise we just keep adding deferred objects to the callbacks.
+        return result
 
     def _consume(self, last_result=None):
         '''override the deferred consume private method for handling the
@@ -512,12 +506,12 @@ current thread.'''
                 # will resume at the next event loop.
                 self.loop.add_callback(self._consume, wake=False)
                 return self
-            result = async_object(maybe_async(result))
+            result = maybe_async(result)
             if is_async(result):
                 # The result is asynchronous and it is not ready yet.
                 # We pause the generator and attach a callback to continue
                 # on the same thread.
-                return result.addBoth(self._consume_in_thread)
+                return result.addBoth(self._resume_in_thread)
             if result == CLEAR_ERRORS:
                 self.errors.clear()
                 result = None
@@ -593,7 +587,7 @@ which may be :class:`Deferred`.
         if self._locked:
             raise RuntimeError(self.__class__.__name__ +\
                                ' cannot add a dependent once locked.')
-        value = async_object(value)
+        value = maybe_async(value)
         if is_async(value):
             self._add_deferred(key, value)
         else:
@@ -617,7 +611,7 @@ which may be :class:`Deferred`.
     def _make(self, value):
         md = self.__class__(value, fireOnOneErrback=self.fireOnOneErrback,
                             handle_value=self.handle_value)
-        return async_object(md.lock())
+        return maybe_async(md.lock())
 
     def _add_deferred(self, key, value):
         self._deferred[key] = value

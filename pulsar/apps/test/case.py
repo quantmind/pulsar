@@ -1,36 +1,15 @@
 import sys
 import io
 import pickle
-from inspect import istraceback, isclass
+from inspect import istraceback
 
 from pulsar import is_failure, CLEAR_ERRORS, make_async, get_actor, async
 
-from .utils import inject_async_assert
+from .utils import inject_async_assert, run_test_function
 
 
 __all__ = ['TestRequest']
 
-
-@async(max_errors=1, description='Test ')
-def run_test_function(test, func, istest=False):
-    '''Run function *func* which belong to *test*.
-
-:parameter test: test instance or class
-:parameter func: test function belonging to *test*
-:parameter istest: flag indicating if this is a test or a setup/teardown
-    function.
-:return: an asynchronous result
-'''
-    if func is None:
-        return func
-    class_method = isclass(test)
-    if istest:
-        worker = get_actor()
-        runner = worker.app.runner
-        test = runner.getTest(test)
-    test.istest = istest
-    test_function = getattr(test, func.__name__)
-    return test_function()
 
 def test_method(cls, method):
     try:
@@ -121,18 +100,18 @@ Run a *test* function using the following algorithm
                                   '__unittest_skip_why__', ''))
                 runner.addSkip(test, reason)
                 raise StopIteration()
-
+            # _pre_setup function if available
             if hasattr(test,'_pre_setup'):
                 outcome = run_test_function(test, test._pre_setup)
                 yield outcome
                 success = not self.add_failure(test, runner, outcome.result)
-
+            # _setup function if available
             if success:
                 outcome = run_test_function(test, test.setUp)
                 yield outcome
                 if not self.add_failure(test, runner, outcome.result):
                     # Here we perform the actual test
-                    outcome = run_test_function(test, testMethod, istest=True)
+                    outcome = run_test_function(test, testMethod)
                     yield outcome
                     success = not self.add_failure(test, runner, outcome.result)
                     if success:

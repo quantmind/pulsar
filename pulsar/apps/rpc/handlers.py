@@ -2,7 +2,7 @@ import sys
 import inspect
 
 from pulsar import LogginMixin, to_bytes, is_failure, log_failure, is_async,\
-                    as_failure, async_object, HttpException
+                    as_failure, maybe_async, HttpException
 from pulsar.utils.tools import checkarity
 from pulsar.apps.wsgi import WsgiResponse, WsgiResponseGenerator
 
@@ -58,10 +58,10 @@ class ResponseGenerator(WsgiResponseGenerator):
         except Exception as e:
             result = as_failure(e)
         handler = request.handler
-        result = async_object(result)
+        result = maybe_async(result)
         while is_async(result):
             yield b''
-            result = async_object(result)
+            result = maybe_async(result)
         try:
             if is_failure(result):
                 e = result.trace[1]
