@@ -29,21 +29,33 @@ class MockArbiter(pulsar.Arbiter):
 NOT_TEST_METHODS = ('setUp', 'tearDown', '_pre_setup', '_post_teardown',
                     'setUpClass', 'tearDownClass')
 
-class ObjectMethod:
+class TestMethod:
     
     def __init__(self, test, method_name):
         self.test = test
         self.method_name = method_name
+        self.istest = self.method_name not in NOT_TEST_METHODS
         
+    def __repr__(self):
+        if isclass(self.test):
+            return '%s.%s' % (self.test.__name__, self.method_name)
+        else:
+            return '%s.%s' % (self.test.__class__.__name__, self.method_name)
+    __str__ = __repr__
+    
     @async(max_errors=1, description='Test ')
-    def __call__(self, actor):
+    def run_test(self, actor):
         test = self.test
-        if self.method_name not in NOT_TEST_METHODS:
-            worker = get_actor()
-            runner = worker.app.runner
-            test = runner.getTest(test)
+        if self.istest:
+            test = actor.app.runner.getTest(test)
         test_function = getattr(test, self.method_name)
         return test_function()
+    
+    def __call__(self, actor):
+        result = self.run_test(actor)
+        if self.istest:
+            result.addBoth(lambda r: actor.app.runner.stopTest(self.test))
+        return result
     
         
 def create_test_arbiter(test=True):
@@ -65,7 +77,7 @@ def run_on_arbiter(f):
 can be useful to test Arbiter mechanics.'''
     name = f.__name__
     def _(obj):
-        callable = ObjectMethod(obj, name)
+        callable = TestMethod(obj, name)
         actor = get_actor()
         if actor.is_monitor():
             # In the test monitor, simply execute the function
@@ -90,7 +102,7 @@ def run_test_function(test, func):
     if func is None:
         return func
     if not getattr(func, 'test_function', False):
-        func = ObjectMethod(test, func.__name__)
+        func = TestMethod(test, func.__name__)
     return func(get_actor())
 
     
