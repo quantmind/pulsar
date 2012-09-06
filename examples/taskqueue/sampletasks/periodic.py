@@ -3,6 +3,7 @@ from random import random
 
 from pulsar.apps.tasks import PeriodicJob,  anchorDate
 
+
 class TestPeriodicJob(PeriodicJob):
     abstract = True
     run_every = timedelta(hours=1)

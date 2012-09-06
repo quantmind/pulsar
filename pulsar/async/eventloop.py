@@ -322,7 +322,7 @@ will make the loop stop after the current event iteration completes."""
                         milliseconds = self._timeouts[0].deadline - now
                         poll_timeout = min(milliseconds, poll_timeout)
                 # A chance to exit
-                if not self.running():
+                if not self._running:
                     break
                 self.do_loop_tasks()
                 if not self.ready:

@@ -111,20 +111,6 @@ def data_stream(lines, num = None):
             yield new_fields
 
 
-class TestProfile(test.WrapTest):
-
-    def __init__(self, test, dir):
-        self.dir = dir
-        super(TestProfile, self).__init__(test)
-
-    def _call(self):
-        self.prof = profiler.Profile()
-        self.prof.enable()
-        self.tmp = tempfile.mktemp(dir=self.dir)
-        self.original_test.stop_profiling = lambda: prof.dump_stats(self.tmp)
-        self.testMethod()
-
-
 def copy_file(filename, target, context=None):
     with open(os.path.join(template_path,filename),'r') as file:
         stream = file.read()
@@ -145,13 +131,17 @@ class Profile(test.Plugin):
         fname = '.'+name
         self.profile_temp_path = os.path.join(dir, fname)
 
-    def getTest(self, test):
+    def before_test_function_run(self, test, local):
         # If active return a TestProfile instance wrapping the real test case.
         if self.active:
-            return TestProfile(test, self.profile_temp_path)
+            local.prof = profiler.Profile()
+            local.tmp = tempfile.mktemp(dir=self.profile_temp_path)
+            local.prof.enable()
         
-    def stopTest(self, test):
-        test.stop_profiling()
+    def after_test_function_run(self, test, local, result):
+        if self.active:
+            local.prof.disable()
+            local.prof.dump_stats(local.tmp)
 
     def on_start(self):
         if self.active:

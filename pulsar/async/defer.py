@@ -454,6 +454,7 @@ occurred.
     generator will continue regardless of errors, accumulating them into
     the final result.
 '''
+    from_thread = False
     def __init__(self, gen, max_errors=None, description=None):
         self.gen = gen
         if not can_generate(gen):
@@ -473,8 +474,11 @@ occurred.
             # Generators are not thread-safe. If the callback is on a different
             # thread we restart the generator on the original thread
             # by adding a callback in the generator eventloop
+            #print('Continuing in thread result: %s' % result)
+            self.from_thread = True
             self.loop.add_callback(lambda: self._consume(result))
         else:
+            self.from_thread = False
             self._consume(result)
         # IMPORTANT! We return the original result.
         # Otherwise we just keep adding deferred objects to the callbacks.
@@ -487,6 +491,9 @@ current thread.'''
         if isinstance(last_result, Failure):
             if self.should_stop(last_result):
                 return self.conclude()
+        if self.from_thread:
+            self.from_thread = False
+            #print('Continuing from another thread')
         try:
             result = next(self.gen)
             self._consumed += 1

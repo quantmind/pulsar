@@ -10,9 +10,9 @@ from threading import current_thread, Thread
 from pulsar.utils.system import IObase
 from pulsar import create_socket, server_socket, create_client_socket,\
                      wrap_socket, defaults, create_connection, CouldNotParse,\
-                     get_socket_timeout, Timeout, BaseSocket
+                     get_socket_timeout, Timeout, BaseSocket, Synchronized
 from pulsar.utils.httpurl import IOClientRead
-from .defer import Deferred, is_async, is_failure, async, make_async,\
+from .defer import Deferred, is_async, is_failure, async, maybe_async,\
                         safe_async, log_failure, NOT_DONE
 from .eventloop import IOLoop, loop_timeout
 from .access import PulsarThread, thread_ioloop, get_actor
@@ -160,9 +160,10 @@ but is non-portable."""
                 # In non-blocking mode connect() always raises an exception
                 if e.args[0] not in (errno.EINPROGRESS, errno.EWOULDBLOCK):
                     raise
-            self._connect_callback = Deferred(description = '%s connect' % self)
+            callback = Deferred(description = '%s connect callback' % self)
+            self._connect_callback = callback
             self._add_io_state(self.WRITE)
-            return self._connect_callback
+            return callback
         else:
             if self._state is not None:
                 raise RuntimeError('Cannot connect. State is %s.'\
@@ -193,7 +194,8 @@ One common pattern of usage::
         if self.closed:
             return self._get_buffer(self._read_buffer)
         else:
-            self._read_callback = Deferred(description='%s read' % self)
+            callback = Deferred(description='%s read callback' % self)
+            self._read_callback = callback
             self._read_length = length
             self._add_io_state(self.READ)
             if self._read_timeout:
@@ -201,10 +203,10 @@ One common pattern of usage::
                     self.ioloop.remove_timeout(self._read_timeout)
                 except ValueError:
                     pass
-            self._read_timeout = loop_timeout(self._read_callback,
+            self._read_timeout = loop_timeout(callback,
                                               self._read_callback_timeout,
                                               self.ioloop)
-            return self._read_callback
+            return callback
     recv = read
 
     def write(self, data):
@@ -219,9 +221,10 @@ overwritten with this new callback.
             self._write_buffer.append(data)
             tot_bytes = self._handle_write()
             if self._write_buffer:
-                self._write_callback = Deferred(description='%s write' % self)
+                callback = Deferred(description='%s write callback' % self)
+                self._write_callback = callback
                 self._add_io_state(self.WRITE)
-                return self._write_callback
+                return callback
             else:
                 return tot_bytes
     sendall = write
@@ -268,23 +271,15 @@ setup using the :meth:`set_close_callback` method."""
         return sum(len(chunk) for chunk in self._read_buffer)
 
     def _may_run_callback(self, c, result=None):
-        if c.called:
-            # The callback has been already called, do nothing
-            # TODO: think about this in details.
-            pass
-        else:
-            try:
-                # Make sure that any uncaught error is logged
-                log_failure(c.callback(result))
-            except:
-                # Close the socket on an uncaught exception from a user callback
-                # (It would eventually get closed when the socket object is
-                # gc'd, but we don't want to rely on gc happening before we
-                # run out of file descriptors)
-                self.close()
-                # Re-raise the exception so that
-                # IOLoop.handle_callback_exception can see it and log the error
-                raise
+        try:
+            # Make sure that any uncaught error is logged
+            log_failure(c.callback(result))
+        except:
+            # Close the socket on an uncaught exception from a user callback
+            # (It would eventually get closed when the socket object is
+            # gc'd, but we don't want to rely on gc happening before we
+            # run out of file descriptors)
+            self.close()
 
     def _handle_connect(self):
         callback = self._connect_callback
@@ -328,7 +323,7 @@ setup using the :meth:`set_close_callback` method."""
                     raise socket.error()
                 tot_bytes += sent
             except socket.error as e:
-                if e.args[0] in (errno.EWOULDBLOCK, errno.EAGAIN):
+                if e.args and e.args[0] in (errno.EWOULDBLOCK, errno.EAGAIN):
                     # With OpenSSL, after send returns EWOULDBLOCK,
                     # the very same string object must be used on the
                     # next call to send.  Therefore we suppress
@@ -340,8 +335,7 @@ setup using the :meth:`set_close_callback` method."""
                     self._write_buffer_frozen = True
                     break
                 else:
-                    self.log.warning("Write error on %s.", self.fileno(),
-                                     exc_info=True)
+                    self.log.warning("Write error on %s.", self, exc_info=True)
                     self.close()
                     return tot_bytes
         return tot_bytes
@@ -571,8 +565,12 @@ parsed.'''
                 msg.add_callback(self._read, self.close)
             else:
                 msg = self._read()
-            msg.addBoth(cbk.callback) if is_async(msg) else cbk.callback(msg)
-        
+            msg = maybe_async(msg)
+            if is_async(msg):
+                msg.addBoth(cbk.callback)
+            else:
+                cbk.callback(msg)
+            
     def _got_result(self, result):
         # Got the result, ping the consumer so it can process
         # requests from the queue

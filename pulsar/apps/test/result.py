@@ -5,11 +5,15 @@ import logging
 from inspect import istraceback
 from copy import deepcopy
 
+from pulsar.utils.structures import AttributeDictionary
 
-__all__ = ['TestObject',
+from .utils import TestFunction
+
+__all__ = ['Plugin',
            'TestStream',
            'TestRunner',
-           'TestResult']
+           'TestResult',
+           'Plugin']
 
 
 LOGGER = logging.getLogger('pulsar.apps.test')
@@ -17,7 +21,7 @@ STDOUT_LINE = '\nStdout:\n%s'
 STDERR_LINE = '\nStderr:\n%s'
 
 
-class TestObject(object):
+class Plugin(object):
     '''Interface for all classes which are part of of the :class:`TestRunner`,
 including :class:`TestRunner` itself, :class:`TestResult`
 and :class:`Plugin`.'''
@@ -33,6 +37,10 @@ it will stop the configuration of all subsequent plugins and quit the test.
 :parameter cfg: instance of :class:`pulsar.Config`.
 '''
         pass
+    
+    @property
+    def name(self):
+        return self.__class__.__name__.lower()
 
     def loadTestsFromTestCase(self, cls):
         pass
@@ -46,16 +54,24 @@ it will stop the configuration of all subsequent plugins and quit the test.
         pass
 
     def startTest(self, test):
-        '''Called just before the *test* instance is executed.'''
+        '''Called just before a *test* is executed. This is run
+just before _pre_setup function.'''
         pass
 
-    def getTest(self, test):
+    def stopTest(self, test):
+        '''Called just after a *test* has finished. This is run just after
+the _post_teardown function.'''
+        pass
+    
+    def before_test_function_run(self, test, local):
+        '''This function can be used by plugins to manipulate the *test*
+behaviour in the process domain where the test run.'''
+        return test
+    
+    def after_test_function_run(self, test, local, result):
         '''Given a test-function instance return a, possibly, modified test
 instance. This function can be used by plugins to modify the behaviour of test
 cases. By default it returns *test*.'''
-        return test
-
-    def stopTest(self, test):
         pass
 
     def addSuccess(self, test):
@@ -88,7 +104,7 @@ cases. By default it returns *test*.'''
             return teststr
 
 
-class TestResultProxy(TestObject):
+class TestResultProxy(Plugin):
     result = None
     stream = None
 
@@ -230,9 +246,9 @@ class TestStream(TestResultProxy):
         return True
 
 
-class TestResult(TestObject):
+class TestResult(Plugin):
 
-    def __init__(self, descriptions = True):
+    def __init__(self, descriptions=True):
         self.descriptions = descriptions
         self.testsRun = 0
         self._count = 0
@@ -324,15 +340,15 @@ class TestResult(TestObject):
             tb = tb.tb_next
         return length
 
-
+    
 class TestRunner(TestResultProxy):
     '''An asynchronous test runner'''
-    def __init__(self, plugins, stream, writercls = None, descriptions=True):
+    def __init__(self, plugins, stream, writercls=None, descriptions=True):
         self.descriptions = descriptions
         self.plugins = []
         writercls = writercls or TestStream
-        result = TestResult(descriptions = self.descriptions)
-        stream = writercls(stream, result, descriptions = self.descriptions)
+        result = TestResult(descriptions=self.descriptions)
+        stream = writercls(stream, result, descriptions=self.descriptions)
         for p in plugins:
             p = deepcopy(p)
             p.descriptions = self.descriptions
@@ -353,6 +369,7 @@ class TestRunner(TestResultProxy):
                 return c
 
     def loadTestsFromTestCase(self, cls):
+        '''Load all *test* functions for the test class *cls*.'''
         all_tests = self.loader.loadTestsFromTestCase(cls)
         for p in self.plugins:
             c = p.loadTestsFromTestCase(cls)
@@ -392,11 +409,22 @@ class TestRunner(TestResultProxy):
             if p.startTest(test):
                 break
 
-    def getTest(self, test):
+    def before_test_function_run(self, test):
+        '''Called before the test run, in the test process domain.'''
+        test.plugins = plugins = {}
+        for p in self.plugins:
+            local = AttributeDictionary()
+            plugins[p.name] = local
+            test = p.before_test_function_run(test, local) or test
+        return test
+    
+    def after_test_function_run(self, test, result):
         '''Called before the test starts.'''
         for p in self.plugins:
-            test = p.getTest(test) or test
-        return test
+            local = test.plugins.get(p.name)
+            if local is not None:
+                p.after_test_function_run(test, local, result)
+        return result
 
     def stopTest(self, test):
         '''Called after test has finished.'''
@@ -433,3 +461,17 @@ class TestRunner(TestResultProxy):
         for p in self.plugins:
             if p.printSummary(timeTaken):
                 break
+            
+    def run_test_function(self, test, func):
+        '''Run function *func* which belong to *test*.
+    
+:parameter test: test instance or class
+:parameter func: test function belonging to *test*
+:return: an asynchronous result
+'''
+        if func is None:
+            return func
+        tfunc = getattr(func, 'testfunction', None)
+        if tfunc is None:
+            tfunc = TestFunction(func.__name__)
+        return tfunc(test)

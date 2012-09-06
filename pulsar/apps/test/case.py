@@ -5,8 +5,6 @@ from inspect import istraceback
 
 from pulsar import is_failure, CLEAR_ERRORS, make_async, get_actor, async
 
-from .utils import inject_async_assert, run_test_function
-
 
 __all__ = ['TestRequest']
 
@@ -50,9 +48,9 @@ following algorithm:
         runner = worker.app.runner
         testcls = self.testcls
         testcls.tag = self.tag
-        inject_async_assert(testcls)
         testcls.cfg = worker.cfg
         all_tests = runner.loadTestsFromTestCase(testcls)
+        run_test_function = runner.run_test_function
         if all_tests.countTestCases():
             skip_tests = getattr(testcls, "__unittest_skip__", False)
             should_stop = False
@@ -91,6 +89,7 @@ Run a *test* function using the following algorithm
         try:
             success = True
             runner.startTest(test)
+            run_test_function = runner.run_test_function
             testMethod = getattr(test, test._testMethodName)
             if (getattr(test.__class__, "__unittest_skip__", False) or
                 getattr(testMethod, "__unittest_skip__", False)):
@@ -122,20 +121,19 @@ Run a *test* function using the following algorithm
                         success = False
                 else:
                     success = False
-
+            # _post_teardown
             if hasattr(test,'_post_teardown'):
                 outcome = run_test_function(test,test._post_teardown)
                 yield outcome
                 if self.add_failure(test, runner, outcome.result):
                     success = False
-
+            # run the stopTest
             runner.stopTest(test)
         except StopIteration:
             success = False
         except Exception as e:
             self.add_failure(test, runner, e)
             success = False
-
         if success:
             runner.addSuccess(test)
 

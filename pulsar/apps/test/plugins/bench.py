@@ -81,15 +81,15 @@ class BenchMark(test.Plugin):
         self.bench = cfg.bench
         self.repeat = cfg.repeat
         
-    def getTest(self, test):
-        number = getattr(test,'__number__',self.repeat)
+    def before_test_function_run(self, test, local):
+        number = getattr(test, '__number__', self.repeat)
         if self.bench:
-            return BenchTest(test,number)
+            return BenchTest(test, number)
     
     def import_module(self, mod, parent):
         b = '__benchmark__'
-        bench = getattr(mod,b,getattr(parent,b,False))
-        setattr(mod,b,bench)
+        bench = getattr(mod, b, getattr(parent, b, False))
+        setattr(mod, b, bench)
         if self.bench:
             if bench:
                 return mod

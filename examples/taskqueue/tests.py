@@ -251,7 +251,6 @@ in the TaskQueueRpcMixin class'''
         self.assertTrue(callable.handler.task_queue_manager)
         task_queue_manager = callable.handler.task_queue_manager
         self.assertEqual(task_queue_manager.name,self._name)
-
     def testKillTaskWorker(self):
         r = self.p.server_info()
         m = dict(((m['name'],m) for m in r['monitors']))

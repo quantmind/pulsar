@@ -17,21 +17,6 @@ from .states import *
 __all__ = ['Task','TaskInMemory','TaskConsumer','nice_task_message']
 
 
-class TaskLoggingHandler(logging.Handler):
-
-    def __init__(self, job, task):
-        self.job = job
-        self.task = task
-        super(TaskLoggingHandler,self).__init__(job.loglevel)
-
-    def emit(self, record):
-        msg = self.format_msg(record)
-        try:
-            self.task.emit_log(record)
-        except:
-            pass
-
-
 class TaskConsumer(object):
     '''A context manager for consuming tasks. This is used by the
 :class:`Scheduler` in a ``with`` block to correctly handle exceptions
@@ -49,40 +34,10 @@ and optional logging.
 
     the :class:`pulsar.apps.Worker` running the process.
 '''
-    result = None
     def __init__(self, task, worker, job):
         self.worker = worker
         self.job = job
         self.task = task
-        if job.loglevel is not None:
-            self.handler = TaskLoggingHandler(job, task)
-            formatter = job.logformatter
-            if not formatter:
-                h = logging.getLogger().handlers
-                if h:
-                    formatter = h[0].formatter
-            if formatter:
-                self.handler.setFormatter(formatter)
-        else:
-            self.handler = None
-
-    def __enter__(self):
-        if self.handler is not None:
-            self.job.logger.addHandler(self.handler)
-        return self
-
-    def __exit__(self, type, value, trace):
-        '''value is either an error or a non'''
-        task = self.task
-        if type:
-            task.result = as_failure((type, value, trace),
-                                     'Critical while processing %s task' % task)
-        if self.handler is not None:
-            self.job.logger.removeHandler(self.handler)
-        try:
-            self.result = task.finish(self.worker, result=task.result)
-        except Exception as e:
-            self.result = as_failure(e)
 
 
 class Task(object):
@@ -145,20 +100,23 @@ start its execution. If no timeout has occured the task will switch to
 a ``STARTED`` :attr:`Task.status` and invoke the :meth:`on_start`
 callback.'''
         job = registry[self.name]
-        with self.consumer(worker, job) as consumer:
+        try:
             if self.maybe_revoked():
                 yield self.on_timeout(worker)
             else:
                 self.status = STARTED
                 self.time_start = datetime.now()
                 yield self.on_start(worker)
+                consumer = TaskConsumer(self, worker, job)
                 result = maybe_async(job(consumer, *self.args, **self.kwargs))
                 if is_async(result):
                     yield result
-                    result = result.result
+                    result = maybe_async(result)
                 self.result = result
-        # just in case this is a deferred
-        yield consumer.result
+        except Exception as e:
+            self.result = as_failure(e)
+        finally:
+            yield self.finish(worker, result=self.result)
 
     def finish(self, worker, result):
         '''called when finishing the task.'''
@@ -173,8 +131,7 @@ callback.'''
             elif self.status == STARTED:
                 self.status = SUCCESS
                 self.result = result
-            self.on_finish(worker)
-        return self
+            return self.on_finish(worker)
 
     def to_queue(self, schedulter=None):
         '''The task has been received by the scheduler. If its status

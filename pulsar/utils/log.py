@@ -122,7 +122,6 @@ class SynchronizedMixin(object):
     @classmethod
     def make(cls, f):
         """Synchronization decorator for Synchronized member functions. """
-    
         def _(self, *args, **kw):
             lock = self.lock
             lock.acquire()
@@ -130,10 +129,8 @@ class SynchronizedMixin(object):
                 return f(self, *args, **kw)
             finally:
                 lock.release()
-                
         _.thread_safe = True
         _.__doc__ = f.__doc__
-        
         return _
     
     

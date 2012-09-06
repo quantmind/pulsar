@@ -10,7 +10,7 @@ from pulsar.async.defer import pickle
 
 __all__ = ['create_test_arbiter',
            'run_on_arbiter',
-           'run_test_function',
+           'NOT_TEST_METHODS',
            'halt_server',
            'arbiter_test',
            'ActorTestMixin',
@@ -29,34 +29,66 @@ class MockArbiter(pulsar.Arbiter):
 NOT_TEST_METHODS = ('setUp', 'tearDown', '_pre_setup', '_post_teardown',
                     'setUpClass', 'tearDownClass')
 
-class TestMethod:
-    
-    def __init__(self, test, method_name):
+class TestCallable:
+
+    def __init__(self, test, method_name, istest):
         self.test = test
         self.method_name = method_name
-        self.istest = self.method_name not in NOT_TEST_METHODS
+        self.istest = istest
         
     def __repr__(self):
         if isclass(self.test):
             return '%s.%s' % (self.test.__name__, self.method_name)
         else:
             return '%s.%s' % (self.test.__class__.__name__, self.method_name)
-    __str__ = __repr__
+    __str__ = __repr__        
     
     @async(max_errors=1, description='Test ')
     def run_test(self, actor):
         test = self.test
         if self.istest:
-            test = actor.app.runner.getTest(test)
+            test = actor.app.runner.before_test_function_run(test)
+        inject_async_assert(test)
         test_function = getattr(test, self.method_name)
         return test_function()
     
-    def __call__(self, actor):
-        result = self.run_test(actor)
+    def __call__(self, actor=None):
+        actor = actor or get_actor()
+        test = self.test
+        outcome = self.run_test(actor)
         if self.istest:
-            result.addBoth(lambda r: actor.app.runner.stopTest(self.test))
-        return result
+            outcome.addBoth(lambda result:
+                actor.app.runner.after_test_function_run(test, result))
+        return outcome
     
+
+class TestFunction:
+    
+    def __init__(self, method_name):
+        self.method_name = method_name
+        self.istest = self.method_name not in NOT_TEST_METHODS
+    
+    def __repr__(self):
+        return self.method_name
+    __str__ = __repr__
+    
+    def __call__(self, test):
+        callable = TestCallable(test, self.method_name, self.istest)
+        return self.run(callable)
+        
+    def run(self, callable):
+        return callable()
+        
+        
+class TestFunctionOnArbiter(TestFunction):
+    
+    def run(self, callable):
+        actor = get_actor()
+        if actor.is_monitor():
+            return callable(actor)
+        else:
+            return actor.send(actor.monitor, 'run', callable)
+        
         
 def create_test_arbiter(test=True):
     '''Create an instance of MockArbiter for testing'''
@@ -75,36 +107,8 @@ def halt_server(exception=None):
 def run_on_arbiter(f):
     '''Decorator for running a test function in the arbiter domain. This
 can be useful to test Arbiter mechanics.'''
-    name = f.__name__
-    def _(obj):
-        callable = TestMethod(obj, name)
-        actor = get_actor()
-        if actor.is_monitor():
-            # In the test monitor, simply execute the function
-            # First inject the AsyncAssert instance
-            inject_async_assert(obj)
-            return callable(actor)
-        else:
-            return actor.send(actor.monitor, 'run', callable)
-    _.test_function = True
-    _.__name__ = name
-    _.__doc__ = f.__doc__
-    return _
-
-
-def run_test_function(test, func):
-    '''Run function *func* which belong to *test*.
-
-:parameter test: test instance or class
-:parameter func: test function belonging to *test*
-:return: an asynchronous result
-'''
-    if func is None:
-        return func
-    if not getattr(func, 'test_function', False):
-        func = TestMethod(test, func.__name__)
-    return func(get_actor())
-
+    f.testfunction = TestFunctionOnArbiter(f.__name__)
+    return f
     
 def arbiter_test(f):
     '''Decorator for testing arbiter mechanics. It creates a mock arbiter
@@ -200,6 +204,6 @@ the tearDown method is overwritten.'''
         
 def inject_async_assert(obj):
     tcls = obj if isclass(obj) else obj.__class__
-    if not hasattr(tcls,'async'):
+    if not hasattr(tcls, 'async'):
         tcls.async = AsyncAssert()
 

@@ -1,11 +1,10 @@
 import unittest
 
 import pulsar
-from pulsar.apps.test.result import TestObject
+from pulsar.apps.test.result import Plugin
 
 
 __all__ = ['WrapTest',
-           'Plugin',
            'TestOption',
            'TestOptionPlugin']
 
@@ -42,11 +41,6 @@ class WrapTest(object):
     def _call(self):
         # This is the actual function to implement
         return self.testMethod()
-        
-    
-class Plugin(TestObject):
-    '''Base class for pulsar :class:`Application` plugins'''
-    settings = ()
     
     
 class TestOptionPlugin(Plugin, TestOption):

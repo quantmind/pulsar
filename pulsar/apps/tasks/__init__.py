@@ -136,7 +136,6 @@ or in the :class:`TaskQueue` constructor.
 .. _celery: http://celeryproject.org/
 '''
 import os
-from time import time
 from datetime import datetime
 
 import pulsar
@@ -246,6 +245,8 @@ def addtask_noack(client, actor, caller, jobname, task_extra, *args, **kwargs):
 
 @pulsar_command(internal=True, commands_set=taskqueue_cmnds)
 def save_task(client, actor, caller, task):
+    #import time
+    #time.sleep(0.1)
     return actor.app.scheduler.save_task(task)
 
 @pulsar_command(internal=True, commands_set=taskqueue_cmnds)
