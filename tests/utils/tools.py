@@ -1,6 +1,8 @@
 '''Tests the tools and utilities in pulsar.utils.'''
+import os
+
 from pulsar import system, get_actor
-from pulsar.utils.tools import checkarity
+from pulsar.utils.tools import checkarity, Pidfile
 from pulsar.apps.test import unittest
 
 def f0(a, b):
@@ -83,6 +85,17 @@ class TestArityCheck(unittest.TestCase):
         self.assertEqual(checkarity(f2,(),{'a':3,'c':5,'d':6}),None)
 
 
+@unittest.skipUnless(system.platform.is_posix, 'Only of posix platforms')
+class TestPidfile(unittest.TestCase):
+    
+    def testCreate(self):
+        p = Pidfile()
+        self.assertEqual(p.fname, None)
+        self.assertEqual(p.pid, None)
+        pid = os.getpid()
+        p.create(pid)
+        
+    
 class TestSystemInfo(unittest.TestCase):
 
     def testMe(self):

@@ -12,7 +12,7 @@ Development
   a dictionary.
 * Socket and WSGI :class:`pulsar.Application` are built on top of the new
   :class:`pulsar.AsyncSocketServer` framework class.
-* **199 regression tests**, **77% coverage**.
+* **200 regression tests**, **79% coverage**.
 
 Version 0.3 - 2012-May-03
 ============================

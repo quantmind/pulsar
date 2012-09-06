@@ -48,6 +48,10 @@ class Platform(object):
         """Return ``posix``, ``win`` or ``java``"""
         return self.type
 
+    @property
+    def is_posix(self):
+        return self.type == 'posix'
+    
     def isMacOSX(self):
         """Return if we are runnng on Mac OS X."""
         return sys.platform == "darwin"

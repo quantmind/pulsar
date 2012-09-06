@@ -33,8 +33,7 @@ __all__ = ['Config',
            'validate_list',
            'validate_pos_int',
            'validate_pos_float',
-           'make_settings',
-           'make_options']
+           'make_settings']
 
 class DefaultSettings:
 
@@ -110,37 +109,6 @@ applications *apps*.
             continue
         settings[setting.name] = setting.copy()
     return settings
-
-def make_options():
-    g_settings = make_settings(exclude=('version',))
-
-    keys = g_settings.keys()
-    def sorter(k):
-        return (g_settings[k].section, g_settings[k].order)
-
-    opts = []
-
-    for k in keys:
-        setting = g_settings[k]
-        if not setting.flags:
-            continue
-
-        args = tuple(setting.flags)
-
-        kwargs = {
-            "dest": setting.name,
-            "metavar": setting.meta or None,
-            "action": setting.action or "store",
-            "type": setting.type or "string",
-            "default": None,
-            "help": "%s [%s]" % (setting.short, setting.default)
-        }
-        if kwargs["action"] != "store":
-            kwargs.pop("type")
-
-        opts.append(optparse.make_option(*args, **kwargs))
-
-    return tuple(opts)
 
 
 class Config(object):

@@ -1,7 +1,3 @@
-# -*- coding: utf-8 -
-#
-# This file is part of gunicorn released under the MIT license. 
-# See the NOTICE for more information.
 import errno
 import os
 import tempfile
@@ -14,8 +10,7 @@ class Pidfile(object):
     it and '"%s.oldpid" % name' will be used. Otherwise
     we create a temp file using os.mkstemp.
     """
-
-    def __init__(self, fname):
+    def __init__(self, fname=None):
         self.fname = fname
         self.pid = None
         
@@ -26,21 +21,16 @@ class Pidfile(object):
                 return
             raise RuntimeError("Already running on PID %s " \
                 "(or pid file '%s' is stale)" % (os.getpid(), self.fname))
-
         self.pid = pid
-        
         # Write pidfile
-        fdir = os.path.dirname(self.fname)
-        if fdir and not os.path.isdir(fdir):
-            raise RuntimeError("%s doesn't exist. Can't create pidfile." % fdir)
-        fd, fname = tempfile.mkstemp(dir=fdir)
-        os.write(fd, "%s\n" % self.pid)
         if self.fname:
-            os.rename(fname, self.fname)
+            fdir = os.path.dirname(self.fname)
+            if fdir and not os.path.isdir(fdir):
+                raise RuntimeError("%s doesn't exist. Can't create pidfile." % fdir)
         else:
-            self.fname = fname
-        os.close(fd)
-
+            self.fname = tempfile.mktemp()
+        with open(self.fname, 'w') as f:
+            f.write("%s\n" % self.pid)
         # set permissions to -rw-r--r-- 
         os.chmod(self.fname, 420)
         
@@ -54,7 +44,6 @@ class Pidfile(object):
         try:
             with open(self.fname, "r") as f:
                 pid1 =  int(f.read() or 0)
-
             if pid1 == self.pid:
                 os.unlink(self.fname)
         except:
