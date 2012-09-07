@@ -1,5 +1,5 @@
-Development
-=====================
+Version 0.4 - 2012-Sep-07
+============================
 * Overall refactoring of API and therefore incompatible with previous versions.
 * Added the new :mod:`pulsar.utils.httpurl` module for HTTP tools and HTTP clients.
 * Refactored :class:`pulsar.Deferred` to be more compatible with twisted. You
