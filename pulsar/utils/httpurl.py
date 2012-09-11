@@ -59,11 +59,11 @@ try:    # Compiled with SSL?
     ssl = None
     if ispy3k:
         from http.client import HTTPSConnection
-    else:
+    else:   # pragma : no cover
         from httplib import HTTPSConnection
     import ssl
     BaseSSLError = ssl.SSLError
-except (ImportError, AttributeError):
+except (ImportError, AttributeError):   # pragma : no cover 
     pass
 
 if ispy3k: # Python 3
@@ -82,6 +82,7 @@ if ispy3k: # Python 3
     zip = zip
     map = map
     range = range
+    chr = chr
     iteritems = lambda d : d.items()
     itervalues = lambda d : d.values()
     is_string = lambda s: isinstance(s, str)
@@ -139,6 +140,7 @@ else:   # pragma : no cover
     string_type = unicode
     ascii_letters = string.letters
     range = xrange
+    chr = unichr
     iteritems = lambda d : d.iteritems()
     itervalues = lambda d : d.itervalues()
     is_string = lambda s: isinstance(s, unicode)
@@ -201,26 +203,31 @@ URI_RESERVED_SET = URI_GEN_DELIMS.union(URI_SUB_DELIMS)
 URI_RESERVED_CHARS = ''.join(URI_RESERVED_SET)
 # The unreserved URI characters (RFC 3986 - section 2.3)
 URI_UNRESERVED_SET = frozenset(ascii_letters + string.digits + '-._~')
+URI_SAFE_CHARS = URI_RESERVED_CHARS + '%~'
 
 escape = lambda s: quote(s, safe='~')
 urlquote = lambda iri: quote(iri, safe=URI_RESERVED_CHARS)
 
+def _gen_unquote(uri):
+    unreserved_set = URI_UNRESERVED_SET
+    for n, part in enumerate(to_string(uri).split('%')):
+        if not n:
+            yield part
+        else:
+            h = part[0:2]
+            if len(h) == 2:
+                c = chr(int(h, 16))
+                if c in unreserved_set:
+                    yield c + part[2:]
+                else:
+                    yield '%' + part
+            else:
+                yield '%' + part
+                
 def unquote_unreserved(uri):
     """Un-escape any percent-escape sequences in a URI that are unreserved
 characters. This leaves all reserved, illegal and non-ASCII bytes encoded."""
-    unreserved_set = URI_UNRESERVED_SET
-    parts = to_string(uri).split('%')
-    for i in range(1, len(parts)):
-        h = parts[i][0:2]
-        if len(h) == 2:
-            c = chr(int(h, 16))
-            if c in unreserved_set:
-                parts[i] = c + parts[i][2:]
-            else:
-                parts[i] = '%' + parts[i]
-        else:
-            parts[i] = '%' + parts[i]
-    return ''.join(parts)
+    return ''.join(_gen_unquote(uri))
 
 def requote_uri(uri):
     """Re-quote the given URI.
@@ -231,7 +238,7 @@ def requote_uri(uri):
     # Unquote only the unreserved characters
     # Then quote only illegal characters (do not quote reserved, unreserved,
     # or '%')
-    return quote(unquote_unreserved(uri), safe="!#$%&'()*+,/:;=?@[]~")
+    return quote(unquote_unreserved(uri), safe=URI_SAFE_CHARS)
 
 def iri_to_uri(iri, kwargs=None):
     '''Convert an Internationalized Resource Identifier (IRI) portion to a URI

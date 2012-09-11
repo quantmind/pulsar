@@ -101,7 +101,7 @@ def wrap_socket(sock):
     if sock and not isinstance(sock, Socket):
         address = sock.getsockname()
         sock_type, address = create_socket_address(address)
-        return sock_type(fd=sock,bound=True,backlog=None)
+        return sock_type(fd=sock, bound=True, backlog=None)
     else:
         return sock
 

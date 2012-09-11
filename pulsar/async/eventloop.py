@@ -369,6 +369,8 @@ will make the loop stop after the current event iteration completes."""
                                 self.log.error(
                                     "Exception in I/O handler for fd %s",
                                               fd, exc_info=True)
+                        except KeyError:
+                            self.log.info("File descriptor %s missing" % fd)
                         except:
                             self.log.error("Exception in I/O handler for fd %s",
                                           fd, exc_info=True)

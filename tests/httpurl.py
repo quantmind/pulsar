@@ -50,6 +50,27 @@ class TestTools(unittest.TestCase):
         s = 'ciao'
         s2 = httpurl.native_str(s)
         self.assertEqual(id(s), id(s2))
+        
+    def test_quote_unreserved(self):
+        '''Test a string of unreserved characters'''
+        s = 'a~b_(c-d).'
+        qs = httpurl.urlquote(s)
+        self.assertTrue('%' in qs)
+        uqs = httpurl.unquote_unreserved(qs)
+        self.assertEqual(uqs, s)
+        self.assertEqual(httpurl.requote_uri(s), s)
+        self.assertEqual(httpurl.requote_uri(qs), s)
+        
+    def test_quote_unreserved_percent(self):
+        s = 'a=3.5%;b=2%'
+        qs = httpurl.urlquote(s)
+        self.assertTrue('%' in qs)
+        uqs = httpurl.unquote_unreserved(qs)
+        self.assertNotEqual(uqs, s)
+        s = 'a~b_(c-d).'
+        qs = httpurl.urlquote(s) + '%f'
+        uqs = httpurl.unquote_unreserved(qs)
+        self.assertEqual(uqs, s+'%f')
 
 
 def request_callback(result):
