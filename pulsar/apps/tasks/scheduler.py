@@ -154,7 +154,7 @@ and task scheduling.
             monitor.put(task.serialize_for_queue())
         else:
             task._queued = False
-            self.log.info('Task %s already requested, abort.', task)
+            self.log.debug('Task %s already requested, abort.', task)
         return task
 
     def tick(self, monitor, now=None):
