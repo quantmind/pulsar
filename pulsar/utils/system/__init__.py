@@ -14,7 +14,7 @@ elif platform.type == 'win':    #pragma nocover
 
 try:
     import psutil
-except ImportError:
+except ImportError:    #pragma    nocover
     psutil = None
     
 memory_symbols = ('K', 'M', 'G', 'T', 'P', 'E', 'Z', 'Y')
@@ -22,7 +22,8 @@ memory_size = dict(((s,1 << (i+1)*10) for i,s in enumerate(memory_symbols)))
 
 
 def convert_bytes(b):
-    '''Convert a number of bytes into a human readable memory usage'''
+    '''Convert a number of bytes into a human readable memory usage, bytes,
+kilo, mega, giga, tera, peta, exa, zetta, yotta'''
     if b is None:
         return '#NA'
     for s in reversed(memory_symbols):
@@ -39,7 +40,7 @@ it returns an empty dictionary.
 
 .. _psutil: http://code.google.com/p/psutil/
 '''
-    if psutil is None:
+    if psutil is None:  #pragma    nocover
         return {}
     p = psutil.Process(pid)
     mem = p.get_memory_info()

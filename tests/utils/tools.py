@@ -101,5 +101,20 @@ class TestSystemInfo(unittest.TestCase):
     def testMe(self):
         worker = get_actor()
         info = system.system_info(worker.pid)
-        self.assertTrue(isinstance(info,dict))
+        self.assertTrue(isinstance(info, dict))
 
+
+class TestFunctions(unittest.TestCase):
+    
+    def test_convert_bytes(self):
+        from pulsar.utils.system import convert_bytes
+        self.assertEqual(convert_bytes(None), '#NA')
+        self.assertEqual(convert_bytes(4), '4B')
+        self.assertEqual(convert_bytes(1024),    '1.0KB')
+        self.assertEqual(convert_bytes(1024**2), '1.0MB')
+        self.assertEqual(convert_bytes(1024**3), '1.0GB')
+        self.assertEqual(convert_bytes(1024**4), '1.0TB')
+        self.assertEqual(convert_bytes(1024**5), '1.0PB')
+        self.assertEqual(convert_bytes(1024**6), '1.0EB')
+        self.assertEqual(convert_bytes(1024**7), '1.0ZB')
+        self.assertEqual(convert_bytes(1024**8), '1.0YB')

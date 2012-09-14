@@ -57,5 +57,22 @@ class TestPulsarStreams(unittest.TestCase):
         yield r
         self.assertEqual(r.result, b'ciao')
         
+    def test_for_coverage(self):
+        import socket
+        io = pulsar.AsyncIOStream()
+        self.assertEqual(str(io), '(closed)')
+        self.assertEqual(io.read(), b'')
+        self.assertEqual(io.state, None)
+        self.assertEqual(io.state_code, 'closed')
+        conn, sock = pulsar.server_client_sockets()
+        io.sock = sock
+        io.settimeout(10)
+        self.assertEqual(io.gettimeout(), 0)
+        def _():
+            io.sock = sock
+        self.assertRaises(RuntimeError, _)
+        self.assertRaises(socket.error, io.connect, ('localhost', 0))
+        
+        
     
     

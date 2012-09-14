@@ -118,7 +118,7 @@ def chunk_encoding(chunk):
 If the size is 0, this is the last chunk, and an extra CRLF is appended.
 '''
     head = ("%X\r\n" % len(chunk)).encode('utf-8')
-    return head + chunk + b'\r\n' 
+    return head + chunk + b'\r\n'
 
 
 class HttpResponse(AsyncResponse):
