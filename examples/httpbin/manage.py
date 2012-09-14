@@ -13,10 +13,11 @@ except ImportError:
 
 from pulsar import HttpException, LocalMixin, local_property, version
 from pulsar.apps import wsgi, ws
+from pulsar.apps.wsgi.server import HttpResponse
 from pulsar.utils.structures import OrderedDict
 from pulsar.utils.httpurl import Headers, parse_qs, ENCODE_URL_METHODS,\
                                  responses, has_empty_content, addslash,\
-                                 itervalues
+                                 itervalues, range
 from pulsar.utils.multipart import parse_form_data
 from pulsar.utils import event
 
@@ -177,6 +178,17 @@ class HttpBin(LocalMixin):
         if bits:
             raise HttpException(status=404)
         return self.response(info_data(environ))
+    
+    @route('getsize', title='Returns a preset size of data',
+           params=[('size', int(2.5*HttpResponse.MAX_CHUNK))])
+    def request_getsize(self, environ, bits):
+        if len(bits) == 1:
+             size = int(bits[0])
+        else:
+            raise HttpException(status=404)
+        data = {'size': size,
+                'data': ''.join(('d' for n in range(size)))}
+        return self.response(jsonbytes(data))
 
     @route('post', method='POST', title='Returns POST data')
     def request_post(self, environ, bits):

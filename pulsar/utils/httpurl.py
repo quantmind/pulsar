@@ -705,17 +705,13 @@ OTHER DEALINGS IN THE SOFTWARE.'''
                     self.errstr = str(e)
                     return nb_parsed
             elif not self.__on_message_complete:
-                if not self.__on_message_begin:
-                    self.__on_message_begin = True
-
+                self.__on_message_begin = True
                 if data:
                     self._buf.append(data)
                     data = b''
-
                 ret = self._parse_body()
                 if ret is None:
                     return length
-
                 elif ret < 0:
                     return ret
                 elif ret == 0:
@@ -723,7 +719,6 @@ OTHER DEALINGS IN THE SOFTWARE.'''
                     return length
                 else:
                     nb_parsed = max(length, ret)
-
             else:
                 return 0
 
@@ -876,10 +871,8 @@ OTHER DEALINGS IN THE SOFTWARE.'''
                 self.errno = INVALID_CHUNK
                 self.errstr = "invalid chunk size [%s]" % str(e)
                 return -1
-
             if size == 0:
                 return size
-
             if size is None or len(rest) < size:
                 return None
             body_part, rest = rest[:size], rest[size:]
@@ -887,14 +880,11 @@ OTHER DEALINGS IN THE SOFTWARE.'''
                 self.errno = INVALID_CHUNK
                 self.errstr = "chunk missing terminator [%s]" % data
                 return -1
-
             # maybe decompress
             if self.__decompress_obj is not None:
                 body_part = self.__decompress_obj.decompress(body_part)
-
             self._partial_body = True
             self._body.append(body_part)
-
             self._buf = [rest[2:]]
             return len(rest)
 
@@ -908,7 +898,6 @@ OTHER DEALINGS IN THE SOFTWARE.'''
             chunk_size = int(chunk_size, 16)
         except ValueError:
             raise InvalidChunkSize(chunk_size)
-
         if chunk_size == 0:
             self._parse_trailers(rest_chunk)
             return 0, None
@@ -916,7 +905,6 @@ OTHER DEALINGS IN THE SOFTWARE.'''
 
     def _parse_trailers(self, data):
         idx = data.find(b'\r\n\r\n')
-
         if data[:2] == b'\r\n':
             self._trailers = self._parse_headers(data[:idx])
 

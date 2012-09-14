@@ -230,6 +230,13 @@ class TestHttpClient(unittest.TestCase):
         parser = r.parser
         self.assertTrue(parser.is_chunked())
         
+    def testChunkedResponse(self):
+        http = self.client()
+        r = make_async(http.get(self.httpbin('getsize/132000')))
+        yield r
+        r = r.result
+        self.assertEqual(r.status_code, 200)
+        
     def test_Cookie(self):
         http = self.client()
         # First set the cookies
@@ -265,6 +272,7 @@ class TestHttpClient(unittest.TestCase):
     def test_parse_cookie(self):
         self.assertEqual(httpurl.parse_cookie('invalid:key=true'), {})
         
+    #### TO INCLUDE
     def __test_far_expiration(self):
         "Cookie will expire when an distant expiration time is provided"
         response = Response(self.environ())

@@ -12,6 +12,7 @@ from pulsar import create_socket, server_socket, create_client_socket,\
                      wrap_socket, defaults, create_connection, CouldNotParse,\
                      get_socket_timeout, Timeout, BaseSocket, Synchronized
 from pulsar.utils.httpurl import IOClientRead
+from pulsar.utils.structures import merge_prefix
 from .defer import Deferred, is_async, is_failure, async, maybe_async,\
                         safe_async, log_failure, NOT_DONE
 from .eventloop import IOLoop, loop_timeout
@@ -315,15 +316,9 @@ setup using the :meth:`set_close_callback` method."""
                     # returning the number of bytes it was able to
                     # process.  Therefore we must not call socket.send
                     # with more than 128KB at a time.
-                    buff = self._get_buffer(self._write_buffer, MAX_BODY)
-                else:
-                    buff = self._write_buffer.popleft() or b''
-                sent = self.sock.send(buff)
+                    merge_prefix(self._write_buffer, MAX_BODY)
+                sent = self.sock.send(self._write_buffer[0])
                 if sent == 0:
-                    raise socket.error()
-                tot_bytes += sent
-            except socket.error as e:
-                if e.args and e.args[0] in (errno.EWOULDBLOCK, errno.EAGAIN):
                     # With OpenSSL, after send returns EWOULDBLOCK,
                     # the very same string object must be used on the
                     # next call to send.  Therefore we suppress
@@ -334,37 +329,31 @@ setup using the :meth:`set_close_callback` method."""
                     # (http://bugs.python.org/issue8240)
                     self._write_buffer_frozen = True
                     break
+                self._write_buffer_frozen = False
+                merge_prefix(self._write_buffer, sent)
+                self._write_buffer.popleft()
+                tot_bytes += sent
+            except socket.error as e:
+                if e.args and e.args[0] in (errno.EWOULDBLOCK, errno.EAGAIN):
+                    self._write_buffer_frozen = True
+                    break
                 else:
                     self.log.warning("Write error on %s.", self, exc_info=True)
                     self.close()
-                    return tot_bytes
-        return tot_bytes
-
+                    return
         if not self._write_buffer and self._write_callback:
             callback = self._write_callback
             self._write_callback = None
             self._may_run_callback(callback, tot_bytes)
+        return tot_bytes
 
     def _check_closed(self):
         if not self.sock:
             raise IOError("Stream is closed")
 
-    def _get_buffer(self, dq, size = None):
-        if size is None:
-            buff = b''.join(dq)
-            dq.clear()
-        else:
-            remaining = size
-            prefix = []
-            while dq and remaining > 0:
-                chunk = dq.popleft()
-                if len(chunk) > remaining:
-                    dq.appendleft(chunk[remaining:])
-                    chunk = chunk[:remaining]
-                prefix.append(chunk)
-                remaining -= len(chunk)
-
-            buff = b''.join(prefix)
+    def _get_buffer(self, dq):
+        buff = b''.join(dq)
+        dq.clear()
         return buff
 
     def _handle_events(self, fd, events):

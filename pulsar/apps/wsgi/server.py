@@ -109,9 +109,16 @@ nothing."""
     environ['SCRIPT_NAME'] = script_name
     return environ
 
-def chunk_encoding(chunk, final=False):
+def chunk_encoding(chunk):
+    '''Write a chunk::
+
+    chunk-size(hex) CRLF
+    chunk-data CRLF
+    
+If the size is 0, this is the last chunk, and an extra CRLF is appended.
+'''
     head = ("%X\r\n" % len(chunk)).encode('utf-8')
-    return head + chunk + b'\r\n'
+    return head + chunk + b'\r\n' 
 
 
 class HttpResponse(AsyncResponse):
@@ -261,6 +268,7 @@ invocation of the application.
             if self.chunked:
                 if buffer:
                     yield chunk_encoding(buffer)
+                # Last chunk
                 yield chunk_encoding(b'')
         # close connection if required
         if not keep_alive:
