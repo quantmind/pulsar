@@ -100,24 +100,21 @@ class GeneralWebSocket(object):
             connection.close()
         elif frame.is_data:
             yield self.as_frame(connection,
-                                self.handle.on_open(environ, frame.body))
+                                self.handle.on_message(environ, frame.body))
 
     def as_frame(self, connection, body):
-        if body:
-            body = maybe_async(body)
-            if is_async(body):
-                return body.addBoth(lambda b: self.as_frame(connection, b))
-            elif is_failure(body):
-                # We have a failure. shut down connection
-                body.log()
-                body = Frame.close('Server error')
-            elif not isinstance(body, Frame):
-                # If the body is not a frame, build a final frame from it.
-                body = Frame(body, version=connection.parser.version,
-                             final=True)
-            return body.msg
-        else:
-            return b''
+        body = maybe_async(body)
+        if is_async(body):
+            return body.addBoth(lambda b: self.as_frame(connection, b))
+        if is_failure(body):
+            # We have a failure. shut down connection
+            body.log()
+            body = Frame.close('Server error')
+        elif not isinstance(body, Frame):
+            # If the body is not a frame, build a final frame from it.
+            body = Frame(body or '', version=connection.parser.version,
+                         final=True)
+        return body.msg
         
     
 class WebSocket(GeneralWebSocket):

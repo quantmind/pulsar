@@ -534,6 +534,7 @@ current thread.'''
         result = last_result if not self.errors else self.errors
         self.gen = None
         self.errors = None
+        #log_failure(result)
         return self.callback(result)
 
 
