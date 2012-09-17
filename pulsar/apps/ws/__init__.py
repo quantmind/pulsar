@@ -26,10 +26,17 @@ WebSocket Handler
    :members:
    :member-order: bysource
 
-Framing
+Frame
 ~~~~~~~~~~~~~~~~~~~
 
-.. autofunction:: frame_close
+.. autoclass:: Frame
+   :members:
+   :member-order: bysource
+   
+   
+.. autoclass:: FrameParser
+   :members:
+   :member-order: bysource
 
 
 '''
@@ -43,7 +50,7 @@ import hashlib
 from functools import partial
 
 import pulsar
-from pulsar import is_async, safe_async, is_failure, AsyncResponse
+from pulsar import maybe_async, is_async, safe_async, is_failure, AsyncResponse
 from pulsar.utils.httpurl import ispy3k, to_bytes, native_str,\
                                  itervalues, parse_qs, WEBSOCKET_VERSION
 from pulsar.apps.wsgi import WsgiResponse, wsgi_iterator
@@ -56,26 +63,18 @@ class GeneralWebSocket(object):
     namespace = ''
     extensions = ['x-webkit-deflate-frame']
     
-    def __init__(self, handle, namespace=None, clients=None, extensions=None):
+    def __init__(self, handle, extensions=None):
         self.handle = handle
         if extensions is None:
             extensions = self.extensions
         self.extensions = extensions
-        self._clients = clients if clients is not None else {}
-        self.namespace = namespace if namespace is not None else self.namespace
-    
-    @property
-    def clients(self):
-        return frozenset(itervalues(self._clients))
 
     def get_client(self):
         return self.handle(self)
     
     def __call__(self, environ, start_response):
-        path = environ.get('PATH_INFO')
-        if not path.lstrip('/').startswith(self.namespace):
-            return
-        return self.handle_handshake(environ, start_response)
+        if self.handle.match(environ):
+            return self.handle_handshake(environ, start_response)
     
     def handle_handshake(self, environ, start_response):
         raise NotImplementedError()
@@ -89,6 +88,10 @@ class GeneralWebSocket(object):
         connection.response_class = self.on_message
         
     def on_message(self, connection, frame):
+        environ = connection.environ
+        if not environ.get('websocket-opened'):
+            environ['websocket-opened'] = True
+            self.handle.on_open(environ)
         rframe = frame.on_received()
         if rframe:
             yield rframe.msg
@@ -97,13 +100,17 @@ class GeneralWebSocket(object):
             connection.close()
         elif frame.is_data:
             yield self.as_frame(connection,
-                                 self.handle.on_message(
-                                            connection.environ, frame.body))
+                                self.handle.on_open(environ, frame.body))
 
     def as_frame(self, connection, body):
         if body:
+            body = maybe_async(body)
             if is_async(body):
-                return body.add_callback(lambda b: self.as_frame(connection, b))
+                return body.addBoth(lambda b: self.as_frame(connection, b))
+            elif is_failure(body):
+                # We have a failure. shut down connection
+                body.log()
+                body = Frame.close('Server error')
             elif not isinstance(body, Frame):
                 # If the body is not a frame, build a final frame from it.
                 body = Frame(body, version=connection.parser.version,
@@ -291,38 +298,26 @@ and closed connections.
 Here is an example Web Socket handler that echos back all received messages
 back to the client::
 
-    class EchoWebSocket(websocket.WebSocketHandler):
-        def on_open(self):
-            print "WebSocket opened"
+    from pulsar.apps import ws
     
-        def on_message(self, message):
-            self.write_message(u"You said: " + message)
+    class EchoWS(ws.WS):
     
-        def on_close(self):
-            print "WebSocket closed"
+        def on_open(self, environ):
+            print("WebSocket opened")
+    
+        def on_message(self, environ, message):
+            return message
+    
+        def on_close(self, environ):
+            print("WebSocket closed")
             
-If you map the handler above to "/websocket" in your application, you can
-invoke it in JavaScript with::
-
-    var ws = new WebSocket("ws://localhost:8888/websocket");
-    ws.onopen = function() {
-       ws.send("Hello, world");
-    };
-    ws.onmessage = function (evt) {
-       alert(evt.data);
-    };
-
-This script pops up an alert box that says "You said: Hello, world".
-
-.. attribute: protocols
-
-    list of protocols from the handshake
+'''
+    def match(self, environ):
+        pass
     
-.. attribute: extensions
-
-    list of extensions from the handshake
-'''    
     def on_handshake(self, environ, headers):
+        """Invoked just before sending the upgraded **headers** to the
+client. This is a chance to add or remove header's entries."""
         pass
     
     def on_open(self, environ):

@@ -22,6 +22,9 @@ from pulsar.utils.httpurl import range
 
 class handle(ws.WS):
     
+    def match(self, environ):
+        return environ.get('PATH_INFO') in ('/echo', '/data')
+    
     def on_message(self, environ, msg):
         path = environ.get('PATH_INFO')
         if path == '/echo':
