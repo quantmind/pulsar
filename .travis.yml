@@ -5,7 +5,9 @@ python:
   - 2.7
   - 3.2
 
-install: python setup.py install
+install:
+  - if [[ $TRAVIS_PYTHON_VERSION == '2.6' ]]; then pip install --use-mirrors argparse unittest2; fi 
+  - python setup.py install
 script: python -m runtests
 
 branches:
