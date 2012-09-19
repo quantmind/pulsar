@@ -143,6 +143,7 @@ Here ``a`` is actually a reference to the remote actor.
     ACTOR_TIMEOUT_TOLERANCE = 0.6
     DEF_PROC_NAME = 'pulsar'
     SIG_QUEUE = None
+    exit_code = None
 
     def __init__(self, impl, arbiter=None, monitor=None,
                  on_task=None, ioqueue=None, monitors=None,
@@ -459,13 +460,14 @@ logging is configured, the :attr:`Actor.mailbox` is registered and the
     # STOPPING
     ############################################################################
     @async()
-    def stop(self, force=False):
+    def stop(self, force=False, exit_code=0):
         '''Stop the actor by stopping its :attr:`Actor.requestloop`
 and closing its :attr:`Actor.mailbox`. Once everything is closed
 properly this actor will go out of scope.'''
         if force or self._state in (self.STARTING, self.RUN):
             self.set('stopping_start', time())
             self._state = self.STOPPING
+            self.exit_code = exit_code
             # make safe user defined callbacks
             yield safe_async(self.on_stop)
             yield self.mailbox.close()

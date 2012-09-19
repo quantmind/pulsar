@@ -72,6 +72,17 @@ class TestTools(unittest.TestCase):
         uqs = httpurl.unquote_unreserved(qs)
         self.assertEqual(uqs, s+'%f')
 
+    def test_remove_double_slash(self):
+        r = httpurl.remove_double_slash
+        self.assertEqual(r('/bla//foo/'), '/bla/foo/')
+        self.assertEqual(r('/bla/////////foo//////////'), '/bla/foo/')
+        self.assertEqual(r('/bla/foo/'), '/bla/foo/')
+        
+    def test_capfirst(self):
+        c = httpurl.capfirst
+        self.assertEqual(c('blA'), 'Bla')
+        self.assertEqual(c(''), '')
+        self.assertEqual(c('bOlA'), 'Bola')
 
 def request_callback(result):
     return result

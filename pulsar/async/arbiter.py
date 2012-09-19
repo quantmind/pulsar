@@ -272,6 +272,8 @@ the timeout. Stop the arbiter.'''
             raise
         except:
             self._halt("Unhandled exception in main loop.")
+        if self.exit_code:
+            sys.exit(self.exit_code)
 
     def _halt(self, reason=None, sig=None):
         #halt the arbiter. If there no signal ``sig`` it is an unexpected exit

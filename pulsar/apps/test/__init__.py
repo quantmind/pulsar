@@ -266,5 +266,9 @@ configuration and plugins.'''
             runner.on_end()
             runner.printSummary(time_taken)
             # Shut down the arbiter
-            return monitor.arbiter.stop()
+            if runner.result.errors or runner.result.failures:
+                exit_code = 1
+            else:
+                exit_code = 0 
+            return monitor.arbiter.stop(exit_code=exit_code)
 
