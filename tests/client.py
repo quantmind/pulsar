@@ -49,7 +49,7 @@ class TestPulsarClient(unittest.TestCase, ClientMixin):
         info = c.info()
         self.assertTrue(info)
         self.assertEqual(len(info['monitors']), 1)
-        self.assertEqual(info['monitors'][0]['name'], 'test')
+        self.assertEqual(info['monitors'][0]['actor']['name'], 'test')
         
         
 class TestClosePulsarClient(unittest.TestCase, ClientMixin):
@@ -63,15 +63,15 @@ class TestClosePulsarClient(unittest.TestCase, ClientMixin):
     def testClose(self):
         c = self.client()
         info = c.info()
-        connections1 = info['server']['active_connections']
+        connections1 = info['server']['internal_connections']
         c2 = self.client()
         info = c2.info()
-        connections2 = info['server']['active_connections']
+        connections2 = info['server']['internal_connections']
         self.assertEqual(connections1+1, connections2)
         # lets drop one
         c.close()
         # give it some time
         time.sleep(0.2)
         info = c2.info()
-        connections3 = info['server']['active_connections']
+        connections3 = info['server']['internal_connections']
         self.assertEqual(connections1, connections3)

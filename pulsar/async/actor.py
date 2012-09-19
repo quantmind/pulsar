@@ -512,30 +512,35 @@ actions:
                     nt = None
             if nt:
                 self.last_notified = nt
-                info = self.info(True)
-                info['last_notified'] = nt
+                info = self.info()
+                info['actor']['last_notified'] = nt
                 self.send('arbiter', 'notify', info)
             self.on_task()
 
-    def info(self, full=False):
+    def info(self):
         '''return A dictionary of information related to the actor
 status and performance.'''
+        if not self.started():
+            return
         isp = self.isprocess()
-        data = {'name': self.name,
-                'actor_id': self.aid[:8],
-                'ppid': self.ppid,
-                'thread_id': self.tid,
-                'process_id': self.pid,
-                'isprocess': isp,
-                'request processed': self.nr,
-                'active_connections': self.mailbox.active_connections,
-                'age': self.age}
+        requestloop  = self.requestloop
+        actor = {'name': self.name,
+                 'actor_id': self.aid[:8],
+                 'uptime': time() - requestloop._started,
+                 'ppid': self.ppid,
+                 'thread_id': self.tid,
+                 'process_id': self.pid,
+                 'is_process': isp,
+                 'internal_connections': self.mailbox.active_connections,
+                 'age': self.age}
+        events = {'request processed': self.nr,
+                  'callbacks': len(self.ioloop._callbacks),
+                  'io_loops': self.ioloop.num_loops}
+        if self.cpubound:
+            events['request_loops'] = requestloop.num_loops
+        data = {'actor': actor, 'events': events}
         if isp:
-            data.update(system.system_info(self.pid))
-        requestloop = self.requestloop
-        data.update({'uptime': time() - requestloop._started,
-                     'event_loops': requestloop.num_loops,
-                     'io_loops': self.ioloop.num_loops})
+            data['system'] = system.system_info(self.pid)
         return self.on_info(data)
 
     ############################################################################

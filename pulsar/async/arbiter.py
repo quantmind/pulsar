@@ -145,19 +145,21 @@ Users access the arbiter by the high level api::
         for pool in list(itervalues(self._monitors)):
             yield pool.stop()
 
-    def info(self):
-        if not self.started():
-            return
-        server = super(Arbiter,self).info()
+    def on_info(self, data):
         monitors = [p.info() for p in itervalues(self.monitors)]
-        server.update({
-            'version':pulsar.__version__,
-            'name':pulsar.SERVER_NAME,
-            'number_of_monitors':len(self._monitors),
-            'number_of_actors':len(self.MANAGED_ACTORS),
-            'workers': [a.info for a in itervalues(self.MANAGED_ACTORS)]})
-        return {'server': server,
-                'monitors': monitors}
+        server = data.pop('actor')
+        server.update({'version':pulsar.__version__,
+                       'name':pulsar.SERVER_NAME,
+                       'number_of_monitors':len(self._monitors),
+                       'number_of_actors':len(self.MANAGED_ACTORS)})
+        server.pop('is_process', None)
+        server.pop('ppid', None)
+        server.pop('actor_id', None)
+        server.pop('age', None)
+        data['server'] = server
+        data['workers'] = [a.info for a in itervalues(self.MANAGED_ACTORS)]
+        data['monitors'] = monitors
+        return data
 
     def configure_logging(self, config = None):
         if self._monitors:

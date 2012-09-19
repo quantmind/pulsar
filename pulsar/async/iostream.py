@@ -338,7 +338,7 @@ setup using the :meth:`set_close_callback` method."""
                     self._write_buffer_frozen = True
                     break
                 else:
-                    self.log.warning("Write error on %s.", self, exc_info=True)
+                    self.log.warning("Write error on %s: %s", self, e)
                     self.close()
                     return
         if not self._write_buffer and self._write_callback:
@@ -768,7 +768,7 @@ class AsyncSocketServer(BaseSocketHandler):
 
 .. attribute:: timeout
 
-    The timeout for when reading data in an asynchronous way.
+    The timeout when reading data in an asynchronous way.
 '''
     thread = None
     _started = False
@@ -885,5 +885,6 @@ class AsyncSocketServer(BaseSocketHandler):
         '''Accept a new connection from a remote client'''
         client, client_address = self.sock.accept()
         if client:
+            self.received += 1
             return self.connection_class(client, client_address, self,
                                          timeout=self.timeout)

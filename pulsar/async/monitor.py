@@ -331,22 +331,21 @@ Users shouldn't need to override this method, but use
         else:
             return actor.proxy.stop()
 
-    def info(self, full=False):
+    def info(self):
         tq = self.ioqueue
-        data = {'actor_class':self.actor_class.code(),
-                'workers': [a.info for a in itervalues(self.MANAGED_ACTORS)],
-                'num_actors':len(self.MANAGED_ACTORS),
-                'concurrency':self.cfg.concurrency,
-                'listen':str(self.socket),
-                'name':self.name,
-                'age':self.age}
+        data = {'actor': {'actor_class':self.actor_class.code(),
+                          'concurrency':self.cfg.concurrency,
+                          'name':self.name,
+                          'age':self.age,
+                          'num_actors':len(self.MANAGED_ACTORS)},
+                'workers': [a.info for a in itervalues(self.MANAGED_ACTORS)]}
         if tq is not None:
             if isinstance(tq,Queue):
                 tqs = 'multiprocessing.Queue'
             else:
                 tqs = str(tq)
-            data.update({'ioqueue': tqs,
-                         'ioqueue_size': tq.qsize()})
+            data['queue'] = {'ioqueue': tqs,
+                             'ioqueue_size': tq.qsize()}
         return self.on_info(data)
 
     def proxy_mailbox(address):

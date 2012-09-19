@@ -137,7 +137,7 @@ It provides two new methods inherited from :class:`ApplicationHandlerMixin`.
             pass
 
     def on_info(self, info):
-        return self.app.on_info(self,info)
+        return self.app.on_info(self, info)
 
 
 class ApplicationMonitor(ApplicationHandlerMixin, Monitor):
@@ -222,9 +222,12 @@ updated actor parameters with information about the application.
         return app.actorparams(self, p)
 
     def on_info(self, info):
-        info.update({'default_timeout': self.cfg.timeout,
-                     'max_requests': self.cfg.max_requests})
-        return self.app.on_info(self,info)
+        info['actor'].update({'default_timeout': self.cfg.timeout,
+                              'max_requests': self.cfg.max_requests})
+        if not self.cfg.workers:
+            return self.app.on_info(self, info)
+        else:
+            return info
 
 
 class Application(pulsar.LogginMixin):

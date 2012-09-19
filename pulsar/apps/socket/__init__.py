@@ -82,3 +82,11 @@ on a socket. This is the base class of :class:`pulsar.apps.wsgi.WSGIServer`.
     def on_event(self, worker, fd, events):
         connection = worker.get('socket_server').accept()
         return connection.on_closed
+    
+    def on_info(self, worker, data):
+        server = worker.get('socket_server')
+        data['socket'] = {'listen_on': server.address,
+                          'read_timeout': server.timeout,
+                          'active_connections': server.active_connections,
+                          'received_connections': server.received}
+        return data
