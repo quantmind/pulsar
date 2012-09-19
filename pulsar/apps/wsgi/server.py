@@ -354,7 +354,7 @@ class HttpParser:
         if self.p.is_message_complete():
             self.p = lib.Http_Parser(kind=0)
         if data:
-            self.p.execute(data, len(data))
+            self.p.execute(bytes(data), len(data))
             if self.p.is_message_complete():
                 return wsgi_environ(self.connection, self.p), bytearray()
         return None, bytearray()

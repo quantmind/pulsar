@@ -212,6 +212,7 @@ class FrameParser(object):
         # end of body can be passed manually by putting a length of 0
         if not data:
             return None
+        data = bytes(data)
         frame = self._frame
         if self._buf:
             data = self._buf + data

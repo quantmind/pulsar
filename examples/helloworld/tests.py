@@ -39,7 +39,7 @@ class TestHelloWorldThread(unittest.TestCase):
         outcome = c.get(self.uri)
         yield outcome
         resp = outcome.result
-        self.assertTrue(resp.status_code, 200)
+        self.assertEqual(resp.status_code, 200)
         content = resp.content
         self.assertEqual(content, b'Hello World!\n')
         headers = resp.headers
