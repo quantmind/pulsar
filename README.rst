@@ -66,7 +66,16 @@ the following
 Examples
 =============
 Check out the ``examples`` directory for various working applications created using
-pulsar alone.
+pulsar alone. It includes:
+
+* Hello world! wsgi example.
+* An Httpbin wsgi application.
+* A HTTP Proxy server.
+* A simple JSON-RPC Calculator server.
+* A taskqueue application with a JSON-RPC.
+* Websocket graph.
+* The dining philosophers problem.
+* Asynchronous shell.
 
 
 Design
