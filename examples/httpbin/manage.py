@@ -201,6 +201,12 @@ class HttpBin(LocalMixin):
         if bits:
             raise HttpException(status=404)
         return self.response(info_data(environ))
+    
+    @route('delete', method='DELETE', title='Returns DELETE data')
+    def request_delete(self, environ, bits):
+        if bits:
+            raise HttpException(status=404)
+        return self.response(info_data(environ))
 
     @route('redirect', title='302 Redirect n times', params=[('n', 6)])
     def request_redirect(self, environ, bits):

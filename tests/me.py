@@ -3,7 +3,6 @@ import os
 import time
 import pickle
 from threading import current_thread
-import multiprocessing
 
 import pulsar
 from pulsar import defaults, send, is_async
@@ -108,6 +107,7 @@ class TestTestWorker(unittest.TestCase):
     
     def testReconnect(self):
         worker = pulsar.get_actor()
+        # the worker shut down the arbiter mailbox
         c = worker.arbiter.mailbox
         c.close()
         yield self.async.assertEqual(c.ping(), 'pong')
@@ -135,12 +135,17 @@ class TestTestWorker(unittest.TestCase):
         self.assertRaises(ValueError, pulsar.send, 'vcghdvchdgcvshcd', 'ping')
         
     def test_multiple_execute(self):
-        result1 = pulsar.send('arbiter', 'run', wait(0.3))
+        result1 = pulsar.send('arbiter', 'run', wait(0.2))
         result2 = pulsar.send('arbiter', 'ping')
-        yield result1
-        yield result2
-        self.assertEqual(result1.result, 0.3)
+        result3 = pulsar.send('arbiter', 'echo', 'ciao!')
+        result4 = pulsar.send('arbiter', 'run', wait(0.1))
+        result5 = pulsar.send('arbiter', 'echo', 'ciao again!')
+        yield result5
+        self.assertEqual(result1.result, 0.2)
         self.assertEqual(result2.result, 'pong')
+        self.assertEqual(result3.result, 'ciao!')
+        self.assertEqual(result4.result, 0.1)
+        self.assertEqual(result5.result, 'ciao again!')
         
     #def testPickle(self):
     #    self.assertRaises(pickle.PicklingError, pickle.dumps,

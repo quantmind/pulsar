@@ -86,8 +86,8 @@ created by :meth:`ActorProxy.send` method.
 
     @classmethod
     def decode(cls, buffer):
-        separator = b'\r\n\r\n\r\n'
-        if buffer[:1] != b'*':
+        separator = b'\r\n'
+        if buffer[0] != 42:
             raise CouldNotParse()
         idx = buffer.find(separator)
         if idx < 0:
@@ -108,7 +108,7 @@ created by :meth:`ActorProxy.send` method.
         data = (self.command, self.sender, self.receiver,
                 self.args, self.kwargs)
         bdata = pickle.dumps(data, protocol=2)
-        return ('*%s\r\n\r\n\r\n' % len(bdata)).encode('utf-8') + bdata
+        return ('*%s\r\n' % len(bdata)).encode('utf-8') + bdata
 
     def __repr__(self):
         return self.command

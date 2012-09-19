@@ -199,6 +199,32 @@ class TestHttpClient(unittest.TestCase):
         self.assertTrue(result['args'])
         self.assertEqual(result['args']['numero'],['1','2'])
         
+    def test_put(self):
+        data = (('bla', 'foo'), ('unz', 'whatz'),
+                ('numero', '1'), ('numero', '2'))
+        http = self.client()
+        r = request(http.put(self.httpbin('put'), data=data))
+        yield r
+        r = r.result
+        self.assertEqual(r.status_code, 200)
+        self.assertEqual(r.response, 'OK')
+        result = r.content_json()
+        self.assertTrue(result['args'])
+        self.assertEqual(result['args']['numero'],['1','2'])
+        
+    def test_delete(self):
+        data = (('bla', 'foo'), ('unz', 'whatz'),
+                ('numero', '1'), ('numero', '2'))
+        http = self.client()
+        r = request(http.delete(self.httpbin('delete'), data=data))
+        yield r
+        r = r.result
+        self.assertEqual(r.status_code, 200)
+        self.assertEqual(r.response, 'OK')
+        result = r.content_json()
+        self.assertTrue(result['args'])
+        self.assertEqual(result['args']['numero'],['1','2'])
+        
     def testRedirect(self):
         http = self.client()
         r = make_async(http.get(self.httpbin('redirect','1')))

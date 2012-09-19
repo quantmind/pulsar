@@ -1,5 +1,5 @@
 '''Event driven concurrent framework for Python'''
-VERSION = (0, 4, 0, 'rc', 1)
+VERSION = (0, 4, 0, 'rc', 2)
 
 from .utils.version import get_version
 
@@ -9,8 +9,7 @@ __author__    = "Luca Sbardella"
 __contact__   = "luca.sbardella@gmail.com"
 __homepage__  = "https://github.com/quantmind/pulsar"
 __docformat__ = "restructuredtext"
-CLASSIFIERS  = [
-                'Development Status :: 3 - Alpha',
+CLASSIFIERS  = ['Development Status :: 3 - Alpha',
                 'Environment :: Web Environment',
                 'Intended Audience :: Developers',
                 'License :: OSI Approved :: BSD License',
@@ -19,6 +18,7 @@ CLASSIFIERS  = [
                 'Programming Language :: Python :: 2.6',
                 'Programming Language :: Python :: 2.7',
                 'Programming Language :: Python :: 3.2',
+                'Programming Language :: Python :: Implementation :: PyPy',
                 'Topic :: Internet',
                 'Topic :: Utilities',
                 'Topic :: System :: Distributed Computing',
@@ -26,8 +26,7 @@ CLASSIFIERS  = [
                 'Topic :: Internet :: WWW/HTTP',
                 'Topic :: Internet :: WWW/HTTP :: WSGI',
                 'Topic :: Internet :: WWW/HTTP :: WSGI :: Server',
-                'Topic :: Internet :: WWW/HTTP :: Dynamic Content'
-                ]
+                'Topic :: Internet :: WWW/HTTP :: Dynamic Content']
 
 from .utils.log import *
 

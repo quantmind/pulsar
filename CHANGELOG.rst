@@ -1,6 +1,7 @@
 Version 0.4 - 2012-Sep-07
 ============================
 * Overall refactoring of API and therefore incompatible with previous versions.
+* Support pypy_.
 * Added the new :mod:`pulsar.utils.httpurl` module for HTTP tools and HTTP clients.
 * Refactored :class:`pulsar.Deferred` to be more compatible with twisted. You
   can add separate callbacks for handling errors.
@@ -12,7 +13,7 @@ Version 0.4 - 2012-Sep-07
   a dictionary.
 * Socket and WSGI :class:`pulsar.Application` are built on top of the new
   :class:`pulsar.AsyncSocketServer` framework class.
-* **208 regression tests**, **79% coverage**.
+* **214 regression tests**, **79% coverage**.
 
 Version 0.3 - 2012-May-03
 ============================
@@ -84,3 +85,4 @@ Version 0.1.0 - 2011-Aug-24
 * **35 regression tests**
 
 .. _psutil: http://code.google.com/p/psutil/
+.. _pypy: http://pypy.org/

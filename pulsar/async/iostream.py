@@ -460,10 +460,26 @@ class EchoParser:
     
     
 class ClientSocketHandler(BaseSocketHandler):
-    '''Base class for socket clients with parsers. This class can be used for
-synchronous and asynchronous socket for both a "client" socket and
-the server connection socket (the socket obtained from a server socket
-via the ``connect`` function).'''
+    '''A :class:`BaseSocketHandler` for socket clients with parsers.
+This class can be used for synchronous and asynchronous socket
+for both a "client" socket and
+a server connection socket (the socket obtained from a server socket
+via the ``connect`` function).
+
+.. attribute:: buffer
+
+    A bytearray containing data received from the socket. This buffer
+    is not empty when more data is required to form a message.
+    
+.. attribute:: parser
+
+    A parser which exposes the *encode* and *decode* methods.
+    
+.. attribute:: remote_address
+
+    The remote address for the socket communicating with this
+    :class:`ClientSocketHandler`.
+'''
     parser_class = EchoParser
     log = iologger
     def __init__(self, socket, address, parser_class=None, timeout=None):
@@ -507,7 +523,7 @@ reading from the same socket connection.'''
     def __init__(self, *args, **kwargs):
         super(ClientSocket, self).__init__(*args, **kwargs)
         self.exec_queue = deque()
-        self.processing = None
+        self.processing = False
         
     @classmethod
     def connect(cls, address, parser_class=None, timeout=None):
@@ -528,9 +544,9 @@ parsed.'''
         if self.async:
             cbk = Deferred()
             if data:
-                self.exec_queue.append((data, cbk))
                 cbk.addBoth(self._got_result)
-                self._consume_next()
+                self.exec_queue.append((data, cbk))
+                self.sock.ioloop.add_callback(self._consume_next)
             else:
                 cbk.callback(None)
             return cbk
@@ -546,6 +562,7 @@ parsed.'''
             return parsed_data
         
     def _consume_next(self):
+        # This function is always called in the socket IOloop
         if not self.processing and self.exec_queue:
             self.processing = True
             data, cbk = self.exec_queue.popleft()
@@ -561,17 +578,18 @@ parsed.'''
                 cbk.callback(msg)
             
     def _got_result(self, result):
-        # Got the result, ping the consumer so it can process
-        # requests from the queue
+        # This callback is always executed in the socket IOloop
         self.processing = False
+        # keep on consuming if needed
         self._consume_next()
         return result
 
     def _parsedata(self, data):
         buffer = self.buffer
         if data:
+            # extend the buffer
             buffer.extend(data)
-        if not buffer:
+        elif not buffer:
             return
         try:
             parsed_data, buffer = self.parser.decode(buffer)

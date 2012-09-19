@@ -137,8 +137,7 @@ class EpollProxy(object):
     
     
 class IOselect(EpollProxy):
-    '''An epoll like select class.'''
-        
+    '''An epoll like select class.'''        
     def poll(self, timeout=None):
         readable, writeable, errors = _select(
             self.read_fds, self.write_fds, self.error_fds, timeout)
@@ -153,7 +152,3 @@ class IOselect(EpollProxy):
         for fd in errors:
             events[fd] = events.get(fd, 0) | IObase.ERROR
         return list(iteritems(events))
-    
-
-        
-    

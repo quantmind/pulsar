@@ -1290,20 +1290,14 @@ http://www.ietf.org/rfc/rfc2616.txt
 
     def _encode_url(self, body):
         query = self.query
-        if isinstance(body, dict):
-            if query:
-                query = parse_qs(query)
-                query.update(body)
+        if body:
+            if is_string_or_native_string(body):
+                body = parse_qsl(body)
             else:
-                query = body
+                body = mapping_iterator(body)
+            query = parse_qsl(query)
+            query.extend(body)
             query = urlencode(query)
-        elif body:
-            if query:
-                query = parse_qs(query)
-                query.update(parse_qs(body))
-                query = urlencode(query)
-            else:
-                query = body
         self.query = query
         self.full_url = self._get_full_url()
 

@@ -1,12 +1,12 @@
 Event driven concurrent framework for python. Tested in Windows and Linux,
-it requires python 2.6 and up, including python 3.
+it requires python 2.6, 2.7, 3.2 or pypy_.
 With pulsar you can write asynchronous servers performing one or several
 activities in different threads and/or processes.
 
-.. image::
-    https://secure.travis-ci.org/quantmind/pulsar.png?branch=master
-    :alt: Build Status
-        :target: https://secure.travis-ci.org/quantmind/pulsar
+|pulsar-build|_
+
+.. |pulsar-build| image:: https://secure.travis-ci.org/quantmind/pulsar.png?branch=master
+.. _pulsar-build: http://travis-ci.org/quantmind/pulsar
 
 An example of a web server written with ``pulsar`` application
 framework which responds with "Hello World!" for every request::
@@ -128,3 +128,4 @@ many other open-source efforts.
 .. _setproctitle: http://code.google.com/p/py-setproctitle/
 .. _psutil: http://code.google.com/p/psutil/
 .. _pypi: http://pypi.python.org/pypi/pulsar
+.. _pypy: http://pypy.org/
