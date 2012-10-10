@@ -208,8 +208,8 @@ configuration and plugins.'''
         # Create a runner and configure it
         runner = self.runner
         if not modules:
-            modules = ((None,'tests'),)
-        if hasattr(modules,'__call__'):
+            modules = ((None, 'tests'),)
+        if hasattr(modules, '__call__'):
             modules = modules(self)
         loader = TestLoader(os.getcwd(), modules, runner, logger=self.log)
         # Listing labels
@@ -238,14 +238,17 @@ configuration and plugins.'''
         # in the :attr:`pulsar.Actor.ioqueue`.
         loader = self.local.loader
         tags = self.cfg.labels
-        self.local.tests = tests = list(loader.testclasses(tags))
-        if tests:
-            self.log.info('loaded %s test classes', len(tests))
-            self.runner.on_start()
-            monitor.cfg.set('workers', min(self.cfg.workers, len(tests)))
-            self._time_start = None
-        else:
-            print('Could not find any tests.')
+        try:
+            self.local.tests = tests = list(loader.testclasses(tags))
+            if tests:
+                self.log.info('loaded %s test classes', len(tests))
+                self.runner.on_start()
+                monitor.cfg.set('workers', min(self.cfg.workers, len(tests)))
+                self._time_start = None
+            else:
+                raise ValueError('Could not find any tests.')
+        except Exception as e:
+            print(str(e))
             monitor.arbiter.stop()
 
     def monitor_task(self, monitor):

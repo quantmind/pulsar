@@ -1047,11 +1047,11 @@ class HttpResponse(IOClientRead):
         if self.request is not None:
             return self.request.client
         
-    def content_string(self, charset=None):
+    def content_string(self, charset=None, errors=None):
         '''Decode content as a string.'''
         data = self.content
         if data is not None:
-            return data.decode(charset or 'utf-8')
+            return data.decode(charset or 'utf-8', errors)
 
     def content_json(self, charset=None, **kwargs):
         '''Decode content as a JSON object.'''
