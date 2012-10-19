@@ -98,11 +98,9 @@ class WSGIServer(socket.SocketServer):
 
     def handler(self):
         callable = self.callable
-        if getattr(callable,'wsgifactory',False):
-            callable = callable()
         return self.wsgi_handler(callable)
 
-    def wsgi_handler(self, hnd, resp_middleware = None):
+    def wsgi_handler(self, hnd, resp_middleware=None):
         '''Build the wsgi handler from *hnd*. This function is called
 at start-up only.
 

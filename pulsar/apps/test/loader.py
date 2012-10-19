@@ -105,10 +105,14 @@ importing tests.
             names = name.split('.') if name else ()
             absolute_path = os.path.join(self.root, *names)
             if os.path.isdir(absolute_path):
+                pathbase = os.path.dirname(absolute_path)
+                if pathbase not in sys.path:
+                    sys.path.append(pathbase)
+                name = names[-1]
                 stags = (tag,) if tag else ()
                 for tag, mod in self.get_tests(absolute_path, name, pattern,
                                                import_tags=tags, tags=stags):
-                    yield tag,mod
+                    yield tag, mod
             else:
                 raise ValueError('%s cannot be found in %s directory.'\
                                   % (name, self.root))

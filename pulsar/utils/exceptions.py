@@ -87,10 +87,6 @@ class HttpException(Exception):
         super(HttpException,self).__init__(msg)
 
 
-class Http404(HttpException):
-    status = 404
-
-
 class HttpRedirect(HttpException):
     status = 302
     def __init__(self, location):
@@ -99,3 +95,12 @@ class HttpRedirect(HttpException):
 
 class PermissionDenied(HttpException):
     status = 403
+
+
+class Http404(HttpException):
+    status = 404
+
+    
+class MethodNotAllowed(HttpException):
+    status = 405
+    

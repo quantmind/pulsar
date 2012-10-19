@@ -253,12 +253,12 @@ class WsgiHandler(pulsar.LogginMixin):
     the middleware.
 
 '''
-    def __init__(self, middleware=None, **kwargs):
+    def __init__(self, middleware=None, response_middleware=None, **kwargs):
         self.setlog(**kwargs)
         if middleware:
             middleware = list(middleware)
         self.middleware = middleware or []
-        self.response_middleware = []
+        self.response_middleware = response_middleware or []
 
     def __call__(self, environ, start_response):
         '''The WSGI callable'''

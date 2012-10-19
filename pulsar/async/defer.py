@@ -579,8 +579,11 @@ which may be :class:`Deferred`.
 
     def update(self, stream):
         add = self._add
-        for key, value in iterdata(stream, len(self._stream)):
-            add(key, value)
+        try:
+            for key, value in iterdata(stream, len(self._stream)):
+                add(key, value)
+        except:
+            raise
         return self
 
     def append(self, value):
