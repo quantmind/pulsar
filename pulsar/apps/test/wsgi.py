@@ -7,7 +7,7 @@ from pulsar import IStream, create_socket_address
 from pulsar.utils.httpurl import HttpClient, HttpRequest, HttpConnectionPool,\
                                     HttpResponse, urlparse, HttpConnection,\
                                     HttpParser
-from pulsar.apps.wsgi import server, handle_http_error
+from pulsar.apps.wsgi import server
 #from .server import HttpResponse
 
 __all__ = ['HttpTestClient']
@@ -35,9 +35,6 @@ object.'''
     @property
     def server_port(self):
         return 8888
-
-    def handle_http_error(self, response, e):
-        return handle_http_error(self, response, e)
 
     def write(self, response):
         for data in response:

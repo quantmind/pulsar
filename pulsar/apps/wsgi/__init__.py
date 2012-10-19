@@ -76,18 +76,6 @@ class ResponseMiddleware(WsgiSetting):
     """
 
 
-class HttpError(WsgiSetting):
-    name = "handle_http_error"
-    validator = pulsar.validate_callable(4)
-    type = "callable"
-    default = staticmethod(handle_http_error)
-    desc = """\
-Render an error occured while serving the WSGI application.
-
-The callable needs to accept two instance variables for the response
-and the error instance."""
-
-
 class WSGIServer(socket.SocketServer):
     cfg_apps = ('socket',)
     _app_name = 'wsgi'

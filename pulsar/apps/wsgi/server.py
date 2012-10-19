@@ -15,7 +15,7 @@ from pulsar.utils.httpurl import Headers, is_string, unquote,\
                                     host_and_port_default, mapping_iterator
 from pulsar.utils import event
 
-from .wsgi import WsgiResponse
+from .wsgi import WsgiResponse, handle_wsgi_error
 
 
 event.create('http-headers')
@@ -253,7 +253,7 @@ invocation of the application.
                 resp = WsgiResponse(
                             content_type=self.environ.get('CONTENT_TYPE'),
                             environ=self.environ)
-                data = conn.handle_http_error(resp, e)
+                data = handle_wsgi_error(self.environ, resp, exc_info)
                 for b in data(self.environ, self.start_response,
                               exc_info=exc_info):
                     head = self.send_headers(force=True)
@@ -335,14 +335,6 @@ a :class:`HttpResponse` at every client request.'''
     @property
     def server_port(self):
         return self.server.server_port
-
-    def handle_http_error(self, response, e):
-        '''Handle an error during response.
-
-:parameter response: a :class:`WsgiResponse`.
-:parameter e: Error.
-'''
-        return self.actor.cfg.handle_http_error(self, response, e)
 
 
 class HttpParser:

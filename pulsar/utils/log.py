@@ -93,7 +93,10 @@ removed when pickling the object'''
         if not hasattr(self, '_local'):
             self._local = AttributeDictionary()
         return self._local
-     
+    
+    def clear_local(self):
+        self.__dict__.pop('_local', None)
+        
     def __getstate__(self):
         '''Remove the local dictionary.'''
         d = self.__dict__.copy()

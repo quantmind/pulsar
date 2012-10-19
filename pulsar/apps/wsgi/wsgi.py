@@ -18,7 +18,8 @@ __all__ = ['WsgiHandler',
            'WsgiResponse',
            'WsgiResponseGenerator',
            'wsgi_iterator',
-           'handle_http_error']
+           'handle_wsgi_error',
+           'wsgi_error_msg']
 
 
 default_logger = logging.getLogger('pulsar.apps.wsgi')
@@ -286,7 +287,14 @@ error_messages = {
     404: 'Cannot find what you are looking for.'
 }
 
-def handle_http_error(connection, response, error=None, encoding='utf-8'):
+def wsgi_error_msg(response, msg):
+    if response.content_type == 'application/json':
+        return json.dumps({'status': response.status_code,
+                           'message': msg})
+    else:
+        return msg
+    
+def handle_wsgi_error(environ, response, trace=None):
     '''The default handler for errors while serving an Http requests.
 
 :parameter connection: The :class:`HttpConnection` handling the request.
@@ -294,38 +302,50 @@ def handle_http_error(connection, response, error=None, encoding='utf-8'):
 :parameter e: the exception instance.
 :return: bytes to send as response
 '''
+    if not trace:
+        trace = sys.exc_info()
+    error = trace[1]
     response.status_code = getattr(error, 'status', 500)
-    msg = error_messages.get(response.status_code, '')
-    path = ''
-    if response.environ:
-        path = ' @ path %s' % response.environ.get('PATH_INFO','/')
+    path = ' @ path %s' % environ.get('PATH_INFO','/')
     if response.status_code == 500:
-        connection.log.critical('Unhandled exception during WSGI response %s',
-                                path, exc_info=True)
+        default_logger.critical('Unhandled exception during WSGI response %s',
+                                path, exc_info=trace)
     else:
-        connection.log.info('WSGI %s status code %s',
+        default_logger.warn('WSGI %s status code %s',
                             response.status_code, path)
     if has_empty_content(response.status_code):
-        msg = ''
+        content = ''
         response.content_type = None
-    if response.content_type == 'text/html':
-        content = textwrap.dedent("""\
-        <!DOCTYPE html>
-        <html>
-          <head>
-            <title>{0[reason]}</title>
-          </head>
-          <body>
-            <h1>{0[reason]}</h1>
-            {0[msg]}
-            <h3>{0[version]}</h3>
-          </body>
-        </html>
-        """).format({"reason": response.status, "msg": msg,
-                     "version": pulsar.SERVER_SOFTWARE})
-    elif response.content_type == 'application/json':
-        content = json.dumps({'message': msg})
     else:
-        content = msg
-    response.content = content.encode(encoding, 'replace')
+        renderer = environ.get('wsgi_error_handler')
+        if renderer:
+            try:
+                content = renderer(environ, response, trace)
+                if is_failure(content):
+                    content.log()
+                    content = None
+            except:
+                default_logger.critical('Error while rendering error',
+                                        exc_info=True)
+                content = None
+        if content is None:
+            msg = error_messages.get(response.status_code) or response.response
+            if response.content_type == 'text/html':
+                content = textwrap.dedent("""\
+                <!DOCTYPE html>
+                <html>
+                  <head>
+                    <title>{0[reason]}</title>
+                  </head>
+                  <body>
+                    <h1>{0[reason]}</h1>
+                    {0[msg]}
+                    <h3>{0[version]}</h3>
+                  </body>
+                </html>
+                """).format({"reason": response.status, "msg": msg,
+                             "version": pulsar.SERVER_SOFTWARE})
+            else:
+                content = wsgi_error_msg(response, msg)
+    response.content = content.encode(response.encoding or 'utf-8', 'replace')
     return response
