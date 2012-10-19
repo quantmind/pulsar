@@ -22,7 +22,7 @@ USER_AGENT = 'Pulsar-Proxy-Server'
 class ProxyMiddleware(LocalMixin):
     '''WSGI middleware for an asynchronous proxy server. By default it adds the
 X-Forwarded-For header. To perform more processing on headers you can add
-``headers_middleware``.'''
+``headers_middleware`` callables.'''
     def __init__(self, user_agent=None, timeout=0, headers_middleware=None):
         self.headers = headers = Headers(kind='client')
         self.headers_middleware = headers_middleware or []
@@ -62,8 +62,9 @@ request uri.'''
                 headers[head] = environ[k]
         for head in ENVIRON_HEADERS:
             k = head.replace('-','_').upper()
-            if k in environ:
-                headers[head] = environ[k]
+            v = environ.get(k)
+            if v:
+                headers[head] = v
         headers.update(self.headers)
         headers.add_header('x-forwarded-for', environ['REMOTE_ADDR'])
         for middleware in self.headers_middleware:
