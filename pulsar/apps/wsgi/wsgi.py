@@ -318,6 +318,7 @@ def handle_wsgi_error(environ, response, trace=None):
         response.content_type = None
     else:
         renderer = environ.get('wsgi_error_handler')
+        content = None
         if renderer:
             try:
                 content = renderer(environ, response, trace)
