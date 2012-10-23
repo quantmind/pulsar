@@ -307,7 +307,10 @@ class TestHttpClient(unittest.TestCase):
         self.assertFalse(result['cookies'])
 
     def test_parse_cookie(self):
-        self.assertEqual(httpurl.parse_cookie('invalid:key=true'), {})
+        self.assertEqual(httpurl.parse_cookie('invalid key=true'),
+                         {'key':'true'})
+        self.assertEqual(httpurl.parse_cookie('invalid;key=true'),
+                         {'key':'true'})
         
     #### TO INCLUDE
     def __test_far_expiration(self):

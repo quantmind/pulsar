@@ -88,7 +88,8 @@ if ispy3k: # Python 3
     is_string = lambda s: isinstance(s, str)
     is_string_or_native_string = is_string
 
-    def to_bytes(s, encoding=None, errors='strict'):
+    def to_bytes(s, encoding=None, errors=None):
+        errors = errors or 'strict'
         encoding = encoding or 'utf-8'
         if isinstance(s, bytes):
             if encoding != 'utf-8':
@@ -1051,7 +1052,7 @@ class HttpResponse(IOClientRead):
         '''Decode content as a string.'''
         data = self.content
         if data is not None:
-            return data.decode(charset or 'utf-8', errors)
+            return data.decode(charset or 'utf-8', errors or 'strict')
 
     def content_json(self, charset=None, **kwargs):
         '''Decode content as a JSON object.'''
@@ -1257,8 +1258,9 @@ http://www.ietf.org/rfc/rfc2616.txt
         return (self.type, host, port, self.timeout)
 
     def is_unverifiable(self):
-        # unverifiable == redirected
         return bool(self.history)
+    # python 3.3 compatibility
+    unverifiable = property(is_unverifiable)
 
     def encode(self, encode_multipart, multipart_boundary):
         body = None

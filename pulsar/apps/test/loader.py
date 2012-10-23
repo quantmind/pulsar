@@ -23,16 +23,19 @@ class TestLoader(object):
 you give a *root* directory and a list of submodules where to look for tests.
 
 :parameter root: root path.
-:parameter modules: list (or tuple) of modules where to look for tests.
-    A module can be a string indicating the **dotted** path relative to the
+:parameter modules: list (or tuple) of entries where to look for tests.
+    An entry can be a string indicating the **dotted** path relative to the
     **root** directory or a two element tuple with the same dotted path as
     first argument and a **pattern** which files must match in order to be
-    included in the search.
+    included in the search. A third element in the tuple can be used to specify
+    the top level tag for all tests in this entry.
     For example::
 
-        modules = ['test']
+        modules = ['test', ('bla', None, 'foo'), ('examples','test)]
 
-    Lodas all tests from the ``test`` directory.
+    loads all tests from the ``test`` directory, all tests from the 'bla'
+    directory with top level tag 'foo' and all tests from the examples
+    directory matching the test pattern.
     All top level modules will be added to the python ``path``.
 
 :parameter runner: Instance of the test runner.
@@ -48,8 +51,8 @@ importing tests.
         for mod in modules:
             if isinstance(mod, str):
                 mod = (mod, None, None)
-            elif len(mod) < 3:
-                mod = tuple(mod) + (None,) * (len(mod) - 3)
+            if len(mod) < 3:
+                mod = tuple(mod) + (None,) * (3 - len(mod))
             self.modules.append(mod)
 
     def __repr__(self):
