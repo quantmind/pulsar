@@ -46,6 +46,14 @@ If not in the :class:`Arbiter` domain,
 the method send a request to the :class:`Arbiter` to spawn a new actor, once
 the arbiter creates the actor it returns the proxy to the original caller.
 
+**Parameter kwargs**
+
+These optional parameters are:
+    * *actorcls* a custom :class:`Actor` subclass.
+    * *aid* the actor id
+    * *commands_set* the set of :ref:`remote commands <api-remote_commands>`
+      the :class:`Actor` can respond to.
+    
 :rtype: an :class:`ActorProxyDeferred`.
 
 A typical usage::

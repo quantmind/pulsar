@@ -34,13 +34,16 @@ def is_actor(obj):
 
 
 def send(target, action, *args, **params):
-    '''Send a message to *target* to perform a given *action*.
+    '''Send an *message* to *target* to perform a given *action*.
 
 :parameter target: the :class:`Actor` id or an :class:`ActorProxy` or name of
-    the target actor receiving the message.
-:parameter action: the action to perform on the remote :class:`Actor`.
-:parameter args: positional arguments to pass to the remote action function.
-:parameter params: dictionary of parameters to pass to the remote *action*.
+    the target actor which will receive the message.
+:parameter action: the name of the :ref:`remote command <api-remote_commands>`
+    to perform in the *target* :class:`Actor`.
+:parameter args: positional arguments to pass to the
+    :ref:`remote command <api-remote_commands>` *action*.
+:parameter params: dictionary of parameters to pass to
+    :ref:`remote command <api-remote_commands>` *action*.
 :rtype: an :class:`ActorMessage` which is a :class:`Deferred` and therefore
     can be used to attach callbacks.
 

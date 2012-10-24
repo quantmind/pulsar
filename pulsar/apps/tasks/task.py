@@ -6,7 +6,7 @@ import logging
 import traceback
 from io import StringIO
 
-from pulsar.utils.httpurl import itervalues
+from pulsar.utils.httpurl import itervalues, iteritems
 from pulsar import maybe_async, as_failure, is_async, is_failure, send
 
 from .models import registry
@@ -14,7 +14,7 @@ from .exceptions import *
 from .states import *
 
 
-__all__ = ['Task','TaskInMemory','TaskConsumer','nice_task_message']
+__all__ = ['Task', 'TaskInMemory', 'TaskConsumer', 'nice_task_message']
 
 
 class TaskConsumer(object):
@@ -89,10 +89,6 @@ class Task(object):
         '''Integer indicating :attr:`status` precedence.
 Lower number higher precedence.'''
         return PRECEDENCE_MAPPING.get(self.status, UNKNOWN_STATE)
-
-    def consumer(self, worker, job):
-        '''Return the task context manager for execution.'''
-        return TaskConsumer(self, worker, job)
 
     def start(self, worker):
         '''Called by the :class:`pulsar.Worker` *worker* when the task
@@ -200,6 +196,12 @@ not available.'''
         raise NotImplementedError()
     
     @classmethod
+    def get_tasks(cls, scheduler, **filters):
+        '''Given *filters* it retrieves task instances which satisfy the
+filter criteria.'''
+        raise NotImplementedError()
+    
+    @classmethod
     def save_task(cls, scheduler, task):
         raise NotImplementedError()
         
@@ -268,8 +270,9 @@ class TaskInMemory(Task):
         self.from_task = from_task
         self.params = params
 
-    def __str__(self):
-        return '{0}({1})'.format(self.name,self.id)
+    def __repr__(self):
+        return '%s(%s)' % (self.name,self.id)
+    __str__ = __repr__
 
     def on_received(self, scheduler=None):
         # Called by the scheduler
@@ -315,15 +318,33 @@ class TaskInMemory(Task):
     @classmethod
     def get_task(cls, scheduler, id):
         return cls.task_container(scheduler).get(id)
+    
+    @classmethod
+    def get_tasks(cls, scheduler, **filters):
+        TASKS = cls.task_container(scheduler)
+        tasks = []
+        if filters:
+            fs = []
+            for name, value in iteritems(filters):
+                if not isinstance(value, (list, tuple)):
+                    value = (value,)
+                fs.append((name, value))
+            for t in itervalues(TASKS):
+                for name, values in fs:
+                    value = getattr(t, name, None)
+                    if value in values:
+                        tasks.append(t)
+        return tasks
 
+
+def format_time(dt):
+    return dt.isoformat() if dt else '?'
 
 def nice_task_message(req, smart_time=None):
     smart_time = smart_time or format_time
     status = req['status'].lower()
-    user = req.get('user',None)
-    ti = req.get('time_start',req.get('time_executed',None))
-    name = '{0} ({1}) '.format(req['name'],req['id'][:8])
-    msg = '{0} {1} at {2}'.format(name,status,smart_time(ti))
-    if user:
-        msg = '{0} by {1}'.format(msg,user)
-    return msg
+    user = req.get('user')
+    ti = req.get('time_start', req.get('time_executed'))
+    name = '%s (%s) ' % (req['name'], req['id'][:8])
+    msg = '%s %s at %s' % (name, status, smart_time(ti))
+    return '%s by %s' % (msg, user) if user else msg

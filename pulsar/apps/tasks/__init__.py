@@ -9,10 +9,42 @@ little setup effort::
     tq = tasks.TaskQueue(tasks_path='path.to.tasks.*')
     tq.start()
 
+.. _tasks-actions:
+
 Tutorial
-================
+==============
 
+Actions
+~~~~~~~~~~~~~~~
 
+The :class:`Taskqueue` application adds the following
+:ref:`remote actions <api-remote_commands>` to its workers:
+
+* **addtask** to add a new task to the task queue::
+
+    send(taskqueue, 'addtask', jobname, task_extra, *args, **kwargs)
+
+ * *jobname*: the name of the :class:`Job` to run.
+ * *task_extra*: dictionary of extra parameters to pass to the :class:`Task`
+   constructor. Usually a empty dictionary.
+ * *args*: positional arguments for the :ref:`job callable <job-callable>`.
+ * *kwargs*: key-valued arguments for the :ref:`job callable <job-callable>`.
+
+* **addtask_noack** same as **addtask** but without acknowleding the sender::
+
+    send(taskqueue, 'addtask_noack', jobname, task_extra, *args, **kwargs)
+    
+* **get_task** retrieve task information. This can be already executed or not.
+  The implementation is left to the :meth:`Task.get_task` method::
+  
+    send(taskqueue, 'get_task', id)
+    
+* **get_tasks** retrieve information for tasks which satisfy the filtering.
+  The implementation is left to the :meth:`Task.get_tasks` method::
+  
+    send(taskqueue, 'get_tasks', **filters)
+  
+    
 Jobs
 ~~~~~~~~~~~~~~~~
 
@@ -24,8 +56,10 @@ with one job, which can be of two types:
 * standard (:class:`Job`)
 * periodic (:class:`PeriodicJob`)
 
+.. _job-callable:
+
 To define a job is simple, subclass from :class:`Job` and implement the
-callable function::
+**job callable method**::
 
     from pulsar.apps import tasks
 
@@ -34,6 +68,11 @@ callable function::
         def __call__(self, consumer, a, b):
             "Add two numbers"
             return a+b
+            
+    class Sampler(tasks.Job):
+
+        def __call__(self, consumer, sample, size=10):
+            ...
 
 The *consumer*, instance of :class:`TaskConsumer`, is passed by the
 :class:`TaskQueue` and should always be the first positional argument in the
@@ -225,14 +264,6 @@ taskqueue_cmnds = set()
 
 @pulsar_command(internal=True, authenticated=True, commands_set=taskqueue_cmnds)
 def addtask(client, actor, caller, jobname, task_extra, *args, **kwargs):
-    '''Add a new task to the task queue.
-
-:parameter jobname: the job to run
-:parameter task_extra: Dictionary of extra parameters to pass to the Task
-    class constructor. Usually a empty dictionary.
-:parameter args: positional arguments for the callable Job.
-:parameter kwargs: keyed-valued arguments for the callable Job.
-'''
     kwargs.pop('ack', None)
     return actor.app._addtask(actor, caller, jobname, task_extra, True,
                               args, kwargs)
@@ -256,6 +287,10 @@ def delete_tasks(client, actor, caller, ids):
 @pulsar_command(commands_set=taskqueue_cmnds)
 def get_task(client, actor, id):
     return actor.app.scheduler.get_task(id)
+
+@pulsar_command(commands_set=taskqueue_cmnds)
+def get_tasks(client, actor, **parameters):
+    return actor.app.scheduler.get_tasks(**parameters)
 
 @pulsar_command(commands_set=taskqueue_cmnds)
 def job_list(client, actor, jobnames=None):

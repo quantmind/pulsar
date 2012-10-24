@@ -543,9 +543,13 @@ class MultiDeferred(Deferred):
     '''A :class:`Deferred` for managing a stream if independent objects
 which may be :class:`Deferred`.
 
-.. attrubute:: lock
+.. attribute:: lock
 
-    If ``True`` items can no longer be added to this :class:`MultiDeferred`
+    If ``True`` items can no longer be added to this :class:`MultiDeferred`.
+    
+.. attribute:: type
+
+    The type of multideferred. Either a ``list`` or a ``dict``.
 '''
     _locked = False
 
@@ -565,10 +569,16 @@ which may be :class:`Deferred`.
             self.update(data)
 
     @property
+    def locked(self):
+        return self._locked
+        
+    @property
     def type(self):
         return self._stream.__class__.__name__
 
     def lock(self):
+        '''Lock the :class:`MultiDeferred` so that no new items can be added.
+If it was alread :attr:`locked` a runtime exception is raised.'''
         if self._locked:
             raise RuntimeError(self.__class__.__name__ +\
                         ' cannot be locked twice.')
@@ -578,6 +588,8 @@ which may be :class:`Deferred`.
         return self
 
     def update(self, stream):
+        '''Update the :class:`MultiDeferred` with new data. It works for
+both ``list`` and ``dict`` types.'''
         add = self._add
         try:
             for key, value in iterdata(stream, len(self._stream)):

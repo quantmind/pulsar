@@ -100,6 +100,30 @@ Event loop tasks
 ~~~~~~~~~~~~~~~~~~~~~~
 
 
+.. _remote-actions:
+
+Actor remote actions
+========================
+Actors communicate with each other by sending *actions* with or
+without parameters. Furthermore, some actions can require authentication while
+other can only be executed internally by pulsar.
+
+
+ping
+~~~~~~~
+
+Ping a remote *arbiter* and recive an asynchronous `'pong``::
+
+    send(arbiter, 'ping')
+
+
+echo
+~~~~~~~
+
+received an asynchronous echo from a remote *arbiter*::
+
+    send('echo', arbiter, 'Hello!')
+
 
 .. _application-framework:
 

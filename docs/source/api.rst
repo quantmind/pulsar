@@ -32,10 +32,14 @@ directly on top of :ref:`pulsar primitives <pulsar_primitives>`. These
 High level functions
 =======================
 
+.. _spawn-function:
+
 spawn
 ~~~~~~~~~~~~~~
 
 .. autofunction:: spawn
+
+.. _send-function:
 
 send
 ~~~~~~~~~~~~~~
@@ -126,6 +130,49 @@ Concurrency
    :members:
    :member-order: bysource
 
+
+.. _api-remote_commands:
+
+Remote Commands
+====================
+
+:class:`Actor` communicate with each other via :class:`Mailbox` which
+each actor has in its process domain. When an actor communicate with
+another remote actor it does so by *sending* an **action** to it
+with positional and/or key-valued arguments. For example::
+
+    send(target, 'ping')
+    
+will :ref:`send <send-function>` the *ping* action to *target* from the actor
+in the current context of execution. The above is equivalent to::
+
+    get_actor().send(target, 'ping')
+
+.. module:: pulsar.async.commands
+    
+Each action is implemented via the :func:`pulsar_command` decorator implemented
+in the :mod:`pulsar.async.commands` module.
+
+pulsar_command
+~~~~~~~~~~~~~~~~~~~~
+
+.. autoclass:: pulsar_command
+
+command
+~~~~~~~~~~~~~~~~~~~~
+
+A shortcut for :func:`pulsar_command` decorator which can be used to create actions
+available to all :class:`Actor`. For example the `ping` action is implemented
+via::
+
+    @command
+    def ping(client, actor):
+        return 'pong'
+
+For a :ref:`full list of remote actions <remote-actions>` check the design
+documentation. 
+
+.. module:: pulsar
 
 .. _api-async-tools:
 

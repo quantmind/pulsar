@@ -108,6 +108,7 @@ class TestTaskQueueOnThread(unittest.TestCase):
         app = get_application(self.name_tq())
         self.assertTrue('notoverlap' in app.registry)
         r1 = app.scheduler.queue_task(app.monitor, 'notoverlap', (1,), {})
+        self.assertEqual(str(r1), 'notoverlap(%s)' % r1.id)
         self.assertTrue(r1._queued)
         r2 = app.scheduler.queue_task(app.monitor, 'notoverlap', (1,), {})
         self.assertFalse(r2._queued)
@@ -234,7 +235,29 @@ class TestTaskQueueOnThread(unittest.TestCase):
             yield NOT_DONE
             r = self.proxy.get_task(id=r['id'])
         self.assertEqual(r['status'], tasks.REVOKED)
-
+        
+    def test_run_producerconsumer(self):
+        '''A task which produce other tasks'''
+        sample = 10
+        r = self.proxy.run_new_task(jobname='standarddeviation',
+                                    sample=sample, size=100)
+        self.assertTrue(r)
+        while r['status'] in tasks.UNREADY_STATES:
+            yield NOT_DONE
+            r = self.proxy.get_task(id=r['id'])
+        self.assertEqual(r['status'], tasks.SUCCESS)
+        self.assertTrue(tasks.nice_task_message(r))
+        # We check for the tasks created
+        stasks = []
+        while len(stasks) < sample:
+            ts = self.proxy.get_tasks(from_task=r['id'])
+            stasks = []
+            for t in ts:
+                if t['status'] not in tasks.UNREADY_STATES:
+                    stasks.append(t)
+                    self.assertEqual(t['status'], tasks.SUCCESS)
+        self.assertEqual(len(stasks), sample)
+        
 
 #class TestTaskRpc(unittest.TestCase):
 class TestTaskRpc(object):

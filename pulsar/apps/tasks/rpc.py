@@ -17,6 +17,8 @@ def task_to_json(task):
             if isinstance(err, TaskNotAvailable):
                 raise rpc.InvalidParams('Job "%s" is not available.'\
                                         % err.task_name)
+        if isinstance(task, (list, tuple)):
+            task = [t.tojson() for t in task]
         else:
             task = task.tojson()
     return task
@@ -57,10 +59,15 @@ It exposes the following remote functions:
     :rtype: a dictionary containing information about the request
     
     
-.. method:: get_task(task_id)
+.. method:: get_task(id=task_id)
 
     Retrieve a task from its ``id``.
     Returns ``None`` if the task is not available.
+    
+    
+.. method:: get_tasks(**filters)
+
+    Retrieve a list of tasks which satisfy *filters*.
 '''
     def __init__(self, taskqueue, **kwargs):
         if not isinstance(taskqueue, str):
@@ -92,6 +99,12 @@ It exposes the following remote functions:
             return self.task_queue_manager(request.environ,
                                            'get_task',
                                            id).add_callback(task_to_json)
+    
+    def rpc_get_tasks(self, request, **params):
+        if params:
+            return self.task_queue_manager(request.environ,
+                                           'get_tasks',
+                                           **params).add_callback(task_to_json)
     
     ############################################################################
     ##    INTERNALS

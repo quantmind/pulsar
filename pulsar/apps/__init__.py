@@ -253,6 +253,7 @@ These are the most important facts about a pulsar :class:`Application`
     line.
 :parameter name: Application name. If not provided the class name in lower
     case is used
+:parameter commands_set: Initialise the :attr:`commands_set` attribute.
 :parameter params: a dictionary of configuration parameters which overrides
     the defaults and the `cfg` attribute. They will be overritten by
     a config file or command line arguments.
@@ -304,10 +305,10 @@ These are the most important facts about a pulsar :class:`Application`
     Default: ``False``.
 
 
-.. attribute:: remotes
+.. attribute:: commands_set
 
-    Optiona :class:`pulsar.RemoteMethods` class to provide additional
-    remote functions to be added to the monitor dictionary of remote functions.
+    Optional set of :ref:`remote actions <api-remote_commands>` available
+    on :class:`Actor` created by this :class:`Application`.
 
     Default: ``None``.
 """
@@ -333,6 +334,7 @@ These are the most important facts about a pulsar :class:`Application`
                  version=None,
                  can_kill_arbiter=None,
                  parse_console=True,
+                 commands_set=None,
                  **params):
         '''Initialize a new :class:`Application` and add its
 :class:`ApplicationMonitor` to the class:`pulsar.Arbiter`.
@@ -350,6 +352,8 @@ These are the most important facts about a pulsar :class:`Application`
         self.epilog = epilog or self.epilog
         self._app_name = self._app_name or self.__class__.__name__.lower()
         self._name = name or self._app_name
+        if commands_set is not None:
+            self.commands_set = commands_set
         self.script = script
         self.python_path()
         nparams = self.cfg.copy()

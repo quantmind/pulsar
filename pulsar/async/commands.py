@@ -5,7 +5,14 @@ actor_commands = set()
 arbiter_commands = set()
 
 class pulsar_command:
-    '''Decorator for pulsar command functions'''
+    '''Decorator for pulsar command functions.
+    
+:parameter ack: ``True`` if the command acknowledge the sender with a
+    response. Usually is set to ``True`` (which is also the default value).
+:parameter authenticated: If ``True`` the action can only be invoked by
+    remote actors which have authenticated with the actor for which
+    the action has been requested.
+'''
     def __init__(self, ack=True, authenticated=False, internal=False,
                  commands_set=None):
         self.ack = ack

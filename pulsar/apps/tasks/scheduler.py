@@ -33,11 +33,11 @@ class Schedule(object):
         self.run_every = run_every
         self.anchor = anchor
 
-    def remaining_estimate(self, last_run_at, now = None):
+    def remaining_estimate(self, last_run_at, now=None):
         """Returns when the periodic task should run next as a timedelta."""
-        return remaining(last_run_at, self.run_every, now = now)
+        return remaining(last_run_at, self.run_every, now=now)
 
-    def is_due(self, last_run_at, now = None):
+    def is_due(self, last_run_at, now=None):
         """Returns tuple of two items ``(is_due, next_time_to_run)``,
         where next time to run is in seconds.
 
@@ -186,8 +186,8 @@ value ``now`` can be passed.'''
     def setup_schedule(self):
         entries = {}
         for name, task in registry.filter_types('periodic'):
-            schedule = self.maybe_schedule(task.run_every,task.anchor)
-            entries[name] = SchedulerEntry(name,schedule)
+            schedule = self.maybe_schedule(task.run_every, task.anchor)
+            entries[name] = SchedulerEntry(name, schedule)
         return entries
 
     def job_list(self, jobnames = None):
@@ -245,6 +245,9 @@ value ``now`` can be passed.'''
             self.delete_tasks([task.id])
         else:
             return task
+        
+    def get_tasks(self, **parameters):
+        return self.task_class.get_tasks(self, **parameters)
     
     def save_task(self, task):
         return self.task_class.save_task(self, task)
