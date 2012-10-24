@@ -179,12 +179,24 @@ def log_failure(failure):
 
 ############################################################### DECORATORS
 class async:
+    '''A decorator class which transforms a function into
+an asynchronous callable.
+    
+:parameter max_errors: The maximum number of errors permitted if the
+    asynchronous value is a :class:`DeferredGenerator`.
+:parameter description: optional description.
+
+Typical usage::
+
+    @async()
+    def myfunction(...):
+        ...
+'''
     def __init__(self, max_errors=None, description=None):
          self.max_errors = max_errors
          self.description = description or 'async decorator for '
 
     def __call__(self, func):
-        '''Asynchronous decorator for a function *func*'''
         description = '%s%s' % (self.description, func.__name__)
         def _(*args, **kwargs):
             return safe_async(func, args=args, kwargs=kwargs,

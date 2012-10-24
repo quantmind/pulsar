@@ -123,6 +123,14 @@ ActorMessage
    :member-order: bysource
    
 
+Mailbox
+~~~~~~~~~~~~~~
+
+.. autoclass:: Mailbox
+   :members:
+   :member-order: bysource
+   
+   
 Concurrency
 ~~~~~~~~~~~~~~~~~~~~~
 
@@ -218,7 +226,6 @@ Deferred Generator
    :members:
    :member-order: bysource
    
-
 Failure
 ~~~~~~~~~~~~~~~~~~~~
 
@@ -227,12 +234,14 @@ Failure
    :member-order: bysource
 
 
-Mailbox
-~~~~~~~~~~~~~~
+Decorators
+~~~~~~~~~~~~~~~~~~~~~
 
-.. autoclass:: Mailbox
-   :members:
-   :member-order: bysource
+.. autoclass:: async
+
+.. autofunction:: multi_async
+
+.. autofunction:: raise_failure
 
 
 Sockets
