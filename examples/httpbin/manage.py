@@ -6,6 +6,8 @@ import re
 import os
 import json
 import sys
+import string
+from random import choice
 try:
     import pulsar
 except ImportError:
@@ -17,13 +19,18 @@ from pulsar.apps.wsgi.server import HttpResponse
 from pulsar.utils.structures import OrderedDict
 from pulsar.utils.httpurl import Headers, parse_qs, ENCODE_URL_METHODS,\
                                  responses, has_empty_content, addslash,\
-                                 itervalues, range
+                                 itervalues, range, ispy3k
 from pulsar.utils.multipart import parse_form_data
 from pulsar.utils import event
 
 pyversion = '.'.join(map(str,sys.version_info[:3]))
 
 error_messages = {404: '<p>The requested URL was not found on the server.</p>'}
+
+if ispy3k:  # pragma nocover
+    characters = string.ascii_letters + string.digits
+else:   # pragma nocover
+    characters = string.letters + string.digits
 
 def jsonbytes(data):
     return json.dumps(data, indent=4).encode('utf-8')
@@ -296,6 +303,21 @@ class HttpBin(LocalMixin):
             raise HttpException(status=401, headers=[h])
         else:
             raise HttpException(status=404)
+        
+    @route('stream', title='Stream m chunk of data n times',
+           params=(('m', 300), ('n', 20)))
+    def request_stream(self, environ, bits):
+        if len(bits) == 2:
+            try:
+                m = int(bits[0])
+                n = int(bits[1])
+            except:
+                raise HttpException(status=404)
+        else:
+            HttpException(status=404)
+        stream = ('Chunk %s\n%s\n\n' % (i+1, ''.join((choice(characters) for\
+                    _ in range(m)))) for i in range(n))
+        return self.response(stream, content_type='text/plain')
 
 
 class handle(ws.WS):

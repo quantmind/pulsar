@@ -1,7 +1,7 @@
 import pulsar
 from pulsar.utils.httpurl import to_bytes, to_string
 from pulsar.apps import socket
-from pulsar.apps.test import unittest, run_on_arbiter
+from pulsar.apps.test import unittest, run_on_arbiter, dont_run_with_thread
         
 
 class EchoServer(socket.SocketServer):
@@ -74,5 +74,8 @@ class TestPulsarStreams(unittest.TestCase):
         self.assertRaises(socket.error, io.connect, ('localhost', 0))
         
         
-    
+@dont_run_with_thread
+class TestPulsarStreamsProcess(TestPulsarStreams):
+    impl = 'process'        
+
     

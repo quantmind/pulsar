@@ -312,6 +312,13 @@ class TestHttpClient(unittest.TestCase):
         self.assertEqual(httpurl.parse_cookie('invalid;key=true'),
                          {'key':'true'})
         
+    def test_stream_response(self):
+        http = self.client()
+        r = make_async(http.get(self.httpbin('stream/3000/20')))
+        yield r
+        r = r.result
+        self.assertEqual(r.status_code, 200)
+        
     #### TO INCLUDE
     def __test_far_expiration(self):
         "Cookie will expire when an distant expiration time is provided"

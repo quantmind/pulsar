@@ -9,15 +9,17 @@ from .iostream import AsyncIOStream
 __all__ = ['HttpClient']
     
 
-class HttpConnectionPool(httpurl.HttpConnectionPool):
+class HttpConnection(httpurl.HttpConnection):
     
-    def make_connection(self):
-        conn = super(HttpConnectionPool, self).make_connection()
-        if conn.timeout == 0:
-            conn.sock = AsyncIOStream()
-            conn.sock.connect((conn.host, conn.port))
-        return conn
-    
+    def connect(self):
+        if self.timeout == 0:
+            self.sock = AsyncIOStream()
+            self.sock.connect((self.host, self.port))
+            if self._tunnel_host:
+                self._tunnel()
+        else:
+            httpurl.HttpConnection.connect(self)
+            
 
 class HttpResponse(httpurl.HttpResponse):
     pass
@@ -32,6 +34,6 @@ class AsyncRequest(httpurl.HttpRequest):
 class HttpClient(httpurl.HttpClient):
     timeout = 0
     client_version = pulsar.SERVER_SOFTWARE
-    connection_pool = HttpConnectionPool
+    http_connection = HttpConnection
     request_class = AsyncRequest
     

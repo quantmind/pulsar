@@ -224,19 +224,17 @@ invocation of the application.
         conn = self.connection
         self.environ['pulsar.connection'] = self.connection
         try:
-            buffer = b''
             for b in conn.wsgi_handler(self.environ, self.start_response):
                 head = self.send_headers(force=b)
                 if head is not None:
                     yield head
                 if b:
                     if self.chunked:
-                        if buffer:
-                            b = buffer + b
                         while len(b) >= MAX_CHUNK:
                             chunk, b = b[:MAX_CHUNK], b[MAX_CHUNK:]
                             yield chunk_encoding(chunk)
-                        buffer = b
+                        if b:
+                            yield chunk_encoding(b)
                     else:
                         yield b
                 else:
@@ -266,8 +264,6 @@ invocation of the application.
             if head is not None:
                 yield head
             if self.chunked:
-                if buffer:
-                    yield chunk_encoding(buffer)
                 # Last chunk
                 yield chunk_encoding(b'')
         # close connection if required

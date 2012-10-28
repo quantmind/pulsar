@@ -161,7 +161,7 @@ but is non-portable."""
                 # In non-blocking mode connect() always raises an exception
                 if e.args[0] not in (errno.EINPROGRESS, errno.EWOULDBLOCK):
                     raise
-            callback = Deferred(description = '%s connect callback' % self)
+            callback = Deferred(description='%s connect callback' % self)
             self._connect_callback = callback
             self._add_io_state(self.WRITE)
             return callback
