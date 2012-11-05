@@ -1,4 +1,4 @@
-Version 0.4 - 2012-Oct-23
+Version 0.4 - Development
 ============================
 * Overall refactoring of API and therefore incompatible with previous versions.
 * Support pypy_ and python 3.3.
@@ -13,7 +13,7 @@ Version 0.4 - 2012-Oct-23
   a dictionary.
 * Socket and WSGI :class:`pulsar.Application` are built on top of the new
   :class:`pulsar.AsyncSocketServer` framework class.
-* **218 regression tests**, **79% coverage**.
+* **241 regression tests**, **79% coverage**.
 
 Version 0.3 - 2012-May-03
 ============================

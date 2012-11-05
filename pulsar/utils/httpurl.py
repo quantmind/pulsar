@@ -4,7 +4,7 @@ On top of that, it implements the :class:`HttpClient` for handling synchronous
 and asynchronous HTTP requests in a pythonic way.
 
 It is a thin layer on top of urllib2 in python2 / urllib in Python 3.
-Several opensource efforts have been used as source of snippes, inspiration
+Several opensource efforts have been used as source of snippets, inspiration
 and more:
 
 * http-parser_
@@ -16,12 +16,12 @@ as it is.
 
 Usage
 ===========
-making requests with the :class:`HttpClient` is simple. First you create
+Making requests with the :class:`HttpClient` is simple. First you create
 a client, which can be as simple as::
 
     >>> client = HttpClient()
 
-Then you can request a webpage, for example::
+Then you can perform an HTTP request, for example::
 
     >>> r = client.get('http://www.bbc.co.uk')
 
@@ -52,6 +52,8 @@ from collections import deque, Mapping
 from copy import copy
 
 ispy3k = sys.version_info >= (3, 0)
+
+create_connection = socket.create_connection
 
 try:    # Compiled with SSL?
     BaseSSLError = None
@@ -142,6 +144,33 @@ else:   # pragma : no cover
     is_string = lambda s: isinstance(s, unicode)
     is_string_or_native_string = lambda s: isinstance(s, basestring)
 
+    if sys.version_info < (2, 7):
+        #
+        def create_connection(address, timeout=socket._GLOBAL_DEFAULT_TIMEOUT,
+                              source_address=None):
+            """Form Python 2.7"""
+            host, port = address
+            err = None
+            for res in socket.getaddrinfo(host, port, 0, socket.SOCK_STREAM):
+                af, socktype, proto, canonname, sa = res
+                sock = None
+                try:
+                    sock = socket.socket(af, socktype, proto)
+                    if timeout is not socket._GLOBAL_DEFAULT_TIMEOUT:
+                        sock.settimeout(timeout)
+                    if source_address:
+                        sock.bind(source_address)
+                    sock.connect(sa)
+                    return sock
+                except error as _:
+                    err = _
+                    if sock is not None:
+                        sock.close()
+            if err is not None:
+                raise err
+            else:
+                raise error("getaddrinfo returns an empty list")
+    
     def to_bytes(s, encoding=None, errors='strict'):
         encoding = encoding or 'utf-8'
         if isinstance(s, bytes):
@@ -1110,6 +1139,10 @@ class HttpConnection(httpclient.HTTPConnection):
     tunnel_class = httpclient.HTTPResponse
     pool = None
     
+    def __init__(self, host, port=None, source_address=None, **kwargs):
+        httpclient.HTTPConnection.__init__(self, host, port, **kwargs)
+        self.source_address = source_address
+    
     def _tunnel(self):
         response_class = self.response_class
         self.response_class = self.tunnel_class
@@ -1122,8 +1155,8 @@ class HttpConnection(httpclient.HTTPConnection):
     
     def connect(self):
         """Connect to the host and port specified in __init__."""
-        self.sock = socket.create_connection((self.host,self.port),
-                                             self.timeout, self.source_address)
+        self.sock = create_connection((self.host,self.port),
+                                       self.timeout, self.source_address)
         if self._tunnel_host:
             self._tunnel()
 
@@ -1444,20 +1477,18 @@ or asynchronous connections.
 
 .. attribute:: proxy_info
 
-    Dictionary of proxy servers for this client
-
-The :attr:`key_file``, :attr:`cert_file`, :attr:`cert_reqs` and
-:attr:`ca_certs` parameters are only used if :mod:`ssl` is available
-and are fed into :meth:`ssl.wrap_socket` to upgrade the connection socket
-into an SSL socket.
+    Dictionary of proxy servers for this client.
 '''
     timeout = None
     allow_redirects = False
     stream = False
     request_class = HttpRequest
+    '''Class handling requests. Default: :class:`HttpRequest`'''
     connection_pool = HttpConnectionPool
     http_connection = HttpConnection
+    '''Class handling HTTP connections. Default: :class:`HttpConnection`'''
     https_connection = HttpsConnection
+    '''Class handling HTTPS connections. Default: :class:`HttpsConnection`'''
     client_version = 'Python-httpurl'
     DEFAULT_HTTP_HEADERS = Headers([
             ('Connection', 'Keep-Alive'),
@@ -1596,19 +1627,14 @@ object.
         return self.request('DELETE', url, **kwargs)
 
     def request(self, method, url, cookies=None, **params):
-        '''Constructs, sends a :class:`HttpRequest` and returns
-a :class:`HttpResponse` object.
+        '''Constructs and sends an :class:`HttpRequest` to a remote server.
+It returns an :class:`HttpResponse` object.
 
 :param method: request method for the :class:`HttpRequest`.
-:param url: URL for the new :class:`HttpRequest`.
+:param url: URL for the :class:`HttpRequest`.
+:param params: a dictionary which specify all the optional parameters for
+the :class:`HttpRequest` constructor.
 
-The **params** dictionary specify all the optional parameters in the request.
-They are:
-
-:param data: optional dictionary or bytes to be sent either in the query string
-    for 'DELETE', 'GET', 'HEAD' and 'OPTIONS' methods or in the body
-    for 'PATCH', 'POST', 'PUT', 'TRACE' methods.
-:param files: The files
 :rtype: a :class:`HttpResponse` object.
 '''
         for parameter in self.request_parameters:

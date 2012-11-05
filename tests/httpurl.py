@@ -346,7 +346,5 @@ class TestHttpClient(unittest.TestCase):
         
 
 class TestHttpClientWithProxy(TestHttpClient):
-    app = None
     with_proxy = True
-    proxy_app = None
     server_concurrency = 'process'

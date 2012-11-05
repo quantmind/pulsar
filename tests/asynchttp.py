@@ -14,3 +14,8 @@ class TestHttpClient(httpurl.TestHttpClient):
         r = r.result
         self.assertEqual(r.status_code, 200)
         self.assertFalse(r.sock.closed)
+        
+        
+class TestHttpClientWithProxy(TestHttpClient):
+    with_proxy = True
+    server_concurrency = 'process'
