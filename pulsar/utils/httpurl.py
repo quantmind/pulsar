@@ -52,6 +52,7 @@ from collections import deque, Mapping
 from copy import copy
 
 ispy3k = sys.version_info >= (3, 0)
+ispy26 = sys.version_info < (2, 7)
 
 create_connection = socket.create_connection
 
@@ -1159,6 +1160,10 @@ class HttpConnection(httpclient.HTTPConnection):
                                        self.timeout, self.source_address)
         if self._tunnel_host:
             self._tunnel()
+    
+    if ispy26:
+        def set_tunnel(self, host, port=None, headers=None):
+            return self._set_tunnel(host, port, headers)
 
 
 class HttpsConnection(HttpConnection):
@@ -1179,25 +1184,18 @@ class HttpsConnection(HttpConnection):
 
     def connect(self):
         "Connect to a host on a given (SSL) port."
-        super(HttpsConnection, self).connect()
-        server_hostname = self.host if ssl.HAS_SNI else None
-        self.sock = self._context.wrap_socket(self.sock,
-                                              server_hostname=server_hostname)
-        try:
-            if self._check_hostname:
+        HttpConnection.connect(self)
+        self.sock = ssl.wrap_socket(self.sock, self.key_file,
+                                    self.cert_file,
+                                    cert_reqs=self.cert_reqs,
+                                    ca_certs=self.ca_certs)
+        if self.ca_certs:
+            try:
                 ssl.match_hostname(self.sock.getpeercert(), self.host)
-        except Exception:
-            self.sock.shutdown(socket.SHUT_RDWR)
-            self.sock.close()
-            raise
-        # Wrap socket using verification with the root certs in
-        # trusted_root_certs
-        #self.sock = ssl.wrap_socket(self.sock, self.key_file,
-        #                            self.cert_file,
-        #                            cert_reqs=self.cert_reqs,
-        #                            ca_certs=self.ca_certs)
-        #if self.ca_certs:
-        #    match_hostname(self.sock.getpeercert(), self.host)
+            except Exception:
+                self.sock.shutdown(socket.SHUT_RDWR)
+                self.sock.close()
+                raise
 
 
 class HttpBase(object):
