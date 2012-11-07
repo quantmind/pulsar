@@ -258,13 +258,11 @@ in the global ``KNOWN_SETTINGS`` list.'''
     def __new__(cls, name, bases, attrs):
         super_new = super(SettingMeta, cls).__new__
         parents = [b for b in bases if isinstance(b, SettingMeta)]
-        if not parents or attrs.pop('virtual',False):
-            return super_new(cls, name, bases, attrs)
-
-        attrs["order"] = len(KNOWN_SETTINGS)
         val = attrs.get("validator")
         attrs["validator"] = wrap_method(val) if val else None
-
+        if not parents or attrs.pop('virtual',False):
+            return super_new(cls, name, bases, attrs)
+        attrs["order"] = len(KNOWN_SETTINGS)
         new_class = super_new(cls, name, bases, attrs)
         new_class.fmt_desc(attrs['desc'] or '')
         if not new_class.name:
@@ -343,11 +341,17 @@ as base class for other settings.'''
     short = None
     desc = None
 
-    def __init__(self):
+    def __init__(self, name=None, flags=None, action=None, default=None,
+                 nargs=None, description=None):
+        self.default = default if default is not None else self.default
         if self.default is not None:
             self.set(self.default)
+        self.name = name or self.name
+        self.flags = flags or self.flags
+        self.action = action or self.action
+        self.nargs = nargs or self.nargs
         self.short = self.short or self.desc
-        self.desc = self.desc or self.short
+        self.desc = description or self.desc or self.short
         if self.app and not self.section:
             self.section = self.app
         if not self.section:
