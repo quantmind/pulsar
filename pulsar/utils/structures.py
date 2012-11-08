@@ -161,6 +161,12 @@ class AttributeDictionary(object):
     def __setattr__(self, name, value):
         self.__dict__[name] = value
         
+    def __setitem__(self, name, value):
+        self.__dict__[name] = value
+        
+    def __getitem__(self, name):
+        return self.__dict__[name]
+        
     def update(self, iterable):
         for name, value in mapping_iterator(iterable):
             setattr(self, name, value)

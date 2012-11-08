@@ -27,6 +27,7 @@ __all__ = ['SERVER_NAME',
            'process_global',
            'LogginMixin',
            'Synchronized',
+           'local_method',
            'local_property',
            'LocalMixin',
            'LogSelf',
@@ -104,14 +105,18 @@ removed when pickling the object'''
         return d
     
 
-def local_property(f):
+def local_method(f):
     name = f.__name__
     def _(self):
         local = self.local
         if name not in local:
             setattr(local, name, f(self))
         return getattr(local, name)
+    return _
     return property(_, doc=f.__doc__)
+
+def local_property(f):
+    return property(local_method(f), doc=f.__doc__)
     
     
 class SynchronizedMixin(object):

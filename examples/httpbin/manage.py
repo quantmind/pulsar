@@ -110,7 +110,6 @@ class HttpBin(LocalMixin):
                 yield attr
 
     def __call__(self, environ, start_response):
-        '''Pulsar HTTP "Hello World!" application'''
         response = self.request(environ)
         return response(environ, start_response)
 
