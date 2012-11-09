@@ -350,8 +350,9 @@ as base class for other settings.'''
         self.flags = flags or self.flags
         self.action = action or self.action
         self.nargs = nargs or self.nargs
+        self.desc = description or self.desc
         self.short = self.short or self.desc
-        self.desc = description or self.desc or self.short
+        self.desc = self.desc or self.short
         if self.app and not self.section:
             self.section = self.app
         if not self.section:
@@ -366,7 +367,6 @@ as base class for other settings.'''
         kwargs = {'nargs':self.nargs}
         if self.type and self.type != 'string':
             kwargs["type"] = self.type
-
         if self.flags:
             args = tuple(self.flags)
             kwargs.update({"dest": self.name,
