@@ -596,8 +596,9 @@ HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
 WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
 FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
 OTHER DEALINGS IN THE SOFTWARE.'''
-    def __init__(self, kind=2, decompress=False):
+    def __init__(self, kind=2, decompress=False, parse_body=True):
         self.decompress = decompress
+        self.parse_body = parse_body
         # errors vars
         self.errno = None
         self.errstr = ""
@@ -738,16 +739,17 @@ OTHER DEALINGS IN THE SOFTWARE.'''
                 if data:
                     self._buf.append(data)
                     data = b''
-                ret = self._parse_body()
-                if ret is None:
-                    return length
-                elif ret < 0:
-                    return ret
-                elif ret == 0:
-                    self.__on_message_complete = True
-                    return length
-                else:
-                    nb_parsed = max(length, ret)
+                if self.parse_body:
+                    ret = self._parse_body()
+                    if ret is None:
+                        return length
+                    elif ret < 0:
+                        return ret
+                    elif ret == 0:
+                        self.__on_message_complete = True
+                        return length
+                    else:
+                        nb_parsed = max(length, ret)
             else:
                 return 0
 
@@ -1103,25 +1105,29 @@ class HttpResponse(IOClientRead):
     def begin(self, start=False, decompress=True):
         '''Start reading the response. Called by the connection object.'''
         if start and self.parser is None:
-            self.parser = self.parser_class(kind=1, decompress=decompress)
+            self.parser = self.parser_class(kind=1, decompress=decompress,
+                                            parse_body=not self.streaming)
             return self.read()
 
     def parsedata(self, data):
         '''Called when data is available on the pipeline'''
-        has_headers = self.parser.is_headers_complete()
-        self.parser.execute(data, len(data))
         if self.streaming:
+            has_headers = self.parser.is_headers_complete()
             # if headers are ready, we return self and start streaming for the body
             if has_headers:
                 if not self.parser.is_message_complete():
                     return
                 else:
                     return self
-            elif self.parser.is_headers_complete():
-                return self.request.client.build_response(self)
+            else:
+                self.parser.execute(data, len(data))
+                if self.parser.is_headers_complete():
+                    return self.request.client.build_response(self)
         # Not streaming. wait until we have the whole message
-        elif self.parser.is_message_complete():
-            return self.request.client.build_response(self)
+        else:
+            self.parser.execute(data, len(data))
+            if self.parser.is_message_complete():
+                return self.request.client.build_response(self)
             
     def stream(self):
         if not self.parser.is_message_complete():

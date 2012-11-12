@@ -48,9 +48,9 @@ X-Forwarded-For header. To perform more processing on headers you can add
         headers = self.request_headers(environ)
         method = environ['REQUEST_METHOD']
         stream = environ.get('wsgi.input') or io.BytesIO()
-        d = self.http_client.request(method, uri, data=stream.getvalue(),
-                                     headers=headers)
-        wsgi_response.content = self.response_generator(d, wsgi_response)
+        response = self.http_client.request(method, uri, data=stream.getvalue(),
+                                            headers=headers)
+        wsgi_response.content = self.response_generator(response, wsgi_response)
         return wsgi_response
     
     def request_headers(self, environ):
