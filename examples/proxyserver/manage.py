@@ -34,8 +34,9 @@ X-Forwarded-For header. To perform more processing on headers you can add
     def http_client(self):
         if 'http' not in self.local:
             self.local.http = HttpClient(timeout=self.timeout,
-                                            decompress=False,
-                                            store_cookies=False)
+                                         decompress=False,
+                                         store_cookies=False,
+                                         stream=True)
         return self.local.http
         
     def __call__(self, environ, start_response):
