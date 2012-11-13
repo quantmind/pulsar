@@ -82,8 +82,8 @@ class route(object):
         self.href = href
 
     def render(self):
-        return "<li><a href='%s'>%s</a> %s.</li>" %\
-                 (self.href, self.url, self.title)
+        return "<li><a href='%s' class='%s'>%s</a> %s.</li>" %\
+                 (self.href, self.method.lower(), self.url, self.title)
 
     def __call__(self, f):
         def _(obj, environ, *args, **kwargs):
@@ -204,6 +204,12 @@ class HttpBin(LocalMixin):
 
     @route('put', method='PUT', title='Returns PUT data')
     def request_put(self, environ, bits):
+        if bits:
+            raise HttpException(status=404)
+        return self.response(info_data(environ))
+    
+    @route('patch', method='PATCH', title='Returns PATCH data')
+    def request_patch(self, environ, bits):
         if bits:
             raise HttpException(status=404)
         return self.response(info_data(environ))

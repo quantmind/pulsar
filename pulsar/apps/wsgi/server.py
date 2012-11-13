@@ -62,11 +62,7 @@ nothing."""
     headers = mapping_iterator(parser.get_headers())
     for header, value in headers:
         header = header.lower()
-        if header == "expect":
-            # handle expect
-            if value == "100-continue":
-                sock.send("HTTP/1.1 100 Continue\r\n\r\n")
-        elif header == 'x-forwarded-for':
+        if header == 'x-forwarded-for':
             forward = value
         elif header == "x-forwarded-protocol" and value == "ssl":
             url_scheme = "https"
@@ -336,16 +332,33 @@ a :class:`HttpResponse` at every client request.'''
 class HttpParser:
     connection = None
     def __init__(self):
-        self.p = lib.Http_Parser(kind=0)
+        self.parser = lib.Http_Parser(kind=0)
         
     def decode(self, data):
-        if self.p.is_message_complete():
-            self.p = lib.Http_Parser(kind=0)
+        p = self.parser
+        if p.is_message_complete():
+            self.parser = p = lib.Http_Parser(kind=0)
         if data:
-            self.p.execute(bytes(data), len(data))
-            if self.p.is_message_complete():
-                return wsgi_environ(self.connection, self.p), bytearray()
+            has_headers = p.is_headers_complete()
+            p.execute(bytes(data), len(data))
+            self.expect_continue(has_headers)
+            if p.is_message_complete():
+                return wsgi_environ(self.connection, p), bytearray()
         return None, bytearray()
+    
+    def expect_continue(self, has_headers):
+        '''Handle the expect=100-continue header if available, according to
+the following algorithm:
+
+* Send the 100 Continue response before waiting for the body.
+* Omit the 100 (Continue) response if it has already received some or all of
+  the request body for the corresponding request.
+    '''
+        p = self.parser
+        if not has_headers and p.is_headers_complete() and\
+            p.get_headers().get('expect') == '100-continue':
+                if not p.is_partial_body():
+                    self.connection.write(b'HTTP/1.1 100 Continue\r\n\r\n')
     
     
 class HttpServer(AsyncSocketServer):

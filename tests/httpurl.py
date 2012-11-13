@@ -226,6 +226,19 @@ class TestHttpClient(unittest.TestCase):
         self.assertTrue(result['args'])
         self.assertEqual(result['args']['numero'],['1','2'])
         
+    def test_patch(self):
+        data = (('bla', 'foo'), ('unz', 'whatz'),
+                ('numero', '1'), ('numero', '2'))
+        http = self.client()
+        r = request(http.patch(self.httpbin('patch'), data=data))
+        yield r
+        r = r.result
+        self.assertEqual(r.status_code, 200)
+        self.assertEqual(r.response, 'OK')
+        result = r.content_json()
+        self.assertTrue(result['args'])
+        self.assertEqual(result['args']['numero'],['1','2'])
+        
     def test_delete(self):
         data = (('bla', 'foo'), ('unz', 'whatz'),
                 ('numero', '1'), ('numero', '2'))
@@ -318,6 +331,16 @@ class TestHttpClient(unittest.TestCase):
     def test_stream_response(self):
         http = self.client()
         r = make_async(http.get(self.httpbin('stream/3000/20')))
+        yield r
+        r = r.result
+        self.assertEqual(r.status_code, 200)
+        
+    def test_expect(self):
+        http = self.client()
+        data = (('bla', 'foo'), ('unz', 'whatz'),
+                ('numero', '1'), ('numero', '2'))
+        r = make_async(http.post(self.httpbin('post'), data=data,
+                                 headers=[('expect','100-continue')]))
         yield r
         r = r.result
         self.assertEqual(r.status_code, 200)
