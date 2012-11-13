@@ -596,9 +596,8 @@ HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
 WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
 FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
 OTHER DEALINGS IN THE SOFTWARE.'''
-    def __init__(self, kind=2, decompress=False, parse_body=True):
+    def __init__(self, kind=2, decompress=False):
         self.decompress = decompress
-        self.parse_body = parse_body
         # errors vars
         self.errno = None
         self.errstr = ""
@@ -739,17 +738,16 @@ OTHER DEALINGS IN THE SOFTWARE.'''
                 if data:
                     self._buf.append(data)
                     data = b''
-                if self.parse_body:
-                    ret = self._parse_body()
-                    if ret is None:
-                        return length
-                    elif ret < 0:
-                        return ret
-                    elif ret == 0:
-                        self.__on_message_complete = True
-                        return length
-                    else:
-                        nb_parsed = max(length, ret)
+                ret = self._parse_body()
+                if ret is None:
+                    return length
+                elif ret < 0:
+                    return ret
+                elif ret == 0:
+                    self.__on_message_complete = True
+                    return length
+                else:
+                    nb_parsed = max(length, ret)
             else:
                 return 0
 
@@ -1105,34 +1103,28 @@ class HttpResponse(IOClientRead):
     def begin(self, start=False, decompress=True):
         '''Start reading the response. Called by the connection object.'''
         if start and self.parser is None:
-            self.parser = self.parser_class(kind=1, decompress=decompress,
-                                            parse_body=not self.streaming)
+            self.parser = self.parser_class(kind=1, decompress=decompress)
             return self.read()
 
     def parsedata(self, data):
         '''Called when data is available on the pipeline'''
+        has_headers = self.parser.is_headers_complete()
+        self.parser.execute(data, len(data))
         if self.streaming:
-            has_headers = self.parser.is_headers_complete()
             # if headers are ready, we return self and start streaming for the body
             if has_headers:
                 if not self.parser.is_message_complete():
                     return
                 else:
                     return self
-            else:
-                self.parser.execute(data, len(data))
-                if self.parser.is_headers_complete():
-                    return self.request.client.build_response(self)
+            elif self.parser.is_headers_complete():
+                res = self.request.client.build_response(self)
+                if not self.parser.is_message_complete():
+                    self._read()
+                return res
         # Not streaming. wait until we have the whole message
-        else:
-            self.parser.execute(data, len(data))
-            if self.parser.is_message_complete():
-                return self.request.client.build_response(self)
-            
-    def stream(self):
-        if not self.parser.is_message_complete():
-            self._read()
-        return self
+        elif self.parser.is_message_complete():
+            return self.request.client.build_response(self)
 
     def close(self):
         self.sock.close()
@@ -1140,6 +1132,10 @@ class HttpResponse(IOClientRead):
     def info(self):
         return self.headers
 
+    def stream_content(self):
+        while not self.parser.is_message_complete():
+            yield self.parser.recv_body()
+        
 
 class HttpConnection(httpclient.HTTPConnection):
     '''Http Connection class'''
@@ -1744,7 +1740,7 @@ the :class:`HttpRequest` constructor.
                                 allow_redirects=request.allow_redirects)
         else:
             # We need to read the rest of the message
-            return response.stream()
+            return response
         
     def _update_parameter(self, name, params):
         if name not in params:

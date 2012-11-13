@@ -83,10 +83,11 @@ request uri.'''
         else:
             wsgi_response.status_code = response.status_code
             wsgi_response.headers.update(response.headers)
-            content = response.content
+            stream_content = response.stream_content()
         wsgi_response.start()
-        if content:
-            yield content
+        if stream_content:
+            for content in stream_content:
+                yield content
 
 def server(description=None, name='proxy-server', **kwargs):
     description = description or 'Pulsar Proxy Server'

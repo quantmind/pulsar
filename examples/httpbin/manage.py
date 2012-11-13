@@ -313,7 +313,7 @@ class HttpBin(LocalMixin):
             except:
                 raise HttpException(status=404)
         else:
-            HttpException(status=404)
+            raise HttpException(status=404)
         stream = ('Chunk %s\n%s\n\n' % (i+1, ''.join((choice(characters) for\
                     _ in range(m)))) for i in range(n))
         return self.response(stream, content_type='text/plain')
