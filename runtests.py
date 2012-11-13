@@ -1,4 +1,9 @@
 #!/usr/bin/env python
+#
+# For the highest coverage run the following command
+#
+#    coverage run runtests.py --concurrency thread --profile 
+#
 import os
 import sys
 from pulsar.apps.test import TestSuite

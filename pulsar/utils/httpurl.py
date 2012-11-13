@@ -1030,12 +1030,12 @@ class HttpResponse(IOClientRead):
 
     def __str__(self):
         if self.status_code:
-            return '{0} {1}'.format(self.status_code,self.response)
+            return '%s %s' % (self.status_code, self.response)
         else:
             return '<None>'
 
     def __repr__(self):
-        return '{0}({1})'.format(self.__class__.__name__,self)
+        return '%s(%s)' % (self.__class__.__name__, self)
 
     @property
     def streaming(self):
@@ -1111,7 +1111,8 @@ class HttpResponse(IOClientRead):
         has_headers = self.parser.is_headers_complete()
         self.parser.execute(data, len(data))
         if self.streaming:
-            # if headers are ready, we return self and start streaming for the body
+            # if headers are ready, we keep reading (by returning nothing) if
+            # the body is not yet complete
             if has_headers:
                 if not self.parser.is_message_complete():
                     return
@@ -1132,9 +1133,18 @@ class HttpResponse(IOClientRead):
     def info(self):
         return self.headers
 
-    def stream_content(self):
-        while not self.parser.is_message_complete():
-            yield self.parser.recv_body()
+    def stream(self):
+        '''Stream parsed body data.'''
+        if self.streaming:
+            if hasattr(self, '_streamed'):
+                raise RuntimeError('Already streamed')
+            self._streamed = True
+            while not self.parser.is_message_complete():
+                yield self.parser.recv_body()
+            # last part only if boy is available
+            b = self.parser.recv_body()
+            if b:
+                yield b
         
 
 class HttpConnection(httpclient.HTTPConnection):
@@ -1608,8 +1618,8 @@ object.
 '''
         return self.request('PUT', url, **kwargs)
 
-    def path(self, url, **kwargs):
-        '''Sends a PATH request and returns a :class:`HttpResponse`
+    def patch(self, url, **kwargs):
+        '''Sends a PATCH request and returns a :class:`HttpResponse`
 object.
 
 :params url: url for the new :class:`HttpRequest` object.

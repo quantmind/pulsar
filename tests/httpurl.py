@@ -146,6 +146,9 @@ class TestHttpClient(unittest.TestCase):
         r = make_async(http.get(self.httpbin()))
         yield r
         r = r.result
+        self.assertEqual(str(r), '200 OK')
+        self.assertEqual(repr(r), 'HttpResponse(200 OK)')
+        self.assertEqual(r.client, http)
         self.assertEqual(r.status_code, 200)
         self.assertEqual(r.response, 'OK')
         self.assertTrue(r.content)

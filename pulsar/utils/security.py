@@ -24,7 +24,7 @@ def gen_salt(length):
 
 
 def _hash_internal(salt, password):
-    return sha1('{0}{1}'.format(salt,password).encode('utf-8')).hexdigest()
+    return sha1(('%s%s' % (salt, password)).encode('utf-8')).hexdigest()
 
 
 def generate_password_hash(password, salt_length=8):

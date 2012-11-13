@@ -11,7 +11,7 @@ except ImportError:
     sys.path.append('../../')
 
 from pulsar import HttpException, LocalMixin, HttpClient, maybe_async,\
-                    is_async, is_failure
+                    is_async, is_failure, local_property
 from pulsar.apps import wsgi
 from pulsar.utils.httpurl import Headers
 
@@ -19,25 +19,25 @@ ENVIRON_HEADERS = ('content-type', 'content-length')
 USER_AGENT = 'Pulsar-Proxy-Server'
 
 
+def x_forwarded_for(environ, headers):
+    headers.add_header('x-forwarded-for', environ['REMOTE_ADDR'])
+    
+
 class ProxyMiddleware(LocalMixin):
-    '''WSGI middleware for an asynchronous proxy server. By default it adds the
-X-Forwarded-For header. To perform more processing on headers you can add
-``headers_middleware`` callables.'''
-    def __init__(self, user_agent=None, timeout=0, headers_middleware=None):
+    '''WSGI middleware for an asynchronous proxy server. To perform
+processing on headers you can pass a list of ``headers_middleware``.
+An headers middleware is a callable which accepts two parameters, the wsgi
+*environ* dictionary and the *headers* container.'''
+    def __init__(self, user_agent=None, headers_middleware=None):
         self.headers = headers = Headers(kind='client')
         self.headers_middleware = headers_middleware or []
-        self.timeout = timeout
         if user_agent:
             headers['user-agent'] = user_agent
             
-    @property
+    @local_property
     def http_client(self):
-        if 'http' not in self.local:
-            self.local.http = HttpClient(timeout=self.timeout,
-                                         decompress=False,
-                                         store_cookies=False,
-                                         stream=True)
-        return self.local.http
+        return HttpClient(timeout=0, decompress=False, store_cookies=False,
+                          stream=True)
         
     def __call__(self, environ, start_response):
         uri = environ['RAW_URI']
@@ -48,14 +48,16 @@ X-Forwarded-For header. To perform more processing on headers you can add
         headers = self.request_headers(environ)
         method = environ['REQUEST_METHOD']
         stream = environ.get('wsgi.input') or io.BytesIO()
-        response = self.http_client.request(method, uri, data=stream.getvalue(),
-                                            headers=headers)
-        wsgi_response.content = self.response_generator(response, wsgi_response)
+        target_response = self.http_client.request(method, uri,
+                                                   data=stream.getvalue(),
+                                                   headers=headers)
+        wsgi_response.content = self.response_generator(target_response,
+                                                        wsgi_response)
         return wsgi_response
     
     def request_headers(self, environ):
-        '''Modify request headers. The returned headers will be sent to the
-request uri.'''
+        '''Modify request headers via the list of :attr:`headers_middleware`.
+The returned headers will be sent to the target uri.'''
         headers = Headers(kind='client')
         for k in environ:
             if k.startswith('HTTP_'):
@@ -67,7 +69,6 @@ request uri.'''
             if v:
                 headers[head] = v
         headers.update(self.headers)
-        headers.add_header('x-forwarded-for', environ['REMOTE_ADDR'])
         for middleware in self.headers_middleware:
             middleware(environ, headers)
         return headers
@@ -83,15 +84,18 @@ request uri.'''
         else:
             wsgi_response.status_code = response.status_code
             wsgi_response.headers.update(response.headers)
-            stream_content = response.stream_content()
+            stream_content = response.stream()
         wsgi_response.start()
         if stream_content:
             for content in stream_content:
                 yield content
 
+
 def server(description=None, name='proxy-server', **kwargs):
     description = description or 'Pulsar Proxy Server'
-    app = wsgi.WsgiHandler(middleware=[ProxyMiddleware(user_agent=USER_AGENT)])
+    wsgi_proxy = ProxyMiddleware(user_agent=USER_AGENT,
+                                 headers_middleware=[x_forwarded_for])
+    app = wsgi.WsgiHandler(middleware=[wsgi_proxy])
     return wsgi.WSGIServer(app, name=name, description=description, **kwargs)
 
 
