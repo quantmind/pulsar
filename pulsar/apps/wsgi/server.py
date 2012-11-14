@@ -269,16 +269,16 @@ invocation of the application.
     def is_chunked(self):
         '''Only use chunked responses when the client is
 speaking HTTP/1.1 or newer and there was no Content-Length header set.'''
-        cl = self.content_length
         if self.environ['wsgi.version'] <= (1,0):
             return False
         elif has_empty_content(int(self.status[:3])):
             # Do not use chunked responses when the response
             # is guaranteed to not have a response body.
             return False
-        elif cl is not None and cl <= MAX_BODY:
-            return False
-        return True
+        elif self.headers.get('Transfer-Encoding') == 'chunked':
+            return True
+        else:
+            return self.content_length is None
 
     def get_headers(self, force=False):
         '''Get the headers to send only if *force* is ``True`` or this
@@ -292,6 +292,8 @@ is an HTTP upgrade (websockets)'''
             if self.is_chunked():
                 headers['Transfer-Encoding'] = 'chunked'
                 headers.pop('content-length', None)
+            else:
+                headers.pop('Transfer-Encoding', None)
             if 'connection' not in headers:
                 connection = "keep-alive" if self.keep_alive else "close"
                 headers['Connection'] = connection

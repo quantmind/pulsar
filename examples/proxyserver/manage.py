@@ -78,7 +78,7 @@ The returned headers will be sent to the target uri.'''
         while is_async(response):
             yield b''
             response = maybe_async(response)
-        content = None
+        stream_content = None
         if is_failure(response):
             wsgi_response.status_code = 500
         else:
