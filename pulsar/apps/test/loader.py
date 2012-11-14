@@ -19,10 +19,11 @@ def issubclass_safe(cls, base_cls):
         return False
 
 class TestLoader(object):
-    '''Aggregate tests from a list of paths. The way it works is simple,
+    '''Classes used by the :class:`TestSuite` to aggregate tests
+from a list of paths. The way it works is simple,
 you give a *root* directory and a list of submodules where to look for tests.
 
-:parameter root: root path.
+:parameter root: root path passed by the :class:`TestSuite`. 
 :parameter modules: list (or tuple) of entries where to look for tests.
     An entry can be a string indicating the **dotted** path relative to the
     **root** directory or a two element tuple with the same dotted path as
@@ -31,11 +32,14 @@ you give a *root* directory and a list of submodules where to look for tests.
     the top level tag for all tests in this entry.
     For example::
 
-        modules = ['test', ('bla', None, 'foo'), ('examples','test)]
+        modules = ['test', ('bla', None, 'foo'), ('examples','test')]
 
-    loads all tests from the ``test`` directory, all tests from the 'bla'
-    directory with top level tag 'foo' and all tests from the examples
-    directory matching the test pattern.
+    loads
+    
+     * all tests from modules in the ``test`` directory,
+     * all tests from the ``bla`` directory with top level tag ``foo``,
+     * all tests from the examples directory matching the test pattern.
+     
     All top level modules will be added to the python ``path``.
 
 :parameter runner: Instance of the test runner.

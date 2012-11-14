@@ -22,9 +22,13 @@ class TestHeaders(unittest.TestCase):
         self.assertEqual(h.kind, 'client')
         self.assertEqual(len(h), 0)
         h['content-type'] = 'text/html'
+        self.assertEqual(h.get_all('content-type'), ['text/html'])
         self.assertEqual(len(h), 1)
         h['server'] = 'bla'
         self.assertEqual(len(h), 1)
+        del h['content-type']
+        self.assertEqual(len(h), 0)
+        self.assertEqual(h.get_all('content-type', []), [])
         
     def test_accept_content_type(self):
         accept = httpurl.accept_content_type()
@@ -35,6 +39,16 @@ class TestHeaders(unittest.TestCase):
         self.assertTrue('text/plain' in accept)
 
 
+class TestAuth(unittest.TestCase):
+    
+    def testBase(self):
+        auth = httpurl.Auth()
+        self.assertRaises(NotImplementedError, auth, None)
+        self.assertFalse(auth.authenticated())
+        self.assertEqual(str(auth), repr(auth))
+        auth = httpurl.HTTPBasicAuth('bla', 'foo')
+        self.assertEqual(str(auth), 'Basic: bla')
+    
 class TestTools(unittest.TestCase):
     
     def test_to_bytes(self):
@@ -146,6 +160,9 @@ class TestHttpClient(unittest.TestCase):
         r = make_async(http.get(self.httpbin()))
         yield r
         r = r.result
+        self.assertEqual(str(r), '200 OK')
+        self.assertEqual(repr(r), 'HttpResponse(200 OK)')
+        self.assertEqual(r.client, http)
         self.assertEqual(r.status_code, 200)
         self.assertEqual(r.response, 'OK')
         self.assertTrue(r.content)
@@ -223,6 +240,19 @@ class TestHttpClient(unittest.TestCase):
         self.assertTrue(result['args'])
         self.assertEqual(result['args']['numero'],['1','2'])
         
+    def test_patch(self):
+        data = (('bla', 'foo'), ('unz', 'whatz'),
+                ('numero', '1'), ('numero', '2'))
+        http = self.client()
+        r = request(http.patch(self.httpbin('patch'), data=data))
+        yield r
+        r = r.result
+        self.assertEqual(r.status_code, 200)
+        self.assertEqual(r.response, 'OK')
+        result = r.content_json()
+        self.assertTrue(result['args'])
+        self.assertEqual(result['args']['numero'],['1','2'])
+        
     def test_delete(self):
         data = (('bla', 'foo'), ('unz', 'whatz'),
                 ('numero', '1'), ('numero', '2'))
@@ -267,9 +297,9 @@ class TestHttpClient(unittest.TestCase):
         parser = r.parser
         self.assertTrue(parser.is_chunked())
         
-    def testChunkedResponse(self):
+    def testLargeResponse(self):
         http = self.client()
-        r = make_async(http.get(self.httpbin('getsize/132000')))
+        r = make_async(http.get(self.httpbin('getsize/600000')))
         yield r
         r = r.result
         self.assertEqual(r.status_code, 200)
@@ -312,6 +342,35 @@ class TestHttpClient(unittest.TestCase):
         self.assertEqual(httpurl.parse_cookie('invalid;key=true'),
                          {'key':'true'})
         
+    def test_stream_response(self):
+        http = self.client()
+        r = make_async(http.get(self.httpbin('stream/3000/20')))
+        yield r
+        r = r.result
+        self.assertEqual(r.status_code, 200)
+        
+    def test_expect(self):
+        http = self.client()
+        data = (('bla', 'foo'), ('unz', 'whatz'),
+                ('numero', '1'), ('numero', '2'))
+        r = make_async(http.post(self.httpbin('post'), data=data,
+                                 headers=[('expect','100-continue')]))
+        yield r
+        r = r.result
+        self.assertEqual(r.status_code, 200)
+        
+    def test_basic_authentication(self):
+        http = self.client()
+        r = make_async(http.get(self.httpbin('basic-auth/bla/foo')))
+        yield r
+        r = r.result
+        self.assertEqual(r.status_code, 401)
+        http.add_basic_authentication('bla', 'foo')
+        r = make_async(http.get(self.httpbin('basic-auth/bla/foo')))
+        yield r
+        r = r.result
+        self.assertEqual(r.status_code, 200)
+        
     #### TO INCLUDE
     def __test_far_expiration(self):
         "Cookie will expire when an distant expiration time is provided"
@@ -339,7 +398,5 @@ class TestHttpClient(unittest.TestCase):
         
 
 class TestHttpClientWithProxy(TestHttpClient):
-    app = None
     with_proxy = True
-    proxy_app = None
     server_concurrency = 'process'

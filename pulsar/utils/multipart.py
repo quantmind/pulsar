@@ -11,7 +11,7 @@ from tempfile import TemporaryFile
 from wsgiref.headers import Headers
 from io import BytesIO
 
-from .httpurl import parse_qs
+from .httpurl import parse_qs, ENCODE_BODY_METHODS
 from .structures import MultiValueDict
 
 
@@ -299,8 +299,9 @@ into memory limits.
     errors. These are silently ignored by default.'''
     forms, files = MultiValueDict(), MultiValueDict()
     try:
-        if environ.get('REQUEST_METHOD','GET').upper() not in ('POST', 'PUT'):
-            raise MultipartError("Request method other than POST or PUT.")
+        if environ.get('REQUEST_METHOD','GET').upper()\
+            not in ENCODE_BODY_METHODS:
+            raise MultipartError("Request method not valid.")
         content_length = int(environ.get('CONTENT_LENGTH', '-1'))
         content_type = environ.get('CONTENT_TYPE', '')
         if not content_type:

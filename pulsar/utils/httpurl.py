@@ -1,10 +1,10 @@
-'''This MASSIVE module imports several classes and functions form the standard
-library in a python 2.6 to python 3.3 compatible fashion.
+'''This is a substantial module which imports several classes and functions
+from the standard library in a python 2.6 to python 3.3 compatible fashion.
 On top of that, it implements the :class:`HttpClient` for handling synchronous
 and asynchronous HTTP requests in a pythonic way.
 
 It is a thin layer on top of urllib2 in python2 / urllib in Python 3.
-Several opensource efforts have been used as source of snippes, inspiration
+Several opensource efforts have been used as source of snippets, inspiration
 and more:
 
 * http-parser_
@@ -16,12 +16,12 @@ as it is.
 
 Usage
 ===========
-making requests with the :class:`HttpClient` is simple. First you create
+Making requests with the :class:`HttpClient` is simple. First you create
 a client, which can be as simple as::
 
     >>> client = HttpClient()
 
-Then you can request a webpage, for example::
+Then you can perform an HTTP request, for example::
 
     >>> r = client.get('http://www.bbc.co.uk')
 
@@ -52,15 +52,13 @@ from collections import deque, Mapping
 from copy import copy
 
 ispy3k = sys.version_info >= (3, 0)
+ispy26 = sys.version_info < (2, 7)
+
+create_connection = socket.create_connection
 
 try:    # Compiled with SSL?
-    HTTPSConnection = object
     BaseSSLError = None
     ssl = None
-    if ispy3k:
-        from http.client import HTTPSConnection
-    else:   # pragma : no cover
-        from httplib import HTTPSConnection
     import ssl
     BaseSSLError = ssl.SSLError
 except (ImportError, AttributeError):   # pragma : no cover 
@@ -147,6 +145,33 @@ else:   # pragma : no cover
     is_string = lambda s: isinstance(s, unicode)
     is_string_or_native_string = lambda s: isinstance(s, basestring)
 
+    if sys.version_info < (2, 7):
+        #
+        def create_connection(address, timeout=socket._GLOBAL_DEFAULT_TIMEOUT,
+                              source_address=None):
+            """Form Python 2.7"""
+            host, port = address
+            err = None
+            for res in socket.getaddrinfo(host, port, 0, socket.SOCK_STREAM):
+                af, socktype, proto, canonname, sa = res
+                sock = None
+                try:
+                    sock = socket.socket(af, socktype, proto)
+                    if timeout is not socket._GLOBAL_DEFAULT_TIMEOUT:
+                        sock.settimeout(timeout)
+                    if source_address:
+                        sock.bind(source_address)
+                    sock.connect(sa)
+                    return sock
+                except error as _:
+                    err = _
+                    if sock is not None:
+                        sock.close()
+            if err is not None:
+                raise err
+            else:
+                raise error("getaddrinfo returns an empty list")
+    
     def to_bytes(s, encoding=None, errors='strict'):
         encoding = encoding or 'utf-8'
         if isinstance(s, bytes):
@@ -211,7 +236,7 @@ urlquote = lambda iri: quote(iri, safe=URI_RESERVED_CHARS)
 
 def _gen_unquote(uri):
     unreserved_set = URI_UNRESERVED_SET
-    for n, part in enumerate(to_string(uri).split('%')):
+    for n, part in enumerate(native_str(uri).split('%')):
         if not n:
             yield part
         else:
@@ -358,16 +383,21 @@ def capfirst(x):
     else:
         return x
     
-def header_field(name, HEADERS_SET=None):
+def capheader(name):
+    return '-'.join((b for b in (capfirst(n) for n in name.split('-')) if b))
+
+def header_field(name, HEADERS_SET=None, strict=False):
     name = name.lower()
     if name.startswith('x-'):
-        return '-'.join((b for b in (capfirst(n) for n in name.split('-')) if b))
+        return capheader(name)
     else:
         header = ALL_HEADER_FIELDS_DICT.get(name)
         if header and HEADERS_SET:
             return header if header in HEADERS_SET else None
-        else:
+        elif header:
             return header
+        elif not strict:
+            return capheader(name)
 
 
 class Headers(object):
@@ -382,12 +412,13 @@ The order in which header fields with differing field names are received is not
 significant. However, it is "good practice" to send general-header fields first,
 followed by request-header or response-header fields, and ending with
 the entity-header fields.'''
-    def __init__(self, headers=None, kind='server'):
+    def __init__(self, headers=None, kind='server', strict=False):
         if isinstance(kind, int):
             kind = header_type.get(kind, 'both')
         else:
             kind = kind.lower()
         self.kind = kind
+        self.strict = strict
         self.all_headers = TYPE_HEADER_FIELDS.get(self.kind)
         if not self.all_headers:
             self.kind = 'both'
@@ -422,18 +453,11 @@ the entity-header fields.'''
     def kind_number(self):
         return header_type_to_int.get(self.kind)
 
-    def update(self, iterable, append=False):
+    def update(self, iterable):
         """Extend the headers with a dictionary or an iterable yielding keys
-and values. If append is set to ``True``, existing headers are appended
-rather than replaced."""
-        iterable = mapping_iterator(iterable)
-        if append:        
-            add = self.add_header
-            for key, value in iterable:
-                add(key, value)
-        else:
-            for key, value in iterable:
-                self[key] = value
+and values."""
+        for key, value in mapping_iterator(iterable):
+            self[key] = value
 
     def __contains__(self, key):
         return header_field(key) in self._headers
@@ -445,7 +469,7 @@ rather than replaced."""
         self._headers.__delitem__(header_field(key))
 
     def __setitem__(self, key, value):
-        key = header_field(key, self.all_headers)
+        key = header_field(key, self.all_headers, self.strict)
         if key and value is not None:
             if not isinstance(value, list):
                 value = [value]
@@ -477,14 +501,12 @@ it returns an empty list.'''
     def add_header(self, key, value, **params):
         '''Add *value* to *key* header. If the header is already available,
 append the value to the list.'''
-        key = header_field(key, self.all_headers)
+        key = header_field(key, self.all_headers, self.strict)
         if key and value:
             values = self._headers.get(key, [])
             if value not in values:
                 values.append(value)
                 self._headers[key] = values
-        #else:
-        #    self._headers.pop(key, None)
 
     def flat(self, version, status):
     	'''Full headers bytes representation'''
@@ -496,8 +518,7 @@ append the value to the list.'''
         return self.get('vary',[])
 
     def has_vary(self, header_query):
-        """Checks to see if the has a given header name in its Vary header.
-        """
+        """Checks to see if the has a given header name in its Vary header."""
         return header_query.lower() in set(self.vary_headers)
 
     def _ordered(self):
@@ -984,14 +1005,17 @@ class HttpResponse(IOClientRead):
 
     A list of :class:`HttpResponse` objects from the history of the
     class:`HttpRequest`. Any redirect responses will end up here.
+    
+.. attribute:: streaming
+
+    boolean indicating if this is a streaming HTTP response.
 '''
     request = None
     parser = None
     will_close = False
     parser_class = HttpParser
 
-    def __init__(self, sock, debuglevel=0, method=None, url=None,
-                 strict=None):
+    def __init__(self, sock, debuglevel=0, method=None, url=None, strict=None):
         self.sock = sock
         self.debuglevel = debuglevel
         self._method = method
@@ -999,13 +1023,17 @@ class HttpResponse(IOClientRead):
 
     def __str__(self):
         if self.status_code:
-            return '{0} {1}'.format(self.status_code,self.response)
+            return '%s %s' % (self.status_code, self.response)
         else:
             return '<None>'
 
     def __repr__(self):
-        return '{0}({1})'.format(self.__class__.__name__,self)
+        return '%s(%s)' % (self.__class__.__name__, self)
 
+    @property
+    def streaming(self):
+        return self.request.stream
+    
     @property
     def status_code(self):
         if self.parser:
@@ -1072,8 +1100,24 @@ class HttpResponse(IOClientRead):
             return self.read()
 
     def parsedata(self, data):
+        '''Called when data is available on the pipeline'''
+        has_headers = self.parser.is_headers_complete()
         self.parser.execute(data, len(data))
-        if self.parser.is_message_complete():
+        if self.streaming:
+            # if headers are ready, we keep reading (by returning nothing) if
+            # the body is not yet complete
+            if has_headers:
+                if not self.parser.is_message_complete():
+                    return
+                else:
+                    return self
+            elif self.parser.is_headers_complete():
+                res = self.request.client.build_response(self)
+                if not self.parser.is_message_complete():
+                    self._read()
+                return res
+        # Not streaming. wait until we have the whole message
+        elif self.parser.is_message_complete():
             return self.request.client.build_response(self)
 
     def close(self):
@@ -1082,10 +1126,29 @@ class HttpResponse(IOClientRead):
     def info(self):
         return self.headers
 
+    def stream(self):
+        '''Stream parsed body data.'''
+        if self.streaming:
+            if hasattr(self, '_streamed'):
+                raise RuntimeError('Already streamed')
+            self._streamed = True
+            while not self.parser.is_message_complete():
+                yield self.parser.recv_body()
+            # last part only if boy is available
+            b = self.parser.recv_body()
+            if b:
+                yield b
+        
 
 class HttpConnection(httpclient.HTTPConnection):
     '''Http Connection class'''
     tunnel_class = httpclient.HTTPResponse
+    pool = None
+    
+    def __init__(self, host, port=None, source_address=None, **kwargs):
+        httpclient.HTTPConnection.__init__(self, host, port, **kwargs)
+        self.source_address = source_address
+    
     def _tunnel(self):
         response_class = self.response_class
         self.response_class = self.tunnel_class
@@ -1095,21 +1158,23 @@ class HttpConnection(httpclient.HTTPConnection):
     @property
     def is_async(self):
         return self.sock.gettimeout() == 0
-
-
-class HttpsConnection(HTTPSConnection):
-    '''Https Connection class.'''
-    tunnel_class = httpclient.HTTPResponse
-    def _tunnel(self):
-        response_class = self.response_class
-        self.response_class = self.tunnel_class
-        HTTPSConnection._tunnel(self)
-        self.response_class = response_class
-
-    @property
-    def is_async(self):
-        return self.sock.gettimeout() == 0
     
+    def connect(self):
+        """Connect to the host and port specified in __init__."""
+        self.sock = create_connection((self.host,self.port),
+                                       self.timeout, self.source_address)
+        if self._tunnel_host:
+            self._tunnel()
+    
+    if ispy26:
+        def set_tunnel(self, host, port=None, headers=None):
+            return self._set_tunnel(host, port, headers)
+
+
+class HttpsConnection(HttpConnection):
+    '''Https Connection class.'''
+    default_port = httpclient.HTTPS_PORT
+
     def set_cert(self, key_file=None, cert_file=None,
                  cert_reqs='CERT_NONE', ca_certs=None):
         ssl_req_scheme = {
@@ -1122,16 +1187,20 @@ class HttpsConnection(HTTPSConnection):
         self.cert_reqs = ssl_req_scheme.get(cert_reqs) or ssl.CERT_NONE
         self.ca_certs = ca_certs
 
-    def __connect(self):
-        # Add certificate verification
-        sock = socket.create_connection((self.host, self.port), self.timeout)
-        # Wrap socket using verification with the root certs in
-        # trusted_root_certs
-        self.sock = ssl.wrap_socket(sock, self.key_file, self.cert_file,
+    def connect(self):
+        "Connect to a host on a given (SSL) port."
+        HttpConnection.connect(self)
+        self.sock = ssl.wrap_socket(self.sock, self.key_file,
+                                    self.cert_file,
                                     cert_reqs=self.cert_reqs,
                                     ca_certs=self.ca_certs)
         if self.ca_certs:
-            match_hostname(self.sock.getpeercert(), self.host)
+            try:
+                ssl.match_hostname(self.sock.getpeercert(), self.host)
+            except Exception:
+                self.sock.shutdown(socket.SHUT_RDWR)
+                self.sock.close()
+                raise
 
 
 class HttpBase(object):
@@ -1187,7 +1256,7 @@ http://www.ietf.org/rfc/rfc2616.txt
     def __init__(self, client, url, method, data=None, files=None,
                  charset=None, encode_multipart=True, multipart_boundary=None,
                  headers=None, timeout=None, hooks=None, history=None,
-                 allow_redirects=False, max_redirects=10, **kwargs):
+                 allow_redirects=False, max_redirects=10, stream=False):
         self.client = client
         self.type, self.host, self.path, self.params,\
         self.query, self.fragment = urlparse(url)
@@ -1202,6 +1271,7 @@ http://www.ietf.org/rfc/rfc2616.txt
         self.method = method.upper()
         self.data = data if data is not None else {}
         self.files = files
+        self.stream = stream
         # Pre-request hook.
         self.dispatch_hook('pre_request', self.hooks, self)
         self.encode(encode_multipart, multipart_boundary)
@@ -1351,10 +1421,10 @@ class HttpConnectionPool(object):
             if not ssl:
                 raise SSLError("Can't connect to HTTPS URL because the SSL "
                                "module is not available.")
-            con = HttpsConnection(host=self.host, port=self.port)
+            con = self.client.https_connection(host=self.host, port=self.port)
             con.set_cert(**self.https_params)
         else:
-            con = HttpConnection(host=self.host, port=self.port)
+            con = self.client.http_connection(host=self.host, port=self.port)
         if self.timeout is not None:
             con.timeout = self.timeout
         return con
@@ -1366,6 +1436,9 @@ class HttpConnectionPool(object):
 
     def remove(self, connection):
         self._in_use_connections.remove(connection)
+
+    def on_connect(self, connection):
+        pass
 
 
 class HttpClient(HttpBase):
@@ -1407,16 +1480,18 @@ or asynchronous connections.
 
 .. attribute:: proxy_info
 
-    Dictionary of proxy servers for this client
-
-The :attr:`key_file``, :attr:`cert_file`, :attr:`cert_reqs` and
-:attr:`ca_certs` parameters are only used if :mod:`ssl` is available
-and are fed into :meth:`ssl.wrap_socket` to upgrade the connection socket
-into an SSL socket.
+    Dictionary of proxy servers for this client.
 '''
     timeout = None
+    allow_redirects = False
+    stream = False
     request_class = HttpRequest
+    '''Class handling requests. Default: :class:`HttpRequest`'''
     connection_pool = HttpConnectionPool
+    http_connection = HttpConnection
+    '''Class handling HTTP connections. Default: :class:`HttpConnection`'''
+    https_connection = HttpsConnection
+    '''Class handling HTTPS connections. Default: :class:`HttpsConnection`'''
     client_version = 'Python-httpurl'
     DEFAULT_HTTP_HEADERS = Headers([
             ('Connection', 'Keep-Alive'),
@@ -1425,6 +1500,9 @@ into an SSL socket.
             ('Accept-Encoding', 'compress'),
             ('Accept-Encoding', 'gzip')],
             kind='client')
+    request_parameters = ('hooks', 'encode_multipart', 'timeout',
+                          'max_redirects', 'allow_redirects',
+                          'multipart_boundary', 'stream')
     # Default hosts not affected by proxy settings. This can be overwritten
     # by specifying the "no" key in the proxy_info dictionary
     no_proxy = set(('localhost', urllibr.localhost(), platform.node()))
@@ -1433,7 +1511,7 @@ into an SSL socket.
                  headers=None, encode_multipart=True, client_version=None,
                  multipart_boundary=None, max_connections=None,
                  key_file=None, cert_file=None, cert_reqs='CERT_NONE',
-                 ca_certs=None, cookies=None, trust_env=True,
+                 ca_certs=None, cookies=None, trust_env=True, stream=None,
                  store_cookies=True, max_redirects=10, decompress=True):
         self.trust_env = trust_env
         self.store_cookies = store_cookies
@@ -1442,6 +1520,7 @@ into an SSL socket.
         self.timeout = timeout if timeout is not None else self.timeout
         self.cookies = cookies
         self.decompress = decompress
+        self.stream = stream if stream is not None else stream
         self.max_connections = max_connections or 2**31
         dheaders = self.DEFAULT_HTTP_HEADERS.copy()
         self.client_version = client_version or self.client_version
@@ -1532,8 +1611,8 @@ object.
 '''
         return self.request('PUT', url, **kwargs)
 
-    def path(self, url, **kwargs):
-        '''Sends a PATH request and returns a :class:`HttpResponse`
+    def patch(self, url, **kwargs):
+        '''Sends a PATCH request and returns a :class:`HttpResponse`
 object.
 
 :params url: url for the new :class:`HttpRequest` object.
@@ -1550,41 +1629,20 @@ object.
 '''
         return self.request('DELETE', url, **kwargs)
 
-    def request(self, method, url, data=None, files=None, headers=None,
-                encode_multipart=None, allow_redirects=False, hooks=None,
-                cookies=None, history=None, max_redirects=None, **kwargs):
-        '''Constructs, sends a :class:`HttpRequest` and returns
-a :class:`HttpResponse` object.
+    def request(self, method, url, cookies=None, **params):
+        '''Constructs and sends an :class:`HttpRequest` to a remote server.
+It returns an :class:`HttpResponse` object.
 
-:param url: URL for the new :class:`HttpRequest`.
-:param data: optional dictionary or bytes to be sent either in the query string
-    for 'DELETE', 'GET', 'HEAD' and 'OPTIONS' methods or in the body
-    for 'PATCH', 'POST', 'PUT', 'TRACE' methods.
-:param method: optional request method for the :class:`HttpRequest`.
-:param hooks:
+:param method: request method for the :class:`HttpRequest`.
+:param url: URL for the :class:`HttpRequest`.
+:param params: a dictionary which specify all the optional parameters for
+the :class:`HttpRequest` constructor.
+
+:rtype: a :class:`HttpResponse` object.
 '''
-        if hooks:
-            chooks = dict(((e, copy(h)) for e, h in iteritems(self.hooks)))
-            for e, h in iteritems(hooks):
-                chooks[e].append(h)
-            hooks = chooks
-        else:
-            hooks = self.hooks
-        encode_multipart = encode_multipart if encode_multipart is not None\
-                            else self.encode_multipart
-        if 'timeout' not in kwargs:
-            kwargs['timeout'] = self.timeout
-        if max_redirects is None:
-            max_redirects = self.max_redirects
-        request = self.request_class(self, url, method, data=data, files=files,
-                                     headers=headers,
-                                     encode_multipart=encode_multipart,
-                                     multipart_boundary=self.multipart_boundary,
-                                     hooks=hooks,
-                                     history=history,
-                                     max_redirects=max_redirects,
-                                     allow_redirects=allow_redirects,
-                                     **kwargs)
+        for parameter in self.request_parameters:
+            self._update_parameter(parameter, params)
+        request = self.request_class(self, url, method, **params)
         # Set proxy if required
         self.set_proxy(request)
         if self.cookies:
@@ -1638,13 +1696,13 @@ a :class:`HttpResponse` object.
                 request.set_proxy(p.netloc, p.scheme)
 
     def build_response(self, response):
+        '''The response headers are available. Build the response.'''
         request = response.request
         headers = response.headers
-        if self.store_cookies:
-            #response.cookies = CookieJar()
-            if 'set-cookie' in headers:
-                #response.cookies.extract_cookies(response, request)
-                self.cookies.extract_cookies(response, request)
+        # store cookies in clinet if needed
+        if self.store_cookies and 'set-cookie' in headers:
+            self.cookies.extract_cookies(response, request)
+        # check redirect
         if response.status_code in REDIRECT_CODES and 'location' in headers and\
                 request.allow_redirects:
             history = request.history or []
@@ -1684,7 +1742,18 @@ a :class:`HttpResponse` object.
                                 max_redirects=request.max_redirects,
                                 allow_redirects=request.allow_redirects)
         else:
-            return request.on_response(response)
+            # We need to read the rest of the message
+            return response
+        
+    def _update_parameter(self, name, params):
+        if name not in params:
+            params[name] = getattr(self, name)
+        elif name == 'hooks':
+            hooks = params[name]
+            chooks = dict(((e, copy(h)) for e, h in iteritems(self.hooks)))
+            for e, h in iteritems(hooks):
+                chooks[e].append(h)
+            params[name] = chooks
 
 
 ###############################################    AUTH
@@ -1825,42 +1894,10 @@ def encode_multipart_formdata(fields, boundary=None, charset=None):
     content_type = 'multipart/form-data; boundary=%s' % boundary
     return body.getvalue(), content_type
 
-def parse_dict_header(value):
-    """Parse lists of key, value pairs as described by RFC 2068 Section 2 and
-    convert them into a python dict:
-
-    >>> d = parse_dict_header('foo="is a fish", bar="as well"')
-    >>> type(d) is dict
-    True
-    >>> sorted(d.items())
-    [('bar', 'as well'), ('foo', 'is a fish')]
-
-    If there is no value for a key it will be `None`:
-
-    >>> parse_dict_header('key_without_value')
-    {'key_without_value': None}
-
-    To create a header from the :class:`dict` again, use the
-    :func:`dump_header` function.
-
-    :param value: a string with a dict header.
-    :return: :class:`dict`
-    """
-    result = {}
-    for item in _parse_list_header(value):
-        if '=' not in item:
-            result[item] = None
-            continue
-        name, value = item.split('=', 1)
-        if value[:1] == value[-1:] == '"':
-            value = unquote_header_value(value[1:-1])
-        result[name] = value
-    return result
-
 def basic_auth_str(username, password):
     """Returns a Basic Auth string."""
     b64 = b64encode(('%s:%s' % (username, password)).encode('latin1'))
-    return 'Basic ' + b64.strip().decode('latin1')
+    return 'Basic %s' % native_str(b64.strip(), 'latin1')
 
 def parse_authorization_header(value, charset='utf-8'):
     """Parse an HTTP basic/digest authorization header transmitted by the web

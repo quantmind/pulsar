@@ -2,7 +2,7 @@
 <html>
 <head>
 <title>%s</title>
-<meta http-equiv='content-type' value='text/html;charset=utf8'>
+<meta charset='utf-8'>
 <style type='text/css' media='all'>
 html, body {
     margin: 0;
@@ -35,5 +35,31 @@ ul {
 Powered by <a href='https://github.com/quantmind/pulsar' target='_blank'>pulsar %s</a>.</p>
 %s
 <p>Running on <a href="http://www.python.org">Python %s</a></p>
+<script type="text/javascript" src="http://code.jquery.com/jquery.min.js"></script>
+<script type="text/javascript">
+(function($) {
+    function ajax_request(method) {
+        return function (e) {
+            e.preventDefault();
+            $.ajax({
+                url: e.target.href,
+                type: method,
+                data: {
+                    body: 'this is a message',
+                    type: method,
+                },
+                success: function (data, status) {
+                    alert('Got succesfull response: ' + data['method']);
+                }
+            });
+        }
+    }
+    $(document).ready(function() {
+        $.each(['post', 'delete', 'put', 'patch'], function (i, name) {
+            $('a.' + name).click(ajax_request(name));
+        });
+    });
+}(jQuery));
+</script>
 </body>
 </html>

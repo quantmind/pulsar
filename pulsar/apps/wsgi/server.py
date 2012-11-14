@@ -7,9 +7,8 @@ from wsgiref.handlers import format_date_time
 from io import BytesIO
 
 import pulsar
-from pulsar import lib, make_async, is_async, AsyncSocketServer,\
-                        Deferred, AsyncConnection, AsyncResponse, DeferredSend,\
-                        HttpException, MAX_BODY
+from pulsar import lib, make_async, is_async, AsyncSocketServer, Deferred,\
+                   AsyncConnection, AsyncResponse, DeferredSend, HttpException
 from pulsar.utils.httpurl import Headers, is_string, unquote,\
                                     has_empty_content, to_bytes,\
                                     host_and_port_default, mapping_iterator
@@ -62,11 +61,7 @@ nothing."""
     headers = mapping_iterator(parser.get_headers())
     for header, value in headers:
         header = header.lower()
-        if header == "expect":
-            # handle expect
-            if value == "100-continue":
-                sock.send("HTTP/1.1 100 Continue\r\n\r\n")
-        elif header == 'x-forwarded-for':
+        if header == 'x-forwarded-for':
             forward = value
         elif header == "x-forwarded-protocol" and value == "ssl":
             url_scheme = "https"
@@ -224,19 +219,17 @@ invocation of the application.
         conn = self.connection
         self.environ['pulsar.connection'] = self.connection
         try:
-            buffer = b''
             for b in conn.wsgi_handler(self.environ, self.start_response):
                 head = self.send_headers(force=b)
                 if head is not None:
                     yield head
                 if b:
                     if self.chunked:
-                        if buffer:
-                            b = buffer + b
                         while len(b) >= MAX_CHUNK:
                             chunk, b = b[:MAX_CHUNK], b[MAX_CHUNK:]
                             yield chunk_encoding(chunk)
-                        buffer = b
+                        if b:
+                            yield chunk_encoding(b)
                     else:
                         yield b
                 else:
@@ -266,8 +259,6 @@ invocation of the application.
             if head is not None:
                 yield head
             if self.chunked:
-                if buffer:
-                    yield chunk_encoding(buffer)
                 # Last chunk
                 yield chunk_encoding(b'')
         # close connection if required
@@ -277,16 +268,16 @@ invocation of the application.
     def is_chunked(self):
         '''Only use chunked responses when the client is
 speaking HTTP/1.1 or newer and there was no Content-Length header set.'''
-        cl = self.content_length
         if self.environ['wsgi.version'] <= (1,0):
             return False
         elif has_empty_content(int(self.status[:3])):
             # Do not use chunked responses when the response
             # is guaranteed to not have a response body.
             return False
-        elif cl is not None and cl <= MAX_BODY:
-            return False
-        return True
+        elif self.headers.get('Transfer-Encoding') == 'chunked':
+            return True
+        else:
+            return self.content_length is None
 
     def get_headers(self, force=False):
         '''Get the headers to send only if *force* is ``True`` or this
@@ -300,6 +291,8 @@ is an HTTP upgrade (websockets)'''
             if self.is_chunked():
                 headers['Transfer-Encoding'] = 'chunked'
                 headers.pop('content-length', None)
+            else:
+                headers.pop('Transfer-Encoding', None)
             if 'connection' not in headers:
                 connection = "keep-alive" if self.keep_alive else "close"
                 headers['Connection'] = connection
@@ -340,16 +333,33 @@ a :class:`HttpResponse` at every client request.'''
 class HttpParser:
     connection = None
     def __init__(self):
-        self.p = lib.Http_Parser(kind=0)
+        self.parser = lib.Http_Parser(kind=0)
         
     def decode(self, data):
-        if self.p.is_message_complete():
-            self.p = lib.Http_Parser(kind=0)
+        p = self.parser
+        if p.is_message_complete():
+            self.parser = p = lib.Http_Parser(kind=0)
         if data:
-            self.p.execute(bytes(data), len(data))
-            if self.p.is_message_complete():
-                return wsgi_environ(self.connection, self.p), bytearray()
+            has_headers = p.is_headers_complete()
+            p.execute(bytes(data), len(data))
+            self.expect_continue(has_headers)
+            if p.is_message_complete():
+                return wsgi_environ(self.connection, p), bytearray()
         return None, bytearray()
+    
+    def expect_continue(self, has_headers):
+        '''Handle the expect=100-continue header if available, according to
+the following algorithm:
+
+* Send the 100 Continue response before waiting for the body.
+* Omit the 100 (Continue) response if it has already received some or all of
+  the request body for the corresponding request.
+    '''
+        p = self.parser
+        if not has_headers and p.is_headers_complete() and\
+            p.get_headers().get('expect') == '100-continue':
+                if not p.is_partial_body():
+                    self.connection.write(b'HTTP/1.1 100 Continue\r\n\r\n')
     
     
 class HttpServer(AsyncSocketServer):

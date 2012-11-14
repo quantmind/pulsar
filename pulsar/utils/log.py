@@ -27,6 +27,7 @@ __all__ = ['SERVER_NAME',
            'process_global',
            'LogginMixin',
            'Synchronized',
+           'local_method',
            'local_property',
            'LocalMixin',
            'LogSelf',
@@ -34,13 +35,13 @@ __all__ = ['SERVER_NAME',
 
 
 LOG_LEVELS = {
-        "critical": logging.CRITICAL,
-        "error": logging.ERROR,
-        "warning": logging.WARNING,
-        "info": logging.INFO,
-        "debug": logging.DEBUG,
-        'none': None
-    }
+    "critical": logging.CRITICAL,
+    "error": logging.ERROR,
+    "warning": logging.WARNING,
+    "info": logging.INFO,
+    "debug": logging.DEBUG,
+    'none': None
+}
 
 
 LOGGING_CONFIG = {
@@ -48,20 +49,21 @@ LOGGING_CONFIG = {
     'disable_existing_loggers': False,
     'formatters': {
         'verbose': {
-            'format': '%(asctime)s [p=%(process)s,t=%(thread)s]\
- [%(levelname)s] [%(name)s] %(message)s',
+            'format': '%(asctime)s [p=%(process)s,t=%(thread)s]'
+                      ' [%(levelname)s] [%(name)s] %(message)s',
             'datefmt': '%Y-%m-%d %H:%M:%S'
         },
         'verbose_color': {
             '()': 'pulsar.utils.tools.ColorFormatter',
-            'format': '%(asctime)s [p=%(process)s,t=%(thread)s]\
- [%(levelname)s] [%(name)s] %(message)s',
+            'format': '%(asctime)s [p=%(process)s,t=%(thread)s]'
+                      ' [%(levelname)s] [%(name)s] %(message)s',
             'datefmt': '%Y-%m-%d %H:%M:%S'
         },
         'simple': {
             'format': '%(asctime)s %(levelname)s %(message)s',
             'datefmt': '%Y-%m-%d %H:%M:%S'
         },
+        'message': {'format': '%(message)s'}
     },
     'handlers': {
         'silent': {
@@ -71,6 +73,10 @@ LOGGING_CONFIG = {
             'level': 'DEBUG',
             'class': 'logging.StreamHandler',
             'formatter': 'verbose_color'
+        },
+        'console_message': {
+            'class': 'logging.StreamHandler',
+            'formatter': 'message'
         }
     },
     'filters ': {},
@@ -80,7 +86,7 @@ LOGGING_CONFIG = {
 
 
 def update_config(config, c):
-    for name in ('handlers','formatters','filters','loggers','root'):
+    for name in ('handlers', 'formatters', 'filters', 'loggers', 'root'):
         if name in c:
             config[name].update(c[name])
 
@@ -104,23 +110,25 @@ removed when pickling the object'''
         return d
     
 
-def local_property(f):
+def local_method(f):
     name = f.__name__
     def _(self):
         local = self.local
         if name not in local:
             setattr(local, name, f(self))
         return getattr(local, name)
+    return _
     return property(_, doc=f.__doc__)
+
+def local_property(f):
+    return property(local_method(f), doc=f.__doc__)
     
     
 class SynchronizedMixin(object):
-    
-    @property
+    '''A mixin to be used with class:`LocalMixin` class.'''
+    @local_property
     def lock(self):
-        if '_lock' not in self.local:
-            self.local._lock = Lock()
-        return self.local._lock
+        return Lock()
     
     @classmethod
     def make(cls, f):
@@ -235,17 +243,17 @@ and utilities for pickle.'''
         self.__dict__ = state
         self.configure_logging()
     
-    def configure_logging(self, config = None):
+    def configure_logging(self, config=None):
         '''Configure logging. This function is invoked every time an
-instance of this class is unserialized (possibly in a different process domain).
-'''
+instance of this class is un-serialised (possibly in a different
+process domain).'''
         logconfig = None
+        # if the logger was not configured, do so.
         if not process_global('_config_logging'):
             logconfig = copy.deepcopy(LOGGING_CONFIG)
             if config:
-                update_config(logconfig,config)
-            process_global('_config_logging',logconfig,True)
-            
+                update_config(logconfig, config)
+            process_global('_config_logging',logconfig, True)
         loglevel = self.loglevel
         if loglevel is None:
             loglevel = logging.NOTSET
@@ -258,25 +266,19 @@ instance of this class is unserialized (possibly in a different process domain).
                     loglevel = logging._levelNames[lv]
                 else:
                     loglevel = logging.NOTSET
-    
         self.loglevel = loglevel
-
         # No loggers configured. This means no logconfig setting
         # parameter was used. Set up the root logger with default
         # loggers 
         if logconfig:
             if not logconfig.get('root'):
                 if loglevel == logging.NOTSET:
-                    logconfig['root'] = {
-                                    'handlers':['silent']
-                                }
+                    handlers = ['silent']
                 else:
-                    logconfig['root'] = {
-                                    'level': logging.getLevelName(loglevel),
-                                    'handlers':['console']
-                                }
+                    handlers = ['console']
+                logconfig['root'] = {'handlers': handlers}
+            logconfig['root']['level'] = logging.getLevelName(loglevel)
             dictConfig(logconfig)
-        
         self.setlog()
         self.log.setLevel(self.loglevel)
             

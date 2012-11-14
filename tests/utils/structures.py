@@ -99,3 +99,4 @@ class TestFunctions(unittest.TestCase):
         self.assertEqual(d, deque([b'abc', b'defg', b'hi', b'j']))
         merge_prefix(d, 100)
         self.assertEqual(d, deque([b'abcdefghij']))
+        

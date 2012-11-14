@@ -2,7 +2,7 @@
 import os
 
 from pulsar import system, get_actor
-from pulsar.utils.tools import checkarity, Pidfile
+from pulsar.utils.tools import checkarity, Pidfile, nice_number
 from pulsar.apps.test import unittest
 
 def f0(a, b):
@@ -118,3 +118,22 @@ class TestFunctions(unittest.TestCase):
         self.assertEqual(convert_bytes(1024**6), '1.0EB')
         self.assertEqual(convert_bytes(1024**7), '1.0ZB')
         self.assertEqual(convert_bytes(1024**8), '1.0YB')
+        
+
+class testNiceNumber(unittest.TestCase):
+    
+    def test_nice_number(self):
+        self.assertEqual(nice_number(0), 'zero')
+        self.assertEqual(nice_number(1), 'one')
+        self.assertEqual(nice_number(2), 'two')
+        self.assertEqual(nice_number(1, 'bla'), 'one bla')
+        self.assertEqual(nice_number(10, 'bla'), 'ten blas')
+        self.assertEqual(nice_number(23, 'bla', 'blax'), 'twenty three blax')
+        
+    def test_nice_number_large(self):
+        self.assertEqual(nice_number(100), 'one hundred')
+        self.assertEqual(nice_number(203), 'two hundred and three')
+        self.assertEqual(nice_number(4210), 'four thousand, two hundred and ten')
+        self.assertEqual(nice_number(51345618),
+                'fifty one million, three hundred forty five thousand, '
+                'six hundred and eighteen')

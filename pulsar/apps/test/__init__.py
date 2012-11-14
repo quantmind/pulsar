@@ -14,17 +14,15 @@ let's call it ``runtests.py``::
     from pulsar.apps import TestSuite
 
     if __name__ == '__main__':
-        TestSuite(description = 'Test suite for my library',
-                  modules = ('regression',
-                             ('examples','tests'))).start()
+        TestSuite(description='Test suite for my library',
+                  modules=('regression',
+                           ('examples','tests'))).start()
 
 where the modules is an iterable for discovering test cases. Check the
-:attr:`TestSuite.modules` attribute for more details.
-
-In the above example
-the test suite will look for all python files in the ``regression`` module
-(in a recursive fashion), and for modules called ``tests`` in the `` example``
-module.
+:class:`TestLoader` for details.
+In the above example the test suite will look for all python files
+in the ``regression`` module (in a recursive fashion), and for modules
+called ``tests`` in the ``example`` module.
 
 .. _apps-test-loading:
 
@@ -141,25 +139,22 @@ class TestSuite(tasks.CPUboundServer):
     '''An asynchronous test suite which works like a task queue where each task
 is a group of tests specified in a test class.
 
-:parameter modules: An iterable over modules where to look for tests. A module
-    can be a string or a two-element tuple. For example::
+:parameter modules: An iterable over modules where to look for tests.
+    Alternatively it can be a callable returning the iterable over modules.
+    For example::
 
-        suite = TestSuite(modules = ('regression',
-                                     ('examples','tests'),
-                                     ('apps','test_*')))
-
-    The :class:`TestLoader` will look into the ``regression`` module for all
-    files and directories, while it will look into the example directory for all
-    files or directories matching ``tests``.
-
-    Alternatively it can be a callable returning the iterable over modules. The
-    callable must accept one positional argument, the instance of the test
-    suite::
-
+        suite = TestSuite(modules=('regression',
+                                   ('examples','tests'),
+                                   ('apps','test_*')))
+        
         def get_modules(suite):
             ...
 
-        suite = TestSuite(modules = get_modules)
+        suite = TestSuite(modules=get_modules)
+
+    If not provided it is set as default to ``["tests"]`` which loads all
+    python module from the tests module in a recursive fashion.
+    Check the the :class:`TestLoader` for detailed information.
 
 :parameter result_class: Optional class for collecting test results. By default
     it used the standard ``unittest.TextTestResult``.
@@ -208,7 +203,7 @@ configuration and plugins.'''
         # Create a runner and configure it
         runner = self.runner
         if not modules:
-            modules = ((None, 'tests'),)
+            modules = ['tests']
         if hasattr(modules, '__call__'):
             modules = modules(self)
         loader = TestLoader(os.getcwd(), modules, runner, logger=self.log)
@@ -246,9 +241,13 @@ configuration and plugins.'''
                 monitor.cfg.set('workers', min(self.cfg.workers, len(tests)))
                 self._time_start = None
             else:
-                raise ValueError('Could not find any tests.')
-        except Exception as e:
+                raise ExitTest('Could not find any tests.')
+        except ExitTest as e:
             print(str(e))
+            monitor.arbiter.stop()
+        except Exception:
+            self.log.error('Error occurred before starting tests',
+                           exc_info=True)
             monitor.arbiter.stop()
 
     def monitor_task(self, monitor):
