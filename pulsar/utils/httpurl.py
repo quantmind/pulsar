@@ -114,7 +114,7 @@ if ispy3k: # Python 3
         if isinstance(s, bytes):
             return s.decode(encoding or 'utf-8')
         else:
-            return '%s' % s
+            return str(s)
         
     def execfile(filename, globals=None, locals=None):
         if globals is None:
@@ -199,7 +199,7 @@ else:   # pragma : no cover
         if isinstance(s, unicode):
             return s.encode(encoding or 'utf-8')
         else:
-            return '%s' % s
+            return str(s)
 
 HTTPError = urllibr.HTTPError
 URLError = urllibr.URLError
@@ -223,6 +223,9 @@ def mapping_iterator(iterable):
 ####################################################    URI & IRI SUFF
 #
 # The reserved URI characters (RFC 3986 - section 2.2)
+#Default is charset is "iso-8859-1" (latin-1) from section 3.7.1
+#http://www.ietf.org/rfc/rfc2616.txt
+DEFAULT_CHARSET = 'latin-1'
 URI_GEN_DELIMS = frozenset(':/?#[]@')
 URI_SUB_DELIMS = frozenset("!$&'()*+,;=")
 URI_RESERVED_SET = URI_GEN_DELIMS.union(URI_SUB_DELIMS)
@@ -236,7 +239,7 @@ urlquote = lambda iri: quote(iri, safe=URI_RESERVED_CHARS)
 
 def _gen_unquote(uri):
     unreserved_set = URI_UNRESERVED_SET
-    for n, part in enumerate(native_str(uri).split('%')):
+    for n, part in enumerate(force_native_str(uri).split('%')):
         if not n:
             yield part
         else:
@@ -416,7 +419,7 @@ the entity-header fields.'''
         if isinstance(kind, int):
             kind = header_type.get(kind, 'both')
         else:
-            kind = kind.lower()
+            kind = str(kind).lower()
         self.kind = kind
         self.strict = strict
         self.all_headers = TYPE_HEADER_FIELDS.get(self.kind)
@@ -1246,10 +1249,6 @@ class HttpRequest(HttpBase):
     The scheme of the of the URI requested. One of http, https
     '''
     response_class = HttpResponse
-    default_charset = 'latin-1'
-    '''Default is charset is "iso-8859-1" (latin-1) from section 3.7.1
-http://www.ietf.org/rfc/rfc2616.txt
-    '''
 
     _tunnel_host = None
     _has_proxy = False
@@ -1267,7 +1266,7 @@ http://www.ietf.org/rfc/rfc2616.txt
         self.history = history
         self.max_redirects = max_redirects
         self.allow_redirects = allow_redirects
-        self.charset = charset or self.default_charset
+        self.charset = charset or DEFAULT_CHARSET
         self.method = method.upper()
         self.data = data if data is not None else {}
         self.files = files
@@ -1863,33 +1862,26 @@ def encode_multipart_formdata(fields, boundary=None, charset=None):
         If not specified, then a random boundary will be generated using
         :func:`mimetools.choose_boundary`.
     """
-    charset = charset or Request.default_charset
+    charset = charset or DEFAULT_CHARSET
     body = BytesIO()
     if boundary is None:
         boundary = choose_boundary()
-
-    if isinstance(fields, dict):
-        fields = iteritems(fields)
-
-    for fieldname, value in fields:
+    for fieldname, value in mapping_iterator(fields):
         body.write(('--%s\r\n' % boundary).encode(charset))
-
         if isinstance(value, tuple):
             filename, data = value
             body.write(('Content-Disposition: form-data; name="%s"; '
                         'filename="%s"\r\n' % (fieldname, filename))\
-                       .encode())
+                       .encode(charset))
             body.write(('Content-Type: %s\r\n\r\n' %
                        (get_content_type(filename))).encode(charset))
         else:
             data = value
             body.write(('Content-Disposition: form-data; name="%s"\r\n'
-                        % (fieldname)).encode())
+                        % (fieldname)).encode(charset))
             body.write(b'Content-Type: text/plain\r\n\r\n')
-
         data = body.write(to_bytes(data))
         body.write(b'\r\n')
-
     body.write(('--%s--\r\n' % (boundary)).encode(charset))
     content_type = 'multipart/form-data; boundary=%s' % boundary
     return body.getvalue(), content_type

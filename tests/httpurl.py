@@ -17,6 +17,14 @@ class TestHeaders(unittest.TestCase):
         h['content-type'] = 'text/html'
         self.assertEqual(len(h), 1)
         
+    def testHeaderBytes(self):
+        h = httpurl.Headers(kind=None)
+        h['content-type'] = 'text/html'
+        h['server'] = 'bla'
+        self.assertTrue(repr(h).startswith('both '))
+        self.assertEqual(bytes(h), b'Server: bla\r\n'
+                                   b'Content-Type: text/html\r\n\r\n')
+        
     def testClientHeader(self):
         h = httpurl.Headers(kind='client')
         self.assertEqual(h.kind, 'client')
@@ -49,6 +57,7 @@ class TestAuth(unittest.TestCase):
         auth = httpurl.HTTPBasicAuth('bla', 'foo')
         self.assertEqual(str(auth), 'Basic: bla')
     
+    
 class TestTools(unittest.TestCase):
     
     def test_to_bytes(self):
@@ -64,6 +73,12 @@ class TestTools(unittest.TestCase):
         s = 'ciao'
         s2 = httpurl.native_str(s)
         self.assertEqual(id(s), id(s2))
+        
+    def test_force_native_str(self):
+        self.assertEqual(httpurl.force_native_str('ciao'), 'ciao')
+        self.assertEqual(httpurl.force_native_str(b'ciao'), 'ciao')
+        self.assertEqual(httpurl.force_native_str(1), '1')
+        self.assertEqual(httpurl.force_native_str((1, 'b')), str((1, 'b')))
         
     def test_quote_unreserved(self):
         '''Test a string of unreserved characters'''
@@ -97,6 +112,23 @@ class TestTools(unittest.TestCase):
         self.assertEqual(c('blA'), 'Bla')
         self.assertEqual(c(''), '')
         self.assertEqual(c('bOlA'), 'Bola')
+        
+    def test_encode_multipart_formdata(self):
+        data, ct = httpurl.encode_multipart_formdata([('bla', 'foo'),
+                                                ('foo', ('pippo', 'pluto'))])
+        idx = data.find(b'\r\n')
+        boundary = data[2:idx].decode('utf-8')
+        self.assertEqual(ct, 'multipart/form-data; boundary=%s' % boundary)
+        
+    def test_parse_authorization_header(self):
+        parse = httpurl.parse_authorization_header
+        self.assertEqual(parse(''), None)
+        self.assertEqual(parse('csdcds'), None)
+        self.assertEqual(parse('csdcds cbsdjchbjsc'), None)
+        self.assertEqual(parse('basic cbsdjcbsjchbsd'), None)
+        auths = httpurl.basic_auth_str('pippo', 'pluto')
+        self.assertTrue(parse(auths).authenticated('pippo', 'pluto'))
+
 
 def request_callback(result):
     return result
