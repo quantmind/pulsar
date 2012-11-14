@@ -7,9 +7,8 @@ from wsgiref.handlers import format_date_time
 from io import BytesIO
 
 import pulsar
-from pulsar import lib, make_async, is_async, AsyncSocketServer,\
-                        Deferred, AsyncConnection, AsyncResponse, DeferredSend,\
-                        HttpException, MAX_BODY
+from pulsar import lib, make_async, is_async, AsyncSocketServer, Deferred,\
+                   AsyncConnection, AsyncResponse, DeferredSend, HttpException
 from pulsar.utils.httpurl import Headers, is_string, unquote,\
                                     has_empty_content, to_bytes,\
                                     host_and_port_default, mapping_iterator

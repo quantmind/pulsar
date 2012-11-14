@@ -180,7 +180,7 @@ class AttributeDictionary(object):
     
 def merge_prefix(deque, size):
     """Replace the first entries in a deque of bytes with a single
-string of up to size bytes."""
+string of up to *size* bytes."""
     if len(deque) == 1 and len(deque[0]) <= size:
         return
     prefix = []

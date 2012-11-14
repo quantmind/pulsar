@@ -236,7 +236,7 @@ urlquote = lambda iri: quote(iri, safe=URI_RESERVED_CHARS)
 
 def _gen_unquote(uri):
     unreserved_set = URI_UNRESERVED_SET
-    for n, part in enumerate(to_string(uri).split('%')):
+    for n, part in enumerate(native_str(uri).split('%')):
         if not n:
             yield part
         else:
@@ -453,18 +453,11 @@ the entity-header fields.'''
     def kind_number(self):
         return header_type_to_int.get(self.kind)
 
-    def update(self, iterable, append=False):
+    def update(self, iterable):
         """Extend the headers with a dictionary or an iterable yielding keys
-and values. If append is set to ``True``, existing headers are appended
-rather than replaced."""
-        iterable = mapping_iterator(iterable)
-        if append:        
-            add = self.add_header
-            for key, value in iterable:
-                add(key, value)
-        else:
-            for key, value in iterable:
-                self[key] = value
+and values."""
+        for key, value in mapping_iterator(iterable):
+            self[key] = value
 
     def __contains__(self, key):
         return header_field(key) in self._headers
@@ -1901,42 +1894,10 @@ def encode_multipart_formdata(fields, boundary=None, charset=None):
     content_type = 'multipart/form-data; boundary=%s' % boundary
     return body.getvalue(), content_type
 
-def parse_dict_header(value):
-    """Parse lists of key, value pairs as described by RFC 2068 Section 2 and
-    convert them into a python dict:
-
-    >>> d = parse_dict_header('foo="is a fish", bar="as well"')
-    >>> type(d) is dict
-    True
-    >>> sorted(d.items())
-    [('bar', 'as well'), ('foo', 'is a fish')]
-
-    If there is no value for a key it will be `None`:
-
-    >>> parse_dict_header('key_without_value')
-    {'key_without_value': None}
-
-    To create a header from the :class:`dict` again, use the
-    :func:`dump_header` function.
-
-    :param value: a string with a dict header.
-    :return: :class:`dict`
-    """
-    result = {}
-    for item in _parse_list_header(value):
-        if '=' not in item:
-            result[item] = None
-            continue
-        name, value = item.split('=', 1)
-        if value[:1] == value[-1:] == '"':
-            value = unquote_header_value(value[1:-1])
-        result[name] = value
-    return result
-
 def basic_auth_str(username, password):
     """Returns a Basic Auth string."""
     b64 = b64encode(('%s:%s' % (username, password)).encode('latin1'))
-    return 'Basic ' + b64.strip().decode('latin1')
+    return 'Basic %s' % native_str(b64.strip(), 'latin1')
 
 def parse_authorization_header(value, charset='utf-8'):
     """Parse an HTTP basic/digest authorization header transmitted by the web

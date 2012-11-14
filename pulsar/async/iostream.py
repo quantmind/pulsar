@@ -14,7 +14,7 @@ from pulsar import create_socket, server_socket, create_client_socket,\
 from pulsar.utils.httpurl import IOClientRead
 from pulsar.utils.structures import merge_prefix
 from .defer import Deferred, is_async, is_failure, async, maybe_async,\
-                        safe_async, log_failure, NOT_DONE
+                        safe_async, log_failure, NOT_DONE, range
 from .eventloop import IOLoop, loop_timeout
 from .access import PulsarThread, thread_ioloop, get_actor
 
@@ -28,9 +28,13 @@ __all__ = ['AsyncIOStream',
            'AsyncConnection',
            'AsyncResponse',
            'AsyncSocketServer',
-           'MAX_BODY']
+           'WRITE_BUFFER_MAX_SIZE']
 
-MAX_BODY = 1024 * 128
+WRITE_BUFFER_MAX_SIZE = 128 * 1024  # 128 kb
+
+
+def async_error(e):
+    return e.args and e.args[0] in (errno.EWOULDBLOCK, errno.EAGAIN)
     
 
 class AsyncIOStream(IObase, BaseSocket):
@@ -54,6 +58,7 @@ adapted to pulsar :ref:`concurrent framework <design>`.
     every time we the :class:`AsyncIOStream` perform a :meth:`read`
     operation a timeout is also created on the :attr:`ioloop`.
 '''
+    _error = None
     _socket = None
     _state = None
     _read_timeout = None
@@ -71,7 +76,6 @@ adapted to pulsar :ref:`concurrent framework <design>`.
         self.read_chunk_size = read_chunk_size or io.DEFAULT_BUFFER_SIZE
         self._read_buffer = deque()
         self._write_buffer = deque()
-        self._write_buffer_frozen = False
         self.log = iologger
 
     def __repr__(self):
@@ -106,6 +110,10 @@ adapted to pulsar :ref:`concurrent framework <design>`.
     @property
     def state(self):
         return self._state
+    
+    @property
+    def error(self):
+        return self._error
 
     @property
     def state_code(self):
@@ -159,18 +167,16 @@ but is non-portable."""
                 self.sock.connect(address)
             except socket.error as e:
                 # In non-blocking mode connect() always raises an exception
-                if e.args[0] not in (errno.EINPROGRESS, errno.EWOULDBLOCK):
-                    raise
+                if not async_error(e):
+                    self.log.warning('Connect error on %s: %s', self, e)
+                    self.close()
+                    return
             callback = Deferred(description='%s connect callback' % self)
             self._connect_callback = callback
             self._add_io_state(self.WRITE)
             return callback
         else:
-            if self._state is not None:
-                raise RuntimeError('Cannot connect. State is %s.'\
-                                   .format(self.state_code))
-            else:
-                raise RuntimeError('Cannot connect while connecting.')
+            raise RuntimeError('Cannot connect. State is %s.' % self.state_code)
 
     def read(self, length=None):
         """Starts reading data from the :attr:`sock`. It returns a
@@ -215,12 +221,20 @@ One common pattern of usage::
 buffered write data and an old write callback, that callback is simply
 overwritten with this new callback.
 
-:rtype: a :class:`Deferred` instance.
+:rtype: a :class:`Deferred` instance or the number of bytes written.
         """
+        self._check_closed()
         if data:
-            self._check_closed()
-            self._write_buffer.append(data)
+            assert isinstance(data, bytes)
+            if len(data) > WRITE_BUFFER_MAX_SIZE:
+                for i in range(0, len(data), WRITE_BUFFER_MAX_SIZE):
+                    self._write_buffer.append(data[i:i+WRITE_BUFFER_MAX_SIZE])
+            else:
+                self._write_buffer.append(data)
+        #
+        if not self.connecting:
             tot_bytes = self._handle_write()
+            # data still in the buffer
             if self._write_buffer:
                 callback = Deferred(description='%s write callback' % self)
                 self._write_callback = callback
@@ -233,7 +247,10 @@ overwritten with this new callback.
     def close(self):
         """Close the :attr:`sock` and call the *callback* if it was
 setup using the :meth:`set_close_callback` method."""
-        if self.sock is not None:
+        if not self.closed:
+            exc_info = sys.exc_info()
+            if any(exc_info):
+                self._error = exc_info[1]
             if self._state is not None:
                 self.ioloop.remove_handler(self.fileno())
             self.sock.close()
@@ -250,14 +267,23 @@ setup using the :meth:`set_close_callback` method."""
         #Reads from the socket and appends the result to the read buffer.
         #Returns the number of bytes read.
         length = self._read_length or self.read_chunk_size
-        # Read what is available in the buffer
+        # Read from the socket until we get EWOULDBLOCK or equivalent.
+        # SSL sockets do some internal buffering, and if the data is
+        # sitting in the SSL object's buffer select() and friends
+        # can't see it; the only way to find out if it's there is to
+        # try to read it.
         while True:
             try:
                 chunk = self.sock.recv(length)
             except socket.error as e:
-                self.close()
-                raise
-            if chunk is None:
+                if async_error(e):
+                    chunk = None
+                else:
+                    raise
+            if not chunk:
+                # if chunk is b'' close the socket
+                if chunk is not None:
+                    self.close()
                 break
             self._read_buffer.append(chunk)
             if self._read_buffer_size() >= self.max_buffer_size:
@@ -289,14 +315,19 @@ setup using the :meth:`set_close_callback` method."""
 
     def _handle_read(self):
         try:
-            # Read from the socket until we get EWOULDBLOCK or equivalent.
-            # SSL sockets do some internal buffering, and if the data is
-            # sitting in the SSL object's buffer select() and friends
-            # can't see it; the only way to find out if it's there is to
-            # try to read it.
-            result = self.read_to_buffer()
+            try:
+                result = self.read_to_buffer()
+            except (socket.error, IOError, OSError) as e:
+                if e.args and e.args[0] == errno.ECONNRESET:
+                    # Treat ECONNRESET as a connection close rather than
+                    # an error to minimize log spam  (the exception will
+                    # be available on self.error for apps that care).
+                    result = 0
+                else:
+                    raise
         except Exception:
             result = 0
+            self.log.warning("Read error on %s.", self, exec_info=True)
         if result == 0:
             self.close()
         buffer = self._get_buffer(self._read_buffer)
@@ -310,13 +341,6 @@ setup using the :meth:`set_close_callback` method."""
         tot_bytes = 0
         while self._write_buffer:
             try:
-                if not self._write_buffer_frozen:
-                    # On windows, socket.send blows up if given a
-                    # write buffer that's too large, instead of just
-                    # returning the number of bytes it was able to
-                    # process.  Therefore we must not call socket.send
-                    # with more than 128KB at a time.
-                    merge_prefix(self._write_buffer, MAX_BODY)
                 sent = self.sock.send(self._write_buffer[0])
                 if sent == 0:
                     # With OpenSSL, after send returns EWOULDBLOCK,
@@ -327,15 +351,12 @@ setup using the :meth:`set_close_callback` method."""
                     # SSL_MODE_ACCEPT_MOVING_WRITE_BUFFER, but this is
                     # not yet accessible from python
                     # (http://bugs.python.org/issue8240)
-                    self._write_buffer_frozen = True
                     break
-                self._write_buffer_frozen = False
                 merge_prefix(self._write_buffer, sent)
                 self._write_buffer.popleft()
                 tot_bytes += sent
             except socket.error as e:
-                if e.args and e.args[0] in (errno.EWOULDBLOCK, errno.EAGAIN):
-                    self._write_buffer_frozen = True
+                if async_error(e):
                     break
                 else:
                     self.log.warning("Write error on %s: %s", self, e)

@@ -1,11 +1,29 @@
+import socket
+
 import pulsar
 from pulsar.utils.httpurl import to_bytes, to_string
-from pulsar.apps import socket
+from pulsar.apps.socket import SocketServer
 from pulsar.apps.test import unittest, run_on_arbiter, dont_run_with_thread
         
 
-class EchoServer(socket.SocketServer):
+class EchoServer(SocketServer):
     socket_server_class = pulsar.AsyncSocketServer 
+    
+
+class SafeCallback(pulsar.Deferred):
+    
+    def __call__(self):
+        try:
+            r = self._call()
+        except Exception as e:
+            r = e
+        if pulsar.is_async(r):
+            return r.add_callback(self)
+        else:
+            return self.callback(r)
+        
+    def _call(self):
+        raise NotImplementedError()
     
 
 class TestPulsarStreams(unittest.TestCase):
@@ -58,7 +76,6 @@ class TestPulsarStreams(unittest.TestCase):
         self.assertEqual(r.result, b'ciao')
         
     def test_for_coverage(self):
-        import socket
         io = pulsar.AsyncIOStream()
         self.assertEqual(str(io), '(closed)')
         self.assertEqual(io.read(), b'')
@@ -71,7 +88,42 @@ class TestPulsarStreams(unittest.TestCase):
         def _():
             io.sock = sock
         self.assertRaises(RuntimeError, _)
-        self.assertRaises(socket.error, io.connect, ('localhost', 0))
+        
+    def test_bad_connect(self):
+        io = pulsar.AsyncIOStream()
+        io.connect(('bla', 6777))
+        self.assertTrue(io.closed)
+        self.assertTrue(io.error)
+        self.assertTrue(isinstance(io.error, socket.gaierror))
+        
+    def test_already_connecting(self):
+        io = pulsar.AsyncIOStream()
+        class _test(SafeCallback):
+            def _call(_):
+                io.connect(self.server.address)
+                self.assertTrue(io.connecting)
+                self.assertEqual(io.state_code, 'connecting')
+                self.assertRaises(RuntimeError, io.connect, self.server.address)
+        cbk = _test()
+        # we need to run this test on the ioloop thread
+        io.ioloop.add_callback(cbk)
+        yield cbk
+        
+    def test_already_reading(self):
+        io = pulsar.AsyncIOStream()
+        io.connect(self.server.address)
+        while io.connecting:
+            yield pulsar.NOT_DONE
+        self.assertFalse(io.connecting)
+        class _test(SafeCallback):
+            def _call(_):
+                io.read()
+                self.assertTrue(io.reading)
+                self.assertEqual(io.state_code, 'reading')
+                self.assertRaises(RuntimeError, io.read)
+        cbk = _test()
+        # we need to run this test on the ioloop thread
+        io.ioloop.add_callback(cbk)
         
         
 @dont_run_with_thread

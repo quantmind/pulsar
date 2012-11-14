@@ -22,9 +22,13 @@ class TestHeaders(unittest.TestCase):
         self.assertEqual(h.kind, 'client')
         self.assertEqual(len(h), 0)
         h['content-type'] = 'text/html'
+        self.assertEqual(h.get_all('content-type'), ['text/html'])
         self.assertEqual(len(h), 1)
         h['server'] = 'bla'
         self.assertEqual(len(h), 1)
+        del h['content-type']
+        self.assertEqual(len(h), 0)
+        self.assertEqual(h.get_all('content-type', []), [])
         
     def test_accept_content_type(self):
         accept = httpurl.accept_content_type()
@@ -35,6 +39,16 @@ class TestHeaders(unittest.TestCase):
         self.assertTrue('text/plain' in accept)
 
 
+class TestAuth(unittest.TestCase):
+    
+    def testBase(self):
+        auth = httpurl.Auth()
+        self.assertRaises(NotImplementedError, auth, None)
+        self.assertFalse(auth.authenticated())
+        self.assertEqual(str(auth), repr(auth))
+        auth = httpurl.HTTPBasicAuth('bla', 'foo')
+        self.assertEqual(str(auth), 'Basic: bla')
+    
 class TestTools(unittest.TestCase):
     
     def test_to_bytes(self):
@@ -283,9 +297,9 @@ class TestHttpClient(unittest.TestCase):
         parser = r.parser
         self.assertTrue(parser.is_chunked())
         
-    def testChunkedResponse(self):
+    def testLargeResponse(self):
         http = self.client()
-        r = make_async(http.get(self.httpbin('getsize/132000')))
+        r = make_async(http.get(self.httpbin('getsize/600000')))
         yield r
         r = r.result
         self.assertEqual(r.status_code, 200)
@@ -341,6 +355,18 @@ class TestHttpClient(unittest.TestCase):
                 ('numero', '1'), ('numero', '2'))
         r = make_async(http.post(self.httpbin('post'), data=data,
                                  headers=[('expect','100-continue')]))
+        yield r
+        r = r.result
+        self.assertEqual(r.status_code, 200)
+        
+    def test_basic_authentication(self):
+        http = self.client()
+        r = make_async(http.get(self.httpbin('basic-auth/bla/foo')))
+        yield r
+        r = r.result
+        self.assertEqual(r.status_code, 401)
+        http.add_basic_authentication('bla', 'foo')
+        r = make_async(http.get(self.httpbin('basic-auth/bla/foo')))
         yield r
         r = r.result
         self.assertEqual(r.status_code, 200)
