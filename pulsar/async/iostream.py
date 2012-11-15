@@ -327,7 +327,7 @@ setup using the :meth:`set_close_callback` method."""
                     raise
         except Exception:
             result = 0
-            self.log.warning("Read error on %s.", self, exec_info=True)
+            self.log.warning("Read error on %s.", self, exc_info=True)
         if result == 0:
             self.close()
         buffer = self._get_buffer(self._read_buffer)

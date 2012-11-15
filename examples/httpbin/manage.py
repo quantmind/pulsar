@@ -7,6 +7,7 @@ import os
 import json
 import sys
 import string
+import time
 from random import choice
 try:
     import pulsar
@@ -19,7 +20,8 @@ from pulsar.apps.wsgi.server import HttpResponse
 from pulsar.utils.structures import OrderedDict
 from pulsar.utils.httpurl import Headers, parse_qs, ENCODE_URL_METHODS,\
                                  responses, has_empty_content, addslash,\
-                                 itervalues, range, ispy3k
+                                 itervalues, range, ispy3k, hexmd5, to_bytes,\
+                                 WWWAuthenticate
 from pulsar.utils.multipart import parse_form_data
 from pulsar.utils import event
 
@@ -300,12 +302,31 @@ class HttpBin(LocalMixin):
         if len(bits) == 2:
             auth = environ.get('HTTP_AUTHORIZATION')
             if auth and auth.type == 'basic':
-                if auth.authenticated(*bits):
+                if auth.authenticated(environ, *bits):
                     data = jsonbytes({'autheinticated': True,
                                       'username': auth.username})
                     return self.response(data)
-            h = ('WWW-Authenticate', 'Basic realm="Fake Realm"')
+            h = ('WWW-Authenticate', str(WWWAuthenticate.basic("Fake Realm")))
             raise HttpException(status=401, headers=[h])
+        else:
+            raise HttpException(status=404)
+        
+    @route('digest-auth', title='Challenges HTTP Digest Auth',
+           params=(('qop', 'auth'),('username','username'),
+                   ('password','password')))
+    def request_challenge_digest_auth(self, environ, bits):
+        if len(bits) == 3:
+            auth = environ.get('HTTP_AUTHORIZATION')
+            if auth and auth.authenticated(environ, *bits[1:]):
+                data = jsonbytes({'autheinticated': True,
+                                  'username': auth.username})
+                return self.response(data)
+            nonce = hexmd5(to_bytes('%d' % time.time()) + os.urandom(10))
+            digest = WWWAuthenticate.digest("Fake Realm", nonce,
+                                            opaque=hexmd5(os.urandom(10)),
+                                            qop=bits[:1])
+            raise HttpException(status=401,
+                                headers=[('WWW-Authenticate', str(digest))])
         else:
             raise HttpException(status=404)
         

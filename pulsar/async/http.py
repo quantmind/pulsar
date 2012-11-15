@@ -20,6 +20,13 @@ class HttpConnection(httpurl.HttpConnection):
         else:
             httpurl.HttpConnection.connect(self)
             
+    @property
+    def closed(self):
+        if self.timeout == 0:
+            return self.sock.closed
+        else:
+            return httpurl.is_closed(self.sock)
+            
 
 class HttpResponse(httpurl.HttpResponse):
     pass

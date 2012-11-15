@@ -1,7 +1,11 @@
 '''tests the httpurl stand-alone script.'''
+import os
+import time
+
 from pulsar import send, make_async, safe_async, is_failure, HttpClient
 from pulsar.apps.test import unittest
 from pulsar.utils import httpurl
+from pulsar.utils.httpurl import to_bytes
 
 BIN_HOST = 'httpbin.org'
 HTTPBIN_URL = 'http://' + BIN_HOST + '/'
@@ -56,6 +60,36 @@ class TestAuth(unittest.TestCase):
         self.assertEqual(str(auth), repr(auth))
         auth = httpurl.HTTPBasicAuth('bla', 'foo')
         self.assertEqual(str(auth), 'Basic: bla')
+        
+    def test_WWWAuthenticate_basic(self):
+        auth = httpurl.WWWAuthenticate.basic('authenticate please')
+        self.assertEqual(auth.type, 'basic')
+        self.assertEqual(len(auth.options), 1)
+        self.assertEqual(str(auth), 'Basic realm="authenticate please"')
+        
+    def test_WWWAuthenticate_digest(self):
+        H = httpurl.hexmd5
+        nonce = H(to_bytes('%d' % time.time()) + os.urandom(10))
+        auth = httpurl.WWWAuthenticate.digest('www.mydomain.org', nonce,
+                                    opaque=H(os.urandom(10)),
+                                    qop=('auth', 'auth-int'))
+        self.assertEqual(auth.options['qop'], 'auth, auth-int')
+        
+    def testDigest(self):
+        auth = httpurl.HTTPDigestAuth('bla', options={'realm': 'fake realm'})
+        self.assertEqual(auth.type, 'digest')
+        self.assertEqual(auth.username, 'bla')
+        self.assertEqual(auth.password, None)
+        self.assertEqual(auth.options['realm'], 'fake realm')
+        
+    def test_parse_authorization_header(self):
+        parse = httpurl.parse_authorization_header
+        self.assertEqual(parse(''), None)
+        self.assertEqual(parse('csdcds'), None)
+        self.assertEqual(parse('csdcds cbsdjchbjsc'), None)
+        self.assertEqual(parse('basic cbsdjcbsjchbsd'), None)
+        auths = httpurl.basic_auth_str('pippo', 'pluto')
+        self.assertTrue(parse(auths).authenticated({}, 'pippo', 'pluto'))
     
     
 class TestTools(unittest.TestCase):
@@ -107,6 +141,10 @@ class TestTools(unittest.TestCase):
         self.assertEqual(r('/bla/////////foo//////////'), '/bla/foo/')
         self.assertEqual(r('/bla/foo/'), '/bla/foo/')
         
+    def test_appendslash(self):
+        self.assertEqual(httpurl.appendslash('bla'), 'bla/')
+        self.assertEqual(httpurl.appendslash('bla/'), 'bla/')
+        
     def test_capfirst(self):
         c = httpurl.capfirst
         self.assertEqual(c('blA'), 'Bla')
@@ -119,15 +157,6 @@ class TestTools(unittest.TestCase):
         idx = data.find(b'\r\n')
         boundary = data[2:idx].decode('utf-8')
         self.assertEqual(ct, 'multipart/form-data; boundary=%s' % boundary)
-        
-    def test_parse_authorization_header(self):
-        parse = httpurl.parse_authorization_header
-        self.assertEqual(parse(''), None)
-        self.assertEqual(parse('csdcds'), None)
-        self.assertEqual(parse('csdcds cbsdjchbjsc'), None)
-        self.assertEqual(parse('basic cbsdjcbsjchbsd'), None)
-        auths = httpurl.basic_auth_str('pippo', 'pluto')
-        self.assertTrue(parse(auths).authenticated('pippo', 'pluto'))
 
 
 def request_callback(result):
@@ -399,6 +428,18 @@ class TestHttpClient(unittest.TestCase):
         self.assertEqual(r.status_code, 401)
         http.add_basic_authentication('bla', 'foo')
         r = make_async(http.get(self.httpbin('basic-auth/bla/foo')))
+        yield r
+        r = r.result
+        self.assertEqual(r.status_code, 200)
+        
+    def test_digest_authentication(self):
+        http = self.client()
+        r = make_async(http.get(self.httpbin('digest-auth/auth/bla/foo')))
+        yield r
+        r = r.result
+        self.assertEqual(r.status_code, 401)
+        http.add_digest_authentication('bla', 'foo')
+        r = make_async(http.get(self.httpbin('digest-auth/auth/bla/foo')))
         yield r
         r = r.result
         self.assertEqual(r.status_code, 200)
