@@ -11,7 +11,7 @@ from tempfile import TemporaryFile
 from wsgiref.headers import Headers
 from io import BytesIO
 
-from .httpurl import parse_qs, ENCODE_BODY_METHODS
+from .httpurl import parse_qs, ENCODE_BODY_METHODS, mapping_iterator
 from .structures import MultiValueDict
 
 
@@ -327,7 +327,7 @@ into memory limits.
             if stream.read(1): # These is more that does not fit mem_limit
                 raise MultipartError("Request to big. Increase MAXMEM.")
             data = parse_qs(data, keep_blank_values=True)
-            for key, values in data.iteritems():
+            for key, values in mapping_iterator(data):
                 for value in values:
                     forms[key] = value
         else:

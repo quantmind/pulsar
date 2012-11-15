@@ -32,9 +32,9 @@ __all__ = ['AsyncIOStream',
 
 WRITE_BUFFER_MAX_SIZE = 128 * 1024  # 128 kb
 
-
+ASYNC_ERRNO = (errno.EWOULDBLOCK, errno.EAGAIN, errno.EINPROGRESS)
 def async_error(e):
-    return e.args and e.args[0] in (errno.EWOULDBLOCK, errno.EAGAIN)
+    return e.args and e.args[0] in ASYNC_ERRNO
     
 
 class AsyncIOStream(IObase, BaseSocket):
