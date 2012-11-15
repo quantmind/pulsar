@@ -357,7 +357,7 @@ the following algorithm:
     '''
         p = self.parser
         if not has_headers and p.is_headers_complete() and\
-            p.get_headers().get('expect') == '100-continue':
+            p.get_headers().get('Expect') == '100-continue':
                 if not p.is_partial_body():
                     self.connection.write(b'HTTP/1.1 100 Continue\r\n\r\n')
     

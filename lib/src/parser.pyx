@@ -157,7 +157,7 @@ the parser detect the type.
 
     def get_headers(self):
         """get request/response headers dictionary."""
-        return list(self._data.headers.items())
+        return self._data.headers
     
     def get_protocol(self):
         return None

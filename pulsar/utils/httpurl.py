@@ -1273,7 +1273,7 @@ class HttpConnection(httpclient.HTTPConnection):
 
     @property
     def is_async(self):
-        return self.sock.gettimeout() == 0
+        return self.sock.gettimeout() == 0 if self.sock else False
     
     @property
     def closed(self):
