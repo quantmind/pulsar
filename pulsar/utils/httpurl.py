@@ -62,7 +62,7 @@ LOGGER = logging.getLogger('httpurl')
 
 try:
     from select import poll, POLLIN
-except ImportError: # `poll` doesn't exist on OSX, windows and other platforms
+except ImportError: #pragma    nocover
     poll = False
     try:
         from select import select
