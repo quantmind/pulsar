@@ -476,7 +476,3 @@ class TestHttpClient(unittest.TestCase):
         self.assertTrue('; httponly' in str(example_cookie))
         self.assertTrue(example_cookie['httponly'])
         
-
-class TestHttpClientWithProxy(TestHttpClient):
-    with_proxy = True
-    server_concurrency = 'process'

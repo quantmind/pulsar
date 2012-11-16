@@ -661,7 +661,7 @@ class InvalidChunkSize(Exception):
 
 
 class HttpParser(object):
-    '''A python http parser.
+    '''A python HTTP parser.
 
 Original code from https://github.com/benoitc/http-parser
 
@@ -811,7 +811,7 @@ OTHER DEALINGS IN THE SOFTWARE.'''
                     to_parse = b''.join(self._buf)
                     ret = self._parse_headers(to_parse)
                     if ret is False:
-                        if to_parse == '\r\n':
+                        if to_parse == b'\r\n':
                             self._buf = []
                             return self.close(length)
                         return length
@@ -1687,7 +1687,7 @@ or asynchronous connections.
             
     def get_headers(self, request, headers=None):
         '''Returns a :class:`Header` obtained from combining
-:attr:`headers` with *headers*.'''
+:attr:`headers` with *headers*. It handles websocket requests.'''
         if request.type in ('ws','wss'):
             d = Headers((('Connection', 'Upgrade'),
                          ('Upgrade', 'websocket'),
