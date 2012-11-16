@@ -18,7 +18,7 @@ import types
 from pulsar import __version__, SERVER_NAME
 from . import system
 from .httpurl import is_string_or_native_string, to_string, to_bytes,\
-                        iteritems
+                        iteritems, HttpParser as PyHttpParser
 from .importer import import_system_file
 
 
@@ -604,8 +604,8 @@ class HttpParser(Setting):
 
     def on_start(self):
         if self.value:
-            from pulsar.lib import setDefaultHttpParser, fallback
-            setDefaultHttpParser(fallback.HttpParser)
+            from pulsar.lib import setDefaultHttpParser 
+            setDefaultHttpParser(PyHttpParser)
 
 
 class Debug(Setting):

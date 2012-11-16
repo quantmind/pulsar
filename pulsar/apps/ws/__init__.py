@@ -1,11 +1,11 @@
-'''The :mod:`pulsar.apps.ws` contains a WSGI middleware for
+'''The :mod:`pulsar.apps.ws` contains a WSGI_ middleware for
 handling the WebSocket_ protocol.
-
 Web sockets allow for bidirectional communication between the browser
 and server. Pulsar implementation uses the WSGI middleware
 :class:`WebSocket` for the handshake and a class derived from
 :class:`WS` handler for the communication part.
 
+.. _WSGI: http://www.python.org/dev/peps/pep-3333/
 .. _WebSocket: http://tools.ietf.org/html/rfc6455
 
 API
@@ -50,7 +50,7 @@ import hashlib
 from functools import partial
 
 import pulsar
-from pulsar import maybe_async, is_async, safe_async, is_failure, AsyncResponse
+from pulsar import maybe_async, is_async, safe_async, is_failure, ClientSocket
 from pulsar.utils.httpurl import ispy3k, to_bytes, native_str,\
                                  itervalues, parse_qs, WEBSOCKET_VERSION
 from pulsar.apps.wsgi import WsgiResponse, wsgi_iterator
@@ -103,6 +103,7 @@ class GeneralWebSocket(object):
                                 self.handle.on_message(environ, frame.body))
 
     def as_frame(self, connection, body):
+        '''Build a websocket server frame from body.'''
         body = maybe_async(body)
         if is_async(body):
             return body.addBoth(lambda b: self.as_frame(connection, b))
@@ -118,24 +119,24 @@ class GeneralWebSocket(object):
         
     
 class WebSocket(GeneralWebSocket):
-    """A :ref:`WSGI <apps-wsgi>` middleware for serving web socket applications.
+    """A :ref:`WSGI <apps-wsgi>` middleware for handling w websocket handshake
+and starting a custom :class:`WS` connection.
 It implements the protocol version 13 as specified at
 http://www.whatwg.org/specs/web-socket-protocol/.
 
 Web Sockets are not standard HTTP connections. The "handshake" is HTTP,
 but after that, the protocol is message-based. To create
-a valid :class:`WebSocket` instance initialise as follow::
+a valid :class:`WebSocket` middleware initialise as follow::
 
     from pulsar.apps import wsgi, ws
     
-    class MyWebSocket(ws.WS):
+    class MyWS(ws.WS):
         ...
     
-    wm = ws.WebSocket(handle = MyWebSocket())
-        
-    app = wsgi.WsgiHandler(middleware = (...,wm))
+    wm = ws.WebSocket(handle=MyWS())
+    app = wsgi.WsgiHandler(middleware=(..., wm))
     
-    wsgi.createServer(callable = app).start()
+    wsgi.createServer(callable=app).start()
 
 
 See http://tools.ietf.org/html/rfc6455 for the websocket server protocol and
@@ -283,10 +284,10 @@ class SocketIOMiddleware(GeneralWebSocket):
     
 
 class WS(object):
-    '''A web socket handler. An instance of this class maintain
-and open socket with a remote web-socket and exchange messages in
-an asynchronous fashion. A :class:`WS` is initialized by :class:`WebSocket`
-middleware at every new web-socket connection.
+    '''A web socket handler. It maintains
+an open socket with a remote web-socket and exchange messages in
+an asynchronous fashion. The communication is started by the
+:class:`WebSocket` middleware after a successful handshake.
  
 Override :meth:`on_message` to handle incoming messages.
 You can also override :meth:`on_open` and :meth:`on_close` to handle opened
@@ -332,6 +333,25 @@ client. This is a chance to add or remove header's entries."""
         pass
     
     def close(self, environ, msg=None):
+        '''Invoked when the web-socket needs closing.'''
         connection = environ['pulsar.connection']
         return Frame.close(msg, version=connection.parser.version)
     
+    
+class WebSocketClient(ClientSocket):
+    
+    def isclosed(self):
+        # For compatibility with HttpResponse
+        return self.closed
+    
+    def parser_class(self):
+        return FrameParser(kind=1)
+    
+
+class HttpClient(pulsar.HttpClient):
+    
+    def upgrade(self, response):
+        client = WebSocketClient(response.sock, response.url)
+        client.handshake = response
+        return client
+        

@@ -80,10 +80,6 @@ def server(**params):
     return wsgi.WSGIServer(callable=wsgi_handler(), **params)
 
 
-def start_server(**params):
-    return server(**params).start()
-
-
-if __name__ == '__main__':
-    start_server()
+if __name__ == '__main__':  #pragma nocover
+    server(**params).start()
 

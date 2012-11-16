@@ -129,30 +129,21 @@ BaseHandler = MetaRpcHandler('BaseRpcHandler',(LogginMixin,),{'virtual':True})
 
 class RpcHandler(BaseHandler):
     '''The base class for rpc handlers.
-Sub-handlers for prefixed methods (e.g., system.listMethods)
-can be added with :meth:`putSubHandler`. By default, prefixes are
-separated with a dot. Override :attr:`separator` to change this.
 
 .. attribute:: content_type
-    Default content type.
 
-    Default: ``"text/plain"``.
+    Default content type. Default: ``text/plain``.
 
 .. attribute:: charset
 
-    The default chrset for this handler. Can be overritten by function
-    charset attribute.
-
-    Default: 'utf-8'.
+    The default charset for this handler. Default: ``utf-8``.
 '''
     serve_as     = 'rpc'
     '''Prefix for class methods providing remote services. Default: ``rpc``.'''
     separator    = '.'
-    '''Separator between subhandlers.'''
+    '''Separator between :attr:`subHandlers`.'''
     content_type = 'text/plain'
-    '''charset'''
     charset = 'utf-8'
-    '''Default content type. Default: ``"text/plain"``.'''
     _info_exceptions = (Fault,)
 
     def __init__(self, subhandlers=None, title=None, documentation=None,
@@ -280,7 +271,7 @@ class RpcMiddleware(object):
 
     Default ``None``
 
-.. _WSGI: http://www.wsgi.org/
+.. _WSGI:: http://www.wsgi.org/
 '''
     methods = ('get','post','put','head','delete','trace','connect')
 

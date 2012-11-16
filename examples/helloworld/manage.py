@@ -9,7 +9,7 @@ To see options type::
 '''
 try:
     import pulsar
-except ImportError:
+except ImportError: #pragma nocover
     import sys
     sys.path.append('../../')
 from pulsar.apps import wsgi
@@ -34,5 +34,5 @@ def server(description = None, **kwargs):
                            **kwargs)
     
 
-if __name__ == '__main__':
+if __name__ == '__main__':  #pragma nocover
     server().start()

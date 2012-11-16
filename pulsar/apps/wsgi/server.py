@@ -11,7 +11,8 @@ from pulsar import lib, make_async, is_async, AsyncSocketServer, Deferred,\
                    AsyncConnection, AsyncResponse, DeferredSend, HttpException
 from pulsar.utils.httpurl import Headers, is_string, unquote,\
                                     has_empty_content, to_bytes,\
-                                    host_and_port_default, mapping_iterator
+                                    host_and_port_default, mapping_iterator,\
+                                    Headers
 from pulsar.utils import event
 
 from .wsgi import WsgiResponse, handle_wsgi_error
@@ -330,7 +331,7 @@ a :class:`HttpResponse` at every client request.'''
         return self.server.server_port
 
 
-class HttpParser:
+class HttpServerParser:
     connection = None
     def __init__(self):
         self.parser = lib.Http_Parser(kind=0)
@@ -340,14 +341,19 @@ class HttpParser:
         if p.is_message_complete():
             self.parser = p = lib.Http_Parser(kind=0)
         if data:
-            has_headers = p.is_headers_complete()
-            p.execute(bytes(data), len(data))
-            self.expect_continue(has_headers)
-            if p.is_message_complete():
-                return wsgi_environ(self.connection, p), bytearray()
+            headers = self.headers()
+            if p.execute(bytes(data), len(data)) == len(data):
+                if headers is None:
+                    self.expect_continue()
+                if p.is_message_complete():
+                    return wsgi_environ(self.connection, p), bytearray()
         return None, bytearray()
     
-    def expect_continue(self, has_headers):
+    def headers(self):
+        if self.parser.is_headers_complete():
+            return self.parser.get_headers()
+    
+    def expect_continue(self):
         '''Handle the expect=100-continue header if available, according to
 the following algorithm:
 
@@ -355,11 +361,10 @@ the following algorithm:
 * Omit the 100 (Continue) response if it has already received some or all of
   the request body for the corresponding request.
     '''
-        p = self.parser
-        if not has_headers and p.is_headers_complete() and\
-            p.get_headers().get('Expect') == '100-continue':
-                if not p.is_partial_body():
-                    self.connection.write(b'HTTP/1.1 100 Continue\r\n\r\n')
+        headers = self.headers()
+        if headers is not None and headers.get('Expect') == '100-continue':
+            if not self.parser.is_message_complete():
+                self.connection.write(b'HTTP/1.1 100 Continue\r\n\r\n')
     
     
 class HttpServer(AsyncSocketServer):
@@ -372,7 +377,7 @@ class HttpServer(AsyncSocketServer):
         self.server_port = port
         
     def parser_class(self):
-        return HttpParser()
+        return HttpServerParser()
 
 
 class WsgiActorLink(object):

@@ -243,7 +243,7 @@ def mapping_iterator(iterable):
 # The reserved URI characters (RFC 3986 - section 2.2)
 #Default is charset is "iso-8859-1" (latin-1) from section 3.7.1
 #http://www.ietf.org/rfc/rfc2616.txt
-DEFAULT_CHARSET = 'latin-1'
+DEFAULT_CHARSET = 'iso-8859-1'
 URI_GEN_DELIMS = frozenset(':/?#[]@')
 URI_SUB_DELIMS = frozenset("!$&'()*+,;=")
 URI_RESERVED_SET = URI_GEN_DELIMS.union(URI_SUB_DELIMS)
@@ -342,7 +342,6 @@ def is_closed(sock):    #pragma nocover
 ENCODE_URL_METHODS = frozenset(['DELETE', 'GET', 'HEAD', 'OPTIONS'])
 ENCODE_BODY_METHODS = frozenset(['PATCH', 'POST', 'PUT', 'TRACE'])
 REDIRECT_CODES = (301, 302, 303, 307)
-
 
 def has_empty_content(status, method=None):
     '''204, 304 and 1xx codes have no content'''
@@ -541,7 +540,7 @@ the entity-header fields.'''
         return '\r\n'.join(self._ordered())
 
     def __bytes__(self):
-        return str(self).encode('iso-8859-1')
+        return str(self).encode(DEFAULT_CHARSET)
 
     def __iter__(self):
         headers = self._headers
@@ -618,7 +617,7 @@ append the value to the list.'''
     def flat(self, version, status):
     	'''Full headers bytes representation'''
     	vs = version + (status, self)
-    	return ('HTTP/%s.%s %s\r\n%s' % vs).encode('iso-8859-1')
+    	return ('HTTP/%s.%s %s\r\n%s' % vs).encode(DEFAULT_CHARSET)
 
     def _ordered(self):
         hf = HEADER_FIELDS
@@ -760,11 +759,6 @@ OTHER DEALINGS IN THE SOFTWARE.'''
         self._partial_body = False
         return body
 
-    def is_upgrade(self):
-        """ Do we get upgrade header in the request. Useful for
-        websockets """
-        return self._headers.get('connection') == "upgrade"
-
     def is_headers_complete(self):
         """ return True if all headers have been parsed. """
         return self.__on_headers_complete
@@ -788,8 +782,7 @@ OTHER DEALINGS IN THE SOFTWARE.'''
     def execute(self, data, length):
         # end of body can be passed manually by putting a length of 0
         if length == 0:
-            self.__on_message_complete = True
-            return length
+            return self.close(length)
         data = bytes(data)
         # start to parse
         nb_parsed = 0
@@ -802,12 +795,11 @@ OTHER DEALINGS IN THE SOFTWARE.'''
                 else:
                     self.__on_firstline = True
                     self._buf.append(data[:idx])
-                    first_line = native_str(b''.join(self._buf), 'iso-8859-1')
-                    nb_parsed = nb_parsed + idx + 2
-
+                    first_line = native_str(b''.join(self._buf),DEFAULT_CHARSET)
                     rest = data[idx+2:]
                     data = b''
                     if self._parse_firstline(first_line):
+                        nb_parsed = nb_parsed + idx + 2
                         self._buf = [rest]
                     else:
                         return nb_parsed
@@ -819,6 +811,9 @@ OTHER DEALINGS IN THE SOFTWARE.'''
                     to_parse = b''.join(self._buf)
                     ret = self._parse_headers(to_parse)
                     if ret is False:
+                        if to_parse == '\r\n':
+                            self._buf = []
+                            return self.close(length)
                         return length
                     nb_parsed = nb_parsed + (len(to_parse) - ret)
                 except InvalidHeader as e:
@@ -843,6 +838,15 @@ OTHER DEALINGS IN THE SOFTWARE.'''
             else:
                 return 0
 
+    def close(self, length):
+        self.__on_message_begin = True
+        self.__on_message_complete = True
+        if not self._buf and self.__on_firstline:
+            self.__on_headers_complete = True
+            return length
+        else:
+            return length+len(self._buf)
+        
     def _parse_firstline(self, line):
         try:
             if self.kind == 2: # auto detect
@@ -884,12 +888,10 @@ OTHER DEALINGS IN THE SOFTWARE.'''
         bits = line.split(None, 2)
         if len(bits) != 3:
             raise InvalidRequestLine(line)
-
         # Method
         if not METHOD_RE.match(bits[0]):
             raise InvalidRequestLine("invalid Method: %s" % bits[0])
         self._method = bits[0].upper()
-
         # URI
         self._url = bits[1]
         parts = urlsplit(bits[1])
@@ -897,7 +899,6 @@ OTHER DEALINGS IN THE SOFTWARE.'''
         self._query_string = parts.query or ""
         self._fragment = parts.fragment or ""
         self._server_protocol = bits[2]
-
         # Version
         match = VERSION_RE.match(bits[2])
         if match is None:
@@ -908,35 +909,30 @@ OTHER DEALINGS IN THE SOFTWARE.'''
         idx = data.find(b'\r\n\r\n')
         if idx < 0: # we don't have all headers
             return False
-        chunk = native_str(data[:idx], 'iso-8859-1')
+        chunk = native_str(data[:idx], DEFAULT_CHARSET)
         # Split lines on \r\n keeping the \r\n on each line
         lines = deque(('%s\r\n' % line for line in chunk.split('\r\n')))
-
         # Parse headers into key/value pairs paying attention
         # to continuation lines.
         while len(lines):
             # Parse initial header name : value pair.
             curr = lines.popleft()
             if curr.find(":") < 0:
-                raise InvalidHeader("invalid line %s" % curr.strip())
+                continue
             name, value = curr.split(":", 1)
             name = name.rstrip(" \t").upper()
             if HEADER_RE.search(name):
                 raise InvalidHeader("invalid header name %s" % name)
             name, value = name.strip(), [value.lstrip()]
-
             # Consume value continuation lines
             while len(lines) and lines[0].startswith((" ", "\t")):
                 value.append(lines.popleft())
             value = ''.join(value).rstrip()
-
             # multiple headers
             if name in self._headers:
-                value = "%s,%s" % (self._headers[name], value)
-
+                value = "%s, %s" % (self._headers[name], value)
             # store new header value
             self._headers[name] = value
-
         # detect now if body is sent by chunks.
         clen = self._headers.get('content-length')
         te = self._headers.get('transfer-encoding', '').lower()
@@ -951,7 +947,6 @@ OTHER DEALINGS IN THE SOFTWARE.'''
                     clen = None
         else:
             clen = None
-
         status = self._status_code
         if status and (status == httpclient.NO_CONTENT or
             status == httpclient.NOT_MODIFIED or
@@ -1095,6 +1090,9 @@ this :class:`IOClientRead` can submit another read request.'''
             return msg
 
 
+class HttpParseError(ValueError):
+    pass
+
 class HttpResponse(IOClientRead):
     '''An Http response object.
 
@@ -1122,6 +1120,7 @@ class HttpResponse(IOClientRead):
         self.debuglevel = debuglevel
         self._method = method
         self.strict=strict
+        self.__headers = None
 
     def __str__(self):
         if self.status_code:
@@ -1150,8 +1149,10 @@ class HttpResponse(IOClientRead):
 
     @property
     def headers(self):
-        if self.parser:
-            return self.parser.get_headers()
+        if self.__headers is None:
+            if self.parser and self.parser.is_headers_complete():
+                self.__headers = Headers(self.parser.get_headers())
+        return self.__headers
 
     @property
     def is_error(self):
@@ -1205,28 +1206,46 @@ class HttpResponse(IOClientRead):
         if start and self.parser is None:
             self.parser = self.parser_class(kind=1, decompress=decompress)
             return self.read()
+        
+    def write(self, data):
+        '''Send data to remote server. This can be used in a Exect/continue
+situation. Return a deferred if asynchronous.'''
+        if self.connection:
+            data = to_bytes(data, DEFAULT_CHARSET)
+            self.parser = self.parser_class(kind=1,
+                                            decompress=self.parser.decompress)
+            self.connection.send(data)
+            return self._read()
+        else:
+            raise RuntimeError('No connection. Response closed.')
 
     def parsedata(self, data):
         '''Called when data is available on the pipeline'''
         has_headers = self.parser.is_headers_complete()
-        self.parser.execute(data, len(data))
-        if self.streaming:
-            # if headers are ready, we keep reading (by returning nothing) if
-            # the body is not yet complete
-            if has_headers:
-                return self.close()
-            elif self.parser.is_headers_complete():
-                res = self.request.client.build_response(self) or self
-                if not res.parser.is_message_complete():
-                    res._read()
-                return res
-        # Not streaming. wait until we have the whole message
-        elif self.parser.is_message_complete():
-            return self.request.client.build_response(self)
+        if self.parser.execute(data, len(data)) == len(data): 
+            if self.streaming:
+                # if headers are ready, we keep reading (by returning nothing) if
+                # the body is not yet complete
+                if has_headers:
+                    return self.close()
+                elif self.parser.is_headers_complete():
+                    res = self.request.client.build_response(self) or self
+                    if not res.parser.is_message_complete():
+                        res._read()
+                    return res
+            # Not streaming. wait until we have the whole message
+            elif self.parser.is_message_complete():
+                return self.request.client.build_response(self)
+        else:
+            # This is an error in the parsing. Raise an error so that the
+            # connection is closed
+            raise HttpParseError()
 
-    def close(self):
-        self.sock.close()
-
+    def isclosed(self):
+        '''Required by python HTTPConnection. It is ``True`` when the
+:class:`HttpResponse` has received all data (headers and body).'''
+        return self.parser.is_message_complete()
+    
     def info(self):
         return self.headers
 
@@ -1251,10 +1270,6 @@ class HttpResponse(IOClientRead):
             else:
                 self.client.release_connection(self.request)
             return self
-        
-    def isclosed(self):
-        '''Required by python HTTPConnection'''
-        return self.parser.is_message_complete()
             
 
 class HttpConnection(httpclient.HTTPConnection):
@@ -1808,7 +1823,13 @@ the :class:`HttpRequest` constructor.
         pool = self.poolmap.get(key)
         if pool:
             pool.release(req.connection)
+        req.connection = None
 
+    def upgrade(self, response):
+        '''Upgrade a :class:`HttpResponse` (for websocket).
+Requires implementation.'''
+        raise NotImplementedError()
+    
     def set_proxy(self, request):
         if request.type in self.proxy_info:
             hostonly, _ = splitport(request.host)
@@ -1842,6 +1863,12 @@ the :class:`HttpRequest` constructor.
                               # encode the url.
                               requote_uri(url))
             return self.new_request(response, url)
+        elif response.status_code == 100:
+            # Continue with current response
+            return response
+        elif response.status_code == 101:
+                # Upgrading response handler
+                return self.upgrade(response)
         else:
             # We need to read the rest of the message
             return response.close()

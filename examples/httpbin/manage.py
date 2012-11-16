@@ -11,7 +11,7 @@ import time
 from random import choice
 try:
     import pulsar
-except ImportError:
+except ImportError: #pragma    nocover
     sys.path.append('../../')
 
 from pulsar import HttpException, LocalMixin, local_property, version
@@ -364,5 +364,5 @@ def server(description=None, **kwargs):
     return wsgi.WSGIServer(app, description=description, **kwargs)
 
 
-if __name__ == '__main__':
+if __name__ == '__main__':  #pragma    nocover
     server().start()

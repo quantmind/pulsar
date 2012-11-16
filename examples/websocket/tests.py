@@ -2,9 +2,9 @@
 from random import randint
 import struct
 
-from pulsar import send, HttpClient
+from pulsar import send
 from pulsar.apps.ws import Frame, WebSocket, int2bytes, i2b,\
-                            WebSocketProtocolError, FrameParser
+                            WebSocketProtocolError, FrameParser, HttpClient
 from pulsar.apps.test import unittest, dont_run_with_thread
 
 from .manage import server
@@ -27,6 +27,7 @@ class WebSocketThreadTest(unittest.TestCase):
         cls.app = outcome.result
         cls.uri = 'http://{0}:{1}'.format(*cls.app.address)
         cls.ws_uri = 'ws://{0}:{1}/data'.format(*cls.app.address)
+        cls.ws_echo = 'ws://{0}:{1}/echo'.format(*cls.app.address)
         
     @classmethod
     def tearDownClass(cls):
@@ -49,13 +50,8 @@ class WebSocketThreadTest(unittest.TestCase):
         v = w.challenge_response('dGhlIHNhbXBsZSBub25jZQ==')
         self.assertEqual(v, "s3pPLMBiTxaQ9kYGzzhZRbK+xOo=")
         
-    def testUpgrade(self):
+    def testBadRequests(self):
         c = HttpClient()
-        outcome = c.get(self.ws_uri)
-        yield outcome
-        response = outcome.result
-        self.assertEqual(response.status_code, 101)
-        #
         outcome = c.post(self.ws_uri)
         yield outcome
         response = outcome.result
@@ -76,6 +72,21 @@ class WebSocketThreadTest(unittest.TestCase):
         response = outcome.result
         self.assertEqual(response.status_code, 400)
     
+    def testUpgrade(self):
+        c = HttpClient()
+        outcome = c.get(self.ws_echo)
+        yield outcome
+        ws = outcome.result
+        response = ws.handshake 
+        self.assertEqual(response.status_code, 101)
+        self.assertEqual(response.headers['upgrade'], 'websocket')
+        # Send a message to the websocket
+        outcome = ws.execute('Hi there!')
+        yield outcome
+        response = outcome.result
+        self.assertEqual(response.body, 'Hi there!')
+        self.assertFalse(response.masking_key)
+        
 
 @dont_run_with_thread
 class WebSocketProcessTest(WebSocketThreadTest):

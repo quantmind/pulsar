@@ -187,11 +187,6 @@ the parser detect the type.
             self._data.body = [rest]
         return m
 
-    def is_upgrade(self):
-        """ Do we get upgrade header in the request. Useful for
-        websockets """
-        return self._parser_upgrade
-
     def is_headers_complete(self):
         """ return True if all headers have been parsed. """ 
         return self._data.headers_complete

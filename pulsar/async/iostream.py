@@ -587,11 +587,8 @@ parsed.'''
         if not self.processing and self.exec_queue:
             self.processing = True
             data, cbk = self.exec_queue.popleft()
-            msg = self.send(data)
-            if is_async(msg):
-                msg.add_callback(self._read, self.close)
-            else:
-                msg = self._read()
+            msg = safe_async(self.send, (data,))\
+                    .add_callback(self._read, self.close)
             msg = maybe_async(msg)
             if is_async(msg):
                 msg.addBoth(cbk.callback)

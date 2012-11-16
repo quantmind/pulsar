@@ -5,7 +5,7 @@ import time
 from pulsar import send, make_async, safe_async, is_failure, HttpClient
 from pulsar.apps.test import unittest
 from pulsar.utils import httpurl
-from pulsar.utils.httpurl import to_bytes
+from pulsar.utils.httpurl import to_bytes, urlencode
 
 BIN_HOST = 'httpbin.org'
 HTTPBIN_URL = 'http://' + BIN_HOST + '/'
@@ -49,8 +49,8 @@ class TestHeaders(unittest.TestCase):
                         'text/*, text/html, text/html;level=1, */*')
         self.assertTrue('text/html' in accept)
         self.assertTrue('text/plain' in accept)
-
-
+        
+        
 class TestAuth(unittest.TestCase):
     
     def testBase(self):
@@ -414,11 +414,18 @@ class TestHttpClient(unittest.TestCase):
         http = self.client()
         data = (('bla', 'foo'), ('unz', 'whatz'),
                 ('numero', '1'), ('numero', '2'))
-        r = make_async(http.post(self.httpbin('post'), data=data,
-                                 headers=[('expect','100-continue')]))
+        bdata = urlencode(data)
+        r = make_async(http.post(self.httpbin('post'), data=b'',
+                                 headers=[('expect','100-continue'),
+                                          ('Content-length', str(len(bdata)))]))
         yield r
-        r = r.result
-        self.assertEqual(r.status_code, 200)
+        response = r.result
+        self.assertEqual(response.status_code, 100)
+        r = make_async(response.write(bdata))
+        yield r
+        response = r.result
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.connection, None)
         
     def test_basic_authentication(self):
         http = self.client()
