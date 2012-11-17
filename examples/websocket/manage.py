@@ -13,7 +13,7 @@ from random import random
 import time
 try:
     import pulsar
-except ImportError:
+except ImportError: #pragma nocover
     sys.path.append('../../')
     import pulsar
 from pulsar.apps import ws, wsgi
@@ -51,5 +51,5 @@ def server(**kwargs):
     return wsgi.WSGIServer(callable=app, **kwargs)
 
 
-if __name__ == '__main__':
+if __name__ == '__main__':  #pragma nocover
     server().start()

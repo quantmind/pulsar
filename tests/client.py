@@ -23,6 +23,7 @@ class ClientMixin:
         self.assertNotEqual(c.address, m.address)
         return c
     
+    
 class TestPulsarClient(unittest.TestCase, ClientMixin):
     
     def testPing(self):

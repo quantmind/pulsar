@@ -59,8 +59,8 @@ the following
 
 * Socket servers.
 * WSGI server (with a JSON-RPC handler too).
-* A distributed task queue.
-* Pulsar shell for asynchronous scripting (posix only).
+* Distributed task queue.
+* Shell for asynchronous scripting (posix only).
 * Asynchronous test suite.
 
 Examples

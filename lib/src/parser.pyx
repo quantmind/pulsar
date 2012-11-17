@@ -157,7 +157,7 @@ the parser detect the type.
 
     def get_headers(self):
         """get request/response headers dictionary."""
-        return list(self._data.headers.items())
+        return self._data.headers
     
     def get_protocol(self):
         return None
@@ -186,11 +186,6 @@ the parser detect the type.
         else:
             self._data.body = [rest]
         return m
-
-    def is_upgrade(self):
-        """ Do we get upgrade header in the request. Useful for
-        websockets """
-        return self._parser_upgrade
 
     def is_headers_complete(self):
         """ return True if all headers have been parsed. """ 

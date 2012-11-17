@@ -9,14 +9,16 @@ __author__    = "Luca Sbardella"
 __contact__   = "luca.sbardella@gmail.com"
 __homepage__  = "https://github.com/quantmind/pulsar"
 __docformat__ = "restructuredtext"
-CLASSIFIERS  = ['Development Status :: 3 - Alpha',
+CLASSIFIERS  = ['Development Status :: 4 - Beta',
                 'Environment :: Web Environment',
                 'Intended Audience :: Developers',
                 'License :: OSI Approved :: BSD License',
                 'Operating System :: OS Independent',
                 'Programming Language :: Python',
+                'Programming Language :: Python :: 2',
                 'Programming Language :: Python :: 2.6',
                 'Programming Language :: Python :: 2.7',
+                'Programming Language :: Python :: 3'
                 'Programming Language :: Python :: 3.2',
                 'Programming Language :: Python :: 3.3',
                 'Programming Language :: Python :: Implementation :: PyPy',

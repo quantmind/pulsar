@@ -6,9 +6,12 @@ import re
 import os
 import json
 import sys
+import string
+import time
+from random import choice
 try:
     import pulsar
-except ImportError:
+except ImportError: #pragma    nocover
     sys.path.append('../../')
 
 from pulsar import HttpException, LocalMixin, local_property, version
@@ -17,13 +20,19 @@ from pulsar.apps.wsgi.server import HttpResponse
 from pulsar.utils.structures import OrderedDict
 from pulsar.utils.httpurl import Headers, parse_qs, ENCODE_URL_METHODS,\
                                  responses, has_empty_content, addslash,\
-                                 itervalues, range
+                                 itervalues, range, ispy3k, hexmd5, to_bytes,\
+                                 WWWAuthenticate
 from pulsar.utils.multipart import parse_form_data
 from pulsar.utils import event
 
 pyversion = '.'.join(map(str,sys.version_info[:3]))
 
 error_messages = {404: '<p>The requested URL was not found on the server.</p>'}
+
+if ispy3k:  # pragma nocover
+    characters = string.ascii_letters + string.digits
+else:   # pragma nocover
+    characters = string.letters + string.digits
 
 def jsonbytes(data):
     return json.dumps(data, indent=4).encode('utf-8')
@@ -75,8 +84,8 @@ class route(object):
         self.href = href
 
     def render(self):
-        return "<li><a href='%s'>%s</a> %s.</li>" %\
-                 (self.href, self.url, self.title)
+        return "<li><a href='%s' class='%s'>%s</a> %s.</li>" %\
+                 (self.href, self.method.lower(), self.url, self.title)
 
     def __call__(self, f):
         def _(obj, environ, *args, **kwargs):
@@ -103,7 +112,6 @@ class HttpBin(LocalMixin):
                 yield attr
 
     def __call__(self, environ, start_response):
-        '''Pulsar HTTP "Hello World!" application'''
         response = self.request(environ)
         return response(environ, start_response)
 
@@ -202,6 +210,12 @@ class HttpBin(LocalMixin):
             raise HttpException(status=404)
         return self.response(info_data(environ))
     
+    @route('patch', method='PATCH', title='Returns PATCH data')
+    def request_patch(self, environ, bits):
+        if bits:
+            raise HttpException(status=404)
+        return self.response(info_data(environ))
+    
     @route('delete', method='DELETE', title='Returns DELETE data')
     def request_delete(self, environ, bits):
         if bits:
@@ -288,14 +302,48 @@ class HttpBin(LocalMixin):
         if len(bits) == 2:
             auth = environ.get('HTTP_AUTHORIZATION')
             if auth and auth.type == 'basic':
-                if auth.authenticated(*bits):
+                if auth.authenticated(environ, *bits):
                     data = jsonbytes({'autheinticated': True,
                                       'username': auth.username})
                     return self.response(data)
-            h = ('WWW-Authenticate', 'Basic realm="Fake Realm"')
+            h = ('WWW-Authenticate', str(WWWAuthenticate.basic("Fake Realm")))
             raise HttpException(status=401, headers=[h])
         else:
             raise HttpException(status=404)
+        
+    @route('digest-auth', title='Challenges HTTP Digest Auth',
+           params=(('qop', 'auth'),('username','username'),
+                   ('password','password')))
+    def request_challenge_digest_auth(self, environ, bits):
+        if len(bits) == 3:
+            auth = environ.get('HTTP_AUTHORIZATION')
+            if auth and auth.authenticated(environ, *bits[1:]):
+                data = jsonbytes({'autheinticated': True,
+                                  'username': auth.username})
+                return self.response(data)
+            nonce = hexmd5(to_bytes('%d' % time.time()) + os.urandom(10))
+            digest = WWWAuthenticate.digest("Fake Realm", nonce,
+                                            opaque=hexmd5(os.urandom(10)),
+                                            qop=bits[:1])
+            raise HttpException(status=401,
+                                headers=[('WWW-Authenticate', str(digest))])
+        else:
+            raise HttpException(status=404)
+        
+    @route('stream', title='Stream m chunk of data n times',
+           params=(('m', 300), ('n', 20)))
+    def request_stream(self, environ, bits):
+        if len(bits) == 2:
+            try:
+                m = int(bits[0])
+                n = int(bits[1])
+            except:
+                raise HttpException(status=404)
+        else:
+            raise HttpException(status=404)
+        stream = ('Chunk %s\n%s\n\n' % (i+1, ''.join((choice(characters) for\
+                    _ in range(m)))) for i in range(n))
+        return self.response(stream, content_type='text/plain')
 
 
 class handle(ws.WS):
@@ -316,5 +364,5 @@ def server(description=None, **kwargs):
     return wsgi.WSGIServer(app, description=description, **kwargs)
 
 
-if __name__ == '__main__':
+if __name__ == '__main__':  #pragma    nocover
     server().start()

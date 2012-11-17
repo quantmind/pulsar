@@ -47,6 +47,7 @@ class TestHttpResponse(HttpResponse):
     server_response = None
 
     def __init__(self, data):
+        super(TestHttpResponse, self).__init__(None)
         self.request_data = data
 
     @property

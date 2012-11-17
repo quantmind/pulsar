@@ -199,14 +199,30 @@ class ParsedFrame(Frame):
     
     
 class FrameParser(object):
-    '''Parser for the version 8 protocol'''    
-    def __init__(self, version=None):
+    '''Parser for the version 8 protocol.
+    
+.. attribute:: kind
+
+    0 for parsing client's frames and sending server frames (to be used in the server),
+    1 for parsing server frames and sending client frames (to be used by the client)
+'''    
+    def __init__(self, version=None, kind=0):
         self.version = get_version(version)
         self._frame = None
         self._buf = None
+        self.kind = kind
     
     def decode(self, data):
         return self.execute(data), bytearray()
+    
+    def encode(self, data):
+        # Encode data into a frame
+        if not isinstance(data, Frame):
+            if self.kind == 1:
+                data = Frame(data, masking_key=os.urandom(4))
+            else:
+                data = Frame(data)
+        return data.msg
     
     def execute(self, data, length=None):
         # end of body can be passed manually by putting a length of 0
@@ -229,8 +245,13 @@ class FrameParser(object):
             if fin not in (0, 1):
                 raise WebSocketProtocolError('FIN must be 0 or 1')
             if not (second_byte & 0x80):
-                raise WebSocketProtocolError(\
-                            'Unmasked client frame. Abort connection')
+                if not self.kind:
+                    raise WebSocketProtocolError(\
+                                'Unmasked client frame. Abort connection')
+            else:
+                if self.kind:
+                    raise WebSocketProtocolError(\
+                            'Masked server frame. Abort connection')
             payload_length = second_byte & 0x7f
             # All control frames MUST have a payload length of 125 bytes or less
             if opcode > 0x7 and payload_length > 125:
@@ -243,22 +264,25 @@ class FrameParser(object):
         if frame.masking_key is None:
             # All control frames MUST have a payload length of 125 bytes or less
             d = None
+            mask_length = 4 if not self.kind else 0
             if frame.payload_length == 126:
-                if len(data) < 6: # 2 + 4 for mask
+                if len(data) < 2 + mask_length: # 2 + 4 for mask
                      return self.save_buf(frame, data)
                 d, data = data[:2] , data[2:]
                 frame.payload_length = unpack("!H", d)[0]
             elif frame.payload_length == 127:
-                if len(data) < 12:  # 8 + 4 for mask
+                if len(data) < 8 + mask_length:  # 8 + 4 for mask
                      return self.save_buf(frame, data)
                 d, data = data[:8] , data[8:]
                 frame.payload_length = unpack("!Q", d)[0]
-            elif len(data) < 4:
+            elif len(data) < mask_length:
                 return self.save_buf(frame, data)
-            # The mask is 4 bits
             if d:
                 frame.msg.extend(d)
-            frame.masking_key, data = data[:4], data[4:]
+            if mask_length:
+                frame.masking_key, data = data[:mask_length], data[mask_length:]
+            else:
+                frame.masking_key = b''
             frame.msg.extend(frame.masking_key)
                 
         if len(data) < frame.payload_length:
@@ -268,7 +292,8 @@ class FrameParser(object):
             data = data[:frame.payload_length]
             frame.msg.extend(data)
             self.save_buf(None, data[frame.payload_length:])
-            data = bytes(frame.unmask(data))
+            if frame.masking_key:
+                data = bytes(frame.unmask(data))
             if frame.opcode == 0x1:
                 data = data.decode("utf-8", "replace")
             frame.body = data

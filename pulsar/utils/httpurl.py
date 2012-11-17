@@ -1,27 +1,28 @@
-'''This MASSIVE module imports several classes and functions form the standard
-library in a python 2.6 to python 3.3 compatible fashion.
+'''This is a substantial module which imports several classes and functions
+from the standard library in a python 2.6 to python 3.3 compatible fashion.
 On top of that, it implements the :class:`HttpClient` for handling synchronous
 and asynchronous HTTP requests in a pythonic way.
 
 It is a thin layer on top of urllib2 in python2 / urllib in Python 3.
-Several opensource efforts have been used as source of snippes, inspiration
+Several opensource efforts have been used as source of snippets, inspiration
 and more:
 
 * http-parser_
 * urllib3_
 * request_
+* werkzeug_
 
 This is a long stand-alone module which can be dropped in any library and used
 as it is.
 
 Usage
 ===========
-making requests with the :class:`HttpClient` is simple. First you create
+Making requests with the :class:`HttpClient` is simple. First you create
 a client, which can be as simple as::
 
     >>> client = HttpClient()
 
-Then you can request a webpage, for example::
+Then you can perform an HTTP request, for example::
 
     >>> r = client.get('http://www.bbc.co.uk')
 
@@ -29,6 +30,7 @@ Then you can request a webpage, for example::
 .. _http-parser: https://github.com/benoitc/http-parser
 .. _urllib3: https://github.com/shazow/urllib3
 .. _request: https://github.com/kennethreitz/requests
+.. _werkzeug: https://github.com/mitsuhiko/werkzeug
 '''
 import os
 import sys
@@ -41,7 +43,8 @@ import mimetypes
 import platform
 import codecs
 import socket
-import traceback
+import logging
+from hashlib import sha1, md5
 from base64 import b64encode, b64decode
 from uuid import uuid4
 from datetime import datetime, timedelta
@@ -52,15 +55,23 @@ from collections import deque, Mapping
 from copy import copy
 
 ispy3k = sys.version_info >= (3, 0)
+ispy26 = sys.version_info < (2, 7)
 
+create_connection = socket.create_connection
+LOGGER = logging.getLogger('httpurl')
+
+try:
+    from select import poll, POLLIN
+except ImportError: #pragma    nocover
+    poll = False
+    try:
+        from select import select
+    except ImportError: #pragma    nocover
+        select = False
+        
 try:    # Compiled with SSL?
-    HTTPSConnection = object
     BaseSSLError = None
     ssl = None
-    if ispy3k:
-        from http.client import HTTPSConnection
-    else:   # pragma : no cover
-        from httplib import HTTPSConnection
     import ssl
     BaseSSLError = ssl.SSLError
 except (ImportError, AttributeError):   # pragma : no cover 
@@ -115,8 +126,10 @@ if ispy3k: # Python 3
     def force_native_str(s, encoding=None):
         if isinstance(s, bytes):
             return s.decode(encoding or 'utf-8')
+        elif not isinstance(s, str):
+            return str(s)
         else:
-            return '%s' % s
+            return s
         
     def execfile(filename, globals=None, locals=None):
         if globals is None:
@@ -147,6 +160,33 @@ else:   # pragma : no cover
     is_string = lambda s: isinstance(s, unicode)
     is_string_or_native_string = lambda s: isinstance(s, basestring)
 
+    if sys.version_info < (2, 7):
+        #
+        def create_connection(address, timeout=socket._GLOBAL_DEFAULT_TIMEOUT,
+                              source_address=None):
+            """Form Python 2.7"""
+            host, port = address
+            err = None
+            for res in socket.getaddrinfo(host, port, 0, socket.SOCK_STREAM):
+                af, socktype, proto, canonname, sa = res
+                sock = None
+                try:
+                    sock = socket.socket(af, socktype, proto)
+                    if timeout is not socket._GLOBAL_DEFAULT_TIMEOUT:
+                        sock.settimeout(timeout)
+                    if source_address:
+                        sock.bind(source_address)
+                    sock.connect(sa)
+                    return sock
+                except Exception as _:
+                    err = _
+                    if sock is not None:
+                        sock.close()
+            if err is not None:
+                raise err
+            else:
+                raise error("getaddrinfo returns an empty list")
+    
     def to_bytes(s, encoding=None, errors='strict'):
         encoding = encoding or 'utf-8'
         if isinstance(s, bytes):
@@ -173,12 +213,15 @@ else:   # pragma : no cover
     def force_native_str(s, encoding=None):
         if isinstance(s, unicode):
             return s.encode(encoding or 'utf-8')
+        elif not isinstance(s, str):
+            return str(s)
         else:
-            return '%s' % s
+            return s
 
 HTTPError = urllibr.HTTPError
 URLError = urllibr.URLError
 request_host = urllibr.request_host
+parse_http_list = urllibr.parse_http_list
 
 class SSLError(HTTPError):
     "Raised when SSL certificate fails in an HTTPS connection."
@@ -198,6 +241,9 @@ def mapping_iterator(iterable):
 ####################################################    URI & IRI SUFF
 #
 # The reserved URI characters (RFC 3986 - section 2.2)
+#Default is charset is "iso-8859-1" (latin-1) from section 3.7.1
+#http://www.ietf.org/rfc/rfc2616.txt
+DEFAULT_CHARSET = 'iso-8859-1'
 URI_GEN_DELIMS = frozenset(':/?#[]@')
 URI_SUB_DELIMS = frozenset("!$&'()*+,;=")
 URI_RESERVED_SET = URI_GEN_DELIMS.union(URI_SUB_DELIMS)
@@ -205,13 +251,15 @@ URI_RESERVED_CHARS = ''.join(URI_RESERVED_SET)
 # The unreserved URI characters (RFC 3986 - section 2.3)
 URI_UNRESERVED_SET = frozenset(ascii_letters + string.digits + '-._~')
 URI_SAFE_CHARS = URI_RESERVED_CHARS + '%~'
+HEADER_TOKEN_CHARS = frozenset("!#$%&'*+-.0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+                               '^_`abcdefghijklmnopqrstuvwxyz|~')
 
 escape = lambda s: quote(s, safe='~')
 urlquote = lambda iri: quote(iri, safe=URI_RESERVED_CHARS)
 
 def _gen_unquote(uri):
     unreserved_set = URI_UNRESERVED_SET
-    for n, part in enumerate(to_string(uri).split('%')):
+    for n, part in enumerate(force_native_str(uri).split('%')):
         if not n:
             yield part
         else:
@@ -271,11 +319,29 @@ def remove_double_slash(route):
         route = re.sub('/+', '/', route)
     return route
 
+def is_closed(sock):    #pragma nocover
+    """Check if socket is connected."""
+    if not sock:
+        return False
+    if not poll:
+        if not select:
+            return False
+        try:
+            return bool(select([sock], [], [], 0.0)[0])
+        except socket.error:
+            return True
+    # This version is better on platforms that support it.
+    p = poll()
+    p.register(sock, POLLIN)
+    for (fno, ev) in p.poll(0.0):
+        if fno == sock.fileno():
+            # Either data is buffered (bad), or the connection is dropped.
+            return True
+
 ####################################################    REQUEST METHODS
 ENCODE_URL_METHODS = frozenset(['DELETE', 'GET', 'HEAD', 'OPTIONS'])
 ENCODE_BODY_METHODS = frozenset(['PATCH', 'POST', 'PUT', 'TRACE'])
 REDIRECT_CODES = (301, 302, 303, 307)
-
 
 def has_empty_content(status, method=None):
     '''204, 304 and 1xx codes have no content'''
@@ -358,17 +424,87 @@ def capfirst(x):
     else:
         return x
     
-def header_field(name, HEADERS_SET=None):
+def capheader(name):
+    return '-'.join((b for b in (capfirst(n) for n in name.split('-')) if b))
+
+def header_field(name, HEADERS_SET=None, strict=False):
     name = name.lower()
     if name.startswith('x-'):
-        return '-'.join((b for b in (capfirst(n) for n in name.split('-')) if b))
+        return capheader(name)
     else:
         header = ALL_HEADER_FIELDS_DICT.get(name)
         if header and HEADERS_SET:
             return header if header in HEADERS_SET else None
-        else:
+        elif header:
             return header
+        elif not strict:
+            return capheader(name)
 
+def quote_header_value(value, extra_chars='', allow_token=True):
+    """Quote a header value if necessary.
+
+:param value: the value to quote.
+:param extra_chars: a list of extra characters to skip quoting.
+:param allow_token: if this is enabled token values are returned
+                    unchanged."""
+    value = force_native_str(value)
+    if allow_token:
+        token_chars = HEADER_TOKEN_CHARS | set(extra_chars)
+        if set(value).issubset(token_chars):
+            return value
+    return '"%s"' % value.replace('\\', '\\\\').replace('"', '\\"')
+
+def unquote_header_value(value, is_filename=False):
+    """Unquotes a header value. Reversal of :func:`quote_header_value`.
+This does not use the real unquoting but what browsers are actually
+using for quoting.
+:param value: the header value to unquote."""
+    if value and value[0] == value[-1] == '"':
+        # this is not the real unquoting, but fixing this so that the
+        # RFC is met will result in bugs with internet explorer and
+        # probably some other browsers as well.  IE for example is
+        # uploading files with "C:\foo\bar.txt" as filename
+        value = value[1:-1]
+        # if this is a filename and the starting characters look like
+        # a UNC path, then just return the value without quotes.  Using the
+        # replace sequence below on a UNC path has the effect of turning
+        # the leading double slash into a single slash and then
+        # _fix_ie_filename() doesn't work correctly.  See #458.
+        if not is_filename or value[:2] != '\\\\':
+            return value.replace('\\\\', '\\').replace('\\"', '"')
+    return value
+
+def parse_dict_header(value):
+    """Parse lists of key, value pairs as described by RFC 2068 Section 2 and
+    convert them into a python dict:
+
+    >>> d = parse_dict_header('foo="is a fish", bar="as well"')
+    >>> type(d) is dict
+    True
+    >>> sorted(d.items())
+    [('bar', 'as well'), ('foo', 'is a fish')]
+
+    If there is no value for a key it will be `None`:
+
+    >>> parse_dict_header('key_without_value')
+    {'key_without_value': None}
+
+    To create a header from the :class:`dict` again, use the
+    :func:`dump_header` function.
+
+    :param value: a string with a dict header.
+    :return: :class:`dict`
+    """
+    result = {}
+    for item in parse_http_list(value):
+        if '=' not in item:
+            result[item] = None
+            continue
+        name, value = item.split('=', 1)
+        if value[:1] == value[-1:] == '"':
+            value = unquote_header_value(value[1:-1])
+        result[name] = value
+    return result
 
 class Headers(object):
     '''Utility for managing HTTP headers for both clients and servers.
@@ -382,12 +518,13 @@ The order in which header fields with differing field names are received is not
 significant. However, it is "good practice" to send general-header fields first,
 followed by request-header or response-header fields, and ending with
 the entity-header fields.'''
-    def __init__(self, headers=None, kind='server'):
+    def __init__(self, headers=None, kind='server', strict=False):
         if isinstance(kind, int):
             kind = header_type.get(kind, 'both')
         else:
-            kind = kind.lower()
+            kind = str(kind).lower()
         self.kind = kind
+        self.strict = strict
         self.all_headers = TYPE_HEADER_FIELDS.get(self.kind)
         if not self.all_headers:
             self.kind = 'both'
@@ -403,7 +540,7 @@ the entity-header fields.'''
         return '\r\n'.join(self._ordered())
 
     def __bytes__(self):
-        return str(self).encode('iso-8859-1')
+        return str(self).encode(DEFAULT_CHARSET)
 
     def __iter__(self):
         headers = self._headers
@@ -422,18 +559,11 @@ the entity-header fields.'''
     def kind_number(self):
         return header_type_to_int.get(self.kind)
 
-    def update(self, iterable, append=False):
+    def update(self, iterable):
         """Extend the headers with a dictionary or an iterable yielding keys
-and values. If append is set to ``True``, existing headers are appended
-rather than replaced."""
-        iterable = mapping_iterator(iterable)
-        if append:        
-            add = self.add_header
-            for key, value in iterable:
-                add(key, value)
-        else:
-            for key, value in iterable:
-                self[key] = value
+and values."""
+        for key, value in mapping_iterator(iterable):
+            self[key] = value
 
     def __contains__(self, key):
         return header_field(key) in self._headers
@@ -445,7 +575,7 @@ rather than replaced."""
         self._headers.__delitem__(header_field(key))
 
     def __setitem__(self, key, value):
-        key = header_field(key, self.all_headers)
+        key = header_field(key, self.all_headers, self.strict)
         if key and value is not None:
             if not isinstance(value, list):
                 value = [value]
@@ -477,28 +607,17 @@ it returns an empty list.'''
     def add_header(self, key, value, **params):
         '''Add *value* to *key* header. If the header is already available,
 append the value to the list.'''
-        key = header_field(key, self.all_headers)
+        key = header_field(key, self.all_headers, self.strict)
         if key and value:
             values = self._headers.get(key, [])
             if value not in values:
                 values.append(value)
                 self._headers[key] = values
-        #else:
-        #    self._headers.pop(key, None)
 
     def flat(self, version, status):
     	'''Full headers bytes representation'''
     	vs = version + (status, self)
-    	return ('HTTP/%s.%s %s\r\n%s' % vs).encode('iso-8859-1')
-
-    @property
-    def vary_headers(self):
-        return self.get('vary',[])
-
-    def has_vary(self, header_query):
-        """Checks to see if the has a given header name in its Vary header.
-        """
-        return header_query.lower() in set(self.vary_headers)
+    	return ('HTTP/%s.%s %s\r\n%s' % vs).encode(DEFAULT_CHARSET)
 
     def _ordered(self):
         hf = HEADER_FIELDS
@@ -542,7 +661,7 @@ class InvalidChunkSize(Exception):
 
 
 class HttpParser(object):
-    '''A python http parser.
+    '''A python HTTP parser.
 
 Original code from https://github.com/benoitc/http-parser
 
@@ -640,11 +759,6 @@ OTHER DEALINGS IN THE SOFTWARE.'''
         self._partial_body = False
         return body
 
-    def is_upgrade(self):
-        """ Do we get upgrade header in the request. Useful for
-        websockets """
-        return self._headers.get('connection') == "upgrade"
-
     def is_headers_complete(self):
         """ return True if all headers have been parsed. """
         return self.__on_headers_complete
@@ -668,8 +782,7 @@ OTHER DEALINGS IN THE SOFTWARE.'''
     def execute(self, data, length):
         # end of body can be passed manually by putting a length of 0
         if length == 0:
-            self.__on_message_complete = True
-            return length
+            return self.close(length)
         data = bytes(data)
         # start to parse
         nb_parsed = 0
@@ -682,12 +795,11 @@ OTHER DEALINGS IN THE SOFTWARE.'''
                 else:
                     self.__on_firstline = True
                     self._buf.append(data[:idx])
-                    first_line = native_str(b''.join(self._buf), 'iso-8859-1')
-                    nb_parsed = nb_parsed + idx + 2
-
+                    first_line = native_str(b''.join(self._buf),DEFAULT_CHARSET)
                     rest = data[idx+2:]
                     data = b''
                     if self._parse_firstline(first_line):
+                        nb_parsed = nb_parsed + idx + 2
                         self._buf = [rest]
                     else:
                         return nb_parsed
@@ -699,6 +811,9 @@ OTHER DEALINGS IN THE SOFTWARE.'''
                     to_parse = b''.join(self._buf)
                     ret = self._parse_headers(to_parse)
                     if ret is False:
+                        if to_parse == b'\r\n':
+                            self._buf = []
+                            return self.close(length)
                         return length
                     nb_parsed = nb_parsed + (len(to_parse) - ret)
                 except InvalidHeader as e:
@@ -723,6 +838,15 @@ OTHER DEALINGS IN THE SOFTWARE.'''
             else:
                 return 0
 
+    def close(self, length):
+        self.__on_message_begin = True
+        self.__on_message_complete = True
+        if not self._buf and self.__on_firstline:
+            self.__on_headers_complete = True
+            return length
+        else:
+            return length+len(self._buf)
+        
     def _parse_firstline(self, line):
         try:
             if self.kind == 2: # auto detect
@@ -764,12 +888,10 @@ OTHER DEALINGS IN THE SOFTWARE.'''
         bits = line.split(None, 2)
         if len(bits) != 3:
             raise InvalidRequestLine(line)
-
         # Method
         if not METHOD_RE.match(bits[0]):
             raise InvalidRequestLine("invalid Method: %s" % bits[0])
         self._method = bits[0].upper()
-
         # URI
         self._url = bits[1]
         parts = urlsplit(bits[1])
@@ -777,7 +899,6 @@ OTHER DEALINGS IN THE SOFTWARE.'''
         self._query_string = parts.query or ""
         self._fragment = parts.fragment or ""
         self._server_protocol = bits[2]
-
         # Version
         match = VERSION_RE.match(bits[2])
         if match is None:
@@ -788,35 +909,30 @@ OTHER DEALINGS IN THE SOFTWARE.'''
         idx = data.find(b'\r\n\r\n')
         if idx < 0: # we don't have all headers
             return False
-        chunk = native_str(data[:idx], 'iso-8859-1')
+        chunk = native_str(data[:idx], DEFAULT_CHARSET)
         # Split lines on \r\n keeping the \r\n on each line
         lines = deque(('%s\r\n' % line for line in chunk.split('\r\n')))
-
         # Parse headers into key/value pairs paying attention
         # to continuation lines.
         while len(lines):
             # Parse initial header name : value pair.
             curr = lines.popleft()
             if curr.find(":") < 0:
-                raise InvalidHeader("invalid line %s" % curr.strip())
+                continue
             name, value = curr.split(":", 1)
             name = name.rstrip(" \t").upper()
             if HEADER_RE.search(name):
                 raise InvalidHeader("invalid header name %s" % name)
             name, value = name.strip(), [value.lstrip()]
-
             # Consume value continuation lines
             while len(lines) and lines[0].startswith((" ", "\t")):
                 value.append(lines.popleft())
             value = ''.join(value).rstrip()
-
             # multiple headers
             if name in self._headers:
-                value = "%s,%s" % (self._headers[name], value)
-
+                value = "%s, %s" % (self._headers[name], value)
             # store new header value
             self._headers[name] = value
-
         # detect now if body is sent by chunks.
         clen = self._headers.get('content-length')
         te = self._headers.get('transfer-encoding', '').lower()
@@ -831,7 +947,6 @@ OTHER DEALINGS IN THE SOFTWARE.'''
                     clen = None
         else:
             clen = None
-
         status = self._status_code
         if status and (status == httpclient.NO_CONTENT or
             status == httpclient.NOT_MODIFIED or
@@ -918,6 +1033,8 @@ class HttpConnectionError(Exception):
 
 
 class IOClientRead(object):
+    '''Base class for IO clients which keep reading from a socket until a
+full parsed message is available.'''
     sock = None
 
     @property
@@ -973,6 +1090,9 @@ this :class:`IOClientRead` can submit another read request.'''
             return msg
 
 
+class HttpParseError(ValueError):
+    pass
+
 class HttpResponse(IOClientRead):
     '''An Http response object.
 
@@ -984,28 +1104,37 @@ class HttpResponse(IOClientRead):
 
     A list of :class:`HttpResponse` objects from the history of the
     class:`HttpRequest`. Any redirect responses will end up here.
+    
+.. attribute:: streaming
+
+    boolean indicating if this is a streaming HTTP response.
 '''
     request = None
     parser = None
     will_close = False
     parser_class = HttpParser
+    again = False
 
-    def __init__(self, sock, debuglevel=0, method=None, url=None,
-                 strict=None):
+    def __init__(self, sock, debuglevel=0, method=None, url=None, strict=None):
         self.sock = sock
         self.debuglevel = debuglevel
         self._method = method
         self.strict=strict
+        self.__headers = None
 
     def __str__(self):
         if self.status_code:
-            return '{0} {1}'.format(self.status_code,self.response)
+            return '%s %s' % (self.status_code, self.response)
         else:
             return '<None>'
 
     def __repr__(self):
-        return '{0}({1})'.format(self.__class__.__name__,self)
+        return '%s(%s)' % (self.__class__.__name__, self)
 
+    @property
+    def streaming(self):
+        return self.request.stream
+    
     @property
     def status_code(self):
         if self.parser:
@@ -1020,8 +1149,10 @@ class HttpResponse(IOClientRead):
 
     @property
     def headers(self):
-        if self.parser:
-            return self.parser.get_headers()
+        if self.__headers is None:
+            if self.parser and self.parser.is_headers_complete():
+                self.__headers = Headers(self.parser.get_headers())
+        return self.__headers
 
     @property
     def is_error(self):
@@ -1048,6 +1179,11 @@ class HttpResponse(IOClientRead):
         if self.request is not None:
             return self.request.client
         
+    @property
+    def connection(self):
+        if self.request is not None:
+            return self.request.connection
+        
     def content_string(self, charset=None, errors=None):
         '''Decode content as a string.'''
         data = self.content
@@ -1070,22 +1206,80 @@ class HttpResponse(IOClientRead):
         if start and self.parser is None:
             self.parser = self.parser_class(kind=1, decompress=decompress)
             return self.read()
+        
+    def write(self, data):
+        '''Send data to remote server. This can be used in a Exect/continue
+situation. Return a deferred if asynchronous.'''
+        if self.connection:
+            data = to_bytes(data, DEFAULT_CHARSET)
+            self.parser = self.parser_class(kind=1,
+                                            decompress=self.parser.decompress)
+            self.connection.send(data)
+            return self._read()
+        else:
+            raise RuntimeError('No connection. Response closed.')
 
     def parsedata(self, data):
-        self.parser.execute(data, len(data))
-        if self.parser.is_message_complete():
-            return self.request.client.build_response(self)
+        '''Called when data is available on the pipeline'''
+        has_headers = self.parser.is_headers_complete()
+        if self.parser.execute(data, len(data)) == len(data): 
+            if self.streaming:
+                # if headers are ready, we keep reading (by returning nothing) if
+                # the body is not yet complete
+                if has_headers:
+                    return self.close()
+                elif self.parser.is_headers_complete():
+                    res = self.request.client.build_response(self) or self
+                    if not res.parser.is_message_complete():
+                        res._read()
+                    return res
+            # Not streaming. wait until we have the whole message
+            elif self.parser.is_message_complete():
+                return self.request.client.build_response(self)
+        else:
+            # This is an error in the parsing. Raise an error so that the
+            # connection is closed
+            raise HttpParseError()
 
-    def close(self):
-        self.sock.close()
-
+    def isclosed(self):
+        '''Required by python HTTPConnection. It is ``True`` when the
+:class:`HttpResponse` has received all data (headers and body).'''
+        return self.parser.is_message_complete()
+    
     def info(self):
         return self.headers
 
+    def stream(self):
+        '''Stream parsed body data.'''
+        if self.streaming:
+            if hasattr(self, '_streamed'):
+                raise RuntimeError('Already streamed')
+            self._streamed = True
+            while not self.parser.is_message_complete():
+                yield self.parser.recv_body()
+            # last part only if boy is available
+            b = self.parser.recv_body()
+            if b:
+                yield b
+    
+    def close(self):
+        if self.parser.is_message_complete():
+            # release the connection
+            if self.again:
+                return self.client.new_request(self)
+            else:
+                self.client.release_connection(self.request)
+            return self
+            
 
 class HttpConnection(httpclient.HTTPConnection):
     '''Http Connection class'''
     tunnel_class = httpclient.HTTPResponse
+    
+    def __init__(self, host, port=None, source_address=None, **kwargs):
+        httpclient.HTTPConnection.__init__(self, host, port, **kwargs)
+        self.source_address = source_address
+    
     def _tunnel(self):
         response_class = self.response_class
         self.response_class = self.tunnel_class
@@ -1094,22 +1288,28 @@ class HttpConnection(httpclient.HTTPConnection):
 
     @property
     def is_async(self):
-        return self.sock.gettimeout() == 0
-
-
-class HttpsConnection(HTTPSConnection):
-    '''Https Connection class.'''
-    tunnel_class = httpclient.HTTPResponse
-    def _tunnel(self):
-        response_class = self.response_class
-        self.response_class = self.tunnel_class
-        HTTPSConnection._tunnel(self)
-        self.response_class = response_class
-
-    @property
-    def is_async(self):
-        return self.sock.gettimeout() == 0
+        return self.sock.gettimeout() == 0 if self.sock else False
     
+    @property
+    def closed(self):
+        return is_closed(self.sock)
+    
+    def connect(self):
+        """Connect to the host and port specified in __init__."""
+        self.sock = create_connection((self.host,self.port),
+                                       self.timeout, self.source_address)
+        if self._tunnel_host:
+            self._tunnel()
+    
+    if ispy26:
+        def set_tunnel(self, host, port=None, headers=None):
+            return self._set_tunnel(host, port, headers)
+
+
+class HttpsConnection(HttpConnection):
+    '''Https Connection class.'''
+    default_port = httpclient.HTTPS_PORT
+
     def set_cert(self, key_file=None, cert_file=None,
                  cert_reqs='CERT_NONE', ca_certs=None):
         ssl_req_scheme = {
@@ -1122,37 +1322,47 @@ class HttpsConnection(HTTPSConnection):
         self.cert_reqs = ssl_req_scheme.get(cert_reqs) or ssl.CERT_NONE
         self.ca_certs = ca_certs
 
-    def __connect(self):
-        # Add certificate verification
-        sock = socket.create_connection((self.host, self.port), self.timeout)
-        # Wrap socket using verification with the root certs in
-        # trusted_root_certs
-        self.sock = ssl.wrap_socket(sock, self.key_file, self.cert_file,
+    def connect(self):
+        "Connect to a host on a given (SSL) port."
+        HttpConnection.connect(self)
+        self.sock = ssl.wrap_socket(self.sock, self.key_file,
+                                    self.cert_file,
                                     cert_reqs=self.cert_reqs,
                                     ca_certs=self.ca_certs)
         if self.ca_certs:
-            match_hostname(self.sock.getpeercert(), self.host)
+            try:
+                ssl.match_hostname(self.sock.getpeercert(), self.host)
+            except Exception:
+                self.sock.shutdown(socket.SHUT_RDWR)
+                self.sock.close()
+                raise
 
 
 class HttpBase(object):
+    hooks = None
     HOOKS = ('args', 'pre_request', 'pre_send', 'post_request', 'response')
 
     def register_hook(self, event, hook):
         '''Register an event hook'''
         self.hooks[event].append(hook)
 
-    def dispatch_hook(self, key, hooks, hook_data):
+    def dispatch_hook(self, key, hook_data):
         """Dispatches a hook dictionary on a given piece of data."""
+        hooks = self.hooks
         if hooks and key in hooks:
             for hook in hooks[key]:
                 try:
                     hook(hook_data)
                 except Exception:
-                    traceback.print_exc()
+                    LOGGER.critical('Unhandled error in %s hook' % key,
+                                    exc_info=True)
 
     def add_basic_authentication(self, username, password):
         '''Add a :class:`HTTPBasicAuth` handler to the *pre_requests* hooks.'''
         self.register_hook('pre_request', HTTPBasicAuth(username, password))
+        
+    def add_digest_authentication(self, username, password):
+        self.register_hook('pre_request', HTTPDigestAuth(username, password))
 
     def has_header(self, key):
         return key in self.headers
@@ -1177,17 +1387,13 @@ class HttpRequest(HttpBase):
     The scheme of the of the URI requested. One of http, https
     '''
     response_class = HttpResponse
-    default_charset = 'latin-1'
-    '''Default is charset is "iso-8859-1" (latin-1) from section 3.7.1
-http://www.ietf.org/rfc/rfc2616.txt
-    '''
 
     _tunnel_host = None
     _has_proxy = False
     def __init__(self, client, url, method, data=None, files=None,
                  charset=None, encode_multipart=True, multipart_boundary=None,
                  headers=None, timeout=None, hooks=None, history=None,
-                 allow_redirects=False, max_redirects=10, **kwargs):
+                 allow_redirects=False, max_redirects=10, stream=False):
         self.client = client
         self.type, self.host, self.path, self.params,\
         self.query, self.fragment = urlparse(url)
@@ -1198,12 +1404,13 @@ http://www.ietf.org/rfc/rfc2616.txt
         self.history = history
         self.max_redirects = max_redirects
         self.allow_redirects = allow_redirects
-        self.charset = charset or self.default_charset
+        self.charset = charset or DEFAULT_CHARSET
         self.method = method.upper()
         self.data = data if data is not None else {}
         self.files = files
+        self.stream = stream
         # Pre-request hook.
-        self.dispatch_hook('pre_request', self.hooks, self)
+        self.dispatch_hook('pre_request', self)
         self.encode(encode_multipart, multipart_boundary)
 
     def get_response(self):
@@ -1216,7 +1423,7 @@ http://www.ietf.org/rfc/rfc2616.txt
                 tunnel_headers[proxy_auth_hdr] = headers[proxy_auth_hdr]
                 self.headers.pop(proxy_auth_hdr)
             connection.set_tunnel(self._tunnel_host, headers=tunnel_headers)
-        self.dispatch_hook('pre_send', self.hooks, self)
+        self.dispatch_hook('pre_send', self)
         headers = self.headers.as_dict()
         connection.request(self.method, self.full_url, self.body, headers)
         response = connection.getresponse()
@@ -1316,9 +1523,6 @@ in the http.client module in the standard library.'''
         request = self.history[-1].request if self.history else self
         return request_host(request)
 
-    def on_response(self, response):
-        return response
-
 
 class HttpConnectionPool(object):
     '''Maintains a pool of connections'''
@@ -1336,7 +1540,10 @@ class HttpConnectionPool(object):
     def get_connection(self):
         "Get a connection from the pool"
         try:
-            connection = self._available_connections.pop()
+            closed = True
+            while closed:
+                connection = self._available_connections.pop()
+                closed = connection.closed
         except IndexError:
             connection = self.make_connection()
         self._in_use_connections.add(connection)
@@ -1351,10 +1558,10 @@ class HttpConnectionPool(object):
             if not ssl:
                 raise SSLError("Can't connect to HTTPS URL because the SSL "
                                "module is not available.")
-            con = HttpsConnection(host=self.host, port=self.port)
+            con = self.client.https_connection(host=self.host, port=self.port)
             con.set_cert(**self.https_params)
         else:
-            con = HttpConnection(host=self.host, port=self.port)
+            con = self.client.http_connection(host=self.host, port=self.port)
         if self.timeout is not None:
             con.timeout = self.timeout
         return con
@@ -1366,6 +1573,9 @@ class HttpConnectionPool(object):
 
     def remove(self, connection):
         self._in_use_connections.remove(connection)
+
+    def on_connect(self, connection):
+        pass
 
 
 class HttpClient(HttpBase):
@@ -1407,16 +1617,18 @@ or asynchronous connections.
 
 .. attribute:: proxy_info
 
-    Dictionary of proxy servers for this client
-
-The :attr:`key_file``, :attr:`cert_file`, :attr:`cert_reqs` and
-:attr:`ca_certs` parameters are only used if :mod:`ssl` is available
-and are fed into :meth:`ssl.wrap_socket` to upgrade the connection socket
-into an SSL socket.
+    Dictionary of proxy servers for this client.
 '''
     timeout = None
+    allow_redirects = False
+    stream = False
     request_class = HttpRequest
+    '''Class handling requests. Default: :class:`HttpRequest`'''
     connection_pool = HttpConnectionPool
+    http_connection = HttpConnection
+    '''Class handling HTTP connections. Default: :class:`HttpConnection`'''
+    https_connection = HttpsConnection
+    '''Class handling HTTPS connections. Default: :class:`HttpsConnection`'''
     client_version = 'Python-httpurl'
     DEFAULT_HTTP_HEADERS = Headers([
             ('Connection', 'Keep-Alive'),
@@ -1425,6 +1637,9 @@ into an SSL socket.
             ('Accept-Encoding', 'compress'),
             ('Accept-Encoding', 'gzip')],
             kind='client')
+    request_parameters = ('hooks', 'encode_multipart', 'timeout',
+                          'max_redirects', 'allow_redirects',
+                          'multipart_boundary', 'stream')
     # Default hosts not affected by proxy settings. This can be overwritten
     # by specifying the "no" key in the proxy_info dictionary
     no_proxy = set(('localhost', urllibr.localhost(), platform.node()))
@@ -1433,7 +1648,7 @@ into an SSL socket.
                  headers=None, encode_multipart=True, client_version=None,
                  multipart_boundary=None, max_connections=None,
                  key_file=None, cert_file=None, cert_reqs='CERT_NONE',
-                 ca_certs=None, cookies=None, trust_env=True,
+                 ca_certs=None, cookies=None, trust_env=True, stream=None,
                  store_cookies=True, max_redirects=10, decompress=True):
         self.trust_env = trust_env
         self.store_cookies = store_cookies
@@ -1442,6 +1657,7 @@ into an SSL socket.
         self.timeout = timeout if timeout is not None else self.timeout
         self.cookies = cookies
         self.decompress = decompress
+        self.stream = stream if stream is not None else stream
         self.max_connections = max_connections or 2**31
         dheaders = self.DEFAULT_HTTP_HEADERS.copy()
         self.client_version = client_version or self.client_version
@@ -1471,7 +1687,7 @@ into an SSL socket.
             
     def get_headers(self, request, headers=None):
         '''Returns a :class:`Header` obtained from combining
-:attr:`headers` with *headers*.'''
+:attr:`headers` with *headers*. It handles websocket requests.'''
         if request.type in ('ws','wss'):
             d = Headers((('Connection', 'Upgrade'),
                          ('Upgrade', 'websocket'),
@@ -1532,8 +1748,8 @@ object.
 '''
         return self.request('PUT', url, **kwargs)
 
-    def path(self, url, **kwargs):
-        '''Sends a PATH request and returns a :class:`HttpResponse`
+    def patch(self, url, **kwargs):
+        '''Sends a PATCH request and returns a :class:`HttpResponse`
 object.
 
 :params url: url for the new :class:`HttpRequest` object.
@@ -1550,41 +1766,20 @@ object.
 '''
         return self.request('DELETE', url, **kwargs)
 
-    def request(self, method, url, data=None, files=None, headers=None,
-                encode_multipart=None, allow_redirects=False, hooks=None,
-                cookies=None, history=None, max_redirects=None, **kwargs):
-        '''Constructs, sends a :class:`HttpRequest` and returns
-a :class:`HttpResponse` object.
+    def request(self, method, url, cookies=None, **params):
+        '''Constructs and sends an :class:`HttpRequest` to a remote server.
+It returns an :class:`HttpResponse` object.
 
-:param url: URL for the new :class:`HttpRequest`.
-:param data: optional dictionary or bytes to be sent either in the query string
-    for 'DELETE', 'GET', 'HEAD' and 'OPTIONS' methods or in the body
-    for 'PATCH', 'POST', 'PUT', 'TRACE' methods.
-:param method: optional request method for the :class:`HttpRequest`.
-:param hooks:
+:param method: request method for the :class:`HttpRequest`.
+:param url: URL for the :class:`HttpRequest`.
+:param params: a dictionary which specify all the optional parameters for
+the :class:`HttpRequest` constructor.
+
+:rtype: a :class:`HttpResponse` object.
 '''
-        if hooks:
-            chooks = dict(((e, copy(h)) for e, h in iteritems(self.hooks)))
-            for e, h in iteritems(hooks):
-                chooks[e].append(h)
-            hooks = chooks
-        else:
-            hooks = self.hooks
-        encode_multipart = encode_multipart if encode_multipart is not None\
-                            else self.encode_multipart
-        if 'timeout' not in kwargs:
-            kwargs['timeout'] = self.timeout
-        if max_redirects is None:
-            max_redirects = self.max_redirects
-        request = self.request_class(self, url, method, data=data, files=files,
-                                     headers=headers,
-                                     encode_multipart=encode_multipart,
-                                     multipart_boundary=self.multipart_boundary,
-                                     hooks=hooks,
-                                     history=history,
-                                     max_redirects=max_redirects,
-                                     allow_redirects=allow_redirects,
-                                     **kwargs)
+        for parameter in self.request_parameters:
+            self._update_parameter(parameter, params)
+        request = self.request_class(self, url, method, **params)
         # Set proxy if required
         self.set_proxy(request)
         if self.cookies:
@@ -1627,8 +1822,14 @@ a :class:`HttpResponse` object.
         key = req.key
         pool = self.poolmap.get(key)
         if pool:
-            pool.remove(req.connection)
+            pool.release(req.connection)
+        req.connection = None
 
+    def upgrade(self, response):
+        '''Upgrade a :class:`HttpResponse` (for websocket).
+Requires implementation.'''
+        raise NotImplementedError()
+    
     def set_proxy(self, request):
         if request.type in self.proxy_info:
             hostonly, _ = splitport(request.host)
@@ -1638,23 +1839,17 @@ a :class:`HttpResponse` object.
                 request.set_proxy(p.netloc, p.scheme)
 
     def build_response(self, response):
+        '''The response headers are available. Build the response.'''
         request = response.request
+        request.dispatch_hook('response', response)
         headers = response.headers
-        if self.store_cookies:
-            #response.cookies = CookieJar()
-            if 'set-cookie' in headers:
-                #response.cookies.extract_cookies(response, request)
-                self.cookies.extract_cookies(response, request)
+        # store cookies in clinet if needed
+        if self.store_cookies and 'set-cookie' in headers:
+            self.cookies.extract_cookies(response, request)
+        # check redirect
         if response.status_code in REDIRECT_CODES and 'location' in headers and\
                 request.allow_redirects:
-            history = request.history or []
-            if len(history) >= request.max_redirects:
-                raise TooManyRedirects()
-            history.append(response)
-            self.release_connection(request)
             url = response.headers['location']
-            data = request.body
-            files = request.files
             # Handle redirection without scheme (see: RFC 1808 Section 4)
             if url.startswith('//'):
                 parsed_rurl = urlparse(request.full_url)
@@ -1667,27 +1862,57 @@ a :class:`HttpResponse` object.
                               # Compliant with RFC3986, we percent
                               # encode the url.
                               requote_uri(url))
-            # http://www.w3.org/Protocols/rfc2616/rfc2616-sec10.html#sec10.3.4
-            if response.status_code is 303:
-                method = 'GET'
-                data = None
-                files = None
-            else:
-                method = request.method
-            headers = request.headers
-            headers.pop('Cookie', None)
-            # Build a new request
-            return self.request(method, url, data=data, files=files,
-                                headers=headers,
-                                encode_multipart=self.encode_multipart,
-                                history=history,
-                                max_redirects=request.max_redirects,
-                                allow_redirects=request.allow_redirects)
+            return self.new_request(response, url)
+        elif response.status_code == 100:
+            # Continue with current response
+            return response
+        elif response.status_code == 101:
+                # Upgrading response handler
+                return self.upgrade(response)
         else:
-            return request.on_response(response)
+            # We need to read the rest of the message
+            return response.close()
+        
+    def new_request(self, response, url=None):
+        request = response.request
+        url = url or request.full_url
+        history = request.history or []
+        if len(history) >= request.max_redirects:
+            raise TooManyRedirects()
+        history.append(response)
+        self.release_connection(request)
+        data = request.body
+        files = request.files
+        # http://www.w3.org/Protocols/rfc2616/rfc2616-sec10.html#sec10.3.4
+        if response.status_code is 303:
+            method = 'GET'
+            data = None
+            files = None
+        else:
+            method = request.method
+        headers = request.headers
+        headers.pop('Cookie', None)
+        # Build a new request
+        return self.request(method, url, data=data, files=files,
+                            headers=headers,
+                            encode_multipart=self.encode_multipart,
+                            history=history,
+                            max_redirects=request.max_redirects,
+                            allow_redirects=request.allow_redirects)
+        
+        
+    def _update_parameter(self, name, params):
+        if name not in params:
+            params[name] = getattr(self, name)
+        elif name == 'hooks':
+            hooks = params[name]
+            chooks = dict(((e, copy(h)) for e, h in iteritems(self.hooks)))
+            for e, h in iteritems(hooks):
+                chooks[e].append(h)
+            params[name] = chooks
 
 
-###############################################    AUTH
+###############################################    AUTHENTICATION
 class Auth(object):
     """Base class that all auth implementations derive from"""
     type = None
@@ -1706,7 +1931,7 @@ class HTTPBasicAuth(Auth):
     def __init__(self, username, password):
         self.username = username
         self.password = password
-
+        
     @property
     def type(self):
         return 'basic'
@@ -1715,7 +1940,7 @@ class HTTPBasicAuth(Auth):
         request.headers['Authorization'] = basic_auth_str(self.username,
                                                           self.password)
 
-    def authenticated(self, username, password):
+    def authenticated(self, environ, username, password):
         return username==self.username and password==self.password
 
     def __repr__(self):
@@ -1724,24 +1949,158 @@ class HTTPBasicAuth(Auth):
 
 class HTTPDigestAuth(Auth):
     """Attaches HTTP Digest Authentication to the given Request object."""
-    def __init__(self, username, password):
+    def __init__(self, username, password=None, options=None):
         self.username = username
         self.password = password
+        self.last_nonce = None
+        self.options = options or {}
+        self.algorithm = self.options.pop('algorithm', 'MD5')
 
     @property
     def type(self):
         return 'digest'
-
+    
     def __call__(self, request):
+        # If we have a saved nonce, skip the 401
+        if self.last_nonce:
+            request.headers['Authorization'] =\
+                self.encode(request.method, request.full_url)
         request.register_hook('response', self.handle_401)
+        return request
 
     def __repr__(self):
-        return 'Digest: %' % self.username
+        return 'Digest: %s' % self.username
 
-    def handle_401(self):
-        pass
+    def authenticated(self, environ, username, password):
+        '''Called by the server to check if client is authenticated.'''
+        if username != self.username:
+            return False
+        o = self.options
+        qop = o.get('qop')
+        method = environ['REQUEST_METHOD']
+        uri = environ.get('PATH_INFO','')
+        ha1 = self.ha1(o['realm'], password)
+        ha2 = self.ha2(qop, method, uri)
+        if qop is None:
+            response = hexmd5(":".join((ha1, self.nonce, ha2)))
+        elif qop == 'auth' or qop == 'auth-int':
+            response = hexmd5(":".join((ha1, o['nonce'], o['nc'],
+                                        o['cnonce'], qop, ha2)))
+        else:
+            raise ValueError("qop value are wrong")
+        return o['response'] == response
+
+    def encode(self, method, uri):
+        '''Called by the client to encode Authentication header.'''
+        if not self.username or not self.password:
+            return
+        o = self.options
+        qop = o.get('qop')
+        realm = o.get('realm')
+        nonce = o['nonce']
+        entdig = None
+        p_parsed = urlparse(uri)
+        path = p_parsed.path
+        if p_parsed.query:
+            path += '?' + p_parsed.query
+        KD = lambda s, d: self.hex("%s:%s" % (s, d))
+        ha1 = self.ha1(realm, self.password)
+        ha2 = self.ha2(qop, method, path)
+        if qop == 'auth':
+            if nonce == self.last_nonce:
+                self.nonce_count += 1
+            else:
+                self.nonce_count = 1
+            ncvalue = '%08x' % self.nonce_count
+            s = str(self.nonce_count).encode('utf-8')
+            s += nonce.encode('utf-8')
+            s += time.ctime().encode('utf-8')
+            s += os.urandom(8)
+            cnonce = sha1(s).hexdigest()[:16]
+            noncebit = "%s:%s:%s:%s:%s" % (nonce, ncvalue, cnonce, qop, ha2)
+            respdig = KD(ha1, noncebit)
+        elif qop is None:
+            respdig = KD(ha1, "%s:%s" % (nonce, ha2))
+        else:
+            # XXX handle auth-int.
+            return
+        base = 'username="%s", realm="%s", nonce="%s", uri="%s", ' \
+               'response="%s"' % (self.username, realm, nonce, path, respdig)
+        opaque = o.get('opaque')
+        if opaque:
+            base += ', opaque="%s"' % opaque
+        if entdig:
+            base += ', digest="%s"' % entdig
+            base += ', algorithm="%s"' % self.algorithm
+        if qop:
+            base += ', qop=%s, nc=%s, cnonce="%s"' % (qop, ncvalue, cnonce)
+        return 'Digest %s' % (base)
+        
+    def handle_401(self, response):
+        """Takes the given response and tries digest-auth, if needed."""
+        request = response.request
+        num_401_calls = request.hooks['response'].count(self.handle_401)
+        s_auth = response.headers.get('www-authenticate', '')
+        if 'digest' in s_auth.lower() and num_401_calls < 2:
+            self.options = parse_dict_header(s_auth.replace('Digest ', ''))
+            request.headers['Authorization'] = self.encode(request.method,
+                                                           request.full_url)
+            response.again = True
+        return response
+    
+    def hex(self, x):
+        if self.algorithm == 'MD5':
+            return hexmd5(x)
+        elif self.algorithm == 'SHA1':
+            return hexsha1(x)
+        else:
+            raise valueError('Unknown algorithm %s' % self.algorithm)
+        
+    def ha1(self, realm, password):
+        return self.hex('%s:%s:%s' % (self.username, realm, password))
+    
+    def ha2(self, qop, method, uri, body=None):
+        if qop == "auth" or qop is None:
+            return self.hex("%s:%s" % (method, uri))
+        elif qop == "auth-int":
+            return self.hex("%s:%s:%s" % (method, uri, self.hex(body)))
+        raise ValueError()
 
 
+class WWWAuthenticate(object):
+    _require_quoting = frozenset(['domain', 'nonce', 'opaque', 'realm'])
+    
+    def __init__(self, type, **options):
+        self.type = type
+        self.options = options
+    
+    @classmethod
+    def basic(cls, realm='authentication required'):
+        """Clear the auth info and enable basic auth."""
+        return cls('basic', realm=realm)
+    
+    @classmethod    
+    def digest(cls, realm, nonce, qop=('auth',), opaque=None,
+               algorithm=None, stale=None):
+        options = {}
+        if stale:
+            options['stale'] = 'TRUE'
+        if opaque is not None:
+            options['opaque'] = opaque
+        if algorithm is not None:
+            options['algorithm'] = algorithm
+        return cls('digest', realm=realm, nonce=nonce,
+                   qop=', '.join(qop), **options)
+    
+    def __str__(self):
+        """Convert the stored values into a WWW-Authenticate header."""
+        return '%s %s' % (self.type.title(), ', '.join((
+            '%s=%s' % (key, quote_header_value(value,
+                                allow_token=key not in self._require_quoting))
+            for key, value in iteritems(self.options)
+        )))
+    __repr__ = __str__
+        
 ###############################################    UTILITIES, ENCODERS, PARSERS
 def get_environ_proxies():
     """Return a dict of environment proxies. From requests_."""
@@ -1794,74 +2153,44 @@ def encode_multipart_formdata(fields, boundary=None, charset=None):
         If not specified, then a random boundary will be generated using
         :func:`mimetools.choose_boundary`.
     """
-    charset = charset or Request.default_charset
+    charset = charset or DEFAULT_CHARSET
     body = BytesIO()
     if boundary is None:
         boundary = choose_boundary()
-
-    if isinstance(fields, dict):
-        fields = iteritems(fields)
-
-    for fieldname, value in fields:
+    for fieldname, value in mapping_iterator(fields):
         body.write(('--%s\r\n' % boundary).encode(charset))
-
         if isinstance(value, tuple):
             filename, data = value
             body.write(('Content-Disposition: form-data; name="%s"; '
                         'filename="%s"\r\n' % (fieldname, filename))\
-                       .encode())
+                       .encode(charset))
             body.write(('Content-Type: %s\r\n\r\n' %
                        (get_content_type(filename))).encode(charset))
         else:
             data = value
             body.write(('Content-Disposition: form-data; name="%s"\r\n'
-                        % (fieldname)).encode())
+                        % (fieldname)).encode(charset))
             body.write(b'Content-Type: text/plain\r\n\r\n')
-
         data = body.write(to_bytes(data))
         body.write(b'\r\n')
-
     body.write(('--%s--\r\n' % (boundary)).encode(charset))
     content_type = 'multipart/form-data; boundary=%s' % boundary
     return body.getvalue(), content_type
 
-def parse_dict_header(value):
-    """Parse lists of key, value pairs as described by RFC 2068 Section 2 and
-    convert them into a python dict:
+def hexmd5(x):
+    return md5(to_bytes(x)).hexdigest()
 
-    >>> d = parse_dict_header('foo="is a fish", bar="as well"')
-    >>> type(d) is dict
-    True
-    >>> sorted(d.items())
-    [('bar', 'as well'), ('foo', 'is a fish')]
-
-    If there is no value for a key it will be `None`:
-
-    >>> parse_dict_header('key_without_value')
-    {'key_without_value': None}
-
-    To create a header from the :class:`dict` again, use the
-    :func:`dump_header` function.
-
-    :param value: a string with a dict header.
-    :return: :class:`dict`
-    """
-    result = {}
-    for item in _parse_list_header(value):
-        if '=' not in item:
-            result[item] = None
-            continue
-        name, value = item.split('=', 1)
-        if value[:1] == value[-1:] == '"':
-            value = unquote_header_value(value[1:-1])
-        result[name] = value
-    return result
+def hexsha1(x):
+    return sha1(to_bytes(x)).hexdigest()
 
 def basic_auth_str(username, password):
     """Returns a Basic Auth string."""
     b64 = b64encode(('%s:%s' % (username, password)).encode('latin1'))
-    return 'Basic ' + b64.strip().decode('latin1')
+    return 'Basic %s' % native_str(b64.strip(), 'latin1')
+    
 
+digest_parameters=frozenset(('username', 'realm', 'nonce', 'uri', 'nc',
+                             'cnonce',  'response'))
 def parse_authorization_header(value, charset='utf-8'):
     """Parse an HTTP basic/digest authorization header transmitted by the web
 browser.  The return value is either `None` if the header was invalid or
@@ -1885,11 +2214,9 @@ not given, otherwise an :class:`Auth` object.
         return HTTPBasicAuth(username, password)
     elif auth_type == 'digest':
         auth_map = parse_dict_header(auth_info)
-        for key in 'username', 'realm', 'nonce', 'uri', 'nc', 'cnonce', \
-                   'response':
-            if not key in auth_map:
-                return
-        return HTTPDigestAuth(auth_map)
+        if not digest_parameters.difference(auth_map):
+            return HTTPDigestAuth(auth_map.pop('username'),
+                                  options=auth_map)
 
 def http_date(epoch_seconds=None):
     """

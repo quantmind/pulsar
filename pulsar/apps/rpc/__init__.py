@@ -26,16 +26,17 @@ To create a server first you create your rpc handler and
             return float(a) / float(b)
     
 
-Then you create the WSGI Middleware::
+Then you create the WSGI_ middleware::
 
-    def server(**params):
+    def server():
         root = Root().putSubHandler('calc',Calculator())
-        return wsgi.createServer(callable=rpc.RpcMiddleware(root), **params)
+        return wsgi.WSGIServer(callable=rpc.RpcMiddleware(root))
     
     if __name__ == '__main__':
         server().start()
     
 .. _JSON-RPC: http://www.jsonrpc.org/specification
+.. _WSGI: http://www.python.org/dev/peps/pep-3333/
 '''
 from .exceptions import *
 from .handlers import *

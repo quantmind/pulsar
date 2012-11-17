@@ -1,7 +1,11 @@
 '''tests the httpurl stand-alone script.'''
+import os
+import time
+
 from pulsar import send, make_async, safe_async, is_failure, HttpClient
 from pulsar.apps.test import unittest
 from pulsar.utils import httpurl
+from pulsar.utils.httpurl import to_bytes, urlencode
 
 BIN_HOST = 'httpbin.org'
 HTTPBIN_URL = 'http://' + BIN_HOST + '/'
@@ -17,14 +21,26 @@ class TestHeaders(unittest.TestCase):
         h['content-type'] = 'text/html'
         self.assertEqual(len(h), 1)
         
+    def testHeaderBytes(self):
+        h = httpurl.Headers(kind=None)
+        h['content-type'] = 'text/html'
+        h['server'] = 'bla'
+        self.assertTrue(repr(h).startswith('both '))
+        self.assertEqual(bytes(h), b'Server: bla\r\n'
+                                   b'Content-Type: text/html\r\n\r\n')
+        
     def testClientHeader(self):
         h = httpurl.Headers(kind='client')
         self.assertEqual(h.kind, 'client')
         self.assertEqual(len(h), 0)
         h['content-type'] = 'text/html'
+        self.assertEqual(h.get_all('content-type'), ['text/html'])
         self.assertEqual(len(h), 1)
         h['server'] = 'bla'
         self.assertEqual(len(h), 1)
+        del h['content-type']
+        self.assertEqual(len(h), 0)
+        self.assertEqual(h.get_all('content-type', []), [])
         
     def test_accept_content_type(self):
         accept = httpurl.accept_content_type()
@@ -33,8 +49,49 @@ class TestHeaders(unittest.TestCase):
                         'text/*, text/html, text/html;level=1, */*')
         self.assertTrue('text/html' in accept)
         self.assertTrue('text/plain' in accept)
-
-
+        
+        
+class TestAuth(unittest.TestCase):
+    
+    def testBase(self):
+        auth = httpurl.Auth()
+        self.assertRaises(NotImplementedError, auth, None)
+        self.assertFalse(auth.authenticated())
+        self.assertEqual(str(auth), repr(auth))
+        auth = httpurl.HTTPBasicAuth('bla', 'foo')
+        self.assertEqual(str(auth), 'Basic: bla')
+        
+    def test_WWWAuthenticate_basic(self):
+        auth = httpurl.WWWAuthenticate.basic('authenticate please')
+        self.assertEqual(auth.type, 'basic')
+        self.assertEqual(len(auth.options), 1)
+        self.assertEqual(str(auth), 'Basic realm="authenticate please"')
+        
+    def test_WWWAuthenticate_digest(self):
+        H = httpurl.hexmd5
+        nonce = H(to_bytes('%d' % time.time()) + os.urandom(10))
+        auth = httpurl.WWWAuthenticate.digest('www.mydomain.org', nonce,
+                                    opaque=H(os.urandom(10)),
+                                    qop=('auth', 'auth-int'))
+        self.assertEqual(auth.options['qop'], 'auth, auth-int')
+        
+    def testDigest(self):
+        auth = httpurl.HTTPDigestAuth('bla', options={'realm': 'fake realm'})
+        self.assertEqual(auth.type, 'digest')
+        self.assertEqual(auth.username, 'bla')
+        self.assertEqual(auth.password, None)
+        self.assertEqual(auth.options['realm'], 'fake realm')
+        
+    def test_parse_authorization_header(self):
+        parse = httpurl.parse_authorization_header
+        self.assertEqual(parse(''), None)
+        self.assertEqual(parse('csdcds'), None)
+        self.assertEqual(parse('csdcds cbsdjchbjsc'), None)
+        self.assertEqual(parse('basic cbsdjcbsjchbsd'), None)
+        auths = httpurl.basic_auth_str('pippo', 'pluto')
+        self.assertTrue(parse(auths).authenticated({}, 'pippo', 'pluto'))
+    
+    
 class TestTools(unittest.TestCase):
     
     def test_to_bytes(self):
@@ -50,6 +107,12 @@ class TestTools(unittest.TestCase):
         s = 'ciao'
         s2 = httpurl.native_str(s)
         self.assertEqual(id(s), id(s2))
+        
+    def test_force_native_str(self):
+        self.assertEqual(httpurl.force_native_str('ciao'), 'ciao')
+        self.assertEqual(httpurl.force_native_str(b'ciao'), 'ciao')
+        self.assertEqual(httpurl.force_native_str(1), '1')
+        self.assertEqual(httpurl.force_native_str((1, 'b')), str((1, 'b')))
         
     def test_quote_unreserved(self):
         '''Test a string of unreserved characters'''
@@ -78,11 +141,23 @@ class TestTools(unittest.TestCase):
         self.assertEqual(r('/bla/////////foo//////////'), '/bla/foo/')
         self.assertEqual(r('/bla/foo/'), '/bla/foo/')
         
+    def test_appendslash(self):
+        self.assertEqual(httpurl.appendslash('bla'), 'bla/')
+        self.assertEqual(httpurl.appendslash('bla/'), 'bla/')
+        
     def test_capfirst(self):
         c = httpurl.capfirst
         self.assertEqual(c('blA'), 'Bla')
         self.assertEqual(c(''), '')
         self.assertEqual(c('bOlA'), 'Bola')
+        
+    def test_encode_multipart_formdata(self):
+        data, ct = httpurl.encode_multipart_formdata([('bla', 'foo'),
+                                                ('foo', ('pippo', 'pluto'))])
+        idx = data.find(b'\r\n')
+        boundary = data[2:idx].decode('utf-8')
+        self.assertEqual(ct, 'multipart/form-data; boundary=%s' % boundary)
+
 
 def request_callback(result):
     return result
@@ -146,6 +221,9 @@ class TestHttpClient(unittest.TestCase):
         r = make_async(http.get(self.httpbin()))
         yield r
         r = r.result
+        self.assertEqual(str(r), '200 OK')
+        self.assertEqual(repr(r), 'HttpResponse(200 OK)')
+        self.assertEqual(r.client, http)
         self.assertEqual(r.status_code, 200)
         self.assertEqual(r.response, 'OK')
         self.assertTrue(r.content)
@@ -223,6 +301,19 @@ class TestHttpClient(unittest.TestCase):
         self.assertTrue(result['args'])
         self.assertEqual(result['args']['numero'],['1','2'])
         
+    def test_patch(self):
+        data = (('bla', 'foo'), ('unz', 'whatz'),
+                ('numero', '1'), ('numero', '2'))
+        http = self.client()
+        r = request(http.patch(self.httpbin('patch'), data=data))
+        yield r
+        r = r.result
+        self.assertEqual(r.status_code, 200)
+        self.assertEqual(r.response, 'OK')
+        result = r.content_json()
+        self.assertTrue(result['args'])
+        self.assertEqual(result['args']['numero'],['1','2'])
+        
     def test_delete(self):
         data = (('bla', 'foo'), ('unz', 'whatz'),
                 ('numero', '1'), ('numero', '2'))
@@ -267,9 +358,9 @@ class TestHttpClient(unittest.TestCase):
         parser = r.parser
         self.assertTrue(parser.is_chunked())
         
-    def testChunkedResponse(self):
+    def testLargeResponse(self):
         http = self.client()
-        r = make_async(http.get(self.httpbin('getsize/132000')))
+        r = make_async(http.get(self.httpbin('getsize/600000')))
         yield r
         r = r.result
         self.assertEqual(r.status_code, 200)
@@ -312,6 +403,54 @@ class TestHttpClient(unittest.TestCase):
         self.assertEqual(httpurl.parse_cookie('invalid;key=true'),
                          {'key':'true'})
         
+    def test_stream_response(self):
+        http = self.client()
+        r = make_async(http.get(self.httpbin('stream/3000/20')))
+        yield r
+        r = r.result
+        self.assertEqual(r.status_code, 200)
+        
+    def test_expect(self):
+        http = self.client()
+        data = (('bla', 'foo'), ('unz', 'whatz'),
+                ('numero', '1'), ('numero', '2'))
+        bdata = urlencode(data)
+        r = make_async(http.post(self.httpbin('post'), data=b'',
+                                 headers=[('expect','100-continue'),
+                                          ('Content-length', str(len(bdata)))]))
+        yield r
+        response = r.result
+        self.assertEqual(response.status_code, 100)
+        r = make_async(response.write(bdata))
+        yield r
+        response = r.result
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.connection, None)
+        
+    def test_basic_authentication(self):
+        http = self.client()
+        r = make_async(http.get(self.httpbin('basic-auth/bla/foo')))
+        yield r
+        r = r.result
+        self.assertEqual(r.status_code, 401)
+        http.add_basic_authentication('bla', 'foo')
+        r = make_async(http.get(self.httpbin('basic-auth/bla/foo')))
+        yield r
+        r = r.result
+        self.assertEqual(r.status_code, 200)
+        
+    def test_digest_authentication(self):
+        http = self.client()
+        r = make_async(http.get(self.httpbin('digest-auth/auth/bla/foo')))
+        yield r
+        r = r.result
+        self.assertEqual(r.status_code, 401)
+        http.add_digest_authentication('bla', 'foo')
+        r = make_async(http.get(self.httpbin('digest-auth/auth/bla/foo')))
+        yield r
+        r = r.result
+        self.assertEqual(r.status_code, 200)
+        
     #### TO INCLUDE
     def __test_far_expiration(self):
         "Cookie will expire when an distant expiration time is provided"
@@ -337,9 +476,3 @@ class TestHttpClient(unittest.TestCase):
         self.assertTrue('; httponly' in str(example_cookie))
         self.assertTrue(example_cookie['httponly'])
         
-
-class TestHttpClientWithProxy(TestHttpClient):
-    app = None
-    with_proxy = True
-    proxy_app = None
-    server_concurrency = 'process'
