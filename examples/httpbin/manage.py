@@ -269,7 +269,10 @@ class HttpBin(LocalMixin):
     @route('status','GET', 'Returns given HTTP Status code',
            params=[('status', 418)])
     def request_status(self, environ, bits):
-        number = int(bits[0]) if len(bits) == 1 else 404
+        try:
+            number = int(bits[0]) if len(bits) == 1 else 404
+        except:
+            raise HttpException(status=404)
         raise HttpException(status=number)
 
     @route('response-headers', title='Returns response headers')
