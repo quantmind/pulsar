@@ -1,4 +1,4 @@
-Version 0.4 - Development
+Version 0.4 - 2012-Nov-19
 ============================
 * Overall refactoring of API and therefore incompatible with previous versions.
 * Development status set to ``Beta``.

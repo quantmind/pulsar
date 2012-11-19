@@ -1385,7 +1385,7 @@ class HttpRequest(HttpBase):
 .. attribute:: type
 
     The scheme of the of the URI requested. One of http, https
-    '''
+'''
     response_class = HttpResponse
 
     _tunnel_host = None
