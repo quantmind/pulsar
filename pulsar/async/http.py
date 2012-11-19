@@ -24,9 +24,7 @@ class HttpConnection(httpurl.HttpConnection):
     def closed(self):
         if self.timeout == 0:
             if not self.sock.closed:
-                sock = self.sock.sock.sock
-                if sock:
-                    return httpurl.is_closed(sock)
+                return httpurl.is_closed(self.sock.sock)
             else:
                 return True
         else:
