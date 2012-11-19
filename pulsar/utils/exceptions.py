@@ -89,8 +89,9 @@ class HttpException(Exception):
 
 class HttpRedirect(HttpException):
     status = 302
-    def __init__(self, location):
-        self.location = location
+    def __init__(self, location, status=None):
+        super(HttpRedirect, self).__init__(status=status or self.status,
+              headers=[('location', location)])
 
 
 class PermissionDenied(HttpException):

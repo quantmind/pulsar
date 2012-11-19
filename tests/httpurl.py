@@ -231,7 +231,7 @@ class TestHttpClient(unittest.TestCase):
         
     def test_http_200_get_data(self):
         http = self.client()
-        r = make_async(http.get(self.httpbin('get'), data={'bla':'foo'}))
+        r = make_async(http.get(self.httpbin('get',''), data={'bla':'foo'}))
         yield r
         r = r.result
         self.assertEqual(r.status_code, 200)
@@ -239,7 +239,7 @@ class TestHttpClient(unittest.TestCase):
         result = r.content_json()
         self.assertEqual(result['args'], {'bla':['foo']})
         self.assertEqual(r.url,
-                         self.httpbin(httpurl.iri_to_uri('get',{'bla':'foo'})))
+                self.httpbin(httpurl.iri_to_uri('get/',{'bla':'foo'})))
         
     def test_http_200_gzip(self):
         http = self.client()
@@ -329,7 +329,7 @@ class TestHttpClient(unittest.TestCase):
         
     def testRedirect(self):
         http = self.client()
-        r = make_async(http.get(self.httpbin('redirect','1')))
+        r = make_async(http.get(self.httpbin('redirect', '1')))
         yield r
         r = r.result
         self.assertEqual(r.status_code, 200)
@@ -337,10 +337,10 @@ class TestHttpClient(unittest.TestCase):
         self.assertEqual(len(history), 1)
         self.assertTrue(history[0].url.endswith('/redirect/1'))
         
-    def testRedirect2(self):
+    def testTooManyRedirects(self):
         http = self.client()
         r = safe_async(http.get, (self.httpbin('redirect', '5'),),
-                                {'max_redirects':2})
+                                {'max_redirects': 2})
         # do this so that the test suite does not fail on the test
         yield r.addBoth(lambda f: [f])
         r = r.result[0]

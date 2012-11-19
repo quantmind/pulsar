@@ -1,9 +1,9 @@
 '''Tests the tools and utilities in pulsar.utils.'''
 import os
 
-from pulsar import system, get_actor
+from pulsar import system, get_actor, spawn, send
 from pulsar.utils.tools import checkarity, Pidfile, nice_number
-from pulsar.apps.test import unittest
+from pulsar.apps.test import unittest, ActorTestMixin
 
 def f0(a, b):
     pass
@@ -85,15 +85,32 @@ class TestArityCheck(unittest.TestCase):
         self.assertEqual(checkarity(f2,(),{'a':3,'c':5,'d':6}),None)
 
 
-@unittest.skipUnless(system.platform.is_posix, 'Only of posix platforms')
-class TestPidfile(unittest.TestCase):
+class TestPidfile(ActorTestMixin, unittest.TestCase):
+    concurrency = 'process'
     
     def testCreate(self):
+        yield self.spawn()
+        proxy = self.a
+        r = send(proxy, 'info')
+        yield r
+        result = r.result['actor']
+        self.assertTrue(result['is_process'])
+        pid = result['process_id']
+        #
         p = Pidfile()
         self.assertEqual(p.fname, None)
         self.assertEqual(p.pid, None)
-        pid = os.getpid()
         p.create(pid)
+        self.assertTrue(p.fname)
+        self.assertEqual(p.pid, pid)
+        p1 = Pidfile(p.fname)
+        self.assertRaises(RuntimeError, p1.create, p.pid+1)
+        #
+        p1 = Pidfile('bla/ksdcskcbnskcdbskcbksdjcb')
+        self.assertRaises(RuntimeError, p1.create, p.pid+1)
+        p1.unlink()
+        p.unlink()
+        self.assertFalse(os.path.exists(p.fname))
         
     
 class TestSystemInfo(unittest.TestCase):

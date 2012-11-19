@@ -1,8 +1,10 @@
 '''Deferred and asynchronous tools.'''
 import sys
+from functools import reduce
 
 from pulsar import AlreadyCalledError, Deferred, is_async,\
-                     make_async, IOLoop, is_failure, MultiDeferred
+                     make_async, IOLoop, is_failure, MultiDeferred,\
+                     maybe_async
 from pulsar.apps.test import unittest
 
 
@@ -189,6 +191,30 @@ class TestMultiDeferred(unittest.TestCase):
         d2.callback('second')
         self.assertTrue(d.called)
         self.assertEqual(d.result,['first','second'])
+        
+    def testNested(self):
+        d = MultiDeferred()
+        # add a generator
+        d.append((a for a in range(1,11)))
+        r = maybe_async(d.lock())
+        self.assertTrue(d.locked)
+        self.assertFalse(is_async(r))
+        self.assertEqual(r, [[1,2,3,4,5,6,7,8,9,10]])
+        
+    def testNestedhandle(self):
+        handle = lambda value : reduce(lambda x,y: x+y, value)\
+                     if isinstance(value, list) else value 
+        d = MultiDeferred(handle_value=handle)
+        d.append((a for a in range(1,11)))
+        r = maybe_async(d.lock())
+        self.assertFalse(is_async(r))
+        self.assertEqual(r, [55])
+        handle = lambda value: 'c'*value
+        d = MultiDeferred(handle_value=handle)
+        d.append((a for a in range(1,11)))
+        r = maybe_async(d.lock())
+        self.assertFalse(is_async(r))
+        self.assertTrue(is_failure(r[0]))
     
         
         

@@ -13,7 +13,6 @@ __all__ = ['IStream',
            'TCP6Socket',
            'wrap_socket',
            'get_socket_timeout',
-           'flush_socket',
            'create_socket',
            'create_client_socket',
            'server_client_sockets',
@@ -49,16 +48,9 @@ def create_connection(address, blocking=0):
     s.sock.setblocking(blocking)
     return s
 
-def flush_socket(sock, length=None):
-    length = length or io.DEFAULT_BUFFER_SIZE
-    client, addr = sock.accept()
-    if client:
-        r = client.recv(length)
-        while len(r) > length:
-            r = client.recv(length)
-
 def create_socket(address, log=None, backlog=2048,
-                  bound=False, retry=5, retry_lag=2):
+                  bound=False, retry=5, retry_lag=2,
+                  retry_step=2, interval_max=30):
     """Create a new server :class:`Socket` for the given address.
 If the address is a tuple, a TCP socket is created.
 If it is a string, a Unix socket is created.
@@ -75,21 +67,20 @@ Otherwise a TypeError is raised.
 :rtype: Instance of :class:`Socket`
     """
     sock_type, address = create_socket_address(address)
+    log = log or logger
+    lag = retry_lag
     for i in range(retry):
         try:
             return sock_type(address, backlog=backlog, bound=bound)
         except socket.error as e:
             if e.errno == errno.EADDRINUSE:
-                if log:
-                    log.error("Connection in use: %s" % str(address))
-            elif e.errno == errno.EADDRNOTAVAIL:
-                if log:
-                    log.error("Invalid address: %s" % str(address))
+                log.error("Connection in use: %s", str(address))
+            elif e.errno in (errno.EADDRNOTAVAIL, 11004):
                 raise RuntimeError("Invalid address: %s" % str(address))
             if i < retry:
-                if log:
-                    log.error("Retrying in {0} seconds.".format(retry_lag))
-                time.sleep(retry_lag)
+                log.error("Retrying in %s seconds." % lag)
+                time.sleep(lag)
+                lag = min(lag + retry_step, interval_max)
     raise RuntimeError("Can't connect to %s. Tried %s times." %
                        (str(address), retry))
 
@@ -243,8 +234,8 @@ higher level tools for creating and reusing sockets already created.'''
             if hasattr(socket, 'fromfd'):
                 sock = socket.fromfd(fd, self.FAMILY, socket.SOCK_STREAM)
             else:
-                raise ValueError('Cannot create socket from file deascriptor.\
- Not implemented in your system')
+                raise ValueError('Cannot create socket from file descriptor.'\
+                                 ' Not implemented in your system')
         if self.is_server:
             self.sock = self.set_options(sock, address, bound)
         else:
@@ -309,10 +300,7 @@ not data was sent. In this case it also raises a socket error.'''
     def __repr__(self):
         s = str(self)
         v = "<socket %d>" % self.sock.fileno()
-        if s != v:
-            return '{0} {1}'.format(v,s)
-        else:
-            return s
+        return s if s == v else '%s %s' % (v, s)
 
     def __getattr__(self, name):
         return getattr(self.sock, name)
@@ -449,7 +437,7 @@ if os.name == 'posix':
 
         return sock_type, addr
 
-else:
+else:   #pragma    nocover
     def get_maxfd():
         return MAXFD
 

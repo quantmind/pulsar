@@ -118,6 +118,10 @@ action ``notify`` with parameter ``"hello there!"``.
         if self.address:
             return get_actor().proxy_mailbox(self.address)
         
+    @property
+    def proxy(self):
+        return self
+    
     def receive_from(self, sender, command, *args, **kwargs):
         '''Send an :class:`ActorMessage` to the underlying actor
 (the receiver). This is the low level function call for
@@ -198,7 +202,7 @@ process where they have been created.
         
     @property
     def notified(self):
-        return self.info['last_notified']
+        return self.info.get('last_notified')
     
     @property
     def pid(self):

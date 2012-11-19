@@ -2,7 +2,7 @@
 try:
     from ._pulsar import *
     hasextensions = True
-except ImportError:
+except ImportError: #pragma    nocover
     # Try Global
     try:
         from _pulsar import *

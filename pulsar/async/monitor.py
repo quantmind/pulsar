@@ -59,7 +59,8 @@ during its life time.
     def ready(self):
         return True
 
-    def spawn(self, actorcls=None, aid=None, commands_set=None, **kwargs):
+    def spawn(self, actorcls=None, aid=None, commands_set=None,
+              linked_actors=None, **kwargs):
         '''Create a new :class:`Actor` and return its
 :class:`ActorProxyMonitor`.'''
         actorcls = actorcls or self.actor_class
@@ -67,6 +68,9 @@ during its life time.
         arbiter.actor_age += 1
         kwargs['age'] = arbiter.actor_age
         kwargs['ppid'] = arbiter.ppid
+        if linked_actors:
+            kwargs['linked_actors'] =\
+                dict(((aid, p.proxy) for aid, p in iteritems(linked_actors)))
         return self._spawn_actor(self, actorcls, aid, commands_set, **kwargs)
 
     def actorparams(self):

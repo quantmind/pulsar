@@ -1,7 +1,5 @@
 .. _httpclient
 
-.. module:: pulsar.utils.httpurl
-
 ==================
 HTTP
 ==================

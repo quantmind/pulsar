@@ -7,7 +7,8 @@ from functools import partial
 import pulsar
 from pulsar import maybe_async, is_async, is_failure, log_failure, NOT_DONE
 from pulsar.utils.httpurl import Headers, SimpleCookie, set_cookie, responses,\
-                                    has_empty_content, string_type, ispy3k
+                                 has_empty_content, string_type, ispy3k,\
+                                 to_bytes, REDIRECT_CODES
 
 from .middleware import is_streamed
 
@@ -142,7 +143,10 @@ client.
     def _get_content_type(self):
         return self.headers.get('content-type')
     def _set_content_type(self, typ):
-        self.headers['content-type'] = typ
+        if typ:
+            self.headers['content-type'] = typ
+        else:
+            self.headers.pop('content-type', None)
     content_type = property(_get_content_type, _set_content_type)
 
     def default_content(self):
@@ -182,7 +186,7 @@ By default it returns an empty tuple. Overrides if you need to.'''
         return self.status
 
     def __repr__(self):
-        return '{0}({1})'.format(self.__class__.__name__,self)
+        return '%s(%s)' % (self.__class__.__name__, self)
 
     @property
     def is_streamed(self):
@@ -294,31 +298,34 @@ def wsgi_error_msg(response, msg):
     else:
         return msg
     
-def handle_wsgi_error(environ, response, trace=None):
+def handle_wsgi_error(environ, trace=None):
     '''The default handler for errors while serving an Http requests.
 
 :parameter connection: The :class:`HttpConnection` handling the request.
-:parameter response: an instance of :class:`WsgiResponse`.
 :parameter e: the exception instance.
-:return: bytes to send as response
+:return: a :class:`WsgiResponse`
 '''
+    response = WsgiResponse(content_type=environ.get('CONTENT_TYPE'),
+                            environ=environ)
     if not trace:
         trace = sys.exc_info()
     error = trace[1]
+    content = None
     response.status_code = getattr(error, 'status', 500)
+    response.headers.update(getattr(error, 'headers', None) or ())
     path = ' @ path %s' % environ.get('PATH_INFO','/')
     if response.status_code == 500:
         default_logger.critical('Unhandled exception during WSGI response %s',
                                 path, exc_info=trace)
     else:
-        default_logger.warn('WSGI %s status code %s',
+        default_logger.info('WSGI %s status code %s',
                             response.status_code, path)
-    if has_empty_content(response.status_code):
-        content = ''
+    if has_empty_content(response.status_code) or\
+       response.status_code in REDIRECT_CODES:
+        content = ()
         response.content_type = None
     else:
         renderer = environ.get('wsgi_error_handler')
-        content = None
         if renderer:
             try:
                 content = renderer(environ, response, trace)
@@ -329,24 +336,26 @@ def handle_wsgi_error(environ, response, trace=None):
                 default_logger.critical('Error while rendering error',
                                         exc_info=True)
                 content = None
-        if content is None:
-            msg = error_messages.get(response.status_code) or response.response
-            if response.content_type == 'text/html':
-                content = textwrap.dedent("""\
-                <!DOCTYPE html>
-                <html>
-                  <head>
-                    <title>{0[reason]}</title>
-                  </head>
-                  <body>
-                    <h1>{0[reason]}</h1>
-                    {0[msg]}
-                    <h3>{0[version]}</h3>
-                  </body>
-                </html>
-                """).format({"reason": response.status, "msg": msg,
-                             "version": pulsar.SERVER_SOFTWARE})
-            else:
-                content = wsgi_error_msg(response, msg)
-    response.content = content.encode(response.encoding or 'utf-8', 'replace')
+    if content is None:
+        msg = error_messages.get(response.status_code) or response.response
+        if response.content_type == 'text/html':
+            content = textwrap.dedent("""\
+            <!DOCTYPE html>
+            <html>
+              <head>
+                <title>{0[reason]}</title>
+              </head>
+              <body>
+                <h1>{0[reason]}</h1>
+                {0[msg]}
+                <h3>{0[version]}</h3>
+              </body>
+            </html>
+            """).format({"reason": response.status, "msg": msg,
+                         "version": pulsar.SERVER_SOFTWARE})
+        else:
+            content = wsgi_error_msg(response, msg)
+    if not isinstance(content, (tuple, list)):
+        content = to_bytes(content, response.encoding or 'utf-8', 'replace')
+    response.content = content
     return response

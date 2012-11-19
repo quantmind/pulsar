@@ -10,7 +10,9 @@ from pulsar.utils.httpurl import BytesIO, parse_authorization_header,\
 re_accepts_gzip = re.compile(r'\bgzip\b')
 
 
-__all__ = ['AccessControl', 'GZipMiddleware',
+__all__ = ['clean_path_middleware',
+           'AccessControl',
+           'GZipMiddleware',
            'cookies_middleware',
            'authorization_middleware',
            'is_streamed']
