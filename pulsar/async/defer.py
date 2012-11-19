@@ -91,14 +91,6 @@ def is_stack_trace(trace):
                  (trace[2] is None and isinstance(trace[1],trace[0]))
     return False
 
-def update_failure(f):
-    '''If *f* is an instance of :class:`Failure` add the current
- ``sys.exc_info`` otherwuise return a new :class:`Failure` with current
- ``sys.exc_info``.'''
-    if not isinstance(f,Failure):
-        f = Failure()
-    return f.append(sys.exc_info())
-
 def is_failure(value):
     return isinstance(value, Failure)
 
@@ -610,12 +602,12 @@ both ``list`` and ``dict`` types.'''
         if self._locked:
             raise RuntimeError(self.__class__.__name__ +\
                                ' cannot add a dependent once locked.')
+        if is_generalised_generator(value):
+            value = list(value)
         value = maybe_async(value)
         if is_async(value):
             self._add_deferred(key, value)
         else:
-            if is_generalised_generator(value):
-                value = list(value)
             # if an instance of an iterable create multiple objects
             if isinstance(value, (dict, list, tuple, set, frozenset)):
                 value = self._make(value)

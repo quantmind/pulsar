@@ -323,20 +323,23 @@ def is_closed(sock):    #pragma nocover
     """Check if socket is connected."""
     if not sock:
         return False
-    if not poll:
-        if not select:
-            return False
-        try:
-            return bool(select([sock], [], [], 0.0)[0])
-        except socket.error:
-            return True
-    # This version is better on platforms that support it.
-    p = poll()
-    p.register(sock, POLLIN)
-    for (fno, ev) in p.poll(0.0):
-        if fno == sock.fileno():
-            # Either data is buffered (bad), or the connection is dropped.
-            return True
+    try:
+        if not poll:
+            if not select:
+                return False
+            try:
+                return bool(select([sock], [], [], 0.0)[0])
+            except socket.error:
+                return True
+        # This version is better on platforms that support it.
+        p = poll()
+        p.register(sock, POLLIN)
+        for (fno, ev) in p.poll(0.0):
+            if fno == sock.fileno():
+                # Either data is buffered (bad), or the connection is dropped.
+                return True
+    except:
+        return True
 
 ####################################################    REQUEST METHODS
 ENCODE_URL_METHODS = frozenset(['DELETE', 'GET', 'HEAD', 'OPTIONS'])

@@ -14,13 +14,15 @@ class Pidfile(object):
         self.fname = fname
         self.pid = None
         
-    def create(self, pid):
-        oldpid = self.validate()
+    def create(self, pid=None):
+        pid = pid or os.getpid()
+        oldpid = self.read()
         if oldpid:
-            if oldpid == os.getpid():
+            if oldpid == pid:
                 return
             raise RuntimeError("Already running on PID %s " \
-                "(or pid file '%s' is stale)" % (os.getpid(), self.fname))
+                               "(or pid file '%s' is stale)" %\
+                                (oldpid, self.fname))
         self.pid = pid
         # Write pidfile
         if self.fname:
@@ -49,25 +51,15 @@ class Pidfile(object):
         except:
             pass
        
-    def validate(self):
+    def read(self):
         """ Validate pidfile and make it stale if needed"""
         if not self.fname:
             return
         try:
             with open(self.fname, "r") as f:
                 wpid = int(f.read() or 0)
-
                 if wpid <= 0:
                     return
-
-                try:
-                    os.kill(wpid, 0)
-                    return wpid
-                except OSError as e:
-                    if e[0] == errno.ESRCH:
-                        return
-                    raise
-        except IOError as e:
-            if e[0] == errno.ENOENT:
-                return
-            raise
+                return wpid
+        except IOError:
+            return

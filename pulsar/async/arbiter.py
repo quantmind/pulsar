@@ -226,7 +226,7 @@ arbiter tasks at every iteration in the event loop.'''
     def manage_actor(self, actor):
         '''If an actor failed to notify itself to the arbiter for more than
 the timeout. Stop the arbiter.'''
-        if self.running():
+        if self.running() and actor.notified:
             gap = time() - actor.notified
             if gap > actor.timeout:
                 if actor.stopping_loops < self.STOPPING_LOOPS:
