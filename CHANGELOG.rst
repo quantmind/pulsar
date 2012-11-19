@@ -1,4 +1,4 @@
-Version 0.4 - Development
+Version 0.4 - 2012-Nov-19
 ============================
 * Overall refactoring of API and therefore incompatible with previous versions.
 * Development status set to ``Beta``.
@@ -15,7 +15,7 @@ Version 0.4 - Development
   a dictionary.
 * Socket and WSGI :class:`pulsar.Application` are built on top of the new
   :class:`pulsar.AsyncSocketServer` framework class.
-* **303 regression tests**, **82% coverage**.
+* **303 regression tests**, **83% coverage**.
 
 Version 0.3 - 2012-May-03
 ============================

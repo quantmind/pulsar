@@ -297,7 +297,7 @@ parameters *params*. It return a :class:`ActorMessage`.'''
         else:
             tg = target
         if not tg:
-            raise ValueError('Cannot send message to %s'.format(target))
+            raise ValueError('Cannot send message to %s' % target)
         if isinstance(tg, ActorProxy):
             return tg.receive_from(self, action, *args, **params)
         else:
