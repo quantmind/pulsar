@@ -12,7 +12,7 @@ from pulsar import lib, make_async, is_async, AsyncSocketServer, Deferred,\
 from pulsar.utils.httpurl import Headers, is_string, unquote,\
                                     has_empty_content, to_bytes,\
                                     host_and_port_default, mapping_iterator,\
-                                    Headers
+                                    Headers, REDIRECT_CODES
 from pulsar.utils import event
 
 from .wsgi import WsgiResponse, handle_wsgi_error
@@ -215,53 +215,54 @@ invocation of the application.
         if data:
             self.connection.write(data)
 
-    def __iter__(self):
+    def _generate(self, response):
         MAX_CHUNK = self.MAX_CHUNK
+        for b in response:
+            head = self.send_headers(force=b)
+            if head is not None:
+                yield head
+            if b:
+                if self.chunked:
+                    while len(b) >= MAX_CHUNK:
+                        chunk, b = b[:MAX_CHUNK], b[MAX_CHUNK:]
+                        yield chunk_encoding(chunk)
+                    if b:
+                        yield chunk_encoding(b)
+                else:
+                    yield b
+            else:
+                yield b''
+            
+    def __iter__(self):
         conn = self.connection
+        keep_alive = self.keep_alive
         self.environ['pulsar.connection'] = self.connection
         try:
-            for b in conn.wsgi_handler(self.environ, self.start_response):
-                head = self.send_headers(force=b)
-                if head is not None:
-                    yield head
-                if b:
-                    if self.chunked:
-                        while len(b) >= MAX_CHUNK:
-                            chunk, b = b[:MAX_CHUNK], b[MAX_CHUNK:]
-                            yield chunk_encoding(chunk)
-                        if b:
-                            yield chunk_encoding(b)
-                    else:
-                        yield b
-                else:
-                    yield b''
-            keep_alive = self.keep_alive
+            resp = conn.wsgi_handler(self.environ, self.start_response)
+            for b in self._generate(resp):
+                yield b
         except Exception as e:
-            keep_alive = False
             exc_info = sys.exc_info()
             if self._headers_sent:
+                keep_alive = False
                 conn.log.critical('Headers already sent', exc_info=exc_info)
                 yield b'CRITICAL SERVER ERROR. Please Contact the administrator'
             else:
                 # Create the error response
-                resp = WsgiResponse(
-                            content_type=self.environ.get('CONTENT_TYPE'),
-                            environ=self.environ)
-                data = handle_wsgi_error(self.environ, resp, exc_info)
-                for b in data(self.environ, self.start_response,
-                              exc_info=exc_info):
-                    head = self.send_headers(force=True)
-                    if head is not None:
-                        yield head
+                resp = handle_wsgi_error(self.environ, exc_info)
+                keep_alive = keep_alive and resp.status_code in REDIRECT_CODES
+                resp.headers['connection'] =\
+                    "keep-alive" if keep_alive else "close"
+                resp(self.environ, self.start_response, exc_info)
+                for b in self._generate(resp):
                     yield b
-        else:
-            # make sure we send the headers
-            head = self.send_headers(force=True)
-            if head is not None:
-                yield head
-            if self.chunked:
-                # Last chunk
-                yield chunk_encoding(b'')
+        # make sure we send the headers
+        head = self.send_headers(force=True)
+        if head is not None:
+            yield head
+        if self.chunked:
+            # Last chunk
+            yield chunk_encoding(b'')
         # close connection if required
         if not keep_alive:
             self.connection.close()

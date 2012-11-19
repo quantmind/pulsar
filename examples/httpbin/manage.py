@@ -13,8 +13,9 @@ try:
     import pulsar
 except ImportError: #pragma    nocover
     sys.path.append('../../')
-
-from pulsar import HttpException, LocalMixin, local_property, version
+    import pulsar
+    
+from pulsar import HttpRedirect, LocalMixin, local_property, version
 from pulsar.apps import wsgi, ws
 from pulsar.apps.wsgi.server import HttpResponse
 from pulsar.utils.structures import OrderedDict
@@ -58,6 +59,10 @@ def info_data(environ, **params):
     data = {'method': method, 'headers': headers, 'args': args}
     data.update(params)
     return jsonbytes(data)
+
+
+class HttpException(pulsar.HttpException):
+    pass
 
 
 class route(object):
@@ -120,9 +125,6 @@ class HttpBin(LocalMixin):
             path = environ.get('PATH_INFO')
             if not path or path == '/':
                 return self.home(environ)
-            elif '//' in path:
-                path = re.sub('/+', '/', path)
-                return self.redirect(path)
             else:
                 path = path[1:]
                 leaf = True
@@ -158,7 +160,7 @@ class HttpBin(LocalMixin):
             return file.read()
 
     def redirect(self, location='/'):
-        return wsgi.WsgiResponse(302, response_headers=(('location',location),))
+        raise HttpRedirect(location)
 
     def response(self, data, status=200, content_type=None, headers=None):
         content_type = content_type or 'application/json'
@@ -232,7 +234,7 @@ class HttpBin(LocalMixin):
             num = 1
         num -= 1
         if num > 0:
-            return self.redirect('/redirect/%s'%num)
+            return self.redirect('/redirect/%s' % num)
         else:
             return self.redirect('/get')
 
@@ -258,7 +260,8 @@ class HttpBin(LocalMixin):
             key = bits[0]
             value = bits[1]
             if key and value:
-                response = self.redirect('/cookies')
+                response = wsgi.WsgiResponse(302,
+                                    response_headers=[('location','/cookies')])
                 response.set_cookie(key, value=value)
                 return response
         else:
@@ -358,7 +361,8 @@ class handle(ws.WS):
 
 def server(description=None, **kwargs):
     description = description or 'Pulsar HttpBin'
-    app = wsgi.WsgiHandler(middleware=(wsgi.cookies_middleware,
+    app = wsgi.WsgiHandler(middleware=(wsgi.clean_path_middleware,
+                                       wsgi.cookies_middleware,
                                        wsgi.authorization_middleware,
                                        HttpBin(),))
     return wsgi.WSGIServer(app, description=description, **kwargs)

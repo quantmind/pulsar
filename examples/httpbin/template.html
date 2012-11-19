@@ -16,10 +16,14 @@ body {
     padding: 10px;
     line-height: 24px;
 }
-a, a:visited {
+h1 a, h1 a:visited {
+    text-decoration: none;
     color: #003366;
 }
-a:hover {
+a, a:visited {
+    color: #008AE6;
+}
+h1 a:hover, a:hover {
     color: #AD5700;
 }
 ul {
@@ -30,7 +34,7 @@ ul {
 </style>
 </head>
 <body>
-<h1>Pulsar httpbin</h1>
+<h1><a href='/'>Pulsar httpbin</a></h1>
 <p>An HTTP server for testing clients.
 Powered by <a href='https://github.com/quantmind/pulsar' target='_blank'>pulsar %s</a>.</p>
 %s

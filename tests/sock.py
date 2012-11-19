@@ -2,7 +2,8 @@ import socket
 import time
 
 import pulsar
-from pulsar.apps.test import unittest
+from pulsar.apps.test import unittest, mock
+from pulsar.utils.sock import create_tcp_socket_address
 
 
 class TestSockUtils(unittest.TestCase):
@@ -38,4 +39,21 @@ class TestSockUtils(unittest.TestCase):
         self.assertTrue(server_connection.closed)
         time.sleep(0.2)
         self.assertEqual(client.write(b'ciao'), 4)
+        
+    def test_invalid_address(self):
+        self.assertRaises(RuntimeError, pulsar.create_socket,
+                          ('jsdchbjscbhd.com', 9000))
+        
+    def testRepr(self):
+        sock = pulsar.create_client_socket(':0')
+        self.assertTrue(repr(sock))
+        self.assertTrue(sock.info().startswith('client '))
+        fd = sock.fileno()
+        state = sock.__getstate__()
+        self.assertEqual(fd, state['fd'])
+        
+    def testForCoverage(self):
+        self.assertRaises(ValueError, create_tcp_socket_address, ('',))
+        self.assertRaises(ValueError, create_tcp_socket_address, ('','a'))
+        self.assertRaises(TypeError, create_tcp_socket_address, ('bla'))
         

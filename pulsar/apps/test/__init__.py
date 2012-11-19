@@ -61,7 +61,7 @@ import inspect
 
 if sys.version_info >= (2,7):
     import unittest
-else:
+else:   # pragma nocover
     try:
         import unittest2 as unittest
     except ImportError:
@@ -69,6 +69,14 @@ else:
  the unittest2 package')
         exit(0)
 
+if sys.version_info < (3,3): # pragma nocover
+    try:
+        import mock
+    except ImportError:
+        mock = None
+else:
+    from unittest import mock
+    
 import pulsar
 from pulsar.apps import tasks
 from pulsar.async.commands import pulsar_command
