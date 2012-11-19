@@ -1849,7 +1849,7 @@ Requires implementation.'''
         # check redirect
         if response.status_code in REDIRECT_CODES and 'location' in headers and\
                 request.allow_redirects:
-            url = response.headers['location']
+            url = response.headers.get('location')
             # Handle redirection without scheme (see: RFC 1808 Section 4)
             if url.startswith('//'):
                 parsed_rurl = urlparse(request.full_url)

@@ -23,7 +23,12 @@ class HttpConnection(httpurl.HttpConnection):
     @property
     def closed(self):
         if self.timeout == 0:
-            return self.sock.closed
+            if not self.sock.closed:
+                sock = self.sock.sock.sock
+                if sock:
+                    return httpurl.is_closed(sock)
+            else:
+                return True
         else:
             return httpurl.is_closed(self.sock)
             

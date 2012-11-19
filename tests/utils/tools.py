@@ -85,7 +85,7 @@ class TestArityCheck(unittest.TestCase):
         self.assertEqual(checkarity(f2,(),{'a':3,'c':5,'d':6}),None)
 
 
-@unittest.skipUnless(system.platform.is_posix, 'Only of posix platforms')
+#@unittest.skipUnless(system.platform.is_posix, 'Only of posix platforms')
 class TestPidfile(unittest.TestCase):
     
     def testCreate(self):
