@@ -118,6 +118,9 @@ For options and help type::
 
     python runtests.py -h
     
+For full coverage run tests with the following flags:
+
+    python runtests.py --concurrency thread --profile --http-py-parser
 
 Kudos
 ============

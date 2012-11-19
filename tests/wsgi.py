@@ -11,12 +11,14 @@ class wsgiTest(unittest.TestCase):
     def testResponse200(self):
         r = wsgi.WsgiResponse(200)
         self.assertEqual(r.status_code, 200)
-        self.assertEqual(r.status,'200 OK')
+        self.assertEqual(r.status, '200 OK')
         self.assertEqual(r.content,())
         self.assertFalse(r.is_streamed)
         self.assertFalse(r.started)
         self.assertEqual(list(r), [])
         self.assertTrue(r.started)
+        self.assertEqual(str(r), r.status)
+        self.assertTrue(repr(r))
         
     def testResponse500(self):
         r = wsgi.WsgiResponse(500, content = b'A critical error occurred')
@@ -41,6 +43,14 @@ class wsgiTest(unittest.TestCase):
             self.assertTrue(r.started)
             self.assertEqual(a, ('line {0}\n'.format(l+1)).encode('utf-8'))
         self.assertEqual(len(data), 10)
+        
+    def testForCoverage(self):
+        r = wsgi.WsgiResponse(environ={'PATH_INFO': 'bla/'})
+        self.assertEqual(r.path, 'bla/')
+        self.assertEqual(r.connection, None)
+        self.assertEqual(r.content, ())
+        self.assertEqual(list(r), [])
+        self.assertRaises(RuntimeError, list, r)
         
         
 class testWsgiApplication(unittest.TestCase):
