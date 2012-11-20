@@ -298,15 +298,21 @@ def wsgi_error_msg(response, msg):
     else:
         return msg
     
-def handle_wsgi_error(environ, trace=None):
+def handle_wsgi_error(environ, trace=None, content_type=None,
+                      encoding=None):
     '''The default handler for errors while serving an Http requests.
 
-:parameter connection: The :class:`HttpConnection` handling the request.
-:parameter e: the exception instance.
+:parameter environ: The WSGI environment.
+:parameter trace: the error traceback. If not avaiable it will be obtained from
+    ``sys.exc_info()``.
+:parameter content_type: Optional content type.
+:parameter encoding: Optional charset.
 :return: a :class:`WsgiResponse`
 '''
-    response = WsgiResponse(content_type=environ.get('CONTENT_TYPE'),
-                            environ=environ)
+    content_type=content_type or environ.get('CONTENT_TYPE')
+    response = WsgiResponse(content_type=content_type,
+                            environ=environ,
+                            encoding=encoding)
     if not trace:
         trace = sys.exc_info()
     error = trace[1]
