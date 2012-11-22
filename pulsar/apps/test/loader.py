@@ -38,7 +38,7 @@ you give a *root* directory and a list of submodules where to look for tests.
     
      * all tests from modules in the ``test`` directory,
      * all tests from the ``bla`` directory with top level tag ``foo``,
-     * all tests from the examples directory matching the test pattern.
+     * all tests from the ``examples`` directory matching the test pattern.
      
     All top level modules will be added to the python ``path``.
 
