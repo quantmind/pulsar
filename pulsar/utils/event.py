@@ -1,8 +1,11 @@
 '''Micro observer-observable (event) library'''
+import logging
+
+logger = logging.getLogger('plusar.event')
 _events=  {}
 
 class Event(object):
-    
+    '''An event is created using the :func:`create` function.'''
     def __init__(self, name):
         self.name = name
         self.observers = []
@@ -28,12 +31,14 @@ class Observer(object):
     def notify(self, value, sender=None):
         '''The observer get notified'''
         try:
-            self.callback(value, sender=sender)
+            self.callback(value=value, sender=sender)
         except:
-            pass
+            logger.error('Unhandled exception in event handler', exc_info=True)
         
         
 def create(name):
+    '''Create a new event from a *name*. If the event is already available
+it returns it.'''
     name = name.lower()
     if name not in _events:
         event = Event(name)

@@ -7,6 +7,7 @@ import pulsar
 from pulsar import Actor, make_async, safe_async, is_failure, HaltServer,\
                      Monitor, loop_timeout, Deferred, get_actor
 from pulsar.async.defer import pickle
+from pulsar.utils import event
 from pulsar.utils.log import LogInformation
 
 __all__ = ['Application',
@@ -360,6 +361,7 @@ These are the most important facts about a pulsar :class:`Application`
         nparams.update(params)
         self.callable = callable
         self.load_config(argv, version, parse_console, nparams)
+        event.fire('ready', sender=self)
         self()
 
     def __call__(self, actor=None):
