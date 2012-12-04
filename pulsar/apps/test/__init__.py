@@ -140,7 +140,7 @@ test_commands = set()
 def test_result(client, actor, sender, tag, clsname, result):
     '''Command for sending test results from test workers to the test monitor.'''
     actor.log.debug('Got a test results from %s.%s', tag, clsname)
-    actor.app.add_result(actor, result)
+    return actor.app.add_result(actor, result)
 
 
 class TestSuite(tasks.CPUboundServer):
