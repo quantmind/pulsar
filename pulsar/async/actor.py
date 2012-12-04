@@ -611,8 +611,6 @@ event loop which will consume events on file descriptors.'''
         self.setid()
         self._state = self.RUN
         self.on_start()
-        if isinstance(self.cfg, Config):
-            self.cfg.on_start()
         self.log.info('Address %s', self.mailbox.address)
 
     def _run(self):

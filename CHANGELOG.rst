@@ -1,5 +1,5 @@
-Version 0.4.1
-============================
+Version 0.4.1 - 2012-Dec-04
+==============================
 * Test suite can load test from single files as well as directories.
 * :func:`pulsar.apps.wsgi.handle_wsgi_error` accepts optional ``content_type``
   and ``encoding`` parameters.

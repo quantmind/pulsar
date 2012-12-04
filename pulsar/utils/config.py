@@ -573,25 +573,6 @@ class HttpProxyServer(Setting):
             os.environ['https_proxy'] = self.value
 
 
-class HttpClient(Setting):
-    name = "http_client"
-    section = "Http"
-    flags = ["--http-client"]
-    type = int
-    default = 2
-    desc = """\
-        Set the python parser as default HTTP parser.
-        """
-
-    def on_start(self):
-        if self.value is not 2:
-            v = (self.value,)
-            if self.value is not 1:
-                v += (1,)
-            from pulsar.net import setDefaultClient
-            setDefaultClient(v)
-
-
 class HttpParser(Setting):
     name = "http_py_parser"
     section = "Http"

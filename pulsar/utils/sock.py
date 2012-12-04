@@ -75,7 +75,7 @@ Otherwise a TypeError is raised.
         except socket.error as e:
             if e.errno == errno.EADDRINUSE:
                 log.error("Connection in use: %s", str(address))
-            elif e.errno in (errno.EADDRNOTAVAIL, 11004):
+            elif e.errno in (errno.EADDRNOTAVAIL, 11004, -5):
                 raise RuntimeError("Invalid address: %s" % str(address))
             if i < retry:
                 log.error("Retrying in %s seconds." % lag)
