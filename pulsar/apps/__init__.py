@@ -191,6 +191,7 @@ pulsar subclasses of :class:`Application`.
             yield self.app.worker_stop(self)
         yield self.app.monitor_stop(self)
         yield super(ApplicationMonitor, self).on_stop()
+        event.fire('stop', sender=self.app)
         self.app.events['on_stop'].callback(self.app)
 
     def on_exit(self):
@@ -336,7 +337,7 @@ These are the most important facts about a pulsar :class:`Application`
                  can_kill_arbiter=None,
                  parse_console=True,
                  commands_set=None,
-                 **params):
+                 **kwargs):
         '''Initialize a new :class:`Application` and add its
 :class:`ApplicationMonitor` to the class:`pulsar.Arbiter`.
 
@@ -357,11 +358,10 @@ These are the most important facts about a pulsar :class:`Application`
             self.commands_set = commands_set
         self.script = script
         self.python_path()
-        nparams = self.cfg.copy()
-        nparams.update(params)
+        params = self.cfg.copy() if self.cfg else {}
+        params.update(kwargs)
         self.callable = callable
-        self.load_config(argv, version, parse_console, nparams)
-        event.fire('ready', sender=self)
+        self.load_config(argv, version, parse_console, params)
         self()
 
     def __call__(self, actor=None):
@@ -370,7 +370,9 @@ These are the most important facts about a pulsar :class:`Application`
         if not self.mid and (not actor or actor.is_arbiter()):
             # Add events
             self.local.events = {'on_start': Deferred(), 'on_stop': Deferred()}
+            self.cfg.on_start()
             self.configure_logging()
+            event.fire('ready', sender=self)
             if self.on_config() is not False:
                 arbiter = pulsar.arbiter(self.cfg.daemon)
                 monitor = arbiter.add_monitor(self.monitor_class,
@@ -474,14 +476,25 @@ By default it returns ``None``.'''
     def add_timeout(self, deadline, callback):
         self.arbiter.ioloop.add_timeout(deadline, callback)
 
+    def get_config_options_include(self, params):
+        '''List of configuration option to include from in
+the Config dictionary'''
+        return self.config_options_include
+    
+    def get_config_options_exclude(self, params):
+        '''List of configuration option to exclude from the Config dictionary'''
+        return self.config_options_exclude
+    
     def load_config(self, argv, version, parse_console, params):
         '''Load the application configuration from a file and/or
 from the command line. Called during application initialization.
 
-:parameter parse_console: if ``False`` the console won't be parsed.
-:parameter params: parameters which override the defaults.
+:parameter argv: list of command line parameters to parse.
+:parameter version: The version of this application.
+:parameter parse_console: True if the console parameters need parsing.
+:parameter params: dictionary of parameters passed during construction.
 
-The parameters overrriding order is the following:
+The parameters overriding order is the following:
 
  * default parameters.
  * the *params* passed in the initialization.
@@ -495,8 +508,8 @@ The parameters overrriding order is the following:
                                  self.epilog,
                                  version,
                                  self.cfg_apps,
-                                 self.config_options_include,
-                                 self.config_options_exclude)
+                                 self.get_config_options_include(params),
+                                 self.get_config_options_exclude(params))
         overrides = {}
         specials = set()
         # get the actor if available and override default cfg values with those

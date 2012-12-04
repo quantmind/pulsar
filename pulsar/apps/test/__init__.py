@@ -79,7 +79,7 @@ else:
     
 import pulsar
 from pulsar.apps import tasks
-from pulsar.async.commands import pulsar_command
+from pulsar.utils import event
 
 from .result import *
 from .case import *
@@ -136,10 +136,10 @@ class TestList(TestOption):
 
 test_commands = set()
 
-@pulsar_command(internal=True, ack=False, commands_set=test_commands)
-def test_result(client, actor, sender, tag, testcls, result):
+@pulsar.command(internal=True, ack=False, commands_set=test_commands)
+def test_result(client, actor, sender, tag, clsname, result):
     '''Command for sending test results from test workers to the test monitor.'''
-    actor.log.debug('Got a test results from %s.%s', tag, testcls.__name__)
+    actor.log.debug('Got a test results from %s.%s', tag, clsname)
     actor.app.add_result(actor, result)
 
 
@@ -171,7 +171,6 @@ is a group of tests specified in a test class.
     _app_name = 'test'
     cfg_apps = ('cpubound',)
     commands_set = test_commands
-    plugins = ()
     config_options_exclude = ('daemon','max_requests','user','group','pidfile')
     can_kill_arbiter = True
     cfg = {'loglevel': 'none', 'timeout': 3600, 'backlog': 1}
@@ -185,7 +184,15 @@ is a group of tests specified in a test class.
         path = os.getcwd()
         if path not in sys.path:
             sys.path.insert(0, path)
-
+    
+    def get_config_options_include(self, params):
+        include = self.config_options_include or []
+        self.plugins = params.get('plugins')
+        if self.plugins:
+            for plugin in self.plugins:
+                include.append(plugin.name)
+        return include
+        
     @property
     def runner(self):
         '''Instance of :class:`TestRunner` driving the test case
@@ -243,6 +250,7 @@ configuration and plugins.'''
         tags = self.cfg.labels
         try:
             self.local.tests = tests = list(loader.testclasses(tags))
+            event.fire('tests', sender=self, value=tests)
             if tests:
                 self.log.info('loaded %s test classes', len(tests))
                 self.runner.on_start()
@@ -254,8 +262,8 @@ configuration and plugins.'''
             print(str(e))
             monitor.arbiter.stop()
         except Exception:
-            self.log.error('Error occurred before starting tests',
-                           exc_info=True)
+            self.log.critical('Error occurred before starting tests',
+                              exc_info=True)
             monitor.arbiter.stop()
 
     def monitor_task(self, monitor):

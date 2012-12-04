@@ -3,6 +3,9 @@ Version 0.4.1
 * Test suite can load test from single files as well as directories.
 * :func:`pulsar.apps.wsgi.handle_wsgi_error` accepts optional ``content_type``
   and ``encoding`` parameters.
+* Fix issue #20, test plugins not included are not available in the command line.
+* :class:`pulsar.Application` call :meth:`pulsar.Config.on_start` before starting.
+* **304 regression tests**, **83% coverage**.
 
 Version 0.4 - 2012-Nov-19
 ============================

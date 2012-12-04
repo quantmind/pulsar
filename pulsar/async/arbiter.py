@@ -14,9 +14,8 @@ from pulsar import HaltServer
 from .defer import itervalues, iteritems, multi_async
 from .actor import Actor, send
 from .monitor import PoolMixin
-from .proxy import ActorProxyDeferred
 from .access import get_actor, set_actor
-from . import commands
+from . import proxy
 
 try:    #pragma nocover
     import queue
@@ -75,7 +74,7 @@ A typical usage::
     if not isinstance(actor, Arbiter):
         msg = send('arbiter', 'spawn', **kwargs)\
                         .add_callback(actor.link_actor)
-        return ActorProxyDeferred(aid, msg)
+        return proxy.ActorProxyDeferred(aid, msg)
     else:
         return actor.spawn(**kwargs)
 
@@ -130,9 +129,9 @@ Users access the arbiter by the high level api::
         return m
 
     @classmethod
-    def make(cls, commands_set = None, impl=None, **kwargs):
-        commands_set = set(commands_set or commands.actor_commands)
-        commands_set.update(commands.arbiter_commands)
+    def make(cls, commands_set=None, impl=None, **kwargs):
+        commands_set = set(commands_set or proxy.actor_commands)
+        commands_set.update(proxy.arbiter_commands)
         return cls._spawn_actor(None, cls, 'arbiter', commands_set, **kwargs)
 
     @property

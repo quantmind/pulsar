@@ -4,12 +4,11 @@ import time
 
 import pulsar
 
-from .proxy import ActorProxyDeferred
+from . import proxy
 from .actor import Actor
 from .concurrency import concurrency
 from .defer import async, iteritems, itervalues, range, NOT_DONE
 from .mailbox import Queue, mailbox
-from . import commands
 
 
 __all__ = ['Monitor', 'PoolMixin']
@@ -203,7 +202,7 @@ as required."""
         # ActorProxyMonitor.
         # *monitor* can be either the ariber or a monitor
         # *actorcls* is the Actor class
-        commands_set = set(commands_set or commands.actor_commands)
+        commands_set = set(commands_set or proxy.actor_commands)
         if monitor:
             params = monitor.actorparams()
             params.update(kwargs)
@@ -222,7 +221,7 @@ as required."""
             actor_proxy.monitor = monitor
             monitor._spawning[actor_proxy.aid] = actor_proxy
             actor_proxy.start()
-            return ActorProxyDeferred(actor_proxy)
+            return proxy.ActorProxyDeferred(actor_proxy)
 
 
 class Monitor(PoolMixin, Actor):

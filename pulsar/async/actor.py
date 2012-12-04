@@ -14,12 +14,11 @@ from pulsar import AlreadyCalledError, AlreadyRegistered,\
                    Config
 
 from .eventloop import IOLoop, ID
-from .proxy import ActorProxy, ActorMessage
+from .proxy import ActorProxy, ActorMessage, get_command, get_proxy
 from .defer import make_async, is_failure, iteritems, itervalues,\
                      pickle, safe_async, async, log_failure, make_async
 from .mailbox import IOQueue, mailbox
 from .access import set_local_data, is_mainthread, get_actor
-from . import commands
 
 
 __all__ = ['is_actor', 'send', 'Actor']
@@ -286,8 +285,9 @@ their ids.'''
         '''Set *parameter* value on this :class:`Actor`.'''
         self._params[parameter] = value
 
-    def command(self, name):
-        return commands.get(name, self.commands_set)
+    def command(self, action):
+        '''Fetch the pulsar command for *action*.'''
+        return get_command(action, self.commands_set)
 
     def send(self, target, action, *args, **params):
         '''Send a message to *target* to perform *action* with given
@@ -296,13 +296,7 @@ parameters *params*. It return a :class:`ActorMessage`.'''
             tg = self.get_actor(target)
         else:
             tg = target
-        if not tg:
-            raise ValueError('Cannot send message to %s' % target)
-        if isinstance(tg, ActorProxy):
-            return tg.receive_from(self, action, *args, **params)
-        else:
-            cmnd = commands.get(action)
-            return make_async(cmnd(None, tg, *args, **params))
+        return get_proxy(tg).receive_from(self, action, *args, **params)
 
     def put(self, request):
         '''Put a *request* into the :attr:`ioqueue` if available.'''

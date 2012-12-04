@@ -46,6 +46,9 @@ it returns it.'''
     return _events[name]
     
 def bind(name, callback, once_only=False):
+    '''Bind a *callback* to event *name*. If *once_only* is ``True``
+the callback will be invoked only once and than removed from the event
+handler.'''
     event = create(name)
     observer = Observer(callback, once_only)
     event.observers.append(observer)

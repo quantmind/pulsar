@@ -2,6 +2,7 @@
 from time import sleep
 
 import pulsar
+from pulsar.async.defer import pickle
 from pulsar.apps.test import unittest, ActorTestMixin, run_on_arbiter,\
                                  dont_run_with_thread
 
@@ -33,6 +34,12 @@ class TestProxy(unittest.TestCase):
         self.assertEqual(p.address, None)
         self.assertEqual(p.receive_from(None, 'dummy'), None)
         self.assertEqual(str(p), p.aid)
+        
+    def testActorCoverage(self):
+        '''test case for coverage'''
+        actor = pulsar.get_actor()
+        self.assertRaises(ValueError, actor.send, 'sjdcbhjscbhjdbjsj', 'bla')
+        self.assertRaises(pickle.PicklingError, pickle.dumps, actor)
         
     
 class TestActorThread(ActorTestMixin, unittest.TestCase):
@@ -79,62 +86,6 @@ class TestActorThread(ActorTestMixin, unittest.TestCase):
                                       actor.send(proxy, 'shutdown'))
         yield self.async.assertEqual(actor.send(proxy, 'auth', 'bla'), True)
         
-    def __testStartStopQueue(self):
-        '''Test start and stop for an actor using a I/O queue'''
-        arbiter = pulsar.arbiter()
-        ioqueue = pulsar.Queue()
-        yield self.spawn(impl = self.impl, name = 'queue',
-                         ioqueue = ioqueue)
-        a = self.a
-        self.assertTrue(isinstance(a,pulsar.ActorProxy))
-        self.assertEqual(a.impl.impl,self.impl)
-        outcome = a.send(arbiter, 'ping')
-        yield outcome
-        self.assertEqual(outcome.result,'pong')
-        yield self.stop()
-        
-    def __testSpawnStopFromActor(self):
-        '''Test the global spawn method from an actor domain other than the
-arbiter'''
-        outcome = pulsar.spawn(impl = self.impl)
-        # the result is an deferred message
-        self.assertTrue(isinstance(outcome, pulsar.ActorProxyDeferred))
-        yield outcome
-        ap = outcome.result
-        self.assertTrue(isinstance(ap, pulsar.ActorProxy))
-        # Check that the new actor is linked with the current actor
-        self.assertEqual(ap, self.worker.get_actor(ap.aid))
-        # and now stop the new actor
-        outcome = pulsar.send(ap, 'stop')
-        yield outcome
-        #self.assertEqual(self.worker.get_actor(ap.aid),None)
-        
-    def __testInfo(self):
-        a = spawn(Actor, impl = self.impl)
-        cbk = self.Callback()
-        r = self.arbiter.proxy.info(a).add_callback(cbk)
-        self.wait(lambda : not hasattr(cbk,'result'))
-        self.assertFalse(r.rid in ActorRequest.REQUESTS)
-        info = cbk.result
-        self.assertEqual(info['aid'],a.aid)
-        self.assertEqual(info['pid'],a.pid)
-        self.stop(a)
-        
-    def __testSpawnFew(self):
-        actors = (spawn(Actor, impl = self.impl) for i in range(5))
-        for a in actors:
-            self.assertTrue(a.aid in self.arbiter.LIVE_ACTORS)
-            cbk = self.Callback()
-            r = self.arbiter.proxy.ping(a).add_callback(cbk)
-            self.wait(lambda : not hasattr(cbk,'result'))
-            self.assertEqual(cbk.result,'pong')
-            self.assertFalse(r.rid in ActorRequest.REQUESTS)
-                
-    def __testTimeout(self):
-        a = spawn(Actor, on_task = sleepfunc, impl = self.impl, timeout = 1)
-        self.assertTrue(a.aid in self.arbiter.LIVE_ACTORS)
-        self.wait(lambda : a.aid in self.arbiter.LIVE_ACTORS, timeout = 3)
-        self.assertFalse(a.aid in self.arbiter.LIVE_ACTORS)
         
 
 @dont_run_with_thread

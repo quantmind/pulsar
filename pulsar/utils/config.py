@@ -97,16 +97,16 @@ applications *apps*.
 :parameter exclude: Optional list of settings to exclude.
 :rtype: dictionary of :class:`pulsar.Setting` instances.'''
     settings = {}
-    exclude = exclude or ()
+    include = set(include or ())
+    exclude = set(exclude or ())
     apps = set(apps or ())
     for s in ordered_settings():
         setting = s()
-        if setting.app and setting.app not in apps:
-            continue
-        if include and setting.name not in include and not setting.app:
-            continue
-        if setting.name in exclude:
-            continue
+        if setting.name not in include:
+            if setting.name in exclude:
+                continue    # setting name in exclude set
+            if setting.app and setting.app not in apps:
+                continue    # the setting is for an app not in the apps set
         settings[setting.name] = setting.copy()
     return settings
 
@@ -214,6 +214,7 @@ settings via the :meth:`Setting.add_argument`.
         return unknowns
         
     def on_start(self):
+        '''Invoked by a :class:`pulsar.Application` just before starting.'''
         for sett in self.settings.values():
             sett.on_start()
 

@@ -72,39 +72,34 @@ It exposes the following remote functions:
     def __init__(self, taskqueue, **kwargs):
         if not isinstance(taskqueue, str):
             taskqueue = taskqueue.name
-        self.task_queue_manager = wsgi.WsgiActorLink(taskqueue)
+        self.taskqueue = taskqueue
         super(TaskQueueRpcMixin,self).__init__(**kwargs)
         
     ############################################################################
     ##    REMOTES
     def rpc_job_list(self, request, jobnames=None):
-        return self.task_queue_manager(request.environ,
-                                       'job_list',
-                                       jobnames=jobnames)
+        return self._rq(request, 'job_list', jobnames=jobnames)
     
     def rpc_next_scheduled_tasks(self, request, jobnames=None):
-        return self.task_queue_manager(request.environ,
-                                       'next_scheduled',
-                                       jobnames=jobnames)
+        return self._rq(request, 'next_scheduled', jobnames=jobnames)
         
-    def rpc_run_new_task(self, request, jobname=None, ack=True,
-                         meta_data=None, **kwargs):
+    def rpc_run_new_task(self, request, jobname=None, ack=True, meta_data=None,
+                         **kw):
         if not jobname:
             raise rpc.InvalidParams('"jobname" is not specified!')
-        result = self.task_callback(request, jobname, ack, meta_data, **kwargs)
-        return result().addBoth(task_to_json)
+        funcname = 'addtask' if ack else 'addtask_noack'
+        meta_data = meta_data or {}
+        meta_data.update(self.task_request_parameters(request))
+        result = self._rq(request, funcname, jobname, meta_data, **kw)
+        return result.addBoth(task_to_json)
         
     def rpc_get_task(self, request, id=None):
         if id:
-            return self.task_queue_manager(request.environ,
-                                           'get_task',
-                                           id).add_callback(task_to_json)
+            return self._rq(request, 'get_task', id).add_callback(task_to_json)
     
     def rpc_get_tasks(self, request, **params):
         if params:
-            return self.task_queue_manager(request.environ,
-                                           'get_tasks',
-                                           **params).add_callback(task_to_json)
+            return self._rq(request, 'get_tasks', **params).add_callback(task_to_json)
     
     ############################################################################
     ##    INTERNALS
@@ -120,21 +115,36 @@ a dictionary and it is called by the internal
 By default it returns an empty dictionary.'''
         return {}
     
-    def task_callback(self, request, jobname, ack=True, meta_data=None,
-                      **kwargs):
-        '''Internal function which uses the :attr:`task_queue_manager`
-to create an :class:`pulsar.ActorLinkCallback` for running a task
-from *jobname* in the :class:`TaskQueue`.
-The function returned by this method can be called with exactly
-the same ``args`` and ``kwargs`` as the callable method of the :class:`Job`
-(excluding the ``consumer``).'''
-        funcname = 'addtask' if ack else 'addtask_noack'
-        request_params = self.task_request_parameters(request)
-        if isinstance(meta_data, Mapping):
-            request_params.update(meta_data)
-        return self.task_queue_manager.create_callback(
-                                            request.environ,
-                                            funcname,
-                                            jobname,
-                                            request_params,
-                                            **kwargs)
+    def _rq(self, request, action, *args, **kw):
+        return pulsar.send(self.taskqueue, action, *args, **kw)
+    
+    
+class ActorRequest(object):
+
+    def __init__(self, target, action, args, kwargs):
+        self.sender = get_actor()
+        self.target = get_proxy(self.sender.get_actor(target))
+        self.action = action
+        self.args = args
+        self.kwargs = kwargs
+        
+    def __call__(self, *args, **kwargs):
+        if not hasattr(self, '_message'):
+            self.args += args
+            self.kwargs.update(kwargs)
+            msg = self.target.receive_from(self.sender, self.action,
+                                           *self.args, **self.kwargs)
+            self._message = make_async(msg)
+        else:
+            raise AlreadyCalledError('Already called')
+        return self._message
+    
+    def result(self):
+        '''Call this function to get a result. If self was never called
+return a :class:`Deferred` already called with ``None``.'''
+        if not hasattr(self,'_message'):
+            d = Deferred()
+            self._message = d
+            d.callback(None)
+        return self._message
+        
