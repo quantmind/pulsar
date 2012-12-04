@@ -48,7 +48,7 @@ except ImportError:
     import sys
     sys.path.append('../../')
     import pulsar
-from pulsar.async.commands import pulsar_command
+from pulsar import command
     
 
 class Eating_Period(pulsar.Setting):
@@ -68,7 +68,7 @@ class Waiting_Period(pulsar.Setting):
 ##    PULSAR COMMANDS FOR DINING PHILOSOPHERS
 philosophers_cmommands = set()
 
-@pulsar_command(commands_set=philosophers_cmommands, ack=False)
+@command(commands_set=philosophers_cmommands, ack=False)
 def putdown_fork(client, actor, fork):
     self = actor.app
     try:
@@ -76,7 +76,7 @@ def putdown_fork(client, actor, fork):
     except KeyError:
         self.log.error('Putting down a fork which was already available')    
 
-@pulsar_command(commands_set=philosophers_cmommands)
+@command(commands_set=philosophers_cmommands)
 def pickup_fork(client, actor, fork_right):
     self = actor.app
     num_philosophers = self.cfg.workers
