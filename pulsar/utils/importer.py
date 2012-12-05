@@ -67,12 +67,16 @@ def import_system_file(mod, add_to_path=True):
         dir, name = os.path.split(mod)
         names = [py_file(name)]
         while dir and not dir in sys.path:
-            dir, name = os.path.split(dir)
+            ndir, name = os.path.split(dir)
+            if dir == ndir:
+                dir = ''
+                break
+            dir = ndir
             names.insert(0, name)
         # the file was not in the system path
         if not dir and add_to_path:
             dir, name = os.path.split(mod)
-            if dir:
+            if dir and dir != mod:
                 sys.path.append(dir)
             mod_name = py_file(name)
         else:

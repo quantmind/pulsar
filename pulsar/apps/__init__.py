@@ -460,6 +460,12 @@ By default it returns ``None``.'''
             self.log.error("Trying to put a request on task queue,\
  but there isn't one!")
 
+    def on_config_init(self, cfg, params):
+        '''Callback when configuration is initialised but not yet loaded.
+This is a chance to add extra config parameter or remove unwanted ones.
+return a new :class:`Config` instance or ``None``.'''
+        pass
+    
     def on_config(self):
         '''Callback when configuration is loaded. This is a chance to do
  an application specific check before the concurrent machinery is put into
@@ -475,15 +481,6 @@ By default it returns ``None``.'''
 
     def add_timeout(self, deadline, callback):
         self.arbiter.ioloop.add_timeout(deadline, callback)
-
-    def get_config_options_include(self, params):
-        '''List of configuration option to include from in
-the Config dictionary'''
-        return self.config_options_include
-    
-    def get_config_options_exclude(self, params):
-        '''List of configuration option to exclude from the Config dictionary'''
-        return self.config_options_exclude
     
     def load_config(self, argv, version, parse_console, params):
         '''Load the application configuration from a file and/or
@@ -504,12 +501,15 @@ The parameters overriding order is the following:
         cfg_apps = set(self.cfg_apps or ())
         cfg_apps.add(self.app_name)
         self.cfg_apps = cfg_apps
-        self.cfg = pulsar.Config(self.description,
-                                 self.epilog,
-                                 version,
-                                 self.cfg_apps,
-                                 self.get_config_options_include(params),
-                                 self.get_config_options_exclude(params))
+        cfg = pulsar.Config(self.description,
+                            self.epilog,
+                            version,
+                            self.cfg_apps,
+                            self.config_options_include,
+                            self.config_options_exclude)
+        self.cfg = self.on_config_init(cfg, params)
+        if not isinstance(self.cfg, pulsar.Config):
+            self.cfg = cfg
         overrides = {}
         specials = set()
         # get the actor if available and override default cfg values with those
@@ -641,7 +641,7 @@ The application is now in the arbiter but has not yet started.'''
         if monitor:
             monitor.stop()
 
-    def configure_logging(self, config = None):
+    def configure_logging(self, config=None):
         """Set the logging configuration as specified by the
  :ref:`logconfig <setting-logconfig>` setting."""
         self.loglevel = self.cfg.loglevel

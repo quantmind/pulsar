@@ -117,58 +117,49 @@ functional.
     
 class ActorProxy(LocalMixin):
     '''This is an important component in pulsar concurrent framework. An
-instance of this class behaves as a proxy for a remote `underlying` 
-:class:`Actor` instance.
-This is a lightweight class which delegates function calls to the underlying
-remote object.
+instance of this class is as a proxy for a remote `underlying` 
+:class:`Actor`. This is a lightweight class which delegates
+function calls to the underlying remote object.
 
 It is pickable and therefore can be send from actor to actor using pulsar
-messaging.
+messaging. It exposes all the underlying :class:`command` which have been
+implemented.
 
-A proxy exposes all the underlying remote functions which have been implemented
-in the actor class by prefixing with ``actor_``
-(see the :class:`pulsar.ActorMetaClass` documentation).
+For example, lets say we have a proxy ``a``, to send a message to it::
 
-By default each actor comes with a set of remote functions:
-
- * ``info`` returns a dictionary of information about the actor
- * ``ping`` returns ``pong``.
- * ``notify``
- * ``stop`` stop the actor
- * ``on_actor_exit``
- * ``callback``
-
-For example, lets say we have a proxy ``a`` and an actor (or proxy) ``b``::
-
-    a.send(b,'notify','hello there!')
+    from pulsar import send
     
-will send a message to actor ``a`` from sender ``b`` invoking
-action ``notify`` with parameter ``"hello there!"``.
+    send(a, 'echo', 'hello there!')
     
-
-.. attribute:: proxyid
-
-    Unique ID for the remote object
+will send the command ``echo`` to actor ``a`` with
+parameter ``"hello there!"``.
     
-.. attribute:: remotes
+.. attribute:: aid
 
-    dictionary of remote functions names with value indicating if the
-    remote function will acknowledge the call or not.
+    Unique ID for the remote :class:`Actor`
+    
+.. attribute:: address
+
+    the socket address of the underlying :attr:`Actor.mailbox`.
     
 .. attribute:: timeout
 
-    the value of the underlying :attr:`pulsar.Actor.timeout` attribute
+    the value of the underlying :attr:`Actor.timeout` attribute
 '''
     last_msg = None
     def __init__(self, impl):
         self.aid = impl.aid
         self.commands_set = impl.commands_set
-        # impl can be an actor or an actor impl,
-        # which does not have the address attribute
+        # impl can be an actor or concurrency, which does not have
+        # the address attribute
         self.address = getattr(impl, 'address', None)
         self.timeout = impl.timeout
         self.loglevel = impl.loglevel
-            
+    
+    def __repr__(self):
+        return self.aid
+    __str__ = __repr__
+    
     @property
     def mailbox(self):
         '''Actor mailbox'''
@@ -185,18 +176,11 @@ action ``notify`` with parameter ``"hello there!"``.
 communicating between actors.
 
 :parameter sender: :class:`Actor` sending the message.
-:parameter command: the command of the message.
-    Default ``None``.
-:parameter args: non positional arguments of message body.
-:parameter kwargs: key-valued arguments of message body.
-:parameter ack: If ``True`` the receiving actor will send a callback.
-    If the action is provided and available, this parameter will be overritten.
-:rtype: an instance of :class:`ActorMessage`.
-
-When sending a message, first we check the ``sender`` outbox. If that is
-not available, we get the receiver ``inbox`` and hope it can carry the message.
-If there is no inbox either, abort the message passing and log a critical error.
-'''
+:parameter command: the :class:`command` to perform in the actor underlying
+    this proxy.
+:parameter args: non positional arguments of command.
+:parameter kwargs: key-valued arguments of command.
+:rtype: an asynchronous :class:`ActorMessage`.'''
         if sender is None:
             sender = get_actor()
         if not self.mailbox:
@@ -207,14 +191,8 @@ If there is no inbox either, abort the message passing and log a critical error.
         if not cmd:
             raise CommandNotFound(command)
         msg = ActorMessage(cmd.__name__, sender, self.aid, args, kwargs)
-        #sender.log.debug('%s %s queuing %s for %s', id(self),
-        #                 self.mailbox.address, msg.command, self.mailbox)
         send = self.mailbox.execute if cmd.ack else self.mailbox.send
         return send(msg)
-        
-    def __repr__(self):
-        return self.aid
-    __str__ = __repr__
     
     def __eq__(self, o):
         o = get_proxy(o,True)

@@ -143,7 +143,6 @@ Here ``a`` is actually a reference to the remote actor.
     # times timeout. So for a timeout of 30 seconds, the messages will
     # go after tolerance*30 seconds (18 secs for tolerance = 0.6).
     ACTOR_TIMEOUT_TOLERANCE = 0.6
-    DEF_PROC_NAME = 'pulsar'
     SIG_QUEUE = None
     exit_code = None
 
@@ -188,7 +187,7 @@ Here ``a`` is actually a reference to the remote actor.
         if kwargs:
             self.local.update(kwargs)
         if self.cfg is None:
-            self.cfg = {}
+            self.cfg = Config()
 
     ############################################################### PROPERTIES
     @property
@@ -358,7 +357,7 @@ mean it is running.'''
     def can_poll(self):
         '''Check if the actor can poll requests. This is used by CPU-bound
  actors only.'''
-        m = self.cfg.get('backlog', 0)
+        m = self.cfg.backlog
         return self.concurrent_requests < m if m else True
 
     def __reduce__(self):
@@ -380,7 +379,7 @@ mean it is running.'''
     def end_event(self, result):
         self.concurrent_requests -= 1
         log_failure(result)
-        max_requests = self.cfg.get('max_requests')
+        max_requests = self.cfg.max_requests
         should_stop = max_requests and self.nr >= max_requests
         if should_stop:
             self.log.info("Auto-restarting worker.")
@@ -566,18 +565,14 @@ if *proxy* is not a class:`ActorProxy` instance raise an exception.'''
         if not self.isprocess():
             return
         random.seed()
-        proc_name = self.DEF_PROC_NAME
-        cfg = self.cfg
-        proc_name = cfg.get('proc_name') or cfg.get('default_proc_name')\
-                         or proc_name
-        proc_name = "{0} - {1}".format(proc_name, self)
+        proc_name = "%s - %s".format(self.cfg.proc_name, self)
         if system.set_proctitle(proc_name):
             self.log.debug('Set process title to %s', proc_name)
         #system.set_owner_process(cfg.uid, cfg.gid)
         if is_mainthread():
             self.log.debug('Installing signals')
             # The default signal handling function in signal
-            sfun = getattr(self,'signal',None)
+            sfun = getattr(self, 'signal', None)
             for name in system.ALL_SIGNALS:
                 func = sfun
                 if not func:

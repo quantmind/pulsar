@@ -3,6 +3,7 @@ import weakref
 from copy import copy
 from collections import *
 
+ispy3k = sys.version_info >= (3, 0)
 if sys.version_info < (2,7):
     from .fallbacks._collections import *
     
@@ -146,6 +147,10 @@ where value is the last item in the list associated with the key.
 
 class AttributeDictionary(object):
     
+    def __init__(self, iterable=None):
+        if iterable is not None:
+            self.update(iterable)
+            
     def __contains__(self, name):
         return name in self.__dict__
     
@@ -176,6 +181,21 @@ class AttributeDictionary(object):
     
     def pop(self, name):
         return self.__dict__.pop(name, None)
+    
+    if ispy3k:
+        def values(self):
+            return self.__dict__.values()
+        
+        def items(self):
+            return self.__dict__.items()
+        
+    else:   #pragma    nocover
+        def itervalues(self):
+            return self.__dict__.itervalues()
+        
+        def iteritems(self):
+            return self.__dict__.iteritems()
+        
     
     
 def merge_prefix(deque, size):

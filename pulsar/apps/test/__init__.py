@@ -173,7 +173,16 @@ is a group of tests specified in a test class.
     commands_set = test_commands
     config_options_exclude = ('daemon','max_requests','user','group','pidfile')
     can_kill_arbiter = True
-    cfg = {'loglevel': 'none', 'timeout': 3600, 'backlog': 1}
+    cfg = {'loglevel': 'none',
+           'timeout': 3600,
+           'backlog': 1,
+           'logconfig': {
+                'loggers': {
+                    'TestRunner': {'handlers': ['console_message'],
+                                   'level': logging.INFO}
+                            }
+                         }
+           }
 
     def handler(self):
         return self
@@ -185,14 +194,12 @@ is a group of tests specified in a test class.
         if path not in sys.path:
             sys.path.insert(0, path)
     
-    def get_config_options_include(self, params):
-        include = self.config_options_include or []
+    def on_config_init(self, cfg, params):
         self.plugins = params.get('plugins')
         if self.plugins:
             for plugin in self.plugins:
-                include.append(plugin.name)
-        return include
-        
+                cfg.settings.update(plugin.config.settings)
+    
     @property
     def runner(self):
         '''Instance of :class:`TestRunner` driving the test case

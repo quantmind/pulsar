@@ -16,7 +16,7 @@ __all__ = ['Plugin',
            'Plugin']
 
 
-LOGGER = logging.getLogger('pulsar.apps.test')
+LOGGER = logging.getLogger('TestRunner')
 STDOUT_LINE = '\nStdout:\n%s'
 STDERR_LINE = '\nStderr:\n%s'
 
@@ -92,7 +92,7 @@ cases. By default it returns *test*.'''
     def printSummary(self, timeTaken):
         pass
 
-    def import_module(self, mod, parent = None):
+    def import_module(self, mod, parent=None):
         return mod
 
     def getDescription(self, test):
@@ -152,7 +152,7 @@ class TestStream(TestResultProxy):
 
     def addSuccess(self, test):
         if self.showAll:
-            self.head(test,'ok')
+            self.head(test, 'ok')
         elif self.dots:
             self.stream.write('.')
             self.stream.flush()
@@ -340,10 +340,23 @@ class TestResult(Plugin):
             tb = tb.tb_next
         return length
 
+
+def testsafe(name):
+    def _(self, *args):
+        for p in self.plugins:
+            try:
+                if getattr(p, name)(*args):
+                    return
+            except:
+                LOGGER.critical('Unhadled error in %s.%s' % (p, name),
+                                exc_info=True)
+    return _                
+            
     
 class TestRunner(TestResultProxy):
     '''An asynchronous test runner'''
-    def __init__(self, plugins, stream, writercls=None, descriptions=True):
+    def __init__(self, plugins, stream, writercls=None, descriptions=True,
+                 logger=None):
         self.descriptions = descriptions
         self.plugins = []
         writercls = writercls or TestStream
@@ -426,41 +439,13 @@ class TestRunner(TestResultProxy):
                 p.after_test_function_run(test, local, result)
         return result
 
-    def stopTest(self, test):
-        '''Called after test has finished.'''
-        for p in self.plugins:
-            if p.stopTest(test):
-                break
-
-    def addSuccess(self, test):
-        for p in self.plugins:
-            if p.addSuccess(test):
-                break
-
-    def addFailure(self, test, err):
-        for p in self.plugins:
-            if p.addFailure(test, err):
-                break
-
-    def addError(self, test, err):
-        for p in self.plugins:
-            if p.addError(test, err):
-                break
-
-    def addSkip(self, test, reason):
-        for p in self.plugins:
-            if p.addSkip(test, reason):
-                break
-
-    def printErrors(self):
-        for p in self.plugins:
-            if p.printErrors():
-                break
-
-    def printSummary(self, timeTaken):
-        for p in self.plugins:
-            if p.printSummary(timeTaken):
-                break
+    stopTest = testsafe('stopTest')
+    addSuccess = testsafe('addSuccess')
+    addFailure = testsafe('addFailure')
+    addError = testsafe('addError')
+    addSkip = testsafe('addSkip')
+    printErrors = testsafe('printErrors')
+    printSummary = testsafe('printSummary')
             
     def run_test_function(self, test, func):
         '''Run function *func* which belong to *test*.

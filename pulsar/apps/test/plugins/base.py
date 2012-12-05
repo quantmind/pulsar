@@ -1,12 +1,13 @@
 import unittest
 
 import pulsar
+from pulsar.utils.httpurl import iteritems, itervalues
 from pulsar.apps.test.result import Plugin
 
 
 __all__ = ['WrapTest',
            'TestOption',
-           'TestOptionPlugin']
+           'TestPlugin']
 
 class TestOption(pulsar.Setting):
     virtual = True
@@ -42,10 +43,57 @@ class WrapTest(object):
         # This is the actual function to implement
         return self.testMethod()
     
+
+def as_test_setting(setting):
+    setting.app = 'test-plugin'
+    setting.section = "Test"
+    return setting
     
-class TestOptionPlugin(Plugin, TestOption):
+class TestPluginMeta(type):
+    
+    def __new__(cls, name, bases, attrs):
+        settings = {}
+        for base in bases:
+            if isinstance(base, TestPluginMeta):
+                settings.update(base.config.settings)
+        for key, setting in list(iteritems(attrs)):
+            if isinstance(setting, pulsar.Setting):
+                attrs.pop(key)
+                setting.name = setting.name or key.lower()
+                settings[setting.name] = as_test_setting(setting)
+        if not attrs.pop('virtual', False):
+            setting_name = attrs.pop('name', name).lower()
+            def_flag = '--%s' % setting_name.replace(' ','-').replace('_','-')
+            action = attrs.pop('action', 'store_true')
+            type = attrs.pop('type', None)
+            default=attrs.pop('default', None)
+            validator=attrs.pop('validator', None)
+            if action == 'store_true':
+                default = False
+                validator = pulsar.validate_bool
+            elif action == 'store_false':
+                default = True
+                validator = pulsar.validate_bool
+            setting = pulsar.Setting(name=setting_name,
+                                desc=attrs.pop('desc', name),
+                                type=type,
+                                flags=attrs.pop('flags', [def_flag]),
+                                action=action,
+                                default=default,
+                                validator=validator)
+            settings[setting.name] = as_test_setting(setting)
+        attrs['config'] = pulsar.Config(settings=settings)
+        return super(TestPluginMeta, cls).__new__(cls, name, bases, attrs)
+                
+    
+class TestPlugin(TestPluginMeta('TestPluginBase',(Plugin,),{'virtual': True})):
     '''Base class for test plugins with one option argument.
 The test option is added to the config object only if the plugin
 is activated.'''
-    app = 'test-plugin'
     virtual = True
+    def configure(self, cfg):
+        self.config = cfg
+        
+    def include_settings(self):
+        return [s.name for settinng in self.settings]
+    
