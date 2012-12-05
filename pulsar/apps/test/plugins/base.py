@@ -64,23 +64,28 @@ class TestPluginMeta(type):
         if not attrs.pop('virtual', False):
             setting_name = attrs.pop('name', name).lower()
             def_flag = '--%s' % setting_name.replace(' ','-').replace('_','-')
-            action = attrs.pop('action', 'store_true')
+            action = attrs.pop('action', None)
             type = attrs.pop('type', None)
-            default=attrs.pop('default', None)
-            validator=attrs.pop('validator', None)
-            if action == 'store_true':
-                default = False
-                validator = pulsar.validate_bool
-            elif action == 'store_false':
-                default = True
-                validator = pulsar.validate_bool
+            default = attrs.pop('default', None)
+            validator = attrs.pop('validator', None)
+            nargs = attrs.pop('nargs', None)
+            if validator is None and default is None and type is None\
+                and nargs is None:
+                if action is None or action == 'store_true':
+                    action = 'store_true'
+                    default = False
+                    validator = pulsar.validate_bool
+                elif action == 'store_false':
+                    default = True
+                    validator = pulsar.validate_bool
             setting = pulsar.Setting(name=setting_name,
                                 desc=attrs.pop('desc', name),
                                 type=type,
                                 flags=attrs.pop('flags', [def_flag]),
                                 action=action,
                                 default=default,
-                                validator=validator)
+                                validator=validator,
+                                nargs=nargs)
             settings[setting.name] = as_test_setting(setting)
         attrs['config'] = pulsar.Config(settings=settings)
         return super(TestPluginMeta, cls).__new__(cls, name, bases, attrs)

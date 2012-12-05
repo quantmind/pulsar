@@ -178,8 +178,8 @@ is a group of tests specified in a test class.
            'backlog': 1,
            'logconfig': {
                 'loggers': {
-                    'TestRunner': {'handlers': ['console_message'],
-                                   'level': logging.INFO}
+                    LOGGER.name: {'handlers': ['console_message'],
+                                  'level': logging.INFO}
                             }
                          }
            }
@@ -257,10 +257,10 @@ configuration and plugins.'''
         tags = self.cfg.labels
         try:
             self.local.tests = tests = list(loader.testclasses(tags))
-            event.fire('tests', sender=self, value=tests)
             if tests:
                 self.log.info('loaded %s test classes', len(tests))
                 self.runner.on_start()
+                event.fire('tests', sender=self, value=tests)
                 monitor.cfg.set('workers', min(self.cfg.workers, len(tests)))
                 self._time_start = None
             else:
@@ -269,8 +269,8 @@ configuration and plugins.'''
             print(str(e))
             monitor.arbiter.stop()
         except Exception:
-            self.log.critical('Error occurred before starting tests',
-                              exc_info=True)
+            LOGGER.critical('Error occurred before starting tests',
+                            exc_info=True)
             monitor.arbiter.stop()
 
     def monitor_task(self, monitor):
