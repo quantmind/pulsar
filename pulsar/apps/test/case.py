@@ -47,6 +47,8 @@ following algorithm:
         worker.app.local.pop('runner')
         runner = worker.app.runner
         testcls = self.testcls
+        if not isinstance(testcls, type):
+            testcls = testcls()
         testcls.tag = self.tag
         testcls.cfg = worker.cfg
         all_tests = runner.loadTestsFromTestCase(testcls)
@@ -74,7 +76,7 @@ following algorithm:
             yield CLEAR_ERRORS
         # send runner result to monitor
         yield worker.send(worker.monitor, 'test_result', testcls.tag,
-                          testcls, runner.result)
+                          testcls.__name__, runner.result)
 
     def run_test(self, test, runner):
         '''\

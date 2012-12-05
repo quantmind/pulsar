@@ -8,7 +8,7 @@ from io import BytesIO
 
 import pulsar
 from pulsar import lib, make_async, is_async, AsyncSocketServer, Deferred,\
-                   AsyncConnection, AsyncResponse, DeferredSend, HttpException
+                   AsyncConnection, AsyncResponse, HttpException
 from pulsar.utils.httpurl import Headers, is_string, unquote,\
                                     has_empty_content, to_bytes,\
                                     host_and_port_default, mapping_iterator,\
@@ -21,7 +21,7 @@ from .wsgi import WsgiResponse, handle_wsgi_error
 event.create('http-headers')
 
 
-__all__ = ['HttpServer', 'WsgiActorLink']
+__all__ = ['HttpServer']
 
 
 def wsgi_environ(connection, parser):
@@ -380,44 +380,3 @@ class HttpServer(AsyncSocketServer):
     def parser_class(self):
         return HttpServerParser()
 
-
-class WsgiActorLink(object):
-    '''A callable utility for sending :class:`ActorMessage`
-to linked :class:`Actor` instances.
-
-.. attribute:: actor_link_name
-
-    The :attr:`pulsar.Actor.name` of the actor which will receive messages via
-    the :class:`WsgiActorLink` from actors managing a wsgi server.
-    An example on how to use an :class:`WsgiActorLink` can be found in the
-    :class:`pulsar.apps.tasks.TaskQueueRpcMixin`, where the
-    ``task_queue_manager`` attribute is a lint to the
-    :class:`pulsar.apps.tasks.TaskQueue`.
-'''
-    def __init__(self, actor_link_name):
-        self.actor_link_name = actor_link_name
-
-    def proxy(self, sender):
-        '''Get the :class:`ActorProxy` for the sender.'''
-        proxy = sender.get_actor(self.actor_link_name)
-        if not proxy:
-            raise ValueError('Got a request from actor "{0}" which is\
-not linked with "{1}".'.format(sender, self.actor_link_name))
-        return proxy
-
-    def create_callback(self, environ, action, *args, **kwargs):
-        '''Create an :class:`ActorLinkCallback` for sending messages
-with additional parameters.
-
-:parameter sender: The :class:`Actor` sending the message.
-:parameter action: The *action* in the :class:`ActorMessage`.
-:parameter args: same as :attr:`ActorMessage.args`
-:parameter kwargs: same as :attr:`ActorMessage.kwargs`
-:rtype: an :class:`ActorLinkCallback`.
-'''
-        sender = environ.get('pulsar.connection').actor
-        target = self.proxy(sender)
-        return DeferredSend(sender, target, action, args, kwargs)
-
-    def __call__(self, sender, action, *args, **kwargs):
-        return self.create_callback(sender, action, *args, **kwargs)()

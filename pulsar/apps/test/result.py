@@ -398,7 +398,7 @@ class TestRunner(TestResultProxy):
 
     def import_module(self, mod, parent=None):
         for p in self.plugins:
-            mod = p.import_module(mod,parent)
+            mod = p.import_module(mod, parent)
             if not mod:
                 return
         return mod

@@ -1509,6 +1509,7 @@ class HttpRequest(HttpBase):
                 body = mapping_iterator(body)
             query = parse_qsl(query)
             query.extend(body)
+            self.data = query
             query = urlencode(query)
         self.query = query
         self.full_url = self._get_full_url()

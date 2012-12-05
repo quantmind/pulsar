@@ -38,7 +38,7 @@ you give a *root* directory and a list of submodules where to look for tests.
     
      * all tests from modules in the ``test`` directory,
      * all tests from the ``bla`` directory with top level tag ``foo``,
-     * all tests from the examples directory matching the test pattern.
+     * all tests from the ``examples`` directory matching the test pattern.
      
     All top level modules will be added to the python ``path``.
 
@@ -120,6 +120,11 @@ importing tests.
                 for tag, mod in self.get_tests(absolute_path, name, pattern,
                                                import_tags=tags, tags=stags):
                     yield tag, mod
+            elif os.path.isfile(absolute_path + '.py'):
+                tag = tag or name
+                mod = self.import_module(name)
+                if mod:
+                    yield tag, mod
             else:
                 raise ValueError('%s cannot be found in %s directory.'\
                                   % (name, self.root))
@@ -178,7 +183,7 @@ tag,module pairs.
             if os.path.isdir(mod_path):
                 counter = 0
                 # Recursively import modules
-                for tag,mod in self.get_tests(mod_path,
+                for tag, mod in self.get_tests(mod_path,
                                                mod_dotted_path,
                                                npattern,
                                                import_tags,
@@ -190,9 +195,9 @@ tag,module pairs.
             if not counter and c == 2:
                 yield tag, module
 
-    def import_module(self, name, path, parent=None):
+    def import_module(self, name, path=None, parent=None):
         imp = True
-        if os.path.isdir(path):
+        if path and os.path.isdir(path):
             imp = False
             # import only if it has a __init__.py file
             for sname in os.listdir(path):

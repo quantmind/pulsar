@@ -2,20 +2,24 @@ import sys
 from time import time
 from collections import deque
 
-from pulsar import CommandNotFound
+from pulsar import CommandNotFound, AuthenticationError
 from pulsar.utils.log import LocalMixin
 
 from .defer import Deferred, is_async, make_async, AlreadyCalledError
 from .mailbox import mailbox, ActorMessage
-from .access import get_actor 
-from . import commands
+from .access import get_actor
 
 __all__ = ['ActorMessage',
            'ActorProxyDeferred',
            'ActorProxy',
            'ActorProxyMonitor',
-           'DeferredSend',
-           'get_proxy']
+           'get_proxy',
+           'command',
+           'get_command']
+
+global_commands_table = {}
+actor_commands = set()
+arbiter_commands = set()
 
 def get_proxy(obj, safe=False):
     if isinstance(obj, ActorProxy):
@@ -26,8 +30,61 @@ def get_proxy(obj, safe=False):
         if safe:
             return None
         else:
-            raise ValueError('"{0}" is not an actor or actor proxy.'\
-                             .format(obj))
+            raise ValueError('"%s" is not an actor or actor proxy.' % obj)
+            
+def get_command(name, commands_set=None):
+    '''Get the command function *name*'''
+    name = name.lower()
+    if commands_set and name not in commands_set:
+        return
+    return global_commands_table.get(name)
+
+
+class command:
+    '''Decorator for pulsar command functions.
+    
+:parameter ack: ``True`` if the command acknowledge the sender with a
+    response. Usually is set to ``True`` (which is also the default value).
+:parameter authenticated: If ``True`` the action can only be invoked by
+    remote actors which have authenticated with the actor for which
+    the action has been requested.
+:parameter internal: Internal commands are for internal use only, not for
+    external clients. They accept the actor proxy calling as third positional
+    arguments.
+'''
+    def __init__(self, ack=True, authenticated=False, internal=False,
+                 commands_set=None):
+        self.ack = ack
+        self.authenticated = authenticated
+        self.internal = internal
+        if commands_set is None:
+            commands_set = actor_commands
+        self.commands_set = commands_set
+    
+    def __call__(self, f):
+        name = f.__name__.lower()
+        
+        def command_function(client, actor, *args, **kwargs):
+            if self.authenticated:
+                password = actor.cfg.get('password')
+                if password and not client.connection.authenticated:
+                    raise AuthenticationError()
+            if self.internal:
+                caller = get_proxy(args[0]) if args else None
+                if not caller:
+                    raise AuthenticationError()
+                args = args[1:]
+                return f(client, actor, caller, *args, **kwargs)
+            else:
+                return f(client, actor, *args, **kwargs)
+        
+        command_function.ack = self.ack
+        command_function.internal = self.internal
+        command_function.__name__ = name
+        command_function.__doc__ = f.__doc__
+        self.commands_set.add(name)
+        global_commands_table[name] = command_function
+        return command_function
             
             
 class ActorProxyDeferred(Deferred):
@@ -146,7 +203,7 @@ If there is no inbox either, abort the message passing and log a critical error.
             sender.log.critical('Cannot send a message to %s. No\
  mailbox available.', self)
             return
-        cmd = commands.get(command, self.commands_set)
+        cmd = get_command(command, self.commands_set)
         if not cmd:
             raise CommandNotFound(command)
         msg = ActorMessage(cmd.__name__, sender, self.aid, args, kwargs)
@@ -229,33 +286,4 @@ provided, it raises an exception if the timeout is reached.'''
         '''Start the remote actor.'''
         self.impl.start()
 
-
-class DeferredSend(object):
-
-    def __init__(self, sender, target, action, args, kwargs):
-        self.sender = sender
-        self.target = get_proxy(target)
-        self.action = action
-        self.args = args
-        self.kwargs = kwargs
-        
-    def __call__(self, *args, **kwargs):
-        if not hasattr(self, '_message'):
-            self.args += args
-            self.kwargs.update(kwargs)
-            msg = self.target.receive_from(self.sender, self.action,
-                                           *self.args, **self.kwargs)
-            self._message = make_async(msg)
-        else:
-            raise AlreadyCalledError('Already called')
-        return self._message
-    
-    def result(self):
-        '''Call this function to get a result. If self was never called
-return a :class:`Deferred` already called with ``None``.'''
-        if not hasattr(self,'_message'):
-            d = Deferred()
-            self._message = d
-            d.callback(None)
-        return self._message
     

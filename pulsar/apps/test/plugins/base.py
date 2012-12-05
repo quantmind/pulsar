@@ -44,5 +44,8 @@ class WrapTest(object):
     
     
 class TestOptionPlugin(Plugin, TestOption):
-    '''Base class for test plugins with one option argument.'''
+    '''Base class for test plugins with one option argument.
+The test option is added to the config object only if the plugin
+is activated.'''
+    app = 'test-plugin'
     virtual = True

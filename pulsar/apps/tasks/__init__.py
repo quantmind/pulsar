@@ -179,7 +179,6 @@ from datetime import datetime
 
 import pulsar
 from pulsar import to_string, safe_async
-from pulsar.async.commands import authenticated, pulsar_command, internal
 from pulsar.utils.importer import import_modules, module_attribute
 
 from .exceptions import *
@@ -262,41 +261,41 @@ be consumed by the workers.'''
 #################################################    TASKQUEUE COMMANDS
 taskqueue_cmnds = set()
 
-@pulsar_command(internal=True, authenticated=True, commands_set=taskqueue_cmnds)
+@pulsar.command(internal=True, commands_set=taskqueue_cmnds)
 def addtask(client, actor, caller, jobname, task_extra, *args, **kwargs):
     kwargs.pop('ack', None)
     return actor.app._addtask(actor, caller, jobname, task_extra, True,
                               args, kwargs)
 
-@pulsar_command(internal=True, ack=False, commands_set=taskqueue_cmnds)
+@pulsar.command(internal=True, ack=False, commands_set=taskqueue_cmnds)
 def addtask_noack(client, actor, caller, jobname, task_extra, *args, **kwargs):
     kwargs.pop('ack', None)
     return actor.app._addtask(actor, caller, jobname, task_extra, False,
                               args, kwargs)
 
-@pulsar_command(internal=True, commands_set=taskqueue_cmnds)
+@pulsar.command(internal=True, commands_set=taskqueue_cmnds)
 def save_task(client, actor, caller, task):
     #import time
     #time.sleep(0.1)
     return actor.app.scheduler.save_task(task)
 
-@pulsar_command(internal=True, commands_set=taskqueue_cmnds)
+@pulsar.command(internal=True, commands_set=taskqueue_cmnds)
 def delete_tasks(client, actor, caller, ids):
     return actor.app.scheduler.delete_tasks(ids)
 
-@pulsar_command(commands_set=taskqueue_cmnds)
+@pulsar.command(commands_set=taskqueue_cmnds)
 def get_task(client, actor, id):
     return actor.app.scheduler.get_task(id)
 
-@pulsar_command(commands_set=taskqueue_cmnds)
+@pulsar.command(commands_set=taskqueue_cmnds)
 def get_tasks(client, actor, **parameters):
     return actor.app.scheduler.get_tasks(**parameters)
 
-@pulsar_command(commands_set=taskqueue_cmnds)
+@pulsar.command(commands_set=taskqueue_cmnds)
 def job_list(client, actor, jobnames=None):
     return list(actor.app.job_list(jobnames=jobnames))
 
-@pulsar_command(commands_set=taskqueue_cmnds)
+@pulsar.command(commands_set=taskqueue_cmnds)
 def next_scheduled(client, actor, jobnames=None):
     return actor.app.scheduler.next_scheduled(jobnames=jobnames)
 

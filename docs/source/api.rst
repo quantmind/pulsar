@@ -156,31 +156,15 @@ in the current context of execution. The above is equivalent to::
 
     get_actor().send(target, 'ping')
 
-.. module:: pulsar.async.commands
     
-Each action is implemented via the :func:`pulsar_command` decorator implemented
+Each action is implemented via the :func:`command` decorator implemented
 in the :mod:`pulsar.async.commands` module.
 
-pulsar_command
+pulsar command
 ~~~~~~~~~~~~~~~~~~~~
 
-.. autoclass:: pulsar_command
+.. autoclass:: command
 
-command
-~~~~~~~~~~~~~~~~~~~~
-
-A shortcut for :func:`pulsar_command` decorator which can be used to create actions
-available to all :class:`Actor`. For example the `ping` action is implemented
-via::
-
-    @command
-    def ping(client, actor):
-        return 'pong'
-
-For a :ref:`full list of remote actions <remote-actions>` check the design
-documentation. 
-
-.. module:: pulsar
 
 .. _api-async-tools:
 
@@ -415,9 +399,5 @@ checkarity
 .. autofunction:: checkarity
 
 
-retry over time
-~~~~~~~~~~~~~~~~~
-
-.. autofunction:: retry_over_time
 
 
