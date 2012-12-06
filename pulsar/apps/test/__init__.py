@@ -195,7 +195,7 @@ is a group of tests specified in a test class.
             sys.path.insert(0, path)
     
     def on_config_init(self, cfg, params):
-        self.plugins = params.get('plugins')
+        self.plugins = params.get('plugins') or ()
         if self.plugins:
             for plugin in self.plugins:
                 cfg.settings.update(plugin.config.settings)

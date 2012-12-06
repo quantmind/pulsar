@@ -66,9 +66,9 @@ def mailbox_address(client, actor, caller, address):
     return actor.proxy
 
 @proxy.command(internal=True)
-def run(client, actor, caller, callable):
+def run(client, actor, caller, callable, *args, **kwargs):
     '''Execute a python script in the server'''
-    return callable(actor)
+    return callable(actor, *args, **kwargs)
 
 @proxy.command(ack=False, internal=True)
 def stop(client, actor, caller):

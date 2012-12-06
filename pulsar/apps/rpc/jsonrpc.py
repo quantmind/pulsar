@@ -14,7 +14,7 @@ import json
 from timeit import default_timer
 
 import pulsar
-from pulsar import HttpClient
+from pulsar import HttpClient, is_async
 from pulsar.utils.structures import AttributeDictionary
 from pulsar.utils.security import gen_unique_id
 from pulsar.utils.httpurl import to_string, range
@@ -199,6 +199,12 @@ usage is simple::
         # Always make sure the content-type is application/json
         self.http.headers['content-type'] = 'application/json'
         resp = self.http.post(self.__url, data=body)
+        if is_async(resp):
+            return resp.add_callback(lambda r: self._end_call(r, raw))
+        else:
+            return self._end_call(resp, raw)
+    
+    def _end_call(self, resp, raw):
         content = resp.content.decode('utf-8')
         if resp.is_error:
             if 'error' in content:

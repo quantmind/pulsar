@@ -108,14 +108,17 @@ callback.'''
                 if is_async(result):
                     yield result
                     result = maybe_async(result)
-                self.result = result
         except Exception as e:
-            self.result = as_failure(e)
+            result = as_failure(e)
         finally:
-            yield self.finish(worker, result=self.result)
+            yield self.finish(worker, result)
 
     def finish(self, worker, result):
-        '''called when finishing the task.'''
+        '''Called when the task has finished and a ``result`` is ready.
+It sets the :attr:`time_end` attribute if not already set
+(in case the :class:`Task` was revoked) and
+determined if it was succesful or a failure. Once done it invokes
+the :ref:`task callback <tasks-callbacks>` :meth:`on_finish`.'''
         if not self.time_end:
             self.time_end = datetime.now()
             if is_failure(result):
@@ -127,7 +130,7 @@ callback.'''
             elif self.status == STARTED:
                 self.status = SUCCESS
                 self.result = result
-            return self.on_finish(worker)
+        return self.on_finish(worker)
 
     def to_queue(self, schedulter=None):
         '''The task has been received by the scheduler. If its status
@@ -146,7 +149,8 @@ task needs to be queued.'''
         return self.__dict__.pop('_toqueue', False)
 
     def done(self):
-        '''Return ``True`` if the task has its staus in READY_STATES'''
+        '''Return ``True`` if the :class:`Task` has finshed
+(its status is one of :ref:`READY_STATES <task-state>`).'''
         return self.status in READY_STATES
 
     def maybe_revoked(self):
@@ -187,29 +191,6 @@ different from ``None`` only when the :class:`Task` has been revoked.
         return self
 
     ############################################################################
-    ##    FACTORY METHODS
-    ############################################################################
-    @classmethod
-    def get_task(cls, scheduler, id):
-        '''Given a task *id* it retrieves a task instance or ``None`` if
-not available.'''
-        raise NotImplementedError()
-    
-    @classmethod
-    def get_tasks(cls, scheduler, **filters):
-        '''Given *filters* it retrieves task instances which satisfy the
-filter criteria.'''
-        raise NotImplementedError()
-    
-    @classmethod
-    def save_task(cls, scheduler, task):
-        raise NotImplementedError()
-        
-    @classmethod
-    def delete_tasks(cls, scheduler, task):
-        raise NotImplementedError()
-
-    ############################################################################
     # CALLBACKS
     ############################################################################
 
@@ -247,6 +228,34 @@ its execution'''
         '''Implement the task logging emit method. By default it does nothing.
 It can be reimplemented to do something with the log record.'''
         pass
+    
+    ############################################################################
+    ##    FACTORY METHODS
+    ############################################################################
+    @classmethod
+    def get_task(cls, scheduler, id):
+        '''Given a task *id* it retrieves a task instance or ``None`` if
+not available.'''
+        raise NotImplementedError()
+    
+    @classmethod
+    def get_tasks(cls, scheduler, **filters):
+        '''Given *filters* it retrieves task instances which satisfy the
+filter criteria.'''
+        raise NotImplementedError()
+    
+    @classmethod
+    def save_task(cls, scheduler, task):
+        raise NotImplementedError()
+        
+    @classmethod
+    def delete_tasks(cls, scheduler, task):
+        raise NotImplementedError()
+    
+    @classmethod
+    def wait_for_task(cls, scheduler, id, timeout):
+        '''Wait for a task to have finished.'''
+        raise NotImplementedError()
 
 
 class TaskInMemory(Task):

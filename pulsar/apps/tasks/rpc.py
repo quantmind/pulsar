@@ -5,6 +5,7 @@ from pulsar.apps import wsgi
 from pulsar.apps import rpc
 
 from .exceptions import TaskNotAvailable
+from .task import Task
 
 
 __all__ = ['TaskQueueRpcMixin']
@@ -18,8 +19,8 @@ def task_to_json(task):
                 raise rpc.InvalidParams('Job "%s" is not available.'\
                                         % err.task_name)
         if isinstance(task, (list, tuple)):
-            task = [t.tojson() for t in task]
-        else:
+            task = [task_to_json(t) for t in task]
+        elif isinstance(task, Task):
             task = task.tojson()
     return task
     
@@ -31,32 +32,31 @@ To use it, you need to have an :ref:`RPC application <apps-rpc>`
 and a :ref:`task queue <apps-tasks>` application installed in the
 :class:`pulsar.Arbiter`.
 
-:parameter taskqueue: set the :attr:`task_queue_manager` attribute. It can be
-    a :class:`pulsar.apps.tasks.TaskQueue` instance or a name of a taskqueue.
-
-.. attribute:: task_queue_manager
-
-    A :class:`pulsar.ActorLink` for facilitating the communication
-    from the rpc workers to the task queue.
+:parameter taskqueue: instance or name of the
+    :class:`pulsar.apps.tasks.TaskQueue` which exposes the remote procedure
+    calls.
     
-It exposes the following remote functions:
+
+**Remote Procedure Calls**
 
 .. method:: job_list([jobnames=None])
 
-    Return the list of jobs registered with task queue with meta information.
-    If a list of jobnames is given, it returns only jobs included in the list.
+    Return the list of :class:`Job` registered with task queue with meta
+    information. If a list of jobnames is given, it returns only jobs
+    included in the list.
     
     :rtype: A list of dictionaries
     
     
 .. method:: run_new_task(jobname, [**kwargs])
     
-    Run a new task in the task queue. The task can be of any type
-    as long as it is registered in the job registry.
+    Run a new :class:`Task` in the task queue. The task can be of any type
+    as long as it is registered in the :class:`Job` registry.
 
-    :parameter jobname: the name of the job to run.
+    :parameter jobname: the name of the :class:`Job` to run.
     :parameter kwargs: optional key-valued job parameters.
-    :rtype: a dictionary containing information about the request
+    :rtype: a dictionary containing information about the
+        :class:`Task` submitted
     
     
 .. method:: get_task(id=task_id)
@@ -68,6 +68,11 @@ It exposes the following remote functions:
 .. method:: get_tasks(**filters)
 
     Retrieve a list of tasks which satisfy *filters*.
+    
+    
+.. method:: wait_for_task(id=task_id)
+
+    Wait for a task to have finished.
 '''
     def __init__(self, taskqueue, **kwargs):
         if not isinstance(taskqueue, str):
@@ -100,19 +105,19 @@ It exposes the following remote functions:
     def rpc_get_tasks(self, request, **params):
         if params:
             return self._rq(request, 'get_tasks', **params).add_callback(task_to_json)
+        
+    def rpc_wait_for_task(self, request, id=None):
+        if id:
+            return self._rq(request, 'wait_for_task', id).add_callback(task_to_json)
     
     ############################################################################
     ##    INTERNALS
     def task_request_parameters(self, request):
-        '''Internal function which returns a dictionary of parameters
+        '''**Internal function** which returns a dictionary of parameters
 to be passed to the :class:`Task` class constructor.
-
 This function can be overridden to add information about
 the type of request, who made the request and so forth. It must return
-a dictionary and it is called by the internal
-:meth:`task_callback` method.
-
-By default it returns an empty dictionary.'''
+a dictionary. By default it returns an empty dictionary.'''
         return {}
     
     def _rq(self, request, action, *args, **kw):
