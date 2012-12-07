@@ -1,5 +1,4 @@
 import time
-import logging
 from datetime import timedelta, datetime
 
 from pulsar.utils.httpurl import itervalues, iteritems
@@ -123,11 +122,11 @@ and task scheduling.
     The :attr:`TaskQueue.task_class` for producing new :class:`Task`.
 
 """
-    def __init__(self, task_class):
+    def __init__(self, app):
         self._entries = self.setup_schedule()
         self.next_run = datetime.now()
-        self.task_class = task_class
-        self.log = logging.getLogger('pulsar.tasks.scheduler')
+        self.task_class = app.task_class
+        self.logger = app.logger
 
     @property
     def entries(self):
@@ -154,7 +153,7 @@ and task scheduling.
             monitor.put(task.serialize_for_queue())
         else:
             task._queued = False
-            self.log.debug('Task %s already requested, abort.', task)
+            self.logger.debug('Task %s already requested, abort.', task)
         return task
 
     def tick(self, monitor, now=None):
@@ -171,7 +170,7 @@ value ``now`` can be passed.'''
                 if next_time_to_run:
                     remaining_times.append(next_time_to_run)
         except:
-            self.log.error('Error in task scheduler', exc_info=True)
+            self.logger.error('Error in task scheduler', exc_info=True)
         self.next_run = now or datetime.now()
         if remaining_times:
             self.next_run += timedelta(seconds = min(remaining_times))

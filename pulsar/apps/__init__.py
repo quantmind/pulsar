@@ -53,7 +53,7 @@ the :class:`Application` associated with *name* if available. If not in the
 :class:`Arbiter` domain it returns nothing.'''
     actor = get_actor()
     if actor and actor.is_arbiter():
-        monitor = actor._monitors.get(name)
+        monitor = actor.monitors.get(name)
         if monitor:
             return getattr(monitor, 'app', None) 
     
@@ -71,18 +71,12 @@ to the underlying :class:`Application`.'''
 
     def handle_task(self):
         if self.information.log():
-            self.log.info('Processed {0} requests'.format(self.nr))
+            self.logger.info('Processed %s requests', self.info.nr)
         try:
             self.cfg.worker_task(self)
         except:
             pass
         self.app.worker_task(self)
-
-    def configure_logging(self, config=None):
-        # Delegate to application
-        self.app.configure_logging(config=config)
-        self.loglevel = self.app.loglevel
-        self.setlog()
 
 
 class Worker(ApplicationHandlerMixin, Actor):
@@ -109,9 +103,8 @@ It provides two new methods inherited from :class:`ApplicationHandlerMixin`.
     
     def on_init(self, app=None, **kwargs):
         self.app = app
-        self.cfg = app.cfg
-        self.max_requests = self.cfg.max_requests or sys.maxsize
         self.information = LogInformation(self.cfg.logevery)
+        app.worker_init(self)
         self.app_handler = app.handler()
         return kwargs
 
@@ -145,28 +138,16 @@ class ApplicationMonitor(ApplicationHandlerMixin, Monitor):
     '''A specialized :class:`Monitor` implementation for managing
 pulsar subclasses of :class:`Application`.
 '''
-    # For logging name
-    @property
-    def class_code(self):
-        return 'monitor %s' % self.app.name
+    actor_class = Worker
     
     def on_init(self, app=None, **kwargs):
         self.app = app
-        self.cfg = app.cfg
-        self.max_requests = 0
-        arbiter = pulsar.arbiter()
-        # Set the arbiter config object if not available
-        if not arbiter.cfg:
-            arbiter.cfg = app.cfg
-        self.max_requests = None
         self.information = LogInformation(self.cfg.logevery)
         app.monitor_init(self)
         if not self.cfg.workers:
             self.app_handler = app.handler()
         else:
             self.app_handler = app.monitor_handler()
-        kwargs['actor_class'] = Worker
-        kwargs['num_actors'] = app.cfg.workers
         return super(ApplicationMonitor, self).on_init(**kwargs)
 
     ############################################################################
@@ -212,27 +193,20 @@ updated actor parameters with information about the application.
     spawn method when creating new actors.'''
         p = Monitor.actorparams(self)
         app = self.app
-        impl = app.cfg.concurrency
-        if impl == 'thread':
+        if app.cfg.concurrency == 'thread':
             app = pickle.loads(pickle.dumps(app))
         p.update({'app': app,
-                  'timeout': app.cfg.timeout,
-                  'loglevel': app.loglevel,
-                  'max_concurrent_requests': app.cfg.backlog,
-                  'concurrency': impl,
-                  'name':'{0}-worker'.format(app.name)})
+                  'name': '{0}-worker'.format(app.name)})
         return app.actorparams(self, p)
 
     def on_info(self, info):
-        info['actor'].update({'default_timeout': self.cfg.timeout,
-                              'max_requests': self.cfg.max_requests})
         if not self.cfg.workers:
             return self.app.on_info(self, info)
         else:
             return info
 
 
-class Application(pulsar.LogginMixin):
+class Application(pulsar.Pulsar):
     """An application interface for configuring and loading
 the various necessities for any given server or distributed application running
 on :mod:`pulsar` concurrent framework.
@@ -373,15 +347,15 @@ These are the most important facts about a pulsar :class:`Application`
             self.cfg.on_start()
             self.configure_logging()
             event.fire('ready', sender=self)
+            arbiter = pulsar.arbiter(cfg=self.cfg)
             if self.on_config() is not False:
-                arbiter = pulsar.arbiter(self.cfg.daemon)
                 monitor = arbiter.add_monitor(self.monitor_class,
                                               self.name,
                                               app=self,
+                                              cfg=self.cfg,
                                               ioqueue=self.ioqueue)
-                self.mid = monitor.aid
                 if self.commands_set:
-                    monitor.commands_set.update(self.commands_set)
+                    monitor.impl.commands_set.update(self.commands_set)
         events = self.events
         if events:
             return events['on_start']
@@ -398,11 +372,6 @@ These are the most important facts about a pulsar :class:`Application`
     def name(self):
         '''Application name, It is unique and defines the application.'''
         return self._name
-    
-    @property
-    def monitor(self):
-        if self.mid:
-            return pulsar.arbiter()._monitors.get(self.mid)
 
     @property
     def events(self):
@@ -414,6 +383,12 @@ These are the most important facts about a pulsar :class:`Application`
     def __str__(self):
         return self.name
 
+    @property
+    def monitor(self):
+        actor = get_actor()
+        if actor:
+            return actor.monitors.get(self.name)
+         
     @property
     def ioqueue(self):
         if 'queue' not in self.local:
@@ -454,10 +429,10 @@ By default it returns ``None``.'''
     def put(self, request):
         queue = self.ioqueue
         if queue:
-            self.log.debug('Put {0} on IO queue'.format(request))
-            queue.put(('request',request))
+            self.logger.debug('Put %s on IO queue', request)
+            queue.put(('request', request))
         else:
-            self.log.error("Trying to put a request on task queue,\
+            self.logger.error("Trying to put a request on task queue,\
  but there isn't one!")
 
     def on_config_init(self, cfg, params):
@@ -581,6 +556,10 @@ By default it returns ``None``.'''
     def on_event(self, worker, fd, events):
         pass
 
+    def worker_init(self, worker):
+        '''Callback by :class:`Worker` when initializing.'''
+        pass
+    
     def worker_start(self, worker):
         '''Called by the :class:`Worker` :meth:`pulsar.Actor.on_start`
 :ref:`callback <actor-callbacks>` method.'''
@@ -630,23 +609,17 @@ The application is now in the arbiter but has not yet started.'''
     def start(self):
         '''Start the application if it wasn't already started.'''
         arbiter = pulsar.arbiter()
-        if self.name in arbiter.monitors:
+        if arbiter and self.name in arbiter.monitors:
             arbiter.start()
         return self
 
     def stop(self):
         '''Stop the application.'''
         arbiter = pulsar.arbiter()
-        monitor = arbiter.get_monitor(self.mid)
-        if monitor:
-            monitor.stop()
-
-    def configure_logging(self, config=None):
-        """Set the logging configuration as specified by the
- :ref:`logconfig <setting-logconfig>` setting."""
-        self.loglevel = self.cfg.loglevel
-        config = config or self.cfg.logconfig
-        super(Application,self).configure_logging(config=config)
+        if arbiter:
+            monitor = arbiter.get_actor(self.name)
+            if monitor:
+                monitor.stop()
 
     def actorlinks(self, links):
         if not links:

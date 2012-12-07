@@ -208,81 +208,72 @@ class Silence(logging.Handler):
 
 class LogginMixin(Synchronized):
     '''A Mixin used throught the library. It provides built in logging object
-and utilities for pickle.'''
-    loglevel = None
-    default_logging_config = None
-    _class_code = None
-    
-    def setlog(self, log=None, **kwargs):
-        if not log:
-            name = getattr(self, '_log_name', self.class_code)
-            log = getLogger(name)
-        self.local.log = log
-        self._log_name = log.name
-        return log
-        
+and utilities for pickle.'''    
     @property
-    def log(self):
-        return self.local.log      
-    
-    def __repr__(self):
-        return self.class_code
-    
-    def __str__(self):
-        return self.__repr__()
-    
-    @property
-    def class_code(self):
-        return self.__class__.code()
-    
-    @classmethod
-    def code(cls):
-        return cls._class_code or cls.__name__.lower()
+    def logger(self):
+        return self.local.logger      
     
     def __setstate__(self, state):
         self.__dict__ = state
-        self.configure_logging()
+        info = getattr(self, '_log_info', {})
+        self.configure_logging(**info)
     
-    def configure_logging(self, config=None):
+    def configure_logging(self, logger=None, config=None, level=None,
+                          handlers=None):
         '''Configure logging. This function is invoked every time an
 instance of this class is un-serialised (possibly in a different
 process domain).'''
-        logconfig = None
+        logconfig = original = process_global('_config_logging')
         # if the logger was not configured, do so.
-        if not process_global('_config_logging'):
+        if not logconfig:
             logconfig = copy.deepcopy(LOGGING_CONFIG)
             if config:
                 update_config(logconfig, config)
-            process_global('_config_logging',logconfig, True)
-        loglevel = self.loglevel
-        if loglevel is None:
-            loglevel = logging.NOTSET
+            original = logconfig
+            process_global('_config_logging', logconfig, True)
+        else:
+            logconfig = copy.deepcopy(logconfig)
+            logconfig['disable_existing_loggers'] = False
+            logconfig.pop('loggers', None)
+            logconfig.pop('root', None)
+        if level is None:
+            level = logging.NOTSET
         else:
             try:
-                loglevel = int(loglevel)
+                level = int(level)
             except (ValueError):
-                lv = str(loglevel).upper()
+                lv = str(level).upper()
                 if lv in logging._levelNames:
-                    loglevel = logging._levelNames[lv]
+                    level = logging._levelNames[lv]
                 else:
-                    loglevel = logging.NOTSET
-        self.loglevel = loglevel
+                    level = logging.NOTSET
         # No loggers configured. This means no logconfig setting
         # parameter was used. Set up the root logger with default
-        # loggers 
+        # loggers
+        if level == logging.NOTSET:
+            handlers = ['silent']
+        else:
+            handlers = handlers or ['console']
+        level = logging.getLevelName(level)
+        logger = logger or self.__class__.__name__.lower()
+        if logger not in original['loggers']:
+            if 'loggers' not in logconfig:
+                logconfig['loggers'] = {}
+            l = {'level': level, 'handlers': handlers, 'propagate': False}
+            original['loggers'][logger] = l
+            logconfig['loggers'][logger] = l
+        if not original.get('root'):
+            logconfig['root'] = {'handlers': handlers,
+                                 'level': level}
         if logconfig:
-            if not logconfig.get('root'):
-                if loglevel == logging.NOTSET:
-                    handlers = ['silent']
-                else:
-                    handlers = ['console']
-                logconfig['root'] = {'handlers': handlers}
-            logconfig['root']['level'] = logging.getLevelName(loglevel)
             dictConfig(logconfig)
-        self.setlog()
-        self.log.setLevel(self.loglevel)
-            
+        self._log_info = {'logger': logger,
+                          'level': level,
+                          'handlers': handlers,
+                          'config': config}
+        self.local.logger = logging.getLogger(logger)
         
+
 class LogInformation(object):
     
     def __init__(self, logevery):

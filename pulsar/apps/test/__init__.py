@@ -139,7 +139,7 @@ test_commands = set()
 @pulsar.command(internal=True, ack=False, commands_set=test_commands)
 def test_result(client, actor, sender, tag, clsname, result):
     '''Command for sending test results from test workers to the test monitor.'''
-    actor.log.debug('Got a test results from %s.%s', tag, clsname)
+    actor.logger.debug('Got a test results from %s.%s', tag, clsname)
     return actor.app.add_result(actor, result)
 
 
@@ -218,7 +218,6 @@ configuration and plugins.'''
     def on_config(self):
         #When config is available load the tests and check what type of
         #action is required.
-        pulsar.arbiter()
         modules = getattr(self, 'modules', None)
         if not hasattr(self, 'plugins'):
             self.plugins = ()
@@ -228,7 +227,7 @@ configuration and plugins.'''
             modules = ['tests']
         if hasattr(modules, '__call__'):
             modules = modules(self)
-        loader = TestLoader(os.getcwd(), modules, runner, logger=self.log)
+        loader = TestLoader(os.getcwd(), modules, runner, logger=self.logger)
         # Listing labels
         if self.cfg.list_labels:
             tags = self.cfg.labels
@@ -258,7 +257,7 @@ configuration and plugins.'''
         try:
             self.local.tests = tests = list(loader.testclasses(tags))
             if tests:
-                self.log.info('loaded %s test classes', len(tests))
+                self.logger.info('loaded %s test classes', len(tests))
                 self.runner.on_start()
                 event.fire('tests', sender=self, value=tests)
                 monitor.cfg.set('workers', min(self.cfg.workers, len(tests)))
@@ -276,7 +275,7 @@ configuration and plugins.'''
     def monitor_task(self, monitor):
         if self._time_start is None:
             tests = self.local.tests
-            self.log.info('sending %s test classes to the task queue',
+            self.logger.info('sending %s test classes to the task queue',
                           len(tests))
             self._time_start = time.time()
             for tag, testcls in tests:

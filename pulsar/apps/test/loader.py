@@ -49,7 +49,7 @@ importing tests.
 '''
     def __init__(self, root, modules, runner, logger=None):
         self.runner = runner
-        self.log = logger or default_logger
+        self.logger = logger or default_logger
         self.root = root
         self.modules = []
         for mod in modules:
@@ -89,7 +89,7 @@ importing tests.
 
     def testclasses(self, tags=None):
         pt = ', '.join(tags) if tags else 'all'
-        self.log.info('Load test classes for %s tags', pt)
+        self.logger.info('Load test classes for %s tags', pt)
         for tag, mod in self.testmodules(tags):
             if tags:
                 skip = True
@@ -210,9 +210,9 @@ tag,module pairs.
                 if getattr(mod, '__test__', True):
                     return self.runner.import_module(mod, parent)
             except ImportError:
-               self.log.error('failed to import module %s. Skipping.',
-                              name, exc_info=True)
-            except:
-               self.log.critical('Failed to import module %s. Skipping.',
+               self.logger.error('failed to import module %s. Skipping.',
                                  name, exc_info=True)
+            except:
+               self.logger.critical('Failed to import module %s. Skipping.',
+                                    name, exc_info=True)
 

@@ -235,6 +235,21 @@ settings via the :meth:`Setting.add_argument`.
             pn = self.settings.get('default_process_name')
             if pn:
                 return pn.get()
+    
+    def copy(self):
+        cls = self.__class__
+        me = cls.__new__(cls)
+        for name, value in iteritems(self.__dict__):
+            if name == 'settings':
+                value = copy.deepcopy(value)
+            me.__dict__[name] = value
+        return me
+    
+    def __copy__(self):
+        return self.copy()
+    
+    def __deepcopy__(self, memo):
+        return self.__copy__()
             
 
 class SettingMeta(type):
@@ -468,7 +483,7 @@ class Workers(Setting):
     type = int
     default = 1
     desc = """\
-        The number of worker process for handling requests.
+        The number of workers for handling requests.
 
 If you are using a multi-process concurrency, a number in the
 the 2-4 x $(NUM_CORES) range should be good. If you are using threads this
@@ -673,17 +688,25 @@ class Loglevel(Setting):
     validator = validate_string
     default = "info"
     desc = """The granularity of log outputs.
+            
+            Valid level names are:
+            
+             * debug
+             * info
+             * warning
+             * error
+             * critical
+             """
 
-Valid level names are:
-
- * debug
- * info
- * warning
- * error
- * critical
- """
-
-
+class LogHandlers(Setting):
+    name = "loghandlers"
+    section = "Logging"
+    flags = ["--log-handlers"]
+    default = ['console']
+    validator = validate_list
+    desc = """log handlers for pulsar server"""
+    
+    
 class LogEvery(Setting):
     name = "logevery"
     section = "Logging"

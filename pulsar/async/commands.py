@@ -61,7 +61,7 @@ def config(client, actor, setget, name, *value):
 def mailbox_address(client, actor, caller, address):
     '''The remote *caller* register its mailbox ``address``.'''
     if address:
-        actor.log.debug('Registering %s inbox address %s', caller, address)    
+        actor.logger.debug('Registering %s inbox address %s', caller, address)    
     actor.link_actor(caller, address)
     return actor.proxy
 
@@ -95,5 +95,5 @@ def kill_actor(client, actor, aid):
         a.stop()
         return 'stopped {0}'.format(a)
     else:
-        self.log.info('Could not kill "%s" no such actor', aid)
+        actor.logger.info('Could not kill "%s" no such actor', aid)
         

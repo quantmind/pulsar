@@ -18,7 +18,7 @@ class RpcRequest(object):
     def __init__(self, environ, handler, method, func, args,
                 kwargs, id, version):
         self.environ = environ
-        self.log = handler.log
+        self.logger = handler.logger
         self.handler = handler
         self.method = method
         self.func = func

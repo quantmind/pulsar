@@ -28,40 +28,9 @@ def file_descriptor(fd):
     else:
         return fd
 
-
-class ID:
-    cpubound = False
-    _name = None
-    _pid = None
-    _repr = ''
-    _tid = None
-
-    def __repr__(self):
-        return self._repr
-
-    def __str__(self):
-        return self._repr
-
-    @property
-    def tid(self):
-        return self._tid
-
-    @property
-    def pid(self):
-        return self._pid
-
-    @property
-    def name(self):
-        return self._name
-
-    @property
-    def fullname(self):
-        return self._repr
-
-    def setid(self):
-        ct = current_thread()
-        self._tid = ct.ident
-        self._pid = os.getpid()
+def setid(self):
+    self.tid = current_thread().ident
+    self.pid = os.getpid()
 
 
 class LoopGuard(object):
@@ -71,9 +40,9 @@ class LoopGuard(object):
 
     def __enter__(self):
         loop = self.loop
-        loop.log.debug("Starting %s", loop)
+        loop.logger.debug("Starting %s", loop)
         loop._running = True
-        loop.setid()
+        setid(loop)
         loop._started = time.time()
         loop._on_exit = Deferred()
         loop.num_loops = 0
@@ -84,11 +53,11 @@ class LoopGuard(object):
         loop._running = False
         loop._tid = None
         loop._stopped = True
-        loop.log.debug('Exiting event loop')
+        loop.logger.debug('Exiting event loop')
         loop._on_exit.callback(loop)
 
 
-class IOLoop(IObase, ID, Synchronized):
+class IOLoop(IObase, Synchronized):
     """\
 A level-triggered I/O event loop adapted from tornado.
 
@@ -120,7 +89,7 @@ A level-triggered I/O event loop adapted from tornado.
         self._impl = io or IOpoll()
         self.POLL_TIMEOUT = pool_timeout if pool_timeout is not None\
                                  else self.POLL_TIMEOUT
-        self.log = logger or logging.getLogger('ioloop')
+        self.logger = logger or logging.getLogger('ioloop')
         if hasattr(self._impl, 'fileno'):
             close_on_exec(self._impl.fileno())
         cname = self.__class__.__name__.lower()
@@ -179,7 +148,7 @@ file descriptor *fd*.
                 self._impl.register(fdd, events | self.ERROR)
                 return True
             else:
-                self.log.debug('Handler for %s already available.', fd)
+                self.logger.debug('Handler for %s already available.', fd)
 
     def update_handler(self, fd, events):
         """Changes the events we listen for fd."""
@@ -193,7 +162,7 @@ file descriptor *fd*.
         try:
             self._impl.unregister(fdd)
         except (OSError, IOError):
-            self.log.error("Error removing %s from IOLoop", fd, exc_info=True)
+            self.logger.error("Error removing %s from IOLoop", fd, exc_info=True)
 
     def start(self, starter=None):
         if not self._startup(starter):
@@ -292,8 +261,8 @@ so that it can perform its tasks at each event loop. Check the
             except HaltServer:
                 raise
             except:
-                self.log.critical('Unhandled exception in loop task',
-                                  exc_info = True)
+                self.logger.critical('Unhandled exception in loop task',
+                                     exc_info=True)
 
     def _run(self):
         """Runs the I/O loop until one of the I/O handlers calls stop(), which
@@ -307,7 +276,6 @@ will make the loop stop after the current event iteration completes."""
                 callbacks = self._callbacks
                 if callbacks:
                     self._callbacks = []
-                    #self.log.debug('Total of %s callbacks', len(callbacks))
                     _run_callback = self._run_callback
                     for callback in callbacks:
                         _run_callback(callback)
@@ -366,13 +334,13 @@ will make the loop stop after the current event iteration completes."""
                                 # Happens when the client closes the connection
                                 pass
                             else:
-                                self.log.error(
+                                self.logger.error(
                                     "Exception in I/O handler for fd %s",
                                               fd, exc_info=True)
                         except KeyError:
-                            self.log.info("File descriptor %s missing" % fd)
+                            self.logger.info("File descriptor %s missing", fd)
                         except:
-                            self.log.error("Exception in I/O handler for fd %s",
+                            self.logger.error("Exception in I/O handler for fd %s",
                                           fd, exc_info=True)
 
     def _run_callback(self, callback):
@@ -393,7 +361,7 @@ will make the loop stop after the current event iteration completes."""
         The exception itself is not passed explicitly, but is available
         in sys.exc_info.
         """
-        self.log.error("Exception in callback %r", callback, exc_info=True)
+        self.logger.error("Exception in callback %r", callback, exc_info=True)
 
 
 class _Timeout(object):
@@ -436,7 +404,7 @@ class PeriodicCallback(object):
         except (KeyboardInterrupt, SystemExit):
             raise
         except:
-            ioloop.log.error("Error in periodic callback", exc_info=True)
+            ioloop.logger.error("Error in periodic callback", exc_info=True)
         if self._running:
             self.start()
 

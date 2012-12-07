@@ -145,11 +145,16 @@ where value is the last item in the list associated with the key.
             self.extend(key, aslist(val))
 
 
-class AttributeDictionary(object):
+class AttributeDictionary(Mapping):
     
-    def __init__(self, iterable=None):
-        if iterable is not None:
+    def __init__(self, *iterable, **kwargs):
+        if iterable:
+            if len(iterable) > 1:
+                raise TypeError('%s exceped at most 1 arguments, got %s.' %\
+                                (self.__class__.__name__, len(iterable)))
             self.update(iterable)
+        if kwargs:
+            self.update(kwargs)
             
     def __contains__(self, name):
         return name in self.__dict__
@@ -182,20 +187,19 @@ class AttributeDictionary(object):
     def pop(self, name):
         return self.__dict__.pop(name, None)
     
-    if ispy3k:
-        def values(self):
-            return self.__dict__.values()
-        
-        def items(self):
-            return self.__dict__.items()
-        
-    else:   #pragma    nocover
+    def values(self):
+        return self.__dict__.values()
+    
+    def items(self):
+        return self.__dict__.items()
+    
+    if not ispy3k:   #pragma    nocover
         def itervalues(self):
             return self.__dict__.itervalues()
         
         def iteritems(self):
             return self.__dict__.iteritems()
-        
+    
     
     
 def merge_prefix(deque, size):

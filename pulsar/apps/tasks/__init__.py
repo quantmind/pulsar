@@ -356,7 +356,7 @@ to check if the scheduler needs to perform a new run.'''
         if self.callable:
             self.callable()
         import_modules(self.cfg.tasks_path)
-        self.local.scheduler = Scheduler(self.task_class)
+        self.local.scheduler = Scheduler(self)
         return self
 
     def monitor_handler(self):

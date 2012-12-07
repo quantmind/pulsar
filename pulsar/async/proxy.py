@@ -142,19 +142,13 @@ parameter ``"hello there!"``.
 
     the socket address of the underlying :attr:`Actor.mailbox`.
     
-.. attribute:: timeout
-
-    the value of the underlying :attr:`Actor.timeout` attribute
 '''
     last_msg = None
     def __init__(self, impl):
         self.aid = impl.aid
         self.commands_set = impl.commands_set
-        # impl can be an actor or concurrency, which does not have
-        # the address attribute
-        self.address = getattr(impl, 'address', None)
-        self.timeout = impl.timeout
-        self.loglevel = impl.loglevel
+        self.address = impl.address
+        self.cfg = impl.cfg
     
     def __repr__(self):
         return self.aid
