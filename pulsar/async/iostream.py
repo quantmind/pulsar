@@ -804,8 +804,7 @@ class AsyncSocketServer(BaseSocketHandler):
         self.on_connection_callbacks = []
         # If the actor has a ioqueue (CPU bound actor) we create a new ioloop
         if self.onthread:
-            self.__ioloop = IOLoop(pool_timeout=actor._pool_timeout,
-                                   logger=actor.log)
+            self.__ioloop = IOLoop(logger=actor.logger)
 
     @classmethod
     def make(cls, actor=None, bind=None, backlog=None, **kwargs):
@@ -813,7 +812,7 @@ class AsyncSocketServer(BaseSocketHandler):
             actor = get_actor()
         if not backlog:
             if actor:
-                backlog = actor.cfg.get('backlog', defaults.BACKLOG)
+                backlog = actor.cfg.backlog
             else:
                 backlog = defaults.BACKLOG
         if bind:

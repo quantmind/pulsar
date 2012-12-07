@@ -23,7 +23,7 @@ __all__ = ['WsgiHandler',
            'wsgi_error_msg']
 
 
-default_logger = logging.getLogger('pulsar.apps.wsgi')
+LOGGER = logging.getLogger('pulsar.wsgi')
 
 
 def wsgi_iterator(gen, encoding=None):
@@ -161,9 +161,8 @@ By default it returns an empty tuple. Overrides if you need to.'''
                 try:
                     rm(environ, self)
                 except:
-                    log = pulsar.get_actor().log
-                    log.error('Exception in response middleware',
-                              exc_info=True)
+                    LOGGER.error('Exception in response middleware',
+                                 exc_info=True)
         start_response(self.status, self.get_headers(), exc_info=exc_info)
         return self
     
@@ -237,7 +236,7 @@ This is usually `True` if a generator is passed to the response object."""
         return list(headers)
 
 
-class WsgiHandler(pulsar.LogginMixin):
+class WsgiHandler(object):
     '''An handler for application conforming to python WSGI_.
 
 .. attribute:: middleware
@@ -259,7 +258,6 @@ class WsgiHandler(pulsar.LogginMixin):
 
 '''
     def __init__(self, middleware=None, response_middleware=None, **kwargs):
-        self.setlog(**kwargs)
         if middleware:
             middleware = list(middleware)
         self.middleware = middleware or []
@@ -321,11 +319,11 @@ def handle_wsgi_error(environ, trace=None, content_type=None,
     response.headers.update(getattr(error, 'headers', None) or ())
     path = ' @ path %s' % environ.get('PATH_INFO','/')
     if response.status_code == 500:
-        default_logger.critical('Unhandled exception during WSGI response %s',
-                                path, exc_info=trace)
+        LOGGER.critical('Unhandled exception during WSGI response %s',
+                        path, exc_info=trace)
     else:
-        default_logger.info('WSGI %s status code %s',
-                            response.status_code, path)
+        LOGGER.info('WSGI %s status code %s',
+                    response.status_code, path)
     if has_empty_content(response.status_code) or\
        response.status_code in REDIRECT_CODES:
         content = ()
@@ -339,8 +337,7 @@ def handle_wsgi_error(environ, trace=None, content_type=None,
                     content.log()
                     content = None
             except:
-                default_logger.critical('Error while rendering error',
-                                        exc_info=True)
+                LOGGER.critical('Error while rendering error', exc_info=True)
                 content = None
     if content is None:
         msg = error_messages.get(response.status_code) or response.response

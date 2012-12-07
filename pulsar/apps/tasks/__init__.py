@@ -299,6 +299,12 @@ def job_list(client, actor, jobnames=None):
 def next_scheduled(client, actor, jobnames=None):
     return actor.app.scheduler.next_scheduled(jobnames=jobnames)
 
+@pulsar.command(commands_set=taskqueue_cmnds)
+def wait_for_task(client, actor, id, timeout=3600):
+    # wait for a task to finish for at most timeout seconds
+    scheduler = actor.app.scheduler
+    return scheduler.task_class.wait_for_task(scheduler, id, timeout)
+
 
 class TaskQueue(CPUboundServer):
     '''A :class:`pulsar.CPUboundServer` for consuming
@@ -350,7 +356,7 @@ to check if the scheduler needs to perform a new run.'''
         if self.callable:
             self.callable()
         import_modules(self.cfg.tasks_path)
-        self.local.scheduler = Scheduler(self.task_class)
+        self.local.scheduler = Scheduler(self)
         return self
 
     def monitor_handler(self):

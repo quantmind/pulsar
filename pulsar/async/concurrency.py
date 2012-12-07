@@ -13,8 +13,7 @@ from .access import get_actor, get_actor_from_id
 
 __all__ = ['Concurrency', 'concurrency']
 
-
-def concurrency(kind, actor_class, timeout, monitor, aid, commands_set, params):
+def concurrency(kind, actor_class, monitor, commands_set, cfg, params):
     '''Function invoked by the :class:`Arbiter` or a :class:`Monitor` when
 spawning a new :class:`Actor`. It created a :class:`Concurrency` instance
 which handle the contruction and the lif of an :class:`Actor`.
@@ -30,9 +29,8 @@ which handle the contruction and the lif of an :class:`Actor`.
     elif kind == 'process':
         c = ActorProcess()
     else:
-        raise ValueError('Concurrency %s not supported by pulsar' % kind)
-    return c.make(kind, actor_class, timeout, monitor,
-                  aid, commands_set, params)
+        raise ValueError('Concurrency %s not supported in pulsar' % kind)
+    return c.make(kind, actor_class, monitor, commands_set, cfg, params)
 
 
 class Concurrency(object):
@@ -48,28 +46,28 @@ and are shared between the :class:`Actor` and its
 :parameter kwargs: additional key-valued arguments to be passed to the actor
     constructor.
 '''
-    def make(self, kind, actor_class, timeout, monitor, aid,
-             commands_set, kwargs):
-        if not aid:
-            if monitor and monitor.is_arbiter():
-                aid = 'arbiter'
-            else:
-                aid = gen_unique_id()[:8]
-        self.aid = aid
-        self.impl = kind
+    _creation_counter = 0
+    address = None
+    def make(self, kind, actor_class, monitor, commands_set, cfg, params):
+        self.__class__._creation_counter += 1
+        self.aid = gen_unique_id()[:8]
+        self.age = self.__class__._creation_counter
+        self.name = params.pop('name', actor_class.__name__.lower())
+        self.kind = kind
         self.commands_set = commands_set
-        self.timeout = timeout
+        self.cfg = cfg
         self.actor_class = actor_class
-        self.loglevel = kwargs.pop('loglevel',None)
-        self.a_kwargs = kwargs
+        self.pool_timeout = params.pop('pool_timeout', None)
+        self.params = params
         return self.get_actor(monitor)
 
     @property
-    def name(self):
-        return '{0}({1})'.format(self.actor_class.code(), self.aid)
+    def unique_name(self):
+        return '%s(%s)' % (self.name, self.aid)
 
-    def __str__(self):
-        return self.name
+    def __repr__(self):
+        return self.unique_name
+    __str__ = __repr__
 
     def get_actor(self, monitor):
         self.daemon = True
@@ -77,19 +75,18 @@ and are shared between the :class:`Actor` and its
             arbiter = monitor
         else:
             arbiter = monitor.arbiter
-        self.a_kwargs['arbiter'] = get_proxy(arbiter)
-        self.a_kwargs['monitor'] = get_proxy(monitor)
+        self.params['arbiter'] = get_proxy(arbiter)
+        self.params['monitor'] = get_proxy(monitor)
         return ActorProxyMonitor(self)
+                
 
 
 class MonitorConcurrency(Concurrency):
     '''An actor implementation for Monitors. Monitors live in the main process
 loop and therefore do not require an inbox.'''
     def get_actor(self, arbiter):
-        # Override get_actor
-        self.a_kwargs['arbiter'] = arbiter
-        self.timeout = 0
-        return self.actor_class(self, **self.a_kwargs)
+        self.params['arbiter'] = arbiter
+        return self.actor_class(self)
 
     def start(self):
         pass
@@ -105,7 +102,7 @@ loop and therefore do not require an inbox.'''
 class ActorConcurrency(Concurrency):
 
     def run(self):
-        actor = self.actor_class(self, **self.a_kwargs)
+        actor = self.actor_class(self)
         actor.start()
 
 

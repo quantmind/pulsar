@@ -13,7 +13,7 @@ from pulsar import HaltServer
 
 from .defer import itervalues, iteritems, multi_async
 from .actor import Actor, send
-from .monitor import PoolMixin
+from .monitor import PoolMixin, _spawn_actor
 from .access import get_actor, set_actor
 from . import proxy
 
@@ -29,11 +29,15 @@ process_global = pulsar.process_global
 __all__ = ['arbiter', 'spawn', 'Arbiter', 'ThreadQueue']
 
 
-def arbiter(daemonize=False):
+def arbiter(commands_set=None, **params):
     '''Obtain the arbiter instance.'''
     arbiter = get_actor()
     if arbiter is None:
-        return set_actor(Arbiter.make(daemonize=daemonize))
+        # Create the arbiter
+        cset = set(proxy.actor_commands)
+        cset.update(proxy.arbiter_commands)
+        cset.update(commands_set or ())
+        return set_actor(_spawn_actor(Arbiter, commands_set=cset, **params))
     elif isinstance(arbiter, Actor) and arbiter.is_arbiter():
         return arbiter
 
@@ -109,56 +113,43 @@ Users access the arbiter by the high level api::
     def is_arbiter(self):
         return True
 
-    def add_monitor(self, monitor_class, monitor_name, **kwargs):
+    def add_monitor(self, monitor_class, monitor_name, **params):
         '''Add a new :class:`Monitor` to the :class:`Arbiter`.
 
 :parameter monitor_class: a :class:`pulsar.Monitor` class.
 :parameter monitor_name: a unique name for the monitor.
 :parameter kwargs: dictionary of key-valued parameters for the monitor.
 :rtype: an instance of a :class:`pulsar.Monitor`.'''
-        if monitor_name in self._monitors:
+        if monitor_name in self.monitors:
             raise KeyError('Monitor "{0}" already available'\
                            .format(monitor_name))
-        kwargs['name'] = monitor_name
-        kwargs['aid'] = monitor_name
-        m = arbiter().spawn(monitor_class, **kwargs)
-        # Monitors don't hold other monitors
-        m._monitors.clear()
-        self._linked_actors[m.aid] = m
-        self._monitors[m.name] = m
+        params['name'] = monitor_name
+        m = self.spawn(monitor_class, **params)
+        self.linked_actors[m.aid] = m
+        self.monitors[m.name] = m
         return m
-
-    @classmethod
-    def make(cls, commands_set=None, impl=None, **kwargs):
-        commands_set = set(commands_set or proxy.actor_commands)
-        commands_set.update(proxy.arbiter_commands)
-        return cls._spawn_actor(None, cls, 'arbiter', commands_set, **kwargs)
-
-    @property
-    def close_signal(self):
-        '''Return the signal that caused the arbiter to stop.'''
-        return self._close_signal
 
     def isprocess(self):
         return True
 
     def get_all_monitors(self):
         '''A dictionary of all :class:`Monitor` in the arbiter'''
-        return dict(((mon.name,mon.proxy) for mon in itervalues(self.monitors)))
+        return dict(((mon.name, mon.proxy) for mon in\
+                      itervalues(self.monitors)))
 
     @multi_async
     def close_monitors(self):
         '''Close all :class:`Monitor` at once.'''
-        for pool in list(itervalues(self._monitors)):
+        for pool in list(itervalues(self.monitors)):
             yield pool.stop()
 
     def on_info(self, data):
-        monitors = [p.info() for p in itervalues(self.monitors)]
+        monitors = [p.get_info() for p in itervalues(self.monitors)]
         server = data.pop('actor')
-        server.update({'version':pulsar.__version__,
-                       'name':pulsar.SERVER_NAME,
-                       'number_of_monitors':len(self._monitors),
-                       'number_of_actors':len(self.MANAGED_ACTORS)})
+        server.update({'version': pulsar.__version__,
+                       'name': pulsar.SERVER_NAME,
+                       'number_of_monitors': len(self.monitors),
+                       'number_of_actors': len(self.MANAGED_ACTORS)})
         server.pop('is_process', None)
         server.pop('ppid', None)
         server.pop('actor_id', None)
@@ -168,19 +159,10 @@ Users access the arbiter by the high level api::
         data['monitors'] = monitors
         return data
 
-    def configure_logging(self, config = None):
-        if self._monitors:
-            monitor = list(self._monitors.values())[0]
-            monitor.configure_logging(config = config)
-            self.setlog()
-            self.loglevel = monitor.loglevel
-        else:
-            super(Arbiter,self).configure_logging(config = config)
-
     ############################################################################
     # OVERRIDE ACTOR HOOKS
     ############################################################################
-    def on_init(self, daemonize=False, **kwargs):
+    def on_init(self, **kwargs):
         testing = kwargs.pop('__test_arbiter__',False)
         if not testing:
             if current_process().daemon:
@@ -189,20 +171,17 @@ Users access the arbiter by the high level api::
             if isinstance(get_actor(), self.__class__):
                 raise pulsar.PulsarException('Arbiter already created')
             os.environ["SERVER_SOFTWARE"] = pulsar.SERVER_SOFTWARE
-        self._close_signal = None
-        if daemonize:
+        if self.cfg.daemon:
             system.daemonize()
-        self.actor_age = 0
-        self.reexec_pid = 0
         self.SIG_QUEUE = ThreadQueue()
         return PoolMixin.on_init(self, **kwargs)
 
     def on_start(self):
-        pidfile = self.get('pidfile')
+        pidfile = self.cfg.pidfile
         if pidfile is not None:
             p = Pidfile(pidfile)
             p.create(self.pid)
-            self.local.pidfile = p
+            self.pidfile = p
 
     def on_task(self):
         '''Override the :class:`Actor.on_task` callback to perform the
@@ -210,11 +189,11 @@ arbiter tasks at every iteration in the event loop.'''
         sig = self._arbiter_task()
         if sig is None:
             self.manage_actors()
-            for m in list(itervalues(self._monitors)):
+            for m in list(itervalues(self.monitors)):
                 if m.started():
                     if not m.running():
-                        self.log.info('Removing monitor {0}'.format(m))
-                        self._monitors.pop(m.name)
+                        self.logger.info('Removing monitor %s', m)
+                        self.monitors.pop(m.name)
                 else:
                     m.start()
         try:
@@ -230,12 +209,10 @@ the timeout. Stop the arbiter.'''
             if gap > actor.timeout:
                 if actor.stopping_loops < self.STOPPING_LOOPS:
                     if not actor.stopping_loops:
-                        self.log.info(\
-                            'Stopping {0}. Timeout surpassed.'.format(actor))
+                        self.logger.info('Stopping %s. Timeout.', actor)
                         self.send(actor, 'stop')
                 else:
-                    self.log.warn(\
-                            'Terminating {0}. Timeout surpassed.'.format(actor))
+                    self.logger.warn('Terminating %s. Timeout.', actor)
                     actor.terminate()
                     actor.join(self.JOIN_TIMEOUT)
                 actor.stopping_loops += 1
@@ -243,17 +220,17 @@ the timeout. Stop the arbiter.'''
     def on_stop(self):
         '''Stop the pools the message queue and remaining actors.'''
         # close all monitors
-        self.log.info('Shutting down server.')
+        self.logger.info('Shutting down server.')
         yield self.close_monitors()
         # close remaining actors
         yield self.close_actors()
         yield self._close_message_queue()
 
     def on_exit(self):
-        p = self.get('pidfile')
+        p = self.cfg.pidfile
         if p is not None:
             p.unlink()
-        if self.MANAGED_ACTORS:
+        if self.managed_actors:
             self._state = self.TERMINATE
 
     ############################################################################
@@ -266,7 +243,7 @@ the timeout. Stop the arbiter.'''
         """
         self._on_run()
         try:
-            self.cfg.get('when_ready')(self)
+            self.cfg.when_ready(self)
         except:
             pass
         try:
@@ -289,10 +266,10 @@ the timeout. Stop the arbiter.'''
         x = 'Shutting down pulsar arbiter'
         _msg = lambda : x if not reason else '{0}: {1}'.format(x,reason)
         if not sig:
-            self.log.critical(_msg())
+            self.logger.critical(_msg())
         else:
-            self.log.info(_msg())
-        self._close_signal = sig
+            self.logger.info(_msg())
+        self.exit_code = sig
         self.stop()
 
     def _close_message_queue(self):
@@ -308,7 +285,7 @@ signal queue'''
             except (Empty,IOError):
                 break
             if sig not in system.SIG_NAMES:
-                self.log.info("Ignoring unknown signal: %s" % sig)
+                self.logger.info("Ignoring unknown signal: %s", sig)
                 sig = None
             else:
                 signame = system.SIG_NAMES.get(sig)
@@ -318,11 +295,11 @@ signal queue'''
                 handler = getattr(self, "handle_queued_%s"\
                                    % signame.lower(), None)
                 if not handler:
-                    self.log.debug('Cannot handle signal "{0}". No Handle'\
-                                   .format(signame))
+                    self.logger.debug('Cannot handle signal "%s". No Handle',\
+                                      signame)
                     sig = None
                 else:
-                    self.log.info("Handling signal: %s" % signame)
+                    self.logger.info("Handling signal: %s", signame)
                     handler()
         return sig
 
@@ -330,14 +307,12 @@ signal queue'''
         signame = system.SIG_NAMES.get(sig, None)
         if signame:
             if self.ioloop.running():
-                self.log.debug('Received and queueing signal {0}.'\
-                               .format(signame))
+                self.logger.debug('Received and queueing signal %s.', signame)
                 self.SIG_QUEUE.put(sig)
                 self.ioloop.wake()
             else:
                 pass
                 #exit(1)
         else:
-            self.log.debug('Received unknown signal "{0}". Skipping.'\
-                          .format(sig))
+            self.logger.debug('Received unknown signal "%s". Skipping.', sig)
 

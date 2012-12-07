@@ -5,6 +5,7 @@ import logging
 from inspect import istraceback
 from copy import deepcopy
 
+from pulsar import HaltServer
 from pulsar.utils.structures import AttributeDictionary
 
 from .utils import TestFunction
@@ -13,10 +14,11 @@ __all__ = ['Plugin',
            'TestStream',
            'TestRunner',
            'TestResult',
-           'Plugin']
+           'Plugin',
+           'LOGGER']
 
 
-LOGGER = logging.getLogger('pulsar.apps.test')
+LOGGER = logging.getLogger('TestRunner')
 STDOUT_LINE = '\nStdout:\n%s'
 STDERR_LINE = '\nStderr:\n%s'
 
@@ -92,7 +94,7 @@ cases. By default it returns *test*.'''
     def printSummary(self, timeTaken):
         pass
 
-    def import_module(self, mod, parent = None):
+    def import_module(self, mod, parent=None):
         return mod
 
     def getDescription(self, test):
@@ -152,7 +154,7 @@ class TestStream(TestResultProxy):
 
     def addSuccess(self, test):
         if self.showAll:
-            self.head(test,'ok')
+            self.head(test, 'ok')
         elif self.dots:
             self.stream.write('.')
             self.stream.flush()
@@ -340,10 +342,28 @@ class TestResult(Plugin):
             tb = tb.tb_next
         return length
 
+
+def testsafe(name, return_val=None):
+    if not return_val:
+        return_val = lambda c: None
+    def _(self, *args):
+        for p in self.plugins:
+            try:
+                c = getattr(p, name)(*args)
+                if c:
+                    return return_val(c)
+            except HaltServer:
+                raise
+            except:
+                LOGGER.critical('Unhadled error in %s.%s' % (p, name),
+                                exc_info=True)
+    return _                
+            
     
 class TestRunner(TestResultProxy):
     '''An asynchronous test runner'''
-    def __init__(self, plugins, stream, writercls=None, descriptions=True):
+    def __init__(self, plugins, stream, writercls=None, descriptions=True,
+                 logger=None):
         self.descriptions = descriptions
         self.plugins = []
         writercls = writercls or TestStream
@@ -361,37 +381,25 @@ class TestRunner(TestResultProxy):
         self.result = result
         self.loader = unittest.TestLoader()
 
-    def configure(self, cfg):
-        self.cfg = cfg
-        for p in self.plugins:
-            c = p.configure(cfg)
-            if c:
-                return c
+    configure = testsafe('configure', lambda c: c)        
+    on_start = testsafe('on_start')
+    on_end = testsafe('on_end')
+    startTest = testsafe('startTest')    
+    stopTest = testsafe('stopTest')
+    addSuccess = testsafe('addSuccess')
+    addFailure = testsafe('addFailure')
+    addError = testsafe('addError')
+    addSkip = testsafe('addSkip')
+    printErrors = testsafe('printErrors')
+    printSummary = testsafe('printSummary')
 
     def loadTestsFromTestCase(self, cls):
         '''Load all *test* functions for the test class *cls*.'''
-        all_tests = self.loader.loadTestsFromTestCase(cls)
-        for p in self.plugins:
-            c = p.loadTestsFromTestCase(cls)
-            if c is not None:
-                return c
-        return all_tests
-
-    def on_start(self):
-        '''Called just before the test suite starts running tests.'''
-        for p in self.plugins:
-            if p.on_start():
-                break
-
-    def on_end(self):
-        '''Called just before the test suite starts running tests.'''
-        for p in self.plugins:
-            try:
-                if p.on_end():
-                    break
-            except:
-                LOGGER.critical('Unhandled exception while calling method'\
-                                ' "on_end" of plugin %s', p, exc_info=True)
+        c = testsafe('loadTestsFromTestCase', lambda v: v)(self, cls)
+        if c is None:
+            return self.loader.loadTestsFromTestCase(cls)
+        else:
+            return c
 
     def add(self, result):
         self.result.add(result)
@@ -402,12 +410,6 @@ class TestRunner(TestResultProxy):
             if not mod:
                 return
         return mod
-
-    def startTest(self, test):
-        '''Called before test has started.'''
-        for p in self.plugins:
-            if p.startTest(test):
-                break
 
     def before_test_function_run(self, test):
         '''Called before the test run, in the test process domain.'''
@@ -425,42 +427,6 @@ class TestRunner(TestResultProxy):
             if local is not None:
                 p.after_test_function_run(test, local, result)
         return result
-
-    def stopTest(self, test):
-        '''Called after test has finished.'''
-        for p in self.plugins:
-            if p.stopTest(test):
-                break
-
-    def addSuccess(self, test):
-        for p in self.plugins:
-            if p.addSuccess(test):
-                break
-
-    def addFailure(self, test, err):
-        for p in self.plugins:
-            if p.addFailure(test, err):
-                break
-
-    def addError(self, test, err):
-        for p in self.plugins:
-            if p.addError(test, err):
-                break
-
-    def addSkip(self, test, reason):
-        for p in self.plugins:
-            if p.addSkip(test, reason):
-                break
-
-    def printErrors(self):
-        for p in self.plugins:
-            if p.printErrors():
-                break
-
-    def printSummary(self, timeTaken):
-        for p in self.plugins:
-            if p.printSummary(timeTaken):
-                break
             
     def run_test_function(self, test, func):
         '''Run function *func* which belong to *test*.
