@@ -5,5 +5,5 @@ Pulsar Python Shell example::
 '''
 from pulsar.apps.shell import PulsarShell 
 
-if __name__ == '__main__':
+if __name__ == '__main__':  #pragma nocover
     PulsarShell().start()

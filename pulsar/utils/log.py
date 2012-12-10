@@ -4,7 +4,7 @@ from time import time
 import logging
 from multiprocessing import current_process, Lock
 
-if sys.version_info < (2,7):
+if sys.version_info < (2,7):    #pragma    nocover
     from .fallbacks._dictconfig import dictConfig
     
     class NullHandler(logging.Handler):
@@ -23,14 +23,12 @@ NOLOG = 100
 __all__ = ['SERVER_NAME',
            'dictConfig',
            'NullHandler',
-           'getLogger',
            'process_global',
            'LogginMixin',
            'Synchronized',
            'local_method',
            'local_property',
            'LocalMixin',
-           'LogSelf',
            'LogInformation']
 
 
@@ -158,47 +156,6 @@ def process_global(name, val = None, setval = False):
         p._pulsar_globals[name] = val
     else:
         return p._pulsar_globals.get(name)
-
-
-def getLogger(name = None):
-    '''Get logger name in "pulsar" namespace'''
-    prefix = SERVER_NAME.lower() + '.'
-    name = name or ''
-    if not name.startswith(prefix):
-        name = prefix + name
-    return logging.getLogger(name)
-
-
-class LogSelf(object):
-    '''\
-    Wrapper for logging with the message starting with the
-string representation of an instance.
-
-:parameter instance: instance which prefix the message.
-:parameter logger: the logger object.
-    '''
-    LOGGING_FUNCTIONS = ('debug','info','error','warning','warn',
-                         'critical','exception')
-    
-    def __init__(self,instance,logger):
-        self.instance = instance
-        self.logger = logger
-        for func in self.LOGGING_FUNCTIONS:
-            setattr(self,func,self._handle(func))
-    
-    @property
-    def name(self):
-        return self.logger.name
-    
-    def _msg(self, msg):
-        return '%s - %s' % (self.instance, msg)
-    
-    def _handle(self, name):
-        func = getattr(self.logger,name)
-        def _(msg, *args, **kwargs):
-            func(self._msg(msg),*args,**kwargs)
-        _.__name__ = name
-        return _
 
 
 class Silence(logging.Handler):

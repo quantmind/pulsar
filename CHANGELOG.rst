@@ -2,7 +2,8 @@ Version 0.4.2
 ========================
 * Fixed bug in boolean validation.
 * Refactored :class:`pulsar.apps.test.TestPlugin` to handle multi-parameters.
-* **321 regression tests**, **85% coverage**.
+* Removed unused code and increased test coverage.
+* **322 regression tests**, **86% coverage**.
 
 Version 0.4.1 - 2012-Dec-04
 ==============================

@@ -10,8 +10,7 @@ from threading import current_thread
 
 
 from pulsar import AlreadyCalledError, AlreadyRegistered,\
-                   ActorAlreadyStarted, LogSelf, LogginMixin, system,\
-                   Config
+                   ActorAlreadyStarted, LogginMixin, system, Config
 from pulsar.utils.structures import AttributeDictionary
 from .eventloop import IOLoop, setid
 from .proxy import ActorProxy, ActorMessage, get_command, get_proxy
