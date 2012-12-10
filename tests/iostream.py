@@ -40,7 +40,7 @@ class TestPulsarStreams(unittest.TestCase):
     @classmethod
     def tearDownClass(cls):
         if cls.server:
-            yield pulsar.send('arbiter', 'kill_actor', cls.server.mid)
+            yield pulsar.send('arbiter', 'kill_actor', cls.server.name)
         
     def client(self, **kwargs):
         return pulsar.ClientSocket.connect(self.server.address, **kwargs)
@@ -124,6 +124,31 @@ class TestPulsarStreams(unittest.TestCase):
         cbk = _test()
         # we need to run this test on the ioloop thread
         io.ioloop.add_callback(cbk)
+        
+    def testReadTimeout(self):
+        client = self.client(timeout=0)
+        self.assertEqual(client.read_timeout, None)
+        client.read_timeout = 20
+        self.assertEqual(client.read_timeout, 20)
+        r = client.execute(b'ciao')
+        yield r
+        self.assertEqual(r.result, b'ciao')
+        self.assertTrue(client.sock._read_timeout)
+        # Remove the read_timeout
+        client.sock.ioloop.remove_timeout(client.sock._read_timeout)
+        r = client.execute(b'pippo')
+        yield r
+        self.assertEqual(r.result, b'pippo')
+        
+    def testMaxBufferSize(self):
+        client = self.client(timeout=0)
+        client.sock.max_buffer_size = 10
+        msg = b'this will overflow the reading buffer'
+        r = client.execute(msg)
+        yield r
+        self.assertEqual(r.result, msg)
+        self.assertTrue(client.closed)
+        
         
         
 @dont_run_with_thread

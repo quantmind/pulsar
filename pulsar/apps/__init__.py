@@ -97,10 +97,6 @@ It provides two new methods inherited from :class:`ApplicationHandlerMixin`.
     The application handler obtained from :meth:`Application.handler`.
 
 """
-    @property
-    def class_code(self):
-        return 'worker %s' % self.app.name
-    
     def on_init(self, app=None, **kwargs):
         self.app = app
         self.information = LogInformation(self.cfg.logevery)
@@ -181,9 +177,6 @@ pulsar subclasses of :class:`Application`.
             self.cfg.worker_exit(self)
         except:
             pass
-
-    def clean_up(self):
-        self.worker_class.clean_arbiter_loop(self,self.ioloop)
 
     def actorparams(self):
         '''Override the :meth:`Monitor.actorparams` method to
@@ -291,7 +284,6 @@ These are the most important facts about a pulsar :class:`Application`
     cfg = {}
     _app_name = None
     description = None
-    mid = None
     epilog = None
     cfg_apps = None
     config_options_include = None
@@ -341,7 +333,10 @@ These are the most important facts about a pulsar :class:`Application`
     def __call__(self, actor=None):
         if actor is None:
             actor = get_actor()
-        if not self.mid and (not actor or actor.is_arbiter()):
+        monitor = None
+        if actor and actor.is_arbiter():
+            monitor = actor.monitors.get(self.name)
+        if monitor is None and (not actor or actor.is_arbiter()): 
             # Add events
             self.local.events = {'on_start': Deferred(), 'on_stop': Deferred()}
             self.cfg.on_start()
@@ -381,7 +376,7 @@ These are the most important facts about a pulsar :class:`Application`
         return self.name
 
     def __str__(self):
-        return self.name
+        return self.__repr__()
 
     @property
     def monitor(self):
@@ -425,15 +420,6 @@ will have a :class:`IOLoop` instance based on the queue (via :class:`IOQueue`).
 
 By default it returns ``None``.'''
         return None
-
-    def put(self, request):
-        queue = self.ioqueue
-        if queue:
-            self.logger.debug('Put %s on IO queue', request)
-            queue.put(('request', request))
-        else:
-            self.logger.error("Trying to put a request on task queue,\
- but there isn't one!")
 
     def on_config_init(self, cfg, params):
         '''Callback when configuration is initialised but not yet loaded.
@@ -511,7 +497,7 @@ The parameters overriding order is the following:
                     self.cfg.settings[k].default = v
                 except AttributeError:
                     if not self.add_to_overrides(k, v, overrides):
-                        setattr(self,k,v)
+                        setattr(self, k, v)
         # parse console args
         if parse_console:
             parser = self.cfg.parser()
@@ -612,25 +598,6 @@ The application is now in the arbiter but has not yet started.'''
         if arbiter and self.name in arbiter.monitors:
             arbiter.start()
         return self
-
-    def stop(self):
-        '''Stop the application.'''
-        arbiter = pulsar.arbiter()
-        if arbiter:
-            monitor = arbiter.get_actor(self.name)
-            if monitor:
-                monitor.stop()
-
-    def actorlinks(self, links):
-        if not links:
-            raise StopIteration
-        else:
-            arbiter = pulsar.arbiter()
-            for name,app in links.items():
-                if app.mid in arbiter.monitors:
-                    monitor = arbiter.monitors[app.mid]
-                    monitor.actor_links[self.name] = self
-                    yield name, app
 
 
 class MultiApp:

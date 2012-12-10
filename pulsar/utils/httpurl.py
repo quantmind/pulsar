@@ -1096,6 +1096,7 @@ this :class:`IOClientRead` can submit another read request.'''
 class HttpParseError(ValueError):
     pass
 
+
 class HttpResponse(IOClientRead):
     '''An Http response object.
 
@@ -1224,12 +1225,11 @@ situation. Return a deferred if asynchronous.'''
 
     def parsedata(self, data):
         '''Called when data is available on the pipeline'''
-        has_headers = self.parser.is_headers_complete()
+        had_headers = self.parser.is_headers_complete()
         if self.parser.execute(data, len(data)) == len(data): 
             if self.streaming:
-                # if headers are ready, we keep reading (by returning nothing) if
-                # the body is not yet complete
-                if has_headers:
+                # if headers are ready, try to close the response
+                if had_headers:
                     return self.close()
                 elif self.parser.is_headers_complete():
                     res = self.request.client.build_response(self) or self
@@ -1237,7 +1237,8 @@ situation. Return a deferred if asynchronous.'''
                         res._read()
                     return res
             # Not streaming. wait until we have the whole message
-            elif self.parser.is_message_complete():
+            elif self.parser.is_headers_complete() and\
+                 self.parser.is_message_complete():
                 return self.request.client.build_response(self)
         else:
             # This is an error in the parsing. Raise an error so that the

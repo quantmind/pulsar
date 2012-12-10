@@ -45,8 +45,7 @@ class TestTaskQueueOnThread(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         # The name of the task queue application
-        s = server(cls.name_tq(),
-                   bind ='127.0.0.1:0',
+        s = server(cls.name_tq(), bind='127.0.0.1:0',
                    concurrency=cls.concurrency)
         outcome = send('arbiter', 'run', s)
         yield outcome

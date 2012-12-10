@@ -27,7 +27,7 @@ def hello(environ, start_response):
     return iter([data])
 
 
-def server(description = None, **kwargs):
+def server(description=None, **kwargs):
     description = description or 'Pulsar Hello World Application'
     return wsgi.WSGIServer(callable=hello,
                            description=description,

@@ -18,7 +18,7 @@ from .proxy import ActorProxy, ActorMessage, get_command, get_proxy
 from .defer import make_async, is_failure, iteritems, itervalues,\
                      pickle, safe_async, async, log_failure, make_async
 from .mailbox import IOQueue, mailbox
-from .access import set_local_data, is_mainthread, get_actor
+from .access import set_local_data, is_mainthread, get_actor, remove_actor
 
 
 __all__ = ['is_actor', 'send', 'Actor', 'ACTOR_STATES', 'Pulsar']
@@ -39,6 +39,9 @@ ACTOR_NOTIFY_PERIOD = 10
 # times timeout. So for a timeout of 30 seconds, the messages will
 # go after tolerance*30 seconds (18 secs for tolerance = 0.6).
 ACTOR_TIMEOUT_TOLERANCE = 0.6
+# Timeout of when joining an actor which has been terminated
+ACTOR_TERMINATE_TIMEOUT = 2
+ACTOR_STOPPING_LOOPS = 10
 EMPTY_TUPLE = ()
 EMPTY_DICT = {}
 
@@ -74,12 +77,16 @@ Typical example::
 class Pulsar(LogginMixin):
     
     def configure_logging(self, **kwargs):
-        super(Pulsar, self).configure_logging(logger=self.name,
-                                              config=self.cfg.logconfig,
-                                              level=self.cfg.loglevel,
-                                              handlers=self.cfg.loghandlers)
-    
-    
+        configure_logging = super(Pulsar, self).configure_logging
+        configure_logging(logger='pulsar',
+                          config=self.cfg.logconfig,
+                          level=self.cfg.loglevel,
+                          handlers=self.cfg.loghandlers) 
+        configure_logging(logger='pulsar.%s' % self.name,
+                          config=self.cfg.logconfig,
+                          level=self.cfg.loglevel,
+                          handlers=self.cfg.loghandlers)
+        
 
 class Actor(Pulsar):
     '''The base class for concurrent programming in pulsar. In computer science,
@@ -153,6 +160,7 @@ Here ``a`` is actually a reference to the remote actor.
     String indicating the logging level for the actor.
 '''
     exit_code = None
+    mailbox = None
     stopping_start = None
     stopping_end = None
     
@@ -173,12 +181,13 @@ Here ``a`` is actually a reference to the remote actor.
         self.concurrent_requests = 0
         self.state = ACTOR_STATES.INITIAL
         self.ioqueue = ioqueue
-        self.linked_actors = {}
+        self.linked_actors = impl.params.pop('linked_actors', {})
         self.monitors = impl.params.pop('monitors', {})
-        self.arbiter = impl.params.pop('arbiter', {})
-        self.monitor = impl.params.pop('monitor', {})
+        self.arbiter = impl.params.pop('arbiter', None)
+        self.monitor = impl.params.pop('monitor', None)
         self.proxy_mailboxes = {}
-        impl.params = self.on_init(**impl.params) or {}
+        self.params = AttributeDictionary(self.on_init(**impl.params))
+        del impl.params
 
     def __repr__(self):
         return self.impl.unique_name
@@ -256,10 +265,8 @@ which can be shared across different processes (i.e. it is pickable).'''
         '''Send a message to *target* to perform *action* with given
 parameters *params*. It return a :class:`ActorMessage`.'''
         if not isinstance(target, ActorProxy):
-            tg = self.get_actor(target)
-        else:
-            tg = target
-        return get_proxy(tg).receive_from(self, action, *args, **params)
+            target = get_proxy(self.get_actor(target))
+        return target.receive_from(self, action, *args, **params)
 
     def put(self, request):
         '''Put a *request* into the :attr:`ioqueue` if available.'''
@@ -269,15 +276,7 @@ parameters *params*. It return a :class:`ActorMessage`.'''
         else:
             self.logger.error("Trying to put a request on task queue,\
  but there isn't one!")
-
-    def run_on_arbiter(self, callable):
-        '''Run a *callable* in the arbiter event loop.
-
-:parameter callable: a pickable, therefore it must be a pickable callable object
-    or a function.
-:rtype: a :class:`Deferred`'''
-        return self.send('arbiter', 'run', callable)
-
+            
     ###############################################################  STATES
     def running(self):
         '''``True`` if actor is running.'''
@@ -313,7 +312,7 @@ mean it is running.'''
 
     def isprocess(self):
         '''boolean indicating if this is an actor on a child process.'''
-        return self.impl == 'process'
+        return self.impl.kind == 'process'
 
     def ready(self):
         return self.arbiter.aid in self.linked_actors
@@ -434,6 +433,7 @@ properly this actor will go out of scope.'''
             self.on_exit()
             self.stopping_end = time()
             self.logger.info('%s exited', self)
+            remove_actor(self)
 
     def linked_proxy_actors(self):
         '''Iterator over linked-actor proxies.'''
@@ -446,7 +446,11 @@ properly this actor will go out of scope.'''
         if aid == self.aid:
             return self
         elif aid == 'arbiter':
+            return self.arbiter or self
+        elif self.arbiter and aid == self.arbiter.aid:
             return self.arbiter
+        elif self.monitor and aid == self.monitor.aid:
+            return self.monitor
         elif aid in self.linked_actors:
             return self.linked_actors[aid]
         else:
@@ -468,11 +472,11 @@ actions:
                     nt = None
             if nt:
                 self.last_notified = nt
-                info = self.get_info()
+                info = self.info()
                 self.send('arbiter', 'notify', info)
             self.on_task()
 
-    def get_info(self):
+    def info(self):
         '''return A dictionary of information related to the actor
 status and performance.'''
         if not self.started():
@@ -550,7 +554,7 @@ event loop which will consume events on file descriptors.'''
         # Inject self as the actor of this thread
         ioq = self.ioqueue
         self.requestloop = IOLoop(io=IOQueue(ioq, self) if ioq else None,
-                                  pool_timeout=self.impl.pool_timeout,
+                                  pool_timeout=self.params.pool_timeout,
                                   logger=self.logger,
                                   name=self.name,
                                   ready=not self.cpubound)

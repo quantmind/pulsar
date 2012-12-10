@@ -89,7 +89,7 @@ class TestPidfile(ActorTestMixin, unittest.TestCase):
     concurrency = 'process'
     
     def testCreate(self):
-        yield self.spawn()
+        yield self.spawn(name='pippo')
         proxy = self.a
         r = send(proxy, 'info')
         yield r

@@ -12,7 +12,7 @@ from pulsar.utils.security import gen_unique_id
 from pulsar import HaltServer
 
 from .defer import itervalues, iteritems, multi_async
-from .actor import Actor, send
+from .actor import Actor, ACTOR_TERMINATE_TIMEOUT, ACTOR_STOPPING_LOOPS
 from .monitor import PoolMixin, _spawn_actor
 from .access import get_actor, set_actor
 from . import proxy
@@ -42,7 +42,7 @@ def arbiter(commands_set=None, **params):
         return arbiter
 
 
-def spawn(**kwargs):
+def spawn(cfg=None, **kwargs):
     '''Spawn a new :class:`Actor` and return an :class:`ActorProxyDeferred`.
 This method can be used from any :class:`Actor`.
 If not in the :class:`Arbiter` domain,
@@ -76,8 +76,8 @@ A typical usage::
     # The actor is not the Arbiter domain.
     # We send a message to the Arbiter to spawn a new Actor
     if not isinstance(actor, Arbiter):
-        msg = send('arbiter', 'spawn', **kwargs)\
-                        .add_callback(actor.link_actor)
+        msg = actor.send('arbiter', 'spawn', **kwargs)\
+                            .add_callback(actor.link_actor)
         return proxy.ActorProxyDeferred(aid, msg)
     else:
         return actor.spawn(**kwargs)
@@ -100,7 +100,6 @@ Users access the arbiter by the high level api::
 .. _twisted: http://twistedmatrix.com/trac/
 .. _tornado: http://www.tornadoweb.org/
 '''
-    STOPPING_LOOPS = 20
     SIG_TIMEOUT = 0.01
     EXIT_SIGNALS = (signal.SIGINT,
                     signal.SIGTERM,
@@ -135,7 +134,7 @@ Users access the arbiter by the high level api::
     def get_all_monitors(self):
         '''A dictionary of all :class:`Monitor` in the arbiter'''
         return dict(((mon.name, mon.proxy) for mon in\
-                      itervalues(self.monitors)))
+                      itervalues(self.monitors) if mon.mailbox))
 
     @multi_async
     def close_monitors(self):
@@ -144,18 +143,18 @@ Users access the arbiter by the high level api::
             yield pool.stop()
 
     def on_info(self, data):
-        monitors = [p.get_info() for p in itervalues(self.monitors)]
+        monitors = [p.info() for p in itervalues(self.monitors)]
         server = data.pop('actor')
         server.update({'version': pulsar.__version__,
                        'name': pulsar.SERVER_NAME,
                        'number_of_monitors': len(self.monitors),
-                       'number_of_actors': len(self.MANAGED_ACTORS)})
+                       'number_of_actors': len(self.managed_actors)})
         server.pop('is_process', None)
         server.pop('ppid', None)
         server.pop('actor_id', None)
         server.pop('age', None)
         data['server'] = server
-        data['workers'] = [a.info for a in itervalues(self.MANAGED_ACTORS)]
+        data['workers'] = [a.info for a in itervalues(self.managed_actors)]
         data['monitors'] = monitors
         return data
 
@@ -206,16 +205,16 @@ arbiter tasks at every iteration in the event loop.'''
 the timeout. Stop the arbiter.'''
         if self.running() and actor.notified:
             gap = time() - actor.notified
-            if gap > actor.timeout:
-                if actor.stopping_loops < self.STOPPING_LOOPS:
+            if gap > actor.cfg.timeout:
+                if actor.stopping_loops < ACTOR_STOPPING_LOOPS:
                     if not actor.stopping_loops:
                         self.logger.info('Stopping %s. Timeout.', actor)
                         self.send(actor, 'stop')
+                    actor.stopping_loops += 1
                 else:
                     self.logger.warn('Terminating %s. Timeout.', actor)
                     actor.terminate()
-                    actor.join(self.JOIN_TIMEOUT)
-                actor.stopping_loops += 1
+                    actor.join(ACTOR_TERMINATE_TIMEOUT)
 
     def on_stop(self):
         '''Stop the pools the message queue and remaining actors.'''

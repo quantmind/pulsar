@@ -18,7 +18,7 @@ from .defer import Deferred, is_async, is_failure, async, maybe_async,\
 from .eventloop import IOLoop, loop_timeout
 from .access import PulsarThread, thread_ioloop, get_actor
 
-iologger = logging.getLogger('pulsar.iostream')
+LOGGER = logging.getLogger('pulsar.iostream')
 
 
 __all__ = ['AsyncIOStream',
@@ -51,11 +51,11 @@ adapted to pulsar :ref:`concurrent framework <design>`.
 
     A :class:`Socket` which might be connected or unconnected.
 
-.. attribute:: _read_callback_timeout
+.. attribute:: timeout
 
     A timeout in second which is used when waiting for a
     data to be available for reading. If timeout is a positive number,
-    every time we the :class:`AsyncIOStream` perform a :meth:`read`
+    every time the :class:`AsyncIOStream` performs a :meth:`read`
     operation a timeout is also created on the :attr:`ioloop`.
 '''
     _error = None
@@ -76,7 +76,6 @@ adapted to pulsar :ref:`concurrent framework <design>`.
         self.read_chunk_size = read_chunk_size or io.DEFAULT_BUFFER_SIZE
         self._read_buffer = deque()
         self._write_buffer = deque()
-        self.log = iologger
 
     def __repr__(self):
         if self.sock:
@@ -168,7 +167,7 @@ but is non-portable."""
             except socket.error as e:
                 # In non-blocking mode connect() always raises an exception
                 if not async_error(e):
-                    self.log.warning('Connect error on %s: %s', self, e)
+                    LOGGER.warning('Connect error on %s: %s', self, e)
                     self.close()
                     return
             callback = Deferred(description='%s connect callback' % self)
@@ -287,7 +286,7 @@ setup using the :meth:`set_close_callback` method."""
                 break
             self._read_buffer.append(chunk)
             if self._read_buffer_size() >= self.max_buffer_size:
-                self.log.error("Reached maximum read buffer size")
+                LOGGER.error("Reached maximum read buffer size")
                 self.close()
                 raise IOError("Reached maximum read buffer size")
             if len(chunk) < length:
@@ -327,7 +326,7 @@ setup using the :meth:`set_close_callback` method."""
                     raise
         except Exception:
             result = 0
-            self.log.warning("Read error on %s.", self, exc_info=True)
+            LOGGER.warning("Read error on %s.", self, exc_info=True)
         if result == 0:
             self.close()
         buffer = self._get_buffer(self._read_buffer)
@@ -359,7 +358,7 @@ setup using the :meth:`set_close_callback` method."""
                 if async_error(e):
                     break
                 else:
-                    self.log.warning("Write error on %s: %s", self, e)
+                    LOGGER.warning("Write error on %s: %s", self, e)
                     self.close()
                     return
         if not self._write_buffer and self._write_callback:
@@ -380,7 +379,7 @@ setup using the :meth:`set_close_callback` method."""
     def _handle_events(self, fd, events):
         # This is the actual callback from the event loop
         if not self.sock:
-            self.log.warning("Got events for closed stream %d", fd)
+            LOGGER.warning("Got events for closed stream %d", fd)
             return
         try:
             if events & self.READ:
@@ -463,7 +462,7 @@ class BaseSocketHandler(BaseSocket):
             if isinstance(msg.trace[1], Timeout):
                 if not msg.logged:
                     msg.logged = True
-                    self.log.info('Closing %s on timeout.', self)
+                    LOGGER.info('Closing %s on timeout.', self)
             else:
                 log_failure(msg)
         self.on_close(msg)
@@ -502,7 +501,6 @@ via the ``connect`` function).
     :class:`ClientSocketHandler`.
 '''
     parser_class = EchoParser
-    log = iologger
     def __init__(self, socket, address, parser_class=None, timeout=None):
         '''Create a client or client-connection socket. A parser class
 is required in order to use :class:`SocketClient`.
@@ -535,6 +533,19 @@ is required in order to use :class:`SocketClient`.
         if self.async:
             close_callback = Deferred().add_callback(self.close)
             self.sock.set_close_callback(close_callback)
+            
+    def _get_read_timeout(self):
+        if self.async:
+            return self.sock._read_callback_timeout
+        else:
+            return self._socket_timeout
+    def _set_read_timeout(self, value):
+        if self.async:
+            self.sock._read_callback_timeout = value
+        else:
+            self._socket_timeout = value
+            sock.settimeout(self._socket_timeout)
+    read_timeout = property(_get_read_timeout, _set_read_timeout) 
 
 
 class ClientSocket(ClientSocketHandler, IOClientRead):
@@ -612,7 +623,7 @@ parsed.'''
         try:
             parsed_data, buffer = self.parser.decode(buffer)
         except CouldNotParse:
-            self.log.warn('Could not parse data', exc_info=True)
+            LOGGER.warn('Could not parse data', exc_info=True)
             parsed_data = None
             buffer = bytearray()
         self.buffer = buffer
@@ -710,12 +721,6 @@ A connection can handle several request/responses until it is closed.
                             yield self.write(data)
                         else: # The response is not ready. release the loop
                             yield NOT_DONE
-
-    def _get_timeout(self):
-        return self.sock._read_callback_timeout
-    def _set_timeout(self, value):
-        self.sock._read_callback_timeout = value
-    read_timeout = property(_get_timeout, _set_timeout) 
     
     def request(self, response=None):
         if self._current_request is None:
@@ -736,20 +741,15 @@ more data in the buffer is required.'''
         self.parser.connection = self
         try:
             parsed_data, buffer = self.parser.decode(buffer)
-        except CouldNotParse:
-            self.log.warn('Could not parse data', exc_info=True)
-            parsed_data = None
-            buffer = bytearray()
+        except:
+            LOGGER.error('Could not parse data', exc_info=True)
+            raise
         self.buffer = buffer
         return parsed_data
 
     @property
     def actor(self):
         return self.server.actor
-
-    @property
-    def log(self):
-        return self.actor.log
 
     def on_close(self, failure=None):
         self.server.connections.discard(self)

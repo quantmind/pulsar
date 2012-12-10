@@ -3,7 +3,6 @@ from time import time
 from collections import deque
 
 from pulsar import CommandNotFound, AuthenticationError
-from pulsar.utils.log import LocalMixin
 
 from .defer import Deferred, is_async, make_async, AlreadyCalledError
 from .mailbox import mailbox, ActorMessage
@@ -110,12 +109,12 @@ functional.
             # simply listent for the calbacks and errorbacks
             msg.addBoth(self.callback)
     
-    def __str__(self):
+    def __repr__(self):
         return '%s(%s)' % (self.__class__, self.aid)
-    __repr__ = __str__
+    __str__ = __repr__
     
     
-class ActorProxy(LocalMixin):
+class ActorProxy(object):
     '''This is an important component in pulsar concurrent framework. An
 instance of this class is as a proxy for a remote `underlying` 
 :class:`Actor`. This is a lightweight class which delegates
@@ -146,12 +145,13 @@ parameter ``"hello there!"``.
     last_msg = None
     def __init__(self, impl):
         self.aid = impl.aid
+        self.name = impl.name
         self.commands_set = impl.commands_set
         self.address = impl.address
         self.cfg = impl.cfg
     
     def __repr__(self):
-        return self.aid
+        return '%s(%s)' % (self.name, self.aid)
     __str__ = __repr__
     
     @property
@@ -178,7 +178,7 @@ communicating between actors.
         if sender is None:
             sender = get_actor()
         if not self.mailbox:
-            sender.log.critical('Cannot send a message to %s. No\
+            sender.logger.critical('Cannot send a message to %s. No\
  mailbox available.', self)
             return
         cmd = get_command(command, self.commands_set)

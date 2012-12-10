@@ -22,6 +22,9 @@ __all__ = ['PulsarClient', 'mailbox', 'Mailbox', 'IOQueue',
            'Empty', 'Queue', 'ActorMessage']
 
 
+LOGGER = logging.getLogger('pulsar.mailbox')
+
+
 def mailbox(actor=None, address=None):
     '''Creates a :class:`Mailbox` instances for :class:`Actor` instances.
 If an address is provided, the communication is implemented using a socket,
@@ -35,7 +38,7 @@ otherwise a queue is used.'''
             return Mailbox.make(actor).start()
 
 def actorid(actor):
-    return actor.aid if hasattr(actor,'aid') else actor
+    return actor.aid if hasattr(actor, 'aid') else actor
 
 
 class MessageParser(object):
@@ -239,8 +242,8 @@ of execution.'''
 
     def unregister(self, actor):
         if not self.ioloop.remove_loop_task(actor):
-            self.actor.log.warn('"%s" could not be removed from eventloop'\
-                                 % actor)
+            LOGGER.warn('"%s" could not be removed from eventloop', actor)
+
 
 class MonitorMailbox(object):
     '''A :class:`Mailbox` for a :class:`Monitor`. This is a proxy for the
@@ -277,14 +280,14 @@ class QueueWaker(object):
         self._fd = 'waker'
 
     def __str__(self):
-        return '{0} {1}'.format(self.__class__.__name__,self._fd)
+        return '%s %s' % (self.__class__.__name__, self._fd)
 
     def fileno(self):
         return self._fd
 
     def wake(self):
         try:
-            self._queue.put((self._fd,None))
+            self._queue.put((self._fd, None))
         except (IOError,TypeError):
             pass
 
