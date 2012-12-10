@@ -21,6 +21,7 @@ from .defer import Deferred, is_async, maybe_async, thread_loop, make_async,\
 __all__ = ['IOLoop', 'PeriodicCallback', 'loop_timeout']
 
 EXIT_EXCEPTIONS = (KeyboardInterrupt, SystemExit, HaltServer)
+LOGGER = logging.getLogger('pulsar.eventloop')
 
 def file_descriptor(fd):
     if hasattr(fd,'fileno'):
@@ -89,7 +90,7 @@ A level-triggered I/O event loop adapted from tornado.
         self._impl = io or IOpoll()
         self.POLL_TIMEOUT = pool_timeout if pool_timeout is not None\
                                  else self.POLL_TIMEOUT
-        self.logger = logger or logging.getLogger('ioloop')
+        self.logger = logger or LOGGER
         if hasattr(self._impl, 'fileno'):
             close_on_exec(self._impl.fileno())
         cname = self.__class__.__name__.lower()
@@ -227,6 +228,12 @@ by the :meth:`add_timeout` method."""
         if wake:
             self.wake()
 
+    def add_periodic(self, callback, period):
+        """Add a :class:`PeriodicCallback` to the event loop."""
+        p = PeriodicCallback(callback, period, self)
+        p.start()
+        return p
+        
     def wake(self):
         '''Wake up the eventloop.'''
         if not self.stopped():
@@ -400,11 +407,11 @@ class PeriodicCallback(object):
         if not self._running:
             return
         try:
-            self.callback()
+            self.callback(self)
         except (KeyboardInterrupt, SystemExit):
             raise
         except:
-            ioloop.logger.error("Error in periodic callback", exc_info=True)
+            LOGGER.error("Error in periodic callback", exc_info=True)
         if self._running:
             self.start()
 

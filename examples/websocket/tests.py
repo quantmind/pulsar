@@ -35,16 +35,6 @@ class WebSocketThreadTest(unittest.TestCase):
             outcome = send('arbiter', 'kill_actor', cls.app.name)
             yield outcome
     
-    def headers(self, extensions=None, protocol=None):
-        headers = Headers((('upgrade', 'websocket'),
-                           ('sec-websocket-key', 'E3qAXpIDEniWJd59VoBALQ=='),
-                           ('sec-websocket-version', '13')))
-        if extensions:
-            headers['sec-websocket-extensions'] = extensions
-        if extensions:
-            headers['sec-websocket-protocol'] = protocol
-        return headers
-    
     def testHyBiKey(self):
         w = WebSocket(None)
         v = w.challenge_response('dGhlIHNhbXBsZSBub25jZQ==')
