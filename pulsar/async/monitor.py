@@ -3,6 +3,7 @@ import sys
 import time
 
 import pulsar
+from pulsar.utils.structures import AttributeDictionary
 
 from . import proxy
 from .actor import Actor, ACTOR_STATES
@@ -104,7 +105,9 @@ during its life time.
         '''Return a dictionary of parameters to be passed to the
 spawn method when creating new actors.'''
         arbiter = self.arbiter or self
-        return {'monitors': arbiter.get_all_monitors()}
+        p = self.params.all()
+        p['monitors'] = arbiter.get_all_monitors()
+        return p
 
     def get_actor(self, aid):
         a = Actor.get_actor(self, aid)

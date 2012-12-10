@@ -148,9 +148,9 @@ Here ``a`` is actually a reference to the remote actor.
     Depending on the actor type, this number can be very high or max 1
     (CPU bound actors).
 
-.. attribute:: loglevel
+.. attribute:: params
 
-    String indicating the logging level for the actor.
+    Contains parameters which are passed to actors spawned by this actor.
 '''
     exit_code = None
     stopping_start = None
@@ -175,10 +175,12 @@ Here ``a`` is actually a reference to the remote actor.
         self.ioqueue = ioqueue
         self.linked_actors = {}
         self.monitors = impl.params.pop('monitors', {})
-        self.arbiter = impl.params.pop('arbiter', {})
-        self.monitor = impl.params.pop('monitor', {})
+        self.arbiter = impl.params.pop('arbiter', None)
+        self.monitor = impl.params.pop('monitor', None)
         self.proxy_mailboxes = {}
-        impl.params = self.on_init(**impl.params) or {}
+        # set the remaining inputs as parameters
+        self.params = AttributeDictionary(self.on_init(**impl.params))
+        del impl.params
 
     def __repr__(self):
         return self.impl.unique_name
@@ -524,7 +526,7 @@ if *proxy* is not a class:`ActorProxy` instance raise an exception.'''
         if not self.isprocess():
             return
         random.seed()
-        proc_name = "%s - %s".format(self.cfg.proc_name, self)
+        proc_name = "%s-%s" % (self.cfg.proc_name, self)
         if system.set_proctitle(proc_name):
             self.logger.debug('Set process title to %s', proc_name)
         #system.set_owner_process(cfg.uid, cfg.gid)

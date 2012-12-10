@@ -27,9 +27,9 @@ class TestProxy(unittest.TestCase):
     def test_dummy_proxy(self):
         actor = pulsar.get_actor()
         self.assertRaises(ValueError, pulsar.concurrency, 'bla',
-                          pulsar.Actor, 5, actor, None, set(), {})
-        impl = pulsar.concurrency('thread', pulsar.Actor, 5, actor, None,
-                                  set(), {})
+                          pulsar.Actor, actor, set(), pulsar.Config(), {})
+        impl = pulsar.concurrency('thread', pulsar.Actor, actor, set(),
+                                  pulsar.Config(), {})
         p = pulsar.ActorProxy(impl)
         self.assertEqual(p.address, None)
         self.assertEqual(p.receive_from(None, 'dummy'), None)
@@ -78,7 +78,9 @@ class TestActorThread(ActorTestMixin, unittest.TestCase):
         yield actor.send(proxy, 'run', check_actor)
         
     def testPasswordProtected(self):
-        yield self.spawn(cfg={'password': 'bla', 'param': 1})
+        cfg = pulsar.Config()
+        cfg.set('password', 'bla')
+        yield self.spawn(cfg=cfg)
         proxy = self.a
         actor = pulsar.get_actor()
         yield self.async.assertEqual(actor.send(proxy, 'ping'), 'pong')

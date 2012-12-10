@@ -81,8 +81,7 @@ class WSGIServer(socket.SocketServer):
     _app_name = 'wsgi'
 
     def socket_server_class(self, worker, socket):
-        timeout = self.cfg.keepalive
-        return HttpServer(worker, socket, timeout=timeout)
+        return HttpServer(worker, socket, timeout=self.cfg.keepalive)
 
     def handler(self):
         callable = self.callable
@@ -96,7 +95,7 @@ at start-up only.
     a WSGI callable or a list WSGI callables.
 :parameter resp_middleware: Optional list of response middleware functions.'''
         if not isinstance(hnd, WsgiHandler):
-            if not isinstance(hnd, (list,tuple)):
+            if not isinstance(hnd, (list, tuple)):
                 hnd = [hnd]
             hnd = WsgiHandler(hnd)
         response_middleware = self.cfg.response_middleware or []

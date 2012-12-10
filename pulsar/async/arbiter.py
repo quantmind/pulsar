@@ -171,7 +171,7 @@ Users access the arbiter by the high level api::
             if isinstance(get_actor(), self.__class__):
                 raise pulsar.PulsarException('Arbiter already created')
             os.environ["SERVER_SOFTWARE"] = pulsar.SERVER_SOFTWARE
-        if self.cfg.daemon:
+        if self.cfg.daemon: #pragma    nocover
             system.daemonize()
         self.SIG_QUEUE = ThreadQueue()
         return PoolMixin.on_init(self, **kwargs)
@@ -206,7 +206,7 @@ arbiter tasks at every iteration in the event loop.'''
 the timeout. Stop the arbiter.'''
         if self.running() and actor.notified:
             gap = time() - actor.notified
-            if gap > actor.timeout:
+            if gap > actor.cfg.timeout:
                 if actor.stopping_loops < self.STOPPING_LOOPS:
                     if not actor.stopping_loops:
                         self.logger.info('Stopping %s. Timeout.', actor)

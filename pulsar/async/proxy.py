@@ -3,7 +3,6 @@ from time import time
 from collections import deque
 
 from pulsar import CommandNotFound, AuthenticationError
-from pulsar.utils.log import LocalMixin
 
 from .defer import Deferred, is_async, make_async, AlreadyCalledError
 from .mailbox import mailbox, ActorMessage
@@ -62,7 +61,7 @@ class command:
         self.commands_set = commands_set
     
     def __call__(self, f):
-        name = f.__name__.lower()
+        self.name = f.__name__.lower()
         
         def command_function(client, actor, *args, **kwargs):
             if self.authenticated:
@@ -80,10 +79,10 @@ class command:
         
         command_function.ack = self.ack
         command_function.internal = self.internal
-        command_function.__name__ = name
+        command_function.__name__ = self.name
         command_function.__doc__ = f.__doc__
-        self.commands_set.add(name)
-        global_commands_table[name] = command_function
+        self.commands_set.add(self.name)
+        global_commands_table[self.name] = command_function
         return command_function
             
             
@@ -115,7 +114,7 @@ functional.
     __repr__ = __str__
     
     
-class ActorProxy(LocalMixin):
+class ActorProxy(object):
     '''This is an important component in pulsar concurrent framework. An
 instance of this class is as a proxy for a remote `underlying` 
 :class:`Actor`. This is a lightweight class which delegates
@@ -178,7 +177,7 @@ communicating between actors.
         if sender is None:
             sender = get_actor()
         if not self.mailbox:
-            sender.log.critical('Cannot send a message to %s. No\
+            sender.logger.critical('Cannot send a message to %s. No\
  mailbox available.', self)
             return
         cmd = get_command(command, self.commands_set)

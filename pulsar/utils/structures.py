@@ -152,7 +152,7 @@ class AttributeDictionary(Mapping):
             if len(iterable) > 1:
                 raise TypeError('%s exceped at most 1 arguments, got %s.' %\
                                 (self.__class__.__name__, len(iterable)))
-            self.update(iterable)
+            self.update(iterable[0])
         if kwargs:
             self.update(kwargs)
             

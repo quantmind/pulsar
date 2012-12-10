@@ -1,7 +1,8 @@
 import sys
 import inspect
+import logging
 
-from pulsar import LogginMixin, to_bytes, is_failure, log_failure, is_async,\
+from pulsar import to_bytes, is_failure, log_failure, is_async,\
                     as_failure, maybe_async, HttpException
 from pulsar.utils.tools import checkarity
 from pulsar.apps.wsgi import WsgiResponse, WsgiResponseGenerator
@@ -13,12 +14,14 @@ from .exceptions import *
 __all__ = ['RpcHandler', 'RpcMiddleware']
 
 
+LOGGER = logging.getLogger('pulsar.rpc')
+
+
 class RpcRequest(object):
 
-    def __init__(self, environ, handler, method, func, args,
-                kwargs, id, version):
+    def __init__(self, environ, handler, method, func, args, kwargs,
+                 id, version):
         self.environ = environ
-        self.logger = handler.logger
         self.handler = handler
         self.method = method
         self.func = func
@@ -75,7 +78,7 @@ class ResponseGenerator(WsgiResponseGenerator):
                                        request.version,
                                        result=result)
         except Exception as e:
-            handler.log.error('Could not serialize', exc_info=True)
+            LOGGER.error('Could not serialize', exc_info=True)
             status_code = 500
             result = handler.dumps(request.id,
                                    request.version,
@@ -124,10 +127,7 @@ Add a limited ammount of magic to RPC handlers.'''
         return make(cls, name, bases, attrs)
 
 
-BaseHandler = MetaRpcHandler('BaseRpcHandler',(LogginMixin,),{'virtual':True})
-
-
-class RpcHandler(BaseHandler):
+class RpcHandler(MetaRpcHandler('BaseRpcHandler',(object,),{'virtual':True})):
     '''The base class for rpc handlers.
 
 .. attribute:: content_type
@@ -146,13 +146,11 @@ class RpcHandler(BaseHandler):
     charset = 'utf-8'
     _info_exceptions = (Fault,)
 
-    def __init__(self, subhandlers=None, title=None, documentation=None,
-                 **kwargs):
+    def __init__(self, subhandlers=None, title=None, documentation=None):
         self._parent = None
         self.subHandlers = {}
         self.title = title or self.__class__.__name__
         self.documentation = documentation or ''
-        self.setlog(**kwargs)
         if subhandlers:
             for prefix,handler in subhandlers.items():
                 if inspect.isclass(handler):
@@ -189,7 +187,7 @@ for ``method``, ``kwargs`` are keyworded parameters for ``method``,
         raise NotImplementedError()
 
     def __getstate__(self):
-        d = super(RpcHandler,self).__getstate__()
+        d = self.__dict__.copy()
         if not self.isroot():
             # Avoid duplicating handlers
             d['_parent'] = True

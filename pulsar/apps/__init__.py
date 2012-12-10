@@ -426,15 +426,6 @@ will have a :class:`IOLoop` instance based on the queue (via :class:`IOQueue`).
 By default it returns ``None``.'''
         return None
 
-    def put(self, request):
-        queue = self.ioqueue
-        if queue:
-            self.logger.debug('Put %s on IO queue', request)
-            queue.put(('request', request))
-        else:
-            self.logger.error("Trying to put a request on task queue,\
- but there isn't one!")
-
     def on_config_init(self, cfg, params):
         '''Callback when configuration is initialised but not yet loaded.
 This is a chance to add extra config parameter or remove unwanted ones.

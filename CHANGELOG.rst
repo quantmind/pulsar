@@ -1,5 +1,6 @@
 Version 0.4.2
 ========================
+* Refactoring of actor's internals.
 * Fixed bug in boolean validation.
 * Refactored :class:`pulsar.apps.test.TestPlugin` to handle multi-parameters.
 * **310 regression tests**, **84% coverage**.
