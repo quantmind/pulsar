@@ -53,7 +53,7 @@ def _set_non_blocking(fd):
     fcntl.fcntl(fd, fcntl.F_SETFL, flags)
     
 
-def get_uid(user):
+def get_uid(user=None):
     if not user:
         return os.geteuid()
     elif user.isdigit() or isinstance(user, int):
@@ -61,7 +61,7 @@ def get_uid(user):
     else:
         return pwd.getpwnam(user).pw_uid
     
-def get_gid(group):
+def get_gid(group=None):
     if not group:
         return os.getegid()
     elif group.isdigit() or isinstance(group, int):

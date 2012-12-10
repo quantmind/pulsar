@@ -118,9 +118,9 @@ For options and help type::
 
     python runtests.py -h
     
-For full coverage run tests with the following flags:
+For full coverage run tests with the following flags::
 
-    python runtests.py --concurrency thread --profile --http-py-parser
+    python runtests.py --concurrency thread --profile --benchmark --http-py-parser --verbosity 2
 
 Kudos
 ============

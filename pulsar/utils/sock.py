@@ -22,7 +22,7 @@ __all__ = ['IStream',
            'socket_pair',
            'server_socket']
 
-logger = logging.getLogger('pulsar.sock')
+LOGGER = logging.getLogger('pulsar.sock')
 
 ALLOWED_ERRORS = (errno.EAGAIN, errno.ECONNABORTED,
                   errno.EWOULDBLOCK, errno.EPIPE)
@@ -48,7 +48,7 @@ def create_connection(address, blocking=0):
     s.sock.setblocking(blocking)
     return s
 
-def create_socket(address, log=None, backlog=2048,
+def create_socket(address, logger=None, backlog=2048,
                   bound=False, retry=5, retry_lag=2,
                   retry_step=2, interval_max=30):
     """Create a new server :class:`Socket` for the given address.
@@ -57,7 +57,7 @@ If it is a string, a Unix socket is created.
 Otherwise a TypeError is raised.
 
 :parameter address: Socket address.
-:parameter log: Optional python logger instance.
+:parameter logger: Optional python logger instance.
 :parameter backlog: The maximum number of pending connections or ``None``.
     if ``None`` this is a client socket.
 :parameter bound: If ``False`` the socket will bind to *address* otherwise
@@ -67,18 +67,18 @@ Otherwise a TypeError is raised.
 :rtype: Instance of :class:`Socket`
     """
     sock_type, address = create_socket_address(address)
-    log = log or logger
+    logger = logger or LOGGER
     lag = retry_lag
     for i in range(retry):
         try:
             return sock_type(address, backlog=backlog, bound=bound)
         except socket.error as e:
             if e.errno == errno.EADDRINUSE:
-                log.error("Connection in use: %s", str(address))
+                logger.error("Connection in use: %s", address)
             elif e.errno in (errno.EADDRNOTAVAIL, 11004, -5):
                 raise RuntimeError("Invalid address: %s" % str(address))
             if i < retry:
-                log.error("Retrying in %s seconds." % lag)
+                logger.error("Retrying in %s seconds.", lag)
                 time.sleep(lag)
                 lag = min(lag + retry_step, interval_max)
     raise RuntimeError("Can't connect to %s. Tried %s times." %
@@ -96,13 +96,13 @@ def wrap_socket(sock):
     else:
         return sock
 
-def socket_pair(backlog=2048, log=None, blocking=0):
+def socket_pair(backlog=2048, logger=None, blocking=0):
     '''Create a ``127.0.0.1`` (client,server) socket pair on any
 available port. The first socket is connected to the second, the server socket,
 which is bound to ``127.0.0.1`` at any available port.
 
 :param backlog: number of connection to listen.
-:param log: optional python logger.
+:param logger: optional python logger.
 :rtype: tuple with two instances of :class:`Socket`
 '''
     remote_client = socket.socket()
@@ -110,7 +110,7 @@ which is bound to ``127.0.0.1`` at any available port.
     count = 0
     while 1:
         count += 1
-        server = create_socket(('127.0.0.1',0), log=log, backlog=backlog)
+        server = create_socket(('127.0.0.1',0), logger=logger, backlog=backlog)
         try:
             # Connect the remote socket with the server socket
             remote_client.connect(server.name)
@@ -158,14 +158,8 @@ class IStream(object):
 .. attribute: address
 
     The address of the stream. This is usually the address of the listening
-    or writing socket.
-
-.. attribute: log
-
-    Logger instance
-'''
+    or writing socket.'''
     address = ('0.0.0.0', 0)
-    log = logging.getLogger('pulsar.IStream')
 
     def close(self, msg=None):
         '''Close the stream'''

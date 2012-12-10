@@ -139,7 +139,7 @@ test_commands = set()
 @pulsar.command(internal=True, ack=False, commands_set=test_commands)
 def test_result(client, actor, sender, tag, clsname, result):
     '''Command for sending test results from test workers to the test monitor.'''
-    actor.log.debug('Got a test results from %s.%s', tag, clsname)
+    actor.logger.debug('Got a test results from %s.%s', tag, clsname)
     return actor.app.add_result(actor, result)
 
 
@@ -173,7 +173,16 @@ is a group of tests specified in a test class.
     commands_set = test_commands
     config_options_exclude = ('daemon','max_requests','user','group','pidfile')
     can_kill_arbiter = True
-    cfg = {'loglevel': 'none', 'timeout': 3600, 'backlog': 1}
+    cfg = {'loglevel': 'none',
+           'timeout': 3600,
+           'backlog': 1,
+           'logconfig': {
+                'loggers': {
+                    LOGGER.name: {'handlers': ['console_message'],
+                                  'level': logging.INFO}
+                            }
+                         }
+           }
 
     def handler(self):
         return self
@@ -185,14 +194,12 @@ is a group of tests specified in a test class.
         if path not in sys.path:
             sys.path.insert(0, path)
     
-    def get_config_options_include(self, params):
-        include = self.config_options_include or []
-        self.plugins = params.get('plugins')
+    def on_config_init(self, cfg, params):
+        self.plugins = params.get('plugins') or ()
         if self.plugins:
             for plugin in self.plugins:
-                include.append(plugin.name)
-        return include
-        
+                cfg.settings.update(plugin.config.settings)
+    
     @property
     def runner(self):
         '''Instance of :class:`TestRunner` driving the test case
@@ -211,7 +218,6 @@ configuration and plugins.'''
     def on_config(self):
         #When config is available load the tests and check what type of
         #action is required.
-        pulsar.arbiter()
         modules = getattr(self, 'modules', None)
         if not hasattr(self, 'plugins'):
             self.plugins = ()
@@ -221,7 +227,7 @@ configuration and plugins.'''
             modules = ['tests']
         if hasattr(modules, '__call__'):
             modules = modules(self)
-        loader = TestLoader(os.getcwd(), modules, runner, logger=self.log)
+        loader = TestLoader(os.getcwd(), modules, runner, logger=self.logger)
         # Listing labels
         if self.cfg.list_labels:
             tags = self.cfg.labels
@@ -250,10 +256,10 @@ configuration and plugins.'''
         tags = self.cfg.labels
         try:
             self.local.tests = tests = list(loader.testclasses(tags))
-            event.fire('tests', sender=self, value=tests)
             if tests:
-                self.log.info('loaded %s test classes', len(tests))
+                self.logger.info('loaded %s test classes', len(tests))
                 self.runner.on_start()
+                event.fire('tests', sender=self, value=tests)
                 monitor.cfg.set('workers', min(self.cfg.workers, len(tests)))
                 self._time_start = None
             else:
@@ -262,14 +268,14 @@ configuration and plugins.'''
             print(str(e))
             monitor.arbiter.stop()
         except Exception:
-            self.log.critical('Error occurred before starting tests',
-                              exc_info=True)
+            LOGGER.critical('Error occurred before starting tests',
+                            exc_info=True)
             monitor.arbiter.stop()
 
     def monitor_task(self, monitor):
         if self._time_start is None:
             tests = self.local.tests
-            self.log.info('sending %s test classes to the task queue',
+            self.logger.info('sending %s test classes to the task queue',
                           len(tests))
             self._time_start = time.time()
             for tag, testcls in tests:

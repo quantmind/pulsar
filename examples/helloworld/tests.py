@@ -1,5 +1,7 @@
 '''Tests the "helloworld" example.'''
 from pulsar import send, SERVER_SOFTWARE, HttpClient, get_application
+from pulsar import MultiDeferred
+from pulsar.utils.httpurl import range
 from pulsar.apps.test import unittest, run_on_arbiter, dont_run_with_thread
 
 from .manage import server
@@ -46,6 +48,11 @@ class TestHelloWorldThread(unittest.TestCase):
         self.assertTrue(headers)
         self.assertEqual(headers['content-type'], 'text/plain')
         self.assertEqual(headers['server'], SERVER_SOFTWARE)
+        
+    def test_getbench(self):
+        c = HttpClient()
+        yield MultiDeferred((c.get(self.uri) for _ in range(1))).lock()
+    test_getbench.__benchmark__ = True
 
 
 @dont_run_with_thread

@@ -17,8 +17,8 @@ import types
 
 from pulsar import __version__, SERVER_NAME
 from . import system
-from .httpurl import is_string_or_native_string, to_string, to_bytes,\
-                        iteritems, HttpParser as PyHttpParser
+from .httpurl import to_bytes, iteritems, HttpParser as PyHttpParser,\
+                     native_str
 from .importer import import_system_file
 
 
@@ -54,29 +54,11 @@ KNOWN_SETTINGS = {}
 KNOWN_SETTINGS_ORDER = []
 
 
-def def_start_server(server):
+def def_arity1(server):
     pass
 
-
-def def_pre_exec(server):
+def def_arity2(worker, req):
     pass
-
-
-def default_process(worker):
-    pass
-
-
-def def_pre_request(worker, req):
-    pass
-
-
-def def_post_request(worker, req):
-    pass
-
-
-def def_worker_exit(worker):
-    pass
-
 
 def wrap_method(func):
     def _wrapped(instance, *args, **kwargs):
@@ -125,12 +107,14 @@ attribute by exposing the :attr:`Setting.name` as attribute.
     
     def __init__(self, description=None, epilog=None,
                  version=None, app=None, include=None,
-                 exclude=None):
-        self.settings = make_settings(app, include, exclude)
+                 exclude=None, settings=None):
+        if settings is None:
+            settings = make_settings(app, include, exclude)
+        self.settings = settings
         self.description = description or 'Pulsar server'
         self.epilog = epilog or 'Have fun!'
         self.version = version or __version__
-
+        
     def __iter__(self):
         return iter(self.settings)
     
@@ -183,7 +167,7 @@ settings via the :meth:`Setting.add_argument`.
         parser = argparse.ArgumentParser(**kwargs)
         parser.add_argument('--version',
                             action='version',
-                            version = self.version)
+                            version=self.version)
         setts = self.settings
         sorter = lambda x: (setts[x].section, setts[x].order)
         for k in sorted(setts, key=sorter):
@@ -242,16 +226,31 @@ settings via the :meth:`Setting.add_argument`.
 
     @property
     def proc_name(self):
-        pn = self.settings.get('proc_name')
+        pn = self.settings.get('process_name')
         if pn:
             pn = pn.get()
         if pn is not None:
             return pn
         else:
-            pn = self.settings.get('default_proc_name')
+            pn = self.settings.get('default_process_name')
             if pn:
                 return pn.get()
-
+    
+    def copy(self):
+        cls = self.__class__
+        me = cls.__new__(cls)
+        for name, value in iteritems(self.__dict__):
+            if name == 'settings':
+                value = copy.deepcopy(value)
+            me.__dict__[name] = value
+        return me
+    
+    def __copy__(self):
+        return self.copy()
+    
+    def __deepcopy__(self, memo):
+        return self.__copy__()
+            
 
 class SettingMeta(type):
     '''A metaclass which collects all setting classes and put them
@@ -261,10 +260,12 @@ in the global ``KNOWN_SETTINGS`` list.'''
         parents = [b for b in bases if isinstance(b, SettingMeta)]
         val = attrs.get("validator")
         attrs["validator"] = wrap_method(val) if val else None
-        if not parents or attrs.pop('virtual',False):
+        if attrs.pop('virtual', False):
             return super_new(cls, name, bases, attrs)
-        attrs["order"] = len(KNOWN_SETTINGS)
+        attrs["order"] = len(KNOWN_SETTINGS) + 1
         new_class = super_new(cls, name, bases, attrs)
+        # build one instance to increase count
+        new_class()
         new_class.fmt_desc(attrs['desc'] or '')
         if not new_class.name:
             new_class.name = new_class.__name__.lower()
@@ -321,6 +322,7 @@ class SimpleSetting(SettingBase):
 class Setting(SettingMeta('BaseSettings', (SettingBase,), {'virtual': True})):
     '''A configuration parameter for pulsar. Parameters can be specified
 on the command line or on a config file.'''
+    creation_count = 0
     virtual = True
     '''If set to ``True`` the settings won't be loaded and it can be only used
 as base class for other settings.'''
@@ -342,8 +344,8 @@ as base class for other settings.'''
     short = None
     desc = None
 
-    def __init__(self, name=None, flags=None, action=None, default=None,
-                 nargs=None, description=None):
+    def __init__(self, name=None, flags=None, action=None, type=None,
+                 default=None, nargs=None, desc=None, validator=None):
         self.default = default if default is not None else self.default
         if self.default is not None:
             self.set(self.default)
@@ -351,13 +353,19 @@ as base class for other settings.'''
         self.flags = flags or self.flags
         self.action = action or self.action
         self.nargs = nargs or self.nargs
-        self.desc = description or self.desc
+        self.type = type or self.type
+        self.desc = desc or self.desc
         self.short = self.short or self.desc
         self.desc = self.desc or self.short
+        #if validator:
+        #    self.validator = wrap_method(validator)
         if self.app and not self.section:
             self.section = self.app
         if not self.section:
             self.section = 'unknown'
+        self.__class__.creation_count += 1
+        if not hasattr(self, 'order'):
+            self.order = 1000 + self.__class__.creation_count
 
     def __getstate__(self):
         return self.__dict__.copy()
@@ -383,7 +391,6 @@ as base class for other settings.'''
         else:
             # Not added to argparser
             return
-
         parser.add_argument(*args, **kwargs)
 
     def copy(self):
@@ -391,9 +398,10 @@ as base class for other settings.'''
 
 
 def validate_bool(val):
-    if isinstance(val,bool):
+    if isinstance(val, bool):
         return val
-    if not isinstance(val, string_type):
+    val = native_str(val)
+    if not isinstance(val, str):
         raise TypeError("Invalid type for casting: %s" % val)
     if val.lower().strip() == "true":
         return True
@@ -419,24 +427,22 @@ def validate_pos_float(val):
     return val
 
 def validate_string(val):
-    if val is None:
+    va = native_str(val)
+    if va is None:
         return None
-    if not is_string_or_native_string(val):
+    if not isinstance(va, str):
         raise TypeError("Not a string: %s" % val)
-    return to_string(val).strip()
-
+    return va.strip()
 
 def validate_list(val):
-    if val and not isinstance(val,list):
+    if val and not isinstance(val, (list, tuple)):
         raise TypeError("Not a list: %s" % val)
-    return val
-
+    return list(val)
 
 def validate_dict(val):
-    if val and not isinstance(val,dict):
+    if val and not isinstance(val, dict):
         raise TypeError("Not a dictionary: %s" % val)
     return val
-
 
 def validate_callable(arity):
     def _validate_callable(val):
@@ -477,7 +483,7 @@ class Workers(Setting):
     type = int
     default = 1
     desc = """\
-        The number of worker process for handling requests.
+        The number of workers for handling requests.
 
 If you are using a multi-process concurrency, a number in the
 the 2-4 x $(NUM_CORES) range should be good. If you are using threads this
@@ -682,17 +688,25 @@ class Loglevel(Setting):
     validator = validate_string
     default = "info"
     desc = """The granularity of log outputs.
+            
+            Valid level names are:
+            
+             * debug
+             * info
+             * warning
+             * error
+             * critical
+             """
 
-Valid level names are:
-
- * debug
- * info
- * warning
- * error
- * critical
- """
-
-
+class LogHandlers(Setting):
+    name = "loghandlers"
+    section = "Logging"
+    flags = ["--log-handlers"]
+    default = ['console']
+    validator = validate_list
+    desc = """log handlers for pulsar server"""
+    
+    
 class LogEvery(Setting):
     name = "logevery"
     section = "Logging"
@@ -715,7 +729,7 @@ class LogConfig(Setting):
 
 
 class Procname(Setting):
-    name = "proc_name"
+    name = "process_name"
     section = "Process Naming"
     flags = ["-n", "--name"]
     meta = "STRING"
@@ -734,7 +748,7 @@ class Procname(Setting):
 
 
 class DefaultProcName(Setting):
-    name = "default_proc_name"
+    name = "default_process_name"
     section = "Process Naming"
     validator = validate_string
     default = SERVER_NAME
@@ -748,7 +762,7 @@ class WhenReady(Setting):
     section = "Server Hooks"
     validator = validate_callable(1)
     type = "callable"
-    default = staticmethod(def_start_server)
+    default = staticmethod(def_arity1)
     desc = """\
         Called just after the server is started.
 
@@ -760,7 +774,7 @@ class Prefork(Setting):
     name = "pre_fork"
     section = "Server Hooks"
     validator = validate_callable(1)
-    default = staticmethod(default_process)
+    default = staticmethod(def_arity1)
     type = "callable"
     desc = """\
         Called just before a worker is forked.
@@ -775,7 +789,7 @@ class Postfork(Setting):
     section = "Server Hooks"
     validator = validate_callable(1)
     type = "callable"
-    default = staticmethod(default_process)
+    default = staticmethod(def_arity1)
     desc = """\
         Called just after a worker has been forked.
 
@@ -789,7 +803,7 @@ class PreExec(Setting):
     section = "Server Hooks"
     validator = validate_callable(1)
     type = "callable"
-    default = staticmethod(def_pre_exec)
+    default = staticmethod(def_arity1)
     desc = """\
         Called just before a new master process is forked.
 
@@ -802,7 +816,7 @@ class PreRequest(Setting):
     section = "Server Hooks"
     validator = validate_callable(2)
     type = "callable"
-    default = staticmethod(def_pre_request)
+    default = staticmethod(def_arity2)
     desc = """\
         Called just before a worker processes the request.
 
@@ -816,7 +830,7 @@ class PostRequest(Setting):
     section = "Server Hooks"
     validator = validate_callable(2)
     type = "callable"
-    default = staticmethod(def_post_request)
+    default = staticmethod(def_arity2)
     desc = """\
         Called after a worker processes the request.
 
@@ -830,7 +844,7 @@ class WorkerExit(Setting):
     section = "Server Hooks"
     validator = validate_callable(1)
     type = "callable"
-    default = staticmethod(def_worker_exit)
+    default = staticmethod(def_arity1)
     desc = """Called just after a worker has been exited.
 
         The callable needs to accept one variable for the
@@ -843,7 +857,7 @@ class WorkerTask(Setting):
     section = "Server Hooks"
     validator = validate_callable(1)
     type = "callable"
-    default = staticmethod(def_worker_exit)
+    default = staticmethod(def_arity1)
     desc = """Called at every event loop by the worker.
 
         The callable needs to accept one variable for the Worker.
@@ -855,7 +869,7 @@ class ArbiterTask(Setting):
     section = "Server Hooks"
     validator = validate_callable(1)
     type = "callable"
-    default = staticmethod(def_worker_exit)
+    default = staticmethod(def_arity1)
     desc = """Called at every event loop by the arbiter.
 
         The callable needs to accept one variable for the Arbiter.

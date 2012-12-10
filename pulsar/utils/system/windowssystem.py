@@ -3,6 +3,7 @@ import ctypes
 import ctypes.wintypes
 import errno
 import socket
+import getpass
 from time import sleep
 
 from pulsar.utils.sock import socket_pair
@@ -36,28 +37,25 @@ def get_parent_id():
     else:
         return None
 
-
 def chown(path, uid, gid):
     pass
-
 
 def close_on_exec(fd):
     success = SetHandleInformation(fd, HANDLE_FLAG_INHERIT, 0)
     if not success:
         raise ctypes.GetLastError()
-    
-    
+        
 def _set_non_blocking(fd):
     pass
 
+def get_uid(user=None):
+    if not user:
+        return getpass.getuser()
+    elif user == getpass.getuser():
+        return user
 
-def get_uid(user):
+def get_gid(group=None):
     return None
-
-
-def get_gid(group):
-    return None
-
 
 def setpgrp():
     pass
