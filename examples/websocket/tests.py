@@ -32,18 +32,8 @@ class WebSocketThreadTest(unittest.TestCase):
     @classmethod
     def tearDownClass(cls):
         if cls.app is not None:
-            outcome = send('arbiter', 'kill_actor', cls.app.mid)
+            outcome = send('arbiter', 'kill_actor', cls.app.name)
             yield outcome
-    
-    def headers(self, extensions=None, protocol=None):
-        headers = Headers((('upgrade', 'websocket'),
-                           ('sec-websocket-key', 'E3qAXpIDEniWJd59VoBALQ=='),
-                           ('sec-websocket-version', '13')))
-        if extensions:
-            headers['sec-websocket-extensions'] = extensions
-        if extensions:
-            headers['sec-websocket-protocol'] = protocol
-        return headers
     
     def testHyBiKey(self):
         w = WebSocket(None)
@@ -57,17 +47,17 @@ class WebSocketThreadTest(unittest.TestCase):
         response = outcome.result
         self.assertEqual(response.status_code, 400)
         #
-        outcome = c.get(self.ws_uri, headers=[('Sec-Websocket-Key','')])
+        outcome = c.get(self.ws_uri, headers=[('Sec-Websocket-Key', '')])
         yield outcome
         response = outcome.result
         self.assertEqual(response.status_code, 400)
         #
-        outcome = c.get(self.ws_uri, headers=[('Sec-Websocket-Key','bla')])
+        outcome = c.get(self.ws_uri, headers=[('Sec-Websocket-Key', 'bla')])
         yield outcome
         response = outcome.result
         self.assertEqual(response.status_code, 400)
         #
-        outcome = c.get(self.ws_uri, headers=[('Sec-Websocket-version','xxx')])
+        outcome = c.get(self.ws_uri, headers=[('Sec-Websocket-version', 'xxx')])
         yield outcome
         response = outcome.result
         self.assertEqual(response.status_code, 400)

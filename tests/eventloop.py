@@ -44,6 +44,24 @@ class TestEventLoop(unittest.TestCase):
         self.assertEqual(d.result, ioloop.tid)
         self.assertFalse(timeout1 in ioloop._timeouts)
         
+    def test_periodic(self):
+        ioloop = pulsar.thread_ioloop()
+        d = pulsar.Deferred()
+        class p:
+            def __init__(self):
+                self.c = 0
+            def __call__(self, periodic):
+                self.c += 1
+                if self.c == 2:
+                    raise ValueError()
+                elif self.c == 3:
+                    periodic.stop()
+                    d.callback(self.c)
+        periodic = ioloop.add_periodic(p(), 1)
+        yield d
+        self.assertEqual(d.result, 3)
+        self.assertFalse(periodic._running)
+        
     def ___test_stop(self):
         ioloop = pulsar.thread_ioloop()
         tid = ioloop.tid

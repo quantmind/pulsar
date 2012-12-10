@@ -47,26 +47,24 @@ on a socket. This is the base class of :class:`pulsar.apps.wsgi.WSGIServer`.
         if not pulsar.platform.multiProcessSocket()\
             or cfg.concurrency == 'thread':
             cfg.set('workers', 0)
+        if not self.socket_server_class:
+            raise TypeError('Socket server class not specified.')
         
     def monitor_start(self, monitor):
         # Open the socket and bind to address
         address = self.cfg.address
         if address:
-            socket = pulsar.create_socket(address,
-                                          logger=monitor.logger,
-                                          backlog=self.cfg.backlog)
+            socket = pulsar.create_socket(address, backlog=self.cfg.backlog)
         else:
             raise pulsar.ImproperlyConfigured('Could not open a socket. '
                                               'No address to bind to')
         self.logger.info('Listening on %s', socket)
-        monitor.socket = socket
+        monitor.params.socket = socket
         self.address = socket.name
     
     def worker_start(self, worker):
         # Start the worker by starting the socket server
-        if not self.socket_server_class:
-            raise TypeError('Socket server class not specified.')
-        s = self.socket_server_class(worker, worker.socket)
+        s = self.socket_server_class(worker, worker.params.socket)
         # We add the file descriptor handler
         s.on_connection_callbacks.append(worker.handle_fd_event)
         worker.socket_server = s.start()

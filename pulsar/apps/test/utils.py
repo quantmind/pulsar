@@ -182,7 +182,7 @@ the tearDown method is overwritten.'''
         
     def spawn(self, concurrency=None, **kwargs):
         concurrency = concurrency or self.concurrency
-        ad = pulsar.spawn(concurrency=concurrency,**kwargs)
+        ad = pulsar.spawn(concurrency=concurrency, **kwargs)
         self.assertTrue(ad.aid)
         self.assertTrue(isinstance(ad, pulsar.ActorProxyDeferred))
         yield ad

@@ -49,7 +49,7 @@ Design to comply with the `JSON-RPC 2.0`_ Specification.
     def get_method_and_args(self, data):
         '''Overrides the :meth:`RpcHandler:get_method_and_args` to obtain
 method data from the JSON *data* string.'''
-        if not isinstance(data,dict):
+        if not isinstance(data, dict):
             data = self._json.loads(data)
         method  = data.get('method',None)
         params  = data.get('params',None)
@@ -57,8 +57,8 @@ method data from the JSON *data* string.'''
         version = data.get('jsonrpc',None)
         kwargs  = {}
         args    = ()
-        if isinstance(params,dict):
-            for k,v in params.items():
+        if isinstance(params, dict):
+            for k, v in params.items():
                 kwargs[str(k)] = v
         elif params:
             args = tuple(params)

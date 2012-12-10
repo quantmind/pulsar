@@ -157,6 +157,11 @@ class TestTools(unittest.TestCase):
         idx = data.find(b'\r\n')
         boundary = data[2:idx].decode('utf-8')
         self.assertEqual(ct, 'multipart/form-data; boundary=%s' % boundary)
+        
+    def test_HttpResponse(self):
+        r = httpurl.HttpResponse(None)
+        self.assertEqual(r.status_code, None)
+        self.assertEqual(str(r), '<None>')
 
 
 def request_callback(result):
@@ -193,9 +198,9 @@ class TestHttpClient(unittest.TestCase):
     @classmethod
     def tearDownClass(cls):
         if cls.app is not None:
-            yield send('arbiter', 'kill_actor', cls.app.mid)
+            yield send('arbiter', 'kill_actor', cls.app.name)
         if cls.proxy_app is not None:
-            yield send('arbiter', 'kill_actor', cls.proxy_app.mid)
+            yield send('arbiter', 'kill_actor', cls.proxy_app.name)
         
     def client(self, **kwargs):
         kwargs['timeout'] = self.timeout

@@ -40,8 +40,7 @@ class server(pulsar.MultiApp):
     def __call__(self, actor=None):
         name = self.name
         params = self.params
-        tq = tasks.TaskQueue(name=name, callable=dummy,
-                             tasks_path=TASK_PATHS,
+        tq = tasks.TaskQueue(name=name, tasks_path=TASK_PATHS,
                              script=__file__, **params)
         self.apps.append(tq)
         rpcs = wsgi.WSGIServer(rpc.RpcMiddleware(RpcRoot(tq)),

@@ -13,7 +13,7 @@ from .access import get_actor, get_actor_from_id
 
 __all__ = ['Concurrency', 'concurrency']
 
-def concurrency(kind, actor_class, monitor, commands_set, cfg, params):
+def concurrency(kind, actor_class, monitor, commands_set, cfg, **params):
     '''Function invoked by the :class:`Arbiter` or a :class:`Monitor` when
 spawning a new :class:`Actor`. It created a :class:`Concurrency` instance
 which handle the contruction and the lif of an :class:`Actor`.
@@ -30,7 +30,7 @@ which handle the contruction and the lif of an :class:`Actor`.
         c = ActorProcess()
     else:
         raise ValueError('Concurrency %s not supported in pulsar' % kind)
-    return c.make(kind, actor_class, monitor, commands_set, cfg, params)
+    return c.make(kind, actor_class, monitor, commands_set, cfg, **params)
 
 
 class Concurrency(object):
@@ -48,16 +48,16 @@ and are shared between the :class:`Actor` and its
 '''
     _creation_counter = 0
     address = None
-    def make(self, kind, actor_class, monitor, commands_set, cfg, params):
+    def make(self, kind, actor_class, monitor, commands_set, cfg, name=None,
+             aid=None, **params):
         self.__class__._creation_counter += 1
-        self.aid = gen_unique_id()[:8]
+        self.aid = aid or gen_unique_id()[:8]
         self.age = self.__class__._creation_counter
-        self.name = params.pop('name', actor_class.__name__.lower())
+        self.name = name or actor_class.__name__.lower()
         self.kind = kind
         self.commands_set = commands_set
         self.cfg = cfg
         self.actor_class = actor_class
-        self.pool_timeout = params.pop('pool_timeout', None)
         self.params = params
         return self.get_actor(monitor)
 
@@ -116,7 +116,8 @@ class ActorThread(ActorConcurrency, Thread):
     def terminate(self):
         '''Called by the main thread to force termination.'''
         actor = get_actor_from_id(self.aid)
-        result = actor.stop(force=True)
+        if actor is not None:
+            actor.stop(force=True)
 
     @property
     def pid(self):
