@@ -4,7 +4,7 @@ import sys
 
 if sys.version_info > (3,0):
     string_type = str
-else:
+else:   #pragma    nocover
     string_type = unicode
     range = xrange
 

@@ -314,7 +314,7 @@ not data was sent. In this case it also raises a socket error.'''
             try:
                 self.sock.shutdown(socket.SHUT_RDWR)
                 self.sock.close()
-            except socket.error:
+            except:
                 pass
             self.sock = None
 
