@@ -9,12 +9,12 @@ from pulsar.utils.sock import create_tcp_socket_address
 class TestSockUtils(unittest.TestCase):
     
     def testClientSocket(self):
-        sock = pulsar.create_client_socket(('',8080))
+        sock = pulsar.create_client_socket(('', 8080))
         self.assertFalse(sock.is_server)
-        self.assertEqual(sock.name,('0.0.0.0', 0))
+        self.assertEqual(sock.name, None)
         sock2 = pulsar.create_client_socket('0.0.0.0:8080')
         self.assertFalse(sock2.is_server)
-        self.assertEqual(sock2.name,('0.0.0.0', 0))
+        self.assertEqual(sock2.name, None)
         
     def test_get_socket_timeout(self):
         self.assertEqual(pulsar.get_socket_timeout(None), None)

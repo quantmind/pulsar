@@ -1,5 +1,6 @@
 '''Tests actor and actor proxies.'''
 from time import sleep
+from multiprocessing.queues import Queue
 
 import pulsar
 from pulsar import send
@@ -11,12 +12,21 @@ from pulsar.apps.test import unittest, ActorTestMixin, run_on_arbiter,\
 def sleepfunc():
     sleep(2)
     
+def on_event(fd, request):
+    pass
+        
 def on_task(self):
     # put something on a queue, just for coverage.
     self.put(None)
     
 def check_actor(actor):
     assert(actor.on_task()==None)
+    
+
+class DodgyActor(pulsar.Actor):
+    
+    def on_stop(self):
+        raise valueError()
     
     
 class TestProxy(unittest.TestCase):
@@ -97,6 +107,41 @@ class TestActorThread(ActorTestMixin, unittest.TestCase):
         ainfo = info['actor']
         self.assertEqual(ainfo['is_process'], self.concurrency=='process')
         
+    @run_on_arbiter
+    def testDodgyActor(self):
+        queue = Queue()
+        yield self.spawn(actor_class=DodgyActor, max_requests=1,
+                         ioqueue=queue, on_event=on_event)
+        proxy = pulsar.get_actor().get_actor(self.a.aid)
+        self.assertEqual(proxy.name, 'dodgyactor')
+        queue.put(('request', 'Hello'))
+        c = 0
+        while c < 20:
+            if not proxy.is_alive():
+                break
+            else:
+                c += 1
+                yield pulsar.NOT_DONE
+        self.assertFalse(proxy.is_alive())
+        
+    @run_on_arbiter
+    def testHaltServer(self):
+        def on_task(w):
+            if w.params.done:
+                raise pulsar.HaltServer()
+            else:
+                w.params.done = True
+                raise ValueError()
+        yield self.spawn(on_task=on_task)
+        proxy = pulsar.get_actor().get_actor(self.a.aid)
+        c = 0
+        while c < 20:
+            if not proxy.is_alive():
+                break
+            else:
+                c += 1
+                yield pulsar.NOT_DONE
+        self.assertFalse(proxy.is_alive())
         
 
 @dont_run_with_thread

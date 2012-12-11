@@ -37,7 +37,7 @@ class TestTestWorker(unittest.TestCase):
         self.assertTrue(worker.cpubound)
         self.assertTrue(worker.mailbox.cpubound)
         self.assertTrue(worker.impl.daemon)
-        self.assertFalse(worker.is_pool())
+        self.assertFalse(worker.is_monitor())
         
     def testWorkerMonitor(self):
         worker = pulsar.get_actor()

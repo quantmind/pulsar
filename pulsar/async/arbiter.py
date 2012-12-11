@@ -11,8 +11,9 @@ from pulsar.utils.tools import Pidfile
 from pulsar.utils.security import gen_unique_id
 from pulsar import HaltServer
 
-from .defer import itervalues, iteritems, multi_async
-from .actor import Actor, ACTOR_TERMINATE_TIMEOUT, ACTOR_STOPPING_LOOPS
+from .defer import itervalues, iteritems, multi_async, async
+from .actor import Actor, ACTOR_STATES,  ACTOR_TERMINATE_TIMEOUT,\
+                     ACTOR_STOPPING_LOOPS
 from .monitor import PoolMixin, _spawn_actor
 from .access import get_actor, set_actor
 from . import proxy
@@ -100,11 +101,10 @@ Users access the arbiter by the high level api::
 .. _twisted: http://twistedmatrix.com/trac/
 .. _tornado: http://www.tornadoweb.org/
 '''
-    SIG_TIMEOUT = 0.01
-    EXIT_SIGNALS = (signal.SIGINT,
-                    signal.SIGTERM,
-                    signal.SIGABRT,
-                    system.SIGQUIT)
+    pidfile = None
+    restarted = False
+    EXIT_SIGNALS = (signal.SIGINT, signal.SIGTERM,
+                    signal.SIGABRT, system.SIGQUIT)
 
     ############################################################################
     # ARBITER HIGH LEVEL API
@@ -140,7 +140,7 @@ Users access the arbiter by the high level api::
     def close_monitors(self):
         '''Close all :class:`Monitor` at once.'''
         for pool in list(itervalues(self.monitors)):
-            yield pool.stop()
+            yield pool.stop(True)
 
     def on_info(self, data):
         monitors = [p.info() for p in itervalues(self.monitors)]
@@ -172,7 +172,7 @@ Users access the arbiter by the high level api::
             os.environ["SERVER_SOFTWARE"] = pulsar.SERVER_SOFTWARE
         if self.cfg.daemon:
             system.daemonize()
-        self.SIG_QUEUE = ThreadQueue()
+        self.signal_queue = ThreadQueue()
         return PoolMixin.on_init(self, **kwargs)
 
     def on_start(self):
@@ -185,8 +185,9 @@ Users access the arbiter by the high level api::
     def on_task(self):
         '''Override the :class:`Actor.on_task` callback to perform the
 arbiter tasks at every iteration in the event loop.'''
-        sig = self._arbiter_task()
-        if sig is None:
+        if self.restarted:
+            self.stop(exit_code=self.exit_code)
+        if not self._arbiter_task():
             self.manage_actors()
             for m in list(itervalues(self.monitors)):
                 if m.started():
@@ -216,21 +217,30 @@ the timeout. Stop the arbiter.'''
                     actor.terminate()
                     actor.join(ACTOR_TERMINATE_TIMEOUT)
 
+    @async()
     def on_stop(self):
         '''Stop the pools the message queue and remaining actors.'''
-        # close all monitors
-        self.logger.info('Shutting down server.')
-        yield self.close_monitors()
-        # close remaining actors
-        yield self.close_actors()
-        yield self._close_message_queue()
-
+        if not self.ioloop.running():
+            for pool in list(itervalues(self.monitors)):
+                pool.state = ACTOR_STATES.STOPPING
+            self.state = ACTOR_STATES.RUN
+            self.restarted = True
+            self.ioloop.start()
+        else:
+            self.state = ACTOR_STATES.STOPPING
+            yield self.close_monitors()
+            yield self.close_actors()
+            yield self._close_message_queue()
+    
     def on_exit(self):
-        p = self.cfg.pidfile
+        self.logger.info("Shutting down server.")
+        p = self.pidfile
         if p is not None:
             p.unlink()
         if self.managed_actors:
-            self._state = self.TERMINATE
+            self.state = ACTOR_STATES.TERMINATE
+        if self.exit_code is not None:
+            sys.exit(self.exit_code)
 
     ############################################################################
     # INTERNALS
@@ -247,29 +257,22 @@ the timeout. Stop the arbiter.'''
             pass
         try:
             self.ioloop.start()
-        except StopIteration:
-            self._halt('Stop Iteration')
-        except KeyboardInterrupt:
-            self._halt('Keyboard Interrupt')
         except HaltServer as e:
-            self._halt(reason=str(e), sig=e.signal)
-        except SystemExit:
-            raise
+            self._halt(reason=str(e), code=e.signal)
+        except (KeyboardInterrupt, SystemExit) as e:
+            self._halt(e.__class__.__name__)
         except:
-            self._halt("Unhandled exception in main loop.")
-        if self.exit_code:
-            sys.exit(self.exit_code)
+            self._halt(code=1)
 
-    def _halt(self, reason=None, sig=None):
+    def _halt(self, reason=None, code=None):
         #halt the arbiter. If there no signal ``sig`` it is an unexpected exit
-        x = 'Shutting down pulsar arbiter'
-        _msg = lambda : x if not reason else '{0}: {1}'.format(x,reason)
-        if not sig:
-            self.logger.critical(_msg())
-        else:
-            self.logger.info(_msg())
-        self.exit_code = sig
-        self.stop()
+        if not self.closed():
+            if not reason:
+                reason = "Unhandled exception in main loop."
+                self.logger.critical(reason, exc_info=True)
+            else:
+                self.logger.info(reason)
+            self.stop(True, exit_code=code)
 
     def _close_message_queue(self):
         return
@@ -280,8 +283,8 @@ signal queue'''
         sig = None
         while True:
             try:
-                sig = self.SIG_QUEUE.get(timeout=self.SIG_TIMEOUT)
-            except (Empty,IOError):
+                sig = self.signal_queue.get(timeout=0.01)
+            except (Empty, IOError):
                 break
             if sig not in system.SIG_NAMES:
                 self.logger.info("Ignoring unknown signal: %s", sig)
@@ -289,17 +292,14 @@ signal queue'''
             else:
                 signame = system.SIG_NAMES.get(sig)
                 if sig in self.EXIT_SIGNALS:
-                    raise HaltServer('Received Signal {0}.'\
-                                          .format(signame),sig)
-                handler = getattr(self, "handle_queued_%s"\
-                                   % signame.lower(), None)
+                    raise HaltServer('Received Signal %s.' % signame, sig)
+                handler = getattr(self, "signal_%s" % signame.lower(), None)
                 if not handler:
-                    self.logger.debug('Cannot handle signal "%s". No Handle',\
-                                      signame)
+                    self.logger.debug('No Handle for signal "%s".', signame)
                     sig = None
                 else:
                     self.logger.info("Handling signal: %s", signame)
-                    handler()
+                    sig = handler()
         return sig
 
     def signal(self, sig, frame=None):
@@ -307,11 +307,8 @@ signal queue'''
         if signame:
             if self.ioloop.running():
                 self.logger.debug('Received and queueing signal %s.', signame)
-                self.SIG_QUEUE.put(sig)
+                self.signal_queue.put(sig)
                 self.ioloop.wake()
-            else:
-                pass
-                #exit(1)
         else:
             self.logger.debug('Received unknown signal "%s". Skipping.', sig)
 

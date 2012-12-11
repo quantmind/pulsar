@@ -14,4 +14,5 @@ if __name__ == '__main__':
     print(sys.version)
     TestSuite(description='Pulsar Asynchronous test suite',
               modules=('tests', ('examples','tests')),
-              plugins=(bench.BenchMark(), profile.Profile())).start()
+              plugins=(bench.BenchMark(), profile.Profile()),
+              pidfile='test.pid').start()

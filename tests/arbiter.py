@@ -5,6 +5,7 @@ from threading import current_thread
 
 import pulsar
 from pulsar import send, spawn
+from pulsar.utils import system
 from pulsar.async.actor import ACTOR_STOPPING_LOOPS
 from pulsar.apps.test import unittest, run_on_arbiter, ActorTestMixin
 
@@ -15,10 +16,8 @@ class BogusActor(pulsar.Actor):
         #This actor does not send notify messages to the arbiter
         pass
     
-    def stop(self, force=False, exit_code=0):
-        if not self.params.failstop or\
-            (self.params.failstop and force):
-            return super(BogusActor, self).stop(force=force, exit_code=exit_code)
+    def stop(self, exit_code=0):
+        pass
     
     
 class TestArbiter(ActorTestMixin, unittest.TestCase):
@@ -53,6 +52,7 @@ class TestArbiter(ActorTestMixin, unittest.TestCase):
         self.assertEqual(arbiter.ioloop, arbiter.requestloop)
         self.assertFalse(arbiter.cpubound)
         self.assertEqual(arbiter.exit_code, None)
+        self.assertEqual(arbiter.on_event(None, None), None)
         info = arbiter.info()
         self.assertTrue('server' in info)
         server = info['server']
@@ -109,4 +109,30 @@ class TestArbiter(ActorTestMixin, unittest.TestCase):
         thread_actors = pulsar.process_local_data('thread_actors')
         self.assertFalse(proxy.aid in thread_actors)
         
-
+    @run_on_arbiter
+    def testFakeSignal(self):
+        arbiter = pulsar.get_actor()
+        self.assertTrue(arbiter.is_arbiter())
+        self.assertEqual(arbiter.signal('fooo'), None)
+        self.assertEqual(arbiter.signal_queue.qsize(), 0)
+        # Now put the signal in the queue
+        arbiter.signal_queue.put('foooooo')
+        self.assertEqual(arbiter.signal_queue.qsize(), 1)
+        # we need to yield so that the arbiter has a chance to process the signal
+        yield pulsar.NOT_DONE
+        # The arbiter should have processed the fake signal
+        self.assertEqual(arbiter.signal_queue.qsize(), 0)
+        
+    @run_on_arbiter
+    def testSignal(self):
+        arbiter = pulsar.get_actor()
+        self.assertTrue(arbiter.is_arbiter())
+        for sig in system.SIG_NAMES:
+            if sig not in arbiter.EXIT_SIGNALS:
+                break
+        # send the signal
+        arbiter.signal(sig)
+        self.assertEqual(arbiter.signal_queue.qsize(), 1)
+        yield pulsar.NOT_DONE
+        self.assertEqual(arbiter.signal_queue.qsize(), 0)
+        

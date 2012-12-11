@@ -180,13 +180,8 @@ class BaseSocket(IStream):
     def getsockname(self):
         try:
             return self.sock.getsockname()
-        except socket.error as e:
-            # In windows the function raises an exception if the socket
-            # is not connected
-            if os.name == 'nt' and e.args[0] == errno.WSAEINVAL:
-                return ('0.0.0.0', 0)
-            else:
-                raise
+        except:
+            return None
     
     def settimeout(self, value):
         self.sock.settimeout(value)
@@ -334,7 +329,11 @@ class TCPSocket(Socket):
     FAMILY = socket.AF_INET
 
     def __str__(self):
-        return "%s:%d" % self.name
+        name = self.name
+        if name:
+            return "%s:%d" % name
+        else:
+            return '<closed>'
 
     def set_options(self, sock, address, bound):
         sock.setsockopt(socket.IPPROTO_TCP, socket.TCP_NODELAY, 1)

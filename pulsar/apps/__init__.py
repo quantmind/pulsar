@@ -5,7 +5,7 @@ from inspect import isfunction
 
 import pulsar
 from pulsar import Actor, make_async, safe_async, is_failure, HaltServer,\
-                     Monitor, loop_timeout, Deferred, get_actor
+                     Monitor, loop_timeout, Deferred, get_actor, async
 from pulsar.async.defer import pickle
 from pulsar.utils import event
 from pulsar.utils.log import LogInformation
@@ -163,6 +163,7 @@ pulsar subclasses of :class:`Application`.
         if not self.cfg.workers:
             yield self.handle_task()
 
+    @async()
     def on_stop(self):
         if not self.cfg.workers:
             yield self.app.worker_stop(self)
@@ -303,6 +304,7 @@ These are the most important facts about a pulsar :class:`Application`
                  can_kill_arbiter=None,
                  parse_console=True,
                  commands_set=None,
+                 cfg=None,
                  **kwargs):
         '''Initialize a new :class:`Application` and add its
 :class:`ApplicationMonitor` to the class:`pulsar.Arbiter`.
@@ -324,7 +326,9 @@ These are the most important facts about a pulsar :class:`Application`
             self.commands_set = commands_set
         self.script = script
         self.python_path()
-        params = self.cfg.copy() if self.cfg else {}
+        params = cfg or {}
+        if self.cfg:
+            params.update(self.cfg)
         params.update(kwargs)
         self.callable = callable
         self.load_config(argv, version, parse_console, params)

@@ -41,19 +41,17 @@ class LoopGuard(object):
 
     def __enter__(self):
         loop = self.loop
-        loop.logger.debug("Starting %s", loop)
+        loop.logger.debug("Starting event loop")
         loop._running = True
+        if not loop._started:
+            loop._started = time.time()
         setid(loop)
-        loop._started = time.time()
         loop._on_exit = Deferred()
-        loop.num_loops = 0
         return self
 
     def __exit__(self, type, value, traceback):
         loop = self.loop
         loop._running = False
-        loop._tid = None
-        loop._stopped = True
         loop.logger.debug('Exiting event loop')
         loop._on_exit.callback(loop)
 
@@ -72,7 +70,7 @@ A level-triggered I/O event loop adapted from tornado.
 
     total number of loops
 
-.. attribute:: POLL_TIMEOUT
+.. attribute:: poll_timeout
 
     The timeout in seconds when polling with epol or select.
 
@@ -83,33 +81,22 @@ A level-triggered I/O event loop adapted from tornado.
     The thread id where the eventloop is running
 """
     # Never use an infinite timeout here - it can stall epoll
-    POLL_TIMEOUT = 0.5
+    poll_timeout = 0.5
 
-    def __init__(self, io=None, logger=None, pool_timeout=None, commnads=None,
-                 name=None, ready=True):
+    def __init__(self, io=None, logger=None, poll_timeout=None, ready=True):
         self._impl = io or IOpoll()
-        self.POLL_TIMEOUT = pool_timeout if pool_timeout is not None\
-                                 else self.POLL_TIMEOUT
+        self.poll_timeout = poll_timeout if poll_timeout else self.poll_timeout
         self.logger = logger or LOGGER
         if hasattr(self._impl, 'fileno'):
             close_on_exec(self._impl.fileno())
-        cname = self.__class__.__name__.lower()
-        self._name = name or cname
-        if self._name != cname:
-            self._repr = '%s - %s' % (cname, self._name)
-        else:
-            self._repr = self._name
         self._handlers = {}
         self._events = {}
         self._callbacks = []
         self._timeouts = []
         self._loop_tasks = WeakList()
-        self._starter = None
         self._started = None
         self._running = False
-        self._stopped = False
         self.num_loops = 0
-        self._blocking_signal_threshold = None
         self._waker = getattr(self._impl, 'waker', Waker)()
         self._on_exit = None
         self.ready = ready
@@ -165,15 +152,10 @@ file descriptor *fd*.
         except (OSError, IOError):
             self.logger.error("Error removing %s from IOLoop", fd, exc_info=True)
 
-    def start(self, starter=None):
-        if not self._startup(starter):
+    def start(self):
+        if self._running:
             return False
-        if starter: # just start
-            self._run()
-        elif self._starter:
-            self._starter.start()
-        else:
-            self._run()
+        self._run()
 
     def stop(self):
         '''Stop the loop after the current event loop iteration is complete.
@@ -197,10 +179,6 @@ whether that callback was invoked before or after ioloop.start.'''
     def running(self):
         """Returns true if this IOLoop is currently running."""
         return self._running
-
-    def stopped(self):
-        '''Return ``True`` if the loop have been stopped.'''
-        return self._stopped
 
     def add_timeout(self, deadline, callback):
         """Add a timeout *callback*. A timeout callback  it is called
@@ -236,58 +214,37 @@ by the :meth:`add_timeout` method."""
         
     def wake(self):
         '''Wake up the eventloop.'''
-        if not self.stopped():
+        if self.running():
             self._waker.wake()
 
-    ############################################################ INTERNALS
-    @Synchronized.make
-    def _startup(self, starter):
-        if self._running:
-            return False
-        if starter:
-            if self._starter and starter is not self._starter:
-                raise RuntimeError('Cannot start. It needs to be started '\
-                                   'by %s' % self._starter)
-            self._starter = starter
-        self._stopped = False
-        return True
-
-    def do_loop_tasks(self):
-        '''Perform tasks in the event loop. These tasks can be added and
-removed using the :meth:`pulsar.IOLoop.add_loop_task` and
-:meth:`pulsar.IOLoop.remove_loop_task` methods.
-
-For example, a :class:`pulsar.Actor` add itself to the event loop tasks
-so that it can perform its tasks at each event loop. Check the
-:meth:`pulsar.Actor` method.'''
-        for task in self._loop_tasks:
-            try:
-                result = task()
-                #result = task()
-                #loop_deferred(result, self)
-            except HaltServer:
-                raise
-            except:
-                self.logger.critical('Unhandled exception in loop task',
-                                     exc_info=True)
+    ############################################################ INTERNALS    
+    def _run_callback(self, callback, name='callback'):
+        try:
+            callback()
+        except EXIT_EXCEPTIONS:
+            raise
+        except:
+            self.logger.critical('Unhandled exception in %s.', name,
+                                 exc_info=True)
 
     def _run(self):
         """Runs the I/O loop until one of the I/O handlers calls stop(), which
 will make the loop stop after the current event iteration completes."""
         with LoopGuard(self) as guard:
             while self._running:
-                poll_timeout = self.POLL_TIMEOUT
+                poll_timeout = self.poll_timeout
                 self.num_loops += 1
+                _run_callback = self._run_callback
+                # Loop task first
+                for task in self._loop_tasks:
+                    _run_callback(task, 'loop task')
                 # Prevent IO event starvation by delaying new callbacks
                 # to the next iteration of the event loop.
                 callbacks = self._callbacks
                 if callbacks:
                     self._callbacks = []
-                    _run_callback = self._run_callback
                     for callback in callbacks:
                         _run_callback(callback)
-                #if self._callbacks:
-                #    poll_timeout = 0.0
                 if self._timeouts:
                     now = time.time()
                     while self._timeouts and self._timeouts[0].deadline <= now:
@@ -299,13 +256,9 @@ will make the loop stop after the current event iteration completes."""
                 # A chance to exit
                 if not self._running:
                     break
-                self.do_loop_tasks()
+                # Not ready to poll
                 if not self.ready:
                     continue
-                if self._blocking_signal_threshold is not None:
-                    # clear alarm so it doesn't fire while poll is waiting for
-                    # events.
-                    signal.setitimer(signal.ITIMER_REAL, 0, 0)
                 try:
                     event_pairs = self._impl.poll(poll_timeout)
                 except Exception as e:
@@ -320,9 +273,6 @@ will make the loop stop after the current event iteration completes."""
                         continue
                     else:
                         raise
-                if self._blocking_signal_threshold is not None:
-                    signal.setitimer(signal.ITIMER_REAL,
-                                     self._blocking_signal_threshold, 0)
                 # Pop one fd at a time from the set of pending fds and run
                 # its handler. Since that handler may perform actions on
                 # other file descriptors, there may be reentrant calls to
@@ -349,26 +299,6 @@ will make the loop stop after the current event iteration completes."""
                         except:
                             self.logger.error("Exception in I/O handler for fd %s",
                                           fd, exc_info=True)
-
-    def _run_callback(self, callback):
-        try:
-            callback()
-        except EXIT_EXCEPTIONS:
-            raise
-        except:
-            self.handle_callback_exception(callback)
-
-    def handle_callback_exception(self, callback):
-        """This method is called whenever a callback run by the IOLoop
-        throws an exception.
-
-        By default simply logs the exception as an error.  Subclasses
-        may override this method to customize reporting of exceptions.
-
-        The exception itself is not passed explicitly, but is available
-        in sys.exc_info.
-        """
-        self.logger.error("Exception in callback %r", callback, exc_info=True)
 
 
 class _Timeout(object):

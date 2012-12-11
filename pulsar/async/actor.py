@@ -15,7 +15,7 @@ from pulsar.utils.structures import AttributeDictionary
 from .eventloop import IOLoop, setid
 from .proxy import ActorProxy, ActorMessage, get_command, get_proxy
 from .defer import make_async, is_failure, iteritems, itervalues,\
-                     pickle, safe_async, async, log_failure, make_async
+                     pickle, safe_async, log_failure, make_async, is_async
 from .mailbox import IOQueue, mailbox
 from .access import set_local_data, is_mainthread, get_actor, remove_actor
 
@@ -239,15 +239,6 @@ which can be shared across different processes (i.e. it is pickable).'''
             return False
 
     @property
-    def pool_timeout(self):
-        '''Timeout in seconds for waiting for events in the eventloop.
- A small number is suitable for :class:`Actor` performing CPU-bound
- operation on the :meth:`Actor.on_task` method, a larger number is better for
- I/O bound actors.
-'''
-        return self.requestloop.POLL_TIMEOUT
-
-    @property
     def info_state(self):
         '''Current state description. One of ``initial``, ``running``,
  ``stopping``, ``closed`` and ``terminated``.'''
@@ -298,9 +289,6 @@ mean it is running.'''
         '''``True`` if actor has exited.'''
         return self.state >= ACTOR_STATES.CLOSE
 
-    def is_pool(self):
-        return False
-
     def is_arbiter(self):
         '''Return ``True`` if ``self`` is the :class:`Arbiter`.'''
         return False
@@ -344,7 +332,7 @@ mean it is running.'''
         max_requests = self.cfg.max_requests
         should_stop = max_requests and self.request_processed >= max_requests
         if should_stop:
-            self.logger.info("Auto-restarting worker.")
+            self.logger.info("Shutting down %s. Max requests reached.", self)
             self.stop()
 
     ############################################################################
@@ -414,8 +402,7 @@ logging is configured, the :attr:`Actor.mailbox` is registered and the
     ############################################################################
     # STOPPING
     ############################################################################
-    @async()
-    def stop(self, force=False, exit_code=0):
+    def stop(self, force=False, exit_code=None):
         '''Stop the actor by stopping its :attr:`Actor.requestloop`
 and closing its :attr:`Actor.mailbox`. Once everything is closed
 properly this actor will go out of scope.'''
@@ -423,22 +410,26 @@ properly this actor will go out of scope.'''
             self.stopping_start = time()
             self.state = ACTOR_STATES.STOPPING
             self.exit_code = exit_code
-            # make safe user defined callbacks
-            yield safe_async(self.on_stop)
-            yield self.mailbox.close()
-            self.state = ACTOR_STATES.CLOSE
+            try:
+                res = self.on_stop()
+            except:
+                self.logger.error('Unhandle error while stopping',
+                                  exc_info=True)
+                res = None
+            return res.addBoth(self.exit) if is_async(res) else self.exit()
+    
+    def exit(self, result=None):
+        '''Exit from the :class:`Actor` domain.'''
+        if not self.stopped():
+            self.mailbox.close()
+            # we don't want monitors to stop the request loop
             if not self.is_monitor():
                 self.requestloop.stop()
-            self.on_exit()
+            self.state = ACTOR_STATES.CLOSE
             self.stopping_end = time()
-            self.logger.info('%s exited', self)
+            self.logger.debug('%s exited', self)
             remove_actor(self)
-
-    def linked_proxy_actors(self):
-        '''Iterator over linked-actor proxies.'''
-        for a in itervalues(self.linked_actors):
-            if isinstance(a, ActorProxy):
-                yield a
+            self.on_exit()
 
     def get_actor(self, aid):
         '''Given an actor unique id return the actor proxy.'''
@@ -527,7 +518,7 @@ if *proxy* is not a class:`ActorProxy` instance raise an exception.'''
         if not self.isprocess():
             return
         random.seed()
-        proc_name = "%s - %s".format(self.cfg.proc_name, self)
+        proc_name = "%s-%s" % (self.cfg.proc_name, self)
         if system.set_proctitle(proc_name):
             self.logger.debug('Set process title to %s', proc_name)
         #system.set_owner_process(cfg.uid, cfg.gid)
@@ -553,9 +544,8 @@ event loop which will consume events on file descriptors.'''
         # Inject self as the actor of this thread
         ioq = self.ioqueue
         self.requestloop = IOLoop(io=IOQueue(ioq, self) if ioq else None,
-                                  pool_timeout=self.params.pool_timeout,
+                                  poll_timeout=self.params.poll_timeout,
                                   logger=self.logger,
-                                  name=self.name,
                                   ready=not self.cpubound)
         # If CPU bound add the request handler to the request loop
         if self.cpubound:
@@ -579,14 +569,4 @@ event loop which will consume events on file descriptors.'''
             self.logger.critical("Unhandled exception exiting.", exc_info=True)
         finally:
             self.stop()
-
-
-    def _signal_stop(self, sig, frame):
-        signame = system.SIG_NAMES.get(sig,None)
-        self.logger.warning('got signal %s. Exiting.', signame)
-        self.stop()
-
-    handle_int  = _signal_stop
-    handle_quit = _signal_stop
-    handle_term = _signal_stop
-    handle_break = _signal_stop
+    

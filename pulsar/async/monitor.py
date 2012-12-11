@@ -98,10 +98,7 @@ during its life time.
 
     def __call__(self):
         if self.running():
-            return self.on_task()
-
-    def is_pool(self):
-        return True
+            self.on_task()
 
     def ready(self):
         return True

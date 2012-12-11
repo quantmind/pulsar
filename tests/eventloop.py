@@ -62,27 +62,6 @@ class TestEventLoop(unittest.TestCase):
         self.assertEqual(d.result, 3)
         self.assertFalse(periodic._running)
         
-    def ___test_stop(self):
-        ioloop = pulsar.thread_ioloop()
-        tid = ioloop.tid
-        self.assertTrue(ioloop.running())
-        self.assertFalse(ioloop.start())
-        d = pulsar.Deferred()
-        ioloop.stop().add_callback(d.callback)
-        time.sleep(0.1)
-        self.assertTrue(d.called)
-        self.assertTrue(ioloop.stopped)
-        self.assertFalse(ioloop.running())
-        num_loops = ioloop.num_loops
-        self.assertTrue(num_loops)
-        self.assertRaises(RuntimeError, ioloop.start, pulsar.get_actor())
-        ioloop.start()
-        # give the thread chance to start
-        time.sleep(0.1)
-        self.assertTrue(ioloop.running())
-        self.assertTrue(ioloop.num_loops < num_loops)
-        self.assertNotEqual(tid, ioloop.tid)
-        
         
         
         

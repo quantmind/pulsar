@@ -117,7 +117,7 @@ class ActorThread(ActorConcurrency, Thread):
         '''Called by the main thread to force termination.'''
         actor = get_actor_from_id(self.aid)
         if actor is not None:
-            actor.stop(force=True)
+            actor.exit()
 
     @property
     def pid(self):

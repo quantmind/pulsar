@@ -123,33 +123,3 @@ a dictionary. By default it returns an empty dictionary.'''
     def _rq(self, request, action, *args, **kw):
         return pulsar.send(self.taskqueue, action, *args, **kw)
     
-    
-class ActorRequest(object):
-
-    def __init__(self, target, action, args, kwargs):
-        self.sender = get_actor()
-        self.target = get_proxy(self.sender.get_actor(target))
-        self.action = action
-        self.args = args
-        self.kwargs = kwargs
-        
-    def __call__(self, *args, **kwargs):
-        if not hasattr(self, '_message'):
-            self.args += args
-            self.kwargs.update(kwargs)
-            msg = self.target.receive_from(self.sender, self.action,
-                                           *self.args, **self.kwargs)
-            self._message = make_async(msg)
-        else:
-            raise AlreadyCalledError('Already called')
-        return self._message
-    
-    def result(self):
-        '''Call this function to get a result. If self was never called
-return a :class:`Deferred` already called with ``None``.'''
-        if not hasattr(self,'_message'):
-            d = Deferred()
-            self._message = d
-            d.callback(None)
-        return self._message
-        

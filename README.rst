@@ -58,9 +58,9 @@ in an elegant and efficient way. Out of the box it is shipped with the
 the following
 
 * Socket servers.
-* WSGI server (with a JSON-RPC handler too).
+* WSGI server (with a JSON-RPC handler).
 * Distributed task queue.
-* Shell for asynchronous scripting (posix only).
+* Shell for asynchronous scripting.
 * Asynchronous test suite.
 
 Examples

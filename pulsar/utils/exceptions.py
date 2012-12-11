@@ -27,7 +27,7 @@ class ActorAlreadyStarted(PulsarException):
 
 class HaltServer(PulsarInternetException):
 
-    def __init__(self, reason, signal=None):
+    def __init__(self, reason='Halt', signal=None):
         super(HaltServer,self).__init__(reason)
         self.signal = signal
 
