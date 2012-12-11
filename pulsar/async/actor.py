@@ -15,7 +15,8 @@ from pulsar.utils.structures import AttributeDictionary
 from .eventloop import IOLoop, setid
 from .proxy import ActorProxy, ActorMessage, get_command, get_proxy
 from .defer import make_async, is_failure, iteritems, itervalues,\
-                     pickle, safe_async, log_failure, make_async, is_async
+                     pickle, safe_async, log_failure, make_async, is_async,\
+                     EXIT_EXCEPTIONS
 from .mailbox import IOQueue, mailbox
 from .access import set_local_data, is_mainthread, get_actor, remove_actor
 
@@ -565,8 +566,6 @@ event loop which will consume events on file descriptors.'''
         self._on_run()
         try:
             self.requestloop.start()
-        except:
-            self.logger.critical("Unhandled exception exiting.", exc_info=True)
         finally:
             self.stop()
     

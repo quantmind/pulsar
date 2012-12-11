@@ -7,7 +7,7 @@ from pulsar.utils.security import gen_unique_id
 
 from .iostream import AsyncIOStream
 from .proxy import ActorProxyMonitor, get_proxy
-from .defer import pickle
+from .defer import pickle, EXIT_EXCEPTIONS
 from .access import get_actor, get_actor_from_id
 
 
@@ -102,8 +102,13 @@ loop and therefore do not require an inbox.'''
 class ActorConcurrency(Concurrency):
 
     def run(self):
-        actor = self.actor_class(self)
-        actor.start()
+        try:
+            actor = self.actor_class(self)
+            actor.start()
+        except EXIT_EXCEPTIONS:
+            # This is needed in windows in order to avoid useless traceback
+            # on KeyboardInterrupt
+            pass
 
 
 class ActorProcess(ActorConcurrency, Process):

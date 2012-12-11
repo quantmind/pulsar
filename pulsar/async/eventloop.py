@@ -16,11 +16,10 @@ from pulsar.utils.log import Synchronized
 from pulsar.utils.structures import WeakList
 
 from .defer import Deferred, is_async, maybe_async, thread_loop, make_async,\
-                    log_failure
+                    log_failure, EXIT_EXCEPTIONS
 
 __all__ = ['IOLoop', 'PeriodicCallback', 'loop_timeout']
 
-EXIT_EXCEPTIONS = (KeyboardInterrupt, SystemExit, HaltServer)
 LOGGER = logging.getLogger('pulsar.eventloop')
 
 def file_descriptor(fd):

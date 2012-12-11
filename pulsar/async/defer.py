@@ -12,6 +12,8 @@ from pulsar import AlreadyCalledError, DeferredFailure, HaltServer
 
 from .access import thread_loop
 
+EXIT_EXCEPTIONS = (KeyboardInterrupt, SystemExit, HaltServer)
+
 __all__ = ['Deferred',
            'MultiDeferred',
            'DeferredGenerator',
@@ -494,7 +496,7 @@ current thread.'''
         try:
             result = next(self.gen)
             self._consumed += 1
-        except (KeyboardInterrupt, HaltServer):
+        except EXIT_EXCEPTIONS:
             raise
         except StopIteration as e:
             # The generator has finished producing data
