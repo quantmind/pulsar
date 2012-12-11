@@ -4,7 +4,7 @@ from copy import copy
 from collections import *
 
 ispy3k = sys.version_info >= (3, 0)
-if sys.version_info < (2,7):
+if sys.version_info < (2,7):    #pragma    nocover
     from .fallbacks._collections import *
     
 from .httpurl import mapping_iterator

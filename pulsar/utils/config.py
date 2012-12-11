@@ -553,18 +553,6 @@ class Timeout(Setting):
         """
 
 
-class MessageTimeout(Setting):
-    name = "message_timeout"
-    section = "Worker Processes"
-    flags = ["--message_timeout"]
-    type = int
-    default = defaults.message_timeout
-    desc = """\
-        Timeout in seconds for communication with pulsar actors.
-        A negative value corresponds to No timeout (blocking sockets) while
-        a value of 0 corresponds to non-blocking sockets."""
-
-
 class HttpProxyServer(Setting):
     name = "http_proxy"
     section = "Http"

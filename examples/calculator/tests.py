@@ -25,7 +25,7 @@ class TestRpcOnThread(unittest.TestCase):
     @classmethod
     def tearDownClass(cls):
         if cls.app:
-            return send('arbiter', 'kill_actor', cls.app.mid)
+            return send('arbiter', 'kill_actor', cls.app.name)
         
     def setUp(self):
         self.assertEqual(self.p.url, self.uri)
@@ -46,7 +46,6 @@ class TestRpcOnThread(unittest.TestCase):
         hnd = root.subHandlers['calc']
         self.assertFalse(hnd.isroot())
         self.assertEqual(hnd.subHandlers, {})
-        self.assertTrue(s.mid)
         
     # Pulsar server commands
     def testPing(self):
@@ -82,7 +81,7 @@ class TestRpcOnThread(unittest.TestCase):
         result = self.p.calc.divide(50, 25)
         self.assertEqual(result, 2)
         
-    def testAInfo(self):
+    def testInfo(self):
         result = self.p.server_info()
         self.assertTrue('server' in result)
         server = result['server']

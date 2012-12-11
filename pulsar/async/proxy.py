@@ -109,9 +109,9 @@ functional.
             # simply listent for the calbacks and errorbacks
             msg.addBoth(self.callback)
     
-    def __str__(self):
+    def __repr__(self):
         return '%s(%s)' % (self.__class__, self.aid)
-    __repr__ = __str__
+    __str__ = __repr__
     
     
 class ActorProxy(object):
@@ -145,12 +145,13 @@ parameter ``"hello there!"``.
     last_msg = None
     def __init__(self, impl):
         self.aid = impl.aid
+        self.name = impl.name
         self.commands_set = impl.commands_set
         self.address = impl.address
         self.cfg = impl.cfg
     
     def __repr__(self):
-        return self.aid
+        return '%s(%s)' % (self.name, self.aid)
     __str__ = __repr__
     
     @property

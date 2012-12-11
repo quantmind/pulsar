@@ -6,7 +6,7 @@ import pulsar
 from pulsar.utils.structures import AttributeDictionary
 
 from . import proxy
-from .actor import Actor, ACTOR_STATES
+from .actor import Actor, ACTOR_STATES, ACTOR_TERMINATE_TIMEOUT
 from .eventloop import setid
 from .concurrency import concurrency
 from .defer import async, iteritems, itervalues, range, NOT_DONE
@@ -16,42 +16,54 @@ from .mailbox import Queue, mailbox
 __all__ = ['Monitor', 'PoolMixin']
 
 
-def _spawn_actor(cls, commands_set=None, monitor=None, cfg=None, **kw):
+def _spawn_actor(cls, commands_set=None, monitor=None, cfg=None, name=None,
+                 aid=None, **kw):
     # Internal function which spawns a new Actor and return its
     # ActorProxyMonitor.
     # *monitor* can be either the ariber or a monitor
     # *actorcls* is the Actor class
-    commands_set = set(commands_set or proxy.actor_commands)
     kind = None
     if issubclass(cls, PoolMixin):
         kind = 'monitor'
+    if cfg is None:
+        if monitor:
+            cfg = monitor.cfg.copy()
+        else:
+            cfg = pulsar.Config()
     if monitor:
         params = monitor.actorparams()
-        params.update(kw)
-        if cfg is None:
-            cfg = monitor.cfg
+        name = params.pop('name', name)
+        aid = params.pop('aid', aid)
+        commands_set = params.pop('commands_set', commands_set)
+    else:
+        if kind != 'monitor':
+            raise TypeError('class %s not a valid monitor' % cls)
+        params = {}
+    commands_set = set(commands_set or proxy.actor_commands)
+    for key, value in iteritems(kw):
+        if key in cfg.settings:
+            cfg.set(key, value)
+        else:
+            params[key] = value
+    #
+    if monitor:
         if not kind:
             if not issubclass(cls, Actor):
                 raise TypeError('Class %s not a valid actor.' % cls)
             kind = cfg.concurrency
-    else:
-        # No monitor, cls must be a monitor class
-        if kind != 'monitor':
-            raise TypeError('class %s not a valid monitor' % cls)
-        params = kw
-    if cfg is None:
-        cfg = pulsar.Config()
     if not kind:
         raise TypeError('Cannot spawn class %s. not a valid concurrency.' % cls)
-    actor_proxy = concurrency(kind, cls, monitor, commands_set, cfg, params)
+    actor_proxy = concurrency(kind, cls, monitor, commands_set, cfg,
+                              name=name, aid=aid, **params)
     # Add to the list of managed actors if this is a remote actor
     if isinstance(actor_proxy, Actor):
         return actor_proxy
     else:
         actor_proxy.monitor = monitor
         monitor.spawning_actors[actor_proxy.aid] = actor_proxy
+        deferred = proxy.ActorProxyDeferred(actor_proxy)
         actor_proxy.start()
-        return proxy.ActorProxyDeferred(actor_proxy)
+        return deferred
 
 
 class PoolMixin(object):
@@ -65,12 +77,15 @@ It is used by both the :class:`Arbiter` and the :class:`Monitor` classes.
     dictionary with keys given by actor's ids and values by
     :class:`ActorProxyMonitor` instances. These are the actors managed by the
     pool.
+    
+.. attribute:: spawning_actors
+
+    A dictionary of :class:`ActorProxyMonitor` which are in the process of
+    being spawned.
 
 '''
     CLOSE_TIMEOUT = 30000000000000
-    JOIN_TIMEOUT = 1.0
     actor_class = Actor
-    DEFAULT_IMPLEMENTATION = 'monitor'
     '''The class derived form :class:`Actor` which the monitor manages
 during its life time.
 
@@ -84,30 +99,28 @@ during its life time.
 
     def __call__(self):
         if self.running():
-            return self.on_task()
-
-    def is_pool(self):
-        return True
+            self.on_task()
 
     def ready(self):
         return True
 
-    def spawn(self, actorcls=None, linked_actors=None, montitor=None, **params):
+    def spawn(self, actor_class=None, linked_actors=None, montitor=None,
+              **params):
         '''Spawn a new :class:`Actor` and return its
 :class:`ActorProxyMonitor`.'''
-        actorcls = actorcls or self.actor_class
+        actor_class = actor_class or self.actor_class
         if linked_actors:
             params['linked_actors'] =\
                 dict(((aid, p.proxy) for aid, p in iteritems(linked_actors)))
-        return _spawn_actor(actorcls, monitor=self, **params)
+        return _spawn_actor(actor_class, monitor=self, **params)
 
     def actorparams(self):
         '''Return a dictionary of parameters to be passed to the
 spawn method when creating new actors.'''
         arbiter = self.arbiter or self
-        p = self.params.all()
-        p['monitors'] = arbiter.get_all_monitors()
-        return p
+        params = dict(self.params)
+        params['monitors'] = arbiter.get_all_monitors()
+        return params
 
     def get_actor(self, aid):
         a = Actor.get_actor(self, aid)
@@ -135,7 +148,7 @@ spawn method when creating new actors.'''
             items.extend(iteritems(SPAWNING))
         for aid, actor in items:
             if not actor.is_alive():
-                actor.join(self.JOIN_TIMEOUT)
+                actor.join(ACTOR_TERMINATE_TIMEOUT)
                 ACTORS.pop(aid, None)
                 SPAWNING.pop(aid, None)
                 LINKED.pop(aid, None)
@@ -146,7 +159,7 @@ spawn method when creating new actors.'''
                     # registered with its monitor yet).
                     if terminate or actor.mailbox is None:
                         actor.terminate()
-                        actor.join(self.JOIN_TIMEOUT)
+                        actor.join(ACTOR_TERMINATE_TIMEOUT)
                     else:
                         actor.stop(self)
                 elif manage:
@@ -190,7 +203,7 @@ as required."""
         delattr(proxy_monitor,'on_address')
         try:
             if not address:
-                raise valueError('No address received')
+                raise ValueError('No address received')
         except:
             on_address.callback(sys.exc_info())
         else:
@@ -218,33 +231,6 @@ as required."""
                 to_stop = self.manage_actors(terminate=True)
                 self.logger.warn('terminated %s actors.', to_stop)
                 to_stop = 0
-
-    @classmethod
-    def _spawn_actor(cls, monitor, actorcls, aid, commands_set, **kwargs):
-        # Internal function which spawns a new Actor and return its
-        # ActorProxyMonitor.
-        # *monitor* can be either the ariber or a monitor
-        # *actorcls* is the Actor class
-        commands_set = set(commands_set or proxy.actor_commands)
-        if monitor:
-            params = monitor.actorparams()
-            params.update(kwargs)
-        else:
-            params = kwargs
-        impl = params.pop('concurrency', actorcls.DEFAULT_IMPLEMENTATION)
-        timeout = max(params.pop('timeout',cls.DEFAULT_ACTOR_TIMEOUT),
-                      cls.MINIMUM_ACTOR_TIMEOUT)
-        actor_proxy = concurrency(impl, actorcls, timeout,
-                                  monitor, aid, commands_set,
-                                  params)
-        # Add to the list of managed actors if this is a remote actor
-        if isinstance(actor_proxy, Actor):
-            return actor_proxy
-        else:
-            actor_proxy.monitor = monitor
-            monitor.spawning_actors[actor_proxy.aid] = actor_proxy
-            actor_proxy.start()
-            return proxy.ActorProxyDeferred(actor_proxy)
 
 
 class Monitor(PoolMixin, Actor):
@@ -330,6 +316,7 @@ Users shouldn't need to override this method, but use
     def _run(self):
         self.requestloop = self.arbiter.requestloop
         self.mailbox = mailbox(self)
+        self.monitors = self.arbiter.monitors
         setid(self)
         self.state = ACTOR_STATES.RUN
         self.on_start()
@@ -356,14 +343,14 @@ Users shouldn't need to override this method, but use
         else:
             return actor.proxy.stop()
 
-    def get_info(self):
+    def info(self):
         tq = self.ioqueue
-        data = {'actor': {'actor_class':self.actor_class.code(),
+        data = {'actor': {'actor_class':self.actor_class.__name__,
                           'concurrency':self.cfg.concurrency,
                           'name':self.name,
                           'age':self.impl.age,
                           'workers': len(self.managed_actors)},
-                'workers': [a.get_info() for a in itervalues(self.managed_actors)]}
+                'workers': [a.info for a in itervalues(self.managed_actors)]}
         if tq is not None:
             if isinstance(tq, Queue):
                 tqs = 'multiprocessing.Queue'

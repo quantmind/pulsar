@@ -46,7 +46,7 @@ import pulsar
 if pulsar.ispy3k:
     def decode_line(line):
         return line
-else:
+else:   #pragma    nocover
     def decode_line(line):
         encoding = getattr(sys.stdin, "encoding", None)
         if encoding and not isinstance(line, unicode):
@@ -101,7 +101,7 @@ class InteractiveConsole(code.InteractiveConsole):
 
 
 class PulsarShell(pulsar.Application):
-    #app = 'shell'
+    can_kill_arbiter = True
     cfg = {'timeout':5,
            'workers':0,
            'loglevel':'none',

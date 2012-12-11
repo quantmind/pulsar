@@ -188,20 +188,6 @@ from .scheduler import Scheduler
 from .states import *
 from .rpc import *
 
-def validate_list(val):
-    if isinstance(val,list):
-        return val
-    elif isinstance(val,tuple):
-        return list(val)
-    else:
-        val = to_string(val).split(',')
-        vals = []
-        for v in to_string(val).split(','):
-            v = v.strip()
-            if v:
-                vals.append(v)
-        return vals
-
 
 class TaskQueueFactory(pulsar.Setting):
     app = 'cpubound'
@@ -224,7 +210,7 @@ class TaskPath(TaskSetting):
     name = "tasks_path"
     section = "Task Consumer"
     meta = "STRING"
-    validator = validate_list
+    validator = pulsar.validate_list
     cli = ["--tasks-path"]
     default = ['pulsar.apps.tasks.testing']
     desc = """\

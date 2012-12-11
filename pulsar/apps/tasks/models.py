@@ -71,10 +71,8 @@ by:
         if attrs.pop("abstract", None) or not attrs.get("autoregister", True)\
                                        or not job_module:
             return super_new(cls, name, bases, attrs)
-
         # Automatically generate missing name.
         job_name = attrs.get("name",name).lower()
-
         # Because of the way import happens (recursively)
         # we may or may not be the first time the Job tries to register
         # with the framework. There should only be one class for each Job

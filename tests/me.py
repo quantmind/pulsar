@@ -31,13 +31,13 @@ class TestTestWorker(unittest.TestCase):
         self.assertFalse(worker.stopping())
         self.assertFalse(worker.closed())
         self.assertFalse(worker.stopped())
-        self.assertEqual(worker.state, 'running')
+        self.assertEqual(worker.info_state, 'running')
         self.assertEqual(worker.tid, current_thread().ident)
         self.assertEqual(worker.pid, os.getpid())
         self.assertTrue(worker.cpubound)
         self.assertTrue(worker.mailbox.cpubound)
-        self.assertTrue(worker._impl.daemon)
-        self.assertFalse(worker.is_pool())
+        self.assertTrue(worker.impl.daemon)
+        self.assertFalse(worker.is_monitor())
         
     def testWorkerMonitor(self):
         worker = pulsar.get_actor()
@@ -126,7 +126,7 @@ class TestTestWorker(unittest.TestCase):
         
     def test_run_on_arbiter(self):
         actor = pulsar.get_actor()
-        result = actor.run_on_arbiter(simple_function)
+        result = actor.send('arbiter', 'run', simple_function)
         yield result
         self.assertEqual(result.result, 'success')
         

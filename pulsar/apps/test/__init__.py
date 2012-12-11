@@ -171,7 +171,7 @@ is a group of tests specified in a test class.
     _app_name = 'test'
     cfg_apps = ('cpubound',)
     commands_set = test_commands
-    config_options_exclude = ('daemon','max_requests','user','group','pidfile')
+    config_options_exclude = ('daemon', 'user', 'group')
     can_kill_arbiter = True
     cfg = {'loglevel': 'none',
            'timeout': 3600,

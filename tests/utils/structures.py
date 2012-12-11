@@ -1,5 +1,6 @@
 '''Tests the tools and utilities in pulsar.utils.'''
-from pulsar.utils.structures import MultiValueDict, merge_prefix, deque
+from pulsar.utils.structures import MultiValueDict, merge_prefix, deque,\
+                                    AttributeDictionary
 from pulsar.apps.test import unittest
 
 class TestMultiValueDict(unittest.TestCase):
@@ -84,6 +85,23 @@ class TestMultiValueDict(unittest.TestCase):
         self.assertFalse(m)
 
 
+class TestAttributeDictionary(unittest.TestCase):
+    
+    def testInit(self):
+        self.assertRaises(TypeError, AttributeDictionary, {}, {})
+        a = AttributeDictionary({'bla': 1}, foo='pippo')
+        self.assertEqual(dict(a), {'bla': 1, 'foo': 'pippo'})
+        self.assertEqual(len(a), 2)
+        
+    def testAssign(self):
+        a = AttributeDictionary()
+        a['ciao'] = 5
+        self.assertEqual(a.ciao, 5)
+        self.assertEqual(a['ciao'], 5)
+        self.assertEqual(list(a.values()), [5])
+        self.assertEqual(list(a.items()), [('ciao',5)])
+    
+    
 class TestFunctions(unittest.TestCase):
     
     def test_merge_prefix(self):

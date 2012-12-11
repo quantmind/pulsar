@@ -13,6 +13,7 @@ from .exceptions import *
 
 __all__ = ['RpcHandler', 'RpcMiddleware']
 
+LOGGER = logging.getLogger('pulsar.rpc')
 
 LOGGER = logging.getLogger('pulsar.rpc')
 
@@ -127,7 +128,7 @@ Add a limited ammount of magic to RPC handlers.'''
         return make(cls, name, bases, attrs)
 
 
-class RpcHandler(MetaRpcHandler('BaseRpcHandler',(object,),{'virtual':True})):
+class RpcHandler(MetaRpcHandler('_RpcHandler', (object,), {'virtual': True})):
     '''The base class for rpc handlers.
 
 .. attribute:: content_type
@@ -194,7 +195,7 @@ for ``method``, ``kwargs`` are keyworded parameters for ``method``,
         return d
 
     def __setstate__(self, state):
-        super(RpcHandler,self).__setstate__(state)
+        self.__dict__ = state
         for handler in self.subHandlers.values():
             handler._parent = self
 

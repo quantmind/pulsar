@@ -10,15 +10,15 @@ from threading import current_thread
 
 
 from pulsar import AlreadyCalledError, AlreadyRegistered,\
-                   ActorAlreadyStarted, LogSelf, LogginMixin, system,\
-                   Config
+                   ActorAlreadyStarted, LogginMixin, system, Config
 from pulsar.utils.structures import AttributeDictionary
 from .eventloop import IOLoop, setid
 from .proxy import ActorProxy, ActorMessage, get_command, get_proxy
 from .defer import make_async, is_failure, iteritems, itervalues,\
-                     pickle, safe_async, async, log_failure, make_async
+                     pickle, safe_async, log_failure, make_async, is_async,\
+                     EXIT_EXCEPTIONS
 from .mailbox import IOQueue, mailbox
-from .access import set_local_data, is_mainthread, get_actor
+from .access import set_local_data, is_mainthread, get_actor, remove_actor
 
 
 __all__ = ['is_actor', 'send', 'Actor', 'ACTOR_STATES', 'Pulsar']
@@ -39,6 +39,9 @@ ACTOR_NOTIFY_PERIOD = 10
 # times timeout. So for a timeout of 30 seconds, the messages will
 # go after tolerance*30 seconds (18 secs for tolerance = 0.6).
 ACTOR_TIMEOUT_TOLERANCE = 0.6
+# Timeout of when joining an actor which has been terminated
+ACTOR_TERMINATE_TIMEOUT = 2
+ACTOR_STOPPING_LOOPS = 10
 EMPTY_TUPLE = ()
 EMPTY_DICT = {}
 
@@ -74,12 +77,16 @@ Typical example::
 class Pulsar(LogginMixin):
     
     def configure_logging(self, **kwargs):
-        super(Pulsar, self).configure_logging(logger=self.name,
-                                              config=self.cfg.logconfig,
-                                              level=self.cfg.loglevel,
-                                              handlers=self.cfg.loghandlers)
-    
-    
+        configure_logging = super(Pulsar, self).configure_logging
+        configure_logging(logger='pulsar',
+                          config=self.cfg.logconfig,
+                          level=self.cfg.loglevel,
+                          handlers=self.cfg.loghandlers) 
+        configure_logging(logger='pulsar.%s' % self.name,
+                          config=self.cfg.logconfig,
+                          level=self.cfg.loglevel,
+                          handlers=self.cfg.loghandlers)
+        
 
 class Actor(Pulsar):
     '''The base class for concurrent programming in pulsar. In computer science,
@@ -153,6 +160,7 @@ Here ``a`` is actually a reference to the remote actor.
     Contains parameters which are passed to actors spawned by this actor.
 '''
     exit_code = None
+    mailbox = None
     stopping_start = None
     stopping_end = None
     
@@ -173,12 +181,11 @@ Here ``a`` is actually a reference to the remote actor.
         self.concurrent_requests = 0
         self.state = ACTOR_STATES.INITIAL
         self.ioqueue = ioqueue
-        self.linked_actors = {}
+        self.linked_actors = impl.params.pop('linked_actors', {})
         self.monitors = impl.params.pop('monitors', {})
         self.arbiter = impl.params.pop('arbiter', None)
         self.monitor = impl.params.pop('monitor', None)
         self.proxy_mailboxes = {}
-        # set the remaining inputs as parameters
         self.params = AttributeDictionary(self.on_init(**impl.params))
         del impl.params
 
@@ -233,15 +240,6 @@ which can be shared across different processes (i.e. it is pickable).'''
             return False
 
     @property
-    def pool_timeout(self):
-        '''Timeout in seconds for waiting for events in the eventloop.
- A small number is suitable for :class:`Actor` performing CPU-bound
- operation on the :meth:`Actor.on_task` method, a larger number is better for
- I/O bound actors.
-'''
-        return self.requestloop.POLL_TIMEOUT
-
-    @property
     def info_state(self):
         '''Current state description. One of ``initial``, ``running``,
  ``stopping``, ``closed`` and ``terminated``.'''
@@ -258,10 +256,8 @@ which can be shared across different processes (i.e. it is pickable).'''
         '''Send a message to *target* to perform *action* with given
 parameters *params*. It return a :class:`ActorMessage`.'''
         if not isinstance(target, ActorProxy):
-            tg = self.get_actor(target)
-        else:
-            tg = target
-        return get_proxy(tg).receive_from(self, action, *args, **params)
+            target = get_proxy(self.get_actor(target))
+        return target.receive_from(self, action, *args, **params)
 
     def put(self, request):
         '''Put a *request* into the :attr:`ioqueue` if available.'''
@@ -271,15 +267,7 @@ parameters *params*. It return a :class:`ActorMessage`.'''
         else:
             self.logger.error("Trying to put a request on task queue,\
  but there isn't one!")
-
-    def run_on_arbiter(self, callable):
-        '''Run a *callable* in the arbiter event loop.
-
-:parameter callable: a pickable, therefore it must be a pickable callable object
-    or a function.
-:rtype: a :class:`Deferred`'''
-        return self.send('arbiter', 'run', callable)
-
+            
     ###############################################################  STATES
     def running(self):
         '''``True`` if actor is running.'''
@@ -302,9 +290,6 @@ mean it is running.'''
         '''``True`` if actor has exited.'''
         return self.state >= ACTOR_STATES.CLOSE
 
-    def is_pool(self):
-        return False
-
     def is_arbiter(self):
         '''Return ``True`` if ``self`` is the :class:`Arbiter`.'''
         return False
@@ -315,7 +300,7 @@ mean it is running.'''
 
     def isprocess(self):
         '''boolean indicating if this is an actor on a child process.'''
-        return self.impl == 'process'
+        return self.impl.kind == 'process'
 
     def ready(self):
         return self.arbiter.aid in self.linked_actors
@@ -348,7 +333,7 @@ mean it is running.'''
         max_requests = self.cfg.max_requests
         should_stop = max_requests and self.request_processed >= max_requests
         if should_stop:
-            self.logger.info("Auto-restarting worker.")
+            self.logger.info("Shutting down %s. Max requests reached.", self)
             self.stop()
 
     ############################################################################
@@ -418,8 +403,7 @@ logging is configured, the :attr:`Actor.mailbox` is registered and the
     ############################################################################
     # STOPPING
     ############################################################################
-    @async()
-    def stop(self, force=False, exit_code=0):
+    def stop(self, force=False, exit_code=None):
         '''Stop the actor by stopping its :attr:`Actor.requestloop`
 and closing its :attr:`Actor.mailbox`. Once everything is closed
 properly this actor will go out of scope.'''
@@ -427,28 +411,37 @@ properly this actor will go out of scope.'''
             self.stopping_start = time()
             self.state = ACTOR_STATES.STOPPING
             self.exit_code = exit_code
-            # make safe user defined callbacks
-            yield safe_async(self.on_stop)
-            yield self.mailbox.close()
-            self.state = ACTOR_STATES.CLOSE
+            try:
+                res = self.on_stop()
+            except:
+                self.logger.error('Unhandle error while stopping',
+                                  exc_info=True)
+                res = None
+            return res.addBoth(self.exit) if is_async(res) else self.exit()
+    
+    def exit(self, result=None):
+        '''Exit from the :class:`Actor` domain.'''
+        if not self.stopped():
+            self.mailbox.close()
+            # we don't want monitors to stop the request loop
             if not self.is_monitor():
                 self.requestloop.stop()
-            self.on_exit()
+            self.state = ACTOR_STATES.CLOSE
             self.stopping_end = time()
-            self.logger.info('%s exited', self)
-
-    def linked_proxy_actors(self):
-        '''Iterator over linked-actor proxies.'''
-        for a in itervalues(self.linked_actors):
-            if isinstance(a, ActorProxy):
-                yield a
+            self.logger.debug('%s exited', self)
+            remove_actor(self)
+            self.on_exit()
 
     def get_actor(self, aid):
         '''Given an actor unique id return the actor proxy.'''
         if aid == self.aid:
             return self
         elif aid == 'arbiter':
+            return self.arbiter or self
+        elif self.arbiter and aid == self.arbiter.aid:
             return self.arbiter
+        elif self.monitor and aid == self.monitor.aid:
+            return self.monitor
         elif aid in self.linked_actors:
             return self.linked_actors[aid]
         else:
@@ -470,11 +463,11 @@ actions:
                     nt = None
             if nt:
                 self.last_notified = nt
-                info = self.get_info()
+                info = self.info()
                 self.send('arbiter', 'notify', info)
             self.on_task()
 
-    def get_info(self):
+    def info(self):
         '''return A dictionary of information related to the actor
 status and performance.'''
         if not self.started():
@@ -552,9 +545,8 @@ event loop which will consume events on file descriptors.'''
         # Inject self as the actor of this thread
         ioq = self.ioqueue
         self.requestloop = IOLoop(io=IOQueue(ioq, self) if ioq else None,
-                                  pool_timeout=self.impl.pool_timeout,
+                                  poll_timeout=self.params.poll_timeout,
                                   logger=self.logger,
-                                  name=self.name,
                                   ready=not self.cpubound)
         # If CPU bound add the request handler to the request loop
         if self.cpubound:
@@ -574,18 +566,6 @@ event loop which will consume events on file descriptors.'''
         self._on_run()
         try:
             self.requestloop.start()
-        except:
-            self.logger.critical("Unhandled exception exiting.", exc_info=True)
         finally:
             self.stop()
-
-
-    def _signal_stop(self, sig, frame):
-        signame = system.SIG_NAMES.get(sig,None)
-        self.logger.warning('got signal %s. Exiting.', signame)
-        self.stop()
-
-    handle_int  = _signal_stop
-    handle_quit = _signal_stop
-    handle_term = _signal_stop
-    handle_break = _signal_stop
+    

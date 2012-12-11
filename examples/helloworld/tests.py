@@ -17,8 +17,9 @@ class TestHelloWorldThread(unittest.TestCase):
     
     @classmethod
     def setUpClass(cls):
-        s = server(bind='127.0.0.1:0', name=cls.name(),
-                   concurrency=cls.concurrency)
+        name = name=cls.name()
+        kwargs = {'%s__bind' % name: '127.0.0.1:0'}
+        s = server(name=cls.name(), concurrency=cls.concurrency, **kwargs)
         outcome = send('arbiter', 'run', s)
         yield outcome
         cls.app = outcome.result
@@ -27,7 +28,7 @@ class TestHelloWorldThread(unittest.TestCase):
     @classmethod
     def tearDownClass(cls):
         if cls.app is not None:
-            outcome = send('arbiter', 'kill_actor', cls.app.mid)
+            outcome = send('arbiter', 'kill_actor', cls.app.name)
             yield outcome
     
     @run_on_arbiter
@@ -35,6 +36,9 @@ class TestHelloWorldThread(unittest.TestCase):
         app = get_application(self.name())
         self.assertEqual(app.name, self.name())
         self.assertTrue(app.monitor.running())
+        self.assertEqual(app, app.app)
+        self.assertEqual(str(app), app.name)
+        self.assertEqual(app.cfg.bind, '127.0.0.1:0')
         
     def testResponse(self):
         c = HttpClient()

@@ -62,9 +62,14 @@ get_actor = lambda: thread_local_data('actor')
 def set_actor(actor):
     '''Returns the actor running the current thread.'''
     actor = thread_local_data('actor', value=actor)
-    if actor.impl == 'thread':
+    if actor.impl.kind == 'thread':
         process_local_data('thread_actors')[actor.aid] = actor
     return actor
+
+def remove_actor(actor):
+    '''Remove actor from threaded_actors dictionary'''
+    if actor.impl.kind == 'thread':
+        process_local_data('thread_actors').pop(actor.aid, None)
 
 def get_actor_from_id(aid):
     '''Retrieve an actor from its actor id. This function can be used by
