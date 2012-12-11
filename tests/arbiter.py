@@ -7,7 +7,7 @@ import pulsar
 from pulsar import send, spawn
 from pulsar.utils import system
 from pulsar.async.actor import ACTOR_STOPPING_LOOPS
-from pulsar.apps.test import unittest, run_on_arbiter, ActorTestMixin
+from pulsar.apps.test import unittest, run_on_arbiter, ActorTestMixin, dont_run_with_thread
 
 
 class BogusActor(pulsar.Actor):
@@ -20,7 +20,8 @@ class BogusActor(pulsar.Actor):
         pass
     
     
-class TestArbiter(ActorTestMixin, unittest.TestCase):
+class TestArbiterThread(ActorTestMixin, unittest.TestCase):
+    concurrency = 'thread'
     
     @run_on_arbiter
     def testSpawning(self):
@@ -136,3 +137,7 @@ class TestArbiter(ActorTestMixin, unittest.TestCase):
         yield pulsar.NOT_DONE
         self.assertEqual(arbiter.signal_queue.qsize(), 0)
         
+
+@dont_run_with_thread
+class TestArbiterProcess(TestArbiterThread):
+    impl = 'process'  

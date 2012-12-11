@@ -96,6 +96,12 @@ class TestPlugin(TestPluginMeta('TestPluginBase',(Plugin,),{'virtual': True})):
 The test option is added to the config object only if the plugin
 is activated.'''
     virtual = True
+    
+    def __new__(cls):
+        o = super(TestPlugin, cls).__new__(cls)
+        o.config = cls.config.copy()
+        return o
+        
     def configure(self, cfg):
         self.config = cfg
         
