@@ -48,7 +48,7 @@ except ImportError:
     import sys
     sys.path.append('../../')
     import pulsar
-from pulsar import command
+from pulsar import command, async
     
 
 class Eating_Period(pulsar.Setting):
@@ -100,14 +100,18 @@ class DiningPhilosophers(pulsar.Application):
     def monitor_init(self, monitor):
         self.not_available_forks = set()
         
-    def worker_task(self, philosopher):
-        # Task performed at each loop in the philosopher I/O loop
+    def worker_start(self, philosopher):
+        self.take_action(philosopher)
+    
+    def take_action(self, philosopher):
         params = philosopher.params
         eaten = params.eaten or 0
         forks = params.forks
         started_waiting = params.started_waiting or 0
+        pick_up_fork = True
         if forks:
             max_eat_period = 2*self.cfg.eating_period
+            # Two forks. Eat!
             if len(forks) == 2:
                 params.thinking = 0
                 eaten += 1
@@ -118,42 +122,49 @@ class DiningPhilosophers(pulsar.Application):
                 except IOError:
                     pass
                 params.eaten = eaten
-                self.release_forks(philosopher)
+                pick_up_fork = False
+            # One fork only! release fork or try to pick up one
             elif len(forks) == 1:
                 waiting_period = 2*self.cfg.waiting_period*random.random()
                 if started_waiting == 0:
                     params.started_waiting = time.time()
                 elif time.time() - started_waiting > waiting_period:
-                    self.release_forks(philosopher)
-                else:
-                    self.check_forks(philosopher)
+                    pick_up_fork = False
             elif len(forks) > 2:
                 philosopher.logger.critical('%s has more than 2 forks!!!',
                                             philosopher.name)
-                self.release_forks(philosopher)
+                pick_up_fork = False
         else:
             thinking = params.thinking or 0
             if not thinking:
                 philosopher.logger.warn('%s thinking...', philosopher.name)
             params.thinking = thinking + 1
-            self.check_forks(philosopher)
+        # Take action
+        if pick_up_fork:
+            self.pickup_fork(philosopher)
+        else:
+            self.release_forks(philosopher)
         
-    def check_forks(self, philosopher):
+    def pickup_fork(self, philosopher):
         '''The philosopher has less than two forks. Check if forks are
 available.'''
         right_fork = philosopher.params.number
-        philosopher.send(philosopher.monitor, 'pickup_fork', right_fork)\
-                   .add_callback_args(self.got_fork, philosopher)
+        return philosopher.send(philosopher.monitor, 'pickup_fork', right_fork)\
+                          .add_callback_args(self._continue, philosopher)
     
+    @async()
     def release_forks(self, philosopher):
         forks = philosopher.params.forks
         philosopher.params.forks = []
         philosopher.params.started_waiting = 0
         for fork in forks:
             philosopher.logger.debug('Putting down fork %s', fork)
-            philosopher.send(philosopher.monitor, 'putdown_fork', fork)
+            yield philosopher.send(philosopher.monitor, 'putdown_fork', fork)
+        # once released all the forks wait for a moment
+        time.sleep(self.cfg.waiting_period)
+        self._continue(None, philosopher)
     
-    def got_fork(self, fork, philosopher):
+    def _continue(self, fork, philosopher):
         if fork:
             forks = philosopher.params.forks
             if fork in forks:
@@ -161,6 +172,7 @@ available.'''
             else:
                 philosopher.logger.debug('Got fork %s.', fork)
                 forks.append(fork)
+        self.take_action(philosopher)
     
     def actorparams(self, monitor, params):
         number = len(monitor.managed_actors) + len(monitor.spawning_actors) + 1

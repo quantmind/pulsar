@@ -128,7 +128,7 @@ Users access the arbiter by the high level api::
         self.monitors[m.name] = m
         return m
 
-    def isprocess(self):
+    def is_process(self):
         return True
 
     def get_all_monitors(self):
@@ -204,11 +204,12 @@ arbiter tasks at every iteration in the event loop.'''
     def manage_actor(self, actor):
         '''If an actor failed to notify itself to the arbiter for more than
 the timeout. Stop the arbiter.'''
-        if self.running() and actor.notified:
+        stopping_loops = actor.stopping_loops
+        if self.running() and (stopping_loops or actor.notified):
             gap = time() - actor.notified
-            if gap > actor.cfg.timeout:
-                if actor.stopping_loops < ACTOR_STOPPING_LOOPS:
-                    if not actor.stopping_loops:
+            if gap > actor.cfg.timeout or stopping_loops:
+                if stopping_loops < ACTOR_STOPPING_LOOPS:
+                    if not stopping_loops:
                         self.logger.info('Stopping %s. Timeout.', actor)
                         self.send(actor, 'stop')
                     actor.stopping_loops += 1
@@ -222,7 +223,7 @@ the timeout. Stop the arbiter.'''
         '''Stop the pools the message queue and remaining actors.'''
         if not self.ioloop.running():
             for pool in list(itervalues(self.monitors)):
-                pool.state = ACTOR_STATES.STOPPING
+                pool.state = ACTOR_STATES.INACTIVE
             self.state = ACTOR_STATES.RUN
             self.restarted = True
             self.ioloop.start()
@@ -245,18 +246,13 @@ the timeout. Stop the arbiter.'''
     ############################################################################
     # INTERNALS
     ############################################################################
-
     def _run(self):
-        """\
-        Initialize the arbiter. Start listening and set pidfile if needed.
-        """
-        self._on_run()
         try:
             self.cfg.when_ready(self)
         except:
             pass
         try:
-            self.ioloop.start()
+            self.requestloop.start()
         except HaltServer as e:
             self._halt(reason=str(e), code=e.signal)
         except (KeyboardInterrupt, SystemExit) as e:

@@ -61,10 +61,18 @@ them to do. CPU-bound :class:`Actors` have the following properties:
   separate thread.
    
 
-.. _remote-functions:
+.. _actor_commands:
 
-Remote functions
+Actor commands
 ~~~~~~~~~~~~~~~~~~~~~~~~
+
+An :class:`Actor` communicate with a remote :class:`Actor` by *sending* an
+**action** to perform. This action takes the form of a **command** name and
+optional positional and key-valued parameters. For example::
+
+    send(target, 'echo', 'Hello!')
+    
+will :func:`send` the ``echo('Hello!')`` action to the remote *target*.
 
 
 

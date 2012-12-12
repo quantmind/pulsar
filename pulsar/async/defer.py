@@ -31,6 +31,7 @@ __all__ = ['Deferred',
            'ispy3k',
            'NOT_DONE',
            'STOP_ON_FAILURE',
+           'EXIT_EXCEPTIONS',
            'CLEAR_ERRORS']
 
 ispy3k = sys.version_info >= (3, 0)

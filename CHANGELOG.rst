@@ -1,11 +1,20 @@
-Version 0.4.2 - 2012-Dec-12
+Ver. 0.4.3
+==============================
+* The :class:`pulsar.Actor` is added to the :attr:`pulsar.Actor.requestloop`
+  tasks. Previously was wrongly added to the :attr:`pulsar.Actor.ioloop` tasks.
+* Fixed issue #17 on asynchronous shell application.
+* Dining philosophers example works on events only.
+* Removed obsolete safe_monitor decorator in :mod:`pulsar.apps`.
+* **341 regression tests**, **86% coverage**.
+
+Ver. 0.4.2 - 2012-Dec-12
 ==============================
 * Fixed bug in boolean validation.
 * Refactored :class:`pulsar.apps.test.TestPlugin` to handle multi-parameters.
 * Removed unused code and increased test coverage.
 * **338 regression tests**, **86% coverage**.
 
-Version 0.4.1 - 2012-Dec-04
+Ver. 0.4.1 - 2012-Dec-04
 ==============================
 * Test suite can load test from single files as well as directories.
 * :func:`pulsar.apps.wsgi.handle_wsgi_error` accepts optional ``content_type``
@@ -14,7 +23,7 @@ Version 0.4.1 - 2012-Dec-04
 * :class:`pulsar.Application` call :meth:`pulsar.Config.on_start` before starting.
 * **304 regression tests**, **83% coverage**.
 
-Version 0.4 - 2012-Nov-19
+Ver. 0.4 - 2012-Nov-19
 ============================
 * Overall refactoring of API and therefore incompatible with previous versions.
 * Development status set to ``Beta``.
@@ -33,7 +42,7 @@ Version 0.4 - 2012-Nov-19
   :class:`pulsar.AsyncSocketServer` framework class.
 * **303 regression tests**, **83% coverage**.
 
-Version 0.3 - 2012-May-03
+Ver. 0.3 - 2012-May-03
 ============================
 * Development status set to ``Alpha``.
 * This version brings several bug fixes, more tests, more docs, and improvements
@@ -62,7 +71,7 @@ Version 0.3 - 2012-May-03
 * Setup does not fail when C extensions fail to compile.
 * **95 regression tests**, **75% coverage**.
 
-Version 0.2.1 - 2011-Dec-18
+Ver. 0.2.1 - 2011-Dec-18
 =======================================
 * Catch errors in :func:`pulsar.apps.test.run_on_arbiter`.
 * Added new setting for configuring http responses when an unhandled error
@@ -78,7 +87,7 @@ Version 0.2.1 - 2011-Dec-18
   has its own buffer.
 * **71 regression tests**
 
-Version 0.2.0 - 2011-Nov-05
+Ver. 0.2.0 - 2011-Nov-05
 =======================================
 * A more stable pre-alpha release with overall code refactoring and a lot
   more documentation.
@@ -93,7 +102,7 @@ Version 0.2.0 - 2011-Nov-05
 * Introduced context manager for `pulsar.apps.tasks` to handle logs and exceptions.
 * **61 regression tests**
 
-Version 0.1.0 - 2011-Aug-24
+Ver. 0.1.0 - 2011-Aug-24
 =======================================
 
 * First (very) pre-alpha release.
