@@ -5,6 +5,7 @@ import logging
 from pulsar import to_bytes, is_failure, log_failure, is_async,\
                     as_failure, maybe_async, HttpException
 from pulsar.utils.tools import checkarity
+from pulsar.utils.structures import AttributeDictionary
 from pulsar.apps.wsgi import WsgiResponse, WsgiResponseGenerator
 
 from .decorators import callrpc, wrap_object_call
@@ -17,32 +18,20 @@ LOGGER = logging.getLogger('pulsar.rpc')
 
 class RpcRequest(object):
 
-    def __init__(self, environ, handler, method, func, args,
-                kwargs, id, version):
+    def __init__(self, environ):
         self.environ = environ
-        self.handler = handler
-        self.method = method
-        self.func = func
-        self.args = args
-        self.kwargs = kwargs
-        self.version = version
-        self.id = id
 
     def __repr__(self):
-        return self.method
+        return self.rpc.method
 
-    @property
-    def user(self):
-        return self.environ.get('user')
+    def __getattr__(self, name):
+        return self.environ.get(name)
 
-    @property
-    def content_type(self):
-        return self.handler.content_type
-
-    def process(self):
-        if not self.func:
-            raise NoSuchFunction('Function "%s" not available.' % self.method)
-        return callrpc(self.func, self.handler, self, self.args, self.kwargs)
+    def __getitem__(self, name):
+        return self.environ[name]
+    
+    def __setitem__(self, name, value):
+        self.environ[name] = value
 
 
 class ResponseGenerator(WsgiResponseGenerator):
@@ -53,12 +42,15 @@ class ResponseGenerator(WsgiResponseGenerator):
 
     def __iter__(self):
         request = self.request
+        rpc = request['rpc']
         status_code = 200
         try:
-            result = request.process()
+            if not rpc.func:
+                raise NoSuchFunction('Function "%s" not available.' % rpc.method)
+            result = callrpc(rpc.func, rpc.handler, request, rpc.args, rpc.kwargs)
         except Exception as e:
             result = as_failure(e)
-        handler = request.handler
+        handler = rpc.handler
         result = maybe_async(result)
         while is_async(result):
             yield b''
@@ -68,22 +60,16 @@ class ResponseGenerator(WsgiResponseGenerator):
                 e = result.trace[1]
                 status_code = getattr(e, 'status', 400)
                 log_failure(result)
-                result = handler.dumps(request.id,
-                                       request.version,
-                                       error=e)
+                result = handler.dumps(rpc.id, rpc.version, error=e)
             else:
-                result = handler.dumps(request.id,
-                                       request.version,
-                                       result=result)
+                result = handler.dumps(rpc.id, rpc.version, result=result)
         except Exception as e:
             LOGGER.error('Could not serialize', exc_info=True)
             status_code = 500
-            result = handler.dumps(request.id,
-                                   request.version,
-                                   error=e)
+            result = handler.dumps(rpc.id, rpc.version, error=e)
         content = to_bytes(result)
         response = WsgiResponse(status_code, content,
-                                content_type=request.content_type)
+                                content_type=handler.content_type)
         for c in self.start(response):
             yield c
 
@@ -229,8 +215,13 @@ for ``method``, ``kwargs`` are keyworded parameters for ``method``,
             func = handler.rpcfunctions[method_name]
         except:
             func = None
-        return RpcRequest(environ, handler, method, func, args,
-                          kwargs, id, version)
+        environ['rpc'] = AttributeDictionary(handler=handler,
+                                             method=method,
+                                             func=func,
+                                             args=args,
+                                             kwargs=kwargs,
+                                             id=id,
+                                             version=version)
 
     def invokeServiceEndpoint(self, meth, args):
         return meth(*args)
@@ -271,6 +262,7 @@ class RpcMiddleware(object):
 .. _WSGI:: http://www.wsgi.org/
 '''
     methods = ('get','post','put','head','delete','trace','connect')
+    request_class = RpcRequest
 
     def __init__(self, handler, path=None, methods=None):
         self.handler = handler
@@ -297,6 +289,7 @@ class RpcMiddleware(object):
             data = environ['wsgi.input'].read()
             hnd = self.handler
             method, args, kwargs, id, version = hnd.get_method_and_args(data)
-            request = hnd.request(environ, method, args, kwargs, id, version)
+            hnd.request(environ, method, args, kwargs, id, version)
+            request = self.request_class(environ)
             return ResponseGenerator(request, start_response)
 

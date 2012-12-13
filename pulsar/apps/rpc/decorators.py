@@ -20,21 +20,21 @@ def rpcerror(func, args, kwargs, discount=0):
         raise
     
 def FromApi(func, doc=None, format='json', request_handler=None):
-    '''\
-A decorator which exposes a function ``func`` as an rpc function.
+    '''A decorator which exposes a function ``func`` as an rpc function.
 
 :parameter func: The function to expose.
 :parameter doc: Optional doc string. If not provided the doc string of
     ``func`` will be used.
-:parameter format: Optional output format. Only used if ``request_handler``
-    is specified.
+:parameter format: Optional output format.
 :parameter request_handler: function which takes ``request``, ``format`` and
      ``kwargs`` and return a new ``kwargs`` to be passed to
      ``func``. It can be used to add additional parameters based
      on request and format.'''
-    def _(self, request, *args, **kwargs):
+    def _(self, *args, **kwargs):
+        request = args[0]
         if request_handler:
             kwargs = request_handler(request, format, kwargs)
+        request.format = kwargs.pop('format', format)
         try:
             return func(*args, **kwargs)
         except TypeError:
@@ -47,7 +47,7 @@ A decorator which exposes a function ``func`` as an rpc function.
 
 def callrpc(func, handler, self, args, kwargs):
     try:
-        return func(self.handler, self, *self.args, **self.kwargs)
+        return func(handler, self, *args, **kwargs)
     except TypeError as e:
         if not getattr(func, 'FromApi', False):
             rpcerror(func, args, kwargs, discount=2)

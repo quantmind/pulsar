@@ -5,7 +5,7 @@ Ver. 0.4.3
 * Fixed issue #17 on asynchronous shell application.
 * Dining philosophers example works on events only.
 * Removed obsolete safe_monitor decorator in :mod:`pulsar.apps`.
-* **341 regression tests**, **86% coverage**.
+* **342 regression tests**, **86% coverage**.
 
 Ver. 0.4.2 - 2012-Dec-12
 ==============================
