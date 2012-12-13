@@ -20,8 +20,8 @@ def _spawn_actor(cls, commands_set=None, monitor=None, cfg=None, name=None,
                  aid=None, **kw):
     # Internal function which spawns a new Actor and return its
     # ActorProxyMonitor.
+    # *cls* is the Actor class
     # *monitor* can be either the ariber or a monitor
-    # *actorcls* is the Actor class
     kind = None
     if issubclass(cls, PoolMixin):
         kind = 'monitor'
@@ -97,12 +97,8 @@ during its life time.
         self.actor_class = actor_class or self.actor_class
         return kwargs
 
-    def __call__(self):
-        if self.running():
-            self.on_task()
-
-    def ready(self):
-        return True
+    def active(self):
+        return self.running()
 
     def spawn(self, actor_class=None, linked_actors=None, montitor=None,
               **params):
@@ -270,7 +266,7 @@ Monitors with distributed queues manage CPU-bound :class:`Actors`.
     def cpubound(self):
         return False
 
-    def isprocess(self):
+    def is_process(self):
         return False
 
     def is_monitor(self):
@@ -311,15 +307,6 @@ Users shouldn't need to override this method, but use
         '''Overrides the :meth:`Actor.on_stop`
 :ref:`actor callback <actor-callbacks>` to stop managed actors.'''
         return self.close_actors()
-
-    # OVERRIDES INTERNALS
-    def _run(self):
-        self.requestloop = self.arbiter.requestloop
-        self.mailbox = mailbox(self)
-        self.monitors = self.arbiter.monitors
-        setid(self)
-        self.state = ACTOR_STATES.RUN
-        self.on_start()
 
     @property
     def multithread(self):
@@ -370,3 +357,11 @@ Users shouldn't need to override this method, but use
             a = self.arbiter.get_actor(aid)
         return a
 
+    # OVERRIDES INTERNALS
+    def _setup_ioloop(self):
+        self.requestloop = self.arbiter.requestloop
+        self.mailbox = mailbox(self)
+        self.monitors = self.arbiter.monitors
+        
+    def _run(self):
+        pass

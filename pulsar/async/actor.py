@@ -23,10 +23,14 @@ from .access import set_local_data, is_mainthread, get_actor, remove_actor
 
 __all__ = ['is_actor', 'send', 'Actor', 'ACTOR_STATES', 'Pulsar']
 
-ACTOR_STATES = AttributeDictionary(INITIAL=0X0, STARTING=0X1, RUN=0x2,
-                                   STOPPING=0x3, CLOSE=0x4, TERMINATE=0x5)
-ACTOR_STATES.DESCRIPTION = {ACTOR_STATES.INITIAL: 'initial',
-                            ACTOR_STATES.STARTING: 'starting',
+ACTOR_STATES = AttributeDictionary(INITIAL=0X0,
+                                   INACTIVE=0X1,
+                                   RUN=0x2,
+                                   STOPPING=0x3,
+                                   CLOSE=0x4,
+                                   TERMINATE=0x5)
+ACTOR_STATES.DESCRIPTION = {ACTOR_STATES.INACTIVE: 'inactive',
+                            ACTOR_STATES.INITIAL: 'initial',
                             ACTOR_STATES.RUN: 'running',
                             ACTOR_STATES.STOPPING: 'stopping',
                             ACTOR_STATES.CLOSE: 'closed',
@@ -88,6 +92,16 @@ class Pulsar(LogginMixin):
                           handlers=self.cfg.loghandlers)
         
 
+class NotifyTask:
+    
+    def __init__(self, actor):
+        self.actor = actor
+        
+    def __call__(self):
+        if self.actor.active():
+            self.actor.notify()
+            
+        
 class Actor(Pulsar):
     '''The base class for concurrent programming in pulsar. In computer science,
 the **Actor model** is a mathematical model of concurrent computation that
@@ -112,38 +126,46 @@ To spawn a new actor::
 
 Here ``a`` is actually a reference to the remote actor.
 
-.. attribute:: actor_functions
+**ATTRIBUTES**
 
-    dictionary of remote functions exposed by the actor. This
-    dictionary is filled by the :class:`pulsar.ActorMetaClass` during class
-    construction.
+.. attribute:: name
 
-.. attribute:: age
+    The name of this :class:`Actor`.
+    
+.. attribute:: aid
 
-    The age of actor, used to access how long the actor has been created.
+    Unique ID for this :class:`Actor`.
+    
+.. attribute:: commands_set
+
+    Set of :ref:`command names <actor_commands>` available to this
+    :class:`Actor`.
 
 .. attribute:: ioqueue
 
-    An optional distributed queue used as IO. Check server configuration with
-    :ref:`io queue <configuration-ioqueue>` for information.
+    An optional distributed queue. If present, it signal that the :class:`Actor`
+    is a :ref:`CPU bound worker <cpubound>` receiving task requests on the
+    :attr:`ioqueue`. 
 
     Default ``None``.
 
 .. attribute:: cpubound
 
-    Indicates if the :class:`Actor` is a CPU-bound worker or a I/O-bound one.
-    CPU-bound actors have a sperate event loop for handling I/O events.
-
-.. attribute:: ioloop
-
-    An instance of :class:`IOLoop`, the input/output event loop
-    driving the actor. Some actors may share the ioloop with other actors
-    depending on their concurrency implementation.
+    Indicates if the :class:`Actor` is a :ref:`CPU-bound worker <cpubound>`
+    or a I/O-bound one.
+    CPU-bound actors have a separate event loop for handling I/O events.
     
+    See also: :attr:`ioqueue`
+
 .. attribute:: requestloop
 
-    The :class:`IOLoop` to listen for requests. This is different from
-    :attr:`ioloop` for CPU-bound actors.
+    The :class:`IOLoop` to listen for requests.
+    
+.. attribute:: ioloop
+
+    An instance of :class:`IOLoop` which listen for input/output events
+    on a socket.  This is different from the :attr:`requestloop` only
+    for :ref:`CPU-bound actors <cpubound>`.
 
 .. attribute:: request_processed
 
@@ -154,13 +176,27 @@ Here ``a`` is actually a reference to the remote actor.
     The current number of concurrent requests the actor is serving.
     Depending on the actor type, this number can be very high or max 1
     (CPU bound actors).
+    
+.. attribute:: proxy
+
+    Instance of a :class:`ActorProxy` holding a reference
+    to this :class:`Actor`. The proxy is a lightweight representation
+    of the actor which can be shared across different processes
+    (i.e. it is pickable).
+
+.. attribute:: linked_actors
+
+    Dictionary of :class:`ActorProxy` linked with this :class:`Actor`.
 
 .. attribute:: params
 
     Contains parameters which are passed to actors spawned by this actor.
+    
+**METHODS**
 '''
     exit_code = None
     mailbox = None
+    _notify_task = None
     stopping_start = None
     stopping_end = None
     
@@ -177,7 +213,6 @@ Here ``a`` is actually a reference to the remote actor.
         else:
             ioqueue = None
         self.request_processed = 0
-        self.last_notified = 0
         self.concurrent_requests = 0
         self.state = ACTOR_STATES.INITIAL
         self.ioqueue = ioqueue
@@ -218,9 +253,6 @@ Here ``a`` is actually a reference to the remote actor.
     
     @property
     def proxy(self):
-        '''Instance of a :class:`ActorProxy` holding a reference
-to the actor. The proxy is a lightweight representation of the actor
-which can be shared across different processes (i.e. it is pickable).'''
         return ActorProxy(self)
 
     @property
@@ -229,7 +261,6 @@ which can be shared across different processes (i.e. it is pickable).'''
 
     @property
     def ioloop(self):
-        '''The :class:`IOLoop` for I/O.'''
         return self.mailbox.ioloop
 
     @property
@@ -248,6 +279,19 @@ which can be shared across different processes (i.e. it is pickable).'''
     ############################################################################
     ##    HIGH LEVEL API METHODS
     ############################################################################
+    def start(self):
+        '''Called after forking to start the actor's life. This is where
+logging is configured, the :attr:`Actor.mailbox` is registered and the
+:attr:`Actor.ioloop` is initialised and started.'''
+        if self.state == ACTOR_STATES.INITIAL:
+            self.configure_logging()
+            self._setup_ioloop()
+            self.requestloop.add_task(self)
+            setid(self)
+            self.state = ACTOR_STATES.RUN
+            self.on_start()
+            self._run()
+            
     def command(self, action):
         '''Fetch the pulsar command for *action*.'''
         return get_command(action, self.commands_set)
@@ -272,15 +316,16 @@ parameters *params*. It return a :class:`ActorMessage`.'''
     def running(self):
         '''``True`` if actor is running.'''
         return self.state == ACTOR_STATES.RUN
-
+    
+    def active(self):
+        '''``True`` if actor is active by being both running and having
+the :attr:`ioloop` running.'''
+        return self.running() and self.arbiter.aid in self.linked_actors
+    
     def started(self):
         '''``True`` if actor has started. It does not necessarily
 mean it is running.'''
         return self.state >= ACTOR_STATES.RUN
-
-    def stopping(self):
-        '''``True`` if actor is stopping.'''
-        return self.state == ACTOR_STATES.STOPPING
 
     def closed(self):
         '''``True`` if actor has exited in an clean fashion.'''
@@ -298,18 +343,18 @@ mean it is running.'''
         '''Return ``True`` if ``self`` is a :class:`Monitor`.'''
         return False
 
-    def isprocess(self):
+    def is_process(self):
         '''boolean indicating if this is an actor on a child process.'''
         return self.impl.kind == 'process'
 
-    def ready(self):
-        return self.arbiter.aid in self.linked_actors
-
     def can_poll(self):
-        '''Check if the actor can poll requests. This is used by CPU-bound
- actors only.'''
-        m = self.cfg.backlog
-        return self.concurrent_requests < m if m else True
+        '''Check if the actor can poll requests. This is used by 
+:ref:`CPU-bound actors <cpubound>` only.'''
+        if self.active():
+            m = self.cfg.backlog
+            return self.concurrent_requests < m if m else True
+        else:
+            return False
 
     def __reduce__(self):
         raise pickle.PicklingError('{0} - Cannot pickle Actor instances'\
@@ -381,15 +426,6 @@ iteration of the :attr:`Actor.ioloop`.'''
  :rtype: a dictionary of pickable data.'''
         return data
 
-    def start(self):
-        '''Called after forking to start the actor's life. This is where
-logging is configured, the :attr:`Actor.mailbox` is registered and the
-:attr:`Actor.ioloop` is initialised and started.'''
-        if self.state == ACTOR_STATES.INITIAL:
-            self.state = ACTOR_STATES.STARTING
-            self.configure_logging()
-            self._run()
-
     ############################################################################
     ##    INTERNALS
     ############################################################################
@@ -407,7 +443,7 @@ logging is configured, the :attr:`Actor.mailbox` is registered and the
         '''Stop the actor by stopping its :attr:`Actor.requestloop`
 and closing its :attr:`Actor.mailbox`. Once everything is closed
 properly this actor will go out of scope.'''
-        if force or self.state in (ACTOR_STATES.STARTING, ACTOR_STATES.RUN):
+        if force or self.state <= ACTOR_STATES.RUN:
             self.stopping_start = time()
             self.state = ACTOR_STATES.STOPPING
             self.exit_code = exit_code
@@ -422,6 +458,8 @@ properly this actor will go out of scope.'''
     def exit(self, result=None):
         '''Exit from the :class:`Actor` domain.'''
         if not self.stopped():
+            self.ioloop.remove_task(self._notify_task)
+            self.requestloop.remove_task(self)
             self.mailbox.close()
             # we don't want monitors to stop the request loop
             if not self.is_monitor():
@@ -447,32 +485,12 @@ properly this actor will go out of scope.'''
         else:
             return self.monitors.get(aid)
 
-    def __call__(self):
-        '''Called in the main eventloop to perform the following
-actions:
-
-* it notifies linked actors if required (arbiter only for now)
-* it executes the :meth:`Actor.on_task` callback.
-'''
-        if self.running() and self.arbiter.aid in self.linked_actors:
-            nt = time()
-            if hasattr(self, 'last_notified'):
-                timeout = self.cfg.timeout
-                tole = min(ACTOR_TIMEOUT_TOLERANCE*timeout, ACTOR_NOTIFY_PERIOD)
-                if nt - self.last_notified < tole:
-                    nt = None
-            if nt:
-                self.last_notified = nt
-                info = self.info()
-                self.send('arbiter', 'notify', info)
-            self.on_task()
-
     def info(self):
         '''return A dictionary of information related to the actor
 status and performance.'''
         if not self.started():
             return
-        isp = self.isprocess()
+        isp = self.is_process()
         requestloop  = self.requestloop
         actor = {'name': self.name,
                  'state': self.info_state,
@@ -488,7 +506,9 @@ status and performance.'''
                   'io_loops': self.ioloop.num_loops}
         if self.cpubound:
             events['request_loops'] = requestloop.num_loops
-        data = {'actor': actor, 'events': events}
+        data = {'actor': actor,
+                'last_notified': self.params.last_notified,
+                'events': events}
         if isp:
             data['system'] = system.system_info(self.pid)
         return self.on_info(data)
@@ -496,6 +516,10 @@ status and performance.'''
     ############################################################################
     #    INTERNALS
     ############################################################################
+    def __call__(self):
+        if self.active():
+            self.on_task()
+            
     def link_actor(self, proxy, address=None):
         '''Add the *proxy* to the :attr:`` dictionary.
 if *proxy* is not a class:`ActorProxy` instance raise an exception.'''
@@ -504,8 +528,6 @@ if *proxy* is not a class:`ActorProxy` instance raise an exception.'''
         if not proxy.address:
             raise ValueError('Linking with a actor without address')
         self.linked_actors[proxy.aid] = proxy
-        if proxy.aid == self.arbiter.aid:
-            self.requestloop.ready = True
         # If the proxy is the actor monitor, add the arbiter
         # if the monitor is not the arbiter itself.
         # This last check is crucial in order to recursive call
@@ -514,58 +536,59 @@ if *proxy* is not a class:`ActorProxy` instance raise an exception.'''
             self.link_actor(self.arbiter, address)
         return proxy
 
-    def _init_runner(self):
-        '''Initialise the runner.'''
-        if not self.isprocess():
-            return
-        random.seed()
-        proc_name = "%s-%s" % (self.cfg.proc_name, self)
-        if system.set_proctitle(proc_name):
-            self.logger.debug('Set process title to %s', proc_name)
-        #system.set_owner_process(cfg.uid, cfg.gid)
-        if is_mainthread():
-            self.logger.debug('Installing signals')
-            # The default signal handling function in signal
-            sfun = getattr(self, 'signal', None)
-            for name in system.ALL_SIGNALS:
-                func = sfun
-                if not func:
-                    func = getattr(self,'handle_{0}'.format(name.lower()),None)
-                if func:
-                    sig = getattr(signal,'SIG{0}'.format(name))
-                    try:
-                        signal.signal(sig, func)
-                    except ValueError:
-                        break
-            #atexit.register(self.stop)
-
-    def _on_run(self):
-        '''Internal function called at the start of the actor. It builds the
-event loop which will consume events on file descriptors.'''
+    def _setup_ioloop(self):
+        # Internal function called at the start of the actor. It builds the
+        # event loop which will consume events on file descriptors
         # Inject self as the actor of this thread
         ioq = self.ioqueue
         self.requestloop = IOLoop(io=IOQueue(ioq, self) if ioq else None,
                                   poll_timeout=self.params.poll_timeout,
-                                  logger=self.logger,
-                                  ready=not self.cpubound)
+                                  logger=self.logger)
         # If CPU bound add the request handler to the request loop
         if self.cpubound:
             self.requestloop.add_handler('request',
                                           self.handle_fd_event,
                                           self.requestloop.READ)
-        self._init_runner()
+        if self.is_process():
+            random.seed()
+            proc_name = "%s-%s" % (self.cfg.proc_name, self)
+            if system.set_proctitle(proc_name):
+                self.logger.debug('Set process title to %s', proc_name)
+            #system.set_owner_process(cfg.uid, cfg.gid)
+            if is_mainthread():
+                self.logger.debug('Installing signals')
+                # The default signal handling function in signal
+                sfun = getattr(self, 'signal', None)
+                for name in system.ALL_SIGNALS:
+                    func = sfun
+                    if not func:
+                        func = getattr(self,'handle_%s' % name.lower(), None)
+                    if func:
+                        sig = getattr(signal, 'SIG%s' % name)
+                        try:
+                            signal.signal(sig, func)
+                        except ValueError:
+                            break
         self.mailbox = mailbox(self)
         set_local_data(self)
-        setid(self)
-        self.state = ACTOR_STATES.RUN
-        self.on_start()
         self.logger.info('address %s', self.mailbox.address)
 
     def _run(self):
-        '''The run implementation which must be done by a derived class.'''
-        self._on_run()
+        self._notify_task = NotifyTask(self)
+        self.ioloop.add_task(self._notify_task)
         try:
             self.requestloop.start()
         finally:
             self.stop()
     
+    def notify(self):
+        nt = time()
+        last_notified = self.params.last_notified
+        if last_notified:
+            timeout = self.cfg.timeout
+            tole = min(ACTOR_TIMEOUT_TOLERANCE*timeout, ACTOR_NOTIFY_PERIOD)
+            if nt - last_notified < tole:
+                nt = None
+        if nt:
+            self.params.last_notified = nt
+            self.send('arbiter', 'notify', self.info())

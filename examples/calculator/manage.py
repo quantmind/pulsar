@@ -23,11 +23,15 @@ from pulsar.apps import rpc, wsgi
 from pulsar.utils.httpurl import range
 
 
-def divide(a, b):
+def divide(request, a, b):
     '''Divide two numbers'''
     return float(a)/float(b)
 
-def randompaths(num_paths=1, size=250, mu=0, sigma=1):
+def request_handler(request, format, kwargs):
+    '''Dummy request handler'''
+    return kwargs
+
+def randompaths(request, num_paths=1, size=250, mu=0, sigma=1):
     r = []
     for p in range(num_paths):
         v = 0
@@ -68,8 +72,7 @@ class Calculator(rpc.JSONRPC):
     def rpc_multiply(self, request, a, b):
         return float(a) * float(b)
 
-    rpc_divide = rpc.FromApi(divide)
-
+    rpc_divide = rpc.FromApi(divide, request_handler=request_handler)
     rpc_randompaths = rpc.FromApi(randompaths)
 
 

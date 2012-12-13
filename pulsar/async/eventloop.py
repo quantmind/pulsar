@@ -45,7 +45,7 @@ class LoopGuard(object):
         if not loop._started:
             loop._started = time.time()
         setid(loop)
-        loop._on_exit = Deferred()
+        loop._on_exit = Deferred(description='IOloop.on_exit')
         return self
 
     def __exit__(self, type, value, traceback):
@@ -65,9 +65,21 @@ A level-triggered I/O event loop adapted from tornado.
     it has an ``epoll`` like interface. Pulsar ships with an additional
     I/O implementation based on distributed queue :class:`IOQueue`.
 
-.. attribute:: num_lumps
+**ATTRIBUTES**
 
-    total number of loops
+.. attribute:: _impl
+
+    The IO implementation
+
+.. attribute:: cpubound
+
+    If ``True`` this is a CPU bound event loop, otherwise it is an I/O
+    event loop. CPU bound loops can block the loop for considerable amount
+    of time.
+        
+.. attribute:: num_loops
+
+    Total number of loops
 
 .. attribute:: poll_timeout
 
@@ -78,11 +90,20 @@ A level-triggered I/O event loop adapted from tornado.
 .. attribute:: tid
 
     The thread id where the eventloop is running
+    
+.. attribute:: tasks
+
+    A list of callables to be executed at each iteration of the event loop.
+    Task can be added and deleted via the :meth:`add_task` and
+    :meth:`remove_task`. Extra care must be taken when adding tasks to
+    I/O event loops. These tasks should be fast to perform and not block.
+
+**METHODS**
 """
     # Never use an infinite timeout here - it can stall epoll
     poll_timeout = 0.5
 
-    def __init__(self, io=None, logger=None, poll_timeout=None, ready=True):
+    def __init__(self, io=None, logger=None, poll_timeout=None):
         self._impl = io or IOpoll()
         self.poll_timeout = poll_timeout if poll_timeout else self.poll_timeout
         self.logger = logger or LOGGER
@@ -98,7 +119,6 @@ A level-triggered I/O event loop adapted from tornado.
         self.num_loops = 0
         self._waker = getattr(self._impl, 'waker', Waker)()
         self._on_exit = None
-        self.ready = ready
         self.add_handler(self._waker,
                          lambda fd, events: self._waker.consume(),
                          self.READ)
@@ -106,19 +126,25 @@ A level-triggered I/O event loop adapted from tornado.
     @property
     def cpubound(self):
         return getattr(self._impl, 'cpubound', False)
+    
+    @property
+    def tasks(self):
+        return self._loop_tasks
 
-    def add_loop_task(self, task):
-        '''Add a callable object to the list of tasks which are
+    def add_task(self, task):
+        '''Add a callable object to the list of :attr:`tasks` which are
 executed at each iteration in the event loop.'''
-        self._loop_tasks.append(task)
+        if hasattr(task, '__call__'):
+            self._loop_tasks.append(task)
 
-    def remove_loop_task(self, task):
-        '''Remove the task from the list of tasks
+    def remove_task(self, task):
+        '''Remove the task from the list of :attr:`tasks`
 executed at each iteration in the event loop.'''
-        try:
-            return self._loop_tasks.remove(task)
-        except ValueError:
-            pass
+        if task is not None:
+            try:
+                return self._loop_tasks.remove(task)
+            except:
+                pass
 
     def add_handler(self, fd, handler, events):
         """Registers the given *handler* to receive the given events for the
@@ -255,9 +281,6 @@ will make the loop stop after the current event iteration completes."""
                 # A chance to exit
                 if not self._running:
                     break
-                # Not ready to poll
-                if not self.ready:
-                    continue
                 try:
                     event_pairs = self._impl.poll(poll_timeout)
                 except Exception as e:

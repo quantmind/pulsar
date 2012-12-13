@@ -41,6 +41,7 @@ import code
 from time import time
 
 import pulsar
+from pulsar.apps import tasks
 
 
 if pulsar.ispy3k:
@@ -54,7 +55,7 @@ else:   #pragma    nocover
         return line
     
 
-class InteractiveConsole(code.InteractiveConsole):
+class InteractiveConsole(code.InteractiveConsole):  #pragma    nocover
 
     def pulsar_banner(self):
         cprt = 'Type "help", "copyright", "credits" or "license" for more information.'
@@ -100,10 +101,13 @@ class InteractiveConsole(code.InteractiveConsole):
                 self._more = self.push(line)
 
 
-class PulsarShell(pulsar.Application):
+class PulsarShell(tasks.CPUboundServer):
     can_kill_arbiter = True
+    _app_name = 'pulsarshell'
+    console_class = InteractiveConsole
+    cfg_apps = ('cpubound',)
     cfg = {'timeout':5,
-           'workers':0,
+           'workers':1,
            'loglevel':'none',
            'concurrency':'thread'}
     
@@ -114,23 +118,31 @@ class PulsarShell(pulsar.Application):
     def handler(self):
         imported_objects = {'pshell': self,
                             'pulsar': pulsar,
-                            'arbiter': pulsar.arbiter(),
                             'get_actor': pulsar.get_actor,
                             'spawn': pulsar.spawn,
                             'send': pulsar.send,
                             'Actor': pulsar.Actor}
         try: # Try activating rlcompleter, because it's handy.
             import readline
-        except ImportError:
+        except ImportError: #pragma    nocover
             pass
-        else:
+        else: #pragma    nocover
             import rlcompleter
             readline.set_completer(rlcompleter.Completer(imported_objects).complete)
             readline.parse_and_bind("tab:complete")
-        self.local.console = InteractiveConsole(imported_objects)
+        self.local.console = self.console_class(imported_objects)
         self.console.setup()
         return self
 
-    def worker_task(self, worker):
-        self.console.interact(0.1*worker.cfg.timeout)
+    def monitor_start(self, monitor):
+        monitor.cfg.set('workers', 1)
+        monitor.cfg.set('concurrency', 'thread')
+        
+    def worker_task(self, worker):  #pragma    nocover
+        try:
+            self.console.interact(0.5*self.cfg.timeout)
+        except pulsar.EXIT_EXCEPTIONS:
+            worker.send('arbiter', 'stop')
+            worker.state = pulsar.ACTOR_STATES.INACTIVE
+            
 

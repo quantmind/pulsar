@@ -218,31 +218,13 @@ of execution.'''
         return '%s mailbox %s:%s' %\
              (self.actor, self.address[0], self.address[1])
 
-    @property
-    def cpubound(self):
-        return self.actor.cpubound
-
-    def actor_ioloop(self):
-        return self.actor.requestloop
-    
-    def shut_down(self):
-        self.unregister(self.actor)
-
     def on_start(self):
         actor = self.actor
-        self.register(actor)
         if not actor.is_arbiter():
             # The actor is not the arbiter. We need to register this mailbox
             # with the actor monitor so that it can receive messages from it
             return actor.send(actor.monitor, 'mailbox_address', self.address)\
                         .add_callback(actor.link_actor)
-
-    def register(self, actor):
-        self.ioloop.add_loop_task(actor)
-
-    def unregister(self, actor):
-        if not self.ioloop.remove_loop_task(actor):
-            LOGGER.warn('"%s" could not be removed from eventloop', actor)
 
 
 class MonitorMailbox(object):
@@ -250,13 +232,7 @@ class MonitorMailbox(object):
 arbiter inbox.'''
     active_connections = 0
     def __init__(self, actor):
-        self.actor = actor
         self.mailbox = actor.arbiter.mailbox
-        self.mailbox.register(self.actor)
-
-    @property
-    def cpubound(self):
-        return self.actor.cpubound
 
     @property
     def address(self):
@@ -268,9 +244,9 @@ arbiter inbox.'''
 
     def start(self):
         pass
-
+    
     def close(self):
-        self.mailbox.unregister(self.actor)
+        pass
 
 
 class QueueWaker(object):

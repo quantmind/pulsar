@@ -27,17 +27,21 @@ class TestTestWorker(unittest.TestCase):
         worker = pulsar.get_actor()
         self.assertTrue(pulsar.is_actor(worker))
         self.assertTrue(worker.running())
-        self.assertTrue(worker.ready())
-        self.assertFalse(worker.stopping())
+        self.assertTrue(worker.active())
         self.assertFalse(worker.closed())
         self.assertFalse(worker.stopped())
         self.assertEqual(worker.info_state, 'running')
         self.assertEqual(worker.tid, current_thread().ident)
         self.assertEqual(worker.pid, os.getpid())
-        self.assertTrue(worker.cpubound)
-        self.assertTrue(worker.mailbox.cpubound)
         self.assertTrue(worker.impl.daemon)
         self.assertFalse(worker.is_monitor())
+        
+    def testCPUbound(self):
+        worker = pulsar.get_actor()
+        self.assertTrue(worker.cpubound)
+        self.assertTrue(worker.requestloop.cpubound)
+        self.assertFalse(worker.ioloop.cpubound)
+        self.assertEqual(worker.ioloop, worker.mailbox.ioloop)
         
     def testWorkerMonitor(self):
         worker = pulsar.get_actor()
@@ -55,7 +59,6 @@ class TestTestWorker(unittest.TestCase):
         app = monitor.app
         self.assertTrue(isinstance(app, TestSuite))
         self.assertFalse(monitor.cpubound)
-        self.assertFalse(monitor.mailbox.cpubound)
         
     def testMailbox(self):
         worker = pulsar.get_actor()

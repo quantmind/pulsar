@@ -88,12 +88,15 @@ def spawn(client, actor, caller, linked_actors=None, **kwargs):
     return actor.spawn(linked_actors=linked_actors, **kwargs)
      
 @proxy.command(authenticated=True, commands_set=proxy.arbiter_commands)
-def kill_actor(client, actor, aid):
+def kill_actor(client, actor, aid=None):
     '''Kill an actor with id ``aid``'''
-    a = actor.get_actor(aid)
-    if a:
-        a.stop()
-        return 'stopped %s' % a
+    if not aid:
+        return actor.stop()
     else:
-        actor.logger.info('Could not kill "%s" no such actor', aid)
+        a = actor.get_actor(aid)
+        if a:
+            a.stop()
+            return 'stopped %s' % a
+        else:
+            actor.logger.info('Could not kill "%s" no such actor', aid)
         

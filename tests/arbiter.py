@@ -12,11 +12,15 @@ from pulsar.apps.test import unittest, run_on_arbiter, ActorTestMixin, dont_run_
 
 class BogusActor(pulsar.Actor):
     
-    def __call__(self):
+    def notify(self):
         #This actor does not send notify messages to the arbiter
-        pass
+        if not self.params.last_notified:
+            super(BogusActor, self).notify()
+        else:
+            pass
     
-    def stop(self, exit_code=0):
+    def stop(self, force=False, exit_code=0):
+        # override stop method so that no stopping can take place
         pass
     
     
@@ -81,7 +85,9 @@ class TestArbiterThread(ActorTestMixin, unittest.TestCase):
         n = arbiter.manage_actors()
         self.assertTrue(n)
         self.assertEqual(proxy.stopping_loops, 1)
-        while proxy.aid in arbiter.managed_actors:
+        c = 0
+        while c<20 and proxy.aid in arbiter.managed_actors:
+            c += 1
             yield pulsar.NOT_DONE
             arbiter.manage_actors()
         self.assertEqual(arbiter.manage_actors(), n-1)
@@ -103,7 +109,9 @@ class TestArbiterThread(ActorTestMixin, unittest.TestCase):
         n = arbiter.manage_actors()
         self.assertTrue(n)
         self.assertEqual(proxy.stopping_loops, 1)
-        while proxy.aid in arbiter.managed_actors:
+        c = 0
+        while c < 10 and proxy.aid in arbiter.managed_actors:
+            c += 1
             yield pulsar.NOT_DONE
             arbiter.manage_actors()
         self.assertEqual(proxy.stopping_loops, ACTOR_STOPPING_LOOPS)

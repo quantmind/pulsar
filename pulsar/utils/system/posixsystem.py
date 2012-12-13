@@ -20,17 +20,14 @@ __all__ = ['IOpoll',
 import select
 if hasattr(select,'epoll'):
     IOpoll = select.epoll
-else:
+else:   #pragma    nocover
     IOpoll = IOselect
 
 # The standard signal quit
 SIGQUIT = signal.SIGQUIT
 # Default maximum for the number of available file descriptors.
 MAXFD = 1024
-if (hasattr(os, "devnull")):
-   REDIRECT_TO = os.devnull
-else:
-   REDIRECT_TO = "/dev/null"
+REDIRECT_TO = getattr(os, "devnull", "/dev/null")
 
 def get_parent_id():
     return os.getppid()
@@ -106,12 +103,9 @@ class Waker(object):
             pass
 
     
-def daemonize():
-    """\
-    Standard daemonization of a process. Code is based on the
-    ActiveState recipe at:
-        http://code.activestate.com/recipes/278731/
-    """
+def daemonize():    #pragma    nocover
+    """Standard daemonization of a process. Code is based on the
+ActiveState recipe at http://code.activestate.com/recipes/278731/"""
     if os.fork() == 0: 
         os.setsid()
         if os.fork() != 0:

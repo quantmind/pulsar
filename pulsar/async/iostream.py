@@ -839,14 +839,11 @@ class AsyncSocketServer(BaseSocketHandler):
 
     @property
     def ioloop(self):
-        return self.__ioloop if self.onthread else self.actor_ioloop()
+        return self.__ioloop if self.onthread else self.actor.requestloop
 
     @property
     def active_connections(self):
         return len(self.connections)
-    
-    def actor_ioloop(self):
-        return self.actor.ioloop
 
     def on_start(self):
         '''callback just before the event loop starts.'''

@@ -17,36 +17,28 @@ __all__ = ['Application',
            'ApplicationMonitor',
            'get_application']
 
+APP_EVENTS = ('start', 'stop')
 
-class safe_monitor:
-    '''Decorator for monitor and application functions'''    
-    def __init__(self, event=None):
-        self.event = event
+def app_events(app):
+    for name in APP_EVENTS:
+        yield name, Deferred(description='%s.%s' % (app.name, name))
+        
+def fire_event(f):
+    name = f.__name__[3:]
+    if name not in APP_EVENTS:
+        raise ValueError()
     
-    def _halt(self, failure, app):
-        failure.log()
-        if app.can_kill_arbiter:
-            raise HaltServer('Unhandled exception application.')
-        else:
-            return failure
-
-    def signal_event(self, result, app):
-        if self.event:
-            app.events[self.event].callback(result)
-        return result
+    def fire(result, app):
+        event.fire(name, sender=app)
+        app.events[name].callback(app)
+        
+    def _(*args, **kwargs):
+        safe_async(f, args, kwargs).addBoth(lambda r: fire(r, args[0].app))
     
-    def __call__(self, f):
-        def _(*args, **kwargs):
-            app = args[0].app
-            result = safe_async(f, args, kwargs)
-            res = result.add_callback(lambda r: app,
-                                      lambda f: self._halt(f, app))
-            return res.addBoth(lambda r: self.signal_event(r, app))
-        _.__name__ = f.__name__
-        _.__doc__ = f.__doc__
-        return _
-
-
+    _.__name__ = f.__name__
+    _.__doc__ = f.__doc__
+    return _
+            
 def get_application(name):
     '''Invoked in the arbiter domain, this function will return
 the :class:`Application` associated with *name* if available. If not in the
@@ -70,8 +62,6 @@ to the underlying :class:`Application`.'''
         return self.app.on_event(self, fd, event)
 
     def handle_task(self):
-        if self.information.log():
-            self.logger.info('Processed %s requests', self.info.nr)
         try:
             self.cfg.worker_task(self)
         except:
@@ -105,7 +95,6 @@ It provides two new methods inherited from :class:`ApplicationHandlerMixin`.
         return kwargs
 
     # Delegates Callbacks to the application
-
     def on_start(self):
         self.app.worker_start(self)
         try:
@@ -148,29 +137,25 @@ pulsar subclasses of :class:`Application`.
 
     ############################################################################
     # Delegates Callbacks to the application
-    
-    @safe_monitor('on_start')
+    @fire_event
     def on_start(self):
         self.app.monitor_start(self)
         # If no workears are available invoke the worker start method too
         if not self.cfg.workers:
             self.app.worker_start(self)
 
-    @safe_monitor()
     def monitor_task(self):
-        yield self.app.monitor_task(self)
+        self.app.monitor_task(self)
         # There are no workers, the monitor do their job
         if not self.cfg.workers:
-            yield self.handle_task()
+            self.handle_task()
 
-    @async()
+    @fire_event
     def on_stop(self):
         if not self.cfg.workers:
             yield self.app.worker_stop(self)
         yield self.app.monitor_stop(self)
         yield super(ApplicationMonitor, self).on_stop()
-        event.fire('stop', sender=self.app)
-        self.app.events['on_stop'].callback(self.app)
 
     def on_exit(self):
         self.app.monitor_exit(self)
@@ -266,15 +251,6 @@ These are the most important facts about a pulsar :class:`Application`
     full path of the script which starts the application or ``None``.
     If supplied it is used to setup the python path
 
-.. attribute:: can_kill_arbiter
-
-    If ``True``, an unhandled error in the application will shut down the
-    :class:`pulsar.Arbiter`. Check the :meth:`ApplicationMonitor.monitor_task`
-    method for implementation.
-
-    Default: ``False``.
-
-
 .. attribute:: commands_set
 
     Optional set of :ref:`remote actions <api-remote_commands>` available
@@ -289,7 +265,6 @@ These are the most important facts about a pulsar :class:`Application`
     cfg_apps = None
     config_options_include = None
     config_options_exclude = None
-    can_kill_arbiter = False
     commands_set = None
     monitor_class = ApplicationMonitor
 
@@ -301,7 +276,6 @@ These are the most important facts about a pulsar :class:`Application`
                  argv=None,
                  script=None,
                  version=None,
-                 can_kill_arbiter=None,
                  parse_console=True,
                  commands_set=None,
                  cfg=None,
@@ -317,8 +291,6 @@ These are the most important facts about a pulsar :class:`Application`
     only if the arbiter has not yet started.
 '''
         self.description = description or self.description
-        if can_kill_arbiter is not None:
-            self.can_kill_arbiter = bool(can_kill_arbiter)
         self.epilog = epilog or self.epilog
         self._app_name = self._app_name or self.__class__.__name__.lower()
         self._name = name or self._app_name
@@ -342,7 +314,7 @@ These are the most important facts about a pulsar :class:`Application`
             monitor = actor.monitors.get(self.name)
         if monitor is None and (not actor or actor.is_arbiter()): 
             # Add events
-            self.local.events = {'on_start': Deferred(), 'on_stop': Deferred()}
+            self.local.events = dict(app_events(self))
             self.cfg.on_start()
             self.configure_logging()
             event.fire('ready', sender=self)
@@ -353,11 +325,12 @@ These are the most important facts about a pulsar :class:`Application`
                                               app=self,
                                               cfg=self.cfg,
                                               ioqueue=self.ioqueue)
+                self.cfg = monitor.cfg
                 if self.commands_set:
                     monitor.impl.commands_set.update(self.commands_set)
         events = self.events
         if events:
-            return events['on_start']
+            return events['start']
 
     @property
     def app(self):

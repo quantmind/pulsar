@@ -26,7 +26,7 @@ def check_actor(actor):
 class DodgyActor(pulsar.Actor):
     
     def on_stop(self):
-        raise valueError()
+        raise ValueError()
     
     
 class TestProxy(unittest.TestCase):
