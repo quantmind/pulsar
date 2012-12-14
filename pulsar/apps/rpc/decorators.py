@@ -44,12 +44,3 @@ def FromApi(func, doc=None, format='json', request_handler=None):
     _.__name__ = func.__name__
     _.FromApi = True
     return _
-
-def callrpc(func, handler, self, args, kwargs):
-    try:
-        return func(handler, self, *args, **kwargs)
-    except TypeError as e:
-        if not getattr(func, 'FromApi', False):
-            rpcerror(func, args, kwargs, discount=2)
-        else:
-            raise

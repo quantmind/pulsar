@@ -8,7 +8,7 @@ from pulsar.utils.tools import checkarity
 from pulsar.utils.structures import AttributeDictionary
 from pulsar.apps.wsgi import WsgiResponse, WsgiResponseGenerator
 
-from .decorators import callrpc, wrap_object_call
+from .decorators import rpcerror, wrap_object_call
 from .exceptions import *
 
 
@@ -37,6 +37,31 @@ class RpcRequest(object):
         self.environ[name] = value
 
 
+class RPC:
+    
+    def __init__(self, handler, method, func, args, kwargs,
+                 id=None, version=None):
+        self.handler = handler
+        self.method = method
+        self.func = func
+        self.args = args
+        self.kwargs = kwargs
+        self.id = id
+        self.version = version
+        
+    def process(self, request):
+        func = self.func
+        if not func:
+            raise NoSuchFunction('Function "%s" not available.' % self.method)
+        try:
+            return func(self.handler, request, *self.args, **self.kwargs)
+        except TypeError as e:
+            if not getattr(func, 'FromApi', False):
+                rpcerror(func, self.args, self.kwargs, discount=2)
+            else:
+                raise
+    
+
 class ResponseGenerator(WsgiResponseGenerator):
     '''Asynchronous response generator invoked by the djpcms WSGI middleware'''
     def __init__(self, request, start_response):
@@ -48,9 +73,7 @@ class ResponseGenerator(WsgiResponseGenerator):
         rpc = request['rpc']
         status_code = 200
         try:
-            if not rpc.func:
-                raise NoSuchFunction('Function "%s" not available.' % rpc.method)
-            result = callrpc(rpc.func, rpc.handler, request, rpc.args, rpc.kwargs)
+            result = rpc.process(request)
         except Exception as e:
             result = as_failure(e)
         handler = rpc.handler
@@ -217,13 +240,7 @@ for ``method``, ``kwargs`` are keyworded parameters for ``method``,
             func = handler.rpcfunctions[method_name]
         except:
             func = None
-        environ['rpc'] = AttributeDictionary(handler=handler,
-                                             method=method,
-                                             func=func,
-                                             args=args,
-                                             kwargs=kwargs,
-                                             id=id,
-                                             version=version)
+        environ['rpc'] = RPC(handler, method, func, args, kwargs, id, version)
 
     def invokeServiceEndpoint(self, meth, args):
         return meth(*args)
