@@ -1,3 +1,4 @@
+from .httpurl import native_str
 
 class _lazy:
 
@@ -6,10 +7,10 @@ class _lazy:
         self._f = f
         self.args = args
         self.kwargs = kwargs
-        
+    
     def __str__(self):
         if self._value is None:
-            self._value = self._f(*self.args, **self.kwargs) or ''
+            self._value = native_str(self._f(*self.args, **self.kwargs) or '')
         return self._value
     __repr__ = __str__
 
