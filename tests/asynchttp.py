@@ -18,4 +18,3 @@ class TestAsyncHttpClient(httpurl.TestHttpClient):
         
 class TestAsyncHttpClientWithProxy(TestAsyncHttpClient):
     with_proxy = True
-    server_concurrency = 'process'

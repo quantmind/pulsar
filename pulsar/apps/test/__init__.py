@@ -171,7 +171,6 @@ is a group of tests specified in a test class.
     _app_name = 'test'
     cfg_apps = ('cpubound',)
     commands_set = test_commands
-    config_options_exclude = ('daemon', 'user', 'group')
     cfg = {'loglevel': 'none',
            'timeout': 3600,
            'backlog': 1,

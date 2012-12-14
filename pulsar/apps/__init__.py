@@ -48,7 +48,7 @@ the :class:`Application` associated with *name* if available. If not in the
         monitor = actor.monitors.get(name)
         if monitor:
             return getattr(monitor, 'app', None) 
-    
+
     
 class ApplicationHandlerMixin(object):
     '''A mixin for both :class:`Worker` and :class:`ApplicationMonitor`.
@@ -318,7 +318,7 @@ These are the most important facts about a pulsar :class:`Application`
             self.cfg.on_start()
             self.configure_logging()
             event.fire('ready', sender=self)
-            arbiter = pulsar.arbiter(cfg=self.cfg)
+            arbiter = pulsar.arbiter(cfg=self.cfg.new_config())
             if self.on_config() is not False:
                 monitor = arbiter.add_monitor(self.monitor_class,
                                               self.name,

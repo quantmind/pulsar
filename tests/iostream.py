@@ -31,7 +31,7 @@ class TestPulsarStreams(unittest.TestCase):
     server = None
     @classmethod
     def setUpClass(cls):
-        s = EchoServer(name='echoserver', bind='127.0.0.1:0',
+        s = EchoServer(name=cls.__name__.lower(), bind='127.0.0.1:0',
                        concurrency=cls.concurrency)
         outcome = pulsar.send('arbiter', 'run', s)
         yield outcome
@@ -47,7 +47,7 @@ class TestPulsarStreams(unittest.TestCase):
         
     @run_on_arbiter
     def testServer(self):
-        app = pulsar.get_application('echoserver')
+        app = pulsar.get_application(self.__class__.__name__.lower())
         self.assertTrue(app.address)
         
     def testSyncClient(self):

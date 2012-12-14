@@ -235,7 +235,7 @@ settings via the :meth:`Setting.add_argument`.
             pn = self.settings.get('default_process_name')
             if pn:
                 return pn.get()
-    
+        
     def copy(self):
         cls = self.__class__
         me = cls.__new__(cls)
@@ -243,13 +243,20 @@ settings via the :meth:`Setting.add_argument`.
             if name == 'settings':
                 value = copy.deepcopy(value)
             me.__dict__[name] = value
-        return me
+        return me        
     
     def __copy__(self):
         return self.copy()
     
     def __deepcopy__(self, memo):
         return self.__copy__()
+    
+    def new_config(self):
+        cfg = self.__class__()
+        for key, sett in iteritems(self.settings):
+            if key in cfg.settings and sett.inherit:
+                cfg.set(key, sett.value)
+        return cfg
             
 
 class SettingMeta(type):
@@ -285,6 +292,7 @@ in the global ``KNOWN_SETTINGS`` list.'''
 
 
 class SettingBase(object):
+    inherit = True
     name = None
     '''The unique name used to access this setting.'''
     validator = None
@@ -476,6 +484,7 @@ class ConfigFile(Setting):
 
 
 class Workers(Setting):
+    inherit = False     # not ineritable by the arbiter
     name = "workers"
     section = "Worker Processes"
     flags = ["-w", "--workers"]
@@ -501,6 +510,7 @@ class Concurrency(Setting):
 
 
 class MaxRequests(Setting):
+    inherit = False     # not ineritable by the arbiter
     name = "max_requests"
     section = "Worker Processes"
     flags = ["--max-requests"]
@@ -519,6 +529,7 @@ class MaxRequests(Setting):
         """
 
 class Backlog(Setting):
+    inherit = False     # not ineritable by the arbiter
     name = "backlog"
     section = "Worker Processes"
     flags = ["--backlog"]
@@ -537,6 +548,7 @@ class Backlog(Setting):
 
 
 class Timeout(Setting):
+    inherit = False     # not ineritable by the arbiter
     name = "timeout"
     section = "Worker Processes"
     flags = ["-t", "--timeout"]

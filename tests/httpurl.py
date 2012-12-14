@@ -183,13 +183,15 @@ class TestHttpClient(unittest.TestCase):
         from examples.proxyserver.manage import server as pserver
         from examples.httpbin.manage import server
         concurrency = cls.cfg.concurrency
-        s = server(bind='127.0.0.1:0', concurrency=concurrency)
+        s = server(bind='127.0.0.1:0', concurrency=concurrency,
+                   name='httpbin-%s' % cls.__name__.lower())
         outcome = send('arbiter', 'run', s)
         yield outcome
         cls.app = outcome.result
         cls.uri = 'http://{0}:{1}'.format(*cls.app.address)
         if cls.with_proxy:
-            s = pserver(bind='127.0.0.1:0', concurrency=concurrency)
+            s = pserver(bind='127.0.0.1:0', concurrency=concurrency,
+                        name='proxyserver-%s' % cls.__name__.lower())
             outcome = send('arbiter', 'run', s)
             yield outcome
             cls.proxy_app = outcome.result
