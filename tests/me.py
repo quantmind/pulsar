@@ -1,7 +1,6 @@
 '''Tests the test suite and pulsar distribution.'''
 import os
 import time
-import pickle
 from threading import current_thread
 
 import pulsar
@@ -54,8 +53,8 @@ class TestTestWorker(unittest.TestCase):
     @run_on_arbiter
     def testTestSuiteMonitor(self):
         arbiter = pulsar.get_actor()
-        self.assertEqual(len(arbiter.monitors), 1)
-        monitor = list(arbiter.monitors.values())[0]
+        self.assertTrue(len(arbiter.monitors) >= 1)
+        monitor = arbiter.monitors['test']
         app = monitor.app
         self.assertTrue(isinstance(app, TestSuite))
         self.assertFalse(monitor.cpubound)
@@ -150,10 +149,7 @@ class TestTestWorker(unittest.TestCase):
         self.assertEqual(result4.result, 0.1)
         self.assertEqual(result5.result, 'ciao again!')
         
-    #def testPickle(self):
-    #    self.assertRaises(pickle.PicklingError, pickle.dumps,
-    #                      pulsar.get_actor())
-
+        
 class TestPulsar(unittest.TestCase):
     
     def test_version(self):

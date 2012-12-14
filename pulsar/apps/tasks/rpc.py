@@ -88,14 +88,8 @@ and a :ref:`task queue <apps-tasks>` application installed in the
     def rpc_next_scheduled_tasks(self, request, jobnames=None):
         return self._rq(request, 'next_scheduled', jobnames=jobnames)
         
-    def rpc_run_new_task(self, request, jobname=None, ack=True, meta_data=None,
-                         **kw):
-        if not jobname:
-            raise rpc.InvalidParams('"jobname" is not specified!')
-        funcname = 'addtask' if ack else 'addtask_noack'
-        meta_data = meta_data or {}
-        meta_data.update(self.task_request_parameters(request))
-        result = self._rq(request, funcname, jobname, meta_data, **kw)
+    def rpc_run_new_task(self, request, jobname=None, **kw):
+        result = self.run_new_task(request, jobname, **kw)
         return result.addBoth(task_to_json)
         
     def rpc_get_task(self, request, id=None):
@@ -112,6 +106,16 @@ and a :ref:`task queue <apps-tasks>` application installed in the
     
     ############################################################################
     ##    INTERNALS
+    def run_new_task(self, request, jobname, args=None,
+                     ack=True, meta_data=None, **kw):
+        if not jobname:
+            raise rpc.InvalidParams('"jobname" is not specified!')
+        funcname = 'addtask' if ack else 'addtask_noack'
+        meta_data = meta_data or {}
+        meta_data.update(self.task_request_parameters(request))
+        args = args or ()
+        return self._rq(request, funcname, jobname, meta_data, *args, **kw)
+    
     def task_request_parameters(self, request):
         '''**Internal function** which returns a dictionary of parameters
 to be passed to the :class:`Task` class constructor.

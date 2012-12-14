@@ -32,13 +32,16 @@ class TestArbiterThread(ActorTestMixin, unittest.TestCase):
         arbiter = pulsar.get_actor()
         self.assertEqual(arbiter.name, 'arbiter')
         self.assertEqual(len(arbiter.monitors), 1)
-        self.assertEqual(arbiter.monitors['test'].spawning_actors, {})
-        yield self.spawn(name='foo')
-        proxy = self.a
-        self.assertEqual(proxy.name, 'foo')
-        self.assertEqual(arbiter.spawning_actors, {})
+        future = spawn(name='testSpawning', concurrency=self.concurrency)
+        self.assertTrue(future.aid in arbiter.spawning_actors)
+        self.assertFalse(future.aid in arbiter.managed_actors)
+        yield future
+        proxy = future.result
+        self.assertEqual(future.aid, proxy.aid)
+        self.assertFalse(future.aid in arbiter.spawning_actors)
+        self.assertEqual(proxy.name, 'testSpawning')
         self.assertTrue(proxy.aid in arbiter.managed_actors)
-        arbiter.manage_actors()
+        yield send(proxy, 'stop')
         
     def testArbiter(self):
         worker = pulsar.get_actor()
@@ -77,20 +80,18 @@ class TestArbiterThread(ActorTestMixin, unittest.TestCase):
         yield self.spawn(actor_class=BogusActor, name='foo', timeout=1)
         proxy = self.a
         self.assertEqual(proxy.name, 'foo')
-        self.assertEqual(arbiter.spawning_actors, {})
+        self.assertFalse(proxy.aid in arbiter.spawning_actors)
         self.assertTrue(proxy.aid in arbiter.managed_actors)
         proxy = arbiter.managed_actors[proxy.aid]
         self.assertEqual(proxy.stopping_loops, 0)
         time.sleep(1)
-        n = arbiter.manage_actors()
-        self.assertTrue(n)
+        self.assertTrue(arbiter.manage_actors())
         self.assertEqual(proxy.stopping_loops, 1)
         c = 0
         while c<20 and proxy.aid in arbiter.managed_actors:
             c += 1
             yield pulsar.NOT_DONE
             arbiter.manage_actors()
-        self.assertEqual(arbiter.manage_actors(), n-1)
         self.assertFalse(proxy.aid in arbiter.managed_actors)
         thread_actors = pulsar.process_local_data('thread_actors')
         self.assertFalse(proxy.aid in thread_actors)
