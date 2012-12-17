@@ -99,6 +99,7 @@ callback.'''
         try:
             if self.maybe_revoked():
                 yield self.on_timeout(worker)
+                result = None
             else:
                 self.status = STARTED
                 self.time_start = datetime.now()
@@ -289,15 +290,15 @@ class TaskInMemory(Task):
 
     def on_start(self, worker=None):
         if worker:
-            return send(worker.monitor, 'save_task', self)
+            return worker.send(worker.monitor, 'save_task', self)
 
     def on_timeout(self, worker=None):
         if worker:
-            return send(worker.monitor, 'save_task', self)
+            return worker.send(worker.monitor, 'save_task', self)
 
     def on_finish(self, worker=None):
         if worker:
-            return send(worker.monitor, 'save_task', self)
+            return worker.send(worker.monitor, 'save_task', self)
 
     @classmethod
     def task_container(cls, scheduler):

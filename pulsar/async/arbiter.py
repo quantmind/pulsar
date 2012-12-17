@@ -240,7 +240,7 @@ the timeout. Stop the arbiter.'''
             p.unlink()
         if self.managed_actors:
             self.state = ACTOR_STATES.TERMINATE
-        if self.exit_code is not None:
+        if self.exit_code:
             sys.exit(self.exit_code)
 
     ############################################################################

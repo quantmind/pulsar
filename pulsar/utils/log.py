@@ -18,7 +18,11 @@ from .structures import AttributeDictionary
 
 SERVER_NAME = 'Pulsar'
 NOLOG = 100
-
+SUBDEBUG = 5
+logging.addLevelName(SUBDEBUG, 'SUBDEBUG')
+def log_subdebug(self, message, *args, **kws):
+    self._log(SUBDEBUG, message, args, **kws)
+logging.Logger.subdebug = log_subdebug  
 
 __all__ = ['SERVER_NAME',
            'dictConfig',

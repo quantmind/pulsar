@@ -306,7 +306,6 @@ parameters *params*. It return a :class:`ActorMessage`.'''
     def put(self, request):
         '''Put a *request* into the :attr:`ioqueue` if available.'''
         if self.ioqueue:
-            self.logger.debug('Putting %s into IO queue', request)
             self.ioqueue.put(('request', request))
         else:
             self.logger.error("Trying to put a request on task queue,\
