@@ -44,6 +44,7 @@ it returns it.'''
         event = Event(name)
         _events[name] = event
     return _events[name]
+
     
 def bind(name, callback, once_only=False):
     '''Bind a *callback* to event *name*. If *once_only* is ``True``
@@ -53,6 +54,8 @@ handler.'''
     observer = Observer(callback, once_only)
     event.observers.append(observer)
     
+    
 def fire(name, value=None, sender=None):
+    '''Fire event *name* '''
     event = create(name)
     event.trigger(value, sender)

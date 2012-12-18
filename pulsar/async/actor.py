@@ -12,6 +12,7 @@ from threading import current_thread
 from pulsar import AlreadyCalledError, AlreadyRegistered,\
                    ActorAlreadyStarted, LogginMixin, system, Config
 from pulsar.utils.structures import AttributeDictionary
+from pulsar.utils import events
 from .eventloop import IOLoop, setid
 from .proxy import ActorProxy, ActorMessage, get_command, get_proxy
 from .defer import make_async, is_failure, iteritems, itervalues,\
@@ -48,7 +49,7 @@ ACTOR_TERMINATE_TIMEOUT = 2
 ACTOR_STOPPING_LOOPS = 5
 EMPTY_TUPLE = ()
 EMPTY_DICT = {}
-
+ 
 
 def is_actor(obj):
     return isinstance(obj, Actor)
@@ -467,6 +468,7 @@ properly this actor will go out of scope.'''
             self.stopping_end = time()
             self.logger.debug('%s exited', self)
             remove_actor(self)
+            events.fire('exit', self)
             self.on_exit()
 
     def get_actor(self, aid):

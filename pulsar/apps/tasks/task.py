@@ -96,10 +96,10 @@ start its execution. If no timeout has occured the task will switch to
 a ``STARTED`` :attr:`Task.status` and invoke the :meth:`on_start`
 callback.'''
         job = registry[self.name]
+        result = None
         try:
             if self.maybe_revoked():
                 yield self.on_timeout(worker)
-                result = None
             else:
                 self.status = STARTED
                 self.time_start = datetime.now()

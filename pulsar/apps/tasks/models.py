@@ -73,13 +73,15 @@ by:
             return super_new(cls, name, bases, attrs)
         # Automatically generate missing name.
         job_name = attrs.get("name",name).lower()
+        log_prefix = attrs.get("log_prefix") or "pulsar"
         # Because of the way import happens (recursively)
         # we may or may not be the first time the Job tries to register
         # with the framework. There should only be one class for each Job
         # name, so we always return the registered version.
         if job_name not in registry:
             attrs["name"] = job_name
-            attrs['logger'] = logging.getLogger('job.{0}'.format(name))
+            logname = '%s.job.%s' % (log_prefix, name)
+            attrs['logger'] = logging.getLogger(logname)
             job_cls = super_new(cls, name, bases, attrs)
             registry.register(job_cls)
         return registry[job_name].__class__
