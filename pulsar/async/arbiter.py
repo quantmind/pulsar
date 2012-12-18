@@ -182,12 +182,10 @@ Users access the arbiter by the high level api::
             p.create(self.pid)
             self.pidfile = p
 
-    def on_task(self):
-        '''Override the :class:`Actor.on_task` callback to perform the
-arbiter tasks at every iteration in the event loop.'''
+    def periodic_task(self):
         if self.restarted:
             self.stop(exit_code=self.exit_code)
-        if not self._arbiter_task():
+        if not self._abort():
             self.manage_actors()
             for m in list(itervalues(self.monitors)):
                 if m.started():
@@ -196,10 +194,11 @@ arbiter tasks at every iteration in the event loop.'''
                         self.monitors.pop(m.name)
                 else:
                     m.start()
-        try:
-            self.cfg.arbiter_task(self)
-        except:
-            pass
+            try:
+                self.cfg.arbiter_task(self)
+            except:
+                pass
+            self.ioloop.add_callback(self.periodic_task)
 
     def manage_actor(self, actor):
         '''If an actor failed to notify itself to the arbiter for more than
@@ -254,7 +253,7 @@ the timeout. Stop the arbiter.'''
         try:
             self.requestloop.start()
         except HaltServer as e:
-            self._halt(reason=str(e), code=e.signal)
+            self._halt(reason=str(e))
         except (KeyboardInterrupt, SystemExit) as e:
             self._halt(e.__class__.__name__)
         except:
@@ -273,7 +272,7 @@ the timeout. Stop the arbiter.'''
     def _close_message_queue(self):
         return
 
-    def _arbiter_task(self):
+    def _abort(self):
         '''Called by the Event loop to perform the signal handling from the
 signal queue'''
         sig = None
@@ -284,19 +283,18 @@ signal queue'''
                 break
             if sig not in system.SIG_NAMES:
                 self.logger.info("Ignoring unknown signal: %s", sig)
-                sig = None
+                return
             else:
                 signame = system.SIG_NAMES.get(sig)
                 if sig in self.EXIT_SIGNALS:
-                    raise HaltServer('Received Signal %s.' % signame, sig)
+                    self.stop(True)
+                    return True
                 handler = getattr(self, "signal_%s" % signame.lower(), None)
                 if not handler:
                     self.logger.debug('No Handle for signal "%s".', signame)
-                    sig = None
                 else:
                     self.logger.info("Handling signal: %s", signame)
-                    sig = handler()
-        return sig
+                    return handler()
 
     def signal(self, sig, frame=None):
         signame = system.SIG_NAMES.get(sig, None)

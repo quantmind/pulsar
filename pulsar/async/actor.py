@@ -35,19 +35,12 @@ ACTOR_STATES.DESCRIPTION = {ACTOR_STATES.INACTIVE: 'inactive',
                             ACTOR_STATES.STOPPING: 'stopping',
                             ACTOR_STATES.CLOSE: 'closed',
                             ACTOR_STATES.TERMINATE:'terminated'}
-MINIMUM_ACTOR_TIMEOUT = 10
-DEFAULT_ACTOR_TIMEOUT = 60
-ACTOR_NOTIFY_PERIOD = 10
-# Send messages to arbiter not before the difference of
-# now and the last message time is greater than this tolerance
-# times timeout. So for a timeout of 30 seconds, the messages will
-# go after tolerance*30 seconds (18 secs for tolerance = 0.6).
+#
+# LOW LEVEL CONSTANTS - NO NEED TO CHANGE THOSE ###########################
+ACTOR_NOTIFY = 30    # NOTIFY AT LEAST AFTER THESE SECONDS
+ACTOR_TERMINATE_TIMEOUT = 2 # TIMEOUT WHEN JOINING A TERMINATING ACTOR
 ACTOR_TIMEOUT_TOLERANCE = 0.6
-# Timeout of when joining an actor which has been terminated
-ACTOR_TERMINATE_TIMEOUT = 2
 ACTOR_STOPPING_LOOPS = 5
-EMPTY_TUPLE = ()
-EMPTY_DICT = {}
 
 
 def is_actor(obj):
@@ -286,9 +279,9 @@ logging is configured, the :attr:`Actor.mailbox` is registered and the
         if self.state == ACTOR_STATES.INITIAL:
             self.configure_logging()
             self._setup_ioloop()
-            self.requestloop.add_task(self)
             setid(self)
             self.state = ACTOR_STATES.RUN
+            self.periodic_task()
             self.on_start()
             self._run()
             
@@ -382,27 +375,25 @@ mean it is running.'''
             self.stop()
 
     ############################################################################
-    ##    HOOKS
+    ##    CALLBACKS
     ############################################################################
     def on_init(self, **kwargs):
-        '''The :ref:`actor callback <actor-callbacks>` run once at the
-end of initialisation (after forking).'''
+        '''The :ref:`actor callback <actor-callbacks>` run **once** at the
+end of initialisation (after forking). No event loops available yet. This is a
+chance to modify the actor with *kwargs*. By defaults it returns the
+parameters to be included in the :attr:`params`.'''
         return kwargs
 
     def on_start(self):
-        '''The :ref:`actor callback <actor-callbacks>` run once just before
+        '''The :ref:`actor callback <actor-callbacks>` run **once** just before
 the actor starts (after forking) its event loop. Every attribute is available,
-therefore this is a chance to setup to perform custom initialization
+therefore this is a chance to setup to perform custom initialisation
 before the actor starts running.'''
         pass
 
-    def on_task(self):
-        '''The :ref:`actor callback <actor-callbacks>` executed at each
-iteration of the :attr:`Actor.ioloop`.'''
-        pass
-
     def on_event(self, fd, event):
-        '''handle and event on a filedescriptor *fd*.'''
+        '''Handle an event on a file descriptor *fd*. This is what defines the
+life of an actor.'''
         pass
 
     def on_stop(self):
@@ -425,16 +416,6 @@ iteration of the :attr:`Actor.ioloop`.'''
  :parameter data: dictionary of data with information about the actor.
  :rtype: a dictionary of pickable data.'''
         return data
-
-    ############################################################################
-    ##    INTERNALS
-    ############################################################################
-    def proxy_mailbox(self, address):
-        m = self.proxy_mailboxes.get(address)
-        if not m:
-            m = mailbox(address=address)
-            self.proxy_mailboxes[address] = m
-        return m
 
     ############################################################################
     # STOPPING
@@ -470,6 +451,24 @@ properly this actor will go out of scope.'''
             remove_actor(self)
             self.on_exit()
 
+    ############################################################################
+    #    INTERNALS
+    ############################################################################
+    def periodic_task(self):
+        if self.active():
+            self.send('arbiter', 'notify', self.info())
+            secs = min(ACTOR_TIMEOUT_TOLERANCE*self.cfg.timeout, ACTOR_NOTIFY)
+            self.ioloop.add_timeout(secs, self.periodic_task)
+        else:
+            self.ioloop.add_callback(self.periodic_task)
+        
+    def proxy_mailbox(self, address):
+        m = self.proxy_mailboxes.get(address)
+        if not m:
+            m = mailbox(address=address)
+            self.proxy_mailboxes[address] = m
+        return m
+    
     def get_actor(self, aid):
         '''Given an actor unique id return the actor proxy.'''
         if aid == self.aid:
@@ -512,14 +511,7 @@ status and performance.'''
         if isp:
             data['system'] = system.system_info(self.pid)
         return self.on_info(data)
-
-    ############################################################################
-    #    INTERNALS
-    ############################################################################
-    def __call__(self):
-        if self.active():
-            self.on_task()
-            
+    
     def link_actor(self, proxy, address=None):
         '''Add the *proxy* to the :attr:`` dictionary.
 if *proxy* is not a class:`ActorProxy` instance raise an exception.'''
@@ -580,15 +572,3 @@ if *proxy* is not a class:`ActorProxy` instance raise an exception.'''
             self.requestloop.start()
         finally:
             self.stop()
-    
-    def notify(self):
-        nt = time()
-        last_notified = self.params.last_notified
-        if last_notified:
-            timeout = self.cfg.timeout
-            tole = min(ACTOR_TIMEOUT_TOLERANCE*timeout, ACTOR_NOTIFY_PERIOD)
-            if nt - last_notified < tole:
-                nt = None
-        if nt:
-            self.params.last_notified = nt
-            self.send('arbiter', 'notify', self.info())

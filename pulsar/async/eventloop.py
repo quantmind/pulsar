@@ -113,7 +113,6 @@ A level-triggered I/O event loop adapted from tornado.
         self._events = {}
         self._callbacks = []
         self._timeouts = []
-        self._loop_tasks = WeakList()
         self._started = None
         self._running = False
         self.num_loops = 0
@@ -126,25 +125,6 @@ A level-triggered I/O event loop adapted from tornado.
     @property
     def cpubound(self):
         return getattr(self._impl, 'cpubound', False)
-    
-    @property
-    def tasks(self):
-        return self._loop_tasks
-
-    def add_task(self, task):
-        '''Add a callable object to the list of :attr:`tasks` which are
-executed at each iteration in the event loop.'''
-        if hasattr(task, '__call__'):
-            self._loop_tasks.append(task)
-
-    def remove_task(self, task):
-        '''Remove the task from the list of :attr:`tasks`
-executed at each iteration in the event loop.'''
-        if task is not None:
-            try:
-                return self._loop_tasks.remove(task)
-            except:
-                pass
 
     def add_handler(self, fd, handler, events):
         """Registers the given *handler* to receive the given events for the
@@ -260,9 +240,6 @@ will make the loop stop after the current event iteration completes."""
                 poll_timeout = self.poll_timeout
                 self.num_loops += 1
                 _run_callback = self._run_callback
-                # Loop task first
-                for task in self._loop_tasks:
-                    _run_callback(task, 'loop task')
                 # Prevent IO event starvation by delaying new callbacks
                 # to the next iteration of the event loop.
                 callbacks = self._callbacks

@@ -10,17 +10,13 @@ from pulsar.apps.test import unittest, dont_run_with_thread
 from .manage import server
 
 
-class WebSocketThreadTest(unittest.TestCase):
+class TestWebSocketThread(unittest.TestCase):
     app = None
     concurrency = 'thread'
     
     @classmethod
-    def name(cls):
-        return 'websocket_' + cls.concurrency
-    
-    @classmethod
     def setUpClass(cls):
-        s = server(bind='127.0.0.1:0', name=cls.name(),
+        s = server(bind='127.0.0.1:0', name=cls.__name__,
                    concurrency=cls.concurrency)
         outcome = send('arbiter', 'run', s)
         yield outcome
@@ -32,8 +28,7 @@ class WebSocketThreadTest(unittest.TestCase):
     @classmethod
     def tearDownClass(cls):
         if cls.app is not None:
-            outcome = send('arbiter', 'kill_actor', cls.app.name)
-            yield outcome
+            yield send('arbiter', 'kill_actor', cls.app.name)
     
     def testHyBiKey(self):
         w = WebSocket(None)
@@ -79,7 +74,7 @@ class WebSocketThreadTest(unittest.TestCase):
         
 
 @dont_run_with_thread
-class WebSocketProcessTest(WebSocketThreadTest):
+class TestWebSocketProcess(TestWebSocketThread):
     concurrency = 'process'
     
     

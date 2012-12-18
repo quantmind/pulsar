@@ -137,8 +137,7 @@ spawn method when creating new actors.'''
         LINKED = self.linked_actors
         alive = 0
         items = list(iteritems(ACTORS))
-        # WHEN TERMINATING OR STOPPING WE INCLUDE THE ACTORS WHICH ARE
-        # SPAWNING
+        # WHEN TERMINATING OR STOPPING WE INCLUDE THE ACTORS WHICH ARE SPAWNING
         shutting_down = terminate or stop
         if shutting_down:
             items.extend(iteritems(SPAWNING))
@@ -278,8 +277,7 @@ Monitors with distributed queues manage CPU-bound :class:`Actors`.
 By default it does nothing.'''
         pass
 
-    # HOOKS
-    def on_task(self):
+    def periodic_task(self):
         '''Overrides the :meth:`Actor.on_task`
 :ref:`actor callback <actor-callbacks>` to perform
 the monitor :class:`IOLoop` tasks, which are:
@@ -298,11 +296,14 @@ The implementation goes as following:
 
 Users shouldn't need to override this method, but use
 :meth:`Monitor.monitor_task` instead.'''
-        self.manage_actors()
-        self.spawn_actors()
-        self.stop_actors()
-        return self.monitor_task()
+        if self.running():
+            self.manage_actors()
+            self.spawn_actors()
+            self.stop_actors()
+            self.monitor_task()
+        self.ioloop.add_callback(self.periodic_task)
 
+    # HOOKS
     def on_stop(self):
         '''Overrides the :meth:`Actor.on_stop`
 :ref:`actor callback <actor-callbacks>` to stop managed actors.'''
