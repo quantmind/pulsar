@@ -31,10 +31,12 @@ dictionary.'''
         return loc
             
 def thread_local_data(name, value=None):
+    '''Set or retrieve an attribute *name* from the curren thread. If *value*
+is None, it will get the value otherwise it will set the value.'''
     ct = current_thread()
     if is_mainthread(ct):
         loc = process_local_data()
-    elif not hasattr(ct,'_pulsar_local'):
+    elif not hasattr(ct, '_pulsar_local'):
         ct._pulsar_local = threading.local()
         loc = ct._pulsar_local
     else:
@@ -48,9 +50,9 @@ def thread_local_data(name, value=None):
             setattr(loc, name, value)
     return getattr(loc, name, None)
 
-    
 def thread_loop(ioloop=None):
-    '''Returns the :class:`IOLoop` on the current thread if available.'''
+    '''Returns the event loop (:class:`IOLoop`) on the current thread
+if available.'''
     return thread_local_data('eventloop', ioloop)
 
 def thread_ioloop(ioloop=None):

@@ -15,12 +15,10 @@ def sleepfunc():
 def on_event(fd, request):
     pass
         
-def on_task(self):
+def check_actor(actor, name):
     # put something on a queue, just for coverage.
-    self.put(None)
-    
-def check_actor(actor):
-    assert(actor.on_task()==None)
+    actor.put(None)
+    assert(actor.name==name)
     
 
 class DodgyActor(pulsar.Actor):
@@ -28,6 +26,20 @@ class DodgyActor(pulsar.Actor):
     def on_stop(self):
         raise ValueError()
     
+    
+class HaltActor(pulsar.Actor):
+    
+    def on_start(self):
+        self.requestloop.add_callback(self._halt)
+        
+    def _halt(self):
+        if self.params.done:
+            raise pulsar.HaltServer()
+        else:
+            self.params.done = True
+            self.requestloop.add_callback(self._halt)
+            raise ValueError()
+
     
 class TestProxy(unittest.TestCase):
     
@@ -75,9 +87,9 @@ class TestActorThread(ActorTestMixin, unittest.TestCase):
         proxy_monitor.join(0.5)
         self.assertFalse(proxy_monitor.is_alive())
         
-    def testActorSpawn(self):
+    def test_spawn_actor(self):
         '''Test spawning from actor domain.'''
-        yield self.spawn(on_task=on_task, name='pippo')
+        yield self.spawn(name='pippo')
         proxy = self.a
         self.assertEqual(proxy.name, 'pippo')
         # The current actor is linked with the actor just spawned
@@ -85,7 +97,7 @@ class TestActorThread(ActorTestMixin, unittest.TestCase):
         self.assertEqual(actor.get_actor(proxy.aid), proxy)
         yield self.async.assertEqual(send(proxy, 'ping'), 'pong')
         yield self.async.assertEqual(send(proxy, 'echo', 'Hello!'), 'Hello!')
-        yield send(proxy, 'run', check_actor)
+        yield send(proxy, 'run', check_actor, 'pippo')
         
     def testPasswordProtected(self):
         yield self.spawn(password='bla', name='pluto')
@@ -97,7 +109,7 @@ class TestActorThread(ActorTestMixin, unittest.TestCase):
         yield self.async.assertEqual(send(proxy, 'auth', 'bla'), True)
         
     def testInfo(self):
-        yield self.spawn(on_task=on_task, name='pippo')
+        yield self.spawn(name='pippo')
         proxy = self.a
         self.assertEqual(proxy.name, 'pippo')
         outcome = send(proxy, 'info')
@@ -126,13 +138,7 @@ class TestActorThread(ActorTestMixin, unittest.TestCase):
         
     @run_on_arbiter
     def testHaltServer(self):
-        def on_task(w):
-            if w.params.done:
-                raise pulsar.HaltServer()
-            else:
-                w.params.done = True
-                raise ValueError()
-        yield self.spawn(on_task=on_task)
+        yield self.spawn(actor_class=HaltActor)
         proxy = pulsar.get_actor().get_actor(self.a.aid)
         c = 0
         while c < 20:

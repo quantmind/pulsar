@@ -12,7 +12,6 @@ from pulsar.utils.log import LogInformation
 
 __all__ = ['Application',
            'MultiApp',
-           'ApplicationHandlerMixin',
            'Worker',
            'ApplicationMonitor',
            'get_application']
@@ -29,11 +28,16 @@ def fire_event(f):
         raise ValueError()
     
     def fire(result, app):
+        if not is_failure(result):
+            result = app
+        else:
+            result.log()
         event.fire(name, sender=app)
         app.events[name].callback(app)
         
     def _(*args, **kwargs):
-        safe_async(f, args, kwargs).addBoth(lambda r: fire(r, args[0].app))
+        app = args[0].params.app
+        safe_async(f, args, kwargs).addBoth(lambda r: fire(r, app))
     
     _.__name__ = f.__name__
     _.__doc__ = f.__doc__
@@ -49,30 +53,10 @@ the :class:`Application` associated with *name* if available. If not in the
         if monitor:
             return getattr(monitor, 'app', None) 
 
-    
-class ApplicationHandlerMixin(object):
-    '''A mixin for both :class:`Worker` and :class:`ApplicationMonitor`.
-It implements the :meth:`handle_request` actor method
-used for by the :class:`Application` for handling requests and
-sending back responses.
-'''
-    def on_event(self, fd, event):
-        '''Override :meth:`pulsar.Actor.on_event` to delegate handling
-to the underlying :class:`Application`.'''
-        return self.app.on_event(self, fd, event)
 
-    def handle_task(self):
-        try:
-            self.cfg.worker_task(self)
-        except:
-            pass
-        self.app.worker_task(self)
-
-
-class Worker(ApplicationHandlerMixin, Actor):
+class Worker(Actor):
     """\
 An :class:`Actor` class for serving an :class:`Application`.
-It provides two new methods inherited from :class:`ApplicationHandlerMixin`.
 
 .. attribute:: app
 
@@ -87,23 +71,19 @@ It provides two new methods inherited from :class:`ApplicationHandlerMixin`.
     The application handler obtained from :meth:`Application.handler`.
 
 """
-    def on_init(self, app=None, **kwargs):
-        self.app = app
-        self.information = LogInformation(self.cfg.logevery)
-        app.worker_init(self)
-        self.app_handler = app.handler()
-        return kwargs
+    @property
+    def app(self):
+        return self.params.app
 
     # Delegates Callbacks to the application
     def on_start(self):
+        app = self.app
+        self.app_handler = app.handler()
         self.app.worker_start(self)
         try:
             self.cfg.worker_start(self)
         except:
             pass
-
-    def on_task(self):
-        self.handle_task()
 
     def on_stop(self):
         return self.app.worker_stop(self)
@@ -117,53 +97,61 @@ It provides two new methods inherited from :class:`ApplicationHandlerMixin`.
 
     def on_info(self, info):
         return self.app.on_info(self, info)
+    
+    def on_event(self, fd, event):
+        '''Override :meth:`pulsar.Actor.on_event` to delegate handling
+to the underlying :class:`Application`.'''
+        return self.app.on_event(self, fd, event)
 
 
-class ApplicationMonitor(ApplicationHandlerMixin, Monitor):
+class ApplicationMonitor(Monitor):
     '''A specialized :class:`Monitor` implementation for managing
 pulsar subclasses of :class:`Application`.
 '''
     actor_class = Worker
-    
-    def on_init(self, app=None, **kwargs):
-        self.app = app
-        self.information = LogInformation(self.cfg.logevery)
-        app.monitor_init(self)
-        if not self.cfg.workers:
-            self.app_handler = app.handler()
-        else:
-            self.app_handler = app.monitor_handler()
-        return super(ApplicationMonitor, self).on_init(**kwargs)
 
+    @property
+    def app(self):
+        return self.params.app
+        
     ############################################################################
     # Delegates Callbacks to the application
     @fire_event
     def on_start(self):
-        self.app.monitor_start(self)
-        # If no workears are available invoke the worker start method too
+        super(ApplicationMonitor, self).on_start()
+        app = self.app
+        app.monitor_start(self)
+        # If no workers available invoke the worker start method too
         if not self.cfg.workers:
-            self.app.worker_start(self)
-
-    def monitor_task(self):
-        self.app.monitor_task(self)
-        # There are no workers, the monitor do their job
-        if not self.cfg.workers:
-            self.handle_task()
+            self.app_handler = app.handler()
+            app.worker_start(self)
+        else:
+            self.app_handler = app.monitor_handler()
 
     @fire_event
     def on_stop(self):
+        app = self.params.app
         if not self.cfg.workers:
-            yield self.app.worker_stop(self)
-        yield self.app.monitor_stop(self)
+            yield app.worker_stop(self)
+        yield app.monitor_stop(self)
         yield super(ApplicationMonitor, self).on_stop()
 
     def on_exit(self):
-        self.app.monitor_exit(self)
+        app = self.params.app
+        app.monitor_exit(self)
         try:
             self.cfg.worker_exit(self)
         except:
             pass
-
+    
+    def monitor_task(self):
+        self.app.monitor_task(self)
+        
+    def on_event(self, fd, event):
+        '''Override :meth:`pulsar.Actor.on_event` to delegate handling
+to the underlying :class:`Application`.'''
+        return self.app.on_event(self, fd, event)
+    
     def actorparams(self):
         '''Override the :meth:`Monitor.actorparams` method to
 updated actor parameters with information about the application.
@@ -171,8 +159,8 @@ updated actor parameters with information about the application.
 :rtype: a dictionary of parameters to be passed to the
     spawn method when creating new actors.'''
         p = Monitor.actorparams(self)
-        app = self.app
-        if app.cfg.concurrency == 'thread':
+        app = self.params.app
+        if self.cfg.concurrency == 'thread':
             app = pickle.loads(pickle.dumps(app))
         p.update({'app': app,
                   'name': '{0}-worker'.format(app.name)})
@@ -180,7 +168,7 @@ updated actor parameters with information about the application.
 
     def on_info(self, info):
         if not self.cfg.workers:
-            return self.app.on_info(self, info)
+            return self.params.app.on_info(self, info)
         else:
             return info
 
@@ -518,19 +506,11 @@ By default it returns ``None``.'''
 
     def on_event(self, worker, fd, events):
         pass
-
-    def worker_init(self, worker):
-        '''Callback by :class:`Worker` when initializing.'''
-        pass
     
     def worker_start(self, worker):
         '''Called by the :class:`Worker` :meth:`pulsar.Actor.on_start`
 :ref:`callback <actor-callbacks>` method.'''
         pass
-
-    def worker_task(self, worker):
-        '''Callback by the *worker* :meth:`Actor.on_task` callback.'''
-        return
 
     def worker_stop(self, worker):
         '''Called by the :class:`Worker` just after stopping.'''
@@ -546,29 +526,23 @@ By default it returns ``None``.'''
 :class:`Worker` is spawned'''
         return params
 
-    def monitor_init(self, monitor):
-        '''Callback by :class:`ApplicationMonitor` when initializing.
-This is a chance to setup your application before the application
-monitor is added to the arbiter.'''
-        pass
-
     def monitor_start(self, monitor):
         '''Callback by :class:`ApplicationMonitor` when starting.
 The application is now in the arbiter but has not yet started.'''
         pass
 
-    def monitor_task(self, monitor):
-        '''Callback by :class:`ApplicationMonitor` at each event loop'''
-        pass
-
     def monitor_stop(self, monitor):
-        '''Callback by :class:`ApplicationMonitor` at each event loop'''
+        '''Callback by :class:`ApplicationMonitor` when stopping'''
         pass
 
     def monitor_exit(self, monitor):
-        '''Callback by :class:`ApplicationMonitor` at each event loop'''
+        '''Callback by :class:`ApplicationMonitor` at exit'''
         pass
 
+    def monitor_task(self, monitor):
+        '''Callback by :class:`ApplicationMonitor` at each event loop'''
+        pass
+    
     def start(self):
         '''Start the application if it wasn't already started.'''
         arbiter = pulsar.arbiter()

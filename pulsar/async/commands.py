@@ -1,3 +1,5 @@
+from time import time
+
 from pulsar import AuthenticationError
 from . import proxy 
 
@@ -60,8 +62,6 @@ def config(client, actor, setget, name, *value):
 @proxy.command(internal=True)
 def mailbox_address(client, actor, caller, address):
     '''The remote *caller* register its mailbox ``address``.'''
-    if address:
-        actor.logger.debug('Registering %s inbox address %s', caller, address)
     actor.link_actor(caller, address)
     return actor.proxy
 
@@ -78,7 +78,9 @@ def stop(client, actor, caller):
 @proxy.command(ack=False, internal=True)
 def notify(client, actor, caller, info):
     '''caller notify itself.'''
-    caller.info = info
+    if isinstance(info, dict):
+        info['last_notified'] = time()
+        caller.info = info
     
 ###########################################################  ARBITER COMMANDS
 @proxy.command(internal=True, commands_set=proxy.arbiter_commands)

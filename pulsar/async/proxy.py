@@ -1,5 +1,4 @@
 import sys
-from time import time
 from collections import deque
 
 from pulsar import CommandNotFound, AuthenticationError
@@ -142,7 +141,6 @@ parameter ``"hello there!"``.
     the socket address of the underlying :attr:`Actor.mailbox`.
     
 '''
-    last_msg = None
     def __init__(self, impl):
         self.aid = impl.aid
         self.name = impl.name
@@ -194,13 +192,6 @@ communicating between actors.
     
     def __ne__(self, o):
         return not self.__eq__(o)
-
-    def local_info(self):
-        '''Return a dictionary containing information about the remote
-object including, aid (actor id), timeout and mailbox size.'''
-        return {'aid':self.aid[:8],
-                'timeout':self.timeout,
-                'mailbox_size':self.mailbox.qsize()}
         
     def stop(self, sender=None):
         '''Stop the remote :class:`Actor`'''
@@ -225,7 +216,7 @@ process where they have been created.
     monitor = None
     def __init__(self, impl):
         self.impl = impl
-        self.info = {'last_notified': time()}
+        self.info = {}
         self.stopping_loops = 0
         super(ActorProxyMonitor,self).__init__(impl)
         

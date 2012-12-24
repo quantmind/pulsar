@@ -84,16 +84,13 @@ class WSGIServer(socket.SocketServer):
         return HttpServer(worker, socket, timeout=self.cfg.keepalive)
 
     def handler(self):
-        callable = self.callable
-        return self.wsgi_handler(callable)
-
-    def wsgi_handler(self, hnd, resp_middleware=None):
         '''Build the wsgi handler from *hnd*. This function is called
 at start-up only.
 
 :parameter hnd: This is the WSGI handle which can be A :class:`WsgiHandler`,
     a WSGI callable or a list WSGI callables.
 :parameter resp_middleware: Optional list of response middleware functions.'''
+        hnd = self.callable
         if not isinstance(hnd, WsgiHandler):
             if not isinstance(hnd, (list, tuple)):
                 hnd = [hnd]
@@ -110,6 +107,4 @@ at start-up only.
             if isclass(mm):
                 mm = mm()
             hnd.response_middleware.append(mm)
-        if resp_middleware:
-            hnd.response_middleware.extend(resp_middleware)
         return hnd

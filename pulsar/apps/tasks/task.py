@@ -96,6 +96,7 @@ start its execution. If no timeout has occured the task will switch to
 a ``STARTED`` :attr:`Task.status` and invoke the :meth:`on_start`
 callback.'''
         job = registry[self.name]
+        result = None
         try:
             if self.maybe_revoked():
                 yield self.on_timeout(worker)
@@ -289,15 +290,15 @@ class TaskInMemory(Task):
 
     def on_start(self, worker=None):
         if worker:
-            return send(worker.monitor, 'save_task', self)
+            return worker.send(worker.monitor, 'save_task', self)
 
     def on_timeout(self, worker=None):
         if worker:
-            return send(worker.monitor, 'save_task', self)
+            return worker.send(worker.monitor, 'save_task', self)
 
     def on_finish(self, worker=None):
         if worker:
-            return send(worker.monitor, 'save_task', self)
+            return worker.send(worker.monitor, 'save_task', self)
 
     @classmethod
     def task_container(cls, scheduler):

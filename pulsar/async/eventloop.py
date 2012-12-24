@@ -23,7 +23,7 @@ __all__ = ['IOLoop', 'PeriodicCallback', 'loop_timeout']
 LOGGER = logging.getLogger('pulsar.eventloop')
 
 def file_descriptor(fd):
-    if hasattr(fd,'fileno'):
+    if hasattr(fd, 'fileno'):
         return fd.fileno()
     else:
         return fd
@@ -40,7 +40,7 @@ class LoopGuard(object):
 
     def __enter__(self):
         loop = self.loop
-        loop.logger.debug("Starting event loop")
+        loop.logger.subdebug("Starting event loop")
         loop._running = True
         if not loop._started:
             loop._started = time.time()
@@ -51,7 +51,7 @@ class LoopGuard(object):
     def __exit__(self, type, value, traceback):
         loop = self.loop
         loop._running = False
-        loop.logger.debug('Exiting event loop')
+        loop.logger.subdebug('Exiting event loop')
         loop._on_exit.callback(loop)
 
 

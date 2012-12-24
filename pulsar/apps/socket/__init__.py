@@ -40,17 +40,15 @@ on a socket. This is the base class of :class:`pulsar.apps.wsgi.WSGIServer`.
     socket_server_class = None
     address = None
     
-    def monitor_init(self, monitor):
+    def monitor_start(self, monitor):
         # if the platform does not support multiprocessing sockets set
         # the number of workers to 0.
         cfg = self.cfg
+        if not self.socket_server_class:
+            raise TypeError('Socket server class not specified.')
         if not pulsar.platform.multiProcessSocket()\
             or cfg.concurrency == 'thread':
             cfg.set('workers', 0)
-        if not self.socket_server_class:
-            raise TypeError('Socket server class not specified.')
-        
-    def monitor_start(self, monitor):
         # Open the socket and bind to address
         address = self.cfg.address
         if address:
@@ -67,16 +65,18 @@ on a socket. This is the base class of :class:`pulsar.apps.wsgi.WSGIServer`.
         s = self.socket_server_class(worker, worker.params.socket)
         # We add the file descriptor handler
         s.on_connection_callbacks.append(worker.handle_fd_event)
-        worker.socket_server = s.start()
+        worker.socket_server = s
     
     def worker_stop(self, worker):
         if hasattr(worker, 'socket_server'):
-            worker.ioloop.remove_handler(worker.socket_server)
-            worker.socket_server.close()
+            # we don't shut down the socket, simply remove all active
+            # connections and othe clean up operations.
+            worker.socket_server.on_close()
         
     def on_event(self, worker, fd, events):
         connection = worker.socket_server.accept()
-        return connection.on_closed
+        if connection is not None:
+            return connection.on_closed
     
     def on_info(self, worker, data):
         server = worker.socket_server

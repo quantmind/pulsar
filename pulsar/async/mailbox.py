@@ -35,7 +35,7 @@ otherwise a queue is used.'''
         if actor.is_monitor():
             return MonitorMailbox(actor)
         else:
-            return Mailbox.make(actor).start()
+            return Mailbox.make(actor)
 
 def actorid(actor):
     return actor.aid if hasattr(actor, 'aid') else actor
@@ -209,22 +209,17 @@ of execution.'''
 
     @classmethod
     def make(cls, actor, backlog=64):
-        return super(Mailbox, cls).make(actor=actor, backlog=backlog,
-                                        onthread=actor.cpubound,
-                                        timeout=None)
+        server = super(Mailbox, cls).make(actor=actor, backlog=backlog,
+                                          onthread=actor.cpubound,
+                                          timeout=None)
+        if not server.actor.is_arbiter():
+            server.ioloop.add_callback(server.send_mailbox_address)
+        return server
 
-    @property
-    def name(self):
-        return '%s mailbox %s:%s' %\
-             (self.actor, self.address[0], self.address[1])
-
-    def on_start(self):
+    def send_mailbox_address(self):
         actor = self.actor
-        if not actor.is_arbiter():
-            # The actor is not the arbiter. We need to register this mailbox
-            # with the actor monitor so that it can receive messages from it
-            return actor.send(actor.monitor, 'mailbox_address', self.address)\
-                        .add_callback(actor.link_actor)
+        return actor.send(actor.monitor, 'mailbox_address', self.address)\
+                    .add_callback(actor.link_actor)
 
 
 class MonitorMailbox(object):
@@ -242,7 +237,7 @@ arbiter inbox.'''
     def ioloop(self):
         return self.mailbox.ioloop
 
-    def start(self):
+    def _run(self):
         pass
     
     def close(self):

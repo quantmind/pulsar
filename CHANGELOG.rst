@@ -1,11 +1,11 @@
 Ver. 0.4.3
 ==============================
-* The :class:`pulsar.Actor` is added to the :attr:`pulsar.Actor.requestloop`
-  tasks. Previously was wrongly added to the :attr:`pulsar.Actor.ioloop` tasks.
+* Removed the loop tasks.
+* Test suite works on with multiple test workers.
 * Fixed issue #17 on asynchronous shell application.
 * Dining philosophers example works on events only.
 * Removed obsolete safe_monitor decorator in :mod:`pulsar.apps`.
-* **342 regression tests**, **87% coverage**.
+* **355 regression tests**, **87% coverage**.
 
 Ver. 0.4.2 - 2012-Dec-12
 ==============================

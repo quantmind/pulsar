@@ -1,12 +1,13 @@
 import os
 import sys
-import time
+from time import time
 
 import pulsar
 from pulsar.utils.structures import AttributeDictionary
 
 from . import proxy
-from .actor import Actor, ACTOR_STATES, ACTOR_TERMINATE_TIMEOUT
+from .actor import Actor, ACTOR_STATES, ACTOR_TERMINATE_TIMEOUT,\
+                     ACTOR_STOPPING_LOOPS
 from .eventloop import setid
 from .concurrency import concurrency
 from .defer import async, iteritems, itervalues, range, NOT_DONE
@@ -91,11 +92,10 @@ during its life time.
 
     Default: :class:`Actor`'''
 
-    def on_init(self, actor_class=None, **kwargs):
+    def on_start(self):
         self.spawning_actors = {}
         self.managed_actors = {}
-        self.actor_class = actor_class or self.actor_class
-        return kwargs
+        self.actor_class = self.params.pop('actor_class') or self.actor_class
 
     def active(self):
         return self.running()
@@ -132,19 +132,20 @@ spawn method when creating new actors.'''
 :parameter stop: if ``True`` stops all alive actor.
 :parameter manage: if ``True`` it checks if alive actors are still responsive.
 '''
-        ACTORS = self.managed_actors
+        MANAGED = self.managed_actors
         SPAWNING = self.spawning_actors
         LINKED = self.linked_actors
         alive = 0
-        items = list(iteritems(ACTORS))
+        ACTORS = list(iteritems(MANAGED))
         # WHEN TERMINATING OR STOPPING WE INCLUDE THE ACTORS WHICH ARE SPAWNING
         shutting_down = terminate or stop
         if shutting_down:
-            items.extend(iteritems(SPAWNING))
-        for aid, actor in items:
+            ACTORS.extend(iteritems(SPAWNING))
+        # Loop over MANAGED ACTORS PROXY MONITORS
+        for aid, actor in ACTORS:
             if not actor.is_alive():
                 actor.join(ACTOR_TERMINATE_TIMEOUT)
-                ACTORS.pop(aid, None)
+                MANAGED.pop(aid, None)
                 SPAWNING.pop(aid, None)
                 LINKED.pop(aid, None)
             else:
@@ -162,8 +163,21 @@ spawn method when creating new actors.'''
         return alive
 
     def manage_actor(self, actor):
-        '''This function is overwritten by the arbiter'''
-        pass
+        '''If an actor failed to notify itself to the arbiter for more than
+the timeout. Stop the arbiter.'''
+        stopping_loops = actor.stopping_loops
+        if self.running() and (stopping_loops or actor.notified):
+            gap = time() - actor.notified
+            if gap > actor.cfg.timeout or stopping_loops:
+                if stopping_loops < ACTOR_STOPPING_LOOPS:
+                    if not stopping_loops:
+                        self.logger.info('Stopping %s. Timeout.', actor)
+                        self.send(actor, 'stop')
+                    actor.stopping_loops += 1
+                else:
+                    self.logger.warn('Terminating %s. Timeout.', actor)
+                    actor.terminate()
+                    actor.join(ACTOR_TERMINATE_TIMEOUT)
 
     def spawn_actors(self):
         '''Spawn new actors if needed. If the :class:`PoolMixin` is spawning
@@ -191,9 +205,11 @@ as required."""
 
     def link_actor(self, proxy, address):
         # Override the link_actor from Actor class
+        self.logger.debug('Registering %s address %s', proxy, address)
         if proxy.aid not in self.spawning_actors:
             raise RuntimeError('Could not retrieve proxy %s.' % proxy)
         proxy_monitor = self.spawning_actors.pop(proxy.aid)
+        proxy_monitor.info['last_notified'] = time()
         on_address = proxy_monitor.on_address
         delattr(proxy_monitor,'on_address')
         try:
@@ -214,13 +230,13 @@ as required."""
     @async()
     def close_actors(self):
         '''Close all managed :class:`Actor`.'''
-        start = time.time()
+        start = time()
         # Stop all of them
         to_stop = self.manage_actors(stop=True)
         while to_stop:
             yield NOT_DONE
             to_stop = self.manage_actors(manage=False)
-            dt = time.time() - start
+            dt = time() - start
             if dt > self.CLOSE_TIMEOUT:
                 self.logger.warn('Cannot stop %s actors.', to_stop)
                 to_stop = self.manage_actors(terminate=True)
@@ -301,7 +317,7 @@ Users shouldn't need to override this method, but use
             self.spawn_actors()
             self.stop_actors()
             self.monitor_task()
-        self.ioloop.add_callback(self.periodic_task)
+        self.ioloop.add_callback(self.periodic_task, False)
 
     # HOOKS
     def on_stop(self):
@@ -332,13 +348,15 @@ Users shouldn't need to override this method, but use
             return actor.proxy.stop()
 
     def info(self):
-        tq = self.ioqueue
         data = {'actor': {'actor_class':self.actor_class.__name__,
                           'concurrency':self.cfg.concurrency,
                           'name':self.name,
                           'age':self.impl.age,
-                          'workers': len(self.managed_actors)},
-                'workers': [a.info for a in itervalues(self.managed_actors)]}
+                          'workers': len(self.managed_actors)}}
+        if not self.started():
+            return data
+        data['workers'] = [a.info for a in itervalues(self.managed_actors)]
+        tq = self.ioqueue
         if tq is not None:
             if isinstance(tq, Queue):
                 tqs = 'multiprocessing.Queue'

@@ -25,7 +25,8 @@ __all__ = ['IStream',
 LOGGER = logging.getLogger('pulsar.sock')
 
 ALLOWED_ERRORS = (errno.EAGAIN, errno.ECONNABORTED,
-                  errno.EWOULDBLOCK, errno.EPIPE)
+                  errno.EWOULDBLOCK, errno.EPIPE,
+                  errno.EINVAL)
 
 MAXFD = 1024
 
@@ -274,7 +275,7 @@ not data was sent. In this case it also raises a socket error.'''
             if e.errno not in ALLOWED_ERRORS:
                 raise
             else:
-                return None,None
+                return None, None
 
     def recv(self, length=None):
         return self.sock.recv(length or io.DEFAULT_BUFFER_SIZE)

@@ -331,6 +331,10 @@ The implementation is very similar to the ``twisted.defer.Deferred`` object.
     ``True`` if the deferred was called. In this case the asynchronous result
     is ready and available in the :attr:`result`.
 
+.. attribute:: running
+
+    ``True`` if the deferred is running callbacks.
+
 """
     paused = 0
     _called = False
@@ -363,7 +367,7 @@ The function takes at most one argument, the result passed to the
 :meth:`callback` method. If the *errback* callable is provided it will
 be called when an exception occurs."""
         errback = errback if errback is not None else pass_through
-        if hasattr(callback,'__call__') and hasattr(errback,'__call__'):
+        if hasattr(callback, '__call__') and hasattr(errback, '__call__'):
             self._callbacks.append((callback, errback))
             self._run_callbacks()
         else:
@@ -375,7 +379,7 @@ be called when an exception occurs."""
         return self.add_callback(pass_through, errback)
 
     def addBoth(self, callback):
-        '''Equivalent to `self.add_callback(callback,callback)`.'''
+        '''Equivalent to `self.add_callback(callback, callback)`.'''
         return self.add_callback(callback, callback)
 
     def add_callback_args(self, callback, *args, **kwargs):

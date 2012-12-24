@@ -49,7 +49,9 @@ send
 get_actor
 ~~~~~~~~~~~~~~
 
-.. autofunction:: get_actor
+.. function:: get_actor
+
+    Return the :class:`Actor` in the current thread/process
 
 .. _api-actors:
 
@@ -158,7 +160,8 @@ in the current context of execution. The above is equivalent to::
 
     
 Each action is implemented via the :func:`command` decorator implemented
-in the :mod:`pulsar.async.commands` module.
+in the :mod:`pulsar.async.commands` module. A :ref:`list of standard commands <actor_commands>`
+is available in the design documentation. 
 
 pulsar command
 ~~~~~~~~~~~~~~~~~~~~
@@ -320,13 +323,6 @@ Application
    :member-order: bysource
 
 
-Application Handler Mixin
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-   
-.. autoclass:: ApplicationHandlerMixin
-   :members:
-   :member-order: bysource
-   
 Application Worker
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
    

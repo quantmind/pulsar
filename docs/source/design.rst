@@ -28,15 +28,16 @@ about individual clients. All requests and responses are handled completely by w
 Actors
 =================
 
+.. _eventloop:
+
 Event loop
 ~~~~~~~~~~~~~~~
-Each actor has its own :class:`IOLoop` to perform its normal operations.
-The :attr:`Actor.ioloop` is initiated just after
-forking.
-Once the event loop is created, the actor add itself to
-:ref:`the event loop tasks <ioloop-tasks>`, so that it can perform
-its operations at each iteration in the event loop.
- 
+Each actor has its own :attr:`Actor.requestloop`, an instance of :class:`IOLoop`,
+which can be used to register handlers on file descriptors.
+The :attr:`Actor.requestloop` is initiated just after forking.
+
+.. _iobound:
+
 IO-bound
 ~~~~~~~~~~~~~~~
 The most common :class:`Actor` has a :meth:`Actor.requestloop` which tells
@@ -53,86 +54,88 @@ The second type of :class:`Actor` can be used to perform CPU intensive
 operations, such as calculations, data manipulation or whatever you need
 them to do. CPU-bound :class:`Actors` have the following properties:
 
-* Their :attr:`Actor.requestloop` listen for requests for a distributed queue
+* Their :attr:`Actor.requestloop` listen for requests on distributed queue
   rather than from a socket.
 * Once they receive a new requests, they can block their request loop
   for a long time. 
-* In addition to their request loop, they have an I/O eventloop running on a
-  separate thread.
-   
-
-.. _actor_commands:
-
-Actor commands
-~~~~~~~~~~~~~~~~~~~~~~~~
-
-An :class:`Actor` communicate with a remote :class:`Actor` by *sending* an
-**action** to perform. This action takes the form of a **command** name and
-optional positional and key-valued parameters. For example::
-
-    send(target, 'echo', 'Hello!')
-    
-will :func:`send` the ``echo('Hello!')`` action to the remote *target*.
-
+* In addition to their request loop, they have an I/O event loop running on a
+  separate thread. It is accessed via the :meth:`Actor.ioloop` attribute.
 
 
 .. _actor-callbacks:
 
 Actor Callbacks
-~~~~~~~~~~~~~~~~~~~~~~~~
-
-:class:`Actor` exposes five callback functions which can be
-used to customize the behaviour of the actor.
-
- * :meth:`Actor.on_init` called just after initialization after forking.
- * :meth:`Actor.on_start` called just before the actor event loop starts.
- * :meth:`Actor.on_task` called at every actor event loop.
- * :meth:`Actor.on_stop`.
- * :meth:`Actor.on_exit`.
- * :meth:`Actor.on_info`.
- * :meth:`Actor.on_message`.
- * :meth:`Actor.on_message_processed`.
-
-These functions do nothing in the :class:`Actor` implementation. 
-
-.. _gunicorn: http://gunicorn.org/
-
-
-Event Loop
 ====================
 
+:class:`Actor` exposes five functions which can be
+used to customize the behaviour of the actor.
+These functions do nothing in the standard :class:`Actor` implementation. 
 
-.. _ioloop-tasks:
+on_start
+~~~~~~~~~~~~~~~
+The `Actor.on_start` methid is called, **once only**, just before the actor
+starts its :ref:`event loop <eventloop>`.
 
-Event loop tasks
-~~~~~~~~~~~~~~~~~~~~~~
+on_event
+~~~~~~~~~~~~~~~
+The :meth:`Actor.on_event` method is called when an event on a registered
+file descriptor occurs.
+ 
+on_stop
+~~~~~~~~~~~~~~~
+The :meth:`Actor.on_stop` method is called, **once only**, just before the
+actor starts shutting down its event loop.
+ 
+on_exit
+~~~~~~~~~~~~~~~
+The :meth:`Actor.on_exit` method is called, **once only**, just before the
+actor is garbage collected.
+ 
+on_info
+~~~~~~~~~~~~~~~
+The :meth:`Actor.on_info` method is called to provide information about
+the actor.
 
 
-.. _remote-actions:
+.. _actor_commands:
 
-Actor remote actions
+Actor commands
 ========================
-Actors communicate with each other by sending *actions* with or
-without parameters. Furthermore, some actions can require authentication while
-other can only be executed internally by pulsar.
+
+An :class:`Actor` communicate with a remote :class:`Actor` by *sending* an
+**action** to perform. This action takes the form of a **command** name and
+optional positional and key-valued parameters. It is possible to add new
+commands via the :class:`pulsar.command` decorator as explained in the
+:ref:`api documentation <api-remote_commands>`.
 
 
 ping
 ~~~~~~~
 
-Ping a remote *arbiter* and recive an asynchronous `'pong``::
+Ping the remote actor *abcd* and receive an asynchronous ``pong``::
 
-    send(arbiter, 'ping')
+    send('abcd', 'ping')
 
 
 echo
 ~~~~~~~
 
-received an asynchronous echo from a remote *arbiter*::
+received an asynchronous echo from a remote actor *abcd*::
 
-    send('echo', arbiter, 'Hello!')
+    send('abcd', 'echo', 'Hello!')
 
 
+run
+~~~~~~~
+
+Run a function on a remote actor. The function must accept actor as its initial parameter::
+
+    def dosomething(actor, *args, **kwargs):
+        ...
+    
+    send('arbiter', 'run', dosomething, *args, **kwargs)
+    
+    
 .. _application-framework:
 
 Application Framework

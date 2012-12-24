@@ -6,7 +6,7 @@ from threading import current_thread
 import pulsar
 from pulsar import send, spawn
 from pulsar.utils import system
-from pulsar.async.actor import ACTOR_STOPPING_LOOPS
+from pulsar.async.actor import ACTOR_STOPPING_LOOPS, EXIT_SIGNALS
 from pulsar.apps.test import unittest, run_on_arbiter, ActorTestMixin, dont_run_with_thread
 
 
@@ -31,7 +31,7 @@ class TestArbiterThread(ActorTestMixin, unittest.TestCase):
     def testSpawning(self):
         arbiter = pulsar.get_actor()
         self.assertEqual(arbiter.name, 'arbiter')
-        self.assertEqual(len(arbiter.monitors), 1)
+        self.assertTrue(len(arbiter.monitors) >= 1)
         future = spawn(name='testSpawning', concurrency=self.concurrency)
         self.assertTrue(future.aid in arbiter.spawning_actors)
         self.assertFalse(future.aid in arbiter.managed_actors)
@@ -123,7 +123,6 @@ class TestArbiterThread(ActorTestMixin, unittest.TestCase):
     def testFakeSignal(self):
         arbiter = pulsar.get_actor()
         self.assertTrue(arbiter.is_arbiter())
-        self.assertEqual(arbiter.signal('fooo'), None)
         # Now put the signal in the queue
         arbiter.signal_queue.put('foooooo')
         self.assertTrue(arbiter.signal_queue.qsize() >= 1)
@@ -138,10 +137,10 @@ class TestArbiterThread(ActorTestMixin, unittest.TestCase):
         arbiter = pulsar.get_actor()
         self.assertTrue(arbiter.is_arbiter())
         for sig in system.SIG_NAMES:
-            if sig not in arbiter.EXIT_SIGNALS:
+            if sig not in EXIT_SIGNALS:
                 break
         # send the signal
-        arbiter.signal(sig)
+        arbiter.signal_queue.put(sig)
         self.assertTrue(arbiter.signal_queue.qsize() >= 1)
         yield pulsar.NOT_DONE
         #TODO this is not valid in multiprocessing!

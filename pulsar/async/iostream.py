@@ -793,19 +793,24 @@ class AsyncSocketServer(BaseSocketHandler):
     connection_class = AsyncConnection
     parser_class = EchoParser
     def __init__(self, actor, socket, parser_class=None, onthread=False,
-                 connection_class=None, timeout=None):
+                  connection_class=None, timeout=None):
         self.actor = actor
         self.parser_class = parser_class or self.parser_class
         self.connection_class = connection_class or self.connection_class
         self.sock = wrap_socket(socket)
         self.connections = set()
-        self.onthread = onthread
         self.timeout = timeout
         self.on_connection_callbacks = []
-        # If the actor has a ioqueue (CPU bound actor) we create a new ioloop
-        if self.onthread:
-            self.__ioloop = IOLoop(logger=actor.logger)
-
+        if onthread:
+            # Create a pulsar thread and starts it
+            self.__ioloop = IOLoop()
+            self.thread = PulsarThread(name=self.name, target=self._run)
+            self.thread.actor = actor
+            actor.requestloop.add_callback(lambda: self.thread.start())
+        else:
+            self.__ioloop = actor.requestloop
+            actor.requestloop.add_callback(self._run)
+        
     @classmethod
     def make(cls, actor=None, bind=None, backlog=None, **kwargs):
         if actor is None:
@@ -822,71 +827,49 @@ class AsyncSocketServer(BaseSocketHandler):
         return cls(actor, socket, **kwargs)
 
     @property
-    def name(self):
-        return '%s %s' % (self.actor, self.address)
+    def onthread(self):
+        return self.thread is not None
     
     @property
-    def started(self):
-        return self._started
+    def name(self):
+        return '%s %s' % (self.__class__.__name__, self.address)
 
     def __repr__(self):
         return self.name
     __str__ = __repr__
 
-    def start(self):
-        self.actor.requestloop.add_callback(self._start)
-        return self
-
     @property
     def ioloop(self):
-        return self.__ioloop if self.onthread else self.actor.requestloop
+        return self.__ioloop
 
     @property
     def active_connections(self):
         return len(self.connections)
-
-    def on_start(self):
-        '''callback just before the event loop starts.'''
-        pass
-
-    def shut_down(self):
-        pass
 
     def quit_connections(self):
         for c in list(self.connections):
             c.close()
             
     def on_close(self, failure=None):
-        self.shut_down()
         self.quit_connections()
         self.ioloop.remove_handler(self)
         if self.onthread:
-            self.ioloop.stop()
+            self.__ioloop.stop()
             # We join the thread
             if current_thread() != self.thread:
                 self.thread.join()
 
     ############################################################## INTERNALS
-    def _start(self):
-        # If onthread is true we start the event loop on a
-        # separate thread.
-        if self.onthread:
-            if self.thread and self.thread.is_alive():
-                raise RunTimeError('Cannot start socket server. '\
-                                   'It has already started')
-            self.thread = PulsarThread(name=self.name, target=self._run)
-            self.thread.start()
-        if not self._started:
-            self._started = True
-            self.ioloop.add_handler(self,
-                                    self.new_connection,
-                                    self.ioloop.READ)
-            return self.on_start()
-
     def _run(self):
+        # add new_connection READ handler to the eventloop and starts the
+        # eventloop if it was not already started.
+        self.actor.logger.debug('Registering %s with event loop.', self)
+        self.ioloop.add_handler(self,
+                                self._on_connection,
+                                self.ioloop.READ)
         self.ioloop.start()
 
-    def new_connection(self, fd, events):
+    def _on_connection(self, fd, events):
         '''Called when a new connection is available.'''
         # obtain the client connection
         for callback in self.on_connection_callbacks:

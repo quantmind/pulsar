@@ -97,7 +97,7 @@ class DiningPhilosophers(pulsar.Application):
     commands_set = philosophers_cmommands
     cfg = {'workers': 5}
     
-    def monitor_init(self, monitor):
+    def monitor_start(self, monitor):
         self.not_available_forks = set()
         
     def worker_start(self, philosopher):

@@ -3,7 +3,6 @@ import os
 import sys
 import signal
 from multiprocessing import current_process
-from multiprocessing.queues import Empty
 
 import pulsar
 from pulsar.utils import system
@@ -12,22 +11,15 @@ from pulsar.utils.security import gen_unique_id
 from pulsar import HaltServer
 
 from .defer import itervalues, iteritems, multi_async, async
-from .actor import Actor, ACTOR_STATES,  ACTOR_TERMINATE_TIMEOUT,\
-                     ACTOR_STOPPING_LOOPS
+from .actor import Actor, ACTOR_STATES
 from .monitor import PoolMixin, _spawn_actor
 from .access import get_actor, set_actor
 from . import proxy
 
-try:    #pragma nocover
-    import queue
-except ImportError: #pragma nocover
-    import Queue as queue
-ThreadQueue = queue.Queue
-
 
 process_global = pulsar.process_global
 
-__all__ = ['arbiter', 'spawn', 'Arbiter', 'ThreadQueue']
+__all__ = ['arbiter', 'spawn', 'Arbiter']
 
 
 def arbiter(commands_set=None, **params):
@@ -53,7 +45,7 @@ the arbiter creates the actor it returns the proxy to the original caller.
 **Parameter kwargs**
 
 These optional parameters are:
-    * *actorcls* a custom :class:`Actor` subclass.
+    * *actor_class* a custom :class:`Actor` subclass.
     * *aid* the actor id
     * *commands_set* the set of :ref:`remote commands <api-remote_commands>`
       the :class:`Actor` can respond to.
@@ -91,7 +83,7 @@ It runs the main :class:`IOLoop` of your concurrent application.
 It is the equivalent of the gunicorn_ arbiter, the twisted_ reactor
 and the tornado_ eventloop.
 
-Users access the arbiter by the high level api::
+Users access the arbiter (in the arbiter process domain) by the high level api::
 
     import pulsar
 
@@ -103,8 +95,6 @@ Users access the arbiter by the high level api::
 '''
     pidfile = None
     restarted = False
-    EXIT_SIGNALS = (signal.SIGINT, signal.SIGTERM,
-                    signal.SIGABRT, system.SIGQUIT)
 
     ############################################################################
     # ARBITER HIGH LEVEL API
@@ -161,31 +151,26 @@ Users access the arbiter by the high level api::
     ############################################################################
     # OVERRIDE ACTOR HOOKS
     ############################################################################
-    def on_init(self, **kwargs):
-        testing = kwargs.pop('__test_arbiter__',False)
-        if not testing:
-            if current_process().daemon:
-                raise pulsar.PulsarException(
-                        'Cannot create the arbiter in a daemon process')
-            if isinstance(get_actor(), self.__class__):
-                raise pulsar.PulsarException('Arbiter already created')
-            os.environ["SERVER_SOFTWARE"] = pulsar.SERVER_SOFTWARE
+    def on_start(self):
+        if current_process().daemon:
+            raise pulsar.PulsarException(
+                    'Cannot create the arbiter in a daemon process')
+        os.environ["SERVER_SOFTWARE"] = pulsar.SERVER_SOFTWARE
         if self.cfg.daemon: #pragma    nocover
             system.daemonize()
-        self.signal_queue = ThreadQueue()
-        return PoolMixin.on_init(self, **kwargs)
-
-    def on_start(self):
         pidfile = self.cfg.pidfile
         if pidfile is not None:
             p = Pidfile(pidfile)
             p.create(self.pid)
             self.pidfile = p
+        PoolMixin.on_start(self)
 
     def periodic_task(self):
+        # Arbiter periodic task
         if self.restarted:
             self.stop(exit_code=self.exit_code)
-        if not self._abort():
+        if self.can_continue() and self.running():
+            # managed actors job
             self.manage_actors()
             for m in list(itervalues(self.monitors)):
                 if m.started():
@@ -198,24 +183,7 @@ Users access the arbiter by the high level api::
                 self.cfg.arbiter_task(self)
             except:
                 pass
-            self.ioloop.add_callback(self.periodic_task)
-
-    def manage_actor(self, actor):
-        '''If an actor failed to notify itself to the arbiter for more than
-the timeout. Stop the arbiter.'''
-        stopping_loops = actor.stopping_loops
-        if self.running() and (stopping_loops or actor.notified):
-            gap = time() - actor.notified
-            if gap > actor.cfg.timeout or stopping_loops:
-                if stopping_loops < ACTOR_STOPPING_LOOPS:
-                    if not stopping_loops:
-                        self.logger.info('Stopping %s. Timeout.', actor)
-                        self.send(actor, 'stop')
-                    actor.stopping_loops += 1
-                else:
-                    self.logger.warn('Terminating %s. Timeout.', actor)
-                    actor.terminate()
-                    actor.join(ACTOR_TERMINATE_TIMEOUT)
+        self.ioloop.add_callback(self.periodic_task, False)
 
     @async()
     def on_stop(self):
@@ -233,13 +201,13 @@ the timeout. Stop the arbiter.'''
             yield self._close_message_queue()
     
     def on_exit(self):
-        self.logger.info("Shutting down server.")
         p = self.pidfile
         if p is not None:
             p.unlink()
-        if self.managed_actors:
+        if self.managed_actors or self.linked_actors:
             self.state = ACTOR_STATES.TERMINATE
-        if self.exit_code is not None:
+        self.logger.info("Bye.")
+        if self.exit_code:
             sys.exit(self.exit_code)
 
     ############################################################################
@@ -260,49 +228,14 @@ the timeout. Stop the arbiter.'''
             self._halt(code=1)
 
     def _halt(self, reason=None, code=None):
-        #halt the arbiter. If there no signal ``sig`` it is an unexpected exit
         if not self.closed():
             if not reason:
-                reason = "Unhandled exception in main loop."
-                self.logger.critical(reason, exc_info=True)
+                self.logger.critical("Unhandled exception in main loop.",
+                                     exc_info=True)
             else:
                 self.logger.info(reason)
             self.stop(True, exit_code=code)
 
     def _close_message_queue(self):
         return
-
-    def _abort(self):
-        '''Called by the Event loop to perform the signal handling from the
-signal queue'''
-        sig = None
-        while True:
-            try:
-                sig = self.signal_queue.get(timeout=0.01)
-            except (Empty, IOError):
-                break
-            if sig not in system.SIG_NAMES:
-                self.logger.info("Ignoring unknown signal: %s", sig)
-                return
-            else:
-                signame = system.SIG_NAMES.get(sig)
-                if sig in self.EXIT_SIGNALS:
-                    self.stop(True)
-                    return True
-                handler = getattr(self, "signal_%s" % signame.lower(), None)
-                if not handler:
-                    self.logger.debug('No Handle for signal "%s".', signame)
-                else:
-                    self.logger.info("Handling signal: %s", signame)
-                    return handler()
-
-    def signal(self, sig, frame=None):
-        signame = system.SIG_NAMES.get(sig, None)
-        if signame:
-            if self.ioloop.running():
-                self.logger.debug('Received and queueing signal %s.', signame)
-                self.signal_queue.put(sig)
-                self.ioloop.wake()
-        else:
-            self.logger.debug('Received unknown signal "%s". Skipping.', sig)
 

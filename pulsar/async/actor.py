@@ -2,26 +2,34 @@ import sys
 import os
 import signal
 import atexit
+import socket
 from time import time
 import random
 import threading
 from multiprocessing import current_process
+from multiprocessing.queues import Empty
 from threading import current_thread
 
+try:    #pragma nocover
+    import queue
+except ImportError: #pragma nocover
+    import Queue as queue
+ThreadQueue = queue.Queue
 
 from pulsar import AlreadyCalledError, AlreadyRegistered,\
                    ActorAlreadyStarted, LogginMixin, system, Config
 from pulsar.utils.structures import AttributeDictionary
+from pulsar.utils import events
 from .eventloop import IOLoop, setid
 from .proxy import ActorProxy, ActorMessage, get_command, get_proxy
 from .defer import make_async, is_failure, iteritems, itervalues,\
-                     pickle, safe_async, log_failure, make_async, is_async,\
-                     EXIT_EXCEPTIONS
+                     pickle, async, log_failure, is_async,\
+                     as_failure, EXIT_EXCEPTIONS
 from .mailbox import IOQueue, mailbox
 from .access import set_local_data, is_mainthread, get_actor, remove_actor
 
 
-__all__ = ['is_actor', 'send', 'Actor', 'ACTOR_STATES', 'Pulsar']
+__all__ = ['is_actor', 'send', 'Actor', 'ACTOR_STATES', 'Pulsar', 'ThreadQueue']
 
 ACTOR_STATES = AttributeDictionary(INITIAL=0X0,
                                    INACTIVE=0X1,
@@ -35,13 +43,14 @@ ACTOR_STATES.DESCRIPTION = {ACTOR_STATES.INACTIVE: 'inactive',
                             ACTOR_STATES.STOPPING: 'stopping',
                             ACTOR_STATES.CLOSE: 'closed',
                             ACTOR_STATES.TERMINATE:'terminated'}
+EXIT_SIGNALS = (signal.SIGINT, signal.SIGTERM, signal.SIGABRT, system.SIGQUIT)
 #
 # LOW LEVEL CONSTANTS - NO NEED TO CHANGE THOSE ###########################
-ACTOR_NOTIFY = 30    # NOTIFY AT LEAST AFTER THESE SECONDS
+MIN_NOTIFY = 5     # DON'T NOTIFY BELOW THIS INTERVAL
+MAX_NOTIFY = 30    # NOTIFY AT LEAST AFTER THESE SECONDS
 ACTOR_TERMINATE_TIMEOUT = 2 # TIMEOUT WHEN JOINING A TERMINATING ACTOR
 ACTOR_TIMEOUT_TOLERANCE = 0.6
 ACTOR_STOPPING_LOOPS = 5
-
 
 def is_actor(obj):
     return isinstance(obj, Actor)
@@ -85,16 +94,6 @@ class Pulsar(LogginMixin):
                           handlers=self.cfg.loghandlers)
         
 
-class NotifyTask:
-    
-    def __init__(self, actor):
-        self.actor = actor
-        
-    def __call__(self):
-        if self.actor.active():
-            self.actor.notify()
-            
-        
 class Actor(Pulsar):
     '''The base class for concurrent programming in pulsar. In computer science,
 the **Actor model** is a mathematical model of concurrent computation that
@@ -189,18 +188,13 @@ Here ``a`` is actually a reference to the remote actor.
 '''
     exit_code = None
     mailbox = None
-    _notify_task = None
-    stopping_start = None
-    stopping_end = None
+    signal_queue = None
     
     def __init__(self, impl):
         self.__impl = impl
-        on_task = impl.params.pop('on_task', None)
         on_event = impl.params.pop('on_event', None)
         ioqueue = impl.params.pop('ioqueue', None)
         if not self.is_arbiter():
-            if on_task:
-                self.on_task = lambda : on_task(self)
             if on_event:
                 self.on_event = lambda fd, event: on_event(self, fd, event)
         else:
@@ -214,8 +208,9 @@ Here ``a`` is actually a reference to the remote actor.
         self.arbiter = impl.params.pop('arbiter', None)
         self.monitor = impl.params.pop('monitor', None)
         self.proxy_mailboxes = {}
-        self.params = AttributeDictionary(self.on_init(**impl.params))
+        self.params = AttributeDictionary(**impl.params)
         del impl.params
+        setid(self)
 
     def __repr__(self):
         return self.impl.unique_name
@@ -279,10 +274,10 @@ logging is configured, the :attr:`Actor.mailbox` is registered and the
         if self.state == ACTOR_STATES.INITIAL:
             self.configure_logging()
             self._setup_ioloop()
-            setid(self)
-            self.state = ACTOR_STATES.RUN
-            self.periodic_task()
+            events.fire('start', self)
             self.on_start()
+            self.periodic_task()
+            self.state = ACTOR_STATES.RUN
             self._run()
             
     def command(self, action):
@@ -299,7 +294,6 @@ parameters *params*. It return a :class:`ActorMessage`.'''
     def put(self, request):
         '''Put a *request* into the :attr:`ioqueue` if available.'''
         if self.ioqueue:
-            self.logger.debug('Putting %s into IO queue', request)
             self.ioqueue.put(('request', request))
         else:
             self.logger.error("Trying to put a request on task queue,\
@@ -356,34 +350,29 @@ mean it is running.'''
     ############################################################################
     ##    EVENT HANDLING
     ############################################################################
+    @async()
     def handle_fd_event(self, fd, event):
         '''This function should be used when registering events
- on file descriptors. It is called by the :attr:`requestloop` when an event
- occurs on file descriptor *fd*.'''
+ on file descriptors registered with the :attr:`requestloop`.'''
         self.request_processed += 1
         self.concurrent_requests += 1
-        msg = safe_async(self.on_event, args=(fd, event))
-        msg.addBoth(self.end_event)
-
-    def end_event(self, result):
+        try:
+            future = make_async(self.on_event(fd, event))
+        except Exception as e:
+            result = as_failure(e)
+        else:
+            yield future
+            result = future.result
         self.concurrent_requests -= 1
         log_failure(result)
         max_requests = self.cfg.max_requests
-        should_stop = max_requests and self.request_processed >= max_requests
-        if should_stop:
-            self.logger.info("Shutting down %s. Max requests reached.", self)
+        if max_requests and self.request_processed >= max_requests:
+            self.logger.warn("Shutting down %s. Max requests reached.", self)
             self.stop()
 
     ############################################################################
     ##    CALLBACKS
     ############################################################################
-    def on_init(self, **kwargs):
-        '''The :ref:`actor callback <actor-callbacks>` run **once** at the
-end of initialisation (after forking). No event loops available yet. This is a
-chance to modify the actor with *kwargs*. By defaults it returns the
-parameters to be included in the :attr:`params`.'''
-        return kwargs
-
     def on_start(self):
         '''The :ref:`actor callback <actor-callbacks>` run **once** just before
 the actor starts (after forking) its event loop. Every attribute is available,
@@ -425,7 +414,7 @@ life of an actor.'''
 and closing its :attr:`Actor.mailbox`. Once everything is closed
 properly this actor will go out of scope.'''
         if force or self.state <= ACTOR_STATES.RUN:
-            self.stopping_start = time()
+            events.fire('stop', self)
             self.state = ACTOR_STATES.STOPPING
             self.exit_code = exit_code
             try:
@@ -439,34 +428,38 @@ properly this actor will go out of scope.'''
     def exit(self, result=None):
         '''Exit from the :class:`Actor` domain.'''
         if not self.stopped():
-            self.ioloop.remove_task(self._notify_task)
-            self.requestloop.remove_task(self)
             self.mailbox.close()
             # we don't want monitors to stop the request loop
             if not self.is_monitor():
                 self.requestloop.stop()
             self.state = ACTOR_STATES.CLOSE
-            self.stopping_end = time()
             self.logger.debug('%s exited', self)
             remove_actor(self)
+            events.fire('exit', self)
             self.on_exit()
 
     ############################################################################
     #    INTERNALS
     ############################################################################
     def periodic_task(self):
-        if self.active():
-            self.send('arbiter', 'notify', self.info())
-            secs = min(ACTOR_TIMEOUT_TOLERANCE*self.cfg.timeout, ACTOR_NOTIFY)
-            self.ioloop.add_timeout(secs, self.periodic_task)
-        else:
-            self.ioloop.add_callback(self.periodic_task)
+        if self.can_continue():
+            if self.active():
+                self.send('arbiter', 'notify', self.info())
+                secs = max(ACTOR_TIMEOUT_TOLERANCE*self.cfg.timeout, MIN_NOTIFY)
+                next = time() + min(secs, MAX_NOTIFY)
+                self.ioloop.add_timeout(next, self.periodic_task)
+            else:
+                self.ioloop.add_callback(self.periodic_task, False)
         
     def proxy_mailbox(self, address):
         m = self.proxy_mailboxes.get(address)
         if not m:
-            m = mailbox(address=address)
-            self.proxy_mailboxes[address] = m
+            try:
+                m = mailbox(address=address)
+            except socket.error:
+                m = None
+            else:
+                self.proxy_mailboxes[address] = m
         return m
     
     def get_actor(self, aid):
@@ -505,15 +498,13 @@ status and performance.'''
                   'io_loops': self.ioloop.num_loops}
         if self.cpubound:
             events['request_loops'] = requestloop.num_loops
-        data = {'actor': actor,
-                'last_notified': self.params.last_notified,
-                'events': events}
+        data = {'actor': actor, 'events': events}
         if isp:
             data['system'] = system.system_info(self.pid)
         return self.on_info(data)
     
     def link_actor(self, proxy, address=None):
-        '''Add the *proxy* to the :attr:`` dictionary.
+        '''Add the *proxy* to the :attr:`linked_actors` dictionary.
 if *proxy* is not a class:`ActorProxy` instance raise an exception.'''
         if address:
             proxy.address = address
@@ -549,25 +540,40 @@ if *proxy* is not a class:`ActorProxy` instance raise an exception.'''
             #system.set_owner_process(cfg.uid, cfg.gid)
             if is_mainthread():
                 self.logger.debug('Installing signals')
-                # The default signal handling function in signal
-                sfun = getattr(self, 'signal', None)
+                self.signal_queue = ThreadQueue()
                 for name in system.ALL_SIGNALS:
-                    func = sfun
-                    if not func:
-                        func = getattr(self,'handle_%s' % name.lower(), None)
-                    if func:
-                        sig = getattr(signal, 'SIG%s' % name)
-                        try:
-                            signal.signal(sig, func)
-                        except ValueError:
-                            break
+                    sig = getattr(signal, 'SIG%s' % name)
+                    try:
+                        signal.signal(sig, self._queue_signal)
+                    except ValueError:
+                        break
         self.mailbox = mailbox(self)
         set_local_data(self)
-        self.logger.info('address %s', self.mailbox.address)
+        self.logger.info('%s started at address %s', self, self.mailbox.address)
 
+    def _queue_signal(self, sig, frame=None):
+        self.signal_queue.put(sig)
+        
+    def can_continue(self):
+        if self.signal_queue is not None:
+            while True:
+                try:
+                    sig = self.signal_queue.get(timeout=0.01)
+                except (Empty, IOError):
+                    break
+                if sig not in system.SIG_NAMES:
+                    self.logger.info("Ignoring unknown signal: %s", sig)
+                else:
+                    signame = system.SIG_NAMES.get(sig)
+                    if sig in EXIT_SIGNALS:
+                        self.logger.warn("Got signal %s. Stopping.", signame)
+                        self.stop(True)
+                        return False
+                    else:
+                        self.logger.debug('No handler for signal %s.', signame)
+        return True
+    
     def _run(self):
-        self._notify_task = NotifyTask(self)
-        self.ioloop.add_task(self._notify_task)
         try:
             self.requestloop.start()
         finally:
