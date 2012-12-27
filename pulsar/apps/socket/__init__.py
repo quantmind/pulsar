@@ -1,5 +1,18 @@
 '''An application for asynchronous applications serving requests
-on a socket.'''
+on a socket.
+An application for asynchronous applications serving requests
+on a socket. This is the base class of :class:`pulsar.apps.wsgi.WSGIServer`.
+
+.. attribute:: socket_server_class
+
+    Class or callable which returns the asynchronous socket server, usually
+    a subclass of :class:`pulsar.AsyncSocketServer`.
+    
+.. attribute:: address
+
+    The socket address, available once the application has started.
+    
+'''
 import pulsar
 from pulsar import AsyncIOStream
 
@@ -23,19 +36,6 @@ class Bind(SocketSetting):
         
 
 class SocketServer(pulsar.Application):
-    '''An application for asynchronous applications serving requests
-on a socket. This is the base class of :class:`pulsar.apps.wsgi.WSGIServer`.
-
-.. attribute:: socket_server_class
-
-    Class or callable which returns the asynchronous socket server, usually
-    a subclass of :class:`pulsar.AsyncSocketServer`.
-    
-.. attribute:: address
-
-    The socket address, available once the application has started.
-    
-'''
     _app_name = 'socket'
     socket_server_class = None
     address = None
@@ -46,7 +46,7 @@ on a socket. This is the base class of :class:`pulsar.apps.wsgi.WSGIServer`.
         cfg = self.cfg
         if not self.socket_server_class:
             raise TypeError('Socket server class not specified.')
-        if not pulsar.platform.multiProcessSocket()\
+        if not pulsar.platform.has_multiProcessSocket\
             or cfg.concurrency == 'thread':
             cfg.set('workers', 0)
         # Open the socket and bind to address

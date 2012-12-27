@@ -56,7 +56,7 @@ class ColorFormatter(logging.Formatter):
               "default": "green"}
     
     def __init__(self, *args, **kwargs):
-        self.use_color = kwargs.pop('use_color',not platform.isWindows())
+        self.use_color = kwargs.pop('use_color', not platform.isWindows)
         logging.Formatter.__init__(self, *args, **kwargs)
 
     def formatException(self, ei):

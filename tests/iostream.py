@@ -1,15 +1,26 @@
 import socket
 
 import pulsar
+from pulsar import is_failure
 from pulsar.utils.httpurl import to_bytes, to_string
 from pulsar.apps.socket import SocketServer
 from pulsar.apps.test import unittest, run_on_arbiter, dont_run_with_thread
         
-
-class EchoServer(SocketServer):
-    socket_server_class = pulsar.AsyncSocketServer 
+        
+class EchoResponse(pulsar.AsyncResponse):
     
-
+    def __iter__(self):
+        if self.parsed_data == b'quit':
+            yield b'bye'
+            self.connection.close()
+        else:
+            yield self.parsed_data
+            
+            
+class TestServerSocketServer(pulsar.AsyncSocketServer):
+    response_class = EchoResponse
+    
+    
 class SafeCallback(pulsar.Deferred):
     
     def __call__(self):
@@ -31,8 +42,9 @@ class TestPulsarStreams(unittest.TestCase):
     server = None
     @classmethod
     def setUpClass(cls):
-        s = EchoServer(name=cls.__name__.lower(), bind='127.0.0.1:0',
-                       concurrency=cls.concurrency)
+        s = SocketServer(socket_server_class=TestServerSocketServer,
+                         name=cls.__name__.lower(), bind='127.0.0.1:0',
+                         concurrency=cls.concurrency)
         outcome = pulsar.send('arbiter', 'run', s)
         yield outcome
         cls.server = outcome.result
@@ -148,7 +160,24 @@ class TestPulsarStreams(unittest.TestCase):
         yield r
         self.assertEqual(r.result, msg)
         self.assertTrue(client.closed)
-        
+    
+    def testConnectionClose(self):
+        client = self.client(timeout=0)
+        future = client.execute(b'ciao')
+        yield future
+        self.assertEqual(future.result, b'ciao')
+        future = client.execute(b'quit')
+        yield future
+        self.assertEqual(future.result, b'bye')
+        try:
+            future = client.execute(b'ciao')
+        except IOError:
+            pass
+        else:
+            future.add_errback(lambda res: (res,))
+            yield future
+            result = future.result[0]
+            self.assertTrue(is_failure(result))
         
         
 @dont_run_with_thread

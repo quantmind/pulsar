@@ -15,7 +15,7 @@ import os
 import textwrap
 import types
 
-from pulsar import __version__, SERVER_NAME
+from pulsar import __version__, SERVER_NAME, parse_address
 from . import system
 from .httpurl import to_bytes, iteritems, HttpParser as PyHttpParser,\
                      native_str
@@ -210,7 +210,7 @@ settings via the :meth:`Setting.add_argument`.
     def address(self):
         bind = self.settings['bind']
         if bind:
-            return system.parse_address(to_bytes(bind.get()))
+            return parse_address(to_bytes(bind.get()))
 
     @property
     def uid(self):

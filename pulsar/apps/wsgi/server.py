@@ -13,12 +13,9 @@ from pulsar.utils.httpurl import Headers, is_string, unquote,\
                                     has_empty_content, to_bytes,\
                                     host_and_port_default, mapping_iterator,\
                                     Headers, REDIRECT_CODES
-from pulsar.utils import event
+from pulsar.utils import events
 
 from .wsgi import WsgiResponse, handle_wsgi_error
-
-
-event.create('http-headers')
 
 
 __all__ = ['HttpServer']
@@ -47,8 +44,8 @@ nothing."""
         "SERVER_PROTOCOL": protocol,
         'CONTENT_TYPE': '',
         "CONTENT_LENGTH": '',
-        'SERVER_NAME': connection.server_name,
-        'SERVER_PORT': connection.server_port,
+        'SERVER_NAME': connection.server.server_name,
+        'SERVER_PORT': connection.server.server_port,
         "wsgi.multithread": False,
         "wsgi.multiprocess":False
     }
@@ -238,7 +235,7 @@ invocation of the application.
         keep_alive = self.keep_alive
         self.environ['pulsar.connection'] = self.connection
         try:
-            resp = conn.wsgi_handler(self.environ, self.start_response)
+            resp = conn.server.app_handler(self.environ, self.start_response)
             for b in self._generate(resp):
                 yield b
         except Exception as e:
@@ -304,7 +301,7 @@ is an HTTP upgrade (websockets)'''
         if not self._headers_sent:
             tosend = self.get_headers(force)
             if tosend:
-                event.fire('http-headers', tosend, sender=self)
+                events.fire('http-headers', self, headers=tosend)
                 self._headers_sent = tosend.flat(self.version, self.status)
                 return self._headers_sent
 
@@ -312,24 +309,6 @@ is an HTTP upgrade (websockets)'''
         self.connection._current_response = None
         if not self.keep_alive:
             return self.connection.close(msg)
-
-
-class HttpConnection(AsyncConnection):
-    '''An :class:`AsyncConnection` for HTTP servers. It produces
-a :class:`HttpResponse` at every client request.'''
-    response_class = HttpResponse
-
-    @property
-    def wsgi_handler(self):
-        return self.actor.app_handler
-    
-    @property
-    def server_name(self):
-        return self.server.server_name
-    
-    @property
-    def server_port(self):
-        return self.server.server_port
 
 
 class HttpServerParser:
@@ -366,16 +345,17 @@ the following algorithm:
         if headers is not None and headers.get('Expect') == '100-continue':
             if not self.parser.is_message_complete():
                 self.connection.write(b'HTTP/1.1 100 Continue\r\n\r\n')
-    
-    
+
+
 class HttpServer(AsyncSocketServer):
-    connection_class = HttpConnection
+    response_class = HttpResponse
 
     def __init__(self, *args, **kwargs):
         super(HttpServer, self).__init__(*args, **kwargs)
         host, port = self.sock.getsockname()[:2]
         self.server_name = socket.getfqdn(host)
         self.server_port = port
+        self.app_handler = self.actor.app_handler
         
     def parser_class(self):
         return HttpServerParser()

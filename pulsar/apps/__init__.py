@@ -7,7 +7,7 @@ import pulsar
 from pulsar import Actor, make_async, safe_async, is_failure, HaltServer,\
                      Monitor, loop_timeout, Deferred, get_actor, async
 from pulsar.async.defer import pickle
-from pulsar.utils import event
+from pulsar.utils import events
 from pulsar.utils.log import LogInformation
 
 __all__ = ['Application',
@@ -32,7 +32,7 @@ def fire_event(f):
             result = app
         else:
             result.log()
-        event.fire(name, sender=app)
+        events.fire(name, app)
         app.events[name].callback(app)
         
     def _(*args, **kwargs):
@@ -305,7 +305,7 @@ These are the most important facts about a pulsar :class:`Application`
             self.local.events = dict(app_events(self))
             self.cfg.on_start()
             self.configure_logging()
-            event.fire('ready', sender=self)
+            events.fire('ready', self)
             arbiter = pulsar.arbiter(cfg=self.cfg.new_config())
             if self.on_config() is not False:
                 monitor = arbiter.add_monitor(self.monitor_class,
@@ -316,9 +316,8 @@ These are the most important facts about a pulsar :class:`Application`
                 self.cfg = monitor.cfg
                 if self.commands_set:
                     monitor.impl.commands_set.update(self.commands_set)
-        events = self.events
-        if events:
-            return events['start']
+        if self.events:
+            return self.events['start']
 
     @property
     def app(self):

@@ -6,12 +6,15 @@ import socket
 import errno
 import time
 
+from .httpurl import native_str
+
 __all__ = ['IStream',
            'BaseSocket',
            'Socket',
            'TCPSocket',
            'TCP6Socket',
            'wrap_socket',
+           'parse_address',
            'get_socket_timeout',
            'create_socket',
            'create_client_socket',
@@ -29,6 +32,31 @@ ALLOWED_ERRORS = (errno.EAGAIN, errno.ECONNABORTED,
                   errno.EINVAL)
 
 MAXFD = 1024
+
+def parse_address(netloc, default_port=8000):
+    '''Parse an address and return a tuple with host and port'''
+    netloc = native_str(netloc)
+    if netloc.startswith("unix:"):
+        return netloc.split("unix:")[1]
+    # get host
+    if '[' in netloc and ']' in netloc:
+        host = netloc.split(']')[0][1:].lower()
+    elif ':' in netloc:
+        host = netloc.split(':')[0].lower()
+    elif netloc == "":
+        host = "0.0.0.0"
+    else:
+        host = netloc.lower()
+    #get port
+    netloc = netloc.split(']')[-1]
+    if ":" in netloc:
+        port = netloc.split(':', 1)[1]
+        if not port.isdigit():
+            raise RuntimeError("%r is not a valid port number." % port)
+        port = int(port)
+    else:
+        port = default_port 
+    return (host, port)
 
 def get_socket_timeout(val):
     '''Obtain a valid stocket timeout value from *val*'''
@@ -215,17 +243,12 @@ higher level tools for creating and reusing sockets already created.'''
 
     def _init(self, fd, address, bound):
         if fd is None:
-            self._clean()
             sock = socket.socket(self.FAMILY, socket.SOCK_STREAM)
         elif hasattr(fd, 'fileno'):
             self.sock = fd
             return
         else:
-            if hasattr(socket, 'fromfd'):
-                sock = socket.fromfd(fd, self.FAMILY, socket.SOCK_STREAM)
-            else:
-                raise ValueError('Cannot create socket from file descriptor.'\
-                                 ' Not implemented in your system')
+            sock = socket.fromfd(fd, self.FAMILY, socket.SOCK_STREAM)
         if self.is_server:
             self.sock = self.set_options(sock, address, bound)
         else:
@@ -249,9 +272,6 @@ higher level tools for creating and reusing sockets already created.'''
     def is_server(self):
         return self._is_server
 
-    def _clean(self):
-        pass
-
     def write(self, data):
         '''Same as the socket send method but it close the connection if
 not data was sent. In this case it also raises a socket error.'''
@@ -268,7 +288,6 @@ not data was sent. In this case it also raises a socket error.'''
 
     def accept(self):
         '''Wrap the socket accept method.'''
-        client = None
         try:
             return self.sock.accept()
         except socket.error as e:
@@ -395,24 +414,27 @@ if os.name == 'posix':
 
         FAMILY = socket.AF_UNIX
 
-        def _clean(self):
-            try:
-                os.remove(conf.address)
-            except OSError:
-                pass
-
         def __str__(self):
             return "unix:%s" % self.address
 
         def bind(self, sock, address):
-            old_umask = os.umask(self.conf.umask)
+            try:
+                os.remove(address)
+            except OSError:
+                pass
+            #old_umask = os.umask(self.conf.umask)
             sock.bind(address)
-            system.chown(address, self.conf.uid, self.conf.gid)
-            os.umask(old_umask)
+            #system.chown(address, self.conf.uid, self.conf.gid)
+            #os.umask(old_umask)
 
         def close(self):
+            name = self.name
             super(UnixSocket, self).close()
-            os.unlink(self.name)
+            if name:
+                try:
+                    os.remove(name)
+                except OSError:
+                    pass
 
 
     def create_socket_address(addr):
@@ -428,7 +450,6 @@ if os.name == 'posix':
                 sock_type = UnixSocket
             else:
                 raise TypeError("Unable to create socket from: %r" % addr)
-
         return sock_type, addr
 
 else:   #pragma    nocover

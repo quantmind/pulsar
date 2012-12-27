@@ -7,6 +7,7 @@ from pulsar import IStream, create_socket_address
 from pulsar.utils.httpurl import HttpClient, HttpRequest, HttpConnectionPool,\
                                     HttpResponse, urlparse, HttpConnection,\
                                     HttpParser
+from pulsar.utils.structures import AttributeDictionary
 from pulsar.apps.wsgi import server
 #from .server import HttpResponse
 
@@ -21,20 +22,12 @@ object.'''
     def __init__(self, client_response):
         self.client_response = client_response
         self.parser = HttpParser()
+        self.server = AttributeDictionary(
+                        server_name='local-testing-server',
+                        server_port=8888,
+                        app_handler=client_response.request.client.wsgi_handler)
         for d in client_response.request_data:
             self.parser.execute(d, len(d))
-
-    @property
-    def wsgi_handler(self):
-        return self.client_response.request.client.wsgi_handler
-    
-    @property
-    def server_name(self):
-        return 'local-testing-server'
-    
-    @property
-    def server_port(self):
-        return 8888
 
     def write(self, response):
         for data in response:

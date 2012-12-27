@@ -18,7 +18,7 @@ class rpcTest(unittest.TestCase):
         http.headers['user-agent'] = 'testing'
         self.assertEqual(http.headers['user-agent'], 'testing')
 
-    def testInavlidFunction(self):
+    def testInvalidFunction(self):
         from pulsar.apps.rpc import NoSuchFunction
         p = self.proxy()
         self.assertRaises(NoSuchFunction, p.blabla)

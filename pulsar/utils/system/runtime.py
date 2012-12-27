@@ -35,10 +35,10 @@ class Platform(object):
     seconds = staticmethod(_timeFunctions.get(type, time.time))
 
     def __str__(self):
-        return '{0} - {1}'.format(self.type,self.name)
+        return '{0} - {1}'.format(self.type, self.name)
     
     def __repr__(self):
-        return '{0}: {1}'.format(self.__class__.__name__,self)
+        return '{0}: {1}'.format(self.__class__.__name__, self)
     
     def isKnown(self):
         """Do we know about this platform?"""
@@ -52,10 +52,12 @@ class Platform(object):
     def is_posix(self):
         return self.type == 'posix'
     
+    @property
     def isMacOSX(self):
         """Return if we are runnng on Mac OS X."""
         return sys.platform == "darwin"
 
+    @property
     def isWinNT(self):
         """Are we running in Windows NT?"""
         if self.getType() == 'win':
@@ -70,9 +72,11 @@ class Platform(object):
         # not windows NT
         return False
 
+    @property
     def isWindows(self):
         return self.getType() == 'win'
 
+    @property
     def isVista(self):
         """
         Check if current platform is Windows Vista or Windows Server 2008.
@@ -93,7 +97,8 @@ class Platform(object):
         except ImportError:
             return False
 
-    def multiProcessSocket(self):
+    @property
+    def has_multiProcessSocket(self):
         ''':rtype: a boolean indicating if support for multiprocess
  sockets is available.
         '''

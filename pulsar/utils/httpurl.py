@@ -1037,7 +1037,12 @@ class HttpConnectionError(Exception):
 
 class IOClientRead(object):
     '''Base class for IO clients which keep reading from a socket until a
-full parsed message is available.'''
+full parsed message is available.
+
+.. attribute:: async
+
+    True if the socket is asynchronous
+'''
     sock = None
 
     @property
@@ -1051,7 +1056,7 @@ this :class:`IOClientRead` can submit another read request.'''
         raise NotImplementedError()
 
     def read(self):
-        '''Read data from socket'''
+        '''Read data from the socket'''
         try:
             return self._read()
         except socket.error:
@@ -1417,7 +1422,7 @@ class HttpRequest(HttpBase):
         self.dispatch_hook('pre_request', self)
         self.encode(encode_multipart, multipart_boundary)
 
-    def get_response(self):
+    def execute(self, tried=False):
         '''Submit request and return a :attr:`response_class` instance.'''
         self.connection = connection = self.client.get_connection(self)
         if self._tunnel_host:
@@ -1429,10 +1434,16 @@ class HttpRequest(HttpBase):
             connection.set_tunnel(self._tunnel_host, headers=tunnel_headers)
         self.dispatch_hook('pre_send', self)
         headers = self.headers.as_dict()
-        connection.request(self.method, self.full_url, self.body, headers)
-        response = connection.getresponse()
-        response.request = self
-        return response.begin(True, self.client.decompress)
+        try:
+            connection.request(self.method, self.full_url, self.body, headers)
+            response = connection.getresponse()
+            response.request = self
+            return response.begin(True, self.client.decompress)
+        except (socket.error, IOError):
+            if tried:
+                raise
+            self.client.release_connection(self, remove=True)
+            return self.execute(True)
 
     @property
     def selector(self):
@@ -1577,7 +1588,12 @@ class HttpConnectionPool(object):
         self._available_connections.append(connection)
 
     def remove(self, connection):
+        '''Remove the *connection* from the pool'''
         self._in_use_connections.remove(connection)
+        try:
+            connection.close()
+        except:
+            pass
 
     def on_connect(self, connection):
         pass
@@ -1793,7 +1809,7 @@ the :class:`HttpRequest` constructor.
             if not isinstance(cookies, CookieJar):
                 cookies = cookiejar_from_dict(cookies)
             cookies.add_cookie_header(request)
-        return request.get_response()
+        return request.execute()
 
     def _set_cookies(self, cookies):
         if cookies:
@@ -1823,12 +1839,16 @@ the :class:`HttpRequest` constructor.
         connection.response_class = request.response_class
         return connection
 
-    def release_connection(self, req):
-        key = req.key
+    def release_connection(self, request, remove=False):
+        '''Release teh connection in *request*'''
+        key = request.key
         pool = self.poolmap.get(key)
         if pool:
-            pool.release(req.connection)
-        req.connection = None
+            if remove:
+                pool.remove(request.connection)
+            else:
+                pool.release(request.connection)
+        request.connection = None
 
     def upgrade(self, response):
         '''Upgrade a :class:`HttpResponse` (for websocket).

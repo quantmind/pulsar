@@ -1,7 +1,11 @@
+import os
 import socket
+import tempfile
 import time
 
 import pulsar
+from pulsar import platform
+from pulsar.async.defer import pickle
 from pulsar.apps.test import unittest, mock
 from pulsar.utils.sock import create_tcp_socket_address
 
@@ -56,4 +60,70 @@ class TestSockUtils(unittest.TestCase):
         self.assertRaises(ValueError, create_tcp_socket_address, ('',))
         self.assertRaises(ValueError, create_tcp_socket_address, ('','a'))
         self.assertRaises(TypeError, create_tcp_socket_address, ('bla'))
+        
+    def test_parse_address(self):
+        a = pulsar.parse_address('bla.com')
+        self.assertEqual(a, ('bla.com', 8000))
+        self.assertRaises(RuntimeError, pulsar.parse_address, 'bla.com:ciao')
+        
+    @unittest.skipUnless(platform.has_multiProcessSocket, 'Posix platform only')
+    def testSerialise(self):
+        sock = pulsar.create_socket(':0')
+        v = pickle.dumps(sock)
+        sock2 = pickle.loads(v)
+        self.assertEqual(sock.name, sock2.name)
+        sock.close()
+        self.assertEqual(sock.name, None)
+        self.assertTrue(sock.closed)
+        self.assertEqual(sock.write(b'bla'), 0)
+        
+    def testWrite(self):
+        server = pulsar.create_socket(':0')
+        self.assertEqual(server.accept(), (None, None))
+        client = pulsar.create_connection(server.name, blocking=3)
+        client_connection, address = server.accept()
+        self.assertEqual(client.name, address)
+        client_connection = pulsar.wrap_socket(client_connection)
+        self.assertEqual(client_connection.write(b''), 0)
+        self.assertEqual(client_connection.write(b'ciao'), 4)
+        client_connection.close()
+        self.assertTrue(client_connection.closed)
+        data = client.recv()
+        self.assertEqual(data, b'ciao')
+        data = client.recv()
+        # The socket has shutdown
+        self.assertEqual(data, b'')
+        
+    def testWriteError(self):
+        server = pulsar.create_socket(':0')
+        client = pulsar.create_connection(server.name, blocking=3)
+        client_connection, address = server.accept()
+        self.assertEqual(client.name, address)
+        client_connection = pulsar.wrap_socket(client_connection)
+        client_connection.send = mock.MagicMock(return_value=0)
+        self.assertRaises(socket.error, client_connection.write, b'ciao')
+        self.assertTrue(client_connection.closed)
+        
+
+@unittest.skipUnless(platform.is_posix, 'Posix platform only')
+class UnixSocket(unittest.TestCase):
+    
+    def setUp(self):
+        self.tmpfile = tempfile.mktemp()
+        
+    def tearDown(self):
+        if os.path.exists(self.tmpfile):
+            os.remove(self.tmpfile)
+        
+    def testUnixSocket(self):
+        sock = pulsar.create_socket(self.tmpfile)
+        self.assertEqual(sock.FAMILY, socket.AF_UNIX)
+        self.assertEqual(sock.name, self.tmpfile)
+        self.assertEqual(str(sock), 'unix:%s' % self.tmpfile)
+        sock.close()
+        self.assertFalse(os.path.exists(self.tmpfile))
+        
+    def testfunctions(self):
+        m = pulsar.get_maxfd()
+        self.assertTrue(m)
         

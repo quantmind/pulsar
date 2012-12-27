@@ -34,8 +34,8 @@ def clean_path_middleware(environ, start_response):
         if not url.startswith('/'):
             url = '/%s' % url
         qs = environ['QUERY_STRING']
-        if qs and environ['method'] == 'GET':
-            url = '{0}?{1}'.format(url,qs)
+        if qs:
+            url = '%s?%s' % (url, qs)
         raise pulsar.HttpRedirect(url)
 
 def cookies_middleware(environ, start_response):

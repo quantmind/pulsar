@@ -17,7 +17,8 @@ it returns it.'''
     return _events[name]
 
 def bind(name, callback, sender=None, **kwargs):
-    '''Bind a *callback* to event *name*.'''
+    '''Bind a *callback* to event *name*. The optional *sender* can be used
+to bind only when the given sender fires the event.'''
     event = create(name)
     event.connect(callback, sender=sender, **kwargs)
     

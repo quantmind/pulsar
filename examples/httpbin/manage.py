@@ -24,7 +24,7 @@ from pulsar.utils.httpurl import Headers, parse_qs, ENCODE_URL_METHODS,\
                                  itervalues, range, ispy3k, hexmd5, to_bytes,\
                                  WWWAuthenticate
 from pulsar.utils.multipart import parse_form_data
-from pulsar.utils import event
+from pulsar.utils import events
 
 pyversion = '.'.join(map(str,sys.version_info[:3]))
 
@@ -285,17 +285,16 @@ class HttpBin(LocalMixin):
 
         class Gen:
             headers = None
-            def __call__(self, value, sender):
-                self.headers = value
+            def __call__(self, headers=None, **kwargs):
+                self.headers = headers
             def generate(self):
-                #yeidl a byte so that headers are sent
+                #yield a byte so that headers are sent
                 yield '{'
                 # we must have the headers now
                 headers = jsonbytes(dict(self.headers))
                 yield headers[1:]
-
         gen = Gen()
-        event.bind('http-headers', gen, once_only=True)
+        events.bind('http-headers', gen)
         data = wsgi.WsgiResponse(
                             200,
                             content=gen.generate(),

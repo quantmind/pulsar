@@ -29,21 +29,10 @@ class HttpConnection(httpurl.HttpConnection):
                 return True
         else:
             return httpurl.is_closed(self.sock)
-            
-
-class HttpResponse(httpurl.HttpResponse):
-    pass
-    
-    
-class AsyncRequest(httpurl.HttpRequest):
-    response_class = HttpResponse
-    def on_response(self, response):
-        return response
         
 
 class HttpClient(httpurl.HttpClient):
     timeout = 0
     client_version = pulsar.SERVER_SOFTWARE
     http_connection = HttpConnection
-    request_class = AsyncRequest
     

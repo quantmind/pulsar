@@ -3,14 +3,13 @@ import signal
 from select import select as _select
 
 from pulsar.utils.importer import import_module, module_attribute
-from pulsar.utils.httpurl import iteritems, to_string
+from pulsar.utils.httpurl import iteritems, native_str
 
 __all__ = ['ALL_SIGNALS',
            'SIG_NAMES',
            'SKIP_SIGNALS',
            'set_proctitle',
            'set_owner_process',
-           'parse_address',
            'IObase',
            'EpollProxy',
            'IOselect']
@@ -38,7 +37,7 @@ try:
     def set_proctitle(title):
         setproctitle(title)
         return True 
-except ImportError:
+except ImportError: #pragma    nocover
     def set_proctitle(title):
         return
 
@@ -56,34 +55,6 @@ def set_owner_process(uid,gid):
     if uid:
         os.setuid(uid)
     
-        
-def parse_address(netloc, default_port=8000):
-    '''Parse an address and return a tuple with host and port'''
-    netloc = to_string(netloc)
-    if netloc.startswith("unix:"):
-        return netloc.split("unix:")[1]
-
-    # get host
-    if '[' in netloc and ']' in netloc:
-        host = netloc.split(']')[0][1:].lower()
-    elif ':' in netloc:
-        host = netloc.split(':')[0].lower()
-    elif netloc == "":
-        host = "0.0.0.0"
-    else:
-        host = netloc.lower()
-    
-    #get port
-    netloc = netloc.split(']')[-1]
-    if ":" in netloc:
-        port = netloc.split(':', 1)[1]
-        if not port.isdigit():
-            raise RuntimeError("%r is not a valid port number." % port)
-        port = int(port)
-    else:
-        port = default_port 
-    return (host, port)
-
 
 class IObase(object):
     # Constants from the epoll module

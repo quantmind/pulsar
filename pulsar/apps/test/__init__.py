@@ -79,7 +79,7 @@ else:
     
 import pulsar
 from pulsar.apps import tasks
-from pulsar.utils import event
+from pulsar.utils import events
 
 from .result import *
 from .case import *
@@ -257,7 +257,7 @@ configuration and plugins.'''
             if tests:
                 self.logger.info('loaded %s test classes', len(tests))
                 self.runner.on_start()
-                event.fire('tests', sender=self, value=tests)
+                events.fire('tests', self, tests=tests)
                 monitor.cfg.set('workers', min(self.cfg.workers, len(tests)))
                 self._time_start = None
             else:

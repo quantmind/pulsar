@@ -196,7 +196,6 @@ from a remote :class:`Actor`.
 An instance of this class is created when a new connection is made
 with a :class:`Mailbox`.'''
     authenticated = False
-    response_class = MailboxResponse
 
 
 class Mailbox(AsyncSocketServer):
@@ -206,6 +205,7 @@ creates its own :class:`IOLoop` which runs on a separate thread
 of execution.'''
     parser_class = MessageParser
     connection_class = MailboxConnection
+    response_class = MailboxResponse
 
     @classmethod
     def make(cls, actor, backlog=64):

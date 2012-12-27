@@ -646,13 +646,18 @@ class ReconnectingClient(Client):
 
 
 class AsyncResponse(object):
-    '''An asynchronous response is created once a connection has produced
-finished data from a read operation. Instances of this class are iterable over
+    '''An asynchronous server response is created once an
+:class:`AsyncConnection` has available parsed data from a read operation.
+Instances of this class are iterable over
 chunk of data to send back to the remote client.
 
 .. attribute:: connection
 
     The :class:`AsyncConnection` for this response
+    
+.. attribute:: server
+
+    The :class:`AsyncSocketServer` for this response
 
 .. attribute:: parsed_data
 
@@ -675,6 +680,7 @@ chunk of data to send back to the remote client.
         return self.connection.sock
 
     def __iter__(self):
+        # by default it echos the client message
         yield self.parsed_data
 
 
@@ -685,27 +691,33 @@ A connection can handle several request/responses until it is closed.
 
 .. attribute:: server
 
-    The class :class:`AsyncSocketServer` which created the connection
+    The class :class:`AsyncSocketServer` which created this
+    :class:`AsyncConnection`.
 
+.. attribute:: response_class
+
+    Class or callable for building an :class:`AsyncResponse` object. It is
+    initialised by the :class:`AsyncSocketServer.response_class` but it can be
+    changed at runtime when upgrading connections to new protocols. An example
+    is the websocket protocol.
 '''
-    response_class = AsyncResponse
-    '''Class or callable for building an :class:`AsyncResponse` object.'''
-
     def __init__(self, sock, address, server, timeout=None):
         if not isinstance(sock, AsyncIOStream):
             sock = AsyncIOStream(sock, timeout=server.timeout)
         super(AsyncConnection, self).__init__(sock, address,
                                               server.parser_class)
         self.server = server
+        self.response_class = server.response_class
         server.connections.add(self)
         self.handle().add_errback(self.close)
 
-    @async(max_errors=1, description='Async client connection generator')
+    @async(max_errors=1, description='Asynchronous client connection generator')
     def handle(self):
         while not self.closed:
             outcome = self.sock.read()
             yield outcome
-            # if we sare here it means no errors occurred so far
+            # if we are here it means no errors occurred so far and
+            # data is available to process
             self.time_last = time.time()
             buffer = self.buffer
             buffer.extend(outcome.result)
@@ -715,7 +727,7 @@ A connection can handle several request/responses until it is closed.
                 parsed_data = self.request_data()
                 if parsed_data:
                     self.received += 1
-                    # The response is iterable (same as WSGI response)
+                    # The response is an iterable (same as WSGI response)
                     for data in self.response_class(self, parsed_data):
                         if data:
                             yield self.write(data)
@@ -760,11 +772,12 @@ more data in the buffer is required.'''
 
 
 class AsyncSocketServer(BaseSocketHandler):
-    '''A :class:`BaseSocketHandler` for asynchronous socket servers.
+    '''A :class:`BaseSocketHandler` for asynchronous servers which listen
+for requests on a socket.
 
 .. attribute:: actor
 
-    The :class:`Actor` powering this :class:`AsyncSocketServer`.
+    The :class:`Actor` running this :class:`AsyncSocketServer`.
 
 .. attribute:: ioloop
 
@@ -787,16 +800,24 @@ class AsyncSocketServer(BaseSocketHandler):
 .. attribute:: timeout
 
     The timeout when reading data in an asynchronous way.
+    
+.. attribute:: response_class
+
+    A subclass of :class:`AsyncResponse` for handling responses to clients
+    once data has been received and processed.
 '''
     thread = None
     _started = False
     connection_class = AsyncConnection
     parser_class = EchoParser
+    response_class = AsyncResponse
+    
     def __init__(self, actor, socket, parser_class=None, onthread=False,
-                  connection_class=None, timeout=None):
+                  connection_class=None, response_class=None, timeout=None):
         self.actor = actor
         self.parser_class = parser_class or self.parser_class
         self.connection_class = connection_class or self.connection_class
+        self.response_class = response_class or self.response_class
         self.sock = wrap_socket(socket)
         self.connections = set()
         self.timeout = timeout

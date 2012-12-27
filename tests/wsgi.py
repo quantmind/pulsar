@@ -1,12 +1,13 @@
 '''Tests the wsgi middleware in pulsar.apps.wsgi'''
 import pickle
 
+import pulsar
 from pulsar.utils.httpurl import range, zip
 from pulsar.apps import wsgi
 from pulsar.apps.test import unittest
 
 
-class wsgiTest(unittest.TestCase):
+class WsgiResponjseTest(unittest.TestCase):
     
     def testResponse200(self):
         r = wsgi.WsgiResponse(200)
@@ -74,3 +75,15 @@ class testWsgiApplication(unittest.TestCase):
         self.assertEqual(len(app.callable.middleware),
                          len(app2.callable.middleware))
         
+        
+class TestWsgiMiddleware(unittest.TestCase):
+    
+    def test_clean_path_middleware(self):
+        url = 'bla//foo'
+        try:
+            wsgi.clean_path_middleware({'PATH_INFO': url,
+                                        'QUERY_STRING': 'page=1'}, None)
+        except pulsar.HttpRedirect as e:
+            url = e.headers[0][1]
+            self.assertEqual(url, '/bla/foo?page=1')
+            

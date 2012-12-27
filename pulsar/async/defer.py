@@ -617,15 +617,11 @@ both ``list`` and ``dict`` types.'''
         if is_generalised_generator(value):
             value = list(value)
         value = maybe_async(value)
+        if isinstance(value, (dict, list, tuple, set, frozenset)):
+            value = self._make(value)    
         if is_async(value):
             self._add_deferred(key, value)
-        else:
-            # if an instance of an iterable create multiple objects
-            if isinstance(value, (dict, list, tuple, set, frozenset)):
-                value = self._make(value)
-                if is_async(value):
-                    self._add_deferred(key, value)
-        if not is_async(value) and self.handle_value:
+        elif self.handle_value:
             try:
                 val = self.handle_value(value)
             except Exception as e:
