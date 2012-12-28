@@ -407,7 +407,6 @@ this point, :meth:`add_callback` will run the *callbacks* immediately.
     def result_or_self(self):
         '''Obtain the result if available, otherwise it returns self.'''
         return self.result if self._called and not self.paused else self
-        #return self.result if self._called else self
 
     ##################################################    INTERNAL METHODS
     def _run_callbacks(self):
@@ -619,9 +618,7 @@ both ``list`` and ``dict`` types.'''
         value = maybe_async(value)
         if isinstance(value, (dict, list, tuple, set, frozenset)):
             value = self._make(value)    
-        if is_async(value):
-            self._add_deferred(key, value)
-        elif self.handle_value:
+        if not is_async(value) and self.handle_value:
             try:
                 val = self.handle_value(value)
             except Exception as e:
@@ -630,6 +627,9 @@ both ``list`` and ``dict`` types.'''
                 if val is not value:
                     return self._add(key, val)
         self._setitem(key, value)
+        # add callback if an asynchronous value
+        if is_async(value):
+            self._add_deferred(key, value)
 
     def _make(self, value):
         md = self.__class__(value, fireOnOneErrback=self.fireOnOneErrback,

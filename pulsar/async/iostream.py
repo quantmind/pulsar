@@ -501,7 +501,8 @@ via the ``connect`` function).
     :class:`ClientSocketHandler`.
 '''
     parser_class = EchoParser
-    def __init__(self, socket, address, parser_class=None, timeout=None):
+    def __init__(self, socket, address, parser_class=None, timeout=None,
+                  read_timeout=None):
         '''Create a client or client-connection socket. A parser class
 is required in order to use :class:`SocketClient`.
 
@@ -509,10 +510,14 @@ is required in order to use :class:`SocketClient`.
 :parameter address: The address of the remote client/server
 :parameter parser_class: A class used for parsing messages.
 :parameter timeout: A timeout in seconds for the socket. Same rules as
-    the ``socket.settimeout`` method in the standard library.
+    the ``socket.settimeout`` method in the standard library. A value of 0
+    indicates an asynchronous socket.
+:parameter read_timeout: A timeout in seconds for asynchronous operations. This
+    value is only used when *timeout* is 0 in the constructor
+    of a :class:`AsyncIOStream`.
 '''
         self._socket_timeout = get_socket_timeout(timeout)
-        self._set_socket(socket)
+        self._set_socket(socket, read_timeout)
         self.remote_address = address
         parser_class = parser_class or self.parser_class
         self.parser = parser_class()
@@ -522,7 +527,7 @@ is required in order to use :class:`SocketClient`.
         return str(self.remote_address)
     __str__ = __repr__
 
-    def _set_socket(self, sock):
+    def _set_socket(self, sock, read_timeout=None):
         if not isinstance(sock, AsyncIOStream):
             if self._socket_timeout == 0:
                 sock = AsyncIOStream(sock)
@@ -533,6 +538,7 @@ is required in order to use :class:`SocketClient`.
         if self.async:
             close_callback = Deferred().add_callback(self.close)
             self.sock.set_close_callback(close_callback)
+            self.read_timeout = read_timeout
             
     def _get_read_timeout(self):
         if self.async:
@@ -544,7 +550,7 @@ is required in order to use :class:`SocketClient`.
             self.sock._read_callback_timeout = value
         else:
             self._socket_timeout = value
-            sock.settimeout(self._socket_timeout)
+            self.sock.settimeout(self._socket_timeout)
     read_timeout = property(_get_read_timeout, _set_read_timeout) 
 
 
@@ -558,9 +564,10 @@ reading from the same socket connection.'''
         self.processing = False
         
     @classmethod
-    def connect(cls, address, parser_class=None, timeout=None):
+    def connect(cls, address, **kwargs):
+        '''Create a new :class:`ClientSocket` connected at *address*.'''
         sock = create_connection(address)
-        return cls(sock, address, parser_class=parser_class, timeout=timeout)
+        return cls(sock, address, **kwargs)
 
     def send(self, data):
         '''Send data to remote server'''

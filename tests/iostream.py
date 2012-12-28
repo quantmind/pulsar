@@ -71,6 +71,10 @@ class TestPulsarStreams(unittest.TestCase):
         client = self.client(timeout=3)
         self.assertFalse(client.async)
         self.assertEqual(client.gettimeout(), 3)
+        self.assertEqual(client.read_timeout, 3)
+        client.read_timeout = 4
+        self.assertEqual(client.gettimeout(), 4)
+        self.assertEqual(client.read_timeout, 4)
         self.assertEqual(client.execute(b'ciao'), b'ciao')
         self.assertEqual(client.received, 1)
         self.assertEqual(client.execute(b'bla'), b'bla')
@@ -162,7 +166,9 @@ class TestPulsarStreams(unittest.TestCase):
         self.assertTrue(client.closed)
     
     def testConnectionClose(self):
-        client = self.client(timeout=0)
+        client = self.client(timeout=0, read_timeout=3)
+        self.assertTrue(client.async)
+        self.assertEqual(client.read_timeout, 3)
         future = client.execute(b'ciao')
         yield future
         self.assertEqual(future.result, b'ciao')

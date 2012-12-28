@@ -1,6 +1,7 @@
-Ver. 0.4.3
+Ver. 0.4.3 - 2012-Dec-28
 ==============================
-* Removed the loop tasks.
+* Removed the tasks in event loop. Task can only be added by appending callbacks or timeouts.
+* Fixed critical bug in MultiDeferred.
 * Test suite works on with multiple test workers.
 * Fixed issue #17 on asynchronous shell application.
 * Dining philosophers example works on events only.
