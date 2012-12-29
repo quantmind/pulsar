@@ -20,7 +20,6 @@ except ImportError:    #pragma    nocover
 memory_symbols = ('K', 'M', 'G', 'T', 'P', 'E', 'Z', 'Y')
 memory_size = dict(((s,1 << (i+1)*10) for i,s in enumerate(memory_symbols)))
 
-
 def convert_bytes(b):
     '''Convert a number of bytes into a human readable memory usage, bytes,
 kilo, mega, giga, tera, peta, exa, zetta, yotta'''
@@ -31,7 +30,6 @@ kilo, mega, giga, tera, peta, exa, zetta, yotta'''
             value = float(b) / memory_size[s]
             return '%.1f%sB' % (value, s)
     return "%sB" % b
-    
     
 def system_info(pid):
     '''Returns a dictionary of system information for the process with id *pid*.

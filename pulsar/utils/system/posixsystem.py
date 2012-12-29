@@ -14,7 +14,8 @@ __all__ = ['IOpoll',
            'daemonize',
            'SIGQUIT',
            'get_uid',
-           'get_gid']
+           'get_gid',
+           'get_maxfd']
 
 
 import select
@@ -26,12 +27,10 @@ else:   #pragma    nocover
 # The standard signal quit
 SIGQUIT = signal.SIGQUIT
 # Default maximum for the number of available file descriptors.
-MAXFD = 1024
 REDIRECT_TO = getattr(os, "devnull", "/dev/null")
 
 def get_parent_id():
     return os.getppid()
-
 
 def chown(path, uid, gid):
     try:
@@ -44,12 +43,10 @@ def close_on_exec(fd):
     flags = fcntl.fcntl(fd, fcntl.F_GETFD)
     fcntl.fcntl(fd, fcntl.F_SETFD, flags | fcntl.FD_CLOEXEC)
     
-    
 def _set_non_blocking(fd):
     flags = fcntl.fcntl(fd, fcntl.F_GETFL) | os.O_NONBLOCK
     fcntl.fcntl(fd, fcntl.F_SETFL, flags)
     
-
 def get_uid(user=None):
     if not user:
         return os.geteuid()
@@ -66,9 +63,36 @@ def get_gid(group=None):
     else:
         return grp.getgrnam(group).gr_gid
     
-
 def setpgrp():
     os.setpgrp()
+
+def get_maxfd():
+    maxfd = resource.getrlimit(resource.RLIMIT_NOFILE)[1]
+    if (maxfd == resource.RLIM_INFINITY):
+        maxfd = MAXFD
+    return maxfd
+
+def daemonize():    #pragma    nocover
+    """Standard daemonization of a process. Code is based on the
+ActiveState recipe at http://code.activestate.com/recipes/278731/"""
+    if os.fork() == 0: 
+        os.setsid()
+        if os.fork() != 0:
+            os.umask(0) 
+        else:
+            os._exit(0)
+    else:
+        os._exit(0)
+    maxfd = get_maxfd()
+    # Iterate through and close all file descriptors.
+    for fd in range(0, maxfd):
+        try:
+            os.close(fd)
+        except OSError:    # ERROR, fd wasn't open to begin with (ignored)
+            pass
+    os.open(REDIRECT_TO, os.O_RDWR)
+    os.dup2(0, 1)
+    os.dup2(0, 2)
 
 
 class Waker(object):
@@ -101,31 +125,3 @@ class Waker(object):
                  r.recv()
         except IOError:
             pass
-
-    
-def daemonize():    #pragma    nocover
-    """Standard daemonization of a process. Code is based on the
-ActiveState recipe at http://code.activestate.com/recipes/278731/"""
-    if os.fork() == 0: 
-        os.setsid()
-        if os.fork() != 0:
-            os.umask(0) 
-        else:
-            os._exit(0)
-    else:
-        os._exit(0)
-    
-    maxfd = resource.getrlimit(resource.RLIMIT_NOFILE)[1]
-    if (maxfd == resource.RLIM_INFINITY):
-        maxfd = MAXFD
-
-    # Iterate through and close all file descriptors.
-    for fd in range(0, maxfd):
-        try:
-            os.close(fd)
-        except OSError:    # ERROR, fd wasn't open to begin with (ignored)
-            pass
-    
-    os.open(REDIRECT_TO, os.O_RDWR)
-    os.dup2(0, 1)
-    os.dup2(0, 2)

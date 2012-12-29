@@ -60,6 +60,12 @@ def get_gid(group=None):
 def setpgrp():
     pass
 
+def get_maxfd():
+    return MAXFD
+
+def daemonize():
+    pass
+
 
 class IOpoll(IOselect):
     
@@ -114,6 +120,3 @@ class Waker(object):
         self.reader.close()
         self.writer.close()
         
-    
-def daemonize():
-    pass

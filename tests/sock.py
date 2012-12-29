@@ -123,7 +123,4 @@ class UnixSocket(unittest.TestCase):
         sock.close()
         self.assertFalse(os.path.exists(self.tmpfile))
         
-    def testfunctions(self):
-        m = pulsar.get_maxfd()
-        self.assertTrue(m)
         

@@ -21,7 +21,6 @@ __all__ = ['IStream',
            'server_client_sockets',
            'create_connection',
            'create_socket_address',
-           'get_maxfd',
            'socket_pair',
            'server_socket']
 
@@ -393,14 +392,6 @@ def create_tcp_socket_address(addr):
     return sock_type, addr
 
 if os.name == 'posix':
-    import resource
-
-    def get_maxfd():
-        maxfd = resource.getrlimit(resource.RLIMIT_NOFILE)[1]
-        if (maxfd == resource.RLIM_INFINITY):
-            maxfd = MAXFD
-        return maxfd
-
 
     def is_ipv6(addr):
         try:
@@ -453,9 +444,6 @@ if os.name == 'posix':
         return sock_type, addr
 
 else:   #pragma    nocover
-    def get_maxfd():
-        return MAXFD
-
 
     def is_ipv6(addr):
         return False

@@ -1,5 +1,6 @@
 Ver. 0.4.4
 ==============================
+* Fixed bug which prevented daemonisation.
 * Changed the `result_or_self` method in `Deferred` to return the *result* when
   the it is called and no callbacks are available. It avoids several unnecessary
   calls on deeply nested `Deferred` (which sometimes caused maximum recursion

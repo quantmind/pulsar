@@ -11,3 +11,6 @@ class TestSystem(unittest.TestCase):
         self.assertFalse(platform.isWindows)
         self.assertFalse(platform.isWinNT)
         
+    def test_maxfd(self):
+        m = system.get_maxfd()
+        self.assertTrue(m)

@@ -8,6 +8,7 @@ from pulsar.utils.httpurl import iteritems, native_str
 __all__ = ['ALL_SIGNALS',
            'SIG_NAMES',
            'SKIP_SIGNALS',
+           'MAXFD',
            'set_proctitle',
            'set_owner_process',
            'IObase',
@@ -16,6 +17,7 @@ __all__ = ['ALL_SIGNALS',
 
 
 SIG_NAMES = {}
+MAXFD = 1024
 SKIP_SIGNALS = frozenset(('KILL','STOP','WINCH'))
 
 def all_signals():

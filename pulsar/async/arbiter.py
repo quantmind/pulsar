@@ -156,8 +156,6 @@ Users access the arbiter (in the arbiter process domain) by the high level api::
             raise pulsar.PulsarException(
                     'Cannot create the arbiter in a daemon process')
         os.environ["SERVER_SOFTWARE"] = pulsar.SERVER_SOFTWARE
-        if self.cfg.daemon: #pragma    nocover
-            system.daemonize()
         pidfile = self.cfg.pidfile
         if pidfile is not None:
             p = Pidfile(pidfile)
@@ -213,6 +211,12 @@ Users access the arbiter (in the arbiter process domain) by the high level api::
     ############################################################################
     # INTERNALS
     ############################################################################
+    def start(self):
+        if self.state == ACTOR_STATES.INITIAL:
+            if self.cfg.daemon: #pragma    nocover
+                system.daemonize()
+            return Actor.start(self)
+            
     def _run(self):
         try:
             self.cfg.when_ready(self)
