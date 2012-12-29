@@ -239,11 +239,8 @@ class Failure(object):
     def __init__(self, err=None, msg=None):
         self.should_stop = False
         self.msg = msg or ''
-        if isinstance(err, self.__class__):
-            self.traces = copy(err.traces)
-        else:
-            self.traces = []
-            self.append(err)
+        self.traces = []
+        self.append(err)
 
     def __repr__(self):
         return '\n\n'.join(self.format_all())
@@ -406,7 +403,7 @@ this point, :meth:`add_callback` will run the *callbacks* immediately.
 
     def result_or_self(self):
         '''Obtain the result if available, otherwise it returns self.'''
-        return self.result if self._called and not self.paused else self
+        return self.result if self._called and not self._callbacks else self
 
     ##################################################    INTERNAL METHODS
     def _run_callbacks(self):

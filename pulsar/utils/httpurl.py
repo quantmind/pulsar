@@ -130,14 +130,6 @@ if ispy3k: # Python 3
             return str(s)
         else:
             return s
-        
-    def execfile(filename, globals=None, locals=None):
-        if globals is None:
-            globals = sys._getframe(1).f_globals
-        if locals is None:
-            locals = sys._getframe(1).f_locals
-        with open(filename, "r") as fh:
-            exec(fh.read()+"\n", globals, locals)
 
 else:   # pragma : no cover
     import urllib2 as urllibr
@@ -1259,7 +1251,8 @@ situation. Return a deferred if asynchronous.'''
         return self.headers
 
     def stream(self):
-        '''Stream parsed body data.'''
+        '''Returns a generator of parsed body data. This is available when
+the client is in a streaming mode.'''
         if self.streaming:
             if hasattr(self, '_streamed'):
                 raise RuntimeError('Already streamed')

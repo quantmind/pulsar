@@ -162,6 +162,11 @@ class TestTools(unittest.TestCase):
         r = httpurl.HttpResponse(None)
         self.assertEqual(r.status_code, None)
         self.assertEqual(str(r), '<None>')
+        
+    def test_IOClientRead(self):
+        io = httpurl.IOClientRead()
+        self.assertEqual(io.read(), None)
+        self.assertRaises(NotImplementedError, io.parsedata, b'bla')
 
 
 def request_callback(result):
@@ -171,7 +176,7 @@ def request(r):
     return make_async(r).addBoth(request_callback)
 
 
-class TestHttpClient(unittest.TestCase):
+class TestHttpClientBase(unittest.TestCase):
     app = None
     with_proxy = False
     proxy_app = None
@@ -215,6 +220,9 @@ class TestHttpClient(unittest.TestCase):
             return self.uri + '/' + '/'.join(suffix)
         else:
             return self.uri
+    
+    
+class TestHttpClient(TestHttpClientBase):
     
     def testClient(self):
         http = self.client()
@@ -457,7 +465,7 @@ class TestHttpClient(unittest.TestCase):
         yield r
         r = r.result
         self.assertEqual(r.status_code, 200)
-        
+    
     #### TO INCLUDE
     def __test_far_expiration(self):
         "Cookie will expire when an distant expiration time is provided"
@@ -483,3 +491,4 @@ class TestHttpClient(unittest.TestCase):
         self.assertTrue('; httponly' in str(example_cookie))
         self.assertTrue(example_cookie['httponly'])
         
+    

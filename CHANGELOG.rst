@@ -1,8 +1,17 @@
+Ver. 0.4.4
+==============================
+* Changed the `result_or_self` method in `Deferred` to return the *result* when
+  the it is called and no callbacks are available. It avoids several unnecessary
+  calls on deeply nested `Deferred` (which sometimes caused maximum recursion
+  depth exceeded).
+* **368 regression tests**, **87% coverage**.
+
 Ver. 0.4.3 - 2012-Dec-28
 ==============================
-* Removed the tasks in event loop. Task can only be added by appending callbacks or timeouts.
+* Removed the tasks in event loop. A task can only be added by appending
+  callbacks or timeouts.
 * Fixed critical bug in MultiDeferred.
-* Test suite works on with multiple test workers.
+* Test suite works with multiple test workers.
 * Fixed issue #17 on asynchronous shell application.
 * Dining philosophers example works on events only.
 * Removed obsolete safe_monitor decorator in :mod:`pulsar.apps`.
