@@ -1,5 +1,6 @@
 '''Tests the wsgi middleware in pulsar.apps.wsgi'''
 import pickle
+from datetime import datetime, timedelta
 
 import pulsar
 from pulsar.utils.httpurl import range, zip
@@ -53,6 +54,17 @@ class WsgiResponjseTest(unittest.TestCase):
         self.assertEqual(list(r), [])
         self.assertRaises(RuntimeError, list, r)
         
+    def testCookies(self):
+        response = wsgi.WsgiResponse()
+        expires = datetime.now() + timedelta(seconds=3600)
+        response.set_cookie('bla', expires=expires)
+        self.assertTrue('bla' in response.cookies)
+        
+    def testDeleteCookie(self):
+        response = wsgi.WsgiResponse()
+        response.delete_cookie('bla')
+        self.assertTrue('bla' in response.cookies)
+        
         
 class testWsgiApplication(unittest.TestCase):
     
@@ -86,4 +98,13 @@ class TestWsgiMiddleware(unittest.TestCase):
         except pulsar.HttpRedirect as e:
             url = e.headers[0][1]
             self.assertEqual(url, '/bla/foo?page=1')
+            
+    def test_handle_wsgi_error(self):
+        environ = {'wsgi_error_handler': lambda : 'bla'}
+        try:
+            raise ValueError('just a test')
+        except:
+            response = wsgi.handle_wsgi_error(environ, content_type='text/html')
+        self.assertEqual(response.content_type, 'text/html')
+        self.assertEqual(response.status_code, 500)
             

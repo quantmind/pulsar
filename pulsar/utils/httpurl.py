@@ -4,12 +4,11 @@ On top of that, it implements the :class:`HttpClient` for handling synchronous
 and asynchronous HTTP requests in a pythonic way.
 
 It is a thin layer on top of urllib2 in python2 / urllib in Python 3.
-Several opensource efforts have been used as source of snippets, inspiration
-and more:
+Several opensource efforts have been used as source of snippets:
 
 * http-parser_
-* urllib3_
 * request_
+* urllib3_
 * werkzeug_
 
 This is a long stand-alone module which can be dropped in any library and used
@@ -83,7 +82,7 @@ if ispy3k: # Python 3
     from urllib.parse import quote, unquote, urlencode, urlparse, urlsplit,\
                              parse_qs, parse_qsl, splitport, urlunparse, urljoin
     from http.client import responses
-    from http.cookiejar import CookieJar
+    from http.cookiejar import CookieJar, Cookie
     from http.cookies import SimpleCookie, BaseCookie, Morsel, CookieError
     from functools import reduce
 
@@ -139,7 +138,7 @@ else:   # pragma : no cover
     from urlparse import urlparse, urlsplit, parse_qs, urlunparse, urljoin,\
                          parse_qsl
     from httplib import responses
-    from cookielib import CookieJar
+    from cookielib import CookieJar, Cookie
     from Cookie import SimpleCookie, BaseCookie, Morsel, CookieError
     from itertools import izip as zip, imap as map
 
@@ -2247,10 +2246,39 @@ def http_date(epoch_seconds=None):
 
     Outputs a string in the format 'Wdy, DD Mon YYYY HH:MM:SS GMT'.
     """
-    rfcdate = formatdate(epoch_seconds)
-    return '%s GMT' % rfcdate[:25]
+    return formatdate(epoch_seconds, usegmt=True)
 
 #################################################################### COOKIE
+def create_cookie(name, value, **kwargs):
+    """Make a cookie from underspecified parameters.
+
+    By default, the pair of `name` and `value` will be set for the domain ''
+    and sent on every request (this is sometimes called a "supercookie").
+    """
+    result = dict(
+        version=0,
+        name=name,
+        value=value,
+        port=None,
+        domain='',
+        path='/',
+        secure=False,
+        expires=None,
+        discard=True,
+        comment=None,
+        comment_url=None,
+        rest={'HttpOnly': None},
+        rfc2109=False,)
+    badargs = set(kwargs) - set(result)
+    if badargs:
+        err = 'create_cookie() got unexpected keyword arguments: %s'
+        raise TypeError(err % list(badargs))
+    result.update(kwargs)
+    result['port_specified'] = bool(result['port'])
+    result['domain_specified'] = bool(result['domain'])
+    result['domain_initial_dot'] = result['domain'].startswith('.')
+    result['path_specified'] = bool(result['path'])
+    return Cookie(**result)
 
 def cookiejar_from_dict(cookie_dict, cookiejar=None):
     """Returns a CookieJar from a key/value dictionary.
@@ -2259,7 +2287,6 @@ def cookiejar_from_dict(cookie_dict, cookiejar=None):
     """
     if cookiejar is None:
         cookiejar = CookieJar()
-
     if cookie_dict is not None:
         for name in cookie_dict:
             cookiejar.set_cookie(create_cookie(name, cookie_dict[name]))
@@ -2281,121 +2308,6 @@ def parse_cookie(cookie):
     for key in c.keys():
         cookiedict[key] = c.get(key).value
     return cookiedict
-
-def cookie_date(epoch_seconds=None):
-    """Formats the time to ensure compatibility with Netscape's cookie
-    standard.
-
-    Accepts a floating point number expressed in seconds since the epoch in, a
-    datetime object or a timetuple.  All times in UTC.  The :func:`parse_date`
-    function can be used to parse such a date.
-
-    Outputs a string in the format ``Wdy, DD-Mon-YYYY HH:MM:SS GMT``.
-
-    :param expires: If provided that date is used, otherwise the current.
-    """
-    rfcdate = formatdate(epoch_seconds)
-    return '%s-%s-%s GMT' % (rfcdate[:7], rfcdate[8:11], rfcdate[12:25])
-
-def set_cookie(cookies, key, value='', max_age=None, expires=None, path='/',
-               domain=None, secure=False, httponly=False):
-    '''Set a cookie key into the cookies dictionary *cookies*.'''
-    cookies[key] = value
-    if expires is not None:
-        if isinstance(expires, datetime):
-            delta = expires - expires.utcnow()
-            # Add one second so the date matches exactly (a fraction of
-            # time gets lost between converting to a timedelta and
-            # then the date string).
-            delta = delta + timedelta(seconds=1)
-            # Just set max_age - the max_age logic will set expires.
-            expires = None
-            max_age = max(0, delta.days * 86400 + delta.seconds)
-        else:
-            cookies[key]['expires'] = expires
-    if max_age is not None:
-        cookies[key]['max-age'] = max_age
-        # IE requires expires, so set it if hasn't been already.
-        if not expires:
-            cookies[key]['expires'] = cookie_date(time.time() + max_age)
-    if path is not None:
-        cookies[key]['path'] = path
-    if domain is not None:
-        cookies[key]['domain'] = domain
-    if secure:
-        cookies[key]['secure'] = True
-    if httponly:
-        cookies[key]['httponly'] = True
-
-class _ExtendedMorsel(Morsel):
-    _reserved = {'httponly': 'HttpOnly'}
-    _reserved.update(Morsel._reserved)
-
-    def __init__(self, name=None, value=None):
-        Morsel.__init__(self)
-        if name is not None:
-            self.set(name, value, value)
-
-    def OutputString(self, attrs=None):
-        httponly = self.pop('httponly', False)
-        result = Morsel.OutputString(self, attrs).rstrip('\t ;')
-        if httponly:
-            result += '; HttpOnly'
-        return result
-
-
-def dump_cookie(key, value='', max_age=None, expires=None, path='/',
-                domain=None, secure=None, httponly=False, charset='utf-8',
-                sync_expires=True):
-    """Creates a new Set-Cookie header without the ``Set-Cookie`` prefix
-    The parameters are the same as in the cookie Morsel object in the
-    Python standard library but it accepts unicode data, too.
-
-    :param max_age: should be a number of seconds, or `None` (default) if
-                    the cookie should last only as long as the client's
-                    browser session.  Additionally `timedelta` objects
-                    are accepted, too.
-    :param expires: should be a `datetime` object or unix timestamp.
-    :param path: limits the cookie to a given path, per default it will
-                 span the whole domain.
-    :param domain: Use this if you want to set a cross-domain cookie. For
-                   example, ``domain=".example.com"`` will set a cookie
-                   that is readable by the domain ``www.example.com``,
-                   ``foo.example.com`` etc. Otherwise, a cookie will only
-                   be readable by the domain that set it.
-    :param secure: The cookie will only be available via HTTPS
-    :param httponly: disallow JavaScript to access the cookie.  This is an
-                     extension to the cookie standard and probably not
-                     supported by all browsers.
-    :param charset: the encoding for unicode values.
-    :param sync_expires: automatically set expires if max_age is defined
-                         but expires not.
-    """
-    morsel = _ExtendedMorsel(key, value)
-    if isinstance(max_age, timedelta):
-        max_age = (max_age.days * 60 * 60 * 24) + max_age.seconds
-    if expires is not None:
-        if not isinstance(expires, basestring):
-            expires = cookie_date(expires)
-        morsel['expires'] = expires
-    elif max_age is not None and sync_expires:
-        morsel['expires'] = cookie_date(time() + max_age)
-    if domain and ':' in domain:
-        # The port part of the domain should NOT be used. Strip it
-        domain = domain.split(':', 1)[0]
-    if domain:
-        assert '.' in domain, (
-            "Setting \"domain\" for a cookie on a server running localy (ex: "
-            "localhost) is not supportted by complying browsers. You should "
-            "have something like: \"127.0.0.1 localhost dev.localhost\" on "
-            "your hosts file and then point your server to run on "
-            "\"dev.localhost\" and also set \"domain\" for \"dev.localhost\""
-        )
-    for k, v in (('path', path), ('domain', domain), ('secure', secure),
-                 ('max-age', max_age), ('httponly', httponly)):
-        if v is not None and v is not False:
-            morsel[k] = str(v)
-    return morsel.output(header='').lstrip()
 
 
 cc_delim_re = re.compile(r'\s*,\s*')

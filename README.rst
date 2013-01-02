@@ -99,11 +99,7 @@ Add-ons
 Pulsar check if some additional python libraries are available, either
 during installation or at runtime, and uses them to add new functionalities.
 
-* setproctitle_. If installed, pulsar will used to change the processes names.
-  To install::
-
-    pip install setproctitle
-    
+* setproctitle_. If installed, pulsar will used to change the processes names.    
 * psutil_. If installed, a ``system`` key is available in the dictionary returned by
   Actor info method.
 

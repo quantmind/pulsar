@@ -5,7 +5,7 @@ Ver. 0.4.4
   the it is called and no callbacks are available. It avoids several unnecessary
   calls on deeply nested `Deferred` (which sometimes caused maximum recursion
   depth exceeded).
-* **368 regression tests**, **87% coverage**.
+* **374 regression tests**, **87% coverage**.
 
 Ver. 0.4.3 - 2012-Dec-28
 ==============================

@@ -90,7 +90,32 @@ class TestAuth(unittest.TestCase):
         self.assertEqual(parse('basic cbsdjcbsjchbsd'), None)
         auths = httpurl.basic_auth_str('pippo', 'pluto')
         self.assertTrue(parse(auths).authenticated({}, 'pippo', 'pluto'))
-    
+        
+    def test_CacheControl(self):
+        headers = httpurl.Headers()
+        c = httpurl.CacheControl()
+        self.assertFalse(c.private)
+        self.assertFalse(c.maxage)
+        c(headers)
+        self.assertEqual(headers['cache-control'], 'no-cache')
+        c = httpurl.CacheControl(maxage=3600)
+        c(headers)
+        self.assertEqual(headers['cache-control'], 'max-age=3600, public')
+        c = httpurl.CacheControl(maxage=3600, private=True)
+        c(headers)
+        self.assertEqual(headers['cache-control'], 'max-age=3600, private')
+        c = httpurl.CacheControl(maxage=3600, must_revalidate=True)
+        c(headers)
+        self.assertEqual(headers['cache-control'],
+                            'max-age=3600, public, must-revalidate')
+        c = httpurl.CacheControl(maxage=3600, proxy_revalidate=True)
+        c(headers)
+        self.assertEqual(headers['cache-control'],
+                            'max-age=3600, public, proxy-revalidate')
+        c = httpurl.CacheControl(maxage=3600, proxy_revalidate=True,
+                                 nostore=True)
+        c(headers)
+        self.assertEqual(headers['cache-control'], 'no-store')
     
 class TestTools(unittest.TestCase):
     
@@ -167,7 +192,18 @@ class TestTools(unittest.TestCase):
         io = httpurl.IOClientRead()
         self.assertEqual(io.read(), None)
         self.assertRaises(NotImplementedError, io.parsedata, b'bla')
-
+        
+    def test_http_date(self):
+        now = time.time()
+        fmt = httpurl.http_date(now)
+        self.assertTrue(fmt.endswith(' GMT'))
+        self.assertEqual(fmt[3:5], ', ')
+        
+    def test_cookiejar_from_dict(self):
+        j = httpurl.cookiejar_from_dict({'bla': 'foo'})
+        j2 = httpurl.cookiejar_from_dict({'pippo': 'pluto'}, j)
+        self.assertEqual(j, j2)
+        
 
 def request_callback(result):
     return result
@@ -231,7 +267,7 @@ class TestHttpClient(TestHttpClientBase):
         if self.with_proxy:
             self.assertEqual(http.proxy_info, {'http': self.proxy_uri})
         
-    def test_http_200_get(self):
+    def test_200_get(self):
         http = self.client()
         r = make_async(http.get(self.httpbin()))
         yield r
@@ -244,7 +280,7 @@ class TestHttpClient(TestHttpClientBase):
         self.assertTrue(r.content)
         self.assertEqual(r.url, self.httpbin())
         
-    def test_http_200_get_data(self):
+    def test_200_get_data(self):
         http = self.client()
         r = make_async(http.get(self.httpbin('get',''), data={'bla':'foo'}))
         yield r
@@ -256,7 +292,7 @@ class TestHttpClient(TestHttpClientBase):
         self.assertEqual(r.url,
                 self.httpbin(httpurl.iri_to_uri('get/',{'bla':'foo'})))
         
-    def test_http_200_gzip(self):
+    def test_200_gzip(self):
         http = self.client()
         r = make_async(http.get(self.httpbin('gzip')))
         yield r
@@ -268,7 +304,7 @@ class TestHttpClient(TestHttpClientBase):
         self.assertTrue(content['gzipped'])
         self.assertTrue(r.headers['content-encoding'],'gzip')
         
-    def test_http_400_get(self):
+    def test_400_get(self):
         '''Bad request 400'''
         http = self.client()
         r = make_async(http.get(self.httpbin('status', '400')))
@@ -279,7 +315,7 @@ class TestHttpClient(TestHttpClientBase):
         self.assertTrue(r.content)
         self.assertRaises(httpurl.HTTPError, r.raise_for_status)
         
-    def test_http_404_get(self):
+    def test_404_get(self):
         '''Not Found 404'''
         http = self.client()
         r = make_async(http.get(self.httpbin('status', '404')))
@@ -290,7 +326,7 @@ class TestHttpClient(TestHttpClientBase):
         self.assertTrue(r.content)
         self.assertRaises(httpurl.HTTPError, r.raise_for_status)
         
-    def test_http_post(self):
+    def test_post(self):
         data = (('bla', 'foo'), ('unz', 'whatz'),
                 ('numero', '1'), ('numero', '2'))
         http = self.client()
