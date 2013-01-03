@@ -885,7 +885,10 @@ for requests on a socket.
             self.__ioloop.stop()
             # We join the thread
             if current_thread() != self.thread:
-                self.thread.join()
+                try:
+                    self.thread.join()
+                except RuntimeError:
+                    pass
 
     ############################################################## INTERNALS
     def _run(self):

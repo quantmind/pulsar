@@ -17,7 +17,8 @@ __all__ = ['IOpoll',
            'daemonize',
            'SIGQUIT',
            'get_uid',
-           'get_gid']
+           'get_gid',
+           'get_maxfd']
 
 # See: http://msdn.microsoft.com/en-us/library/ms724935(VS.85).aspx
 SetHandleInformation = ctypes.windll.kernel32.SetHandleInformation

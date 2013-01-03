@@ -68,7 +68,7 @@ class TestSockUtils(unittest.TestCase):
         
     @unittest.skipUnless(platform.has_multiProcessSocket, 'Posix platform only')
     def testSerialise(self):
-        sock = pulsar.create_socket(':0')
+        sock = pulsar.create_socket('127.0.0.1:0')
         v = pickle.dumps(sock)
         sock2 = pickle.loads(v)
         self.assertEqual(sock.name, sock2.name)
@@ -78,11 +78,12 @@ class TestSockUtils(unittest.TestCase):
         self.assertEqual(sock.write(b'bla'), 0)
         
     def testWrite(self):
-        server = pulsar.create_socket(':0')
+        server = pulsar.create_socket('127.0.0.1:0')
         self.assertEqual(server.accept(), (None, None))
         client = pulsar.create_connection(server.name, blocking=3)
+        yield pulsar.NOT_DONE
         client_connection, address = server.accept()
-        self.assertEqual(client.name, address)
+        self.assertEqual(client.address, address)
         client_connection = pulsar.wrap_socket(client_connection)
         self.assertEqual(client_connection.write(b''), 0)
         self.assertEqual(client_connection.write(b'ciao'), 4)
@@ -95,8 +96,9 @@ class TestSockUtils(unittest.TestCase):
         self.assertEqual(data, b'')
         
     def testWriteError(self):
-        server = pulsar.create_socket(':0')
+        server = pulsar.create_socket('127.0.0.1:0')
         client = pulsar.create_connection(server.name, blocking=3)
+        yield pulsar.NOT_DONE
         client_connection, address = server.accept()
         self.assertEqual(client.name, address)
         client_connection = pulsar.wrap_socket(client_connection)
