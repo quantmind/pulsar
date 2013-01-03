@@ -18,6 +18,14 @@ TestSuite
    :member-order: bysource
    
    
+TestPlugin
+~~~~~~~~~~~~~~~~~~~
+
+.. autoclass:: TestPlugin
+   :members:
+   :member-order: bysource
+
+
 TestLoader
 ~~~~~~~~~~~~~~~~~~~
 

@@ -1,17 +1,5 @@
-'''An application for asynchronous applications serving requests
-on a socket.
-An application for asynchronous applications serving requests
-on a socket. This is the base class of :class:`pulsar.apps.wsgi.WSGIServer`.
-
-.. attribute:: socket_server_class
-
-    Class or callable which returns the asynchronous socket server, usually
-    a subclass of :class:`pulsar.AsyncSocketServer`.
-    
-.. attribute:: address
-
-    The socket address, available once the application has started.
-    
+'''Asynchronous application for serving requests
+on a socket. This is the base class of :class:`pulsar.apps.wsgi.WSGIServer`.    
 '''
 import pulsar
 from pulsar import AsyncIOStream
@@ -36,6 +24,19 @@ class Bind(SocketSetting):
         
 
 class SocketServer(pulsar.Application):
+    '''This application bind a socket to a given address and listen for
+requests. The class which handle requests is constructued from the
+:attr:`socket_server_class` parameter/attribute.
+    
+.. attribute:: socket_server_class
+
+    Class or callable which returns the asynchronous socket server, usually
+    a subclass of :class:`pulsar.AsyncSocketServer`.
+    
+.. attribute:: address
+
+    The socket address, available once the application has started.
+    '''
     _app_name = 'socket'
     socket_server_class = None
     address = None
