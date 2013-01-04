@@ -1,7 +1,12 @@
 '''\
 An asynchronous parallel testing suite :class:`pulsar.Application`.
-It is used for testing
-pulsar itself and can be used as a test suite for any other library.
+Used for testing pulsar itself but it can be used as a test suite for
+any other library.
+
+Requirements
+====================
+* unittest2_ for python 2.6
+* mock_ for python < 3.3
 
 .. _apps-test-intro:
 
@@ -18,7 +23,7 @@ let's call it ``runtests.py``::
                   modules=('regression',
                            ('examples','tests'))).start()
 
-where the modules is an iterable for discovering test cases. Check the
+where ``modules`` is an iterable for discovering test cases. Check the
 :class:`TestLoader` for details.
 In the above example the test suite will look for all python files
 in the ``regression`` module (in a recursive fashion), and for modules
@@ -50,9 +55,11 @@ When running a test, pulsar looks for two extra method: ``_pre_setup`` and
 ``_post_teardown``. If the former is available, it is run just before the
 ``setUp`` method while if the latter is available, it is run
 just after the ``tearDown`` method.
+
+.. _unittest2: http://pypi.python.org/pypi/unittest2
+.. _mock: http://pypi.python.org/pypi/mock
 '''
 __test__ = False
-import unittest
 import logging
 import os
 import sys
@@ -73,7 +80,8 @@ if sys.version_info < (3,3): # pragma nocover
     try:
         import mock
     except ImportError:
-        mock = None
+        print('To run tests you need to install the mock package')
+        exit(0)
 else:
     from unittest import mock
     
@@ -166,7 +174,7 @@ is a group of tests specified in a test class.
 
 :parameter result_class: Optional class for collecting test results. By default
     it used the standard ``unittest.TextTestResult``.
-:parameter plugins: Optional list of :class:`Plugin` instances
+:parameter plugins: Optional list of :class:`TestPlugin` instances.
 '''
     _app_name = 'test'
     cfg_apps = ('cpubound',)

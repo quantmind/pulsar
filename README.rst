@@ -1,9 +1,14 @@
 Event driven concurrent framework for python. Tested in Windows and Linux,
-it requires python 2.6, 2.7, 3.2 or pypy_.
+it requires python 2.6, 2.7, 3.2, 3.3 or pypy_.
 With pulsar you can write asynchronous servers performing one or several
 activities in different threads and/or processes.
 
-|pulsar-build|_
+:CI: |pulsar-build|_ 
+:Documentation: http://packages.python.org/pulsar/
+:Dowloads: http://pypi.python.org/pypi/pulsar
+:Source: https://github.com/quantmind/pulsar
+:Keywords: server, asynchronous, concurrency, actor, thread, process, socket, task queue
+
 
 .. |pulsar-build| image:: https://secure.travis-ci.org/quantmind/pulsar.png?branch=master
 .. _pulsar-build: http://travis-ci.org/quantmind/pulsar
@@ -37,14 +42,13 @@ Pulsar tells the operating system (through epoll or select) that it should be
 notified when a new connection is made, and then it goes to sleep.
 
 Pulsar uses the multiprocessing_ module from the standard python library and
-it can be configured to run in multi-processing or multi-threading mode.
+it can be configured to run in multi-processing mode, multi-threading mode or
+a combination of the two.
 
 Installing
 ============
 
-Pulsar is a stand alone python library which works for python 2.6 up to
-python 3.3.
-Installing pulsar can be done via `pip`::
+Pulsar is a stand alone python library and it can be installed via `pip`::
 
     pip install pulsar
     
@@ -58,7 +62,9 @@ in an elegant and efficient way. Out of the box it is shipped with the
 the following
 
 * Socket servers.
-* WSGI server (with a JSON-RPC handler).
+* WSGI server.
+* JSON-RPC WSGI middleware.
+* Web Sockets WSGI middleware.
 * Distributed task queue.
 * Shell for asynchronous scripting.
 * Asynchronous test suite.
@@ -85,28 +91,30 @@ pulsar's concurrent computation, they do not share state between them,
 communication is achieved via asynchronous inter-process message passing,
 implemented using the standard python socket library.
 
-Two special classes of actors are the ``Arbiter``, used as a singletone,
+Two special classes of actors are the ``Arbiter``, used as a singleton_,
 and the ``Monitor``, a manager of several actors performing similar functions.
 The Arbiter runs the main eventloop and it controls the life of all actors.
 Monitors manage group of actors performing similar functions, You can think
 of them as a pool of actors.
 
-More information about design and philosophy in the documentations.  
+More information about design and philosophy in the documentation.  
 
 
 Add-ons
 =========
-Pulsar check if some additional python libraries are available, either
+Pulsar checks if some additional libraries are available, either
 during installation or at runtime, and uses them to add new functionalities.
 
-* setproctitle_. If installed, pulsar will used to change the processes names.    
-* psutil_. If installed, a ``system`` key is available in the dictionary returned by
+* setproctitle_: if installed, pulsar can use it to change the processes names of
+  the running application.  
+* psutil_: if installed, a ``system`` key is available in the dictionary returned by
   Actor info method.
 
 Running Tests
 ==================
-Pulsar test suite uses the pulsar test applications. If you are using python 2.6
-you need to install unittest2_. To run the tests::
+Pulsar test suite uses the pulsar test application. If you are using python 2.6
+you need to install unittest2_, and if not running on python 3.3, the mock_
+library is also needed. To run tests::
 
     python runtests.py
 
@@ -125,6 +133,26 @@ ideas from nodejs_ (api design), twisted_ (the deferred implementation), tornado
 (the event-loop implementation), celery_ (the task queue application) and
 many other open-source efforts.
 
+.. _contributing:
+
+Contributing
+=================
+Development of pulsar_ happens at Github. We very much welcome your contribution
+of course. To do so, simply follow these guidelines:
+
+1. Fork pulsar_ on github
+2. Create a topic branch ``git checkout -b my_branch``
+3. Push to your branch ``git push origin my_branch``
+4. Create an issue at https://github.com/quantmind/pulsar/issues with a link to your patch.
+
+
+.. _license:
+
+License
+=============
+This software is licensed under the New BSD_ License. See the LICENSE
+file in the top distribution directory for the full license text.
+
 .. _gunicorn: http://gunicorn.org/
 .. _nodejs: http://nodejs.org/
 .. _twisted: http://twistedmatrix.com/trac/
@@ -133,7 +161,11 @@ many other open-source efforts.
 .. _multiprocessing: http://docs.python.org/library/multiprocessing.html
 .. _`actors primitive`: http://en.wikipedia.org/wiki/Actor_model
 .. _unittest2: http://pypi.python.org/pypi/unittest2
+.. _mock: http://pypi.python.org/pypi/mock
 .. _setproctitle: http://code.google.com/p/py-setproctitle/
 .. _psutil: http://code.google.com/p/psutil/
 .. _pypi: http://pypi.python.org/pypi/pulsar
 .. _pypy: http://pypy.org/
+.. _BSD: http://www.opensource.org/licenses/bsd-license.php
+.. _pulsar: https://github.com/quantmind/pulsar
+.. _singleton: http://en.wikipedia.org/wiki/Singleton_pattern

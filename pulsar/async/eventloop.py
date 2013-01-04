@@ -266,12 +266,14 @@ will make the loop stop after the current event iteration completes."""
                     # two ways EINTR might be signaled:
                     # * e.errno == errno.EINTR
                     # * e.args is like (errno.EINTR, 'Interrupted system call')
-                    if (getattr(e, 'errno', None) == errno.EINTR or
-                        (isinstance(getattr(e, 'args', None), tuple) and
-                         len(e.args) == 2 and e.args[0] == errno.EINTR)):
-                        continue
-                    else:
+                    eno = getattr(e, 'errno', None)
+                    if eno != errno.EINTR:
+                        args = getattr(e, 'args', None)
+                        if isinstance(args, tuple) and len(args) == 2:
+                            eno = args[0]
+                    if eno != errno.EINTR and self._running:
                         raise
+                    continue
                 # Pop one fd at a time from the set of pending fds and run
                 # its handler. Since that handler may perform actions on
                 # other file descriptors, there may be reentrant calls to

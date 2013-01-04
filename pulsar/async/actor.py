@@ -428,10 +428,10 @@ properly this actor will go out of scope.'''
     def exit(self, result=None):
         '''Exit from the :class:`Actor` domain.'''
         if not self.stopped():
-            self.mailbox.close()
             # we don't want monitors to stop the request loop
             if not self.is_monitor():
                 self.requestloop.stop()
+            self.mailbox.close()
             self.state = ACTOR_STATES.CLOSE
             self.logger.debug('%s exited', self)
             remove_actor(self)

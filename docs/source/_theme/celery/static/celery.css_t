@@ -59,11 +59,6 @@ div.body {
     color: #3E4349;
     padding: 0 30px 0 30px;
 }
-
-img.celerylogo {
-    padding: 0 0 10px 10px;
-    float: right;
-}
  
 div.footer {
     width: {{ page_width - 15 }}px;

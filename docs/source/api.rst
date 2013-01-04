@@ -9,7 +9,8 @@ API
 .. _pulsar_primitives:
 
 Pulsar is built on top of a set of **primitive** classes which handle the
-different aspects of the concurrent framework. These primitive classes are:
+different aspects of the asynchronous concurrent framework.
+These primitive classes are:
 
 * :class:`Deferred` the primitive for handling asynchronous execution.
 * :class:`Actor` the primitive for handling parallel execution.
@@ -190,6 +191,12 @@ Safe Async
 ~~~~~~~~~~~~~~~~~~~~
 
 .. autofunction:: safe_async
+
+
+Maybe Async
+~~~~~~~~~~~~~~~~~~~~
+
+.. autofunction:: maybe_async
 
 
 Deferred

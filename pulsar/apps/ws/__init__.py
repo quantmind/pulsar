@@ -59,6 +59,7 @@ from .frame import *
 
 WEBSOCKET_GUID = '258EAFA5-E914-47DA-95CA-C5AB0DC85B11'
 
+
 class GeneralWebSocket(object):
     namespace = ''
     extensions = ['x-webkit-deflate-frame']
@@ -215,73 +216,6 @@ http://www.w3.org/TR/websockets/ for details on the JavaScript interface.
     def get_parser(self):
         return FrameParser()
 
-
-class SocketIOMiddleware(GeneralWebSocket):
-    '''A WSGI middleware for socket.io_ client.
-    
-.. _socket.io: https://github.com/LearnBoost/socket.io-client
-'''
-    namespace = 'socket.io'
-    RE_REQUEST_URL = re.compile(r"""
-        ^/(?P<namespace>[^/]+)
-         /(?P<protocol_version>[^/]+)
-         /(?P<transport_id>[^/]+)
-         /(?P<session_id>[^/]+)/?$
-         """, re.X)
-    RE_HANDSHAKE_URL = re.compile(r"^/(?P<namespace>[^/]+)/1/$", re.X)
-    
-    handler_types = {
-        'websocket': WebSocket
-    }
-    
-    def __init__(self, handle, namespace=None, extensions=None):
-        super(SocketIOMiddleware, self).__init__(handle,namespace=namespace,
-                                                 extensions=extensions)
-        ht = self.handler_types
-        self._middlewares = dict(((k,ht[k](handle,\
-                                    clients = self._clients)) for k in ht))
-    
-    def handle_handshake(self, environ, start_response):
-        path = environ.get('PATH_INFO')
-        request_method = environ.get("REQUEST_METHOD")
-        request_tokens = self.RE_REQUEST_URL.match(path)
-        
-        # Parse request URL and QUERY_STRING and do handshake
-        if request_tokens:
-            request_tokens = request_tokens.groupdict()
-        else:
-            handshake_tokens = self.RE_HANDSHAKE_URL.match(path)
-            if handshake_tokens:
-                return self._io_handshake(environ, start_response,
-                                          handshake_tokens.groupdict())
-            else:
-                return
-
-        # Delegate to transport protocol
-        transport = self._middlewares.get(request_tokens["transport_id"])
-        return transport.handle_handshake(environ, start_response)
-        
-    ############################################################################
-    ##    Private
-    ############################################################################
-    
-    def _io_handshake(self, environ, start_response, tokens):
-        if tokens["namespace"] != self.namespace:
-            raise WebSocketError(400, "Namespace mismatch")
-        else:
-            client = self.get_client()
-            self._clients.pop(client.id)
-            data = "%s:15:10:%s" % (client.id, ",".join(self._middlewares))
-            args = parse_qs(environ.get("QUERY_STRING"))
-            if "jsonp" in args:
-                content_type = 'application/javascript'
-                data = 'io.j[%s]("%s");' % (args["jsonp"][0], data)
-            else:
-                content_type = 'text/plain'
-            return WsgiResponse(200,
-                                data.encode('utf-8'),
-                                content_type=content_type)
-    
 
 class WS(object):
     '''A web socket handler. It maintains

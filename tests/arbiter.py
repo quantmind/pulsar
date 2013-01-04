@@ -84,7 +84,7 @@ class TestArbiterThread(ActorTestMixin, unittest.TestCase):
         self.assertTrue(proxy.aid in arbiter.managed_actors)
         proxy = arbiter.managed_actors[proxy.aid]
         self.assertEqual(proxy.stopping_loops, 0)
-        time.sleep(1)
+        time.sleep(1.5)
         self.assertTrue(arbiter.manage_actors())
         self.assertEqual(proxy.stopping_loops, 1)
         c = 0
@@ -100,13 +100,12 @@ class TestArbiterThread(ActorTestMixin, unittest.TestCase):
     def testTerminate(self):
         arbiter = pulsar.get_actor()
         self.assertTrue(arbiter.is_arbiter())
-        yield self.spawn(actor_class=BogusActor, name='foo', timeout=1,
-                         failstop=True)
+        yield self.spawn(actor_class=BogusActor, name='foo', timeout=1)
         proxy = self.a
         self.assertEqual(proxy.name, 'foo')
         proxy = arbiter.managed_actors[proxy.aid]
         self.assertEqual(proxy.stopping_loops, 0)
-        time.sleep(1)
+        time.sleep(1.5)
         n = arbiter.manage_actors()
         self.assertTrue(n)
         self.assertEqual(proxy.stopping_loops, 1)

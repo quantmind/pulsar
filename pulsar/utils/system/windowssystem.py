@@ -69,7 +69,7 @@ def daemonize():
 
 
 class IOpoll(IOselect):
-    
+    '''The default windows IO poll class. Based on select.'''
     def poll(self, timeout=None):
         """Win32 select wrapper."""
         if not (self.read_fds or self.write_fds):
@@ -84,11 +84,11 @@ class IOpoll(IOselect):
         # time or ctrl-c will never be recognized
         if timeout is None or timeout > 0.5:
             timeout = 0.5
-        return super(IOpoll,self).poll(timeout)
+        return super(IOpoll, self).poll(timeout)
     
     
 class Waker(object):
-    '''In windows '''
+    '''In windows'''
     def __init__(self):
         self._writer, s = socket_pair(backlog = 1)
         s.setblocking(True)   

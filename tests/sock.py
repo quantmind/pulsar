@@ -81,8 +81,12 @@ class TestSockUtils(unittest.TestCase):
         server = pulsar.create_socket('127.0.0.1:0')
         self.assertEqual(server.accept(), (None, None))
         client = pulsar.create_connection(server.name, blocking=3)
-        yield pulsar.NOT_DONE
         client_connection, address = server.accept()
+        count = 0
+        while address is None and count < 10:
+            count += 1
+            yield pulsar.NOT_DONE
+            client_connection, address = server.accept()
         self.assertEqual(client.address, address)
         client_connection = pulsar.wrap_socket(client_connection)
         self.assertEqual(client_connection.write(b''), 0)
@@ -98,8 +102,12 @@ class TestSockUtils(unittest.TestCase):
     def testWriteError(self):
         server = pulsar.create_socket('127.0.0.1:0')
         client = pulsar.create_connection(server.name, blocking=3)
-        yield pulsar.NOT_DONE
         client_connection, address = server.accept()
+        count = 0
+        while address is None and count < 10:
+            count += 1
+            yield pulsar.NOT_DONE
+            client_connection, address = server.accept()
         self.assertEqual(client.name, address)
         client_connection = pulsar.wrap_socket(client_connection)
         client_connection.send = mock.MagicMock(return_value=0)

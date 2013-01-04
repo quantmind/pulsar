@@ -115,20 +115,11 @@ def is_async(obj):
     '''Check if *obj* is an asynchronous instance'''
     return isinstance(obj, Deferred)
 
-def safe_async(f, args=None, kwargs=None, description=None, max_errors=None):
-    '''Execute function *f* safely and return an asynchronous result'''
-    try:
-        kwargs = kwargs if kwargs is not None else EMPTY_DICT
-        args = args or ()
-        result = f(*args, **kwargs)
-    except:
-        result = sys.exc_info()
-    return make_async(result, max_errors=max_errors, description=description)
-
 def maybe_async(val, description=None, max_errors=None):
     '''Convert *val* into an asynchronous instance only if *val* is a generator
-or a function. If *val* is asynchronous it check that if it has a result. In
-this case it return the result itself.'''
+or a function. If *val* is a :class:`Deferred` it checks if it has been
+called and all callbacks have been consumed.
+In this case it returns the :attr:`Deferred.result` attribute.'''
     if isgenerator(val):
         val = DeferredGenerator(val, max_errors=max_errors,
                                 description=description)
@@ -150,7 +141,7 @@ so that callbacks can be attached to it.
     :class:`DeferredGenerator` instance will be returned.
 :parameter max_errors: the maximum number of errors tolerated if *val* is
     a generator. Default `None`.
-:rtype: a :class:`Deferred` instance.
+:return: a :class:`Deferred` instance.
 
 This function is useful when someone needs to treat a value as a deferred::
 
@@ -165,6 +156,26 @@ This function is useful when someone needs to treat a value as a deferred::
         return d
     else:
         return val
+    
+def safe_async(f, args=None, kwargs=None, description=None, max_errors=None):
+    '''Execute function *f* safely and **always** returns an asynchronous
+result.
+
+:parameter f: function to execute
+:parameter args: tuple of positional arguments for *f*.
+:parameter kwargs: dictionary of key-word parameters for *f*.
+:parameter description: Optional description for the :class:`Deferred` returned.
+:parameter max_errors: the maximum number of errors tolerated if a :class:`DeferredGenerator`
+    is returned.
+:return: a :class:`Deferred` instance.
+'''
+    try:
+        kwargs = kwargs if kwargs is not None else EMPTY_DICT
+        args = args or ()
+        result = f(*args, **kwargs)
+    except:
+        result = sys.exc_info()
+    return make_async(result, max_errors=max_errors, description=description)
 
 def log_failure(failure):
     '''Log the *failure* if *failure* is a :class:`Failure`.'''
@@ -320,7 +331,8 @@ class Failure(object):
 
 ############################################################### Deferred
 class Deferred(object):
-    """This is a callback which will be put off until later.
+    """The main class of the pulsar asynchronous tools.
+It is a callback which will be put off until later.
 The implementation is very similar to the ``twisted.defer.Deferred`` object.
 
 .. attribute:: called
@@ -331,7 +343,18 @@ The implementation is very similar to the ``twisted.defer.Deferred`` object.
 .. attribute:: running
 
     ``True`` if the deferred is running callbacks.
+    
+.. attribute:: paused
 
+    Integer indicating the number of times this :class:`Deferred` has been
+    paused because the result of a callback was another :class::`Deferred`.
+
+.. attribute:: result
+
+    This is available once the :class:`Deferred` has been called back. Note,
+    this can be anything, including another :class:`Deferred`. Trying to access
+    this attribute when :attr:`called` is ``False`` will result in an
+    ``AttributeError`` exception.
 """
     paused = 0
     _called = False
@@ -402,7 +425,10 @@ this point, :meth:`add_callback` will run the *callbacks* immediately.
         return self.result
 
     def result_or_self(self):
-        '''Obtain the result if available, otherwise it returns self.'''
+        '''It returns the :attr:`result` only if available and all
+callbacks have been consumed, otherwise it returns this :class:`Deferred`.
+Users should use this method to obained the result, rather than accessing
+directly the :attr:`result` attribute.'''
         return self.result if self._called and not self._callbacks else self
 
     ##################################################    INTERNAL METHODS

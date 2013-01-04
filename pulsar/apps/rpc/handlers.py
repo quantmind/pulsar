@@ -16,10 +16,8 @@ __all__ = ['RpcHandler', 'RpcMiddleware']
 
 LOGGER = logging.getLogger('pulsar.rpc')
 
-LOGGER = logging.getLogger('pulsar.rpc')
 
-
-class RpcRequest(object):
+class RpcRequest:
 
     def __init__(self, environ):
         self.environ = environ
@@ -278,7 +276,7 @@ class RpcMiddleware(object):
 
     Default ``None``
 
-.. _WSGI:: http://www.wsgi.org/
+.. _WSGI: http://www.wsgi.org/
 '''
     methods = ('get','post','put','head','delete','trace','connect')
     request_class = RpcRequest

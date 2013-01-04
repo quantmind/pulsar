@@ -618,7 +618,7 @@ class Daemon(Setting):
     action = "store_true"
     default = False
     desc = """\
-        Daemonize the Pulsar process.
+        Daemonize the Pulsar process (posix only).
 
         Detaches the server from the controlling terminal and enters the
         background.

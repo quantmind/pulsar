@@ -1,8 +1,8 @@
 .. _apps-test:
 
-================================
+=============================
 Asynchronous Test Suite
-================================
+=============================
 
 .. automodule:: pulsar.apps.test
 
@@ -59,6 +59,6 @@ TestRequest
    
    
 run_on_arbiter
-~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~
 
 .. autofunction:: run_on_arbiter

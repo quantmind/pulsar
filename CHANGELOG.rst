@@ -1,17 +1,19 @@
 Ver. 0.4.4
 ==============================
-* Fixed bug which prevented daemonisation.
-* Changed the `result_or_self` method in `Deferred` to return the *result* when
-  the it is called and no callbacks are available. It avoids several unnecessary
-  calls on deeply nested `Deferred` (which sometimes caused maximum recursion
-  depth exceeded).
+* Modified :meth:`pulsar.Actor.exit` so that it shuts down :attr:`pulsar.Actor.mailbox`
+  after closing the :attr:`pulsar.Actor.requestloop`.
+* Fixed bug which prevented :ref:`daemonisation <setting-daemon>` in posix systems.
+* Changed the :meth:`pulsar.Deferred.result_or_self` method to return the
+  *result* when the it is called and no callbacks are available.
+  It avoids several unnecessary calls on deeply nested :class:`pulsar.Deferred`
+  (which sometimes caused maximum recursion depth exceeded).
 * **374 regression tests**, **87% coverage**.
 
 Ver. 0.4.3 - 2012-Dec-28
 ==============================
 * Removed the tasks in event loop. A task can only be added by appending
   callbacks or timeouts.
-* Fixed critical bug in MultiDeferred.
+* Fixed critical bug in :class:`pulsar.MultiDeferred`.
 * Test suite works with multiple test workers.
 * Fixed issue #17 on asynchronous shell application.
 * Dining philosophers example works on events only.
