@@ -1,7 +1,7 @@
 .. _apps-socket:
 
 =================
-Socket Server
+Socket Servers
 =================
 
 .. automodule:: pulsar.apps.socket
@@ -11,7 +11,7 @@ API
 =========
 
 Socket Server
-~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~
 
 .. autoclass:: SocketServer
    :members:

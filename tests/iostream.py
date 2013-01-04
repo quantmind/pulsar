@@ -42,7 +42,7 @@ class TestPulsarStreams(unittest.TestCase):
     server = None
     @classmethod
     def setUpClass(cls):
-        s = SocketServer(socket_server_class=TestServerSocketServer,
+        s = SocketServer(socket_server_factory=TestServerSocketServer,
                          name=cls.__name__.lower(), bind='127.0.0.1:0',
                          concurrency=cls.concurrency)
         outcome = pulsar.send('arbiter', 'run', s)

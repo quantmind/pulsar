@@ -40,6 +40,7 @@ An headers middleware is a callable which accepts two parameters, the wsgi
                           stream=True)
         
     def __call__(self, environ, start_response):
+        # The WSGI thing
         uri = environ['RAW_URI']
         if not uri or uri.startswith('/'):
             raise HttpException(status=404)

@@ -79,7 +79,7 @@ class Calculator(rpc.JSONRPC):
 def wsgi_handler():
     return rpc.RpcMiddleware(Root().putSubHandler('calc',Calculator()))
 
-def server(**params):
+def server(callable=None, **params):
     return wsgi.WSGIServer(callable=wsgi_handler(), **params)
 
 

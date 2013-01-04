@@ -44,17 +44,7 @@ from .middleware import *
 class WsgiSetting(pulsar.Setting):
     virtual = True
     app = 'wsgi'
-
-
-class Keepalive(WsgiSetting):
-    name = "keepalive"
-    flags = ["--keep-alive"]
-    validator = pulsar.validate_pos_int
-    type = int
-    default = 15
-    desc = """\
-        The number of seconds to keep an idel HTTP keep-alive connection
-        connected."""
+    section = "WSGI Servers"
 
 
 class HttpParser(WsgiSetting):
@@ -79,9 +69,7 @@ class ResponseMiddleware(WsgiSetting):
 class WSGIServer(socket.SocketServer):
     cfg_apps = ('socket',)
     _app_name = 'wsgi'
-
-    def socket_server_class(self, worker, socket):
-        return HttpServer(worker, socket, timeout=self.cfg.keepalive)
+    socket_server_factory = HttpServer
 
     def handler(self):
         '''Build the wsgi handler from *hnd*. This function is called

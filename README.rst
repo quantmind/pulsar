@@ -69,18 +69,20 @@ the following
 * Shell for asynchronous scripting.
 * Asynchronous test suite.
 
+.. _examples:
+
 Examples
 =============
 Check out the ``examples`` directory for various working applications created using
 pulsar alone. It includes:
 
 * Hello world! wsgi example.
-* An Httpbin wsgi application.
-* A HTTP Proxy server.
+* An Httpbin wsgi application (similar to http://httpbin.org/).
+* An HTTP Proxy server with headers middleware.
 * A simple JSON-RPC Calculator server.
-* A taskqueue application with a JSON-RPC.
+* A taskqueue application with a JSON-RPC interface.
 * Websocket graph.
-* The dining philosophers problem.
+* The `dining philosophers problem <http://en.wikipedia.org/wiki/Dining_philosophers_problem>`_.
 * Asynchronous shell.
 
 

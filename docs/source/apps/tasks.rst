@@ -1,7 +1,7 @@
 .. _apps-tasks:
 
 =============================
-Distributed Task Queue
+Distributed Task Queues
 =============================
 
 .. automodule:: pulsar.apps.tasks

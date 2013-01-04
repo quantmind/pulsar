@@ -32,7 +32,7 @@ class PulsarSettings(Directive):
             yield s,sec[s]
             
     def text(self):
-        for s,settings in self.sections():
+        for s, settings in self.sections():
             yield '.. _setting-section-{0}:\n\n\
 {0}\n=====================================\n\n'.format(s)
             for sett in settings:

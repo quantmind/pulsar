@@ -1,7 +1,7 @@
 .. _apps-wsgi:
 
 =================
-WSGI Server
+WSGI Servers
 =================
 
 .. automodule:: pulsar.apps.wsgi

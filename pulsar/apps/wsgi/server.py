@@ -311,7 +311,7 @@ is an HTTP upgrade (websockets)'''
             return self.connection.close(msg)
 
 
-class HttpServerParser:
+class HttpProtocol:
     connection = None
     def __init__(self):
         self.parser = lib.Http_Parser(kind=0)
@@ -349,6 +349,7 @@ the following algorithm:
 
 class HttpServer(AsyncSocketServer):
     response_class = HttpResponse
+    protocol_factory = HttpProtocol
 
     def __init__(self, *args, **kwargs):
         super(HttpServer, self).__init__(*args, **kwargs)
@@ -356,7 +357,5 @@ class HttpServer(AsyncSocketServer):
         self.server_name = socket.getfqdn(host)
         self.server_port = port
         self.app_handler = self.actor.app_handler
-        
-    def parser_class(self):
-        return HttpServerParser()
+    
 

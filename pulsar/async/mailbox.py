@@ -120,7 +120,7 @@ created by :meth:`ActorProxy.send` method.
 class PulsarClient(ReconnectingClient):
     '''A proxy for the :attr:`Actor.inbox` attribute. It is used by the
 :class:`ActorProxy` to send messages to the remote actor.'''
-    parser_class = MessageParser
+    protocol_factory = MessageParser
 
     def parsedata(self, data):
         msg = super(PulsarClient, self).parsedata(data)
@@ -187,7 +187,7 @@ class MailboxResponse(AsyncResponse):
                 m = ActorMessage('errback', sender=receiver, args=(result,))
             else:
                 m = ActorMessage('callback', sender=receiver, args=(result,))
-            yield self.parser.encode(m)
+            yield self.protocol.encode(m)
 
 
 class MailboxConnection(AsyncConnection):
@@ -203,7 +203,7 @@ class Mailbox(AsyncSocketServer):
 :ref:`CPU bound worker <cpubound>`, the class:`Mailbox`
 creates its own :class:`IOLoop` which runs on a separate thread
 of execution.'''
-    parser_class = MessageParser
+    protocol_factory = MessageParser
     connection_class = MailboxConnection
     response_class = MailboxResponse
 

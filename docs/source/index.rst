@@ -16,6 +16,14 @@ it requires python 2.6 up to python 3.3 in a single code base.
    http
    settings
    
+.. Note::
+
+    This documentation is incomplete and with several spelling errors.
+    It will improve with time and, hopefully, with help from the community.
+    In the mean time, a lot of insight can be gained by
+    visiting and running, the :ref:`example applications <examples>`
+    which are located in the ``examples`` module at the top level of
+    pulsar distribution.
 
 .. _apps-framework:
 

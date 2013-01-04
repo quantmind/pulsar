@@ -275,8 +275,6 @@ class RpcMiddleware(object):
     The path where the RPC is located
 
     Default ``None``
-
-.. _WSGI: http://www.wsgi.org/
 '''
     methods = ('get','post','put','head','delete','trace','connect')
     request_class = RpcRequest

@@ -22,7 +22,7 @@ LOGGER = logging.getLogger('pulsar.iostream')
 
 
 __all__ = ['AsyncIOStream',
-           'BaseSocketHandler',
+           'ProtocolSocket',
            'ClientSocket',
            'Client',
            'AsyncConnection',
@@ -426,27 +426,47 @@ setup using the :meth:`set_close_callback` method."""
             self.ioloop.update_handler(self, self._state)
 
 
-class BaseSocketHandler(BaseSocket):
-    '''A :class:`BaseSocket` class for all socket handlers such as
-:class:`AsyncSocketServer`, :class:`AsyncConnection`.
+class EchoParser:
+    '''A simple echo protocol'''
+    def encode(self, data):
+        return data
+    
+    def decode(self, data):
+        return bytes(data), bytearray()
+    
+    
+class ProtocolSocket(BaseSocket):
+    '''A :class:`BaseSocket` with a protocol for encoding and decoding
+messages. This is the base class for :class:`AsyncSocketServer`,
+:class:`AsyncConnection` and :class:`ClientSocketHandler`.
 
 .. attribute:: on_closed
 
     A :class:`Deferred` which receives a callback once the
-    :meth:`close` method is invoked
-.. '''
+    :meth:`close` method is invoked.
+ 
+'''
+    protocol_factory = EchoParser
+    '''A callable for building the protocol to encode and decode messages. This
+    attribute can be specified as class attribute or via the constructor.
+    A :ref:`protocol <socket-protocol>` must be an instance of a class
+    exposing the ``encode`` and ``decode`` methods.'''
     _closing_socket = False
     def __new__(cls, *args, **kwargs):
-        o = super(BaseSocketHandler, cls).__new__(cls)
+        o = super(ProtocolSocket, cls).__new__(cls)
         o.on_closed = Deferred(
-                        description='on_closed BaseSocketHandler callback')
+                        description='on_closed %s callback' % cls.__name__)
         o.time_started = time.time()
         o.time_last = o.time_started
+        f = kwargs.get('protocol_factory')
+        if f:
+            o.protocol_factory = f
         o.received = 0
         return o
 
     @property
     def closed(self):
+        '''True if the socket is closed.'''
         return self.sock.closed
 
     def on_close(self, failure=None):
@@ -468,47 +488,38 @@ class BaseSocketHandler(BaseSocket):
         self.on_close(msg)
         self.sock.close()
         return self.on_closed.callback(msg)
-
-
-class EchoParser:
-    '''A simple echo parser'''
-    def encode(self, data):
-        return data
-    
-    def decode(self, data):
-        return bytes(data), bytearray()
     
     
-class ClientSocketHandler(BaseSocketHandler):
-    '''A :class:`BaseSocketHandler` for socket clients with parsers.
-This class can be used for synchronous and asynchronous socket
-for both a "client" socket and
-a server connection socket (the socket obtained from a server socket
-via the ``connect`` function).
+class ClientSocketHandler(ProtocolSocket):
+    '''A :class:`ProtocolSocket` for clients.
+This class can be used with synchronous and asynchronous socket
+for both a "client" socket and a server connection socket (the socket
+obtained from a server socket via the ``connect`` function).
 
+.. attribute:: protocol
+
+    An object obtained by the :attr:`ProtocolSocket.protocol_factory` method.
+    It must implement the ``encode`` and ``decode`` methods used, respectively,
+    by clients and servers.
+    
 .. attribute:: buffer
 
     A bytearray containing data received from the socket. This buffer
     is not empty when more data is required to form a message.
-    
-.. attribute:: parser
-
-    A parser which exposes the *encode* and *decode* methods.
     
 .. attribute:: remote_address
 
     The remote address for the socket communicating with this
     :class:`ClientSocketHandler`.
 '''
-    parser_class = EchoParser
-    def __init__(self, socket, address, parser_class=None, timeout=None,
-                  read_timeout=None):
-        '''Create a client or client-connection socket. A parser class
-is required in order to use :class:`SocketClient`.
+    def __init__(self, socket, address, timeout=None, read_timeout=None,
+                 **kwargs):
+        '''Create a client or client-connection socket.
 
 :parameter socket: a client or client-connection socket
 :parameter address: The address of the remote client/server
-:parameter parser_class: A class used for parsing messages.
+:parameter protocol_factory: A callable used for creating
+    :attr:`ProtoSocket.protocol` instance.
 :parameter timeout: A timeout in seconds for the socket. Same rules as
     the ``socket.settimeout`` method in the standard library. A value of 0
     indicates an asynchronous socket.
@@ -519,8 +530,7 @@ is required in order to use :class:`SocketClient`.
         self._socket_timeout = get_socket_timeout(timeout)
         self._set_socket(socket, read_timeout)
         self.remote_address = address
-        parser_class = parser_class or self.parser_class
-        self.parser = parser_class()
+        self.protocol = self.protocol_factory()
         self.buffer = bytearray()
 
     def __repr__(self):
@@ -572,7 +582,7 @@ reading from the same socket connection.'''
     def send(self, data):
         '''Send data to remote server'''
         self.time_last = time.time()
-        data = self.parser.encode(data)
+        data = self.protocol.encode(data)
         return self.sock.write(data)
         
     def execute(self, data):
@@ -628,7 +638,7 @@ parsed.'''
         elif not buffer:
             return
         try:
-            parsed_data, buffer = self.parser.decode(buffer)
+            parsed_data, buffer = self.protocol.decode(buffer)
         except CouldNotParse:
             LOGGER.warn('Could not parse data', exc_info=True)
             parsed_data = None
@@ -655,8 +665,12 @@ class ReconnectingClient(Client):
 class AsyncResponse(object):
     '''An asynchronous server response is created once an
 :class:`AsyncConnection` has available parsed data from a read operation.
-Instances of this class are iterable over
-chunk of data to send back to the remote client.
+Instances of this class are iterable and produce chunk of data to send back
+to the remote client.
+
+The ``__iter__`` is the only method which **needs** to be implemented by
+derived classes. If an empty byte is yielded, the asynchronous engine
+will resume the iteration after one loop in the actor event loop.
 
 .. attribute:: connection
 
@@ -679,8 +693,8 @@ chunk of data to send back to the remote client.
         return self.connection.server
 
     @property
-    def parser(self):
-        return self.connection.parser
+    def protocol(self):
+        return self.connection.protocol
 
     @property
     def sock(self):
@@ -688,7 +702,7 @@ chunk of data to send back to the remote client.
 
     def __iter__(self):
         # by default it echos the client message
-        yield self.parsed_data
+        yield self.protocol.encode(self.parsed_data)
 
 
 class AsyncConnection(ClientSocketHandler):
@@ -708,11 +722,10 @@ A connection can handle several request/responses until it is closed.
     changed at runtime when upgrading connections to new protocols. An example
     is the websocket protocol.
 '''
-    def __init__(self, sock, address, server, timeout=None):
+    def __init__(self, sock, address, server, **kwargs):
         if not isinstance(sock, AsyncIOStream):
             sock = AsyncIOStream(sock, timeout=server.timeout)
-        super(AsyncConnection, self).__init__(sock, address,
-                                              server.parser_class)
+        super(AsyncConnection, self).__init__(sock, address, **kwargs)
         self.server = server
         self.response_class = server.response_class
         server.connections.add(self)
@@ -721,15 +734,16 @@ A connection can handle several request/responses until it is closed.
     @async(max_errors=1, description='Asynchronous client connection generator')
     def handle(self):
         while not self.closed:
+            # Read the socket
             outcome = self.sock.read()
             yield outcome
             # if we are here it means no errors occurred so far and
-            # data is available to process
+            # data is available to process (max_errors=1)
             self.time_last = time.time()
             buffer = self.buffer
             buffer.extend(outcome.result)
             parsed_data = True
-            # IMPORTANT! Consume all data until the parser returns nothing.
+            # IMPORTANT! Consume all data until the protocol returns nothing.
             while parsed_data:
                 parsed_data = self.request_data()
                 if parsed_data:
@@ -757,9 +771,9 @@ more data in the buffer is required.'''
         buffer = self.buffer
         if not buffer:
             return
-        self.parser.connection = self
+        self.protocol.connection = self
         try:
-            parsed_data, buffer = self.parser.decode(buffer)
+            parsed_data, buffer = self.protocol.decode(buffer)
         except:
             LOGGER.error('Could not parse data', exc_info=True)
             raise
@@ -778,8 +792,8 @@ more data in the buffer is required.'''
         return self.sock.write(data)
 
 
-class AsyncSocketServer(BaseSocketHandler):
-    '''A :class:`BaseSocketHandler` for asynchronous servers which listen
+class AsyncSocketServer(ProtocolSocket):
+    '''A :class:`ProtocolSocket` for asynchronous servers which listen
 for requests on a socket.
 
 .. attribute:: actor
@@ -800,29 +814,24 @@ for requests on a socket.
     If ``True`` the server has its own :class:`IOLoop` running on a separate
     thread of execution. Otherwise it shares the :attr:`actor.requestloop`
 
-.. attribute:: parser_class
-
-    A class for encoding and decoding data
-
 .. attribute:: timeout
 
     The timeout when reading data in an asynchronous way.
     
-.. attribute:: response_class
-
-    A subclass of :class:`AsyncResponse` for handling responses to clients
-    once data has been received and processed.
 '''
     thread = None
     _started = False
     connection_class = AsyncConnection
-    parser_class = EchoParser
+    '''A subclass of :class:`AsyncConnection`. A new instance of this class is
+constructued each time a new connection has been established by the
+:meth:`accept` method.'''
     response_class = AsyncResponse
+    '''A subclass of :class:`AsyncResponse` for handling responses to clients
+    once data has been received and processed.'''
     
-    def __init__(self, actor, socket, parser_class=None, onthread=False,
-                  connection_class=None, response_class=None, timeout=None):
+    def __init__(self, actor, socket, onthread=False, connection_class=None,
+                 response_class=None, timeout=None, **kwargs):
         self.actor = actor
-        self.parser_class = parser_class or self.parser_class
         self.connection_class = connection_class or self.connection_class
         self.response_class = response_class or self.response_class
         self.sock = wrap_socket(socket)
@@ -915,4 +924,4 @@ for requests on a socket.
         if client:
             self.received += 1
             return self.connection_class(client, client_address, self,
-                                         timeout=self.timeout)
+                                         protocol_factory=self.protocol_factory)

@@ -203,9 +203,24 @@ class IStream(object):
 
 
 class BaseSocket(IStream):
+    '''Base class for :class:`IStream` using a socket as I/O mechanism.
+    
+.. attribute:: sock
+    
+    The underlying socket
+    
+.. attribute:: async
+    
+    True if this is an asynchronous socket.
+    
+.. attribute:: address
+    
+    same as :meth:`getsockname`.
+'''
     sock = None
     
     def getsockname(self):
+        '''The socket name if open otherwise None.'''
         try:
             return self.sock.getsockname()
         except:

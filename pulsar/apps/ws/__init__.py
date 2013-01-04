@@ -85,7 +85,7 @@ class GeneralWebSocket(object):
         connection = environ['pulsar.connection']
         connection.environ = environ
         #connection.read_timeout = 0
-        connection.parser = FrameParser(version)
+        connection.protocol = FrameParser(version)
         connection.response_class = self.on_message
         
     def on_message(self, connection, frame):
@@ -114,7 +114,7 @@ class GeneralWebSocket(object):
             body = Frame.close('Server error')
         elif not isinstance(body, Frame):
             # If the body is not a frame, build a final frame from it.
-            body = Frame(body or '', version=connection.parser.version,
+            body = Frame(body or '', version=connection.protocol.version,
                          final=True)
         return body.msg
         
@@ -206,8 +206,7 @@ http://www.w3.org/TR/websockets/ for details on the JavaScript interface.
         self.handle.on_handshake(environ, headers)
         self.upgrade_connection(environ, version)
         response = WsgiResponse(101, content=(), response_headers=headers)
-        response(environ, start_response)
-        return response
+        return response(environ, start_response)
         
     def challenge_response(self, key):
         sha1 = hashlib.sha1(to_bytes(key+WEBSOCKET_GUID))
@@ -269,7 +268,7 @@ client. This is a chance to add or remove header's entries."""
     def close(self, environ, msg=None):
         '''Invoked when the web-socket needs closing.'''
         connection = environ['pulsar.connection']
-        return Frame.close(msg, version=connection.parser.version)
+        return Frame.close(msg, version=connection.protocol.version)
     
     
 class WebSocketClient(ClientSocket):
@@ -278,7 +277,7 @@ class WebSocketClient(ClientSocket):
         # For compatibility with HttpResponse
         return self.closed
     
-    def parser_class(self):
+    def protocol_factory(self):
         return FrameParser(kind=1)
     
 

@@ -241,18 +241,18 @@ Decorators
 Sockets
 ================
 
-Create Socket
-~~~~~~~~~~~~~~~~~~~~
+handling asynchronous sockets is an important task in pulsar. The core component
+for asynchronous I/O on sockets is the :class:`AsyncIOStream` class which has been
+adapted from tornado_ web server.
 
-.. autofunction:: create_socket
+Base Socket
+~~~~~~~~~~~~~~~~~~~~~~
 
-
-Socket Pair
-~~~~~~~~~~~~~~~~~~~~
-
-.. autofunction:: socket_pair
-
-
+.. autoclass:: BaseSocket
+   :members:
+   :member-order: bysource
+   
+   
 Socket
 ~~~~~~~~~~~~~~~~~~~~~~
 
@@ -269,10 +269,10 @@ AsyncIOStream
    :member-order: bysource
 
 
-BaseSocketHandler
+Socket with Protocol
 ~~~~~~~~~~~~~~~~~~~~~
 
-.. autoclass:: BaseSocketHandler
+.. autoclass:: ProtocolSocket
    :members:
    :member-order: bysource
    
@@ -296,6 +296,14 @@ AsyncResponse
 .. autoclass:: AsyncResponse
    :members:
    :member-order: bysource
+   
+   
+Utilities
+~~~~~~~~~~~~~~~
+
+.. autofunction:: create_socket
+
+.. autofunction:: socket_pair
    
 Eventloop
 =================
@@ -404,3 +412,4 @@ checkarity
 
 
 
+.. tornado: http://www.tornadoweb.org/
