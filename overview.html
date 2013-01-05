@@ -1,0 +1,307 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>Overview &mdash; pulsar v0.4.4b1 documentation</title>
+    <link rel="stylesheet" href="static/celery.css" type="text/css" />
+    <link rel="stylesheet" href="static/pygments.css" type="text/css" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '',
+        VERSION:     '0.4.4b1',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="static/jquery.js"></script>
+    <script type="text/javascript" src="static/underscore.js"></script>
+    <script type="text/javascript" src="static/doctools.js"></script>
+    <link rel="top" title="pulsar v0.4.4b1 documentation" href="index.html" />
+    <link rel="next" title="Changelog" href="changelog.html" />
+    <link rel="prev" title="Pulsar" href="index.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="changelog.html" title="Changelog"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="index.html" title="Pulsar"
+             accesskey="P">previous</a> |</li>
+        <li><a href="index.html">pulsar v0.4.4b1 documentation</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+<div class="deck">
+
+    
+        <p class="developmentversion">
+        This document is for Pulsar's development version. Get the 
+        <a href="http://packages.python.org/pulsar/">release docs here</a>.
+        </p>
+    
+
+</div>
+
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="overview">
+<span id="intro-overview"></span><h1>Overview<a class="headerlink" href="#overview" title="Permalink to this headline">¶</a></h1>
+<p>Event driven concurrent framework for python. Tested in Windows and Linux,
+it requires python 2.6, 2.7, 3.2, 3.3 or <a class="reference external" href="http://pypy.org/">pypy</a>.
+With pulsar you can write asynchronous servers performing one or several
+activities in different threads and/or processes.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field"><th class="field-name">CI:</th><td class="field-body"><a class="reference external" href="http://travis-ci.org/quantmind/pulsar"><img alt="pulsar-build" src="https://secure.travis-ci.org/quantmind/pulsar.png?branch=master" /></a></td>
+</tr>
+<tr class="field"><th class="field-name">Documentation:</th><td class="field-body"><a class="reference external" href="http://packages.python.org/pulsar/">http://packages.python.org/pulsar/</a></td>
+</tr>
+<tr class="field"><th class="field-name">Dowloads:</th><td class="field-body"><a class="reference external" href="http://pypi.python.org/pypi/pulsar">http://pypi.python.org/pypi/pulsar</a></td>
+</tr>
+<tr class="field"><th class="field-name">Source:</th><td class="field-body"><a class="reference external" href="https://github.com/quantmind/pulsar">https://github.com/quantmind/pulsar</a></td>
+</tr>
+<tr class="field"><th class="field-name">Keywords:</th><td class="field-body">server, asynchronous, concurrency, actor, thread, process, socket, task queue</td>
+</tr>
+</tbody>
+</table>
+<p>An example of a web server written with <tt class="docutils literal"><span class="pre">pulsar</span></tt> application
+framework which responds with &#8220;Hello World!&#8221; for every request:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="kn">from</span> <span class="nn">pulsar.apps</span> <span class="kn">import</span> <span class="n">wsgi</span>
+
+<span class="k">def</span> <span class="nf">hello</span><span class="p">(</span><span class="n">environ</span><span class="p">,</span> <span class="n">start_response</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39;Pulsar HTTP &quot;Hello World!&quot; application&#39;&#39;&#39;</span>
+    <span class="n">data</span> <span class="o">=</span> <span class="n">b</span><span class="s">&#39;Hello World!</span><span class="se">\n</span><span class="s">&#39;</span>
+    <span class="n">status</span> <span class="o">=</span> <span class="s">&#39;200 OK&#39;</span>
+    <span class="n">response_headers</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="p">(</span><span class="s">&#39;Content-type&#39;</span><span class="p">,</span><span class="s">&#39;text/plain&#39;</span><span class="p">),</span>
+        <span class="p">(</span><span class="s">&#39;Content-Length&#39;</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">data</span><span class="p">)))</span>
+    <span class="p">)</span>
+    <span class="n">start_response</span><span class="p">(</span><span class="n">status</span><span class="p">,</span> <span class="n">response_headers</span><span class="p">)</span>
+    <span class="k">return</span> <span class="p">[</span><span class="n">data</span><span class="p">]</span>
+
+
+<span class="k">if</span> <span class="n">__name__</span> <span class="o">==</span> <span class="s">&#39;__main__&#39;</span><span class="p">:</span>
+    <span class="k">return</span> <span class="n">wsgi</span><span class="o">.</span><span class="n">WSGIServer</span><span class="p">(</span><span class="nb">callable</span><span class="o">=</span><span class="n">hello</span><span class="p">)</span><span class="o">.</span><span class="n">start</span><span class="p">()</span>
+</pre></div>
+</div>
+<p>Pulsar&#8217;s goal is to provide an easy way to build scalable network programs.
+In the &#8220;Hello world!&#8221; web server example above, many client
+connections can be handled concurrently.
+Pulsar tells the operating system (through epoll or select) that it should be
+notified when a new connection is made, and then it goes to sleep.</p>
+<p>Pulsar uses the <a class="reference external" href="http://docs.python.org/library/multiprocessing.html">multiprocessing</a> module from the standard python library and
+it can be configured to run in multi-processing mode, multi-threading mode or
+a combination of the two.</p>
+<div class="section" id="installing">
+<h2>Installing<a class="headerlink" href="#installing" title="Permalink to this headline">¶</a></h2>
+<p>Pulsar is a stand alone python library and it can be installed via <cite>pip</cite>:</p>
+<div class="highlight-python"><pre>pip install pulsar</pre>
+</div>
+<p><cite>easy_install</cite> or downloading the tarball from <a class="reference external" href="http://pypi.python.org/pypi/pulsar">pypi</a>.</p>
+</div>
+<div class="section" id="applications">
+<h2>Applications<a class="headerlink" href="#applications" title="Permalink to this headline">¶</a></h2>
+<p>Pulsar design allows for a host of different applications to be implemented
+in an elegant and efficient way. Out of the box it is shipped with the
+the following</p>
+<ul class="simple">
+<li>Socket servers.</li>
+<li>WSGI server.</li>
+<li>JSON-RPC WSGI middleware.</li>
+<li>Web Sockets WSGI middleware.</li>
+<li>Distributed task queue.</li>
+<li>Shell for asynchronous scripting.</li>
+<li>Asynchronous test suite.</li>
+</ul>
+</div>
+<div class="section" id="examples">
+<span id="id1"></span><h2>Examples<a class="headerlink" href="#examples" title="Permalink to this headline">¶</a></h2>
+<p>Check out the <tt class="docutils literal"><span class="pre">examples</span></tt> directory for various working applications created using
+pulsar alone. It includes:</p>
+<ul class="simple">
+<li>Hello world! wsgi example.</li>
+<li>An Httpbin wsgi application (similar to <a class="reference external" href="http://httpbin.org/">http://httpbin.org/</a>).</li>
+<li>An HTTP Proxy server with headers middleware.</li>
+<li>A simple JSON-RPC Calculator server.</li>
+<li>A taskqueue application with a JSON-RPC interface.</li>
+<li>Websocket graph.</li>
+<li>The <a class="reference external" href="http://en.wikipedia.org/wiki/Dining_philosophers_problem">dining philosophers problem</a>.</li>
+<li>Asynchronous shell.</li>
+</ul>
+</div>
+<div class="section" id="design">
+<h2>Design<a class="headerlink" href="#design" title="Permalink to this headline">¶</a></h2>
+<p>Pulsar internals are based on <a class="reference external" href="http://en.wikipedia.org/wiki/Actor_model">actors primitive</a>. <tt class="docutils literal"><span class="pre">Actors</span></tt> are the <em>atoms</em> of
+pulsar&#8217;s concurrent computation, they do not share state between them,
+communication is achieved via asynchronous inter-process message passing,
+implemented using the standard python socket library.</p>
+<p>Two special classes of actors are the <tt class="docutils literal"><span class="pre">Arbiter</span></tt>, used as a <a class="reference external" href="http://en.wikipedia.org/wiki/Singleton_pattern">singleton</a>,
+and the <tt class="docutils literal"><span class="pre">Monitor</span></tt>, a manager of several actors performing similar functions.
+The Arbiter runs the main eventloop and it controls the life of all actors.
+Monitors manage group of actors performing similar functions, You can think
+of them as a pool of actors.</p>
+<p>More information about design and philosophy in the documentation.</p>
+</div>
+<div class="section" id="add-ons">
+<h2>Add-ons<a class="headerlink" href="#add-ons" title="Permalink to this headline">¶</a></h2>
+<p>Pulsar checks if some additional libraries are available, either
+during installation or at runtime, and uses them to add new functionalities.</p>
+<ul class="simple">
+<li><a class="reference external" href="http://code.google.com/p/py-setproctitle/">setproctitle</a>: if installed, pulsar can use it to change the processes names of
+the running application.</li>
+<li><a class="reference external" href="http://code.google.com/p/psutil/">psutil</a>: if installed, a <tt class="docutils literal"><span class="pre">system</span></tt> key is available in the dictionary returned by
+Actor info method.</li>
+</ul>
+</div>
+<div class="section" id="running-tests">
+<h2>Running Tests<a class="headerlink" href="#running-tests" title="Permalink to this headline">¶</a></h2>
+<p>Pulsar test suite uses the pulsar test application. If you are using python 2.6
+you need to install <a class="reference external" href="http://pypi.python.org/pypi/unittest2">unittest2</a>, and if not running on python 3.3, the <a class="reference external" href="http://pypi.python.org/pypi/mock">mock</a>
+library is also needed. To run tests:</p>
+<div class="highlight-python"><pre>python runtests.py</pre>
+</div>
+<p>For options and help type:</p>
+<div class="highlight-python"><pre>python runtests.py -h</pre>
+</div>
+<p>For full coverage run tests with the following flags:</p>
+<div class="highlight-python"><pre>python runtests.py --concurrency thread --profile --benchmark --http-py-parser --verbosity 2</pre>
+</div>
+</div>
+<div class="section" id="kudos">
+<h2>Kudos<a class="headerlink" href="#kudos" title="Permalink to this headline">¶</a></h2>
+<p>Pulsar project started as a fork of <a class="reference external" href="http://gunicorn.org/">gunicorn</a> (from where the arbiter idea) and has been developed using
+ideas from <a class="reference external" href="http://nodejs.org/">nodejs</a> (api design), <a class="reference external" href="http://twistedmatrix.com/trac/">twisted</a> (the deferred implementation), <a class="reference external" href="http://www.tornadoweb.org/">tornado</a> web server
+(the event-loop implementation), <a class="reference external" href="http://celeryproject.org/">celery</a> (the task queue application) and
+many other open-source efforts.</p>
+</div>
+<div class="section" id="contributing">
+<span id="id2"></span><h2>Contributing<a class="headerlink" href="#contributing" title="Permalink to this headline">¶</a></h2>
+<p>Development of <a class="reference external" href="https://github.com/quantmind/pulsar">pulsar</a> happens at Github. We very much welcome your contribution
+of course. To do so, simply follow these guidelines:</p>
+<ol class="arabic simple">
+<li>Fork <a class="reference external" href="https://github.com/quantmind/pulsar">pulsar</a> on github</li>
+<li>Create a topic branch <tt class="docutils literal"><span class="pre">git</span> <span class="pre">checkout</span> <span class="pre">-b</span> <span class="pre">my_branch</span></tt></li>
+<li>Push to your branch <tt class="docutils literal"><span class="pre">git</span> <span class="pre">push</span> <span class="pre">origin</span> <span class="pre">my_branch</span></tt></li>
+<li>Create an issue at <a class="reference external" href="https://github.com/quantmind/pulsar/issues">https://github.com/quantmind/pulsar/issues</a> with a link to your patch.</li>
+</ol>
+</div>
+<div class="section" id="license">
+<span id="id3"></span><h2>License<a class="headerlink" href="#license" title="Permalink to this headline">¶</a></h2>
+<p>This software is licensed under the New <a class="reference external" href="http://www.opensource.org/licenses/bsd-license.php">BSD</a> License. See the LICENSE
+file in the top distribution directory for the full license text.</p>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper"><p class="logo">
+<a href="index.html">
+  <img class="logo" width="200" src="static/pulsar.png" alt="pulsar" title="Pulsar"/>
+</a>
+</p>
+  <h3><a href="index.html">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">Overview</a><ul>
+<li><a class="reference internal" href="#installing">Installing</a></li>
+<li><a class="reference internal" href="#applications">Applications</a></li>
+<li><a class="reference internal" href="#examples">Examples</a></li>
+<li><a class="reference internal" href="#design">Design</a></li>
+<li><a class="reference internal" href="#add-ons">Add-ons</a></li>
+<li><a class="reference internal" href="#running-tests">Running Tests</a></li>
+<li><a class="reference internal" href="#kudos">Kudos</a></li>
+<li><a class="reference internal" href="#contributing">Contributing</a></li>
+<li><a class="reference internal" href="#license">License</a></li>
+</ul>
+</li>
+</ul>
+
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="index.html"
+                        title="previous chapter">Pulsar</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="changelog.html"
+                        title="next chapter">Changelog</a></p>
+  <h3>This Page</h3>
+  <ul class="this-page-menu">
+    <li><a href="sources/overview.txt"
+           rel="nofollow">Show Source</a></li>
+  </ul>
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" size="18" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="changelog.html" title="Changelog"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="index.html" title="Pulsar"
+             >previous</a> |</li>
+        <li><a href="index.html">pulsar v0.4.4b1 documentation</a> &raquo;</li> 
+      </ul>
+    </div>
+
+    <div class="footer">
+        &copy; Copyright 2011, Luca Sbardella.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.0.7.
+    </div>
+<script type="text/javascript">
+
+  var _gaq = _gaq || [];
+  _gaq.push(['_setAccount', 'UA-3900561-7']);
+  _gaq.push(['_trackPageview']);
+
+  (function() {
+    var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+    ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+    var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+  })();
+
+</script>
+
+  </body>
+</html>

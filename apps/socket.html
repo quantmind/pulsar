@@ -1,0 +1,279 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>Socket Servers &mdash; pulsar v0.4.4b1 documentation</title>
+    <link rel="stylesheet" href="../static/celery.css" type="text/css" />
+    <link rel="stylesheet" href="../static/pygments.css" type="text/css" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../',
+        VERSION:     '0.4.4b1',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../static/jquery.js"></script>
+    <script type="text/javascript" src="../static/underscore.js"></script>
+    <script type="text/javascript" src="../static/doctools.js"></script>
+    <link rel="top" title="pulsar v0.4.4b1 documentation" href="../index.html" />
+    <link rel="next" title="WSGI Servers" href="wsgi.html" />
+    <link rel="prev" title="Settings" href="../settings.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="wsgi.html" title="WSGI Servers"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="../settings.html" title="Settings"
+             accesskey="P">previous</a> |</li>
+        <li><a href="../index.html">pulsar v0.4.4b1 documentation</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+<div class="deck">
+
+    
+        <p class="developmentversion">
+        This document is for Pulsar's development version. Get the 
+        <a href="http://packages.python.org/pulsar/">release docs here</a>.
+        </p>
+    
+
+</div>
+
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="module-pulsar.apps.socket">
+<span id="socket-servers"></span><span id="apps-socket"></span><h1>Socket Servers<a class="headerlink" href="#module-pulsar.apps.socket" title="Permalink to this headline">¶</a></h1>
+<p>Asynchronous application for serving requests
+on a socket. This is the base class of <a class="reference internal" href="wsgi.html#pulsar.apps.wsgi.WSGIServer" title="pulsar.apps.wsgi.WSGIServer"><tt class="xref py py-class docutils literal"><span class="pre">pulsar.apps.wsgi.WSGIServer</span></tt></a>.</p>
+<p>A simple echo server <tt class="docutils literal"><span class="pre">script.py</span></tt> can be implemented as follow:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="kn">import</span> <span class="nn">pulsar</span>
+<span class="kn">from</span> <span class="nn">pulsar.apps.socket</span> <span class="kn">import</span> <span class="n">SocketServer</span>
+
+<span class="k">class</span> <span class="nc">EchoProtocol</span><span class="p">:</span>
+    <span class="s">&quot;The simplest protocol possible.&quot;</span>
+    <span class="k">def</span> <span class="nf">decode</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">):</span>
+        <span class="k">return</span> <span class="nb">bytes</span><span class="p">(</span><span class="n">data</span><span class="p">),</span> <span class="nb">bytearray</span><span class="p">()</span>
+    
+    <span class="k">def</span> <span class="nf">encode</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">data</span>
+
+<span class="k">def</span> <span class="nf">echoserver</span><span class="p">(</span><span class="n">actor</span><span class="p">,</span> <span class="n">socket</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+    <span class="n">kwargs</span><span class="p">[</span><span class="s">&#39;protocol_factory&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">EchoProtocol</span>
+    <span class="k">return</span> <span class="n">pulsar</span><span class="o">.</span><span class="n">AsyncSocketServer</span><span class="p">(</span><span class="n">actor</span><span class="p">,</span> <span class="n">socket</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+    
+<span class="k">if</span> <span class="n">__name__</span> <span class="o">==</span> <span class="s">&#39;__main__&#39;</span><span class="p">:</span>
+    <span class="n">SocketServer</span><span class="p">(</span><span class="n">socket_server_factory</span><span class="o">=</span><span class="n">echoserver</span><span class="p">)</span><span class="o">.</span><span class="n">start</span><span class="p">()</span>
+</pre></div>
+</div>
+<p>The main parameter for <a class="reference internal" href="#pulsar.apps.socket.SocketServer" title="pulsar.apps.socket.SocketServer"><tt class="xref py py-class docutils literal"><span class="pre">SocketServer</span></tt></a> is the <tt class="docutils literal"><span class="pre">socket_server_factory</span></tt>
+callable which build a <a class="reference internal" href="../api.html#pulsar.AsyncSocketServer" title="pulsar.AsyncSocketServer"><tt class="xref py py-class docutils literal"><span class="pre">pulsar.AsyncSocketServer</span></tt></a> for each
+<a class="reference internal" href="../api.html#pulsar.Worker" title="pulsar.Worker"><tt class="xref py py-class docutils literal"><span class="pre">pulsar.Worker</span></tt></a> serving the application.</p>
+<div class="section" id="protocol">
+<span id="socket-protocol"></span><h2>Protocol<a class="headerlink" href="#protocol" title="Permalink to this headline">¶</a></h2>
+<p>The protocol class needs to implement two methods, the <tt class="docutils literal"><span class="pre">decode</span></tt> for servers
+and the <tt class="docutils literal"><span class="pre">encode</span></tt> for clients. Both methods accept as input one parameter which
+can be <tt class="docutils literal"><span class="pre">bytes</span></tt> or a <tt class="docutils literal"><span class="pre">bytesarray</span></tt>.</p>
+<p>The <tt class="docutils literal"><span class="pre">decode</span></tt> method must return a <strong>two elements tuple</strong> of the form:</p>
+<blockquote>
+<div><ul class="simple">
+<li><tt class="xref docutils literal"><span class="pre">None</span></tt>, <tt class="docutils literal"><span class="pre">bytesarray</span></tt>: when more data is needed to form a message.</li>
+<li><tt class="docutils literal"><span class="pre">message</span></tt>, <tt class="docutils literal"><span class="pre">bytesarray</span></tt>: where <em>message</em> is a correctly parsed message
+and <em>bytesarray</em> contains data for the next message.</li>
+</ul>
+</div></blockquote>
+<p>The <tt class="docutils literal"><span class="pre">encode</span></tt> method must return <tt class="docutils literal"><span class="pre">bytes</span></tt> which will be sent to the server.</p>
+</div>
+<div class="section" id="useful-settings">
+<h2>Useful settings<a class="headerlink" href="#useful-settings" title="Permalink to this headline">¶</a></h2>
+<p>All standard <a class="reference internal" href="../settings.html#settings"><em>settings</em></a> can be applied to a
+<a class="reference internal" href="#pulsar.apps.socket.SocketServer" title="pulsar.apps.socket.SocketServer"><tt class="xref py py-class docutils literal"><span class="pre">SocketServer</span></tt></a>. These are some of the most important:</p>
+<div class="section" id="bind">
+<h3>bind<a class="headerlink" href="#bind" title="Permalink to this headline">¶</a></h3>
+<p>The <a class="reference internal" href="#pulsar.apps.socket.SocketServer" title="pulsar.apps.socket.SocketServer"><tt class="xref py py-class docutils literal"><span class="pre">SocketServer</span></tt></a> application introduces the additional pulsar settings
+<a class="reference internal" href="../settings.html#setting-bind"><em>bind</em></a> which is used to specify the address
+to bind the server to:</p>
+<div class="highlight-python"><pre>python script.py --bind 127.0.0.1:8070</pre>
+</div>
+</div>
+<div class="section" id="backlog">
+<h3>backlog<a class="headerlink" href="#backlog" title="Permalink to this headline">¶</a></h3>
+<p>To control the concurrency of the server you can use the
+<a class="reference internal" href="../settings.html#setting-backlog"><em>backlog</em></a> settings. For example:</p>
+<div class="highlight-python"><pre>python script.py --backlog 1000</pre>
+</div>
+<p>will serve a maximum of 1000 clients per <a class="reference internal" href="../api.html#pulsar.Worker" title="pulsar.Worker"><tt class="xref py py-class docutils literal"><span class="pre">pulsar.Worker</span></tt></a> concurrently.</p>
+</div>
+<div class="section" id="keepalive">
+<h3>keepalive<a class="headerlink" href="#keepalive" title="Permalink to this headline">¶</a></h3>
+<p>To control how long a <a class="reference internal" href="../api.html#pulsar.AsyncConnection" title="pulsar.AsyncConnection"><tt class="xref py py-class docutils literal"><span class="pre">pulsar.AsyncConnection</span></tt></a> is kept alive after the
+last read from the remote client, one can use the
+<a class="reference internal" href="../settings.html#setting-keepalive"><em>keepalive</em></a> setting.</p>
+<blockquote>
+<div>python script.py &#8211;keepalive 10</div></blockquote>
+<p>will close a client connection which has been idle for 10 seconds.</p>
+</div>
+</div>
+<div class="section" id="concurrency">
+<h2>Concurrency<a class="headerlink" href="#concurrency" title="Permalink to this headline">¶</a></h2>
+<p>When running a <a class="reference internal" href="#pulsar.apps.socket.SocketServer" title="pulsar.apps.socket.SocketServer"><tt class="xref py py-class docutils literal"><span class="pre">SocketServer</span></tt></a> in threading mode:</p>
+<div class="highlight-python"><pre>python script.py --concurrency thread</pre>
+</div>
+<p>the number of <a class="reference internal" href="../api.html#pulsar.Worker" title="pulsar.Worker"><tt class="xref py py-class docutils literal"><span class="pre">pulsar.Worker</span></tt></a> serving the application is set to 0 so
+that the application is actually served by the <tt class="xref py py-class docutils literal"><span class="pre">Arbiter</span></tt>
+eventloop (we refer this to a single process server).
+This configuration is used when debugging, testing, benchmarking or small
+load servers.</p>
+<p>In addition, a <a class="reference internal" href="#pulsar.apps.socket.SocketServer" title="pulsar.apps.socket.SocketServer"><tt class="xref py py-class docutils literal"><span class="pre">SocketServer</span></tt></a> in multi-process mode is only available for:</p>
+<blockquote>
+<div><ul class="simple">
+<li>Posix systems</li>
+<li>Windows running python 3.2 or above.</li>
+</ul>
+</div></blockquote>
+</div>
+<div class="section" id="api">
+<h2>API<a class="headerlink" href="#api" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="socket-server">
+<h3>Socket Server<a class="headerlink" href="#socket-server" title="Permalink to this headline">¶</a></h3>
+<dl class="class">
+<dt id="pulsar.apps.socket.SocketServer">
+<em class="property">class </em><tt class="descclassname">pulsar.apps.socket.</tt><tt class="descname">SocketServer</tt><big>(</big><em>callable=None</em>, <em>description=None</em>, <em>name=None</em>, <em>epilog=None</em>, <em>argv=None</em>, <em>script=None</em>, <em>version=None</em>, <em>parse_console=True</em>, <em>commands_set=None</em>, <em>cfg=None</em>, <em>**kwargs</em><big>)</big><a class="reference internal" href="../modules/pulsar/apps/socket.html#SocketServer"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.socket.SocketServer" title="Permalink to this definition">¶</a></dt>
+<dd><p>This application bind a socket to a given address and listen for
+requests. The request handler is constructued from the
+<a class="reference internal" href="#pulsar.apps.socket.SocketServer.socket_server_factory" title="pulsar.apps.socket.SocketServer.socket_server_factory"><tt class="xref py py-attr docutils literal"><span class="pre">socket_server_factory</span></tt></a> parameter/attribute.</p>
+<dl class="attribute">
+<dt id="pulsar.apps.socket.SocketServer.socket_server_factory">
+<tt class="descname">socket_server_factory</tt><a class="headerlink" href="#pulsar.apps.socket.SocketServer.socket_server_factory" title="Permalink to this definition">¶</a></dt>
+<dd><p>Callable which returns the asynchronous socket server, usually
+a subclass of <a class="reference internal" href="../api.html#pulsar.AsyncSocketServer" title="pulsar.AsyncSocketServer"><tt class="xref py py-class docutils literal"><span class="pre">pulsar.AsyncSocketServer</span></tt></a>.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="pulsar.apps.socket.SocketServer.address">
+<tt class="descname">address</tt><a class="headerlink" href="#pulsar.apps.socket.SocketServer.address" title="Permalink to this definition">¶</a></dt>
+<dd><p>The socket address, available once the application has started.</p>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper"><p class="logo">
+<a href="../index.html">
+  <img class="logo" width="200" src="../static/pulsar.png" alt="pulsar" title="Pulsar"/>
+</a>
+</p>
+  <h3><a href="../index.html">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">Socket Servers</a><ul>
+<li><a class="reference internal" href="#protocol">Protocol</a></li>
+<li><a class="reference internal" href="#useful-settings">Useful settings</a><ul>
+<li><a class="reference internal" href="#bind">bind</a></li>
+<li><a class="reference internal" href="#backlog">backlog</a></li>
+<li><a class="reference internal" href="#keepalive">keepalive</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#concurrency">Concurrency</a></li>
+<li><a class="reference internal" href="#api">API</a><ul>
+<li><a class="reference internal" href="#socket-server">Socket Server</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="../settings.html"
+                        title="previous chapter">Settings</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="wsgi.html"
+                        title="next chapter">WSGI Servers</a></p>
+  <h3>This Page</h3>
+  <ul class="this-page-menu">
+    <li><a href="../sources/apps/socket.txt"
+           rel="nofollow">Show Source</a></li>
+  </ul>
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" size="18" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="wsgi.html" title="WSGI Servers"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="../settings.html" title="Settings"
+             >previous</a> |</li>
+        <li><a href="../index.html">pulsar v0.4.4b1 documentation</a> &raquo;</li> 
+      </ul>
+    </div>
+
+    <div class="footer">
+        &copy; Copyright 2011, Luca Sbardella.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.0.7.
+    </div>
+<script type="text/javascript">
+
+  var _gaq = _gaq || [];
+  _gaq.push(['_setAccount', 'UA-3900561-7']);
+  _gaq.push(['_trackPageview']);
+
+  (function() {
+    var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+    ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+    var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+  })();
+
+</script>
+
+  </body>
+</html>

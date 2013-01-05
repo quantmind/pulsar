@@ -1,0 +1,527 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>Settings &mdash; pulsar v0.4.4b1 documentation</title>
+    <link rel="stylesheet" href="static/celery.css" type="text/css" />
+    <link rel="stylesheet" href="static/pygments.css" type="text/css" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '',
+        VERSION:     '0.4.4b1',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="static/jquery.js"></script>
+    <script type="text/javascript" src="static/underscore.js"></script>
+    <script type="text/javascript" src="static/doctools.js"></script>
+    <link rel="top" title="pulsar v0.4.4b1 documentation" href="index.html" />
+    <link rel="next" title="Socket Servers" href="apps/socket.html" />
+    <link rel="prev" title="HTTP" href="http.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="apps/socket.html" title="Socket Servers"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="http.html" title="HTTP"
+             accesskey="P">previous</a> |</li>
+        <li><a href="index.html">pulsar v0.4.4b1 documentation</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+<div class="deck">
+
+    
+        <p class="developmentversion">
+        This document is for Pulsar's development version. Get the 
+        <a href="http://packages.python.org/pulsar/">release docs here</a>.
+        </p>
+    
+
+</div>
+
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <span class="target" id="module-pulsar.utils.config"><span id="settings"></span></span><div class="section" id="id1">
+<h1>Settings<a class="headerlink" href="#id1" title="Permalink to this headline">¶</a></h1>
+<p>This is the full list of <a class="reference internal" href="api.html#pulsar.Setting" title="pulsar.Setting"><tt class="xref py py-class docutils literal"><span class="pre">pulsar.Setting</span></tt></a> available for configuring
+your pulsar server or application.</p>
+<div class="section" id="config-file">
+<span id="setting-section-config-file"></span><h2>Config File<a class="headerlink" href="#config-file" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="config">
+<span id="setting-config"></span><h3>config<a class="headerlink" href="#config" title="Permalink to this headline">¶</a></h3>
+<p><em>Command line</em>: -c,&#8211;config</p>
+<p>The path to a Pulsar config file.</p>
+<p>Only has an effect when specified on the command line or as part of an
+application specific configuration.</p>
+</div>
+</div>
+<div class="section" id="worker-processes">
+<span id="setting-section-worker-processes"></span><h2>Worker Processes<a class="headerlink" href="#worker-processes" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="workers">
+<span id="setting-workers"></span><h3>workers<a class="headerlink" href="#workers" title="Permalink to this headline">¶</a></h3>
+<p><em>Command line</em>: -w,&#8211;workers</p>
+<p>The number of workers for handling requests.</p>
+<p>If you are using a multi-process concurrency, a number in the
+the 2-4 x $(NUM_CORES) range should be good. If you are using threads this
+number can be higher.</p>
+</div>
+<div class="section" id="concurrency">
+<span id="setting-concurrency"></span><h3>concurrency<a class="headerlink" href="#concurrency" title="Permalink to this headline">¶</a></h3>
+<p><em>Command line</em>: &#8211;concurrency</p>
+<p>The type of concurrency to use: <tt class="docutils literal"><span class="pre">process</span></tt> or <tt class="docutils literal"><span class="pre">thread</span></tt>.</p>
+</div>
+<div class="section" id="max-requests">
+<span id="setting-max-requests"></span><h3>max_requests<a class="headerlink" href="#max-requests" title="Permalink to this headline">¶</a></h3>
+<p><em>Command line</em>: &#8211;max-requests</p>
+<p>The maximum number of requests a worker will process before restarting.</p>
+<p>Any value greater than zero will limit the number of requests a work
+will process before automatically restarting. This is a simple method
+to help limit the damage of memory leaks.</p>
+<p>If this is set to zero (the default) then the automatic worker
+restarts are disabled.</p>
+</div>
+<div class="section" id="backlog">
+<span id="setting-backlog"></span><h3>backlog<a class="headerlink" href="#backlog" title="Permalink to this headline">¶</a></h3>
+<p><em>Command line</em>: &#8211;backlog</p>
+<p>The maximum number of concurrent requests.
+This refers to the number of clients that can be waiting to be served.
+Exceeding this number results in the client getting an error when
+attempting to connect. It should only affect servers under significant
+load.</p>
+<p>Must be a positive integer. Generally set in the 64-2048 range.</p>
+</div>
+<div class="section" id="timeout">
+<span id="setting-timeout"></span><h3>timeout<a class="headerlink" href="#timeout" title="Permalink to this headline">¶</a></h3>
+<p><em>Command line</em>: -t,&#8211;timeout</p>
+<p>Workers silent for more than this many seconds are killed and restarted.</p>
+<p>Generally set to thirty seconds. Only set this noticeably higher if
+you&#8217;re sure of the repercussions for sync workers. For the non sync
+workers it just means that the worker process is still communicating and
+is not tied to the length of time required to handle a single request.</p>
+</div>
+</div>
+<div class="section" id="http">
+<span id="setting-section-http"></span><h2>Http<a class="headerlink" href="#http" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="http-proxy">
+<span id="setting-http-proxy"></span><h3>http_proxy<a class="headerlink" href="#http-proxy" title="Permalink to this headline">¶</a></h3>
+<p><em>Command line</em>: &#8211;http-proxy</p>
+<p>The HTTP proxy server to use with HttpClient.</p>
+</div>
+<div class="section" id="http-py-parser">
+<span id="setting-http-py-parser"></span><h3>http_py_parser<a class="headerlink" href="#http-py-parser" title="Permalink to this headline">¶</a></h3>
+<p><em>Command line</em>: &#8211;http-py-parser</p>
+<p>Set the python parser as default HTTP parser.</p>
+</div>
+</div>
+<div class="section" id="debugging">
+<span id="setting-section-debugging"></span><h2>Debugging<a class="headerlink" href="#debugging" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="debug">
+<span id="setting-debug"></span><h3>debug<a class="headerlink" href="#debug" title="Permalink to this headline">¶</a></h3>
+<p><em>Command line</em>: &#8211;debug</p>
+<p>Turn on debugging in the server.</p>
+<p>This limits the number of worker processes to 1 and changes some error
+handling that&#8217;s sent to clients.</p>
+</div>
+</div>
+<div class="section" id="server-mechanics">
+<span id="setting-section-server-mechanics"></span><h2>Server Mechanics<a class="headerlink" href="#server-mechanics" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="daemon">
+<span id="setting-daemon"></span><h3>daemon<a class="headerlink" href="#daemon" title="Permalink to this headline">¶</a></h3>
+<p><em>Command line</em>: -D,&#8211;daemon</p>
+<p>Daemonize the Pulsar process (posix only).</p>
+<p>Detaches the server from the controlling terminal and enters the
+background.</p>
+</div>
+<div class="section" id="pidfile">
+<span id="setting-pidfile"></span><h3>pidfile<a class="headerlink" href="#pidfile" title="Permalink to this headline">¶</a></h3>
+<p><em>Command line</em>: -p,&#8211;pid</p>
+<p>A filename to use for the PID file.</p>
+<p>If not set, no PID file will be written.</p>
+</div>
+<div class="section" id="password">
+<span id="setting-password"></span><h3>password<a class="headerlink" href="#password" title="Permalink to this headline">¶</a></h3>
+<p><em>Command line</em>: &#8211;password</p>
+<p>Set a password for the server</p>
+</div>
+<div class="section" id="user">
+<span id="setting-user"></span><h3>user<a class="headerlink" href="#user" title="Permalink to this headline">¶</a></h3>
+<p><em>Command line</em>: -u,&#8211;user</p>
+<p>Switch worker processes to run as this user.</p>
+<p>A valid user id (as an integer) or the name of a user that can be
+retrieved with a call to pwd.getpwnam(value) or None to not change
+the worker process user.</p>
+</div>
+<div class="section" id="group">
+<span id="setting-group"></span><h3>group<a class="headerlink" href="#group" title="Permalink to this headline">¶</a></h3>
+<p><em>Command line</em>: -g,&#8211;group</p>
+<p>Switch worker process to run as this group.</p>
+<p>A valid group id (as an integer) or the name of a user that can be
+retrieved with a call to pwd.getgrnam(value) or None to not change
+the worker processes group.</p>
+</div>
+</div>
+<div class="section" id="logging">
+<span id="setting-section-logging"></span><h2>Logging<a class="headerlink" href="#logging" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="loglevel">
+<span id="setting-loglevel"></span><h3>loglevel<a class="headerlink" href="#loglevel" title="Permalink to this headline">¶</a></h3>
+<p><em>Command line</em>: &#8211;log-level</p>
+<p>The granularity of log outputs.</p>
+<blockquote>
+<div><p>Valid level names are:</p>
+<blockquote>
+<div><ul class="simple">
+<li>debug</li>
+<li>info</li>
+<li>warning</li>
+<li>error</li>
+<li>critical</li>
+</ul>
+</div></blockquote>
+</div></blockquote>
+</div>
+<div class="section" id="loghandlers">
+<span id="setting-loghandlers"></span><h3>loghandlers<a class="headerlink" href="#loghandlers" title="Permalink to this headline">¶</a></h3>
+<p><em>Command line</em>: &#8211;log-handlers</p>
+<p>log handlers for pulsar server</p>
+</div>
+<div class="section" id="logevery">
+<span id="setting-logevery"></span><h3>logevery<a class="headerlink" href="#logevery" title="Permalink to this headline">¶</a></h3>
+<p><em>Command line</em>: &#8211;log-every</p>
+<p>Log information every n seconds</p>
+</div>
+<div class="section" id="logconfig">
+<span id="setting-logconfig"></span><h3>logconfig<a class="headerlink" href="#logconfig" title="Permalink to this headline">¶</a></h3>
+<p>The logging configuration dictionary.</p>
+<p>This settings can only be specified on a config file</p>
+</div>
+</div>
+<div class="section" id="process-naming">
+<span id="setting-section-process-naming"></span><h2>Process Naming<a class="headerlink" href="#process-naming" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="process-name">
+<span id="setting-process-name"></span><h3>process_name<a class="headerlink" href="#process-name" title="Permalink to this headline">¶</a></h3>
+<p><em>Command line</em>: -n,&#8211;name</p>
+<p>A base to use with setproctitle for process naming.</p>
+<p>This affects things like <tt class="docutils literal"><span class="pre">ps</span></tt> and <tt class="docutils literal"><span class="pre">top</span></tt>. If you&#8217;re going to be
+running more than one instance of Pulsar you&#8217;ll probably want to set a
+name to tell them apart. This requires that you install the setproctitle
+module.</p>
+<p>It defaults to &#8216;pulsar&#8217;.</p>
+</div>
+<div class="section" id="default-process-name">
+<span id="setting-default-process-name"></span><h3>default_process_name<a class="headerlink" href="#default-process-name" title="Permalink to this headline">¶</a></h3>
+<p>Internal setting that is adjusted for each type of application.</p>
+</div>
+</div>
+<div class="section" id="server-hooks">
+<span id="setting-section-server-hooks"></span><h2>Server Hooks<a class="headerlink" href="#server-hooks" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="when-ready">
+<span id="setting-when-ready"></span><h3>when_ready<a class="headerlink" href="#when-ready" title="Permalink to this headline">¶</a></h3>
+<p>Called just after the server is started.</p>
+<p>The callable needs to accept a single instance variable for the Arbiter.</p>
+</div>
+<div class="section" id="pre-fork">
+<span id="setting-pre-fork"></span><h3>pre_fork<a class="headerlink" href="#pre-fork" title="Permalink to this headline">¶</a></h3>
+<p>Called just before a worker is forked.</p>
+<p>The callable needs to accept two instance variables for the Arbiter and
+new Worker.</p>
+</div>
+<div class="section" id="post-fork">
+<span id="setting-post-fork"></span><h3>post_fork<a class="headerlink" href="#post-fork" title="Permalink to this headline">¶</a></h3>
+<p>Called just after a worker has been forked.</p>
+<p>The callable needs to accept two instance variables for the Arbiter and
+new Worker.</p>
+</div>
+<div class="section" id="pre-exec">
+<span id="setting-pre-exec"></span><h3>pre_exec<a class="headerlink" href="#pre-exec" title="Permalink to this headline">¶</a></h3>
+<p>Called just before a new master process is forked.</p>
+<p>The callable needs to accept a single instance variable for the Arbiter.</p>
+</div>
+<div class="section" id="pre-request">
+<span id="setting-pre-request"></span><h3>pre_request<a class="headerlink" href="#pre-request" title="Permalink to this headline">¶</a></h3>
+<p>Called just before a worker processes the request.</p>
+<p>The callable needs to accept two instance variables for the Worker and
+the Request.</p>
+</div>
+<div class="section" id="post-request">
+<span id="setting-post-request"></span><h3>post_request<a class="headerlink" href="#post-request" title="Permalink to this headline">¶</a></h3>
+<p>Called after a worker processes the request.</p>
+<p>The callable needs to accept two instance variables for the Worker and
+the Request.</p>
+</div>
+<div class="section" id="worker-exit">
+<span id="setting-worker-exit"></span><h3>worker_exit<a class="headerlink" href="#worker-exit" title="Permalink to this headline">¶</a></h3>
+<p>Called just after a worker has been exited.</p>
+<blockquote>
+<div>The callable needs to accept one variable for the
+the just-exited Worker.</div></blockquote>
+</div>
+<div class="section" id="worker-task">
+<span id="setting-worker-task"></span><h3>worker_task<a class="headerlink" href="#worker-task" title="Permalink to this headline">¶</a></h3>
+<p>Called at every event loop by the worker.</p>
+<blockquote>
+<div>The callable needs to accept one variable for the Worker.</div></blockquote>
+</div>
+<div class="section" id="arbiter-task">
+<span id="setting-arbiter-task"></span><h3>arbiter_task<a class="headerlink" href="#arbiter-task" title="Permalink to this headline">¶</a></h3>
+<p>Called at every event loop by the arbiter.</p>
+<blockquote>
+<div>The callable needs to accept one variable for the Arbiter.</div></blockquote>
+</div>
+</div>
+<div class="section" id="socket-servers">
+<span id="setting-section-socket-servers"></span><h2>Socket Servers<a class="headerlink" href="#socket-servers" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="bind">
+<span id="setting-bind"></span><h3>bind<a class="headerlink" href="#bind" title="Permalink to this headline">¶</a></h3>
+<p>Setting for <a class="reference internal" href="apps/socket.html#module-pulsar.apps.socket" title="pulsar.apps.socket"><tt class="xref py py-mod docutils literal"><span class="pre">pulsar.apps.socket</span></tt></a> application.</p>
+<p><em>Command line</em>: -b,&#8211;bind</p>
+<p>The socket to bind.</p>
+<p>A string of the form: &#8216;HOST&#8217;, &#8216;HOST:PORT&#8217;, &#8216;unix:PATH&#8217;. An IP is a valid
+HOST.</p>
+</div>
+<div class="section" id="keepalive">
+<span id="setting-keepalive"></span><h3>keepalive<a class="headerlink" href="#keepalive" title="Permalink to this headline">¶</a></h3>
+<p>Setting for <a class="reference internal" href="apps/socket.html#module-pulsar.apps.socket" title="pulsar.apps.socket"><tt class="xref py py-mod docutils literal"><span class="pre">pulsar.apps.socket</span></tt></a> application.</p>
+<p><em>Command line</em>: &#8211;keep-alive</p>
+<p>The number of seconds to keep an idle client connection
+open.</p>
+</div>
+</div>
+<div class="section" id="wsgi-servers">
+<span id="setting-section-wsgi-servers"></span><h2>WSGI Servers<a class="headerlink" href="#wsgi-servers" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="http-parser">
+<span id="setting-http-parser"></span><h3>http_parser<a class="headerlink" href="#http-parser" title="Permalink to this headline">¶</a></h3>
+<p>Setting for <a class="reference internal" href="apps/wsgi.html#module-pulsar.apps.wsgi" title="pulsar.apps.wsgi"><tt class="xref py py-mod docutils literal"><span class="pre">pulsar.apps.wsgi</span></tt></a> application.</p>
+<p><em>Command line</em>: &#8211;http-parser</p>
+<p>The HTTP Parser to use. By default it uses the fastest possible.</p>
+<p>Specify <cite>python</cite> if you wich to use the pure python implementation</p>
+</div>
+<div class="section" id="response-middleware">
+<span id="setting-response-middleware"></span><h3>response_middleware<a class="headerlink" href="#response-middleware" title="Permalink to this headline">¶</a></h3>
+<p>Setting for <a class="reference internal" href="apps/wsgi.html#module-pulsar.apps.wsgi" title="pulsar.apps.wsgi"><tt class="xref py py-mod docutils literal"><span class="pre">pulsar.apps.wsgi</span></tt></a> application.</p>
+<p><em>Command line</em>: &#8211;response-middleware</p>
+<p>Response middleware to add to the wsgi handler</p>
+</div>
+</div>
+<div class="section" id="task-consumer">
+<span id="setting-section-task-consumer"></span><h2>Task Consumer<a class="headerlink" href="#task-consumer" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="task-queue-factory">
+<span id="setting-task-queue-factory"></span><h3>task_queue_factory<a class="headerlink" href="#task-queue-factory" title="Permalink to this headline">¶</a></h3>
+<p>Setting for <tt class="xref py py-mod docutils literal"><span class="pre">pulsar.apps.cpubound</span></tt> application.</p>
+<p><em>Command line</em>: -q,&#8211;task-queue</p>
+<p>The task queue factory to use.</p>
+</div>
+<div class="section" id="tasks-path">
+<span id="setting-tasks-path"></span><h3>tasks_path<a class="headerlink" href="#tasks-path" title="Permalink to this headline">¶</a></h3>
+<p>Setting for <a class="reference internal" href="apps/tasks.html#module-pulsar.apps.tasks" title="pulsar.apps.tasks"><tt class="xref py py-mod docutils literal"><span class="pre">pulsar.apps.tasks</span></tt></a> application.</p>
+<p>List of python dotted paths where tasks are located.</p>
+</div>
+</div>
+<div class="section" id="test">
+<span id="setting-section-test"></span><h2>Test<a class="headerlink" href="#test" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="verbosity">
+<span id="setting-verbosity"></span><h3>verbosity<a class="headerlink" href="#verbosity" title="Permalink to this headline">¶</a></h3>
+<p>Setting for <a class="reference internal" href="apps/test.html#module-pulsar.apps.test" title="pulsar.apps.test"><tt class="xref py py-mod docutils literal"><span class="pre">pulsar.apps.test</span></tt></a> application.</p>
+<p><em>Command line</em>: &#8211;verbosity</p>
+<p>Test verbosity, 0, 1, 2, 3</p>
+</div>
+<div class="section" id="labels">
+<span id="setting-labels"></span><h3>labels<a class="headerlink" href="#labels" title="Permalink to this headline">¶</a></h3>
+<p>Setting for <a class="reference internal" href="apps/test.html#module-pulsar.apps.test" title="pulsar.apps.test"><tt class="xref py py-mod docutils literal"><span class="pre">pulsar.apps.test</span></tt></a> application.</p>
+<p>Optional test labels to run. If not provided all tests are run.</p>
+<p>To see available labels use the -l option.</p>
+</div>
+<div class="section" id="size">
+<span id="setting-size"></span><h3>size<a class="headerlink" href="#size" title="Permalink to this headline">¶</a></h3>
+<p>Setting for <a class="reference internal" href="apps/test.html#module-pulsar.apps.test" title="pulsar.apps.test"><tt class="xref py py-mod docutils literal"><span class="pre">pulsar.apps.test</span></tt></a> application.</p>
+<p><em>Command line</em>: &#8211;size</p>
+<p>Optional test size.</p>
+</div>
+<div class="section" id="list-labels">
+<span id="setting-list-labels"></span><h3>list_labels<a class="headerlink" href="#list-labels" title="Permalink to this headline">¶</a></h3>
+<p>Setting for <a class="reference internal" href="apps/test.html#module-pulsar.apps.test" title="pulsar.apps.test"><tt class="xref py py-mod docutils literal"><span class="pre">pulsar.apps.test</span></tt></a> application.</p>
+<p><em>Command line</em>: -l,&#8211;list_labels</p>
+<p>List all test labels without performing tests.</p>
+</div>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper"><p class="logo">
+<a href="index.html">
+  <img class="logo" width="200" src="static/pulsar.png" alt="pulsar" title="Pulsar"/>
+</a>
+</p>
+  <h3><a href="index.html">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">Settings</a><ul>
+<li><a class="reference internal" href="#config-file">Config File</a><ul>
+<li><a class="reference internal" href="#config">config</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#worker-processes">Worker Processes</a><ul>
+<li><a class="reference internal" href="#workers">workers</a></li>
+<li><a class="reference internal" href="#concurrency">concurrency</a></li>
+<li><a class="reference internal" href="#max-requests">max_requests</a></li>
+<li><a class="reference internal" href="#backlog">backlog</a></li>
+<li><a class="reference internal" href="#timeout">timeout</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#http">Http</a><ul>
+<li><a class="reference internal" href="#http-proxy">http_proxy</a></li>
+<li><a class="reference internal" href="#http-py-parser">http_py_parser</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#debugging">Debugging</a><ul>
+<li><a class="reference internal" href="#debug">debug</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#server-mechanics">Server Mechanics</a><ul>
+<li><a class="reference internal" href="#daemon">daemon</a></li>
+<li><a class="reference internal" href="#pidfile">pidfile</a></li>
+<li><a class="reference internal" href="#password">password</a></li>
+<li><a class="reference internal" href="#user">user</a></li>
+<li><a class="reference internal" href="#group">group</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#logging">Logging</a><ul>
+<li><a class="reference internal" href="#loglevel">loglevel</a></li>
+<li><a class="reference internal" href="#loghandlers">loghandlers</a></li>
+<li><a class="reference internal" href="#logevery">logevery</a></li>
+<li><a class="reference internal" href="#logconfig">logconfig</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#process-naming">Process Naming</a><ul>
+<li><a class="reference internal" href="#process-name">process_name</a></li>
+<li><a class="reference internal" href="#default-process-name">default_process_name</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#server-hooks">Server Hooks</a><ul>
+<li><a class="reference internal" href="#when-ready">when_ready</a></li>
+<li><a class="reference internal" href="#pre-fork">pre_fork</a></li>
+<li><a class="reference internal" href="#post-fork">post_fork</a></li>
+<li><a class="reference internal" href="#pre-exec">pre_exec</a></li>
+<li><a class="reference internal" href="#pre-request">pre_request</a></li>
+<li><a class="reference internal" href="#post-request">post_request</a></li>
+<li><a class="reference internal" href="#worker-exit">worker_exit</a></li>
+<li><a class="reference internal" href="#worker-task">worker_task</a></li>
+<li><a class="reference internal" href="#arbiter-task">arbiter_task</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#socket-servers">Socket Servers</a><ul>
+<li><a class="reference internal" href="#bind">bind</a></li>
+<li><a class="reference internal" href="#keepalive">keepalive</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#wsgi-servers">WSGI Servers</a><ul>
+<li><a class="reference internal" href="#http-parser">http_parser</a></li>
+<li><a class="reference internal" href="#response-middleware">response_middleware</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#task-consumer">Task Consumer</a><ul>
+<li><a class="reference internal" href="#task-queue-factory">task_queue_factory</a></li>
+<li><a class="reference internal" href="#tasks-path">tasks_path</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#test">Test</a><ul>
+<li><a class="reference internal" href="#verbosity">verbosity</a></li>
+<li><a class="reference internal" href="#labels">labels</a></li>
+<li><a class="reference internal" href="#size">size</a></li>
+<li><a class="reference internal" href="#list-labels">list_labels</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="http.html"
+                        title="previous chapter">HTTP</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="apps/socket.html"
+                        title="next chapter">Socket Servers</a></p>
+  <h3>This Page</h3>
+  <ul class="this-page-menu">
+    <li><a href="sources/settings.txt"
+           rel="nofollow">Show Source</a></li>
+  </ul>
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" size="18" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="apps/socket.html" title="Socket Servers"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="http.html" title="HTTP"
+             >previous</a> |</li>
+        <li><a href="index.html">pulsar v0.4.4b1 documentation</a> &raquo;</li> 
+      </ul>
+    </div>
+
+    <div class="footer">
+        &copy; Copyright 2011, Luca Sbardella.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.0.7.
+    </div>
+<script type="text/javascript">
+
+  var _gaq = _gaq || [];
+  _gaq.push(['_setAccount', 'UA-3900561-7']);
+  _gaq.push(['_trackPageview']);
+
+  (function() {
+    var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+    ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+    var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+  })();
+
+</script>
+
+  </body>
+</html>

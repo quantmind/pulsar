@@ -1,0 +1,305 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>WebSockets &mdash; pulsar v0.4.4b1 documentation</title>
+    <link rel="stylesheet" href="../static/celery.css" type="text/css" />
+    <link rel="stylesheet" href="../static/pygments.css" type="text/css" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../',
+        VERSION:     '0.4.4b1',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../static/jquery.js"></script>
+    <script type="text/javascript" src="../static/underscore.js"></script>
+    <script type="text/javascript" src="../static/doctools.js"></script>
+    <link rel="top" title="pulsar v0.4.4b1 documentation" href="../index.html" />
+    <link rel="next" title="Asynchronous Test Suite" href="test.html" />
+    <link rel="prev" title="Distributed Task Queues" href="tasks.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="test.html" title="Asynchronous Test Suite"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="tasks.html" title="Distributed Task Queues"
+             accesskey="P">previous</a> |</li>
+        <li><a href="../index.html">pulsar v0.4.4b1 documentation</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+<div class="deck">
+
+    
+        <p class="developmentversion">
+        This document is for Pulsar's development version. Get the 
+        <a href="http://packages.python.org/pulsar/">release docs here</a>.
+        </p>
+    
+
+</div>
+
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="module-pulsar.apps.ws">
+<span id="websockets"></span><span id="apps-ws"></span><h1>WebSockets<a class="headerlink" href="#module-pulsar.apps.ws" title="Permalink to this headline">¶</a></h1>
+<p>The <a class="reference internal" href="#module-pulsar.apps.ws" title="pulsar.apps.ws"><tt class="xref py py-mod docutils literal"><span class="pre">pulsar.apps.ws</span></tt></a> contains a <a class="reference external" href="http://www.python.org/dev/peps/pep-3333/">WSGI</a> middleware for
+handling the <a class="reference external" href="http://tools.ietf.org/html/rfc6455">WebSocket</a> protocol.
+Web sockets allow for bidirectional communication between the browser
+and server. Pulsar implementation uses the WSGI middleware
+<a class="reference internal" href="#pulsar.apps.ws.WebSocket" title="pulsar.apps.ws.WebSocket"><tt class="xref py py-class docutils literal"><span class="pre">WebSocket</span></tt></a> for the handshake and a class derived from
+<a class="reference internal" href="#pulsar.apps.ws.WS" title="pulsar.apps.ws.WS"><tt class="xref py py-class docutils literal"><span class="pre">WS</span></tt></a> handler for the communication part.</p>
+<div class="section" id="api">
+<h2>API<a class="headerlink" href="#api" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="id1">
+<h3>WebSocket<a class="headerlink" href="#id1" title="Permalink to this headline">¶</a></h3>
+<dl class="class">
+<dt id="pulsar.apps.ws.WebSocket">
+<em class="property">class </em><tt class="descclassname">pulsar.apps.ws.</tt><tt class="descname">WebSocket</tt><big>(</big><em>handle</em>, <em>extensions=None</em><big>)</big><a class="reference internal" href="../modules/pulsar/apps/ws.html#WebSocket"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.ws.WebSocket" title="Permalink to this definition">¶</a></dt>
+<dd><p>A <a class="reference internal" href="wsgi.html#apps-wsgi"><em>WSGI</em></a> middleware for handling w websocket handshake
+and starting a custom <a class="reference internal" href="#pulsar.apps.ws.WS" title="pulsar.apps.ws.WS"><tt class="xref py py-class docutils literal"><span class="pre">WS</span></tt></a> connection.
+It implements the protocol version 13 as specified at
+<a class="reference external" href="http://www.whatwg.org/specs/web-socket-protocol/">http://www.whatwg.org/specs/web-socket-protocol/</a>.</p>
+<p>Web Sockets are not standard HTTP connections. The &#8220;handshake&#8221; is HTTP,
+but after that, the protocol is message-based. To create
+a valid <a class="reference internal" href="#pulsar.apps.ws.WebSocket" title="pulsar.apps.ws.WebSocket"><tt class="xref py py-class docutils literal"><span class="pre">WebSocket</span></tt></a> middleware initialise as follow:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="kn">from</span> <span class="nn">pulsar.apps</span> <span class="kn">import</span> <span class="n">wsgi</span><span class="p">,</span> <span class="n">ws</span>
+
+<span class="k">class</span> <span class="nc">MyWS</span><span class="p">(</span><span class="n">ws</span><span class="o">.</span><span class="n">WS</span><span class="p">):</span>
+    <span class="o">...</span>
+
+<span class="n">wm</span> <span class="o">=</span> <span class="n">ws</span><span class="o">.</span><span class="n">WebSocket</span><span class="p">(</span><span class="n">handle</span><span class="o">=</span><span class="n">MyWS</span><span class="p">())</span>
+<span class="n">app</span> <span class="o">=</span> <span class="n">wsgi</span><span class="o">.</span><span class="n">WsgiHandler</span><span class="p">(</span><span class="n">middleware</span><span class="o">=</span><span class="p">(</span><span class="o">...</span><span class="p">,</span> <span class="n">wm</span><span class="p">))</span>
+
+<span class="n">wsgi</span><span class="o">.</span><span class="n">createServer</span><span class="p">(</span><span class="nb">callable</span><span class="o">=</span><span class="n">app</span><span class="p">)</span><span class="o">.</span><span class="n">start</span><span class="p">()</span>
+</pre></div>
+</div>
+<p>See <a class="reference external" href="http://tools.ietf.org/html/rfc6455">http://tools.ietf.org/html/rfc6455</a> for the websocket server protocol and
+<a class="reference external" href="http://www.w3.org/TR/websockets/">http://www.w3.org/TR/websockets/</a> for details on the JavaScript interface.</p>
+</dd></dl>
+
+</div>
+<div class="section" id="websocket-handler">
+<h3>WebSocket Handler<a class="headerlink" href="#websocket-handler" title="Permalink to this headline">¶</a></h3>
+<dl class="class">
+<dt id="pulsar.apps.ws.WS">
+<em class="property">class </em><tt class="descclassname">pulsar.apps.ws.</tt><tt class="descname">WS</tt><a class="reference internal" href="../modules/pulsar/apps/ws.html#WS"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.ws.WS" title="Permalink to this definition">¶</a></dt>
+<dd><p>A web socket handler. It maintains
+an open socket with a remote web-socket and exchange messages in
+an asynchronous fashion. The communication is started by the
+<a class="reference internal" href="#pulsar.apps.ws.WebSocket" title="pulsar.apps.ws.WebSocket"><tt class="xref py py-class docutils literal"><span class="pre">WebSocket</span></tt></a> middleware after a successful handshake.</p>
+<p>Override <a class="reference internal" href="#pulsar.apps.ws.WS.on_message" title="pulsar.apps.ws.WS.on_message"><tt class="xref py py-meth docutils literal"><span class="pre">on_message()</span></tt></a> to handle incoming messages.
+You can also override <a class="reference internal" href="#pulsar.apps.ws.WS.on_open" title="pulsar.apps.ws.WS.on_open"><tt class="xref py py-meth docutils literal"><span class="pre">on_open()</span></tt></a> and <a class="reference internal" href="#pulsar.apps.ws.WS.on_close" title="pulsar.apps.ws.WS.on_close"><tt class="xref py py-meth docutils literal"><span class="pre">on_close()</span></tt></a> to handle opened
+and closed connections.</p>
+<p>Here is an example Web Socket handler that echos back all received messages
+back to the client:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="kn">from</span> <span class="nn">pulsar.apps</span> <span class="kn">import</span> <span class="n">ws</span>
+
+<span class="k">class</span> <span class="nc">EchoWS</span><span class="p">(</span><span class="n">ws</span><span class="o">.</span><span class="n">WS</span><span class="p">):</span>
+
+    <span class="k">def</span> <span class="nf">on_open</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">environ</span><span class="p">):</span>
+        <span class="k">print</span><span class="p">(</span><span class="s">&quot;WebSocket opened&quot;</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">on_message</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">environ</span><span class="p">,</span> <span class="n">message</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">message</span>
+
+    <span class="k">def</span> <span class="nf">on_close</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">environ</span><span class="p">):</span>
+        <span class="k">print</span><span class="p">(</span><span class="s">&quot;WebSocket closed&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+<dl class="method">
+<dt id="pulsar.apps.ws.WS.on_handshake">
+<tt class="descname">on_handshake</tt><big>(</big><em>environ</em>, <em>headers</em><big>)</big><a class="reference internal" href="../modules/pulsar/apps/ws.html#WS.on_handshake"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.ws.WS.on_handshake" title="Permalink to this definition">¶</a></dt>
+<dd><p>Invoked just before sending the upgraded <strong>headers</strong> to the
+client. This is a chance to add or remove header&#8217;s entries.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="pulsar.apps.ws.WS.on_open">
+<tt class="descname">on_open</tt><big>(</big><em>environ</em><big>)</big><a class="reference internal" href="../modules/pulsar/apps/ws.html#WS.on_open"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.ws.WS.on_open" title="Permalink to this definition">¶</a></dt>
+<dd><p>Invoked when a new WebSocket is opened.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="pulsar.apps.ws.WS.on_message">
+<tt class="descname">on_message</tt><big>(</big><em>environ</em>, <em>message</em><big>)</big><a class="reference internal" href="../modules/pulsar/apps/ws.html#WS.on_message"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.ws.WS.on_message" title="Permalink to this definition">¶</a></dt>
+<dd><p>Handle incoming messages on the WebSocket.
+This method must be overloaded.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="pulsar.apps.ws.WS.on_close">
+<tt class="descname">on_close</tt><big>(</big><em>environ</em><big>)</big><a class="reference internal" href="../modules/pulsar/apps/ws.html#WS.on_close"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.ws.WS.on_close" title="Permalink to this definition">¶</a></dt>
+<dd><p>Invoked when the WebSocket is closed.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="pulsar.apps.ws.WS.close">
+<tt class="descname">close</tt><big>(</big><em>environ</em>, <em>msg=None</em><big>)</big><a class="reference internal" href="../modules/pulsar/apps/ws.html#WS.close"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.ws.WS.close" title="Permalink to this definition">¶</a></dt>
+<dd><p>Invoked when the web-socket needs closing.</p>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="frame">
+<h3>Frame<a class="headerlink" href="#frame" title="Permalink to this headline">¶</a></h3>
+<dl class="class">
+<dt id="pulsar.apps.ws.Frame">
+<em class="property">class </em><tt class="descclassname">pulsar.apps.ws.</tt><tt class="descname">Frame</tt><big>(</big><em>message=None</em>, <em>opcode=None</em>, <em>version=None</em>, <em>masking_key=None</em>, <em>final=False</em>, <em>rsv1=0</em>, <em>rsv2=0</em>, <em>rsv3=0</em><big>)</big><a class="headerlink" href="#pulsar.apps.ws.Frame" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="method">
+<dt id="pulsar.apps.ws.Frame.build_frame">
+<tt class="descname">build_frame</tt><big>(</big><em>message</em><big>)</big><a class="headerlink" href="#pulsar.apps.ws.Frame.build_frame" title="Permalink to this definition">¶</a></dt>
+<dd><p>Builds a frame from the instance&#8217;s attributes.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="pulsar.apps.ws.Frame.mask">
+<tt class="descname">mask</tt><big>(</big><em>data</em><big>)</big><a class="headerlink" href="#pulsar.apps.ws.Frame.mask" title="Permalink to this definition">¶</a></dt>
+<dd><p>Performs the masking or unmasking operation on data
+using the simple masking algorithm:</p>
+<div class="highlight-python"><pre>j                   = i MOD 4
+transformed-octet-i = original-octet-i XOR masking-key-octet-j</pre>
+</div>
+</dd></dl>
+
+<dl class="method">
+<dt id="pulsar.apps.ws.Frame.unmask">
+<tt class="descname">unmask</tt><big>(</big><em>data</em><big>)</big><a class="headerlink" href="#pulsar.apps.ws.Frame.unmask" title="Permalink to this definition">¶</a></dt>
+<dd><p>Performs the masking or unmasking operation on data
+using the simple masking algorithm:</p>
+<div class="highlight-python"><pre>j                   = i MOD 4
+transformed-octet-i = original-octet-i XOR masking-key-octet-j</pre>
+</div>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="pulsar.apps.ws.FrameParser">
+<em class="property">class </em><tt class="descclassname">pulsar.apps.ws.</tt><tt class="descname">FrameParser</tt><big>(</big><em>version=None</em>, <em>kind=0</em><big>)</big><a class="headerlink" href="#pulsar.apps.ws.FrameParser" title="Permalink to this definition">¶</a></dt>
+<dd><p>Parser for the version 8 protocol.</p>
+<dl class="attribute">
+<dt id="pulsar.apps.ws.FrameParser.kind">
+<tt class="descname">kind</tt><a class="headerlink" href="#pulsar.apps.ws.FrameParser.kind" title="Permalink to this definition">¶</a></dt>
+<dd><p>0 for parsing client&#8217;s frames and sending server frames (to be used in the server),
+1 for parsing server frames and sending client frames (to be used by the client)</p>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper"><p class="logo">
+<a href="../index.html">
+  <img class="logo" width="200" src="../static/pulsar.png" alt="pulsar" title="Pulsar"/>
+</a>
+</p>
+  <h3><a href="../index.html">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">WebSockets</a><ul>
+<li><a class="reference internal" href="#api">API</a><ul>
+<li><a class="reference internal" href="#id1">WebSocket</a></li>
+<li><a class="reference internal" href="#websocket-handler">WebSocket Handler</a></li>
+<li><a class="reference internal" href="#frame">Frame</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="tasks.html"
+                        title="previous chapter">Distributed Task Queues</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="test.html"
+                        title="next chapter">Asynchronous Test Suite</a></p>
+  <h3>This Page</h3>
+  <ul class="this-page-menu">
+    <li><a href="../sources/apps/websockets.txt"
+           rel="nofollow">Show Source</a></li>
+  </ul>
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" size="18" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="test.html" title="Asynchronous Test Suite"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="tasks.html" title="Distributed Task Queues"
+             >previous</a> |</li>
+        <li><a href="../index.html">pulsar v0.4.4b1 documentation</a> &raquo;</li> 
+      </ul>
+    </div>
+
+    <div class="footer">
+        &copy; Copyright 2011, Luca Sbardella.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.0.7.
+    </div>
+<script type="text/javascript">
+
+  var _gaq = _gaq || [];
+  _gaq.push(['_setAccount', 'UA-3900561-7']);
+  _gaq.push(['_trackPageview']);
+
+  (function() {
+    var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+    ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+    var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+  })();
+
+</script>
+
+  </body>
+</html>

@@ -1,0 +1,307 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>WSGI Servers &mdash; pulsar v0.4.4b1 documentation</title>
+    <link rel="stylesheet" href="../static/celery.css" type="text/css" />
+    <link rel="stylesheet" href="../static/pygments.css" type="text/css" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../',
+        VERSION:     '0.4.4b1',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../static/jquery.js"></script>
+    <script type="text/javascript" src="../static/underscore.js"></script>
+    <script type="text/javascript" src="../static/doctools.js"></script>
+    <link rel="top" title="pulsar v0.4.4b1 documentation" href="../index.html" />
+    <link rel="next" title="JSON-RPC" href="rpc.html" />
+    <link rel="prev" title="Socket Servers" href="socket.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="rpc.html" title="JSON-RPC"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="socket.html" title="Socket Servers"
+             accesskey="P">previous</a> |</li>
+        <li><a href="../index.html">pulsar v0.4.4b1 documentation</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+<div class="deck">
+
+    
+        <p class="developmentversion">
+        This document is for Pulsar's development version. Get the 
+        <a href="http://packages.python.org/pulsar/">release docs here</a>.
+        </p>
+    
+
+</div>
+
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="module-pulsar.apps.wsgi">
+<span id="wsgi-servers"></span><span id="apps-wsgi"></span><h1>WSGI Servers<a class="headerlink" href="#module-pulsar.apps.wsgi" title="Permalink to this headline">¶</a></h1>
+<p>A specialized <a class="reference internal" href="socket.html#pulsar.apps.socket.SocketServer" title="pulsar.apps.socket.SocketServer"><tt class="xref py py-class docutils literal"><span class="pre">pulsar.apps.socket.SocketServer</span></tt></a> for
+serving web applications which conforms with the python web server
+gateway interface (<a class="reference external" href="http://www.wsgi.org">WSGI</a>).</p>
+<p>The application can be used in conjunction with several web frameworks
+as well as the <a class="reference internal" href="rpc.html#apps-rpc"><em>pulsar RPC middleware</em></a> and
+the <a class="reference internal" href="websockets.html#apps-ws"><em>websocket middleware</em></a>.</p>
+<p>An example of a web server written with <tt class="docutils literal"><span class="pre">pulsar.apps.wsgi</span></tt> which responds
+with &#8220;Hello World!&#8221; for every request:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="kn">from</span> <span class="nn">pulsar.apps</span> <span class="kn">import</span> <span class="n">wsgi</span>
+
+<span class="k">def</span> <span class="nf">hello</span><span class="p">(</span><span class="n">environ</span><span class="p">,</span> <span class="n">start_response</span><span class="p">):</span>
+    <span class="n">data</span> <span class="o">=</span> <span class="n">b</span><span class="s">&quot;Hello World!&quot;</span>
+    <span class="n">response_headers</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="p">(</span><span class="s">&#39;Content-type&#39;</span><span class="p">,</span><span class="s">&#39;text/plain&#39;</span><span class="p">),</span>
+        <span class="p">(</span><span class="s">&#39;Content-Length&#39;</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">data</span><span class="p">)))</span>
+    <span class="p">)</span>
+    <span class="n">start_response</span><span class="p">(</span><span class="s">&quot;200 OK&quot;</span><span class="p">,</span> <span class="n">response_headers</span><span class="p">)</span>
+    <span class="k">return</span> <span class="p">[</span><span class="n">data</span><span class="p">]</span>
+
+<span class="k">if</span> <span class="n">__name__</span> <span class="o">==</span> <span class="s">&#39;__main__&#39;</span><span class="p">:</span>
+    <span class="n">wsgi</span><span class="o">.</span><span class="n">WSGIServer</span><span class="p">(</span><span class="nb">callable</span><span class="o">=</span><span class="n">hello</span><span class="p">)</span><span class="o">.</span><span class="n">start</span><span class="p">()</span>
+</pre></div>
+</div>
+<p>For more information regarding WSGI check the <a class="reference external" href="http://www.python.org/dev/peps/pep-3333/">pep3333</a> specification.</p>
+<div class="section" id="api">
+<h2>API<a class="headerlink" href="#api" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="wsgiapplication">
+<h3>WSGIApplication<a class="headerlink" href="#wsgiapplication" title="Permalink to this headline">¶</a></h3>
+<dl class="class">
+<dt id="pulsar.apps.wsgi.WSGIServer">
+<em class="property">class </em><tt class="descclassname">pulsar.apps.wsgi.</tt><tt class="descname">WSGIServer</tt><big>(</big><em>callable=None</em>, <em>description=None</em>, <em>name=None</em>, <em>epilog=None</em>, <em>argv=None</em>, <em>script=None</em>, <em>version=None</em>, <em>parse_console=True</em>, <em>commands_set=None</em>, <em>cfg=None</em>, <em>**kwargs</em><big>)</big><a class="reference internal" href="../modules/pulsar/apps/wsgi.html#WSGIServer"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.wsgi.WSGIServer" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="method">
+<dt id="pulsar.apps.wsgi.WSGIServer.handler">
+<tt class="descname">handler</tt><big>(</big><big>)</big><a class="reference internal" href="../modules/pulsar/apps/wsgi.html#WSGIServer.handler"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.wsgi.WSGIServer.handler" title="Permalink to this definition">¶</a></dt>
+<dd><p>Build the wsgi handler from <em>hnd</em>. This function is called
+at start-up only.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>hnd</strong> &#8211; This is the WSGI handle which can be A <a class="reference internal" href="#pulsar.apps.wsgi.WsgiHandler" title="pulsar.apps.wsgi.WsgiHandler"><tt class="xref py py-class docutils literal"><span class="pre">WsgiHandler</span></tt></a>,
+a WSGI callable or a list WSGI callables.</li>
+<li><strong>resp_middleware</strong> &#8211; Optional list of response middleware functions.</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="wsgihandler">
+<h3>WsgiHandler<a class="headerlink" href="#wsgihandler" title="Permalink to this headline">¶</a></h3>
+<dl class="class">
+<dt id="pulsar.apps.wsgi.WsgiHandler">
+<em class="property">class </em><tt class="descclassname">pulsar.apps.wsgi.</tt><tt class="descname">WsgiHandler</tt><big>(</big><em>middleware=None</em>, <em>response_middleware=None</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#pulsar.apps.wsgi.WsgiHandler" title="Permalink to this definition">¶</a></dt>
+<dd><p>An handler for application conforming to python <a class="reference external" href="http://www.wsgi.org">WSGI</a>.</p>
+<dl class="attribute">
+<dt id="pulsar.apps.wsgi.WsgiHandler.middleware">
+<tt class="descname">middleware</tt><a class="headerlink" href="#pulsar.apps.wsgi.WsgiHandler.middleware" title="Permalink to this definition">¶</a></dt>
+<dd><p>List of callable WSGI middleware callable which accept
+<tt class="docutils literal"><span class="pre">environ</span></tt> and <tt class="docutils literal"><span class="pre">start_response</span></tt> as arguments.
+The order matter, since the response returned by the callable
+is the non <tt class="xref docutils literal"><span class="pre">None</span></tt> value returned by a middleware.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="pulsar.apps.wsgi.WsgiHandler.response_middleware">
+<tt class="descname">response_middleware</tt><a class="headerlink" href="#pulsar.apps.wsgi.WsgiHandler.response_middleware" title="Permalink to this definition">¶</a></dt>
+<dd><p>List of functions of the form:</p>
+<div class="highlight-python"><pre>def ..(environ, start_response, response):
+    ...</pre>
+</div>
+<p>where <tt class="docutils literal"><span class="pre">response</span></tt> is the first not <tt class="xref docutils literal"><span class="pre">None</span></tt> value returned by
+the middleware.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="pulsar.apps.wsgi.WsgiHandler.get">
+<tt class="descname">get</tt><big>(</big><em>route='/'</em><big>)</big><a class="headerlink" href="#pulsar.apps.wsgi.WsgiHandler.get" title="Permalink to this definition">¶</a></dt>
+<dd><p>Fetch a middleware with the given <em>route</em>. If it is not found
+return <tt class="xref docutils literal"><span class="pre">None</span></tt>.</p>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="wsgiresponse">
+<h3>WsgiResponse<a class="headerlink" href="#wsgiresponse" title="Permalink to this headline">¶</a></h3>
+<dl class="class">
+<dt id="pulsar.apps.wsgi.WsgiResponse">
+<em class="property">class </em><tt class="descclassname">pulsar.apps.wsgi.</tt><tt class="descname">WsgiResponse</tt><big>(</big><em>status=None</em>, <em>content=None</em>, <em>response_headers=None</em>, <em>content_type=None</em>, <em>encoding=None</em>, <em>environ=None</em>, <em>start_response=None</em><big>)</big><a class="headerlink" href="#pulsar.apps.wsgi.WsgiResponse" title="Permalink to this definition">¶</a></dt>
+<dd><p>A WSGI response wrapper initialized by a WSGI request middleware.
+Instances are callable using the standard WSGI call:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">response</span> <span class="o">=</span> <span class="n">WsgiResponse</span><span class="p">(</span><span class="mi">200</span><span class="p">)</span>
+<span class="n">response</span><span class="p">(</span><span class="n">environ</span><span class="p">,</span> <span class="n">start_response</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>A <a class="reference internal" href="#pulsar.apps.wsgi.WsgiResponse" title="pulsar.apps.wsgi.WsgiResponse"><tt class="xref py py-class docutils literal"><span class="pre">WsgiResponse</span></tt></a> is an iterable over bytes to send back to the requesting
+client.</p>
+<dl class="attribute">
+<dt id="pulsar.apps.wsgi.WsgiResponse.status_code">
+<tt class="descname">status_code</tt><a class="headerlink" href="#pulsar.apps.wsgi.WsgiResponse.status_code" title="Permalink to this definition">¶</a></dt>
+<dd><p>Integer indicating the HTTP status, (i.e. 200)</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="pulsar.apps.wsgi.WsgiResponse.response">
+<tt class="descname">response</tt><a class="headerlink" href="#pulsar.apps.wsgi.WsgiResponse.response" title="Permalink to this definition">¶</a></dt>
+<dd><p>String indicating the HTTP status (i.e. &#8216;OK&#8217;)</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="pulsar.apps.wsgi.WsgiResponse.status">
+<tt class="descname">status</tt><a class="headerlink" href="#pulsar.apps.wsgi.WsgiResponse.status" title="Permalink to this definition">¶</a></dt>
+<dd><p>String indicating the HTTP status code and response (i.e. &#8216;200 OK&#8217;)</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="pulsar.apps.wsgi.WsgiResponse.environ">
+<tt class="descname">environ</tt><a class="headerlink" href="#pulsar.apps.wsgi.WsgiResponse.environ" title="Permalink to this definition">¶</a></dt>
+<dd><p>The dictionary of WSGI environment if passed to the constructor.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="pulsar.apps.wsgi.WsgiResponse.is_streamed">
+<tt class="descname">is_streamed</tt><a class="headerlink" href="#pulsar.apps.wsgi.WsgiResponse.is_streamed" title="Permalink to this definition">¶</a></dt>
+<dd><p>If the response is streamed (the response is not an iterable with
+length information) this property is <cite>True</cite>.  In this case streamed
+means that there is no information about the number of iterations.
+This is usually <cite>True</cite> if a generator is passed to the response object.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="pulsar.apps.wsgi.WsgiResponse.set_cookie">
+<tt class="descname">set_cookie</tt><big>(</big><em>key</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#pulsar.apps.wsgi.WsgiResponse.set_cookie" title="Permalink to this definition">¶</a></dt>
+<dd><p>Sets a cookie.</p>
+<p><tt class="docutils literal"><span class="pre">expires</span></tt> can be a string in the correct format or a
+<tt class="docutils literal"><span class="pre">datetime.datetime</span></tt> object in UTC. If <tt class="docutils literal"><span class="pre">expires</span></tt> is a datetime
+object then <tt class="docutils literal"><span class="pre">max_age</span></tt> will be calculated.</p>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper"><p class="logo">
+<a href="../index.html">
+  <img class="logo" width="200" src="../static/pulsar.png" alt="pulsar" title="Pulsar"/>
+</a>
+</p>
+  <h3><a href="../index.html">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">WSGI Servers</a><ul>
+<li><a class="reference internal" href="#api">API</a><ul>
+<li><a class="reference internal" href="#wsgiapplication">WSGIApplication</a></li>
+<li><a class="reference internal" href="#wsgihandler">WsgiHandler</a></li>
+<li><a class="reference internal" href="#wsgiresponse">WsgiResponse</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="socket.html"
+                        title="previous chapter">Socket Servers</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="rpc.html"
+                        title="next chapter">JSON-RPC</a></p>
+  <h3>This Page</h3>
+  <ul class="this-page-menu">
+    <li><a href="../sources/apps/wsgi.txt"
+           rel="nofollow">Show Source</a></li>
+  </ul>
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" size="18" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="rpc.html" title="JSON-RPC"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="socket.html" title="Socket Servers"
+             >previous</a> |</li>
+        <li><a href="../index.html">pulsar v0.4.4b1 documentation</a> &raquo;</li> 
+      </ul>
+    </div>
+
+    <div class="footer">
+        &copy; Copyright 2011, Luca Sbardella.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.0.7.
+    </div>
+<script type="text/javascript">
+
+  var _gaq = _gaq || [];
+  _gaq.push(['_setAccount', 'UA-3900561-7']);
+  _gaq.push(['_trackPageview']);
+
+  (function() {
+    var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+    ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+    var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+  })();
+
+</script>
+
+  </body>
+</html>

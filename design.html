@@ -1,0 +1,288 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>Design &mdash; pulsar v0.4.4b1 documentation</title>
+    <link rel="stylesheet" href="static/celery.css" type="text/css" />
+    <link rel="stylesheet" href="static/pygments.css" type="text/css" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '',
+        VERSION:     '0.4.4b1',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="static/jquery.js"></script>
+    <script type="text/javascript" src="static/underscore.js"></script>
+    <script type="text/javascript" src="static/doctools.js"></script>
+    <link rel="top" title="pulsar v0.4.4b1 documentation" href="index.html" />
+    <link rel="next" title="API" href="api.html" />
+    <link rel="prev" title="Changelog" href="changelog.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="api.html" title="API"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="changelog.html" title="Changelog"
+             accesskey="P">previous</a> |</li>
+        <li><a href="index.html">pulsar v0.4.4b1 documentation</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+<div class="deck">
+
+    
+        <p class="developmentversion">
+        This document is for Pulsar's development version. Get the 
+        <a href="http://packages.python.org/pulsar/">release docs here</a>.
+        </p>
+    
+
+</div>
+
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <span class="target" id="module-pulsar"><span id="design"></span></span><div class="section" id="id1">
+<h1>Design<a class="headerlink" href="#id1" title="Permalink to this headline">¶</a></h1>
+<p>Pulsar is an asynchronous concurrent framework for python. It implements
+a double layer of components for building a vast array of parallel and asynchronous
+applications.</p>
+<ul class="simple">
+<li>The first layer is based on the building blocks of pulsar library,
+the <a class="reference internal" href="api.html#pulsar.Actor" title="pulsar.Actor"><tt class="xref py py-class docutils literal"><span class="pre">Actor</span></tt></a> class for concurrency and the the <a class="reference internal" href="api.html#pulsar.Deferred" title="pulsar.Deferred"><tt class="xref py py-class docutils literal"><span class="pre">Deferred</span></tt></a> class
+for handling asynchronous events.</li>
+<li>The second layer is the based on the <a class="reference internal" href="api.html#pulsar.Application" title="pulsar.Application"><tt class="xref py py-class docutils literal"><span class="pre">Application</span></tt></a> class.</li>
+</ul>
+<div class="section" id="server-model">
+<h2>Server Model<a class="headerlink" href="#server-model" title="Permalink to this headline">¶</a></h2>
+<p>When running as server, Pulsar has central master process that manages
+a set of worker pools. In multi-processing mode, the master never knows anything
+about individual clients. All requests and responses are handled completely by worker pools.</p>
+</div>
+<div class="section" id="actors">
+<h2>Actors<a class="headerlink" href="#actors" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="event-loop">
+<span id="eventloop"></span><h3>Event loop<a class="headerlink" href="#event-loop" title="Permalink to this headline">¶</a></h3>
+<p>Each actor has its own <a class="reference internal" href="api.html#pulsar.Actor.requestloop" title="pulsar.Actor.requestloop"><tt class="xref py py-attr docutils literal"><span class="pre">Actor.requestloop</span></tt></a>, an instance of <a class="reference internal" href="api.html#pulsar.IOLoop" title="pulsar.IOLoop"><tt class="xref py py-class docutils literal"><span class="pre">IOLoop</span></tt></a>,
+which can be used to register handlers on file descriptors.
+The <a class="reference internal" href="api.html#pulsar.Actor.requestloop" title="pulsar.Actor.requestloop"><tt class="xref py py-attr docutils literal"><span class="pre">Actor.requestloop</span></tt></a> is initiated just after forking.</p>
+</div>
+<div class="section" id="io-bound">
+<span id="iobound"></span><h3>IO-bound<a class="headerlink" href="#io-bound" title="Permalink to this headline">¶</a></h3>
+<p>The most common <a class="reference internal" href="api.html#pulsar.Actor" title="pulsar.Actor"><tt class="xref py py-class docutils literal"><span class="pre">Actor</span></tt></a> has a <a class="reference internal" href="api.html#pulsar.Actor.requestloop" title="pulsar.Actor.requestloop"><tt class="xref py py-meth docutils literal"><span class="pre">Actor.requestloop()</span></tt></a> which tells
+the operating system (through <cite>epoll</cite> or <cite>select</cite>) that it should be notified
+when a new connection is made, and then it goes to sleep.
+Serving the new request should occur as fast as possible so that other
+connections can be served simultaneously.</p>
+</div>
+<div class="section" id="cpu-bound">
+<span id="cpubound"></span><h3>CPU-bound<a class="headerlink" href="#cpu-bound" title="Permalink to this headline">¶</a></h3>
+<p>The second type of <a class="reference internal" href="api.html#pulsar.Actor" title="pulsar.Actor"><tt class="xref py py-class docutils literal"><span class="pre">Actor</span></tt></a> can be used to perform CPU intensive
+operations, such as calculations, data manipulation or whatever you need
+them to do. CPU-bound <tt class="xref py py-class docutils literal"><span class="pre">Actors</span></tt> have the following properties:</p>
+<ul class="simple">
+<li>Their <a class="reference internal" href="api.html#pulsar.Actor.requestloop" title="pulsar.Actor.requestloop"><tt class="xref py py-attr docutils literal"><span class="pre">Actor.requestloop</span></tt></a> listen for requests on distributed queue
+rather than from a socket.</li>
+<li>Once they receive a new requests, they can block their request loop
+for a long time.</li>
+<li>In addition to their request loop, they have an I/O event loop running on a
+separate thread. It is accessed via the <a class="reference internal" href="api.html#pulsar.Actor.ioloop" title="pulsar.Actor.ioloop"><tt class="xref py py-meth docutils literal"><span class="pre">Actor.ioloop()</span></tt></a> attribute.</li>
+</ul>
+</div>
+</div>
+<div class="section" id="actor-callbacks">
+<span id="id2"></span><h2>Actor Callbacks<a class="headerlink" href="#actor-callbacks" title="Permalink to this headline">¶</a></h2>
+<p><a class="reference internal" href="api.html#pulsar.Actor" title="pulsar.Actor"><tt class="xref py py-class docutils literal"><span class="pre">Actor</span></tt></a> exposes five functions which can be
+used to customize the behaviour of the actor.
+These functions do nothing in the standard <a class="reference internal" href="api.html#pulsar.Actor" title="pulsar.Actor"><tt class="xref py py-class docutils literal"><span class="pre">Actor</span></tt></a> implementation.</p>
+<div class="section" id="on-start">
+<h3>on_start<a class="headerlink" href="#on-start" title="Permalink to this headline">¶</a></h3>
+<p>The <cite>Actor.on_start</cite> methid is called, <strong>once only</strong>, just before the actor
+starts its <a class="reference internal" href="#eventloop"><em>event loop</em></a>.</p>
+</div>
+<div class="section" id="on-event">
+<h3>on_event<a class="headerlink" href="#on-event" title="Permalink to this headline">¶</a></h3>
+<p>The <a class="reference internal" href="api.html#pulsar.Actor.on_event" title="pulsar.Actor.on_event"><tt class="xref py py-meth docutils literal"><span class="pre">Actor.on_event()</span></tt></a> method is called when an event on a registered
+file descriptor occurs.</p>
+</div>
+<div class="section" id="on-stop">
+<h3>on_stop<a class="headerlink" href="#on-stop" title="Permalink to this headline">¶</a></h3>
+<p>The <a class="reference internal" href="api.html#pulsar.Actor.on_stop" title="pulsar.Actor.on_stop"><tt class="xref py py-meth docutils literal"><span class="pre">Actor.on_stop()</span></tt></a> method is called, <strong>once only</strong>, just before the
+actor starts shutting down its event loop.</p>
+</div>
+<div class="section" id="on-exit">
+<h3>on_exit<a class="headerlink" href="#on-exit" title="Permalink to this headline">¶</a></h3>
+<p>The <a class="reference internal" href="api.html#pulsar.Actor.on_exit" title="pulsar.Actor.on_exit"><tt class="xref py py-meth docutils literal"><span class="pre">Actor.on_exit()</span></tt></a> method is called, <strong>once only</strong>, just before the
+actor is garbage collected.</p>
+</div>
+<div class="section" id="on-info">
+<h3>on_info<a class="headerlink" href="#on-info" title="Permalink to this headline">¶</a></h3>
+<p>The <a class="reference internal" href="api.html#pulsar.Actor.on_info" title="pulsar.Actor.on_info"><tt class="xref py py-meth docutils literal"><span class="pre">Actor.on_info()</span></tt></a> method is called to provide information about
+the actor.</p>
+</div>
+</div>
+<div class="section" id="actor-commands">
+<span id="id3"></span><h2>Actor commands<a class="headerlink" href="#actor-commands" title="Permalink to this headline">¶</a></h2>
+<p>An <a class="reference internal" href="api.html#pulsar.Actor" title="pulsar.Actor"><tt class="xref py py-class docutils literal"><span class="pre">Actor</span></tt></a> communicate with a remote <a class="reference internal" href="api.html#pulsar.Actor" title="pulsar.Actor"><tt class="xref py py-class docutils literal"><span class="pre">Actor</span></tt></a> by <em>sending</em> an
+<strong>action</strong> to perform. This action takes the form of a <strong>command</strong> name and
+optional positional and key-valued parameters. It is possible to add new
+commands via the <a class="reference internal" href="api.html#pulsar.command" title="pulsar.command"><tt class="xref py py-class docutils literal"><span class="pre">pulsar.command</span></tt></a> decorator as explained in the
+<a class="reference internal" href="api.html#api-remote-commands"><em>api documentation</em></a>.</p>
+<div class="section" id="ping">
+<h3>ping<a class="headerlink" href="#ping" title="Permalink to this headline">¶</a></h3>
+<p>Ping the remote actor <em>abcd</em> and receive an asynchronous <tt class="docutils literal"><span class="pre">pong</span></tt>:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">send</span><span class="p">(</span><span class="s">&#39;abcd&#39;</span><span class="p">,</span> <span class="s">&#39;ping&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="echo">
+<h3>echo<a class="headerlink" href="#echo" title="Permalink to this headline">¶</a></h3>
+<p>received an asynchronous echo from a remote actor <em>abcd</em>:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">send</span><span class="p">(</span><span class="s">&#39;abcd&#39;</span><span class="p">,</span> <span class="s">&#39;echo&#39;</span><span class="p">,</span> <span class="s">&#39;Hello!&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="run">
+<h3>run<a class="headerlink" href="#run" title="Permalink to this headline">¶</a></h3>
+<p>Run a function on a remote actor. The function must accept actor as its initial parameter:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="k">def</span> <span class="nf">dosomething</span><span class="p">(</span><span class="n">actor</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+    <span class="o">...</span>
+
+<span class="n">send</span><span class="p">(</span><span class="s">&#39;arbiter&#39;</span><span class="p">,</span> <span class="s">&#39;run&#39;</span><span class="p">,</span> <span class="n">dosomething</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+</div>
+<div class="section" id="application-framework">
+<span id="id4"></span><h2>Application Framework<a class="headerlink" href="#application-framework" title="Permalink to this headline">¶</a></h2>
+<p>To aid the development of applications running on top of pulsar concurrent
+framework, the library ships with the <a class="reference internal" href="api.html#pulsar.Application" title="pulsar.Application"><tt class="xref py py-class docutils literal"><span class="pre">Application</span></tt></a> class.</p>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper"><p class="logo">
+<a href="index.html">
+  <img class="logo" width="200" src="static/pulsar.png" alt="pulsar" title="Pulsar"/>
+</a>
+</p>
+  <h3><a href="index.html">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">Design</a><ul>
+<li><a class="reference internal" href="#server-model">Server Model</a></li>
+<li><a class="reference internal" href="#actors">Actors</a><ul>
+<li><a class="reference internal" href="#event-loop">Event loop</a></li>
+<li><a class="reference internal" href="#io-bound">IO-bound</a></li>
+<li><a class="reference internal" href="#cpu-bound">CPU-bound</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#actor-callbacks">Actor Callbacks</a><ul>
+<li><a class="reference internal" href="#on-start">on_start</a></li>
+<li><a class="reference internal" href="#on-event">on_event</a></li>
+<li><a class="reference internal" href="#on-stop">on_stop</a></li>
+<li><a class="reference internal" href="#on-exit">on_exit</a></li>
+<li><a class="reference internal" href="#on-info">on_info</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#actor-commands">Actor commands</a><ul>
+<li><a class="reference internal" href="#ping">ping</a></li>
+<li><a class="reference internal" href="#echo">echo</a></li>
+<li><a class="reference internal" href="#run">run</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#application-framework">Application Framework</a></li>
+</ul>
+</li>
+</ul>
+
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="changelog.html"
+                        title="previous chapter">Changelog</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="api.html"
+                        title="next chapter">API</a></p>
+  <h3>This Page</h3>
+  <ul class="this-page-menu">
+    <li><a href="sources/design.txt"
+           rel="nofollow">Show Source</a></li>
+  </ul>
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" size="18" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="api.html" title="API"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="changelog.html" title="Changelog"
+             >previous</a> |</li>
+        <li><a href="index.html">pulsar v0.4.4b1 documentation</a> &raquo;</li> 
+      </ul>
+    </div>
+
+    <div class="footer">
+        &copy; Copyright 2011, Luca Sbardella.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.0.7.
+    </div>
+<script type="text/javascript">
+
+  var _gaq = _gaq || [];
+  _gaq.push(['_setAccount', 'UA-3900561-7']);
+  _gaq.push(['_trackPageview']);
+
+  (function() {
+    var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+    ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+    var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+  })();
+
+</script>
+
+  </body>
+</html>

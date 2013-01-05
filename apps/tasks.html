@@ -1,0 +1,1014 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>Distributed Task Queues &mdash; pulsar v0.4.4b1 documentation</title>
+    <link rel="stylesheet" href="../static/celery.css" type="text/css" />
+    <link rel="stylesheet" href="../static/pygments.css" type="text/css" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../',
+        VERSION:     '0.4.4b1',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../static/jquery.js"></script>
+    <script type="text/javascript" src="../static/underscore.js"></script>
+    <script type="text/javascript" src="../static/doctools.js"></script>
+    <link rel="top" title="pulsar v0.4.4b1 documentation" href="../index.html" />
+    <link rel="next" title="WebSockets" href="websockets.html" />
+    <link rel="prev" title="JSON-RPC" href="rpc.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="websockets.html" title="WebSockets"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="rpc.html" title="JSON-RPC"
+             accesskey="P">previous</a> |</li>
+        <li><a href="../index.html">pulsar v0.4.4b1 documentation</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+<div class="deck">
+
+    
+        <p class="developmentversion">
+        This document is for Pulsar's development version. Get the 
+        <a href="http://packages.python.org/pulsar/">release docs here</a>.
+        </p>
+    
+
+</div>
+
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="module-pulsar.apps.tasks">
+<span id="distributed-task-queues"></span><span id="apps-tasks"></span><h1>Distributed Task Queues<a class="headerlink" href="#module-pulsar.apps.tasks" title="Permalink to this headline">¶</a></h1>
+<p>An asynchronous task-queue built on top <a class="reference internal" href="../api.html#pulsar.Application" title="pulsar.Application"><tt class="xref py py-class docutils literal"><span class="pre">pulsar.Application</span></tt></a> framework.
+By creating <a class="reference internal" href="#pulsar.apps.tasks.Job" title="pulsar.apps.tasks.Job"><tt class="xref py py-class docutils literal"><span class="pre">Job</span></tt></a> classes in a similar way you can do for <a class="reference external" href="http://celeryproject.org/">celery</a>,
+this application gives you all you need for running them with very
+little setup effort:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="kn">from</span> <span class="nn">pulsar.apps</span> <span class="kn">import</span> <span class="n">tasks</span>
+
+<span class="n">tq</span> <span class="o">=</span> <span class="n">tasks</span><span class="o">.</span><span class="n">TaskQueue</span><span class="p">(</span><span class="n">tasks_path</span><span class="o">=</span><span class="s">&#39;path.to.tasks.*&#39;</span><span class="p">)</span>
+<span class="n">tq</span><span class="o">.</span><span class="n">start</span><span class="p">()</span>
+</pre></div>
+</div>
+<div class="section" id="tutorial">
+<span id="tasks-actions"></span><h2>Tutorial<a class="headerlink" href="#tutorial" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="actions">
+<h3>Actions<a class="headerlink" href="#actions" title="Permalink to this headline">¶</a></h3>
+<p>The <tt class="xref py py-class docutils literal"><span class="pre">Taskqueue</span></tt> application adds the following
+<a class="reference internal" href="../api.html#api-remote-commands"><em>remote actions</em></a> to its workers:</p>
+<ul>
+<li><p class="first"><strong>addtask</strong> to add a new task to the task queue:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">send</span><span class="p">(</span><span class="n">taskqueue</span><span class="p">,</span> <span class="s">&#39;addtask&#39;</span><span class="p">,</span> <span class="n">jobname</span><span class="p">,</span> <span class="n">task_extra</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+</pre></div>
+</div>
+</li>
+</ul>
+<blockquote>
+<div><ul class="simple">
+<li><em>jobname</em>: the name of the <a class="reference internal" href="#pulsar.apps.tasks.Job" title="pulsar.apps.tasks.Job"><tt class="xref py py-class docutils literal"><span class="pre">Job</span></tt></a> to run.</li>
+<li><em>task_extra</em>: dictionary of extra parameters to pass to the <a class="reference internal" href="#pulsar.apps.tasks.Task" title="pulsar.apps.tasks.Task"><tt class="xref py py-class docutils literal"><span class="pre">Task</span></tt></a>
+constructor. Usually a empty dictionary.</li>
+<li><em>args</em>: positional arguments for the <a class="reference internal" href="#job-callable"><em>job callable</em></a>.</li>
+<li><em>kwargs</em>: key-valued arguments for the <a class="reference internal" href="#job-callable"><em>job callable</em></a>.</li>
+</ul>
+</div></blockquote>
+<ul>
+<li><p class="first"><strong>addtask_noack</strong> same as <strong>addtask</strong> but without acknowleding the sender:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">send</span><span class="p">(</span><span class="n">taskqueue</span><span class="p">,</span> <span class="s">&#39;addtask_noack&#39;</span><span class="p">,</span> <span class="n">jobname</span><span class="p">,</span> <span class="n">task_extra</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+</pre></div>
+</div>
+</li>
+<li><p class="first"><strong>get_task</strong> retrieve task information. This can be already executed or not.
+The implementation is left to the <a class="reference internal" href="#pulsar.apps.tasks.Task.get_task" title="pulsar.apps.tasks.Task.get_task"><tt class="xref py py-meth docutils literal"><span class="pre">Task.get_task()</span></tt></a> method:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">send</span><span class="p">(</span><span class="n">taskqueue</span><span class="p">,</span> <span class="s">&#39;get_task&#39;</span><span class="p">,</span> <span class="nb">id</span><span class="p">)</span>
+</pre></div>
+</div>
+</li>
+<li><p class="first"><strong>get_tasks</strong> retrieve information for tasks which satisfy the filtering.
+The implementation is left to the <a class="reference internal" href="#pulsar.apps.tasks.Task.get_tasks" title="pulsar.apps.tasks.Task.get_tasks"><tt class="xref py py-meth docutils literal"><span class="pre">Task.get_tasks()</span></tt></a> method:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">send</span><span class="p">(</span><span class="n">taskqueue</span><span class="p">,</span> <span class="s">&#39;get_tasks&#39;</span><span class="p">,</span> <span class="o">**</span><span class="n">filters</span><span class="p">)</span>
+</pre></div>
+</div>
+</li>
+</ul>
+</div>
+<div class="section" id="jobs">
+<h3>Jobs<a class="headerlink" href="#jobs" title="Permalink to this headline">¶</a></h3>
+<p>An application implements several <a class="reference internal" href="#pulsar.apps.tasks.Job" title="pulsar.apps.tasks.Job"><tt class="xref py py-class docutils literal"><span class="pre">Job</span></tt></a>
+classes which specify the way each <a class="reference internal" href="#pulsar.apps.tasks.Task" title="pulsar.apps.tasks.Task"><tt class="xref py py-class docutils literal"><span class="pre">Task</span></tt></a> is run.
+Each job class is a task-factory, therefore, a task is always associated
+with one job, which can be of two types:</p>
+<ul class="simple">
+<li>standard (<a class="reference internal" href="#pulsar.apps.tasks.Job" title="pulsar.apps.tasks.Job"><tt class="xref py py-class docutils literal"><span class="pre">Job</span></tt></a>)</li>
+<li>periodic (<a class="reference internal" href="#pulsar.apps.tasks.PeriodicJob" title="pulsar.apps.tasks.PeriodicJob"><tt class="xref py py-class docutils literal"><span class="pre">PeriodicJob</span></tt></a>)</li>
+</ul>
+<p id="job-callable">To define a job is simple, subclass from <a class="reference internal" href="#pulsar.apps.tasks.Job" title="pulsar.apps.tasks.Job"><tt class="xref py py-class docutils literal"><span class="pre">Job</span></tt></a> and implement the
+<strong>job callable method</strong>:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="kn">from</span> <span class="nn">pulsar.apps</span> <span class="kn">import</span> <span class="n">tasks</span>
+
+<span class="k">class</span> <span class="nc">Addition</span><span class="p">(</span><span class="n">tasks</span><span class="o">.</span><span class="n">Job</span><span class="p">):</span>
+
+    <span class="k">def</span> <span class="nf">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">consumer</span><span class="p">,</span> <span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">):</span>
+        <span class="s">&quot;Add two numbers&quot;</span>
+        <span class="k">return</span> <span class="n">a</span><span class="o">+</span><span class="n">b</span>
+        
+<span class="k">class</span> <span class="nc">Sampler</span><span class="p">(</span><span class="n">tasks</span><span class="o">.</span><span class="n">Job</span><span class="p">):</span>
+
+    <span class="k">def</span> <span class="nf">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">consumer</span><span class="p">,</span> <span class="n">sample</span><span class="p">,</span> <span class="n">size</span><span class="o">=</span><span class="mi">10</span><span class="p">):</span>
+        <span class="o">...</span>
+</pre></div>
+</div>
+<p>The <em>consumer</em>, instance of <a class="reference internal" href="#pulsar.apps.tasks.TaskConsumer" title="pulsar.apps.tasks.TaskConsumer"><tt class="xref py py-class docutils literal"><span class="pre">TaskConsumer</span></tt></a>, is passed by the
+<a class="reference internal" href="#pulsar.apps.tasks.TaskQueue" title="pulsar.apps.tasks.TaskQueue"><tt class="xref py py-class docutils literal"><span class="pre">TaskQueue</span></tt></a> and should always be the first positional argument in the
+callable function.
+The remaining positional arguments and/or key-valued parameters are needed by
+your job implementation.</p>
+</div>
+<div class="section" id="task-class">
+<h3>Task Class<a class="headerlink" href="#task-class" title="Permalink to this headline">¶</a></h3>
+<p>By default, tasks are constructed using an in-memory implementation of
+<a class="reference internal" href="#pulsar.apps.tasks.Task" title="pulsar.apps.tasks.Task"><tt class="xref py py-class docutils literal"><span class="pre">Task</span></tt></a>. To use a different implementation, for example one that
+saves tasks on a database, subclass <a class="reference internal" href="#pulsar.apps.tasks.Task" title="pulsar.apps.tasks.Task"><tt class="xref py py-class docutils literal"><span class="pre">Task</span></tt></a> and pass the new class
+to the <a class="reference internal" href="#pulsar.apps.tasks.TaskQueue" title="pulsar.apps.tasks.TaskQueue"><tt class="xref py py-class docutils literal"><span class="pre">TaskQueue</span></tt></a> constructor:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="kn">from</span> <span class="nn">pulsar.apps</span> <span class="kn">import</span> <span class="n">tasks</span>
+
+<span class="k">class</span> <span class="nc">TaskDatabase</span><span class="p">(</span><span class="n">tasks</span><span class="o">.</span><span class="n">Task</span><span class="p">):</span>
+
+    <span class="k">def</span> <span class="nf">on_created</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">save2db</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">on_received</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">save2db</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">on_start</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">save2db</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">on_finish</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">save2db</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">get_task</span><span class="p">(</span><span class="n">cls</span><span class="p">,</span> <span class="nb">id</span><span class="p">,</span> <span class="n">remove</span> <span class="o">=</span> <span class="bp">False</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">taskfromdb</span><span class="p">(</span><span class="nb">id</span><span class="p">)</span>
+
+
+<span class="n">tq</span> <span class="o">=</span> <span class="n">tasks</span><span class="o">.</span><span class="n">TaskQueue</span><span class="p">(</span><span class="n">task_class</span><span class="o">=</span><span class="n">TaskDatabase</span><span class="p">,</span> <span class="n">tasks_path</span><span class="o">=</span><span class="s">&#39;path.to.tasks.*&#39;</span><span class="p">)</span>
+<span class="n">tq</span><span class="o">.</span><span class="n">start</span><span class="p">()</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="task-callbacks">
+<span id="tasks-callbacks"></span><h3>Task callbacks<a class="headerlink" href="#task-callbacks" title="Permalink to this headline">¶</a></h3>
+<p>When creating your own <a class="reference internal" href="#pulsar.apps.tasks.Task" title="pulsar.apps.tasks.Task"><tt class="xref py py-class docutils literal"><span class="pre">Task</span></tt></a> class all you need to override are the four
+task callbacks:</p>
+<ul class="simple">
+<li><a class="reference internal" href="#pulsar.apps.tasks.Task.on_created" title="pulsar.apps.tasks.Task.on_created"><tt class="xref py py-meth docutils literal"><span class="pre">Task.on_created()</span></tt></a> called by the taskqueue when it creates a new task
+instance.</li>
+<li><a class="reference internal" href="#pulsar.apps.tasks.Task.on_received" title="pulsar.apps.tasks.Task.on_received"><tt class="xref py py-meth docutils literal"><span class="pre">Task.on_received()</span></tt></a> called by a worker when it receives the task.</li>
+<li><a class="reference internal" href="#pulsar.apps.tasks.Task.on_start" title="pulsar.apps.tasks.Task.on_start"><tt class="xref py py-meth docutils literal"><span class="pre">Task.on_start()</span></tt></a> called by a worker when it starts the task.</li>
+<li><a class="reference internal" href="#pulsar.apps.tasks.Task.on_finish" title="pulsar.apps.tasks.Task.on_finish"><tt class="xref py py-meth docutils literal"><span class="pre">Task.on_finish()</span></tt></a> called by a worker when it ends the task.</li>
+</ul>
+<p>and <a class="reference internal" href="#pulsar.apps.tasks.Task.get_task" title="pulsar.apps.tasks.Task.get_task"><tt class="xref py py-meth docutils literal"><span class="pre">Task.get_task()</span></tt></a> classmethod for retrieving tasks instances.</p>
+</div>
+<div class="section" id="task-states">
+<span id="task-state"></span><h3>Task states<a class="headerlink" href="#task-states" title="Permalink to this headline">¶</a></h3>
+<p>A <a class="reference internal" href="#pulsar.apps.tasks.Task" title="pulsar.apps.tasks.Task"><tt class="xref py py-class docutils literal"><span class="pre">Task</span></tt></a> can have one of the following <a class="reference internal" href="#pulsar.apps.tasks.Task.status" title="pulsar.apps.tasks.Task.status"><tt class="xref py py-attr docutils literal"><span class="pre">Task.status</span></tt></a> string:</p>
+<ul class="simple">
+<li><tt class="docutils literal"><span class="pre">PENDING</span></tt> A task waiting for execution and unknown.</li>
+<li><tt class="docutils literal"><span class="pre">RETRY</span></tt> A task is retrying calculation.</li>
+<li><tt class="docutils literal"><span class="pre">RECEIVED</span></tt> when the task is received by the task queue.</li>
+<li><tt class="docutils literal"><span class="pre">STARTED</span></tt> task execution has started.</li>
+<li><tt class="docutils literal"><span class="pre">REVOKED</span></tt> the task execution has been revoked. One possible reason could be
+the task has timed out.</li>
+<li><tt class="docutils literal"><span class="pre">UNKNOWN</span></tt> task execution is unknown.</li>
+<li><tt class="docutils literal"><span class="pre">FAILURE</span></tt> task execution has finished with failure.</li>
+<li><tt class="docutils literal"><span class="pre">SUCCESS</span></tt> task execution has finished with success.</li>
+</ul>
+<dl class="attribute">
+<dt id="pulsar.apps.tasks.FULL_RUN_STATES">
+<tt class="descclassname">pulsar.apps.tasks.</tt><tt class="descname">FULL_RUN_STATES</tt><a class="headerlink" href="#pulsar.apps.tasks.FULL_RUN_STATES" title="Permalink to this definition">¶</a></dt>
+<dd><p>The set of states for which a <a class="reference internal" href="#pulsar.apps.tasks.Task" title="pulsar.apps.tasks.Task"><tt class="xref py py-class docutils literal"><span class="pre">Task</span></tt></a> has run:
+<tt class="docutils literal"><span class="pre">FAILURE</span></tt> and <tt class="docutils literal"><span class="pre">SUCCESS</span></tt></p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="pulsar.apps.tasks.READY_STATES">
+<tt class="descclassname">pulsar.apps.tasks.</tt><tt class="descname">READY_STATES</tt><a class="headerlink" href="#pulsar.apps.tasks.READY_STATES" title="Permalink to this definition">¶</a></dt>
+<dd><p>The set of states for which a <a class="reference internal" href="#pulsar.apps.tasks.Task" title="pulsar.apps.tasks.Task"><tt class="xref py py-class docutils literal"><span class="pre">Task</span></tt></a> has finished:
+<tt class="docutils literal"><span class="pre">REVOKED</span></tt>, <tt class="docutils literal"><span class="pre">FAILURE</span></tt> and <tt class="docutils literal"><span class="pre">SUCCESS</span></tt></p>
+</dd></dl>
+
+</div>
+<div class="section" id="queue">
+<h3>Queue<a class="headerlink" href="#queue" title="Permalink to this headline">¶</a></h3>
+<p>By default the queue is implemented using the multiprocessing.Queue
+from the standard python library. To specify a different queue you can
+use the <tt class="docutils literal"><span class="pre">task-queue</span></tt> flag from the command line:</p>
+<div class="highlight-python"><pre>python myserverscript.py --task-queue dotted.path.to.callable</pre>
+</div>
+<p>or by setting the <tt class="docutils literal"><span class="pre">task_queue_factory</span></tt> parameter in the config file
+or in the <a class="reference internal" href="#pulsar.apps.tasks.TaskQueue" title="pulsar.apps.tasks.TaskQueue"><tt class="xref py py-class docutils literal"><span class="pre">TaskQueue</span></tt></a> constructor.</p>
+</div>
+</div>
+<div class="section" id="api">
+<h2>API<a class="headerlink" href="#api" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="taskqueue">
+<h3>Taskqueue<a class="headerlink" href="#taskqueue" title="Permalink to this headline">¶</a></h3>
+<dl class="class">
+<dt id="pulsar.apps.tasks.TaskQueue">
+<em class="property">class </em><tt class="descclassname">pulsar.apps.tasks.</tt><tt class="descname">TaskQueue</tt><big>(</big><em>callable=None</em>, <em>description=None</em>, <em>name=None</em>, <em>epilog=None</em>, <em>argv=None</em>, <em>script=None</em>, <em>version=None</em>, <em>parse_console=True</em>, <em>commands_set=None</em>, <em>cfg=None</em>, <em>**kwargs</em><big>)</big><a class="reference internal" href="../modules/pulsar/apps/tasks.html#TaskQueue"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.tasks.TaskQueue" title="Permalink to this definition">¶</a></dt>
+<dd><p>A <tt class="xref py py-class docutils literal"><span class="pre">pulsar.CPUboundServer</span></tt> for consuming
+tasks and managing scheduling of tasks.</p>
+<dl class="attribute">
+<dt id="pulsar.apps.tasks.TaskQueue.registry">
+<tt class="descname">registry</tt><a class="reference internal" href="../modules/pulsar/apps/tasks.html#TaskQueue.registry"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.tasks.TaskQueue.registry" title="Permalink to this definition">¶</a></dt>
+<dd><p>Instance of a <a class="reference internal" href="#pulsar.apps.tasks.JobRegistry" title="pulsar.apps.tasks.JobRegistry"><tt class="xref py py-class docutils literal"><span class="pre">JobRegistry</span></tt></a> containing all
+registered <a class="reference internal" href="#pulsar.apps.tasks.Job" title="pulsar.apps.tasks.Job"><tt class="xref py py-class docutils literal"><span class="pre">Job</span></tt></a> instances.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="pulsar.apps.tasks.TaskQueue.task_class">
+<tt class="descname">task_class</tt><a class="headerlink" href="#pulsar.apps.tasks.TaskQueue.task_class" title="Permalink to this definition">¶</a></dt>
+<dd><p>The <a class="reference internal" href="#pulsar.apps.tasks.Task" title="pulsar.apps.tasks.Task"><tt class="xref py py-class docutils literal"><span class="pre">Task</span></tt></a> class for storing information about task execution.</p>
+<p>Default: <tt class="xref py py-class docutils literal"><span class="pre">TaskInMemory</span></tt></p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="pulsar.apps.tasks.TaskQueue.scheduler_class">
+<tt class="descname">scheduler_class</tt><a class="headerlink" href="#pulsar.apps.tasks.TaskQueue.scheduler_class" title="Permalink to this definition">¶</a></dt>
+<dd><p>The scheduler class. Default: <a class="reference internal" href="#pulsar.apps.tasks.Scheduler" title="pulsar.apps.tasks.Scheduler"><tt class="xref py py-class docutils literal"><span class="pre">Scheduler</span></tt></a>.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="pulsar.apps.tasks.TaskQueue.scheduler">
+<tt class="descname">scheduler</tt><a class="reference internal" href="../modules/pulsar/apps/tasks.html#TaskQueue.scheduler"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.tasks.TaskQueue.scheduler" title="Permalink to this definition">¶</a></dt>
+<dd><p>A <a class="reference internal" href="#pulsar.apps.tasks.Scheduler" title="pulsar.apps.tasks.Scheduler"><tt class="xref py py-class docutils literal"><span class="pre">Scheduler</span></tt></a> which send task to the task queue and
+produces of periodic tasks according to their schedule of execution.</p>
+<p>At every event loop, the <a class="reference internal" href="../api.html#pulsar.ApplicationMonitor" title="pulsar.ApplicationMonitor"><tt class="xref py py-class docutils literal"><span class="pre">pulsar.ApplicationMonitor</span></tt></a> running
+the <a class="reference internal" href="#pulsar.apps.tasks.TaskQueue" title="pulsar.apps.tasks.TaskQueue"><tt class="xref py py-class docutils literal"><span class="pre">TaskQueue</span></tt></a> application, invokes the <a class="reference internal" href="#pulsar.apps.tasks.Scheduler.tick" title="pulsar.apps.tasks.Scheduler.tick"><tt class="xref py py-meth docutils literal"><span class="pre">Scheduler.tick()</span></tt></a>
+which check for tasks to be scheduled.</p>
+<p>Check the <a class="reference internal" href="#pulsar.apps.tasks.TaskQueue.monitor_task" title="pulsar.apps.tasks.TaskQueue.monitor_task"><tt class="xref py py-meth docutils literal"><span class="pre">TaskQueue.monitor_task()</span></tt></a> callback
+for implementation.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="pulsar.apps.tasks.TaskQueue.monitor_task">
+<tt class="descname">monitor_task</tt><big>(</big><em>monitor</em><big>)</big><a class="reference internal" href="../modules/pulsar/apps/tasks.html#TaskQueue.monitor_task"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.tasks.TaskQueue.monitor_task" title="Permalink to this definition">¶</a></dt>
+<dd><p>Override the <a class="reference internal" href="../api.html#pulsar.Application.monitor_task" title="pulsar.Application.monitor_task"><tt class="xref py py-meth docutils literal"><span class="pre">pulsar.Application.monitor_task()</span></tt></a> callback
+to check if the scheduler needs to perform a new run.</p>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="job">
+<h3>Job<a class="headerlink" href="#job" title="Permalink to this headline">¶</a></h3>
+<dl class="class">
+<dt id="pulsar.apps.tasks.Job">
+<em class="property">class </em><tt class="descclassname">pulsar.apps.tasks.</tt><tt class="descname">Job</tt><a class="headerlink" href="#pulsar.apps.tasks.Job" title="Permalink to this definition">¶</a></dt>
+<dd><p>The Job class which is used in a distributed task queue.</p>
+<dl class="attribute">
+<dt id="pulsar.apps.tasks.Job.name">
+<tt class="descname">name</tt><a class="headerlink" href="#pulsar.apps.tasks.Job.name" title="Permalink to this definition">¶</a></dt>
+<dd><p>The unique name which defines the Job and which can be used to retrieve
+it from the job registry.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="pulsar.apps.tasks.Job.abstract">
+<tt class="descname">abstract</tt><a class="headerlink" href="#pulsar.apps.tasks.Job.abstract" title="Permalink to this definition">¶</a></dt>
+<dd><p>If set to <tt class="xref docutils literal"><span class="pre">True</span></tt> (default is <tt class="xref docutils literal"><span class="pre">False</span></tt>), the Job won&#8217;t be registered
+with the <a class="reference internal" href="#pulsar.apps.tasks.JobRegistry" title="pulsar.apps.tasks.JobRegistry"><tt class="xref py py-class docutils literal"><span class="pre">JobRegistry</span></tt></a>.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="pulsar.apps.tasks.Job.autoregister">
+<tt class="descname">autoregister</tt><a class="headerlink" href="#pulsar.apps.tasks.Job.autoregister" title="Permalink to this definition">¶</a></dt>
+<dd><p>If <tt class="xref docutils literal"><span class="pre">False</span></tt> (default is <tt class="xref docutils literal"><span class="pre">True</span></tt>), the Job need to be registered
+manually with the Job registry.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="pulsar.apps.tasks.Job.type">
+<tt class="descname">type</tt><a class="headerlink" href="#pulsar.apps.tasks.Job.type" title="Permalink to this definition">¶</a></dt>
+<dd><p>Type of Job, one of <tt class="docutils literal"><span class="pre">regular</span></tt> and <tt class="docutils literal"><span class="pre">periodic</span></tt>.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="pulsar.apps.tasks.Job.timeout">
+<tt class="descname">timeout</tt><a class="headerlink" href="#pulsar.apps.tasks.Job.timeout" title="Permalink to this definition">¶</a></dt>
+<dd><p>An instance of a datetime.timedelta or <tt class="xref docutils literal"><span class="pre">None</span></tt>. If set, it represents the
+time lag after which a task which did not start expires.</p>
+<p>Default: <tt class="xref docutils literal"><span class="pre">None</span></tt>.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="pulsar.apps.tasks.Job.can_overlap">
+<tt class="descname">can_overlap</tt><a class="headerlink" href="#pulsar.apps.tasks.Job.can_overlap" title="Permalink to this definition">¶</a></dt>
+<dd><p>Boolean indicating if this job can generate overlapping tasks. It can
+also be a callable which accept the same input parameters as the job
+callable function.</p>
+<p>Default: <tt class="xref docutils literal"><span class="pre">True</span></tt>.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="pulsar.apps.tasks.Job.doc_syntax">
+<tt class="descname">doc_syntax</tt><a class="headerlink" href="#pulsar.apps.tasks.Job.doc_syntax" title="Permalink to this definition">¶</a></dt>
+<dd><p>The doc string syntax.</p>
+<p>Default: <tt class="docutils literal"><span class="pre">markdown</span></tt></p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="pulsar.apps.tasks.Job.loglevel">
+<tt class="descname">loglevel</tt><a class="headerlink" href="#pulsar.apps.tasks.Job.loglevel" title="Permalink to this definition">¶</a></dt>
+<dd><p>Level of task logging</p>
+<p>Default: <tt class="xref docutils literal"><span class="pre">None</span></tt></p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="pulsar.apps.tasks.Job.logger">
+<tt class="descname">logger</tt><a class="headerlink" href="#pulsar.apps.tasks.Job.logger" title="Permalink to this definition">¶</a></dt>
+<dd><p>an instance of a logger.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="pulsar.apps.tasks.Job.make_task_id">
+<tt class="descname">make_task_id</tt><big>(</big><em>args</em>, <em>kwargs</em><big>)</big><a class="headerlink" href="#pulsar.apps.tasks.Job.make_task_id" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get the task unique identifier.
+This can be overridden by Job implementation.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>args</strong> &#8211; tuple of positional arguments passed to the job callable.</li>
+<li><strong>kwargs</strong> &#8211; dictionary of key-valued parameters passed to
+the job callable.</li>
+</ul>
+</td>
+</tr>
+<tr class="field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last">a native string.</p>
+</td>
+</tr>
+</tbody>
+</table>
+<p>Called by the <a class="reference internal" href="#pulsar.apps.tasks.TaskQueue.scheduler" title="pulsar.apps.tasks.TaskQueue.scheduler"><tt class="xref py py-attr docutils literal"><span class="pre">TaskQueue.scheduler</span></tt></a> when creating a new task.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="pulsar.apps.tasks.Job.on_same_id">
+<tt class="descname">on_same_id</tt><big>(</big><em>task</em><big>)</big><a class="headerlink" href="#pulsar.apps.tasks.Job.on_same_id" title="Permalink to this definition">¶</a></dt>
+<dd><p>Callback invocked when a task has an id equal to a task already
+submitted to the task queue. By default return None and the
+task is aborted.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="pulsar.apps.tasks.Job.ack">
+<tt class="descname">ack</tt><big>(</big><em>args</em>, <em>kwargs</em><big>)</big><a class="headerlink" href="#pulsar.apps.tasks.Job.ack" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return <tt class="xref docutils literal"><span class="pre">True</span></tt> if a Job task will acknowledge the task queue
+once the result is ready or an error has occured.
+By default it returns <tt class="xref docutils literal"><span class="pre">True</span></tt> but it can be overridden so that its
+behaviour can change at runtime.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="pulsar.apps.tasks.Job.send_to_queue">
+<tt class="descname">send_to_queue</tt><big>(</big><em>consumer</em>, <em>jobname</em>, <em>*args</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#pulsar.apps.tasks.Job.send_to_queue" title="Permalink to this definition">¶</a></dt>
+<dd><p>Send a new task request to the <a class="reference internal" href="#pulsar.apps.tasks.TaskQueue" title="pulsar.apps.tasks.TaskQueue"><tt class="xref py py-class docutils literal"><span class="pre">TaskQueue</span></tt></a>
+from within another <a class="reference internal" href="#pulsar.apps.tasks.Task" title="pulsar.apps.tasks.Task"><tt class="xref py py-class docutils literal"><span class="pre">Task</span></tt></a>.
+This allows tasks to act as tasks factories.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>consumer</strong> &#8211; The <a class="reference internal" href="#pulsar.apps.tasks.TaskConsumer" title="pulsar.apps.tasks.TaskConsumer"><tt class="xref py py-class docutils literal"><span class="pre">TaskConsumer</span></tt></a> handling the <a class="reference internal" href="#pulsar.apps.tasks.Task" title="pulsar.apps.tasks.Task"><tt class="xref py py-class docutils literal"><span class="pre">Task</span></tt></a>.</li>
+<li><strong>jobname</strong> &#8211; The name of the <a class="reference internal" href="#pulsar.apps.tasks.Job" title="pulsar.apps.tasks.Job"><tt class="xref py py-class docutils literal"><span class="pre">Job</span></tt></a> to run.</li>
+<li><strong>args</strong> &#8211; positional argument for the <a class="reference internal" href="#job-callable"><em>job callable</em></a>.</li>
+<li><strong>kwargs</strong> &#8211; key-valued parameters for the
+<a class="reference internal" href="#job-callable"><em>job callable</em></a>.</li>
+</ul>
+</td>
+</tr>
+<tr class="field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last">A <a class="reference internal" href="../api.html#pulsar.ActorMessage" title="pulsar.ActorMessage"><tt class="xref py py-class docutils literal"><span class="pre">pulsar.ActorMessage</span></tt></a> if <strong>ack=True</strong> was passed in the
+key-valued parameters, otherwise nothing.</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="periodic-job">
+<h3>Periodic Job<a class="headerlink" href="#periodic-job" title="Permalink to this headline">¶</a></h3>
+<dl class="class">
+<dt id="pulsar.apps.tasks.PeriodicJob">
+<em class="property">class </em><tt class="descclassname">pulsar.apps.tasks.</tt><tt class="descname">PeriodicJob</tt><big>(</big><em>run_every=None</em><big>)</big><a class="headerlink" href="#pulsar.apps.tasks.PeriodicJob" title="Permalink to this definition">¶</a></dt>
+<dd><p>A periodic <a class="reference internal" href="#pulsar.apps.tasks.Job" title="pulsar.apps.tasks.Job"><tt class="xref py py-class docutils literal"><span class="pre">Job</span></tt></a> implementation.</p>
+<dl class="attribute">
+<dt id="pulsar.apps.tasks.PeriodicJob.anchor">
+<tt class="descname">anchor</tt><a class="headerlink" href="#pulsar.apps.tasks.PeriodicJob.anchor" title="Permalink to this definition">¶</a></dt>
+<dd><p>If specified it must be a <tt class="xref py py-class docutils literal"><span class="pre">datetime.datetime</span></tt> instance.
+It controls when the periodic Job is run.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="pulsar.apps.tasks.PeriodicJob.run_every">
+<tt class="descname">run_every</tt><a class="headerlink" href="#pulsar.apps.tasks.PeriodicJob.run_every" title="Permalink to this definition">¶</a></dt>
+<dd><p>Periodicity as a <tt class="xref py py-class docutils literal"><span class="pre">datetime.timedelta</span></tt> instance.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="pulsar.apps.tasks.PeriodicJob.is_due">
+<tt class="descname">is_due</tt><big>(</big><em>last_run_at</em><big>)</big><a class="headerlink" href="#pulsar.apps.tasks.PeriodicJob.is_due" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns tuple of two items <tt class="docutils literal"><span class="pre">(is_due,</span> <span class="pre">next_time_to_run)</span></tt>,
+where next time to run is in seconds. e.g.</p>
+<ul>
+<li><dl class="first docutils">
+<dt><tt class="docutils literal"><span class="pre">(True,</span> <span class="pre">20)</span></tt>, means the Job should be run now, and the next</dt>
+<dd><p class="first last">time to run is in 20 seconds.</p>
+</dd>
+</dl>
+</li>
+<li><p class="first"><tt class="docutils literal"><span class="pre">(False,</span> <span class="pre">12)</span></tt>, means the Job should be run in 12 seconds.</p>
+</li>
+</ul>
+<p>You can override this to decide the interval at runtime.</p>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="task">
+<h3>Task<a class="headerlink" href="#task" title="Permalink to this headline">¶</a></h3>
+<dl class="class">
+<dt id="pulsar.apps.tasks.Task">
+<em class="property">class </em><tt class="descclassname">pulsar.apps.tasks.</tt><tt class="descname">Task</tt><a class="headerlink" href="#pulsar.apps.tasks.Task" title="Permalink to this definition">¶</a></dt>
+<dd><p>Interface for tasks which are produced by <a class="reference internal" href="#pulsar.apps.tasks.Job" title="pulsar.apps.tasks.Job"><tt class="xref py py-class docutils literal"><span class="pre">Job</span></tt></a>.</p>
+<dl class="attribute">
+<dt id="pulsar.apps.tasks.Task.id">
+<tt class="descname">id</tt><a class="headerlink" href="#pulsar.apps.tasks.Task.id" title="Permalink to this definition">¶</a></dt>
+<dd><p><a class="reference internal" href="#pulsar.apps.tasks.Task" title="pulsar.apps.tasks.Task"><tt class="xref py py-class docutils literal"><span class="pre">Task</span></tt></a> unique id.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="pulsar.apps.tasks.Task.name">
+<tt class="descname">name</tt><a class="headerlink" href="#pulsar.apps.tasks.Task.name" title="Permalink to this definition">¶</a></dt>
+<dd><p><a class="reference internal" href="#pulsar.apps.tasks.Job" title="pulsar.apps.tasks.Job"><tt class="xref py py-class docutils literal"><span class="pre">Job</span></tt></a> name.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="pulsar.apps.tasks.Task.status">
+<tt class="descname">status</tt><a class="headerlink" href="#pulsar.apps.tasks.Task.status" title="Permalink to this definition">¶</a></dt>
+<dd><p>The current <a class="reference internal" href="#task-state"><em>status string</em></a> of task.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="pulsar.apps.tasks.Task.time_executed">
+<tt class="descname">time_executed</tt><a class="headerlink" href="#pulsar.apps.tasks.Task.time_executed" title="Permalink to this definition">¶</a></dt>
+<dd><p>date time when the task was executed.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="pulsar.apps.tasks.Task.time_start">
+<tt class="descname">time_start</tt><a class="headerlink" href="#pulsar.apps.tasks.Task.time_start" title="Permalink to this definition">¶</a></dt>
+<dd><p>date-time when the task calculation has started.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="pulsar.apps.tasks.Task.time_end">
+<tt class="descname">time_end</tt><a class="headerlink" href="#pulsar.apps.tasks.Task.time_end" title="Permalink to this definition">¶</a></dt>
+<dd><p>date-time when the task has finished.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="pulsar.apps.tasks.Task.expiry">
+<tt class="descname">expiry</tt><a class="headerlink" href="#pulsar.apps.tasks.Task.expiry" title="Permalink to this definition">¶</a></dt>
+<dd><p>optional date-time indicating when the task should expire.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="pulsar.apps.tasks.Task.timeout">
+<tt class="descname">timeout</tt><a class="headerlink" href="#pulsar.apps.tasks.Task.timeout" title="Permalink to this definition">¶</a></dt>
+<dd><p>A datetime or <tt class="xref docutils literal"><span class="pre">None</span></tt> indicating whether a timeout has occurred.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="pulsar.apps.tasks.Task.from_task">
+<tt class="descname">from_task</tt><a class="headerlink" href="#pulsar.apps.tasks.Task.from_task" title="Permalink to this definition">¶</a></dt>
+<dd><p>Optional <a class="reference internal" href="#pulsar.apps.tasks.Task.id" title="pulsar.apps.tasks.Task.id"><tt class="xref py py-attr docutils literal"><span class="pre">Task.id</span></tt></a> for the <a class="reference internal" href="#pulsar.apps.tasks.Task" title="pulsar.apps.tasks.Task"><tt class="xref py py-class docutils literal"><span class="pre">Task</span></tt></a> which queued
+this <a class="reference internal" href="#pulsar.apps.tasks.Task" title="pulsar.apps.tasks.Task"><tt class="xref py py-class docutils literal"><span class="pre">Task</span></tt></a>. This is a usuful for monitoring the creation
+of tasks within other tasks.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="pulsar.apps.tasks.Task.status_code">
+<tt class="descname">status_code</tt><a class="headerlink" href="#pulsar.apps.tasks.Task.status_code" title="Permalink to this definition">¶</a></dt>
+<dd><p>Integer indicating <a class="reference internal" href="#pulsar.apps.tasks.Task.status" title="pulsar.apps.tasks.Task.status"><tt class="xref py py-attr docutils literal"><span class="pre">status</span></tt></a> precedence.
+Lower number higher precedence.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="pulsar.apps.tasks.Task.start">
+<tt class="descname">start</tt><big>(</big><em>worker</em><big>)</big><a class="headerlink" href="#pulsar.apps.tasks.Task.start" title="Permalink to this definition">¶</a></dt>
+<dd><p>Called by the <a class="reference internal" href="../api.html#pulsar.Worker" title="pulsar.Worker"><tt class="xref py py-class docutils literal"><span class="pre">pulsar.Worker</span></tt></a> <em>worker</em> when the task
+start its execution. If no timeout has occured the task will switch to
+a <tt class="docutils literal"><span class="pre">STARTED</span></tt> <a class="reference internal" href="#pulsar.apps.tasks.Task.status" title="pulsar.apps.tasks.Task.status"><tt class="xref py py-attr docutils literal"><span class="pre">Task.status</span></tt></a> and invoke the <a class="reference internal" href="#pulsar.apps.tasks.Task.on_start" title="pulsar.apps.tasks.Task.on_start"><tt class="xref py py-meth docutils literal"><span class="pre">on_start()</span></tt></a>
+callback.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="pulsar.apps.tasks.Task.finish">
+<tt class="descname">finish</tt><big>(</big><em>worker</em>, <em>result</em><big>)</big><a class="headerlink" href="#pulsar.apps.tasks.Task.finish" title="Permalink to this definition">¶</a></dt>
+<dd><p>Called when the task has finished and a <tt class="docutils literal"><span class="pre">result</span></tt> is ready.
+It sets the <a class="reference internal" href="#pulsar.apps.tasks.Task.time_end" title="pulsar.apps.tasks.Task.time_end"><tt class="xref py py-attr docutils literal"><span class="pre">time_end</span></tt></a> attribute if not already set
+(in case the <a class="reference internal" href="#pulsar.apps.tasks.Task" title="pulsar.apps.tasks.Task"><tt class="xref py py-class docutils literal"><span class="pre">Task</span></tt></a> was revoked) and
+determined if it was succesful or a failure. Once done it invokes
+the <a class="reference internal" href="#tasks-callbacks"><em>task callback</em></a> <a class="reference internal" href="#pulsar.apps.tasks.Task.on_finish" title="pulsar.apps.tasks.Task.on_finish"><tt class="xref py py-meth docutils literal"><span class="pre">on_finish()</span></tt></a>.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="pulsar.apps.tasks.Task.to_queue">
+<tt class="descname">to_queue</tt><big>(</big><em>schedulter=None</em><big>)</big><a class="headerlink" href="#pulsar.apps.tasks.Task.to_queue" title="Permalink to this definition">¶</a></dt>
+<dd><p>The task has been received by the scheduler. If its status
+is PENDING swicth to RECEIVED, save the task and return it. Otherwise
+returns nothing.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="pulsar.apps.tasks.Task.needs_queuing">
+<tt class="descname">needs_queuing</tt><big>(</big><big>)</big><a class="headerlink" href="#pulsar.apps.tasks.Task.needs_queuing" title="Permalink to this definition">¶</a></dt>
+<dd><p>called after calling <a class="reference internal" href="#pulsar.apps.tasks.Task.to_queue" title="pulsar.apps.tasks.Task.to_queue"><tt class="xref py py-meth docutils literal"><span class="pre">to_queue()</span></tt></a>, it return <tt class="xref docutils literal"><span class="pre">True</span></tt> if the
+task needs to be queued.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="pulsar.apps.tasks.Task.done">
+<tt class="descname">done</tt><big>(</big><big>)</big><a class="headerlink" href="#pulsar.apps.tasks.Task.done" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return <tt class="xref docutils literal"><span class="pre">True</span></tt> if the <a class="reference internal" href="#pulsar.apps.tasks.Task" title="pulsar.apps.tasks.Task"><tt class="xref py py-class docutils literal"><span class="pre">Task</span></tt></a> has finshed
+(its status is one of <a class="reference internal" href="#task-state"><em>READY_STATES</em></a>).</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="pulsar.apps.tasks.Task.maybe_revoked">
+<tt class="descname">maybe_revoked</tt><big>(</big><big>)</big><a class="headerlink" href="#pulsar.apps.tasks.Task.maybe_revoked" title="Permalink to this definition">¶</a></dt>
+<dd><p>Try to revoke a task. It returns the <a class="reference internal" href="#pulsar.apps.tasks.Task.timeout" title="pulsar.apps.tasks.Task.timeout"><tt class="xref py py-attr docutils literal"><span class="pre">timeout</span></tt></a> which is
+different from <tt class="xref docutils literal"><span class="pre">None</span></tt> only when the <a class="reference internal" href="#pulsar.apps.tasks.Task" title="pulsar.apps.tasks.Task"><tt class="xref py py-class docutils literal"><span class="pre">Task</span></tt></a> has been revoked.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field"><th class="field-name">Return type:</th><td class="field-body"><tt class="xref docutils literal"><span class="pre">None</span></tt> or a DateTime.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="pulsar.apps.tasks.Task.duration">
+<tt class="descname">duration</tt><big>(</big><big>)</big><a class="headerlink" href="#pulsar.apps.tasks.Task.duration" title="Permalink to this definition">¶</a></dt>
+<dd><p>The <a class="reference internal" href="#pulsar.apps.tasks.Task" title="pulsar.apps.tasks.Task"><tt class="xref py py-class docutils literal"><span class="pre">Task</span></tt></a> duration. Only available if the task status is in
+<a class="reference internal" href="#pulsar.apps.tasks.FULL_RUN_STATES" title="pulsar.apps.tasks.FULL_RUN_STATES"><tt class="xref py py-attr docutils literal"><span class="pre">FULL_RUN_STATES</span></tt></a>.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="pulsar.apps.tasks.Task.tojson">
+<tt class="descname">tojson</tt><big>(</big><big>)</big><a class="headerlink" href="#pulsar.apps.tasks.Task.tojson" title="Permalink to this definition">¶</a></dt>
+<dd><p>Convert the task instance into a JSON-serializable dictionary.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="pulsar.apps.tasks.Task.on_created">
+<tt class="descname">on_created</tt><big>(</big><em>scheduler=None</em><big>)</big><a class="headerlink" href="#pulsar.apps.tasks.Task.on_created" title="Permalink to this definition">¶</a></dt>
+<dd><p>A <a class="reference internal" href="#tasks-callbacks"><em>task callback</em></a> when the task has
+has been created.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field"><th class="field-name">Parameters:</th><td class="field-body"><strong>scheduler</strong> &#8211; the scheduler which created the task.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="pulsar.apps.tasks.Task.on_received">
+<tt class="descname">on_received</tt><big>(</big><em>scheduler=None</em><big>)</big><a class="headerlink" href="#pulsar.apps.tasks.Task.on_received" title="Permalink to this definition">¶</a></dt>
+<dd><p>A <a class="reference internal" href="#tasks-callbacks"><em>task callback</em></a> when the task has
+has been received by the scheduler.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="pulsar.apps.tasks.Task.on_start">
+<tt class="descname">on_start</tt><big>(</big><em>worker=None</em><big>)</big><a class="headerlink" href="#pulsar.apps.tasks.Task.on_start" title="Permalink to this definition">¶</a></dt>
+<dd><p>A <a class="reference internal" href="#tasks-callbacks"><em>task callback</em></a> when the task starts
+its execution</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="pulsar.apps.tasks.Task.on_timeout">
+<tt class="descname">on_timeout</tt><big>(</big><em>worker=None</em><big>)</big><a class="headerlink" href="#pulsar.apps.tasks.Task.on_timeout" title="Permalink to this definition">¶</a></dt>
+<dd><p>A <a class="reference internal" href="#tasks-callbacks"><em>task callback</em></a> when the task is expired</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="pulsar.apps.tasks.Task.on_finish">
+<tt class="descname">on_finish</tt><big>(</big><em>worker=None</em><big>)</big><a class="headerlink" href="#pulsar.apps.tasks.Task.on_finish" title="Permalink to this definition">¶</a></dt>
+<dd><p>A <a class="reference internal" href="#tasks-callbacks"><em>task callback</em></a> when the task finish
+its execution</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="pulsar.apps.tasks.Task.emit_log">
+<tt class="descname">emit_log</tt><big>(</big><em>record</em><big>)</big><a class="headerlink" href="#pulsar.apps.tasks.Task.emit_log" title="Permalink to this definition">¶</a></dt>
+<dd><p>Implement the task logging emit method. By default it does nothing.
+It can be reimplemented to do something with the log record.</p>
+</dd></dl>
+
+<dl class="classmethod">
+<dt id="pulsar.apps.tasks.Task.get_task">
+<em class="property">classmethod </em><tt class="descname">get_task</tt><big>(</big><em>scheduler</em>, <em>id</em><big>)</big><a class="headerlink" href="#pulsar.apps.tasks.Task.get_task" title="Permalink to this definition">¶</a></dt>
+<dd><p>Given a task <em>id</em> it retrieves a task instance or <tt class="xref docutils literal"><span class="pre">None</span></tt> if
+not available.</p>
+</dd></dl>
+
+<dl class="classmethod">
+<dt id="pulsar.apps.tasks.Task.get_tasks">
+<em class="property">classmethod </em><tt class="descname">get_tasks</tt><big>(</big><em>scheduler</em>, <em>**filters</em><big>)</big><a class="headerlink" href="#pulsar.apps.tasks.Task.get_tasks" title="Permalink to this definition">¶</a></dt>
+<dd><p>Given <em>filters</em> it retrieves task instances which satisfy the
+filter criteria.</p>
+</dd></dl>
+
+<dl class="classmethod">
+<dt id="pulsar.apps.tasks.Task.wait_for_task">
+<em class="property">classmethod </em><tt class="descname">wait_for_task</tt><big>(</big><em>scheduler</em>, <em>id</em>, <em>timeout</em><big>)</big><a class="headerlink" href="#pulsar.apps.tasks.Task.wait_for_task" title="Permalink to this definition">¶</a></dt>
+<dd><p>Wait for a task to have finished.</p>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="taskqueue-rpc-mixin">
+<h3>TaskQueue Rpc Mixin<a class="headerlink" href="#taskqueue-rpc-mixin" title="Permalink to this headline">¶</a></h3>
+<dl class="class">
+<dt id="pulsar.apps.tasks.TaskQueueRpcMixin">
+<em class="property">class </em><tt class="descclassname">pulsar.apps.tasks.</tt><tt class="descname">TaskQueueRpcMixin</tt><big>(</big><em>taskqueue</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#pulsar.apps.tasks.TaskQueueRpcMixin" title="Permalink to this definition">¶</a></dt>
+<dd><p>A <a class="reference internal" href="rpc.html#pulsar.apps.rpc.JSONRPC" title="pulsar.apps.rpc.JSONRPC"><tt class="xref py py-class docutils literal"><span class="pre">pulsar.apps.rpc.JSONRPC</span></tt></a> mixin for communicating with
+a <a class="reference internal" href="#pulsar.apps.tasks.TaskQueue" title="pulsar.apps.tasks.TaskQueue"><tt class="xref py py-class docutils literal"><span class="pre">TaskQueue</span></tt></a>.
+To use it, you need to have an <a class="reference internal" href="rpc.html#apps-rpc"><em>RPC application</em></a>
+and a <a class="reference internal" href="#apps-tasks"><em>task queue</em></a> application installed in the
+<a class="reference internal" href="../api.html#pulsar.Arbiter" title="pulsar.Arbiter"><tt class="xref py py-class docutils literal"><span class="pre">pulsar.Arbiter</span></tt></a>.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field"><th class="field-name">Parameters:</th><td class="field-body"><strong>taskqueue</strong> &#8211; instance or name of the
+<a class="reference internal" href="#pulsar.apps.tasks.TaskQueue" title="pulsar.apps.tasks.TaskQueue"><tt class="xref py py-class docutils literal"><span class="pre">pulsar.apps.tasks.TaskQueue</span></tt></a> which exposes the remote procedure
+calls.</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Remote Procedure Calls</strong></p>
+<dl class="method">
+<dt id="pulsar.apps.tasks.TaskQueueRpcMixin.job_list">
+<tt class="descname">job_list</tt><big>(</big><span class="optional">[</span><em>jobnames=None</em><span class="optional">]</span><big>)</big><a class="headerlink" href="#pulsar.apps.tasks.TaskQueueRpcMixin.job_list" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return the list of <a class="reference internal" href="#pulsar.apps.tasks.Job" title="pulsar.apps.tasks.Job"><tt class="xref py py-class docutils literal"><span class="pre">Job</span></tt></a> registered with task queue with meta
+information. If a list of jobnames is given, it returns only jobs
+included in the list.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field"><th class="field-name">Return type:</th><td class="field-body">A list of dictionaries</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="pulsar.apps.tasks.TaskQueueRpcMixin.run_new_task">
+<tt class="descname">run_new_task</tt><big>(</big><em>jobname</em><span class="optional">[</span>, <em>**kwargs</em><span class="optional">]</span><big>)</big><a class="headerlink" href="#pulsar.apps.tasks.TaskQueueRpcMixin.run_new_task" title="Permalink to this definition">¶</a></dt>
+<dd><p>Run a new <a class="reference internal" href="#pulsar.apps.tasks.Task" title="pulsar.apps.tasks.Task"><tt class="xref py py-class docutils literal"><span class="pre">Task</span></tt></a> in the task queue. The task can be of any type
+as long as it is registered in the <a class="reference internal" href="#pulsar.apps.tasks.Job" title="pulsar.apps.tasks.Job"><tt class="xref py py-class docutils literal"><span class="pre">Job</span></tt></a> registry.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>jobname</strong> &#8211; the name of the <a class="reference internal" href="#pulsar.apps.tasks.Job" title="pulsar.apps.tasks.Job"><tt class="xref py py-class docutils literal"><span class="pre">Job</span></tt></a> to run.</li>
+<li><strong>kwargs</strong> &#8211; optional key-valued job parameters.</li>
+</ul>
+</td>
+</tr>
+<tr class="field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last">a dictionary containing information about the
+<a class="reference internal" href="#pulsar.apps.tasks.Task" title="pulsar.apps.tasks.Task"><tt class="xref py py-class docutils literal"><span class="pre">Task</span></tt></a> submitted</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="pulsar.apps.tasks.TaskQueueRpcMixin.get_task">
+<tt class="descname">get_task</tt><big>(</big><em>id=task_id</em><big>)</big><a class="headerlink" href="#pulsar.apps.tasks.TaskQueueRpcMixin.get_task" title="Permalink to this definition">¶</a></dt>
+<dd><p>Retrieve a task from its <tt class="docutils literal"><span class="pre">id</span></tt>.
+Returns <tt class="xref docutils literal"><span class="pre">None</span></tt> if the task is not available.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="pulsar.apps.tasks.TaskQueueRpcMixin.get_tasks">
+<tt class="descname">get_tasks</tt><big>(</big><em>**filters</em><big>)</big><a class="headerlink" href="#pulsar.apps.tasks.TaskQueueRpcMixin.get_tasks" title="Permalink to this definition">¶</a></dt>
+<dd><p>Retrieve a list of tasks which satisfy <em>filters</em>.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="pulsar.apps.tasks.TaskQueueRpcMixin.wait_for_task">
+<tt class="descname">wait_for_task</tt><big>(</big><em>id=task_id</em><big>)</big><a class="headerlink" href="#pulsar.apps.tasks.TaskQueueRpcMixin.wait_for_task" title="Permalink to this definition">¶</a></dt>
+<dd><p>Wait for a task to have finished.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="pulsar.apps.tasks.TaskQueueRpcMixin.task_request_parameters">
+<tt class="descname">task_request_parameters</tt><big>(</big><em>request</em><big>)</big><a class="headerlink" href="#pulsar.apps.tasks.TaskQueueRpcMixin.task_request_parameters" title="Permalink to this definition">¶</a></dt>
+<dd><p><strong>Internal function</strong> which returns a dictionary of parameters
+to be passed to the <a class="reference internal" href="#pulsar.apps.tasks.Task" title="pulsar.apps.tasks.Task"><tt class="xref py py-class docutils literal"><span class="pre">Task</span></tt></a> class constructor.
+This function can be overridden to add information about
+the type of request, who made the request and so forth. It must return
+a dictionary. By default it returns an empty dictionary.</p>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="scheduler">
+<h3>Scheduler<a class="headerlink" href="#scheduler" title="Permalink to this headline">¶</a></h3>
+<dl class="class">
+<dt id="pulsar.apps.tasks.Scheduler">
+<em class="property">class </em><tt class="descclassname">pulsar.apps.tasks.</tt><tt class="descname">Scheduler</tt><big>(</big><em>app</em><big>)</big><a class="headerlink" href="#pulsar.apps.tasks.Scheduler" title="Permalink to this definition">¶</a></dt>
+<dd><p>Scheduler for periodic tasks. This class is the main driver of tasks
+and task scheduling.</p>
+<dl class="attribute">
+<dt id="pulsar.apps.tasks.Scheduler.task_class">
+<tt class="descname">task_class</tt><a class="headerlink" href="#pulsar.apps.tasks.Scheduler.task_class" title="Permalink to this definition">¶</a></dt>
+<dd><p>The <a class="reference internal" href="#pulsar.apps.tasks.TaskQueue.task_class" title="pulsar.apps.tasks.TaskQueue.task_class"><tt class="xref py py-attr docutils literal"><span class="pre">TaskQueue.task_class</span></tt></a> for producing new <a class="reference internal" href="#pulsar.apps.tasks.Task" title="pulsar.apps.tasks.Task"><tt class="xref py py-class docutils literal"><span class="pre">Task</span></tt></a>.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="pulsar.apps.tasks.Scheduler.queue_task">
+<tt class="descname">queue_task</tt><big>(</big><em>monitor</em>, <em>jobname</em>, <em>targs=None</em>, <em>tkwargs=None</em>, <em>**params</em><big>)</big><a class="headerlink" href="#pulsar.apps.tasks.Scheduler.queue_task" title="Permalink to this definition">¶</a></dt>
+<dd><p>Create a new <a class="reference internal" href="#pulsar.apps.tasks.Task" title="pulsar.apps.tasks.Task"><tt class="xref py py-class docutils literal"><span class="pre">Task</span></tt></a> which may or may not queued.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>monitor</strong> &#8211; the <a class="reference internal" href="../api.html#pulsar.ApplicationMonitor" title="pulsar.ApplicationMonitor"><tt class="xref py py-class docutils literal"><span class="pre">pulsar.ApplicationMonitor</span></tt></a> running the
+<a class="reference internal" href="#pulsar.apps.tasks.TaskQueue" title="pulsar.apps.tasks.TaskQueue"><tt class="xref py py-class docutils literal"><span class="pre">TaskQueue</span></tt></a> application.</li>
+<li><strong>jobname</strong> &#8211; the name of a <a class="reference internal" href="#pulsar.apps.tasks.Job" title="pulsar.apps.tasks.Job"><tt class="xref py py-class docutils literal"><span class="pre">Job</span></tt></a> registered
+with the <a class="reference internal" href="#pulsar.apps.tasks.TaskQueue" title="pulsar.apps.tasks.TaskQueue"><tt class="xref py py-class docutils literal"><span class="pre">TaskQueue</span></tt></a> application.</li>
+<li><strong>targs</strong> &#8211; optional tuple used for the positional arguments in the
+task callable.</li>
+<li><strong>tkwargs</strong> &#8211; optional dictionary used for the key-valued arguments
+in the task callable.</li>
+<li><strong>params</strong> &#8211; Additional parameters to be passed to the <a class="reference internal" href="#pulsar.apps.tasks.Task" title="pulsar.apps.tasks.Task"><tt class="xref py py-class docutils literal"><span class="pre">Task</span></tt></a>
+constructor (not its callable function).</li>
+</ul>
+</td>
+</tr>
+<tr class="field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last">an instance of <a class="reference internal" href="#pulsar.apps.tasks.Task" title="pulsar.apps.tasks.Task"><tt class="xref py py-class docutils literal"><span class="pre">Task</span></tt></a></p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="pulsar.apps.tasks.Scheduler.tick">
+<tt class="descname">tick</tt><big>(</big><em>monitor</em>, <em>now=None</em><big>)</big><a class="headerlink" href="#pulsar.apps.tasks.Scheduler.tick" title="Permalink to this definition">¶</a></dt>
+<dd><p>Run a tick, that is one iteration of the scheduler.
+Executes all due tasks calculate the time in seconds to wait before
+running a new <a class="reference internal" href="#pulsar.apps.tasks.Scheduler.tick" title="pulsar.apps.tasks.Scheduler.tick"><tt class="xref py py-meth docutils literal"><span class="pre">tick()</span></tt></a>. For testing purposes a <tt class="xref py py-class docutils literal"><span class="pre">datetime.datetime</span></tt>
+value <tt class="docutils literal"><span class="pre">now</span></tt> can be passed.</p>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="taskconsumer">
+<h3>TaskConsumer<a class="headerlink" href="#taskconsumer" title="Permalink to this headline">¶</a></h3>
+<dl class="class">
+<dt id="pulsar.apps.tasks.TaskConsumer">
+<em class="property">class </em><tt class="descclassname">pulsar.apps.tasks.</tt><tt class="descname">TaskConsumer</tt><big>(</big><em>task</em>, <em>worker</em>, <em>job</em><big>)</big><a class="headerlink" href="#pulsar.apps.tasks.TaskConsumer" title="Permalink to this definition">¶</a></dt>
+<dd><p>A context manager for consuming tasks. This is used by the
+<a class="reference internal" href="#pulsar.apps.tasks.Scheduler" title="pulsar.apps.tasks.Scheduler"><tt class="xref py py-class docutils literal"><span class="pre">Scheduler</span></tt></a> in a <tt class="docutils literal"><span class="pre">with</span></tt> block to correctly handle exceptions
+and optional logging.</p>
+<dl class="attribute">
+<dt id="pulsar.apps.tasks.TaskConsumer.task">
+<tt class="descname">task</tt><a class="headerlink" href="#pulsar.apps.tasks.TaskConsumer.task" title="Permalink to this definition">¶</a></dt>
+<dd><p>the <a class="reference internal" href="#pulsar.apps.tasks.Task" title="pulsar.apps.tasks.Task"><tt class="xref py py-class docutils literal"><span class="pre">Task</span></tt></a> being consumed.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="pulsar.apps.tasks.TaskConsumer.job">
+<tt class="descname">job</tt><a class="headerlink" href="#pulsar.apps.tasks.TaskConsumer.job" title="Permalink to this definition">¶</a></dt>
+<dd><p>the <a class="reference internal" href="#pulsar.apps.tasks.Job" title="pulsar.apps.tasks.Job"><tt class="xref py py-class docutils literal"><span class="pre">Job</span></tt></a> which generated the <a class="reference internal" href="#pulsar.apps.tasks.TaskConsumer.task" title="pulsar.apps.tasks.TaskConsumer.task"><tt class="xref py py-attr docutils literal"><span class="pre">task</span></tt></a>.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="pulsar.apps.tasks.TaskConsumer.worker">
+<tt class="descname">worker</tt><a class="headerlink" href="#pulsar.apps.tasks.TaskConsumer.worker" title="Permalink to this definition">¶</a></dt>
+<dd><p>the <tt class="xref py py-class docutils literal"><span class="pre">pulsar.apps.Worker</span></tt> running the process.</p>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="job-registry">
+<h3>Job Registry<a class="headerlink" href="#job-registry" title="Permalink to this headline">¶</a></h3>
+<dl class="class">
+<dt id="pulsar.apps.tasks.JobRegistry">
+<em class="property">class </em><tt class="descclassname">pulsar.apps.tasks.</tt><tt class="descname">JobRegistry</tt><a class="headerlink" href="#pulsar.apps.tasks.JobRegistry" title="Permalink to this definition">¶</a></dt>
+<dd><p>Site registry for tasks.</p>
+<dl class="method">
+<dt id="pulsar.apps.tasks.JobRegistry.regular">
+<tt class="descname">regular</tt><big>(</big><big>)</big><a class="headerlink" href="#pulsar.apps.tasks.JobRegistry.regular" title="Permalink to this definition">¶</a></dt>
+<dd><p>A generator of all regular jobs.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="pulsar.apps.tasks.JobRegistry.periodic">
+<tt class="descname">periodic</tt><big>(</big><big>)</big><a class="headerlink" href="#pulsar.apps.tasks.JobRegistry.periodic" title="Permalink to this definition">¶</a></dt>
+<dd><p>A generator of all periodic jobs.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="pulsar.apps.tasks.JobRegistry.register">
+<tt class="descname">register</tt><big>(</big><em>job</em><big>)</big><a class="headerlink" href="#pulsar.apps.tasks.JobRegistry.register" title="Permalink to this definition">¶</a></dt>
+<dd><p>Register a job in the job registry.</p>
+<p>The task will be automatically instantiated if not already an
+instance.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="pulsar.apps.tasks.JobRegistry.filter_types">
+<tt class="descname">filter_types</tt><big>(</big><em>type</em><big>)</big><a class="headerlink" href="#pulsar.apps.tasks.JobRegistry.filter_types" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return a generator of all tasks of a specific type.</p>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="job-meta-class">
+<h3>Job meta Class<a class="headerlink" href="#job-meta-class" title="Permalink to this headline">¶</a></h3>
+<dl class="class">
+<dt id="pulsar.apps.tasks.JobMetaClass">
+<em class="property">class </em><tt class="descclassname">pulsar.apps.tasks.</tt><tt class="descname">JobMetaClass</tt><a class="headerlink" href="#pulsar.apps.tasks.JobMetaClass" title="Permalink to this definition">¶</a></dt>
+<dd><p>Metaclass for Jobs. It performs a little ammount of magic
+by:</p>
+<ul class="simple">
+<li>Automatic registration of <a class="reference internal" href="#pulsar.apps.tasks.Job" title="pulsar.apps.tasks.Job"><tt class="xref py py-class docutils literal"><span class="pre">Job</span></tt></a> instances to the
+global <a class="reference internal" href="#pulsar.apps.tasks.JobRegistry" title="pulsar.apps.tasks.JobRegistry"><tt class="xref py py-class docutils literal"><span class="pre">JobRegistry</span></tt></a>, unless
+the <a class="reference internal" href="#pulsar.apps.tasks.Job.abstract" title="pulsar.apps.tasks.Job.abstract"><tt class="xref py py-attr docutils literal"><span class="pre">Job.abstract</span></tt></a> attribute is set to <tt class="xref docutils literal"><span class="pre">True</span></tt>.</li>
+<li>If no <tt class="xref py py-attr docutils literal"><span class="pre">Job.name`</span></tt> attribute is provided,
+it is automatically set to the class name in lower case.</li>
+<li>Add a logger instance with name given by &#8216;job.name` where name is the
+same as above.</li>
+</ul>
+</dd></dl>
+
+</div>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper"><p class="logo">
+<a href="../index.html">
+  <img class="logo" width="200" src="../static/pulsar.png" alt="pulsar" title="Pulsar"/>
+</a>
+</p>
+  <h3><a href="../index.html">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">Distributed Task Queues</a><ul>
+<li><a class="reference internal" href="#tutorial">Tutorial</a><ul>
+<li><a class="reference internal" href="#actions">Actions</a></li>
+<li><a class="reference internal" href="#jobs">Jobs</a></li>
+<li><a class="reference internal" href="#task-class">Task Class</a></li>
+<li><a class="reference internal" href="#task-callbacks">Task callbacks</a></li>
+<li><a class="reference internal" href="#task-states">Task states</a></li>
+<li><a class="reference internal" href="#queue">Queue</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#api">API</a><ul>
+<li><a class="reference internal" href="#taskqueue">Taskqueue</a></li>
+<li><a class="reference internal" href="#job">Job</a></li>
+<li><a class="reference internal" href="#periodic-job">Periodic Job</a></li>
+<li><a class="reference internal" href="#task">Task</a></li>
+<li><a class="reference internal" href="#taskqueue-rpc-mixin">TaskQueue Rpc Mixin</a></li>
+<li><a class="reference internal" href="#scheduler">Scheduler</a></li>
+<li><a class="reference internal" href="#taskconsumer">TaskConsumer</a></li>
+<li><a class="reference internal" href="#job-registry">Job Registry</a></li>
+<li><a class="reference internal" href="#job-meta-class">Job meta Class</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="rpc.html"
+                        title="previous chapter">JSON-RPC</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="websockets.html"
+                        title="next chapter">WebSockets</a></p>
+  <h3>This Page</h3>
+  <ul class="this-page-menu">
+    <li><a href="../sources/apps/tasks.txt"
+           rel="nofollow">Show Source</a></li>
+  </ul>
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" size="18" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="websockets.html" title="WebSockets"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="rpc.html" title="JSON-RPC"
+             >previous</a> |</li>
+        <li><a href="../index.html">pulsar v0.4.4b1 documentation</a> &raquo;</li> 
+      </ul>
+    </div>
+
+    <div class="footer">
+        &copy; Copyright 2011, Luca Sbardella.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.0.7.
+    </div>
+<script type="text/javascript">
+
+  var _gaq = _gaq || [];
+  _gaq.push(['_setAccount', 'UA-3900561-7']);
+  _gaq.push(['_trackPageview']);
+
+  (function() {
+    var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+    ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+    var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+  })();
+
+</script>
+
+  </body>
+</html>
