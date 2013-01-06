@@ -1,11 +1,34 @@
 {% extends "!layout.html" %}
 
+{% block document %}
+<div class="deck">
+
+    {% if release_version %}
+        <p>
+        Documentation for pulsar {{ version }}. For development docs,
+        <a href="http://docs.celeryproject.org/en/master/{{ pagename }}{{ file_suffix }}">go here</a>.
+        </p>
+    {% else %}
+        <p class="developmentversion">
+        Documentation for pulsar's DEVELOPMENT version. Get the 
+        <a href="http://packages.python.org/pulsar/">release docs here</a>.
+        </p>
+    {% endif %}
+
+</div>
+{{ super() }}
+{% endblock %}
+
 {% block footer %}
 {{ super() }}
 <script type="text/javascript">
 
   var _gaq = _gaq || [];
+  {% if release_version %}
   _gaq.push(['_setAccount', 'UA-3900561-7']);
+  {% else %}
+  _gaq.push(['_setAccount', 'UA-3900561-8']);
+  {% endif %}
   _gaq.push(['_trackPageview']);
 
   (function() {

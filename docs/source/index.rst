@@ -2,17 +2,20 @@
 Pulsar
 ================
 
-An asynchronous concurrent framework for Python. Tested in Windows and Linux,
-it requires python 2.6 up to python 3.3 in a single code base.
+A concurrent framework for Python. **Concurrent** here stands for asynchronous
+and parallel execution. Tested in Windows and Linux, it requires python 2.6 up to python 3.3
+in a single code base.
 
 
 .. toctree::
    :maxdepth: 1
    
    overview
-   changelog
    design
+   faq
+   advantage
    api
+   changelog
    http
    settings
    

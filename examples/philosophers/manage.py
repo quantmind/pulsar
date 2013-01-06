@@ -50,7 +50,8 @@ except ImportError:
     import pulsar
 from pulsar import command, async
     
-
+################################################################################
+##    EXTRA COMMAND LINE PARAMETERS
 class Eating_Period(pulsar.Setting):
     flags = ["--eating-period"]
     validator = pulsar.validate_pos_float
@@ -66,9 +67,9 @@ class Waiting_Period(pulsar.Setting):
     
 ################################################################################
 ##    PULSAR COMMANDS FOR DINING PHILOSOPHERS
-philosophers_cmommands = set()
+philosophers_commands = set()
 
-@command(commands_set=philosophers_cmommands, ack=False)
+@command(commands_set=philosophers_commands, ack=False)
 def putdown_fork(client, actor, fork):
     self = actor.app
     try:
@@ -76,7 +77,7 @@ def putdown_fork(client, actor, fork):
     except KeyError:
         self.logger.error('Putting down a fork which was already available')    
 
-@command(commands_set=philosophers_cmommands)
+@command(commands_set=philosophers_commands)
 def pickup_fork(client, actor, fork_right):
     self = actor.app
     num_philosophers = self.cfg.workers
@@ -94,7 +95,7 @@ def pickup_fork(client, actor, fork_right):
 class DiningPhilosophers(pulsar.Application):
     description = 'Dining philosophers sit at a table around a bowl of '\
                   'spaghetti and waits for available forks.'
-    commands_set = philosophers_cmommands
+    commands_set = philosophers_commands
     cfg = {'workers': 5}
     
     def monitor_start(self, monitor):

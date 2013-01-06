@@ -10,23 +10,32 @@ Pulsar is an asynchronous concurrent framework for python. It implements
 a double layer of components for building a vast array of parallel and asynchronous
 applications.
 
-* The first layer is based on the building blocks of pulsar library,
+* The first layer is based on the building blocks of pulsar library:
   the :class:`Actor` class for concurrency and the the :class:`Deferred` class
   for handling asynchronous events.
-* The second layer is the based on the :class:`Application` class.
+* The second layer, built on top of the first one, is based on the
+  :class:`Application` class.
    
 
 Server Model
 ==================
 
-When running as server, Pulsar has central master process that manages
-a set of worker pools. In multi-processing mode, the master never knows anything
-about individual clients. All requests and responses are handled completely by worker pools.
-
+When running as server, the main thread in the master process
+is managed by the :class:`Arbiter`, a specialised :ref:`IO actor <iobound>`
+which control the life all :class:`Actor` and :class:`Monitor`.
 
 
 Actors
 =================
+
+Actors are the atoms of pulsar’s concurrent computation, they do not share
+state between them, communication is achieved via asynchronous
+inter-process message passing, implemented using the standard
+python socket library. An :class:`Actor` can be **thread-based** or
+**process-based** (default) and control at least one running eventloop. To
+obtain the actor in the current context::
+
+    actor = pulsar.get_actor()
 
 .. _eventloop:
 
@@ -35,6 +44,7 @@ Event loop
 Each actor has its own :attr:`Actor.requestloop`, an instance of :class:`IOLoop`,
 which can be used to register handlers on file descriptors.
 The :attr:`Actor.requestloop` is initiated just after forking.
+Pulsar event loop will be following pep-3156_ guidelines.
 
 .. _iobound:
 
@@ -64,17 +74,20 @@ them to do. CPU-bound :class:`Actors` have the following properties:
 
 .. _actor-callbacks:
 
-Actor Callbacks
+Actor Hooks
 ====================
 
-:class:`Actor` exposes five functions which can be
-used to customize the behaviour of the actor.
-These functions do nothing in the standard :class:`Actor` implementation. 
+An :class:`Actor` exposes five functions which can be
+used to customise its behaviour. These functions do nothing in the
+standard :class:`Actor` implementation. 
 
 on_start
 ~~~~~~~~~~~~~~~
-The `Actor.on_start` methid is called, **once only**, just before the actor
-starts its :ref:`event loop <eventloop>`.
+The :meth:`Actor.on_start` method is called, **once only**, just before the actor
+starts its :ref:`event loop <eventloop>`. This function can be used to setup
+the application and register event handlers. For example, the
+:ref:`socket server application <apps-socket>` creates the server and register
+its file descriptor with the :attr:`Actor.requestloop` via the :meth:`IOLoop.add_handler` method.
 
 on_event
 ~~~~~~~~~~~~~~~
@@ -143,3 +156,7 @@ Application Framework
 
 To aid the development of applications running on top of pulsar concurrent
 framework, the library ships with the :class:`Application` class.
+
+
+
+.. _pep-3156: http://www.python.org/dev/peps/pep-3156/

@@ -43,6 +43,7 @@ import platform
 import codecs
 import socket
 import logging
+from functools import reduce
 from hashlib import sha1, md5
 from base64 import b64encode, b64decode
 from uuid import uuid4
@@ -80,11 +81,11 @@ if ispy3k: # Python 3
     from urllib import request as urllibr
     from http import client as httpclient
     from urllib.parse import quote, unquote, urlencode, urlparse, urlsplit,\
-                             parse_qs, parse_qsl, splitport, urlunparse, urljoin
+                             parse_qs, parse_qsl, splitport, urlunparse,\
+                             urljoin
     from http.client import responses
     from http.cookiejar import CookieJar, Cookie
     from http.cookies import SimpleCookie, BaseCookie, Morsel, CookieError
-    from functools import reduce
 
     string_type = str
     getproxies_environment = urllibr.getproxies_environment

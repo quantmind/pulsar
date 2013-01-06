@@ -23,7 +23,7 @@ class WsgiResponjseTest(unittest.TestCase):
         self.assertTrue(repr(r))
         
     def testResponse500(self):
-        r = wsgi.WsgiResponse(500, content = b'A critical error occurred')
+        r = wsgi.WsgiResponse(500, content=b'A critical error occurred')
         self.assertEqual(r.status_code, 500)
         self.assertEqual(r.status,'500 Internal Server Error')
         self.assertEqual(r.content,(b'A critical error occurred',))

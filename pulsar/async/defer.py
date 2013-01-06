@@ -427,7 +427,7 @@ this point, :meth:`add_callback` will run the *callbacks* immediately.
     def result_or_self(self):
         '''It returns the :attr:`result` only if available and all
 callbacks have been consumed, otherwise it returns this :class:`Deferred`.
-Users should use this method to obained the result, rather than accessing
+Users should use this method to obtain the result, rather than accessing
 directly the :attr:`result` attribute.'''
         return self.result if self._called and not self._callbacks else self
 

@@ -24,6 +24,7 @@ class RpcRequest:
 
     def __repr__(self):
         return self.rpc.method
+    __str__ = __repr__
 
     def __getattr__(self, name):
         return self.environ.get(name)

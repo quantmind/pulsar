@@ -1,5 +1,6 @@
 Ver. 0.4.4
 ==============================
+* Documentation for development version hosted on github.
 * Modified :meth:`pulsar.Actor.exit` so that it shuts down :attr:`pulsar.Actor.mailbox`
   after closing the :attr:`pulsar.Actor.requestloop`.
 * Fixed bug which prevented :ref:`daemonisation <setting-daemon>` in posix systems.

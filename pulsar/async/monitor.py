@@ -245,9 +245,9 @@ as required."""
 
 
 class Monitor(PoolMixin, Actor):
-    '''A monitor is a special :class:`Actor` which shares
-the same :class:`IOLoop` with the :class:`Arbiter` and therefore lives in
-the main process domain.
+    '''A monitor is a **very** special :class:`Actor` and :class:`PoolMixin`
+which shares the same :class:`IOLoop` with the :class:`Arbiter` and
+therefore lives in the main process domain.
 The Arbiter manages monitors which in turn manage a set of :class:`Actor`
 performing similar tasks.
 
@@ -273,7 +273,7 @@ You can also create a monitor with a distributed queue as IO mechanism::
                                      'mymonitor',
                                      ioqueue = Queue())
 
-Monitors with distributed queues manage CPU-bound :class:`Actors`.
+Monitors with distributed queues manage :ref:`CPU-bound actors <cpubound>`.
 '''
     socket = None
 
@@ -288,9 +288,8 @@ Monitors with distributed queues manage CPU-bound :class:`Actors`.
         return True
 
     def monitor_task(self):
-        '''Monitor specific task called by the :meth:`Monitor.on_task`
-:ref:`actor callback <actor-callbacks>` at each iteration in the event loop.
-By default it does nothing.'''
+        '''Monitor specific task called by the :meth:`Monitor.periodic_task`.
+By default it does nothing. Override if you need to.'''
         pass
 
     def periodic_task(self):
@@ -321,8 +320,6 @@ Users shouldn't need to override this method, but use
 
     # HOOKS
     def on_stop(self):
-        '''Overrides the :meth:`Actor.on_stop`
-:ref:`actor callback <actor-callbacks>` to stop managed actors.'''
         return self.close_actors()
 
     @property
@@ -370,7 +367,7 @@ Users shouldn't need to override this method, but use
         return self.arbiter.proxy_mailboxes.get(address)
 
     def get_actor(self, aid):
-        '''Delegate get_actor to the arbiter'''
+        #Delegate get_actor to the arbiter
         a = super(Monitor, self).get_actor(aid)
         if a is None:
             a = self.arbiter.get_actor(aid)

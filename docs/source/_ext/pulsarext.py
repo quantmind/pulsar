@@ -10,6 +10,7 @@ from docutils import nodes, statemachine
 
 targetid = "pulsar_settings"
 
+
 class pulsar_settings(nodes.General, nodes.Element):
     pass
 

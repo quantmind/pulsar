@@ -41,6 +41,9 @@ extensions = ['sphinx.ext.autodoc',
               'sphinx.ext.viewcode',
               'pulsarext']
 
+if pulsar.VERSION[3] == 'beta':
+    extensions.append('sphinxtogithub')
+html_context = {'release_version': pulsar.VERSION[3] == 'final'}
 # The suffix of source filenames.
 source_suffix = '.rst'
 
@@ -67,7 +70,6 @@ html_sidebars = {
            'sourcelink.html', 'searchbox.html'],
 }
 exclude_trees = []
-
 
 # -- Options for HTML output ---------------------------------------------------
 

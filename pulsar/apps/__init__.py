@@ -56,7 +56,7 @@ the :class:`Application` associated with *name* if available. If not in the
 
 class Worker(Actor):
     """\
-An :class:`Actor` class for serving an :class:`Application`.
+An :class:`Actor` for serving a pulsar :class:`Application`.
 
 .. attribute:: app
 
@@ -99,14 +99,16 @@ An :class:`Actor` class for serving an :class:`Application`.
         return self.app.on_info(self, info)
     
     def on_event(self, fd, event):
-        '''Override :meth:`pulsar.Actor.on_event` to delegate handling
-to the underlying :class:`Application`.'''
         return self.app.on_event(self, fd, event)
 
 
 class ApplicationMonitor(Monitor):
-    '''A specialized :class:`Monitor` implementation for managing
-pulsar subclasses of :class:`Application`.
+    '''A :class:`Monitor` for managing a pulsar :class:`Application`.
+    
+.. attribute:: app_handler
+
+    The monitor application handler obtained from
+    :meth:`Application.monitor_handler`.
 '''
     actor_class = Worker
 
@@ -148,16 +150,9 @@ pulsar subclasses of :class:`Application`.
         self.app.monitor_task(self)
         
     def on_event(self, fd, event):
-        '''Override :meth:`pulsar.Actor.on_event` to delegate handling
-to the underlying :class:`Application`.'''
         return self.app.on_event(self, fd, event)
     
     def actorparams(self):
-        '''Override the :meth:`Monitor.actorparams` method to
-updated actor parameters with information about the application.
-
-:rtype: a dictionary of parameters to be passed to the
-    spawn method when creating new actors.'''
         p = Monitor.actorparams(self)
         app = self.params.app
         if self.cfg.concurrency == 'thread':
@@ -229,11 +224,6 @@ These are the most important facts about a pulsar :class:`Application`
 
     Default: ``None``
     
-.. attribute:: mid
-
-    The unique id of the :class:`ApplicationMonitor` managing the
-    application. Defined at runtime.
-
 .. attribute:: script
 
     full path of the script which starts the application or ``None``.
@@ -254,7 +244,6 @@ These are the most important facts about a pulsar :class:`Application`
     config_options_include = None
     config_options_exclude = None
     commands_set = None
-    monitor_class = ApplicationMonitor
 
     def __init__(self,
                  callable=None,
@@ -308,7 +297,7 @@ These are the most important facts about a pulsar :class:`Application`
             events.fire('ready', self)
             arbiter = pulsar.arbiter(cfg=self.cfg.new_config())
             if self.on_config() is not False:
-                monitor = arbiter.add_monitor(self.monitor_class,
+                monitor = arbiter.add_monitor(ApplicationMonitor,
                                               self.name,
                                               app=self,
                                               cfg=self.cfg,
@@ -387,8 +376,8 @@ By default it returns ``None``.'''
 
     def on_config_init(self, cfg, params):
         '''Callback when configuration is initialised but not yet loaded.
-This is a chance to add extra config parameter or remove unwanted ones.
-return a new :class:`Config` instance or ``None``.'''
+This is a chance to add extra :ref:`config parameters <settings>` or remove
+unwanted ones. It returns a new :class:`Config` instance or ``None``.'''
         pass
     
     def on_config(self):
@@ -495,7 +484,7 @@ The parameters overriding order is the following:
                 return True
 
     def monitor_handler(self):
-        '''Returns a application handler for the monitor.
+        '''Returns an application handler for the :class:`ApplicationMonitor`.
 By default it returns ``None``.'''
         return None
 
@@ -506,23 +495,26 @@ By default it returns ``None``.'''
     def on_event(self, worker, fd, events):
         pass
     
+    # WORKERS CALLBACKS
     def worker_start(self, worker):
         '''Called by the :class:`Worker` :meth:`pulsar.Actor.on_start`
 :ref:`callback <actor-callbacks>` method.'''
         pass
 
     def worker_stop(self, worker):
-        '''Called by the :class:`Worker` just after stopping.'''
+        '''Called by the :class:`Worker` :meth:`pulsar.Actor.on_stop`
+:ref:`callback <actor-callbacks>` method.'''
         pass
 
     def worker_exit(self, worker):
-        '''Called by the :class:`Worker` just when exited.'''
+        '''Called by the :class:`Worker` :meth:`pulsar.Actor.on_exit`
+:ref:`callback <actor-callbacks>` method.'''
         pass
 
-    # MONITOR CALLBAKS
+    # MONITOR CALLBACKS
     def actorparams(self, monitor, params):
-        '''A chance to override the actor parameters before a new
-:class:`Worker` is spawned'''
+        '''A chance to override the dictionary of parameters *params*
+before a new :class:`Worker` is spawned.'''
         return params
 
     def monitor_start(self, monitor):

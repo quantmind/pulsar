@@ -387,3 +387,7 @@ a:hover tt {
     background: #EEE;
 }
 
+.deck {
+    background: #F2FCEE;
+    padding: 5px 10px;
+}

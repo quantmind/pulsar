@@ -7,7 +7,7 @@ from .exceptions import InvalidParams
 
 def wrap_object_call(fname, namefunc):
     def _(self,*args,**kwargs):
-        f = getattr(self,fname)
+        f = getattr(self, fname)
         return f(*args,**kwargs)
     _.__name__ = namefunc
     return _

@@ -77,7 +77,8 @@ A typical usage::
 
     
 class Arbiter(PoolMixin, Actor):
-    '''The Arbiter is a special :class:`Monitor`. It is used as singletone
+    '''The Arbiter is the most important a :class:`Actor`
+and :class:`PoolMixin` in pulsar concurrent framework. It is used as singleton
 in the main process and it manages one or more :class:`Monitor`.
 It runs the main :class:`IOLoop` of your concurrent application.
 It is the equivalent of the gunicorn_ arbiter, the twisted_ reactor

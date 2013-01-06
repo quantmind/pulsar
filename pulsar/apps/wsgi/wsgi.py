@@ -5,7 +5,7 @@ import textwrap
 import logging
 import time
 from datetime import datetime, timedelta
-from functools import partial
+from functools import partial, reduce
 from email.utils import formatdate
 
 import pulsar
@@ -16,8 +16,11 @@ from pulsar.utils.httpurl import Headers, SimpleCookie, responses,\
 
 from .middleware import is_streamed
 
-if ispy3k:
-    from functools import reduce
+if ispy3k:  #thanks to @chrismcdonoug
+    from urllib.parse import unquote_to_bytes
+    unquote_to_bytes_wsgi = lambda bs: unquote_to_bytes(bs).decode('latin-1')
+else:   #pragma    nocover
+    from urlparse import unquote as unquote_to_bytes_wsgi
 
 __all__ = ['WsgiHandler',
            'WsgiResponse',
@@ -180,9 +183,14 @@ client.
     def _set_content(self, content):
         if not self._started:
             if content is None:
-                # no content, get the default content
-                content = self.default_content()
-            elif isinstance(content, bytes):
+                content = ()
+            elif ispy3k: #what a fucking pain
+                if isinstance(content, str):
+                    content = bytes(content, 'latin-1')
+            else: #pragma    nocover
+                if isinstance(content, unicode):
+                    content = bytes(content, 'latin-1')
+            if isinstance(content, bytes):
                 content = (content,)
             self._content = content
         else:
@@ -197,11 +205,6 @@ client.
         else:
             self.headers.pop('content-type', None)
     content_type = property(_get_content_type, _set_content_type)
-
-    def default_content(self):
-        '''Called during initialization when the content given is ``None``.
-By default it returns an empty tuple. Overrides if you need to.'''
-        return ()
 
     def __call__(self, environ, start_response, exc_info=None):
         '''Make sure the headers are set.'''
@@ -407,7 +410,5 @@ def handle_wsgi_error(environ, trace=None, content_type=None,
                          "version": pulsar.SERVER_SOFTWARE})
         else:
             content = wsgi_error_msg(response, msg)
-    if not isinstance(content, (tuple, list)):
-        content = to_bytes(content, response.encoding or 'utf-8', 'replace')
     response.content = content
     return response
