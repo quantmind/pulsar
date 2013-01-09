@@ -90,7 +90,7 @@ class IOpoll(IOselect):
 class Waker(object):
     '''In windows'''
     def __init__(self):
-        self._writer, s = socket_pair(backlog = 1)
+        self._writer, s = socket_pair(backlog=1)
         s.setblocking(True)   
         self._reader, addr = s.accept()
         self._writer.setblocking(False)

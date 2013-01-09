@@ -156,32 +156,28 @@ requests. The request handler is constructued from the
         # Open the socket and bind to address
         address = self.cfg.address
         if address:
-            socket = pulsar.create_socket(address, backlog=self.cfg.backlog)
+            sock = pulsar.create_socket(address, bindto=True,
+                                        backlog=self.cfg.backlog)
         else:
             raise pulsar.ImproperlyConfigured('Could not open a socket. '
                                               'No address to bind to')
-        self.logger.info('Listening on %s', socket)
-        monitor.params.socket = socket
-        self.address = socket.name
+        self.logger.info('Listening on %s', sock)
+        monitor.params.socket = sock
+        self.address = sock.address
     
     def worker_start(self, worker):
         # Start the worker by starting the socket server
-        s = self.socket_server_factory(worker, worker.params.socket,
+        s = self.socket_server_factory(worker, sock=worker.params.socket,
+                                       server_handler=self.handler(),
+                                       max_requests=self.cfg.max_requests,
                                        timeout=self.cfg.keepalive)
-        # We add the file descriptor handler
-        s.on_connection_callbacks.append(worker.handle_fd_event)
         worker.socket_server = s
     
     def worker_stop(self, worker):
         if hasattr(worker, 'socket_server'):
             # we don't shut down the socket, simply remove all active
             # connections and othe clean up operations.
-            worker.socket_server.on_close()
-        
-    def on_event(self, worker, fd, events):
-        connection = worker.socket_server.accept()
-        if connection is not None:
-            return connection.on_closed
+            worker.socket_server.abort()
     
     def on_info(self, worker, data):
         server = worker.socket_server

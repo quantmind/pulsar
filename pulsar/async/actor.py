@@ -25,7 +25,8 @@ from .proxy import ActorProxy, ActorMessage, get_command, get_proxy
 from .defer import make_async, is_failure, iteritems, itervalues,\
                      pickle, async, log_failure, is_async,\
                      as_failure, EXIT_EXCEPTIONS
-from .mailbox import IOQueue, mailbox
+from .queue import IOQueue
+from .mailbox import mailbox
 from .access import set_local_data, is_mainthread, get_actor, remove_actor
 
 
@@ -348,41 +349,13 @@ mean it is running.'''
                                    .format(self))
 
     ############################################################################
-    ##    EVENT HANDLING
-    ############################################################################
-    @async()
-    def handle_fd_event(self, fd, event):
-        '''This function should be used when registering events
- on file descriptors registered with the :attr:`requestloop`.'''
-        self.request_processed += 1
-        self.concurrent_requests += 1
-        try:
-            future = make_async(self.on_event(fd, event))
-        except Exception as e:
-            result = as_failure(e)
-        else:
-            yield future
-            result = future.result
-        self.concurrent_requests -= 1
-        log_failure(result)
-        max_requests = self.cfg.max_requests
-        if max_requests and self.request_processed >= max_requests:
-            self.logger.warn("Shutting down %s. Max requests reached.", self)
-            self.stop()
-
-    ############################################################################
-    ##    CALLBACKS
+    ##  ACTOR HOOKS
     ############################################################################
     def on_start(self):
         '''The :ref:`actor callback <actor-callbacks>` run **once** just before
 the actor starts (after forking) its event loop. Every attribute is available,
 therefore this is a chance to setup to perform custom initialisation
 before the actor starts running.'''
-        pass
-
-    def on_event(self, fd, event):
-        '''Handle an event on a file descriptor *fd*. This is what defines the
-life of an actor.'''
         pass
 
     def on_stop(self):
@@ -527,11 +500,6 @@ if *proxy* is not a class:`ActorProxy` instance raise an exception.'''
         self.requestloop = IOLoop(io=IOQueue(ioq, self) if ioq else None,
                                   poll_timeout=self.params.poll_timeout,
                                   logger=self.logger)
-        # If CPU bound add the request handler to the request loop
-        if self.cpubound:
-            self.requestloop.add_handler('request',
-                                          self.handle_fd_event,
-                                          self.requestloop.READ)
         if self.is_process():
             random.seed()
             proc_name = "%s-%s" % (self.cfg.proc_name, self)

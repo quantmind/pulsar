@@ -218,9 +218,10 @@ class TaskPath(TaskSetting):
         """
 
 
-class CPUboundServer(pulsar.Application):
+class CPUboundServer(pulsar.Application, pulsar.ConcurrentServer):
     '''A CPU-bound application server.'''
     _app_name = 'cpubound'
+    cpu_bound_server = None
 
     def get_ioqueue(self):
         '''Return the distributed task queue which produces tasks to
@@ -230,19 +231,20 @@ be consumed by the workers.'''
     def request_instance(self, worker, fd, request):
         return request
 
-    def on_event(self, worker, fd, request):
-        request = self.request_instance(worker, fd, request)
+    def worker_start(self, worker):
+        '''Set up the cpu bound worker and register its file descriptor'''
+        self.request_loop.add_reader('request', partial(self.on_event, worker))
+        
+    @async()
+    def on_event(self, worker, request):
+        request = self.request_instance(request)
         if request is not None:
-            c = self.local.current_requests
-            if c is None:
-                c = []
-                self.local.current_requests = c
-            c.append(request)
-            yield safe_async(request.start, args=(worker,))
+            self.received += 1
+            self.concurrent_requests.append(request)
             try:
-                c.remove(request)
-            except ValueError:
-                pass
+                yield request.start(worker)
+            finally:
+                self.concurrent_requests.remove(request)
 
 #################################################    TASKQUEUE COMMANDS
 taskqueue_cmnds = set()
@@ -310,7 +312,6 @@ tasks and managing scheduling of tasks.
 
 Default: :class:`TaskInMemory`
 '''
-    scheduler_class = Scheduler
     '''The scheduler class. Default: :class:`Scheduler`.'''
 
     @property
@@ -326,7 +327,7 @@ Check the :meth:`TaskQueue.monitor_task` callback
 for implementation.'''
         return self.local.scheduler
 
-    def request_instance(self, worker, fd, request):
+    def request_instance(self, request):
         return self.scheduler.get_task(request)
 
     def monitor_task(self, monitor):

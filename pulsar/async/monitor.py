@@ -11,7 +11,8 @@ from .actor import Actor, ACTOR_STATES, ACTOR_TERMINATE_TIMEOUT,\
 from .eventloop import setid
 from .concurrency import concurrency
 from .defer import async, iteritems, itervalues, range, NOT_DONE
-from .mailbox import Queue, mailbox
+from .queue import Queue
+from .mailbox import mailbox
 
 
 __all__ = ['Monitor', 'PoolMixin']

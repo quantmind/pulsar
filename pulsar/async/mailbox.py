@@ -1,25 +1,20 @@
-import io
 import sys
 import logging
-import socket
-import time
-import threading
-from multiprocessing.queues import Empty, Queue
+import tempfile
 
 from pulsar import create_connection, MailboxError, server_socket,\
                     wrap_socket, CouldNotParse, CommandNotFound,\
-                    defaults
+                    platform, defaults
 from pulsar.utils.httpurl import to_bytes
 
 from .defer import maybe_async, pickle, is_async, log_failure,\
-                    async, is_failure, ispy3k, raise_failure, CLEAR_ERRORS
-from .iostream import AsyncIOStream, AsyncSocketServer,\
-                        AsyncConnection, ReconnectingClient, AsyncResponse
+                    async, is_failure, ispy3k, raise_failure
 from .access import get_actor
+from .servers import create_server
+from .protocols import Protocol, ProtocolResponse
 
 
-__all__ = ['PulsarClient', 'mailbox', 'Mailbox', 'IOQueue',
-           'Empty', 'Queue', 'ActorMessage']
+__all__ = ['PulsarClient', 'mailbox', 'ActorMessage']
 
 
 LOGGER = logging.getLogger('pulsar.mailbox')
@@ -35,7 +30,7 @@ otherwise a queue is used.'''
         if actor.is_monitor():
             return MonitorMailbox(actor)
         else:
-            return Mailbox.make(actor)
+            return create_mailbox(actor)
 
 def actorid(actor):
     return actor.aid if hasattr(actor, 'aid') else actor
@@ -116,7 +111,7 @@ created by :meth:`ActorProxy.send` method.
     def __repr__(self):
         return self.command
 
-
+ReconnectingClient = object
 class PulsarClient(ReconnectingClient):
     '''A proxy for the :attr:`Actor.inbox` attribute. It is used by the
 :class:`ActorProxy` to send messages to the remote actor.'''
@@ -156,30 +151,32 @@ class PulsarClient(ReconnectingClient):
         return self.execute(ActorMessage('stop'))
 
 
-class MailboxResponse(AsyncResponse):
-    __slots__ = ('connection', 'parsed_data')
-    def __iter__(self):
+class MailboxResponse(ProtocolResponse):
+    message = None
+    def feed(self, data):
         # The receiver could be different from the mail box actor. For
         # example a monitor uses the same mailbox as the arbiter
-        message = self.parsed_data
-        actor = self.connection.actor
-        receiver = actor.get_actor(message.receiver) or actor
-        sender = receiver.get_actor(message.sender)
-        command = receiver.command(message.command)
-        try:
-            if not command:
-                raise CommandNotFound(message.command)
-            args = message.args
-            # If this is an internal command add the sender information
-            if command.internal:
-                args = (sender,) + args
-            result = command(self, receiver, *args, **message.kwargs)
-        except:
-            result = sys.exc_info()
-        result = maybe_async(result)
-        while is_async(result):
-            yield b''
-            result = maybe_async(result)
+        message, data = ActorMessage.decode(data)
+        if message:
+            self.message = message
+            actor = get_actor()
+            receiver = actor.get_actor(message.receiver) or actor
+            sender = receiver.get_actor(message.sender)
+            command = receiver.command(message.command)
+            try:
+                if not command:
+                    raise CommandNotFound(message.command)
+                args = message.args
+                # If this is an internal command add the sender information
+                if command.internal:
+                    args = (sender,) + args
+                result = command(self, receiver, *args, **message.kwargs)
+            except:
+                result = sys.exc_info()
+            result = make_async(result).add_both(self.encode)
+            self.write(result)
+            
+    def encode(self, result):
         log_failure(result)
         if command.ack:
             # Send back the result as an ActorMessage
@@ -187,10 +184,15 @@ class MailboxResponse(AsyncResponse):
                 m = ActorMessage('errback', sender=receiver, args=(result,))
             else:
                 m = ActorMessage('callback', sender=receiver, args=(result,))
-            yield self.protocol.encode(m)
+            return m.encode()
+        else:
+            return b''
+
+    def finished(self):
+        return bool(self.message)
 
 
-class MailboxConnection(AsyncConnection):
+class MailboxProtocol(Protocol):
     '''A :class:`MailboxClient` is a socket which receives messages
 from a remote :class:`Actor`.
 An instance of this class is created when a new connection is made
@@ -198,28 +200,19 @@ with a :class:`Mailbox`.'''
     authenticated = False
 
 
-class Mailbox(AsyncSocketServer):
-    '''Mailbox for an :class:`Actor`. If the actor is a
-:ref:`CPU bound worker <cpubound>`, the class:`Mailbox`
-creates its own :class:`IOLoop` which runs on a separate thread
-of execution.'''
-    protocol_factory = MessageParser
-    connection_class = MailboxConnection
-    response_class = MailboxResponse
-
-    @classmethod
-    def make(cls, actor, backlog=64):
-        server = super(Mailbox, cls).make(actor=actor, backlog=backlog,
-                                          onthread=actor.cpubound,
-                                          timeout=None)
-        if not server.actor.is_arbiter():
-            server.ioloop.add_callback(server.send_mailbox_address)
-        return server
-
-    def send_mailbox_address(self):
-        actor = self.actor
-        return actor.send(actor.monitor, 'mailbox_address', self.address)\
-                    .add_callback(actor.link_actor)
+def create_mailbox(actor):
+    if platform.type == 'posix':
+        address = 'unix:%s' % tempfile.mkdtemp('.pulsar')
+    else:
+        address = ('127.0.0.1', 0)
+    deferred = create_server(address=address, onthread=actor.cpubound,
+                             protocol=MailboxProtocol, response=MailboxResponse)
+    deferred.add_callback(send_mailbox_address)
+    
+def send_mailbox_address(self):
+    actor = self.actor
+    return actor.send(actor.monitor, 'mailbox_address', self.address)\
+                     .add_callback(actor.link_actor)
 
 
 class MonitorMailbox(object):
@@ -242,74 +235,4 @@ arbiter inbox.'''
     
     def close(self):
         pass
-
-
-class QueueWaker(object):
-    '''A waker for :class:`IOQueue`. Used by CPU-bound actors.'''
-    def __init__(self, queue):
-        self._queue = queue
-        self._fd = 'waker'
-
-    def __str__(self):
-        return '%s %s' % (self.__class__.__name__, self._fd)
-
-    def fileno(self):
-        return self._fd
-
-    def wake(self):
-        try:
-            self._queue.put((self._fd, None))
-        except (IOError,TypeError):
-            pass
-
-    def consume(self):
-        pass
-
-    def close(self):
-        pass
-
-
-class IOQueue(object):
-    '''Epoll like class for a IO based on queues rather than sockets.
-The interface is the same as the python epoll_ implementation.
-
-.. _epoll: http://docs.python.org/library/select.html#epoll-objects'''
-    cpubound = True
-    def __init__(self, queue, actor=None):
-        self._queue = queue
-        self._actor = actor
-        self._fds = set()
-        self._empty = ()
-
-    @property
-    def queue(self):
-        '''The underlying distributed queue used for I/O.'''
-        return self._queue
-
-    def register(self, fd, events=None):
-        '''Register a fd descriptor with the io queue object'''
-        self._fds.add(fd)
-
-    def modify(self, fd, events=None):
-        '''Modify a registered file descriptor'''
-        self.unregister(fd)
-        self.register(fd, events)
-
-    def unregister(self, fd):
-        '''Remove a registered file descriptor from the ioqueue object.. '''
-        self._fds.discard(fd)
-
-    def poll(self, timeout=0.5):
-        '''Wait for events. timeout in seconds (float)'''
-        if self._actor:
-            if not self._actor.can_poll():
-                return self._empty
-        try:
-            event = self._queue.get(timeout=timeout)
-        except (Empty,IOError,TypeError,EOFError):
-            return self._empty
-        return (event,)
-
-    def waker(self):
-        return QueueWaker(self._queue)
 

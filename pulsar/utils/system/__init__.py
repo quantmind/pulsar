@@ -6,7 +6,7 @@ seconds = platform.seconds
 
 from .base import *
 
-if platform.type == 'posix':    #pragma nocover
+if platform.type == 'posix':
     from .posixsystem import *
 elif platform.type == 'win':    #pragma nocover
     from .windowssystem import *

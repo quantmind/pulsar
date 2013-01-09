@@ -179,6 +179,7 @@ is a group of tests specified in a test class.
     _app_name = 'test'
     cfg_apps = ('cpubound',)
     commands_set = test_commands
+    cpu_bound_server = TestScheduler
     cfg = {'loglevel': 'none',
            'timeout': 3600,
            'backlog': 1,

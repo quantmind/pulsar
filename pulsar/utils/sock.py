@@ -361,7 +361,11 @@ not data was sent. In this case it also raises a socket error.'''
 
 class TCPSocket(Socket):
     FAMILY = socket.AF_INET
-
+    
+    @property
+    def type(self):
+        return 'tcp'
+    
     def __str__(self):
         name = self.name
         if name:
@@ -376,7 +380,11 @@ class TCPSocket(Socket):
 
 class TCP6Socket(TCPSocket):
     FAMILY = socket.AF_INET6
-
+    
+    @property
+    def type(self):
+        return 'tcp6'
+    
     def __str__(self):
         (host, port, fl, sc) = self.name
         return "[%s]:%d" % (host, port)

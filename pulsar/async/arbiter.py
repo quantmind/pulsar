@@ -192,7 +192,7 @@ Users access the arbiter (in the arbiter process domain) by the high level api::
                 pool.state = ACTOR_STATES.INACTIVE
             self.state = ACTOR_STATES.RUN
             self.restarted = True
-            self.ioloop.start()
+            self.ioloop.run()
         else:
             self.state = ACTOR_STATES.STOPPING
             yield self.close_monitors()

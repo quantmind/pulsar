@@ -1,12 +1,13 @@
 import os
 import sys
+import heapq
 import logging
 import traceback
 import time
 import signal
 import errno
-import bisect
 import socket
+from functools import partial
 from threading import current_thread
 
 from pulsar import HaltServer, Timeout
@@ -22,6 +23,11 @@ __all__ = ['IOLoop', 'PeriodicCallback', 'loop_timeout']
 
 LOGGER = logging.getLogger('pulsar.eventloop')
 
+if sys.version_info >= (3, 3):
+    timer = time.monotonic
+else:   #pragma    nocover
+    timer = time.time
+    
 def file_descriptor(fd):
     if hasattr(fd, 'fileno'):
         return fd.fileno()
@@ -32,30 +38,161 @@ def setid(self):
     self.tid = current_thread().ident
     self.pid = os.getpid()
 
+class StopEventLoop(BaseException):
+    """Raised to stop the event loop."""
 
-class LoopGuard(object):
-    '''Context manager for the eventloop'''
-    def __init__(self, loop):
-        self.loop = loop
-
-    def __enter__(self):
-        loop = self.loop
-        loop.logger.subdebug("Starting event loop")
-        loop._running = True
-        if not loop._started:
-            loop._started = time.time()
-        setid(loop)
-        loop._on_exit = Deferred(description='IOloop.on_exit')
-        return self
-
-    def __exit__(self, type, value, traceback):
-        loop = self.loop
-        loop._running = False
-        loop.logger.subdebug('Exiting event loop')
-        loop._on_exit.callback(loop)
+def _raise_stop_event_loop():
+    raise StopEventLoop
 
 
-class IOLoop(IObase, Synchronized):
+class TimedCall(object):
+    """An IOLoop timeout, a UNIX timestamp and a callback"""
+
+    def __init__(self, deadline, callback, args, canceller=None):
+        self.deadline = deadline
+        self.canceller = canceller
+        self._callback = callback
+        self._args = args
+        self._cancelled = False
+
+    def __lt__(self, other):
+        return self.deadline < other.deadline
+        
+    @property
+    def cancelled(self):
+        return self._cancelled
+    
+    @property
+    def callback(self):
+        return self._callback
+    
+    @property
+    def args(self):
+        return self._args
+    
+    def cancel(self):
+        '''Attempt to cancel the callback.'''
+        if not self.cancelled:
+            if self.canceller:
+                self.canceller(self)
+            self._cancelled = True
+
+    def __call__(self):
+        self._callback(*self._args)
+        
+        
+class FileDescriptor(IObase):
+    def __init__(self, fd, eventloop, read=None, write=None, connect=None):
+        self.fd = fd
+        self.eventloop = eventloop
+        self._connecting = False
+        self.handle_write = None
+        self.handle_read = None
+        if connect:
+            self.add_connector(connect)
+        elif write:
+            self.add_writer(write)
+        if read:
+            self.add_reader(read)
+
+    @property
+    def poller(self):
+        return self.eventloop._impl
+    
+    @property
+    def reading(self):
+        return bool(self.handle_read)
+    
+    @property
+    def writing(self):
+        return bool(self.handle_read)
+    
+    @property
+    def connecting(self):
+        return self._connecting
+    
+    @property
+    def state(self):
+        if self.reading:
+            if self.writing:
+                return self.READ | self.WRITE
+            else:
+                return self.READ
+        elif self.writing:
+            return self.WRITE
+            
+    @property
+    def state_code(self):
+        s = []
+        if self.state is None:
+            return 'closed'
+        if self.connecting:
+            s.append('connecting')
+        elif self.writing:
+            s.append('writing')
+        if self.reading:
+            s.append('reading')
+        return ' '.join(s) if s else 'idle'
+    
+    def add_connector(self, callback):
+        if self.state is not None:
+            raise RuntimeError('Cannot connect. State is %s.' % self.state_code)
+        self._connecting = True
+        self.add_writer(callback)
+        
+    def add_reader(self, callback):
+        if not self.handle_read:
+            current_state = self.state
+            self.handle_read = callback
+            self.modify_state(current_state, self.READ)
+        else:
+            raise RuntimeError("Asynchronous stream already reading!")
+        
+    def add_writer(self, callback):
+        if not self.handle_write:
+            current_state = self.state
+            self.handle_write = callback
+            self.modify_state(current_state, self.WRITE)
+        else:
+            raise RuntimeError("Asynchronous stream already writing!")
+        
+    def remove_connector(self):
+        self._connecting = False
+        return self.remove_writer()
+    
+    def remove_reader(self):
+        '''Remove reader and return True if writing'''
+        state = self.ERROR
+        if self.writing:
+            state |= self.WRITE
+        self.handle_read = None
+        self.modify_state(state)
+        return self.writing
+
+    def remove_writer(self):
+        '''Remove writer and return True if reading'''
+        state = self.ERROR
+        if self.reading:
+            state |= self.READ
+        self.handle_write = None
+        self.modify_state(state)
+        return self.reading
+    
+    def __call__(self, events):
+        if events & self.READ:
+            self.handle_read()
+        if events & self.WRITE:
+            self.handle_write()
+            
+    def modify_state(self, current_state, state):
+        if current_state != state:
+            if current_state is None:
+                self.poller.register(self.fd, state)
+            else:
+                self.poller.modify(self.fd, state)
+                
+
+class IOLoop(IObase):
     """\
 A level-triggered I/O event loop adapted from tornado.
 
@@ -105,22 +242,19 @@ A level-triggered I/O event loop adapted from tornado.
 
     def __init__(self, io=None, logger=None, poll_timeout=None):
         self._impl = io or IOpoll()
+        self.fd_factory = getattr(self._impl, 'fd_factory', FileDescriptor)
         self.poll_timeout = poll_timeout if poll_timeout else self.poll_timeout
         self.logger = logger or LOGGER
         if hasattr(self._impl, 'fileno'):
             close_on_exec(self._impl.fileno())
         self._handlers = {}
-        self._events = {}
         self._callbacks = []
         self._timeouts = []
         self._started = None
         self._running = False
         self.num_loops = 0
         self._waker = getattr(self._impl, 'waker', Waker)()
-        self._on_exit = None
-        self.add_handler(self._waker,
-                         lambda fd, events: self._waker.consume(),
-                         self.READ)
+        self.add_reader(self._waker, self._waker.consume)
 
     @property
     def cpubound(self):
@@ -156,11 +290,21 @@ file descriptor *fd*.
             self._impl.unregister(fdd)
         except (OSError, IOError):
             self.logger.error("Error removing %s from IOLoop", fd, exc_info=True)
-
-    def start(self):
-        if self._running:
-            return False
-        self._run()
+    
+    @property
+    def active(self):
+        return self._callbacks or self._timeouts or self._handlers
+    
+    def run(self):
+        '''Run the event loop until nothing left to do or stop() called.'''
+        try:
+            while self.active:
+                try:
+                    self._run_once()
+                except StopEventLoop:
+                    break
+        finally:
+            self._running = False
 
     def stop(self):
         '''Stop the loop after the current event loop iteration is complete.
@@ -176,15 +320,37 @@ unit tests), you can start and stop the event loop like this::
 
 :meth:`start` will return after async_method has run its callback,
 whether that callback was invoked before or after ioloop.start.'''
-        if self.running():
-            self._running = False
-            self.wake()
-        return self._on_exit
+        self.call_soon_threadsafe(_raise_stop_error)
 
     def running(self):
         """Returns true if this IOLoop is currently running."""
         return self._running
 
+    def call_later(self, seconds, callback, *args):
+        """Add a *callback* to be executed approximately *seconds* in the
+future, once, unless cancelled. A timeout callback  it is called
+at the time *deadline* from the :class:`IOLoop`.
+It returns an handle that may be passed to remove_timeout to cancel."""
+        if seconds > 0:
+            timeout = TimedCall(timer() + seconds, callback, args,
+                                self.remove_timeout)
+            heapq.heappush(self._scheduled, timeout)
+            return timeout
+        else:
+            return self.call_soon(callback, *args)
+
+    def call_soon(self, callback, *args):
+        '''Equivalent to ``self.call_later(0, callback, *args, **kw)``.'''
+        timeout = TimedCall(None, callback, args, self.remove_timeout)
+        self._callbacks.append(timeout)
+        return timeout
+    
+    def call_soon_threadsafe(self, callback, *args):
+        '''Equivalent to ``self.call_later(0, callback, *args, **kw)``.'''
+        timeout = self.call_soon(callback, *args)
+        self.wake()
+        return timeout
+    
     def add_timeout(self, deadline, callback):
         """Add a timeout *callback*. A timeout callback  it is called
 at the time *deadline* from the :class:`IOLoop`.
@@ -217,11 +383,34 @@ by the :meth:`add_timeout` method."""
         p.start()
         return p
         
+    def add_reader(self, fd, callback, *args):
+        """Add a reader callback.  Return a Handler instance."""
+        handler = TimedCall(None, callback, args)
+        fd = file_descriptor(fd)
+        if fd in self._handlers:
+            self._handlers[fd].add_reader(callback)
+        else:
+            self._handlers[fd] = self.fd_factory(fd, self, read=handler)
+        return handler
+    
+    def add_writer(self, fd, callback, *args):
+        """Add a reader callback.  Return a Handler instance."""
+        handler = TimedCall(None, callback, args, self)
+        fd = file_descriptor(fd)
+        if fd in self._handlers:
+            self._handlers[fd].add_writer(callback)
+        else:
+            self._handlers[fd] = self.fd_factory(fd, self, writer=handler)
+        return handler
+    
     def wake(self):
         '''Wake up the eventloop.'''
         if self.running():
             self._waker.wake()
 
+    def create_server(self, sock, protocol, **params):
+        pass
+    
     ############################################################ INTERNALS    
     def _run_callback(self, callback, name='callback'):
         try:
@@ -301,6 +490,47 @@ will make the loop stop after the current event iteration completes."""
                             self.logger.error("Exception in I/O handler for fd %s",
                                           fd, exc_info=True)
 
+    def _run_once(self, timeout=None):
+        self._running = True
+        setid(self)
+        poll_timeout = self.poll_timeout
+        self.num_loops += 1
+        # Prevent IO event starvation by delaying new callbacks
+        # to the next iteration of the event loop.
+        callbacks = self._callbacks
+        self._callbacks = []
+        if self._timeouts:
+            now = time.time()
+            while self._timeouts and self._timeouts[0].deadline <= now:
+                callbacks.append(self._timeouts.pop(0))
+            if self._timeouts:
+                seconds = self._timeouts[0].deadline - now
+                poll_timeout = min(seconds, poll_timeout)
+        try:
+            event_pairs = self._impl.poll(poll_timeout)
+        except Exception as e:
+            # Depending on python version and IOLoop implementation,
+            # different exception types may be thrown and there are
+            # two ways EINTR might be signaled:
+            # * e.errno == errno.EINTR
+            # * e.args is like (errno.EINTR, 'Interrupted system call')
+            eno = getattr(e, 'errno', None)
+            if eno != errno.EINTR:
+                args = getattr(e, 'args', None)
+                if isinstance(args, tuple) and len(args) == 2:
+                    eno = args[0]
+            if eno != errno.EINTR and self._running:
+                raise
+        else:
+            for fd, events in event_pairs:
+                callback.append(partial(self._handlers[fd], events))
+        for callback in callbacks:
+            try:
+                callback()
+            except Exception:
+                LOGGER.exception('Exception in callback %s', callback)
+        
+        
 
 class _Timeout(object):
     """An IOLoop timeout, a UNIX timestamp and a callback"""
