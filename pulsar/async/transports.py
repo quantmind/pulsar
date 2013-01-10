@@ -18,7 +18,21 @@ __all__ = ['Transport', 'ClientTransport', 'StreamingClientTransport',
 
     
 class Transport:
-    '''Base class for pulsar transports'''
+    '''Base class for pulsar transports. Design to conform with pep-3156 as
+close as possible until it is finalised.
+
+.. attribute: protocol
+
+    a the eventloop instance for this :class:`Transport`.
+    
+.. attribute: protocol
+
+    a the protocol instance for this :class:`Transport`.
+    
+.. attribute: sock
+
+    the socket for this :class:`Transport`.
+'''
     def __init__(self, event_loop, sock, protocol, **params):
         self._sock = sock
         self._event_loop = event_loop
@@ -35,6 +49,10 @@ class Transport:
     
     def __str__(self):
         return self.__repr__()
+    
+    @property
+    def protocol(self):
+        return self._protocol
     
     @property
     def closed(self):
@@ -57,7 +75,40 @@ class Transport:
         if self._sock:
             return self._sock.fileno()
         
+    ############################################################################
+    ###    PEP-3156    METHODS
     def write(self, data):
+        """Write some data bytes to the transport.
+        This does not block; it buffers the data and arranges for it
+        to be sent out asynchronously.
+        """
+        raise NotImplementedError
+    
+    def writelines(self, list_of_data):
+        """Write a list (or any iterable) of data bytes to the transport.
+If *list_of_data* is a generator, and during iteration an empty byte is yielded,
+the function will postpone writing the remaining of the generator at the
+next loop in the :attr:`eventloop`."""
+        if isgenerator(list_of_data):
+            self._write_lines_async(list_of_data)
+        else:
+            for data in list_of_data:
+                self.write(data)
+    
+    def pause(self):
+        """Pause the receiving end.
+
+        No data will be passed to the protocol's data_received()
+        method until resume() is called.
+        """
+        raise NotImplementedError
+
+    def resume(self):
+        """Resume the receiving end.
+
+        Data received will once again be passed to the protocol's
+        data_received() method.
+        """
         raise NotImplementedError
     
     def close(self):
@@ -66,14 +117,8 @@ class Transport:
     def abort(self):
         self.close()
     
-    def writelines(self, list_of_data):
-        """Write a list (or any iterable) of data bytes to the transport."""
-        if isgenerator(list_of_data):
-            self._write_lines_async(list_of_data)
-        else:
-            for data in list_of_data:
-                self.write(data)
-    
+    ############################################################################
+    ###    INTERNALS
     def _write_lines_async(self, lines):
         try:
             result = next(lines)
@@ -90,7 +135,7 @@ class Transport:
         raise NotImplementedError
     
     def on_close(self):
-        self._protocol.close()
+        self._sock.close()
         self._sock = None
         
     def _check_closed(self):
@@ -105,7 +150,7 @@ class Transport:
         
         
 class BaseClientTransport(Transport):
-    '''Transport for a :class:`Transport` for a client socket, either
+    '''A :class:`Transport` for a client socket, either
 a Server client connection or a remote client.'''
     default_timeout = 30
     largest_timeout = 604800
@@ -114,11 +159,15 @@ a Server client connection or a remote client.'''
         self._timeout = max(0, timeout) or self.largest_timeout  
         self._max_buffer_size = max_buffer_size or 104857600
         self._read_chunk_size = read_chunk_size or io.DEFAULT_BUFFER_SIZE
+        self._read_buffer = []
         self._write_buffer = deque()
         self._event_loop.add_writer(self.fileno(), self._ready_write)
         self._read_timeout = None
         self._writing = False
+        self._paused = False
         
+    ############################################################################
+    ###    PEP-3156    METHODS
     def write(self, data):
         """Write the given *data* to this stream. If there was previously
 buffered write data and an old write callback, that callback is simply
@@ -138,12 +187,15 @@ overwritten with this new callback.
         if not self._writing:
             self._ready_write()
 
-    def add_reader(self):
-        self._event_loop.add_reader(self.fileno(), self._ready_read)
-        self.add_read_timeout()
-        
-    def read_done(self):
-        pass
+    def pause(self):
+        self._paused = True
+
+    def resume(self):
+        self._paused = False
+        buffer = self._read_buffer
+        self._read_buffer = []
+        for data in buffer:
+            self._data_received(chunk)
     
     def close(self):
         """Closes the transport.
@@ -172,9 +224,16 @@ overwritten with this new callback.
             self._event_loop.remove_writer(self.fileno())
             self._write_buffer = deque()
         self.on_close()
-            
-    def on_close(self):
-        self._protocol.close()
+    
+    def add_reader(self):
+        self._event_loop.add_reader(self.fileno(), self._ready_read)
+        self.add_read_timeout()
+        
+    def read_done(self):
+        pass
+    
+    def on_close(self, exc=None):
+        self._protocol.connection_lost(exc)
         self._sock = None
     
     def close_read(self):
@@ -182,6 +241,12 @@ overwritten with this new callback.
         if self._read_timeout:
             self._read_timeout.cancel()
             self._read_timeout = None
+    
+    def _data_received(self, data):
+        if self._paused:
+            self._read_buffer.append(data)
+        else:
+            self._protocol.data_received(chunk)
             
     def _ready_read(self):
         # Read from the socket until we get EWOULDBLOCK or equivalent.
@@ -207,7 +272,7 @@ overwritten with this new callback.
                 self._read_timeout.cancel()
                 self._read_timeout = None
             try:
-                self._protocol.data_received(chunk)
+                self._data_received(chunk)
             except:
                 self.abort()
                 raise

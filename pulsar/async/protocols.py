@@ -15,9 +15,11 @@ class ConcurrentServer(object):
     def concurrent_request(self):
         return len(self.concurrent_requests)
     
+    
 class ProtocolError(Exception):
     '''Raised when the protocol encounter unexpected data. It will close
 the socket connection.'''
+
 
 class ProtocolResponse(object):
     '''A :class:`Protocol` response is responsible for parsing incoming data.'''
@@ -36,6 +38,10 @@ class ProtocolResponse(object):
     @property
     def protocol(self):
         return self._protocol
+    
+    @property
+    def transport(self):
+        return self._protocol.transport
         
     def feed(self, data):
         '''Feed new data into the :class:`ProtocolResponse`'''
@@ -50,10 +56,23 @@ class ProtocolResponse(object):
             self.event_loop.call_soon(self.write, data)
         else:
             self.protocol.transport.write(data)
-
-
+            
+    def writelines(self, lines):
+        '''Write an iterable of bytes. It is a proxy to
+:meth:`Transport.writelines`'''
+        self.transport.writelines(self._generate(lines))
+        
+    def _generate(self, lines):
+        self.transport.pause()
+        try:
+            for data in gen:
+                yield data
+        finally:
+            self.transport.resume()
+            
+        
 class Protocol(object):
-    '''Base class for a pulsar :class:`Protocol`.
+    '''Base class for a pulsar :class:`Protocol`. It conforms with pep-3156.
     
 .. attribute:: transport
 
@@ -110,15 +129,13 @@ The argument is a bytes object."""
     def eof_received(self):
         """Called when the other end calls write_eof() or equivalent."""
 
-    def close(self):
+    def connection_lost(self, exc):
         """Called when the connection is lost or closed.
 
         The argument is an exception object or None (the latter
         meaning a regular EOF is received or the connection was
         aborted or closed).
         """
-        if self.sock:
-            self.sock.close()
     
     
 class ClientProtocol(Protocol):
@@ -151,10 +168,6 @@ The argument is a bytes object."""
             if data:
                 if not response.finished():
                     raise ProtocolError
-    
-    # SHORTCUTS FOR TRANSPORTS
-    def writelines(self, data_lines):
-        self._transport.writelines(data_lines)
             
             
 class ServerProtocol(Protocol, ConcurrentServer):
