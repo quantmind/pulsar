@@ -15,6 +15,8 @@ from pulsar.utils.system import IObase, IOpoll, close_on_exec, platform, Waker
 from pulsar.utils.security import gen_unique_id
 from pulsar.utils.log import Synchronized
 from pulsar.utils.structures import WeakList
+from pulsar.utils.pep import default_timer, DefaultEventLoopPolicy,\
+                             set_event_loop_policy, set_event_loop
 
 from .defer import Deferred, is_async, maybe_async, thread_loop, make_async,\
                     log_failure, EXIT_EXCEPTIONS
@@ -23,10 +25,6 @@ __all__ = ['IOLoop', 'PeriodicCallback', 'loop_timeout']
 
 LOGGER = logging.getLogger('pulsar.eventloop')
 
-if sys.version_info >= (3, 3):
-    timer = time.monotonic
-else:   #pragma    nocover
-    timer = time.time
     
 def file_descriptor(fd):
     if hasattr(fd, 'fileno'):
@@ -43,6 +41,30 @@ class StopEventLoop(BaseException):
 
 def _raise_stop_event_loop():
     raise StopEventLoop
+
+
+class EventLoopPolicy(DefaultEventLoopPolicy):
+    _request_loop = None
+    def get_event_loop(self):
+        """Get the event loop.
+
+        This may be None or an instance of EventLoop.
+        """
+        return self._event_loop or self._request_loop
+    
+    def new_event_loop(self, **kwargs):
+        return IOLoop(**kwargs)
+    
+    def set_event_loop(self, event_loop):
+        """Set the event loop."""
+        assert event_loop is None or isinstance(event_loop, IOLoop)
+        if event_loop.cpubound:
+            self._request_loop = event_loop
+        else:
+            self._event_loop = event_loop
+    
+    
+set_event_loop_policy(EventLoopPolicy())
 
 
 class TimedCall(object):
@@ -240,9 +262,10 @@ A level-triggered I/O event loop adapted from tornado.
     # Never use an infinite timeout here - it can stall epoll
     poll_timeout = 0.5
 
-    def __init__(self, io=None, logger=None, poll_timeout=None):
+    def __init__(self, io=None, logger=None, poll_timeout=None, timer=None):
         self._impl = io or IOpoll()
         self.fd_factory = getattr(self._impl, 'fd_factory', FileDescriptor)
+        self.timer = timer or default_timer
         self.poll_timeout = poll_timeout if poll_timeout else self.poll_timeout
         self.logger = logger or LOGGER
         if hasattr(self._impl, 'fileno'):
@@ -297,15 +320,32 @@ file descriptor *fd*.
     
     def run(self):
         '''Run the event loop until nothing left to do or stop() called.'''
-        try:
-            while self.active:
-                try:
-                    self._run_once()
-                except StopEventLoop:
-                    break
-        finally:
-            self._running = False
+        if not self._running:
+            set_event_loop(self)
+            try:
+                while self.active:
+                    try:
+                        self._run_once()
+                    except StopEventLoop:
+                        break
+            finally:
+                self._running = False
 
+    def run_once(self, timeout=None):
+        """Run through all callbacks and all I/O polls once.
+
+        Calling stop() will break out of this too.
+        """
+        if not self._running:
+            set_event_loop(self)
+            try:
+                try:
+                    self._run_once(timeout)
+                except StopEventLoop:
+                    pass
+            finally:
+                self._running = False
+        
     def stop(self):
         '''Stop the loop after the current event loop iteration is complete.
 If the event loop is not currently running, the next call to :meth:`start`
@@ -332,7 +372,7 @@ future, once, unless cancelled. A timeout callback  it is called
 at the time *deadline* from the :class:`IOLoop`.
 It returns an handle that may be passed to remove_timeout to cancel."""
         if seconds > 0:
-            timeout = TimedCall(timer() + seconds, callback, args,
+            timeout = TimedCall(self.timer() + seconds, callback, args,
                                 self.remove_timeout)
             heapq.heappush(self._scheduled, timeout)
             return timeout
@@ -492,8 +532,8 @@ will make the loop stop after the current event iteration completes."""
 
     def _run_once(self, timeout=None):
         self._running = True
+        poll_timeout = timeout or self.poll_timeout
         setid(self)
-        poll_timeout = self.poll_timeout
         self.num_loops += 1
         # Prevent IO event starvation by delaying new callbacks
         # to the next iteration of the event loop.

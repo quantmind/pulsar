@@ -1,27 +1,27 @@
 from pulsar.utils.sockets import *
 
-from .transports import ServerTransport
+from .protocols import ServerProtocol
 
 __all__ = ['TCPServer']
 
 
-class TCPServer(ServerTransport):
+class TCPServer(ServerProtocol):
     '''An asynchronous  TCP server
     
 .. attribute:: timeout
 
     number of seconds to keep alive an idle client connection
 '''
-    def setup(self, numberAccepts=100, transport=None, response=None,
-              timeout=30, max_requests=0, **params):
+    def __init__(self, numberAccepts=100, transport=None, response=None,
+                  timeout=30, max_requests=0, protocol=None, **params):
         if platform.type == "posix":
             self._numberAccepts = max(numberAccepts, 1)
         else:
             self._numberAccepts = 1
         self.timeout = timeout
         self.max_requests = max_requests
-        if transport:
-            self.transport = transport
+        if protocol:
+            self.protocol = protocol
         if response:
             self.response = response 
         
@@ -57,11 +57,10 @@ class TCPServer(ServerTransport):
         except:
             LOGGER.error('Could not accept new connection', exc_info=True)
             
-    def on_close(self):
+    def close(self):
         try:
-            self._sock.shutdown(socket.SHUT_RDWR)
-            self._sock.close()
+            self.sock.shutdown(socket.SHUT_RDWR)
+            self.sock.close()
         except:
             pass
-        self._sock = None
         

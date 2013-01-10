@@ -250,7 +250,7 @@ Here ``a`` is actually a reference to the remote actor.
 
     @property
     def ioloop(self):
-        return self.mailbox.ioloop
+        return self.mailbox.event_loop
 
     @property
     def cpubound(self):

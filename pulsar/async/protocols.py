@@ -1,3 +1,5 @@
+from .transports import ServerTransport
+from .mixins import ConcurrentServer
 
 __all__ = ['Protocol', 'ProtocolResponse']
 
@@ -41,18 +43,7 @@ class Protocol(object):
 '''
     transport = None
     response = None
-    
-    def __init__(self, address, response=None):
-        self._processed = 0
-        self.address = address
-        self.current_response = None
-        if response:
-            self.response = response
         
-    @property
-    def processed(self):
-        return self._processed
-    
     @property
     def event_loop(self):
         if self.transport:
@@ -76,6 +67,35 @@ class Protocol(object):
     def data_received(self, data):
         """Called by the :attr:`transport` when some data is received.
 The argument is a bytes object."""
+            
+    def eof_received(self):
+        """Called when the other end calls write_eof() or equivalent."""
+
+    def connection_lost(self, exc):
+        """Called when the connection is lost or closed.
+
+        The argument is an exception object or None (the latter
+        meaning a regular EOF is received or the connection was
+        aborted or closed).
+        """
+    
+    
+class ClientProtocol(Protocol):
+    
+    def __init__(self, address, response=None):
+        self._processed = 0
+        self.address = address
+        self.current_response = None
+        if response:
+            self.response = response
+            
+    @property
+    def processed(self):
+        return self._processed
+    
+    def data_received(self, data):
+        """Called by the :attr:`transport` when some data is received.
+The argument is a bytes object."""
         response = self.current_response
         if response is not None and response.finished():
             response = None
@@ -86,15 +106,17 @@ The argument is a bytes object."""
         if data:
             self.data_received(data)
             
-    def eof_received(self):
-        """Called when the other end calls write_eof() or equivalent."""
-        self.transport.close()
-
-    def connection_lost(self, exc):
-        """Called when the connection is lost or closed.
-
-        The argument is an exception object or None (the latter
-        meaning a regular EOF is received or the connection was
-        aborted or closed).
-        """
+            
+class ServerProtocol(Protocol, ConcurrentServer):
+    '''Base class for all Server's protocols.
     
+.. attribute:: protocol
+
+    The :class:`Protocol` for a socket created from a connection of a remote
+    client with this server. It is usually a subclass of
+    :class:`ClientProtocol`.
+'''
+    protocol = ClientProtocol
+    
+    def create_transport(self, event_loop, sock):
+        ServerTransport(event_loop, sock, self)

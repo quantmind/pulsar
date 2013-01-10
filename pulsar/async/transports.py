@@ -7,8 +7,6 @@ from pulsar.utils.sockets import *
 from pulsar.utils.httpurl import range
 from pulsar.utils.structures import merge_prefix
 
-from .mixins import ConcurrentServer
-
 LOGGER = logging.getLogger('pulsar.transports')
 
 
@@ -72,7 +70,7 @@ class Transport:
         self.close()
     
     def on_close(self):
-        close_socket(self._sock)
+        pass
     
     def _check_closed(self):
         if self.closing:
@@ -180,7 +178,11 @@ class ServerConnection(Client):
         self.server.concurrent_requests.remove(self)
         
 
-class ServerTransport(Transport, ConcurrentServer):
-    transport = ServerConnection
-    response = None
+class ServerTransport(Transport):
+    
+    def ready_read(self):
+        self.protocol.ready_read()
 
+    def on_close(self):
+        self.protocol.close()
+        self._sock = None

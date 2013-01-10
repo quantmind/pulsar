@@ -1,3 +1,7 @@
+Ver. 0.5.0
+==============================
+* pep-3156
+
 Ver. 0.4.4
 ==============================
 * Documentation for development version hosted on github.

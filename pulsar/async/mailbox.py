@@ -202,12 +202,12 @@ with a :class:`Mailbox`.'''
 
 def create_mailbox(actor):
     if platform.type == 'posix':
-        address = 'unix:%s' % tempfile.mkdtemp('.pulsar')
-    else:
+        address = 'unix:%s.pulsar' % actor.aid
+    else:   #pragma    nocover
         address = ('127.0.0.1', 0)
-    deferred = create_server(address=address, onthread=actor.cpubound,
-                             protocol=MailboxProtocol, response=MailboxResponse)
-    deferred.add_callback(send_mailbox_address)
+    return create_server(actor, address=address, onthread=actor.cpubound,
+                         protocol=MailboxProtocol, response=MailboxResponse,
+                         call_soon=send_mailbox_address)
     
 def send_mailbox_address(self):
     actor = self.actor
