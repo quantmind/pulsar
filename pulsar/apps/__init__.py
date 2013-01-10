@@ -4,9 +4,9 @@ import sys
 from inspect import isfunction
 
 import pulsar
-from pulsar import Actor, make_async, safe_async, is_failure, HaltServer,\
-                     Monitor, loop_timeout, Deferred, get_actor, async
-from pulsar.async.defer import pickle
+from pulsar import Actor, safe_async, is_failure, HaltServer,\
+                     Monitor, Deferred, get_actor, async
+from pulsar.utils.pep import pickle
 from pulsar.utils import events
 from pulsar.utils.log import LogInformation
 

@@ -8,9 +8,10 @@ import pulsar
 from pulsar.utils import system
 from pulsar.utils.tools import Pidfile
 from pulsar.utils.security import gen_unique_id
+from pulsar.utils.pep import itervalues, iteritems
 from pulsar import HaltServer
 
-from .defer import itervalues, iteritems, multi_async, async
+from .defer import multi_async, async
 from .actor import Actor, ACTOR_STATES
 from .monitor import PoolMixin, _spawn_actor
 from .access import get_actor, set_actor
@@ -182,12 +183,14 @@ Users access the arbiter (in the arbiter process domain) by the high level api::
                 self.cfg.arbiter_task(self)
             except:
                 pass
-        self.ioloop.add_callback(self.periodic_task, False)
+        # requestloop and ioloop are the same. Use requestloop because ioloop
+        # is not available at startup
+        self.requestloop.call_soon(self.periodic_task)
 
     @async()
     def on_stop(self):
         '''Stop the pools the message queue and remaining actors.'''
-        if not self.ioloop.running():
+        if not self.ioloop.running:
             for pool in list(itervalues(self.monitors)):
                 pool.state = ACTOR_STATES.INACTIVE
             self.state = ACTOR_STATES.RUN
@@ -223,22 +226,18 @@ Users access the arbiter (in the arbiter process domain) by the high level api::
             self.cfg.when_ready(self)
         except:
             pass
+        crash = 0
         try:
-            self.requestloop.start()
-        except HaltServer as e:
-            self._halt(reason=str(e))
-        except (KeyboardInterrupt, SystemExit) as e:
-            self._halt(e.__class__.__name__)
-        except:
-            self._halt(code=1)
+            self.requestloop.run()
+        except Exception as e:
+            crash = 1
+        finally:
+            self._halt(crash)
 
-    def _halt(self, reason=None, code=None):
+    def _halt(self, code=0):
         if not self.closed():
-            if not reason:
-                self.logger.critical("Unhandled exception in main loop.",
-                                     exc_info=True)
-            else:
-                self.logger.info(reason)
+            if code:
+                self.logger.exception("Unhandled exception in main loop.")
             self.stop(True, exit_code=code)
 
     def _close_message_queue(self):

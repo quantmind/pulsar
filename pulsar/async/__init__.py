@@ -4,8 +4,7 @@ from .defer import *
 from .transports import *
 from .protocols import *
 from .tcp import *
-from .servers import * 
-from .iostream import *
+from .servers import *
 from .mailbox import *
 from .eventloop import *
 from .proxy import *

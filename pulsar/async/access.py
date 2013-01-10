@@ -2,10 +2,10 @@ import threading
 from threading import Thread, current_thread
 from multiprocessing import current_process
 
-__all__ = ['thread_loop',
-           'thread_ioloop',
+from pulsar.utils.pep import get_event_loop_policy
+
+__all__ = ['get_request_loop',
            'get_actor',
-           'set_local_data',
            'is_mainthread',
            'PulsarThread',
            'process_local_data',
@@ -16,6 +16,9 @@ def is_mainthread(thread=None):
 the current thread'''
     thread = thread if thread is not None else current_thread() 
     return isinstance(thread, threading._MainThread)
+
+def get_request_loop():
+    return get_event_loop_policy().get_request_loop()
 
 def process_local_data(name=None):
     '''Fetch the current process local data dictionary. If *name* is not
@@ -50,15 +53,6 @@ is None, it will get the value otherwise it will set the value.'''
             setattr(loc, name, value)
     return getattr(loc, name, None)
 
-def thread_loop(ioloop=None):
-    '''Returns the event loop (:class:`IOLoop`) on the current thread
-if available.'''
-    return thread_local_data('eventloop', ioloop)
-
-def thread_ioloop(ioloop=None):
-    '''Returns the :class:`IOLoop` on the current thread if available.'''
-    return thread_local_data('ioloop', ioloop)
-
 get_actor = lambda: thread_local_data('actor')
 
 def set_actor(actor):
@@ -79,21 +73,16 @@ actors with thread concurrency ince they live in the arbiter process domain.'''
     actors = process_local_data('thread_actors')
     if actors:
         return actors.get(aid)
-
-def set_local_data(actor):
-    set_actor(actor)
-    thread_loop(actor.requestloop)
-    thread_ioloop(actor.ioloop)
     
     
 class PulsarThread(Thread):
     
-    def __init__(self, *args, **kwargs):
-        self.actor = get_actor()
+    def __init__(self, actor, *args, **kwargs):
+        self.actor = actor
         super(PulsarThread, self).__init__(*args, **kwargs)
         
     def run(self):
-        set_local_data(self.actor)
+        set_actor(self.actor)
         super(PulsarThread, self).run()
         
         

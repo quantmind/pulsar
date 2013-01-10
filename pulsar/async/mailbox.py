@@ -2,14 +2,11 @@ import sys
 import logging
 import tempfile
 
-from pulsar import create_connection, MailboxError, server_socket,\
-                    wrap_socket, CouldNotParse, CommandNotFound,\
-                    platform, defaults
-from pulsar.utils.httpurl import to_bytes
+from pulsar import MailboxError, CouldNotParse, CommandNotFound, platform
+from pulsar.utils.pep import to_bytes, ispy3k, pickle, ispy3k, set_event_loop
 
-from .defer import maybe_async, pickle, is_async, log_failure,\
-                    async, is_failure, ispy3k, raise_failure
-from .access import get_actor
+from .defer import log_failure, async, is_failure, raise_failure
+from .access import get_actor, set_actor
 from .servers import create_server
 from .protocols import Protocol, ProtocolResponse
 
@@ -205,14 +202,18 @@ def create_mailbox(actor):
         address = 'unix:%s.pulsar' % actor.aid
     else:   #pragma    nocover
         address = ('127.0.0.1', 0)
-    return create_server(actor, address=address, onthread=actor.cpubound,
-                         protocol=MailboxProtocol, response=MailboxResponse,
-                         call_soon=send_mailbox_address)
+    return create_server(actor, address=address, protocol=MailboxProtocol,
+                         response=MailboxResponse,
+                         call_soon=lambda : send_mailbox_address(actor))
     
-def send_mailbox_address(self):
-    actor = self.actor
-    return actor.send(actor.monitor, 'mailbox_address', self.address)\
-                     .add_callback(actor.link_actor)
+def send_mailbox_address(actor):
+    actor.logger.info('%s started at address %s', actor, actor.mailbox)
+    a = get_actor()
+    if a is not actor:
+        set_actor(actor)
+    if not actor.is_arbiter():
+        return actor.send(actor.monitor, 'mailbox_address', self.address)\
+                    .add_callback(actor.link_actor)
 
 
 class MonitorMailbox(object):
@@ -227,8 +228,8 @@ arbiter inbox.'''
         return self.mailbox.address
 
     @property
-    def ioloop(self):
-        return self.mailbox.ioloop
+    def event_loop(self):
+        return self.mailbox.event_loop
 
     def _run(self):
         pass

@@ -1,8 +1,13 @@
+import logging
+
 from pulsar.utils.sockets import *
 
 from .protocols import ServerProtocol
 
 __all__ = ['TCPServer']
+
+
+LOGGER = logging.getLogger('pulsar.tcp')
 
 
 class TCPServer(ServerProtocol):
@@ -13,7 +18,7 @@ class TCPServer(ServerProtocol):
     number of seconds to keep alive an idle client connection
 '''
     def __init__(self, numberAccepts=100, transport=None, response=None,
-                  timeout=30, max_requests=0, protocol=None, **params):
+                 timeout=30, max_requests=0, protocol=None, **params):
         if platform.type == "posix":
             self._numberAccepts = max(numberAccepts, 1)
         else:
@@ -31,7 +36,7 @@ class TCPServer(ServerProtocol):
                 if self.closed:
                     return
                 try:
-                    sock, address = self._sock.accept()
+                    sock, address = self.sock.accept()
                 except socket.error as e:
                     if e.args[0] in (EWOULDBLOCK, EAGAIN):
                         self.numberAccepts = i
@@ -45,22 +50,12 @@ class TCPServer(ServerProtocol):
                         break
                     raise
                 # Build the protocol
-                protocol = self.protocol(address)
+                protocol = self.protocol(address, self.response)
                 if protocol is None:
                     sock.close()
                     continue
                 self.received += 1
-                session = self.received
-                transport = self.transport(self._event_loop, sock, protocol,
-                                           server=self, session=self.received)
-                protocol.connection_made(transport)
+                self.transport(sock, protocol, session=self.received)
         except:
-            LOGGER.error('Could not accept new connection', exc_info=True)
-            
-    def close(self):
-        try:
-            self.sock.shutdown(socket.SHUT_RDWR)
-            self.sock.close()
-        except:
-            pass
+            LOGGER.exception('Could not accept new connection')
         

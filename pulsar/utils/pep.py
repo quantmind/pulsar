@@ -1,6 +1,8 @@
 import sys
 import time
+import string
 import threading
+from inspect import istraceback
 
 ispy3k = sys.version_info >= (3, 0)
 ispy26 = sys.version_info < (2, 7)
@@ -13,6 +15,7 @@ else:   #pragma    nocover
     
     
 if ispy3k: # Python 3
+    import pickle
     string_type = str
     ascii_letters = string.ascii_letters
     zip = zip
@@ -56,8 +59,16 @@ if ispy3k: # Python 3
         else:
             return s
 
+    def raise_error_trace(err, traceback):
+        if istraceback(traceback):
+            raise err.with_traceback(traceback)
+        else:
+            raise err
+        
 else:   # pragma : no cover
     from itertools import izip as zip, imap as map
+    import cPickle as pickle
+    from ._py2 import *
     string_type = unicode
     ascii_letters = string.letters
     range = xrange
@@ -100,6 +111,12 @@ else:   # pragma : no cover
         
 ################################################################################
 ###    PEP 3156
+###    These classes will be eventually replaced by the standard lib
+
+class EventLoop(object):
+    '''This is just a signature'''
+    
+    
 class EventLoopPolicy:
     """Abstract policy for accessing the event loop."""
 

@@ -96,7 +96,6 @@ In addition, a :class:`SocketServer` in multi-process mode is only available for
  * Windows running python 3.2 or above.
 '''
 import pulsar
-from pulsar import AsyncIOStream
 
 
 class Bind(pulsar.Setting):
@@ -129,27 +128,19 @@ class Keepalive(pulsar.Setting):
 class SocketServer(pulsar.Application):
     '''This application bind a socket to a given address and listen for
 requests. The request handler is constructued from the
-:attr:`socket_server_factory` parameter/attribute.
-    
-.. attribute:: socket_server_factory
-
-    Callable which returns the asynchronous socket server, usually
-    a subclass of :class:`pulsar.AsyncSocketServer`.
+:attr:`handler` parameter/attribute.
     
 .. attribute:: address
 
     The socket address, available once the application has started.
     '''
     _app_name = 'socket'
-    socket_server_factory = None
     address = None
     
     def monitor_start(self, monitor):
         # if the platform does not support multiprocessing sockets set
         # the number of workers to 0.
         cfg = self.cfg
-        if not self.socket_server_factory:
-            raise TypeError('Socket server class not specified.')
         if not pulsar.platform.has_multiProcessSocket\
             or cfg.concurrency == 'thread':
             cfg.set('workers', 0)
@@ -162,16 +153,12 @@ requests. The request handler is constructued from the
             raise pulsar.ImproperlyConfigured('Could not open a socket. '
                                               'No address to bind to')
         self.logger.info('Listening on %s', sock)
-        monitor.params.socket = sock
+        monitor.params.sock = sock
         self.address = sock.address
     
     def worker_start(self, worker):
         # Start the worker by starting the socket server
-        s = self.socket_server_factory(worker, sock=worker.params.socket,
-                                       server_handler=self.handler(),
-                                       max_requests=self.cfg.max_requests,
-                                       timeout=self.cfg.keepalive)
-        worker.socket_server = s
+        worker.socket_server = self.create_server(worker)
     
     def worker_stop(self, worker):
         if hasattr(worker, 'socket_server'):
@@ -186,3 +173,12 @@ requests. The request handler is constructued from the
                           'active_connections': server.active_connections,
                           'received_connections': server.received}
         return data
+
+    def create_server(self, worker):
+        '''Create the Server Protocol which will listen for requests. It
+uses the :meth:`handler` as its response protocol.'''
+        return pulsar.create_server(worker, sock=worker.params.sock,
+                                    response = worker.app_handler,
+                                    max_requests=self.cfg.max_requests,
+                                    timeout=self.cfg.keepalive)
+    

@@ -1,58 +1,59 @@
 import sys
 import time
 import os
-import logging
 import socket
 from wsgiref.handlers import format_date_time
 from io import BytesIO
 
 import pulsar
-from pulsar import lib, make_async, is_async, AsyncSocketServer, Deferred,\
-                   AsyncConnection, AsyncResponse, HttpException
-from pulsar.utils.httpurl import Headers, is_string, unquote,\
-                                    has_empty_content, to_bytes,\
+from pulsar import lib, HttpException
+from pulsar.utils.pep import is_string, to_bytes
+from pulsar.utils.httpurl import Headers, unquote, has_empty_content,\
                                     host_and_port_default, mapping_iterator,\
                                     Headers, REDIRECT_CODES
 from pulsar.utils import events
 
-from .wsgi import WsgiResponse, handle_wsgi_error
+from .wsgi import WsgiResponse, handle_wsgi_error, LOGGER
 
 
-__all__ = ['HttpServer']
+__all__ = ['HttpServerResponse','MAX_CHUNK_SIZE']
+
+MAX_CHUNK_SIZE = 65536
 
 
-def wsgi_environ(connection, parser):
+def wsgi_environ(response, parser):
     """return a :ref:`WSGI <apps-wsgi>` compatible environ dictionary
 based on the current request. If the reqi=uest headers are not ready it returns
 nothing."""
+    protocol = response.protocol
     version = parser.get_version()
     input = BytesIO()
     for b in parser.get_body():
         input.write(b)
     input.seek(0)
-    protocol = parser.get_protocol()
+    prot = parser.get_protocol()
     environ = {
         "wsgi.input": input,
         "wsgi.errors": sys.stderr,
         "wsgi.version": version,
         "wsgi.run_once": True,
-        "wsgi.url_scheme": protocol,
+        "wsgi.url_scheme": prot,
         "SERVER_SOFTWARE": pulsar.SERVER_SOFTWARE,
         "REQUEST_METHOD": parser.get_method(),
         "QUERY_STRING": parser.get_query_string(),
         "RAW_URI": parser.get_url(),
-        "SERVER_PROTOCOL": protocol,
+        "SERVER_PROTOCOL": prot,
         'CONTENT_TYPE': '',
         "CONTENT_LENGTH": '',
-        'SERVER_NAME': connection.server.server_name,
-        'SERVER_PORT': connection.server.server_port,
+        'SERVER_NAME': response.server_name,
+        'SERVER_PORT': response.server_port,
         "wsgi.multithread": False,
         "wsgi.multiprocess":False
     }
     # REMOTE_HOST and REMOTE_ADDR may not qualify the remote addr:
     # http://www.ietf.org/rfc/rfc3875
     url_scheme = "http"
-    forward = connection.address
+    forward = protocol.address
     server = None
     url_scheme = "http"
     script_name = os.environ.get("SCRIPT_NAME", "")
@@ -114,21 +115,56 @@ If the size is 0, this is the last chunk, and an extra CRLF is appended.
     return head + chunk + b'\r\n'
 
 
-class HttpResponse(AsyncResponse):
+class HttpServerResponse(pulsar.ProtocolResponse):
     '''Handle an HTTP response for a :class:`HttpConnection`.'''
     _status = None
     _headers_sent = None
-    headers = None
-    MAX_CHUNK = 65536
-
+    
+    def __init__(self, wsgi_callable, protocol):
+        super(HttpServerResponse, self).__init__(protocol)
+        self.wsgi_callable = wsgi_callable
+        host, port = self.sock.address[:2]
+        self.server_name = socket.getfqdn(host)
+        self.server_port = port
+        self.parser = lib.Http_Parser(kind=0)
+        
+    def feed(self, data):
+        p = self.parser
+        request_headers = self.request_headers
+        if p.execute(bytes(data), len(data)) == len(data):
+            if request_headers is None:
+                self.expect_continue()
+            if p.is_message_complete():
+                self.environ = wsgi_environ(self, p)
+                # Once the environment is ready we kick of the wsgi response
+                self.protocol.writelines(self.generate(self.environ))
+        else:
+            # This is a parsing error, the client must have sent
+            # bogus data
+            raise ProtocolError
+    
     def default_headers(self):
         return Headers([('Server', pulsar.SERVER_SOFTWARE),
                         ('Date', format_date_time(time.time()))])
-
+    
     @property
-    def environ(self):
-        return self.parsed_data
+    def request_headers(self):
+        if self.parser.is_headers_complete():
+            return self.parser.get_headers()
+        
+    def expect_continue(self):
+        '''Handle the expect=100-continue header if available, according to
+the following algorithm:
 
+* Send the 100 Continue response before waiting for the body.
+* Omit the 100 (Continue) response if it has already received some or all of
+  the request body for the corresponding request.
+    '''
+        headers = self.request_headers
+        if headers is not None and headers.get('Expect') == '100-continue':
+            if not self.parser.is_message_complete():
+                self.protocol.write(b'HTTP/1.1 100 Continue\r\n\r\n')
+    
     @property
     def status(self):
         return self._status
@@ -196,7 +232,7 @@ invocation of the application.
                 exc_info = None
         elif self._status:
             # Headers already sent. Raise error
-            raise pulsar.HttpException("Response headers already sent!")
+            raise HttpException("Response headers already sent!")
         self._status = status
         if type(response_headers) is not list:
             raise TypeError("Headers must be a list of name/value tuples")
@@ -208,61 +244,57 @@ invocation of the application.
         '''The write function required by WSGI specification.'''
         head = self.send_headers(force=data)
         if head:
-            self.connection.write(head)
+            self.protocol.write(head)
         if data:
-            self.connection.write(data)
+            self.protocol.write(data)
 
-    def _generate(self, response):
-        MAX_CHUNK = self.MAX_CHUNK
-        for b in response:
-            head = self.send_headers(force=b)
-            if head is not None:
-                yield head
-            if b:
-                if self.chunked:
-                    while len(b) >= MAX_CHUNK:
-                        chunk, b = b[:MAX_CHUNK], b[MAX_CHUNK:]
-                        yield chunk_encoding(chunk)
-                    if b:
-                        yield chunk_encoding(b)
-                else:
-                    yield b
-            else:
-                yield b''
-            
-    def __iter__(self):
-        conn = self.connection
+    def generate(self, environ):
+        exc_info = None
         keep_alive = self.keep_alive
-        self.environ['pulsar.connection'] = self.connection
-        try:
-            resp = conn.server.app_handler(self.environ, self.start_response)
-            for b in self._generate(resp):
-                yield b
-        except Exception as e:
-            exc_info = sys.exc_info()
-            if self._headers_sent:
-                keep_alive = False
-                conn.log.critical('Headers already sent', exc_info=exc_info)
-                yield b'CRITICAL SERVER ERROR. Please Contact the administrator'
+        wsgi = lambda e, s, err: self.wsgi_callable(e,s)
+        while True:
+            try:
+                for b in wsgi(environ, self.start_response, exc_info):
+                    head = self.send_headers(force=b)
+                    if head is not None:
+                        yield head
+                    if b:
+                        if self.chunked:
+                            while len(b) >= MAX_CHUNK_SIZE:
+                                chunk, b = b[:MAX_CHUNK_SIZE], b[MAX_CHUNK_SIZE:]
+                                yield chunk_encoding(chunk)
+                            if b:
+                                yield chunk_encoding(b)
+                        else:
+                            yield b
+                    else:
+                        yield b''
+            except Exception as e:
+                if exc_info or self._headers_sent:
+                    keep_alive = False
+                    LOGGER.critical('Could not send valid response',
+                                    exc_info=True)
+                    break
+                else:
+                    exc_info = sys.exc_info()
+                    wsgi = handle_wsgi_error(environ, exc_info)
+                    if keep_alive and wsgi.status_code in REDIRECT_CODES:
+                        wsgi.headers['connection'] = 'keep-alive'
+                    else:
+                        keep_alive = False
+                        wsgi.headers['connection'] = 'close'
             else:
-                # Create the error response
-                resp = handle_wsgi_error(self.environ, exc_info)
-                keep_alive = keep_alive and resp.status_code in REDIRECT_CODES
-                resp.headers['connection'] =\
-                    "keep-alive" if keep_alive else "close"
-                resp(self.environ, self.start_response, exc_info)
-                for b in self._generate(resp):
-                    yield b
-        # make sure we send the headers
-        head = self.send_headers(force=True)
-        if head is not None:
-            yield head
-        if self.chunked:
-            # Last chunk
-            yield chunk_encoding(b'')
-        # close connection if required
+                head = self.send_headers(force=True)
+                if head is not None:
+                    yield head
+                if self.chunked:
+                    # Last chunk
+                    yield chunk_encoding(b'')
+                break
+        # close transport if required
         if not keep_alive:
-            self.connection.close()
+            self.protocol.close()
+        self._finished = True
 
     def is_chunked(self):
         '''Only use chunked responses when the client is
@@ -304,58 +336,4 @@ is an HTTP upgrade (websockets)'''
                 events.fire('http-headers', self, headers=tosend)
                 self._headers_sent = tosend.flat(self.version, self.status)
                 return self._headers_sent
-
-    def close(self, msg=None):
-        self.connection._current_response = None
-        if not self.keep_alive:
-            return self.connection.close(msg)
-
-
-class HttpProtocol:
-    connection = None
-    def __init__(self):
-        self.parser = lib.Http_Parser(kind=0)
-        
-    def decode(self, data):
-        p = self.parser
-        if p.is_message_complete():
-            self.parser = p = lib.Http_Parser(kind=0)
-        if data:
-            headers = self.headers()
-            if p.execute(bytes(data), len(data)) == len(data):
-                if headers is None:
-                    self.expect_continue()
-                if p.is_message_complete():
-                    return wsgi_environ(self.connection, p), bytearray()
-        return None, bytearray()
-    
-    def headers(self):
-        if self.parser.is_headers_complete():
-            return self.parser.get_headers()
-    
-    def expect_continue(self):
-        '''Handle the expect=100-continue header if available, according to
-the following algorithm:
-
-* Send the 100 Continue response before waiting for the body.
-* Omit the 100 (Continue) response if it has already received some or all of
-  the request body for the corresponding request.
-    '''
-        headers = self.headers()
-        if headers is not None and headers.get('Expect') == '100-continue':
-            if not self.parser.is_message_complete():
-                self.connection.write(b'HTTP/1.1 100 Continue\r\n\r\n')
-
-
-class HttpServer(AsyncSocketServer):
-    response_class = HttpResponse
-    protocol_factory = HttpProtocol
-
-    def __init__(self, *args, **kwargs):
-        super(HttpServer, self).__init__(*args, **kwargs)
-        host, port = self.sock.getsockname()[:2]
-        self.server_name = socket.getfqdn(host)
-        self.server_port = port
-        self.app_handler = self.actor.app_handler
-    
 

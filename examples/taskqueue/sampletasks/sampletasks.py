@@ -1,7 +1,7 @@
 import time
 from datetime import timedelta
 
-from pulsar import thread_loop, NOT_DONE
+from pulsar import get_request_loop, NOT_DONE
 from pulsar.apps import tasks
 
 
@@ -27,7 +27,7 @@ class Asynchronous(tasks.Job):
     
     def __call__(self, consumer, loops=1):
         loop = 0
-        rl = thread_loop()
+        rl = get_request_loop()
         start = rl.num_loops
         while loop < loops:
             yield NOT_DONE

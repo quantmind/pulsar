@@ -2,14 +2,6 @@
 class PulsarException(Exception):
     '''Base class of all Pulsar Exception'''
 
-class Timeout(PulsarException):
-    '''Raised when a timeout occurs'''
-    def __init__(self, msg, timeout=None):
-        self.timeout = timeout
-        if timeout:
-            msg = msg + ' Timeout {0} surpassed.'.format(self.timeout)
-        super(Timeout,self).__init__(msg)
-
 class ImproperlyConfigured(PulsarException):
     '''A :class:`PulsarException` raised when pulsar has inconsistent
 configuration.'''
@@ -25,7 +17,7 @@ class MailboxError(PulsarException):
 class ActorAlreadyStarted(PulsarException):
     '''A :class:`PulsarException` raised when trying to start an actor already started'''
 
-class HaltServer(PulsarInternetException):
+class HaltServer(BaseException):
 
     def __init__(self, reason='Halt', signal=None):
         super(HaltServer,self).__init__(reason)

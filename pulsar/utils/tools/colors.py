@@ -65,7 +65,6 @@ class ColorFormatter(logging.Formatter):
 
     def format(self, record):
         levelname = record.levelname
-
         if self.use_color:
             COLORS = self.COLORS
             if not levelname in COLORS:
@@ -75,5 +74,4 @@ class ColorFormatter(logging.Formatter):
                 if name in _COLOR_MAP:
                     wrap = _COLOR_MAP[name]
                     record.msg = wrap(record.msg)
-
         return logging.Formatter.format(self, record)

@@ -2,12 +2,10 @@ import time
 from multiprocessing import Process, current_process
 from threading import Thread, current_thread
 
-from pulsar import system, wrap_socket, platform, socket_pair
+from pulsar import system, platform
 from pulsar.utils.security import gen_unique_id
 
-from .iostream import AsyncIOStream
 from .proxy import ActorProxyMonitor, get_proxy
-from .defer import pickle, EXIT_EXCEPTIONS
 from .access import get_actor, get_actor_from_id
 
 
@@ -105,7 +103,7 @@ class ActorConcurrency(Concurrency):
         try:
             actor = self.actor_class(self)
             actor.start()
-        except EXIT_EXCEPTIONS:
+        except:
             # This is needed in windows in order to avoid useless traceback
             # on KeyboardInterrupt
             pass

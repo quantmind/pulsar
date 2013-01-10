@@ -38,9 +38,8 @@ ASYNC_TIMEOUT = None
 SERVER_SOFTWARE = "python-{0}/{1}".format(SERVER_NAME, version)
 
 from .utils.exceptions import *
-from .utils.sock import *
 from .utils import system
-from .utils.sockets import create_socket
+from .utils.sockets import create_socket, parse_address
 from .utils.httpurl import to_string, native_str, to_bytes
 platform = system.platform
 

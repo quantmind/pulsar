@@ -9,8 +9,9 @@ from inspect import isgenerator, isfunction, ismethod, istraceback
 from time import sleep
 
 from pulsar import AlreadyCalledError, DeferredFailure, HaltServer
+from pulsar.utils.pep import raise_error_trace, iteritems
 
-from .access import thread_loop
+from .access import get_request_loop
 
 EXIT_EXCEPTIONS = (KeyboardInterrupt, SystemExit, HaltServer)
 
@@ -28,31 +29,10 @@ __all__ = ['Deferred',
            'safe_async',
            'async',
            'multi_async',
-           'ispy3k',
            'NOT_DONE',
            'STOP_ON_FAILURE',
            'EXIT_EXCEPTIONS',
            'CLEAR_ERRORS']
-
-ispy3k = sys.version_info >= (3, 0)
-if ispy3k:
-    import pickle
-    iteritems = lambda d : d.items()
-    itervalues = lambda d : d.values()
-    def raise_error_trace(err, traceback):
-        if istraceback(traceback):
-            raise err.with_traceback(traceback)
-        else:
-            raise err
-    range = range
-    can_generate = lambda gen: hasattr(gen, '__next__')
-else:   # pragma : nocover
-    import cPickle as pickle
-    from pulsar.utils._py2 import *
-    iteritems = lambda d : d.iteritems()
-    itervalues = lambda d : d.itervalues()
-    range = xrange
-    can_generate = lambda gen: hasattr(gen, 'next')
 
 # Special objects
 class NOT_DONE(object):
@@ -66,7 +46,7 @@ class CLEAR_ERRORS(object):
 
 EMPTY_DICT = {}
 
-logger = logging.getLogger('pulsar.async.defer')
+LOGGER = logging.getLogger('pulsar.defer')
 
 remote_stacktrace = namedtuple('remote_stacktrace', 'error_class error trace')
 
@@ -325,7 +305,7 @@ class Failure(object):
     def log(self, log=None):
         if not self.logged:
             self.logged = True
-            log = log or logger
+            log = log or LOGGER
             for e in self:
                 log.critical(self.msg, exc_info=e)
 
@@ -489,13 +469,11 @@ occurred.
 '''
     def __init__(self, gen, max_errors=None, description=None):
         self.gen = gen
-        if not can_generate(gen):
-            raise TypeError('DeferredGenerator requires an iterable')
         self.max_errors = max(1, max_errors) if max_errors else 0
         self._consumed = 0
         self.errors = Failure()
         super(DeferredGenerator,self).__init__(description=description)
-        self.loop = thread_loop()
+        self.loop = get_request_loop()
         self._consume()
 
     def _resume_in_thread(self, result=None):

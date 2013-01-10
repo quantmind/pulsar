@@ -3,9 +3,6 @@ import pulsar
 from pulsar import lib
 from pulsar.utils import httpurl
 
-from .iostream import AsyncIOStream
-
-
 __all__ = ['HttpClient']
     
 

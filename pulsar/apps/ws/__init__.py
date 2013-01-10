@@ -50,7 +50,7 @@ import hashlib
 from functools import partial
 
 import pulsar
-from pulsar import maybe_async, is_async, safe_async, is_failure, ClientSocket
+from pulsar import maybe_async, is_async, safe_async, is_failure
 from pulsar.utils.httpurl import ispy3k, to_bytes, native_str,\
                                  itervalues, parse_qs, WEBSOCKET_VERSION
 from pulsar.apps.wsgi import WsgiResponse, wsgi_iterator
@@ -271,7 +271,7 @@ client. This is a chance to add or remove header's entries."""
         return Frame.close(msg, version=connection.protocol.version)
     
     
-class WebSocketClient(ClientSocket):
+class WebSocketClientProtocol(pulsar.ClientProtocol):
     
     def isclosed(self):
         # For compatibility with HttpResponse

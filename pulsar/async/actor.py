@@ -19,15 +19,15 @@ ThreadQueue = queue.Queue
 from pulsar import AlreadyCalledError, AlreadyRegistered,\
                    ActorAlreadyStarted, LogginMixin, system, Config
 from pulsar.utils.structures import AttributeDictionary
+from pulsar.utils.pep import pickle
 from pulsar.utils import events
+
 from .eventloop import IOLoop, setid
 from .proxy import ActorProxy, ActorMessage, get_command, get_proxy
-from .defer import make_async, is_failure, iteritems, itervalues,\
-                     pickle, async, log_failure, is_async,\
-                     as_failure, EXIT_EXCEPTIONS
+from .defer import make_async, is_failure, async, log_failure, is_async
 from .queue import IOQueue
 from .mailbox import mailbox
-from .access import set_local_data, is_mainthread, get_actor, remove_actor
+from .access import set_actor, is_mainthread, get_actor, remove_actor
 
 
 __all__ = ['is_actor', 'send', 'Actor', 'ACTOR_STATES', 'Pulsar', 'ThreadQueue']
@@ -195,10 +195,7 @@ Here ``a`` is actually a reference to the remote actor.
         self.__impl = impl
         on_event = impl.params.pop('on_event', None)
         ioqueue = impl.params.pop('ioqueue', None)
-        if not self.is_arbiter():
-            if on_event:
-                self.on_event = lambda fd, event: on_event(self, fd, event)
-        else:
+        if self.is_arbiter():
             ioqueue = None
         self.request_processed = 0
         self.concurrent_requests = 0
@@ -419,10 +416,10 @@ properly this actor will go out of scope.'''
             if self.active():
                 self.send('arbiter', 'notify', self.info())
                 secs = max(ACTOR_TIMEOUT_TOLERANCE*self.cfg.timeout, MIN_NOTIFY)
-                next = time() + min(secs, MAX_NOTIFY)
-                self.ioloop.add_timeout(next, self.periodic_task)
+                next = min(secs, MAX_NOTIFY)
+                self.ioloop.call_later(next, self.periodic_task)
             else:
-                self.ioloop.add_callback(self.periodic_task, False)
+                self.ioloop.call_soon(self.periodic_task)
         
     def proxy_mailbox(self, address):
         m = self.proxy_mailboxes.get(address)
@@ -516,8 +513,7 @@ if *proxy* is not a class:`ActorProxy` instance raise an exception.'''
                     except ValueError:
                         break
         self.mailbox = mailbox(self)
-        set_local_data(self)
-        self.logger.info('%s started at address %s', self, self.mailbox.address)
+        set_actor(self)
 
     def _queue_signal(self, sig, frame=None):
         self.signal_queue.put(sig)

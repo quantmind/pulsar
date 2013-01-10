@@ -17,7 +17,6 @@ except ImportError: #pragma    nocover
     
 from pulsar import HttpRedirect, LocalMixin, local_property, version
 from pulsar.apps import wsgi, ws
-from pulsar.apps.wsgi.server import HttpResponse
 from pulsar.utils.structures import OrderedDict
 from pulsar.utils.httpurl import Headers, parse_qs, ENCODE_URL_METHODS,\
                                  responses, has_empty_content, addslash,\
@@ -190,7 +189,7 @@ class HttpBin(LocalMixin):
         return self.response(info_data(environ))
     
     @route('getsize', title='Returns a preset size of data',
-           params=[('size', int(2.5*HttpResponse.MAX_CHUNK))])
+           params=[('size', int(2.5*wsgi.MAX_CHUNK_SIZE))])
     def request_getsize(self, environ, bits):
         if len(bits) == 1:
              size = int(bits[0])

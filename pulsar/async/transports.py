@@ -1,5 +1,7 @@
+import io
 import socket
 import logging
+from inspect import isgenerator
 
 from collections import deque
 
@@ -9,7 +11,12 @@ from pulsar.utils.structures import merge_prefix
 
 LOGGER = logging.getLogger('pulsar.transports')
 
+WRITE_BUFFER_MAX_SIZE = 128 * 1024  # 128 kb
 
+__all__ = ['Transport', 'ClientTransport', 'StreamingClientTransport',
+           'ServerConnectionTransport', 'ServerTransport']
+
+    
 class Transport:
     '''Base class for pulsar transports'''
     def __init__(self, event_loop, sock, protocol, **params):
@@ -18,11 +25,16 @@ class Transport:
         self._protocol = protocol
         self._closing = False
         self.setup(**params)
-        self._event_loop.add_reader(self._sock.fileno(), self.ready_read)
-        self._event_loop.call_soon(self._protocol.connection_made, self)
+        self._protocol.connection_made(self)
     
     def setup(self, **params):
         pass
+    
+    def __repr__(self):
+        return 'transport for %s' % self._protocol
+    
+    def __str__(self):
+        return self.__repr__()
     
     @property
     def closed(self):
@@ -33,47 +45,56 @@ class Transport:
         return self._sock
     
     @property
+    def address(self):
+        if self._sock:
+            return self._sock.address
+    
+    @property
     def event_loop(self):
         return self._event_loop
     
+    def fileno(self):
+        if self._sock:
+            return self._sock.fileno()
+        
     def write(self, data):
         raise NotImplementedError
     
-    def writelines(self, list_of_data):
-        """Write a list (or any iterable) of data bytes to the transport."""
-        for data in list_of_data:
-            self.write(data)
-    
-    def ready_read(self):
+    def close(self):
         raise NotImplementedError
     
-    def close(self):
-        """Closes the transport.
-
-        Buffered data will be flushed asynchronously.  No more data
-        will be received.  After all buffered data is flushed, the
-        protocol's connection_lost() method will (eventually) called
-        with None as its argument.
-        """
-        if not self.closed:
-            self._closing = True
-            self._event_loop.remove_reader(self._sock.fileno())
-            self.on_close()
-    
     def abort(self):
-        """Closes the transport immediately.
-
-        Buffered data will be lost.  No more data will be received.
-        The protocol's connection_lost() method will (eventually) be
-        called with None as its argument.
-        """
         self.close()
     
-    def on_close(self):
-        pass
+    def writelines(self, list_of_data):
+        """Write a list (or any iterable) of data bytes to the transport."""
+        if isgenerator(list_of_data):
+            self._write_lines_async(list_of_data)
+        else:
+            for data in list_of_data:
+                self.write(data)
     
+    def _write_lines_async(self, lines):
+        try:
+            result = next(lines)
+            if result == b'':
+                # stop writing and resume at next loop
+                self._event_loop.call_soon(self._write_lines_async, lines)
+            else:
+                self.write(result)
+                self._write_lines_async(lines)
+        except StopIteration:
+            pass
+        
+    def _ready_read(self):
+        raise NotImplementedError
+    
+    def on_close(self):
+        self._protocol.close()
+        self._sock = None
+        
     def _check_closed(self):
-        if self.closing:
+        if self._sock is None:
             raise IOError("Transport is closed")
         
     def _call_connection_lost(self, exc):
@@ -83,14 +104,19 @@ class Transport:
             self._sock.close()
         
         
-class Client(Transport):
+class BaseClientTransport(Transport):
     '''Transport for a :class:`Transport` for a client socket, either
 a Server client connection or a remote client.'''
-    def setup(self, max_buffer_size=None, read_chunk_size=None, timeout=30):
-        self.max_buffer_size = max_buffer_size or 104857600
-        self.read_chunk_size = read_chunk_size or io.DEFAULT_BUFFER_SIZE
-        self.async_timeout = timeout
+    default_timeout = 30
+    largest_timeout = 604800
+    def setup(self, max_buffer_size=None, read_chunk_size=None, timeout=None):
+        timeout = timeout if timeout is not None else self.default_timeout
+        self._timeout = max(0, timeout) or self.largest_timeout  
+        self._max_buffer_size = max_buffer_size or 104857600
+        self._read_chunk_size = read_chunk_size or io.DEFAULT_BUFFER_SIZE
         self._write_buffer = deque()
+        self._event_loop.add_writer(self.fileno(), self._ready_write)
+        self._read_timeout = None
         self._writing = False
         
     def write(self, data):
@@ -110,9 +136,54 @@ overwritten with this new callback.
                 self._write_buffer.append(data)
         #
         if not self._writing:
-            self._handle_write()
+            self._ready_write()
 
-    def ready_read(self):
+    def add_reader(self):
+        self._event_loop.add_reader(self.fileno(), self._ready_read)
+        self.add_read_timeout()
+        
+    def read_done(self):
+        pass
+    
+    def close(self):
+        """Closes the transport.
+
+        Buffered data will be flushed asynchronously.  No more data
+        will be received.  After all buffered data is flushed, the
+        protocol's connection_lost() method will (eventually) called
+        with None as its argument.
+        """
+        if not self.closed:
+            self._closing = True
+            self.close_read()
+            if not self._write_buffer:
+                self._event_loop.call_soon(self.on_close)
+    
+    def abort(self):
+        """Closes the transport immediately.
+
+        Buffered data will be lost.  No more data will be received.
+        The protocol's connection_lost() method will (eventually) be
+        called with None as its argument.
+        """
+        if not self._closing:
+            self._closing = True
+            self.close_read()
+            self._event_loop.remove_writer(self.fileno())
+            self._write_buffer = deque()
+        self.on_close()
+            
+    def on_close(self):
+        self._protocol.close()
+        self._sock = None
+    
+    def close_read(self):
+        self._event_loop.remove_reader(self._sock.fileno())
+        if self._read_timeout:
+            self._read_timeout.cancel()
+            self._read_timeout = None
+            
+    def _ready_read(self):
         # Read from the socket until we get EWOULDBLOCK or equivalent.
         # SSL sockets do some internal buffering, and if the data is
         # sitting in the SSL object's buffer select() and friends
@@ -121,23 +192,28 @@ overwritten with this new callback.
         close = True
         while True:
             try:
-                chunk = self._sock.recv(self.read_chunk_size)
+                chunk = self._sock.recv(self._read_chunk_size)
             except socket.error as e:
-                if se.args[0] == EWOULDBLOCK:
+                if e.args[0] == EWOULDBLOCK:
                     close = False
                 else:
+                    self.close()
                     raise
             if not chunk:
                 if close:
                     self.close()
                 break
-            self._protocol.data_received(chunk)
+            if self._read_timeout:
+                self._read_timeout.cancel()
+                self._read_timeout = None
+            try:
+                self._protocol.data_received(chunk)
+            except:
+                self.abort()
+                raise
+        self.read_done()
             
-    def on_close(self):
-        if not self._buffer:
-            self._event_loop.call_soon(self._call_connection_lost, None)
-            
-    def _handle_write(self):
+    def _ready_write(self):
         # keep count how many bytes we write
         tot_bytes = 0
         while self._write_buffer:
@@ -157,32 +233,84 @@ overwritten with this new callback.
                 self._write_buffer.popleft()
                 tot_bytes += sent
             except socket.error as e:
-                if async_error(e):
+                if e.args[0] in (EWOULDBLOCK, ENOBUFS, EINPROGRESS):
                     break
                 else:
                     LOGGER.warning("Write error on %s: %s", self, e)
-                    self.close()
+                    self.abort()
                     return
         self._writing = bool(self._write_buffer)
+        if not self._writing and self._closing:
+            self._event_loop.call_soon(self.on_close)
         return tot_bytes
-            
-            
-class ServerConnection(Client):
+                
+    def _timed_out(self, name, timeout):
+        LOGGER.info('"%s" timed out on %s after %d seconds.'
+                     % (name, self, timeout))
+        self.on_timeout(name)
+        
+    def on_timeout(self, name):
+        self.close()
+        
+    def add_read_timeout(self):
+        if not self.closed and not self._read_timeout:
+            self._read_timeout = self._event_loop.call_later(self._timeout,
+                                                             self._timed_out,
+                                                             'read',
+                                                             self._timeout)
+
+
+class StreamingClientTransport(BaseClientTransport):
+    default_timeout = 30
+    largest_timeout = 604800
     
-    def setup(self, server=None, session=None):
+    def setup(self, **kwargs):
+        super(StreamingClientTransport, self).setup(**kwargs)
+        self.add_reader()
+
+    def read_done(self):
+        self.add_read_timeout()
+
+
+class ClientTransport(BaseClientTransport):
+    ''':class:`ClientTransport` for non-streaming clients.'''
+    default_timeout = 10
+    largest_timeout = 30      
+    
+    
+class ServerConnectionTransport(StreamingClientTransport):
+    '''A :class:`StreamingClientTransport` for transport associated with client
+sockets obtain from ``accept`` in TCP server sockets or ``recvfrom``
+in UDP server sockets.'''
+    def setup(self, server=None, session=None, **kwargs):
         self.server = server
         self.session = session
         self.server.concurrent_requests.add(self)
+        super(ServerConnectionTransport, self).setup(**kwargs)
         
     def on_close(self):
-        self.server.concurrent_requests.remove(self)
+        self.server.concurrent_requests.discard(self)
+        super(ServerConnectionTransport, self).on_close()
         
 
 class ServerTransport(Transport):
+    connection_transport = ServerConnectionTransport
     
-    def ready_read(self):
-        self.protocol.ready_read()
+    def setup(self, **kwargs):
+        self._event_loop.add_reader(self.fileno(), self._ready_read)
+    
+    def close(self):
+        if not self.closed:
+            self._closing = True
+            self._event_loop.remove_reader(self._sock.fileno())
+            self.on_close()
+    
+    def _ready_read(self):
+        self._protocol.ready_read()
 
-    def on_close(self):
-        self.protocol.close()
-        self._sock = None
+    def __call__(self, sock, protocol, **params):
+        # Build a transport for a client server connection
+        sock = wrap_client_socket(sock)
+        return self.connection_transport(self.event_loop, sock, protocol,
+                                         server=self._protocol, **params)
+        

@@ -4,13 +4,14 @@ from time import time
 
 import pulsar
 from pulsar.utils.structures import AttributeDictionary
+from pulsar.utils.pep import iteritems, itervalues, range
 
 from . import proxy
 from .actor import Actor, ACTOR_STATES, ACTOR_TERMINATE_TIMEOUT,\
                      ACTOR_STOPPING_LOOPS
 from .eventloop import setid
 from .concurrency import concurrency
-from .defer import async, iteritems, itervalues, range, NOT_DONE
+from .defer import async, NOT_DONE
 from .queue import Queue
 from .mailbox import mailbox
 
@@ -317,7 +318,7 @@ Users shouldn't need to override this method, but use
             self.spawn_actors()
             self.stop_actors()
             self.monitor_task()
-        self.ioloop.add_callback(self.periodic_task, False)
+        self.ioloop.call_soon(self.periodic_task)
 
     # HOOKS
     def on_stop(self):

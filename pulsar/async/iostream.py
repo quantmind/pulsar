@@ -15,7 +15,6 @@ from pulsar.utils.httpurl import IOClientRead
 from pulsar.utils.structures import merge_prefix
 from .defer import Deferred, is_async, is_failure, async, maybe_async,\
                         safe_async, log_failure, NOT_DONE, range
-from .eventloop import IOLoop, loop_timeout
 from .access import PulsarThread, thread_ioloop, get_actor
 
 LOGGER = logging.getLogger('pulsar.iostream')

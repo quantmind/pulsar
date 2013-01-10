@@ -7,15 +7,25 @@ from .httpurl import native_str
 
 
 WRITE_BUFFER_MAX_SIZE = 128 * 1024  # 128 kb
+SOCKET_TYPES = {}
 
-class Socket:
+class SocketType(type):
+    
+    def __new__(cls, name, bases, attrs):
+        new_class = super(SocketType, cls).__new__(cls, name, bases, attrs)
+        family = getattr(new_class, 'FAMILY', None)
+        if family is not None:
+            SOCKET_TYPES[family] = new_class
+        return new_class
+
+
+class Socket(SocketType('SocketBase', (), {})):
     '''Wrapper for a socket'''
-    FAMILY = None
-    def __init__(self, sock, address, bindto=False, backlog=1024):
+    def __init__(self, sock, address=None, bindto=False, backlog=1024):
         if sock is None:
             sock = socket.socket(self.FAMILY, socket.SOCK_STREAM)
         self._sock = sock
-        self._backlog = backlog
+        self._backlog = backlog if bindto else None
         self._set_options(bindto, address)
     
     @property
@@ -56,13 +66,13 @@ class Socket:
         
     def close(self, log=None):
         '''Shutdown and close the socket.'''
-        if not self.closed:
+        if self._sock:
             try:
-                self.sock.shutdown(socket.SHUT_RDWR)
-                self.sock.close()
+                self._sock.shutdown(socket.SHUT_RDWR)
+                self._sock.close()
             except:
                 pass
-            self.sock = None
+            self._sock = None
         
     def __getattr__(self, name):
         return getattr(self._sock, name)
@@ -92,9 +102,8 @@ else:
                       ENFILE, ENOMEM, EAGAIN, ECONNABORTED
     
     class UnixSocket(Socket):
-
         FAMILY = socket.AF_UNIX
-
+        
         def __repr__(self):
             return "unix:%s" % self.address
         
@@ -134,10 +143,9 @@ class TCPSocket(Socket):
     def __repr__(self):
         address = self.address
         if address:
-            return "[%s]:%d" % address[:2]
+            return ':'.join((str(a) for a in address))
         else:
             return '%s:closed' % self.type
-        
         
 class TCP6Socket(TCPSocket):
     FAMILY = socket.AF_INET6
@@ -208,3 +216,11 @@ def create_socket(address=None, sock=None, bindto=False, backlog=1024):
         return UnixSocket(sock, address, bindto=bindto, backlog=backlog)
     else:
         raise RuntimeError('Socket address not supported in this platform')
+    
+    
+def wrap_client_socket(sock, timeout=0):
+    '''Wrap a python socket with pulsar :class:`Socket`.'''
+    if sock and not isinstance(sock, Socket):
+        sock = SOCKET_TYPES[sock.family](sock)
+        sock.settimeout(timeout)
+    return sock
