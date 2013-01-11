@@ -236,8 +236,7 @@ as required."""
                 self.requestloop.call_soon(self.close_actors, start)
         else:
             to_stop = self.manage_actors(manage=False)
-            dt = time() - start
-            if dt > self.CLOSE_TIMEOUT and to_stop:
+            if time() - start > self.CLOSE_TIMEOUT and to_stop:
                 self.logger.warn('Cannot stop %s actors.', to_stop)
                 to_stop = self.manage_actors(terminate=True)
                 self.logger.warn('terminated %s actors.', to_stop)
