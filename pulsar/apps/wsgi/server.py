@@ -16,7 +16,7 @@ from pulsar.utils import events
 from .wsgi import WsgiResponse, handle_wsgi_error, LOGGER
 
 
-__all__ = ['HttpServerResponse','MAX_CHUNK_SIZE']
+__all__ = ['wsgi_environ', 'HttpServerResponse', 'MAX_CHUNK_SIZE']
 
 MAX_CHUNK_SIZE = 65536
 

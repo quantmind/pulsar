@@ -11,11 +11,12 @@ from threading import current_thread
 
 from pulsar.utils.system import IObase, IOpoll, close_on_exec, platform, Waker
 from pulsar.utils.pep import default_timer, DefaultEventLoopPolicy,\
-                             set_event_loop_policy, set_event_loop, EventLoop
+                             set_event_loop_policy, set_event_loop,\
+                             EventLoop as BaseEventLoop
 
 from .defer import log_failure
 
-__all__ = ['IOLoop']
+__all__ = ['EventLoop', 'TimedCall']
 
 LOGGER = logging.getLogger('pulsar.eventloop')
 
@@ -46,11 +47,11 @@ class EventLoopPolicy(DefaultEventLoopPolicy):
         return self._request_loop or self._event_loop
     
     def new_event_loop(self, **kwargs):
-        return IOLoop(**kwargs)
+        return EventLoop(**kwargs)
     
     def set_event_loop(self, event_loop):
         """Set the event loop."""
-        assert event_loop is None or isinstance(event_loop, IOLoop)
+        assert event_loop is None or isinstance(event_loop, BaseEventLoop)
         if event_loop.cpubound:
             self._request_loop = event_loop
         else:
@@ -61,7 +62,22 @@ set_event_loop_policy(EventLoopPolicy())
 
 
 class TimedCall(object):
-    """An IOLoop timeout, a UNIX timestamp and a callback"""
+    """An EventLoop callback handler. This is not initialised directly, instead
+it is created by :meth:`EventLoop.call_soon`, :meth:`EventLoop.call_later`,
+:meth:`EventLoop.call_soon_threadsafe` and so forth.
+    
+.. attribute:: deadline
+
+    a time in the future or ``None``.
+    
+.. attribute:: callback
+
+    The callback to execute in the eventloop
+    
+.. attribute:: cancelled
+
+    Flag indicating this callback is cancelled.
+    """
 
     def __init__(self, deadline, callback, args, canceller=None):
         self.reschedule(deadline)
@@ -216,25 +232,23 @@ class FileDescriptor(IObase):
         try:
             self.poller.unregister(fd)
         except (OSError, IOError):
-            self.eventloop.logger.error("Error removing %s from IOLoop", fd)
+            self.eventloop.logger.error("Error removing %s from EventLoop", fd)
         self.eventloop._handlers.pop(fd, None)
 
 
-class IOLoop(IObase, EventLoop):
-    """\
-A level-triggered I/O event loop adapted from tornado.
+class EventLoop(IObase, BaseEventLoop):
+    """A pluggable event loop which conforms with the pep-3156_ API. The
+event loop is the place where most asynchronous operations are carried out.
 
-:parameter io: The I/O implementation. If not supplied, the best possible
+**ATTRIBUTES**
+
+.. attribute:: io
+
+    The I/O implementation. If not supplied, the best possible
     implementation available will be used. On posix system this is ``epoll``,
     or else ``select``. It can be any other custom implementation as long as
     it has an ``epoll`` like interface. Pulsar ships with an additional
     I/O implementation based on distributed queue :class:`IOQueue`.
-
-**ATTRIBUTES**
-
-.. attribute:: _impl
-
-    The IO implementation
 
 .. attribute:: cpubound
 
@@ -255,13 +269,6 @@ A level-triggered I/O event loop adapted from tornado.
 .. attribute:: tid
 
     The thread id where the eventloop is running
-    
-.. attribute:: tasks
-
-    A list of callables to be executed at each iteration of the event loop.
-    Task can be added and deleted via the :meth:`add_task` and
-    :meth:`remove_task`. Extra care must be taken when adding tasks to
-    I/O event loops. These tasks should be fast to perform and not block.
 
 **METHODS**
 """
@@ -285,6 +292,10 @@ A level-triggered I/O event loop adapted from tornado.
         self._waker = getattr(self._impl, 'waker', Waker)()
         self.add_reader(self._waker, self._waker.consume)
 
+    @property
+    def io(self):
+        return self._impl
+    
     @property
     def cpubound(self):
         return getattr(self._impl, 'cpubound', False)
@@ -326,26 +337,28 @@ A level-triggered I/O event loop adapted from tornado.
                 self._running = False
         
     def stop(self):
-        '''Stop the loop after the current event loop iteration is complete.
-If the event loop is not currently running, the next call to :meth:`start`
-will return immediately.
-
-To use asynchronous methods from otherwise-synchronous code (such as
-unit tests), you can start and stop the event loop like this::
-
-    ioloop = IOLoop()
-    async_method(ioloop=ioloop, callback=ioloop.stop)
-    ioloop.start()
-
-:meth:`start` will return after async_method has run its callback,
-whether that callback was invoked before or after ioloop.start.'''
+        '''Stop the loop after the current event loop iteration is complete'''
         self.call_soon_threadsafe(_raise_stop_event_loop)
         
     def call_later(self, seconds, callback, *args):
-        """Add a *callback* to be executed approximately *seconds* in the
-future, once, unless cancelled. A timeout callback  it is called
-at the time *deadline* from the :class:`IOLoop`.
-It returns an handle that may be passed to remove_timeout to cancel."""
+        """Arrange for a *callback* to be called at a given time in the future.
+Return an :class:`TimedCall` with a :meth:`TimedCall.cancel' method
+that can be used to
+cancel the call. The delay can be an int or float, expressed in
+seconds.  It is always a relative time.
+
+Each callback will be called exactly once.  If two callbacks
+are scheduled for exactly the same time, it is undefined which
+will be called first.
+
+Callbacks scheduled in the past are passed on to call_soon(),
+so these will be called in the order in which they were
+registered rather than by time due.  This is so you can't
+cheat and insert yourself at the front of the ready queue by
+using a negative time.
+
+Any positional arguments after the callback will be passed to
+the callback when it is called."""
         if seconds > 0:
             timeout = TimedCall(self.timer() + seconds, callback, args,
                                 self.remove_timeout)
@@ -362,18 +375,19 @@ It returns an handle that may be passed to remove_timeout to cancel."""
     
     def call_soon_threadsafe(self, callback, *args):
         '''Calls the given callback on the next I/O loop iteration.
-
-        It is safe to call this method from any thread at any time.
-        Note that this is the *only* method in IOLoop that makes this
-        guarantee; all other interaction with the IOLoop must be done
-        from that IOLoop's thread.  add_callback() may be used to transfer
-        control from other threads to the IOLoop's thread.'''
+It is safe to call this method from any thread at any time.
+Note that this is the *only* method in :class:`EventLoop` that
+makes this guarantee. all other interaction with the :class:`EventLoop`
+must be done from that :class:`EventLoop`'s thread. It may be used
+to transfer control from other threads to the EventLoop's thread.'''
         timeout = self.call_soon(callback, *args)
         self.wake()
         return timeout
 
     def call_repeatedly(self, interval, callback, *args):
-        """Call a callback every 'interval' seconds."""
+        """Call a *callback* every *interval* seconds.
+        
+**TODO: be able to cancel it.**"""
         def wrapper():
             callback(*args)  # If this fails, the chain is broken.
             handler.reschedule(self.timer() + interval)
@@ -451,7 +465,7 @@ by the :meth:`add_timeout` method."""
         try:
             event_pairs = self._impl.poll(poll_timeout)
         except Exception as e:
-            # Depending on python version and IOLoop implementation,
+            # Depending on python version and EventLoop implementation,
             # different exception types may be thrown and there are
             # two ways EINTR might be signaled:
             # * e.errno == errno.EINTR

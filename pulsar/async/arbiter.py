@@ -81,7 +81,7 @@ class Arbiter(PoolMixin, Actor):
     '''The Arbiter is the most important a :class:`Actor`
 and :class:`PoolMixin` in pulsar concurrent framework. It is used as singleton
 in the main process and it manages one or more :class:`Monitor`.
-It runs the main :class:`IOLoop` of your concurrent application.
+It runs the main :class:`EventLoop` of your concurrent application.
 It is the equivalent of the gunicorn_ arbiter, the twisted_ reactor
 and the tornado_ eventloop.
 

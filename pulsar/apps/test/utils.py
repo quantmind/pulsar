@@ -5,7 +5,7 @@ import threading
 import pulsar
 from pulsar import is_failure, async, get_actor
 from pulsar.async import commands
-from pulsar.async.defer import pickle
+from pulsar.utils.pep import pickle
 
 
 __all__ = ['create_test_arbiter',

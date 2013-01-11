@@ -100,7 +100,7 @@ The interface is the same as the python epoll_ implementation.
                 return ()
         try:
             request = self._queue.get(timeout=timeout)
-        except (Empty,IOError, TypeError, EOFError):
+        except (Empty, IOError, TypeError, EOFError):
             return ()
         if request == QUEUE_WAKER:
             return ()

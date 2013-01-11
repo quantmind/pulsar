@@ -1,7 +1,8 @@
 from .transports import ServerTransport
 
-__all__ = ['Protocol', 'ProtocolResponse', 'ClientProtocol',
-           'ServerProtocol', 'ProtocolError', 'ConcurrentServer']
+__all__ = ['Protocol', 'ProtocolResponse', 'ClientResponse',
+           'ClientProtocol', 'ServerProtocol', 'ProtocolError',
+           'ConcurrentServer']
 
 class ConcurrentServer(object):
     
@@ -69,14 +70,29 @@ class ProtocolResponse(object):
                 yield data
         finally:
             self.transport.resume()
-            
+
+
+class ClientResponse(ProtocolResponse):
+    
+    def __init__(self, protocol, request):
+        super(ClientResponse, self).__init__(protocol)
+        self.request = request
+        self._protocol.set_response(self)
+    
+    def on_connect(self):
+        pass
+    
+    def begin(self):
+        raise NotImplementedError
+        
         
 class Protocol(object):
-    '''Base class for a pulsar :class:`Protocol`. It conforms with pep-3156.
+    '''Base class for a pulsar :class:`Protocol` conforming with pep-3156_.
     
 .. attribute:: transport
 
-    The :class:`Transport` for this :class:`Protocol`
+    The :class:`Transport` for this :class:`Protocol`. This is obtained once
+    the :meth:`connection_made` is invoked.
     
 .. attribute:: response
 
@@ -115,10 +131,11 @@ class Protocol(object):
     def connection_made(self, transport):
         """Called when a connection is made.
 
-        The argument is the transport representing the connection.
-        To send data, call its write() or writelines() method.
-        To receive data, wait for data_received() calls.
-        When the connection is closed, connection_lost() is called.
+        The argument is the :class:`Transport` representing the connection.
+        To send data, call its :meth:`Transport.write` or
+        :meth:`Transport.writelines` method.
+        To receive data, wait for :meth:`data_received` calls.
+        When the connection is closed, :meth:`connection_lost` is called.
         """
         self._transport = transport
 
@@ -136,16 +153,47 @@ The argument is a bytes object."""
         meaning a regular EOF is received or the connection was
         aborted or closed).
         """
+        
+    ############################################################################
+    ###    TRANSPORT METHODS SHORTCUT
+    def close(self):
+        if self._transport:
+            self._transport.close()
     
+    def abort(self):
+        if self._transport:
+            self._transport.abort()
     
+
 class ClientProtocol(Protocol):
+    '''Base :class:`Protocol` for clients/server sockets.
+
+* a *client* protocol is for clients connecting to a remote server.
+* a *server* protocol is for socket created from an **accept** on a
+  server socket.
+
+.. attribute:: address
+
+    Address of the client, if this is a server, or of the remote
+    server if this is a client.
     
-    def __init__(self, address, response_factory):
+.. attribute:: processed
+
+    Number of separate requests processed by this protocol.
+    
+.. attribute:: response_factory
+
+    A :class:`ProtocolResponse` class for handling a single request.
+'''
+    def __init__(self, address, response_factory=None):
         self._processed = 0
         self._address = address
         self._current_response = None
         self._response_factory = response_factory
-            
+    
+    def __repr__(self):
+        return str(self._address)
+        
     @property
     def processed(self):
         return self._processed
@@ -154,9 +202,23 @@ class ClientProtocol(Protocol):
     def address(self):
         return self._address
     
+    def connect(self, sock):
+        '''Connect the client to the remote server.'''
+        raise NotImplementedError
+    
+    def connection_made(self, transport):
+        self._transport = transport
+        if self._current_response is not None:
+            self._current_response.on_connect()
+            self._current_response.begin()
+        
+    def set_response(self, response):
+        assert self._current_response is None, "protocol already in response"
+        self._current_response = response
+        if self._transport is not None:
+            self._current_response.begin()
+    
     def data_received(self, data):
-        """Called by the :attr:`transport` when some data is received.
-The argument is a bytes object."""
         while data:
             response = self._current_response
             if response is not None and response.finished():

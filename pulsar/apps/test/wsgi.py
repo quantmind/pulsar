@@ -3,18 +3,16 @@ from io import BytesIO
 import logging
 import socket
 
-from pulsar import IStream, create_socket_address
 from pulsar.utils.httpurl import HttpClient, HttpRequest, HttpConnectionPool,\
                                     HttpResponse, urlparse, HttpConnection,\
                                     HttpParser
 from pulsar.utils.structures import AttributeDictionary
-from pulsar.apps.wsgi import server
-#from .server import HttpResponse
+from pulsar.apps.wsgi import wsgi_environ, HttpServerResponse
 
 __all__ = ['HttpTestClient']
 
 
-class DummyHttpServerConnection(IStream):
+class DummyHttpServerConnection(object):
     '''This is a simple class simulating a connection on
 a Http server. It contains the client response so that the
 write method simply write on the client response

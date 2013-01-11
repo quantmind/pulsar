@@ -22,7 +22,7 @@ from pulsar.utils.structures import AttributeDictionary
 from pulsar.utils.pep import pickle
 from pulsar.utils import events
 
-from .eventloop import IOLoop, setid
+from .eventloop import EventLoop, setid
 from .proxy import ActorProxy, ActorMessage, get_command, get_proxy
 from .defer import make_async, is_failure, async, log_failure, is_async
 from .queue import IOQueue
@@ -117,7 +117,8 @@ To spawn a new actor::
     >>> a.is_alive()
     True
 
-Here ``a`` is actually a reference to the remote actor.
+Here ``a`` is actually a reference to the remote actor, it is
+an :class:`ActorProxy`.
 
 **ATTRIBUTES**
 
@@ -152,11 +153,11 @@ Here ``a`` is actually a reference to the remote actor.
 
 .. attribute:: requestloop
 
-    The :class:`IOLoop` to listen for requests.
+    The :class:`EventLoop` to listen for requests.
     
 .. attribute:: ioloop
 
-    An instance of :class:`IOLoop` which listen for input/output events
+    An instance of :class:`EventLoop` which listen for input/output events
     on a socket.  This is different from the :attr:`requestloop` only
     for :ref:`CPU-bound actors <cpubound>`.
 
@@ -193,7 +194,6 @@ Here ``a`` is actually a reference to the remote actor.
     
     def __init__(self, impl):
         self.__impl = impl
-        on_event = impl.params.pop('on_event', None)
         ioqueue = impl.params.pop('ioqueue', None)
         if self.is_arbiter():
             ioqueue = None
@@ -494,9 +494,9 @@ if *proxy* is not a class:`ActorProxy` instance raise an exception.'''
         # event loop which will consume events on file descriptors
         # Inject self as the actor of this thread
         ioq = self.ioqueue
-        self.requestloop = IOLoop(io=IOQueue(ioq, self) if ioq else None,
-                                  poll_timeout=self.params.poll_timeout,
-                                  logger=self.logger)
+        self.requestloop = EventLoop(io=IOQueue(ioq, self) if ioq else None,
+                                     poll_timeout=self.params.poll_timeout,
+                                     logger=self.logger)
         if self.is_process():
             random.seed()
             proc_name = "%s-%s" % (self.cfg.proc_name, self)

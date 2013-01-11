@@ -33,9 +33,6 @@ class Socket(SocketType('SocketBase', (), {})):
         if self._sock:
             return self._sock.getsockname()
     
-    def __repr__(self):
-        return str(self.address)
-    
     def __str__(self):
         return self.__repr__()
     
@@ -143,7 +140,7 @@ class TCPSocket(Socket):
     def __repr__(self):
         address = self.address
         if address:
-            return ':'.join((str(a) for a in address))
+            return '%s:%s' % address
         else:
             return '%s:closed' % self.type
         
@@ -154,6 +151,13 @@ class TCP6Socket(TCPSocket):
     def type(self):
         return 'tcp6'
     
+    def __repr__(self):
+        address = self.address
+        if address:
+            return '[%s]:%s' % address[:2]
+        else:
+            return '%s:closed' % self.type
+        
     def _set_options(self, bindto=False, address=None):
         super(TCP6Socket, self)._set_options(bindto, address)
         if platform.type == "posix" and sys.platform != "cygwin":

@@ -2,8 +2,9 @@ import sys
 import inspect
 import logging
 
-from pulsar import to_bytes, is_failure, log_failure, is_async,\
+from pulsar import log_failure, is_async, is_failure,\
                     as_failure, maybe_async, HttpException
+from pulsar.utils.pep import to_bytes
 from pulsar.utils.tools import checkarity
 from pulsar.utils.structures import AttributeDictionary
 from pulsar.apps.wsgi import WsgiResponse, WsgiResponseGenerator

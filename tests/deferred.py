@@ -3,7 +3,7 @@ import sys
 from functools import reduce
 
 from pulsar import AlreadyCalledError, Deferred, is_async,\
-                     make_async, IOLoop, is_failure, MultiDeferred,\
+                     make_async, is_failure, MultiDeferred,\
                      maybe_async
 from pulsar.apps.test import unittest
 
@@ -95,7 +95,6 @@ class TestDeferred(unittest.TestCase):
         
     def testDeferredCallbackInGenerator(self):
         d = Deferred()
-        ioloop = IOLoop()
         # Add a callback which returns a deferred
         rd = Cbk()
         d.add_callback(lambda r : rd.add(r))
@@ -120,7 +119,6 @@ class TestDeferred(unittest.TestCase):
         
     def testDeferredErrorbackInGenerator(self):
         d = Deferred()
-        ioloop = IOLoop()
         # Add a callback which returns a deferred
         rd = Cbk()
         d.add_callback(lambda r : rd.add(r))

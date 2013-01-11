@@ -178,7 +178,7 @@ import os
 from datetime import datetime
 
 import pulsar
-from pulsar import to_string, safe_async
+from pulsar import to_string, async
 from pulsar.utils.importer import import_modules, module_attribute
 
 from .exceptions import *
@@ -217,9 +217,11 @@ class TaskPath(TaskSetting):
         List of python dotted paths where tasks are located.
         """
 
-
 class CPUboundServer(pulsar.Application, pulsar.ConcurrentServer):
-    '''A CPU-bound application server.'''
+    '''A CPU-bound application server, that is an application which
+handle events with a task to complete and the time complete it is
+determined principally by the speed of the CPU.
+This type of application is served by :ref:`CPU bound workers <cpubound>`.'''
     _app_name = 'cpubound'
     cpu_bound_server = None
 

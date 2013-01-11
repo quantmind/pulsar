@@ -5,6 +5,7 @@ from .transports import *
 from .protocols import *
 from .tcp import *
 from .servers import *
+from .clients import *
 from .mailbox import *
 from .eventloop import *
 from .proxy import *

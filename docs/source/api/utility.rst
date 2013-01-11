@@ -1,7 +1,7 @@
 .. _httpclient
 
 ==================
-HTTP
+Utilities
 ==================
 
 The :mod:`pulsar.utils.httpurl` contains several utilities useful when working

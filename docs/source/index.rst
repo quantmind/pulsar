@@ -14,7 +14,7 @@ in a single code base.
    design
    faq
    advantage
-   api
+   api/index
    changelog
    http
    settings

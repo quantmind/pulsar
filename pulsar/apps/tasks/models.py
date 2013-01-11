@@ -3,7 +3,7 @@ from hashlib import sha1
 import logging
 import inspect
 
-from pulsar.utils.httpurl import iteritems
+from pulsar.utils.pep import iteritems
 from pulsar.utils.security import gen_unique_id
 
 

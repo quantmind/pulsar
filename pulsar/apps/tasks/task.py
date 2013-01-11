@@ -6,7 +6,7 @@ import logging
 import traceback
 from io import StringIO
 
-from pulsar.utils.httpurl import itervalues, iteritems
+from pulsar.utils.pep import itervalues, iteritems
 from pulsar import maybe_async, as_failure, is_async, is_failure, send
 
 from .models import registry

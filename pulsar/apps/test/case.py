@@ -1,9 +1,9 @@
 import sys
 import io
-import pickle
 from inspect import istraceback
 
 from pulsar import is_failure, CLEAR_ERRORS, make_async, get_actor, async
+from pulsar.utils.pep import pickle
 
 
 __all__ = ['TestRequest']

@@ -1,9 +1,8 @@
 from functools import partial
 
 from pulsar import create_socket
-from pulsar.utils.pep import get_event_loop, set_event_loop
+from pulsar.utils.pep import get_event_loop, set_event_loop, new_event_loop
 
-from .eventloop import IOLoop
 from .access import PulsarThread
 from .tcp import TCPServer 
 
@@ -35,7 +34,7 @@ def _start_on_thread(name, *args):
     # should be already available if the tne actor is not CPU bound.
     event_loop = get_event_loop()
     if event_loop is None:
-        event_loop = IOLoop()
+        event_loop = new_event_loop()
         set_event_loop(event_loop)
         args = (event_loop,) + args + (True,)
         PulsarThread(name=name, target=start_server, args=args).start()

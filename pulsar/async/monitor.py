@@ -248,7 +248,7 @@ as required."""
 
 class Monitor(PoolMixin, Actor):
     '''A monitor is a **very** special :class:`Actor` and :class:`PoolMixin`
-which shares the same :class:`IOLoop` with the :class:`Arbiter` and
+which shares the same :class:`EventLoop` with the :class:`Arbiter` and
 therefore lives in the main process domain.
 The Arbiter manages monitors which in turn manage a set of :class:`Actor`
 performing similar tasks.
@@ -297,7 +297,7 @@ By default it does nothing. Override if you need to.'''
     def periodic_task(self):
         '''Overrides the :meth:`Actor.on_task`
 :ref:`actor callback <actor-callbacks>` to perform
-the monitor :class:`IOLoop` tasks, which are:
+the monitor :class:`EventLoop` tasks, which are:
 
 * To maintain a responsive set of actors ready to perform their duty.
 * To perform its own tasks.

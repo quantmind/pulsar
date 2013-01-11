@@ -1,13 +1,51 @@
+'''Protocols for TCP clients and servers'''
 import logging
 
 from pulsar.utils.sockets import *
+from pulsar.utils.structures import merge_prefix
 
-from .protocols import ServerProtocol
+from .protocols import ServerProtocol, ClientProtocol
 
-__all__ = ['TCPServer']
+__all__ = ['TCPServer', 'TCPClient']
 
+TRAY_AGAIN = (EWOULDBLOCK, ENOBUFS, EINPROGRESS)
 
 LOGGER = logging.getLogger('pulsar.tcp')
+
+class TCPClient(ClientProtocol):
+    
+    def connect(self, sock):
+        try:
+            sock.connect(self.address)
+        except socket.error as e:
+            if e.args[0] in TRY_AGAIN:
+                return False
+            else:
+                raise
+        else:
+            return True #    A synchronous connection
+    
+    def ready_write(self):
+        buffer = self._transport._write_buffer
+        tot_bytes = 0
+        while buffer:
+            try:
+                sent = self.sock.send(buffer[0])
+                if sent == 0:
+                    # With OpenSSL, after send returns EWOULDBLOCK,
+                    # the very same string object must be used on the
+                    # next call to send.  Therefore we suppress
+                    # merging the write buffer after an EWOULDBLOCK.
+                    break
+                merge_prefix(buffer, sent)
+                buffer.popleft()
+                tot_bytes += sent
+            except socket.error as e:
+                if e.args[0] in TRY_AGAIN:
+                    break
+                else:
+                    raise
+        return tot_bytes
 
 
 class TCPServer(ServerProtocol):
@@ -17,6 +55,7 @@ class TCPServer(ServerProtocol):
 
     number of seconds to keep alive an idle client connection
 '''
+    protocol = TCPClient
     def __init__(self, numberAccepts=100, transport=None, response=None,
                  timeout=30, max_requests=0, protocol=None, **params):
         if platform.type == "posix":

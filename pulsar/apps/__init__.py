@@ -369,7 +369,7 @@ a *request*.
     def get_ioqueue(self):
         '''Returns an I/O distributed queue for the application if one
 is needed. If a queue is returned, the application :class:`Worker`
-will have a :class:`IOLoop` instance based on the queue (via :class:`IOQueue`).
+will have a :class:`EventLoop` instance based on the queue (via :class:`IOQueue`).
 
 By default it returns ``None``.'''
         return None

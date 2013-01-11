@@ -11,23 +11,20 @@ from .servers import create_server
 from .protocols import Protocol, ProtocolResponse
 
 
-__all__ = ['PulsarClient', 'mailbox', 'ActorMessage']
+__all__ = ['mailbox', 'ActorMessage']
 
 
 LOGGER = logging.getLogger('pulsar.mailbox')
 
 
-def mailbox(actor=None, address=None):
+def mailbox(actor=None):
     '''Creates a :class:`Mailbox` instances for :class:`Actor` instances.
 If an address is provided, the communication is implemented using a socket,
 otherwise a queue is used.'''
-    if address:
-        return PulsarClient.connect(address, timeout=0)
+    if actor.is_monitor():
+        return MonitorMailbox(actor)
     else:
-        if actor.is_monitor():
-            return MonitorMailbox(actor)
-        else:
-            return create_mailbox(actor)
+        return create_mailbox(actor)
 
 def actorid(actor):
     return actor.aid if hasattr(actor, 'aid') else actor
@@ -107,45 +104,6 @@ created by :meth:`ActorProxy.send` method.
 
     def __repr__(self):
         return self.command
-
-ReconnectingClient = object
-class PulsarClient(ReconnectingClient):
-    '''A proxy for the :attr:`Actor.inbox` attribute. It is used by the
-:class:`ActorProxy` to send messages to the remote actor.'''
-    protocol_factory = MessageParser
-
-    def parsedata(self, data):
-        msg = super(PulsarClient, self).parsedata(data)
-        if msg:
-            # Those two messages are special
-            if msg.command in ('callback', 'errback'):
-                return msg.args[0] or ''
-            else:
-                return msg
-
-    @raise_failure
-    def ping(self):
-        return self.execute(ActorMessage('ping'))
-
-    @raise_failure
-    def echo(self, message):
-        return self.execute(ActorMessage('echo', args=(message,)))
-
-    @raise_failure
-    def run_code(self, code):
-        return self.execute(ActorMessage('run_code', args=(code,)))
-
-    @raise_failure
-    def info(self):
-        return self.execute(ActorMessage('info'))
-
-    @raise_failure
-    def quit(self):
-        return self.execute(ActorMessage('quit'))
-
-    @raise_failure
-    def shutdown(self):
-        return self.execute(ActorMessage('stop'))
 
 
 class MailboxResponse(ProtocolResponse):

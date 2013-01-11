@@ -64,7 +64,6 @@ import logging
 import os
 import sys
 import time
-import inspect
 
 if sys.version_info >= (2,7):
     import unittest
@@ -179,7 +178,6 @@ is a group of tests specified in a test class.
     _app_name = 'test'
     cfg_apps = ('cpubound',)
     commands_set = test_commands
-    cpu_bound_server = TestScheduler
     cfg = {'loglevel': 'none',
            'timeout': 3600,
            'backlog': 1,
