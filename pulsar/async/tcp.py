@@ -39,7 +39,6 @@ class TCPServer(ServerProtocol):
                     sock, address = self.sock.accept()
                 except socket.error as e:
                     if e.args[0] in (EWOULDBLOCK, EAGAIN):
-                        self.numberAccepts = i
                         break
                     elif e.args[0] == EPERM:
                         # Netfilter on Linux may have rejected the

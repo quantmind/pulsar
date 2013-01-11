@@ -65,7 +65,7 @@ class ProtocolResponse(object):
     def _generate(self, lines):
         self.transport.pause()
         try:
-            for data in gen:
+            for data in lines:
                 yield data
         finally:
             self.transport.resume()

@@ -45,7 +45,7 @@ close as possible until it is finalised.
         pass
     
     def __repr__(self):
-        return 'transport for %s' % self._protocol
+        return self._protocol.__repr__()
     
     def __str__(self):
         return self.__repr__()
@@ -225,6 +225,8 @@ overwritten with this new callback.
             self._write_buffer = deque()
         self.on_close()
     
+    ############################################################################
+    ###    PULSAR    METHODS
     def add_reader(self):
         self._event_loop.add_reader(self.fileno(), self._ready_read)
         self.add_read_timeout()
@@ -246,7 +248,7 @@ overwritten with this new callback.
         if self._paused:
             self._read_buffer.append(data)
         else:
-            self._protocol.data_received(chunk)
+            self._protocol.data_received(data)
             
     def _ready_read(self):
         # Read from the socket until we get EWOULDBLOCK or equivalent.
@@ -259,6 +261,7 @@ overwritten with this new callback.
             try:
                 chunk = self._sock.recv(self._read_chunk_size)
             except socket.error as e:
+                chunk = None
                 if e.args[0] == EWOULDBLOCK:
                     close = False
                 else:
@@ -373,9 +376,11 @@ class ServerTransport(Transport):
     def _ready_read(self):
         self._protocol.ready_read()
 
-    def __call__(self, sock, protocol, **params):
+    def __call__(self, sock, protocol, session=None):
         # Build a transport for a client server connection
         sock = wrap_client_socket(sock)
+        server = self._protocol
         return self.connection_transport(self.event_loop, sock, protocol,
-                                         server=self._protocol, **params)
+                                         server=server, session=session,
+                                         timeout=server.timeout)
         

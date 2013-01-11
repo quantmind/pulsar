@@ -64,15 +64,18 @@ class TimedCall(object):
     """An IOLoop timeout, a UNIX timestamp and a callback"""
 
     def __init__(self, deadline, callback, args, canceller=None):
-        self.deadline = deadline
-        self.canceller = canceller
+        self.reschedule(deadline)
+        self._canceller = canceller
         self._callback = callback
         self._args = args
-        self._cancelled = False
 
     def __lt__(self, other):
         return self.deadline < other.deadline
         
+    @property
+    def deadline(self):
+        return self._deadline
+    
     @property
     def cancelled(self):
         return self._cancelled
@@ -87,13 +90,20 @@ class TimedCall(object):
     
     def cancel(self):
         '''Attempt to cancel the callback.'''
-        if not self.cancelled:
+        if not self._cancelled:
             self._cancelled = True
-            if self.canceller:
-                self.canceller(self)
+            if self._canceller:
+                self._canceller(self)
+                
+    def reschedule(self, new_deadline):
+        self._deadline = new_deadline
+        self._cancelled = False
     
     def __call__(self):
-        self._callback(*self._args)
+        if not self._cancelled:
+            if self._deadline:
+                self._cancelled = True
+            self._callback(*self._args)
         
         
 class FileDescriptor(IObase):
@@ -120,7 +130,7 @@ class FileDescriptor(IObase):
     
     @property
     def writing(self):
-        return bool(self.handle_read)
+        return bool(self.handle_write)
     
     @property
     def connecting(self):
@@ -156,20 +166,14 @@ class FileDescriptor(IObase):
         self.add_writer(callback)
         
     def add_reader(self, callback):
-        if not self.handle_read:
-            current_state = self.state
-            self.handle_read = callback
-            self.modify_state(current_state, self.READ)
-        else:
-            raise RuntimeError("Asynchronous stream already reading!")
+        current_state = self.state
+        self.handle_read = callback
+        self.modify_state(current_state, self.READ)
         
     def add_writer(self, callback):
-        if not self.handle_write:
-            current_state = self.state
-            self.handle_write = callback
-            self.modify_state(current_state, self.WRITE)
-        else:
-            raise RuntimeError("Asynchronous stream already writing!")
+        current_state = self.state
+        self.handle_write = callback
+        self.modify_state(current_state, self.WRITE)
         
     def remove_connector(self):
         self._connecting = False
@@ -372,7 +376,7 @@ It returns an handle that may be passed to remove_timeout to cancel."""
         """Call a callback every 'interval' seconds."""
         def wrapper():
             callback(*args)  # If this fails, the chain is broken.
-            handler.deadline = self.timer() + interval
+            handler.reschedule(self.timer() + interval)
             heapq.heappush(self._scheduled, handler)
         handler = TimedCall(interval, wrapper, (), self.remove_timeout)
         heapq.heappush(self._scheduled, handler)
@@ -422,7 +426,10 @@ descriptor.'''
     def remove_timeout(self, timeout):
         """Cancels a pending *timeout*. The argument is an handle as returned
 by the :meth:`add_timeout` method."""
-        self._scheduled.remove(timeout)
+        try:
+            self._scheduled.remove(timeout)
+        except ValueError:
+            LOGGER.warn('trying to remove a timeout not scheduled.')
 
     ############################################################ INTERNALS
     def _run_once(self, timeout=None):
