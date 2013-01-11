@@ -24,7 +24,6 @@ from pulsar.utils import events
 
 from .eventloop import EventLoop, setid
 from .proxy import ActorProxy, ActorMessage, get_command, get_proxy
-from .defer import make_async, is_failure, async, log_failure, is_async
 from .queue import IOQueue
 from .mailbox import mailbox
 from .access import set_actor, is_mainthread, get_actor, remove_actor
@@ -360,11 +359,6 @@ before the actor starts running.'''
  the actor stops running.'''
         pass
 
-    def on_exit(self):
-        '''The :ref:`actor callback <actor-callbacks>` run once when the actor
- has stopped running, just before it vanish in the garbage collector.'''
-        pass
-
     def on_info(self, data):
         '''An :ref:`actor callback <actor-callbacks>` executed when
  obtaining information about the actor. It can be used to add additional
@@ -386,16 +380,9 @@ properly this actor will go out of scope.'''
         if force or self.state <= ACTOR_STATES.RUN:
             events.fire('stop', self)
             self.state = ACTOR_STATES.STOPPING
-            self.exit_code = exit_code
-            try:
-                res = self.on_stop()
-            except:
-                self.logger.error('Unhandle error while stopping',
-                                  exc_info=True)
-                res = None
-            return res.addBoth(self.exit) if is_async(res) else self.exit()
+            self.on_stop()
     
-    def exit(self, result=None):
+    def on_stop(self):
         '''Exit from the :class:`Actor` domain.'''
         if not self.stopped():
             # we don't want monitors to stop the request loop
@@ -419,7 +406,8 @@ properly this actor will go out of scope.'''
                 next = min(secs, MAX_NOTIFY)
                 self.ioloop.call_later(next, self.periodic_task)
             else:
-                self.ioloop.call_soon(self.periodic_task)
+                # The actor is not yet active, come back at the next requestloop
+                self.requestloop.call_soon_threadsafe(self.periodic_task)
         
     def proxy_mailbox(self, address):
         m = self.proxy_mailboxes.get(address)
@@ -539,6 +527,6 @@ if *proxy* is not a class:`ActorProxy` instance raise an exception.'''
     
     def _run(self):
         try:
-            self.requestloop.start()
+            self.requestloop.run()
         finally:
             self.stop()

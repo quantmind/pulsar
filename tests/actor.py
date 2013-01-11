@@ -4,7 +4,7 @@ from multiprocessing.queues import Queue
 
 import pulsar
 from pulsar import send
-from pulsar.async.defer import pickle
+from pulsar.utils.pep import pickle
 from pulsar.apps.test import unittest, ActorTestMixin, run_on_arbiter,\
                                  dont_run_with_thread
 

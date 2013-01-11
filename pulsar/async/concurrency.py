@@ -100,13 +100,8 @@ loop and therefore do not require an inbox.'''
 class ActorConcurrency(Concurrency):
 
     def run(self):
-        try:
-            actor = self.actor_class(self)
-            actor.start()
-        except:
-            # This is needed in windows in order to avoid useless traceback
-            # on KeyboardInterrupt
-            pass
+        actor = self.actor_class(self)
+        actor.start()
 
 
 class ActorProcess(ActorConcurrency, Process):

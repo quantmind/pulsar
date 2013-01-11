@@ -159,8 +159,6 @@ next loop in the :attr:`eventloop`."""
         finally:
             self._sock.close()
         
-CONNECTING = 1
-WRITING = 2
 
 class ClientTransport(Transport):
     '''A :class:`Transport` for a :class:`ClientProtocol`.
@@ -188,16 +186,16 @@ class ClientTransport(Transport):
         self._write_buffer = deque()
         self._event_loop.add_writer(self.fileno(), self._ready_write)
         self._read_timeout = None
-        self._writing = False
+        self._connecting = False
         self._paused = False
     
     @property
     def connecting(self):
-        return self._writing == CONNECTING
+        return self._connecting
     
     @property
     def writing(self):
-        return self._writing == WRITING
+        return bool(self._write_buffer)
     
     ############################################################################
     ###    PEP-3156    METHODS
@@ -210,8 +208,8 @@ class ClientTransport(Transport):
                     self._write_buffer.append(data[i:i+WRITE_BUFFER_MAX_SIZE])
             else:
                 self._write_buffer.append(data)
-        #
-        if not self._writing:
+        # Try to write
+        if not self.connecting:
             self._ready_write()
 
     def pause(self):
@@ -230,9 +228,8 @@ class ClientTransport(Transport):
             self.close_read()
             if not async:
                 self._write_buffer = deque()
-            if not self._write_buffer:
                 self._shutdown()
-            else:
+            elif not self.writing:
                 self._event_loop.call_soon(self._shutdown)
     
     def abort(self):
@@ -242,10 +239,11 @@ class ClientTransport(Transport):
     ###    PULSAR    METHODS
     def connect():
         '''Connect this :class:`Transport` to a remote server.'''
-        if not self._writing:
-            self._writing = CONNECTING
+        if not self.connecting:
+            self._connecting = True
             try:
                 if self._protocol.connect(self._sock):
+                    self._connecting = False
                     self._protocol.connection_made(self)
             except Exception as e:
                 self._protocol.connection_made(self)
@@ -273,7 +271,6 @@ class ClientTransport(Transport):
         
     ############################################################################
     ##    INTERNALS
-    
     def _shutdown(self, exc=None):
         self._event_loop.remove_writer(self.fileno())
         self._sock.close()
@@ -314,17 +311,21 @@ class ClientTransport(Transport):
     def _ready_write(self):
         # keep count how many bytes we write
         if self.connecting:
+            self._connecting = False
             self._protocol.connection_made(self)
-            self._writing = WRITING
         try:
             self._protocol.ready_write()
         except socket.error as e:
             LOGGER.warning("Write error on %s: %s", self, e)
             self.abort()
             return
-        self._writing = WRITING if self._write_buffer else 0
-        if not self._writing and self._closing:
-            self._shutdown()
+        if self.writing:
+            # more to do
+            # TODO: should this be call_soon?
+            self._event_loop.call_soon_threadsafe(self._ready_write)
+        elif self._closing:
+            # shutdown
+            self._event_loop.call_soon(self._shutdown)
                 
     def _timed_out(self):
         LOGGER.info('%s idle for %d seconds. Closing connection.',

@@ -11,7 +11,6 @@ from pulsar.utils.security import gen_unique_id
 from pulsar.utils.pep import itervalues, iteritems
 from pulsar import HaltServer
 
-from .defer import multi_async, async
 from .actor import Actor, ACTOR_STATES
 from .monitor import PoolMixin, _spawn_actor
 from .access import get_actor, set_actor
@@ -128,7 +127,6 @@ Users access the arbiter (in the arbiter process domain) by the high level api::
         return dict(((mon.name, mon.proxy) for mon in\
                       itervalues(self.monitors) if mon.mailbox))
 
-    @multi_async
     def close_monitors(self):
         '''Close all :class:`Monitor` at once.'''
         for pool in list(itervalues(self.monitors)):
@@ -187,22 +185,16 @@ Users access the arbiter (in the arbiter process domain) by the high level api::
         # is not available at startup
         self.requestloop.call_soon(self.periodic_task)
 
-    @async()
     def on_stop(self):
         '''Stop the pools the message queue and remaining actors.'''
-        if not self.ioloop.running:
-            for pool in list(itervalues(self.monitors)):
-                pool.state = ACTOR_STATES.INACTIVE
-            self.state = ACTOR_STATES.RUN
-            self.restarted = True
-            self.ioloop.run()
-        else:
-            self.state = ACTOR_STATES.STOPPING
-            yield self.close_monitors()
-            yield self.close_actors()
-            yield self._close_message_queue()
-    
-    def on_exit(self):
+        self.state = ACTOR_STATES.STOPPING
+        self.requestloop.call_soon(self.exit)
+        self.requestloop.run()
+        
+    def exit(self):
+        self.close_monitors()
+        self.close_actors()
+        self._close_message_queue()
         p = self.pidfile
         if p is not None:
             p.unlink()

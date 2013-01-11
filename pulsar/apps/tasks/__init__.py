@@ -235,16 +235,16 @@ be consumed by the workers.'''
 
     def worker_start(self, worker):
         '''Set up the cpu bound worker and register its file descriptor'''
-        self.request_loop.add_reader('request', partial(self.on_event, worker))
+        worker.requestloop.add_reader('request', self.on_event)
         
     @async()
-    def on_event(self, worker, request):
+    def on_event(self, request):
         request = self.request_instance(request)
         if request is not None:
             self.received += 1
             self.concurrent_requests.append(request)
             try:
-                yield request.start(worker)
+                yield request.start()
             finally:
                 self.concurrent_requests.remove(request)
 

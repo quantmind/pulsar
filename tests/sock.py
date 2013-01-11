@@ -5,9 +5,8 @@ import time
 
 import pulsar
 from pulsar import platform
-from pulsar.async.defer import pickle
+from pulsar.utils.pep import pickle
 from pulsar.apps.test import unittest, mock
-from pulsar.utils.sock import create_tcp_socket_address
 
 
 class TestSockUtils(unittest.TestCase):
@@ -55,11 +54,6 @@ class TestSockUtils(unittest.TestCase):
         fd = sock.fileno()
         state = sock.__getstate__()
         self.assertEqual(fd, state['fd'])
-        
-    def testForCoverage(self):
-        self.assertRaises(ValueError, create_tcp_socket_address, ('',))
-        self.assertRaises(ValueError, create_tcp_socket_address, ('','a'))
-        self.assertRaises(TypeError, create_tcp_socket_address, ('bla'))
         
     def test_parse_address(self):
         a = pulsar.parse_address('bla.com')

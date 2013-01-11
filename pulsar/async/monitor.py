@@ -11,7 +11,6 @@ from .actor import Actor, ACTOR_STATES, ACTOR_TERMINATE_TIMEOUT,\
                      ACTOR_STOPPING_LOOPS
 from .eventloop import setid
 from .concurrency import concurrency
-from .defer import async, NOT_DONE
 from .queue import Queue
 from .mailbox import mailbox
 
@@ -139,10 +138,8 @@ spawn method when creating new actors.'''
         LINKED = self.linked_actors
         alive = 0
         ACTORS = list(iteritems(MANAGED))
-        # WHEN TERMINATING OR STOPPING WE INCLUDE THE ACTORS WHICH ARE SPAWNING
+        ACTORS.extend(iteritems(SPAWNING))
         shutting_down = terminate or stop
-        if shutting_down:
-            ACTORS.extend(iteritems(SPAWNING))
         # Loop over MANAGED ACTORS PROXY MONITORS
         for aid, actor in ACTORS:
             if not actor.is_alive():
@@ -229,17 +226,18 @@ as required."""
             on_address.callback(proxy_monitor.proxy)
         return proxy_monitor.proxy
 
-    @async()
-    def close_actors(self):
+    def close_actors(self, start=None):
         '''Close all managed :class:`Actor`.'''
-        start = time()
-        # Stop all of them
-        to_stop = self.manage_actors(stop=True)
-        while to_stop:
-            yield NOT_DONE
+        if not start:
+            start = time()
+            # Stop all of them
+            to_stop = self.manage_actors(stop=True)
+            if to_stop:
+                self.requestloop.call_soon(self.close_actors, start)
+        else:
             to_stop = self.manage_actors(manage=False)
             dt = time() - start
-            if dt > self.CLOSE_TIMEOUT:
+            if dt > self.CLOSE_TIMEOUT and to_stop:
                 self.logger.warn('Cannot stop %s actors.', to_stop)
                 to_stop = self.manage_actors(terminate=True)
                 self.logger.warn('terminated %s actors.', to_stop)

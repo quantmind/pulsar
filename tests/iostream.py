@@ -2,23 +2,8 @@ import socket
 
 import pulsar
 from pulsar import is_failure
-from pulsar.utils.httpurl import to_bytes, to_string
-from pulsar.apps.socket import SocketServer
+from pulsar.utils.pep import to_bytes, to_string
 from pulsar.apps.test import unittest, run_on_arbiter, dont_run_with_thread
-        
-        
-class EchoResponse(pulsar.AsyncResponse):
-    
-    def __iter__(self):
-        if self.parsed_data == b'quit':
-            yield b'bye'
-            self.connection.close()
-        else:
-            yield self.parsed_data
-            
-            
-class TestServerSocketServer(pulsar.AsyncSocketServer):
-    response_class = EchoResponse
     
     
 class SafeCallback(pulsar.Deferred):

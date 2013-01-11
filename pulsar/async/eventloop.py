@@ -182,14 +182,20 @@ class FileDescriptor(IObase):
         self.add_writer(callback)
         
     def add_reader(self, callback):
-        current_state = self.state
-        self.handle_read = callback
-        self.modify_state(current_state, self.READ)
+        if self.reading:
+            raise RuntimeError('Read handler already registered')
+        else:
+            current_state = self.state
+            self.handle_read = callback
+            self.modify_state(current_state, self.READ)
         
     def add_writer(self, callback):
-        current_state = self.state
-        self.handle_write = callback
-        self.modify_state(current_state, self.WRITE)
+        if self.writing:
+            raise RuntimeError('Write handler already registered')
+        else:
+            current_state = self.state
+            self.handle_write = callback
+            self.modify_state(current_state, self.WRITE)
         
     def remove_connector(self):
         self._connecting = False

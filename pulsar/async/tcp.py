@@ -8,7 +8,8 @@ from .protocols import ServerProtocol, ClientProtocol
 
 __all__ = ['TCPServer', 'TCPClient']
 
-TRAY_AGAIN = (EWOULDBLOCK, ENOBUFS, EINPROGRESS)
+TRY_WRITE_AGAIN = (EWOULDBLOCK, ENOBUFS, EINPROGRESS)
+TRY_READ_AGAIN = (EWOULDBLOCK, EAGAIN)
 
 LOGGER = logging.getLogger('pulsar.tcp')
 
@@ -18,7 +19,7 @@ class TCPClient(ClientProtocol):
         try:
             sock.connect(self.address)
         except socket.error as e:
-            if e.args[0] in TRY_AGAIN:
+            if e.args[0] in TRY_WRITE_AGAIN:
                 return False
             else:
                 raise
@@ -41,7 +42,7 @@ class TCPClient(ClientProtocol):
                 buffer.popleft()
                 tot_bytes += sent
             except socket.error as e:
-                if e.args[0] in TRY_AGAIN:
+                if e.args[0] in TRY_WRITE_AGAIN:
                     break
                 else:
                     raise
@@ -77,7 +78,7 @@ class TCPServer(ServerProtocol):
                 try:
                     sock, address = self.sock.accept()
                 except socket.error as e:
-                    if e.args[0] in (EWOULDBLOCK, EAGAIN):
+                    if e.args[0] in TRY_READ_AGAIN:
                         break
                     elif e.args[0] == EPERM:
                         # Netfilter on Linux may have rejected the
