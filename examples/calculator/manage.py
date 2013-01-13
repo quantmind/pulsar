@@ -84,5 +84,5 @@ def server(callable=None, **params):
 
 
 if __name__ == '__main__':  #pragma nocover
-    server(**params).start()
+    server().start()
 
