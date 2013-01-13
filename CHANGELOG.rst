@@ -1,4 +1,4 @@
-Ver. 0.4.4
+Ver. 0.4.4 - 2013-Jan-13
 ==============================
 * Documentation for development version hosted on github.
 * Modified :meth:`pulsar.Actor.exit` so that it shuts down :attr:`pulsar.Actor.mailbox`
@@ -8,6 +8,7 @@ Ver. 0.4.4
   *result* when the it is called and no callbacks are available.
   It avoids several unnecessary calls on deeply nested :class:`pulsar.Deferred`
   (which sometimes caused maximum recursion depth exceeded).
+* Fixed calculator example script.
 * **374 regression tests**, **87% coverage**.
 
 Ver. 0.4.3 - 2012-Dec-28
