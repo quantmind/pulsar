@@ -40,11 +40,13 @@ and producing no more than one response.'''
         raise NotImplementedError
         
     def feed(self, data):
-        '''Feed new data into the :class:`ProtocolResponse`'''
+        '''Feed new data into the this :class:`ProtocolResponse`. This method
+should return `None` unless it has finished the response and the returned bytes
+can be used for the next response.'''
         raise NotImplementedError
     
     def finished(self):
-        '''`True` if this response has finished.'''
+        '''`True` if this response has finished and a new response can start.'''
         return self._finished
     
     ############################################################################
@@ -104,6 +106,10 @@ It can be used for both client and server sockets.
 .. attribute:: processed
 
     Number of separate requests processed by this protocol.
+    
+.. attribute:: current_response
+
+    The :class:`ProtocolResponse` currently handling incoming data.
 '''
     _transport = None
     response_factory = None
@@ -148,17 +154,19 @@ It can be used for both client and server sockets.
     def closed(self):
         return self._transport.closed if self._transport else True
     
+    @property
+    def current_response(self):
+        self._current_response
+    
     ############################################################################
     ###    PEP 3156 METHODS
     def connection_made(self, transport):
-        """Called when a connection is made.
-
-        The argument is the :class:`Transport` representing the connection.
-        To send data, call its :meth:`Transport.write` or
-        :meth:`Transport.writelines` method.
-        To receive data, wait for :meth:`data_received` calls.
-        When the connection is closed, :meth:`connection_lost` is called.
-        """
+        """Called when a connection is made. The argument is the
+:class:`Transport` representing the connection.
+To send data, call its :meth:`Transport.write` or
+:meth:`Transport.writelines` method.
+To receive data, wait for :meth:`data_received` calls.
+When the connection is closed, :meth:`connection_lost` is called."""
         self._transport = transport
         if self._current_response is not None:
             self._current_response.on_connect()
@@ -166,7 +174,8 @@ It can be used for both client and server sockets.
 
     def data_received(self, data):
         """Called by the :attr:`transport` when data is received.
-The argument is a bytes object."""
+By default it feeds the *data*, a bytes object, into the
+:attr:`current_response` attribute."""
         while data:
             response = self._current_response
             if response is not None and response.finished():

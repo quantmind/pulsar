@@ -75,11 +75,22 @@ class GeneralWebSocket(object):
     
     def __call__(self, environ, start_response):
         if self.handle.match(environ):
-            return self.handle_handshake(environ, start_response)
+            self.handle_handshake(environ, start_response)
+            return self.generate(environ)
     
     def handle_handshake(self, environ, start_response):
-        raise NotImplementedError()
+        raise NotImplementedError
     
+    #@coroutine
+    def generate(self, environ):
+        parser = FrameParser(kind=1)
+        while True:
+            data = (yield)
+            # new data from the protocol, parse it
+            message = parser.execute(parser)
+            if message:
+                result = self.handle.on_message(environ, message)
+                
     def upgrade_connection(self, environ, version):
         '''Upgrade the connection so it handles the websocket protocol.'''
         connection = environ['pulsar.connection']
@@ -204,9 +215,7 @@ http://www.w3.org/TR/websockets/ for details on the JavaScript interface.
             headers.append(('Sec-WebSocket-Extensions',
                             ','.join(ws_extensions)))
         self.handle.on_handshake(environ, headers)
-        self.upgrade_connection(environ, version)
-        response = WsgiResponse(101, content=(), response_headers=headers)
-        return response(environ, start_response)
+        start_response(101, headers)
         
     def challenge_response(self, key):
         sha1 = hashlib.sha1(to_bytes(key+WEBSOCKET_GUID))

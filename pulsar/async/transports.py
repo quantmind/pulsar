@@ -19,7 +19,9 @@ class Transport(object):
     '''Base class for pulsar transports. Design to conform with pep-3156_ as
 close as possible until it is finalised. A transport is an abstraction on top
 of a socket or something similar.
-Form pep-3153_:. Transports talk to two things: the other side of the
+Form pep-3153_:
+
+Transports talk to two things: the other side of the
 connection on one hand, and a :attr:`protocol` on the other. It's a bridge
 between the specific underlying transfer mechanism and the protocol.
 Its job can be described as allowing the protocol to just send and
@@ -34,16 +36,28 @@ capabilities in some transport mechanisms.
 
 .. attribute:: eventloop
 
-    a the :class:`EventLoop` instance for this :class:`Transport`.
+    The :class:`EventLoop` for this :class:`Transport`.
     
 .. attribute:: protocol
 
-    a the :class:`Protocol` instance for this :class:`Transport`.
+    The :class:`Protocol` for this :class:`Transport`.
     
 .. attribute:: sock
 
     the socket/pipe for this :class:`Transport`.
+
+.. attribute:: connecting
+
+    ``True`` if the transport is connecting with remote server.
     
+.. attribute:: writing
+
+    ``True`` if the transport has data in its writing buffer.
+
+.. attribute:: closing
+
+    ``True`` if the transport is about to close.
+        
 .. attribute:: closed
 
     ``True`` if the transport is closed.
@@ -134,7 +148,7 @@ If *list_of_data* is a **generator**, and during iteration an empty byte is
 yielded, the function will postpone writing the remaining of the generator
 at the next loop in the :attr:`eventloop`."""
         if isgenerator(list_of_data):
-            self.pause()    #pause delivery of data until done with generator
+            #self.pause()    #pause delivery of data until done with generator
             self._write_lines_async(list_of_data)
         else:
             for data in list_of_data:
@@ -142,18 +156,15 @@ at the next loop in the :attr:`eventloop`."""
     
     def pause(self):
         """A :class:`Transport` can be paused and resumed. Invoking this
-method will cause the transport to buffer data coming from protocols and
-stop sending received data to the :attr:`protocol`. No data will be passed to
+method will cause the transport to buffer data coming from protocols but not
+sending it to the :attr:`protocol`. In other words, no data will be passed to
 the :meth:`Protocol.data_received` method until :meth:`resume` is called.
         """
         self._paused = True
 
     def resume(self):
-        """Resume the receiving end.
-
-        Data received will once again be passed to the protocol's
-        data_received() method.
-        """
+        """Resume the receiving end. Data received will once again be
+passed to the :meth:`Protocol.data_received` method."""
         self._paused = False
         buffer = self._read_buffer
         self._read_buffer = []

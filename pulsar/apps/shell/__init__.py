@@ -42,9 +42,10 @@ from time import time
 
 import pulsar
 from pulsar.apps import tasks
+from pulsar.utils.pep import ispy3k
 
 
-if pulsar.ispy3k:
+if ispy3k:
     def decode_line(line):
         return line
 else:   #pragma    nocover

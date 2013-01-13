@@ -6,62 +6,38 @@
 Protocols API
 =======================
 
-Protocols
-==========================
-
-Protocol
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-.. autoclass:: Protocol
-   :members:
-   :member-order: bysource
-
-
-Client Protocol
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~   
-.. autoclass:: ClientProtocol
-   :members:
-   :member-order: bysource
-   
-
-Server Protocol
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~   
-.. autoclass:: ServerProtocol
-   :members:
-   :member-order: bysource
-
-Transports
-==========================
+This part of the :ref:`pulsar API <api>` is about classes responsible for
+implementing the Protocol/Transport paradigm as well as the :class:`Server`,
+the base class for all socket servers.
 
 Transport
-~~~~~~~~~~~~~~~~~~~
+==========================
 
 .. autoclass:: Transport
    :members:
    :member-order: bysource
    
-
-Client Transport
-~~~~~~~~~~~~~~~~~~~~~~~
    
-.. autoclass:: ClientTransport
+Protocol
+==========================
+.. autoclass:: Protocol
+   :members:
+   :member-order: bysource
+
+   
+Protocol Response
+==========================
+.. autoclass:: ProtocolResponse
    :members:
    :member-order: bysource
    
-
-Streaming Transport
-~~~~~~~~~~~~~~~~~~~~~~~
    
-.. autoclass:: StreamingClientTransport
+Server
+==========================
+.. autoclass:: Server
    :members:
    :member-order: bysource
-   
 
-Server Transport
-~~~~~~~~~~~~~~~~~~~~~~~
-   
-.. autoclass:: ServerTransport
-   :members:
-   :member-order: bysource
 
 
 .. _pep-3153: http://www.python.org/dev/peps/pep-3153/

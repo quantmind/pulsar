@@ -286,7 +286,7 @@ class FrameParser(object):
             frame.msg.extend(frame.masking_key)
                 
         if len(data) < frame.payload_length:
-            return self.save_buf(frame, data)
+            self.save_buf(frame, data)
         # We have a frame
         else:
             data = data[:frame.payload_length]
