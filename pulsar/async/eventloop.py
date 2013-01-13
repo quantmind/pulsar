@@ -3,6 +3,7 @@ import sys
 import heapq
 import logging
 import traceback
+import inspect
 import signal
 import errno
 import socket
@@ -12,11 +13,11 @@ from threading import current_thread
 from pulsar.utils.system import IObase, IOpoll, close_on_exec, platform, Waker
 from pulsar.utils.pep import default_timer, DefaultEventLoopPolicy,\
                              set_event_loop_policy, set_event_loop,\
-                             EventLoop as BaseEventLoop
+                             get_event_loop, EventLoop as BaseEventLoop
+from .defer import log_failure, Deferred
+from .servers import Server
 
-from .defer import log_failure
-
-__all__ = ['EventLoop', 'TimedCall']
+__all__ = ['EventLoop', 'TimedCall', 'asynchronous']
 
 LOGGER = logging.getLogger('pulsar.eventloop')
 
@@ -61,6 +62,30 @@ class EventLoopPolicy(DefaultEventLoopPolicy):
 set_event_loop_policy(EventLoopPolicy())
 
 
+class asynchronous:
+    
+    def __call__(self, f):
+        assert inspect.isgeneratorfunction(f), 'required generator function'
+        self.func = f
+        def _(*args, **kwargs):
+            d = Deferred()
+            self.generate(get_event_loop(), d.callback, f(*args, **kwargs))
+            return d
+        return _
+    
+    def generate(self, eventloop, callback, gen, value=None):
+        try:
+            value = next(gen)
+            eventloop.call_soon_threadsafe(self.generate, eventloop,
+                                           callback, gen, value)
+        except StopIteration:
+            callback(value)
+            pass
+        except Exception as e:
+            callback(e)
+                
+            
+            
 class TimedCall(object):
     """An EventLoop callback handler. This is not initialised directly, instead
 it is created by :meth:`EventLoop.call_soon`, :meth:`EventLoop.call_later`,
@@ -115,11 +140,11 @@ it is created by :meth:`EventLoop.call_soon`, :meth:`EventLoop.call_later`,
         self._deadline = new_deadline
         self._cancelled = False
     
-    def __call__(self):
+    def __call__(self, *args, **kwargs):
         if not self._cancelled:
-            if self._deadline:
+            if self._deadline:  # cancel of if a deadline !important
                 self._cancelled = True
-            self._callback(*self._args)
+            self._callback(*self.args)
         
         
 class FileDescriptor(IObase):
@@ -290,6 +315,7 @@ event loop is the place where most asynchronous operations are carried out.
         if hasattr(self._impl, 'fileno'):
             close_on_exec(self._impl.fileno())
         self._handlers = {}
+        self._signals = {}
         self._callbacks = []
         self._scheduled = []
         self._started = None
@@ -375,7 +401,7 @@ the callback when it is called."""
         
     def call_soon(self, callback, *args):
         '''Equivalent to ``self.call_later(0, callback, *args, **kw)``.'''
-        timeout = TimedCall(None, callback, args, self.remove_timeout)
+        timeout = TimedCall(None, callback, args)
         self._callbacks.append(timeout)
         return timeout
     
@@ -437,7 +463,27 @@ descriptor.'''
         fd = file_descriptor(fd)
         if fd in self._handlers:
             self._handlers[fd].remove_writer()
-            
+    
+    def add_signal_handler(self, sig, callback, *args):
+        '''Whenever signal ``sig is received, arrange for callback(*args) to
+be called. Returns a Handler which can be used to cancel the signal callback.'''
+        handler = TimedCall(None, callback, args)
+        prev = signal.signal(sig, handler)
+        if isinstance(prev, TimedCall):
+            prev.cancel()
+        return handler
+    
+    def remove_signal_handler(self, sig):
+        handler = signal.signal(sig, signal.SIG_DFL)
+        if handler:
+            handler.cancel()
+            return True
+        else:
+            return False
+        
+    def create_server(self, **kwargs):
+        return Server.create(eventloop=self, **kwargs)
+    
     def wake(self):
         '''Wake up the eventloop.'''
         if self.running:

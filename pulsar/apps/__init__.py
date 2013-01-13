@@ -37,7 +37,7 @@ def fire_event(f):
         
     def _(*args, **kwargs):
         app = args[0].params.app
-        safe_async(f, args, kwargs).addBoth(lambda r: fire(r, app))
+        safe_async(f, args, kwargs).add_both(lambda r: fire(r, app))
     
     _.__name__ = f.__name__
     _.__doc__ = f.__doc__

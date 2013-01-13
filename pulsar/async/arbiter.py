@@ -13,6 +13,7 @@ from pulsar import HaltServer
 
 from .actor import Actor, ACTOR_STATES
 from .monitor import PoolMixin, _spawn_actor
+from .defer import multi_async
 from .access import get_actor, set_actor
 from . import proxy
 
@@ -95,7 +96,6 @@ Users access the arbiter (in the arbiter process domain) by the high level api::
 .. _tornado: http://www.tornadoweb.org/
 '''
     pidfile = None
-    restarted = False
 
     ############################################################################
     # ARBITER HIGH LEVEL API
@@ -129,8 +129,7 @@ Users access the arbiter (in the arbiter process domain) by the high level api::
 
     def close_monitors(self):
         '''Close all :class:`Monitor` at once.'''
-        for pool in list(itervalues(self.monitors)):
-            yield pool.stop(True)
+        return multi_async([m.stop() for m in itervalues(self.monitors)])
 
     def on_info(self, data):
         monitors = [p.info() for p in itervalues(self.monitors)]
@@ -162,11 +161,19 @@ Users access the arbiter (in the arbiter process domain) by the high level api::
             p.create(self.pid)
             self.pidfile = p
         PoolMixin.on_start(self)
-
+        
+    def on_stop(self):
+        p = self.pidfile
+        if p is not None:
+            p.unlink()
+        if self.managed_actors or self.linked_actors:
+            self.state = ACTOR_STATES.TERMINATE
+        self.logger.info("Bye.")
+        if self.exit_code:
+            sys.exit(self.exit_code)
+        
     def periodic_task(self):
         # Arbiter periodic task
-        if self.restarted:
-            self.stop(exit_code=self.exit_code)
         if self.can_continue() and self.running():
             # managed actors job
             self.manage_actors()
@@ -185,25 +192,19 @@ Users access the arbiter (in the arbiter process domain) by the high level api::
         # is not available at startup
         self.requestloop.call_soon(self.periodic_task)
 
-    def on_stop(self):
+    def _stop(self):
         '''Stop the pools the message queue and remaining actors.'''
-        self.state = ACTOR_STATES.STOPPING
-        self.requestloop.call_soon(self.exit)
+        self.requestloop.call_soon_threadsafe(self._exit)
         self.requestloop.run()
         
-    def exit(self):
-        self.close_monitors()
-        self.close_actors()
-        self._close_message_queue()
-        p = self.pidfile
-        if p is not None:
-            p.unlink()
-        if self.managed_actors or self.linked_actors:
-            self.state = ACTOR_STATES.TERMINATE
-        self.logger.info("Bye.")
-        if self.exit_code:
-            sys.exit(self.exit_code)
-
+    def _exit(self, res=None):
+        if res:
+            self.state = ACTOR_STATES.CLOSE
+            self.mailbox.close()
+        else:
+            active = multi_async((self.close_monitors(), self.close_actors()))
+            active.add_both(self._exit)
+                
     ############################################################################
     # INTERNALS
     ############################################################################
@@ -212,26 +213,3 @@ Users access the arbiter (in the arbiter process domain) by the high level api::
             if self.cfg.daemon: #pragma    nocover
                 system.daemonize()
             return Actor.start(self)
-            
-    def _run(self):
-        try:
-            self.cfg.when_ready(self)
-        except:
-            pass
-        crash = 0
-        try:
-            self.requestloop.run()
-        except Exception as e:
-            crash = 1
-        finally:
-            self._halt(crash)
-
-    def _halt(self, code=0):
-        if not self.closed():
-            if code:
-                self.logger.exception("Unhandled exception in main loop.")
-            self.stop(True, exit_code=code)
-
-    def _close_message_queue(self):
-        return
-

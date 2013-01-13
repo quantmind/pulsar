@@ -1,23 +1,20 @@
 from pulsar.utils.pep import get_event_loop
 
-from .protocols import ClientResponse
-from .tcp import TCPClient
+from .protocols import ProtocolResponse
+from .servers import Server
 
 __all__ = ['create_connection', 'ClientSessions']
 
 
 def create_connection(address, timeout=0, streaming=False, source_address=None,
-                      backlog=None):
+                        backlog=None):
     '''Create a connection with a remote server'''
     sock = create_socket(address=address, backlog=backlog)
     sock.settimeout(timeout)
     if source_address:
         sock.bind(source_address)
-    if sock.type == 'tcp' or sock.type == 'unix':
-        protocol_type = TCPClient
-    else:
-        raise NotImplemented
-    protocol = protocol_type(address)
+    protocol_factory = Server.server_types[sock.type].server.protocol_factory
+    protocol = protocol_factory(address)
     transport_class = StreamClientTransport if streaming else ClientTransport
     transport = transport_class(get_event_loop(), sock, protocol)
     return transport.connect()
@@ -77,7 +74,7 @@ class ClientSessions(object):
     '''A client for a server which handles a pool of synchronous
 or asynchronous connections.'''
     connection_pool = ConnectionPool
-    response_class = ClientResponse
+    response_class = ProtocolResponse
     client_version = ''
     stream = False
     timeout = 0

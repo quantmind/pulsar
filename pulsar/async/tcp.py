@@ -1,20 +1,21 @@
-'''Protocols for TCP clients and servers'''
+'''TCP protocol clients and servers'''
 import logging
 
 from pulsar.utils.sockets import *
 from pulsar.utils.structures import merge_prefix
 
-from .protocols import ServerProtocol, ClientProtocol
+from .servers import Server
+from .protocols import Protocol
 
-__all__ = ['TCPServer', 'TCPClient']
+__all__ = ['TCPServer', 'TCPProtocol']
 
 TRY_WRITE_AGAIN = (EWOULDBLOCK, ENOBUFS, EINPROGRESS)
 TRY_READ_AGAIN = (EWOULDBLOCK, EAGAIN)
 
 LOGGER = logging.getLogger('pulsar.tcp')
 
-class TCPClient(ClientProtocol):
-    
+class TCPProtocol(Protocol):
+    '''TCP protocol.'''
     def connect(self, sock):
         try:
             sock.connect(self.address)
@@ -49,26 +50,17 @@ class TCPClient(ClientProtocol):
         return tot_bytes
 
 
-class TCPServer(ServerProtocol):
-    '''An asynchronous  TCP server
+class TCPServer(Server):
+    '''An asynchronous TCP :class:`Server`'''
+    TYPE = socket.SOCK_STREAM
+    protocol_factory = TCPProtocol
     
-.. attribute:: timeout
-
-    number of seconds to keep alive an idle client connection
-'''
-    protocol = TCPClient
-    def __init__(self, numberAccepts=100, transport=None, response=None,
-                 timeout=30, max_requests=0, protocol=None, **params):
+    def __init__(self, event_loop, sock, numberAccepts=100, **params):
         if platform.type == "posix":
             self._numberAccepts = max(numberAccepts, 1)
         else:
             self._numberAccepts = 1
-        self.timeout = timeout
-        self.max_requests = max_requests
-        if protocol:
-            self.protocol = protocol
-        if response:
-            self.response = response 
+        super(TCPServer, self).__init__(event_loop, sock, **params)
         
     def ready_read(self):
         try:
@@ -88,13 +80,7 @@ class TCPServer(ServerProtocol):
                         LOGGER.info('Could not accept new connection')
                         break
                     raise
-                # Build the protocol
-                protocol = self.protocol(address, self.response)
-                if protocol is None:
-                    sock.close()
-                    continue
-                self.received += 1
-                self.transport(sock, protocol, session=self.received)
+                self.create_connection(sock, address)
         except:
             LOGGER.exception('Could not accept new connection')
         

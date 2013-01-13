@@ -9,10 +9,10 @@ from pulsar.utils.pep import iteritems, itervalues, range
 from . import proxy
 from .actor import Actor, ACTOR_STATES, ACTOR_TERMINATE_TIMEOUT,\
                      ACTOR_STOPPING_LOOPS
-from .eventloop import setid
 from .concurrency import concurrency
 from .queue import Queue
 from .mailbox import mailbox
+from .eventloop import asynchronous
 
 
 __all__ = ['Monitor', 'PoolMixin']
@@ -226,21 +226,21 @@ as required."""
             on_address.callback(proxy_monitor.proxy)
         return proxy_monitor.proxy
 
-    def close_actors(self, start=None):
+    @asynchronous()
+    def close_actors(self):
         '''Close all managed :class:`Actor`.'''
-        if not start:
-            start = time()
-            # Stop all of them
-            to_stop = self.manage_actors(stop=True)
-            if to_stop:
-                self.requestloop.call_soon(self.close_actors, start)
-        else:
-            to_stop = self.manage_actors(manage=False)
-            if time() - start > self.CLOSE_TIMEOUT and to_stop:
-                self.logger.warn('Cannot stop %s actors.', to_stop)
-                to_stop = self.manage_actors(terminate=True)
-                self.logger.warn('terminated %s actors.', to_stop)
-                to_stop = 0
+        start = time()
+        # Stop all of them
+        to_stop = yield self.manage_actors(stop=True)
+        if to_stop:
+            while True:
+                to_stop = yield self.manage_actors(manage=False)
+                if time() - start > self.CLOSE_TIMEOUT:
+                    self.logger.warn('Cannot stop %s actors.', to_stop)
+                    to_stop = self.manage_actors(terminate=True)
+                    self.logger.warn('terminated %s actors.', to_stop)
+                    to_stop = 0
+                    break
 
 
 class Monitor(PoolMixin, Actor):
@@ -318,8 +318,8 @@ Users shouldn't need to override this method, but use
         self.ioloop.call_soon(self.periodic_task)
 
     # HOOKS
-    def on_stop(self):
-        return self.close_actors()
+    def _stop(self):
+        self.close_actors().add_both(self.on_exit.callback)
 
     @property
     def multithread(self):

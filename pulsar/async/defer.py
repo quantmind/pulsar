@@ -21,7 +21,6 @@ __all__ = ['Deferred',
            'Failure',
            'as_failure',
            'is_failure',
-           'raise_failure',
            'log_failure',
            'is_async',
            'maybe_async',
@@ -137,6 +136,9 @@ This function is useful when someone needs to treat a value as a deferred::
     else:
         return val
     
+def multi_async(iterable):
+    return MultiDeferred(iterable).lock()
+    
 def safe_async(f, args=None, kwargs=None, description=None, max_errors=None):
     '''Execute function *f* safely and **always** returns an asynchronous
 result.
@@ -192,29 +194,6 @@ Typical usage::
         _.__doc__ = func.__doc__
         return _
 
-def multi_async(func):
-    '''Decorator for a function *func* which returns an iterable over, possibly
-asynchronous, values. This decorator create an instance of a
-:class:`MultiDeferred` called once all asynchronous values have been caled.'''
-    def _(*args, **kwargs):
-        try:
-            return MultiDeferred(func(*args, **kwargs), type=list).lock()
-        except Exception as e:
-            return make_async(e)
-    _.__name__ = func.__name__
-    _.__doc__ = func.__doc__
-    return _
-
-def raise_failure(f):
-    '''Decorator for raising failures'''
-    def _(*args, **kwargs):
-        r = f(*args, **kwargs)
-        if is_failure(r):
-            r.raise_all()
-        return r
-    _.__name__ = f.__name__
-    _.__doc__ = f.__doc__
-    return _
 
 ############################################################### FAILURE
 class Failure(object):
@@ -378,7 +357,7 @@ be called when an exception occurs."""
         '''Same as :meth:`add_callback` but only for errors.'''
         return self.add_callback(pass_through, errback)
 
-    def addBoth(self, callback):
+    def add_both(self, callback):
         '''Equivalent to `self.add_callback(callback, callback)`.'''
         return self.add_callback(callback, callback)
 
@@ -431,7 +410,7 @@ directly the :attr:`result` attribute.'''
                     # Add a pause
                     self._pause()
                     # Add a callback to the result to resume callbacks
-                    self.result.addBoth(self._continue)
+                    self.result.add_both(self._continue)
                     break
 
     def _pause(self):
@@ -470,9 +449,9 @@ occurred.
     def __init__(self, gen, max_errors=None, description=None):
         self.gen = gen
         self.max_errors = max(1, max_errors) if max_errors else 0
-        self._consumed = 0
         self.errors = Failure()
         super(DeferredGenerator,self).__init__(description=description)
+        # the loop in the current thread... with preference to the request loop
         self.loop = get_request_loop()
         self._consume()
 
@@ -500,7 +479,6 @@ current thread.'''
                 return self.conclude()
         try:
             result = next(self.gen)
-            self._consumed += 1
         except EXIT_EXCEPTIONS:
             raise
         except StopIteration as e:
@@ -515,14 +493,14 @@ current thread.'''
                 # The NOT_DONE object indicates that the generator needs to
                 # abort so that the event loop can continue. This generator
                 # will resume at the next event loop.
-                self.loop.add_callback(self._consume, wake=False)
+                self.loop.call_soon(self._consume)
                 return self
             result = maybe_async(result)
             if is_async(result):
                 # The result is asynchronous and it is not ready yet.
                 # We pause the generator and attach a callback to continue
                 # on the same thread.
-                return result.addBoth(self._resume_in_thread)
+                return result.add_both(self._resume_in_thread)
             if result == CLEAR_ERRORS:
                 self.errors.clear()
                 result = None
@@ -639,7 +617,7 @@ both ``list`` and ``dict`` types.'''
 
     def _add_deferred(self, key, value):
         self._deferred[key] = value
-        value.addBoth(lambda result: self._deferred_done(key, result))
+        value.add_both(lambda result: self._deferred_done(key, result))
 
     def _deferred_done(self, key, result):
         self._deferred.pop(key, None)

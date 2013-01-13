@@ -177,8 +177,9 @@ requests. The request handler is constructued from the
     def create_server(self, worker):
         '''Create the Server Protocol which will listen for requests. It
 uses the :meth:`handler` as its response protocol.'''
-        return pulsar.create_server(worker, sock=worker.params.sock,
-                                    response = worker.app_handler,
+        return pulsar.create_server(eventloop=worker.requestloop,
+                                    sock=worker.params.sock,
+                                    response_factory=self.handler(),
                                     max_requests=self.cfg.max_requests,
                                     timeout=self.cfg.keepalive)
-    
+        

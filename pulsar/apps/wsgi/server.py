@@ -136,12 +136,8 @@ class HttpServerResponse(pulsar.ProtocolResponse):
             if request_headers is None:
                 self.expect_continue()
             if p.is_message_complete(): # message is done
-                try:
-                    self.transport.pause()  # pause the delivery of data
-                    self.environ = wsgi_environ(self, p)
-                    self.writelines(self.generate(self.environ))
-                finally:
-                    self.transport.resume()
+                self.environ = wsgi_environ(self, p)
+                self.writelines(self.generate(self.environ))
         else:
             # This is a parsing error, the client must have sent
             # bogus data

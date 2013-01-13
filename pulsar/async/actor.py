@@ -6,6 +6,7 @@ import socket
 from time import time
 import random
 import threading
+from functools import partial
 from multiprocessing import current_process
 from multiprocessing.queues import Empty
 from threading import current_thread
@@ -23,6 +24,7 @@ from pulsar.utils.pep import pickle
 from pulsar.utils import events
 
 from .eventloop import EventLoop, setid
+from .defer import Deferred
 from .proxy import ActorProxy, ActorMessage, get_command, get_proxy
 from .queue import IOQueue
 from .mailbox import mailbox
@@ -208,6 +210,7 @@ an :class:`ActorProxy`.
         self.params = AttributeDictionary(**impl.params)
         del impl.params
         setid(self)
+        self.on_exit = Deferred()
 
     def __repr__(self):
         return self.impl.unique_name
@@ -373,27 +376,36 @@ before the actor starts running.'''
     ############################################################################
     # STOPPING
     ############################################################################
-    def stop(self, force=False, exit_code=None):
+    def stop(self, exc=None):
         '''Stop the actor by stopping its :attr:`Actor.requestloop`
 and closing its :attr:`Actor.mailbox`. Once everything is closed
 properly this actor will go out of scope.'''
-        if force or self.state <= ACTOR_STATES.RUN:
+        if self.state <= ACTOR_STATES.RUN:
+            # The actor has not started the stopping process. Starts it now.
             events.fire('stop', self)
+            self.exit_code = 1 if exc else 0
             self.state = ACTOR_STATES.STOPPING
+            if self.cpubound and self.requestloop.running:
+                self.requestloop.call_soon_threadsafe(self._stop)
+                self.requestloop.stop()
+            else:
+                self._stop()
+        else:
+            # The actor has finished the stopping process
+            events.fire('exit', self)
+            self.on_exit.callback(self)
             self.on_stop()
+        return self.on_exit
     
     def on_stop(self):
+        self.logger.debug('%s exited', self)
+        
+    def _stop(self):
         '''Exit from the :class:`Actor` domain.'''
         if not self.stopped():
-            # we don't want monitors to stop the request loop
-            if not self.is_monitor():
-                self.requestloop.stop()
-            self.mailbox.close()
             self.state = ACTOR_STATES.CLOSE
-            self.logger.debug('%s exited', self)
+            self.mailbox.close()
             remove_actor(self)
-            events.fire('exit', self)
-            self.on_exit()
 
     ############################################################################
     #    INTERNALS
@@ -480,11 +492,14 @@ if *proxy* is not a class:`ActorProxy` instance raise an exception.'''
     def _setup_ioloop(self):
         # Internal function called at the start of the actor. It builds the
         # event loop which will consume events on file descriptors
+        # Build the mailbox first so that when the mailbox closes, it shut
+        # down the eventloop.
+        io = IOQueue(self.ioqueue, self) if self.ioqueue else None
+        self.requestloop = EventLoop(io=io, logger=self.logger,
+                                     poll_timeout=self.params.poll_timeout)
+        self.mailbox = mailbox(self)
         # Inject self as the actor of this thread
-        ioq = self.ioqueue
-        self.requestloop = EventLoop(io=IOQueue(ioq, self) if ioq else None,
-                                     poll_timeout=self.params.poll_timeout,
-                                     logger=self.logger)
+        set_actor(self)
         if self.is_process():
             random.seed()
             proc_name = "%s-%s" % (self.cfg.proc_name, self)
@@ -497,14 +512,10 @@ if *proxy* is not a class:`ActorProxy` instance raise an exception.'''
                 for name in system.ALL_SIGNALS:
                     sig = getattr(signal, 'SIG%s' % name)
                     try:
-                        signal.signal(sig, self._queue_signal)
+                        handler = partial(self.signal_queue.put, sig)
+                        self.requestloop.add_signal_handler(sig, handler)
                     except ValueError:
                         break
-        self.mailbox = mailbox(self)
-        set_actor(self)
-
-    def _queue_signal(self, sig, frame=None):
-        self.signal_queue.put(sig)
         
     def can_continue(self):
         if self.signal_queue is not None:
@@ -519,7 +530,7 @@ if *proxy* is not a class:`ActorProxy` instance raise an exception.'''
                     signame = system.SIG_NAMES.get(sig)
                     if sig in EXIT_SIGNALS:
                         self.logger.warn("Got signal %s. Stopping.", signame)
-                        self.stop(True)
+                        self.stop()
                         return False
                     else:
                         self.logger.debug('No handler for signal %s.', signame)
@@ -527,6 +538,14 @@ if *proxy* is not a class:`ActorProxy` instance raise an exception.'''
     
     def _run(self):
         try:
+            self.cfg.when_ready(self)
+        except:
+            pass
+        exc = None
+        try:
             self.requestloop.run()
+        except Exception as e:
+            exc = e
         finally:
-            self.stop()
+            self.stop(exc)
+        

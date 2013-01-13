@@ -1,21 +1,9 @@
-from .transports import ServerTransport
+from inspect import isgenerator
 
-__all__ = ['Protocol', 'ProtocolResponse', 'ClientResponse',
-           'ClientProtocol', 'ServerProtocol', 'ProtocolError',
-           'ConcurrentServer']
+from .defer import Deferred
 
-class ConcurrentServer(object):
-    
-    def __new__(cls, *args, **kwargs):
-        o = super(ConcurrentServer, cls).__new__(cls)
-        o.received = 0
-        o.concurrent_requests = set()
-        return o
-        
-    @property
-    def concurrent_request(self):
-        return len(self.concurrent_requests)
-    
+__all__ = ['Protocol', 'ProtocolResponse', 'ChunkResponse', 'ProtocolError']
+
     
 class ProtocolError(Exception):
     '''Raised when the protocol encounter unexpected data. It will close
@@ -23,7 +11,8 @@ the socket connection.'''
 
 
 class ProtocolResponse(object):
-    '''A :class:`Protocol` response is responsible for parsing incoming data.'''
+    '''A :class:`Protocol` response is responsible for parsing incoming data
+and producing no more than one response.'''
     def __init__(self, protocol):
         self._protocol = protocol
         self._finished = False
@@ -43,6 +32,12 @@ class ProtocolResponse(object):
     @property
     def transport(self):
         return self._protocol.transport
+    
+    def on_connect(self):
+        pass
+    
+    def begin(self):
+        raise NotImplementedError
         
     def feed(self, data):
         '''Feed new data into the :class:`ProtocolResponse`'''
@@ -52,54 +47,88 @@ class ProtocolResponse(object):
         '''`True` if this response has finished.'''
         return self._finished
     
+    ############################################################################
+    ###    TRANSPORT SHURTCUTS
     def write(self, data):
-        if is_async(data):
-            self.event_loop.call_soon(self.write, data)
-        else:
-            self.protocol.transport.write(data)
+        self.transport.write(data)
             
     def writelines(self, lines):
         '''Write an iterable of bytes. It is a proxy to
 :meth:`Transport.writelines`'''
-        self.transport.writelines(self._generate(lines))
+        self.transport.writelines(lines)
         
-    def _generate(self, lines):
-        self.transport.pause()
-        try:
-            for data in lines:
-                yield data
-        finally:
-            self.transport.resume()
 
-
-class ClientResponse(ProtocolResponse):
+class ChunkResponse(ProtocolResponse):
     
-    def __init__(self, protocol, request):
-        super(ClientResponse, self).__init__(protocol)
-        self.request = request
-        self._protocol.set_response(self)
+    def __init__(self, protocol):
+        super(ChunkResponse, self).__init__(protocol)
+        self._buffer = bytearray()  
     
-    def on_connect(self):
-        pass
-    
-    def begin(self):
+    def feed(self, data):
+        self._buffer.extend(data)
+        message = self.decode(bytes(self._buffer))
+        if message is not None:
+            self.responde(message)
+        
+    def decode(self, data):
         raise NotImplementedError
-        
+    
+    def responde(self, message):
+        '''Write back to the client or server'''
+        self.write(message)
+        self._finished = True
+    
         
 class Protocol(object):
-    '''Base class for a pulsar :class:`Protocol` conforming with pep-3156_.
+    '''Pulsar :class:`Protocol` conforming with pep-3156_.
+It can be used for both client and server sockets.
+
+* a *client* protocol is for clients connecting to a remote server.
+* a *server* protocol is for socket created from an **accept**
+  on a :class:`Server`.
+
+.. attribute:: address
+
+    Address of the client, if this is a server, or of the remote
+    server if this is a client.
     
 .. attribute:: transport
 
     The :class:`Transport` for this :class:`Protocol`. This is obtained once
     the :meth:`connection_made` is invoked.
     
-.. attribute:: response
+.. attribute:: response_factory
 
-    The :class:`ProtocolResponse` factory for this :class:`Protocol`
+    A factory of :class:`ProtocolResponse` instances for this :class:`Protocol`
+    
+.. attribute:: processed
+
+    Number of separate requests processed by this protocol.
 '''
     _transport = None
-    response = None
+    response_factory = None
+    
+    def __init__(self, address, response_factory=None):
+        self._processed = 0
+        self._address = address
+        self._current_response = None
+        self.on_connection_lost = Deferred()
+        if response_factory:
+            self._response_factory = response_factory
+    
+    def __repr__(self):
+        return str(self._address)
+    
+    def __str__(self):
+        return self.__repr__()
+        
+    @property
+    def processed(self):
+        return self._processed
+    
+    @property
+    def address(self):
+        return self._address
     
     @property
     def transport(self):
@@ -119,15 +148,8 @@ class Protocol(object):
     def closed(self):
         return self._transport.closed if self._transport else True
     
-    def __repr__(self):
-        if self.sock:
-            return repr(self.sock)
-        else:
-            return '<closed>'
-    
-    def __str__(self):
-        return '%s @ %s' % (self.__class__.__name__, repr(self))
-    
+    ############################################################################
+    ###    PEP 3156 METHODS
     def connection_made(self, transport):
         """Called when a connection is made.
 
@@ -138,10 +160,25 @@ class Protocol(object):
         When the connection is closed, :meth:`connection_lost` is called.
         """
         self._transport = transport
+        if self._current_response is not None:
+            self._current_response.on_connect()
+            self._current_response.begin()
 
     def data_received(self, data):
-        """Called by the :attr:`transport` when some data is received.
+        """Called by the :attr:`transport` when data is received.
 The argument is a bytes object."""
+        while data:
+            response = self._current_response
+            if response is not None and response.finished():
+                response = None
+            if response is None:
+                self._processed += 1
+                self._current_response = response = self._response_factory(self)
+            data = response.feed(data)
+            if data and not response.finished():
+                # if data is returned from the response feed method and the
+                # response has not done yet raise a Protocol Error
+                raise ProtocolError
             
     def eof_received(self):
         """Called when the other end calls write_eof() or equivalent."""
@@ -153,7 +190,18 @@ The argument is a bytes object."""
         meaning a regular EOF is received or the connection was
         aborted or closed).
         """
+        self.on_connection_lost.callback(exc)
         
+    ############################################################################
+    ###    PULSAR METHODS
+    def set_response(self, response):
+        '''Set a new response instance on this protocol. If a response is
+already available it raises an exception.'''
+        assert self._current_response is None, "protocol already in response"
+        self._current_response = response
+        if self._transport is not None:
+            self._current_response.begin()
+            
     ############################################################################
     ###    TRANSPORT METHODS SHORTCUT
     def close(self):
@@ -164,89 +212,3 @@ The argument is a bytes object."""
         if self._transport:
             self._transport.abort()
     
-
-class ClientProtocol(Protocol):
-    '''Base :class:`Protocol` for clients/server sockets.
-
-* a *client* protocol is for clients connecting to a remote server.
-* a *server* protocol is for socket created from an **accept** on a
-  server socket.
-
-.. attribute:: address
-
-    Address of the client, if this is a server, or of the remote
-    server if this is a client.
-    
-.. attribute:: processed
-
-    Number of separate requests processed by this protocol.
-    
-.. attribute:: response_factory
-
-    A :class:`ProtocolResponse` class for handling a single request.
-'''
-    def __init__(self, address, response_factory=None):
-        self._processed = 0
-        self._address = address
-        self._current_response = None
-        self._response_factory = response_factory
-    
-    def __repr__(self):
-        return str(self._address)
-        
-    @property
-    def processed(self):
-        return self._processed
-    
-    @property
-    def address(self):
-        return self._address
-    
-    def connect(self, sock):
-        '''Connect the client to the remote server.'''
-        raise NotImplementedError
-    
-    def connection_made(self, transport):
-        self._transport = transport
-        if self._current_response is not None:
-            self._current_response.on_connect()
-            self._current_response.begin()
-        
-    def set_response(self, response):
-        assert self._current_response is None, "protocol already in response"
-        self._current_response = response
-        if self._transport is not None:
-            self._current_response.begin()
-    
-    def data_received(self, data):
-        while data:
-            response = self._current_response
-            if response is not None and response.finished():
-                response = None
-            if response is None:
-                self._processed += 1
-                self._current_response = response = self._response_factory(self)
-            data = response.feed(data)
-            if data:
-                if not response.finished():
-                    raise ProtocolError
-            
-            
-class ServerProtocol(Protocol, ConcurrentServer):
-    '''Base class for all Server's protocols.
-    
-.. attribute:: protocol
-
-    The :class:`Protocol` for a socket created from a connection of a remote
-    client with this server. It is usually a subclass of
-    :class:`ClientProtocol`.
-'''
-    protocol = ClientProtocol
-    
-    def create_transport(self, event_loop, sock):
-        ServerTransport(event_loop, sock, self)
-    
-    @property
-    def address(self):
-        if self.transport:
-            return self.transport.address

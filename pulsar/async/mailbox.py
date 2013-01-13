@@ -5,10 +5,10 @@ import tempfile
 from pulsar import MailboxError, CouldNotParse, CommandNotFound, platform
 from pulsar.utils.pep import to_bytes, ispy3k, pickle, ispy3k, set_event_loop
 
-from .defer import log_failure, async, is_failure, raise_failure
+from .defer import log_failure, is_failure
 from .access import get_actor, set_actor
 from .servers import create_server
-from .protocols import Protocol, ProtocolResponse
+from .protocols import Protocol, ChunkResponse
 
 
 __all__ = ['mailbox', 'ActorMessage']
@@ -17,29 +17,23 @@ __all__ = ['mailbox', 'ActorMessage']
 LOGGER = logging.getLogger('pulsar.mailbox')
 
 
-def mailbox(actor=None):
-    '''Creates a :class:`Mailbox` instances for :class:`Actor` instances.
-If an address is provided, the communication is implemented using a socket,
-otherwise a queue is used.'''
+def mailbox(actor):
+    '''Creates a :class:`Mailbox` for *actor*.'''
     if actor.is_monitor():
         return MonitorMailbox(actor)
     else:
-        return create_mailbox(actor)
+        if platform.type == 'posix':
+            address = 'unix:%s.pulsar' % actor.aid
+        else:   #pragma    nocover
+            address = ('127.0.0.1', 0)
+        server = actor.requestloop.create_server(address=address,
+                                            protocol_factory=MailboxProtocol,
+                                            close_event_loop=True)
+        server.event_loop.call_soon(send_mailbox_address, actor)
+        return server
 
 def actorid(actor):
     return actor.aid if hasattr(actor, 'aid') else actor
-
-
-class MessageParser(object):
-
-    def encode(self, msg):
-        if isinstance(msg, ActorMessage):
-            return msg.encode()
-        else:
-            return to_bytes(msg)
-
-    def decode(self, buffer):
-        return ActorMessage.decode(buffer)
 
 
 class ActorMessage(object):
@@ -106,30 +100,33 @@ created by :meth:`ActorProxy.send` method.
         return self.command
 
 
-class MailboxResponse(ProtocolResponse):
-    message = None
-    def feed(self, data):
+class MailboxResponse(ChunkResponse):
+    
+    def decode(self, data):
         # The receiver could be different from the mail box actor. For
         # example a monitor uses the same mailbox as the arbiter
         message, data = ActorMessage.decode(data)
-        if message:
-            self.message = message
-            actor = get_actor()
-            receiver = actor.get_actor(message.receiver) or actor
-            sender = receiver.get_actor(message.sender)
-            command = receiver.command(message.command)
-            try:
-                if not command:
-                    raise CommandNotFound(message.command)
-                args = message.args
-                # If this is an internal command add the sender information
-                if command.internal:
-                    args = (sender,) + args
-                result = command(self, receiver, *args, **message.kwargs)
-            except:
-                result = sys.exc_info()
-            result = make_async(result).add_both(self.encode)
-            self.write(result)
+        return message
+        
+    def response(self, message):
+        self.message = message
+        actor = get_actor()
+        receiver = actor.get_actor(message.receiver) or actor
+        sender = receiver.get_actor(message.sender)
+        command = receiver.command(message.command)
+        try:
+            if not command:
+                raise CommandNotFound(message.command)
+            args = message.args
+            # If this is an internal command add the sender information
+            if command.internal:
+                args = (sender,) + args
+            result = command(self, receiver, *args, **message.kwargs)
+        except:
+            result = sys.exc_info()
+        result = make_async(result).add_both(self.encode)
+        self.write(result)
+        self._finished = True
             
     def encode(self, result):
         log_failure(result)
@@ -148,21 +145,9 @@ class MailboxResponse(ProtocolResponse):
 
 
 class MailboxProtocol(Protocol):
-    '''A :class:`MailboxClient` is a socket which receives messages
-from a remote :class:`Actor`.
-An instance of this class is created when a new connection is made
-with a :class:`Mailbox`.'''
+    response_factory = MailboxResponse
     authenticated = False
-
-
-def create_mailbox(actor):
-    if platform.type == 'posix':
-        address = 'unix:%s.pulsar' % actor.aid
-    else:   #pragma    nocover
-        address = ('127.0.0.1', 0)
-    return create_server(actor, address=address, protocol=MailboxProtocol,
-                         response=MailboxResponse,
-                         call_soon=lambda : send_mailbox_address(actor))
+    
     
 def send_mailbox_address(actor):
     actor.logger.info('%s started at address %s', actor, actor.mailbox)

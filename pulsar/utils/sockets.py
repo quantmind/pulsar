@@ -9,13 +9,25 @@ from .httpurl import native_str
 WRITE_BUFFER_MAX_SIZE = 128 * 1024  # 128 kb
 SOCKET_TYPES = {}
 
+class SocketMap:
+    
+    def __init__(self, type):
+        self.type = type
+        self.family = {}
+        self.server = None
+        
+
 class SocketType(type):
     
     def __new__(cls, name, bases, attrs):
         new_class = super(SocketType, cls).__new__(cls, name, bases, attrs)
         family = getattr(new_class, 'FAMILY', None)
-        if family is not None:
-            SOCKET_TYPES[family] = new_class
+        type = getattr(new_class, 'TYPE', None)
+        if type is not None:
+            if type  not in SOCKET_TYPES:
+                SOCKET_TYPES[type] = SocketMap(type)
+            if family is not None:
+                SOCKET_TYPES[type].family[family] = new_class
         return new_class
 
 
@@ -23,7 +35,7 @@ class Socket(SocketType('SocketBase', (), {})):
     '''Wrapper for a socket'''
     def __init__(self, sock, address=None, bindto=False, backlog=1024):
         if sock is None:
-            sock = socket.socket(self.FAMILY, socket.SOCK_STREAM)
+            sock = socket.socket(self.FAMILY, self.TYPE)
         self._sock = sock
         self._backlog = backlog if bindto else None
         self._set_options(bindto, address)
@@ -44,7 +56,7 @@ class Socket(SocketType('SocketBase', (), {})):
     def __setstate__(self, state):
         fd = state.pop('fd')
         self.__dict__ = state
-        self._sock = socket.fromfd(fd, self.FAMILY, socket.SOCK_STREAM)
+        self._sock = socket.fromfd(fd, self.FAMILY, self.TYPE)
         self._set_options()
         
     def _set_options(self, bindto=False, address=None):
@@ -97,17 +109,58 @@ else:
     from errno import EPERM, EINVAL, EWOULDBLOCK, EINPROGRESS, EALREADY,\
                       ECONNRESET, EISCONN, ENOTCONN, EINTR, ENOBUFS, EMFILE,\
                       ENFILE, ENOMEM, EAGAIN, ECONNABORTED
+
+TCP_ACCEPT_ERRORS = (EMFILE, ENOBUFS, ENFILE, ENOMEM, ECONNABORTED)
+
+        
+class TCPSocket(Socket):
+    TYPE = socket.SOCK_STREAM
+    FAMILY = socket.AF_INET
     
-    class UnixSocket(Socket):
+    def __repr__(self):
+        address = self.address
+        if address:
+            return '%s:%s' % address
+        else:
+            return 'tcp:closed'
+        
+        
+class TCP6Socket(TCPSocket):
+    FAMILY = socket.AF_INET6
+    
+    def __repr__(self):
+        address = self.address
+        if address:
+            return '[%s]:%s' % address[:2]
+        else:
+            return 'tcp6:closed'
+        
+    def _set_options(self, bindto=False, address=None):
+        super(TCP6Socket, self)._set_options(bindto, address)
+        if platform.type == "posix" and sys.platform != "cygwin":
+            # Required: Forces listenTCP6 to listen exclusively on IPv6 addresses.
+            # See: http://www.velocityreviews.com/forums/t328345-ipv6-question.html
+            self._sock.setsockopt(socket.IPPROTO_IPV6, socket.IPV6_V6ONLY, 1)
+    
+    
+class UDPSocket(Socket):
+    TYPE = socket.SOCK_DGRAM
+    FAMILY = socket.AF_INET
+    
+    
+
+if not platform.isWindows:
+    
+    class UnixSocket(TCPSocket):
         FAMILY = socket.AF_UNIX
         
         def __repr__(self):
-            return "unix:%s" % self.address
+            address = self.address
+            if address:
+                return "unix:%s" % self.address
+            else:
+                return 'unix:closed'
         
-        @property
-        def type(self):
-            return 'unix'
-    
         def bind(self, address):
             try:
                 os.remove(address)
@@ -126,46 +179,7 @@ else:
                     os.remove(address)
                 except OSError:
                     pass
-
-TCP_ACCEPT_ERRORS = (EMFILE, ENOBUFS, ENFILE, ENOMEM, ECONNABORTED)
-
-        
-class TCPSocket(Socket):
-    FAMILY = socket.AF_INET
-    
-    @property
-    def type(self):
-        return 'tcp'
-        
-    def __repr__(self):
-        address = self.address
-        if address:
-            return '%s:%s' % address
-        else:
-            return '%s:closed' % self.type
-        
-class TCP6Socket(TCPSocket):
-    FAMILY = socket.AF_INET6
-    
-    @property
-    def type(self):
-        return 'tcp6'
-    
-    def __repr__(self):
-        address = self.address
-        if address:
-            return '[%s]:%s' % address[:2]
-        else:
-            return '%s:closed' % self.type
-        
-    def _set_options(self, bindto=False, address=None):
-        super(TCP6Socket, self)._set_options(bindto, address)
-        if platform.type == "posix" and sys.platform != "cygwin":
-            # Required: Forces listenTCP6 to listen exclusively on IPv6 addresses.
-            # See: http://www.velocityreviews.com/forums/t328345-ipv6-question.html
-            self._sock.setsockopt(socket.IPPROTO_IPV6, socket.IPV6_V6ONLY, 1)
-    
-    
+                
 def is_ipv6(address):
     '''Determine whether the given string represents an IPv6 address'''
     if '%' in address:
@@ -222,9 +236,9 @@ def create_socket(address=None, sock=None, bindto=False, backlog=1024):
         raise RuntimeError('Socket address not supported in this platform')
     
     
-def wrap_client_socket(sock, timeout=0):
+def wrap_socket(type, sock, timeout=0):
     '''Wrap a python socket with pulsar :class:`Socket`.'''
     if sock and not isinstance(sock, Socket):
-        sock = SOCKET_TYPES[sock.family](sock)
+        sock = SOCKET_TYPES[type].family[sock.family](sock)
         sock.settimeout(timeout)
     return sock

@@ -12,13 +12,25 @@ LOGGER = logging.getLogger('pulsar.transports')
 
 WRITE_BUFFER_MAX_SIZE = 128 * 1024  # 128 kb
 
-__all__ = ['Transport', 'ClientTransport', 'StreamingClientTransport',
-           'ServerConnectionTransport', 'ServerTransport']
+__all__ = ['Transport']
 
-    
+
 class Transport(object):
     '''Base class for pulsar transports. Design to conform with pep-3156_ as
-close as possible until it is finalised.
+close as possible until it is finalised. A transport is an abstraction on top
+of a socket or something similar.
+Form pep-3153_:. Transports talk to two things: the other side of the
+connection on one hand, and a :attr:`protocol` on the other. It's a bridge
+between the specific underlying transfer mechanism and the protocol.
+Its job can be described as allowing the protocol to just send and
+receive bytes, taking care of all of the magic that needs to happen to those
+bytes to be eventually sent across the wire.
+
+The primary feature of a transport is sending bytes to a protocol and receiving
+bytes from the underlying protocol. Writing to the transport is done using
+the :meth:`write` and :meth:`writelines` methods. The latter method is a
+performance optimisation, to allow software to take advantage of specific
+capabilities in some transport mechanisms.
 
 .. attribute:: eventloop
 
@@ -30,21 +42,30 @@ close as possible until it is finalised.
     
 .. attribute:: sock
 
-    the socket for this :class:`Transport`.
+    the socket/pipe for this :class:`Transport`.
     
 .. attribute:: closed
 
     ``True`` if the transport is closed.
 '''
-    def __init__(self, event_loop, sock, protocol, **params):
+    default_timeout = 30
+    largest_timeout = 604800
+    def __init__(self, event_loop, sock, protocol, max_buffer_size=None,
+                  read_chunk_size=None, timeout=None):
+        timeout = timeout if timeout is not None else self.default_timeout
+        self._timeout = max(0, timeout) or self.largest_timeout
         self._sock = sock
         self._event_loop = event_loop
         self._protocol = protocol
         self._closing = False
-        self.setup(**params)
-    
-    def setup(self, **params):
-        pass
+        self._paused = False
+        self._read_timeout = None
+        self._connecting = False
+        self._read_chunk_size = read_chunk_size or io.DEFAULT_BUFFER_SIZE
+        self._read_buffer = []
+        self._write_buffer = deque()
+        self._event_loop.add_writer(self.fileno(), self._ready_write)
+        self.add_reader()
     
     def __repr__(self):
         return self._protocol.__repr__()
@@ -53,12 +74,24 @@ close as possible until it is finalised.
         return self.__repr__()
     
     @property
+    def connecting(self):
+        return self._connecting
+    
+    @property
+    def writing(self):
+        return bool(self._write_buffer)
+    
+    @property
+    def closing(self):
+        return bool(self._closing)
+    
+    @property
     def protocol(self):
         return self._protocol
     
     @property
     def closed(self):
-        return self._sock is None or self._closing
+        return self._sock is None
     
     @property
     def sock(self):
@@ -76,130 +109,13 @@ close as possible until it is finalised.
     def fileno(self):
         if self._sock:
             return self._sock.fileno()
-        
+
     ############################################################################
     ###    PEP-3156    METHODS
     def write(self, data):
-        """Write some data bytes to the transport.
+        '''Write some data bytes to the transport.
         This does not block; it buffers the data and arranges for it
-        to be sent out asynchronously.
-        """
-        raise NotImplementedError
-    
-    def writelines(self, list_of_data):
-        """Write a list (or any iterable) of data bytes to the transport.
-If *list_of_data* is a generator, and during iteration an empty byte is yielded,
-the function will postpone writing the remaining of the generator at the
-next loop in the :attr:`eventloop`."""
-        if isgenerator(list_of_data):
-            self._write_lines_async(list_of_data)
-        else:
-            for data in list_of_data:
-                self.write(data)
-    
-    def pause(self):
-        """Pause the receiving end.
-
-        No data will be passed to the protocol's data_received()
-        method until resume() is called.
-        """
-        raise NotImplementedError
-
-    def resume(self):
-        """Resume the receiving end.
-
-        Data received will once again be passed to the protocol's
-        data_received() method.
-        """
-        raise NotImplementedError
-    
-    def close(self):
-        """Closes the transport.
-
-        Buffered data will be flushed asynchronously.  No more data
-        will be received.  After all buffered data is flushed, the
-        protocol's connection_lost() method will (eventually) called
-        with None as its argument.
-        """
-        raise NotImplementedError
-    
-    def abort(self):
-        """Closes the transport immediately.
-
-        Buffered data will be lost.  No more data will be received.
-        The protocol's connection_lost() method will (eventually) be
-        called with None as its argument.
-        """
-        self.close()
-    
-    ############################################################################
-    ###    INTERNALS
-    def _write_lines_async(self, lines):
-        try:
-            result = next(lines)
-            if result == b'':
-                # stop writing and resume at next loop
-                self._event_loop.call_soon(self._write_lines_async, lines)
-            else:
-                self.write(result)
-                self._write_lines_async(lines)
-        except StopIteration:
-            pass
-        
-    def _ready_read(self):
-        raise NotImplementedError
-        
-    def _check_closed(self):
-        if self._sock is None:
-            raise IOError("Transport is closed")
-        
-    def _call_connection_lost(self, exc):
-        try:
-            self._protocol.connection_lost(exc)
-        finally:
-            self._sock.close()
-        
-
-class ClientTransport(Transport):
-    '''A :class:`Transport` for a :class:`ClientProtocol`.
-    
-.. attribute:: timeout
-
-    A timeout in seconds for read operations. The transport will shut down the
-    connection if no incoming data have been received for *timeout* seconds.
-    
-.. attribute:: connecting
-
-    ``True`` if the transport is connecting (only for client sockets)
-    
-.. attribute:: writing
-
-    ``True`` if the transport is writing.
-'''
-    default_timeout = 10
-    largest_timeout = 3600
-    def setup(self, max_buffer_size=None, read_chunk_size=None, timeout=None):
-        timeout = timeout if timeout is not None else self.default_timeout
-        self._timeout = max(0, timeout) or self.largest_timeout  
-        self._read_chunk_size = read_chunk_size or io.DEFAULT_BUFFER_SIZE
-        self._read_buffer = []
-        self._write_buffer = deque()
-        self._event_loop.add_writer(self.fileno(), self._ready_write)
-        self._read_timeout = None
-        self._connecting = False
-        self._paused = False
-    
-    @property
-    def connecting(self):
-        return self._connecting
-    
-    @property
-    def writing(self):
-        return bool(self._write_buffer)
-    
-    ############################################################################
-    ###    PEP-3156    METHODS
-    def write(self, data):
+        to be sent out asynchronously.'''
         self._check_closed()
         if data:
             assert isinstance(data, bytes)
@@ -211,11 +127,33 @@ class ClientTransport(Transport):
         # Try to write
         if not self.connecting:
             self._ready_write()
-
+    
+    def writelines(self, list_of_data):
+        """Write a list (or any iterable) of data bytes to the transport.
+If *list_of_data* is a **generator**, and during iteration an empty byte is
+yielded, the function will postpone writing the remaining of the generator
+at the next loop in the :attr:`eventloop`."""
+        if isgenerator(list_of_data):
+            self.pause()    #pause delivery of data until done with generator
+            self._write_lines_async(list_of_data)
+        else:
+            for data in list_of_data:
+                self.write(data)
+    
     def pause(self):
+        """A :class:`Transport` can be paused and resumed. Invoking this
+method will cause the transport to buffer data coming from protocols and
+stop sending received data to the :attr:`protocol`. No data will be passed to
+the :meth:`Protocol.data_received` method until :meth:`resume` is called.
+        """
         self._paused = True
 
     def resume(self):
+        """Resume the receiving end.
+
+        Data received will once again be passed to the protocol's
+        data_received() method.
+        """
         self._paused = False
         buffer = self._read_buffer
         self._read_buffer = []
@@ -223,7 +161,14 @@ class ClientTransport(Transport):
             self._data_received(chunk)
     
     def close(self, async=True):
-        if not self.closed:
+        """Closes the transport.
+
+        Buffered data will be flushed asynchronously.  No more data
+        will be received.  After all buffered data is flushed, the
+        protocol's connection_lost() method will (eventually) called
+        with None as its argument.
+        """
+        if not self.closing:
             self._closing = True
             self.close_read()
             if not async:
@@ -233,10 +178,16 @@ class ClientTransport(Transport):
                 self._event_loop.call_soon(self._shutdown)
     
     def abort(self):
+        """Closes the transport immediately.
+
+        Buffered data will be lost.  No more data will be received.
+        The protocol's connection_lost() method will (eventually) be
+        called with None as its argument.
+        """
         self.close(async=False)
     
     ############################################################################
-    ###    PULSAR    METHODS
+    ###    PULSAR TRANSPORT METHODS
     def connect():
         '''Connect this :class:`Transport` to a remote server.'''
         if not self.connecting:
@@ -253,9 +204,6 @@ class ClientTransport(Transport):
     def add_reader(self):
         self._event_loop.add_reader(self.fileno(), self._ready_read)
         self.add_read_timeout()
-        
-    def read_done(self):
-        pass
     
     def close_read(self):
         self._event_loop.remove_reader(self._sock.fileno())
@@ -268,9 +216,36 @@ class ClientTransport(Transport):
             self._read_buffer.append(data)
         else:
             self._protocol.data_received(data)
-        
+            
     ############################################################################
-    ##    INTERNALS
+    ###    INTERNALS
+    def _write_lines_async(self, lines):
+        try:
+            result = next(lines)
+            if result == b'':
+                # stop writing and resume at next loop
+                self._event_loop.call_soon(self._write_lines_async, lines)
+            else:
+                self.write(result)
+                self._write_lines_async(lines)
+        except StopIteration:
+            self.resume()
+        except:
+            self.resume()
+            raise
+        
+    def _check_closed(self):
+        if self.closed:
+            raise IOError("Transport is closed")
+        elif self._closing:
+            raise IOError("Transport is closing")
+        
+    def _call_connection_lost(self, exc):
+        try:
+            self._protocol.connection_lost(exc)
+        finally:
+            self._sock.close()
+        
     def _shutdown(self, exc=None):
         self._event_loop.remove_writer(self.fileno())
         self._sock.close()
@@ -306,7 +281,7 @@ class ClientTransport(Transport):
             except:
                 self.abort()
                 raise
-        self.read_done()
+        self.add_read_timeout()
             
     def _ready_write(self):
         # keep count how many bytes we write
@@ -335,63 +310,4 @@ class ClientTransport(Transport):
     def add_read_timeout(self):
         if not self.closed and not self._read_timeout:
             self._read_timeout = self._event_loop.call_later(self._timeout,
-                                                             self._timed_out)
-
-
-class StreamingClientTransport(ClientTransport):
-    '''A :class:`Transport` for a :class:`ClientProtocol` of a server-type
-socket or for clients which require streaming.'''
-    default_timeout = 30
-    largest_timeout = 604800
-    
-    def setup(self, **kwargs):
-        super(StreamingClientTransport, self).setup(**kwargs)
-        self.add_reader()
-
-    def read_done(self):
-        self.add_read_timeout()  
-    
-    
-class ServerConnectionTransport(StreamingClientTransport):
-    '''A :class:`StreamingClientTransport` for transports associated with client
-sockets obtain from ``accept`` in TCP server sockets or ``recvfrom``
-in UDP server sockets.'''
-    def setup(self, server=None, session=None, **kwargs):
-        self.server = server
-        self.session = session
-        self.server.concurrent_requests.add(self)
-        super(ServerConnectionTransport, self).setup(**kwargs)
-        self._protocol.connection_made(self)
-    
-    def connect():
-        raise RuntimeError('cannot connect form a server connection')
-    
-    def _shutdown(self):
-        self.server.concurrent_requests.discard(self)
-        super(ServerConnectionTransport, self)._shutdown()
-
-class ServerTransport(Transport):
-    connection_transport = ServerConnectionTransport
-    
-    def setup(self, **kwargs):
-        self._event_loop.add_reader(self.fileno(), self._ready_read)
-        self._protocol.connection_made(self)
-    
-    def close(self):
-        if not self.closed:
-            self._closing = True
-            self._event_loop.remove_reader(self._sock.fileno())
-            self._sock.close()
-            self._sock = None
-    
-    def _ready_read(self):
-        self._protocol.ready_read()
-
-    def __call__(self, sock, protocol, session=None):
-        # Build a transport for a client server connection
-        sock = wrap_client_socket(sock)
-        server = self._protocol
-        return self.connection_transport(self.event_loop, sock, protocol,
-                                         server=server, session=session,
-                                         timeout=server.timeout)
-        
+                                                             self._timed_out)    

@@ -271,7 +271,7 @@ client. This is a chance to add or remove header's entries."""
         return Frame.close(msg, version=connection.protocol.version)
     
     
-class WebSocketClientProtocol(pulsar.ClientProtocol):
+class WebSocketClientProtocol(pulsar.Protocol):
     
     def isclosed(self):
         # For compatibility with HttpResponse

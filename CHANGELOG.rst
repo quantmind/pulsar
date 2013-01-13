@@ -1,6 +1,7 @@
 Ver. 0.5.0
 ==============================
-* pep-3156
+* pep-3156_ implementation with considerable amount of internal refactoring.
+* Initial twisted_ integration
 
 Ver. 0.4.4
 ==============================
@@ -131,3 +132,4 @@ Ver. 0.1.0 - 2011-Aug-24
 
 .. _psutil: http://code.google.com/p/psutil/
 .. _pypy: http://pypy.org/
+.. _pep-3156: http://www.python.org/dev/peps/pep-3156/
