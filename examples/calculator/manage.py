@@ -17,6 +17,11 @@ Open a new shell and launch python and type::
     >>>
 
 '''
+try:
+    import pulsar
+except ImportError: #pragma nocover
+    import sys
+    sys.path.append('../../')
 from random import normalvariate
 
 from pulsar.apps import rpc, wsgi
