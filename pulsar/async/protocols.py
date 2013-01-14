@@ -155,6 +155,10 @@ It can be used for both client and server sockets.
         return self._transport.closed if self._transport else True
     
     @property
+    def response_factory(self):
+        return self._response_factory
+    
+    @property
     def current_response(self):
         self._current_response
     
@@ -188,6 +192,13 @@ By default it feeds the *data*, a bytes object, into the
                 # if data is returned from the response feed method and the
                 # response has not done yet raise a Protocol Error
                 raise ProtocolError
+            
+    def upgrade(self, response_factory):
+        '''Update the :attr:`response_factory` attribute with a new
+:class:`ProtocolResponse`. This function can be used when the protocol
+specification changes during a response (an example is a WebSocket
+response).'''
+        self._response_factory = response_factory
             
     def eof_received(self):
         """Called when the other end calls write_eof() or equivalent."""

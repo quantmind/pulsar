@@ -75,59 +75,16 @@ class GeneralWebSocket(object):
     
     def __call__(self, environ, start_response):
         if self.handle.match(environ):
-            self.handle_handshake(environ, start_response)
-            return self.generate(environ)
+            headers = self.handle_handshake(environ, start_response)
+            response = WsgiResponse(101, (b'',), response_headers=headers)
+            upgrade = environ['upgrade_protocol']
+            upgrade(partial(WebSocketProtocol, self.handle, environ))
+            return response(environ, start_response)
     
     def handle_handshake(self, environ, start_response):
+        '''handle the websocket handshake. Must return a list of HTTP
+headers to send back to the client.'''
         raise NotImplementedError
-    
-    #@coroutine
-    def generate(self, environ):
-        parser = FrameParser(kind=1)
-        while True:
-            data = (yield)
-            # new data from the protocol, parse it
-            message = parser.execute(parser)
-            if message:
-                result = self.handle.on_message(environ, message)
-                
-    def upgrade_connection(self, environ, version):
-        '''Upgrade the connection so it handles the websocket protocol.'''
-        connection = environ['pulsar.connection']
-        connection.environ = environ
-        #connection.read_timeout = 0
-        connection.protocol = FrameParser(version)
-        connection.response_class = self.on_message
-        
-    def on_message(self, connection, frame):
-        environ = connection.environ
-        if not environ.get('websocket-opened'):
-            environ['websocket-opened'] = True
-            self.handle.on_open(environ)
-        rframe = frame.on_received()
-        if rframe:
-            yield rframe.msg
-        elif frame.is_close:
-            # Close
-            connection.close()
-        elif frame.is_data:
-            yield self.as_frame(connection,
-                                self.handle.on_message(environ, frame.body))
-
-    def as_frame(self, connection, body):
-        '''Build a websocket server frame from body.'''
-        body = maybe_async(body)
-        if is_async(body):
-            return body.addBoth(lambda b: self.as_frame(connection, b))
-        if is_failure(body):
-            # We have a failure. shut down connection
-            body.log()
-            body = Frame.close('Server error')
-        elif not isinstance(body, Frame):
-            # If the body is not a frame, build a final frame from it.
-            body = Frame(body or '', version=connection.protocol.version,
-                         final=True)
-        return body.msg
         
     
 class WebSocket(GeneralWebSocket):
@@ -214,8 +171,7 @@ http://www.w3.org/TR/websockets/ for details on the JavaScript interface.
         if ws_extensions:
             headers.append(('Sec-WebSocket-Extensions',
                             ','.join(ws_extensions)))
-        self.handle.on_handshake(environ, headers)
-        start_response(101, headers)
+        return self.handle.on_handshake(environ, headers)
         
     def challenge_response(self, key):
         sha1 = hashlib.sha1(to_bytes(key+WEBSOCKET_GUID))
@@ -258,7 +214,7 @@ back to the client::
     def on_handshake(self, environ, headers):
         """Invoked just before sending the upgraded **headers** to the
 client. This is a chance to add or remove header's entries."""
-        pass
+        return headers
     
     def on_open(self, environ):
         """Invoked when a new WebSocket is opened."""
@@ -276,8 +232,50 @@ client. This is a chance to add or remove header's entries."""
     
     def close(self, environ, msg=None):
         '''Invoked when the web-socket needs closing.'''
-        connection = environ['pulsar.connection']
-        return Frame.close(msg, version=connection.protocol.version)
+        return Frame.close(msg)
+    
+    
+class WebSocketProtocol(pulsar.ProtocolResponse):
+    
+    def __init__(self, handler, environ, protocol):
+        super(WebSocketProtocol, self).__init__(protocol)
+        self.handler = handler
+        self.environ = environ
+        self.parser = FrameParser()
+        self.started = False
+        
+    def feed(self, data):
+        environ = self.environ
+        frame = self.parser.execute(data)
+        if frame:
+            if not self.started:
+                self.started = True
+                self.handler.on_open(environ)
+            rframe = frame.on_received()
+            if rframe:
+                self.write(rframe.msg)
+            elif frame.is_close:
+                # Close the connection
+                self.close()
+            elif frame.is_data:
+                result = self.handler.on_message(environ, frame.body)
+                if is_async(result):
+                    result.add_callback(self.on_message, self.close)
+                else:
+                    self.on_message(result)
+    
+    def on_message(self, frame):
+        if not isinstance(frame, Frame):
+            frame = Frame(frame or '', final=True)
+        self.write(frame.msg)
+        if frame.is_close:
+            self.close()
+            
+    def close(self, error=None):
+        if not self._finished:
+            self._finished = True
+            self.handler.on_close(self.environ)
+            self.protocol.close()
     
     
 class WebSocketClientProtocol(pulsar.Protocol):

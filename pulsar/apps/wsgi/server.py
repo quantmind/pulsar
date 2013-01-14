@@ -251,6 +251,7 @@ invocation of the application.
     def generate(self, environ):
         exc_info = None
         keep_alive = self.keep_alive
+        environ['upgrade_protocol'] = self.protocol.upgrade
         wsgi = lambda e, s, err: self.wsgi_callable(e,s)
         while True:
             try:

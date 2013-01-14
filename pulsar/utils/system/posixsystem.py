@@ -12,7 +12,7 @@ __all__ = ['IOpoll',
            'close_on_exec',
            'Waker',
            'daemonize',
-           'SIGQUIT',
+           'EXIT_SIGNALS',
            'get_uid',
            'get_gid',
            'get_maxfd']
@@ -24,8 +24,8 @@ if hasattr(select,'epoll'):
 else:   #pragma    nocover
     IOpoll = IOselect
 
-# The standard signal quit
-SIGQUIT = signal.SIGQUIT
+# standard signal quit
+EXIT_SIGNALS = (signal.SIGINT, signal.SIGTERM, signal.SIGABRT, signal.SIGQUIT)
 # Default maximum for the number of available file descriptors.
 REDIRECT_TO = getattr(os, "devnull", "/dev/null")
 

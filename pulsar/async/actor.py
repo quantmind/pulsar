@@ -45,7 +45,6 @@ ACTOR_STATES.DESCRIPTION = {ACTOR_STATES.INACTIVE: 'inactive',
                             ACTOR_STATES.STOPPING: 'stopping',
                             ACTOR_STATES.CLOSE: 'closed',
                             ACTOR_STATES.TERMINATE:'terminated'}
-EXIT_SIGNALS = (signal.SIGINT, signal.SIGTERM, signal.SIGABRT, system.SIGQUIT)
 #
 # LOW LEVEL CONSTANTS - NO NEED TO CHANGE THOSE ###########################
 MIN_NOTIFY = 5     # DON'T NOTIFY BELOW THIS INTERVAL
@@ -528,7 +527,7 @@ if *proxy* is not a class:`ActorProxy` instance raise an exception.'''
                     self.logger.info("Ignoring unknown signal: %s", sig)
                 else:
                     signame = system.SIG_NAMES.get(sig)
-                    if sig in EXIT_SIGNALS:
+                    if sig in system.EXIT_SIGNALS:
                         self.logger.warn("Got signal %s. Stopping.", signame)
                         self.stop()
                         return False

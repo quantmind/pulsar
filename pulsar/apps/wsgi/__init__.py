@@ -59,6 +59,7 @@ class WSGIServer(SocketServer):
         '''Build a :class:`WsgiHandler` for the WSGI callable provided
 and return an :class:`HttpResponse` factory function.'''
         if not isinstance(self.callable, WsgiHandler):
+            hnd = self.callable
             if not isinstance(hnd, (list, tuple)):
                 hnd = [hnd]
             self.callable = WsgiHandler(hnd)

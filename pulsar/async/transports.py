@@ -240,10 +240,7 @@ passed to the :meth:`Protocol.data_received` method."""
                 self.write(result)
                 self._write_lines_async(lines)
         except StopIteration:
-            self.resume()
-        except:
-            self.resume()
-            raise
+            pass
         
     def _check_closed(self):
         if self.closed:

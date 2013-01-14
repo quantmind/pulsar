@@ -50,7 +50,7 @@ class Socket(SocketType('SocketBase', (), {})):
     
     def __getstate__(self):
         d = self.__dict__.copy()
-        d['fd'] = d.pop('sock').fileno()
+        d['fd'] = d.pop('_sock').fileno()
         return d
 
     def __setstate__(self, state):

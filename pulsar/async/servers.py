@@ -98,11 +98,27 @@ on a socket. It is a producer of :class:`Transport` for server protocols.
 .. attribute:: protocol_factory
 
     A factory producing the :class:`Protocol` for a socket created
-    from a connection of a remote client with this server.
+    from a connection of a remote client with this server. This is a function
+    or a :class:`Protocol` class which accept two arguments, the client address
+    and the :attr:`response_factory` attribute. This attribute is used in
+    the :meth:`create_connection` method.
+    
+.. attribute:: response_factory
+
+    Optional callable or :class:`ProtocolResponse` class which can be used
+    to override the :class:`Protocol.response_factory` attribute.
     
 .. attribute:: timeout
 
     number of seconds to keep alive an idle connection
+    
+.. attribute:: event_loop
+
+    The :class:`EventLoop` running the server.
+    
+.. attribute:: address
+
+    Server address, where clients send requests to.
     
 .. attribute:: on_close
 
@@ -133,13 +149,19 @@ on a socket. It is a producer of :class:`Transport` for server protocols.
                               timeout=self.timeout)
         connection.protocol.connection_made(transport)
     
+    def __repr__(self):
+        return str(self.address)
+    
+    def __str__(self):
+        return self.__repr__()
+    
     @property
     def event_loop(self):
         return self._event_loop
     
     @property
     def address(self):
-        return self._sock.self.transport.address
+        return self._sock.address
     
     @property
     def sock(self):
@@ -154,13 +176,19 @@ on a socket. It is a producer of :class:`Transport` for server protocols.
             return self._sock.fileno()
     
     def close(self):
+        '''Close the server'''
         self._event_loop.remove_reader(self._sock.fileno())
         self.close_connections()
         self._sock.close()
         self._sock = None
         self.on_close.callback(self)
         
+    def abort(self):
+        self.close()
+        
     def ready_read(self):
+        '''Callback when a new connection is waiting to be served. This must
+be implemented by subclasses.'''
         raise NotImplementedError
 
     @classmethod

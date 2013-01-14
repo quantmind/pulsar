@@ -155,7 +155,7 @@ def send_mailbox_address(actor):
     if a is not actor:
         set_actor(actor)
     if not actor.is_arbiter():
-        return actor.send(actor.monitor, 'mailbox_address', self.address)\
+        return actor.send(actor.monitor, 'mailbox_address', actor.address)\
                     .add_callback(actor.link_actor)
 
 
