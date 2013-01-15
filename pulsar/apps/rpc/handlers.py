@@ -152,6 +152,7 @@ class RpcHandler(MetaRpcHandler('_RpcHandler', (object,), {'virtual': True})):
     separator    = '.'
     '''Separator between :attr:`subHandlers`.'''
     content_type = 'text/plain'
+    methods = ('get','post','put','head','delete','trace','connect')
     charset = 'utf-8'
     _info_exceptions = (Fault,)
 
@@ -277,13 +278,11 @@ class RpcMiddleware(object):
 
     Default ``None``
 '''
-    methods = ('get','post','put','head','delete','trace','connect')
     request_class = RpcRequest
 
-    def __init__(self, handler, path=None, methods=None):
+    def __init__(self, handler, path=None):
         self.handler = handler
         self.path = path or '/'
-        self.methods = methods or self.methods
 
     def __str__(self):
         return self.path
@@ -300,7 +299,7 @@ class RpcMiddleware(object):
         path = environ['PATH_INFO'] or '/'
         if path == self.path:
             method = environ['REQUEST_METHOD'].lower()
-            if method not in self.methods:
+            if method not in self.handler.methods:
                 raise HttpException(status=405)
             data = environ['wsgi.input'].read()
             hnd = self.handler
