@@ -153,6 +153,8 @@ class RpcHandler(MetaRpcHandler('_RpcHandler', (object,), {'virtual': True})):
     separator    = '.'
     '''Separator between :attr:`subHandlers`.'''
     content_type = 'text/plain'
+    methods = ('get','post','put','head','delete','trace','connect')
+    '''HTTP method allowed by this handler.'''
     charset = 'utf-8'
     _info_exceptions = (Fault,)
 
@@ -277,14 +279,19 @@ class RpcMiddleware(object):
     The path where the RPC is located
 
     Default ``None``
+    
+.. attribute:: request_class
+
+    A class which is used to wrap the WSGI *environ* dictionary. Must have
+    a dictionary-like interface.
 '''
-    methods = ('get','post','put','head','delete','trace','connect')
     request_class = RpcRequest
 
-    def __init__(self, handler, path=None, methods=None):
+    def __init__(self, handler, path=None, request_class=None):
+        if request_class:
+            self.request_class = request_class
         self.handler = handler
         self.path = path or '/'
-        self.methods = methods or self.methods
 
     def __str__(self):
         return self.path
@@ -301,7 +308,7 @@ class RpcMiddleware(object):
         path = environ['PATH_INFO'] or '/'
         if path == self.path:
             method = environ['REQUEST_METHOD'].lower()
-            if method not in self.methods:
+            if method not in self.handler.methods:
                 raise HttpException(status=405)
             data = environ['wsgi.input'].read()
             hnd = self.handler

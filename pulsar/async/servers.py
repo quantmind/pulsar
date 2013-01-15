@@ -123,6 +123,14 @@ on a socket. It is a producer of :class:`Transport` for server protocols.
 .. attribute:: on_close
 
     A :class:`Deferred` called once the :class:`Server` is closed.
+    
+.. attribute:: concurrent_connections
+
+    Number of concurrent active connections
+    
+.. attribute:: received
+
+    Total number of received connections
 '''
     protocol_factory = None
     timeout = None

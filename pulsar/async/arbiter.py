@@ -5,11 +5,10 @@ import signal
 from multiprocessing import current_process
 
 import pulsar
-from pulsar.utils import system
 from pulsar.utils.tools import Pidfile
 from pulsar.utils.security import gen_unique_id
 from pulsar.utils.pep import itervalues, iteritems
-from pulsar import HaltServer
+from pulsar import HaltServer, system
 
 from .actor import Actor, ACTOR_STATES
 from .monitor import PoolMixin, _spawn_actor

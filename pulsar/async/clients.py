@@ -1,7 +1,8 @@
 from pulsar.utils.pep import get_event_loop
+from pulsar.utils.sockets import SOCKET_TYPES
 
 from .protocols import ProtocolResponse
-from .servers import Server
+from .servers import Producer
 
 __all__ = ['create_connection', 'ClientSessions']
 
@@ -20,7 +21,14 @@ def create_connection(address, timeout=0, streaming=False, source_address=None,
     return transport.connect()
     
 
-class ConnectionPool(object):
+class ConnectionPool(Producer):
+    '''A connection pool maintain a pool of active connections for client
+protocols.
+
+.. attribute:: all
+
+    A class attribute containing all active :class:`ConnectionPool`
+    '''
     all = {}
     
     @classmethod

@@ -77,8 +77,8 @@ actors with thread concurrency ince they live in the arbiter process domain.'''
     
 class PulsarThread(Thread):
     
-    def __init__(self, actor, *args, **kwargs):
-        self.actor = actor
+    def __init__(self, *args, **kwargs):
+        self.actor = get_actor()
         super(PulsarThread, self).__init__(*args, **kwargs)
         
     def run(self):

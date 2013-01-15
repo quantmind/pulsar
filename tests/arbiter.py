@@ -4,9 +4,8 @@ import time
 from threading import current_thread
 
 import pulsar
-from pulsar import send, spawn
-from pulsar.utils import system
-from pulsar.async.actor import ACTOR_STOPPING_LOOPS, EXIT_SIGNALS
+from pulsar import send, spawn, system
+from pulsar.async.actor import ACTOR_STOPPING_LOOPS
 from pulsar.apps.test import unittest, run_on_arbiter, ActorTestMixin, dont_run_with_thread
 
 
@@ -136,7 +135,7 @@ class TestArbiterThread(ActorTestMixin, unittest.TestCase):
         arbiter = pulsar.get_actor()
         self.assertTrue(arbiter.is_arbiter())
         for sig in system.SIG_NAMES:
-            if sig not in EXIT_SIGNALS:
+            if sig not in system.EXIT_SIGNALS:
                 break
         # send the signal
         arbiter.signal_queue.put(sig)
