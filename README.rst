@@ -32,7 +32,7 @@ framework which responds with "Hello World!" for every request::
     
     
     if __name__ == '__main__':
-        return wsgi.WSGIServer(callable=hello).start()
+        wsgi.WSGIServer(callable=hello).start()
     
     
 Pulsar's goal is to provide an easy way to build scalable network programs.
