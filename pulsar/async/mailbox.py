@@ -21,14 +21,17 @@ LOGGER = logging.getLogger('pulsar.mailbox')
 def mailbox(actor=None, address=None):
     '''Creates a :class:`Mailbox` for *actor*.'''
     if address:
+        #if platform.type == 'posix':
+        #    address = 'unix:%s' % address
         return PulsarClient(address)
     elif actor.is_monitor():
         return MonitorMailbox(actor)
     else:
-        if platform.type == 'posix':
-            address = 'unix:%s.pulsar' % actor.aid
-        else:   #pragma    nocover
-            address = ('127.0.0.1', 0)
+        #if platform.type == 'posix':
+        #    address = 'unix:%s.pulsar' % actor.aid
+        #else:   #pragma    nocover
+        #    address = ('127.0.0.1', 0)
+        address = ('127.0.0.1', 0)
         server = actor.requestloop.create_server(address=address,
                                         name='Mailbox for %s' % actor,
                                         connection_factory=MailboxConnection,
@@ -77,6 +80,10 @@ created by :meth:`ActorProxy.send` method.
         self.args = args if args is not None else ()
         self.kwargs = kwargs if kwargs is not None else {}
 
+    @property
+    def ack(self):
+        return self.command.ack
+    
     @classmethod
     def decode(cls, buffer):
         separator = b'\r\n'
@@ -98,7 +105,7 @@ created by :meth:`ActorProxy.send` method.
             return None, buffer
 
     def encode(self):
-        data = (self.command, self.sender, self.receiver,
+        data = (self.command.__name__, self.sender, self.receiver,
                 self.args, self.kwargs)
         bdata = pickle.dumps(data, protocol=2)
         return ('*%s\r\n' % len(bdata)).encode('utf-8') + bdata
@@ -135,7 +142,7 @@ class MailboxConnection(ServerConnection):
     authenticated = False
     
 
-class MailboxServerConsumer(ServerChunkConsumer):
+class MailboxResponse(ServerChunkConsumer):
         
     def feed(self, data):
         # The receiver could be different from the mail box actor. For
@@ -179,7 +186,7 @@ class MailboxClientConsumer(clients.ClientProtocolConsumer):
     '''The Protocol consumer for a Mailbox client'''
     def send(self, _):
         msg = self.request.encode()
-        self.protocol.write(msg)
+        self.transport.write(msg)
         # if no acknoledgment is expected callback when ready
         if not self.request.ack:
             self.when_ready.callback(None)

@@ -1,6 +1,6 @@
 from inspect import isgenerator
 
-from .defer import Deferred
+from .defer import Deferred, log_failure
 
 __all__ = ['Protocol', 'ProtocolConsumer', 'Connection', 'ProtocolError']
 
@@ -43,7 +43,6 @@ It can be used for both client and server sockets.
     response_factory = None
     
     def __init__(self, address):
-        self._processed = 0
         self._address = address
         self.consumer = None
         self.on_connection = Deferred()
@@ -54,10 +53,6 @@ It can be used for both client and server sockets.
     
     def __str__(self):
         return self.__repr__()
-        
-    @property
-    def processed(self):
-        return self._processed
     
     @property
     def address(self):
@@ -91,7 +86,7 @@ To send data, call its :meth:`Transport.write` or
 To receive data, wait for :meth:`data_received` calls.
 When the connection is closed, :meth:`connection_lost` is called."""
         self._transport = transport
-        self.on_connection.callback(self)
+        log_failure(self.on_connection.callback(self))
 
     def data_received(self, data):
         """Called by the :attr:`transport` when data is received.
@@ -110,7 +105,8 @@ By default it feeds the *data*, a bytes object, into the
         meaning a regular EOF is received or the connection was
         aborted or closed).
         """
-        self.on_connection_lost.callback(exc)
+        if not self.on_connection_lost.called:
+            self.on_connection_lost.callback(exc)
         
     ############################################################################
     ###    PULSAR METHODS
@@ -134,11 +130,15 @@ already available it raises an exception.'''
     
 
 class ProtocolConsumer(object):
-    '''A :class:`Protocol` response is responsible for parsing incoming data
+    '''A :class:`Protocol` consumer is responsible for parsing incoming data
 and,  producing no more than one response.'''
     def __init__(self, connection):
         self._connection = connection
             
+    @property
+    def connection(self):
+        return self._connection
+    
     @property
     def event_loop(self):
         return self._connection.event_loop
@@ -193,11 +193,12 @@ number.
     
 .. attribute:: producer
 
-    The producer of this connection
+    The producer of this :class:`Connection`, It is either a :class:`Server`
+    or a client :class:`ConnectionPool`.
     
 .. attribute:: response_factory
 
-    A factory of :class:`ProtocolResponse` instances for this :class:`Protocol`
+    A factory of :class:`ProtocolConsumer` instances for this :class:`Protocol`
     
 .. attribute:: session
 
@@ -211,13 +212,13 @@ number.
 
     The :class:`Consumer` currently handling incoming data.
 '''
-    def __init__(self, protocol, producer, session):
+    def __init__(self, protocol, producer, session, response_factory):
         self._protocol = protocol
         self._producer = producer
         self._session = session 
         self._processed = 0
         self._current_response = None
-        self._response_factory = producer.response_factory
+        self._response_factory = response_factory
         protocol.consumer = self.consume
         
     def __repr__(self):
@@ -227,12 +228,16 @@ number.
         return self.__repr__()
     
     @property
+    def protocol(self):
+        return self._protocol
+    
+    @property
     def transport(self):
         return self.protocol.transport
     
     @property
-    def protocol(self):
-        return self._protocol
+    def event_loop(self):
+        return self._protocol.event_loop
     
     @property
     def sock(self):
@@ -253,6 +258,10 @@ number.
     @property
     def current_response(self):
         self._current_response
+        
+    @property
+    def processed(self):
+        return self._processed
     
     def consume(self, data):
         raise NotImplementedError

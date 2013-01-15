@@ -4,11 +4,14 @@ import heapq
 import logging
 import traceback
 import inspect
-import signal
 import errno
 import socket
 from functools import partial
 from threading import current_thread
+try:
+    import signal
+except ImportError:
+    signal = None
 
 from pulsar.utils.system import IObase, IOpoll, close_on_exec, platform, Waker
 from pulsar.utils.pep import default_timer, DefaultEventLoopPolicy,\
@@ -255,7 +258,7 @@ class FileDescriptor(IObase):
             if current_state is None:
                 self.poller.register(self.fd, state)
             else:
-                self.poller.modify(self.fd, state)
+                self.poller.modify(self.fd, current_state | state)
     
     def remove_handler(self):
         """Stop listening for events on fd."""
@@ -315,7 +318,6 @@ event loop is the place where most asynchronous operations are carried out.
         if hasattr(self._impl, 'fileno'):
             close_on_exec(self._impl.fileno())
         self._handlers = {}
-        self._signals = {}
         self._callbacks = []
         self._scheduled = []
         self._started = None
@@ -468,6 +470,7 @@ descriptor.'''
         '''Whenever signal ``sig`` is received, arrange for callback(*args) to
 be called. Returns a :class:`TimedCall` handler which can be used to cancel
 the signal callback.'''
+        self._check_signal(sig)
         handler = TimedCall(None, callback, args)
         prev = signal.signal(sig, handler)
         if isinstance(prev, TimedCall):
@@ -477,6 +480,7 @@ the signal callback.'''
     def remove_signal_handler(self, sig):
         '''Remove the signal ``sig`` if it was installed and reinstal the
 default signal handler ``signal.SIG_DFL``.'''
+        self._check_signal(sig)
         handler = signal.signal(sig, signal.SIG_DFL)
         if handler:
             handler.cancel()
@@ -500,6 +504,20 @@ default signal handler ``signal.SIG_DFL``.'''
             self._scheduled.remove(timeout)
         except ValueError:
             LOGGER.warn('trying to remove a timeout not scheduled.')
+            
+    def _check_signal(self, sig):
+        """Internal helper to validate a signal.
+
+        Raise ValueError if the signal number is invalid or uncatchable.
+        Raise RuntimeError if there is a problem setting up the handler.
+        """
+        if not isinstance(sig, int):
+            raise TypeError('sig must be an int, not {!r}'.format(sig))
+        if signal is None:
+            raise RuntimeError('Signals are not supported')
+        if not (1 <= sig < signal.NSIG):
+            raise ValueError('sig {} out of range(1, {})'.format(sig,
+                                                                 signal.NSIG))
 
     def _run_once(self, timeout=None):
         self._running = True

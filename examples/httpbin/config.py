@@ -4,6 +4,7 @@ def pre_request(worker, request):
     pass
 
 def post_request(worker, request):
+    environ = request.environ
     pass
     
 def arbiter_task(actor):

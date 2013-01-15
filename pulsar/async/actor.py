@@ -1,6 +1,5 @@
 import sys
 import os
-import signal
 import atexit
 import socket
 from time import time
@@ -23,7 +22,7 @@ from pulsar.utils.structures import AttributeDictionary
 from pulsar.utils.pep import pickle
 from pulsar.utils import events
 
-from .eventloop import EventLoop, setid
+from .eventloop import EventLoop, setid, signal
 from .defer import Deferred
 from .proxy import ActorProxy, ActorMessage, get_command, get_proxy
 from .queue import IOQueue
@@ -509,7 +508,7 @@ if *proxy* is not a class:`ActorProxy` instance raise an exception.'''
             if system.set_proctitle(proc_name):
                 self.logger.debug('Set process title to %s', proc_name)
             #system.set_owner_process(cfg.uid, cfg.gid)
-            if is_mainthread():
+            if is_mainthread() and signal:
                 self.logger.debug('Installing signals')
                 self.signal_queue = ThreadQueue()
                 for name in system.ALL_SIGNALS:

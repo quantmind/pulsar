@@ -1,6 +1,9 @@
 import ctypes
-import signal
 from select import select as _select
+try:
+    import signal
+except ImportError:
+    signal = None
 
 from pulsar.utils.importer import import_module, module_attribute
 from pulsar.utils.httpurl import iteritems, native_str
@@ -21,14 +24,15 @@ MAXFD = 1024
 SKIP_SIGNALS = frozenset(('KILL', 'STOP', 'WINCH'))
 
 def all_signals():
-    for sig in dir(signal):
-        if sig.startswith('SIG') and sig[3] != "_":
-            val = getattr(signal, sig)
-            if isinstance(val, int):
-                name = sig[3:]
-                if name not in SKIP_SIGNALS:
-                    SIG_NAMES[val] = name
-                    yield name
+    if signal:
+        for sig in dir(signal):
+            if sig.startswith('SIG') and sig[3] != "_":
+                val = getattr(signal, sig)
+                if isinstance(val, int):
+                    name = sig[3:]
+                    if name not in SKIP_SIGNALS:
+                        SIG_NAMES[val] = name
+                        yield name
 
             
 ALL_SIGNALS = tuple(all_signals())

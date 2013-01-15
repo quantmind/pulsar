@@ -235,10 +235,10 @@ client. This is a chance to add or remove header's entries."""
         return Frame.close(msg)
     
     
-class WebSocketProtocol(pulsar.ProtocolResponse):
+class WebSocketProtocol(pulsar.ProtocolConsumer):
     
-    def __init__(self, handler, environ, protocol):
-        super(WebSocketProtocol, self).__init__(protocol)
+    def __init__(self, handler, environ, connection):
+        super(WebSocketProtocol, self).__init__(connection)
         self.handler = handler
         self.environ = environ
         self.parser = FrameParser()

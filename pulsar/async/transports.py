@@ -132,6 +132,7 @@ capabilities in some transport mechanisms.
         This does not block; it buffers the data and arranges for it
         to be sent out asynchronously.'''
         self._check_closed()
+        writing = self.writing
         if data:
             assert isinstance(data, bytes)
             if len(data) > WRITE_BUFFER_MAX_SIZE:
@@ -139,8 +140,8 @@ capabilities in some transport mechanisms.
                     self._write_buffer.append(data[i:i+WRITE_BUFFER_MAX_SIZE])
             else:
                 self._write_buffer.append(data)
-        # Try to write
-        if not self.connecting:
+        # Try to write only when not waiting for write callbacks
+        if not self.connecting and not writing:
             self._ready_write()
     
     def writelines(self, list_of_data):
@@ -210,8 +211,9 @@ returns ``self``.'''
                     self._connecting = False
                     self._protocol.connection_made(self)
             except Exception as e:
-                self._protocol.connection_made(self)
+                #self._protocol.connection_made(self)
                 self._protocol.connection_lost(e)
+                raise
         return self
         
     def add_reader(self):
@@ -257,10 +259,11 @@ returns ``self``.'''
             self._sock.close()
         
     def _shutdown(self, exc=None):
-        self._event_loop.remove_writer(self.fileno())
-        self._sock.close()
-        self._sock = None
-        self._protocol.connection_lost(exc)
+        if self._sock is not None:
+            self._event_loop.remove_writer(self.fileno())
+            self._sock.close()
+            self._sock = None
+            self._protocol.connection_lost(exc)
         
     def _ready_read(self):
         # Read from the socket until we get EWOULDBLOCK or equivalent.

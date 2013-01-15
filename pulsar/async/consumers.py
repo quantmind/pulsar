@@ -6,7 +6,7 @@ __all__ = ['ServerChunkConsumer']
 class ServerChunkConsumer(ProtocolConsumer):
     '''A consumer of chunks on the server.'''
     def __init__(self, connection):
-        super(ChunkResponse, self).__init__(connection)
+        super(ServerChunkConsumer, self).__init__(connection)
         self._buffer = bytearray()
     
     def feed(self, data):

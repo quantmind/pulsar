@@ -35,7 +35,7 @@ class ServerType(type):
         return new_class
             
 
-class SeverConnection(Connection):
+class ServerConnection(Connection):
     
     def consume(self, data):
         while data:
@@ -72,10 +72,10 @@ class EventHandler(object):
         self.hooks[event].append(hook)
         
     def fire(self, event, event_data):
-        """Dispatches a hook dictionary on a given piece of data."""
+        """Dispatches an event dictionary on a given piece of data."""
         hooks = self.hooks
-        if hooks and key in hooks:
-            for hook in hooks[key]:
+        if hooks and event in hooks:
+            for hook in hooks[event]:
                 try:
                     hook(event_data)
                 except Exception:
@@ -83,8 +83,11 @@ class EventHandler(object):
     
     
 class Producer(object):
-    '''A Producer of connections with remote servers or clients. It is the base
-class for both :class:`Server` and :class:`ConnectionPool`.
+    '''A Producer of :class:`Connection` with remote servers or clients.
+It is the base class for both :class:`Server` and :class:`ConnectionPool`.
+The main method in this class is :meth:`new_connection` where a new
+:class:`Connection` is created and added to the set of
+:attr:`concurrent_connections`.
 
 .. attribute:: concurrent_connections
 
@@ -103,7 +106,7 @@ class for both :class:`Server` and :class:`ConnectionPool`.
     Maximum number of connections allowed. A value of 0 (default)
     means no limit.
 '''
-    connection_factory = SeverConnection
+    connection_factory = None
     def __init__(self, max_connections=0, timeout=0, connection_factory=None):
         self._received = 0
         self._max_connections = max_connections
@@ -128,17 +131,17 @@ class for both :class:`Server` and :class:`ConnectionPool`.
     def concurrent_connections(self):
         return len(self._concurrent_connections)
     
-    def new_connection(self, protocol):
-        '''Create a new connection using the :attr:`connection_factory`
-attribute.'''
+    def new_connection(self, protocol, response_factory):
+        ''''Called when a new connection is created'''
         self._received = self._received + 1
-        conn = self.connection_factory(protocol, self, self._received)
-        # wen connection is lost invoke _remove_connection
-        protocol.on_connection_lost.add_both(self._remove_connection)
-        self._concurrent_connections.add(c)
-        if self.max_connections and self._received > self.max_connections:
+        conn = self.connection_factory(protocol, self, self._received,
+                                       response_factory)
+        self._concurrent_connections.add(conn)
+        protocol.on_connection_lost.add_both(
+                                partial(self._remove_connection, conn))
+        if self._max_connections and self._received > self._max_connections:
             self.close()
-        return c
+        return conn
     
     def close_connections(self, connection=None):
         if connection:
@@ -147,8 +150,8 @@ attribute.'''
             for connection in self._concurrent_connections:
                 connection.transport.close()
             
-    def _remove_connection(self, *args):
-        self._concurrent_connections.discard(self)
+    def _remove_connection(self, connection, *args):
+        self._concurrent_connections.discard(connection)
         
     def close(self):
         raise NotImplementedError
@@ -183,6 +186,7 @@ on a socket. It is a producer of :class:`Transport` for server protocols.
 
     A :class:`Deferred` called once the :class:`Server` is closed.
 '''
+    connection_factory = ServerConnection
     protocol_factory = None
     timeout = None
     
@@ -199,13 +203,16 @@ on a socket. It is a producer of :class:`Transport` for server protocols.
         if protocol_factory:
             self.protocol_factory = protocol_factory
         self._event_loop.add_reader(self.fileno(), self.ready_read)
+        LOGGER.debug('Listening on %s', sock)
         
     def create_connection(self, sock, address):
         '''Create a new server :class:`Protocol` ready to serve its client.'''
         # Build the protocol
+        
         sock = wrap_socket(self.TYPE, sock)
         protocol = self.protocol_factory(address)
-        connection = self.new_connection(protocol)
+        #Create the connection
+        connection = self.new_connection(protocol, self.response_factory)
         transport = Transport(self._event_loop, sock, protocol,
                               timeout=self.timeout)
         connection.protocol.connection_made(transport)

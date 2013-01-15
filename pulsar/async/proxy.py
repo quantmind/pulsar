@@ -182,7 +182,7 @@ communicating between actors.
         cmd = get_command(command, self.commands_set)
         if not cmd:
             raise CommandNotFound(command)
-        return self.mailbox.request(cmd.__name__, sender, self.aid, args, kwargs)
+        return self.mailbox.request(cmd, sender, self.aid, args, kwargs)
     
     def __eq__(self, o):
         o = get_proxy(o,True)

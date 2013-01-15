@@ -17,7 +17,7 @@ def create_connection(address, timeout=0, source_address=None):
     sock.settimeout(timeout)
     if source_address:
         sock.bind(source_address)
-    protocol_factory = SOCKET_TYPES[sock.type].server.protocol_factory
+    protocol_factory = SOCKET_TYPES[sock.TYPE].server.protocol_factory
     protocol = protocol_factory(address)
     event_loop = get_event_loop() if timeout == 0 else None
     transport = Transport(event_loop, sock, protocol)
@@ -67,7 +67,7 @@ class ClientProtocolConsumer(ProtocolConsumer):
             
     def send(self, res):
         msg = request.encode()
-        self.protocol.write(msg)
+        self.transport.write(msg)
     
     def decode(self):
         raise NotImplementedError
@@ -147,19 +147,23 @@ protocols. It maintains a live set of connections.
         except:
             pass
         
-    def create_connection(self):
-        "Get a connection from the pool"
+    def get_or_create_connection(self, response_factory):
+        "Get or create a new connection from the pool"
         try:
             connection = self._available_connections.pop()
         except IndexError:
-            connection = self.new_connection()
-        self._concurrent_connections.add(connection)
+            connection = None
+        else:
+            # we have a connection, lets added it to the concurrent set
+            self._concurrent_connections.add(connection)
+        if connection is None:
+            # build protocol and build the new connection
+            protocol = self.build_protocol(response_factory)
+            connection = self.new_connection(protocol, response_factory)
         return connection
     
-    def new_connection(self):
-        self._received = self._received + 1
-        protocol = create_connection(self._address, timeout=self._timeout)
-        return ClientConnection(protocol, self, self._received)
+    def build_protocol(self, response_factory):
+        return create_connection(self._address, timeout=self._timeout)
     
     
 class Request(ClientEventHandler):
@@ -174,8 +178,7 @@ class Client(ClientEventHandler):
 :class:`ConnectionPool` of synchronous or asynchronous connections.'''
     connection_pool = ConnectionPool
     '''Factory of :class:`ConnectionPool`.'''
-    request_factory = Request
-    '''Factory of request instances'''
+    connection_factory = ClientConnection
     response_factory = None
     '''Factory of response instances'''
     client_version = ''
@@ -203,12 +206,21 @@ Must be implemented by subclasses.'''
         raise NotImplementedError
     
     def response(self, request, consumer=None):
+        '''Once a *request* object has been constructed, the :meth:`request`
+method should invoke this method to start the response dance.
+
+:parameter request: A custom request for the :class:`Client`
+:parameter consumer: An optional consumer of streaming data.
+:rtype: An object obtained form :attr:`response_factory`.
+'''
+        self.fire('pre_request', request)
         pool = self.connection_pool.get(request,
-                                        timeout=request.timeout,
-                                        max_connections=self.max_connections)
-        connection = pool.create_connection()
-        response = self.response_factory(connection.protocol, request, consumer)
-        self.fire('pre_request', response)
+                                    timeout=request.timeout,
+                                    max_connections=self.max_connections,
+                                    connection_factory=self.connection_factory)
+        connection = pool.get_or_create_connection(self.response_factory)
+        response = self.response_factory(connection, request, consumer)
+        self.fire('post_request', response.request)
         return response.begin()
     
     def update_parameter(self, params):

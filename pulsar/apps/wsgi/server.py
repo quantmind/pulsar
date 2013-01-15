@@ -251,7 +251,9 @@ invocation of the application.
     def generate(self, environ):
         exc_info = None
         keep_alive = self.keep_alive
-        environ['upgrade_protocol'] = self.protocol.upgrade
+        # Inject upgrade_protocol into the environment
+        # TODO: is this the best way to do it?
+        environ['upgrade_protocol'] = self.connection.upgrade
         wsgi = lambda e, s, err: self.wsgi_callable(e,s)
         while True:
             try:
