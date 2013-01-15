@@ -23,16 +23,16 @@ framework which responds with "Hello World!" for every request::
         '''Pulsar HTTP "Hello World!" application'''
         data = b'Hello World!\n'
         status = '200 OK'
-        response_headers = (
+        response_headers = [
             ('Content-type','text/plain'),
             ('Content-Length', str(len(data)))
-        )
+        ]
         start_response(status, response_headers)
         return [data]
     
     
     if __name__ == '__main__':
-        return wsgi.WSGIServer(callable=hello).start()
+        wsgi.WSGIServer(callable=hello).start()
     
     
 Pulsar's goal is to provide an easy way to build scalable network programs.
