@@ -1,54 +1,134 @@
 from pulsar.utils.pep import get_event_loop
-from pulsar.utils.sockets import SOCKET_TYPES
+from pulsar.utils.sockets import SOCKET_TYPES, create_socket
 
-from .protocols import ProtocolResponse
-from .servers import Producer
+from .defer import Deferred
+from .protocols import ProtocolConsumer, Connection
+from .transports import Transport
+from .servers import Producer, EventHandler
 
-__all__ = ['create_connection', 'ClientSessions']
+__all__ = ['create_connection', 'ConnectionPool', 'Client',
+           'ProtocolConsumer']
 
+transports= set()
 
-def create_connection(address, timeout=0, streaming=False, source_address=None,
-                        backlog=None):
+def create_connection(address, timeout=0, source_address=None):
     '''Create a connection with a remote server'''
-    sock = create_socket(address=address, backlog=backlog)
+    sock = create_socket(address=address, bindto=False)
     sock.settimeout(timeout)
     if source_address:
         sock.bind(source_address)
-    protocol_factory = Server.server_types[sock.type].server.protocol_factory
+    protocol_factory = SOCKET_TYPES[sock.type].server.protocol_factory
     protocol = protocol_factory(address)
-    transport_class = StreamClientTransport if streaming else ClientTransport
-    transport = transport_class(get_event_loop(), sock, protocol)
-    return transport.connect()
+    event_loop = get_event_loop() if timeout == 0 else None
+    transport = Transport(event_loop, sock, protocol)
+    transports.add(transport)
+    return transport.connect().protocol
+
+
+class ClientEventHandler(EventHandler):
+    EVENTS = ('pre_request', 'post_request', 'response')
     
+    
+class ClientProtocolConsumer(ProtocolConsumer):
+    '''A :class:`ProtocolConsumer` for a :class:`Client`.
+    
+.. attribute:: protocol
 
+
+.. attribute:: request
+
+    The request sent to the remote server
+    
+.. attribute:: consumer
+
+    Optional consumer of data received from the server in response to
+    :attr:`request`. This can be used to stream data as it arrives (for example)
+'''
+    def __init__(self, connection, request, consumer):
+        super(ClientProtocolConsumer, self).__init__(connection)
+        self.request = request
+        self.consumer = consumer
+        self.when_ready = Deferred()
+        
+    def begin(self):
+        self.protocol.on_connection.add_callback(self.send, self.close)
+        return self
+    
+    def feed(self, data):
+        try:
+            msg, data = self.decode(data)
+            if msg:
+                self._finished = True
+                if data:
+                    raise ProtocolError
+                self.when_ready.callback(msg)
+        except Exception as e:
+            self.when_ready.callback(e)
+            
+    def send(self, res):
+        msg = request.encode()
+        self.protocol.write(msg)
+    
+    def decode(self):
+        raise NotImplementedError
+    
+    def close(self):
+        pass
+        
+        
+class ClientConnection(Connection):
+    
+    def consume(self, data):
+        while data:
+            p = self.protocol
+            response = self._current_response
+            if response is None:
+                self._processed += 1
+                self._current_response = self._response_factory(self)
+                self._producer.fire('pre_request', self._current_response)
+                response = self._current_response 
+            data = response.feed(data)
+            if data and self._current_response:
+                # if data is returned from the response feed method and the
+                # response has not done yet raise a Protocol Error
+                raise ProtocolError
+    
+    def finished(self, response):
+        if response is self._current_response:
+            self._producer.fire('response', self._current_response)
+            self._current_response = None
+        else:
+            raise RuntimeError()
+    
+        
 class ConnectionPool(Producer):
-    '''A connection pool maintain a pool of active connections for client
-protocols.
+    '''A :class:`Producer` of of active connections for client
+protocols. It maintains a live set of connections.
 
+.. attribute:: address
+
+    Address to connect to
+    
 .. attribute:: all
 
     A class attribute containing all active :class:`ConnectionPool`
     '''
     all = {}
     
+    def __init__(self, request, **params):
+        super(ConnectionPool, self).__init__(**params)
+        self._address = request.address
+        self._available_connections = []
+        
     @classmethod
-    def get(cls, address, timeout, streaming=False, **params):
-        self = cls()
-        self._address = address
-        self._timeout = timeout
-        self._streaming = streaming
-        self.setup(**params)
+    def get(cls, request, **params):
+        self = cls(request, **params)
         if self not in cls.all:
-            self._in_use_connections = set()
-            self._available_connections = []
             cls.all[self] = self
         return cls.all[self]
     
-    def setup(self):
-        pass
-    
     def __hash__(self):
-        return hash((self.address, self.db, self.timeout))
+        return hash((self.address, self.timeout))
     
     @property
     def address(self):
@@ -56,7 +136,7 @@ protocols.
     
     def release(self, connection):
         "Releases the connection back to the pool"
-        self._in_use_connections.remove(connection)
+        self._concurrent_connections.remove(connection)
         self._available_connections.append(connection)
 
     def remove(self, connection):
@@ -67,27 +147,43 @@ protocols.
         except:
             pass
         
-    def get_connection(self):
+    def create_connection(self):
         "Get a connection from the pool"
         try:
             connection = self._available_connections.pop()
         except IndexError:
-            connection = create_connection(self._address, self._timeout,
-                                           self._streaming)
-        self._in_use_connections.add(connection)
+            connection = self.new_connection()
+        self._concurrent_connections.add(connection)
         return connection
-        
+    
+    def new_connection(self):
+        self._received = self._received + 1
+        protocol = create_connection(self._address, timeout=self._timeout)
+        return ClientConnection(protocol, self, self._received)
+    
+    
+class Request(ClientEventHandler):
+    '''A :class:`Client` request class.'''
+    def __init__(self, address, timeout=0):
+        self.address = address
+        self.timeout = timeout
 
-class ClientSessions(object):
-    '''A client for a server which handles a pool of synchronous
-or asynchronous connections.'''
+
+class Client(ClientEventHandler):
+    '''A client for a remote server which handles one or more
+:class:`ConnectionPool` of synchronous or asynchronous connections.'''
     connection_pool = ConnectionPool
-    response_class = ProtocolResponse
+    '''Factory of :class:`ConnectionPool`.'''
+    request_factory = Request
+    '''Factory of request instances'''
+    response_factory = None
+    '''Factory of response instances'''
     client_version = ''
     stream = False
     timeout = 0
+    EVENTS = ('pre_request', 'post_request', 'response')
     
-    request_parameters = ('hooks', 'timeout', 'stream')
+    request_parameters = ('hooks', 'timeout')
     def __init__(self, timeout=None, client_version=None,
                  max_connections=None, trust_env=True, stream=None,
                  **params):
@@ -99,29 +195,33 @@ or asynchronous connections.'''
         self.setup(**params)
     
     def setup(self, **params):
-        '''Setup the client sessions handler. By default it does nothing.'''
-    
-    def build_request(self, *args, **kwargs):
-        raise NotImplementedError
+        '''Setup the client. By default it does nothing.'''
     
     def request(self, *args, **params):
-        '''Build a request object to pass to the :attr:`response_class` which
-build the response for the request.'''
-        for parameter in self.request_parameters:
-            self._update_parameter(parameter, params)
-        request = self.build_request(*args, **params)
-        pool = self.connection_pool.get(request)
-        connection = pool.get_connection(request)
-        response = self.response_class(connection, request)
-        events.fire('pre_request', response)
-        return response
+        '''Create a request and invoke the :meth:`response` method.
+Must be implemented by subclasses.'''
+        raise NotImplementedError
     
-    def _update_parameter(self, name, params):
-        if name not in params:
-            params[name] = getattr(self, name)
-        elif name == 'hooks':
-            hooks = params[name]
-            chooks = dict(((e, copy(h)) for e, h in iteritems(self.hooks)))
-            for e, h in iteritems(hooks):
-                chooks[e].append(h)
-            params[name] = chooks
+    def response(self, request, consumer=None):
+        pool = self.connection_pool.get(request,
+                                        timeout=request.timeout,
+                                        max_connections=self.max_connections)
+        connection = pool.create_connection()
+        response = self.response_factory(connection.protocol, request, consumer)
+        self.fire('pre_request', response)
+        return response.begin()
+    
+    def update_parameter(self, params):
+        for name in self.request_parameters:
+            if name not in params:
+                params[name] = getattr(self, name)
+            elif name == 'hooks':
+                hooks = params[name]
+                chooks = dict(((e, copy(h)) for e, h in iteritems(self.hooks)))
+                for e, h in iteritems(hooks):
+                    chooks[e].append(h)
+                params[name] = chooks
+        return params
+            
+    def fire(self, event, *args):
+        pass

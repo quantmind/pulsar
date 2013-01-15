@@ -5,10 +5,11 @@ from pulsar.utils.sockets import create_socket, SOCKET_TYPES, wrap_socket
 from pulsar.utils.pep import get_event_loop, set_event_loop, new_event_loop
 
 from .access import PulsarThread
-from .defer import Deferred
-from .transports import Transport
+from .defer import Deferred, coroutine
+from .protocols import Connection, ProtocolError
+from .transports import Transport, LOGGER
 
-__all__ = ['create_server', 'ConcurrentServer', 'Server']
+__all__ = ['create_server', 'ConcurrentServer', 'Server', 'Producer']
 
 
 class ConcurrentServer(object):
@@ -32,48 +33,110 @@ class ServerType(type):
         if type is not None:
             SOCKET_TYPES[type].server = new_class
         return new_class
-    
+            
 
-class Connection:
+class SeverConnection(Connection):
     
-    def __init__(self, protocol, producer, session):
-        self.protocol = protocol
-        self.producer = producer
-        self.session = session
+    def consume(self, data):
+        while data:
+            p = self.protocol
+            response = self._current_response
+            if response is None:
+                self._processed += 1
+                self._current_response = self._response_factory(self)
+                self._producer.fire('pre_request', self._current_response)
+                response = self._current_response 
+            data = response.feed(data)
+            if data and self._current_response:
+                # if data is returned from the response feed method and the
+                # response has not done yet raise a Protocol Error
+                raise ProtocolError
+    
+    def finished(self, response):
+        if response is self._current_response:
+            self._producer.fire('post_request', self._current_response)
+            self._current_response = None
+        else:
+            raise RuntimeError()
+    
+class EventHandler(object):
+    EVENTS = ('pre_request', 'post_request')
+    
+    def __new__(cls, *args, **kwargs):
+        o = super(EventHandler, cls).__new__(cls)
+        o.hooks = dict(((event, []) for event in cls.EVENTS))
+        return o
         
-    def __repr__(self):
-        return '%s session %s' % (self.protocol, self.session)
+    def bind_event(self, event, hook):
+        '''Register an event hook'''
+        self.hooks[event].append(hook)
+        
+    def fire(self, event, event_data):
+        """Dispatches a hook dictionary on a given piece of data."""
+        hooks = self.hooks
+        if hooks and key in hooks:
+            for hook in hooks[key]:
+                try:
+                    hook(event_data)
+                except Exception:
+                    LOGGER.exception('Unhandled error in %s hook', key)
     
-    def __str__(self):
-        return self.__repr__()
+    
+class Producer(object):
+    '''A Producer of connections with remote servers or clients. It is the base
+class for both :class:`Server` and :class:`ConnectionPool`.
+
+.. attribute:: concurrent_connections
+
+    Number of concurrent active connections
+    
+.. attribute:: received
+
+    Total number of received connections
+    
+.. attribute:: timeout
+
+    number of seconds to keep alive an idle connection
+    
+.. attribute:: max_connections
+
+    Maximum number of connections allowed. A value of 0 (default)
+    means no limit.
+'''
+    connection_factory = SeverConnection
+    def __init__(self, max_connections=0, timeout=0, connection_factory=None):
+        self._received = 0
+        self._max_connections = max_connections
+        self._timeout = timeout
+        self._concurrent_connections = set()
+        if connection_factory:
+            self.connection_factory = connection_factory
     
     @property
-    def transport(self):
-        return self.protocol.transport
-        
-        
-class Producer(object):
-    connection_factory = Connection
-    def __new__(cls, *args, **kwargs):
-        o = super(Producer, cls).__new__(cls)
-        o._received = 0
-        o._concurrent_connections = set()
-        return o
+    def timeout(self):
+        return self._timeout
     
     @property
     def received(self):
         return self._received
     
     @property
+    def max_connections(self):
+        return self._max_connections
+    
+    @property
     def concurrent_connections(self):
         return len(self._concurrent_connections)
     
-    def new_connection(self, protocol, max_connections=0):
+    def new_connection(self, protocol):
+        '''Create a new connection using the :attr:`connection_factory`
+attribute.'''
         self._received = self._received + 1
-        c = self.connection_factory(protocol, self, self._received)
+        conn = self.connection_factory(protocol, self, self._received)
+        # wen connection is lost invoke _remove_connection
         protocol.on_connection_lost.add_both(self._remove_connection)
         self._concurrent_connections.add(c)
-        if max_connections and self._received > max_connections:
+        if self.max_connections and self._received > self.max_connections:
             self.close()
         return c
     
@@ -89,10 +152,10 @@ class Producer(object):
         
     def close(self):
         raise NotImplementedError
-        
+
      
-class Server(ServerType('BaseServer', (Producer,), {})):
-    '''Base abstract class for all Server's listening for connections
+class Server(ServerType('BaseServer', (Producer, EventHandler), {})):
+    '''A :class:`Producer` for all server's listening for connections
 on a socket. It is a producer of :class:`Transport` for server protocols.
     
 .. attribute:: protocol_factory
@@ -108,10 +171,6 @@ on a socket. It is a producer of :class:`Transport` for server protocols.
     Optional callable or :class:`ProtocolResponse` class which can be used
     to override the :class:`Protocol.response_factory` attribute.
     
-.. attribute:: timeout
-
-    number of seconds to keep alive an idle connection
-    
 .. attribute:: event_loop
 
     The :class:`EventLoop` running the server.
@@ -123,24 +182,18 @@ on a socket. It is a producer of :class:`Transport` for server protocols.
 .. attribute:: on_close
 
     A :class:`Deferred` called once the :class:`Server` is closed.
-    
-.. attribute:: concurrent_connections
-
-    Number of concurrent active connections
-    
-.. attribute:: received
-
-    Total number of received connections
 '''
     protocol_factory = None
     timeout = None
     
     def __init__(self, event_loop, sock, protocol_factory=None,
-                  timeout=None, max_requests=0, response_factory=None):
+                  timeout=None, max_connections=0, response_factory=None,
+                  connection_factory=None):
+        super(Server, self).__init__(timeout=timeout,
+                                     max_connections=max_connections,
+                                     connection_factory=connection_factory)
         self._event_loop = event_loop
         self._sock = sock
-        self.timeout = timeout if timeout is not None else self.timeout
-        self.max_requests = max_requests
         self.response_factory = response_factory
         self.on_close = Deferred()
         if protocol_factory:
@@ -151,8 +204,8 @@ on a socket. It is a producer of :class:`Transport` for server protocols.
         '''Create a new server :class:`Protocol` ready to serve its client.'''
         # Build the protocol
         sock = wrap_socket(self.TYPE, sock)
-        protocol = self.protocol_factory(address, self.response_factory)
-        connection = self.new_connection(protocol, self.max_requests)
+        protocol = self.protocol_factory(address)
+        connection = self.new_connection(protocol)
         transport = Transport(self._event_loop, sock, protocol,
                               timeout=self.timeout)
         connection.protocol.connection_made(transport)

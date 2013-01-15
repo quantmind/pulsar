@@ -288,7 +288,7 @@ logging is configured, the :attr:`Actor.mailbox` is registered and the
 parameters *params*. It return a :class:`ActorMessage`.'''
         if not isinstance(target, ActorProxy):
             target = get_proxy(self.get_actor(target))
-        return target.receive_from(self, action, *args, **params)
+        return target.request(self, action, args, params)
 
     def put(self, request):
         '''Put a *request* into the :attr:`ioqueue` if available.'''
@@ -420,6 +420,10 @@ properly this actor will go out of scope.'''
                 # The actor is not yet active, come back at the next requestloop
                 self.requestloop.call_soon_threadsafe(self.periodic_task)
         
+    def register(self):
+        response = self.send(self.monitor, 'mailbox_address', self.address)
+        response.when_ready.add_callback(self.link_actor)
+            
     def proxy_mailbox(self, address):
         m = self.proxy_mailboxes.get(address)
         if not m:

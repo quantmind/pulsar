@@ -456,6 +456,7 @@ The parameters overriding order is the following:
             parser = self.cfg.parser()
             opts = parser.parse_args(argv)
             config = getattr(opts, 'config', None)
+            # set the config only if config is part of the settings
             if config is not None and self.cfg.config:
                 self.cfg.config = config
         else:

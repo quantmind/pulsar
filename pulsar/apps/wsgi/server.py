@@ -115,13 +115,13 @@ If the size is 0, this is the last chunk, and an extra CRLF is appended.
     return head + chunk + b'\r\n'
 
 
-class HttpServerResponse(pulsar.ProtocolResponse):
+class HttpServerResponse(pulsar.ProtocolConsumer):
     '''Handle an HTTP response for a :class:`HttpConnection`.'''
     _status = None
     _headers_sent = None
     
-    def __init__(self, wsgi_callable, protocol):
-        super(HttpServerResponse, self).__init__(protocol)
+    def __init__(self, wsgi_callable, connection):
+        super(HttpServerResponse, self).__init__(connection)
         self.wsgi_callable = wsgi_callable
         host, port = self.sock.address[:2]
         self.server_name = socket.getfqdn(host)
@@ -295,7 +295,7 @@ invocation of the application.
         # close transport if required
         if not keep_alive:
             self.protocol.close()
-        self._finished = True
+        self.finished()
 
     def is_chunked(self):
         '''Only use chunked responses when the client is

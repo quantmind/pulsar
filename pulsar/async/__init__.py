@@ -4,6 +4,7 @@ from .defer import *
 from .transports import *
 from .protocols import *
 from .servers import *
+from .consumers import *
 from .tcp import *
 from .udp import *
 from .clients import *

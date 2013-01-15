@@ -476,10 +476,8 @@ class ConfigFile(Setting):
     validator = validate_string
     default = 'config.py'
     desc = """\
-        The path to a Pulsar config file.
-
-        Only has an effect when specified on the command line or as part of an
-        application specific configuration.
+        The path to a Pulsar config file, where default Settings
+        paramaters can be specified.
         """
 
 

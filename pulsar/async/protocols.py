@@ -2,83 +2,12 @@ from inspect import isgenerator
 
 from .defer import Deferred
 
-__all__ = ['Protocol', 'ProtocolResponse', 'ChunkResponse', 'ProtocolError']
+__all__ = ['Protocol', 'ProtocolConsumer', 'Connection', 'ProtocolError']
 
     
 class ProtocolError(Exception):
     '''Raised when the protocol encounter unexpected data. It will close
 the socket connection.'''
-
-
-class ProtocolResponse(object):
-    '''A :class:`Protocol` response is responsible for parsing incoming data
-and producing no more than one response.'''
-    def __init__(self, protocol):
-        self._protocol = protocol
-        self._finished = False
-            
-    @property
-    def event_loop(self):
-        return self._protocol.event_loop
-    
-    @property
-    def sock(self):
-        return self._protocol.sock
-    
-    @property
-    def protocol(self):
-        return self._protocol
-    
-    @property
-    def transport(self):
-        return self._protocol.transport
-    
-    def on_connect(self):
-        pass
-    
-    def begin(self):
-        raise NotImplementedError
-        
-    def feed(self, data):
-        '''Feed new data into the this :class:`ProtocolResponse`. This method
-should return `None` unless it has finished the response and the returned bytes
-can be used for the next response.'''
-        raise NotImplementedError
-    
-    def finished(self):
-        '''`True` if this response has finished and a new response can start.'''
-        return self._finished
-    
-    ############################################################################
-    ###    TRANSPORT SHURTCUTS
-    def write(self, data):
-        self.transport.write(data)
-            
-    def writelines(self, lines):
-        '''Write an iterable of bytes. It is a proxy to
-:meth:`Transport.writelines`'''
-        self.transport.writelines(lines)
-        
-
-class ChunkResponse(ProtocolResponse):
-    
-    def __init__(self, protocol):
-        super(ChunkResponse, self).__init__(protocol)
-        self._buffer = bytearray()  
-    
-    def feed(self, data):
-        self._buffer.extend(data)
-        message = self.decode(bytes(self._buffer))
-        if message is not None:
-            self.responde(message)
-        
-    def decode(self, data):
-        raise NotImplementedError
-    
-    def responde(self, message):
-        '''Write back to the client or server'''
-        self.write(message)
-        self._finished = True
     
         
 class Protocol(object):
@@ -98,29 +27,27 @@ It can be used for both client and server sockets.
 
     The :class:`Transport` for this :class:`Protocol`. This is obtained once
     the :meth:`connection_made` is invoked.
-    
-.. attribute:: response_factory
 
-    A factory of :class:`ProtocolResponse` instances for this :class:`Protocol`
-    
-.. attribute:: processed
+.. attribute:: on_connection
 
-    Number of separate requests processed by this protocol.
-    
-.. attribute:: current_response
+    a :class:`Deferred` called once the :attr:`transport` is connected.
+        
+.. attribute:: on_connection_lost
 
-    The :class:`ProtocolResponse` currently handling incoming data.
+    a :class:`Deferred` called once the :attr:`transport` loses the connection
+    with the endpoint.
+    
+**METHODS**
 '''
     _transport = None
     response_factory = None
     
-    def __init__(self, address, response_factory=None):
+    def __init__(self, address):
         self._processed = 0
         self._address = address
-        self._current_response = None
+        self.consumer = None
+        self.on_connection = Deferred()
         self.on_connection_lost = Deferred()
-        if response_factory:
-            self._response_factory = response_factory
     
     def __repr__(self):
         return str(self._address)
@@ -154,14 +81,6 @@ It can be used for both client and server sockets.
     def closed(self):
         return self._transport.closed if self._transport else True
     
-    @property
-    def response_factory(self):
-        return self._response_factory
-    
-    @property
-    def current_response(self):
-        self._current_response
-    
     ############################################################################
     ###    PEP 3156 METHODS
     def connection_made(self, transport):
@@ -172,33 +91,14 @@ To send data, call its :meth:`Transport.write` or
 To receive data, wait for :meth:`data_received` calls.
 When the connection is closed, :meth:`connection_lost` is called."""
         self._transport = transport
-        if self._current_response is not None:
-            self._current_response.on_connect()
-            self._current_response.begin()
+        self.on_connection.callback(self)
 
     def data_received(self, data):
         """Called by the :attr:`transport` when data is received.
 By default it feeds the *data*, a bytes object, into the
 :attr:`current_response` attribute."""
-        while data:
-            response = self._current_response
-            if response is not None and response.finished():
-                response = None
-            if response is None:
-                self._processed += 1
-                self._current_response = response = self._response_factory(self)
-            data = response.feed(data)
-            if data and not response.finished():
-                # if data is returned from the response feed method and the
-                # response has not done yet raise a Protocol Error
-                raise ProtocolError
-            
-    def upgrade(self, response_factory):
-        '''Update the :attr:`response_factory` attribute with a new
-:class:`ProtocolResponse`. This function can be used when the protocol
-specification changes during a response (an example is a WebSocket
-response).'''
-        self._response_factory = response_factory
+        if self.consumer:
+            self.consumer(data)
             
     def eof_received(self):
         """Called when the other end calls write_eof() or equivalent."""
@@ -232,3 +132,137 @@ already available it raises an exception.'''
         if self._transport:
             self._transport.abort()
     
+
+class ProtocolConsumer(object):
+    '''A :class:`Protocol` response is responsible for parsing incoming data
+and,  producing no more than one response.'''
+    def __init__(self, connection):
+        self._connection = connection
+            
+    @property
+    def event_loop(self):
+        return self._connection.event_loop
+    
+    @property
+    def sock(self):
+        return self._connection.sock
+    
+    @property
+    def protocol(self):
+        return self._connection.protocol
+    
+    @property
+    def transport(self):
+        return self._connection.transport
+    
+    def on_connect(self):
+        pass
+    
+    def begin(self):
+        raise NotImplementedError
+        
+    def feed(self, data):
+        '''Feed new data into the this :class:`ProtocolResponse`. This method
+should return `None` unless it has finished the response and the returned bytes
+can be used for the next response.'''
+        raise NotImplementedError
+    
+    def finished(self):
+        '''`True` if this response has finished and a new response can start.'''
+        return self._connection.finished(self)
+    
+    ############################################################################
+    ###    TRANSPORT SHURTCUTS
+    def write(self, data):
+        self.transport.write(data)
+            
+    def writelines(self, lines):
+        '''Write an iterable of bytes. It is a proxy to
+:meth:`Transport.writelines`'''
+        self.transport.writelines(lines)
+        
+        
+class Connection:
+    '''A client or server connection. It contains the :class:`Protocol`, the
+transport producer (:class:`Server` or :class:`Client`) and a session
+number.
+
+.. attribute:: protocol
+
+    The :class:`Protocol` of this connection
+    
+.. attribute:: producer
+
+    The producer of this connection
+    
+.. attribute:: response_factory
+
+    A factory of :class:`ProtocolResponse` instances for this :class:`Protocol`
+    
+.. attribute:: session
+
+    Connection session number. Created by the :attr:`producer`
+    
+.. attribute:: processed
+
+    Number of separate requests processed by this connection.
+    
+.. attribute:: current_response
+
+    The :class:`Consumer` currently handling incoming data.
+'''
+    def __init__(self, protocol, producer, session):
+        self._protocol = protocol
+        self._producer = producer
+        self._session = session 
+        self._processed = 0
+        self._current_response = None
+        self._response_factory = producer.response_factory
+        protocol.consumer = self.consume
+        
+    def __repr__(self):
+        return '%s session %s' % (self.protocol, self._session)
+    
+    def __str__(self):
+        return self.__repr__()
+    
+    @property
+    def transport(self):
+        return self.protocol.transport
+    
+    @property
+    def protocol(self):
+        return self._protocol
+    
+    @property
+    def sock(self):
+        return self._protocol.sock
+    
+    @property
+    def producer(self):
+        return self._producer
+    
+    @property
+    def session(self):
+        return self._session
+    
+    @property
+    def response_factory(self):
+        return self._response_factory
+    
+    @property
+    def current_response(self):
+        self._current_response
+    
+    def consume(self, data):
+        raise NotImplementedError
+    
+    def upgrade(self, response_factory):
+        '''Update the :attr:`response_factory` attribute with a new
+:class:`ProtocolResponse`. This function can be used when the protocol
+specification changes during a response (an example is a WebSocket
+response).'''
+        self._response_factory = response_factory
+        
+    def finished(self, response):
+        raise NotImplementedError

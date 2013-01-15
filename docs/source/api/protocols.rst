@@ -26,7 +26,7 @@ Protocol
 
    
 Protocol Response
-==========================
+=====================================
 .. autoclass:: ProtocolResponse
    :members:
    :member-order: bysource
@@ -35,6 +35,27 @@ Protocol Response
 Server
 ==========================
 .. autoclass:: Server
+   :members:
+   :member-order: bysource
+   
+   
+Client
+==========================
+.. autoclass:: Client
+   :members:
+   :member-order: bysource
+
+
+Client Connection Pool
+==========================
+.. autoclass:: ConnectionPool
+   :members:
+   :member-order: bysource
+   
+   
+Producer
+==========================
+.. autoclass:: Producer
    :members:
    :member-order: bysource
 

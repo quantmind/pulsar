@@ -97,7 +97,7 @@ class HttpResponse(ClientResponse):
         pass
 
 
-class HttpClient(ClientSessions):
+class HttpClient(Client):
     '''A client for an HTTP/HTTPS server which handles a pool of synchronous
 or asynchronous connections.
 
@@ -191,7 +191,7 @@ or asynchronous connections.
                                              'latin-1')
         return self._websocket_key
     
-    def build_request(self, method, url, cookies=None, headers=None, **params):
+    def request(self, method, url, cookies=None, headers=None, **params):
         '''Constructs and sends a request to a remote server.
 It returns an :class:`HttpResponse` object.
 
@@ -202,6 +202,8 @@ the :class:`HttpRequest` constructor.
 
 :rtype: a :class:`HttpResponse` object.
 '''
+        for parameter in self.request_parameters:
+            self._update_parameter(parameter, params)
         request = HttpRequest(url, method, **params)
         self.set_headers(request, headers)
         # Set proxy if required

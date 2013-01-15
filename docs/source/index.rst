@@ -14,6 +14,7 @@ in a single code base.
    design
    faq
    advantage
+   tutorials/index
    api/index
    changelog
    http

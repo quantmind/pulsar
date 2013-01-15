@@ -195,6 +195,14 @@ Typical usage::
         return _
 
 
+def coroutine(f):
+    def _(*args, **kwargs):
+        gen = f(*args, **kwargs)
+        next(gen)
+        return gen
+    return _
+            
+        
 ############################################################### FAILURE
 class Failure(object):
     '''Aggregate failures during :class:`Deferred` callbacks.

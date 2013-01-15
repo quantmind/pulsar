@@ -78,8 +78,9 @@ capabilities in some transport mechanisms.
         self._read_chunk_size = read_chunk_size or io.DEFAULT_BUFFER_SIZE
         self._read_buffer = []
         self._write_buffer = deque()
-        self._event_loop.add_writer(self.fileno(), self._ready_write)
-        self.add_reader()
+        if self._event_loop:
+            self._event_loop.add_writer(self.fileno(), self._ready_write)
+            self.add_reader()
     
     def __repr__(self):
         return self._protocol.__repr__()
@@ -199,8 +200,9 @@ passed to the :meth:`Protocol.data_received` method."""
     
     ############################################################################
     ###    PULSAR TRANSPORT METHODS
-    def connect():
-        '''Connect this :class:`Transport` to a remote server.'''
+    def connect(self):
+        '''Connect this :class:`Transport` to a remote server and
+returns ``self``.'''
         if not self.connecting:
             self._connecting = True
             try:
@@ -210,7 +212,7 @@ passed to the :meth:`Protocol.data_received` method."""
             except Exception as e:
                 self._protocol.connection_made(self)
                 self._protocol.connection_lost(e)
-        return self._protocol        
+        return self
         
     def add_reader(self):
         self._event_loop.add_reader(self.fileno(), self._ready_read)

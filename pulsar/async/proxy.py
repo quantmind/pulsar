@@ -162,7 +162,7 @@ parameter ``"hello there!"``.
     def proxy(self):
         return self
     
-    def receive_from(self, sender, command, *args, **kwargs):
+    def request(self, sender, command, args, kwargs):
         '''Send an :class:`ActorMessage` to the underlying actor
 (the receiver). This is the low level function call for
 communicating between actors.
@@ -182,9 +182,7 @@ communicating between actors.
         cmd = get_command(command, self.commands_set)
         if not cmd:
             raise CommandNotFound(command)
-        msg = ActorMessage(cmd.__name__, sender, self.aid, args, kwargs)
-        send = self.mailbox.execute if cmd.ack else self.mailbox.send
-        return send(msg)
+        return self.mailbox.request(cmd.__name__, sender, self.aid, args, kwargs)
     
     def __eq__(self, o):
         o = get_proxy(o,True)

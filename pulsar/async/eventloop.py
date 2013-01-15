@@ -393,7 +393,7 @@ Any positional arguments after the callback will be passed to
 the callback when it is called."""
         if seconds > 0:
             timeout = TimedCall(self.timer() + seconds, callback, args,
-                                self.remove_timeout)
+                                self._remove_timeout)
             heapq.heappush(self._scheduled, timeout)
             return timeout
         else:
@@ -424,7 +424,7 @@ to transfer control from other threads to the EventLoop's thread.'''
             callback(*args)  # If this fails, the chain is broken.
             handler.reschedule(self.timer() + interval)
             heapq.heappush(self._scheduled, handler)
-        handler = TimedCall(interval, wrapper, (), self.remove_timeout)
+        handler = TimedCall(interval, wrapper, (), self._remove_timeout)
         heapq.heappush(self._scheduled, handler)
         return handler
         
@@ -465,8 +465,9 @@ descriptor.'''
             self._handlers[fd].remove_writer()
     
     def add_signal_handler(self, sig, callback, *args):
-        '''Whenever signal ``sig is received, arrange for callback(*args) to
-be called. Returns a Handler which can be used to cancel the signal callback.'''
+        '''Whenever signal ``sig`` is received, arrange for callback(*args) to
+be called. Returns a :class:`TimedCall` handler which can be used to cancel
+the signal callback.'''
         handler = TimedCall(None, callback, args)
         prev = signal.signal(sig, handler)
         if isinstance(prev, TimedCall):
@@ -474,6 +475,8 @@ be called. Returns a Handler which can be used to cancel the signal callback.'''
         return handler
     
     def remove_signal_handler(self, sig):
+        '''Remove the signal ``sig`` if it was installed and reinstal the
+default signal handler ``signal.SIG_DFL``.'''
         handler = signal.signal(sig, signal.SIG_DFL)
         if handler:
             handler.cancel()
@@ -482,22 +485,22 @@ be called. Returns a Handler which can be used to cancel the signal callback.'''
             return False
         
     def create_server(self, **kwargs):
-        return Server.create(eventloop=self, **kwargs)
+        '''Create a new :class:`Server`.'''
+        kwargs['eventloop'] = self
+        return Server.create(**kwargs)
     
     def wake(self):
         '''Wake up the eventloop.'''
         if self.running:
             self._waker.wake()
 
-    def remove_timeout(self, timeout):
-        """Cancels a pending *timeout*. The argument is an handle as returned
-by the :meth:`add_timeout` method."""
+    ############################################################ INTERNALS
+    def _remove_timeout(self, timeout):
         try:
             self._scheduled.remove(timeout)
         except ValueError:
             LOGGER.warn('trying to remove a timeout not scheduled.')
 
-    ############################################################ INTERNALS
     def _run_once(self, timeout=None):
         self._running = True
         poll_timeout = timeout or self.poll_timeout

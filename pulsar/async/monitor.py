@@ -98,6 +98,9 @@ during its life time.
         self.managed_actors = {}
         self.actor_class = self.params.pop('actor_class') or self.actor_class
 
+    def register(self):
+        pass
+    
     def active(self):
         return self.running()
 
