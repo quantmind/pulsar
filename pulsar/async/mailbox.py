@@ -1,30 +1,25 @@
+'''Pulsar internal communication uses the websocket protocol.'''
 import sys
 import logging
 import tempfile
 from functools import partial
 
-from pulsar import platform
-from pulsar.utils.pep import to_bytes, ispy3k, pickle, ispy3k, set_event_loop
+from pulsar import platform, PulsarException, Config
+from pulsar.utils.pep import to_bytes, ispy3k, ispy3k, pickle, set_event_loop
+from pulsar.utils.websocket import FrameParser
 
-from .defer import make_async, log_failure, is_failure
 from .access import get_actor, set_actor
+from .defer import make_async, log_failure, is_failure
 from .servers import create_server, ServerConnection
-from .protocols import ProtocolError
-from .consumers import ServerChunkConsumer
+from .protocols import ProtocolConsumer
+from .proxy import actorid, CommandNotFound
 from . import clients
 
 
-__all__ = ['mailbox', 'ActorMessage', 'CommandNotFound']
+__all__ = ['mailbox', 'CommandNotFound']
 
 
 LOGGER = logging.getLogger('pulsar.mailbox')
-
-
-class CommandNotFound(Exception):
-
-    def __init__(self, name):
-        super(CommandNotFound, self).__init__(
-                            'Command "%s" not available' % name)
 
 
 def mailbox(actor=None, address=None):
@@ -49,78 +44,34 @@ def mailbox(actor=None, address=None):
                                         close_event_loop=True)
         server.event_loop.call_soon(send_mailbox_address, actor)
         return server
-
-def actorid(actor):
-    return actor.aid if hasattr(actor, 'aid') else actor
-
-
-class ActorMessage(clients.Request):
-    '''A message which travels from :class:`Actor` to
-:class:`Actor` to perform a specific *command*. :class:`ActorMessage`
-are not directly initialised using the constructor, instead they are
-created by :meth:`ActorProxy.send` method.
-
-.. attribute:: sender
-
-    id of the actor sending the message.
-
-.. attribute:: receiver
-
-    id of the actor receiving the message.
-
-.. attribute:: command
-
-    command to be performed
-
-.. attribute:: args
-
-    Positional arguments in the message body
-
-.. attribute:: kwargs
-
-    Optional arguments in the message body
-'''
-    def __init__(self, command, sender=None, receiver=None,
-                 args=None, kwargs=None, address=None, timeout=0):
-        super(ActorMessage, self).__init__(address, timeout)
-        self.command = command
-        self.sender = actorid(sender)
-        self.receiver = actorid(receiver)
-        self.args = args if args is not None else ()
-        self.kwargs = kwargs if kwargs is not None else {}
-
-    @property
-    def ack(self):
-        return self.command.ack
     
-    @classmethod
-    def decode(cls, buffer):
-        separator = b'\r\n'
-        if buffer[0] != 42:
-            raise ProtocolError
-        idx = buffer.find(separator)
-        if idx < 0:
-            return None, buffer
-        length = int(buffer[1:idx])
-        idx += len(separator)
-        total_length = idx + length
-        if len(buffer) >= total_length:
-            data, buffer = buffer[idx:total_length:], buffer[total_length:]
-            if not ispy3k:
-                data = bytes(data)
-            args = pickle.loads(data)
-            return cls(*args), buffer
-        else:
-            return None, buffer
+    
+def dump_data(obj):
+    return pickle.dumps(obj, protocol=2)
 
-    def encode(self):
-        data = (self.command.__name__, self.sender, self.receiver,
-                self.args, self.kwargs)
-        bdata = pickle.dumps(data, protocol=2)
-        return ('*%s\r\n' % len(bdata)).encode('utf-8') + bdata
+def load_message(data):
+    return pickle.loads(data)
+    
+    
+class Request(clients.Request):
+    # Actor message request
+    def __init__(self, address, timeout, command, sender, receiver,
+                 args, kwargs, ack):
+        super(Request, self).__init__(address, timeout)
+        self.data = {'command': command,
+                     'sender': actorid(sender),
+                     'receiver': actorid(receiver),
+                     'args': args if args is not None else (),
+                     'kwargs': kwargs if kwargs is not None else {}}
+        self.parser = FrameParser(kind=1)
+        self.ack = ack
+    
+    def encode(self): 
+        msg = dump_data(self.data)
+        return self.parser.encode(msg).msg
 
     def __repr__(self):
-        return self.command.__name__
+        return self.data['command']
     __str__ = __repr__
 
 
@@ -151,56 +102,71 @@ arbiter inbox.'''
 class MailboxConnection(ServerConnection):
     authenticated = False
     
-
-class MailboxResponse(ServerChunkConsumer):
+    
+class MailboxResponse(ProtocolConsumer):
+    
+    def __init__(self, connection):
+        super(MailboxResponse, self).__init__(connection)
+        self.parser = FrameParser()
         
-    def decode(self, data):
+    def feed(self, data):
         # The receiver could be different from the mail box actor. For
         # example a monitor uses the same mailbox as the arbiter
-        return ActorMessage.decode(data)
-        
+        msg = self.parser.execute(data)
+        if msg:
+            message = load_message(msg.body)
+            self.responde(message)
+    
+    def encode(self, code, data=None): 
+        msg = dump_data((code, data))
+        frame = self.parser.encode(msg)
+        return frame.msg
+    
     def responde(self, message):
         actor = get_actor()
-        receiver = actor.get_actor(message.receiver) or actor
-        sender = receiver.get_actor(message.sender)
-        message.command = command = receiver.command(message.command)
+        self.actor = actor.get_actor(message['receiver']) or actor
+        self.caller = self.actor.get_actor(message['sender'])
+        command = self.actor.command(message['command'])
         try:
             if not command:
-                raise CommandNotFound(message.command)
-            args = message.args
-            # If this is an internal command add the sender information
-            if command.internal:
-                args = (sender,) + args
-            result = command(self, receiver, *args, **message.kwargs)
+                raise CommandNotFound(message['command'])
+            result = command(self, message['args'], message['kwargs'])
         except:
             result = sys.exc_info()
-        #just in case the return result is asynchronous
-        make_async(result).add_both(
-                            partial(self.write, receiver, sender, command.ack))
-            
-    def write(self, sender, receiver, ack, result):
-        log_failure(result)
-        if ack:
-            # Send back the result as an ActorMessage
-            if is_failure(result):
-                receiver.request(sender, 'errback', (result,))
-            else:
-                receiver.request(sender, 'callback', (result,))
-
+        result = make_async(result).add_both(partial(self.write, command.ack))
+        
+    def write(self, ack, result):
+        if is_failure(result):
+            log_failure(result)
+            if ack:
+                msg = self.encode('errback')
+                self.transport.write(msg)
+        elif ack:
+            msg = self.encode('callback', result)
+            self.transport.write(msg)
+    
 
 ################################################################################
 ##    Mailbox Client Classes
 class MailboxClientConsumer(clients.ClientProtocolConsumer):
     '''The Protocol consumer for a Mailbox client'''
-    def send(self, _):
-        msg = self.request.encode()
-        self.transport.write(msg)
-        # if no acknoledgment is expected callback when ready
-        if not self.request.ack:
-            self.when_ready.callback(None)
-            
-    def decode(self, data):
-        return ActorMessage.decode(data)
+    def feed(self, data):
+        frame = self.request.parser.execute(data)
+        if frame:
+            code, result = load_message(frame.body)
+            try:
+                if code == 'errback':
+                    raise PulsarException
+            except:
+                result = sys.exc_info()
+            self.result = result
+            self.finished(result)
+    
+    def send(self, *args):
+        message = self.request.encode()
+        self.write(message)
+        if not self.request.ack: # No acknowledgment
+            self.finished()
     
     
 class PulsarClient(clients.Client):
@@ -210,10 +176,10 @@ class PulsarClient(clients.Client):
         super(PulsarClient, self).__init__(**params)
         self.address = address
         
-    def request(self, action, sender, target, args, kwargs):
-        req = ActorMessage(action, sender, target, args, kwargs,
-                           address=self.address, timeout=self.timeout)
-        return self.response(req)
+    def request(self, cmd, sender, target, args, kwargs, consumer=None):
+        req = Request(self.address, self.timeout, cmd.__name__, sender,
+                      target, args, kwargs, cmd.ack)
+        return self.response(req, consumer)
     
     
 def send_mailbox_address(actor):

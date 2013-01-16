@@ -54,8 +54,7 @@ from pulsar import maybe_async, is_async, safe_async, is_failure
 from pulsar.utils.httpurl import ispy3k, to_bytes, native_str,\
                                  itervalues, parse_qs, WEBSOCKET_VERSION
 from pulsar.apps.wsgi import WsgiResponse, wsgi_iterator
-
-from .frame import *
+from pulsar.utils.websocket import FrameParser, Frame
 
 WEBSOCKET_GUID = '258EAFA5-E914-47DA-95CA-C5AB0DC85B11'
 

@@ -212,21 +212,12 @@ as required."""
             raise RuntimeError('Could not retrieve proxy %s.' % proxy)
         proxy_monitor = self.spawning_actors.pop(proxy.aid)
         proxy_monitor.info['last_notified'] = time()
-        on_address = proxy_monitor.on_address
-        delattr(proxy_monitor,'on_address')
-        try:
-            if not address:
-                raise ValueError('No address received')
-        except:
-            on_address.callback(sys.exc_info())
-        else:
-            proxy_monitor.address = address
-            self.managed_actors[proxy.aid] = proxy_monitor
-            self.linked_actors[proxy.aid] = proxy
-            if self.arbiter:
-                # link also the arbiter
-                self.arbiter.linked_actors[proxy.aid] = proxy
-            on_address.callback(proxy_monitor.proxy)
+        proxy_monitor.address = address
+        self.managed_actors[proxy.aid] = proxy_monitor
+        self.linked_actors[proxy.aid] = proxy
+        if self.arbiter:
+            # link also the arbiter
+            self.arbiter.linked_actors[proxy.aid] = proxy
         return proxy_monitor.proxy
 
     @asynchronous()

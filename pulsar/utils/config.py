@@ -25,6 +25,7 @@ from .importer import import_system_file
 __all__ = ['Config',
            'SimpleSetting',
            'Setting',
+           'Function',
            'defaults',
            'ordered_settings',
            'validate_string',
@@ -129,7 +130,7 @@ attribute by exposing the :attr:`Setting.name` as attribute.
         return self.__dict__.copy()
 
     def __setstate__(self, state):
-        for k,v in state.items():
+        for k, v in state.items():
             self.__dict__[k] = v
 
     def __getattr__(self, name):
@@ -319,6 +320,11 @@ custom initialization for this :class:`Setting`.'''
         pass
 
 
+class Function:
+    
+    pass
+
+
 class SimpleSetting(SettingBase):
 
     def __init__(self, name, value):
@@ -403,7 +409,7 @@ as base class for other settings.'''
 
     def copy(self):
         return copy.copy(self)
-
+        
 
 def validate_bool(val):
     if isinstance(val, bool):
@@ -755,7 +761,7 @@ class DefaultProcName(Setting):
         """
 
 
-class WhenReady(Setting):
+class WhenReady(Function, Setting):
     name = "when_ready"
     section = "Server Hooks"
     validator = validate_callable(1)
@@ -768,7 +774,7 @@ class WhenReady(Setting):
         """
 
 
-class Prefork(Setting):
+class Prefork(Function, Setting):
     name = "pre_fork"
     section = "Server Hooks"
     validator = validate_callable(1)
@@ -782,7 +788,7 @@ class Prefork(Setting):
         """
 
 
-class Postfork(Setting):
+class Postfork(Function, Setting):
     name = "post_fork"
     section = "Server Hooks"
     validator = validate_callable(1)
@@ -796,7 +802,7 @@ class Postfork(Setting):
         """
 
 
-class PreExec(Setting):
+class PreExec(Function, Setting):
     name = "pre_exec"
     section = "Server Hooks"
     validator = validate_callable(1)
@@ -809,7 +815,7 @@ class PreExec(Setting):
         """
 
 
-class PreRequest(Setting):
+class PreRequest(Function, Setting):
     name = "pre_request"
     section = "Server Hooks"
     validator = validate_callable(2)
@@ -823,7 +829,7 @@ class PreRequest(Setting):
         """
 
 
-class PostRequest(Setting):
+class PostRequest(Function, Setting):
     name = "post_request"
     section = "Server Hooks"
     validator = validate_callable(2)
@@ -837,7 +843,7 @@ class PostRequest(Setting):
         """
 
 
-class WorkerExit(Setting):
+class WorkerExit(Function, Setting):
     name = "worker_exit"
     section = "Server Hooks"
     validator = validate_callable(1)
@@ -850,7 +856,7 @@ class WorkerExit(Setting):
         """
 
 
-class WorkerTask(Setting):
+class WorkerTask(Function, Setting):
     name = "worker_task"
     section = "Server Hooks"
     validator = validate_callable(1)
@@ -862,7 +868,7 @@ class WorkerTask(Setting):
         """
         
         
-class ArbiterTask(Setting):
+class ArbiterTask(Function, Setting):
     name = "arbiter_task"
     section = "Server Hooks"
     validator = validate_callable(1)

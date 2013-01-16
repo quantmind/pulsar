@@ -36,5 +36,5 @@ directly on top of :ref:`pulsar primitives <pulsar_primitives>`. These
    actor
    protocols
    application
-   utility
+   utilities
    

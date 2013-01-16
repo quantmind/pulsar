@@ -2,14 +2,12 @@ from inspect import isgenerator
 
 from .defer import Deferred, log_failure
 
-__all__ = ['Protocol', 'ProtocolConsumer', 'Connection', 'ProtocolError']
+__all__ = ['Protocol', 'ProtocolConsumer', 'Connection', 'NOTHING']
+    
+class NOTHING:
+    pass
 
-    
-class ProtocolError(Exception):
-    '''Raised when the protocol encounter unexpected data. It will close
-the socket connection.'''
-    
-        
+
 class Protocol(object):
     '''Pulsar :class:`Protocol` conforming with pep-3156_.
 It can be used for both client and server sockets.
@@ -131,7 +129,20 @@ already available it raises an exception.'''
 
 class ProtocolConsumer(object):
     '''A :class:`Protocol` consumer is responsible for parsing incoming data
-and,  producing no more than one response.'''
+and,  producing no more than one response.
+
+.. attribute:: connection
+
+    The :class:`Connection` of this consumer
+    
+.. attribute:: protocol
+
+    The :class:`Protocol` of this consumer
+    
+.. attribute:: transport
+
+    The :class:`Transport` of this consumer
+'''
     def __init__(self, connection):
         self._connection = connection
             
@@ -162,23 +173,24 @@ and,  producing no more than one response.'''
         raise NotImplementedError
         
     def feed(self, data):
-        '''Feed new data into the this :class:`ProtocolResponse`. This method
-should return `None` unless it has finished the response and the returned bytes
-can be used for the next response.'''
+        '''Feed new data into this :class:`ProtocolConsumer`. This method
+must be implemented by subclasses.'''
         raise NotImplementedError
     
-    def finished(self):
-        '''`True` if this response has finished and a new response can start.'''
-        return self._connection.finished(self)
+    def finished(self, result=NOTHING):
+        '''Call this method to when done with this :class:`ProtocolConsumer`.
+By default it calls the :meth:`Connection.finished` method of the
+:attr:`connection`.'''
+        return self._connection.finished(self, result)
     
     ############################################################################
     ###    TRANSPORT SHURTCUTS
     def write(self, data):
+        '''Proxy of :meth:`Transport.write` method of :attr:`transport`.'''
         self.transport.write(data)
             
     def writelines(self, lines):
-        '''Write an iterable of bytes. It is a proxy to
-:meth:`Transport.writelines`'''
+        '''Proxy of :meth:`Transport.writelines` method of :attr:`transport`.'''
         self.transport.writelines(lines)
         
         
@@ -194,7 +206,7 @@ number.
 .. attribute:: producer
 
     The producer of this :class:`Connection`, It is either a :class:`Server`
-    or a client :class:`ConnectionPool`.
+    or a client :class:`Client`.
     
 .. attribute:: response_factory
 
@@ -273,5 +285,7 @@ specification changes during a response (an example is a WebSocket
 response).'''
         self._response_factory = response_factory
         
-    def finished(self, response):
+    def finished(self, response, result=NOTHING):
+        '''Call this methdo with the current response to close the current
+consumer.'''
         raise NotImplementedError

@@ -24,7 +24,7 @@ from pulsar.utils import events
 
 from .eventloop import EventLoop, setid, signal
 from .defer import Deferred
-from .proxy import ActorProxy, ActorMessage, get_command, get_proxy
+from .proxy import ActorProxy, get_command, get_proxy
 from .queue import IOQueue
 from .mailbox import mailbox
 from .access import set_actor, is_mainthread, get_actor, remove_actor
@@ -270,6 +270,7 @@ an :class:`ActorProxy`.
 logging is configured, the :attr:`Actor.mailbox` is registered and the
 :attr:`Actor.ioloop` is initialised and started.'''
         if self.state == ACTOR_STATES.INITIAL:
+            self._started = time() 
             self.configure_logging()
             self._setup_ioloop()
             events.fire('start', self)
@@ -284,10 +285,10 @@ logging is configured, the :attr:`Actor.mailbox` is registered and the
 
     def send(self, target, action, *args, **params):
         '''Send a message to *target* to perform *action* with given
-parameters *params*. It return a :class:`ActorMessage`.'''
+parameters *params*.'''
         if not isinstance(target, ActorProxy):
             target = get_proxy(self.get_actor(target))
-        return target.request(self, action, args, params)
+        return target.request(self, action, *args, **params)
 
     def put(self, request):
         '''Put a *request* into the :attr:`ioqueue` if available.'''
@@ -420,6 +421,8 @@ properly this actor will go out of scope.'''
                 self.requestloop.call_soon_threadsafe(self.periodic_task)
         
     def register(self):
+        '''register this :class:`Actor` with the :attr:`monitor`
+by sending its :attr:`mailbox` address.'''
         response = self.send(self.monitor, 'mailbox_address', self.address)
         response.when_ready.add_callback(self.link_actor)
             
@@ -450,7 +453,7 @@ properly this actor will go out of scope.'''
             return self.monitors.get(aid)
 
     def info(self):
-        '''return A dictionary of information related to the actor
+        '''Return a dictionary of information related to the actor
 status and performance.'''
         if not self.started():
             return
@@ -459,14 +462,13 @@ status and performance.'''
         actor = {'name': self.name,
                  'state': self.info_state,
                  'actor_id': self.aid,
-                 'uptime': time() - requestloop._started,
+                 'uptime': time() - self._started,
                  'thread_id': self.tid,
                  'process_id': self.pid,
                  'is_process': isp,
-                 'internal_connections': self.mailbox.active_connections,
+                 'internal_connections': self.mailbox.concurrent_connections,
                  'age': self.impl.age}
-        events = {'request processed': self.request_processed,
-                  'callbacks': len(self.ioloop._callbacks),
+        events = {'callbacks': len(self.ioloop._callbacks),
                   'io_loops': self.ioloop.num_loops}
         if self.cpubound:
             events['request_loops'] = requestloop.num_loops

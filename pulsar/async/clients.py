@@ -1,13 +1,13 @@
 from pulsar.utils.pep import get_event_loop
 from pulsar.utils.sockets import SOCKET_TYPES, create_socket
 
-from .defer import Deferred
-from .protocols import ProtocolConsumer, Connection
+from .defer import Deferred, pass_through
+from .protocols import ProtocolConsumer, Connection, NOTHING
 from .transports import Transport
 from .servers import Producer, EventHandler
 
 __all__ = ['create_connection', 'ConnectionPool', 'Client',
-           'ProtocolConsumer']
+           'ClientProtocolConsumer']
 
 transports= set()
 
@@ -29,74 +29,75 @@ class ClientEventHandler(EventHandler):
     EVENTS = ('pre_request', 'post_request', 'response')
     
     
+class Request(ClientEventHandler):
+    '''A :class:`Client` request class.'''
+    def __init__(self, address, timeout=0):
+        self.address = address
+        self.timeout = timeout
+    
+
 class ClientProtocolConsumer(ProtocolConsumer):
     '''A :class:`ProtocolConsumer` for a :class:`Client`.
     
-.. attribute:: protocol
-
-
 .. attribute:: request
 
-    The request sent to the remote server
-    
+    The :class:`Request` instance.
+
 .. attribute:: consumer
 
-    Optional consumer of data received from the server in response to
-    :attr:`request`. This can be used to stream data as it arrives (for example)
+    Optional callable which can be used by the feed method to send data to
+    another listening consumer. This can be used to stream data as
+    it arrives (for example).
 '''
     def __init__(self, connection, request, consumer):
         super(ClientProtocolConsumer, self).__init__(connection)
+        connection.set_response(self)
         self.request = request
-        self.consumer = consumer
+        self.consumer = consumer or pass_through
         self.when_ready = Deferred()
         
     def begin(self):
-        self.protocol.on_connection.add_callback(self.send, self.close)
+        '''Connect, send data and wait for results.'''
+        self.protocol.on_connection.add_callback(self.send, self.finished)
         return self
     
     def feed(self, data):
-        try:
-            msg, data = self.decode(data)
-            if msg:
-                self._finished = True
-                if data:
-                    raise ProtocolError
-                self.when_ready.callback(msg)
-        except Exception as e:
-            self.when_ready.callback(e)
-            
-    def send(self, res):
-        msg = request.encode()
-        self.transport.write(msg)
-    
-    def decode(self):
+        '''Called when new data has arrived from the remote server.'''
         raise NotImplementedError
-    
-    def close(self):
-        pass
+            
+    def send(self, *args):
+        '''Write the request to the server. Must be implemented by
+subclasses. This method is invoked by the :meth:`begin` method
+once the connection is established. **Not called directly**.'''
+        raise NotImplementedError
         
         
 class ClientConnection(Connection):
     
+    def set_response(self, response):
+        assert self._current_response is None, 'Response is not None'
+        self._current_response = response
+        self._processed += 1
+        
     def consume(self, data):
         while data:
             p = self.protocol
             response = self._current_response
             if response is None:
-                self._processed += 1
-                self._current_response = self._response_factory(self)
-                self._producer.fire('pre_request', self._current_response)
-                response = self._current_response 
+                raise ProtocolError 
             data = response.feed(data)
             if data and self._current_response:
                 # if data is returned from the response feed method and the
                 # response has not done yet raise a Protocol Error
                 raise ProtocolError
     
-    def finished(self, response):
+    def finished(self, response, result=NOTHING):
         if response is self._current_response:
             self._producer.fire('response', self._current_response)
+            result = self if result is NOTHING else result
+            self._current_response.when_ready.callback(result)
             self._current_response = None
+            response._connection = None
         else:
             raise RuntimeError()
     
@@ -108,24 +109,20 @@ protocols. It maintains a live set of connections.
 .. attribute:: address
 
     Address to connect to
-    
-.. attribute:: all
-
-    A class attribute containing all active :class:`ConnectionPool`
-    '''
-    all = {}
-    
+    '''    
     def __init__(self, request, **params):
         super(ConnectionPool, self).__init__(**params)
         self._address = request.address
         self._available_connections = []
         
     @classmethod
-    def get(cls, request, **params):
+    def get(cls, request, pools, **params):
+        '''Build a new :class:`ConnectionPool` if not already available in
+*pools* dictionary.'''
         self = cls(request, **params)
-        if self not in cls.all:
-            cls.all[self] = self
-        return cls.all[self]
+        if self not in pools:
+            pools[self] = self
+        return pools[self]
     
     def __hash__(self):
         return hash((self.address, self.timeout))
@@ -147,8 +144,8 @@ protocols. It maintains a live set of connections.
         except:
             pass
         
-    def get_or_create_connection(self, response_factory):
-        "Get or create a new connection from the pool"
+    def get_or_create_connection(self, client):
+        "Get or create a new connection for *client*"
         try:
             connection = self._available_connections.pop()
         except IndexError:
@@ -158,19 +155,13 @@ protocols. It maintains a live set of connections.
             self._concurrent_connections.add(connection)
         if connection is None:
             # build protocol and build the new connection
-            protocol = self.build_protocol(response_factory)
-            connection = self.new_connection(protocol, response_factory)
+            protocol = self.build_protocol(client)
+            connection = self.new_connection(protocol, client.response_factory,
+                                             client)
         return connection
     
-    def build_protocol(self, response_factory):
+    def build_protocol(self, client):
         return create_connection(self._address, timeout=self._timeout)
-    
-    
-class Request(ClientEventHandler):
-    '''A :class:`Client` request class.'''
-    def __init__(self, address, timeout=0):
-        self.address = address
-        self.timeout = timeout
 
 
 class Client(ClientEventHandler):
@@ -182,7 +173,7 @@ class Client(ClientEventHandler):
     response_factory = None
     '''Factory of response instances'''
     client_version = ''
-    stream = False
+    connection_pools = None
     timeout = 0
     EVENTS = ('pre_request', 'post_request', 'response')
     
@@ -194,7 +185,8 @@ class Client(ClientEventHandler):
         self.timeout = timeout if timeout is not None else self.timeout
         self.client_version = client_version or self.client_version
         self.max_connections = max_connections or 2**31
-        self.stream = stream if stream is not None else self.stream
+        if self.connection_pools is None:
+            self.connection_pools = {}
         self.setup(**params)
     
     def setup(self, **params):
@@ -210,17 +202,23 @@ Must be implemented by subclasses.'''
 method should invoke this method to start the response dance.
 
 :parameter request: A custom request for the :class:`Client`
-:parameter consumer: An optional consumer of streaming data.
-:rtype: An object obtained form :attr:`response_factory`.
+:parameter consumer: An optional consumer of streaming data, it is the
+    :attr:`ClientProtocolConsumer.consumer` attribute of the
+    consumer returned by this method.
+:rtype: An :class:`ClientProtocolConsumer` obtained form
+    :attr:`response_factory`.
 '''
         self.fire('pre_request', request)
+        # Get a suitable connection pool
         pool = self.connection_pool.get(request,
+                                    self.connection_pools,
                                     timeout=request.timeout,
                                     max_connections=self.max_connections,
                                     connection_factory=self.connection_factory)
-        connection = pool.get_or_create_connection(self.response_factory)
+        # Get or create a connection
+        connection = pool.get_or_create_connection(self)
         response = self.response_factory(connection, request, consumer)
-        self.fire('post_request', response.request)
+        self.fire('post_request', response)
         return response.begin()
     
     def update_parameter(self, params):
@@ -234,6 +232,10 @@ method should invoke this method to start the response dance.
                     chooks[e].append(h)
                 params[name] = chooks
         return params
+    
+    def close_connections(self):
+        for p in self.connection_pools.values():
+            p.close_connections()
             
     def fire(self, event, *args):
         pass

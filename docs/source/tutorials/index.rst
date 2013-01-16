@@ -11,4 +11,5 @@ Tutorials
    :maxdepth: 1
    
    wsgi
+   clients
    

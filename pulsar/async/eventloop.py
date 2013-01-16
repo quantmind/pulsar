@@ -147,7 +147,8 @@ it is created by :meth:`EventLoop.call_soon`, :meth:`EventLoop.call_later`,
         if not self._cancelled:
             if self._deadline:  # cancel of if a deadline !important
                 self._cancelled = True
-            self._callback(*self.args)
+            args = self._args + args
+            return self._callback(*args, **kwargs)
         
         
 class FileDescriptor(IObase):
@@ -320,7 +321,6 @@ event loop is the place where most asynchronous operations are carried out.
         self._handlers = {}
         self._callbacks = []
         self._scheduled = []
-        self._started = None
         self._running = False
         self.num_loops = 0
         self._waker = getattr(self._impl, 'waker', Waker)()

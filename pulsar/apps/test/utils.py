@@ -43,7 +43,7 @@ class TestCallable:
             return '%s.%s' % (self.test.__class__.__name__, self.method_name)
     __str__ = __repr__        
     
-    @async(max_errors=1, description='Test ')
+    @async(max_errors=1)
     def run_test(self, actor):
         test = self.test
         if self.istest:
@@ -57,7 +57,7 @@ class TestCallable:
         test = self.test
         outcome = self.run_test(actor)
         if self.istest:
-            outcome.addBoth(lambda result:
+            outcome.add_both(lambda result:
                 actor.app.runner.after_test_function_run(test, result))
         return outcome
     

@@ -2,47 +2,35 @@
 class PulsarException(Exception):
     '''Base class of all Pulsar Exception'''
 
+
 class ImproperlyConfigured(PulsarException):
     '''A :class:`PulsarException` raised when pulsar has inconsistent
 configuration.'''
     pass
 
-class PulsarInternetException(PulsarException):
-    '''base class of all Pulsar Internet Exception'''
+    
+class ProtocolError(Exception):
+    '''Raised when the protocol encounter unexpected data. It will close
+the socket connection.'''
+
+
+class AuthenticationError(Exception):
     pass
 
-class MailboxError(PulsarException):
+
+class ConnectionError(Exception):
     pass
+
 
 class ActorAlreadyStarted(PulsarException):
     '''A :class:`PulsarException` raised when trying to start an actor already started'''
+
 
 class HaltServer(BaseException):
 
     def __init__(self, reason='Halt', signal=None):
         super(HaltServer,self).__init__(reason)
         self.signal = signal
-
-
-class CommandError(PulsarException):
-    '''Exception raised when executing a Command'''
-    pass
-
-
-class AuthenticationError(PulsarException):
-    pass
-
-
-class ConnectionError(PulsarInternetException):
-    pass
-
-
-class CouldNotParse(PulsarInternetException):
-    pass
-
-
-class DeferredFailure(PulsarException):
-    pass
 
 
 class AlreadyCalledError(PulsarException):

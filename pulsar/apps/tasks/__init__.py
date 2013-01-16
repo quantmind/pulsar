@@ -178,7 +178,7 @@ import os
 from datetime import datetime
 
 import pulsar
-from pulsar import to_string, async
+from pulsar import to_string, maybe_async_deco, get_actor
 from pulsar.utils.importer import import_modules, module_attribute
 
 from .exceptions import *
@@ -216,37 +216,48 @@ class TaskPath(TaskSetting):
     desc = """\
         List of python dotted paths where tasks are located.
         """
-
-class CPUboundServer(pulsar.Application, pulsar.ConcurrentServer):
+                
+                
+class CPUboundServer(pulsar.Application):
     '''A CPU-bound application server, that is an application which
 handle events with a task to complete and the time complete it is
 determined principally by the speed of the CPU.
 This type of application is served by :ref:`CPU bound workers <cpubound>`.'''
     _app_name = 'cpubound'
     cpu_bound_server = None
+    
+    def __init__(self, *args, **kwargs):
+        self.received = 0
+        self.concurrent_requests = set()
+        super(CPUboundServer, self).__init__(*args, **kwargs)
+        
+    @property
+    def concurrent_request(self):
+        return len(self.concurrent_requests)
 
     def get_ioqueue(self):
         '''Return the distributed task queue which produces tasks to
 be consumed by the workers.'''
         return self.cfg.task_queue_factory()
 
-    def request_instance(self, worker, fd, request):
+    def request_instance(self, request):
         return request
 
     def worker_start(self, worker):
         '''Set up the cpu bound worker and register its file descriptor'''
-        worker.requestloop.add_reader('request', self.on_event)
+        worker.requestloop.add_reader('request', self.on_request, worker)
         
-    @async()
-    def on_event(self, request):
+    @maybe_async_deco
+    def on_request(self, worker, request):
         request = self.request_instance(request)
         if request is not None:
             self.received += 1
-            self.concurrent_requests.append(request)
+            self.concurrent_requests.add(request)
             try:
-                yield request.start()
+                yield request.start(worker)
             finally:
-                self.concurrent_requests.remove(request)
+                self.concurrent_requests.discard(request)
+        
 
 #################################################    TASKQUEUE COMMANDS
 taskqueue_cmnds = set()

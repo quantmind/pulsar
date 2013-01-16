@@ -25,33 +25,11 @@ Protocol
    :member-order: bysource
 
    
-Protocol Response
+Protocol Consumer
 =====================================
-.. autoclass:: ProtocolResponse
+.. autoclass:: ProtocolConsumer
    :members:
-   :member-order: bysource
-   
-   
-Server
-==========================
-.. autoclass:: Server
-   :members:
-   :member-order: bysource
-   
-   
-Client
-==========================
-.. autoclass:: Client
-   :members:
-   :member-order: bysource
-
-
-Client Connection Pool
-==========================
-.. autoclass:: ConnectionPool
-   :members:
-   :member-order: bysource
-   
+   :member-order: bysource      
    
 Producer
 ==========================
@@ -59,6 +37,46 @@ Producer
    :members:
    :member-order: bysource
 
+
+Connection
+==========================
+.. autoclass:: Connection
+   :members:
+   :member-order: bysource
+
+
+Clients
+=================
+
+Client
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.. autoclass:: Client
+   :members:
+   :member-order: bysource
+
+
+Client Connection Pool
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.. autoclass:: ConnectionPool
+   :members:
+   :member-order: bysource
+   
+   
+Client Protocol Consumer
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.. autoclass:: ClientProtocolConsumer
+   :members:
+   :member-order: bysource
+
+
+Servers
+==================
+
+Server
+~~~~~~~~~~~~~~~~~~~
+.. autoclass:: Server
+   :members:
+   :member-order: bysource
 
 
 .. _pep-3153: http://www.python.org/dev/peps/pep-3153/

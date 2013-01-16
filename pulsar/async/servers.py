@@ -1,28 +1,15 @@
 from functools import partial
 
-from pulsar import create_socket
+from pulsar import create_socket, ProtocolError
 from pulsar.utils.sockets import create_socket, SOCKET_TYPES, wrap_socket
 from pulsar.utils.pep import get_event_loop, set_event_loop, new_event_loop
 
 from .access import PulsarThread
 from .defer import Deferred, coroutine
-from .protocols import Connection, ProtocolError
+from .protocols import Connection, NOTHING
 from .transports import Transport, LOGGER
 
-__all__ = ['create_server', 'ConcurrentServer', 'Server', 'Producer']
-
-
-class ConcurrentServer(object):
-    
-    def __new__(cls, *args, **kwargs):
-        o = super(ConcurrentServer, cls).__new__(cls)
-        o.received = 0
-        o.concurrent_requests = set()
-        return o
-        
-    @property
-    def concurrent_request(self):
-        return len(self.concurrent_requests)
+__all__ = ['create_server', 'Server', 'Producer']
     
 
 class ServerType(type):
@@ -52,12 +39,13 @@ class ServerConnection(Connection):
                 # response has not done yet raise a Protocol Error
                 raise ProtocolError
     
-    def finished(self, response):
+    def finished(self, response, result=NOTHING):
         if response is self._current_response:
             self._producer.fire('post_request', self._current_response)
             self._current_response = None
         else:
             raise RuntimeError()
+    
     
 class EventHandler(object):
     EVENTS = ('pre_request', 'post_request')
@@ -110,8 +98,8 @@ The main method in this class is :meth:`new_connection` where a new
     def __init__(self, max_connections=0, timeout=0, connection_factory=None):
         self._received = 0
         self._max_connections = max_connections
-        self._timeout = timeout
         self._concurrent_connections = set()
+        self._timeout = timeout
         if connection_factory:
             self.connection_factory = connection_factory
     
@@ -131,10 +119,11 @@ The main method in this class is :meth:`new_connection` where a new
     def concurrent_connections(self):
         return len(self._concurrent_connections)
     
-    def new_connection(self, protocol, response_factory):
+    def new_connection(self, protocol, response_factory, producer=None):
         ''''Called when a new connection is created'''
         self._received = self._received + 1
-        conn = self.connection_factory(protocol, self, self._received,
+        producer = producer or self 
+        conn = self.connection_factory(protocol, producer, self._received,
                                        response_factory)
         self._concurrent_connections.add(conn)
         protocol.on_connection_lost.add_both(
@@ -144,6 +133,8 @@ The main method in this class is :meth:`new_connection` where a new
         return conn
     
     def close_connections(self, connection=None):
+        '''Close *connection* if specified, otherwise close all
+active connections.'''
         if connection:
             connection.transport.close()
         else:
@@ -188,11 +179,10 @@ on a socket. It is a producer of :class:`Transport` for server protocols.
 '''
     connection_factory = ServerConnection
     protocol_factory = None
-    timeout = None
     
     def __init__(self, event_loop, sock, protocol_factory=None,
-                  timeout=None, max_connections=0, response_factory=None,
-                  connection_factory=None):
+                 timeout=None, max_connections=0, response_factory=None,
+                 connection_factory=None):
         super(Server, self).__init__(timeout=timeout,
                                      max_connections=max_connections,
                                      connection_factory=connection_factory)

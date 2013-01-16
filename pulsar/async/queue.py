@@ -63,8 +63,8 @@ class TaskFactory:
         '''Remove reader and return True if writing'''
         self.handle_read = None
     
-    def __call__(self, fd, request):
-        self.handle_read(request)
+    def __call__(self, request):
+        return self.handle_read(request)
 
 
 class IOQueue(IObase):
@@ -105,7 +105,7 @@ The interface is the same as the python epoll_ implementation.
         if request == QUEUE_WAKER:
             return ()
         else:
-            return (('request', request),)
+            return (request,)
 
     def waker(self):
         return QueueWaker(self._queue)

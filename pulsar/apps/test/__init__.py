@@ -144,10 +144,10 @@ class TestList(TestOption):
 test_commands = set()
 
 @pulsar.command(internal=True, ack=False, commands_set=test_commands)
-def test_result(client, actor, sender, tag, clsname, result):
+def test_result(request, tag, clsname, result):
     '''Command for sending test results from test workers to the test monitor.'''
-    actor.logger.debug('Got a test results from %s.%s', tag, clsname)
-    return actor.app.add_result(actor, result)
+    request.actor.logger.debug('Got test results from %s.%s', tag, clsname)
+    return request.actor.app.add_result(request.actor, result)
 
 
 class TestSuite(tasks.CPUboundServer):
@@ -299,5 +299,5 @@ configuration and plugins.'''
                 exit_code = 1
             else:
                 exit_code = 0 
-            return monitor.arbiter.stop(exit_code=exit_code)
+            return monitor.arbiter.stop(exit_code)
 

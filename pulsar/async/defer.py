@@ -8,12 +8,11 @@ from collections import deque, namedtuple
 from inspect import isgenerator, isfunction, ismethod, istraceback
 from time import sleep
 
-from pulsar import AlreadyCalledError, DeferredFailure, HaltServer
+from pulsar import AlreadyCalledError, HaltServer
 from pulsar.utils.pep import raise_error_trace, iteritems
 
 from .access import get_request_loop
 
-EXIT_EXCEPTIONS = (KeyboardInterrupt, SystemExit, HaltServer)
 
 __all__ = ['Deferred',
            'MultiDeferred',
@@ -28,9 +27,9 @@ __all__ = ['Deferred',
            'safe_async',
            'async',
            'multi_async',
+           'maybe_async_deco',
            'NOT_DONE',
            'STOP_ON_FAILURE',
-           'EXIT_EXCEPTIONS',
            'CLEAR_ERRORS']
 
 # Special objects
@@ -42,6 +41,10 @@ class STOP_ON_FAILURE(object):
 
 class CLEAR_ERRORS(object):
     pass
+
+class DeferredFailure(Exception):
+    '''Raised when no other information is available on a Failure'''
+    
 
 EMPTY_DICT = {}
 
@@ -102,15 +105,15 @@ In this case it returns the :attr:`Deferred.result` attribute.'''
     if isgenerator(val):
         val = DeferredGenerator(val, max_errors=max_errors,
                                 description=description)
-    if isfunction(val) or ismethod(val):
-        try:
-            val = maybe_async(val())
-        except:
-            val = sys.exc_info()
     if is_async(val):
         return val.result_or_self()
     else:
         return as_failure(val)
+    
+def maybe_async_deco(f):
+    def _(*args, **kwargs):
+        return maybe_async(f(*args, **kwargs))
+    return _
 
 def make_async(val=None, description=None, max_errors=None):
     '''Convert *val* into an :class:`Deferred` asynchronous instance
@@ -268,7 +271,7 @@ class Failure(object):
 
     def raise_all(self, first=True):
         pos = 0 if first else -1
-        if self.traces and isinstance(self.traces[pos][1],Exception):
+        if self.traces and isinstance(self.traces[pos][1], Exception):
             eclass, error, trace = self.traces.pop()
             self.log()
             raise_error_trace(error, trace)
@@ -471,8 +474,9 @@ occurred.
             # Generators are not thread-safe. If the callback is on a different
             # thread we restart the generator on the original thread
             # by adding a callback in the generator eventloop.
-            self.loop.add_callback(lambda: self._consume(result))
+            self.loop.call_soon_threadsafe(self._consume, result)
         else:
+            # If we are on the same thread, continue to consume
             self._consume(result)
         # IMPORTANT! We return the original result.
         # Otherwise we just keep adding deferred objects to the callbacks.
@@ -487,8 +491,6 @@ current thread.'''
                 return self.conclude()
         try:
             result = next(self.gen)
-        except EXIT_EXCEPTIONS:
-            raise
         except StopIteration as e:
             # The generator has finished producing data
             return self.conclude(last_result)
