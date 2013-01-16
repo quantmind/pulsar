@@ -1,10 +1,10 @@
 import sys
 from collections import deque
 
-from pulsar import CommandNotFound, AuthenticationError
+from pulsar import AuthenticationError
 
 from .defer import Deferred, is_async, make_async, AlreadyCalledError
-from .mailbox import mailbox, ActorMessage
+from .mailbox import mailbox, ActorMessage, CommandNotFound
 from .access import get_actor
 
 __all__ = ['ActorMessage',

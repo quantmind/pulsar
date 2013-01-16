@@ -1,21 +1,30 @@
 import sys
 import logging
 import tempfile
+from functools import partial
 
-from pulsar import MailboxError, CouldNotParse, CommandNotFound, platform
+from pulsar import platform
 from pulsar.utils.pep import to_bytes, ispy3k, pickle, ispy3k, set_event_loop
 
-from .defer import log_failure, is_failure
+from .defer import make_async, log_failure, is_failure
 from .access import get_actor, set_actor
 from .servers import create_server, ServerConnection
+from .protocols import ProtocolError
 from .consumers import ServerChunkConsumer
 from . import clients
 
 
-__all__ = ['mailbox', 'ActorMessage']
+__all__ = ['mailbox', 'ActorMessage', 'CommandNotFound']
 
 
 LOGGER = logging.getLogger('pulsar.mailbox')
+
+
+class CommandNotFound(Exception):
+
+    def __init__(self, name):
+        super(CommandNotFound, self).__init__(
+                            'Command "%s" not available' % name)
 
 
 def mailbox(actor=None, address=None):
@@ -88,7 +97,7 @@ created by :meth:`ActorProxy.send` method.
     def decode(cls, buffer):
         separator = b'\r\n'
         if buffer[0] != 42:
-            raise CouldNotParse()
+            raise ProtocolError
         idx = buffer.find(separator)
         if idx < 0:
             return None, buffer
@@ -111,7 +120,8 @@ created by :meth:`ActorProxy.send` method.
         return ('*%s\r\n' % len(bdata)).encode('utf-8') + bdata
 
     def __repr__(self):
-        return self.command
+        return self.command.__name__
+    __str__ = __repr__
 
 
 class MonitorMailbox(object):
@@ -144,16 +154,16 @@ class MailboxConnection(ServerConnection):
 
 class MailboxResponse(ServerChunkConsumer):
         
-    def feed(self, data):
+    def decode(self, data):
         # The receiver could be different from the mail box actor. For
         # example a monitor uses the same mailbox as the arbiter
         return ActorMessage.decode(data)
         
-    def response(self, message):
+    def responde(self, message):
         actor = get_actor()
         receiver = actor.get_actor(message.receiver) or actor
         sender = receiver.get_actor(message.sender)
-        command = receiver.command(message.command)
+        message.command = command = receiver.command(message.command)
         try:
             if not command:
                 raise CommandNotFound(message.command)
@@ -164,20 +174,18 @@ class MailboxResponse(ServerChunkConsumer):
             result = command(self, receiver, *args, **message.kwargs)
         except:
             result = sys.exc_info()
-        result = make_async(result).add_both(self.encode)
-        self.write(result)
+        #just in case the return result is asynchronous
+        make_async(result).add_both(
+                            partial(self.write, receiver, sender, command.ack))
             
-    def encode(self, result):
+    def write(self, sender, receiver, ack, result):
         log_failure(result)
-        if command.ack:
+        if ack:
             # Send back the result as an ActorMessage
             if is_failure(result):
-                m = ActorMessage('errback', sender=receiver, args=(result,))
+                receiver.request(sender, 'errback', (result,))
             else:
-                m = ActorMessage('callback', sender=receiver, args=(result,))
-            return m.encode()
-        else:
-            return b''
+                receiver.request(sender, 'callback', (result,))
 
 
 ################################################################################
