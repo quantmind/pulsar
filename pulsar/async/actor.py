@@ -20,26 +20,28 @@ from pulsar import AlreadyCalledError, AlreadyRegistered,\
                    ActorAlreadyStarted, LogginMixin, system, Config
 from pulsar.utils.structures import AttributeDictionary
 from pulsar.utils.pep import pickle, set_event_loop_policy
+from pulsar.utils.events import EventHandler
 from pulsar.utils import events
 
 from .eventloop import EventLoop, setid, signal
-from .defer import Deferred
+from .defer import Deferred, log_failure
 from .proxy import ActorProxy, get_command, get_proxy
-from .queue import IOQueue
 from .mailbox import mailbox
-from .access import set_actor, is_mainthread, get_actor, remove_actor
+from .access import set_actor, is_mainthread, get_actor, remove_actor, NOTHING
 
 
 __all__ = ['is_actor', 'send', 'Actor', 'ACTOR_STATES', 'Pulsar', 'ThreadQueue']
 
 ACTOR_STATES = AttributeDictionary(INITIAL=0X0,
                                    INACTIVE=0X1,
-                                   RUN=0x2,
-                                   STOPPING=0x3,
-                                   CLOSE=0x4,
-                                   TERMINATE=0x5)
+                                   STARTING=0x2,
+                                   RUN=0x3,
+                                   STOPPING=0x4,
+                                   CLOSE=0x5,
+                                   TERMINATE=0x6)
 ACTOR_STATES.DESCRIPTION = {ACTOR_STATES.INACTIVE: 'inactive',
                             ACTOR_STATES.INITIAL: 'initial',
+                            ACTOR_STATES.STARTING: 'starting',
                             ACTOR_STATES.RUN: 'running',
                             ACTOR_STATES.STOPPING: 'stopping',
                             ACTOR_STATES.CLOSE: 'closed',
@@ -50,7 +52,7 @@ MIN_NOTIFY = 5     # DON'T NOTIFY BELOW THIS INTERVAL
 MAX_NOTIFY = 30    # NOTIFY AT LEAST AFTER THESE SECONDS
 ACTOR_TERMINATE_TIMEOUT = 2 # TIMEOUT WHEN JOINING A TERMINATING ACTOR
 ACTOR_TIMEOUT_TOLERANCE = 0.6
-ACTOR_STOPPING_LOOPS = 5
+ACTOR_STOPPING_LOOPS = 10
 
 def is_actor(obj):
     return isinstance(obj, Actor)
@@ -94,7 +96,7 @@ class Pulsar(LogginMixin):
                           handlers=self.cfg.loghandlers)
         
 
-class Actor(Pulsar):
+class Actor(EventHandler, Pulsar):
     '''The base class for concurrent programming in pulsar. In computer science,
 the **Actor model** is a mathematical model of concurrent computation that
 treats *actors* as the universal primitives of computation.
@@ -134,21 +136,10 @@ an :class:`ActorProxy`.
     Set of :ref:`command names <actor_commands>` available to this
     :class:`Actor`.
 
-.. attribute:: ioqueue
-
-    An optional distributed queue. If present, it signal that the :class:`Actor`
-    is a :ref:`CPU bound worker <cpubound>` receiving task requests on the
-    :attr:`ioqueue`. 
-
-    Default ``None``.
-
 .. attribute:: cpubound
 
     Indicates if the :class:`Actor` is a :ref:`CPU-bound worker <cpubound>`
     or a I/O-bound one.
-    CPU-bound actors have a separate event loop for handling I/O events.
-    
-    See also: :attr:`ioqueue`
 
 .. attribute:: requestloop
 
@@ -187,19 +178,18 @@ an :class:`ActorProxy`.
     
 **METHODS**
 '''
+    EVENTS = ('on_stop', 'on_start', 'on_info')
     exit_code = None
     mailbox = None
     signal_queue = None
     
     def __init__(self, impl):
-        self.__impl = impl
-        ioqueue = impl.params.pop('ioqueue', None)
-        if self.is_arbiter():
-            ioqueue = None
-        self.request_processed = 0
-        self.concurrent_requests = 0
         self.state = ACTOR_STATES.INITIAL
-        self.ioqueue = ioqueue
+        self.__impl = impl
+        for name in self.EVENTS:
+            hook = impl.params.pop(name, None)
+            if hook:
+                self.hooks[name].append(hook)
         self.linked_actors = impl.params.pop('linked_actors', {})
         self.monitors = impl.params.pop('monitors', {})
         self.arbiter = impl.params.pop('arbiter', None)
@@ -251,10 +241,7 @@ an :class:`ActorProxy`.
 
     @property
     def cpubound(self):
-        if self.impl.kind != 'monitor':
-            return self.ioqueue is not None
-        else:
-            return False
+        return getattr(self.requestloop, 'cpubound', False)
 
     @property
     def info_state(self):
@@ -274,9 +261,7 @@ logging is configured, the :attr:`Actor.mailbox` is registered and the
             self.configure_logging()
             self._setup_ioloop()
             events.fire('start', self)
-            self.on_start()
-            self.periodic_task()
-            self.state = ACTOR_STATES.RUN
+            self.state = ACTOR_STATES.STARTING
             self._run()
             
     def command(self, action):
@@ -289,15 +274,11 @@ parameters *params*.'''
         if not isinstance(target, ActorProxy):
             target = get_proxy(self.get_actor(target))
         return target.request(self, action, *args, **params)
-
-    def put(self, request):
-        '''Put a *request* into the :attr:`ioqueue` if available.'''
-        if self.ioqueue:
-            self.ioqueue.put(('request', request))
-        else:
-            self.logger.error("Trying to put a request on task queue,\
- but there isn't one!")
-            
+    
+    def io_poller(self):
+        '''Return the :class:`EventLoop.io` handler. By default it return
+nothing so that the best handler for the system is chosen.'''
+        return None
     ###############################################################  STATES
     def running(self):
         '''``True`` if actor is running.'''
@@ -332,15 +313,6 @@ mean it is running.'''
     def is_process(self):
         '''boolean indicating if this is an actor on a child process.'''
         return self.impl.kind == 'process'
-
-    def can_poll(self):
-        '''Check if the actor can poll requests. This is used by 
-:ref:`CPU-bound actors <cpubound>` only.'''
-        if self.active():
-            m = self.cfg.backlog
-            return self.concurrent_requests < m if m else True
-        else:
-            return False
 
     def __reduce__(self):
         raise pickle.PicklingError('{0} - Cannot pickle Actor instances'\
@@ -379,21 +351,25 @@ before the actor starts running.'''
         '''Stop the actor by stopping its :attr:`Actor.requestloop`
 and closing its :attr:`Actor.mailbox`. Once everything is closed
 properly this actor will go out of scope.'''
+        log_failure(exc)
         if self.state <= ACTOR_STATES.RUN:
             # The actor has not started the stopping process. Starts it now.
             events.fire('stop', self)
             self.exit_code = 1 if exc else 0
             self.state = ACTOR_STATES.STOPPING
+            # if CPU bound and the requestloop is still running, stop it
             if self.cpubound and self.requestloop.running:
                 self.requestloop.call_soon_threadsafe(self._stop)
                 self.requestloop.stop()
             else:
                 self._stop()
         else:
-            # The actor has finished the stopping process
+            # The actor has finished the stopping process.
+            #Remove itself from the actors dictionary
+            remove_actor(self)
             events.fire('exit', self)
             self.on_exit.callback(self)
-            self.on_stop()
+            self.fire('on_stop', self)
         return self.on_exit
     
     def on_stop(self):
@@ -404,7 +380,7 @@ properly this actor will go out of scope.'''
         if not self.stopped():
             self.state = ACTOR_STATES.CLOSE
             self.mailbox.close()
-            remove_actor(self)
+            
 
     ############################################################################
     #    INTERNALS
@@ -419,13 +395,28 @@ properly this actor will go out of scope.'''
             else:
                 # The actor is not yet active, come back at the next requestloop
                 self.requestloop.call_soon_threadsafe(self.periodic_task)
-        
-    def register(self):
-        '''register this :class:`Actor` with the :attr:`monitor`
-by sending its :attr:`mailbox` address.'''
-        self.logger.debug('%s send hand shake to arbiter', self)
-        response = self.send(self.monitor, 'mailbox_address', self.address)
-        response.when_ready.add_callback(self.link_actor)
+    
+    def mailbox_ready(self, *args):
+        self.logger.info('%s started at address %s', self, self.mailbox)
+        a = get_actor()
+        if a is not self:
+            set_actor(self)
+        self.hand_shake()
+    
+    def hand_shake(self, result=NOTHING):
+        # hand shake. Don't modify this method. Crucial.
+        if result is NOTHING:
+            self.logger.debug('%s send hand shake to %s', self, self.monitor)
+            response = self.send(self.monitor, 'mailbox_address', self.address)
+            response.when_ready.add_callback(self.hand_shake)\
+                               .add_errback(self.stop)
+        else:
+            self.logger.debug('%s got hand shake from %s', self, self.monitor)
+            self.link_actor(result)
+            self.state = ACTOR_STATES.RUN
+            self.on_start()
+            self.fire('on_start', self)
+            self.periodic_task()
             
     def proxy_mailbox(self, address):
         m = self.proxy_mailboxes.get(address)
@@ -499,8 +490,7 @@ if *proxy* is not a class:`ActorProxy` instance raise an exception.'''
         # event loop which will consume events on file descriptors
         # Build the mailbox first so that when the mailbox closes, it shut
         # down the eventloop.
-        io = IOQueue(self.ioqueue, self) if self.ioqueue else None
-        self.requestloop = EventLoop(io=io, logger=self.logger,
+        self.requestloop = EventLoop(io=self.io_poller(), logger=self.logger,
                                      poll_timeout=self.params.poll_timeout)
         self.mailbox = mailbox(self)
         # Inject self as the actor of this thread
@@ -550,6 +540,7 @@ if *proxy* is not a class:`ActorProxy` instance raise an exception.'''
         try:
             self.requestloop.run()
         except Exception as e:
+            self.logger.exception('Unhadled exception in %s', self.requestloop)
             exc = e
         finally:
             self.stop(exc)

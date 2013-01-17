@@ -229,10 +229,6 @@ client. This is a chance to add or remove header's entries."""
         """Invoked when the WebSocket is closed."""
         pass
     
-    def close(self, environ, msg=None):
-        '''Invoked when the web-socket needs closing.'''
-        return Frame.close(msg)
-    
     
 class WebSocketProtocol(pulsar.ProtocolConsumer):
     
@@ -242,50 +238,58 @@ class WebSocketProtocol(pulsar.ProtocolConsumer):
         self.environ = environ
         self.parser = FrameParser()
         self.started = False
+        self.closed = False
         
     def feed(self, data):
         environ = self.environ
-        frame = self.parser.execute(data)
+        frame = self.parser.decode(data)
         if frame:
+            self.write(frame.on_received())
             if not self.started:
+                # call on_start (first message received)
                 self.started = True
-                self.handler.on_open(environ)
-            rframe = frame.on_received()
-            if rframe:
-                self.write(rframe.msg)
-            elif frame.is_close:
+                self.write(self.handler.on_open(environ))
+            if frame.is_close:
                 # Close the connection
                 self.close()
             elif frame.is_data:
-                result = self.handler.on_message(environ, frame.body)
-                if is_async(result):
-                    result.add_callback(self.on_message, self.close)
-                else:
-                    self.on_message(result)
+                self.write(self.handler.on_message(environ, frame.body))
     
-    def on_message(self, frame):
-        if not isinstance(frame, Frame):
-            frame = Frame(frame or '', final=True)
-        self.write(frame.msg)
+    def write(self, frame):
+        if frame is None:
+            return
+        elif is_async(frame):
+            return result.add_callback(self.write, self.close)
+        elif not isinstance(frame, Frame):
+            frame = self.parser.encode(frame)
+            self.transport.write(frame.msg)
+        else:
+            self.transport.write(frame.msg)
         if frame.is_close:
             self.close()
             
     def close(self, error=None):
-        if not self._finished:
-            self._finished = True
+        if not self.closed:
+            self.closed = True
             self.handler.on_close(self.environ)
-            self.protocol.close()
+            self.transport.close()
     
     
-class WebSocketClientProtocol(pulsar.Protocol):
+class WebSocketClientProtocol(pulsar.ClientProtocolConsumer):
     
-    def isclosed(self):
-        # For compatibility with HttpResponse
-        return self.closed
-    
-    def protocol_factory(self):
-        return FrameParser(kind=1)
-    
+    def __init__(self, *args):
+        super(WebSocketClientProtocol, self).__init__(*args)
+        self.parser = FrameParser(kind=1)
+        
+    def feed(self, data):
+        frame = self.parser.decode(data)
+        while frame:
+            # Got a frame
+            self.consumer(frame)
+            frame = self.parser.decode()
+        # No more frames
+        
+            
 
 class HttpClient(pulsar.HttpClient):
     

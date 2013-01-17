@@ -17,34 +17,60 @@ applications.
   :class:`Application` class.
    
 
-Server Model
+Server State
 ==================
 
-When running as server, the main thread in the master process
-is managed by the :class:`Arbiter`, a specialised :ref:`IO actor <iobound>`
+Pulsar can be used as a stand-alone asynchronous library, without using
+:ref:`actors <design-actor>` to provide parallel execution.
+When using :ref:`pulsar application framework <design-application>`
+you need to use pulsar in **server state**, that is to say, there
+will be a centralised :class:`Arbiter` controlling the main
+:class:`EventLoop` in the **main thread** of the **master process**.
+The arbiter is a specialised :ref:`IO actor <iobound>`
 which control the life all :class:`Actor` and :class:`Monitor`.
 
+.. _design-arbiter:
+
+Arbiter
+~~~~~~~~~~~~~~~~~~~~~~~~
+To access the arbiter, from the main process, one can use::
+
+    arbiter = pulsar.arbiter()
+    
+The Arbiter can be stopped and restarted.
+
+.. _design-actor:
 
 Actors
 =================
 
-Actors are the atoms of pulsar’s concurrent computation, they do not share
+Actors are the atoms of pulsar's concurrent computation, they do not share
 state between them, communication is achieved via asynchronous
 inter-process message passing, implemented using the standard
 python socket library. An :class:`Actor` can be **thread-based** or
-**process-based** (default) and control at least one running eventloop. To
-obtain the actor in the current context::
+**process-based** (default) and control at least one running :class:`EventLoop`.
+To obtain the actor in the current thread::
 
     actor = pulsar.get_actor()
+    
+Spawning a new actor can be achieved by the :func:`spawn` function, for example
+the following will spawn a thread-based actor::
 
+    ap = spawn(concurrency='thread')
+    
+    
 .. _eventloop:
 
 Event loop
 ~~~~~~~~~~~~~~~
-Each actor has its own :attr:`Actor.requestloop`, an instance of :class:`IOLoop`,
+Each actor has its own :attr:`Actor.requestloop`, an instance of :class:`EventLoop`,
 which can be used to register handlers on file descriptors.
-The :attr:`Actor.requestloop` is initiated just after forking.
-Pulsar event loop will be following pep-3156_ guidelines.
+The :attr:`Actor.requestloop` is initiated just after forking (or after the
+actor's thread starts for thread-based actors).
+Pulsar :class:`EventLoop` will be following pep-3156_ guidelines.
+In addition to the :attr:`Actor.requestloop`, :ref:`cpu bound <cpubound>`
+actors have another :class:`EventLoop`, on a different thread, for
+handling IO requests on their :ref:`mailbox <actor-mailbox>`.
 
 .. _iobound:
 
@@ -72,48 +98,85 @@ them to do. CPU-bound :class:`Actors` have the following properties:
   separate thread. It is accessed via the :meth:`Actor.ioloop` attribute.
 
 
+.. _design-mailbox:
+
+Mailbox
+~~~~~~~~~~~~~~
+Each actor, with the only exception of :class:`Monitor`, have its own
+:attr:`Actor.mailbox`, an asynchronous socket server which listen for
+messages from other actors. In other words, each actor has an associated
+**address**.
+
+
+.. _design-spawning:
+
+Spawning
+~~~~~~~~~~~~~~
+Spawning a new actor is achieved via the :func:`spawn` function::
+    
+    from pulsar import spawn
+    
+    def periodic_task():
+        # do something useful here
+        ...
+        
+    ap = spawn(on_start=lambda: get_event_loop().call_repeatedly(2, periodic_task))
+    
+The valued returned by :func:`spawn` is an :class:`ActorProxyDeferred` instance,
+a specialised :class:`Deferred`, which has the spawned actor id ``aid`` and
+it is called back once the remote actor has started.
+The callback will be an :class:`ActorProxy`, a lightweight proxy
+for the remote actor.
+
+When spawning from an actor other than the :ref:`arbiter <design-arbiter>`,
+the workflow of the :func:`spawn` function is as follow:
+
+* :func:`send` a message to the :ref:`arbiter <design-arbiter>` to spawn
+  a new actor.
+* The arbiter spawn the actor and wait for the actor's **hand shake**. Once the
+  hand shake is done, it sends the response (the :class:`ActorProxy` of the
+  spawned actor) to the original actor.
+        
+The actor **hand shake** is the mechanism with which a :class:`Actor` register
+its :ref:`mailbox address <design-mailbox>` with the :class:`Arbiter` so that
+the arbiter can monitor its behavior. If the hand-shake fails, the spawned
+actor will eventually stop.
+
+
 .. _actor-callbacks:
 
-Actor Hooks
-====================
+Hooks
+~~~~~~~~~~~~~~~~~~~
 
-An :class:`Actor` exposes five functions which can be
+An :class:`Actor` exposes three functions which can be
 used to customise its behaviour. These functions do nothing in the
 standard :class:`Actor` implementation. 
 
-on_start
-~~~~~~~~~~~~~~~
+**on_start**
+
 The :meth:`Actor.on_start` method is called, **once only**, just before the actor
 starts its :ref:`event loop <eventloop>`. This function can be used to setup
 the application and register event handlers. For example, the
 :ref:`socket server application <apps-socket>` creates the server and register
-its file descriptor with the :attr:`Actor.requestloop` via the :meth:`IOLoop.add_handler` method.
+its file descriptor with the :attr:`Actor.requestloop` via the
+:meth:`IOLoop.add_handler` method.
 
-on_event
-~~~~~~~~~~~~~~~
-The :meth:`Actor.on_event` method is called when an event on a registered
-file descriptor occurs.
  
-on_stop
-~~~~~~~~~~~~~~~
+**on_stop**
+
 The :meth:`Actor.on_stop` method is called, **once only**, just before the
-actor starts shutting down its event loop.
- 
-on_exit
-~~~~~~~~~~~~~~~
-The :meth:`Actor.on_exit` method is called, **once only**, just before the
 actor is garbage collected.
  
-on_info
-~~~~~~~~~~~~~~~
+**on_info**
+
 The :meth:`Actor.on_info` method is called to provide information about
 the actor.
 
 
 .. _actor_commands:
 
-Actor commands
-========================
+Commands
+~~~~~~~~~~~~~~~~~
 
 An :class:`Actor` communicate with a remote :class:`Actor` by *sending* an
 **action** to perform. This action takes the form of a **command** name and
@@ -122,24 +185,21 @@ commands via the :class:`pulsar.command` decorator as explained in the
 :ref:`api documentation <api-remote_commands>`.
 
 
-ping
-~~~~~~~
+**ping**
 
 Ping the remote actor *abcd* and receive an asynchronous ``pong``::
 
     send('abcd', 'ping')
 
 
-echo
-~~~~~~~
+**echo**
 
 received an asynchronous echo from a remote actor *abcd*::
 
     send('abcd', 'echo', 'Hello!')
 
 
-run
-~~~~~~~
+**run**
 
 Run a function on a remote actor. The function must accept actor as its initial parameter::
 
@@ -149,7 +209,8 @@ Run a function on a remote actor. The function must accept actor as its initial 
     send('arbiter', 'run', dosomething, *args, **kwargs)
     
     
-.. _application-framework:
+
+.. _design-application:
 
 Application Framework
 =============================

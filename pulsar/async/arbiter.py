@@ -69,8 +69,9 @@ A typical usage::
     # The actor is not the Arbiter domain.
     # We send a message to the Arbiter to spawn a new Actor
     if not isinstance(actor, Arbiter):
-        msg = actor.send('arbiter', 'spawn', **kwargs)\
-                            .add_callback(actor.link_actor)
+        # send the request to the arbiter
+        response = actor.send('arbiter', 'spawn', **kwargs)
+        msg = response.when_ready.add_callback(actor.link_actor)
         return proxy.ActorProxyDeferred(aid, msg)
     else:
         return actor.spawn(**kwargs)

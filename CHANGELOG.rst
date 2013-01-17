@@ -2,7 +2,7 @@ Ver. 0.5.0
 ==============================
 * pep-3156_ implementation with considerable amount of internal refactoring.
 * Initial twisted_ integration.
-* :class:`Actor` internal message passing used the websocket protocol.
+* :class:`Actor` internal message passing uses the (unmasked) websocket protocol.
 
 Ver. 0.4.4
 ==============================

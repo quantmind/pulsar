@@ -3,7 +3,7 @@ from functools import partial
 import pulsar
 from pulsar.apps.test import unittest
 
-from .manage import server
+from .manage import server, Echo, EchoServerConsumer
 
 
 
@@ -13,12 +13,11 @@ class TestEchoServer(unittest.TestCase):
     
     @classmethod
     def setUpClass(cls):
-        server_factory = partial(pulsar.create_server, response=EchoResponse)
         s = server(name=cls.__name__.lower(), bind='127.0.0.1:0',
                    backlog=1024, concurrency=cls.concurrency)
         outcome = pulsar.send('arbiter', 'run', s)
-        yield outcome
-        cls.server = outcome.result
+        yield outcome.when_ready
+        cls.server = outcome.when_ready.result
         
     @classmethod
     def tearDownClass(cls):
@@ -27,3 +26,11 @@ class TestEchoServer(unittest.TestCase):
             
     def test_server(self):
         self.assertTrue(self.server)
+        self.assertEqual(self.server.callable, EchoServerConsumer)
+        self.assertTrue(self.server.address)
+        
+    def test_ping(self):
+        c = Echo(self.server.address)
+        response = c.request(b'ciao')
+        yield response.when_ready
+        self.assertEqual(response.message, b'ciao')

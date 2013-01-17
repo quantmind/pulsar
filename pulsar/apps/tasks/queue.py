@@ -74,10 +74,9 @@ The interface is the same as the python epoll_ implementation.
 .. _epoll: http://docs.python.org/library/select.html#epoll-objects'''
     cpubound = True
     fd_factory = TaskFactory
-    def __init__(self, queue, actor=None):
+    def __init__(self, queue, app):
         self._queue = queue
-        self._actor = actor
-        self.request = None
+        self._app = app
 
     @property
     def queue(self):
@@ -95,9 +94,8 @@ The interface is the same as the python epoll_ implementation.
 
     def poll(self, timeout=0.5):
         '''Wait for events. timeout in seconds (float)'''
-        if self._actor:
-            if not self._actor.can_poll():
-                return ()
+        if not self._app.can_poll():
+            return ()
         try:
             request = self._queue.get(timeout=timeout)
         except (Empty, IOError, TypeError, EOFError):

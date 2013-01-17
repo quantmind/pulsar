@@ -1,5 +1,6 @@
 from pulsar.utils.pep import get_event_loop
 from pulsar.utils.sockets import SOCKET_TYPES, create_socket
+from pulsar.utils.events import EventHandler
 
 from .defer import Deferred, pass_through
 from .protocols import ProtocolConsumer, Connection, NOTHING
@@ -7,7 +8,7 @@ from .transports import Transport
 from .servers import Producer, EventHandler
 
 __all__ = ['create_connection', 'ConnectionPool', 'Client',
-           'ClientProtocolConsumer']
+           'ClientProtocolConsumer', 'Request']
 
 transports= set()
 
@@ -93,8 +94,8 @@ class ClientConnection(Connection):
     
     def finished(self, response, result=NOTHING):
         if response is self._current_response:
-            self._producer.fire('response', self._current_response)
             result = self if result is NOTHING else result
+            self._producer.fire('response', self._current_response)
             self._current_response.when_ready.callback(result)
             self._current_response = None
             response._connection = None
@@ -175,7 +176,6 @@ class Client(ClientEventHandler):
     client_version = ''
     connection_pools = None
     timeout = 0
-    EVENTS = ('pre_request', 'post_request', 'response')
     
     request_parameters = ('hooks', 'timeout')
     def __init__(self, timeout=None, client_version=None,

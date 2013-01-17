@@ -16,7 +16,7 @@ import pulsar
 from pulsar.apps.socket import SocketServer
 
 
-class ServerConsumer(pulsar.ProtocolConsumer):
+class EchoServerConsumer(pulsar.ProtocolConsumer):
     '''Protocol consumer for the server'''
     separator = b'\r\n'
     def feed(self, data):
@@ -73,7 +73,7 @@ class Echo(pulsar.Client):
 
 def server(description=None, **kwargs):
     description = description or 'Echo Server'
-    return SocketServer(callable=ServerConsumer,
+    return SocketServer(callable=EchoServerConsumer,
                         description=description,
                         **kwargs)
     

@@ -1,11 +1,9 @@
 from inspect import isgenerator
 
 from .defer import Deferred, log_failure
+from .access import NOTHING
 
-__all__ = ['Protocol', 'ProtocolConsumer', 'Connection', 'NOTHING']
-    
-class NOTHING:
-    pass
+__all__ = ['Protocol', 'ProtocolConsumer', 'Connection']
 
 
 class Protocol(object):
@@ -178,9 +176,9 @@ must be implemented by subclasses.'''
         raise NotImplementedError
     
     def finished(self, result=NOTHING):
-        '''Call this method to when done with this :class:`ProtocolConsumer`.
+        '''Call this method when done with this :class:`ProtocolConsumer`.
 By default it calls the :meth:`Connection.finished` method of the
-:attr:`connection`.'''
+:attr:`connection` attribute.'''
         return self._connection.finished(self, result)
     
     ############################################################################
@@ -286,6 +284,6 @@ response).'''
         self._response_factory = response_factory
         
     def finished(self, response, result=NOTHING):
-        '''Call this methdo with the current response to close the current
+        '''Call this method with the current response to close the current
 consumer.'''
         raise NotImplementedError

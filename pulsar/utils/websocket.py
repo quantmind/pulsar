@@ -182,6 +182,7 @@ class FrameParser(object):
       in the server)
     * 1 for parsing server frames and sending client frames (to be used
       by the client)
+    * 2 Assumes always unmasked data
 '''    
     def __init__(self, version=None, kind=0):
         self.version = get_version(version)
@@ -193,6 +194,14 @@ class FrameParser(object):
     def kind(self):
         return self._kind
     
+    @property
+    def masked(self):
+        return self.kind == 1
+    
+    @property
+    def expect_masked(self):
+        return True if self.kind == 0 else False
+    
     def decode(self, data):
         return self.execute(data), bytearray()
     
@@ -203,7 +212,7 @@ class FrameParser(object):
 :parameter masking_key: Optional making key used only if :attr:`kind` is 1 
     (Client frames).
     '''
-        if self.kind == 1:
+        if self.masked:
             masking_key = masking_key or os.urandom(4)
             return Frame(data, masking_key=masking_key, final=final, **params)
         else:
@@ -211,22 +220,24 @@ class FrameParser(object):
     
     def ping(cls, body=None):
         '''return a `ping` :class:`Frame`.'''
-        return self.encode(body, opcode=0x9, **params)
+        return self.encode(body, opcode=0x9)
     
     def pong(cls, body=None):
         '''return a `pong` :class:`Frame`.'''
-        return self.encode(body, opcode=0xA, **params)
+        return self.encode(body, opcode=0xA)
     
     def close(cls, body=None):
         '''return a `close` :class:`Frame`.'''
-        return self.encode(body, opcode=0x8, **params)
+        return self.encode(body, opcode=0x8)
     
     def continuation(cls, body=None):
         '''return a `continuation` :class:`Frame`.'''
         return self.encode(body, opcode=0, final=False)
     
-    def execute(self, data=None, length=None):
-        # end of body can be passed manually by putting a length of 0
+    def decode(self, data=None):
+        '''Decode bytes data into a :class:`Frame`. If :attr:`kind` is 0
+it descodes into a client frame (masked frame) while if is 1 it decodes
+into a server frame (unmasked).'''
         if data:
             if self._buf:
                 data = self._buf + data
@@ -234,6 +245,7 @@ class FrameParser(object):
             data = self._buf
         if not data: 
             return None
+        masked_frame = self.expect_masked
         frame = self._frame
         # No opcode yet
         if frame is None:
@@ -247,11 +259,11 @@ class FrameParser(object):
             opcode = first_byte & 0xf
             if fin not in (0, 1):
                 raise ProtocolError('WEBSOCKET fin must be 0 or 1')
-            if not (second_byte & 0x80):
-                if not self.kind:
+            is_masked = bool(second_byte & 0x80)
+            if masked_frame != is_masked:
+                if masked_frame:
                     raise ProtocolError('WEBSOCKET unmasked client frame.')
-            else:
-                if self.kind:
+                else:
                     raise ProtocolError('WEBSOCKET masked server frame.')
             payload_length = second_byte & 0x7f
             # All control frames MUST have a payload length of 125 bytes or less
@@ -265,7 +277,7 @@ class FrameParser(object):
         if frame.masking_key is None:
             # All control frames MUST have a payload length of 125 bytes or less
             d = None
-            mask_length = 4 if not self.kind else 0
+            mask_length = 4 if not masked_frame else 0
             if frame.payload_length == 126:
                 if len(data) < 2 + mask_length: # 2 + 4 for mask
                      return self.save_buf(frame, data)

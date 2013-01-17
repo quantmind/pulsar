@@ -78,7 +78,7 @@ class command:
                 if password and not request.connection.authenticated:
                     raise AuthenticationError
             if self.internal:
-                request.caller = get_proxy(request.caller)
+                request.caller = get_proxy(request.caller, safe=True)
                 if not request.caller:
                     raise AuthenticationError
                 return f(request, *args, **kwargs)
@@ -95,9 +95,9 @@ class command:
             
             
 class ActorProxyDeferred(Deferred):
-    '''A :class:`Deferred` for an :class:`ActorProxy`. This instance will be
-obtain and :class:`ActorProxy` result once the remote :class:`Actor` is fully
-functional.
+    '''A :class:`Deferred` for an :class:`ActorProxy`. The callback will
+be an :class:`ActorProxy` which will be received once the remote :class:`Actor`
+is fully functional.
 
 .. attribute:: aid
 
@@ -108,14 +108,11 @@ functional.
         super(ActorProxyDeferred,self).__init__()
         if msg is None:
             # In this case aid is an instance of an ActorProxyMonitor
-            proxy = aid
-            self.aid = proxy.aid
-            # callback for the mailbox
-            proxy.on_address = self
+            self.aid = aid.aid
         else:
             self.aid = aid
-            # simply listent for the calbacks and errorbacks
-            msg.addBoth(self.callback)
+            # Listen for the callbacks and errorbacks
+            msg.add_both(self.callback)
     
     def __repr__(self):
         return '%s(%s)' % (self.__class__, self.aid)
@@ -224,6 +221,7 @@ process where they have been created.
         self.impl = impl
         self.info = {}
         self.stopping_loops = 0
+        self.spawning_loops = 0
         super(ActorProxyMonitor,self).__init__(impl)
         
     @property

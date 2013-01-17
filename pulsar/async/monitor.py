@@ -10,7 +10,6 @@ from . import proxy
 from .actor import Actor, ACTOR_STATES, ACTOR_TERMINATE_TIMEOUT,\
                      ACTOR_STOPPING_LOOPS
 from .concurrency import concurrency
-from .queue import Queue
 from .mailbox import mailbox
 from .eventloop import asynchronous
 
@@ -98,8 +97,12 @@ during its life time.
         self.managed_actors = {}
         self.actor_class = self.params.pop('actor_class') or self.actor_class
 
-    def register(self):
-        pass
+    def hand_shake(self, *args):
+        #Monitors don't do hand shakes
+        self.state = ACTOR_STATES.RUN
+        self.on_start()
+        self.fire('on_start')
+        self.periodic_task()
     
     def active(self):
         return self.running()
@@ -143,10 +146,15 @@ spawn method when creating new actors.'''
         ACTORS = list(iteritems(MANAGED))
         ACTORS.extend(iteritems(SPAWNING))
         shutting_down = terminate or stop
-        # Loop over MANAGED ACTORS PROXY MONITORS
+        # Loop over MANAGED & SPAWNING Actor's PROXY MONITORS
         for aid, actor in ACTORS:
             if not actor.is_alive():
+                if actor.aid in SPAWNING:
+                    if actor.spawning_loops < ACTOR_STOPPING_LOOPS:
+                        actor.spawning_loops += 1
+                        continue
                 actor.join(ACTOR_TERMINATE_TIMEOUT)
+                self.logger.debug('Actor %s removed from monitor', actor)
                 MANAGED.pop(aid, None)
                 SPAWNING.pop(aid, None)
                 LINKED.pop(aid, None)
@@ -255,18 +263,7 @@ adding a new monitor to the arbiter follows the pattern::
 
     import pulsar
 
-    m = pulsar.arbiter().add_monitor(pulsar.Monitor,'mymonitor')
-
-You can also create a monitor with a distributed queue as IO mechanism::
-
-    from multiprocessing import Queue
-    import pulsar
-
-    m = pulsar.arbiter().add_monitor(pulsar.Monitor,
-                                     'mymonitor',
-                                     ioqueue = Queue())
-
-Monitors with distributed queues manage :ref:`CPU-bound actors <cpubound>`.
+    m = pulsar.arbiter().add_monitor(pulsar.Monitor, 'mymonitor')
 '''
     socket = None
 
@@ -327,8 +324,7 @@ Users shouldn't need to override this method, but use
         '''Spawn a new actor and add its :class:`ActorProxyMonitor`
  to the :attr:`PoolMixin.managed_actors` dictionary.'''
         p = super(Monitor, self).actorparams()
-        p.update({'ioqueue': self.ioqueue,
-                  'commands_set': self.impl.commands_set})
+        p.update({'commands_set': self.impl.commands_set})
         return p
 
     def stop_actor(self, actor):
@@ -346,18 +342,6 @@ Users shouldn't need to override this method, but use
         if not self.started():
             return data
         data['workers'] = [a.info for a in itervalues(self.managed_actors)]
-        tq = self.ioqueue
-        if tq is not None:
-            if isinstance(tq, Queue):
-                tqs = 'multiprocessing.Queue'
-            else:
-                tqs = str(tq)
-            try:
-                size = tq.qsize()
-            except NotImplementedError: #pragma    nocover
-                size = 0
-            data['queue'] = {'ioqueue': tqs,
-                             'ioqueue_size': size}
         return self.on_info(data)
 
     def proxy_mailbox(address):

@@ -7,7 +7,7 @@ import inspect
 import errno
 import socket
 from functools import partial
-from threading import current_thread, local
+from threading import current_thread
 try:
     import signal
 except ImportError:
@@ -18,7 +18,7 @@ from pulsar.utils.pep import default_timer, set_event_loop_policy,\
                              set_event_loop, new_event_loop, get_event_loop,\
                              EventLoop as BaseEventLoop,\
                              EventLoopPolicy as BaseEventLoopPolicy
-from pulsar.utils.log import process_global
+from .access import thread_local_data
 from .defer import log_failure, Deferred
 from .servers import Server
 
@@ -37,40 +37,22 @@ def setid(self):
     self.tid = current_thread().ident
     self.pid = os.getpid()
 
-class StopEventLoop(BaseException):
-    """Raised to stop the event loop."""
-
 def _raise_stop_event_loop():
+    LOGGER.debug('Exiting event loop')
     raise StopEventLoop
 
 
-def is_mainthread(thread=None):
-    '''Check if thread is the main thread. If *thread* is not supplied check
-the current thread'''
-    thread = thread if thread is not None else current_thread() 
-    return isinstance(thread, threading._MainThread)
+class StopEventLoop(BaseException):
+    """Raised to stop the event loop."""
 
 
-class EventLoopPolicy(local, BaseEventLoopPolicy):
-    def local(self):
-        ct = current_thread()
-        if is_mainthread(ct):
-            loc = process_global('_pulsar_local')
-            if loc is None:
-                loc = local()
-                process_global('_pulsar_local', loc)
-        elif not hasattr(ct, '_pulsar_local'):
-            ct._pulsar_local = local()
-            loc = ct._pulsar_local
-        else:
-            loc = ct._pulsar_local
-        return process_global('_event_loop_locals')
+class EventLoopPolicy(BaseEventLoopPolicy):
     
     def get_event_loop(self):
-        return process_global('_event_loop')
+        return thread_local_data('_event_loop')
     
     def get_request_loop(self):
-        return process_global('_request_loop') or self.get_event_loop()
+        return thread_local_data('_request_loop') or self.get_event_loop()
     
     def new_event_loop(self, **kwargs):
         return EventLoop(**kwargs)
@@ -79,11 +61,9 @@ class EventLoopPolicy(local, BaseEventLoopPolicy):
         """Set the event loop."""
         assert event_loop is None or isinstance(event_loop, BaseEventLoop)
         if event_loop.cpubound:
-            LOGGER.debug('Setting request loop')
-            process_global('_request_loop', event_loop)
+            thread_local_data('_request_loop', event_loop)
         else:
-            LOGGER.debug('Setting event loop')
-            process_global('_event_loop', event_loop)
+            thread_local_data('_event_loop', event_loop)
         
     
 set_event_loop_policy(EventLoopPolicy())
@@ -306,8 +286,7 @@ event loop is the place where most asynchronous operations are carried out.
     The I/O implementation. If not supplied, the best possible
     implementation available will be used. On posix system this is ``epoll``,
     or else ``select``. It can be any other custom implementation as long as
-    it has an ``epoll`` like interface. Pulsar ships with an additional
-    I/O implementation based on distributed queue :class:`IOQueue`.
+    it has an ``epoll`` like interface.
 
 .. attribute:: cpubound
 

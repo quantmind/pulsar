@@ -3,7 +3,7 @@ from time import sleep
 from multiprocessing.queues import Queue
 
 import pulsar
-from pulsar import send
+from pulsar import send, get_actor
 from pulsar.utils.pep import pickle
 from pulsar.apps.test import unittest, ActorTestMixin, run_on_arbiter,\
                                  dont_run_with_thread
@@ -27,19 +27,16 @@ class DodgyActor(pulsar.Actor):
         raise ValueError()
     
     
-class HaltActor(pulsar.Actor):
+def halt_actor(halt=0):
+    actor = get_actor()
+    if halt==2:
+        actor.requestloop.stop()
+    elif halt:
+        actor.requestloop.call_soon(halt_actor, 2)
+        raise ValueError()
+    else:   # called at the beginning
+        actor.requestloop.call_soon(halt_actor, 1)
     
-    def on_start(self):
-        self.requestloop.add_callback(self._halt)
-        
-    def _halt(self):
-        if self.params.done:
-            raise pulsar.HaltServer()
-        else:
-            self.params.done = True
-            self.requestloop.add_callback(self._halt)
-            raise ValueError()
-
     
 class TestProxy(unittest.TestCase):
     
@@ -55,7 +52,7 @@ class TestProxy(unittest.TestCase):
                                   pulsar.Config())
         p = pulsar.ActorProxy(impl)
         self.assertEqual(p.address, None)
-        self.assertEqual(p.receive_from(None, 'dummy'), None)
+        self.assertEqual(p.request(None, 'dummy'), None)
         self.assertEqual(str(p), 'actor(%s)' % p.aid)
         
     def testActorCoverage(self):
@@ -138,7 +135,7 @@ class TestActorThread(ActorTestMixin, unittest.TestCase):
         
     @run_on_arbiter
     def testHaltServer(self):
-        yield self.spawn(actor_class=HaltActor)
+        yield self.spawn(name='halting_actor', on_start=halt_actor)
         proxy = pulsar.get_actor().get_actor(self.a.aid)
         c = 0
         while c < 20:

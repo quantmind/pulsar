@@ -9,7 +9,10 @@ __all__ = ['get_request_loop',
            'is_mainthread',
            'PulsarThread',
            'process_local_data',
-           'thread_local_data']
+           'thread_local_data',
+           'NOTHING']
+
+NOTHING = object()
 
 def is_mainthread(thread=None):
     '''Check if thread is the main thread. If *thread* is not supplied check
@@ -33,7 +36,7 @@ dictionary.'''
     else:
         return loc
             
-def thread_local_data(name, value=None):
+def thread_local_data(name, value=NOTHING):
     '''Set or retrieve an attribute *name* from the curren thread. If *value*
 is None, it will get the value otherwise it will set the value.'''
     ct = current_thread()
@@ -44,7 +47,7 @@ is None, it will get the value otherwise it will set the value.'''
         loc = ct._pulsar_local
     else:
         loc = ct._pulsar_local
-    if value is not None:
+    if value is not NOTHING:
         if hasattr(loc, name):
             if getattr(loc, name) is not value:
                 raise RuntimeError(

@@ -24,6 +24,7 @@ class wait:
 class TestTestWorker(unittest.TestCase):
     
     def testWorker(self):
+        '''Test the test worker'''
         worker = pulsar.get_actor()
         self.assertTrue(pulsar.is_actor(worker))
         self.assertTrue(worker.running())
@@ -72,6 +73,7 @@ class TestTestWorker(unittest.TestCase):
         self.assertTrue(mailbox.sock)
         
     def testIOloop(self):
+        '''Test event loop in test worker'''
         worker = pulsar.get_actor()
         ioloop = get_event_loop()
         self.assertTrue(ioloop.running)

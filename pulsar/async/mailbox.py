@@ -42,7 +42,7 @@ def mailbox(actor=None, address=None):
                                         response_factory=MailboxResponse,
                                         timeout=3600,
                                         close_event_loop=True)
-        server.event_loop.call_soon(send_mailbox_address, actor)
+        server.event_loop.call_soon(actor.mailbox_ready)
         return server
     
     
@@ -63,7 +63,7 @@ class Request(clients.Request):
                      'receiver': actorid(receiver),
                      'args': args if args is not None else (),
                      'kwargs': kwargs if kwargs is not None else {}}
-        self.parser = FrameParser(kind=1)
+        self.parser = FrameParser(kind=2)
         self.ack = ack
     
     def encode(self): 
@@ -81,7 +81,15 @@ arbiter inbox.'''
     active_connections = 0
     def __init__(self, actor):
         self.mailbox = actor.arbiter.mailbox
+        # make sure the monitor get the hand shake!
+        self.mailbox.event_loop.call_soon_threadsafe(actor.hand_shake)
 
+    def __repr__(self):
+        return self.mailbox.__repr__()
+    
+    def __str__(self):
+        return self.mailbox.__str__()
+    
     @property
     def address(self):
         return self.mailbox.address
@@ -107,12 +115,12 @@ class MailboxResponse(ProtocolConsumer):
     
     def __init__(self, connection):
         super(MailboxResponse, self).__init__(connection)
-        self.parser = FrameParser()
+        self.parser = FrameParser(kind=2)
         
     def feed(self, data):
         # The receiver could be different from the mail box actor. For
         # example a monitor uses the same mailbox as the arbiter
-        msg = self.parser.execute(data)
+        msg = self.parser.decode(data)
         if msg:
             message = load_message(msg.body)
             self.responde(message)
@@ -151,7 +159,7 @@ class MailboxResponse(ProtocolConsumer):
 class MailboxClientConsumer(clients.ClientProtocolConsumer):
     '''The Protocol consumer for a Mailbox client'''
     def feed(self, data):
-        frame = self.request.parser.execute(data)
+        frame = self.request.parser.decode(data)
         if frame:
             code, result = load_message(frame.body)
             try:
@@ -181,10 +189,3 @@ class PulsarClient(clients.Client):
                       target, args, kwargs, cmd.ack)
         return self.response(req, consumer)
     
-    
-def send_mailbox_address(actor):
-    actor.logger.info('%s started at address %s', actor, actor.mailbox)
-    a = get_actor()
-    if a is not actor:
-        set_actor(actor)
-    actor.register()

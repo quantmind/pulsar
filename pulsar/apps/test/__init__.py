@@ -284,7 +284,7 @@ configuration and plugins.'''
                           len(tests))
             self._time_start = time.time()
             for tag, testcls in tests:
-                monitor.put(TestRequest(testcls, tag))
+                self.put(TestRequest(testcls, tag))
 
     def add_result(self, monitor, result):
         #Check if we got all results

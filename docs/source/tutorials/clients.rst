@@ -6,7 +6,18 @@ Writing Clients
 =====================
 
 Pulsar provides several classes for writing clients. The first step
-is to sublcass :class:`pulsar.ClientProtocolConsumer` which controls how::
+is to sublcass :class:`pulsar.ClientProtocolConsumer` which is needed
+for two reasons:
+
+* It sends the request to the remote server.
+* It listen (if needed) for incoming data from the remote server.
+
+The :class:`pulsar.ClientProtocolConsumer` should called the
+:class:`pulsar.ProtocolConsumer.finished` method once a complete
+response from the server is received, or, if no responjse is expected, as soon
+as it sends the data to the server.
+
+This is a simple Client for an echo server::
 
 
     class EchoProtocol(pulsar.ClientProtocolConsumer):

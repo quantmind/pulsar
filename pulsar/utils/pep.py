@@ -28,15 +28,11 @@ if ispy3k: # Python 3
     is_string_or_native_string = is_string
 
     def to_bytes(s, encoding=None, errors=None):
-        errors = errors or 'strict'
-        encoding = encoding or 'utf-8'
-        if isinstance(s, bytes):
-            if encoding != 'utf-8':
-                return s.decode('utf-8', errors).encode(encoding, errors)
-            else:
-                return s
+        '''Convert *s* into bytes'''
+        if not isinstance(s, bytes):
+            return ('%s' % s).encode(encoding or 'utf-8', errors or 'strict')
         else:
-            return ('%s'%s).encode(encoding, errors)
+            return s
 
     def to_string(s, encoding=None, errors='strict'):
         """Inverse of to_bytes"""

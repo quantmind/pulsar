@@ -1,5 +1,4 @@
 from .access import *
-from .queue import *
 from .defer import *
 from .proxy import *
 from .transports import *

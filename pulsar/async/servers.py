@@ -3,6 +3,7 @@ from functools import partial
 from pulsar import create_socket, ProtocolError
 from pulsar.utils.sockets import create_socket, SOCKET_TYPES, wrap_socket
 from pulsar.utils.pep import get_event_loop, set_event_loop, new_event_loop
+from pulsar.utils.events import EventHandler
 
 from .access import PulsarThread
 from .defer import Deferred, coroutine
@@ -45,30 +46,7 @@ class ServerConnection(Connection):
             self._current_response = None
         else:
             raise RuntimeError()
-    
-    
-class EventHandler(object):
-    EVENTS = ('pre_request', 'post_request')
-    
-    def __new__(cls, *args, **kwargs):
-        o = super(EventHandler, cls).__new__(cls)
-        o.hooks = dict(((event, []) for event in cls.EVENTS))
-        return o
-        
-    def bind_event(self, event, hook):
-        '''Register an event hook'''
-        self.hooks[event].append(hook)
-        
-    def fire(self, event, event_data):
-        """Dispatches an event dictionary on a given piece of data."""
-        hooks = self.hooks
-        if hooks and event in hooks:
-            for hook in hooks[event]:
-                try:
-                    hook(event_data)
-                except Exception:
-                    LOGGER.exception('Unhandled error in %s hook', key)
-    
+
     
 class Producer(object):
     '''A Producer of :class:`Connection` with remote servers or clients.
@@ -177,6 +155,7 @@ on a socket. It is a producer of :class:`Transport` for server protocols.
 
     A :class:`Deferred` called once the :class:`Server` is closed.
 '''
+    EVENTS = ('pre_request', 'post_request')
     connection_factory = ServerConnection
     protocol_factory = None
     
@@ -262,7 +241,10 @@ be implemented by subclasses.'''
         if getattr(eventloop, 'cpubound', False):
             loop = get_event_loop()
             if loop is None:
+                # No event loop available in the current thread.
+                # Create one and set it as the event loop
                 loop = new_event_loop()
+                set_event_loop(loop)
                 server = server_type(loop, sock, **kw)
                 # Shutdown eventloop when server closes
                 close_event_loop = True
