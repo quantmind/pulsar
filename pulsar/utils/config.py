@@ -66,7 +66,6 @@ def wrap_method(func):
         return func(*args, **kwargs)
     return _wrapped
 
-
 def ordered_settings():
     for name in KNOWN_SETTINGS_ORDER:
         yield KNOWN_SETTINGS[name]

@@ -7,16 +7,18 @@ import inspect
 import errno
 import socket
 from functools import partial
-from threading import current_thread
+from threading import current_thread, local
 try:
     import signal
 except ImportError:
     signal = None
 
 from pulsar.utils.system import IObase, IOpoll, close_on_exec, platform, Waker
-from pulsar.utils.pep import default_timer, DefaultEventLoopPolicy,\
-                             set_event_loop_policy, set_event_loop,\
-                             get_event_loop, EventLoop as BaseEventLoop
+from pulsar.utils.pep import default_timer, set_event_loop_policy,\
+                             set_event_loop, new_event_loop, get_event_loop,\
+                             EventLoop as BaseEventLoop,\
+                             EventLoopPolicy as BaseEventLoopPolicy
+from pulsar.utils.log import process_global
 from .defer import log_failure, Deferred
 from .servers import Server
 
@@ -42,13 +44,33 @@ def _raise_stop_event_loop():
     raise StopEventLoop
 
 
-class EventLoopPolicy(DefaultEventLoopPolicy):
-    _request_loop = None
+def is_mainthread(thread=None):
+    '''Check if thread is the main thread. If *thread* is not supplied check
+the current thread'''
+    thread = thread if thread is not None else current_thread() 
+    return isinstance(thread, threading._MainThread)
+
+
+class EventLoopPolicy(local, BaseEventLoopPolicy):
+    def local(self):
+        ct = current_thread()
+        if is_mainthread(ct):
+            loc = process_global('_pulsar_local')
+            if loc is None:
+                loc = local()
+                process_global('_pulsar_local', loc)
+        elif not hasattr(ct, '_pulsar_local'):
+            ct._pulsar_local = local()
+            loc = ct._pulsar_local
+        else:
+            loc = ct._pulsar_local
+        return process_global('_event_loop_locals')
+    
     def get_event_loop(self):
-        return self._event_loop
+        return process_global('_event_loop')
     
     def get_request_loop(self):
-        return self._request_loop or self._event_loop
+        return process_global('_request_loop') or self.get_event_loop()
     
     def new_event_loop(self, **kwargs):
         return EventLoop(**kwargs)
@@ -57,10 +79,12 @@ class EventLoopPolicy(DefaultEventLoopPolicy):
         """Set the event loop."""
         assert event_loop is None or isinstance(event_loop, BaseEventLoop)
         if event_loop.cpubound:
-            self._request_loop = event_loop
+            LOGGER.debug('Setting request loop')
+            process_global('_request_loop', event_loop)
         else:
-            self._event_loop = event_loop
-    
+            LOGGER.debug('Setting event loop')
+            process_global('_event_loop', event_loop)
+        
     
 set_event_loop_policy(EventLoopPolicy())
 
@@ -325,7 +349,14 @@ event loop is the place where most asynchronous operations are carried out.
         self.num_loops = 0
         self._waker = getattr(self._impl, 'waker', Waker)()
         self.add_reader(self._waker, self._waker.consume)
-
+    
+    def __repr__(self):
+        if self.cpubound:
+            return 'request loop for %s' % current_thread().name
+        else:
+            return 'event loop for %s' % current_thread().name
+    __str__ = __repr__
+        
     @property
     def io(self):
         return self._impl
@@ -346,6 +377,7 @@ event loop is the place where most asynchronous operations are carried out.
         '''Run the event loop until nothing left to do or stop() called.'''
         if not self._running:
             set_event_loop(self)
+            LOGGER.debug('Starting %s' % self)
             try:
                 while self.active:
                     try:

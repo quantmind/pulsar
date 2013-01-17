@@ -133,36 +133,6 @@ class EventLoopPolicy:
         raise NotImplementedError
 
 
-class DefaultEventLoopPolicy(threading.local, EventLoopPolicy):
-    """Default policy implementation for accessing the event loop.
-
-    In this policy, each thread has its own event loop.  However, we
-    only automatically create an event loop by default for the main
-    thread; other threads by default have no event loop.
-
-    Other policies may have different rules (e.g. a single global
-    event loop, or automatically creating an event loop per thread, or
-    using some other notion of context to which an event loop is
-    associated).
-    """
-    _event_loop = None
-
-    def get_event_loop(self):
-        """Get the event loop.
-
-        This may be None or an instance of EventLoop.
-        """
-        if (self._event_loop is None and
-            threading.current_thread().name == 'MainThread'):
-            self._event_loop = self.new_event_loop()
-        return self._event_loop
-
-    def set_event_loop(self, event_loop):
-        """Set the event loop."""
-        assert event_loop is None or isinstance(event_loop, EventLoop)
-        self._event_loop = event_loop
-
-
 # Event loop policy.  The policy itself is always global, even if the
 # policy's rules say that there is an event loop per thread (or other
 # notion of context).  The default policy is installed by the first
@@ -172,8 +142,6 @@ _event_loop_policy = None
 def get_event_loop_policy():
     """XXX"""
     global _event_loop_policy
-    if _event_loop_policy is None:
-        _event_loop_policy = DefaultEventLoopPolicy()
     return _event_loop_policy
 
 def set_event_loop_policy(policy):

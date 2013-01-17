@@ -18,11 +18,6 @@ from .structures import AttributeDictionary
 
 SERVER_NAME = 'Pulsar'
 NOLOG = 100
-SUBDEBUG = 5
-logging.addLevelName(SUBDEBUG, 'SUBDEBUG')
-def log_subdebug(self, message, *args, **kws):
-    self._log(SUBDEBUG, message, args, **kws)
-logging.Logger.subdebug = log_subdebug  
 
 __all__ = ['SERVER_NAME',
            'dictConfig',
@@ -44,6 +39,15 @@ LOG_LEVELS = {
     "debug": logging.DEBUG,
     'none': None
 }
+
+def install_new_log_level(level, name):
+    logging.addLevelName(level, name.upper())
+    new_log = lambda self, msg, *args, **kws: self._log(level, msg, args, **kws)
+    name = name.lower()
+    setattr(logging.Logger, name, new_log)
+    LOG_LEVELS[name] = level
+
+install_new_log_level(5, 'subdebug')
 
 
 LOGGING_CONFIG = {
@@ -151,7 +155,7 @@ class Synchronized(LocalMixin, SynchronizedMixin):
     pass
 
 
-def process_global(name, val = None, setval = False):
+def process_global(name, val=None, setval=False):
     '''Access and set global variables for the current process.'''
     p = current_process()
     if not hasattr(p,'_pulsar_globals'):

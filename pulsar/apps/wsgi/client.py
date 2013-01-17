@@ -1,18 +1,20 @@
 import platform
 
-from pulsar import ClientResponse, ClientSessions
+import pulsar
 from pulsar.utils.httpurl import *
 
 __all__ = ['HttpClient']
 
 class HttpRequest(object):
-    
+    parser_class = HttpParser
+    version = 'HTTP/1.1'
     _tunnel_host = None
     _has_proxy = False
     def __init__(self, url, method, data=None, files=None,
                  charset=None, encode_multipart=True, multipart_boundary=None,
                  timeout=None, hooks=None, history=None, source_address=None,
-                 allow_redirects=False, max_redirects=10, stream=False):
+                 allow_redirects=False, max_redirects=10, decompress=True,
+                 version=None):
         self.type, self.host, self.path, self.params,\
         self.query, self.fragment = urlparse(url)
         self.full_url = self._get_full_url()
@@ -23,18 +25,19 @@ class HttpRequest(object):
         self.allow_redirects = allow_redirects
         self.charset = charset or DEFAULT_CHARSET
         self.method = method.upper()
+        self.version = version or self.version
         self.data = data if data is not None else {}
         self.files = files
-        self.stream = stream
         self.source_address = source_address
         self._set_hostport(*host_and_port(self.host))
+        self.parser = self.parser_class(kind=1, decompress=self.decompress)
         # Pre-request hook.
         self.dispatch_hook('pre_request', self)
         self.encode(encode_multipart, multipart_boundary)
         
     def __hash__(self):
-        # For connection pool
-        return (self.type, self.host, self.port, self.timeout, self.stream)
+        # For the connection pool
+        return (self.type, self.host, self.port, self.timeout)
         
     def set_proxy(self, host, type):
         if self.type == 'https' and not self._tunnel_host:
@@ -69,8 +72,15 @@ class HttpRequest(object):
         self.host = host
         self.port = port
     
+    def encode(self):
+        self._buffer = buffer = []
+        request = '%s %s %s' % (self.method, self.url, self.version)
+        buffer.append(request.encode('ascii'))
+        buffer.append(bytes(self.headers))
+         
+        
 
-class HttpResponse(ClientResponse):
+class HttpResponse(pulsar.ClientProtocolConsumer):
     '''Http client request initialised by a call to the
 :class:`HttpClient.request` method.
 
@@ -82,16 +92,9 @@ class HttpResponse(ClientResponse):
 
     The scheme of the of the URI requested. One of http, https
 '''
-    parser_class = HttpParser
 
     _tunnel_host = None
-    _has_proxy = False
-    
-    def begin(self):
-        self.parser = self.parser_class(kind=1,
-                                        decompress=self.request.decompress)
-        
-        
+    _has_proxy = False       
     
     def feed(self, data):
         pass
@@ -149,9 +152,9 @@ or asynchronous connections.
             ('Accept-Encoding', 'compress'),
             ('Accept-Encoding', 'gzip')],
             kind='client')
-    request_parameters = ClientSessions.request_parameters +\
-                        ('encode_multipart', 'max_redirects',
-                         'allow_redirects', 'multipart_boundary')
+    request_parameters = Client.request_parameters +\
+                        ('encode_multipart', 'max_redirects', 'decompress',
+                         'allow_redirects', 'multipart_boundary', 'version')
     # Default hosts not affected by proxy settings. This can be overwritten
     # by specifying the "no" key in the proxy_info dictionary
     no_proxy = set(('localhost', urllibr.localhost(), platform.node()))

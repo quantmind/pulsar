@@ -19,7 +19,7 @@ ThreadQueue = queue.Queue
 from pulsar import AlreadyCalledError, AlreadyRegistered,\
                    ActorAlreadyStarted, LogginMixin, system, Config
 from pulsar.utils.structures import AttributeDictionary
-from pulsar.utils.pep import pickle
+from pulsar.utils.pep import pickle, set_event_loop_policy
 from pulsar.utils import events
 
 from .eventloop import EventLoop, setid, signal
@@ -423,6 +423,7 @@ properly this actor will go out of scope.'''
     def register(self):
         '''register this :class:`Actor` with the :attr:`monitor`
 by sending its :attr:`mailbox` address.'''
+        self.logger.debug('%s send hand shake to arbiter', self)
         response = self.send(self.monitor, 'mailbox_address', self.address)
         response.when_ready.add_callback(self.link_actor)
             

@@ -193,7 +193,7 @@ on a socket. It is a producer of :class:`Transport` for server protocols.
         if protocol_factory:
             self.protocol_factory = protocol_factory
         self._event_loop.add_reader(self.fileno(), self.ready_read)
-        LOGGER.debug('Listening on %s', sock)
+        LOGGER.debug('Registered server listening on %s', sock)
         
     def create_connection(self, sock, address):
         '''Create a new server :class:`Protocol` ready to serve its client.'''
@@ -280,8 +280,5 @@ create_server = Server.create
 def _start_on_thread(name, server):
     # we are on the actor request loop thread, therefore the event loop
     # should be already available if the tne actor is not CPU bound.
-    event_loop = get_event_loop()
-    if event_loop is None:
-        set_event_loop(server.event_loop)
     PulsarThread(name=name, target=server.event_loop.run).start()
     
