@@ -4,7 +4,7 @@ import time
 from threading import current_thread
 
 import pulsar
-from pulsar import defaults, send, is_async, multi_async
+from pulsar import defaults, send, is_async, multi_async, is_async
 from pulsar.apps.test import unittest, run_on_arbiter, TestSuite
 from pulsar.utils.pep import get_event_loop
 
@@ -46,10 +46,9 @@ class TestTestWorker(unittest.TestCase):
         
     def testWorkerMonitor(self):
         worker = pulsar.get_actor()
+        mailbox = worker.mailbox
         monitor = worker.monitor
-        arbiter = worker.arbiter
-        mailbox = monitor.mailbox
-        self.assertEqual(mailbox, arbiter.mailbox)
+        self.assertEqual(mailbox.address, monitor.address)
         self.assertEqual(mailbox.timeout, 0)
         
     @run_on_arbiter
@@ -70,7 +69,8 @@ class TestTestWorker(unittest.TestCase):
         self.assertNotEqual(worker.requestloop, mailbox.event_loop)
         self.assertNotEqual(worker.tid, mailbox.event_loop.tid)
         self.assertTrue(mailbox.address)
-        self.assertTrue(mailbox.sock)
+        self.assertTrue(mailbox.name)
+        self.assertEqual(mailbox.max_connections, 1)
         
     def testIOloop(self):
         '''Test event loop in test worker'''
@@ -116,10 +116,13 @@ class TestTestWorker(unittest.TestCase):
         response = send(worker.arbiter, 'ping')
         yield self.async.assertEqual(response.when_ready, 'pong')
         
-    def testPingArbiter(self):
+    def testPingMonitor(self):
         worker = pulsar.get_actor()
-        yield self.async.assertEqual(send('arbiter', 'ping').when_ready, 'pong')
-        yield self.async.assertEqual(send('arbiter', 'ping').when_ready, 'pong')
+        result = send(worker.monitor, 'ping')
+        self.assertTrue(is_async(result))
+        yield result
+        self.assertEqual(result, 'pong')
+        yield self.async.assertEqual(send(worker.monitor, 'ping'), 'pong')
         response = worker.send('arbiter', 'notify', worker.info())
         self.assertEqual(response.connection, None)
         

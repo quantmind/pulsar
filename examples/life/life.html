@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset='utf-8'>
+<title>Game of life</title>
+<link href="//netdna.bootstrapcdn.com/twitter-bootstrap/2.2.2/css/bootstrap-combined.min.css" rel="stylesheet">
+<style type="text/css">
+</style>
+</head>
+<body>
+<div class="row">
+    <div class="span4">
+    <h3>Pulsar</h3>
+    </div>
+</div>
+<div id="life" style="width:600px;height:600px"></div>
+<div id="graph" style="width:600px;height:300px"></div>
+<script src="http://ajax.googleapis.com/ajax/libs/jquery/1.8.3/jquery.min.js"></script>
+<script src="http://people.iola.dk/olau/flot/jquery.flot.js"></script>
+<script>
+(function($) {
+    $(document).ready(function() {
+        var square_radius = 10;
+        function square(ctx, x, y, radius, shadow) {
+            var size = 2*radius;
+            ctx.rect(x, y-size, size, size);
+        }
+        //
+        var init_data = [[100, 100], [140, 100], [990, 100], [990, 40]];
+        $.plot('#life', [init_data],
+        {
+          series: {
+            shadowSize: 0,
+            points: { radius: square_radius, symbol: square,
+                      lineWidth: 1,
+                      show: true, fill: true,
+                      color: '#999', fillColor: '#999'},
+          },
+          xaxis: { min: 0, max: 1000, show: false },
+          yaxis: { min: 0, max: 1000, show: false }
+        });
+        var ws = new WebSocket("ws://%(HTTP_HOST)s/life");
+        ws.onmessage = function(e) {
+          //alert('got ' + e.data);
+          try {
+	          var data = $.parseJSON(e.data);
+	          $.plot('#holder', [data],
+	                  {
+	                    series: {
+	                      lines: { show: true, fill: true },
+	                    },
+	                    yaxis: { min: 0 },
+	                  } );
+	          ws.send('next');
+          } catch(e){}
+        };
+        ws.onopen = function() {
+            var s = JSON.stringify({action: 'start', data: init_data,
+                                    scale: 2*square_radius});
+            ws.send(s);
+        };
+    });
+}(jQuery));
+</script>
+</body>
+</html>

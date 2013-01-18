@@ -31,7 +31,7 @@ def arbiter(commands_set=None, **params):
         cset = set(proxy.actor_commands)
         cset.update(proxy.arbiter_commands)
         cset.update(commands_set or ())
-        return set_actor(_spawn_actor(Arbiter, commands_set=cset, **params))
+        return set_actor(_spawn_actor(Arbiter, None, commands_set=cset, **params))
     elif isinstance(arbiter, Actor) and arbiter.is_arbiter():
         return arbiter
 
@@ -97,6 +97,11 @@ Users access the arbiter (in the arbiter process domain) by the high level api::
 .. _tornado: http://www.tornadoweb.org/
 '''
     pidfile = None
+    
+    def __init__(self, impl):
+        Actor.__init__(self, impl)
+        self.monitors = {}
+        self.registered = {}
 
     ############################################################################
     # ARBITER HIGH LEVEL API
@@ -111,22 +116,17 @@ Users access the arbiter (in the arbiter process domain) by the high level api::
 :parameter monitor_name: a unique name for the monitor.
 :parameter kwargs: dictionary of key-valued parameters for the monitor.
 :rtype: an instance of a :class:`pulsar.Monitor`.'''
-        if monitor_name in self.monitors:
+        if monitor_name in self.registered: 
             raise KeyError('Monitor "{0}" already available'\
                            .format(monitor_name))
         params['name'] = monitor_name
         m = self.spawn(monitor_class, **params)
-        self.linked_actors[m.aid] = m
-        self.monitors[m.name] = m
+        self.registered[m.name] = m
+        self.monitors[m.aid] = m
         return m
 
     def is_process(self):
         return True
-
-    def get_all_monitors(self):
-        '''A dictionary of all :class:`Monitor` in the arbiter'''
-        return dict(((mon.name, mon.proxy) for mon in\
-                      itervalues(self.monitors) if mon.mailbox))
 
     def close_monitors(self):
         '''Close all :class:`Monitor` at once.'''
@@ -148,6 +148,15 @@ Users access the arbiter (in the arbiter process domain) by the high level api::
         data['monitors'] = monitors
         return data
 
+    def get_actor(self, aid):
+        '''Given an actor unique id return the actor proxy.'''
+        a = super(Arbiter, self).get_actor(aid)
+        if a is None:
+            if aid in self.monitors:
+                return self.monitors[aid]
+            else:
+                return self.registered.get(aid)
+    
     ############################################################################
     # INTERNALS
     ############################################################################
@@ -224,5 +233,5 @@ Users access the arbiter (in the arbiter process domain) by the high level api::
                                            response_factory=MailboxResponse,
                                            timeout=0,
                                            close_event_loop=True)
-        mailbox.event_loop.call_soon_threadsafe(self.mailbox_ready)
+        mailbox.event_loop.call_soon_threadsafe(self.hand_shake)
         return mailbox

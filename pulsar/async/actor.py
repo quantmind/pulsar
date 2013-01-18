@@ -26,6 +26,7 @@ from pulsar.utils import events
 from .eventloop import EventLoop, setid, signal
 from .defer import Deferred, log_failure
 from .proxy import ActorProxy, get_command, get_proxy
+from .mailbox import MailboxClient
 from .access import set_actor, is_mainthread, get_actor, remove_actor, NOTHING
 
 
@@ -189,11 +190,7 @@ an :class:`ActorProxy`.
             hook = impl.params.pop(name, None)
             if hook:
                 self.hooks[name].append(hook)
-        self.linked_actors = impl.params.pop('linked_actors', {})
-        self.monitors = impl.params.pop('monitors', {})
-        self.arbiter = impl.params.pop('arbiter', None)
         self.monitor = impl.params.pop('monitor', None)
-        self.proxy_mailboxes = {}
         self.params = AttributeDictionary(**impl.params)
         del impl.params
         setid(self)
@@ -380,14 +377,13 @@ properly this actor will go out of scope.'''
             self.state = ACTOR_STATES.CLOSE
             self.mailbox.close()
             
-
     ############################################################################
     #    INTERNALS
     ############################################################################
     def periodic_task(self):
         if self.can_continue():
-            if self.active():
-                self.send('arbiter', 'notify', self.info())
+            if self.running():
+                self.send(self.monitor, 'notify', self.info())
                 secs = max(ACTOR_TIMEOUT_TOLERANCE*self.cfg.timeout, MIN_NOTIFY)
                 next = min(secs, MAX_NOTIFY)
                 self.ioloop.call_later(next, self.periodic_task)
@@ -395,50 +391,22 @@ properly this actor will go out of scope.'''
                 # The actor is not yet active, come back at the next requestloop
                 self.requestloop.call_soon_threadsafe(self.periodic_task)
     
-    def mailbox_ready(self):
+    def hand_shake(self):
         a = get_actor()
         if a is not self:
             set_actor(self)
         self.logger.info('%s started', self)
-        self.mailbox = self.mailbox.
-        # hand shake. Don't modify this method. Crucial.
-        self.logger.debug('%s send hand shake to %s', self, self.monitor)
-            response = self.send(self.monitor, 'mailbox_address', self.address)
-            response.when_ready.add_callback(self.hand_shake)\
-                               .add_errback(self.stop)
-        else:
-            self.logger.debug('%s got hand shake from %s', self, self.monitor)
-            self.link_actor(result)
-            self.state = ACTOR_STATES.RUN
-            self.on_start()
-            self.fire('on_start', self)
-            self.periodic_task()
-            
-    def proxy_mailbox(self, address):
-        m = self.proxy_mailboxes.get(address)
-        if not m:
-            try:
-                m = mailbox(address=address)
-            except socket.error:
-                m = None
-            else:
-                self.proxy_mailboxes[address] = m
-        return m
+        self.state = ACTOR_STATES.RUN
+        self.on_start()
+        self.fire('on_start', self)
+        self.periodic_task()
     
     def get_actor(self, aid):
         '''Given an actor unique id return the actor proxy.'''
         if aid == self.aid:
             return self
-        elif aid == 'arbiter':
-            return self.arbiter or self
-        elif self.arbiter and aid == self.arbiter.aid:
-            return self.arbiter
-        elif self.monitor and aid == self.monitor.aid:
-            return self.monitor
-        elif aid in self.linked_actors:
-            return self.linked_actors[aid]
-        else:
-            return self.monitors.get(aid)
+        elif aid == 'monitor':
+            return self.monitor or self
 
     def info(self):
         '''Return a dictionary of information related to the actor
@@ -454,7 +422,6 @@ status and performance.'''
                  'thread_id': self.tid,
                  'process_id': self.pid,
                  'is_process': isp,
-                 'internal_connections': self.mailbox.concurrent_connections,
                  'age': self.impl.age}
         events = {'callbacks': len(self.ioloop._callbacks),
                   'io_loops': self.ioloop.num_loops}
@@ -542,6 +509,6 @@ if *proxy* is not a class:`ActorProxy` instance raise an exception.'''
             self.stop(exc)
         
     def _mailbox(self):
-        client = PulsarClient(self.arbiter.address)
-        client.event_loop.call_soon_threadsafe(self.mailbox_ready)
+        client = MailboxClient(self.monitor.address, self)
+        client.event_loop.call_soon_threadsafe(self.hand_shake)
         return client

@@ -458,7 +458,7 @@ The application is now in the arbiter but has not yet started.'''
     def start(self):
         '''Start the application if it wasn't already started.'''
         arbiter = pulsar.arbiter()
-        if arbiter and self.name in arbiter.monitors:
+        if arbiter and self.name in arbiter.registered:
             arbiter.start()
         return self
 

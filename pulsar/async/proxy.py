@@ -79,7 +79,6 @@ class command:
                 if password and not request.connection.authenticated:
                     raise AuthenticationError
             if self.internal:
-                request.caller = get_proxy(request.caller, safe=True)
                 if not request.caller:
                     raise AuthenticationError
                 return f(request, *args, **kwargs)
@@ -152,18 +151,13 @@ parameter ``"hello there!"``.
         self.aid = impl.aid
         self.name = impl.name
         self.commands_set = tuple(impl.commands_set)
-        self.address = impl.address
         self.cfg = impl.cfg
+        if hasattr(impl, 'address'):
+            self.address = impl.address
     
     def __repr__(self):
         return '%s(%s)' % (self.name, self.aid)
     __str__ = __repr__
-    
-    @property
-    def mailbox(self):
-        '''Actor mailbox'''
-        if self.address:
-            return get_actor().proxy_mailbox(self.address)
         
     @property
     def proxy(self):
@@ -181,14 +175,10 @@ communicating between actors.
 :rtype: an asynchronous :class:`ActorMessage`.'''
         if sender is None:
             sender = get_actor()
-        if not self.mailbox:
-            sender.logger.critical('Cannot send a message to %s. No\
- mailbox available.', self)
-            return
         cmd = get_command(command, self.commands_set)
         if not cmd:
             raise CommandNotFound(command)
-        return self.mailbox.request(cmd, sender, self.aid, args, params)
+        return sender.mailbox.request(cmd, sender, self.aid, args, params)
     
     def __eq__(self, o):
         o = get_proxy(o,True)

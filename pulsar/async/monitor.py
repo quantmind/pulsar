@@ -17,7 +17,7 @@ from .eventloop import asynchronous
 __all__ = ['Monitor', 'PoolMixin']
 
 
-def _spawn_actor(cls, commands_set=None, monitor=None, cfg=None, name=None,
+def _spawn_actor(cls, monitor, commands_set=None, cfg=None, name=None,
                  aid=None, **kw):
     # Internal function which spawns a new Actor and return its
     # ActorProxyMonitor.
@@ -104,32 +104,29 @@ during its life time.
         self.fire('on_start')
         self.periodic_task()
     
+    def get_actor(self, aid):
+        if aid == self.aid:
+            return self
+        elif aid in self.managed_actors:
+            return self.managed_actors[aid]
+        elif aid in self.spawning_actors:
+            return self.spawning_actors[aid]
+        elif self.monitor and aid == self.monitor.aid:
+            return self.monitor
+        
     def active(self):
         return self.running()
 
-    def spawn(self, actor_class=None, linked_actors=None, montitor=None,
-              **params):
+    def spawn(self, actor_class=None, **params):
         '''Spawn a new :class:`Actor` and return its
 :class:`ActorProxyMonitor`.'''
         actor_class = actor_class or self.actor_class
-        if linked_actors:
-            params['linked_actors'] =\
-                dict(((aid, p.proxy) for aid, p in iteritems(linked_actors)))
-        return _spawn_actor(actor_class, monitor=self, **params)
+        return _spawn_actor(actor_class, self, **params)
 
     def actorparams(self):
         '''Return a dictionary of parameters to be passed to the
 spawn method when creating new actors.'''
-        arbiter = self.arbiter or self
-        params = dict(self.params)
-        params['monitors'] = arbiter.get_all_monitors()
-        return params
-
-    def get_actor(self, aid):
-        a = Actor.get_actor(self, aid)
-        if not a:
-            a = self.spawning_actors.get(aid)
-        return a
+        return dict(self.params)
 
     def manage_actors(self, terminate=False, stop=False, manage=True):
         '''Remove :class:`Actor` which are not alive from the
@@ -141,7 +138,8 @@ spawn method when creating new actors.'''
 '''
         MANAGED = self.managed_actors
         SPAWNING = self.spawning_actors
-        LINKED = self.linked_actors
+        if not MANAGED and not SPAWNING:
+            return 
         alive = 0
         ACTORS = list(iteritems(MANAGED))
         ACTORS.extend(iteritems(SPAWNING))
@@ -157,7 +155,6 @@ spawn method when creating new actors.'''
                 self.logger.debug('Actor %s removed from monitor', actor)
                 MANAGED.pop(aid, None)
                 SPAWNING.pop(aid, None)
-                LINKED.pop(aid, None)
             else:
                 alive += 1
                 if shutting_down:
@@ -319,6 +316,10 @@ Users shouldn't need to override this method, but use
     @property
     def multiprocess(self):
         return self.cfg.concurrency == 'process'
+    
+    @property
+    def requestloop(self):
+        return self.monitor.requestloop
 
     def actorparams(self):
         '''Spawn a new actor and add its :class:`ActorProxyMonitor`
@@ -351,14 +352,12 @@ Users shouldn't need to override this method, but use
         #Delegate get_actor to the arbiter
         a = super(Monitor, self).get_actor(aid)
         if a is None:
-            a = self.arbiter.get_actor(aid)
+            a = self.monitor.get_actor(aid)
         return a
 
     # OVERRIDES INTERNALS
     def _setup_ioloop(self):
-        self.requestloop = self.arbiter.requestloop
         self.mailbox = self._mailbox()
-        self.monitors = self.arbiter.monitors
         
     def _run(self):
         pass

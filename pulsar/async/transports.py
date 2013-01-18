@@ -67,7 +67,7 @@ capabilities in some transport mechanisms.
     def __init__(self, event_loop, sock, protocol, max_buffer_size=None,
                   read_chunk_size=None, timeout=None):
         timeout = timeout if timeout is not None else self.default_timeout
-        self._timeout = max(0, timeout) or self.largest_timeout
+        self._timeout = max(0, timeout)
         self._sock = sock
         self._event_loop = event_loop
         self._protocol = protocol
@@ -321,6 +321,6 @@ returns ``self``.'''
         self.close()
         
     def add_read_timeout(self):
-        if not self.closed and not self._read_timeout:
+        if not self.closed and not self._read_timeout and self._timeout:
             self._read_timeout = self._event_loop.call_later(self._timeout,
                                                              self._timed_out)    

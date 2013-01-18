@@ -10,7 +10,6 @@ from .servers import Producer, EventHandler
 __all__ = ['create_connection', 'ConnectionPool', 'Client',
            'ClientProtocolConsumer', 'Request']
 
-transports= set()
 
 def create_connection(address, timeout=0, source_address=None):
     '''Create a connection with a remote server'''
@@ -20,9 +19,8 @@ def create_connection(address, timeout=0, source_address=None):
         sock.bind(source_address)
     protocol_factory = SOCKET_TYPES[sock.TYPE].server.protocol_factory
     protocol = protocol_factory(address)
-    event_loop = get_event_loop() if timeout == 0 else None
-    transport = Transport(event_loop, sock, protocol)
-    transports.add(transport)
+    event_loop = get_event_loop()
+    transport = Transport(event_loop, sock, protocol, timeout=timeout)
     return transport.connect().protocol
 
 
@@ -167,7 +165,13 @@ protocols. It maintains a live set of connections.
 
 class Client(ClientEventHandler):
     '''A client for a remote server which handles one or more
-:class:`ConnectionPool` of synchronous or asynchronous connections.'''
+:class:`ConnectionPool` of asynchronous connections.
+
+.. attribute:: timeout
+
+    timeout in seconds for an idle connection to be dropped. A value of zero
+    means no timeout.
+'''
     connection_pool = ConnectionPool
     '''Factory of :class:`ConnectionPool`.'''
     connection_factory = ClientConnection

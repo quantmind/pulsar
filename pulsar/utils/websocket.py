@@ -277,7 +277,7 @@ into a server frame (unmasked).'''
         if frame.masking_key is None:
             # All control frames MUST have a payload length of 125 bytes or less
             d = None
-            mask_length = 4 if not masked_frame else 0
+            mask_length = 4 if masked_frame else 0
             if frame.payload_length == 126:
                 if len(data) < 2 + mask_length: # 2 + 4 for mask
                      return self.save_buf(frame, data)

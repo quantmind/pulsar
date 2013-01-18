@@ -99,6 +99,8 @@ The main method in this class is :meth:`new_connection` where a new
     
     def new_connection(self, protocol, response_factory, producer=None):
         ''''Called when a new connection is created'''
+        if self._max_connections and self._received >= self._max_connections:
+            raise RuntimeError('Too many connections')
         self._received = self._received + 1
         producer = producer or self 
         conn = self.connection_factory(protocol, producer, self._received,
@@ -106,8 +108,6 @@ The main method in this class is :meth:`new_connection` where a new
         self._concurrent_connections.add(conn)
         protocol.on_connection_lost.add_both(
                                 partial(self._remove_connection, conn))
-        if self._max_connections and self._received > self._max_connections:
-            self.close()
         return conn
     
     def close_connections(self, connection=None):
