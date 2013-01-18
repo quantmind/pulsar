@@ -2,7 +2,8 @@ Ver. 0.5.0
 ==============================
 * pep-3156_ implementation with considerable amount of internal refactoring.
 * Initial twisted_ integration.
-* :class:`Actor` internal message passing uses the (unmasked) websocket protocol.
+* :class:`Actor` internal message passing uses the (unmasked) websocket protocol
+  in a bidirectional communications between the :class:`Arbiter` and actors.
 
 Ver. 0.4.4
 ==============================

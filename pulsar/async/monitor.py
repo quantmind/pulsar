@@ -10,7 +10,7 @@ from . import proxy
 from .actor import Actor, ACTOR_STATES, ACTOR_TERMINATE_TIMEOUT,\
                      ACTOR_STOPPING_LOOPS
 from .concurrency import concurrency
-from .mailbox import mailbox
+from .mailbox import MonitorMailbox
 from .eventloop import asynchronous
 
 
@@ -357,8 +357,11 @@ Users shouldn't need to override this method, but use
     # OVERRIDES INTERNALS
     def _setup_ioloop(self):
         self.requestloop = self.arbiter.requestloop
-        self.mailbox = mailbox(self)
+        self.mailbox = self._mailbox()
         self.monitors = self.arbiter.monitors
         
     def _run(self):
         pass
+    
+    def _mailbox(self):
+        return MonitorMailbox(self)

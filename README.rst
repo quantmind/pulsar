@@ -7,7 +7,7 @@ activities in different threads and/or processes.
 :Documentation: http://packages.python.org/pulsar/
 :Dowloads: http://pypi.python.org/pypi/pulsar
 :Source: https://github.com/quantmind/pulsar
-:Keywords: server, asynchronous, concurrency, actor, thread, process, socket, task queue
+:Keywords: server, asynchronous, concurrency, actor, thread, process, socket, task queue, wsgi
 
 
 .. |pulsar-build| image:: https://secure.travis-ci.org/quantmind/pulsar.png?branch=master
@@ -23,10 +23,10 @@ framework which responds with "Hello World!" for every request::
         '''Pulsar HTTP "Hello World!" application'''
         data = b'Hello World!\n'
         status = '200 OK'
-        response_headers = (
+        response_headers = [
             ('Content-type','text/plain'),
             ('Content-Length', str(len(data)))
-        )
+        ]
         start_response(status, response_headers)
         return [data]
     
@@ -59,7 +59,7 @@ Applications
 ==============
 Pulsar design allows for a host of different applications to be implemented
 in an elegant and efficient way. Out of the box it is shipped with the
-the following
+the following:
 
 * Socket servers.
 * WSGI server.

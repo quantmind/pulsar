@@ -179,8 +179,8 @@ class Client(ClientEventHandler):
     
     request_parameters = ('hooks', 'timeout')
     def __init__(self, timeout=None, client_version=None,
-                 max_connections=None, trust_env=True, stream=None,
-                 **params):
+                  max_connections=None, trust_env=True, stream=None,
+                  **params):
         self.trust_env = trust_env
         self.timeout = timeout if timeout is not None else self.timeout
         self.client_version = client_version or self.client_version

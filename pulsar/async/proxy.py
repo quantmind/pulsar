@@ -16,6 +16,7 @@ __all__ = ['ActorProxyDeferred',
            'get_command']
 
 global_commands_table = {}
+actor_only_commands = set()
 actor_commands = set()
 arbiter_commands = set()
 

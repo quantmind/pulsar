@@ -6,25 +6,12 @@ from . import proxy
 #############################################################  COMMANDS
 
 @proxy.command()
-def auth(request, password):
-    '''Request for authentication in a password protected Pulsar server.
-Pulsar can be instructed to require a password before allowing clients to
-execute commands.'''
-    p = actor.cfg.get('password')
-    if p and p != password:
-        client.connection.authenticated = False
-        raise AuthenticationError()
-    else:
-        client.connection.authenticated = True
-        return True
-
-@proxy.command()
 def ping(request):
     return 'pong'
 
 @proxy.command()
 def echo(request, message):
-    '''Returns mmessage'''
+    '''Returns *message*'''
     return message
 
 @proxy.command(ack=False)
@@ -32,11 +19,6 @@ def quit(request):
     '''Ask the server to close the connection. The connection is closed as
 soon as all pending replies have been written to the client.'''
     client.connection.close()
-
-@proxy.command(authenticated=True)
-def info(request):
-    ''' Returns information and statistics about the server as a json string'''
-    return actor.info()
 
 @proxy.command(authenticated=True)
 def shutdown(request):
@@ -88,7 +70,26 @@ def spawn(request, linked_actors=None, **kwargs):
     linked_actors = linked_actors if linked_actors is not None else {}
     linked_actors[request.caller.aid] = request.caller
     return request.actor.spawn(linked_actors=linked_actors, **kwargs)
+
+@proxy.command(authenticated=True, commands_set=proxy.arbiter_commands)
+def info(request):
+    ''' Returns information and statistics about the server as a json string'''
+    return request.actor.info()
      
+@proxy.command(commands_set=proxy.arbiter_commands)
+def auth(request, password):
+    '''Request for authentication in a password protected Pulsar server.
+Pulsar can be instructed to require a password before allowing clients to
+execute commands.'''
+    actor = request.actor
+    p = actor.cfg.get('password')
+    if p and p != password:
+        request.connection.authenticated = False
+        raise AuthenticationError
+    else:
+        request.connection.authenticated = True
+        return True
+    
 @proxy.command(authenticated=True, commands_set=proxy.arbiter_commands)
 def kill_actor(request, aid=None):
     '''Kill an actor with id ``aid``'''

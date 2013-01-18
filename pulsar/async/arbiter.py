@@ -14,6 +14,7 @@ from .actor import Actor, ACTOR_STATES
 from .monitor import PoolMixin, _spawn_actor
 from .defer import multi_async
 from .access import get_actor, set_actor
+from .mailbox import MailboxConnection, MailboxResponse
 from . import proxy
 
 
@@ -148,7 +149,7 @@ Users access the arbiter (in the arbiter process domain) by the high level api::
         return data
 
     ############################################################################
-    # OVERRIDE ACTOR HOOKS
+    # INTERNALS
     ############################################################################
     def on_start(self):
         if current_process().daemon:
@@ -205,11 +206,23 @@ Users access the arbiter (in the arbiter process domain) by the high level api::
             active = multi_async((self.close_monitors(), self.close_actors()))
             active.add_both(self._exit)
                 
-    ############################################################################
-    # INTERNALS
-    ############################################################################
     def start(self):
         if self.state == ACTOR_STATES.INITIAL:
             if self.cfg.daemon: #pragma    nocover
                 system.daemonize()
             return Actor.start(self)
+        
+    def _mailbox(self):
+        #if platform.type == 'posix':
+        #    address = 'unix:%s.pulsar' % actor.aid
+        #else:   #pragma    nocover
+        #    address = ('127.0.0.1', 0)
+        address = ('127.0.0.1', 0)
+        mailbox = self.requestloop.create_server(address=address,
+                                           name='Mailbox for %s' % self,
+                                           connection_factory=MailboxConnection,
+                                           response_factory=MailboxResponse,
+                                           timeout=0,
+                                           close_event_loop=True)
+        mailbox.event_loop.call_soon_threadsafe(self.mailbox_ready)
+        return mailbox

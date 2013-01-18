@@ -1,10 +1,12 @@
-'''A very simple Echo server in Pulsar::
+'''A very simple Echo server/client using Pulsar. To run the server::
 
     python manage.py
     
-To see options type::
+Open a new shell, in this directory, launch python and type::
 
-    python manage.py -h
+    >>> from manage import Echo
+    >>> p = Echo('localhost:8060')
+    >>> response = p.request('Hello')
 '''
 try:
     import pulsar

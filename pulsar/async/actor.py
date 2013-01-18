@@ -26,7 +26,6 @@ from pulsar.utils import events
 from .eventloop import EventLoop, setid, signal
 from .defer import Deferred, log_failure
 from .proxy import ActorProxy, get_command, get_proxy
-from .mailbox import mailbox
 from .access import set_actor, is_mainthread, get_actor, remove_actor, NOTHING
 
 
@@ -396,17 +395,14 @@ properly this actor will go out of scope.'''
                 # The actor is not yet active, come back at the next requestloop
                 self.requestloop.call_soon_threadsafe(self.periodic_task)
     
-    def mailbox_ready(self, *args):
-        self.logger.info('%s started at address %s', self, self.mailbox)
+    def mailbox_ready(self):
         a = get_actor()
         if a is not self:
             set_actor(self)
-        self.hand_shake()
-    
-    def hand_shake(self, result=NOTHING):
+        self.logger.info('%s started', self)
+        self.mailbox = self.mailbox.
         # hand shake. Don't modify this method. Crucial.
-        if result is NOTHING:
-            self.logger.debug('%s send hand shake to %s', self, self.monitor)
+        self.logger.debug('%s send hand shake to %s', self, self.monitor)
             response = self.send(self.monitor, 'mailbox_address', self.address)
             response.when_ready.add_callback(self.hand_shake)\
                                .add_errback(self.stop)
@@ -492,7 +488,7 @@ if *proxy* is not a class:`ActorProxy` instance raise an exception.'''
         # down the eventloop.
         self.requestloop = EventLoop(io=self.io_poller(), logger=self.logger,
                                      poll_timeout=self.params.poll_timeout)
-        self.mailbox = mailbox(self)
+        self.mailbox = self._mailbox()
         # Inject self as the actor of this thread
         set_actor(self)
         if self.is_process():
@@ -545,3 +541,7 @@ if *proxy* is not a class:`ActorProxy` instance raise an exception.'''
         finally:
             self.stop(exc)
         
+    def _mailbox(self):
+        client = PulsarClient(self.arbiter.address)
+        client.event_loop.call_soon_threadsafe(self.mailbox_ready)
+        return client
