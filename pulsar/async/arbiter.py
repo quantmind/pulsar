@@ -28,19 +28,16 @@ def arbiter(commands_set=None, **params):
     arbiter = get_actor()
     if arbiter is None:
         # Create the arbiter
-        cset = set(proxy.actor_commands)
-        cset.update(proxy.arbiter_commands)
-        cset.update(commands_set or ())
-        return set_actor(_spawn_actor(Arbiter, None, commands_set=cset, **params))
+        return set_actor(_spawn_actor(Arbiter, None, **params))
     elif isinstance(arbiter, Actor) and arbiter.is_arbiter():
         return arbiter
 
-
+#TODO: why cfg is set to None?
 def spawn(cfg=None, **kwargs):
     '''Spawn a new :class:`Actor` and return an :class:`ActorProxyDeferred`.
 This method can be used from any :class:`Actor`.
 If not in the :class:`Arbiter` domain,
-the method send a request to the :class:`Arbiter` to spawn a new actor, once
+the method send a request to the :class:`Arbiter` to spawn a new actor. Once
 the arbiter creates the actor it returns the proxy to the original caller.
 
 **Parameter kwargs**

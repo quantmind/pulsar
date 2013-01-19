@@ -7,7 +7,6 @@ from .servers import *
 from .tcp import *
 from .udp import *
 from .clients import *
-from .mailbox import *
 from .eventloop import *
 from .actor import *
 from .arbiter import *

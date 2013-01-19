@@ -1,4 +1,4 @@
-'''Pulsar inter-actor message pasing.
+'''Pulsar inter-actor message passing.
 It uses bidirectional socket connections between the :class:`Arbiter`
 and actors. It uses the unmasked websocket protocol.'''
 import sys
@@ -7,21 +7,18 @@ import tempfile
 from functools import partial
 from collections import namedtuple
 
-from pulsar import platform, PulsarException, Config
+from pulsar import platform, PulsarException, Config, ProtocolError
 from pulsar.utils.pep import to_bytes, ispy3k, ispy3k, pickle, set_event_loop,\
                              get_event_loop, new_event_loop
 from pulsar.utils.websocket import FrameParser
 from pulsar.utils.security import gen_unique_id
 
 from .access import get_actor, set_actor, PulsarThread
-from .defer import make_async, log_failure, is_failure, Deferred
+from .defer import make_async, log_failure, Deferred
 from .servers import create_server, ServerConnection
 from .protocols import ProtocolConsumer
-from .proxy import actorid, CommandNotFound, get_proxy
+from .proxy import actorid, get_proxy, get_command
 from . import clients
-
-
-__all__ = ['CommandNotFound']
 
 
 LOGGER = logging.getLogger('pulsar.mailbox')
@@ -30,7 +27,7 @@ Request = namedtuple('Request', 'actor caller connection')
     
 class MonitorMailbox(object):
     '''A :class:`Mailbox` for a :class:`Monitor`. This is a proxy for the
-arbiter inbox.'''
+arbiter mailbox.'''
     active_connections = 0
     def __init__(self, actor):
         self.mailbox = actor.monitor.mailbox
@@ -59,7 +56,7 @@ arbiter inbox.'''
     
         
 class MailboxMixin(object):
-    
+    # A Mixin for both Server and Client protocol consumers
     def __new__(cls, *args, **kwargs):
         self = super(MailboxMixin, cls).__new__(cls)
         self._pending_responses = {}
@@ -72,7 +69,7 @@ class MailboxMixin(object):
         msg = self._parser.decode(data)
         if msg:
             message = pickle.loads(msg.body)
-            self.responde(message)
+            log_failure(self.responde(message))
             
     def callback(self, ack, result):
         if not ack:
@@ -85,31 +82,25 @@ class MailboxMixin(object):
         
     def responde(self, message):
         actor = get_actor()
-        actor = actor.get_actor(message['receiver']) or actor
-        caller = actor.get_actor(message['sender'])
         try:
             command = message['command']
-            if command == 'callback':
-                self.callback(message.get('ack'), message.get('result'))
-                return
-            else:
-                command = actor.command(command)
-            if not command:
-                raise CommandNotFound(message['command'])
+            if command == 'callback':   #this is a callback
+                return self.callback(message.get('ack'), message.get('result'))
+            actor = actor.get_actor(message['receiver']) or actor
+            caller = actor.get_actor(message['sender'])
+            command = get_command(command)
             req = Request(actor, get_proxy(caller, safe=True), self.connection)
             result = command(req, message['args'], message['kwargs'])
         except:
             result = sys.exc_info()
-        result = make_async(result).add_both(partial(self._responde, message))
+        return make_async(result).add_both(partial(self._responde, message))
         
     def _responde(self, data, result):
-        if is_failure(result):
-            log_failure(result)
         if data.get('ack'):
-            data['result'] = result
-            data['receiver'], data['sender'] = data['sender'], data['receiver']
-            data['command'] = 'callback'
+            data = {'command': 'callback', 'result': result, 'ack': data['ack']}
             self.write(data)
+        #Return the result so a failure can be logged
+        return result
             
     def dump_data(self, obj):
         obj = pickle.dumps(obj, protocol=2)
@@ -119,7 +110,10 @@ class MailboxMixin(object):
         if consumer and 'ack' in data:
             self._pending_responses[data['ack']] = consumer
         data = self.dump_data(data)
-        self.event_loop.call_soon_threadsafe(self.transport.write, data)
+        self._write(data)
+    
+    def _write(self, data):
+        self.transport.write(data)
 
 ################################################################################
 ##    Mailbox Server Classes
@@ -138,6 +132,9 @@ class MailboxClientConsumer(MailboxMixin, clients.ClientProtocolConsumer):
     def send(self, *args):
         # This is only called at the first request
         self.write(self.request.data, self.consumer)
+    
+    def _write(self, data):
+        self.event_loop.call_soon_threadsafe(self.transport.write, data)
     
     
 class MailboxClient(clients.Client):
@@ -170,14 +167,15 @@ class MailboxClient(clients.Client):
         request = clients.Request(self.address, self.timeout)
         self.consumer = self.response(request)
         
-    def request(self, cmd, sender, target, args, kwargs):
-        data = {'command': cmd.__name__,
+    def request(self, command, sender, target, args, kwargs):
+        command = get_command(command)
+        data = {'command': command.__name__,
                 'sender': actorid(sender),
                 'receiver': actorid(target),
                 'args': args if args is not None else (),
                 'kwargs': kwargs if kwargs is not None else {}}
         d = None
-        if cmd.ack:
+        if command.ack:
             d = Deferred()
             data['ack'] = gen_unique_id()[:8]
         if not self.consumer:

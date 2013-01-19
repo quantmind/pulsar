@@ -28,7 +28,6 @@ class TestTestWorker(unittest.TestCase):
         worker = pulsar.get_actor()
         self.assertTrue(pulsar.is_actor(worker))
         self.assertTrue(worker.running())
-        self.assertTrue(worker.active())
         self.assertFalse(worker.closed())
         self.assertFalse(worker.stopped())
         self.assertEqual(worker.info_state, 'running')
@@ -52,15 +51,15 @@ class TestTestWorker(unittest.TestCase):
         self.assertEqual(mailbox.timeout, 0)
         
     @run_on_arbiter
-    def testTestSuiteMonitor(self):
+    def test_TestSuiteMonitor(self):
         arbiter = pulsar.get_actor()
         self.assertTrue(len(arbiter.monitors) >= 1)
-        monitor = arbiter.monitors['test']
+        monitor = arbiter.registered['test']
         app = monitor.app
         self.assertTrue(isinstance(app, TestSuite))
         self.assertFalse(monitor.cpubound)
         
-    def testMailbox(self):
+    def test_Mailbox(self):
         worker = pulsar.get_actor()
         mailbox = worker.mailbox
         self.assertTrue(mailbox)
@@ -83,7 +82,7 @@ class TestTestWorker(unittest.TestCase):
         self.assertNotEqual(worker.tid, ioloop.tid)
         self.assertTrue(str(ioloop))
         
-    def testNOT_DONE(self):
+    def test_NOT_DONE(self):
         worker = pulsar.get_actor()
         count = worker.requestloop.num_loops
         yield pulsar.NOT_DONE
@@ -109,7 +108,8 @@ class TestTestWorker(unittest.TestCase):
         self.assertEqual(worker.ioloop.tid, d.result)
         self.assertEqual(worker.tid, current_thread().ident)
     
-    def testReconnect(self):
+    def __testReconnect(self):
+        #TODO: new test for drop connections
         worker = pulsar.get_actor()
         # the worker closes all arbiters connection
         worker.arbiter.mailbox.close_connections()
@@ -118,13 +118,13 @@ class TestTestWorker(unittest.TestCase):
         
     def testPingMonitor(self):
         worker = pulsar.get_actor()
-        result = send(worker.monitor, 'ping')
-        self.assertTrue(is_async(result))
-        yield result
-        self.assertEqual(result, 'pong')
+        future = send(worker.monitor, 'ping')
+        self.assertTrue(is_async(future))
+        yield future
+        self.assertEqual(future.result, 'pong')
         yield self.async.assertEqual(send(worker.monitor, 'ping'), 'pong')
-        response = worker.send('arbiter', 'notify', worker.info())
-        self.assertEqual(response.connection, None)
+        response = worker.send(worker.monitor, 'notify', worker.info())
+        self.assertEqual(response, None)
         
     def test_run_on_arbiter(self):
         actor = pulsar.get_actor()
@@ -137,11 +137,11 @@ class TestTestWorker(unittest.TestCase):
         self.assertRaises(ValueError, pulsar.send, 'vcghdvchdgcvshcd', 'ping')
         
     def test_multiple_execute(self):
-        result1 = pulsar.send('arbiter', 'run', wait(0.2))
-        result2 = pulsar.send('arbiter', 'ping')
-        result3 = pulsar.send('arbiter', 'echo', 'ciao!')
-        result4 = pulsar.send('arbiter', 'run', wait(0.1))
-        result5 = pulsar.send('arbiter', 'echo', 'ciao again!')
+        result1 = send('arbiter', 'run', wait(0.2))
+        result2 = send('arbiter', 'ping')
+        result3 = send('arbiter', 'echo', 'ciao!')
+        result4 = send('arbiter', 'run', wait(0.1))
+        result5 = send('arbiter', 'echo', 'ciao again!')
         yield multi_async((result1.when_ready,result2.when_ready,
                            result3.when_ready,result4.when_ready,
                            result5.when_ready))

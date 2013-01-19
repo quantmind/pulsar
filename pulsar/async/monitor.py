@@ -17,8 +17,7 @@ from .eventloop import asynchronous
 __all__ = ['Monitor', 'PoolMixin']
 
 
-def _spawn_actor(cls, monitor, commands_set=None, cfg=None, name=None,
-                 aid=None, **kw):
+def _spawn_actor(cls, monitor, cfg=None, name=None, aid=None, **kw):
     # Internal function which spawns a new Actor and return its
     # ActorProxyMonitor.
     # *cls* is the Actor class
@@ -35,12 +34,10 @@ def _spawn_actor(cls, monitor, commands_set=None, cfg=None, name=None,
         params = monitor.actorparams()
         name = params.pop('name', name)
         aid = params.pop('aid', aid)
-        commands_set = params.pop('commands_set', commands_set)
     else:
         if kind != 'monitor':
             raise TypeError('class %s not a valid monitor' % cls)
         params = {}
-    commands_set = set(commands_set or proxy.actor_commands)
     for key, value in iteritems(kw):
         if key in cfg.settings:
             cfg.set(key, value)
@@ -54,8 +51,8 @@ def _spawn_actor(cls, monitor, commands_set=None, cfg=None, name=None,
             kind = cfg.concurrency
     if not kind:
         raise TypeError('Cannot spawn class %s. not a valid concurrency.' % cls)
-    actor_proxy = concurrency(kind, cls, monitor, commands_set, cfg,
-                              name=name, aid=aid, **params)
+    actor_proxy = concurrency(kind, cls, monitor, cfg, name=name,
+                              aid=aid, **params)
     # Add to the list of managed actors if this is a remote actor
     if isinstance(actor_proxy, Actor):
         return actor_proxy
@@ -245,7 +242,7 @@ as required."""
 class Monitor(PoolMixin, Actor):
     '''A monitor is a **very** special :class:`Actor` and :class:`PoolMixin`
 which shares the same :class:`EventLoop` with the :class:`Arbiter` and
-therefore lives in the main process domain.
+therefore lives in the main thread of the  process domain.
 The Arbiter manages monitors which in turn manage a set of :class:`Actor`
 performing similar tasks.
 
@@ -267,6 +264,10 @@ adding a new monitor to the arbiter follows the pattern::
     @property
     def cpubound(self):
         return False
+    
+    @property
+    def arbiter(self):
+        return self.monitor
 
     def is_process(self):
         return False
@@ -320,13 +321,6 @@ Users shouldn't need to override this method, but use
     @property
     def requestloop(self):
         return self.monitor.requestloop
-
-    def actorparams(self):
-        '''Spawn a new actor and add its :class:`ActorProxyMonitor`
- to the :attr:`PoolMixin.managed_actors` dictionary.'''
-        p = super(Monitor, self).actorparams()
-        p.update({'commands_set': self.impl.commands_set})
-        return p
 
     def stop_actor(self, actor):
         if not actor.is_alive():

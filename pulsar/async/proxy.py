@@ -4,7 +4,6 @@ from collections import deque
 
 from pulsar import AuthenticationError
 
-from .access import get_actor
 from .defer import Deferred
 
 __all__ = ['ActorProxyDeferred',
@@ -16,9 +15,6 @@ __all__ = ['ActorProxyDeferred',
            'get_command']
 
 global_commands_table = {}
-actor_only_commands = set()
-actor_commands = set()
-arbiter_commands = set()
 
 class CommandNotFound(Exception):
 
@@ -41,12 +37,12 @@ def get_proxy(obj, safe=False):
 def actorid(actor):
     return actor.aid if hasattr(actor, 'aid') else actor
 
-def get_command(name, commands_set=None):
+def get_command(name):
     '''Get the command function *name*'''
-    name = name.lower()
-    if commands_set and name not in commands_set:
-        return
-    return global_commands_table.get(name)
+    command = global_commands_table.get(name.lower())
+    if not command:
+        raise CommandNotFound(name)
+    return command
     
     
 class command:
@@ -61,35 +57,18 @@ class command:
     external clients. They accept the actor proxy calling as third positional
     arguments.
 '''
-    def __init__(self, ack=True, authenticated=False, internal=False,
-                 commands_set=None):
+    def __init__(self, ack=True):
         self.ack = ack
-        self.authenticated = authenticated
-        self.internal = internal
-        if commands_set is None:
-            commands_set = actor_commands
-        self.commands_set = commands_set
     
     def __call__(self, f):
         self.name = f.__name__.lower()
         
         def command_function(request, args, kwargs):
-            if self.authenticated:
-                password = request.actor.cfg.get('password')
-                if password and not request.connection.authenticated:
-                    raise AuthenticationError
-            if self.internal:
-                if not request.caller:
-                    raise AuthenticationError
-                return f(request, *args, **kwargs)
-            else:
-                return f(request, *args, **kwargs)
+            return f(request, *args, **kwargs)
         
         command_function.ack = self.ack
-        command_function.internal = self.internal
         command_function.__name__ = self.name
         command_function.__doc__ = f.__doc__
-        self.commands_set.add(self.name)
         global_commands_table[self.name] = command_function
         return command_function
             
@@ -150,7 +129,6 @@ parameter ``"hello there!"``.
     def __init__(self, impl):
         self.aid = impl.aid
         self.name = impl.name
-        self.commands_set = tuple(impl.commands_set)
         self.cfg = impl.cfg
         if hasattr(impl, 'address'):
             self.address = impl.address
@@ -162,23 +140,6 @@ parameter ``"hello there!"``.
     @property
     def proxy(self):
         return self
-    
-    def request(self, sender, command, *args, **params):
-        '''Send an message to the underlying actor
-(the receiver). This is the low level function call for
-communicating between actors.
-
-:parameter sender: :class:`Actor` sending the message.
-:parameter command: the :class:`command` to perform in the actor underlying
-    this proxy.
-:parameter args: non positional arguments of command.
-:rtype: an asynchronous :class:`ActorMessage`.'''
-        if sender is None:
-            sender = get_actor()
-        cmd = get_command(command, self.commands_set)
-        if not cmd:
-            raise CommandNotFound(command)
-        return sender.mailbox.request(cmd, sender, self.aid, args, params)
     
     def __eq__(self, o):
         o = get_proxy(o,True)

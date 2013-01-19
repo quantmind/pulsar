@@ -140,10 +140,7 @@ class TestList(TestOption):
     validator = pulsar.validate_bool
     desc = """List all test labels without performing tests."""
 
-
-test_commands = set()
-
-@pulsar.command(internal=True, ack=False, commands_set=test_commands)
+@pulsar.command(ack=False)
 def test_result(request, tag, clsname, result):
     '''Command for sending test results from test workers to the test monitor.'''
     request.actor.logger.debug('Got test results from %s.%s', tag, clsname)
@@ -177,7 +174,6 @@ is a group of tests specified in a test class.
 '''
     _app_name = 'test'
     cfg_apps = ('cpubound',)
-    commands_set = test_commands
     cfg = {'loglevel': 'none',
            'timeout': 3600,
            'backlog': 1,

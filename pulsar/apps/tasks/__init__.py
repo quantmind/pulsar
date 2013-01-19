@@ -297,50 +297,48 @@ request has been obtained from the :attr:`ioqueue`.'''
         
 
 #################################################    TASKQUEUE COMMANDS
-taskqueue_cmnds = set()
-
-@pulsar.command(internal=True, commands_set=taskqueue_cmnds)
-def addtask(client, actor, caller, jobname, task_extra, *args, **kwargs):
+@pulsar.command()
+def addtask(request, jobname, task_extra, *args, **kwargs):
+    actor = request.actor
     kwargs.pop('ack', None)
-    return actor.app._addtask(actor, caller, jobname, task_extra, True,
+    return actor.app._addtask(actor, request.caller, jobname, task_extra, True,
                               args, kwargs)
 
-@pulsar.command(internal=True, ack=False, commands_set=taskqueue_cmnds)
-def addtask_noack(client, actor, caller, jobname, task_extra, *args, **kwargs):
+@pulsar.command()
+def addtask_noack(request, jobname, task_extra, *args, **kwargs):
+    actor = request.actor
     kwargs.pop('ack', None)
-    return actor.app._addtask(actor, caller, jobname, task_extra, False,
+    return actor.app._addtask(actor, request.caller, jobname, task_extra, False,
                               args, kwargs)
 
-@pulsar.command(internal=True, commands_set=taskqueue_cmnds)
-def save_task(client, actor, caller, task):
-    #import time
-    #time.sleep(0.1)
-    return actor.app.scheduler.save_task(task)
+@pulsar.command()
+def save_task(request, task):
+    return request.actor.app.scheduler.save_task(task)
 
-@pulsar.command(internal=True, commands_set=taskqueue_cmnds)
-def delete_tasks(client, actor, caller, ids):
-    return actor.app.scheduler.delete_tasks(ids)
+@pulsar.command()
+def delete_tasks(request, ids):
+    return request.actor.app.scheduler.delete_tasks(ids)
 
-@pulsar.command(commands_set=taskqueue_cmnds)
-def get_task(client, actor, id):
-    return actor.app.scheduler.get_task(id)
+@pulsar.command()
+def get_task(crequest, id):
+    return request.actor.app.scheduler.get_task(id)
 
-@pulsar.command(commands_set=taskqueue_cmnds)
-def get_tasks(client, actor, **parameters):
-    return actor.app.scheduler.get_tasks(**parameters)
+@pulsar.command()
+def get_tasks(request, **parameters):
+    return request.actor.app.scheduler.get_tasks(**parameters)
 
-@pulsar.command(commands_set=taskqueue_cmnds)
-def job_list(client, actor, jobnames=None):
-    return list(actor.app.job_list(jobnames=jobnames))
+@pulsar.command()
+def job_list(request, jobnames=None):
+    return list(request.actor.app.job_list(jobnames=jobnames))
 
-@pulsar.command(commands_set=taskqueue_cmnds)
-def next_scheduled(client, actor, jobnames=None):
-    return actor.app.scheduler.next_scheduled(jobnames=jobnames)
+@pulsar.command()
+def next_scheduled(request, jobnames=None):
+    return request.actor.app.scheduler.next_scheduled(jobnames=jobnames)
 
-@pulsar.command(commands_set=taskqueue_cmnds)
-def wait_for_task(client, actor, id, timeout=3600):
+@pulsar.command()
+def wait_for_task(request, id, timeout=3600):
     # wait for a task to finish for at most timeout seconds
-    scheduler = actor.app.scheduler
+    scheduler = request.actor.app.scheduler
     return scheduler.task_class.wait_for_task(scheduler, id, timeout)
 
 
@@ -356,7 +354,6 @@ tasks and managing scheduling of tasks.
     _app_name = 'tasks'
     cfg_apps = ('cpubound',)
     cfg = {'timeout': '3600', 'backlog': 1}
-    commands_set = taskqueue_cmnds
     task_class = TaskInMemory
     '''The :class:`Task` class for storing information about task execution.
 

@@ -151,7 +151,6 @@ These are the most important facts about a pulsar :class:`Application`
     line.
 :parameter name: Application name. If not provided the class name in lower
     case is used
-:parameter commands_set: Initialise the :attr:`commands_set` attribute.
 :parameter params: a dictionary of configuration parameters which overrides
     the defaults and the `cfg` attribute. They will be overritten by
     a config file or command line arguments.
@@ -188,13 +187,6 @@ These are the most important facts about a pulsar :class:`Application`
 
     full path of the script which starts the application or ``None``.
     If supplied it is used to setup the python path
-
-.. attribute:: commands_set
-
-    Optional set of :ref:`remote actions <api-remote_commands>` available
-    on :class:`Actor` created by this :class:`Application`.
-
-    Default: ``None``.
 """
     cfg = {}
     _app_name = None
@@ -203,7 +195,6 @@ These are the most important facts about a pulsar :class:`Application`
     cfg_apps = None
     config_options_include = None
     config_options_exclude = None
-    commands_set = None
 
     def __init__(self,
                  callable=None,
@@ -214,7 +205,6 @@ These are the most important facts about a pulsar :class:`Application`
                  script=None,
                  version=None,
                  parse_console=True,
-                 commands_set=None,
                  cfg=None,
                  **kwargs):
         '''Initialize a new :class:`Application` and add its
@@ -231,8 +221,6 @@ These are the most important facts about a pulsar :class:`Application`
         self.epilog = epilog or self.epilog
         self._app_name = self._app_name or self.__class__.__name__.lower()
         self._name = name or self._app_name
-        if commands_set is not None:
-            self.commands_set = commands_set
         self.script = script
         self.python_path()
         params = cfg or {}
@@ -261,8 +249,6 @@ These are the most important facts about a pulsar :class:`Application`
                                               app=self,
                                               cfg=self.cfg)
                 self.cfg = monitor.cfg
-                if self.commands_set:
-                    monitor.impl.commands_set.update(self.commands_set)
         return self.local.on_start
 
     @property

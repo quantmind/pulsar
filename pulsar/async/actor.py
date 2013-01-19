@@ -25,7 +25,7 @@ from pulsar.utils import events
 
 from .eventloop import EventLoop, setid, signal
 from .defer import Deferred, log_failure
-from .proxy import ActorProxy, get_command, get_proxy
+from .proxy import ActorProxy, get_proxy
 from .mailbox import MailboxClient
 from .access import set_actor, is_mainthread, get_actor, remove_actor, NOTHING
 
@@ -46,6 +46,7 @@ ACTOR_STATES.DESCRIPTION = {ACTOR_STATES.INACTIVE: 'inactive',
                             ACTOR_STATES.STOPPING: 'stopping',
                             ACTOR_STATES.CLOSE: 'closed',
                             ACTOR_STATES.TERMINATE:'terminated'}
+SPECIAL_ACTORS = ('monitor', 'arbiter')
 #
 # LOW LEVEL CONSTANTS - NO NEED TO CHANGE THOSE ###########################
 MIN_NOTIFY = 5     # DON'T NOTIFY BELOW THIS INTERVAL
@@ -220,10 +221,6 @@ an :class:`ActorProxy`.
         return self.__impl.name
     
     @property
-    def commands_set(self):
-        return self.__impl.commands_set
-    
-    @property
     def proxy(self):
         return ActorProxy(self)
 
@@ -259,17 +256,13 @@ logging is configured, the :attr:`Actor.mailbox` is registered and the
             events.fire('start', self)
             self.state = ACTOR_STATES.STARTING
             self._run()
-            
-    def command(self, action):
-        '''Fetch the pulsar command for *action*.'''
-        return get_command(action, self.commands_set)
 
     def send(self, target, action, *args, **params):
         '''Send a message to *target* to perform *action* with given
 parameters *params*.'''
         if not isinstance(target, ActorProxy):
-            target = get_proxy(self.get_actor(target))
-        return target.request(self, action, *args, **params)
+            target = get_proxy(self.get_actor(target)) or target
+        return self.mailbox.request(action, self, target, args, params)
     
     def io_poller(self):
         '''Return the :class:`EventLoop.io` handler. By default it return
@@ -283,7 +276,7 @@ nothing so that the best handler for the system is chosen.'''
     def active(self):
         '''``True`` if actor is active by being both running and having
 the :attr:`ioloop` running.'''
-        return self.running() and self.arbiter.aid in self.linked_actors
+        return self.running()
     
     def started(self):
         '''``True`` if actor has started. It does not necessarily
@@ -431,22 +424,6 @@ status and performance.'''
         if isp:
             data['system'] = system.system_info(self.pid)
         return self.on_info(data)
-    
-    def link_actor(self, proxy, address=None):
-        '''Add the *proxy* to the :attr:`linked_actors` dictionary.
-if *proxy* is not a class:`ActorProxy` instance raise an exception.'''
-        if address:
-            proxy.address = address
-        if not proxy.address:
-            raise ValueError('Linking with a actor without address')
-        self.linked_actors[proxy.aid] = proxy
-        # If the proxy is the actor monitor, add the arbiter
-        # if the monitor is not the arbiter itself.
-        # This last check is crucial in order to recursive call
-        # causing stack overflow!
-        if self.monitor == proxy and self.monitor != self.arbiter:
-            self.link_actor(self.arbiter, address)
-        return proxy
 
     def _setup_ioloop(self):
         # Internal function called at the start of the actor. It builds the

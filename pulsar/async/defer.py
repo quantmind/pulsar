@@ -163,7 +163,9 @@ result.
     return make_async(result, max_errors=max_errors, description=description)
 
 def log_failure(failure):
-    '''Log the *failure* if *failure* is a :class:`Failure`.'''
+    '''Log the *failure* if *failure* is a :class:`Failure` or a
+:class:`Deferred` with a called failure.'''
+    failure = maybe_async(failure)
     if is_failure(failure):
         failure.log()
     return failure
