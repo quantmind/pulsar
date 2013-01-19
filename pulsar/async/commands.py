@@ -30,7 +30,7 @@ def config(request, setget, name, *value):
 
 @proxy.command()
 def run(request, callable, *args, **kwargs):
-    '''Execute a python script in the server'''
+    '''Execute a python *callable*.'''
     return callable(request.actor, *args, **kwargs)
 
 @proxy.command(ack=False)
@@ -46,10 +46,9 @@ def notify(request, info):
         request.caller.info = info
     
 @proxy.command()
-def spawn(request, linked_actors=None, **kwargs):
-    linked_actors = linked_actors if linked_actors is not None else {}
-    linked_actors[request.caller.aid] = request.caller
-    return request.actor.spawn(linked_actors=linked_actors, **kwargs)
+def spawn(request, **kwargs):
+    '''Spawn a new actor.'''
+    return request.actor.spawn(**kwargs)
 
 @proxy.command()
 def info(request):

@@ -41,7 +41,7 @@ extensions = ['sphinx.ext.autodoc',
               'sphinx.ext.viewcode',
               'pulsarext']
 
-if pulsar.VERSION[3] == 'beta':
+if pulsar.VERSION[3] != 'final':
     extensions.append('sphinxtogithub')
 html_context = {'release_version': pulsar.VERSION[3] == 'final'}
 # The suffix of source filenames.

@@ -12,10 +12,9 @@ Pulsar is built on top of a set of **primitive** classes which handle the
 different aspects of the concurrent framework.
 These primitive classes are:
 
-* :class:`IOLoop` the primitive for handling asynchronous events.
-* :class:`Deferred` the primitive for handling asynchronous execution.
-* :class:`Protocol` the primitive for handling parallel execution.
-* :class:`Actor` the primitive for handling parallel execution.
+* :class:`EventLoop` to handle scheduling of asynchronous events.
+* :class:`Deferred` to handle asynchronous call backs.
+* :class:`Actor` manage parallel execution in threads or processes.
 
 .. _pulsar_framework:
 
@@ -24,9 +23,7 @@ directly on top of :ref:`pulsar primitives <pulsar_primitives>`. These
 **framework** classes are:
 
 * :class:`Arbiter` manages the execution of pulsar-powered applications.
-* :class:`AsyncIOStream` the primitive for handling asynchronous IO on a :class:`Socket`.
-* :class:`AsyncSocketServer` base class for all asynchronous servers performing IO on
-  a :class:`Socket`.
+* :class:`ProtocolConsumer` consume stream of data provided by the :class:`Protocol`.
 
 
 .. toctree::

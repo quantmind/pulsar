@@ -95,22 +95,6 @@ ActorProxyMonitor
    :member-order: bysource
    
    
-ActorMessage
-~~~~~~~~~~~~~~
-
-.. autoclass:: ActorMessage
-   :members:
-   :member-order: bysource
-   
-
-Mailbox
-~~~~~~~~~~~~~~
-
-.. autoclass:: Mailbox
-   :members:
-   :member-order: bysource
-   
-   
 Concurrency
 ~~~~~~~~~~~~~~~~~~~~~
 
@@ -121,11 +105,12 @@ Concurrency
 
 .. _api-remote_commands:
 
-Remote Commands
+Messages
 ====================
 
-:class:`Actor` communicate with each other via :class:`Mailbox` which
-each actor has in its process domain. When an actor communicate with
+:class:`Actor` communicate with each other via the :func:`send` function
+which uses the via :attr:`Actor.mailbox` attribute of the actor in the
+current context. When an actor communicate with
 another remote actor it does so by *sending* an **action** to it
 with positional and/or key-valued arguments. For example::
 

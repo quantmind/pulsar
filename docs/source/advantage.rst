@@ -13,5 +13,5 @@ It is now developed in python 3.3 while keeping backward compatibility.
 Flexibility
 -------------------
 Pulsar's codebase is small, at about 10,000 lines of code. The source code is
-open and it has a very liberal license. This way you know you'll never be in a position where
-you can't add a feature you need.
+open and it has a very :ref:`liberal license <license>`.
+You can :ref:`fork the code <contributing>` add feature you need and send us your patch.

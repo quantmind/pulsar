@@ -23,15 +23,7 @@ EventLoop
 .. autoclass:: EventLoop
    :members:
    :member-order: bysource
-   
-     
-IOQueue
-~~~~~~~~~~~~~~~~~~~~
-
-.. autoclass:: IOQueue
-   :members:
-   :member-order: bysource
-   
+      
    
 Asyncronous Tools
 =====================

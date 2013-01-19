@@ -98,7 +98,7 @@ Users access the arbiter (in the arbiter process domain) by the high level api::
     def __init__(self, impl):
         Actor.__init__(self, impl)
         self.monitors = {}
-        self.registered = {}
+        self.registered = {'arbiter': self}
 
     ############################################################################
     # ARBITER HIGH LEVEL API

@@ -41,9 +41,16 @@ pulsar :ref:`socket server application <apps-socket>`.
 Socket Servers
 --------------------
 
-Can I run a Web-server with multiple process?
+Can I run a web-server with multiple process?
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Yes you can, in posix always, in windows only for python 3.2 or above.
 Check :ref:`wsgi in multi process <multi-wsgi>`.
 
 
+Internals
+---------------
+
+How is inter-actor message passing implemented?
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Check the :ref:`actor messages documentation <tutorials-messages>`.

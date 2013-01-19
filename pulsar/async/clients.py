@@ -241,5 +241,8 @@ method should invoke this method to start the response dance.
         for p in self.connection_pools.values():
             p.close_connections()
             
+    def close(self):
+        self.close_connections()
+        
     def fire(self, event, *args):
         pass

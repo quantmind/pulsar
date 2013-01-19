@@ -138,7 +138,7 @@ class MailboxClientConsumer(MailboxMixin, clients.ClientProtocolConsumer):
     
     
 class MailboxClient(clients.Client):
-    # Pulsar arbiter client
+    # mailbox for actors client
     response_factory = MailboxClientConsumer
      
     def __init__(self, address, actor):
@@ -146,11 +146,13 @@ class MailboxClient(clients.Client):
         self.address = address
         self.consumer = None
         self.name = 'Mailbox for %s' % actor
+        self._cpubound = False
         eventloop = get_event_loop()
         # The eventloop is cpubound
         if eventloop is None or getattr(eventloop, 'cpubound', False):
             # No IO event loop available in the current thread.
             # Create one and set it as the event loop
+            self._cpubound = True
             eventloop = new_event_loop()
             set_event_loop(eventloop)
             actor.requestloop.call_soon_threadsafe(self._start_on_thread)
@@ -186,3 +188,7 @@ class MailboxClient(clients.Client):
             self.consumer.write(data, d)
         return d
     
+    def close(self):
+        if self._cpubound:
+            self._event_loop.close()
+        return super(MailboxClient, self).close()

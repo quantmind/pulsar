@@ -11,14 +11,9 @@ from pulsar.utils.pep import get_event_loop
 def simple_function(actor):
     return 'success'
 
-class wait:
-    
-    def __init__(self, period=0.5):
-        self.period = period
-        
-    def __call__(self, actor):
-        time.sleep(self.period)
-        return self.period
+def wait(actor, period=0.5):
+    time.sleep(period)
+    return period
 
 
 class TestTestWorker(unittest.TestCase):
@@ -137,10 +132,10 @@ class TestTestWorker(unittest.TestCase):
         self.assertRaises(ValueError, pulsar.send, 'vcghdvchdgcvshcd', 'ping')
         
     def test_multiple_execute(self):
-        result1 = send('arbiter', 'run', wait(0.2))
+        result1 = send('arbiter', 'run', wait, 0.2)
         result2 = send('arbiter', 'ping')
         result3 = send('arbiter', 'echo', 'ciao!')
-        result4 = send('arbiter', 'run', wait(0.1))
+        result4 = send('arbiter', 'run', wait, 0.1)
         result5 = send('arbiter', 'echo', 'ciao again!')
         yield multi_async((result1.when_ready,result2.when_ready,
                            result3.when_ready,result4.when_ready,

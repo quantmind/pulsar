@@ -18,9 +18,7 @@ The shell has already ``pulsar``, ``arbiter`` and the :class:`Actor`
 class in the global dictionary::
 
     >> pulsar.__version__
-    0.2.0
-    >> arbiter.is_arbiter()
-    True
+    0.5.0
     >> arbiter.state
     'running'
     >> arbiter.MANAGED_ACTORS

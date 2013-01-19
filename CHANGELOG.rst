@@ -5,7 +5,7 @@ Ver. 0.5.0
 * :class:`Actor` internal message passing uses the (unmasked) websocket protocol
   in a bidirectional communications between the :class:`Arbiter` and actors.
 
-Ver. 0.4.4
+Ver. 0.4.4 - 2013-Jan-13
 ==============================
 * Documentation for development version hosted on github.
 * Modified :meth:`pulsar.Actor.exit` so that it shuts down :attr:`pulsar.Actor.mailbox`

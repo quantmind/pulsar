@@ -60,7 +60,8 @@ def is_actor(obj):
 
 
 def send(target, action, *args, **params):
-    '''Send an *message* to *target* to perform a given *action*.
+    '''Send a :ref:`message <api-remote_commands>` to *target* to perform
+a given *action*.
 
 :parameter target: the :class:`Actor` id or an :class:`ActorProxy` or name of
     the target actor which will receive the message.
@@ -70,8 +71,7 @@ def send(target, action, *args, **params):
     :ref:`remote command <api-remote_commands>` *action*.
 :parameter params: dictionary of parameters to pass to
     :ref:`remote command <api-remote_commands>` *action*.
-:rtype: an :class:`ActorMessage` which is a :class:`Deferred` and therefore
-    can be used to attach callbacks.
+:rtype: a :class:`Deferred` if the action acknowledge the caller or `None`.
 
 Typical example::
 
@@ -98,15 +98,12 @@ class Pulsar(LogginMixin):
         
 
 class Actor(EventHandler, Pulsar):
-    '''The base class for concurrent programming in pulsar. In computer science,
+    '''The base class for parallel execution in pulsar. In computer science,
 the **Actor model** is a mathematical model of concurrent computation that
 treats *actors* as the universal primitives of computation.
 In response to a message that it receives, an actor can make local decisions,
 create more actors, send more messages, and determine how to respond to
 the next message received.
-
-Pulsar actors are slightly different from the general theory. They cannot
-create other actors, unless they are of special kind.
 
 The current implementation allows for actors to perform specific tasks such
 as listening to a socket, acting as http server, consuming
@@ -114,8 +111,8 @@ a task queue and so forth.
 
 To spawn a new actor::
 
-    >>> from pulsar import Actor, spawn
-    >>> a = spawn(Actor)
+    >>> from pulsar import spawn
+    >>> a = spawn()
     >>> a.is_alive()
     True
 
@@ -131,11 +128,6 @@ an :class:`ActorProxy`.
 .. attribute:: aid
 
     Unique ID for this :class:`Actor`.
-    
-.. attribute:: commands_set
-
-    Set of :ref:`command names <actor_commands>` available to this
-    :class:`Actor`.
 
 .. attribute:: cpubound
 
@@ -152,15 +144,9 @@ an :class:`ActorProxy`.
     on a socket.  This is different from the :attr:`requestloop` only
     for :ref:`CPU-bound actors <cpubound>`.
 
-.. attribute:: request_processed
+.. attribute:: mailbox
 
-    The total number of requests served by the actor
-
-.. attribute:: concurrent_requests
-
-    The current number of concurrent requests the actor is serving.
-    Depending on the actor type, this number can be very high or max 1
-    (CPU bound actors).
+    Used to send and receive :ref:`actor messages <api-remote_commands>`.
     
 .. attribute:: proxy
 
@@ -168,10 +154,6 @@ an :class:`ActorProxy`.
     to this :class:`Actor`. The proxy is a lightweight representation
     of the actor which can be shared across different processes
     (i.e. it is pickable).
-
-.. attribute:: linked_actors
-
-    Dictionary of :class:`ActorProxy` linked with this :class:`Actor`.
 
 .. attribute:: params
 
@@ -260,14 +242,17 @@ logging is configured, the :attr:`Actor.mailbox` is registered and the
     def send(self, target, action, *args, **params):
         '''Send a message to *target* to perform *action* with given
 parameters *params*.'''
-        if not isinstance(target, ActorProxy):
-            target = get_proxy(self.get_actor(target)) or target
+        target = self.monitor if target == 'monitor' else target
         return self.mailbox.request(action, self, target, args, params)
     
     def io_poller(self):
         '''Return the :class:`EventLoop.io` handler. By default it return
 nothing so that the best handler for the system is chosen.'''
         return None
+    
+    def spawn(self, **params):
+        raise RuntimeError('Cannot spawn an actor from an actor.')
+    
     ###############################################################  STATES
     def running(self):
         '''``True`` if actor is running.'''
@@ -376,7 +361,7 @@ properly this actor will go out of scope.'''
     def periodic_task(self):
         if self.can_continue():
             if self.running():
-                self.send(self.monitor, 'notify', self.info())
+                self.send('monitor', 'notify', self.info())
                 secs = max(ACTOR_TIMEOUT_TOLERANCE*self.cfg.timeout, MIN_NOTIFY)
                 next = min(secs, MAX_NOTIFY)
                 self.ioloop.call_later(next, self.periodic_task)
