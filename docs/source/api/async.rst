@@ -88,8 +88,6 @@ Decorators
 
 .. autofunction:: multi_async
 
-.. autofunction:: raise_failure
-
 
 
 .. _pep-3156: http://www.python.org/dev/peps/pep-3156/

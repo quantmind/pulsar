@@ -60,7 +60,7 @@ class EchoProtocol(pulsar.ClientProtocolConsumer):
         
 
 class Echo(pulsar.Client):
-    response_factory = EchoProtocol
+    consumer_factory = EchoProtocol
 
     def __init__(self, address, **params):
         super(Echo, self).__init__(**params)

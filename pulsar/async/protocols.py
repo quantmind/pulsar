@@ -23,6 +23,12 @@ It can be used for both client and server sockets.
 
     The :class:`Transport` for this :class:`Protocol`. This is obtained once
     the :meth:`connection_made` is invoked.
+    
+.. attribute:: consumer_factory
+
+    Callable or a :class:`ProtocolConsumer` which produces
+    :class:`ProtocolConsumer` which handle the receiving, decoding and
+    sending of data.
 
 .. attribute:: on_connection
 
@@ -36,7 +42,7 @@ It can be used for both client and server sockets.
 **METHODS**
 '''
     _transport = None
-    response_factory = None
+    consumer_factory = None
     
     def __init__(self, address):
         self._address = address
@@ -87,7 +93,7 @@ When the connection is closed, :meth:`connection_lost` is called."""
     def data_received(self, data):
         """Called by the :attr:`transport` when data is received.
 By default it feeds the *data*, a bytes object, into the
-:attr:`current_response` attribute."""
+:attr:`current_consumer` attribute."""
         if self.consumer:
             self.consumer(data)
             
@@ -109,10 +115,10 @@ By default it feeds the *data*, a bytes object, into the
     def set_response(self, response):
         '''Set a new response instance on this protocol. If a response is
 already available it raises an exception.'''
-        assert self._current_response is None, "protocol already in response"
-        self._current_response = response
+        assert self._current_consumer is None, "protocol already in response"
+        self._current_consumer = response
         if self._transport is not None:
-            self._current_response.begin()
+            self._current_consumer.begin()
             
     ############################################################################
     ###    TRANSPORT METHODS SHORTCUT
@@ -126,8 +132,11 @@ already available it raises an exception.'''
     
 
 class ProtocolConsumer(object):
-    '''A :class:`Protocol` consumer is responsible for parsing incoming data
-and,  producing no more than one response.
+    '''The :class:`Protocol` consumer is one most important classes
+in :ref:`pulsar framework <pulsar_framework>`. It is responsible for receiving
+incoming data from a the :meth:`Protocol.data_received` method, decoding,
+and producing responses, i.e. writing back to the client or server via
+the :attr:`transport` attribute.
 
 .. attribute:: connection
 
@@ -194,8 +203,8 @@ By default it calls the :meth:`Connection.finished` method of the
         
 class Connection:
     '''A client or server connection. It contains the :class:`Protocol`, the
-transport producer (:class:`Server` or :class:`Client`) and a session
-number.
+transport producer (:class:`Server` or :class:`Client`), a session
+number and a factory of :class:`ProtocolConsumer`.
 
 .. attribute:: protocol
 
@@ -206,7 +215,7 @@ number.
     The producer of this :class:`Connection`, It is either a :class:`Server`
     or a client :class:`Client`.
     
-.. attribute:: response_factory
+.. attribute:: consumer_factory
 
     A factory of :class:`ProtocolConsumer` instances for this :class:`Protocol`
     
@@ -218,17 +227,17 @@ number.
 
     Number of separate requests processed by this connection.
     
-.. attribute:: current_response
+.. attribute:: current_consumer
 
-    The :class:`Consumer` currently handling incoming data.
+    The :class:`ProtocolConsumer` currently handling incoming data.
 '''
-    def __init__(self, protocol, producer, session, response_factory):
+    def __init__(self, protocol, producer, session, consumer_factory):
         self._protocol = protocol
         self._producer = producer
         self._session = session 
         self._processed = 0
-        self._current_response = None
-        self._response_factory = response_factory
+        self._current_consumer = None
+        self._consumer_factory = consumer_factory
         protocol.consumer = self.consume
         
     def __repr__(self):
@@ -262,12 +271,12 @@ number.
         return self._session
     
     @property
-    def response_factory(self):
-        return self._response_factory
+    def consumer_factory(self):
+        return self._consumer_factory
     
     @property
-    def current_response(self):
-        self._current_response
+    def current_consumer(self):
+        return self._current_consumer
         
     @property
     def processed(self):
@@ -276,12 +285,12 @@ number.
     def consume(self, data):
         raise NotImplementedError
     
-    def upgrade(self, response_factory):
-        '''Update the :attr:`response_factory` attribute with a new
-:class:`ProtocolResponse`. This function can be used when the protocol
+    def upgrade(self, consumer_factory):
+        '''Update the :attr:`consumer_factory` attribute with a new
+:class:`ProtocolConsumer` factory. This function can be used when the protocol
 specification changes during a response (an example is a WebSocket
 response).'''
-        self._response_factory = response_factory
+        self._consumer_factory = consumer_factory
         
     def finished(self, response, result=NOTHING):
         '''Call this method with the current response to close the current

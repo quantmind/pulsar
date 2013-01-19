@@ -12,9 +12,9 @@ from pulsar import HaltServer, system
 
 from .actor import Actor, ACTOR_STATES
 from .monitor import PoolMixin, _spawn_actor
-from .defer import multi_async
+from .defer import multi_async, log_failure
 from .access import get_actor, set_actor
-from .mailbox import MailboxConnection, MailboxResponse
+from .mailbox import MailboxConnection, MailboxServerConsumer
 from . import proxy
 
 
@@ -75,7 +75,7 @@ A typical usage::
         return actor.spawn(**kwargs)
 
     
-class Arbiter(PoolMixin, Actor):
+class Arbiter(PoolMixin):
     '''The Arbiter is the most important a :class:`Actor`
 and :class:`PoolMixin` in pulsar concurrent framework. It is used as singleton
 in the main process and it manages one or more :class:`Monitor`.
@@ -96,7 +96,7 @@ Users access the arbiter (in the arbiter process domain) by the high level api::
     pidfile = None
     
     def __init__(self, impl):
-        Actor.__init__(self, impl)
+        super(Arbiter, self).__init__(impl)
         self.monitors = {}
         self.registered = {'arbiter': self}
 
@@ -127,7 +127,8 @@ Users access the arbiter (in the arbiter process domain) by the high level api::
 
     def close_monitors(self):
         '''Close all :class:`Monitor` at once.'''
-        return multi_async([m.stop() for m in itervalues(self.monitors)])
+        return multi_async([m.stop() for m in itervalues(self.monitors)],
+                           log_failure=True)
 
     def on_info(self, data):
         monitors = [p.info() for p in itervalues(self.monitors)]
@@ -157,6 +158,11 @@ Users access the arbiter (in the arbiter process domain) by the high level api::
     ############################################################################
     # INTERNALS
     ############################################################################
+    def _remove_actor(self, actor):
+        super(Arbiter, self)._remove_actor(actor)
+        self.registered.pop(actor.name, None)
+        self.monitors.pop(actor.aid, None)
+        
     def on_start(self):
         if current_process().daemon:
             raise pulsar.PulsarException(
@@ -167,13 +173,14 @@ Users access the arbiter (in the arbiter process domain) by the high level api::
             p = Pidfile(pidfile)
             p.create(self.pid)
             self.pidfile = p
-        PoolMixin.on_start(self)
         
     def on_stop(self):
+        self._remove_actor(self)
         p = self.pidfile
         if p is not None:
+            self.logger.debug('Removing %s' % p.fname)
             p.unlink()
-        if self.managed_actors or self.linked_actors:
+        if self.managed_actors:
             self.state = ACTOR_STATES.TERMINATE
         self.logger.info("Bye.")
         if self.exit_code:
@@ -187,8 +194,7 @@ Users access the arbiter (in the arbiter process domain) by the high level api::
             for m in list(itervalues(self.monitors)):
                 if m.started():
                     if not m.running():
-                        self.logger.info('Removing monitor %s', m)
-                        self.monitors.pop(m.name)
+                        self._remove_actor(m)
                 else:
                     m.start()
             try:
@@ -209,7 +215,8 @@ Users access the arbiter (in the arbiter process domain) by the high level api::
             self.state = ACTOR_STATES.CLOSE
             self.mailbox.close()
         else:
-            active = multi_async((self.close_monitors(), self.close_actors()))
+            active = multi_async((self.close_monitors(), self.close_actors()),
+                                 log_failure=True)
             active.add_both(self._exit)
                 
     def start(self):
@@ -225,10 +232,10 @@ Users access the arbiter (in the arbiter process domain) by the high level api::
         #    address = ('127.0.0.1', 0)
         address = ('127.0.0.1', 0)
         mailbox = self.requestloop.create_server(address=address,
-                                           name='Mailbox for %s' % self,
-                                           connection_factory=MailboxConnection,
-                                           response_factory=MailboxResponse,
-                                           timeout=0,
-                                           close_event_loop=True)
+                                        name='Mailbox for %s' % self,
+                                        connection_factory=MailboxConnection,
+                                        consumer_factory=MailboxServerConsumer,
+                                        timeout=0,
+                                        close_event_loop=True)
         mailbox.event_loop.call_soon_threadsafe(self.hand_shake)
         return mailbox

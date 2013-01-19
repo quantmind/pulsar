@@ -341,9 +341,12 @@ properly this actor will go out of scope.'''
             # The actor has finished the stopping process.
             #Remove itself from the actors dictionary
             remove_actor(self)
-            events.fire('exit', self)
-            self.on_exit.callback(self)
-            self.fire('on_stop', self)
+            try:
+                events.fire('exit', self)
+                self.fire('on_stop', self)
+                self.on_stop()
+            finally:
+                self.on_exit.callback(self)
         return self.on_exit
     
     def on_stop(self):
@@ -370,14 +373,17 @@ properly this actor will go out of scope.'''
                 self.requestloop.call_soon_threadsafe(self.periodic_task)
     
     def hand_shake(self):
-        a = get_actor()
-        if a is not self:
-            set_actor(self)
-        self.logger.info('%s started', self)
-        self.state = ACTOR_STATES.RUN
-        self.on_start()
-        self.fire('on_start', self)
-        self.periodic_task()
+        try:
+            a = get_actor()
+            if a is not self:
+                set_actor(self)
+            self.logger.info('%s started', self)
+            self.state = ACTOR_STATES.RUN
+            self.on_start()
+            self.fire('on_start', self)
+            self.periodic_task()
+        except Exception as e:
+            self.stop(e)
     
     def get_actor(self, aid):
         '''Given an actor unique id return the actor proxy.'''

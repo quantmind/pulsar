@@ -139,8 +139,8 @@ This function is useful when someone needs to treat a value as a deferred::
     else:
         return val
     
-def multi_async(iterable):
-    return MultiDeferred(iterable).lock()
+def multi_async(iterable, **kwargs):
+    return MultiDeferred(iterable, **kwargs).lock()
     
 def safe_async(f, args=None, kwargs=None, description=None, max_errors=None):
     '''Execute function *f* safely and **always** returns an asynchronous
@@ -528,7 +528,6 @@ current thread.'''
         result = last_result if not self.errors else self.errors
         self.gen = None
         self.errors = None
-        #log_failure(result)
         return self.callback(result)
 
 
@@ -548,9 +547,10 @@ which may be :class:`Deferred`.
     _locked = False
 
     def __init__(self, data=None, type=None, fireOnOneErrback=False,
-                 handle_value=None):
+                 handle_value=None, log_failure=False):
         self._deferred = {}
         self._failures = Failure()
+        self.log_failure = log_failure
         self.fireOnOneErrback = fireOnOneErrback
         self.handle_value = handle_value
         if not type:
@@ -658,4 +658,6 @@ both ``list`` and ``dict`` types.'''
         else:
             stream[key] = value
         if is_failure(value):
+            if self.log_failure:
+                log_failure(value)
             self._failures.append(value)

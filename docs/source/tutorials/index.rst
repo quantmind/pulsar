@@ -1,18 +1,34 @@
-.. module:: pulsar
+.. module:: examples
 
 .. _tutorials:
 
-==================
-Tutorials
-==================
+=====================
+Tutorials & Topics
+=====================
 
+
+Tutorials
+==============
 
 .. toctree::
    :maxdepth: 1
    
    wsgi
    clients
-   messages
    proxy
    life
+   
+   
+Topics
+==============
+
+These sections cover **pulsar internals** for the curious reader.
+
+.. toctree::
+   :maxdepth: 1
+   
+   messages
+   signal
+   
+   
    

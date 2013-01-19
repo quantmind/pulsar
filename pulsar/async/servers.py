@@ -28,22 +28,22 @@ class ServerConnection(Connection):
     def consume(self, data):
         while data:
             p = self.protocol
-            response = self._current_response
+            response = self._current_consumer
             if response is None:
                 self._processed += 1
-                self._current_response = self._response_factory(self)
-                self._producer.fire('pre_request', self._current_response)
-                response = self._current_response 
+                self._current_consumer = self._consumer_factory(self)
+                self._producer.fire('pre_request', self._current_consumer)
+                response = self._current_consumer 
             data = response.feed(data)
-            if data and self._current_response:
+            if data and self._current_consumer:
                 # if data is returned from the response feed method and the
                 # response has not done yet raise a Protocol Error
                 raise ProtocolError
     
     def finished(self, response, result=NOTHING):
-        if response is self._current_response:
-            self._producer.fire('post_request', self._current_response)
-            self._current_response = None
+        if response is self._current_consumer:
+            self._producer.fire('post_request', self._current_consumer)
+            self._current_consumer = None
         else:
             raise RuntimeError()
 
@@ -97,14 +97,14 @@ The main method in this class is :meth:`new_connection` where a new
     def concurrent_connections(self):
         return len(self._concurrent_connections)
     
-    def new_connection(self, protocol, response_factory, producer=None):
+    def new_connection(self, protocol, consumer_factory, producer=None):
         ''''Called when a new connection is created'''
         if self._max_connections and self._received >= self._max_connections:
             raise RuntimeError('Too many connections')
         self._received = self._received + 1
         producer = producer or self 
         conn = self.connection_factory(protocol, producer, self._received,
-                                       response_factory)
+                                       consumer_factory)
         self._concurrent_connections.add(conn)
         protocol.on_connection_lost.add_both(
                                 partial(self._remove_connection, conn))
@@ -130,18 +130,27 @@ class Server(ServerType('BaseServer', (Producer, EventHandler), {})):
     '''A :class:`Producer` for all server's listening for connections
 on a socket. It is a producer of :class:`Transport` for server protocols.
     
+.. attribute:: sock:
+
+    The socket listening for client connections
+    
 .. attribute:: protocol_factory
 
     A factory producing the :class:`Protocol` for a socket created
     from a connection of a remote client with this server. This is a function
     or a :class:`Protocol` class which accept two arguments, the client address
-    and the :attr:`response_factory` attribute. This attribute is used in
-    the :meth:`create_connection` method.
+    and the :attr:`consumer_factory` attribute. This attribute is used in
+    the :meth:`create_connection` method. **By default pulsar uses a
+    protocol appropiate to the socket type** .
+    There shouldn't be any reason to change the default,
+    it is here just in case.
     
-.. attribute:: response_factory
+.. attribute:: consumer_factory
 
-    Optional callable or :class:`ProtocolResponse` class which can be used
-    to override the :class:`Protocol.response_factory` attribute.
+    Callable or a :class:`ProtocolConsumer` class used
+    to override the :class:`Protocol.consumer_factory` attribute. It produces
+    :class:`ProtocolConsumer` which handle the receiving, decoding and
+    sending of data.
     
 .. attribute:: event_loop
 
@@ -160,14 +169,14 @@ on a socket. It is a producer of :class:`Transport` for server protocols.
     protocol_factory = None
     
     def __init__(self, event_loop, sock, protocol_factory=None,
-                 timeout=None, max_connections=0, response_factory=None,
+                 timeout=None, max_connections=0, consumer_factory=None,
                  connection_factory=None):
         super(Server, self).__init__(timeout=timeout,
                                      max_connections=max_connections,
                                      connection_factory=connection_factory)
         self._event_loop = event_loop
         self._sock = sock
-        self.response_factory = response_factory
+        self.consumer_factory = consumer_factory
         self.on_close = Deferred()
         if protocol_factory:
             self.protocol_factory = protocol_factory
@@ -177,11 +186,10 @@ on a socket. It is a producer of :class:`Transport` for server protocols.
     def create_connection(self, sock, address):
         '''Create a new server :class:`Protocol` ready to serve its client.'''
         # Build the protocol
-        
         sock = wrap_socket(self.TYPE, sock)
         protocol = self.protocol_factory(address)
         #Create the connection
-        connection = self.new_connection(protocol, self.response_factory)
+        connection = self.new_connection(protocol, self.consumer_factory)
         transport = Transport(self._event_loop, sock, protocol,
                               timeout=self.timeout)
         connection.protocol.connection_made(transport)

@@ -50,12 +50,6 @@ class command:
     
 :parameter ack: ``True`` if the command acknowledge the sender with a
     response. Usually is set to ``True`` (which is also the default value).
-:parameter authenticated: If ``True`` the action can only be invoked by
-    remote actors which have authenticated with the actor for which
-    the action has been requested.
-:parameter internal: Internal commands are for internal use only, not for
-    external clients. They accept the actor proxy calling as third positional
-    arguments.
 '''
     def __init__(self, ack=True):
         self.ack = ack
@@ -148,10 +142,6 @@ parameter ``"hello there!"``.
     def __ne__(self, o):
         return not self.__eq__(o)
         
-    def stop(self, sender=None):
-        '''Stop the remote :class:`Actor`'''
-        self.receive_from(sender, 'stop')
-        
 
 class ActorProxyMonitor(ActorProxy):
     '''A specialised :class:`ActorProxy` class which contains additional
@@ -172,6 +162,7 @@ process where they have been created.
     def __init__(self, impl):
         self.impl = impl
         self.info = {}
+        self.mailbox = None
         self.stopping_loops = 0
         self.spawning_loops = 0
         super(ActorProxyMonitor,self).__init__(impl)

@@ -26,7 +26,7 @@ in a single code base.
     It will improve with time and, hopefully, with help from the community.
     In the mean time, a lot of insight can be gained by
     visiting and running, the :ref:`example applications <examples>`
-    which are located in the ``examples`` module at the top level of
+    which are located in the :mod:`examples` module at the top level of
     pulsar distribution.
 
 .. _apps-framework:

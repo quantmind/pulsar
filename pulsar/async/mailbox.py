@@ -1,6 +1,7 @@
-'''Pulsar inter-actor message passing.
-It uses bidirectional socket connections between the :class:`Arbiter`
-and actors. It uses the unmasked websocket protocol.'''
+'''Actors communicate with each other by sending and receiving messages.
+The :mod:`pulsar.async.mailbox` module implements the message passing layer
+via a bidirectional socket connections between the :class:`Arbiter`
+and actors.'''
 import sys
 import logging
 import tempfile
@@ -70,7 +71,21 @@ class MailboxMixin(object):
         if msg:
             message = pickle.loads(msg.body)
             log_failure(self.responde(message))
-            
+    
+    def create_request(self, command, sender, target, args, kwargs):
+        # Build the request and write
+        command = get_command(command)
+        data = {'command': command.__name__,
+                'sender': actorid(sender),
+                'receiver': actorid(target),
+                'args': args if args is not None else (),
+                'kwargs': kwargs if kwargs is not None else {}}
+        d = None
+        if command.ack:
+            d = Deferred()
+            data['ack'] = gen_unique_id()[:8]
+        return data, d
+    
     def callback(self, ack, result):
         if not ack:
             raise ProtocolError('A callback without id')
@@ -116,22 +131,26 @@ class MailboxMixin(object):
         self.transport.write(data)
 
 ################################################################################
-##    Mailbox Server Classes
+##    Mailbox Server (Arbiter) Classes
 class MailboxConnection(ServerConnection):
     authenticated = False
     
 
-class MailboxResponse(MailboxMixin, ProtocolConsumer):
-    pass
+class MailboxServerConsumer(MailboxMixin, ProtocolConsumer):
+ 
+    def request(self, command, sender, target, args, kwargs):
+        data, d = self.create_request(command, sender, target, args, kwargs)
+        self.write(data, d)
+        return d
+        
     
-
 ################################################################################
-##    Mailbox Client Classes
+##    Mailbox Client (Actor) Classes
 class MailboxClientConsumer(MailboxMixin, clients.ClientProtocolConsumer):
     '''The Protocol consumer for a Mailbox client'''    
     def send(self, *args):
         # This is only called at the first request
-        self.write(self.request.data, self.consumer)
+        pass
     
     def _write(self, data):
         self.event_loop.call_soon_threadsafe(self.transport.write, data)
@@ -139,7 +158,7 @@ class MailboxClientConsumer(MailboxMixin, clients.ClientProtocolConsumer):
     
 class MailboxClient(clients.Client):
     # mailbox for actors client
-    response_factory = MailboxClientConsumer
+    consumer_factory = MailboxClientConsumer
      
     def __init__(self, address, actor):
         super(MailboxClient, self).__init__(max_connections=1)
@@ -157,38 +176,34 @@ class MailboxClient(clients.Client):
             set_event_loop(eventloop)
             actor.requestloop.call_soon_threadsafe(self._start_on_thread)
         self._event_loop = eventloop
-        
-    def _start_on_thread(self):
-        PulsarThread(name=self.name, target=self._event_loop.run).start()
-        
+    
     @property
     def event_loop(self):
         return self._event_loop
+    
+    def request(self, command, sender, target, args, kwargs):
+        # Build the request and write
+        if not self.consumer:
+            req = clients.Request(self.address, self.timeout)
+            self.consumer = self.response(req)
+        c = self.consumer
+        data, d = c.create_request(command, sender, target, args, kwargs)
+        if c.protocol.on_connection.called:
+            c.write(data, d)
+        else:
+            c.protocol.on_connection.add_callback(lambda r: c.write(data, d))
+        return d
+        
+    
+    def _start_on_thread(self):
+        PulsarThread(name=self.name, target=self._event_loop.run).start()
         
     def connect(self):
         request = clients.Request(self.address, self.timeout)
         self.consumer = self.response(request)
-        
-    def request(self, command, sender, target, args, kwargs):
-        command = get_command(command)
-        data = {'command': command.__name__,
-                'sender': actorid(sender),
-                'receiver': actorid(target),
-                'args': args if args is not None else (),
-                'kwargs': kwargs if kwargs is not None else {}}
-        d = None
-        if command.ack:
-            d = Deferred()
-            data['ack'] = gen_unique_id()[:8]
-        if not self.consumer:
-            req = clients.Request(self.address, self.timeout)
-            req.data = data
-            self.consumer = self.response(req, d)
-        else:
-            self.consumer.write(data, d)
-        return d
     
     def close(self):
         if self._cpubound:
-            self._event_loop.close()
+            self._event_loop.stop()
         return super(MailboxClient, self).close()
+

@@ -74,28 +74,28 @@ once the connection is established. **Not called directly**.'''
 class ClientConnection(Connection):
     
     def set_response(self, response):
-        assert self._current_response is None, 'Response is not None'
-        self._current_response = response
+        assert self._current_consumer is None, 'Response is not None'
+        self._current_consumer = response
         self._processed += 1
         
     def consume(self, data):
         while data:
             p = self.protocol
-            response = self._current_response
+            response = self._current_consumer
             if response is None:
                 raise ProtocolError 
             data = response.feed(data)
-            if data and self._current_response:
+            if data and self._current_consumer:
                 # if data is returned from the response feed method and the
                 # response has not done yet raise a Protocol Error
                 raise ProtocolError
     
     def finished(self, response, result=NOTHING):
-        if response is self._current_response:
+        if response is self._current_consumer:
             result = self if result is NOTHING else result
-            self._producer.fire('response', self._current_response)
-            self._current_response.when_ready.callback(result)
-            self._current_response = None
+            self._producer.fire('response', self._current_consumer)
+            self._current_consumer.when_ready.callback(result)
+            self._current_consumer = None
             response._connection = None
         else:
             raise RuntimeError()
@@ -155,7 +155,7 @@ protocols. It maintains a live set of connections.
         if connection is None:
             # build protocol and build the new connection
             protocol = self.build_protocol(client)
-            connection = self.new_connection(protocol, client.response_factory,
+            connection = self.new_connection(protocol, client.consumer_factory,
                                              client)
         return connection
     
@@ -175,7 +175,7 @@ class Client(ClientEventHandler):
     connection_pool = ConnectionPool
     '''Factory of :class:`ConnectionPool`.'''
     connection_factory = ClientConnection
-    response_factory = None
+    consumer_factory = None
     '''Factory of response instances'''
     client_version = ''
     connection_pools = None
@@ -210,7 +210,7 @@ method should invoke this method to start the response dance.
     :attr:`ClientProtocolConsumer.consumer` attribute of the
     consumer returned by this method.
 :rtype: An :class:`ClientProtocolConsumer` obtained form
-    :attr:`response_factory`.
+    :attr:`consumer_factory`.
 '''
         self.fire('pre_request', request)
         # Get a suitable connection pool
@@ -221,7 +221,7 @@ method should invoke this method to start the response dance.
                                     connection_factory=self.connection_factory)
         # Get or create a connection
         connection = pool.get_or_create_connection(self)
-        response = self.response_factory(connection, request, consumer)
+        response = self.consumer_factory(connection, request, consumer)
         self.fire('post_request', response)
         return response.begin()
     

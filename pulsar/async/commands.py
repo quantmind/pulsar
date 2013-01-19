@@ -40,10 +40,12 @@ def stop(request, aid=None):
     
 @proxy.command(ack=False)
 def notify(request, info):
-    '''caller notify itself.'''
+    '''cThe actor notify itself.'''
+    remote_actor = request.caller
+    remote_actor.mailbox = request.connection.current_consumer
     if isinstance(info, dict):
         info['last_notified'] = time()
-        request.caller.info = info
+        remote_actor.info = info
     
 @proxy.command()
 def spawn(request, **kwargs):

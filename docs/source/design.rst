@@ -102,10 +102,10 @@ them to do. CPU-bound :class:`Actors` have the following properties:
 
 Mailbox
 ~~~~~~~~~~~~~~
-Each actor, with the only exception of :class:`Monitor`, have its own
-:attr:`Actor.mailbox`, an asynchronous socket server which listen for
-messages from other actors. In other words, each actor has an associated
-**address**.
+Each :class:`Actor`, with the only exception of :class:`Monitor`, have its own
+:attr:`Actor.mailbox`, an asynchronous client of the :class:`Arbiter`
+mailbox server. Check the :ref:`message passing documentation <tutorials-messages>`
+for more information.
 
 
 .. _design-spawning:
@@ -206,7 +206,16 @@ Run a function on a remote actor. The function must accept actor as its initial 
     def dosomething(actor, *args, **kwargs):
         ...
     
-    send('arbiter', 'run', dosomething, *args, **kwargs)
+    send('monitor', 'run', dosomething, *args, **kwargs)
+    
+
+.. _actor_stop_command:
+
+**stop**
+
+Tell the remote actor ``abc`` to gracefully shutdown::
+
+    send('abc', 'stop')
     
     
 

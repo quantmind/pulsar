@@ -113,7 +113,6 @@ class ApplicationMonitor(Monitor):
             self.app.worker_stop(self)
         self.app.monitor_stop(self)
         super(ApplicationMonitor, self).on_stop()
-        self.app.stop.callback(self.app)
     
     def monitor_task(self):
         self.app.monitor_task(self)
