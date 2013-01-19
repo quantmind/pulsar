@@ -7,8 +7,8 @@
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
     <title>Distributed Task Queues &mdash; pulsar v0.5a1 documentation</title>
-    <link rel="stylesheet" href="../_static/celery.css" type="text/css" />
-    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="../static/celery.css" type="text/css" />
+    <link rel="stylesheet" href="../static/pygments.css" type="text/css" />
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../',
@@ -18,9 +18,9 @@
         HAS_SOURCE:  true
       };
     </script>
-    <script type="text/javascript" src="../_static/jquery.js"></script>
-    <script type="text/javascript" src="../_static/underscore.js"></script>
-    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <script type="text/javascript" src="../static/jquery.js"></script>
+    <script type="text/javascript" src="../static/underscore.js"></script>
+    <script type="text/javascript" src="../static/doctools.js"></script>
     <link rel="top" title="pulsar v0.5a1 documentation" href="../index.html" />
     <link rel="next" title="WebSockets" href="websockets.html" />
     <link rel="prev" title="JSON-RPC" href="rpc.html" /> 
@@ -238,12 +238,12 @@ or in the <a class="reference internal" href="#pulsar.apps.tasks.TaskQueue" titl
 <h3>Taskqueue<a class="headerlink" href="#taskqueue" title="Permalink to this headline">¶</a></h3>
 <dl class="class">
 <dt id="pulsar.apps.tasks.TaskQueue">
-<em class="property">class </em><tt class="descclassname">pulsar.apps.tasks.</tt><tt class="descname">TaskQueue</tt><big>(</big><em>*args</em>, <em>**kwargs</em><big>)</big><a class="reference internal" href="../_modules/pulsar/apps/tasks.html#TaskQueue"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.tasks.TaskQueue" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><tt class="descclassname">pulsar.apps.tasks.</tt><tt class="descname">TaskQueue</tt><big>(</big><em>*args</em>, <em>**kwargs</em><big>)</big><a class="reference internal" href="../modules/pulsar/apps/tasks.html#TaskQueue"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.tasks.TaskQueue" title="Permalink to this definition">¶</a></dt>
 <dd><p>A <tt class="xref py py-class docutils literal"><span class="pre">pulsar.CPUboundServer</span></tt> for consuming
 tasks and managing scheduling of tasks.</p>
 <dl class="attribute">
 <dt id="pulsar.apps.tasks.TaskQueue.registry">
-<tt class="descname">registry</tt><a class="reference internal" href="../_modules/pulsar/apps/tasks.html#TaskQueue.registry"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.tasks.TaskQueue.registry" title="Permalink to this definition">¶</a></dt>
+<tt class="descname">registry</tt><a class="reference internal" href="../modules/pulsar/apps/tasks.html#TaskQueue.registry"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.tasks.TaskQueue.registry" title="Permalink to this definition">¶</a></dt>
 <dd><p>Instance of a <a class="reference internal" href="#pulsar.apps.tasks.JobRegistry" title="pulsar.apps.tasks.JobRegistry"><tt class="xref py py-class docutils literal"><span class="pre">JobRegistry</span></tt></a> containing all
 registered <a class="reference internal" href="#pulsar.apps.tasks.Job" title="pulsar.apps.tasks.Job"><tt class="xref py py-class docutils literal"><span class="pre">Job</span></tt></a> instances.</p>
 </dd></dl>
@@ -257,7 +257,7 @@ registered <a class="reference internal" href="#pulsar.apps.tasks.Job" title="pu
 
 <dl class="attribute">
 <dt id="pulsar.apps.tasks.TaskQueue.scheduler">
-<tt class="descname">scheduler</tt><a class="reference internal" href="../_modules/pulsar/apps/tasks.html#TaskQueue.scheduler"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.tasks.TaskQueue.scheduler" title="Permalink to this definition">¶</a></dt>
+<tt class="descname">scheduler</tt><a class="reference internal" href="../modules/pulsar/apps/tasks.html#TaskQueue.scheduler"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.tasks.TaskQueue.scheduler" title="Permalink to this definition">¶</a></dt>
 <dd><p>A <a class="reference internal" href="#pulsar.apps.tasks.Scheduler" title="pulsar.apps.tasks.Scheduler"><tt class="xref py py-class docutils literal"><span class="pre">Scheduler</span></tt></a> which send task to the task queue and
 produces of periodic tasks according to their schedule of execution.</p>
 <p>At every event loop, the <tt class="xref py py-class docutils literal"><span class="pre">pulsar.ApplicationMonitor</span></tt> running
@@ -269,7 +269,7 @@ for implementation.</p>
 
 <dl class="method">
 <dt id="pulsar.apps.tasks.TaskQueue.monitor_task">
-<tt class="descname">monitor_task</tt><big>(</big><em>monitor</em><big>)</big><a class="reference internal" href="../_modules/pulsar/apps/tasks.html#TaskQueue.monitor_task"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.tasks.TaskQueue.monitor_task" title="Permalink to this definition">¶</a></dt>
+<tt class="descname">monitor_task</tt><big>(</big><em>monitor</em><big>)</big><a class="reference internal" href="../modules/pulsar/apps/tasks.html#TaskQueue.monitor_task"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.tasks.TaskQueue.monitor_task" title="Permalink to this definition">¶</a></dt>
 <dd><p>Override the <tt class="xref py py-meth docutils literal"><span class="pre">pulsar.Application.monitor_task()</span></tt> callback
 to check if the scheduler needs to perform a new run.</p>
 </dd></dl>
@@ -908,7 +908,7 @@ same as above.</li>
       <div class="sphinxsidebar">
         <div class="sphinxsidebarwrapper"><p class="logo">
 <a href="../index.html">
-  <img class="logo" width="200" src="../_static/pulsar.png" alt="pulsar" title="Pulsar"/>
+  <img class="logo" width="200" src="../static/pulsar.png" alt="pulsar" title="Pulsar"/>
 </a>
 </p>
   <h3><a href="../index.html">Table Of Contents</a></h3>
@@ -947,7 +947,7 @@ same as above.</li>
                         title="next chapter">WebSockets</a></p>
   <h3>This Page</h3>
   <ul class="this-page-menu">
-    <li><a href="../_sources/apps/tasks.txt"
+    <li><a href="../sources/apps/tasks.txt"
            rel="nofollow">Show Source</a></li>
   </ul>
 <div id="searchbox" style="display: none">

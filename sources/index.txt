@@ -14,7 +14,8 @@ in a single code base.
    design
    faq
    advantage
-   api
+   tutorials/index
+   api/index
    changelog
    http
    settings

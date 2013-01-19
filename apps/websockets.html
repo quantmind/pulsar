@@ -7,8 +7,8 @@
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
     <title>WebSockets &mdash; pulsar v0.5a1 documentation</title>
-    <link rel="stylesheet" href="../_static/celery.css" type="text/css" />
-    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="../static/celery.css" type="text/css" />
+    <link rel="stylesheet" href="../static/pygments.css" type="text/css" />
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../',
@@ -18,9 +18,9 @@
         HAS_SOURCE:  true
       };
     </script>
-    <script type="text/javascript" src="../_static/jquery.js"></script>
-    <script type="text/javascript" src="../_static/underscore.js"></script>
-    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <script type="text/javascript" src="../static/jquery.js"></script>
+    <script type="text/javascript" src="../static/underscore.js"></script>
+    <script type="text/javascript" src="../static/doctools.js"></script>
     <link rel="top" title="pulsar v0.5a1 documentation" href="../index.html" />
     <link rel="next" title="Asynchronous Test Suite" href="test.html" />
     <link rel="prev" title="Distributed Task Queues" href="tasks.html" /> 
@@ -75,7 +75,7 @@ and server. Pulsar implementation uses the WSGI middleware
 <h3>WebSocket<a class="headerlink" href="#id1" title="Permalink to this headline">¶</a></h3>
 <dl class="class">
 <dt id="pulsar.apps.ws.WebSocket">
-<em class="property">class </em><tt class="descclassname">pulsar.apps.ws.</tt><tt class="descname">WebSocket</tt><big>(</big><em>handle</em>, <em>extensions=None</em><big>)</big><a class="reference internal" href="../_modules/pulsar/apps/ws.html#WebSocket"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.ws.WebSocket" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><tt class="descclassname">pulsar.apps.ws.</tt><tt class="descname">WebSocket</tt><big>(</big><em>handle</em>, <em>extensions=None</em><big>)</big><a class="reference internal" href="../modules/pulsar/apps/ws.html#WebSocket"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.ws.WebSocket" title="Permalink to this definition">¶</a></dt>
 <dd><p>A <a class="reference internal" href="wsgi.html#apps-wsgi"><em>WSGI</em></a> middleware for handling w websocket handshake
 and starting a custom <a class="reference internal" href="#pulsar.apps.ws.WS" title="pulsar.apps.ws.WS"><tt class="xref py py-class docutils literal"><span class="pre">WS</span></tt></a> connection.
 It implements the protocol version 13 as specified at
@@ -103,7 +103,7 @@ a valid <a class="reference internal" href="#pulsar.apps.ws.WebSocket" title="pu
 <h3>WebSocket Handler<a class="headerlink" href="#websocket-handler" title="Permalink to this headline">¶</a></h3>
 <dl class="class">
 <dt id="pulsar.apps.ws.WS">
-<em class="property">class </em><tt class="descclassname">pulsar.apps.ws.</tt><tt class="descname">WS</tt><a class="reference internal" href="../_modules/pulsar/apps/ws.html#WS"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.ws.WS" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><tt class="descclassname">pulsar.apps.ws.</tt><tt class="descname">WS</tt><a class="reference internal" href="../modules/pulsar/apps/ws.html#WS"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.ws.WS" title="Permalink to this definition">¶</a></dt>
 <dd><p>A web socket handler. It maintains
 an open socket with a remote web-socket and exchange messages in
 an asynchronous fashion. The communication is started by the
@@ -129,27 +129,27 @@ back to the client:</p>
 </div>
 <dl class="method">
 <dt id="pulsar.apps.ws.WS.on_handshake">
-<tt class="descname">on_handshake</tt><big>(</big><em>environ</em>, <em>headers</em><big>)</big><a class="reference internal" href="../_modules/pulsar/apps/ws.html#WS.on_handshake"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.ws.WS.on_handshake" title="Permalink to this definition">¶</a></dt>
+<tt class="descname">on_handshake</tt><big>(</big><em>environ</em>, <em>headers</em><big>)</big><a class="reference internal" href="../modules/pulsar/apps/ws.html#WS.on_handshake"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.ws.WS.on_handshake" title="Permalink to this definition">¶</a></dt>
 <dd><p>Invoked just before sending the upgraded <strong>headers</strong> to the
 client. This is a chance to add or remove header&#8217;s entries.</p>
 </dd></dl>
 
 <dl class="method">
 <dt id="pulsar.apps.ws.WS.on_open">
-<tt class="descname">on_open</tt><big>(</big><em>environ</em><big>)</big><a class="reference internal" href="../_modules/pulsar/apps/ws.html#WS.on_open"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.ws.WS.on_open" title="Permalink to this definition">¶</a></dt>
+<tt class="descname">on_open</tt><big>(</big><em>environ</em><big>)</big><a class="reference internal" href="../modules/pulsar/apps/ws.html#WS.on_open"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.ws.WS.on_open" title="Permalink to this definition">¶</a></dt>
 <dd><p>Invoked when a new WebSocket is opened.</p>
 </dd></dl>
 
 <dl class="method">
 <dt id="pulsar.apps.ws.WS.on_message">
-<tt class="descname">on_message</tt><big>(</big><em>environ</em>, <em>message</em><big>)</big><a class="reference internal" href="../_modules/pulsar/apps/ws.html#WS.on_message"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.ws.WS.on_message" title="Permalink to this definition">¶</a></dt>
+<tt class="descname">on_message</tt><big>(</big><em>environ</em>, <em>message</em><big>)</big><a class="reference internal" href="../modules/pulsar/apps/ws.html#WS.on_message"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.ws.WS.on_message" title="Permalink to this definition">¶</a></dt>
 <dd><p>Handle incoming messages on the WebSocket.
 This method must be overloaded.</p>
 </dd></dl>
 
 <dl class="method">
 <dt id="pulsar.apps.ws.WS.on_close">
-<tt class="descname">on_close</tt><big>(</big><em>environ</em><big>)</big><a class="reference internal" href="../_modules/pulsar/apps/ws.html#WS.on_close"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.ws.WS.on_close" title="Permalink to this definition">¶</a></dt>
+<tt class="descname">on_close</tt><big>(</big><em>environ</em><big>)</big><a class="reference internal" href="../modules/pulsar/apps/ws.html#WS.on_close"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.ws.WS.on_close" title="Permalink to this definition">¶</a></dt>
 <dd><p>Invoked when the WebSocket is closed.</p>
 </dd></dl>
 
@@ -280,7 +280,7 @@ into a server frame (unmasked).</p>
       <div class="sphinxsidebar">
         <div class="sphinxsidebarwrapper"><p class="logo">
 <a href="../index.html">
-  <img class="logo" width="200" src="../_static/pulsar.png" alt="pulsar" title="Pulsar"/>
+  <img class="logo" width="200" src="../static/pulsar.png" alt="pulsar" title="Pulsar"/>
 </a>
 </p>
   <h3><a href="../index.html">Table Of Contents</a></h3>
@@ -304,7 +304,7 @@ into a server frame (unmasked).</p>
                         title="next chapter">Asynchronous Test Suite</a></p>
   <h3>This Page</h3>
   <ul class="this-page-menu">
-    <li><a href="../_sources/apps/websockets.txt"
+    <li><a href="../sources/apps/websockets.txt"
            rel="nofollow">Show Source</a></li>
   </ul>
 <div id="searchbox" style="display: none">
