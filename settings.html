@@ -6,24 +6,24 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>Settings &mdash; pulsar v0.4.4b1 documentation</title>
-    <link rel="stylesheet" href="static/celery.css" type="text/css" />
-    <link rel="stylesheet" href="static/pygments.css" type="text/css" />
+    <title>Settings &mdash; pulsar v0.5a1 documentation</title>
+    <link rel="stylesheet" href="_static/celery.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '',
-        VERSION:     '0.4.4b1',
+        VERSION:     '0.5a1',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
       };
     </script>
-    <script type="text/javascript" src="static/jquery.js"></script>
-    <script type="text/javascript" src="static/underscore.js"></script>
-    <script type="text/javascript" src="static/doctools.js"></script>
-    <link rel="top" title="pulsar v0.4.4b1 documentation" href="index.html" />
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="top" title="pulsar v0.5a1 documentation" href="index.html" />
     <link rel="next" title="Socket Servers" href="apps/socket.html" />
-    <link rel="prev" title="HTTP" href="http.html" /> 
+    <link rel="prev" title="Changelog" href="changelog.html" /> 
   </head>
   <body>
     <div class="related">
@@ -39,9 +39,9 @@
           <a href="apps/socket.html" title="Socket Servers"
              accesskey="N">next</a> |</li>
         <li class="right" >
-          <a href="http.html" title="HTTP"
+          <a href="changelog.html" title="Changelog"
              accesskey="P">previous</a> |</li>
-        <li><a href="index.html">pulsar v0.4.4b1 documentation</a> &raquo;</li> 
+        <li><a href="index.html">pulsar v0.5a1 documentation</a> &raquo;</li> 
       </ul>
     </div>  
 
@@ -63,16 +63,15 @@
             
   <span class="target" id="module-pulsar.utils.config"><span id="settings"></span></span><div class="section" id="id1">
 <h1>Settings<a class="headerlink" href="#id1" title="Permalink to this headline">¶</a></h1>
-<p>This is the full list of <a class="reference internal" href="api.html#pulsar.Setting" title="pulsar.Setting"><tt class="xref py py-class docutils literal"><span class="pre">pulsar.Setting</span></tt></a> available for configuring
+<p>This is the full list of <a class="reference internal" href="api/application.html#pulsar.Setting" title="pulsar.Setting"><tt class="xref py py-class docutils literal"><span class="pre">pulsar.Setting</span></tt></a> available for configuring
 your pulsar server or application.</p>
 <div class="section" id="config-file">
 <span id="setting-section-config-file"></span><h2>Config File<a class="headerlink" href="#config-file" title="Permalink to this headline">¶</a></h2>
 <div class="section" id="config">
 <span id="setting-config"></span><h3>config<a class="headerlink" href="#config" title="Permalink to this headline">¶</a></h3>
 <p><em>Command line</em>: -c,&#8211;config</p>
-<p>The path to a Pulsar config file.</p>
-<p>Only has an effect when specified on the command line or as part of an
-application specific configuration.</p>
+<p>The path to a Pulsar config file, where default Settings
+paramaters can be specified.</p>
 </div>
 </div>
 <div class="section" id="worker-processes">
@@ -315,12 +314,6 @@ open.</p>
 <p>The HTTP Parser to use. By default it uses the fastest possible.</p>
 <p>Specify <cite>python</cite> if you wich to use the pure python implementation</p>
 </div>
-<div class="section" id="response-middleware">
-<span id="setting-response-middleware"></span><h3>response_middleware<a class="headerlink" href="#response-middleware" title="Permalink to this headline">¶</a></h3>
-<p>Setting for <a class="reference internal" href="apps/wsgi.html#module-pulsar.apps.wsgi" title="pulsar.apps.wsgi"><tt class="xref py py-mod docutils literal"><span class="pre">pulsar.apps.wsgi</span></tt></a> application.</p>
-<p><em>Command line</em>: &#8211;response-middleware</p>
-<p>Response middleware to add to the wsgi handler</p>
-</div>
 </div>
 <div class="section" id="task-consumer">
 <span id="setting-section-task-consumer"></span><h2>Task Consumer<a class="headerlink" href="#task-consumer" title="Permalink to this headline">¶</a></h2>
@@ -373,7 +366,7 @@ open.</p>
       <div class="sphinxsidebar">
         <div class="sphinxsidebarwrapper"><p class="logo">
 <a href="index.html">
-  <img class="logo" width="200" src="static/pulsar.png" alt="pulsar" title="Pulsar"/>
+  <img class="logo" width="200" src="_static/pulsar.png" alt="pulsar" title="Pulsar"/>
 </a>
 </p>
   <h3><a href="index.html">Table Of Contents</a></h3>
@@ -439,7 +432,6 @@ open.</p>
 </li>
 <li><a class="reference internal" href="#wsgi-servers">WSGI Servers</a><ul>
 <li><a class="reference internal" href="#http-parser">http_parser</a></li>
-<li><a class="reference internal" href="#response-middleware">response_middleware</a></li>
 </ul>
 </li>
 <li><a class="reference internal" href="#task-consumer">Task Consumer</a><ul>
@@ -459,14 +451,14 @@ open.</p>
 </ul>
 
   <h4>Previous topic</h4>
-  <p class="topless"><a href="http.html"
-                        title="previous chapter">HTTP</a></p>
+  <p class="topless"><a href="changelog.html"
+                        title="previous chapter">Changelog</a></p>
   <h4>Next topic</h4>
   <p class="topless"><a href="apps/socket.html"
                         title="next chapter">Socket Servers</a></p>
   <h3>This Page</h3>
   <ul class="this-page-menu">
-    <li><a href="sources/settings.txt"
+    <li><a href="_sources/settings.txt"
            rel="nofollow">Show Source</a></li>
   </ul>
 <div id="searchbox" style="display: none">
@@ -499,9 +491,9 @@ open.</p>
           <a href="apps/socket.html" title="Socket Servers"
              >next</a> |</li>
         <li class="right" >
-          <a href="http.html" title="HTTP"
+          <a href="changelog.html" title="Changelog"
              >previous</a> |</li>
-        <li><a href="index.html">pulsar v0.4.4b1 documentation</a> &raquo;</li> 
+        <li><a href="index.html">pulsar v0.5a1 documentation</a> &raquo;</li> 
       </ul>
     </div>
 

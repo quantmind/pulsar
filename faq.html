@@ -1,0 +1,228 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>FAQ &mdash; pulsar v0.5a1 documentation</title>
+    <link rel="stylesheet" href="_static/celery.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '',
+        VERSION:     '0.5a1',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="top" title="pulsar v0.5a1 documentation" href="index.html" />
+    <link rel="next" title="Pulsar Advantage" href="advantage.html" />
+    <link rel="prev" title="Design" href="design.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="advantage.html" title="Pulsar Advantage"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="design.html" title="Design"
+             accesskey="P">previous</a> |</li>
+        <li><a href="index.html">pulsar v0.5a1 documentation</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+<div class="deck">
+
+    
+        <p class="developmentversion">
+        Documentation for pulsar's DEVELOPMENT version. Get the 
+        <a href="http://packages.python.org/pulsar/">release docs here</a>.
+        </p>
+    
+
+</div>
+
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <span class="target" id="module-pulsar"><span id="faq"></span></span><div class="section" id="id1">
+<h1>FAQ<a class="headerlink" href="#id1" title="Permalink to this headline">¶</a></h1>
+<p>This is a list of Frequently Asked Questions regarding pulsar.</p>
+<div class="contents local topic" id="contents">
+<ul class="simple">
+<li><a class="reference internal" href="#general" id="id2">General</a><ul>
+<li><a class="reference internal" href="#what-is-pulsar" id="id3">What is pulsar?</a></li>
+<li><a class="reference internal" href="#why-should-i-use-pulsar" id="id4">Why should I use pulsar?</a></li>
+<li><a class="reference internal" href="#what-is-an-actor" id="id5">What is an actor?</a></li>
+<li><a class="reference internal" href="#is-pulsar-another-twisted" id="id6">Is pulsar another twisted?</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#socket-servers" id="id7">Socket Servers</a><ul>
+<li><a class="reference internal" href="#can-i-run-a-web-server-with-multiple-process" id="id8">Can I run a web-server with multiple process?</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#internals" id="id9">Internals</a><ul>
+<li><a class="reference internal" href="#how-is-inter-actor-message-passing-implemented" id="id10">How is inter-actor message passing implemented?</a></li>
+</ul>
+</li>
+</ul>
+</div>
+<div class="section" id="general">
+<h2><a class="toc-backref" href="#id2">General</a><a class="headerlink" href="#general" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="what-is-pulsar">
+<h3><a class="toc-backref" href="#id3">What is pulsar?</a><a class="headerlink" href="#what-is-pulsar" title="Permalink to this headline">¶</a></h3>
+<p>Check the <a class="reference internal" href="overview.html#intro-overview"><em>overview</em></a>.</p>
+</div>
+<div class="section" id="why-should-i-use-pulsar">
+<h3><a class="toc-backref" href="#id4">Why should I use pulsar?</a><a class="headerlink" href="#why-should-i-use-pulsar" title="Permalink to this headline">¶</a></h3>
+<p>Check the <a class="reference internal" href="advantage.html#pulsar-advantage"><em>pulsar advantage</em></a>.</p>
+</div>
+<div class="section" id="what-is-an-actor">
+<h3><a class="toc-backref" href="#id5">What is an actor?</a><a class="headerlink" href="#what-is-an-actor" title="Permalink to this headline">¶</a></h3>
+<p>Check the <a class="reference internal" href="design.html#design-actor"><em>actor design documentation</em></a>.</p>
+</div>
+<div class="section" id="is-pulsar-another-twisted">
+<h3><a class="toc-backref" href="#id6">Is pulsar another twisted?</a><a class="headerlink" href="#is-pulsar-another-twisted" title="Permalink to this headline">¶</a></h3>
+<p>No, pulsar is a concurrent framework based on Actor primitive, check the
+<a class="reference internal" href="design.html#design"><em>design documentation</em></a> for more information. Twisted is a library
+which can be used to write a pulsar equivalent and it has a vast array of
+protocols which pulsar will never have. However, pulsar and twisted have in common
+the Deferred implementation. One could, in theory, use twisted protocols to write a
+pulsar <a class="reference internal" href="apps/socket.html#apps-socket"><em>socket server application</em></a>.</p>
+</div>
+</div>
+<div class="section" id="socket-servers">
+<h2><a class="toc-backref" href="#id7">Socket Servers</a><a class="headerlink" href="#socket-servers" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="can-i-run-a-web-server-with-multiple-process">
+<h3><a class="toc-backref" href="#id8">Can I run a web-server with multiple process?</a><a class="headerlink" href="#can-i-run-a-web-server-with-multiple-process" title="Permalink to this headline">¶</a></h3>
+<p>Yes you can, in posix always, in windows only for python 3.2 or above.
+Check <a class="reference internal" href="tutorials/wsgi.html#multi-wsgi"><em>wsgi in multi process</em></a>.</p>
+</div>
+</div>
+<div class="section" id="internals">
+<h2><a class="toc-backref" href="#id9">Internals</a><a class="headerlink" href="#internals" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="how-is-inter-actor-message-passing-implemented">
+<h3><a class="toc-backref" href="#id10">How is inter-actor message passing implemented?</a><a class="headerlink" href="#how-is-inter-actor-message-passing-implemented" title="Permalink to this headline">¶</a></h3>
+<p>Check the <a class="reference internal" href="tutorials/messages.html#tutorials-messages"><em>actor messages documentation</em></a>.</p>
+</div>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper"><p class="logo">
+<a href="index.html">
+  <img class="logo" width="200" src="_static/pulsar.png" alt="pulsar" title="Pulsar"/>
+</a>
+</p>
+  <h3><a href="index.html">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">FAQ</a><ul>
+<li><a class="reference internal" href="#general">General</a><ul>
+<li><a class="reference internal" href="#what-is-pulsar">What is pulsar?</a></li>
+<li><a class="reference internal" href="#why-should-i-use-pulsar">Why should I use pulsar?</a></li>
+<li><a class="reference internal" href="#what-is-an-actor">What is an actor?</a></li>
+<li><a class="reference internal" href="#is-pulsar-another-twisted">Is pulsar another twisted?</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#socket-servers">Socket Servers</a><ul>
+<li><a class="reference internal" href="#can-i-run-a-web-server-with-multiple-process">Can I run a web-server with multiple process?</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#internals">Internals</a><ul>
+<li><a class="reference internal" href="#how-is-inter-actor-message-passing-implemented">How is inter-actor message passing implemented?</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="design.html"
+                        title="previous chapter">Design</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="advantage.html"
+                        title="next chapter">Pulsar Advantage</a></p>
+  <h3>This Page</h3>
+  <ul class="this-page-menu">
+    <li><a href="_sources/faq.txt"
+           rel="nofollow">Show Source</a></li>
+  </ul>
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" size="18" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="advantage.html" title="Pulsar Advantage"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="design.html" title="Design"
+             >previous</a> |</li>
+        <li><a href="index.html">pulsar v0.5a1 documentation</a> &raquo;</li> 
+      </ul>
+    </div>
+
+    <div class="footer">
+        &copy; Copyright 2011, Luca Sbardella.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.0.7.
+    </div>
+<script type="text/javascript">
+
+  var _gaq = _gaq || [];
+  
+  _gaq.push(['_setAccount', 'UA-3900561-8']);
+  
+  _gaq.push(['_trackPageview']);
+
+  (function() {
+    var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+    ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+    var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+  })();
+
+</script>
+
+  </body>
+</html>

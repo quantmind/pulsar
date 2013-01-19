@@ -1,0 +1,206 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>Writing Clients &mdash; pulsar v0.5a1 documentation</title>
+    <link rel="stylesheet" href="../_static/celery.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../',
+        VERSION:     '0.5a1',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <link rel="top" title="pulsar v0.5a1 documentation" href="../index.html" />
+    <link rel="up" title="Tutorials" href="index.html" />
+    <link rel="next" title="Actor messages" href="messages.html" />
+    <link rel="prev" title="WSGI" href="wsgi.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="messages.html" title="Actor messages"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="wsgi.html" title="WSGI"
+             accesskey="P">previous</a> |</li>
+        <li><a href="../index.html">pulsar v0.5a1 documentation</a> &raquo;</li>
+          <li><a href="index.html" accesskey="U">Tutorials</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+<div class="deck">
+
+    
+        <p class="developmentversion">
+        Documentation for pulsar's DEVELOPMENT version. Get the 
+        <a href="http://packages.python.org/pulsar/">release docs here</a>.
+        </p>
+    
+
+</div>
+
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="writing-clients">
+<span id="tutorials-writing-clients"></span><h1>Writing Clients<a class="headerlink" href="#writing-clients" title="Permalink to this headline">¶</a></h1>
+<p>Pulsar provides several classes for writing clients. The first step
+is to sublcass <a class="reference internal" href="../api/protocols.html#pulsar.ClientProtocolConsumer" title="pulsar.ClientProtocolConsumer"><tt class="xref py py-class docutils literal"><span class="pre">pulsar.ClientProtocolConsumer</span></tt></a> which is needed
+for two reasons:</p>
+<ul class="simple">
+<li>It sends the request to the remote server.</li>
+<li>It listen (if needed) for incoming data from the remote server.</li>
+</ul>
+<p>The <a class="reference internal" href="../api/protocols.html#pulsar.ClientProtocolConsumer" title="pulsar.ClientProtocolConsumer"><tt class="xref py py-class docutils literal"><span class="pre">pulsar.ClientProtocolConsumer</span></tt></a> should called the
+<a class="reference internal" href="../api/protocols.html#pulsar.ProtocolConsumer.finished" title="pulsar.ProtocolConsumer.finished"><tt class="xref py py-class docutils literal"><span class="pre">pulsar.ProtocolConsumer.finished</span></tt></a> method once a complete
+response from the server is received, or, if no responjse is expected, as soon
+as it sends the data to the server.</p>
+<p>This is a simple Client for an echo server:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="k">class</span> <span class="nc">EchoProtocol</span><span class="p">(</span><span class="n">pulsar</span><span class="o">.</span><span class="n">ClientProtocolConsumer</span><span class="p">):</span>
+    <span class="n">separator</span> <span class="o">=</span> <span class="n">b</span><span class="s">&#39;</span><span class="se">\r\n</span><span class="s">&#39;</span>
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">buffer</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">hasattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s">&#39;_buffer&#39;</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_buffer</span> <span class="o">=</span> <span class="n">b</span><span class="s">&#39;&#39;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_buffer</span>
+
+    <span class="k">def</span> <span class="nf">feed</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">):</span>
+        <span class="n">idx</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">separator</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">idx</span><span class="p">:</span> <span class="c"># we have the message</span>
+            <span class="n">data</span><span class="p">,</span> <span class="n">rest</span> <span class="o">=</span> <span class="n">data</span><span class="p">[:</span><span class="n">idx</span><span class="p">],</span> <span class="n">data</span><span class="p">[</span><span class="n">idx</span><span class="o">+</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">separator</span><span class="p">):]</span>
+            <span class="k">if</span> <span class="n">rest</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="n">pulsar</span><span class="o">.</span><span class="n">ProtocolError</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">consumer</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">message</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">buffer</span> <span class="o">+</span> <span class="n">data</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">finished</span><span class="p">()</span> <span class="c"># done with this response</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">buffer</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">buffer</span> <span class="o">+</span> <span class="n">data</span>
+
+    <span class="k">def</span> <span class="nf">send</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">):</span>
+        <span class="n">message</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">request</span><span class="o">.</span><span class="n">message</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="s">&#39;utf-8&#39;</span><span class="p">)</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">separator</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">message</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>The <tt class="docutils literal"><span class="pre">Echo</span></tt> client is built by subclassing <a class="reference internal" href="../api/protocols.html#pulsar.Client" title="pulsar.Client"><tt class="xref py py-class docutils literal"><span class="pre">pulsar.Client</span></tt></a>:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="k">class</span> <span class="nc">Echo</span><span class="p">(</span><span class="n">pulsar</span><span class="o">.</span><span class="n">Client</span><span class="p">):</span>
+    <span class="n">response_factory</span> <span class="o">=</span> <span class="n">EchoProtocol</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">address</span><span class="p">,</span> <span class="o">**</span><span class="n">params</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">Echo</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="o">**</span><span class="n">params</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">address</span> <span class="o">=</span> <span class="n">address</span>
+
+    <span class="k">def</span> <span class="nf">request</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">message</span><span class="p">,</span> <span class="n">consumer</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+        <span class="n">request</span> <span class="o">=</span> <span class="n">pulsar</span><span class="o">.</span><span class="n">Request</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">address</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">timeout</span><span class="p">)</span>
+        <span class="n">request</span><span class="o">.</span><span class="n">message</span> <span class="o">=</span> <span class="n">message</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">response</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="n">consumer</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>To send requests:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">echo</span> <span class="o">=</span> <span class="n">Echo</span><span class="p">(</span><span class="s">&#39;localhost:8060&#39;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">response</span> <span class="o">=</span> <span class="n">echo</span><span class="o">.</span><span class="n">request</span><span class="p">(</span><span class="s">&#39;Hello!&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper"><p class="logo">
+<a href="../index.html">
+  <img class="logo" width="200" src="../_static/pulsar.png" alt="pulsar" title="Pulsar"/>
+</a>
+</p>
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="wsgi.html"
+                        title="previous chapter">WSGI</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="messages.html"
+                        title="next chapter">Actor messages</a></p>
+  <h3>This Page</h3>
+  <ul class="this-page-menu">
+    <li><a href="../_sources/tutorials/clients.txt"
+           rel="nofollow">Show Source</a></li>
+  </ul>
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" size="18" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="messages.html" title="Actor messages"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="wsgi.html" title="WSGI"
+             >previous</a> |</li>
+        <li><a href="../index.html">pulsar v0.5a1 documentation</a> &raquo;</li>
+          <li><a href="index.html" >Tutorials</a> &raquo;</li> 
+      </ul>
+    </div>
+
+    <div class="footer">
+        &copy; Copyright 2011, Luca Sbardella.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.0.7.
+    </div>
+<script type="text/javascript">
+
+  var _gaq = _gaq || [];
+  
+  _gaq.push(['_setAccount', 'UA-3900561-8']);
+  
+  _gaq.push(['_trackPageview']);
+
+  (function() {
+    var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+    ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+    var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+  })();
+
+</script>
+
+  </body>
+</html>

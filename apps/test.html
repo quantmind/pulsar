@@ -6,22 +6,22 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>Asynchronous Test Suite &mdash; pulsar v0.4.4b1 documentation</title>
-    <link rel="stylesheet" href="../static/celery.css" type="text/css" />
-    <link rel="stylesheet" href="../static/pygments.css" type="text/css" />
+    <title>Asynchronous Test Suite &mdash; pulsar v0.5a1 documentation</title>
+    <link rel="stylesheet" href="../_static/celery.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../',
-        VERSION:     '0.4.4b1',
+        VERSION:     '0.5a1',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
       };
     </script>
-    <script type="text/javascript" src="../static/jquery.js"></script>
-    <script type="text/javascript" src="../static/underscore.js"></script>
-    <script type="text/javascript" src="../static/doctools.js"></script>
-    <link rel="top" title="pulsar v0.4.4b1 documentation" href="../index.html" />
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <link rel="top" title="pulsar v0.5a1 documentation" href="../index.html" />
     <link rel="next" title="Asynchronous Shell" href="shell.html" />
     <link rel="prev" title="WebSockets" href="websockets.html" /> 
   </head>
@@ -41,7 +41,7 @@
         <li class="right" >
           <a href="websockets.html" title="WebSockets"
              accesskey="P">previous</a> |</li>
-        <li><a href="../index.html">pulsar v0.4.4b1 documentation</a> &raquo;</li> 
+        <li><a href="../index.html">pulsar v0.5a1 documentation</a> &raquo;</li> 
       </ul>
     </div>  
 
@@ -63,7 +63,7 @@
             
   <div class="section" id="module-pulsar.apps.test">
 <span id="asynchronous-test-suite"></span><span id="apps-test"></span><h1>Asynchronous Test Suite<a class="headerlink" href="#module-pulsar.apps.test" title="Permalink to this headline">¶</a></h1>
-<p>An asynchronous parallel testing suite <a class="reference internal" href="../api.html#pulsar.Application" title="pulsar.Application"><tt class="xref py py-class docutils literal"><span class="pre">pulsar.Application</span></tt></a>.
+<p>An asynchronous parallel testing suite <tt class="xref py py-class docutils literal"><span class="pre">pulsar.Application</span></tt>.
 Used for testing pulsar itself but it can be used as a test suite for
 any other library.</p>
 <div class="section" id="requirements">
@@ -120,7 +120,7 @@ just after the <tt class="docutils literal"><span class="pre">tearDown</span></t
 <h3>TestSuite<a class="headerlink" href="#testsuite" title="Permalink to this headline">¶</a></h3>
 <dl class="class">
 <dt id="pulsar.apps.test.TestSuite">
-<em class="property">class </em><tt class="descclassname">pulsar.apps.test.</tt><tt class="descname">TestSuite</tt><big>(</big><em>callable=None</em>, <em>description=None</em>, <em>name=None</em>, <em>epilog=None</em>, <em>argv=None</em>, <em>script=None</em>, <em>version=None</em>, <em>parse_console=True</em>, <em>commands_set=None</em>, <em>cfg=None</em>, <em>**kwargs</em><big>)</big><a class="reference internal" href="../modules/pulsar/apps/test.html#TestSuite"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.test.TestSuite" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><tt class="descclassname">pulsar.apps.test.</tt><tt class="descname">TestSuite</tt><big>(</big><em>*args</em>, <em>**kwargs</em><big>)</big><a class="reference internal" href="../_modules/pulsar/apps/test.html#TestSuite"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.test.TestSuite" title="Permalink to this definition">¶</a></dt>
 <dd><p>An asynchronous test suite which works like a task queue where each task
 is a group of tests specified in a test class.</p>
 <table class="docutils field-list" frame="void" rules="none">
@@ -155,7 +155,7 @@ it used the standard <tt class="docutils literal"><span class="pre">unittest.Tex
 </table>
 <dl class="attribute">
 <dt id="pulsar.apps.test.TestSuite.runner">
-<tt class="descname">runner</tt><a class="reference internal" href="../modules/pulsar/apps/test.html#TestSuite.runner"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.test.TestSuite.runner" title="Permalink to this definition">¶</a></dt>
+<tt class="descname">runner</tt><a class="reference internal" href="../_modules/pulsar/apps/test.html#TestSuite.runner"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.test.TestSuite.runner" title="Permalink to this definition">¶</a></dt>
 <dd><p>Instance of <a class="reference internal" href="#pulsar.apps.test.TestRunner" title="pulsar.apps.test.TestRunner"><tt class="xref py py-class docutils literal"><span class="pre">TestRunner</span></tt></a> driving the test case
 configuration and plugins.</p>
 </dd></dl>
@@ -169,7 +169,7 @@ configuration and plugins.</p>
 <dt id="pulsar.apps.test.TestPlugin">
 <em class="property">class </em><tt class="descclassname">pulsar.apps.test.</tt><tt class="descname">TestPlugin</tt><a class="headerlink" href="#pulsar.apps.test.TestPlugin" title="Permalink to this definition">¶</a></dt>
 <dd><p>Base class for plugins which can be added to a <a class="reference internal" href="#pulsar.apps.test.TestSuite" title="pulsar.apps.test.TestSuite"><tt class="xref py py-class docutils literal"><span class="pre">TestSuite</span></tt></a>
-to extend its functionalities. <a class="reference internal" href="../api.html#pulsar.Setting" title="pulsar.Setting"><tt class="xref py py-class docutils literal"><span class="pre">pulsar.Setting</span></tt></a> are specified as
+to extend its functionalities. <a class="reference internal" href="../api/application.html#pulsar.Setting" title="pulsar.Setting"><tt class="xref py py-class docutils literal"><span class="pre">pulsar.Setting</span></tt></a> are specified as
 class attributes and collected into the <tt class="xref py py-attr docutils literal"><span class="pre">config</span></tt> attribute.</p>
 <p>If the <tt class="xref py py-attr docutils literal"><span class="pre">name</span></tt> is not specified or its value validate as True,
 an additional settings is added to the configuration.</p>
@@ -275,7 +275,7 @@ it will stop the configuration of all subsequent plugins and quit the test.</p>
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
-<tr class="field"><th class="field-name">Parameters:</th><td class="field-body"><strong>cfg</strong> &#8211; instance of <a class="reference internal" href="../api.html#pulsar.Config" title="pulsar.Config"><tt class="xref py py-class docutils literal"><span class="pre">pulsar.Config</span></tt></a>.</td>
+<tr class="field"><th class="field-name">Parameters:</th><td class="field-body"><strong>cfg</strong> &#8211; instance of <a class="reference internal" href="../api/application.html#pulsar.Config" title="pulsar.Config"><tt class="xref py py-class docutils literal"><span class="pre">pulsar.Config</span></tt></a>.</td>
 </tr>
 </tbody>
 </table>
@@ -440,7 +440,7 @@ can be useful to test Arbiter mechanics.</p>
       <div class="sphinxsidebar">
         <div class="sphinxsidebarwrapper"><p class="logo">
 <a href="../index.html">
-  <img class="logo" width="200" src="../static/pulsar.png" alt="pulsar" title="Pulsar"/>
+  <img class="logo" width="200" src="../_static/pulsar.png" alt="pulsar" title="Pulsar"/>
 </a>
 </p>
   <h3><a href="../index.html">Table Of Contents</a></h3>
@@ -472,7 +472,7 @@ can be useful to test Arbiter mechanics.</p>
                         title="next chapter">Asynchronous Shell</a></p>
   <h3>This Page</h3>
   <ul class="this-page-menu">
-    <li><a href="../sources/apps/test.txt"
+    <li><a href="../_sources/apps/test.txt"
            rel="nofollow">Show Source</a></li>
   </ul>
 <div id="searchbox" style="display: none">
@@ -507,7 +507,7 @@ can be useful to test Arbiter mechanics.</p>
         <li class="right" >
           <a href="websockets.html" title="WebSockets"
              >previous</a> |</li>
-        <li><a href="../index.html">pulsar v0.4.4b1 documentation</a> &raquo;</li> 
+        <li><a href="../index.html">pulsar v0.5a1 documentation</a> &raquo;</li> 
       </ul>
     </div>
 

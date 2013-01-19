@@ -6,22 +6,22 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>JSON-RPC &mdash; pulsar v0.4.4b1 documentation</title>
-    <link rel="stylesheet" href="../static/celery.css" type="text/css" />
-    <link rel="stylesheet" href="../static/pygments.css" type="text/css" />
+    <title>JSON-RPC &mdash; pulsar v0.5a1 documentation</title>
+    <link rel="stylesheet" href="../_static/celery.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../',
-        VERSION:     '0.4.4b1',
+        VERSION:     '0.5a1',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
       };
     </script>
-    <script type="text/javascript" src="../static/jquery.js"></script>
-    <script type="text/javascript" src="../static/underscore.js"></script>
-    <script type="text/javascript" src="../static/doctools.js"></script>
-    <link rel="top" title="pulsar v0.4.4b1 documentation" href="../index.html" />
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <link rel="top" title="pulsar v0.5a1 documentation" href="../index.html" />
     <link rel="next" title="Distributed Task Queues" href="tasks.html" />
     <link rel="prev" title="WSGI Servers" href="wsgi.html" /> 
   </head>
@@ -41,7 +41,7 @@
         <li class="right" >
           <a href="wsgi.html" title="WSGI Servers"
              accesskey="P">previous</a> |</li>
-        <li><a href="../index.html">pulsar v0.4.4b1 documentation</a> &raquo;</li> 
+        <li><a href="../index.html">pulsar v0.5a1 documentation</a> &raquo;</li> 
       </ul>
     </div>  
 
@@ -132,6 +132,12 @@
 </dd></dl>
 
 <dl class="attribute">
+<dt id="pulsar.apps.rpc.RpcHandler.methods">
+<tt class="descname">methods</tt><a class="headerlink" href="#pulsar.apps.rpc.RpcHandler.methods" title="Permalink to this definition">¶</a></dt>
+<dd><p>HTTP method allowed by this handler.</p>
+</dd></dl>
+
+<dl class="attribute">
 <dt id="pulsar.apps.rpc.RpcHandler.parent">
 <tt class="descname">parent</tt><a class="headerlink" href="#pulsar.apps.rpc.RpcHandler.parent" title="Permalink to this definition">¶</a></dt>
 <dd><p>The parent <a class="reference internal" href="#pulsar.apps.rpc.RpcHandler" title="pulsar.apps.rpc.RpcHandler"><tt class="xref py py-class docutils literal"><span class="pre">RpcHandler</span></tt></a> or <tt class="xref docutils literal"><span class="pre">None</span></tt> if this
@@ -196,7 +202,7 @@ for <tt class="docutils literal"><span class="pre">method</span></tt>, <tt class
 <h3>RpcMiddleware<a class="headerlink" href="#rpcmiddleware" title="Permalink to this headline">¶</a></h3>
 <dl class="class">
 <dt id="pulsar.apps.rpc.RpcMiddleware">
-<em class="property">class </em><tt class="descclassname">pulsar.apps.rpc.</tt><tt class="descname">RpcMiddleware</tt><big>(</big><em>handler</em>, <em>path=None</em>, <em>methods=None</em><big>)</big><a class="headerlink" href="#pulsar.apps.rpc.RpcMiddleware" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><tt class="descclassname">pulsar.apps.rpc.</tt><tt class="descname">RpcMiddleware</tt><big>(</big><em>handler</em>, <em>path=None</em>, <em>request_class=None</em><big>)</big><a class="headerlink" href="#pulsar.apps.rpc.RpcMiddleware" title="Permalink to this definition">¶</a></dt>
 <dd><p>A <a class="reference external" href="http://www.python.org/dev/peps/pep-3333/">WSGI</a> middleware for serving an <a class="reference internal" href="#pulsar.apps.rpc.RpcHandler" title="pulsar.apps.rpc.RpcHandler"><tt class="xref py py-class docutils literal"><span class="pre">RpcHandler</span></tt></a>.</p>
 <dl class="attribute">
 <dt id="pulsar.apps.rpc.RpcMiddleware.handler">
@@ -209,6 +215,13 @@ for <tt class="docutils literal"><span class="pre">method</span></tt>, <tt class
 <tt class="descname">path</tt><a class="headerlink" href="#pulsar.apps.rpc.RpcMiddleware.path" title="Permalink to this definition">¶</a></dt>
 <dd><p>The path where the RPC is located</p>
 <p>Default <tt class="xref docutils literal"><span class="pre">None</span></tt></p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="pulsar.apps.rpc.RpcMiddleware.request_class">
+<tt class="descname">request_class</tt><a class="headerlink" href="#pulsar.apps.rpc.RpcMiddleware.request_class" title="Permalink to this definition">¶</a></dt>
+<dd><p>A class which is used to wrap the WSGI <em>environ</em> dictionary. Must have
+a dictionary-like interface.</p>
 </dd></dl>
 
 </dd></dl>
@@ -381,7 +394,7 @@ It invokes the <a class="reference internal" href="#pulsar.apps.rpc.PulsarServer
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
-<tr class="field"><th class="field-name">Parameters:</th><td class="field-body"><strong>aid</strong> &#8211; <a class="reference internal" href="../api.html#pulsar.Actor.aid" title="pulsar.Actor.aid"><tt class="xref py py-attr docutils literal"><span class="pre">pulsar.Actor.aid</span></tt></a> of the actor to kill</td>
+<tr class="field"><th class="field-name">Parameters:</th><td class="field-body"><strong>aid</strong> &#8211; <a class="reference internal" href="../api/actor.html#pulsar.Actor.aid" title="pulsar.Actor.aid"><tt class="xref py py-attr docutils literal"><span class="pre">pulsar.Actor.aid</span></tt></a> of the actor to kill</td>
 </tr>
 </tbody>
 </table>
@@ -407,7 +420,7 @@ It invokes the <a class="reference internal" href="#pulsar.apps.rpc.PulsarServer
       <div class="sphinxsidebar">
         <div class="sphinxsidebarwrapper"><p class="logo">
 <a href="../index.html">
-  <img class="logo" width="200" src="../static/pulsar.png" alt="pulsar" title="Pulsar"/>
+  <img class="logo" width="200" src="../_static/pulsar.png" alt="pulsar" title="Pulsar"/>
 </a>
 </p>
   <h3><a href="../index.html">Table Of Contents</a></h3>
@@ -435,7 +448,7 @@ It invokes the <a class="reference internal" href="#pulsar.apps.rpc.PulsarServer
                         title="next chapter">Distributed Task Queues</a></p>
   <h3>This Page</h3>
   <ul class="this-page-menu">
-    <li><a href="../sources/apps/rpc.txt"
+    <li><a href="../_sources/apps/rpc.txt"
            rel="nofollow">Show Source</a></li>
   </ul>
 <div id="searchbox" style="display: none">
@@ -470,7 +483,7 @@ It invokes the <a class="reference internal" href="#pulsar.apps.rpc.PulsarServer
         <li class="right" >
           <a href="wsgi.html" title="WSGI Servers"
              >previous</a> |</li>
-        <li><a href="../index.html">pulsar v0.4.4b1 documentation</a> &raquo;</li> 
+        <li><a href="../index.html">pulsar v0.5a1 documentation</a> &raquo;</li> 
       </ul>
     </div>
 

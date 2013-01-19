@@ -1,0 +1,319 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>Applications API &mdash; pulsar v0.5a1 documentation</title>
+    <link rel="stylesheet" href="../_static/celery.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../',
+        VERSION:     '0.5a1',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <link rel="top" title="pulsar v0.5a1 documentation" href="../index.html" />
+    <link rel="up" title="API" href="index.html" />
+    <link rel="next" title="Tools" href="utilities.html" />
+    <link rel="prev" title="Protocols API" href="protocols.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="utilities.html" title="Tools"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="protocols.html" title="Protocols API"
+             accesskey="P">previous</a> |</li>
+        <li><a href="../index.html">pulsar v0.5a1 documentation</a> &raquo;</li>
+          <li><a href="index.html" accesskey="U">API</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+<div class="deck">
+
+    
+        <p class="developmentversion">
+        Documentation for pulsar's DEVELOPMENT version. Get the 
+        <a href="http://packages.python.org/pulsar/">release docs here</a>.
+        </p>
+    
+
+</div>
+
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="applications-api">
+<h1>Applications API<a class="headerlink" href="#applications-api" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="application-worker">
+<h2>Application Worker<a class="headerlink" href="#application-worker" title="Permalink to this headline">¶</a></h2>
+</div>
+<div class="section" id="application-monitor">
+<h2>Application Monitor<a class="headerlink" href="#application-monitor" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="utilities">
+<span id="api-config"></span><h3>Utilities<a class="headerlink" href="#utilities" title="Permalink to this headline">¶</a></h3>
+</div>
+</div>
+<div class="section" id="config">
+<h2>Config<a class="headerlink" href="#config" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="pulsar.Config">
+<em class="property">class </em><tt class="descclassname">pulsar.</tt><tt class="descname">Config</tt><big>(</big><em>description=None</em>, <em>epilog=None</em>, <em>version=None</em>, <em>app=None</em>, <em>include=None</em>, <em>exclude=None</em>, <em>settings=None</em><big>)</big><a class="headerlink" href="#pulsar.Config" title="Permalink to this definition">¶</a></dt>
+<dd><p>Dictionary containing <tt class="xref py py-class docutils literal"><span class="pre">Setting</span></tt> parameters for
+fine tuning pulsar servers. It provides easy access to <tt class="xref py py-attr docutils literal"><span class="pre">Setting.value</span></tt>
+attribute by exposing the <tt class="xref py py-attr docutils literal"><span class="pre">Setting.name</span></tt> as attribute.</p>
+<dl class="attribute">
+<dt id="Config.settings">
+<tt class="descname">settings</tt><a class="headerlink" href="#Config.settings" title="Permalink to this definition">¶</a></dt>
+<dd><p>Dictionary of all <tt class="xref py py-class docutils literal"><span class="pre">Settings</span></tt> instances available. The
+keys are given by the <tt class="xref py py-attr docutils literal"><span class="pre">Setting.name</span></tt> attribute.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="pulsar.Config.parser">
+<tt class="descname">parser</tt><big>(</big><big>)</big><a class="headerlink" href="#pulsar.Config.parser" title="Permalink to this definition">¶</a></dt>
+<dd><p>Create the <a class="reference external" href="http://docs.python.org/dev/library/argparse.html">argparser</a> for this configuration by adding all
+settings via the <tt class="xref py py-meth docutils literal"><span class="pre">Setting.add_argument()</span></tt>.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field"><th class="field-name">Return type:</th><td class="field-body">an instance of <tt class="xref py py-class docutils literal"><span class="pre">argparse.ArgumentParser</span></tt>.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="pulsar.Config.on_start">
+<tt class="descname">on_start</tt><big>(</big><big>)</big><a class="headerlink" href="#pulsar.Config.on_start" title="Permalink to this definition">¶</a></dt>
+<dd><p>Invoked by a <tt class="xref py py-class docutils literal"><span class="pre">pulsar.Application</span></tt> just before starting.</p>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="setting">
+<h2>Setting<a class="headerlink" href="#setting" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="pulsar.Setting">
+<em class="property">class </em><tt class="descclassname">pulsar.</tt><tt class="descname">Setting</tt><big>(</big><em>name=None</em>, <em>flags=None</em>, <em>action=None</em>, <em>type=None</em>, <em>default=None</em>, <em>nargs=None</em>, <em>desc=None</em>, <em>validator=None</em><big>)</big><a class="headerlink" href="#pulsar.Setting" title="Permalink to this definition">¶</a></dt>
+<dd><p>A configuration parameter for pulsar. Parameters can be specified
+on the command line or on a config file.</p>
+<dl class="attribute">
+<dt id="pulsar.Setting.virtual">
+<tt class="descname">virtual</tt><a class="headerlink" href="#pulsar.Setting.virtual" title="Permalink to this definition">¶</a></dt>
+<dd><p>If set to <tt class="xref docutils literal"><span class="pre">True</span></tt> the settings won&#8217;t be loaded and it can be only used
+as base class for other settings.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="pulsar.Setting.app">
+<tt class="descname">app</tt><a class="headerlink" href="#pulsar.Setting.app" title="Permalink to this definition">¶</a></dt>
+<dd><p>Setting for a specific <tt class="xref py py-class docutils literal"><span class="pre">Application</span></tt>.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="pulsar.Setting.choices">
+<tt class="descname">choices</tt><a class="headerlink" href="#pulsar.Setting.choices" title="Permalink to this definition">¶</a></dt>
+<dd><p>Restrict the argument to the choices provided.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="pulsar.Setting.default">
+<tt class="descname">default</tt><a class="headerlink" href="#pulsar.Setting.default" title="Permalink to this definition">¶</a></dt>
+<dd><p>Default value</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="pulsar.Setting.flags">
+<tt class="descname">flags</tt><a class="headerlink" href="#pulsar.Setting.flags" title="Permalink to this definition">¶</a></dt>
+<dd><p>List of options strings, e.g. <tt class="docutils literal"><span class="pre">[-f,</span> <span class="pre">--foo]</span></tt>.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="pulsar.Setting.nargs">
+<tt class="descname">nargs</tt><a class="headerlink" href="#pulsar.Setting.nargs" title="Permalink to this definition">¶</a></dt>
+<dd><p>For positional arguments. Same usage as argparse.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="pulsar.Setting.section">
+<tt class="descname">section</tt><a class="headerlink" href="#pulsar.Setting.section" title="Permalink to this definition">¶</a></dt>
+<dd><p>Setting section, used for creating documentation.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="pulsar.Setting.add_argument">
+<tt class="descname">add_argument</tt><big>(</big><em>parser</em><big>)</big><a class="headerlink" href="#pulsar.Setting.add_argument" title="Permalink to this definition">¶</a></dt>
+<dd><p>Add itself to the argparser.</p>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="exceptions">
+<h2>Exceptions<a class="headerlink" href="#exceptions" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="internals">
+<span id="id1"></span><h3>Internals<a class="headerlink" href="#internals" title="Permalink to this headline">¶</a></h3>
+<span class="target" id="module-pulsar.utils.system"></span></div>
+</div>
+<div class="section" id="system-info">
+<h2>System info<a class="headerlink" href="#system-info" title="Permalink to this headline">¶</a></h2>
+<dl class="function">
+<dt id="pulsar.utils.system.system_info">
+<tt class="descclassname">pulsar.utils.system.</tt><tt class="descname">system_info</tt><big>(</big><em>pid</em><big>)</big><a class="reference internal" href="../_modules/pulsar/utils/system.html#system_info"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.utils.system.system_info" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns a dictionary of system information for the process with id <em>pid</em>.
+It uses the <a class="reference external" href="http://code.google.com/p/psutil/">psutil</a> module for the purpose. If <a class="reference external" href="http://code.google.com/p/psutil/">psutil</a> is not available
+it returns an empty dictionary.</p>
+</dd></dl>
+
+<span class="target" id="module-pulsar.utils.tools"></span></div>
+<div class="section" id="checkarity">
+<h2>checkarity<a class="headerlink" href="#checkarity" title="Permalink to this headline">¶</a></h2>
+<dl class="function">
+<dt id="pulsar.utils.tools.checkarity">
+<tt class="descclassname">pulsar.utils.tools.</tt><tt class="descname">checkarity</tt><big>(</big><em>func</em>, <em>args</em>, <em>kwargs</em>, <em>discount=0</em><big>)</big><a class="headerlink" href="#pulsar.utils.tools.checkarity" title="Permalink to this definition">¶</a></dt>
+<dd><p>Check if arguments respect a given function arity and return
+a error message if the check did not pass, otherwise it returns <tt class="xref docutils literal"><span class="pre">None</span></tt>.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>func</strong> &#8211; the function.</li>
+<li><strong>args</strong> &#8211; function arguments.</li>
+<li><strong>kwargs</strong> &#8211; function key-valued parameters.</li>
+<li><strong>discount</strong> &#8211; optional integer which discount the number of
+positional argument to check. Default <tt class="docutils literal"><span class="pre">0</span></tt>.</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper"><p class="logo">
+<a href="../index.html">
+  <img class="logo" width="200" src="../_static/pulsar.png" alt="pulsar" title="Pulsar"/>
+</a>
+</p>
+  <h3><a href="../index.html">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">Applications API</a><ul>
+<li><a class="reference internal" href="#application-worker">Application Worker</a></li>
+<li><a class="reference internal" href="#application-monitor">Application Monitor</a><ul>
+<li><a class="reference internal" href="#utilities">Utilities</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#config">Config</a></li>
+<li><a class="reference internal" href="#setting">Setting</a></li>
+<li><a class="reference internal" href="#exceptions">Exceptions</a><ul>
+<li><a class="reference internal" href="#internals">Internals</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#system-info">System info</a></li>
+<li><a class="reference internal" href="#checkarity">checkarity</a></li>
+</ul>
+</li>
+</ul>
+
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="protocols.html"
+                        title="previous chapter">Protocols API</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="utilities.html"
+                        title="next chapter">Tools</a></p>
+  <h3>This Page</h3>
+  <ul class="this-page-menu">
+    <li><a href="../_sources/api/application.txt"
+           rel="nofollow">Show Source</a></li>
+  </ul>
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" size="18" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="utilities.html" title="Tools"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="protocols.html" title="Protocols API"
+             >previous</a> |</li>
+        <li><a href="../index.html">pulsar v0.5a1 documentation</a> &raquo;</li>
+          <li><a href="index.html" >API</a> &raquo;</li> 
+      </ul>
+    </div>
+
+    <div class="footer">
+        &copy; Copyright 2011, Luca Sbardella.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.0.7.
+    </div>
+<script type="text/javascript">
+
+  var _gaq = _gaq || [];
+  
+  _gaq.push(['_setAccount', 'UA-3900561-8']);
+  
+  _gaq.push(['_trackPageview']);
+
+  (function() {
+    var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+    ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+    var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+  })();
+
+</script>
+
+  </body>
+</html>

@@ -1,0 +1,176 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>pulsar.utils.system &mdash; pulsar v0.5a1 documentation</title>
+    <link rel="stylesheet" href="../../../_static/celery.css" type="text/css" />
+    <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../../',
+        VERSION:     '0.5a1',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../../_static/doctools.js"></script>
+    <link rel="top" title="pulsar v0.5a1 documentation" href="../../../index.html" />
+    <link rel="up" title="pulsar" href="../../pulsar.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li><a href="../../../index.html">pulsar v0.5a1 documentation</a> &raquo;</li>
+          <li><a href="../../index.html" >Module code</a> &raquo;</li>
+          <li><a href="../../pulsar.html" accesskey="U">pulsar</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+<div class="deck">
+
+    
+        <p class="developmentversion">
+        Documentation for pulsar's DEVELOPMENT version. Get the 
+        <a href="http://packages.python.org/pulsar/">release docs here</a>.
+        </p>
+    
+
+</div>
+
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <h1>Source code for pulsar.utils.system</h1><div class="highlight"><pre>
+<span class="sd">&#39;&#39;&#39;Operative system specific functions and classes.&#39;&#39;&#39;</span>
+<span class="kn">from</span> <span class="nn">.runtime</span> <span class="kn">import</span> <span class="n">Platform</span>
+
+<span class="n">platform</span> <span class="o">=</span> <span class="n">Platform</span><span class="p">()</span>
+<span class="n">seconds</span> <span class="o">=</span> <span class="n">platform</span><span class="o">.</span><span class="n">seconds</span>
+
+<span class="kn">from</span> <span class="nn">.base</span> <span class="kn">import</span> <span class="o">*</span>
+
+<span class="k">if</span> <span class="n">platform</span><span class="o">.</span><span class="n">type</span> <span class="o">==</span> <span class="s">&#39;posix&#39;</span><span class="p">:</span>    <span class="c">#pragma nocover</span>
+    <span class="kn">from</span> <span class="nn">.posixsystem</span> <span class="kn">import</span> <span class="o">*</span>
+<span class="k">elif</span> <span class="n">platform</span><span class="o">.</span><span class="n">type</span> <span class="o">==</span> <span class="s">&#39;win&#39;</span><span class="p">:</span>    <span class="c">#pragma nocover</span>
+    <span class="kn">from</span> <span class="nn">.windowssystem</span> <span class="kn">import</span> <span class="o">*</span>
+
+
+<span class="k">try</span><span class="p">:</span>
+    <span class="kn">import</span> <span class="nn">psutil</span>
+<span class="k">except</span> <span class="ne">ImportError</span><span class="p">:</span>    <span class="c">#pragma    nocover</span>
+    <span class="n">psutil</span> <span class="o">=</span> <span class="bp">None</span>
+    
+<span class="n">memory_symbols</span> <span class="o">=</span> <span class="p">(</span><span class="s">&#39;K&#39;</span><span class="p">,</span> <span class="s">&#39;M&#39;</span><span class="p">,</span> <span class="s">&#39;G&#39;</span><span class="p">,</span> <span class="s">&#39;T&#39;</span><span class="p">,</span> <span class="s">&#39;P&#39;</span><span class="p">,</span> <span class="s">&#39;E&#39;</span><span class="p">,</span> <span class="s">&#39;Z&#39;</span><span class="p">,</span> <span class="s">&#39;Y&#39;</span><span class="p">)</span>
+<span class="n">memory_size</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(((</span><span class="n">s</span><span class="p">,</span><span class="mi">1</span> <span class="o">&lt;&lt;</span> <span class="p">(</span><span class="n">i</span><span class="o">+</span><span class="mi">1</span><span class="p">)</span><span class="o">*</span><span class="mi">10</span><span class="p">)</span> <span class="k">for</span> <span class="n">i</span><span class="p">,</span><span class="n">s</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">memory_symbols</span><span class="p">)))</span>
+
+<span class="k">def</span> <span class="nf">convert_bytes</span><span class="p">(</span><span class="n">b</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39;Convert a number of bytes into a human readable memory usage, bytes,</span>
+<span class="sd">kilo, mega, giga, tera, peta, exa, zetta, yotta&#39;&#39;&#39;</span>
+    <span class="k">if</span> <span class="n">b</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+        <span class="k">return</span> <span class="s">&#39;#NA&#39;</span>
+    <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="nb">reversed</span><span class="p">(</span><span class="n">memory_symbols</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">b</span> <span class="o">&gt;=</span> <span class="n">memory_size</span><span class="p">[</span><span class="n">s</span><span class="p">]:</span>
+            <span class="n">value</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">b</span><span class="p">)</span> <span class="o">/</span> <span class="n">memory_size</span><span class="p">[</span><span class="n">s</span><span class="p">]</span>
+            <span class="k">return</span> <span class="s">&#39;</span><span class="si">%.1f%s</span><span class="s">B&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="n">s</span><span class="p">)</span>
+    <span class="k">return</span> <span class="s">&quot;</span><span class="si">%s</span><span class="s">B&quot;</span> <span class="o">%</span> <span class="n">b</span>
+    
+<div class="viewcode-block" id="system_info"><a class="viewcode-back" href="../../../api/application.html#pulsar.utils.system.system_info">[docs]</a><span class="k">def</span> <span class="nf">system_info</span><span class="p">(</span><span class="n">pid</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39;Returns a dictionary of system information for the process with id *pid*.</span>
+<span class="sd">It uses the psutil_ module for the purpose. If psutil_ is not available</span>
+<span class="sd">it returns an empty dictionary.</span>
+
+<span class="sd">.. _psutil: http://code.google.com/p/psutil/</span>
+<span class="sd">&#39;&#39;&#39;</span>
+    <span class="k">if</span> <span class="n">psutil</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>  <span class="c">#pragma    nocover</span>
+        <span class="k">return</span> <span class="p">{}</span>
+    <span class="n">p</span> <span class="o">=</span> <span class="n">psutil</span><span class="o">.</span><span class="n">Process</span><span class="p">(</span><span class="n">pid</span><span class="p">)</span>
+    <span class="n">mem</span> <span class="o">=</span> <span class="n">p</span><span class="o">.</span><span class="n">get_memory_info</span><span class="p">()</span>
+    <span class="k">return</span> <span class="p">{</span><span class="s">&#39;memory&#39;</span><span class="p">:</span> <span class="n">mem</span><span class="o">.</span><span class="n">rss</span><span class="p">,</span>
+            <span class="s">&#39;memory_virtual&#39;</span><span class="p">:</span> <span class="n">mem</span><span class="o">.</span><span class="n">vms</span><span class="p">,</span>
+            <span class="s">&#39;cpu_percent&#39;</span><span class="p">:</span> <span class="n">p</span><span class="o">.</span><span class="n">get_cpu_percent</span><span class="p">(),</span>
+            <span class="s">&#39;nice&#39;</span><span class="p">:</span> <span class="n">p</span><span class="o">.</span><span class="n">nice</span><span class="p">,</span>
+            <span class="s">&#39;num_threads&#39;</span><span class="p">:</span> <span class="n">p</span><span class="o">.</span><span class="n">get_num_threads</span><span class="p">()}</span>
+    
+    </div>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper"><p class="logo">
+<a href="../../../index.html">
+  <img class="logo" width="200" src="../../../_static/pulsar.png" alt="pulsar" title="Pulsar"/>
+</a>
+</p>
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="../../../search.html" method="get">
+      <input type="text" name="q" size="18" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li><a href="../../../index.html">pulsar v0.5a1 documentation</a> &raquo;</li>
+          <li><a href="../../index.html" >Module code</a> &raquo;</li>
+          <li><a href="../../pulsar.html" >pulsar</a> &raquo;</li> 
+      </ul>
+    </div>
+
+    <div class="footer">
+        &copy; Copyright 2011, Luca Sbardella.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.0.7.
+    </div>
+<script type="text/javascript">
+
+  var _gaq = _gaq || [];
+  
+  _gaq.push(['_setAccount', 'UA-3900561-8']);
+  
+  _gaq.push(['_trackPageview']);
+
+  (function() {
+    var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+    ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+    var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+  })();
+
+</script>
+
+  </body>
+</html>

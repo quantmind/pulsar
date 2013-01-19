@@ -6,24 +6,24 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>API &mdash; pulsar v0.4.4b1 documentation</title>
-    <link rel="stylesheet" href="static/celery.css" type="text/css" />
-    <link rel="stylesheet" href="static/pygments.css" type="text/css" />
+    <title>API &mdash; pulsar v0.4.4 documentation</title>
+    <link rel="stylesheet" href="_static/celery.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '',
-        VERSION:     '0.4.4b1',
+        VERSION:     '0.4.4',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
       };
     </script>
-    <script type="text/javascript" src="static/jquery.js"></script>
-    <script type="text/javascript" src="static/underscore.js"></script>
-    <script type="text/javascript" src="static/doctools.js"></script>
-    <link rel="top" title="pulsar v0.4.4b1 documentation" href="index.html" />
-    <link rel="next" title="HTTP" href="http.html" />
-    <link rel="prev" title="Design" href="design.html" /> 
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="top" title="pulsar v0.4.4 documentation" href="index.html" />
+    <link rel="next" title="Changelog" href="changelog.html" />
+    <link rel="prev" title="Pulsar Advantage" href="advantage.html" /> 
   </head>
   <body>
     <div class="related">
@@ -36,12 +36,12 @@
           <a href="py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
         <li class="right" >
-          <a href="http.html" title="HTTP"
+          <a href="changelog.html" title="Changelog"
              accesskey="N">next</a> |</li>
         <li class="right" >
-          <a href="design.html" title="Design"
+          <a href="advantage.html" title="Pulsar Advantage"
              accesskey="P">previous</a> |</li>
-        <li><a href="index.html">pulsar v0.4.4b1 documentation</a> &raquo;</li> 
+        <li><a href="index.html">pulsar v0.4.4 documentation</a> &raquo;</li> 
       </ul>
     </div>  
 
@@ -49,9 +49,9 @@
 <div class="deck">
 
     
-        <p class="developmentversion">
-        Documentation for pulsar's DEVELOPMENT version. Get the 
-        <a href="http://packages.python.org/pulsar/">release docs here</a>.
+        <p>
+        Documentation for pulsar 0.4.4. For development docs,
+        <a href="http://docs.celeryproject.org/en/master/api.html">go here</a>.
         </p>
     
 
@@ -1139,7 +1139,7 @@ this point, <a class="reference internal" href="#pulsar.Deferred.add_callback" t
 <tt class="descname">result_or_self</tt><big>(</big><big>)</big><a class="headerlink" href="#pulsar.Deferred.result_or_self" title="Permalink to this definition">¶</a></dt>
 <dd><p>It returns the <a class="reference internal" href="#pulsar.Deferred.result" title="pulsar.Deferred.result"><tt class="xref py py-attr docutils literal"><span class="pre">result</span></tt></a> only if available and all
 callbacks have been consumed, otherwise it returns this <a class="reference internal" href="#pulsar.Deferred" title="pulsar.Deferred"><tt class="xref py py-class docutils literal"><span class="pre">Deferred</span></tt></a>.
-Users should use this method to obained the result, rather than accessing
+Users should use this method to obtain the result, rather than accessing
 directly the <a class="reference internal" href="#pulsar.Deferred.result" title="pulsar.Deferred.result"><tt class="xref py py-attr docutils literal"><span class="pre">result</span></tt></a> attribute.</p>
 </dd></dl>
 
@@ -1360,7 +1360,7 @@ not data was sent. In this case it also raises a socket error.</p>
 <dt id="pulsar.AsyncIOStream">
 <em class="property">class </em><tt class="descclassname">pulsar.</tt><tt class="descname">AsyncIOStream</tt><big>(</big><em>socket=None</em>, <em>max_buffer_size=None</em>, <em>read_chunk_size=None</em>, <em>timeout=None</em><big>)</big><a class="headerlink" href="#pulsar.AsyncIOStream" title="Permalink to this definition">¶</a></dt>
 <dd><p><a class="reference internal" href="#pulsar-framework"><em>Framework class</em></a> to write and read
-from a non-blocking socket. It is used everywhere in <a class="reference internal" href="design.html#module-pulsar" title="pulsar"><tt class="xref py py-mod docutils literal"><span class="pre">pulsar</span></tt></a> for
+from a non-blocking socket. It is used everywhere in <a class="reference internal" href="faq.html#module-pulsar" title="pulsar"><tt class="xref py py-mod docutils literal"><span class="pre">pulsar</span></tt></a> for
 handling asynchronous <a class="reference internal" href="#pulsar.AsyncIOStream.write" title="pulsar.AsyncIOStream.write"><tt class="xref py py-meth docutils literal"><span class="pre">write()</span></tt></a> and <a class="reference internal" href="#pulsar.AsyncIOStream.read" title="pulsar.AsyncIOStream.read"><tt class="xref py py-meth docutils literal"><span class="pre">read()</span></tt></a> operations with
 <cite>callbacks</cite> which can be used to act when data has just been sent or has
 just been received.</p>
@@ -1973,7 +1973,7 @@ The interface is the same as the python <a class="reference external" href="http
 <em class="property">class </em><tt class="descclassname">pulsar.</tt><tt class="descname">Application</tt><big>(</big><em>callable=None</em>, <em>description=None</em>, <em>name=None</em>, <em>epilog=None</em>, <em>argv=None</em>, <em>script=None</em>, <em>version=None</em>, <em>parse_console=True</em>, <em>commands_set=None</em>, <em>cfg=None</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#pulsar.Application" title="Permalink to this definition">¶</a></dt>
 <dd><p>An application interface for configuring and loading
 the various necessities for any given server or distributed application running
-on <a class="reference internal" href="design.html#module-pulsar" title="pulsar"><tt class="xref py py-mod docutils literal"><span class="pre">pulsar</span></tt></a> concurrent framework.
+on <a class="reference internal" href="faq.html#module-pulsar" title="pulsar"><tt class="xref py py-mod docutils literal"><span class="pre">pulsar</span></tt></a> concurrent framework.
 Applications can be of any sorts or forms and the library is shipped with
 several battery included examples in the <a class="reference internal" href="index.html#module-pulsar.apps" title="pulsar.apps"><tt class="xref py py-mod docutils literal"><span class="pre">pulsar.apps</span></tt></a> framework module.</p>
 <p>These are the most important facts about a pulsar <a class="reference internal" href="#pulsar.Application" title="pulsar.Application"><tt class="xref py py-class docutils literal"><span class="pre">Application</span></tt></a></p>
@@ -2395,7 +2395,7 @@ one <a class="reference internal" href="#pulsar.Deferred.callback" title="pulsar
 <h3>System info<a class="headerlink" href="#system-info" title="Permalink to this headline">¶</a></h3>
 <dl class="function">
 <dt id="pulsar.utils.system.system_info">
-<tt class="descclassname">pulsar.utils.system.</tt><tt class="descname">system_info</tt><big>(</big><em>pid</em><big>)</big><a class="reference internal" href="modules/pulsar/utils/system.html#system_info"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.utils.system.system_info" title="Permalink to this definition">¶</a></dt>
+<tt class="descclassname">pulsar.utils.system.</tt><tt class="descname">system_info</tt><big>(</big><em>pid</em><big>)</big><a class="reference internal" href="_modules/pulsar/utils/system.html#system_info"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.utils.system.system_info" title="Permalink to this definition">¶</a></dt>
 <dd><p>Returns a dictionary of system information for the process with id <em>pid</em>.
 It uses the <a class="reference external" href="http://code.google.com/p/psutil/">psutil</a> module for the purpose. If <a class="reference external" href="http://code.google.com/p/psutil/">psutil</a> is not available
 it returns an empty dictionary.</p>
@@ -2438,7 +2438,7 @@ positional argument to check. Default <tt class="docutils literal"><span class="
       <div class="sphinxsidebar">
         <div class="sphinxsidebarwrapper"><p class="logo">
 <a href="index.html">
-  <img class="logo" width="200" src="static/pulsar.png" alt="pulsar" title="Pulsar"/>
+  <img class="logo" width="200" src="_static/pulsar.png" alt="pulsar" title="Pulsar"/>
 </a>
 </p>
   <h3><a href="index.html">Table Of Contents</a></h3>
@@ -2516,14 +2516,14 @@ positional argument to check. Default <tt class="docutils literal"><span class="
 </ul>
 
   <h4>Previous topic</h4>
-  <p class="topless"><a href="design.html"
-                        title="previous chapter">Design</a></p>
+  <p class="topless"><a href="advantage.html"
+                        title="previous chapter">Pulsar Advantage</a></p>
   <h4>Next topic</h4>
-  <p class="topless"><a href="http.html"
-                        title="next chapter">HTTP</a></p>
+  <p class="topless"><a href="changelog.html"
+                        title="next chapter">Changelog</a></p>
   <h3>This Page</h3>
   <ul class="this-page-menu">
-    <li><a href="sources/api.txt"
+    <li><a href="_sources/api.txt"
            rel="nofollow">Show Source</a></li>
   </ul>
 <div id="searchbox" style="display: none">
@@ -2553,12 +2553,12 @@ positional argument to check. Default <tt class="docutils literal"><span class="
           <a href="py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
         <li class="right" >
-          <a href="http.html" title="HTTP"
+          <a href="changelog.html" title="Changelog"
              >next</a> |</li>
         <li class="right" >
-          <a href="design.html" title="Design"
+          <a href="advantage.html" title="Pulsar Advantage"
              >previous</a> |</li>
-        <li><a href="index.html">pulsar v0.4.4b1 documentation</a> &raquo;</li> 
+        <li><a href="index.html">pulsar v0.4.4 documentation</a> &raquo;</li> 
       </ul>
     </div>
 
@@ -2570,7 +2570,7 @@ positional argument to check. Default <tt class="docutils literal"><span class="
 
   var _gaq = _gaq || [];
   
-  _gaq.push(['_setAccount', 'UA-3900561-8']);
+  _gaq.push(['_setAccount', 'UA-3900561-7']);
   
   _gaq.push(['_trackPageview']);
 

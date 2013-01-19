@@ -6,22 +6,22 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>Socket Servers &mdash; pulsar v0.4.4b1 documentation</title>
-    <link rel="stylesheet" href="../static/celery.css" type="text/css" />
-    <link rel="stylesheet" href="../static/pygments.css" type="text/css" />
+    <title>Socket Servers &mdash; pulsar v0.5a1 documentation</title>
+    <link rel="stylesheet" href="../_static/celery.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../',
-        VERSION:     '0.4.4b1',
+        VERSION:     '0.5a1',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
       };
     </script>
-    <script type="text/javascript" src="../static/jquery.js"></script>
-    <script type="text/javascript" src="../static/underscore.js"></script>
-    <script type="text/javascript" src="../static/doctools.js"></script>
-    <link rel="top" title="pulsar v0.4.4b1 documentation" href="../index.html" />
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <link rel="top" title="pulsar v0.5a1 documentation" href="../index.html" />
     <link rel="next" title="WSGI Servers" href="wsgi.html" />
     <link rel="prev" title="Settings" href="../settings.html" /> 
   </head>
@@ -41,7 +41,7 @@
         <li class="right" >
           <a href="../settings.html" title="Settings"
              accesskey="P">previous</a> |</li>
-        <li><a href="../index.html">pulsar v0.4.4b1 documentation</a> &raquo;</li> 
+        <li><a href="../index.html">pulsar v0.5a1 documentation</a> &raquo;</li> 
       </ul>
     </div>  
 
@@ -86,8 +86,8 @@ on a socket. This is the base class of <a class="reference internal" href="wsgi.
 </pre></div>
 </div>
 <p>The main parameter for <a class="reference internal" href="#pulsar.apps.socket.SocketServer" title="pulsar.apps.socket.SocketServer"><tt class="xref py py-class docutils literal"><span class="pre">SocketServer</span></tt></a> is the <tt class="docutils literal"><span class="pre">socket_server_factory</span></tt>
-callable which build a <a class="reference internal" href="../api.html#pulsar.AsyncSocketServer" title="pulsar.AsyncSocketServer"><tt class="xref py py-class docutils literal"><span class="pre">pulsar.AsyncSocketServer</span></tt></a> for each
-<a class="reference internal" href="../api.html#pulsar.Worker" title="pulsar.Worker"><tt class="xref py py-class docutils literal"><span class="pre">pulsar.Worker</span></tt></a> serving the application.</p>
+callable which build a <tt class="xref py py-class docutils literal"><span class="pre">pulsar.AsyncSocketServer</span></tt> for each
+<tt class="xref py py-class docutils literal"><span class="pre">pulsar.Worker</span></tt> serving the application.</p>
 <div class="section" id="protocol">
 <span id="socket-protocol"></span><h2>Protocol<a class="headerlink" href="#protocol" title="Permalink to this headline">¶</a></h2>
 <p>The protocol class needs to implement two methods, the <tt class="docutils literal"><span class="pre">decode</span></tt> for servers
@@ -121,11 +121,11 @@ to bind the server to:</p>
 <a class="reference internal" href="../settings.html#setting-backlog"><em>backlog</em></a> settings. For example:</p>
 <div class="highlight-python"><pre>python script.py --backlog 1000</pre>
 </div>
-<p>will serve a maximum of 1000 clients per <a class="reference internal" href="../api.html#pulsar.Worker" title="pulsar.Worker"><tt class="xref py py-class docutils literal"><span class="pre">pulsar.Worker</span></tt></a> concurrently.</p>
+<p>will serve a maximum of 1000 clients per <tt class="xref py py-class docutils literal"><span class="pre">pulsar.Worker</span></tt> concurrently.</p>
 </div>
 <div class="section" id="keepalive">
 <h3>keepalive<a class="headerlink" href="#keepalive" title="Permalink to this headline">¶</a></h3>
-<p>To control how long a <a class="reference internal" href="../api.html#pulsar.AsyncConnection" title="pulsar.AsyncConnection"><tt class="xref py py-class docutils literal"><span class="pre">pulsar.AsyncConnection</span></tt></a> is kept alive after the
+<p>To control how long a <tt class="xref py py-class docutils literal"><span class="pre">pulsar.AsyncConnection</span></tt> is kept alive after the
 last read from the remote client, one can use the
 <a class="reference internal" href="../settings.html#setting-keepalive"><em>keepalive</em></a> setting.</p>
 <blockquote>
@@ -138,7 +138,7 @@ last read from the remote client, one can use the
 <p>When running a <a class="reference internal" href="#pulsar.apps.socket.SocketServer" title="pulsar.apps.socket.SocketServer"><tt class="xref py py-class docutils literal"><span class="pre">SocketServer</span></tt></a> in threading mode:</p>
 <div class="highlight-python"><pre>python script.py --concurrency thread</pre>
 </div>
-<p>the number of <a class="reference internal" href="../api.html#pulsar.Worker" title="pulsar.Worker"><tt class="xref py py-class docutils literal"><span class="pre">pulsar.Worker</span></tt></a> serving the application is set to 0 so
+<p>the number of <tt class="xref py py-class docutils literal"><span class="pre">pulsar.Worker</span></tt> serving the application is set to 0 so
 that the application is actually served by the <tt class="xref py py-class docutils literal"><span class="pre">Arbiter</span></tt>
 eventloop (we refer this to a single process server).
 This configuration is used when debugging, testing, benchmarking or small
@@ -157,21 +157,21 @@ load servers.</p>
 <h3>Socket Server<a class="headerlink" href="#socket-server" title="Permalink to this headline">¶</a></h3>
 <dl class="class">
 <dt id="pulsar.apps.socket.SocketServer">
-<em class="property">class </em><tt class="descclassname">pulsar.apps.socket.</tt><tt class="descname">SocketServer</tt><big>(</big><em>callable=None</em>, <em>description=None</em>, <em>name=None</em>, <em>epilog=None</em>, <em>argv=None</em>, <em>script=None</em>, <em>version=None</em>, <em>parse_console=True</em>, <em>commands_set=None</em>, <em>cfg=None</em>, <em>**kwargs</em><big>)</big><a class="reference internal" href="../modules/pulsar/apps/socket.html#SocketServer"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.socket.SocketServer" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><tt class="descclassname">pulsar.apps.socket.</tt><tt class="descname">SocketServer</tt><big>(</big><em>callable=None</em>, <em>description=None</em>, <em>name=None</em>, <em>epilog=None</em>, <em>argv=None</em>, <em>script=None</em>, <em>version=None</em>, <em>parse_console=True</em>, <em>cfg=None</em>, <em>**kwargs</em><big>)</big><a class="reference internal" href="../_modules/pulsar/apps/socket.html#SocketServer"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.socket.SocketServer" title="Permalink to this definition">¶</a></dt>
 <dd><p>This application bind a socket to a given address and listen for
 requests. The request handler is constructued from the
-<a class="reference internal" href="#pulsar.apps.socket.SocketServer.socket_server_factory" title="pulsar.apps.socket.SocketServer.socket_server_factory"><tt class="xref py py-attr docutils literal"><span class="pre">socket_server_factory</span></tt></a> parameter/attribute.</p>
-<dl class="attribute">
-<dt id="pulsar.apps.socket.SocketServer.socket_server_factory">
-<tt class="descname">socket_server_factory</tt><a class="headerlink" href="#pulsar.apps.socket.SocketServer.socket_server_factory" title="Permalink to this definition">¶</a></dt>
-<dd><p>Callable which returns the asynchronous socket server, usually
-a subclass of <a class="reference internal" href="../api.html#pulsar.AsyncSocketServer" title="pulsar.AsyncSocketServer"><tt class="xref py py-class docutils literal"><span class="pre">pulsar.AsyncSocketServer</span></tt></a>.</p>
-</dd></dl>
-
+<tt class="xref py py-attr docutils literal"><span class="pre">handler</span></tt> parameter/attribute.</p>
 <dl class="attribute">
 <dt id="pulsar.apps.socket.SocketServer.address">
 <tt class="descname">address</tt><a class="headerlink" href="#pulsar.apps.socket.SocketServer.address" title="Permalink to this definition">¶</a></dt>
 <dd><p>The socket address, available once the application has started.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="pulsar.apps.socket.SocketServer.create_server">
+<tt class="descname">create_server</tt><big>(</big><em>worker</em><big>)</big><a class="headerlink" href="#pulsar.apps.socket.SocketServer.create_server" title="Permalink to this definition">¶</a></dt>
+<dd><p>Create the Server Protocol which will listen for requests. It
+uses the <tt class="xref py py-meth docutils literal"><span class="pre">handler()</span></tt> as its response protocol.</p>
 </dd></dl>
 
 </dd></dl>
@@ -188,7 +188,7 @@ a subclass of <a class="reference internal" href="../api.html#pulsar.AsyncSocket
       <div class="sphinxsidebar">
         <div class="sphinxsidebarwrapper"><p class="logo">
 <a href="../index.html">
-  <img class="logo" width="200" src="../static/pulsar.png" alt="pulsar" title="Pulsar"/>
+  <img class="logo" width="200" src="../_static/pulsar.png" alt="pulsar" title="Pulsar"/>
 </a>
 </p>
   <h3><a href="../index.html">Table Of Contents</a></h3>
@@ -218,7 +218,7 @@ a subclass of <a class="reference internal" href="../api.html#pulsar.AsyncSocket
                         title="next chapter">WSGI Servers</a></p>
   <h3>This Page</h3>
   <ul class="this-page-menu">
-    <li><a href="../sources/apps/socket.txt"
+    <li><a href="../_sources/apps/socket.txt"
            rel="nofollow">Show Source</a></li>
   </ul>
 <div id="searchbox" style="display: none">
@@ -253,7 +253,7 @@ a subclass of <a class="reference internal" href="../api.html#pulsar.AsyncSocket
         <li class="right" >
           <a href="../settings.html" title="Settings"
              >previous</a> |</li>
-        <li><a href="../index.html">pulsar v0.4.4b1 documentation</a> &raquo;</li> 
+        <li><a href="../index.html">pulsar v0.5a1 documentation</a> &raquo;</li> 
       </ul>
     </div>
 

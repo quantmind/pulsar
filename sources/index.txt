@@ -11,9 +11,11 @@ in a single code base.
    :maxdepth: 1
    
    overview
-   changelog
    design
+   faq
+   advantage
    api
+   changelog
    http
    settings
    

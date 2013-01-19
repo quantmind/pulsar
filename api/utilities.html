@@ -1,0 +1,283 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>Tools &mdash; pulsar v0.5a1 documentation</title>
+    <link rel="stylesheet" href="../_static/celery.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../',
+        VERSION:     '0.5a1',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <link rel="top" title="pulsar v0.5a1 documentation" href="../index.html" />
+    <link rel="up" title="API" href="index.html" />
+    <link rel="next" title="Changelog" href="../changelog.html" />
+    <link rel="prev" title="Applications API" href="application.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="../changelog.html" title="Changelog"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="application.html" title="Applications API"
+             accesskey="P">previous</a> |</li>
+        <li><a href="../index.html">pulsar v0.5a1 documentation</a> &raquo;</li>
+          <li><a href="index.html" accesskey="U">API</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+<div class="deck">
+
+    
+        <p class="developmentversion">
+        Documentation for pulsar's DEVELOPMENT version. Get the 
+        <a href="http://packages.python.org/pulsar/">release docs here</a>.
+        </p>
+    
+
+</div>
+
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="tools">
+<h1>Tools<a class="headerlink" href="#tools" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="module-pulsar.utils.websocket">
+<span id="websocket-frame-parser"></span><h2>Websocket Frame &amp; Parser<a class="headerlink" href="#module-pulsar.utils.websocket" title="Permalink to this headline">¶</a></h2>
+<p><a class="reference external" href="http://tools.ietf.org/html/rfc6455">WebSocket</a> Protocol <a class="reference internal" href="#pulsar.utils.websocket.Frame" title="pulsar.utils.websocket.Frame"><tt class="xref py py-class docutils literal"><span class="pre">Frame</span></tt></a> and <a class="reference internal" href="#pulsar.utils.websocket.FrameParser" title="pulsar.utils.websocket.FrameParser"><tt class="xref py py-class docutils literal"><span class="pre">FrameParser</span></tt></a> classes.
+These two classes can be used for both clients and server protocols.</p>
+<div class="section" id="frame">
+<h3>Frame<a class="headerlink" href="#frame" title="Permalink to this headline">¶</a></h3>
+<dl class="class">
+<dt id="pulsar.utils.websocket.Frame">
+<em class="property">class </em><tt class="descclassname">pulsar.utils.websocket.</tt><tt class="descname">Frame</tt><big>(</big><em>message=None</em>, <em>opcode=None</em>, <em>version=None</em>, <em>masking_key=None</em>, <em>final=False</em>, <em>rsv1=0</em>, <em>rsv2=0</em>, <em>rsv3=0</em>, <em>build_frame=True</em><big>)</big><a class="reference internal" href="../_modules/pulsar/utils/websocket.html#Frame"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.utils.websocket.Frame" title="Permalink to this definition">¶</a></dt>
+<dd><p>Implements the framing protocol as defined by
+specification supporting protocol version 13:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">f</span> <span class="o">=</span> <span class="n">Frame</span><span class="p">(</span><span class="s">&#39;hello world&#39;</span><span class="p">,</span> <span class="n">final</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">data</span> <span class="o">=</span> <span class="n">f</span><span class="o">.</span><span class="n">build</span><span class="p">()</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">f</span> <span class="o">=</span> <span class="n">Frame</span><span class="p">()</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">f</span><span class="o">.</span><span class="n">parser</span><span class="o">.</span><span class="n">send</span><span class="p">(</span><span class="nb">bytes</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">f</span><span class="o">.</span><span class="n">parser</span><span class="o">.</span><span class="n">send</span><span class="p">(</span><span class="nb">bytes</span><span class="p">[</span><span class="mi">2</span><span class="p">])</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">f</span><span class="o">.</span><span class="n">parser</span><span class="o">.</span><span class="n">send</span><span class="p">(</span><span class="nb">bytes</span><span class="p">[</span><span class="mi">2</span><span class="p">:])</span>
+</pre></div>
+</div>
+<dl class="method">
+<dt id="pulsar.utils.websocket.Frame.mask">
+<tt class="descname">mask</tt><big>(</big><em>data</em><big>)</big><a class="reference internal" href="../_modules/pulsar/utils/websocket.html#Frame.mask"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.utils.websocket.Frame.mask" title="Permalink to this definition">¶</a></dt>
+<dd><p>Performs the masking or unmasking operation on data
+using the simple masking algorithm:</p>
+<div class="highlight-python"><pre>j = i MOD 4
+transformed-octet-i = original-octet-i XOR masking-key-octet-j</pre>
+</div>
+</dd></dl>
+
+<dl class="method">
+<dt id="pulsar.utils.websocket.Frame.unmask">
+<tt class="descname">unmask</tt><big>(</big><em>data</em><big>)</big><a class="headerlink" href="#pulsar.utils.websocket.Frame.unmask" title="Permalink to this definition">¶</a></dt>
+<dd><p>Performs the masking or unmasking operation on data
+using the simple masking algorithm:</p>
+<div class="highlight-python"><pre>j = i MOD 4
+transformed-octet-i = original-octet-i XOR masking-key-octet-j</pre>
+</div>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="frame-parser">
+<h3>Frame Parser<a class="headerlink" href="#frame-parser" title="Permalink to this headline">¶</a></h3>
+<dl class="class">
+<dt id="pulsar.utils.websocket.FrameParser">
+<em class="property">class </em><tt class="descclassname">pulsar.utils.websocket.</tt><tt class="descname">FrameParser</tt><big>(</big><em>version=None</em>, <em>kind=0</em><big>)</big><a class="reference internal" href="../_modules/pulsar/utils/websocket.html#FrameParser"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.utils.websocket.FrameParser" title="Permalink to this definition">¶</a></dt>
+<dd><p>Decoder and encoder for the websocket protocol.</p>
+<dl class="attribute">
+<dt id="pulsar.utils.websocket.FrameParser.version">
+<tt class="descname">version</tt><a class="headerlink" href="#pulsar.utils.websocket.FrameParser.version" title="Permalink to this definition">¶</a></dt>
+<dd><p>Optional protocol version (Default 13).</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="pulsar.utils.websocket.FrameParser.kind">
+<tt class="descname">kind</tt><a class="reference internal" href="../_modules/pulsar/utils/websocket.html#FrameParser.kind"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.utils.websocket.FrameParser.kind" title="Permalink to this definition">¶</a></dt>
+<dd><ul class="simple">
+<li>0 for parsing client&#8217;s frames and sending server frames (to be used
+in the server)</li>
+<li>1 for parsing server frames and sending client frames (to be used
+by the client)</li>
+<li>2 Assumes always unmasked data</li>
+</ul>
+</dd></dl>
+
+<dl class="method">
+<dt id="pulsar.utils.websocket.FrameParser.encode">
+<tt class="descname">encode</tt><big>(</big><em>data</em>, <em>final=True</em>, <em>masking_key=None</em>, <em>**params</em><big>)</big><a class="reference internal" href="../_modules/pulsar/utils/websocket.html#FrameParser.encode"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.utils.websocket.FrameParser.encode" title="Permalink to this definition">¶</a></dt>
+<dd><p>Encode data into a <a class="reference internal" href="#pulsar.utils.websocket.Frame" title="pulsar.utils.websocket.Frame"><tt class="xref py py-class docutils literal"><span class="pre">Frame</span></tt></a>.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>final</strong> &#8211; Indicating if this is a final Frame.</li>
+<li><strong>masking_key</strong> &#8211; Optional making key used only if <a class="reference internal" href="#pulsar.utils.websocket.FrameParser.kind" title="pulsar.utils.websocket.FrameParser.kind"><tt class="xref py py-attr docutils literal"><span class="pre">kind</span></tt></a> is 1 
+(Client frames).</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="pulsar.utils.websocket.FrameParser.ping">
+<tt class="descname">ping</tt><big>(</big><em>body=None</em><big>)</big><a class="reference internal" href="../_modules/pulsar/utils/websocket.html#FrameParser.ping"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.utils.websocket.FrameParser.ping" title="Permalink to this definition">¶</a></dt>
+<dd><p>return a <cite>ping</cite> <a class="reference internal" href="#pulsar.utils.websocket.Frame" title="pulsar.utils.websocket.Frame"><tt class="xref py py-class docutils literal"><span class="pre">Frame</span></tt></a>.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="pulsar.utils.websocket.FrameParser.pong">
+<tt class="descname">pong</tt><big>(</big><em>body=None</em><big>)</big><a class="reference internal" href="../_modules/pulsar/utils/websocket.html#FrameParser.pong"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.utils.websocket.FrameParser.pong" title="Permalink to this definition">¶</a></dt>
+<dd><p>return a <cite>pong</cite> <a class="reference internal" href="#pulsar.utils.websocket.Frame" title="pulsar.utils.websocket.Frame"><tt class="xref py py-class docutils literal"><span class="pre">Frame</span></tt></a>.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="pulsar.utils.websocket.FrameParser.close">
+<tt class="descname">close</tt><big>(</big><em>body=None</em><big>)</big><a class="reference internal" href="../_modules/pulsar/utils/websocket.html#FrameParser.close"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.utils.websocket.FrameParser.close" title="Permalink to this definition">¶</a></dt>
+<dd><p>return a <cite>close</cite> <a class="reference internal" href="#pulsar.utils.websocket.Frame" title="pulsar.utils.websocket.Frame"><tt class="xref py py-class docutils literal"><span class="pre">Frame</span></tt></a>.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="pulsar.utils.websocket.FrameParser.continuation">
+<tt class="descname">continuation</tt><big>(</big><em>body=None</em><big>)</big><a class="reference internal" href="../_modules/pulsar/utils/websocket.html#FrameParser.continuation"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.utils.websocket.FrameParser.continuation" title="Permalink to this definition">¶</a></dt>
+<dd><p>return a <cite>continuation</cite> <a class="reference internal" href="#pulsar.utils.websocket.Frame" title="pulsar.utils.websocket.Frame"><tt class="xref py py-class docutils literal"><span class="pre">Frame</span></tt></a>.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="pulsar.utils.websocket.FrameParser.decode">
+<tt class="descname">decode</tt><big>(</big><em>data=None</em><big>)</big><a class="reference internal" href="../_modules/pulsar/utils/websocket.html#FrameParser.decode"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.utils.websocket.FrameParser.decode" title="Permalink to this definition">¶</a></dt>
+<dd><p>Decode bytes data into a <a class="reference internal" href="#pulsar.utils.websocket.Frame" title="pulsar.utils.websocket.Frame"><tt class="xref py py-class docutils literal"><span class="pre">Frame</span></tt></a>. If <a class="reference internal" href="#pulsar.utils.websocket.FrameParser.kind" title="pulsar.utils.websocket.FrameParser.kind"><tt class="xref py py-attr docutils literal"><span class="pre">kind</span></tt></a> is 0
+it descodes into a client frame (masked frame) while if is 1 it decodes
+into a server frame (unmasked).</p>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper"><p class="logo">
+<a href="../index.html">
+  <img class="logo" width="200" src="../_static/pulsar.png" alt="pulsar" title="Pulsar"/>
+</a>
+</p>
+  <h3><a href="../index.html">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">Tools</a><ul>
+<li><a class="reference internal" href="#module-pulsar.utils.websocket">Websocket Frame &amp; Parser</a><ul>
+<li><a class="reference internal" href="#frame">Frame</a></li>
+<li><a class="reference internal" href="#frame-parser">Frame Parser</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="application.html"
+                        title="previous chapter">Applications API</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="../changelog.html"
+                        title="next chapter">Changelog</a></p>
+  <h3>This Page</h3>
+  <ul class="this-page-menu">
+    <li><a href="../_sources/api/utilities.txt"
+           rel="nofollow">Show Source</a></li>
+  </ul>
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" size="18" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="../changelog.html" title="Changelog"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="application.html" title="Applications API"
+             >previous</a> |</li>
+        <li><a href="../index.html">pulsar v0.5a1 documentation</a> &raquo;</li>
+          <li><a href="index.html" >API</a> &raquo;</li> 
+      </ul>
+    </div>
+
+    <div class="footer">
+        &copy; Copyright 2011, Luca Sbardella.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.0.7.
+    </div>
+<script type="text/javascript">
+
+  var _gaq = _gaq || [];
+  
+  _gaq.push(['_setAccount', 'UA-3900561-8']);
+  
+  _gaq.push(['_trackPageview']);
+
+  (function() {
+    var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+    ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+    var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+  })();
+
+</script>
+
+  </body>
+</html>

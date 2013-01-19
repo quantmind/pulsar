@@ -6,23 +6,23 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>Overview &mdash; pulsar v0.4.4b1 documentation</title>
-    <link rel="stylesheet" href="static/celery.css" type="text/css" />
-    <link rel="stylesheet" href="static/pygments.css" type="text/css" />
+    <title>Overview &mdash; pulsar v0.5a1 documentation</title>
+    <link rel="stylesheet" href="_static/celery.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '',
-        VERSION:     '0.4.4b1',
+        VERSION:     '0.5a1',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
       };
     </script>
-    <script type="text/javascript" src="static/jquery.js"></script>
-    <script type="text/javascript" src="static/underscore.js"></script>
-    <script type="text/javascript" src="static/doctools.js"></script>
-    <link rel="top" title="pulsar v0.4.4b1 documentation" href="index.html" />
-    <link rel="next" title="Changelog" href="changelog.html" />
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="top" title="pulsar v0.5a1 documentation" href="index.html" />
+    <link rel="next" title="Design" href="design.html" />
     <link rel="prev" title="Pulsar" href="index.html" /> 
   </head>
   <body>
@@ -36,12 +36,12 @@
           <a href="py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
         <li class="right" >
-          <a href="changelog.html" title="Changelog"
+          <a href="design.html" title="Design"
              accesskey="N">next</a> |</li>
         <li class="right" >
           <a href="index.html" title="Pulsar"
              accesskey="P">previous</a> |</li>
-        <li><a href="index.html">pulsar v0.4.4b1 documentation</a> &raquo;</li> 
+        <li><a href="index.html">pulsar v0.5a1 documentation</a> &raquo;</li> 
       </ul>
     </div>  
 
@@ -79,7 +79,7 @@ activities in different threads and/or processes.</p>
 </tr>
 <tr class="field"><th class="field-name">Source:</th><td class="field-body"><a class="reference external" href="https://github.com/quantmind/pulsar">https://github.com/quantmind/pulsar</a></td>
 </tr>
-<tr class="field"><th class="field-name">Keywords:</th><td class="field-body">server, asynchronous, concurrency, actor, thread, process, socket, task queue</td>
+<tr class="field"><th class="field-name">Keywords:</th><td class="field-body">server, asynchronous, concurrency, actor, thread, process, socket, task queue, wsgi</td>
 </tr>
 </tbody>
 </table>
@@ -91,10 +91,10 @@ framework which responds with &#8220;Hello World!&#8221; for every request:</p>
     <span class="sd">&#39;&#39;&#39;Pulsar HTTP &quot;Hello World!&quot; application&#39;&#39;&#39;</span>
     <span class="n">data</span> <span class="o">=</span> <span class="n">b</span><span class="s">&#39;Hello World!</span><span class="se">\n</span><span class="s">&#39;</span>
     <span class="n">status</span> <span class="o">=</span> <span class="s">&#39;200 OK&#39;</span>
-    <span class="n">response_headers</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="n">response_headers</span> <span class="o">=</span> <span class="p">[</span>
         <span class="p">(</span><span class="s">&#39;Content-type&#39;</span><span class="p">,</span><span class="s">&#39;text/plain&#39;</span><span class="p">),</span>
         <span class="p">(</span><span class="s">&#39;Content-Length&#39;</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">data</span><span class="p">)))</span>
-    <span class="p">)</span>
+    <span class="p">]</span>
     <span class="n">start_response</span><span class="p">(</span><span class="n">status</span><span class="p">,</span> <span class="n">response_headers</span><span class="p">)</span>
     <span class="k">return</span> <span class="p">[</span><span class="n">data</span><span class="p">]</span>
 
@@ -122,7 +122,7 @@ a combination of the two.</p>
 <h2>Applications<a class="headerlink" href="#applications" title="Permalink to this headline">¶</a></h2>
 <p>Pulsar design allows for a host of different applications to be implemented
 in an elegant and efficient way. Out of the box it is shipped with the
-the following</p>
+the following:</p>
 <ul class="simple">
 <li>Socket servers.</li>
 <li>WSGI server.</li>
@@ -219,7 +219,7 @@ file in the top distribution directory for the full license text.</p>
       <div class="sphinxsidebar">
         <div class="sphinxsidebarwrapper"><p class="logo">
 <a href="index.html">
-  <img class="logo" width="200" src="static/pulsar.png" alt="pulsar" title="Pulsar"/>
+  <img class="logo" width="200" src="_static/pulsar.png" alt="pulsar" title="Pulsar"/>
 </a>
 </p>
   <h3><a href="index.html">Table Of Contents</a></h3>
@@ -242,11 +242,11 @@ file in the top distribution directory for the full license text.</p>
   <p class="topless"><a href="index.html"
                         title="previous chapter">Pulsar</a></p>
   <h4>Next topic</h4>
-  <p class="topless"><a href="changelog.html"
-                        title="next chapter">Changelog</a></p>
+  <p class="topless"><a href="design.html"
+                        title="next chapter">Design</a></p>
   <h3>This Page</h3>
   <ul class="this-page-menu">
-    <li><a href="sources/overview.txt"
+    <li><a href="_sources/overview.txt"
            rel="nofollow">Show Source</a></li>
   </ul>
 <div id="searchbox" style="display: none">
@@ -276,12 +276,12 @@ file in the top distribution directory for the full license text.</p>
           <a href="py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
         <li class="right" >
-          <a href="changelog.html" title="Changelog"
+          <a href="design.html" title="Design"
              >next</a> |</li>
         <li class="right" >
           <a href="index.html" title="Pulsar"
              >previous</a> |</li>
-        <li><a href="index.html">pulsar v0.4.4b1 documentation</a> &raquo;</li> 
+        <li><a href="index.html">pulsar v0.5a1 documentation</a> &raquo;</li> 
       </ul>
     </div>
 
