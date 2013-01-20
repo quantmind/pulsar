@@ -41,14 +41,9 @@ arbiter mailbox.'''
     def __str__(self):
         return self.mailbox.__str__()
     
-    @property
-    def address(self):
-        return self.mailbox.address
-
-    @property
-    def event_loop(self):
-        return self.mailbox.event_loop
-
+    def __getattr__(self, name):
+        return getattr(self.mailbox, name)
+    
     def _run(self):
         pass
     

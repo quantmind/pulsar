@@ -121,7 +121,7 @@ class TestTestWorker(unittest.TestCase):
         response = worker.send(worker.monitor, 'notify', worker.info())
         self.assertEqual(response, None)
         
-    def test_run_on_arbiter(self):
+    def __test_run_on_arbiter(self):
         actor = pulsar.get_actor()
         response = actor.send('arbiter', 'run', simple_function)
         yield response.when_ready
@@ -131,7 +131,7 @@ class TestTestWorker(unittest.TestCase):
         # The target does not exists
         self.assertRaises(ValueError, pulsar.send, 'vcghdvchdgcvshcd', 'ping')
         
-    def test_multiple_execute(self):
+    def __test_multiple_execute(self):
         result1 = send('arbiter', 'run', wait, 0.2)
         result2 = send('arbiter', 'ping')
         result3 = send('arbiter', 'echo', 'ciao!')

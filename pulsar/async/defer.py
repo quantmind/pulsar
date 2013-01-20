@@ -47,7 +47,7 @@ class DeferredFailure(Exception):
     
 
 EMPTY_DICT = {}
-
+EMPTY_TUPLE = ()
 LOGGER = logging.getLogger('pulsar.defer')
 
 remote_stacktrace = namedtuple('remote_stacktrace', 'error_class error trace')
@@ -156,9 +156,9 @@ result.
 '''
     try:
         kwargs = kwargs if kwargs is not None else EMPTY_DICT
-        args = args or ()
+        args = args or EMPTY_TUPLE
         result = f(*args, **kwargs)
-    except:
+    except Exception:
         result = sys.exc_info()
     return make_async(result, max_errors=max_errors, description=description)
 

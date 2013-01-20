@@ -127,7 +127,7 @@ Users access the arbiter (in the arbiter process domain) by the high level api::
 
     def close_monitors(self):
         '''Close all :class:`Monitor` at once.'''
-        return multi_async([m.stop() for m in itervalues(self.monitors)],
+        return multi_async([m.stop() for m in list(itervalues(self.monitors))],
                            log_failure=True)
 
     def on_info(self, data):
@@ -158,8 +158,8 @@ Users access the arbiter (in the arbiter process domain) by the high level api::
     ############################################################################
     # INTERNALS
     ############################################################################
-    def _remove_actor(self, actor):
-        super(Arbiter, self)._remove_actor(actor)
+    def _remove_actor(self, actor, log=True):
+        super(Arbiter, self)._remove_actor(actor, log)
         self.registered.pop(actor.name, None)
         self.monitors.pop(actor.aid, None)
         
@@ -175,7 +175,6 @@ Users access the arbiter (in the arbiter process domain) by the high level api::
             self.pidfile = p
         
     def on_stop(self):
-        self._remove_actor(self)
         p = self.pidfile
         if p is not None:
             self.logger.debug('Removing %s' % p.fname)

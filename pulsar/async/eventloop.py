@@ -19,7 +19,7 @@ from pulsar.utils.pep import default_timer, set_event_loop_policy,\
                              EventLoop as BaseEventLoop,\
                              EventLoopPolicy as BaseEventLoopPolicy
 from .access import thread_local_data
-from .defer import log_failure, Deferred
+from .defer import log_failure, Deferred, as_failure
 from .servers import Server
 
 __all__ = ['EventLoop', 'TimedCall', 'asynchronous']
@@ -36,10 +36,6 @@ def file_descriptor(fd):
 def setid(self):
     self.tid = current_thread().ident
     self.pid = os.getpid()
-
-def _raise_stop_event_loop():
-    LOGGER.debug('Exiting event loop')
-    raise StopEventLoop
 
 
 class StopEventLoop(BaseException):
@@ -83,13 +79,13 @@ class asynchronous:
     def generate(self, eventloop, callback, gen, value=None):
         try:
             value = next(gen)
-            eventloop.call_soon_threadsafe(self.generate, eventloop,
-                                           callback, gen, value)
+            return eventloop.call_soon_threadsafe(self.generate, eventloop,
+                                                  callback, gen, value)
         except StopIteration:
-            callback(value)
             pass
         except Exception as e:
-            callback(e)
+            value = as_failure(e)
+        callback(log_failure(value))
                 
             
             
@@ -383,8 +379,12 @@ event loop is the place where most asynchronous operations are carried out.
         
     def stop(self):
         '''Stop the loop after the current event loop iteration is complete'''
-        self.call_soon_threadsafe(_raise_stop_event_loop)
+        self.call_soon_threadsafe(self._raise_stop_event_loop)
         
+    def _raise_stop_event_loop(self):
+        self.logger.debug('Stopping %s', self)
+        raise StopEventLoop
+
     def call_later(self, seconds, callback, *args):
         """Arrange for a *callback* to be called at a given time in the future.
 Return an :class:`TimedCall` with a :meth:`TimedCall.cancel' method

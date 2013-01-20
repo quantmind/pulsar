@@ -10,6 +10,7 @@ from . import proxy
 from .actor import Actor, ACTOR_STATES, ACTOR_TERMINATE_TIMEOUT,\
                      ACTOR_STOPPING_LOOPS, send
 from .access import NOTHING
+from .defer import async
 from .concurrency import concurrency
 from .mailbox import MonitorMailbox
 from .eventloop import asynchronous
@@ -88,6 +89,7 @@ during its life time.
     def __init__(self, impl):
         super(PoolMixin, self).__init__(impl)
         self.managed_actors = {}
+        self.terminated_actors = []
         self.actor_class = self.params.pop('actor_class') or self.actor_class
 
     def hand_shake(self, *args):
@@ -122,64 +124,65 @@ during its life time.
 spawn method when creating new actors.'''
         return dict(self.params)
 
-    def _remove_actor(self, actor):
-        self.logger.info('Removing %s', actor)
+    def _remove_actor(self, actor, log=True):
+        if log:
+            self.logger.info('Removing %s', actor)
         self.managed_actors.pop(actor.aid, None)
+        if self.monitor:
+            self.monitor._remove_actor(actor, False)
                 
-    def manage_actors(self, terminate=False, stop=False, manage=True):
+    def manage_actors(self, stop=False):
         '''Remove :class:`Actor` which are not alive from the
 :class:`PoolMixin.managed_actors` and return the number of actors still alive.
 
-:parameter terminate: if ``True`` force termination of alive actors.
 :parameter stop: if ``True`` stops all alive actor.
-:parameter manage: if ``True`` it checks if alive actors are still responsive.
 '''
-        if not self.managed_actors:
-            return 
         alive = 0
-        ACTORS = list(iteritems(self.managed_actors))
-        shutting_down = terminate or stop
-        # Loop over MANAGED PROXY MONITORS
-        for aid, actor in ACTORS:
-            if not actor.is_alive():
-                if actor.spawning_loops is not NOTHING:
-                    if actor.spawning_loops < ACTOR_STOPPING_LOOPS:
-                        actor.spawning_loops += 1
-                        continue
-                actor.join(ACTOR_TERMINATE_TIMEOUT)
-                self.logger.debug('Actor %s removed from monitor', actor)
-                self._remove_actor(actor)
-                if self.monitor:
-                    self.monitor._remove_actor(actor)
-            else:
-                actor.spawning_loops = NOTHING
-                alive += 1
-                if shutting_down:
-                    if terminate and not actor.mailbox:
-                        actor.terminate()
-                        actor.join(ACTOR_TERMINATE_TIMEOUT)
-                    else:
-                        self.send(actor, 'stop')
-                elif manage:
-                    self.manage_actor(actor)
+        if self.managed_actors:
+            for aid, actor in list(iteritems(self.managed_actors)):
+                alive += self.manage_actor(actor, stop)
         return alive
 
-    def manage_actor(self, actor):
+    def manage_actor(self, actor, stop=False):
         '''If an actor failed to notify itself to the arbiter for more than
 the timeout. Stop the arbiter.'''
-        stopping_loops = actor.stopping_loops
-        if self.running() and (stopping_loops or actor.notified):
-            gap = time() - actor.notified
-            if gap > actor.cfg.timeout or stopping_loops:
-                if stopping_loops < ACTOR_STOPPING_LOOPS:
-                    if not stopping_loops:
-                        self.logger.info('Stopping %s. Timeout.', actor)
-                        self.send(actor, 'stop')
-                    actor.stopping_loops += 1
-                else:
-                    self.logger.warn('Terminating %s. Timeout.', actor)
+        if not self.running():
+            stop = True
+        if not actor.is_alive():
+            if actor.spawning_loops is not NOTHING and not stop:
+                if actor.spawning_loops < ACTOR_STOPPING_LOOPS:
+                    actor.spawning_loops += 1
+                    return 1
+            actor.join(ACTOR_TERMINATE_TIMEOUT)
+            self._remove_actor(actor)
+            return 0
+        else:
+            actor.spawning_loops = NOTHING
+            lp = actor.stopping_loops
+            timeout = bool(lp)
+            stop = stop or lp
+            if not stop and actor.notified:
+                gap = time() - actor.notified
+                stop = timeout = gap > actor.cfg.timeout
+            if stop:   # we are shutting down
+                if not actor.mailbox or lp >= ACTOR_STOPPING_LOOPS:
+                    if timeout:
+                        self.logger.warn('Terminating %s. Timeout.', actor)
+                    else:
+                        self.logger.info('Terminating %s.', actor)
                     actor.terminate()
-                    actor.join(ACTOR_TERMINATE_TIMEOUT)
+                    self.terminated_actors.append(actor)
+                    self._remove_actor(actor)
+                    return 0
+                else:
+                    actor.stopping_loops += 1
+                    if not lp:
+                        if timeout:
+                            self.logger.warn('Stopping %s. Timeout', actor)
+                        else:
+                            self.logger.info('Stopping %s.', actor)
+                        self.send(actor, 'stop')
+            return 1
 
     def spawn_actors(self):
         '''Spawn new actors if needed. If the :class:`PoolMixin` is spawning
@@ -200,41 +203,16 @@ as required."""
                     age = worker.impl.age
                     if age < kage:
                         w, kage = w, age
-                if not actor.is_alive():
-                    self._remove_actor(w)
-                else:
-                    send(w, 'stop')
-                    
-    def link_actor(self, proxy, address):
-        # Override the link_actor from Actor class
-        self.logger.debug('Registering %s address %s', proxy, address)
-        if proxy.aid not in self.spawning_actors:
-            raise RuntimeError('Could not retrieve proxy %s.' % proxy)
-        proxy_monitor = self.spawning_actors.pop(proxy.aid)
-        proxy_monitor.info['last_notified'] = time()
-        proxy_monitor.address = address
-        self.managed_actors[proxy.aid] = proxy_monitor
-        self.linked_actors[proxy.aid] = proxy
-        if self.arbiter:
-            # link also the arbiter
-            self.arbiter.linked_actors[proxy.aid] = proxy
-        return proxy_monitor.proxy
-
+                self.manage_actor(w, True)
+    
     @asynchronous()
     def close_actors(self):
         '''Close all managed :class:`Actor`.'''
-        start = time()
         # Stop all of them
-        to_stop = yield self.manage_actors(stop=True)
-        if to_stop:
-            while True:
-                to_stop = yield self.manage_actors(manage=False)
-                if time() - start > self.CLOSE_TIMEOUT:
-                    self.logger.warn('Cannot stop %s actors.', to_stop)
-                    to_stop = self.manage_actors(terminate=True)
-                    self.logger.warn('terminated %s actors.', to_stop)
-                    to_stop = 0
-                    break
+        to_stop = self.manage_actors(stop=True)
+        while to_stop:
+            yield to_stop
+            to_stop = self.manage_actors(stop=True)
     
     
 class Monitor(PoolMixin):
@@ -305,9 +283,12 @@ Users shouldn't need to override this method, but use
         self.ioloop.call_soon(self.periodic_task)
 
     # HOOKS
+    @async()
     def _stop(self):
-        self.close_actors().add_callback(
-            lambda r: self.monitor._remove_actor(self).add_both(self.on_exit.callback))
+        yield self.close_actors()
+        if not self.terminated_actors:
+            self.monitor._remove_actor(self)
+        self.on_exit.callback(self)
 
     @property
     def multithread(self):

@@ -25,7 +25,7 @@ from pulsar.utils import events
 
 from .eventloop import EventLoop, setid, signal
 from .defer import Deferred, log_failure
-from .proxy import ActorProxy, get_proxy
+from .proxy import ActorProxy, get_proxy, ActorProxyMonitor
 from .mailbox import MailboxClient
 from .access import set_actor, is_mainthread, get_actor, remove_actor, NOTHING
 
@@ -243,7 +243,11 @@ logging is configured, the :attr:`Actor.mailbox` is registered and the
         '''Send a message to *target* to perform *action* with given
 parameters *params*.'''
         target = self.monitor if target == 'monitor' else target
-        return self.mailbox.request(action, self, target, args, params)
+        if isinstance(target, ActorProxyMonitor):
+            mailbox = target.mailbox
+        else:
+            mailbox = self.mailbox
+        return mailbox.request(action, self, target, args, params)
     
     def io_poller(self):
         '''Return the :class:`EventLoop.io` handler. By default it return
