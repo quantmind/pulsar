@@ -257,12 +257,12 @@ configuration and plugins.'''
         tags = self.cfg.labels
         try:
             self.local.tests = tests = list(loader.testclasses(tags))
+            self._time_start = None
             if tests:
                 self.logger.info('loaded %s test classes', len(tests))
                 self.runner.on_start()
                 events.fire('tests', self, tests=tests)
                 monitor.cfg.set('workers', min(self.cfg.workers, len(tests)))
-                self._time_start = None
             else:
                 raise ExitTest('Could not find any tests.')
         except ExitTest as e:
@@ -274,12 +274,11 @@ configuration and plugins.'''
             monitor.arbiter.stop()
 
     def monitor_task(self, monitor):
-        if self._time_start is None:
-            tests = self.local.tests
+        if self._time_start is None and self.local.tests:
             self.logger.info('sending %s test classes to the task queue',
-                          len(tests))
+                          len(self.local.tests))
             self._time_start = time.time()
-            for tag, testcls in tests:
+            for tag, testcls in self.local.tests:
                 self.put(TestRequest(testcls, tag))
 
     def add_result(self, monitor, result):

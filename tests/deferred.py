@@ -33,7 +33,7 @@ class Cbk(Deferred):
 
 def async_pair():
     c = Deferred()
-    d = Deferred().addBoth(c.callback)
+    d = Deferred().add_both(c.callback)
     return d, c
     
     
