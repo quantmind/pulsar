@@ -119,7 +119,8 @@ class TestTestWorker(unittest.TestCase):
         self.assertEqual(future.result, 'pong')
         yield self.async.assertEqual(send(worker.monitor, 'ping'), 'pong')
         response = worker.send(worker.monitor, 'notify', worker.info())
-        self.assertEqual(response, None)
+        yield response
+        self.assertTrue(response.result < time.time())
         
     def __test_run_on_arbiter(self):
         actor = pulsar.get_actor()
