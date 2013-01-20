@@ -58,7 +58,6 @@ ACTOR_STOPPING_LOOPS = 10
 def is_actor(obj):
     return isinstance(obj, Actor)
 
-
 def send(target, action, *args, **params):
     '''Send a :ref:`message <api-remote_commands>` to *target* to perform
 a given *action*.
@@ -82,6 +81,13 @@ Typical example::
 '''
     return get_actor().send(target, action, *args, **params)
 
+def stop_on_error(f):
+    def _(self, *args, **kwargs):
+        try:
+            return f(self, *args, **kwargs)
+        except Exception as e:
+            self.stop(e)
+    return _
 
 class Pulsar(LogginMixin):
     
@@ -368,26 +374,28 @@ properly this actor will go out of scope.'''
     def periodic_task(self):
         if self.can_continue():
             if self.running():
-                self.send('monitor', 'notify', self.info())
+                r = self.send('monitor', 'notify', self.info())
                 secs = max(ACTOR_TIMEOUT_TOLERANCE*self.cfg.timeout, MIN_NOTIFY)
                 next = min(secs, MAX_NOTIFY)
                 self.ioloop.call_later(next, self.periodic_task)
+                return r
             else:
                 # The actor is not yet active, come back at the next requestloop
                 self.requestloop.call_soon_threadsafe(self.periodic_task)
-    
+        
+    @stop_on_error
+    def _got_notified(self, result):
+        self.on_start()
+        self.fire('on_start', self)
+        self.logger.info('%s started', self)
+        
+    @stop_on_error
     def hand_shake(self):
-        try:
-            a = get_actor()
-            if a is not self:
-                set_actor(self)
-            self.logger.info('%s started', self)
-            self.state = ACTOR_STATES.RUN
-            self.on_start()
-            self.fire('on_start', self)
-            self.periodic_task()
-        except Exception as e:
-            self.stop(e)
+        a = get_actor()
+        if a is not self:
+            set_actor(self)
+        self.state = ACTOR_STATES.RUN
+        self.periodic_task().add_callback(self._got_notified)
     
     def get_actor(self, aid):
         '''Given an actor unique id return the actor proxy.'''

@@ -88,7 +88,6 @@ class asynchronous:
         callback(log_failure(value))
                 
             
-            
 class TimedCall(object):
     """An EventLoop callback handler. This is not initialised directly, instead
 it is created by :meth:`EventLoop.call_soon`, :meth:`EventLoop.call_later`,

@@ -9,6 +9,7 @@ from .defer import Deferred
 __all__ = ['ActorProxyDeferred',
            'ActorProxy',
            'ActorProxyMonitor',
+           'CommandError',
            'CommandNotFound',
            'get_proxy',
            'command',
@@ -16,7 +17,11 @@ __all__ = ['ActorProxyDeferred',
 
 global_commands_table = {}
 
-class CommandNotFound(Exception):
+class CommandError(Exception):
+    pass
+
+
+class CommandNotFound(CommandError):
 
     def __init__(self, name):
         super(CommandNotFound, self).__init__(

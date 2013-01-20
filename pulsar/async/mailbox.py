@@ -18,7 +18,7 @@ from .access import get_actor, set_actor, PulsarThread
 from .defer import make_async, log_failure, Deferred
 from .servers import create_server, ServerConnection
 from .protocols import ProtocolConsumer
-from .proxy import actorid, get_proxy, get_command
+from .proxy import actorid, get_proxy, get_command, CommandError, ActorProxy
 from . import clients
 
 
@@ -60,8 +60,6 @@ class MailboxMixin(object):
         return self
     
     def feed(self, data):
-        # The receiver could be different from the mail box actor. For
-        # example a monitor uses the same mailbox as the arbiter
         msg = self._parser.decode(data)
         if msg:
             message = pickle.loads(msg.body)
@@ -72,7 +70,7 @@ class MailboxMixin(object):
         command = get_command(command)
         data = {'command': command.__name__,
                 'sender': actorid(sender),
-                'receiver': actorid(target),
+                'target': actorid(target),
                 'args': args if args is not None else (),
                 'kwargs': kwargs if kwargs is not None else {}}
         d = None
@@ -96,10 +94,17 @@ class MailboxMixin(object):
             command = message['command']
             if command == 'callback':   #this is a callback
                 return self.callback(message.get('ack'), message.get('result'))
-            actor = actor.get_actor(message['receiver']) or actor
+            target = actor.get_actor(message['target'])
+            if target is None:
+                raise CommandError('unknown actor %s' % message['target'])
+            if isinstance(target, ActorProxy):
+                # route the message to the actor
+                raise NotImplementedError()
+            else:
+                actor = target
             caller = actor.get_actor(message['sender'])
             command = get_command(command)
-            req = Request(actor, get_proxy(caller, safe=True), self.connection)
+            req = Request(target, get_proxy(caller, safe=True), self.connection)
             result = command(req, message['args'], message['kwargs'])
         except:
             result = sys.exc_info()

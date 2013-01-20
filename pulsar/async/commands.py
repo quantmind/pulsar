@@ -1,20 +1,20 @@
 from time import time
 
 from pulsar import AuthenticationError
-from . import proxy 
+from .proxy import command, CommandError
 
 #############################################################  COMMANDS
 
-@proxy.command()
+@command()
 def ping(request):
     return 'pong'
 
-@proxy.command()
+@command()
 def echo(request, message):
     '''Returns *message*'''
     return message
 
-@proxy.command()
+@command()
 def config(request, setget, name, *value):
     setget = setget.lower()
     if setget == 'get':
@@ -28,36 +28,43 @@ def config(request, setget, name, *value):
     else:
         raise CommandError('config must be followed by set or get')
 
-@proxy.command()
+@command()
 def run(request, callable, *args, **kwargs):
     '''Execute a python *callable*.'''
     return callable(request.actor, *args, **kwargs)
 
-@proxy.command(ack=False)
+@command(ack=False)
 def stop(request, aid=None):
     '''Stop the actor from running.'''
     return request.actor.stop()
     
-@proxy.command(ack=False)
+@command()
 def notify(request, info):
-    '''cThe actor notify itself.'''
+    '''The actor notify itself with a dictionary of information.
+The command perform the following actions:
+
+* Update the mailbox to the current consumer of the actor connection
+* Update the info dictionary
+* Returns the time of the update
+'''
+    t = time()
     remote_actor = request.caller
     remote_actor.mailbox = request.connection.current_consumer
-    if isinstance(info, dict):
-        info['last_notified'] = time()
-        remote_actor.info = info
+    info['last_notified'] = t
+    remote_actor.info = info
+    return t
     
-@proxy.command()
+@command()
 def spawn(request, **kwargs):
     '''Spawn a new actor.'''
     return request.actor.spawn(**kwargs)
 
-@proxy.command()
+@command()
 def info(request):
     ''' Returns information and statistics about the server as a json string'''
     return request.actor.info()
      
-@proxy.command()
+@command()
 def auth(request, password):
     '''Request for authentication in a password protected Pulsar server.
 Pulsar can be instructed to require a password before allowing clients to
@@ -71,7 +78,7 @@ execute commands.'''
         request.connection.authenticated = True
         return True
     
-@proxy.command()
+@command()
 def kill_actor(request, aid=None):
     '''Kill an actor with id ``aid``'''
     if not aid:

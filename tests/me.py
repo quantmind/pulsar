@@ -4,7 +4,7 @@ import time
 from threading import current_thread
 
 import pulsar
-from pulsar import defaults, send, is_async, multi_async, is_async
+from pulsar import defaults, send, is_async, multi_async, is_async, is_failure
 from pulsar.apps.test import unittest, run_on_arbiter, TestSuite
 from pulsar.utils.pep import get_event_loop
 
@@ -113,7 +113,7 @@ class TestTestWorker(unittest.TestCase):
         
     def testPingMonitor(self):
         worker = pulsar.get_actor()
-        future = send(worker.monitor, 'ping')
+        future = send('monitor', 'ping')
         self.assertTrue(is_async(future))
         yield future
         self.assertEqual(future.result, 'pong')
@@ -127,9 +127,11 @@ class TestTestWorker(unittest.TestCase):
         yield response.when_ready
         self.assertEqual(response.result, 'success')
         
-    def test_bad_send(self):
+    def test_unknown_send_target(self):
         # The target does not exists
-        self.assertRaises(ValueError, pulsar.send, 'vcghdvchdgcvshcd', 'ping')
+        future = pulsar.send('vcghdvchdgcvshcd', 'ping').add_both(lambda r: [r])
+        yield future
+        self.assertTrue(is_failure(future.result[0]))
         
     def __test_multiple_execute(self):
         result1 = send('arbiter', 'run', wait, 0.2)

@@ -218,10 +218,10 @@ class Failure(object):
     the execution of a :class:`Deferred`.
 
 '''
-    logged = False
     def __init__(self, err=None, msg=None):
         self.should_stop = False
         self.msg = msg or ''
+        self.logged = False
         self.traces = []
         self.append(err)
 
@@ -253,6 +253,7 @@ class Failure(object):
                 yield str(value)
 
     def __getstate__(self):
+        self.log()
         traces = []
         for exctype, value, tb in self:
             if istraceback(tb):
