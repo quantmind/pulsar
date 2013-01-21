@@ -359,8 +359,12 @@ Users shouldn't need to override this method, but use
                 tqs = 'multiprocessing.Queue'
             else:
                 tqs = str(tq)
+            try:
+                size = tq.qsize()
+            except NotImplementedError: #pragma    nocover
+                size = 0
             data['queue'] = {'ioqueue': tqs,
-                             'ioqueue_size': tq.qsize()}
+                             'ioqueue_size': size}
         return self.on_info(data)
 
     def proxy_mailbox(address):
