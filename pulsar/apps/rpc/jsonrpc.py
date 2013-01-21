@@ -20,7 +20,7 @@ from pulsar.utils.security import gen_unique_id
 from pulsar.utils.httpurl import to_string, range
 from pulsar.utils.jsontools import DefaultJSONEncoder, DefaultJSONHook
 
-from .handlers import RpcHandler, RpcRequest
+from .handlers import RpcHandler, Request
 from .exceptions import exception, INTERNAL_ERROR, REQUIRES_AUTHENTICATION
 
 __all__ = ['JSONRPC', 'JsonProxy', 'LocalJsonProxy']
@@ -257,4 +257,4 @@ domain.'''
         environ = self.local.environ
         method, args, kwargs, id, version = hnd.get_method_and_args(data)
         hnd.request(environ, method, args, kwargs, id, version)
-        return environ['rpc'].process(RpcRequest(environ))
+        return environ['rpc'].process(Request(environ))

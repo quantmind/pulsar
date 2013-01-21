@@ -6,41 +6,15 @@ from pulsar import to_bytes, is_failure, log_failure, is_async,\
                     as_failure, maybe_async, HttpException
 from pulsar.utils.tools import checkarity
 from pulsar.utils.structures import AttributeDictionary
-from pulsar.apps.wsgi import WsgiResponse, WsgiResponseGenerator
+from pulsar.apps.wsgi import WsgiResponse, WsgiResponseGenerator, Request
 
 from .decorators import rpcerror, wrap_object_call
 from .exceptions import *
 
 
-__all__ = ['RpcHandler', 'RpcMiddleware']
+__all__ = ['RpcMiddleware']
 
 LOGGER = logging.getLogger('pulsar.rpc')
-
-
-class RpcRequest:
-
-    def __init__(self, environ):
-        self.environ = environ
-
-    def __repr__(self):
-        return self.rpc.method
-    __str__ = __repr__
-
-    def __getattr__(self, name):
-        return self.environ.get(name)
-
-    def __getitem__(self, name):
-        return self.environ[name]
-    
-    def __setitem__(self, name, value):
-        self.environ[name] = value
-        
-    def __len__(self):
-        return len(self.environ)
-    
-    def __iter__(self):
-        return iter(self.environ)
-
 
 class RPC:
     
@@ -284,7 +258,7 @@ class RpcMiddleware(object):
 
     Default ``None``
 '''
-    request_class = RpcRequest
+    request_class = Request
 
     def __init__(self, handler, path=None):
         self.handler = handler

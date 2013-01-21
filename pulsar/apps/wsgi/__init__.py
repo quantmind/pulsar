@@ -39,6 +39,7 @@ from pulsar.apps import socket
 from .wsgi import *
 from .server import *
 from .middleware import *
+from .request import *
 
 
 class WsgiSetting(pulsar.Setting):

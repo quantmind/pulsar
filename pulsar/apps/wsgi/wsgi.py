@@ -14,8 +14,6 @@ from pulsar.utils.httpurl import Headers, SimpleCookie, responses,\
                                  has_empty_content, string_type, ispy3k,\
                                  to_bytes, REDIRECT_CODES
 
-from .middleware import is_streamed
-
 if ispy3k:  #thanks to @chrismcdonoug
     from urllib.parse import unquote_to_bytes
     unquote_to_bytes_wsgi = lambda bs: unquote_to_bytes(bs).decode('latin-1')
@@ -27,11 +25,18 @@ __all__ = ['WsgiHandler',
            'WsgiResponseGenerator',
            'wsgi_iterator',
            'handle_wsgi_error',
-           'wsgi_error_msg']
+           'wsgi_error_msg',
+           'is_streamed']
 
 
 LOGGER = logging.getLogger('pulsar.wsgi')
 
+def is_streamed(content):
+    try:
+        len(content)
+    except TypeError:
+        return True
+    return False
 
 def wsgi_iterator(gen, encoding=None):
     encoding = encoding or 'utf-8'
