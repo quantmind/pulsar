@@ -34,6 +34,12 @@ class RpcRequest:
     
     def __setitem__(self, name, value):
         self.environ[name] = value
+        
+    def __len__(self):
+        return len(self.environ)
+    
+    def __iter__(self):
+        return iter(self.environ)
 
 
 class RPC:
