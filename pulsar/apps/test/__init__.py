@@ -1,7 +1,7 @@
-'''\
-An asynchronous parallel testing suite :class:`pulsar.Application`.
-Used for testing pulsar itself but it can be used as a test suite for
-any other library.
+'''The :class:`TestSuite` is a testing framework for
+asynchronous applications or for running synchronous tests
+in parallel. It is used for testing pulsar itself but it can be used
+as a test suite for any other library.
 
 Requirements
 ====================
@@ -65,25 +65,27 @@ import os
 import sys
 import time
 
-if sys.version_info >= (2,7):
-    import unittest
-else:   # pragma nocover
+from pulsar.utils.pep import ispy26, ispy33
+
+if ispy26: # pragma nocover
     try:
         import unittest2 as unittest
     except ImportError:
         print('To run tests in python 2.6 you need to install\
  the unittest2 package')
         exit(0)
-
-if sys.version_info < (3,3): # pragma nocover
+else:
+    import unittest
+    
+if ispy33: 
+    from unittest import mock
+else: # pragma nocover
     try:
         import mock
     except ImportError:
         print('To run tests you need to install the mock package')
         exit(0)
-else:
-    from unittest import mock
-    
+
 import pulsar
 from pulsar.apps import tasks
 from pulsar.utils import events
@@ -285,7 +287,7 @@ configuration and plugins.'''
         #Check if we got all results
         runner = self.runner
         runner.add(result)
-        if runner.count == len(self.local.tests):
+        if runner.count >= len(self.local.tests):
             time_taken = time.time() - self._time_start
             runner.on_end()
             runner.printSummary(time_taken)

@@ -238,7 +238,11 @@ This type of application is served by :ref:`CPU bound workers <cpubound>`.'''
     
     def can_poll(self):
         if self.local.can_poll:
-            return len(self.concurrent_requests) <= self.cfg.backlog
+            if len(self.concurrent_requests) > self.cfg.backlog:
+                self.logger.debug('Cannot poll. There are %s concurrent tasks.',
+                                  len(self.concurrent_requests))
+            else:
+                return True
     
     @property
     def concurrent_request(self):
