@@ -4,6 +4,7 @@ Ver. 0.5.0
 * Initial twisted_ integration.
 * :class:`Actor` internal message passing uses the (unmasked) websocket protocol
   in a bidirectional communications between the :class:`Arbiter` and actors.
+* :class:`CPUboundApplication` created as base class for CPU bound applications.
 
 Ver. 0.4.4 - 2013-Jan-13
 ==============================

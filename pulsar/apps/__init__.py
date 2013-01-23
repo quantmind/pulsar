@@ -4,19 +4,33 @@ import sys
 from inspect import isfunction
 
 import pulsar
-from pulsar import Actor, safe_async, is_failure, HaltServer,\
-                     Monitor, Deferred, get_actor, async
+from pulsar import Actor, Monitor, Deferred, get_actor, maybe_async_deco
+from pulsar.utils.importer import module_attribute
 from pulsar.utils.pep import pickle
 from pulsar.utils import events
 from pulsar.utils.log import LogInformation
+from pulsar.utils.queue import IOQueue
 
 __all__ = ['Application',
+           'CPUboundApplication',
            'MultiApp',
            'Worker',
            'ApplicationMonitor',
            'get_application']
 
-            
+
+class TaskQueueFactory(pulsar.Setting):
+    app = 'cpubound'
+    name = "task_queue_factory"
+    section = "Task Consumer"
+    flags = ["-q", "--task-queue"]
+    default = "multiprocessing.queues.Queue"
+    desc = """The task queue factory to use."""
+
+    def get(self):
+        return module_attribute(self.value)
+    
+        
 def get_application(name):
     '''Invoked in the arbiter domain, this function will return
 the :class:`Application` associated with *name* if available. If not in the
@@ -446,6 +460,91 @@ The application is now in the arbiter but has not yet started.'''
         if arbiter and self.name in arbiter.registered:
             arbiter.start()
         return self
+
+
+class CPUboundApplication(Application):
+    '''A CPU-bound :class:`Application` is an application which
+handles events with a task to complete and the time complete the task is
+determined principally by the speed of the CPU.
+This type of application is served by :ref:`CPU bound workers <cpubound>`.'''
+    _app_name = 'cpubound'
+    
+    def __init__(self, *args, **kwargs):
+        self.received = 0
+        self.concurrent_requests = set()
+        super(CPUboundApplication, self).__init__(*args, **kwargs)
+        
+    def io_poller(self, worker):
+        self.local.queue = worker.params.ioqueue 
+        return IOQueue(self.ioqueue, self)
+    
+    def can_poll(self):
+        '''Check if the :class:`Worker` can poll from the distributed task
+queue. If the number of concurrent requests is above the ``backlog`` parameter
+it retuns ``False``.'''
+        if self.local.can_poll:
+            if len(self.concurrent_requests) > self.cfg.backlog:
+                self.logger.debug('Cannot poll. There are %s concurrent tasks.',
+                                  len(self.concurrent_requests))
+            else:
+                return True
+    
+    @property
+    def concurrent_request(self):
+        return len(self.concurrent_requests)
+    
+    @property
+    def ioqueue(self):
+        return self.local.queue
+    
+    def put(self, request):
+        '''Put a *request* into the :attr:`ioqueue` if available.'''
+        self.ioqueue.put(('request', request))
+
+    def request_instance(self, request):
+        '''Build a request class from a *request*. By default it returns the
+request. This method is called by the :meth:`on_request` once a new
+request has been obtained from the :attr:`ioqueue`.'''
+        return request
+
+    def worker_start(self, worker):
+        # Set up the cpu bound worker by registering its file descriptor
+        # and enabling polling from the queue
+        worker.requestloop.add_reader('request', self.on_request, worker)
+        self.local.can_poll = True
+    
+    def monitor_info(self, worker, data):
+        tq = self.ioqueue
+        if tq is not None:
+            if isinstance(tq, Queue):
+                tqs = 'multiprocessing.Queue'
+            else:
+                tqs = str(tq)
+            try:
+                size = tq.qsize()
+            except NotImplementedError: #pragma    nocover
+                size = 0
+            data['queue'] = {'ioqueue': tqs, 'ioqueue_size': size}
+        return data
+    
+    def actorparams(self, monitor, params):
+        if 'queue' not in self.local:
+            self.local.queue = self.cfg.task_queue_factory()
+        params['ioqueue'] = self.ioqueue
+        return params
+    
+    @maybe_async_deco
+    def on_request(self, worker, request):
+        request = self.request_instance(request)
+        if request is not None:
+            self.received += 1
+            self.logger.debug('New request %s. Total requests %s',
+                              request, self.received)
+            self.concurrent_requests.add(request)
+            try:
+                yield request.start(worker)
+            finally:
+                self.concurrent_requests.discard(request)
 
 
 class MultiApp:

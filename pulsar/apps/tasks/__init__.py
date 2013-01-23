@@ -178,28 +178,15 @@ import os
 from datetime import datetime
 
 import pulsar
-from pulsar import to_string, maybe_async_deco, get_actor
-from pulsar.utils.importer import import_modules, module_attribute
+from pulsar import to_string
+from pulsar.utils.importer import import_modules
 
-from .queue import *
 from .exceptions import *
 from .task import *
 from .models import *
 from .scheduler import Scheduler
 from .states import *
 from .rpc import *
-
-
-class TaskQueueFactory(pulsar.Setting):
-    app = 'cpubound'
-    name = "task_queue_factory"
-    section = "Task Consumer"
-    flags = ["-q", "--task-queue"]
-    default = "pulsar.apps.tasks.Queue"
-    desc = """The task queue factory to use."""
-
-    def get(self):
-        return module_attribute(self.value)
 
 
 class TaskSetting(pulsar.Setting):
@@ -217,87 +204,6 @@ class TaskPath(TaskSetting):
     desc = """\
         List of python dotted paths where tasks are located.
         """
-                
-                
-class CPUboundServer(pulsar.Application):
-    '''A CPU-bound application server, that is an application which
-handle events with a task to complete and the time complete it is
-determined principally by the speed of the CPU.
-This type of application is served by :ref:`CPU bound workers <cpubound>`.'''
-    _app_name = 'cpubound'
-    cpu_bound_server = None
-    
-    def __init__(self, *args, **kwargs):
-        self.received = 0
-        self.concurrent_requests = set()
-        super(CPUboundServer, self).__init__(*args, **kwargs)
-        
-    def io_poller(self, worker):
-        self.local.queue = worker.params.ioqueue 
-        return IOQueue(self.ioqueue, self)
-    
-    def can_poll(self):
-        if self.local.can_poll:
-            if len(self.concurrent_requests) > self.cfg.backlog:
-                self.logger.debug('Cannot poll. There are %s concurrent tasks.',
-                                  len(self.concurrent_requests))
-            else:
-                return True
-    
-    @property
-    def concurrent_request(self):
-        return len(self.concurrent_requests)
-    
-    @property
-    def ioqueue(self):
-        return self.local.queue
-    
-    def put(self, request):
-        '''Put a *request* into the :attr:`ioqueue` if available.'''
-        self.ioqueue.put(('request', request))
-
-    def request_instance(self, request):
-        '''Build a request class from a *request*. By default it returns the
-request. This method is called by the :meth:`on_request` once a new
-request has been obtained from the :attr:`ioqueue`.'''
-        return request
-
-    def worker_start(self, worker):
-        # Set up the cpu bound worker by registering its file descriptor
-        # and enabling polling from the queue
-        worker.requestloop.add_reader('request', self.on_request, worker)
-        self.local.can_poll = True
-    
-    def monitor_info(self, worker, data):
-        tq = self.ioqueue
-        if tq is not None:
-            if isinstance(tq, Queue):
-                tqs = 'multiprocessing.Queue'
-            else:
-                tqs = str(tq)
-            try:
-                size = tq.qsize()
-            except NotImplementedError: #pragma    nocover
-                size = 0
-            data['queue'] = {'ioqueue': tqs, 'ioqueue_size': size}
-        return data
-    
-    def actorparams(self, monitor, params):
-        if 'queue' not in self.local:
-            self.local.queue = self.cfg.task_queue_factory()
-        params['ioqueue'] = self.ioqueue
-        return params
-    
-    @maybe_async_deco
-    def on_request(self, worker, request):
-        request = self.request_instance(request)
-        if request is not None:
-            self.received += 1
-            self.concurrent_requests.add(request)
-            try:
-                yield request.start(worker)
-            finally:
-                self.concurrent_requests.discard(request)
         
 
 #################################################    TASKQUEUE COMMANDS
@@ -346,7 +252,7 @@ def wait_for_task(request, id, timeout=3600):
     return scheduler.task_class.wait_for_task(scheduler, id, timeout)
 
 
-class TaskQueue(CPUboundServer):
+class TaskQueue(pulsar.CPUboundApplication):
     '''A :class:`pulsar.CPUboundServer` for consuming
 tasks and managing scheduling of tasks.
 

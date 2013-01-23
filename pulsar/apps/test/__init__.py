@@ -87,7 +87,6 @@ else: # pragma nocover
         exit(0)
 
 import pulsar
-from pulsar.apps import tasks
 from pulsar.utils import events
 
 from .result import *
@@ -146,10 +145,10 @@ class TestList(TestOption):
 def test_result(request, tag, clsname, result):
     '''Command for sending test results from test workers to the test monitor.'''
     request.actor.logger.debug('Got test results from %s.%s', tag, clsname)
-    return request.actor.app.add_result(request.actor, result)
+    request.actor.app.add_result(request.actor, result)
 
 
-class TestSuite(tasks.CPUboundServer):
+class TestSuite(pulsar.CPUboundApplication):
     '''An asynchronous test suite which works like a task queue where each task
 is a group of tests specified in a test class.
 

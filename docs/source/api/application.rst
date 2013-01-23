@@ -6,7 +6,18 @@
 Applications API
 ========================
 
+Application
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+   
 .. autoclass:: Application
+   :members:
+   :member-order: bysource
+   
+
+CPU bound Application
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+      
+.. autoclass:: CPUboundApplication
    :members:
    :member-order: bysource
 

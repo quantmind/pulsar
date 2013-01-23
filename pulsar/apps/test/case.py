@@ -1,5 +1,6 @@
 import sys
 import io
+import logging
 from inspect import istraceback
 
 from pulsar import is_failure, CLEAR_ERRORS, make_async, get_actor, async
@@ -8,6 +9,8 @@ from pulsar.utils.pep import pickle
 
 __all__ = ['TestRequest']
 
+
+LOGGER = logging.getLogger('pulsar.test')
 
 def test_method(cls, method):
     try:
@@ -51,6 +54,7 @@ following algorithm:
             testcls = testcls()
         testcls.tag = self.tag
         testcls.cfg = worker.cfg
+        LOGGER.debug('Testing %s', self)
         all_tests = runner.loadTestsFromTestCase(testcls)
         run_test_function = runner.run_test_function
         if all_tests.countTestCases():
@@ -75,8 +79,9 @@ following algorithm:
             # Clear errors
             yield CLEAR_ERRORS
         # send runner result to monitor
-        yield worker.send(worker.monitor, 'test_result', testcls.tag,
-                          testcls.__name__, runner.result)
+        LOGGER.debug('Sending %s results back to monitor', self)
+        worker.send('monitor', 'test_result', testcls.tag,
+                    testcls.__name__, runner.result)
 
     def run_test(self, test, runner):
         '''\

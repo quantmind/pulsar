@@ -60,10 +60,12 @@ class MailboxMixin(object):
         return self
     
     def feed(self, data):
+        # Feed data into the parser
         msg = self._parser.decode(data)
-        if msg:
+        while msg:
             message = pickle.loads(msg.body)
             log_failure(self.responde(message))
+            msg = self._parser.decode()
     
     def create_request(self, command, sender, target, args, kwargs):
         # Build the request and write
@@ -106,7 +108,7 @@ class MailboxMixin(object):
             command = get_command(command)
             req = Request(target, get_proxy(caller, safe=True), self.connection)
             result = command(req, message['args'], message['kwargs'])
-        except:
+        except Exception:
             result = sys.exc_info()
         return make_async(result).add_both(partial(self._responde, message))
         
@@ -119,7 +121,7 @@ class MailboxMixin(object):
             
     def dump_data(self, obj):
         obj = pickle.dumps(obj, protocol=2)
-        return self._parser.encode(obj).msg
+        return self._parser.encode(obj, opcode=0x2).msg
 
     def write(self, data, consumer=None):
         if consumer and 'ack' in data:
@@ -194,7 +196,6 @@ class MailboxClient(clients.Client):
             c.protocol.on_connection.add_callback(lambda r: c.write(data, d))
         return d
         
-    
     def _start_on_thread(self):
         PulsarThread(name=self.name, target=self._event_loop.run).start()
         

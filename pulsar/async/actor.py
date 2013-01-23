@@ -395,7 +395,7 @@ properly this actor will go out of scope.'''
         if a is not self:
             set_actor(self)
         self.state = ACTOR_STATES.RUN
-        self.periodic_task().add_callback(self._got_notified)
+        self.periodic_task().add_callback(self._got_notified, self.stop)
     
     def get_actor(self, aid):
         '''Given an actor unique id return the actor proxy.'''
