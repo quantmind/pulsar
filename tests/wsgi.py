@@ -103,7 +103,7 @@ class TestWsgiMiddleware(unittest.TestCase):
         environ = {'wsgi_error_handler': lambda : 'bla'}
         try:
             raise ValueError('just a test')
-        except:
+        except ValueError:
             response = wsgi.handle_wsgi_error(environ, content_type='text/html')
         self.assertEqual(response.content_type, 'text/html')
         self.assertEqual(response.status_code, 500)

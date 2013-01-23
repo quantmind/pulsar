@@ -198,7 +198,7 @@ Users access the arbiter (in the arbiter process domain) by the high level api::
                     m.start()
             try:
                 self.cfg.arbiter_task(self)
-            except:
+            except Exception:
                 pass
         # requestloop and ioloop are the same. Use requestloop because ioloop
         # is not available at startup

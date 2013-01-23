@@ -79,7 +79,7 @@ class Socket(SocketType('SocketBase', (), {})):
             try:
                 self._sock.shutdown(socket.SHUT_RDWR)
                 self._sock.close()
-            except:
+            except Exception:
                 pass
             self._sock = None
         

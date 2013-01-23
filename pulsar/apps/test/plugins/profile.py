@@ -70,7 +70,7 @@ def data_stream(lines, num=None):
             for f in fields[1:-1]:
                 try:
                     float(f)
-                except:
+                except Exception:
                     valid = False
                     break
                 new_fields.append(f)
@@ -160,7 +160,7 @@ class Profile(test.TestPlugin):
                     bits = line.split(' ')
                     try:
                         ncalls = int(bits[0])
-                    except:
+                    except Exception:
                         continue
                     else:
                         run_info += ' ' + line

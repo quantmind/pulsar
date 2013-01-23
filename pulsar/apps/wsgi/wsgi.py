@@ -212,7 +212,7 @@ client.
             for rm in self.middleware:
                 try:
                     rm(environ, self)
-                except:
+                except Exception:
                     LOGGER.error('Exception in response middleware',
                                  exc_info=True)
         start_response(self.status, self.get_headers(), exc_info=exc_info)
@@ -388,7 +388,7 @@ def handle_wsgi_error(environ, trace=None, content_type=None,
                 if is_failure(content):
                     content.log()
                     content = None
-            except:
+            except Exception:
                 LOGGER.critical('Error while rendering error', exc_info=True)
                 content = None
     if content is None:

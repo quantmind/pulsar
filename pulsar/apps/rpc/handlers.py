@@ -240,7 +240,7 @@ for ``method``, ``kwargs`` are keyworded parameters for ``method``,
                 handler = subhandler
         try:
             func = handler.rpcfunctions[method_name]
-        except:
+        except Exception:
             func = None
         environ['rpc'] = RPC(handler, method, func, args, kwargs, id, version)
 

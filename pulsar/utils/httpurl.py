@@ -330,7 +330,7 @@ def is_closed(sock):    #pragma nocover
             if fno == sock.fileno():
                 # Either data is buffered (bad), or the connection is dropped.
                 return True
-    except:
+    except Exception:
         return True
 
 ####################################################    REQUEST METHODS
@@ -1585,7 +1585,7 @@ class HttpConnectionPool(object):
         self._in_use_connections.remove(connection)
         try:
             connection.close()
-        except:
+        except Exception:
             pass
 
     def on_connect(self, connection):

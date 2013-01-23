@@ -586,11 +586,8 @@ If it was alread :attr:`locked` a runtime exception is raised.'''
         '''Update the :class:`MultiDeferred` with new data. It works for
 both ``list`` and ``dict`` types.'''
         add = self._add
-        try:
-            for key, value in iterdata(stream, len(self._stream)):
-                add(key, value)
-        except:
-            raise
+        for key, value in iterdata(stream, len(self._stream)):
+            add(key, value)
         return self
 
     def append(self, value):

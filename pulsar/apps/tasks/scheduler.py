@@ -169,7 +169,7 @@ value ``now`` can be passed.'''
                     self.queue_task(monitor, entry.name)
                 if next_time_to_run:
                     remaining_times.append(next_time_to_run)
-        except:
+        except Exception:
             self.logger.error('Error in task scheduler', exc_info=True)
         self.next_run = now or datetime.now()
         if remaining_times:

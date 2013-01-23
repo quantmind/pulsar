@@ -81,6 +81,6 @@ class TCPServer(Server):
                         break
                     raise
                 self.create_connection(sock, address)
-        except:
+        except Exception:
             LOGGER.exception('Could not accept new connection')
         

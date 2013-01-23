@@ -122,7 +122,7 @@ http://www.w3.org/TR/websockets/ for details on the JavaScript interface.
         if key:
             try:
                 ws_key = base64.b64decode(key.encode('latin-1'))
-            except:
+            except Exception:
                 ws_key = ''
             if len(ws_key) != 16:
                 raise WebSocketError("WebSocket key's length is invalid",
@@ -135,7 +135,7 @@ http://www.w3.org/TR/websockets/ for details on the JavaScript interface.
         if version:
             try:
                 version = int(version)
-            except:
+            except Exception:
                 pass
         if version not in WEBSOCKET_VERSION:
             raise WebSocketError('Unsupported WebSocket version {0}'\

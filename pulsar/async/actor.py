@@ -477,7 +477,7 @@ status and performance.'''
     def _run(self):
         try:
             self.cfg.when_ready(self)
-        except:
+        except Exception:
             pass
         exc = None
         try:

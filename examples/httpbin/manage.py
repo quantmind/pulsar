@@ -273,7 +273,7 @@ class HttpBin(LocalMixin):
     def request_status(self, environ, bits):
         try:
             number = int(bits[0]) if len(bits) == 1 else 404
-        except:
+        except Exception:
             raise HttpException(status=404)
         raise HttpException(status=number)
 
@@ -341,7 +341,7 @@ class HttpBin(LocalMixin):
             try:
                 m = int(bits[0])
                 n = int(bits[1])
-            except:
+            except Exception:
                 raise HttpException(status=404)
         else:
             raise HttpException(status=404)

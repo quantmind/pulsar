@@ -48,7 +48,7 @@ class Pidfile(object):
                 pid1 =  int(f.read() or 0)
             if pid1 == self.pid:
                 os.unlink(self.fname)
-        except:
+        except Exception:
             pass
        
     def read(self):

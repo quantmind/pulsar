@@ -223,7 +223,7 @@ class BaseSocket(IStream):
         '''The socket name if open otherwise None.'''
         try:
             return self.sock.getsockname()
-        except:
+        except Exception:
             return None
     
     def settimeout(self, value):
@@ -296,7 +296,7 @@ not data was sent. In this case it also raises a socket error.'''
             if sent == 0:
                 raise socket.error()
             return sent
-        except:
+        except Exception:
             self.close()
             raise
 
@@ -348,7 +348,7 @@ not data was sent. In this case it also raises a socket error.'''
             try:
                 self.sock.shutdown(socket.SHUT_RDWR)
                 self.sock.close()
-            except:
+            except Exception:
                 pass
             self.sock = None
 
@@ -401,7 +401,7 @@ def create_tcp_socket_address(addr):
         host = addr[0]
         try:
             port = int(addr[1])
-        except:
+        except Exception:
             raise ValueError('TCP address must be a (host, port) tuple')
         if not host:
             host = '0.0.0.0'

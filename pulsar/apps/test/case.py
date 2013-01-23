@@ -152,7 +152,7 @@ Run a *test* function using the following algorithm
                     raise e
                 except test.failureException:
                     runner.addFailure(test, trace)
-                except:
+                except Exception:
                     runner.addError(test, trace)
                 return True
         else:

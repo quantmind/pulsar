@@ -72,7 +72,7 @@ An :class:`Actor` for serving a pulsar :class:`Application`.
         self.app.worker_start(self)
         try:
             self.cfg.worker_start(self)
-        except:
+        except Exception:
             pass
 
     def on_info(self, data):
@@ -82,7 +82,7 @@ An :class:`Actor` for serving a pulsar :class:`Application`.
         self.app.worker_stop(self)
         try:
             self.cfg.worker_exit(self)
-        except:
+        except Exception:
             pass
 
     def on_info(self, info):

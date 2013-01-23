@@ -140,7 +140,7 @@ protocols. It maintains a live set of connections.
         self._in_use_connections.remove(connection)
         try:
             connection.close()
-        except:
+        except Exception:
             pass
         
     def get_or_create_connection(self, client):

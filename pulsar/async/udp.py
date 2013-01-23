@@ -30,7 +30,7 @@ class UDPServer(Server):
                     return
                 raise
             self.create_connection((data, self.sock), address)
-        except:
+        except Exception:
             LOGGER.exception('Could not accept new connection')
         
 

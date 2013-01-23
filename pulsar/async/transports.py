@@ -291,7 +291,7 @@ returns ``self``.'''
                 self._read_timeout = None
             try:
                 self._data_received(chunk)
-            except:
+            except Exception:
                 self.abort()
                 raise
         self.add_read_timeout()

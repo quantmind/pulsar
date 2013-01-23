@@ -354,7 +354,7 @@ def testsafe(name, return_val=None):
                     return return_val(c)
             except HaltServer:
                 raise
-            except:
+            except Exception:
                 LOGGER.critical('Unhadled error in %s.%s' % (p, name),
                                 exc_info=True)
     return _                
