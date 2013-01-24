@@ -4,6 +4,8 @@ from pulsar.utils import websocket
 
 ################################################################################
 ##  x-webkit-deflate-frame     Extension
+#
+# http://code.google.com/p/pywebsocket/
 
 
 class deflate_frame(websocket.Extension):
@@ -24,4 +26,4 @@ class deflate_frame(websocket.Extension):
 
 
 
-websocket.WS_EXTENSIONS['x-webkit-deflate-frame'] = deflate_frame()
+#websocket.WS_EXTENSIONS['x-webkit-deflate-frame'] = deflate_frame

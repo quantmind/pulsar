@@ -58,7 +58,7 @@ class HttpException(Exception):
         self.handler = handler
         self.strict = strict
         self.headers = headers
-        super(HttpException,self).__init__(msg)
+        super(HttpException, self).__init__(msg)
 
 
 class HttpRedirect(HttpException):

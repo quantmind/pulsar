@@ -50,7 +50,7 @@ import hashlib
 from functools import partial
 
 import pulsar
-from pulsar import is_async, HttpException
+from pulsar import is_async, HttpException, ProtocolError
 from pulsar.utils.httpurl import to_bytes, native_str
 from pulsar.utils.websocket import FrameParser, Frame
 from pulsar.apps import wsgi
@@ -159,19 +159,19 @@ http://www.w3.org/TR/websockets/ for details on the JavaScript interface.
         try:
             parser = self.frame_parser(version=version, protocols=ws_protocols,
                                        extensions=ws_extensions)
-        except Exception as e:
+        except ProtocolError as e:
             raise HttpException(str(e), status=400)
         headers = [
             ('Upgrade', 'websocket'),
             ('Connection', 'Upgrade'),
             ('Sec-WebSocket-Accept', self.challenge_response(key))
         ]
-        if ws_protocols:
+        if parser.protocols:
             headers.append(('Sec-WebSocket-Protocol',
-                            ', '.join(ws_protocols)))
-        if ws_extensions:
+                            ', '.join(parser.protocols)))
+        if parser.extensions:
             headers.append(('Sec-WebSocket-Extensions',
-                            ','.join(ws_extensions)))
+                            ','.join(parser.extensions)))
         return self.handle.on_handshake(environ, headers), parser
         
     def challenge_response(self, key):

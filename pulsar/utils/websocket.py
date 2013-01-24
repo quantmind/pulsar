@@ -37,17 +37,7 @@ def get_version(version):
     if version not in SUPPORTED_VERSIONS:
         raise ProtocolError('Version %s not supported.' % version)
     return version
-    
-def ws_middleware(names, group, type):
-    mw = []
-    if names:
-        for name in names:
-            if name in group:
-                mw.append(group[name])
-            else:
-                raise ProtocolError('%s %s not supported.' % (type, name))
-    return mw
-    
+
     
 class Extension(object):
     
@@ -207,15 +197,35 @@ class FrameParser(object):
 '''    
     def __init__(self, version=None, kind=0, extensions=None, protocols=None):
         self.version = get_version(version)
-        self.extensions = ws_middleware(extensions, WS_EXTENSIONS, 'Extension')
-        self.protocols = ws_middleware(protocols, WS_PROTOCOLS, 'Protocol')
+        self._ext_middleware, self._extensions =\
+            self.ws_middleware(extensions, WS_EXTENSIONS)
+        self._pro_middleware, self._protocols =\
+            self.ws_middleware(extensions, WS_PROTOCOLS)
         self._frame = None  #current frame
         self._buf = None
         self._kind = kind
+
+    def ws_middleware(self, names, group):
+        mw = []
+        av = []
+        if names:
+            for name in names:
+                if name in group:
+                    av.append(name)
+                    mw.append(group[name]())
+        return mw, tuple(av)
     
     @property
     def kind(self):
         return self._kind
+    
+    @property
+    def extensions(self):
+        return self._extensions
+    
+    @property
+    def protocols(self):
+        return self._protocols
     
     @property
     def masked(self):
@@ -328,10 +338,10 @@ into a server frame (unmasked).'''
             data = data[:frame.payload_length] # payload data
             frame.msg.extend(data)
             self.save_buf(None, data[frame.payload_length:])
-            if frame.masking_key:
-                data = frame.unmask(data)
             for extension in self.extensions:
                 data = extension.receive(frame, data)
+            if frame.masking_key:
+                data = frame.unmask(data)
             if frame.opcode == 0x1:
                 data = data.decode("utf-8", "replace")
             frame.body = data
