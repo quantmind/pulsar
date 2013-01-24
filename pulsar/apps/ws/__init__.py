@@ -50,34 +50,40 @@ import hashlib
 from functools import partial
 
 import pulsar
-from pulsar import maybe_async, is_async, safe_async, is_failure
-from pulsar.utils.httpurl import ispy3k, to_bytes, native_str,\
-                                 itervalues, parse_qs, WEBSOCKET_VERSION
-from pulsar.apps.wsgi import WsgiResponse, wsgi_iterator
+from pulsar import is_async, HttpException
+from pulsar.utils.httpurl import to_bytes, native_str
 from pulsar.utils.websocket import FrameParser, Frame
+from pulsar.apps import wsgi
+
+from . import extensions
 
 WEBSOCKET_GUID = '258EAFA5-E914-47DA-95CA-C5AB0DC85B11'
 
 
 class GeneralWebSocket(object):
-    namespace = ''
-    extensions = ['x-webkit-deflate-frame']
+    '''A websocket middleware.
     
-    def __init__(self, handle, extensions=None):
+.. attribute:: frame_parser
+
+    A factory of websocket frame parsers
+'''
+    namespace = ''
+    frame_parser = FrameParser
+    
+    def __init__(self, handle, frame_parser=None):
         self.handle = handle
-        if extensions is None:
-            extensions = self.extensions
-        self.extensions = extensions
+        if frame_parser:
+            self.frame_parser = frame_parser
 
     def get_client(self):
         return self.handle(self)
     
     def __call__(self, environ, start_response):
         if self.handle.match(environ):
-            headers = self.handle_handshake(environ, start_response)
-            response = WsgiResponse(101, (b'',), response_headers=headers)
+            headers, parser = self.handle_handshake(environ, start_response)
+            response = wsgi.WsgiResponse(101, (b'',), response_headers=headers)
             upgrade = environ['upgrade_protocol']
-            upgrade(partial(WebSocketProtocol, self.handle, environ))
+            upgrade(partial(WebSocketProtocol, self.handle, environ, parser))
             return response(environ, start_response)
     
     def handle_handshake(self, environ, start_response):
@@ -117,7 +123,7 @@ http://www.w3.org/TR/websockets/ for details on the JavaScript interface.
            'upgrade' not in connections:
             return
         if environ['REQUEST_METHOD'].upper() != 'GET':
-            raise WebSocketError('Method is not GET', status=400)
+            raise HttpException(msg='Method is not GET', status=400)
         key = environ.get('HTTP_SEC_WEBSOCKET_KEY')
         if key:
             try:
@@ -125,40 +131,36 @@ http://www.w3.org/TR/websockets/ for details on the JavaScript interface.
             except Exception:
                 ws_key = ''
             if len(ws_key) != 16:
-                raise WebSocketError("WebSocket key's length is invalid",
-                                     status=400)
+                raise HttpException(msg="WebSocket key's length is invalid",
+                                    status=400)
         else:
-            raise WebSocketError('Not a valid HyBi WebSocket request. '
-                                 'Missing Sec-Websocket-Key header.',
-                                 status=400)
+            raise HttpException(msg='Not a valid HyBi WebSocket request. '
+                                    'Missing Sec-Websocket-Key header.',
+                                status=400)
         version = environ.get('HTTP_SEC_WEBSOCKET_VERSION')
         if version:
             try:
                 version = int(version)
             except Exception:
                 pass
-        if version not in WEBSOCKET_VERSION:
-            raise WebSocketError('Unsupported WebSocket version {0}'\
-                                 .format(version),
-                                 status=400)
         # Collect supported subprotocols
         subprotocols = environ.get('HTTP_SEC_WEBSOCKET_PROTOCOL')
         ws_protocols = []
         if subprotocols:
             for s in subprotocols.split(','):
-                s = s.strip()
-                if s in protocols:
-                    ws_protocols.append(s)
+                ws_protocols.append(s.strip())
         # Collect supported extensions
         ws_extensions = []
         extensions = environ.get('HTTP_SEC_WEBSOCKET_EXTENSIONS')
         if extensions:
-            exts = self.extensions
             for ext in extensions.split(','):
-                ext = ext.strip()
-                if ext in exts:
-                    ws_extensions.append(ext)
-        # Build and start the HTTP response
+                ws_extensions.append(ext.strip())
+        # Build the frame parser
+        try:
+            parser = self.frame_parser(version=version, protocols=ws_protocols,
+                                       extensions=ws_extensions)
+        except Exception as e:
+            raise HttpException(str(e), status=400)
         headers = [
             ('Upgrade', 'websocket'),
             ('Connection', 'Upgrade'),
@@ -170,7 +172,7 @@ http://www.w3.org/TR/websockets/ for details on the JavaScript interface.
         if ws_extensions:
             headers.append(('Sec-WebSocket-Extensions',
                             ','.join(ws_extensions)))
-        return self.handle.on_handshake(environ, headers)
+        return self.handle.on_handshake(environ, headers), parser
         
     def challenge_response(self, key):
         sha1 = hashlib.sha1(to_bytes(key+WEBSOCKET_GUID))
@@ -232,11 +234,11 @@ client. This is a chance to add or remove header's entries."""
     
 class WebSocketProtocol(pulsar.ProtocolConsumer):
     
-    def __init__(self, handler, environ, connection):
+    def __init__(self, handler, environ, parser, connection):
         super(WebSocketProtocol, self).__init__(connection)
         self.handler = handler
         self.environ = environ
-        self.parser = FrameParser()
+        self.parser = parser
         self.started = False
         self.closed = False
         
@@ -291,7 +293,7 @@ class WebSocketClientProtocol(pulsar.ClientProtocolConsumer):
         
             
 
-class HttpClient(pulsar.HttpClient):
+class HttpClient(wsgi.HttpClient):
     
     def upgrade(self, response):
         client = WebSocketClient(response.sock, response.url)

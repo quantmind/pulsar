@@ -22,10 +22,10 @@
 	                    yaxis: { min: 0 },
 	                  } );
           } catch(e){}
-          ws.send('');
+          ws.send('more data');
         };
         ws.onopen = function() {
-            ws.send('hi');
+            ws.send('hi there');
         };
     });
 }(jQuery));

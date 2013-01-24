@@ -6,6 +6,7 @@ These two classes can be used for both clients and server protocols.
 import array
 import os
 from struct import pack, unpack
+from array import array
 from io import BytesIO
 
 from .pep import ispy3k, range, to_bytes, is_string
@@ -13,6 +14,8 @@ from .exceptions import ProtocolError
 
 DEFAULT_VERSION = 13
 SUPPORTED_VERSIONS = (DEFAULT_VERSION,)
+WS_EXTENSIONS = {}
+WS_PROTOCOLS = {}
 
 if ispy3k:
     i2b = lambda n : bytes((n,))
@@ -34,6 +37,25 @@ def get_version(version):
     if version not in SUPPORTED_VERSIONS:
         raise ProtocolError('Version %s not supported.' % version)
     return version
+    
+def ws_middleware(names, group, type):
+    mw = []
+    if names:
+        for name in names:
+            if name in group:
+                mw.append(group[name])
+            else:
+                raise ProtocolError('%s %s not supported.' % (type, name))
+    return mw
+    
+    
+class Extension(object):
+    
+    def receive(self, data):
+        return data
+        
+    def send(self, data):
+        return data
     
     
 class Frame(object):
@@ -159,13 +181,12 @@ using the simple masking algorithm::
     j = i MOD 4
     transformed-octet-i = original-octet-i XOR masking-key-octet-j
 """
-        masked = bytearray(data)
-        key = self.masking_key
-        if not ispy3k:  #pragma    nocover
-            key = map(ord, key)
+        mask_size = len(self.masking_key)
+        key = array('B', self.masking_key)
+        data = array('B', data)
         for i in range(len(data)):
-            masked[i] = masked[i] ^ key[i%4]
-        return masked
+            data[i] ^= key[i % mask_size]
+        return data.tostring()
     unmask = mask
 
     
@@ -184,8 +205,10 @@ class FrameParser(object):
       by the client)
     * 2 Assumes always unmasked data
 '''    
-    def __init__(self, version=None, kind=0):
+    def __init__(self, version=None, kind=0, extensions=None, protocols=None):
         self.version = get_version(version)
+        self.extensions = ws_middleware(extensions, WS_EXTENSIONS, 'Extension')
+        self.protocols = ws_middleware(protocols, WS_PROTOCOLS, 'Protocol')
         self._frame = None  #current frame
         self._buf = None
         self._kind = kind
@@ -218,19 +241,19 @@ class FrameParser(object):
         else:
             return Frame(data, final=final, **params)
     
-    def ping(cls, body=None):
+    def ping(self, body=None):
         '''return a `ping` :class:`Frame`.'''
         return self.encode(body, opcode=0x9)
     
-    def pong(cls, body=None):
+    def pong(self, body=None):
         '''return a `pong` :class:`Frame`.'''
         return self.encode(body, opcode=0xA)
     
-    def close(cls, body=None):
+    def close(self, body=None):
         '''return a `close` :class:`Frame`.'''
         return self.encode(body, opcode=0x8)
     
-    def continuation(cls, body=None):
+    def continuation(self, body=None):
         '''return a `continuation` :class:`Frame`.'''
         return self.encode(body, opcode=0, final=False)
     
@@ -278,12 +301,12 @@ into a server frame (unmasked).'''
             # All control frames MUST have a payload length of 125 bytes or less
             d = None
             mask_length = 4 if masked_frame else 0
-            if frame.payload_length == 126:
+            if frame.payload_length == 0x7e: #126
                 if len(data) < 2 + mask_length: # 2 + 4 for mask
                      return self.save_buf(frame, data)
                 d, data = data[:2] , data[2:]
                 frame.payload_length = unpack("!H", d)[0]
-            elif frame.payload_length == 127:
+            elif frame.payload_length == 0x7f: #127
                 if len(data) < 8 + mask_length:  # 8 + 4 for mask
                      return self.save_buf(frame, data)
                 d, data = data[:8] , data[8:]
@@ -302,11 +325,13 @@ into a server frame (unmasked).'''
             self.save_buf(frame, data)
         # We have a frame
         else:
-            data = data[:frame.payload_length]
+            data = data[:frame.payload_length] # payload data
             frame.msg.extend(data)
             self.save_buf(None, data[frame.payload_length:])
             if frame.masking_key:
-                data = bytes(frame.unmask(data))
+                data = frame.unmask(data)
+            for extension in self.extensions:
+                data = extension.receive(frame, data)
             if frame.opcode == 0x1:
                 data = data.decode("utf-8", "replace")
             frame.body = data
