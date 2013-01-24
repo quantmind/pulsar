@@ -1,8 +1,16 @@
 import platform
+import json
 
 import pulsar
+from pulsar.utils.pep import native_str
+from pulsar.utils.structures import mapping_iterator
 from pulsar.utils.httpurl import urlparse, urljoin, DEFAULT_CHARSET,\
-                                    REDIRECT_CODES, HttpParser, httpclient
+                                    REDIRECT_CODES, HttpParser, httpclient,\
+                                    ENCODE_URL_METHODS, parse_qsl,\
+                                    encode_multipart_formdata, urlencode,\
+                                    Headers, urllibr, get_environ_proxies,\
+                                    choose_boundary, urlunparse,\
+                                    host_and_port
 
 __all__ = ['HttpClient']
 
@@ -10,7 +18,8 @@ __all__ = ['HttpClient']
 class TooManyRedirects(Exception):
     pass
 
-class HttpRequest(object):
+
+class HttpRequest(pulsar.Request):
     parser_class = HttpParser
     _tunnel_host = None
     _has_proxy = False
@@ -22,15 +31,18 @@ class HttpRequest(object):
         self.client = client
         self.type, self.host, self.path, self.params,\
         self.query, self.fragment = urlparse(url)
+        client.set_proxy(self)
         self.full_url = self._get_full_url()
-        self.timeout = timeout
-        self.hooks = hooks
+        address = (self.type, self.host, self.port)
+        super(HttpRequest, self).__init__(address, timeout)
+        #self.bind_event(hooks)
         self.history = history
         self.max_redirects = max_redirects
         self.allow_redirects = allow_redirects
         self.charset = charset or DEFAULT_CHARSET
         self.method = method.upper()
         self.version = version
+        self.decompress = decompress
         self.encode_multipart = encode_multipart 
         self.multipart_boundary = multipart_boundary
         self.data = data if data is not None else {}
@@ -38,11 +50,7 @@ class HttpRequest(object):
         self.source_address = source_address
         self._set_hostport(*host_and_port(self.host))
         self.parser = self.parser_class(kind=1, decompress=self.decompress)
-        self.dispatch_hook('pre_request', self)
-        
-    def __hash__(self):
-        # For the connection pool
-        return (self.type, self.host, self.port, self.timeout)
+        self.fire('pre_request', self)
         
     def set_proxy(self, host, type):
         if self.type == 'https' and not self._tunnel_host:
@@ -79,10 +87,16 @@ class HttpRequest(object):
         self.port = port
     
     def encode(self):
-        self._buffer = buffer = []
+        buffer = []
+        body = self.encode_body()
         request = '%s %s %s' % (self.method, self.url, self.version)
         buffer.append(request.encode('ascii'))
         buffer.append(bytes(self.headers))
+        buffer.append(b'')
+        buffer.append(b'')
+        if isinstance(body, bytes):
+            buffer.append(body)
+        return b'\r\n'.join(buffer)
         
     def encode_body(self):
         body = None
@@ -114,6 +128,25 @@ class HttpRequest(object):
          
     def params(self):
         return self.__dict__.copy()
+    
+    def _encode_url(self, body):
+        query = self.query
+        if body:
+            body = native_str(body)
+            if isinstance(body, str):
+                body = parse_qsl(body)
+            else:
+                body = mapping_iterator(body)
+            query = parse_qsl(query)
+            query.extend(body)
+            self.data = query
+            query = urlencode(query)
+        self.query = query
+        self.full_url = self._get_full_url()
+
+    def _get_full_url(self):
+        return urlunparse((self.type, self.host, self.path,
+                                   self.params, self.query, ''))
         
         
 class HttpResponse(pulsar.ClientProtocolConsumer):
@@ -397,8 +430,6 @@ the :class:`HttpRequest` constructor.
         params = self.update_parameters(params)
         request = HttpRequest(self, url, method, **params)
         self.set_headers(request, headers)
-        # Set proxy if required
-        self.set_proxy(request)
         if self.cookies:
             self.cookies.add_cookie_header(request)
         if cookies:

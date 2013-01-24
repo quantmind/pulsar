@@ -1,14 +1,16 @@
-import sys
-import weakref
 from copy import copy
 from collections import *
 
-ispy3k = sys.version_info >= (3, 0)
-if sys.version_info < (2,7):    #pragma    nocover
+from .pep import ispy26, ispy3k, iteritems
+
+if ispy26:    #pragma    nocover
     from .fallbacks._collections import *
     
-from .httpurl import mapping_iterator
 
+def mapping_iterator(iterable):
+    if isinstance(iterable, Mapping):
+        iterable = iteritems(iterable)
+    return iterable
 
 def isgenerator(value):
     return hasattr(value,'__iter__') and not hasattr(value, '__len__')
@@ -20,35 +22,6 @@ def aslist(value):
         return list(value)
     else:
         return [value]
-
-
-class WeakList(object):
-
-    def __init__(self):
-        self._list = []
-
-    def append(self, obj):
-        if obj:
-            self._list.append(weakref.ref(obj))
-
-    def remove(self, obj):
-        wr = weakref.ref(obj)
-        if wr in self._list:
-            self._list.remove(wr)
-            if wr not in self._list:
-                return obj
-
-    def __iter__(self):
-        if self._list:
-            ol = self._list
-            nl = self._list = []
-            for v in ol:
-                obj = v()
-                if obj:
-                    nl.append(v)
-                    yield obj
-        else:
-            raise StopIteration
 
 
 class MultiValueDict(dict):

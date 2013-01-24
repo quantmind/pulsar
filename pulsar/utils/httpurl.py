@@ -1715,70 +1715,7 @@ or asynchronous connections.
             d.update(headers)
         return d
 
-    def get(self, url, **kwargs):
-        '''Sends a GET request and returns a :class:`HttpResponse`
-object.
-
-:params url: url for the new :class:`HttpRequest` object.
-:param \*\*kwargs: Optional arguments for the :meth:`request` method.
-'''
-        kwargs.setdefault('allow_redirects', True)
-        return self.request('GET', url, **kwargs)
-
-    def options(self, url, **kwargs):
-        '''Sends a OPTIONS request and returns a :class:`HttpResponse`
-object.
-
-:params url: url for the new :class:`HttpRequest` object.
-:param \*\*kwargs: Optional arguments for the :meth:`request` method.
-'''
-        kwargs.setdefault('allow_redirects', True)
-        return self.request('OPTIONS', url, **kwargs)
-
-    def head(self, url, **kwargs):
-        '''Sends a HEAD request and returns a :class:`HttpResponse`
-object.
-
-:params url: url for the new :class:`HttpRequest` object.
-:param \*\*kwargs: Optional arguments for the :meth:`request` method.
-'''
-        return self.request('HEAD', url, **kwargs)
-
-    def post(self, url, **kwargs):
-        '''Sends a POST request and returns a :class:`HttpResponse`
-object.
-
-:params url: url for the new :class:`HttpRequest` object.
-:param \*\*kwargs: Optional arguments for the :meth:`request` method.
-'''
-        return self.request('POST', url, **kwargs)
-
-    def put(self, url, **kwargs):
-        '''Sends a PUT request and returns a :class:`HttpResponse`
-object.
-
-:params url: url for the new :class:`HttpRequest` object.
-:param \*\*kwargs: Optional arguments for the :meth:`request` method.
-'''
-        return self.request('PUT', url, **kwargs)
-
-    def patch(self, url, **kwargs):
-        '''Sends a PATCH request and returns a :class:`HttpResponse`
-object.
-
-:params url: url for the new :class:`HttpRequest` object.
-:param \*\*kwargs: Optional arguments for the :meth:`request` method.
-'''
-        return self.request('PATCH', url, **kwargs)
-
-    def delete(self, url, **kwargs):
-        '''Sends a DELETE request and returns a :class:`HttpResponse`
-object.
-
-:params url: url for the new :class:`HttpRequest` object.
-:param \*\*kwargs: Optional arguments for the :meth:`request` method.
-'''
-        return self.request('DELETE', url, **kwargs)
+    
 
     def request(self, method, url, cookies=None, **params):
         '''Constructs and sends an :class:`HttpRequest` to a remote server.
@@ -1855,68 +1792,6 @@ Requires implementation.'''
             if not any(map(hostonly.endswith, no_proxy)):
                 p = urlparse(self.proxy_info[request.type])
                 request.set_proxy(p.netloc, p.scheme)
-
-    def build_response(self, response):
-        '''The response headers are available. Build the response.'''
-        request = response.request
-        request.dispatch_hook('response', response)
-        headers = response.headers
-        # store cookies in clinet if needed
-        if self.store_cookies and 'set-cookie' in headers:
-            self.cookies.extract_cookies(response, request)
-        # check redirect
-        if response.status_code in REDIRECT_CODES and 'location' in headers and\
-                request.allow_redirects:
-            url = response.headers.get('location')
-            # Handle redirection without scheme (see: RFC 1808 Section 4)
-            if url.startswith('//'):
-                parsed_rurl = urlparse(request.full_url)
-                url = '%s:%s' % (parsed_rurl.scheme, url)
-            # Facilitate non-RFC2616-compliant 'location' headers
-            # (e.g. '/path/to/resource' instead of
-            # 'http://domain.tld/path/to/resource')
-            if not urlparse(url).netloc:
-                url = urljoin(request.full_url,
-                              # Compliant with RFC3986, we percent
-                              # encode the url.
-                              requote_uri(url))
-            return self.new_request(response, url)
-        elif response.status_code == 100:
-            # Continue with current response
-            return response
-        elif response.status_code == 101:
-                # Upgrading response handler
-                return self.upgrade(response)
-        else:
-            # We need to read the rest of the message
-            return response.close()
-        
-    def new_request(self, response, url=None):
-        request = response.request
-        url = url or request.full_url
-        history = request.history or []
-        if len(history) >= request.max_redirects:
-            raise TooManyRedirects()
-        history.append(response)
-        self.release_connection(request)
-        data = request.body
-        files = request.files
-        # http://www.w3.org/Protocols/rfc2616/rfc2616-sec10.html#sec10.3.4
-        if response.status_code is 303:
-            method = 'GET'
-            data = None
-            files = None
-        else:
-            method = request.method
-        headers = request.headers
-        headers.pop('Cookie', None)
-        # Build a new request
-        return self.request(method, url, data=data, files=files,
-                            headers=headers,
-                            encode_multipart=self.encode_multipart,
-                            history=history,
-                            max_redirects=request.max_redirects,
-                            allow_redirects=request.allow_redirects)
         
         
     def _update_parameter(self, name, params):

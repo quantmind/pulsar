@@ -5,10 +5,14 @@ from pulsar.utils.events import EventHandler
 from .defer import Deferred, pass_through
 from .protocols import ProtocolConsumer, Connection, NOTHING
 from .transports import Transport
-from .servers import Producer, EventHandler
+from .servers import Producer
 
-__all__ = ['create_connection', 'ConnectionPool', 'Client',
-           'ClientProtocolConsumer', 'Request']
+__all__ = ['create_connection',
+           'ConnectionPool',
+           'Client',
+           'ClientEventHandler',
+           'ClientProtocolConsumer',
+           'Request']
 
 
 def create_connection(address, timeout=0, source_address=None):
