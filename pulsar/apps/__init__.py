@@ -482,7 +482,6 @@ This type of application is served by :ref:`CPU bound workers <cpubound>`.'''
         '''Check if the :class:`Worker` can poll from the distributed task
 queue. If the number of concurrent requests is above the ``backlog`` parameter
 it retuns ``False``.'''
-        self.logger.debug('Try to poll')
         if self.local.can_poll:
             if len(self.concurrent_requests) > self.cfg.backlog:
                 self.logger.debug('Cannot poll. There are %s concurrent tasks.',
