@@ -7,5 +7,5 @@ class TestAsyncHttpClient(httpurl.TestHttpClient):
     timeout = 0        
         
         
-class TestAsyncHttpClientWithProxy(TestAsyncHttpClient):
-    with_proxy = True
+#class TestAsyncHttpClientWithProxy(TestAsyncHttpClient):
+#    with_proxy = True

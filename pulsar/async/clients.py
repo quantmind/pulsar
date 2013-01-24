@@ -48,11 +48,12 @@ class ClientProtocolConsumer(ProtocolConsumer):
     another listening consumer. This can be used to stream data as
     it arrives (for example).
 '''
-    def __init__(self, connection, request, consumer):
+    consumer = pass_through
+    def __init__(self, connection, request, consumer=None):
         super(ClientProtocolConsumer, self).__init__(connection)
         connection.set_response(self)
         self.request = request
-        self.consumer = consumer or pass_through
+        self.consumer = consumer or self.consumer
         self.when_ready = Deferred()
         
     def begin(self):
@@ -225,7 +226,9 @@ method should invoke this method to start the response dance.
         self.fire('post_request', response)
         return response.begin()
     
-    def update_parameter(self, params):
+    def update_parameters(self, params):
+        '''Update *param* with attributes of this :class:`Client` defined
+in :attr:`request_parameters` tuple.'''
         for name in self.request_parameters:
             if name not in params:
                 params[name] = getattr(self, name)

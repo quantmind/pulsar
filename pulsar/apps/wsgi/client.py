@@ -1,20 +1,25 @@
 import platform
 
 import pulsar
-from pulsar.utils.httpurl import *
+from pulsar.utils.httpurl import urlparse, urljoin, DEFAULT_CHARSET,\
+                                    REDIRECT_CODES, HttpParser, httpclient
 
 __all__ = ['HttpClient']
 
+
+class TooManyRedirects(Exception):
+    pass
+
 class HttpRequest(object):
     parser_class = HttpParser
-    version = 'HTTP/1.1'
     _tunnel_host = None
     _has_proxy = False
-    def __init__(self, url, method, data=None, files=None,
+    def __init__(self, client, url, method, data=None, files=None,
                  charset=None, encode_multipart=True, multipart_boundary=None,
                  timeout=None, hooks=None, history=None, source_address=None,
                  allow_redirects=False, max_redirects=10, decompress=True,
-                 version=None):
+                 version=None, **ignored):
+        self.client = client
         self.type, self.host, self.path, self.params,\
         self.query, self.fragment = urlparse(url)
         self.full_url = self._get_full_url()
@@ -25,15 +30,15 @@ class HttpRequest(object):
         self.allow_redirects = allow_redirects
         self.charset = charset or DEFAULT_CHARSET
         self.method = method.upper()
-        self.version = version or self.version
+        self.version = version
+        self.encode_multipart = encode_multipart 
+        self.multipart_boundary = multipart_boundary
         self.data = data if data is not None else {}
         self.files = files
         self.source_address = source_address
         self._set_hostport(*host_and_port(self.host))
         self.parser = self.parser_class(kind=1, decompress=self.decompress)
-        # Pre-request hook.
         self.dispatch_hook('pre_request', self)
-        self.encode(encode_multipart, multipart_boundary)
         
     def __hash__(self):
         # For the connection pool
@@ -63,7 +68,8 @@ class HttpRequest(object):
                     if host[i+1:] == "": # http://foo.com:/ == http://foo.com/
                         port = self.default_port
                     else:
-                        raise InvalidURL("nonnumeric port: '%s'" % host[i+1:])
+                        raise httpclient.InvalidURL("nonnumeric port: '%s'"
+                                                     % host[i+1:])
                 host = host[:i]
             else:
                 port = self.default_port
@@ -77,9 +83,39 @@ class HttpRequest(object):
         request = '%s %s %s' % (self.method, self.url, self.version)
         buffer.append(request.encode('ascii'))
         buffer.append(bytes(self.headers))
-         
         
-
+    def encode_body(self):
+        body = None
+        if self.method in ENCODE_URL_METHODS:
+            self.files = None
+            self._encode_url(self.data)
+        elif isinstance(self.data, bytes):
+            body = self.data
+        elif is_string(self.data):
+            body = to_bytes(self.data, self.charset)
+        elif self.data:
+            content_type = self.headers.get('content-type')
+            # No content type given
+            if not content_type:
+                content_type = 'application/x-www-form-urlencoded'
+                if self.encode_multipart:
+                    body, content_type = encode_multipart_formdata(
+                                            self.data,
+                                            boundary=self.multipart_boundary,
+                                            charset=self.charset)
+                else:
+                    body = urlencode(self.data)
+                self.headers['Content-Type'] = content_type
+            elif content_type == 'application/json':
+                body = json.dumps(self.data).encode('latin-1')
+            else:
+                body = json.dumps(self.data).encode('latin-1')
+        return body
+         
+    def params(self):
+        return self.__dict__.copy()
+        
+        
 class HttpResponse(pulsar.ClientProtocolConsumer):
     '''Http client request initialised by a call to the
 :class:`HttpClient.request` method.
@@ -94,10 +130,98 @@ class HttpResponse(pulsar.ClientProtocolConsumer):
 '''
 
     _tunnel_host = None
-    _has_proxy = False       
+    _has_proxy = False
+    consumer = None # Remove default consumer
+    next_url = None
+    
+    @property
+    def parser(self):
+        return self.request.parser
     
     def feed(self, data):
-        pass
+        had_headers = self.parser.is_headers_complete()
+        if self.parser.execute(data, len(data)) == len(data):
+            if had_headers:
+                return self.close()
+            elif self.parser.is_headers_complete():
+                res = self.build_response()
+                res = self.request.client.build_response(self) or self
+                if not res.parser.is_message_complete():
+                    res._read()
+                return res
+            # Not streaming. wait until we have the whole message
+            elif self.parser.is_headers_complete() and\
+                 self.parser.is_message_complete():
+                return self.request.client.build_response(self)
+        else:
+            # This is an error in the parsing. Raise an error so that the
+            # connection is closed
+            raise pulsar.ProtocolError
+        
+    def close(self):
+        if self.parser.is_message_complete():
+            self.finished()
+            if self.next_url:
+                return self.new_request(self.next_url)
+            return self
+        
+    def build_response(self):
+        '''The response headers are available. Build the response.'''
+        request = self.request
+        request.dispatch_hook('response', response)
+        headers = self.headers
+        client = request.client
+        # store cookies in clinet if needed
+        if client.store_cookies and 'set-cookie' in headers:
+            client.cookies.extract_cookies(self, request)
+        # check redirect
+        if self.status_code in REDIRECT_CODES and 'location' in headers and\
+                request.allow_redirects:
+            url = headers.get('location')
+            # Handle redirection without scheme (see: RFC 1808 Section 4)
+            if url.startswith('//'):
+                parsed_rurl = urlparse(request.full_url)
+                url = '%s:%s' % (parsed_rurl.scheme, url)
+            # Facilitate non-RFC2616-compliant 'location' headers
+            # (e.g. '/path/to/resource' instead of
+            # 'http://domain.tld/path/to/resource')
+            if not urlparse(url).netloc:
+                url = urljoin(request.full_url,
+                              # Compliant with RFC3986, we percent
+                              # encode the url.
+                              requote_uri(url))
+            return self.new_request(url)
+        elif self.status_code == 100:
+            # Continue with current response
+            return self
+        elif self.status_code == 101:
+            # Upgrading response handler
+            return client.upgrade(response)
+        else:
+            # We need to read the rest of the message
+            return response.close()
+        
+    def new_request(self, url=None):
+        request = self.request
+        params = request.params()
+        url = url or request.full_url
+        history = params.pop('history') or []
+        if len(history) >= request.max_redirects:
+            raise TooManyRedirects
+        history.append(self)
+        request.client.release_connection(request)
+        method = params.pop('method')
+        # http://www.w3.org/Protocols/rfc2616/rfc2616-sec10.html#sec10.3.4
+        if response.status_code is 303:
+            method = 'GET'
+            params.pop('data')
+            params.pop('files')
+        headers = params.pop('headers')
+        headers.pop('Cookie', None)
+        params.pop('hooks')
+        # Build a new request
+        return request.client.request(method, url, headers=headers,
+                                      history=history, **params)
 
 
 class HttpClient(pulsar.Client):
@@ -145,6 +269,7 @@ or asynchronous connections.
     allow_redirects = False
     max_redirects = 10
     client_version = 'Python-httpurl'
+    version = 'HTTP/1.1' 
     DEFAULT_HTTP_HEADERS = Headers([
             ('Connection', 'Keep-Alive'),
             ('Accept-Encoding', 'identity'),
@@ -166,11 +291,9 @@ or asynchronous connections.
               max_redirects=10, decompress=True):
         self.store_cookies = store_cookies
         self.max_redirects = max_redirects
-        self.poolmap = {}
         self.cookies = cookies
         self.decompress = decompress
         dheaders = self.DEFAULT_HTTP_HEADERS.copy()
-        self.client_version = client_version or self.client_version
         dheaders['user-agent'] = self.client_version
         if headers:
             dheaders.update(headers)
@@ -194,7 +317,73 @@ or asynchronous connections.
                                              'latin-1')
         return self._websocket_key
     
-    def request(self, method, url, cookies=None, headers=None, **params):
+    def get(self, url, **kwargs):
+        '''Sends a GET request and returns a :class:`HttpResponse`
+object.
+
+:params url: url for the new :class:`HttpRequest` object.
+:param \*\*kwargs: Optional arguments for the :meth:`request` method.
+'''
+        kwargs.setdefault('allow_redirects', True)
+        return self.request('GET', url, **kwargs)
+
+    def options(self, url, **kwargs):
+        '''Sends a OPTIONS request and returns a :class:`HttpResponse`
+object.
+
+:params url: url for the new :class:`HttpRequest` object.
+:param \*\*kwargs: Optional arguments for the :meth:`request` method.
+'''
+        kwargs.setdefault('allow_redirects', True)
+        return self.request('OPTIONS', url, **kwargs)
+
+    def head(self, url, **kwargs):
+        '''Sends a HEAD request and returns a :class:`HttpResponse`
+object.
+
+:params url: url for the new :class:`HttpRequest` object.
+:param \*\*kwargs: Optional arguments for the :meth:`request` method.
+'''
+        return self.request('HEAD', url, **kwargs)
+
+    def post(self, url, **kwargs):
+        '''Sends a POST request and returns a :class:`HttpResponse`
+object.
+
+:params url: url for the new :class:`HttpRequest` object.
+:param \*\*kwargs: Optional arguments for the :meth:`request` method.
+'''
+        return self.request('POST', url, **kwargs)
+
+    def put(self, url, **kwargs):
+        '''Sends a PUT request and returns a :class:`HttpResponse`
+object.
+
+:params url: url for the new :class:`HttpRequest` object.
+:param \*\*kwargs: Optional arguments for the :meth:`request` method.
+'''
+        return self.request('PUT', url, **kwargs)
+
+    def patch(self, url, **kwargs):
+        '''Sends a PATCH request and returns a :class:`HttpResponse`
+object.
+
+:params url: url for the new :class:`HttpRequest` object.
+:param \*\*kwargs: Optional arguments for the :meth:`request` method.
+'''
+        return self.request('PATCH', url, **kwargs)
+
+    def delete(self, url, **kwargs):
+        '''Sends a DELETE request and returns a :class:`HttpResponse`
+object.
+
+:params url: url for the new :class:`HttpRequest` object.
+:param \*\*kwargs: Optional arguments for the :meth:`request` method.
+'''
+        return self.request('DELETE', url, **kwargs)
+    
+    def request(self, method, url, cookies=None, headers=None,
+                consumer=None, **params):
         '''Constructs and sends a request to a remote server.
 It returns an :class:`HttpResponse` object.
 
@@ -205,9 +394,8 @@ the :class:`HttpRequest` constructor.
 
 :rtype: a :class:`HttpResponse` object.
 '''
-        for parameter in self.request_parameters:
-            self._update_parameter(parameter, params)
-        request = HttpRequest(url, method, **params)
+        params = self.update_parameters(params)
+        request = HttpRequest(self, url, method, **params)
         self.set_headers(request, headers)
         # Set proxy if required
         self.set_proxy(request)
@@ -217,7 +405,7 @@ the :class:`HttpRequest` constructor.
             if not isinstance(cookies, CookieJar):
                 cookies = cookiejar_from_dict(cookies)
             cookies.add_cookie_header(request)
-        return request
+        return self.response(request, consumer)
 
     def set_headers(self, request, headers):
         '''Returns a :class:`Header` obtained from combining

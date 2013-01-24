@@ -10,7 +10,7 @@ try:
 except ImportError:
     sys.path.append('../../')
 
-from pulsar import HttpException, LocalMixin, HttpClient, maybe_async,\
+from pulsar import HttpException, LocalMixin, maybe_async,\
                     is_async, is_failure, local_property
 from pulsar.apps import wsgi
 from pulsar.utils.httpurl import Headers
@@ -21,7 +21,7 @@ USER_AGENT = 'Pulsar-Proxy-Server'
 
 def x_forwarded_for(environ, headers):
     headers.add_header('x-forwarded-for', environ['REMOTE_ADDR'])
-    
+
 
 class ProxyMiddleware(LocalMixin):
     '''WSGI middleware for an asynchronous proxy server. To perform
@@ -33,11 +33,10 @@ An headers middleware is a callable which accepts two parameters, the wsgi
         self.headers_middleware = headers_middleware or []
         if user_agent:
             headers['user-agent'] = user_agent
-            
+    
     @local_property
     def http_client(self):
-        return HttpClient(timeout=0, decompress=False, store_cookies=False,
-                          stream=True)
+        return wsgi.HttpClient(decompress=False, store_cookies=False)
         
     def __call__(self, environ, start_response):
         # The WSGI thing

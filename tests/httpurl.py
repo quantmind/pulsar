@@ -118,6 +118,7 @@ class TestAuth(unittest.TestCase):
         c(headers)
         self.assertEqual(headers['cache-control'], 'no-store')
     
+    
 class TestTools(unittest.TestCase):
     
     def test_to_bytes(self):
