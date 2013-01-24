@@ -85,6 +85,57 @@ method data from the JSON *data* string.'''
         return self._json.dumps(res)
 
 
+class JsonCall:
+    
+    dlots = ('_client', '_name')
+    
+    def __init__(self, client, name):
+        self._client = client
+        self._name = name
+        
+    def __repr__(self):
+        return self._name
+    __str__ = __repr__
+    
+    @property
+    def url(self):
+        return self._client.url
+    
+    @property
+    def name(self):
+        return self._name
+    
+    def __getattr__(self, name):
+        name = "%s%s%s" % (self._name, self._client.separator, name)
+        return self.__class__(self._client, name)
+        
+    def __call__(self, *args, **kwargs):
+        c = self._client
+        data, raw = c._get_data(self._name, *args, **kwargs)
+        body = c._json.dumps(data).encode('latin-1')
+        # Always make sure the content-type is application/json
+        c.http.headers['content-type'] = 'application/json'
+        resp = c.http.post(c.url, data=body)
+        if self._client._full_response:
+            return resp
+        elif is_async(resp):
+            return resp.add_callback(lambda r: self._end_call(r, raw))
+        else:
+            return self._end_call(resp, raw)
+    
+    def _end_call(self, resp, raw):
+        content = resp.content.decode('utf-8')
+        if resp.is_error:
+            if 'error' in content:
+                return self._client.loads(content)
+            else:
+                resp.raise_for_status()
+        else:
+            if raw:
+                return content
+            else:
+                return self._client.loads(content)
+        
 class JsonProxy(object):
     '''A python Proxy class for :class:`JSONRPC` Servers.
 
@@ -114,20 +165,18 @@ Lets say your RPC server is running at ``http://domain.name.com/``::
     default_timeout = 3
     _json = JsonToolkit
 
-    def __init__(self, url, name=None, version=None, id=None, data=None,
-                 **kwargs):
+    def __init__(self, url, version=None, data=None, full_response=False, **kw):
         self.__url = url
-        self.__name = name
         self.__version = version or self.__class__.default_version
-        self.__id = id
+        self._full_response = full_response
         self.__data = data if data is not None else {}
         self.local = AttributeDictionary()
-        self.setup(**kwargs)
+        self.setup(**kw)
 
-    def setup(self, http=None, timeout=None, **kwargs):
+    def setup(self, http=None, timeout=None, **kw):
         if not http:
             timeout = timeout if timeout is not None else self.default_timeout
-            http = HttpClient(timeout=timeout, **kwargs)
+            http = HttpClient(timeout=timeout, **kw)
         self.local.http = http
 
     @property
@@ -138,30 +187,18 @@ Lets say your RPC server is running at ``http://domain.name.com/``::
     def http(self):
         return self.local.http
 
-    @property
-    def path(self):
-        return self.__name
-
     def makeid(self):
         '''Can be re-implemented by your own Proxy'''
         return gen_unique_id()
 
+    def __repr__(self):
+        return '%s(%s)' % (self.__class__.__name__, self.__url)
+
     def __str__(self):
         return self.__repr__()
-
-    def __repr__(self):
-        if self.__id:
-            d = '%s - %s' % (self.__url,self.__id)
-        else:
-            d = self.__url
-        return 'JSONRPCProxy(%s)' % d
-
+    
     def __getattr__(self, name):
-        if self.__name != None:
-            name = "%s%s%s" % (self.__name, self.separator, name)
-        id = self.makeid()
-        return self.__class__(self.__url, name=name, version=self.__version,
-                              id=id, data=self.__data, **self.local.all())
+        return JsonCall(self, name)
 
     def timeit(self, func, times, *args, **kwargs):
         '''Usefull little utility for timing responses from server. The
@@ -174,14 +211,14 @@ usage is simple::
     >>> _
     '''
         r = range(times)
-        func = getattr(self,func)
+        func = getattr(self, func)
         start = default_timer()
         for t in r:
             func(*args, **kwargs)
         return default_timer() - start
 
-    def _get_data(self, *args, **kwargs):
-        func_name = self.__name
+    def _get_data(self, func_name, *args, **kwargs):
+        id = self.makeid()
         fs = func_name.split('_')
         raw = False
         if len(fs) > 1 and fs[0] == self.rawprefix:
@@ -189,33 +226,9 @@ usage is simple::
             fs.pop(0)
             func_name = '_'.join(fs)
         params = self.get_params(*args, **kwargs)
-        data = {'method': func_name, 'params': params, 'id': self.__id,
+        data = {'method': func_name, 'params': params, 'id': id,
                 'jsonrpc': self.__version}
         return data, raw
-
-    def __call__(self, *args, **kwargs):
-        data, raw = self._get_data(*args, **kwargs)
-        body = self._json.dumps(data).encode('latin-1')
-        # Always make sure the content-type is application/json
-        self.http.headers['content-type'] = 'application/json'
-        resp = self.http.post(self.__url, data=body)
-        if is_async(resp):
-            return resp.add_callback(lambda r: self._end_call(r, raw))
-        else:
-            return self._end_call(resp, raw)
-    
-    def _end_call(self, resp, raw):
-        content = resp.content.decode('utf-8')
-        if resp.is_error:
-            if 'error' in content:
-                return self.loads(content)
-            else:
-                resp.raise_for_status()
-        else:
-            if raw:
-                return content
-            else:
-                return self.loads(content)
 
     def get_params(self, *args, **kwargs):
         '''

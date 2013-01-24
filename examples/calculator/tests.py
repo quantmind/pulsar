@@ -29,9 +29,8 @@ class TestRpcOnThread(unittest.TestCase):
         
     def setUp(self):
         self.assertEqual(self.p.url, self.uri)
-        self.assertEqual(self.p.path, None)
         proxy = self.p.bla
-        self.assertEqual(proxy.path, 'bla')
+        self.assertEqual(proxy.name, 'bla')
         self.assertEqual(proxy.url, self.uri)
         self.assertTrue(str(self.p))
         
@@ -41,7 +40,7 @@ class TestRpcOnThread(unittest.TestCase):
         middleware = s.callable
         root = middleware.handler
         self.assertEqual(root.content_type, 'application/json')
-        self.assertEqual(middleware.path,'/')
+        self.assertEqual(middleware.path, '/')
         self.assertEqual(len(root.subHandlers), 1)
         hnd = root.subHandlers['calc']
         self.assertFalse(hnd.isroot())

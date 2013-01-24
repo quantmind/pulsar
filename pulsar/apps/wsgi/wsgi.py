@@ -374,13 +374,13 @@ def handle_wsgi_error(environ, trace=None, content_type=None,
     content = None
     response.status_code = getattr(error, 'status', 500)
     response.headers.update(getattr(error, 'headers', None) or ())
-    path = ' @ path %s' % environ.get('PATH_INFO','/')
+    path = ' @ path "%s"' % environ.get('PATH_INFO','/')
     if response.status_code == 500:
         LOGGER.critical('Unhandled exception during WSGI response %s',
                         path, exc_info=trace)
     else:
         LOGGER.info('WSGI %s status code %s',
-                    response.status_code, path)
+                    response.status_code, path, exc_info=trace)
     if has_empty_content(response.status_code) or\
        response.status_code in REDIRECT_CODES:
         content = ()

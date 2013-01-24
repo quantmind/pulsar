@@ -280,7 +280,8 @@ class RpcMiddleware(object):
         if path == self.path:
             method = environ['REQUEST_METHOD'].lower()
             if method not in self.handler.methods:
-                raise HttpException(status=405)
+                raise HttpException(status=405, msg='Method "%s" not allowed' %\
+                                    method)
             data = environ['wsgi.input'].read()
             hnd = self.handler
             method, args, kwargs, id, version = hnd.get_method_and_args(data)

@@ -1,3 +1,8 @@
+Dev
+==============================
+* Refactored :class:`pulsar.apps.rpc.JsonProxy` class.
+* **374 regression tests**, **87% coverage**.
+
 Ver. 0.4.4 - 2013-Jan-13
 ==============================
 * Documentation for development version hosted on github.
