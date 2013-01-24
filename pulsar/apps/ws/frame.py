@@ -210,7 +210,19 @@ class FrameParser(object):
         self.version = get_version(version)
         self._frame = None
         self._buf = None
-        self.kind = kind
+        self._kind = kind
+        
+    @property
+    def kind(self):
+        return self._kind
+    
+    @property
+    def masked(self):
+        return self.kind == 1
+    
+    @property
+    def expect_masked(self):
+        return True if self.kind == 0 else False
     
     def decode(self, data):
         return self.execute(data), bytearray()
@@ -232,6 +244,7 @@ class FrameParser(object):
         frame = self._frame
         if self._buf:
             data = self._buf + data
+        masked_frame = self.expect_masked
         # No opcode yet
         if frame is None:
             if len(data) < 2:
@@ -244,14 +257,12 @@ class FrameParser(object):
             opcode = first_byte & 0xf
             if fin not in (0, 1):
                 raise WebSocketProtocolError('FIN must be 0 or 1')
-            if not (second_byte & 0x80):
-                if not self.kind:
-                    raise WebSocketProtocolError(\
-                                'Unmasked client frame. Abort connection')
-            else:
-                if self.kind:
-                    raise WebSocketProtocolError(\
-                            'Masked server frame. Abort connection')
+            is_masked = bool(second_byte & 0x80)
+            if masked_frame != is_masked:
+                if masked_frame:
+                    raise WebSocketProtocolError('WEBSOCKET unmasked client frame.')
+                else:
+                    raise WebSocketProtocolError('WEBSOCKET masked server frame.')
             payload_length = second_byte & 0x7f
             # All control frames MUST have a payload length of 125 bytes or less
             if opcode > 0x7 and payload_length > 125:
@@ -264,7 +275,7 @@ class FrameParser(object):
         if frame.masking_key is None:
             # All control frames MUST have a payload length of 125 bytes or less
             d = None
-            mask_length = 4 if not self.kind else 0
+            mask_length = 4 if masked_frame else 0
             if frame.payload_length == 126:
                 if len(data) < 2 + mask_length: # 2 + 4 for mask
                      return self.save_buf(frame, data)
