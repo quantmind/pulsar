@@ -1,6 +1,7 @@
 Dev
 ==============================
 * Refactored :class:`pulsar.apps.rpc.JsonProxy` class.
+* Websocket does not support any extensions.
 * **374 regression tests**, **87% coverage**.
 
 Ver. 0.4.4 - 2013-Jan-13

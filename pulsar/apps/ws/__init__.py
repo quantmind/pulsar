@@ -62,7 +62,7 @@ WEBSOCKET_GUID = '258EAFA5-E914-47DA-95CA-C5AB0DC85B11'
 
 class GeneralWebSocket(object):
     namespace = ''
-    extensions = ['x-webkit-deflate-frame']
+    extensions = []
     
     def __init__(self, handle, extensions=None):
         self.handle = handle
