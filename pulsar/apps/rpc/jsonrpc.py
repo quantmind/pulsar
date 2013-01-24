@@ -14,11 +14,12 @@ import json
 from timeit import default_timer
 
 import pulsar
-from pulsar import HttpClient, is_async
+from pulsar import is_async
 from pulsar.utils.structures import AttributeDictionary
 from pulsar.utils.security import gen_unique_id
-from pulsar.utils.httpurl import to_string, range
+from pulsar.utils.pep import to_string, range
 from pulsar.utils.jsontools import DefaultJSONEncoder, DefaultJSONHook
+from pulsar.apps.wsgi import HttpClient
 
 from .handlers import RpcHandler, RpcRequest
 from .exceptions import exception, INTERNAL_ERROR, REQUIRES_AUTHENTICATION

@@ -374,6 +374,7 @@ properly this actor will go out of scope.'''
     def periodic_task(self):
         if self.can_continue():
             if self.running():
+                self.logger.debug('%s notifying the monitor', self)
                 r = self.send('monitor', 'notify', self.info())
                 secs = max(ACTOR_TIMEOUT_TOLERANCE*self.cfg.timeout, MIN_NOTIFY)
                 next = min(secs, MAX_NOTIFY)

@@ -37,6 +37,7 @@ from pulsar.apps.socket import SocketServer
 from .wsgi import *
 from .server import *
 from .middleware import *
+from .client import *
 
 
 class HttpParser(pulsar.Setting):

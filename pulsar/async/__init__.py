@@ -12,5 +12,4 @@ from .actor import *
 from .arbiter import *
 from .monitor import *
 from .concurrency import *
-from .http import *
 from . import commands

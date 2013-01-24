@@ -2,10 +2,11 @@
 import os
 import time
 
-from pulsar import send, make_async, safe_async, is_failure, HttpClient
+from pulsar import send, make_async, safe_async, is_failure
 from pulsar.apps.test import unittest
 from pulsar.utils import httpurl
 from pulsar.utils.httpurl import to_bytes, urlencode
+from pulsar.apps.wsgi import HttpClient
 
 BIN_HOST = 'httpbin.org'
 HTTPBIN_URL = 'http://' + BIN_HOST + '/'

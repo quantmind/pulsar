@@ -176,7 +176,7 @@ class Client(ClientEventHandler):
     '''Factory of :class:`ConnectionPool`.'''
     connection_factory = ClientConnection
     consumer_factory = None
-    '''Factory of response instances'''
+    '''A factory of :class:`ProtocolConsumer` for sending and consuming data.'''
     client_version = ''
     connection_pools = None
     timeout = 0

@@ -100,7 +100,7 @@ class HttpResponse(pulsar.ClientProtocolConsumer):
         pass
 
 
-class HttpClient(Client):
+class HttpClient(pulsar.Client):
     '''A client for an HTTP/HTTPS server which handles a pool of synchronous
 or asynchronous connections.
 
@@ -141,7 +141,7 @@ or asynchronous connections.
 
     Dictionary of proxy servers for this client.
 '''
-    response_class = HttpResponse
+    consumer_factory = HttpResponse
     allow_redirects = False
     max_redirects = 10
     client_version = 'Python-httpurl'
@@ -152,7 +152,7 @@ or asynchronous connections.
             ('Accept-Encoding', 'compress'),
             ('Accept-Encoding', 'gzip')],
             kind='client')
-    request_parameters = Client.request_parameters +\
+    request_parameters = pulsar.Client.request_parameters +\
                         ('encode_multipart', 'max_redirects', 'decompress',
                          'allow_redirects', 'multipart_boundary', 'version')
     # Default hosts not affected by proxy settings. This can be overwritten
