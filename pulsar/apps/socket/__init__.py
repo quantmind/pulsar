@@ -181,10 +181,10 @@ requests. The request handler is constructued from the
 uses the :meth:`handler` as its response protocol.'''
         cfg = self.cfg
         server = pulsar.create_server(eventloop=worker.requestloop,
-                                     sock=worker.params.sock,
-                                     consumer_factory=self.handler(),
-                                     max_connections=cfg.max_requests,
-                                     timeout=cfg.keepalive)
+                                      sock=worker.params.sock,
+                                      consumer_factory=self.handler(),
+                                      max_connections=cfg.max_requests,
+                                      timeout=cfg.keepalive)
         server.bind_event('pre_request', partial(cfg.pre_request, worker))
         server.bind_event('post_request', partial(cfg.post_request, worker))
         return server

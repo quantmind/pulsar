@@ -2,7 +2,7 @@ import platform
 import json
 
 import pulsar
-from pulsar import create_connection
+from pulsar import create_transport
 from pulsar.utils.pep import native_str
 from pulsar.utils.structures import mapping_iterator
 from pulsar.utils.httpurl import urlparse, urljoin, DEFAULT_CHARSET,\
@@ -257,7 +257,7 @@ class HttpResponse(pulsar.ClientProtocolConsumer):
                                       history=history, **params)
 
 
-class HttpClient(pulsar.Client):
+class HttpClient(pulsar.ClientPool):
     '''A client for an HTTP/HTTPS server which handles a pool of synchronous
 or asynchronous connections.
 
@@ -310,7 +310,7 @@ or asynchronous connections.
             ('Accept-Encoding', 'compress'),
             ('Accept-Encoding', 'gzip')],
             kind='client')
-    request_parameters = pulsar.Client.request_parameters +\
+    request_parameters = pulsar.ClientPool.request_parameters +\
                         ('encode_multipart', 'max_redirects', 'decompress',
                          'allow_redirects', 'multipart_boundary', 'version')
     # Default hosts not affected by proxy settings. This can be overwritten

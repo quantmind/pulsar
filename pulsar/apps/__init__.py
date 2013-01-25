@@ -4,11 +4,9 @@ import sys
 from inspect import isfunction
 
 import pulsar
-from pulsar import Actor, Monitor, Deferred, get_actor, maybe_async_deco
+from pulsar import Actor, Monitor, get_actor, maybe_async_deco, EventHandler
 from pulsar.utils.importer import module_attribute
 from pulsar.utils.pep import pickle
-from pulsar.utils import events
-from pulsar.utils.log import LogInformation
 from pulsar.utils.queue import IOQueue
 
 __all__ = ['Application',
@@ -39,7 +37,27 @@ the :class:`Application` associated with *name* if available. If not in the
     if actor and actor.is_arbiter():
         monitor = actor.monitors.get(name)
         if monitor:
-            return getattr(monitor, 'app', None) 
+            return getattr(monitor, 'app', None)
+        
+def monitor_start(self):
+    self.app.monitor_start(self)
+    # If no workers available invoke the worker start method too
+    if not self.cfg.workers:
+        self.app.worker_start(self)
+    else:
+        self.app_handler = self.app.monitor_handler()
+    self.app.fire_event('start')
+
+def monitor_info(self, data):
+    if not self.cfg.workers:
+        self.app.worker_info((self, data))
+    else:
+        self.app.monitor_info((self, data))
+        
+def monitor_stop(self):
+    if not self.cfg.workers:
+        self.app.worker_stop(self)
+    self.app.monitor_stop(self)
 
 
 class Worker(Actor):
@@ -59,34 +77,18 @@ An :class:`Actor` for serving a pulsar :class:`Application`.
     The application handler obtained from :meth:`Application.handler`.
 
 """
+    def __init__(self, *args, **kwargs):
+        super(Worker, self).__init__(*args, **kwargs)
+        self.bind_event('start', self.app.worker_start)
+        self.bind_event('stop', self.app.worker_stop)
+        self.bind_event('info', self.app.worker_info)
+        
     @property
     def app(self):
         return self.params.app
     
     def io_poller(self):
         return self.app.io_poller(self)
-        
-    # Delegates Callbacks to the application
-    def on_start(self):
-        self.app_handler = self.app.handler()
-        self.app.worker_start(self)
-        try:
-            self.cfg.worker_start(self)
-        except Exception:
-            pass
-
-    def on_info(self, data):
-        return self.app.worker_info(self, data)
-        
-    def on_stop(self):
-        self.app.worker_stop(self)
-        try:
-            self.cfg.worker_exit(self)
-        except Exception:
-            pass
-
-    def on_info(self, info):
-        return self.app.on_info(self, info)
     
 
 class ApplicationMonitor(Monitor):
@@ -98,36 +100,19 @@ class ApplicationMonitor(Monitor):
     :meth:`Application.monitor_handler`.
 '''
     actor_class = Worker
-
+    
+    def __init__(self, *args, **kwargs):
+        super(ApplicationMonitor, self).__init__(*args, **kwargs)
+        self.bind_event('start', monitor_start)
+        self.bind_event('stop', monitor_stop)
+        self.bind_event('info', monitor_info)
+        
     @property
     def app(self):
         return self.params.app
         
     ############################################################################
     # Delegates Callbacks to the application
-    def on_start(self):
-        super(ApplicationMonitor, self).on_start()
-        self.app.monitor_start(self)
-        # If no workers available invoke the worker start method too
-        if not self.cfg.workers:
-            self.app.worker_start(self)
-        else:
-            self.app_handler = self.app.monitor_handler()
-        events.fire('ready', self.app)
-        self.app.local.on_start.callback(self.app)
-
-    def on_info(self, data):
-        if not self.cfg.workers:
-            return self.app.worker_info(self, data)
-        else:
-            return self.app.monitor_info(self, data)
-            
-    def on_stop(self):
-        if not self.cfg.workers:
-            self.app.worker_stop(self)
-        self.app.monitor_stop(self)
-        super(ApplicationMonitor, self).on_stop()
-    
     def monitor_task(self):
         self.app.monitor_task(self)
         
@@ -141,6 +126,11 @@ class ApplicationMonitor(Monitor):
         return self.app.actorparams(self, p)
 
 
+class AppEvents(EventHandler):
+    ONE_TIME_EVENTS = ('ready', 'start', 'stop')
+    MANY_TIMES_EVENTS = ('info',)
+    
+    
 class Application(pulsar.Pulsar):
     """An application interface for configuring and loading
 the various necessities for any given server or distributed application running
@@ -230,6 +220,7 @@ These are the most important facts about a pulsar :class:`Application`
 :parameter parse_console: flag for parsing console inputs. By default it parse
     only if the arbiter has not yet started.
 '''
+        self.local.events = AppEvents()
         self.description = description or self.description
         self.epilog = epilog or self.epilog
         self._app_name = self._app_name or self.__class__.__name__.lower()
@@ -252,9 +243,8 @@ These are the most important facts about a pulsar :class:`Application`
             monitor = actor.monitors.get(self.name)
         if monitor is None and (not actor or actor.is_arbiter()):
             self.cfg.on_start()
-            self.local.on_start = Deferred()
             self.configure_logging()
-            events.fire('ready', self)
+            self.fire_event('ready')
             arbiter = pulsar.arbiter(cfg=self.cfg.new_config())
             if self.on_config() is not False:
                 monitor = arbiter.add_monitor(ApplicationMonitor,
@@ -262,8 +252,8 @@ These are the most important facts about a pulsar :class:`Application`
                                               app=self,
                                               cfg=self.cfg)
                 self.cfg = monitor.cfg
-        return self.local.on_start
-
+        return self.event('start')
+        
     @property
     def app(self):
         return self
@@ -289,6 +279,15 @@ These are the most important facts about a pulsar :class:`Application`
         if actor:
             return actor.monitors.get(self.name)
 
+    def fire_event(self, name):
+        return self.local.events.fire_event(name, self)
+        
+    def bind_event(self, name, callback):
+        return self.local.events.bind_event(name, callback)
+        
+    def event(self, name):
+        return self.local.events.event(name)
+        
     def handler(self):
         '''Returns the callable application handler which is stored in
 :attr:`Worker.app_handler`, used by :class:`Worker` to carry out its task.
@@ -413,10 +412,6 @@ The parameters overriding order is the following:
         '''Returns an application handler for the :class:`ApplicationMonitor`.
 By default it returns ``None``.'''
         return None
-
-    # MONITOR AND WORKER CALLBACKS
-    def on_info(self, worker, data):
-        return data
     
     # WORKERS CALLBACKS
     def worker_start(self, worker):
@@ -424,8 +419,8 @@ By default it returns ``None``.'''
 :ref:`callback <actor-callbacks>` method.'''
         pass
 
-    def worker_info(self, worker, data):
-        return data
+    def worker_info(self, arg):
+        pass
     
     def worker_stop(self, worker):
         '''Called by the :class:`Worker` :meth:`pulsar.Actor.on_stop`

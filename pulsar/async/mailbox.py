@@ -16,10 +16,8 @@ from pulsar.utils.security import gen_unique_id
 
 from .access import get_actor, set_actor, PulsarThread
 from .defer import make_async, log_failure, Deferred
-from .servers import create_server, ServerConnection
-from .protocols import ProtocolConsumer
+from .transports import ProtocolConsumer, Client
 from .proxy import actorid, get_proxy, get_command, CommandError, ActorProxy
-from . import clients
 
 
 LOGGER = logging.getLogger('pulsar.mailbox')
@@ -134,10 +132,6 @@ class MailboxMixin(object):
 
 ################################################################################
 ##    Mailbox Server (Arbiter) Classes
-class MailboxConnection(ServerConnection):
-    authenticated = False
-    
-
 class MailboxServerConsumer(MailboxMixin, ProtocolConsumer):
  
     def request(self, command, sender, target, args, kwargs):
@@ -148,7 +142,7 @@ class MailboxServerConsumer(MailboxMixin, ProtocolConsumer):
     
 ################################################################################
 ##    Mailbox Client (Actor) Classes
-class MailboxClientConsumer(MailboxMixin, clients.ClientProtocolConsumer):
+class MailboxClientConsumer(MailboxMixin, ProtocolConsumer):
     '''The Protocol consumer for a Mailbox client'''    
     def send(self, *args):
         # This is only called at the first request
@@ -158,7 +152,7 @@ class MailboxClientConsumer(MailboxMixin, clients.ClientProtocolConsumer):
         self.event_loop.call_soon_threadsafe(self.transport.write, data)
     
     
-class MailboxClient(clients.Client):
+class MailboxClient(Client):
     # mailbox for actors client
     consumer_factory = MailboxClientConsumer
      

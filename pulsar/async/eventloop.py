@@ -20,7 +20,7 @@ from pulsar.utils.pep import default_timer, set_event_loop_policy,\
                              EventLoopPolicy as BaseEventLoopPolicy
 from .access import thread_local_data
 from .defer import log_failure, Deferred, as_failure
-from .servers import Server
+from .transports import create_server
 
 __all__ = ['EventLoop', 'TimedCall', 'asynchronous']
 
@@ -501,7 +501,7 @@ default signal handler ``signal.SIG_DFL``.'''
     def create_server(self, **kwargs):
         '''Create a new :class:`Server`.'''
         kwargs['eventloop'] = self
-        return Server.create(**kwargs)
+        return create_server(**kwargs)
     
     def wake(self):
         '''Wake up the eventloop.'''

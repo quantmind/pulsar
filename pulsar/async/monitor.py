@@ -96,8 +96,7 @@ during its life time.
         #Monitors don't do hand shakes
         try:
             self.state = ACTOR_STATES.RUN
-            self.on_start()
-            self.fire('on_start')
+            self.fire_event('start')
             self.periodic_task()
         except Exception as e:
             self.stop(e)
@@ -288,7 +287,7 @@ Users shouldn't need to override this method, but use
         yield self.close_actors()
         if not self.terminated_actors:
             self.monitor._remove_actor(self)
-        self.on_exit.callback(self)
+        self.fire_event('stop')
 
     @property
     def multithread(self):
@@ -311,7 +310,7 @@ Users shouldn't need to override this method, but use
         if not self.started():
             return data
         data['workers'] = [a.info for a in itervalues(self.managed_actors)]
-        return self.on_info(data)
+        self.fire_event('info', (self, data))
 
     def proxy_mailbox(address):
         return self.arbiter.proxy_mailboxes.get(address)

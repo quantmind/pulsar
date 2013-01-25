@@ -1,44 +1,22 @@
 from pulsar.utils.pep import get_event_loop
-from pulsar.utils.sockets import SOCKET_TYPES, create_socket
-from pulsar.utils.events import EventHandler
+from pulsar.utils.sockets import get_transport_type, create_socket
 
-from .defer import Deferred, pass_through
-from .protocols import ProtocolConsumer, Connection, NOTHING
-from .transports import Transport
-from .servers import Producer
+from .protocols import ProtocolConsumer, Connection, EventHandler, Producer, NOTHING
+from .transport import create_transport
 
-__all__ = ['create_connection',
-           'ConnectionPool',
+__all__ = ['ConnectionPool',
            'Client',
-           'ClientEventHandler',
            'ClientProtocolConsumer',
            'Request']
 
-
-def create_connection(address, timeout=0, source_address=None):
-    '''Create a connection with a remote server'''
-    sock = create_socket(address=address, bindto=False)
-    sock.settimeout(timeout)
-    if source_address:
-        sock.bind(source_address)
-    protocol_factory = SOCKET_TYPES[sock.TYPE].server.protocol_factory
-    protocol = protocol_factory(address)
-    event_loop = get_event_loop()
-    transport = Transport(event_loop, sock, protocol, timeout=timeout)
-    return transport.connect().protocol
-
-
-class ClientEventHandler(EventHandler):
-    EVENTS = ('pre_request', 'post_request', 'response')
     
-    
-class Request(ClientEventHandler):
+class Request(EventHandler):
     '''A :class:`Client` request class.'''
     def __init__(self, address, timeout=0):
         self.address = address
         self.timeout = timeout
     
-
+    
 class ClientProtocolConsumer(ProtocolConsumer):
     '''A :class:`ProtocolConsumer` for a :class:`Client`.
     
@@ -52,12 +30,12 @@ class ClientProtocolConsumer(ProtocolConsumer):
     another listening consumer. This can be used to stream data as
     it arrives (for example).
 '''
-    consumer = pass_through
     def __init__(self, connection, request, consumer=None):
         super(ClientProtocolConsumer, self).__init__(connection)
         connection.set_response(self)
         self.request = request
-        self.consumer = consumer or self.consumer
+        if consumer:
+            self.bind_event('data_received', consumer)
         
     def begin(self):
         '''Connect, send data and wait for results.'''
@@ -74,36 +52,6 @@ subclasses. This method is invoked by the :meth:`begin` method
 once the connection is established. **Not called directly**.'''
         raise NotImplementedError
         
-        
-class ClientConnection(Connection):
-    
-    def set_response(self, response):
-        assert self._current_consumer is None, 'Response is not None'
-        self._current_consumer = response
-        self._processed += 1
-        
-    def consume(self, data):
-        while data:
-            p = self.protocol
-            response = self._current_consumer
-            if response is None:
-                raise ProtocolError 
-            data = response.feed(data)
-            if data and self._current_consumer:
-                # if data is returned from the response feed method and the
-                # response has not done yet raise a Protocol Error
-                raise ProtocolError
-    
-    def finished(self, response, result=NOTHING):
-        if response is self._current_consumer:
-            result = self if result is NOTHING else result
-            self._producer.fire('response', self._current_consumer)
-            self._current_consumer.on_finished.callback(result)
-            self._current_consumer = None
-            response._connection = None
-        else:
-            raise RuntimeError()
-    
         
 class ConnectionPool(Producer):
     '''A :class:`Producer` of of active connections for client
@@ -164,7 +112,7 @@ protocols. It maintains a live set of connections.
         return connection
     
 
-class Client(ClientEventHandler):
+class Client(EventHandler):
     '''A client for a remote server which handles one or more
 :class:`ConnectionPool` of asynchronous connections.
 
@@ -175,23 +123,25 @@ class Client(ClientEventHandler):
 '''
     connection_pool = ConnectionPool
     '''Factory of :class:`ConnectionPool`.'''
-    connection_factory = ClientConnection
     consumer_factory = None
     '''A factory of :class:`ProtocolConsumer` for sending and consuming data.'''
+    connection_factory = Connection
+    '''A factory of :class:`Connection`.'''
     client_version = ''
-    connection_pools = None
     timeout = 0
     
-    request_parameters = ('hooks', 'timeout')
-    def __init__(self, timeout=None, client_version=None,
-                  max_connections=None, trust_env=True, stream=None,
-                  **params):
+    MANY_TIMES_EVENTS = ('pre_request', 'post_request')
+    request_parameters = ('timeout',)
+    def __init__(self, max_connections=None, timeout=None, client_version=None,
+                 trust_env=True, consumer_factory=None,**params):
+        super(Client, self).__init__()
         self.trust_env = trust_env
-        self.timeout = timeout if timeout is not None else self.timeout
         self.client_version = client_version or self.client_version
+        self.timeout = timeout if timeout is not None else self.timeout
+        if consumer_factory:
+            self.consumer_factory = consumer_factory
         self.max_connections = max_connections or 2**31
-        if self.connection_pools is None:
-            self.connection_pools = {}
+        self.connection_pools = {}
         self.setup(**params)
     
     def setup(self, **params):
@@ -240,12 +190,15 @@ in :attr:`request_parameters` tuple.'''
                 params[name] = chooks
         return params
     
+    def create_connection(self, address, timeout=0):
+        '''Create a new connection'''
+        transport = create_transport(address=address, timeout=timeout)
+        transport.connect()
+        connection = self.connection_factory(address, self)
+        
     def close_connections(self):
         for p in self.connection_pools.values():
             p.close_connections()
             
     def close(self):
         self.close_connections()
-        
-    def build_protocol(self, address, timeout):
-        return create_connection(address, timeout)

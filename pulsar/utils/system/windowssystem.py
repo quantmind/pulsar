@@ -7,7 +7,7 @@ import socket
 import getpass
 from time import sleep
 
-from pulsar.utils.sock import socket_pair
+from pulsar.utils.sockets import socket_pair
 
 from .winprocess import WINEXE
 from .base import *

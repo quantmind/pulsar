@@ -14,7 +14,7 @@ from .actor import Actor, ACTOR_STATES
 from .monitor import PoolMixin, _spawn_actor
 from .defer import multi_async, log_failure
 from .access import get_actor, set_actor
-from .mailbox import MailboxConnection, MailboxServerConsumer
+from .mailbox import MailboxServerConsumer
 from . import proxy
 
 
@@ -74,6 +74,46 @@ A typical usage::
     else:
         return actor.spawn(**kwargs)
 
+
+def stop_arbiter(self):
+    p = self.pidfile
+    if p is not None:
+        self.logger.debug('Removing %s' % p.fname)
+        p.unlink()
+    if self.managed_actors:
+        self.state = ACTOR_STATES.TERMINATE
+    self.logger.info("Bye.")
+    if self.exit_code:
+        sys.exit(self.exit_code)
+    
+def start_arbiter(self):
+    if current_process().daemon:
+        raise pulsar.PulsarException(
+                'Cannot create the arbiter in a daemon process')
+    os.environ["SERVER_SOFTWARE"] = pulsar.SERVER_SOFTWARE
+    pidfile = self.cfg.pidfile
+    if pidfile is not None:
+        p = Pidfile(pidfile)
+        p.create(self.pid)
+        self.pidfile = p
+    
+def info_arbiter(args):
+    self, data = args
+    monitors = [p.info() for p in itervalues(self.monitors)]
+    server = data.pop('actor')
+    server.update({'version': pulsar.__version__,
+                   'name': pulsar.SERVER_NAME,
+                   'number_of_monitors': len(self.monitors),
+                   'number_of_actors': len(self.managed_actors)})
+    server.pop('is_process', None)
+    server.pop('ppid', None)
+    server.pop('actor_id', None)
+    server.pop('age', None)
+    data['server'] = server
+    data['workers'] = [a.info for a in itervalues(self.managed_actors)]
+    data['monitors'] = monitors
+    return data
+    
     
 class Arbiter(PoolMixin):
     '''The Arbiter is the most important a :class:`Actor`
@@ -99,6 +139,8 @@ Users access the arbiter (in the arbiter process domain) by the high level api::
         super(Arbiter, self).__init__(impl)
         self.monitors = {}
         self.registered = {'arbiter': self}
+        self.bind_event('start', start_arbiter)
+        self.bind_event('stop', stop_arbiter)
 
     ############################################################################
     # ARBITER HIGH LEVEL API
@@ -130,22 +172,6 @@ Users access the arbiter (in the arbiter process domain) by the high level api::
         return multi_async([m.stop() for m in list(itervalues(self.monitors))],
                            log_failure=True)
 
-    def on_info(self, data):
-        monitors = [p.info() for p in itervalues(self.monitors)]
-        server = data.pop('actor')
-        server.update({'version': pulsar.__version__,
-                       'name': pulsar.SERVER_NAME,
-                       'number_of_monitors': len(self.monitors),
-                       'number_of_actors': len(self.managed_actors)})
-        server.pop('is_process', None)
-        server.pop('ppid', None)
-        server.pop('actor_id', None)
-        server.pop('age', None)
-        data['server'] = server
-        data['workers'] = [a.info for a in itervalues(self.managed_actors)]
-        data['monitors'] = monitors
-        return data
-
     def get_actor(self, aid):
         '''Given an actor unique id return the actor proxy.'''
         a = super(Arbiter, self).get_actor(aid)
@@ -162,28 +188,6 @@ Users access the arbiter (in the arbiter process domain) by the high level api::
         super(Arbiter, self)._remove_actor(actor, log)
         self.registered.pop(actor.name, None)
         self.monitors.pop(actor.aid, None)
-        
-    def on_start(self):
-        if current_process().daemon:
-            raise pulsar.PulsarException(
-                    'Cannot create the arbiter in a daemon process')
-        os.environ["SERVER_SOFTWARE"] = pulsar.SERVER_SOFTWARE
-        pidfile = self.cfg.pidfile
-        if pidfile is not None:
-            p = Pidfile(pidfile)
-            p.create(self.pid)
-            self.pidfile = p
-        
-    def on_stop(self):
-        p = self.pidfile
-        if p is not None:
-            self.logger.debug('Removing %s' % p.fname)
-            p.unlink()
-        if self.managed_actors:
-            self.state = ACTOR_STATES.TERMINATE
-        self.logger.info("Bye.")
-        if self.exit_code:
-            sys.exit(self.exit_code)
         
     def periodic_task(self):
         # Arbiter periodic task
@@ -232,7 +236,6 @@ Users access the arbiter (in the arbiter process domain) by the high level api::
         address = ('127.0.0.1', 0)
         mailbox = self.requestloop.create_server(address=address,
                                         name='Mailbox for %s' % self,
-                                        connection_factory=MailboxConnection,
                                         consumer_factory=MailboxServerConsumer,
                                         timeout=0,
                                         close_event_loop=True)

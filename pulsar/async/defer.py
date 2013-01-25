@@ -5,13 +5,15 @@ import logging
 import traceback
 from threading import current_thread, local
 from collections import deque, namedtuple
+from itertools import chain
 from inspect import isgenerator, isfunction, ismethod, istraceback
 from time import sleep
 
 from pulsar import AlreadyCalledError, HaltServer
+from pulsar.utils import events
 from pulsar.utils.pep import raise_error_trace, iteritems
 
-from .access import get_request_loop
+from .access import get_request_loop, NOTHING
 
 
 __all__ = ['Deferred',
@@ -450,26 +452,45 @@ directly the :attr:`result` attribute.'''
 
 
 class EventHandler(object):
-    '''A Mixin for signaling one time events.'''
-    EVENTS = ()
+    '''A Mixin for handling one time events and events that occur several
+times.'''
+    ONE_TIME_EVENTS = ()
+    MANY_TIMES_EVENTS = ()
     
-    def __new__(cls, *args, **kwargs):
-        o = super(EventHandler, cls).__new__(cls)
-        o._events = dict(((event, Deferred()) for event in cls.EVENTS))
-        return o
+    def __init__(self):
+        o = dict(((e, Deferred()) for e in self.ONE_TIME_EVENTS))
+        m = dict(((e, []) for e in self.MANY_TIMES_EVENTS))
+        self.ONE_TIME_EVENTS = o
+        self.MANY_TIMES_EVENTS = m
         
-    def event_handler(self, name):
-        return self._events[name]
+    def event(self, name):
+        '''Return the handler for event *name*.'''
+        if name in self.ONE_TIME_EVENTS:
+            return self.ONE_TIME_EVENTS[name]
+        else:
+            return self.MANY_TIMES_EVENTS[name]
     
     def bind_event(self, event, callback):
-        '''Register an event hook'''
-        self._events[event].add_callback(callback)
+        '''Register a *callback* with *event*. The callback must be
+a callable which accept one argument.'''
+        if event in self.ONE_TIME_EVENTS:
+            self.ONE_TIME_EVENTS[event].add_callback(callback)
+        else:
+            self.MANY_TIMES_EVENTS[event].append(callback)
         
-    def fire_event(self, event, event_data):
-        """Dispatches an event dictionary on a given piece of data."""
-        if event in self._events:
-            log_failure(self._events[event].callback(event_data))
-                    
+    def fire_event(self, event, event_data=NOTHING):
+        """Dispatches *event_data* to the *event* listeners."""
+        event_data = self if event_data is NOTHING else event_data
+        if event in self.ONE_TIME_EVENTS:
+            log_failure(self.ONE_TIME_EVENTS[event].callback(event_data))
+        else:
+            for callback in self.MANY_TIMES_EVENTS[event]:
+                callback(event_data)
+        events.fire(event, event_data)
+        
+    def all_events(self):
+        return chain(self.ONE_TIME_EVENTS, self.MANY_TIMES_EVENTS)
+            
                     
 class DeferredGenerator(Deferred):
     '''A :class:`Deferred` for a generator over, possibly, deferred objects.

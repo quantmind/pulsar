@@ -25,7 +25,6 @@ def wsgi_environ(response, parser):
     """return a :ref:`WSGI <apps-wsgi>` compatible environ dictionary
 based on the current request. If the reqi=uest headers are not ready it returns
 nothing."""
-    protocol = response.protocol
     version = parser.get_version()
     input = BytesIO()
     for b in parser.get_body():
@@ -53,7 +52,7 @@ nothing."""
     # REMOTE_HOST and REMOTE_ADDR may not qualify the remote addr:
     # http://www.ietf.org/rfc/rfc3875
     url_scheme = "http"
-    forward = protocol.address
+    forward = response.address
     server = None
     url_scheme = "http"
     script_name = os.environ.get("SCRIPT_NAME", "")
@@ -128,7 +127,7 @@ class HttpServerResponse(pulsar.ProtocolConsumer):
         self.server_port = port
         self.parser = lib.Http_Parser(kind=0)
         
-    def feed(self, data):
+    def data_received(self, data):
         # Got data from the transport, lets parse it
         p = self.parser
         request_headers = self.request_headers

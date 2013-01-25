@@ -1,22 +1,29 @@
 '''TCP protocol clients and servers'''
 import logging
+import socket
 
 from pulsar.utils.sockets import *
+from pulsar.utils.pep import range
 from pulsar.utils.structures import merge_prefix
 
 from .servers import Server
-from .protocols import Protocol
+from .transport import SocketTransport
 
-__all__ = ['TCPServer', 'TCPProtocol']
+__all__ = ['TCP']
 
 TRY_WRITE_AGAIN = (EWOULDBLOCK, ENOBUFS, EINPROGRESS)
 TRY_READ_AGAIN = (EWOULDBLOCK, EAGAIN)
+NUMBER_ACCEPTS = 30 if platform.type == "posix" else 1
 
 LOGGER = logging.getLogger('pulsar.tcp')
 
-class TCPProtocol(Protocol):
-    '''TCP protocol.'''
-    def connect(self, sock):
+class TCP(SocketTransport):
+    '''Transport for the TCP protocol.'''
+    TYPE = socket.SOCK_STREAM
+    MANY_TIMES_EVENTS = SocketTransport.MANY_TIMES_EVENTS +\
+                                         ('connection_received',)
+    
+    def _protocol_connect(self, sock):
         try:
             sock.connect(self.address)
         except socket.error as e:
@@ -27,8 +34,17 @@ class TCPProtocol(Protocol):
         else:
             return True #    A synchronous connection
     
-    def ready_write(self):
-        buffer = self._transport._write_buffer
+    def _protocol_read(self):
+        try:
+            return self._sock.recv(self._read_chunk_size)
+        except socket.error as e:
+            if e.args[0] == EWOULDBLOCK:
+                return
+            else:
+                raise
+            
+    def _protocol_write(self):
+        buffer = self._write_buffer
         tot_bytes = 0
         while buffer:
             try:
@@ -48,23 +64,10 @@ class TCPProtocol(Protocol):
                 else:
                     raise
         return tot_bytes
-
-
-class TCPServer(Server):
-    '''An asynchronous TCP :class:`Server`'''
-    TYPE = socket.SOCK_STREAM
-    protocol_factory = TCPProtocol
-    
-    def __init__(self, event_loop, sock, numberAccepts=100, **params):
-        if platform.type == "posix":
-            self._numberAccepts = max(numberAccepts, 1)
-        else:
-            self._numberAccepts = 1
-        super(TCPServer, self).__init__(event_loop, sock, **params)
         
-    def ready_read(self):
+    def _protocol_accept(self):
         try:
-            for i in range(self._numberAccepts):
+            for i in range(NUMBER_ACCEPTS):
                 if self.closed:
                     return
                 try:
@@ -80,7 +83,11 @@ class TCPServer(Server):
                         LOGGER.info('Could not accept new connection')
                         break
                     raise
-                self.create_connection(sock, address)
+                self.fire_event('connection_received', (sock, address))
         except Exception:
             LOGGER.exception('Could not accept new connection')
         
+    def add_listener(self, callback):
+        '''Called by :class:`Server`'''
+        self.bind_event('connection_received', callback)
+        self.event_loop.add_reader(self.fileno(), self._protocol_accept)

@@ -7,33 +7,51 @@ from .httpurl import native_str
 
 
 WRITE_BUFFER_MAX_SIZE = 128 * 1024  # 128 kb
-SOCKET_TYPES = {}
 
-class SocketMap:
+
+class TransportInfo:
     
     def __init__(self, type):
         self.type = type
         self.family = {}
-        self.server = None
+        self.transport = None
         
 
-class SocketType(type):
+class TransportType(type):
+    TRANSPORT_TYPES = {}
+        
+    def __new__(cls, name, bases, attrs):
+        new_class = super(TransportType, cls).__new__(cls, name, bases, attrs)
+        type = getattr(new_class, 'TYPE', None)
+        if type is not None:
+            if type  not in cls.TRANSPORT_TYPES:
+                cls.TRANSPORT_TYPES[type] = TransportInfo(type)
+        return new_class
+    
+    @classmethod
+    def get_transport_type(cls, type):
+        return cls.TRANSPORT_TYPES[type]
+    
+
+get_transport_type = TransportType.get_transport_type
+    
+    
+class SocketType(TransportType):
     
     def __new__(cls, name, bases, attrs):
         new_class = super(SocketType, cls).__new__(cls, name, bases, attrs)
         family = getattr(new_class, 'FAMILY', None)
         type = getattr(new_class, 'TYPE', None)
         if type is not None:
-            if type  not in SOCKET_TYPES:
-                SOCKET_TYPES[type] = SocketMap(type)
+            transport_type = cls.TRANSPORT_TYPES[type]
             if family is not None:
-                SOCKET_TYPES[type].family[family] = new_class
+                transport_type.family[family] = new_class
         return new_class
 
 
 class Socket(SocketType('SocketBase', (), {})):
     '''Wrapper for a socket'''
-    def __init__(self, sock, address=None, bindto=False, backlog=1024):
+    def __init__(self, sock=None, address=None, bindto=False, backlog=1024):
         if sock is None:
             sock = socket.socket(self.FAMILY, self.TYPE)
         self._sock = sock
@@ -100,6 +118,11 @@ if platform.isWindows:    #pragma    nocover
     from errno import WSAENOBUFS as ENOBUFS
     from errno import WSAEMFILE as EMFILE
     from errno import WSAECONNRESET as ECONNABORTED
+    from errno import WSAEADDRINUSE as EADDRINUSE
+    from errno import WSAEMSGSIZE as EMSGSIZE
+    from errno import WSAENETRESET as ENETRESET
+    from errno import WSAETIMEDOUT as ETIMEDOUT
+    from errno import WSAECONNREFUSED as ECONNREFUSED
     # No such thing as WSAENFILE, either.
     ENFILE = object()
     # Nor ENOMEM
@@ -108,7 +131,8 @@ if platform.isWindows:    #pragma    nocover
 else:
     from errno import EPERM, EINVAL, EWOULDBLOCK, EINPROGRESS, EALREADY,\
                       ECONNRESET, EISCONN, ENOTCONN, EINTR, ENOBUFS, EMFILE,\
-                      ENFILE, ENOMEM, EAGAIN, ECONNABORTED
+                      ENFILE, ENOMEM, EAGAIN, ECONNABORTED, EADDRINUSE,\
+                      EMSGSIZE, ENETRESET, ETIMEDOUT, ECONNREFUSED
 
 TCP_ACCEPT_ERRORS = (EMFILE, ENOBUFS, ENFILE, ENOMEM, ECONNABORTED)
 
@@ -235,10 +259,38 @@ def create_socket(address=None, sock=None, bindto=False, backlog=1024):
     else:
         raise RuntimeError('Socket address not supported in this platform')
     
-    
 def wrap_socket(type, sock, timeout=0):
     '''Wrap a python socket with pulsar :class:`Socket`.'''
     if sock and not isinstance(sock, Socket):
-        sock = SOCKET_TYPES[type].family[sock.family](sock)
+        sock = get_transport_type(type).family[sock.family](sock)
         sock.settimeout(timeout)
     return sock
+
+def socket_pair(backlog=2048, blocking=0):
+    '''Create a ``127.0.0.1`` (client,server) socket pair on any
+available port. The first socket is connected to the second, the server socket,
+which is bound to ``127.0.0.1`` at any available port.
+
+:param backlog: number of connection to listen.
+:rtype: tuple with two instances of :class:`Socket`
+'''
+    count = 0
+    while 1:
+        count += 1
+        server = create_socket(address=('127.0.0.1', 0), bindto=True,
+                               backlog=backlog)
+        try:
+            # Connect the remote socket with the server socket
+            remote_client = create_socket(address=server.address)
+            remote_client.connect(server.address)
+            break
+        except socket.error as e:
+            if e[0] != EADDRINUSE:
+                raise
+            if count >= 10:
+                remote_client.close()
+                server.close()
+                raise socket.error("Cannot bind socket pairs!")
+            remote_client.close()
+    remote_client.setblocking(blocking)
+    return remote_client, server

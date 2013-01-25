@@ -2,6 +2,7 @@ import sys
 import os
 import atexit
 import socket
+import logging
 from time import time
 import random
 import threading
@@ -20,11 +21,10 @@ from pulsar import AlreadyCalledError, AlreadyRegistered,\
                    ActorAlreadyStarted, LogginMixin, system, Config
 from pulsar.utils.structures import AttributeDictionary
 from pulsar.utils.pep import pickle, set_event_loop_policy
-from pulsar.utils.events import EventHandler
 from pulsar.utils import events
 
 from .eventloop import EventLoop, setid, signal
-from .defer import Deferred, log_failure
+from .defer import Deferred, EventHandler, log_failure
 from .proxy import ActorProxy, get_proxy, ActorProxyMonitor
 from .mailbox import MailboxClient
 from .access import set_actor, is_mainthread, get_actor, remove_actor, NOTHING
@@ -88,6 +88,7 @@ def stop_on_error(f):
         except Exception as e:
             self.stop(e)
     return _
+
 
 class Pulsar(LogginMixin):
     
@@ -167,23 +168,24 @@ an :class:`ActorProxy`.
     
 **METHODS**
 '''
-    EVENTS = ('on_stop', 'on_start', 'on_info')
+    ONE_TIME_EVENTS = ('stop', 'start')
+    MANY_TIMES_EVENTS = ('info',)
     exit_code = None
     mailbox = None
     signal_queue = None
     
     def __init__(self, impl):
+        super(Actor, self).__init__()
         self.state = ACTOR_STATES.INITIAL
         self.__impl = impl
-        for name in self.EVENTS:
+        for name in self.all_events():
             hook = impl.params.pop(name, None)
             if hook:
-                self.hooks[name].append(hook)
+                self.bind_event(name, hook)
         self.monitor = impl.params.pop('monitor', None)
         self.params = AttributeDictionary(**impl.params)
         del impl.params
         setid(self)
-        self.on_exit = Deferred()
 
     def __repr__(self):
         return self.impl.unique_name
@@ -241,7 +243,6 @@ logging is configured, the :attr:`Actor.mailbox` is registered and the
             self._started = time() 
             self.configure_logging()
             self._setup_ioloop()
-            events.fire('start', self)
             self.state = ACTOR_STATES.STARTING
             self._run()
 
@@ -303,32 +304,6 @@ mean it is running.'''
                                    .format(self))
 
     ############################################################################
-    ##  ACTOR HOOKS
-    ############################################################################
-    def on_start(self):
-        '''The :ref:`actor callback <actor-callbacks>` run **once** just before
-the actor starts (after forking) its event loop. Every attribute is available,
-therefore this is a chance to setup to perform custom initialisation
-before the actor starts running.'''
-        pass
-
-    def on_stop(self):
-        '''The :ref:`actor callback <actor-callbacks>` run once just before
- the actor stops running.'''
-        pass
-
-    def on_info(self, data):
-        '''An :ref:`actor callback <actor-callbacks>` executed when
- obtaining information about the actor. It can be used to add additional
- data to the *data* dictionary. Information about the actor is obtained
- via the :meth:`Actor.info` method which is also exposed
- as a remote function.
-
- :parameter data: dictionary of data with information about the actor.
- :rtype: a dictionary of pickable data.'''
-        return data
-
-    ############################################################################
     # STOPPING
     ############################################################################
     def stop(self, exc=None):
@@ -338,7 +313,6 @@ properly this actor will go out of scope.'''
         log_failure(exc)
         if self.state <= ACTOR_STATES.RUN:
             # The actor has not started the stopping process. Starts it now.
-            events.fire('stop', self)
             self.exit_code = 1 if exc else 0
             self.state = ACTOR_STATES.STOPPING
             # if CPU bound and the requestloop is still running, stop it
@@ -351,16 +325,8 @@ properly this actor will go out of scope.'''
             # The actor has finished the stopping process.
             #Remove itself from the actors dictionary
             remove_actor(self)
-            try:
-                events.fire('exit', self)
-                self.fire('on_stop', self)
-                self.on_stop()
-            finally:
-                self.on_exit.callback(self)
-        return self.on_exit
-    
-    def on_stop(self):
-        self.logger.debug('%s exited', self)
+            self.fire_event('stop')
+        return self.event('stop')
         
     def _stop(self):
         '''Exit from the :class:`Actor` domain.'''
@@ -386,8 +352,7 @@ properly this actor will go out of scope.'''
         
     @stop_on_error
     def _got_notified(self, result):
-        self.on_start()
-        self.fire('on_start', self)
+        self.fire_event('start')
         self.logger.info('%s started', self)
         
     @stop_on_error
@@ -427,7 +392,8 @@ status and performance.'''
         data = {'actor': actor, 'events': events}
         if isp:
             data['system'] = system.system_info(self.pid)
-        return self.on_info(data)
+        self.fire_event('info', (self, data))
+        return data
 
     def _setup_ioloop(self):
         # Internal function called at the start of the actor. It builds the
