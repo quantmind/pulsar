@@ -15,6 +15,7 @@ from .access import get_request_loop
 
 
 __all__ = ['Deferred',
+           'EventHandler',
            'MultiDeferred',
            'DeferredGenerator',
            'Failure',
@@ -448,6 +449,28 @@ directly the :attr:`result` attribute.'''
             self.result.append(e)
 
 
+class EventHandler(object):
+    '''A Mixin for signaling one time events.'''
+    EVENTS = ()
+    
+    def __new__(cls, *args, **kwargs):
+        o = super(EventHandler, cls).__new__(cls)
+        o._events = dict(((event, Deferred()) for event in cls.EVENTS))
+        return o
+        
+    def event_handler(self, name):
+        return self._events[name]
+    
+    def bind_event(self, event, callback):
+        '''Register an event hook'''
+        self._events[event].add_callback(callback)
+        
+    def fire_event(self, event, event_data):
+        """Dispatches an event dictionary on a given piece of data."""
+        if event in self._events:
+            log_failure(self._events[event].callback(event_data))
+                    
+                    
 class DeferredGenerator(Deferred):
     '''A :class:`Deferred` for a generator over, possibly, deferred objects.
 The callback will occur once the generator has stopped

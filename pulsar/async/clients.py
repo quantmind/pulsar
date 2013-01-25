@@ -58,7 +58,6 @@ class ClientProtocolConsumer(ProtocolConsumer):
         connection.set_response(self)
         self.request = request
         self.consumer = consumer or self.consumer
-        self.when_ready = Deferred()
         
     def begin(self):
         '''Connect, send data and wait for results.'''
@@ -99,7 +98,7 @@ class ClientConnection(Connection):
         if response is self._current_consumer:
             result = self if result is NOTHING else result
             self._producer.fire('response', self._current_consumer)
-            self._current_consumer.when_ready.callback(result)
+            self._current_consumer.on_finished.callback(result)
             self._current_consumer = None
             response._connection = None
         else:
@@ -159,14 +158,11 @@ protocols. It maintains a live set of connections.
             self._concurrent_connections.add(connection)
         if connection is None:
             # build protocol and build the new connection
-            protocol = self.build_protocol(client)
+            protocol = client.build_protocol(self._address, self._timeout)
             connection = self.new_connection(protocol, client.consumer_factory,
                                              client)
         return connection
     
-    def build_protocol(self, client):
-        return create_connection(self._address, timeout=self._timeout)
-
 
 class Client(ClientEventHandler):
     '''A client for a remote server which handles one or more
@@ -251,5 +247,5 @@ in :attr:`request_parameters` tuple.'''
     def close(self):
         self.close_connections()
         
-    def fire(self, event, *args):
-        pass
+    def build_protocol(self, address, timeout):
+        return create_connection(address, timeout)

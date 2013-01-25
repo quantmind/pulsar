@@ -2,6 +2,7 @@ import platform
 import json
 
 import pulsar
+from pulsar import create_connection
 from pulsar.utils.pep import native_str
 from pulsar.utils.structures import mapping_iterator
 from pulsar.utils.httpurl import urlparse, urljoin, DEFAULT_CHARSET,\
@@ -24,13 +25,14 @@ class HttpRequest(pulsar.Request):
     _tunnel_host = None
     _has_proxy = False
     def __init__(self, client, url, method, data=None, files=None,
-                 charset=None, encode_multipart=True, multipart_boundary=None,
-                 timeout=None, hooks=None, history=None, source_address=None,
-                 allow_redirects=False, max_redirects=10, decompress=True,
-                 version=None, **ignored):
+                  charset=None, encode_multipart=True, multipart_boundary=None,
+                  timeout=None, hooks=None, history=None, source_address=None,
+                  allow_redirects=False, max_redirects=10, decompress=True,
+                  version=None, **ignored):
         self.client = client
         self.type, self.host, self.path, self.params,\
         self.query, self.fragment = urlparse(url)
+        self._set_hostport(*host_and_port(self.host))
         client.set_proxy(self)
         self.full_url = self._get_full_url()
         address = (self.type, self.host, self.port)
@@ -48,9 +50,7 @@ class HttpRequest(pulsar.Request):
         self.data = data if data is not None else {}
         self.files = files
         self.source_address = source_address
-        self._set_hostport(*host_and_port(self.host))
         self.parser = self.parser_class(kind=1, decompress=self.decompress)
-        self.fire('pre_request', self)
         
     def set_proxy(self, host, type):
         if self.type == 'https' and not self._tunnel_host:
@@ -461,3 +461,7 @@ the :class:`HttpRequest` constructor.
             if not any(map(hostonly.endswith, no_proxy)):
                 p = urlparse(self.proxy_info[request.type])
                 request.set_proxy(p.netloc, p.scheme)
+                
+    def build_protocol(self, address, timeout):
+        type, address = address[0], address[1:] 
+        return create_connection(address, timeout)

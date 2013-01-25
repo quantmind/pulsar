@@ -43,6 +43,7 @@ class ServerConnection(Connection):
     def finished(self, response, result=NOTHING):
         if response is self._current_consumer:
             self._producer.fire('post_request', self._current_consumer)
+            self._current_consumer.on_finished.callback(result)
             self._current_consumer = None
         else:
             raise RuntimeError()

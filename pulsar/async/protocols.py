@@ -1,12 +1,13 @@
 from inspect import isgenerator
 
-from .defer import Deferred, log_failure
+from .defer import EventHandler, log_failure
 from .access import NOTHING
+
 
 __all__ = ['Protocol', 'ProtocolConsumer', 'Connection']
 
 
-class Protocol(object):
+class Protocol(EventHandler):
     '''Pulsar :class:`Protocol` conforming with pep-3156_.
 It can be used for both client and server sockets.
 
@@ -24,31 +25,20 @@ It can be used for both client and server sockets.
     The :class:`Transport` for this :class:`Protocol`. This is obtained once
     the :meth:`connection_made` is invoked.
     
-.. attribute:: consumer_factory
+.. attribute:: consumer
 
-    Callable or a :class:`ProtocolConsumer` which produces
-    :class:`ProtocolConsumer` which handle the receiving, decoding and
-    sending of data.
-
-.. attribute:: on_connection
-
-    a :class:`Deferred` called once the :attr:`transport` is connected.
-        
-.. attribute:: on_connection_lost
-
-    a :class:`Deferred` called once the :attr:`transport` loses the connection
-    with the endpoint.
-    
-**METHODS**
+    Callable consumer of data received.
 '''
+    EVENTS = ('on_start', 'on_finished')
+    '''It has two events: `on_start` fired once the :attr:`transport` is
+connected and `on_finished` fired once the :attr:`transport` loses the
+connection with the endpoint.'''
     _transport = None
     consumer_factory = None
     
     def __init__(self, address):
         self._address = address
         self.consumer = None
-        self.on_connection = Deferred()
-        self.on_connection_lost = Deferred()
     
     def __repr__(self):
         return str(self._address)
@@ -88,7 +78,7 @@ To send data, call its :meth:`Transport.write` or
 To receive data, wait for :meth:`data_received` calls.
 When the connection is closed, :meth:`connection_lost` is called."""
         self._transport = transport
-        log_failure(self.on_connection.callback(self))
+        self.fire_event('on_start', self)
 
     def data_received(self, data):
         """Called by the :attr:`transport` when data is received.
@@ -107,18 +97,8 @@ By default it feeds the *data*, a bytes object, into the
         meaning a regular EOF is received or the connection was
         aborted or closed).
         """
-        if not self.on_connection_lost.called:
-            self.on_connection_lost.callback(exc)
-        
-    ############################################################################
-    ###    PULSAR METHODS
-    def set_response(self, response):
-        '''Set a new response instance on this protocol. If a response is
-already available it raises an exception.'''
-        assert self._current_consumer is None, "protocol already in response"
-        self._current_consumer = response
-        if self._transport is not None:
-            self._current_consumer.begin()
+        if not self.event_handler('on_finished').called:
+            self.fire_event('on_finished', exc)
             
     ############################################################################
     ###    TRANSPORT METHODS SHORTCUT
@@ -131,7 +111,7 @@ already available it raises an exception.'''
             self._transport.abort()
     
 
-class ProtocolConsumer(object):
+class ProtocolConsumer(EventHandler):
     '''The :class:`Protocol` consumer is one most important classes
 in :ref:`pulsar framework <pulsar_framework>`. It is responsible for receiving
 incoming data from a the :meth:`Protocol.data_received` method, decoding,
@@ -149,7 +129,14 @@ the :attr:`transport` attribute.
 .. attribute:: transport
 
     The :class:`Transport` of this consumer
+    
+.. attribute:: on_finished
+
+    A :class:`Deferred` called once the :class:`ProtocolConsumer` has
+    finished consuming the :attr:`protocol`. It is called by the
+    :attr:`connection` before disposing of this consumer.
 '''
+    EVENTS = ('on_start', 'on_finished')
     def __init__(self, connection):
         self._connection = connection
             
@@ -201,7 +188,7 @@ By default it calls the :meth:`Connection.finished` method of the
         self.transport.writelines(lines)
         
         
-class Connection:
+class Connection(object):
     '''A client or server connection. It contains the :class:`Protocol`, the
 transport producer (:class:`Server` or :class:`Client`), a session
 number and a factory of :class:`ProtocolConsumer`.
