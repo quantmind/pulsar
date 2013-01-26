@@ -12,7 +12,7 @@ import pulsar
 from pulsar import maybe_async, is_async, is_failure, log_failure, NOT_DONE
 from pulsar.utils.httpurl import Headers, SimpleCookie, responses,\
                                  has_empty_content, string_type, ispy3k,\
-                                 to_bytes, REDIRECT_CODES
+                                 to_bytes, REDIRECT_CODES, iteritems
 
 if ispy3k:  #thanks to @chrismcdonoug
     from urllib.parse import unquote_to_bytes
@@ -353,6 +353,17 @@ def wsgi_error_msg(response, msg):
     else:
         return msg
     
+    
+class dump_environ(object):
+    
+    def __init__(self, environ):
+        self.environ = environ
+        
+    def __str__(self):
+        env = iteritems(self.environ)
+        return '\n%s\n' % '\n'.join(('%s = %s' % (k, v) for k, v in env))
+        
+        
 def handle_wsgi_error(environ, trace=None, content_type=None,
                       encoding=None):
     '''The default handler for errors while serving an Http requests.
@@ -375,12 +386,13 @@ def handle_wsgi_error(environ, trace=None, content_type=None,
     response.status_code = getattr(error, 'status', 500)
     response.headers.update(getattr(error, 'headers', None) or ())
     path = ' @ path "%s"' % environ.get('PATH_INFO','/')
+    e = dump_environ(environ)
     if response.status_code == 500:
-        LOGGER.critical('Unhandled exception during WSGI response %s',
-                        path, exc_info=trace)
+        LOGGER.critical('Unhandled exception during WSGI response %s.%s',
+                        path, e, exc_info=trace)
     else:
-        LOGGER.info('WSGI %s status code %s',
-                    response.status_code, path, exc_info=trace)
+        LOGGER.info('WSGI %s status code %s.%s',
+                    response.status_code, path, e, exc_info=trace)
     if has_empty_content(response.status_code) or\
        response.status_code in REDIRECT_CODES:
         content = ()
