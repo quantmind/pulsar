@@ -192,9 +192,10 @@ in :attr:`request_parameters` tuple.'''
     
     def create_connection(self, address, timeout=0):
         '''Create a new connection'''
-        transport = create_transport(address=address, timeout=timeout)
-        transport.connect()
-        connection = self.connection_factory(address, self)
+        protocol = self.connection_factory(address)
+        transport = create_transport(protocol, address=address,
+                                     timeout=timeout)
+        return transport.connect()
         
     def close_connections(self):
         for p in self.connection_pools.values():

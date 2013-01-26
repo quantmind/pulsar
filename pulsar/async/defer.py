@@ -490,6 +490,18 @@ a callable which accept one argument.'''
         
     def all_events(self):
         return chain(self.ONE_TIME_EVENTS, self.MANY_TIMES_EVENTS)
+    
+    def copy_many_times_events(self, other, *names):
+        many = other.MANY_TIMES_EVENTS
+        names = names or many
+        for name in names:
+            if name in many:
+                if name in self.MANY_TIMES_EVENTS:
+                    self.MANY_TIMES_EVENTS[name].extend(many[name])
+                elif name in self.ONE_TIME_EVENTS:
+                    d = self.ONE_TIME_EVENTS[name]
+                    for callback in many[name]:
+                        d.add_callback(callback)
             
                     
 class DeferredGenerator(Deferred):

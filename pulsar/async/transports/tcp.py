@@ -1,5 +1,4 @@
 '''TCP protocol clients and servers'''
-import logging
 import socket
 
 from pulsar.utils.sockets import *
@@ -7,7 +6,7 @@ from pulsar.utils.pep import range
 from pulsar.utils.structures import merge_prefix
 
 from .servers import Server
-from .transport import SocketTransport
+from .transport import SocketTransport, LOGGER
 
 __all__ = ['TCP']
 
@@ -15,13 +14,10 @@ TRY_WRITE_AGAIN = (EWOULDBLOCK, ENOBUFS, EINPROGRESS)
 TRY_READ_AGAIN = (EWOULDBLOCK, EAGAIN)
 NUMBER_ACCEPTS = 30 if platform.type == "posix" else 1
 
-LOGGER = logging.getLogger('pulsar.tcp')
 
 class TCP(SocketTransport):
     '''Transport for the TCP protocol.'''
     TYPE = socket.SOCK_STREAM
-    MANY_TIMES_EVENTS = SocketTransport.MANY_TIMES_EVENTS +\
-                                         ('connection_received',)
     
     def _protocol_connect(self, sock):
         try:
@@ -83,11 +79,7 @@ class TCP(SocketTransport):
                         LOGGER.info('Could not accept new connection')
                         break
                     raise
-                self.fire_event('connection_received', (sock, address))
+                self._protocol.data_received(sock, address)
         except Exception:
             LOGGER.exception('Could not accept new connection')
         
-    def add_listener(self, callback):
-        '''Called by :class:`Server`'''
-        self.bind_event('connection_received', callback)
-        self.event_loop.add_reader(self.fileno(), self._protocol_accept)

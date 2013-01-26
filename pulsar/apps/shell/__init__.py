@@ -39,7 +39,6 @@ import code
 from time import time
 
 import pulsar
-from pulsar.apps import tasks
 from pulsar.utils.pep import ispy3k
 
 
@@ -100,7 +99,7 @@ class InteractiveConsole(code.InteractiveConsole):  #pragma    nocover
                 self._more = self.push(line)
 
 
-class PulsarShell(tasks.CPUboundServer):
+class PulsarShell(pulsar.CPUboundApplication):
     can_kill_arbiter = True
     _app_name = 'pulsarshell'
     console_class = InteractiveConsole
@@ -114,7 +113,9 @@ class PulsarShell(tasks.CPUboundServer):
     def console(self):
         return self.local.console
     
-    def handler(self):
+    def monitor_start(self, monitor):
+        monitor.cfg.set('workers', 1)
+        monitor.cfg.set('concurrency', 'thread')
         imported_objects = {'pshell': self,
                             'pulsar': pulsar,
                             'get_actor': pulsar.get_actor,
@@ -131,11 +132,6 @@ class PulsarShell(tasks.CPUboundServer):
             readline.parse_and_bind("tab:complete")
         self.local.console = self.console_class(imported_objects)
         self.console.setup()
-        return self
-
-    def monitor_start(self, monitor):
-        monitor.cfg.set('workers', 1)
-        monitor.cfg.set('concurrency', 'thread')
         
     def worker_task(self, worker):  #pragma    nocover
         try:

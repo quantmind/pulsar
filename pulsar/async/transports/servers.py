@@ -52,41 +52,44 @@ on a socket. It is a producer of :class:`Transport` for server protocols.
 
     A timeout in seconds for idle connections
 '''
-    MANY_TIMES_EVENTS = ('pre_request', 'post_request')
+    ONE_TIME_EVENTS = ('start', 'finish')
+    MANY_TIMES_EVENTS = ('connection_made', 'pre_request','post_request',
+                         'connection_lost')
     consumer_factory = None
     
-    def __init__(self, transport, consumer_factory=None, timeout=None, **kw):
+    def __init__(self, consumer_factory=None, timeout=None, **kw):
         super(Server, self).__init__(**kw)
-        TransportProxy.__init__(self, transport)
         self._timeout = timeout
         if consumer_factory:
             self.consumer_factory = consumer_factory
-        if self.transport.TYPE == socket.SOCK_DGRAM:
-            self.transport.add_listener(self.datagram_received)
-        else:
-            self.transport.add_listener(self.connection_received)
-        # when transport starts closing, close connections
-        transport.bind_event('closing', lambda s: self.close_connections())
-        LOGGER.debug('Registered server listening on %s', self)
         
-    def connection_received(self, sock_addr):
+    def data_received(self, sock, address):
         '''Create a new server :class:`Protocol` ready to serve its client.'''
-        # Build the protocol
-        sock, addr = sock_addr
+        # Build the connection
         sock = wrap_socket(self.transport.TYPE, sock)
-        transport = create_transport(sock=sock, event_loop=self.event_loop,
-                                     timeout=self.timeout)
-        #Create the connection
-        connection = self.new_connection(addr, self.consumer_factory)
-        connection.connection_made(transport)
-        return connection
+        protocol = self.new_connection(address, self.consumer_factory)
+        transport = create_transport(protocol, sock=sock,
+                                     event_loop=self.event_loop)
+        protocol.copy_many_times_events(self)
+        protocol.connection_made(transport)
+        return protocol
         
-    def datagram_received(self, data_addr):
+    def datagram_received(self, data, address):
         raise NotImplementedError
     
     @property
     def timeout(self):
         return self._timeout
+    
+    def connection_made(self, transport):
+        self._transport = transport
+        self.event_loop.add_reader(self.fileno(), transport._protocol_accept)
+        LOGGER.debug('Registered server listening on %s', self)
+        self.fire_event('start')
+        
+    def connection_lost(self, exc):
+        self.close_connections()
+        self.fire_event('finish')
         
     @classmethod
     def create(cls, eventloop=None, sock=None, address=None, backlog=1024,
@@ -96,6 +99,7 @@ on a socket. It is a producer of :class:`Transport` for server protocols.
                              backlog=backlog)
         transport_type = get_transport_type(sock.TYPE).transport
         eventloop = loop = eventloop or get_event_loop()
+        server = cls(**kw)
         transport = None
         # The eventloop is cpubound
         if getattr(eventloop, 'cpubound', False):
@@ -105,16 +109,16 @@ on a socket. It is a producer of :class:`Transport` for server protocols.
                 # Create one and set it as the event loop
                 loop = new_event_loop()
                 set_event_loop(loop)
-                transport = transport_type(loop, sock)
+                transport = transport_type(loop, sock, server)
                 # Shutdown eventloop when server closes
                 close_event_loop = True
                 # start the server on a different thread
                 eventloop.call_soon_threadsafe(_start_on_thread, name, server)
-        transport = transport or transport_type(loop, sock)
-        server = cls(transport, **kw)
+        transport = transport or transport_type(loop, sock, server)
+        server.connection_made(transport)
         if close_event_loop:
-            server.transport.bind_event('connection_lost',
-                                        lambda exc: server.event_loop.stop())
+            server.bind_event('finish',
+                                lambda exc: server.event_loop.stop())
         return server
 
 create_server = Server.create

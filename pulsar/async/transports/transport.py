@@ -7,7 +7,7 @@ from collections import deque
 from pulsar.utils import sockets
 from pulsar.utils.sockets import WRITE_BUFFER_MAX_SIZE, get_transport_type,\
                                  create_socket
-from pulsar.async.defer import EventHandler
+from pulsar.async.defer import Deferred
 
 LOGGER = logging.getLogger('pulsar.transport')
 
@@ -15,8 +15,8 @@ LOGGER = logging.getLogger('pulsar.transport')
 __all__ = ['Transport', 'SocketTransport', 'TransportProxy', 'create_transport']
 
 
-def create_transport(sock=None, address=None, event_loop=None, 
-                     timeout=None, source_address=None):
+def create_transport(protocol, sock=None, address=None, event_loop=None, 
+                       source_address=None, **kw):
     '''Create a new connection with a remote server. It returns
 a :class:`Transport` for the connection.'''
     sock = create_socket(sock=sock, address=address, bindto=False)
@@ -25,7 +25,7 @@ a :class:`Transport` for the connection.'''
         sock.bind(source_address)
     transport_factory = get_transport_type(sock.TYPE).transport
     event_loop = event_loop or get_event_loop()
-    return transport_factory(event_loop, sock, timeout=timeout)
+    return transport_factory(event_loop, sock, protocol, **kw)
 
 
 class TransportType(sockets.TransportType):
@@ -149,8 +149,22 @@ passed to the :meth:`Protocol.data_received` method."""
         except StopIteration:
             pass
     
+
+class Connector(Deferred):
     
-class SocketTransport(EventHandler, Transport):
+    def __init__(self, transport):
+        super(Connector, self).__init__(self)
+        self._transport = transport
+        self.add_callback(self._connection_made, self._connection_failure)
+        
+    def _connection_made(self, result):
+        self._transport._protocol.connection_made(self._transport)
+        
+    def _connection_failure(self, failure):
+        self._transport._protocol.connection_lost(failure)
+        
+    
+class SocketTransport(Transport):
     '''A class:`Transport` based on sockets. It handles events implemented by
 the :class:`EventHandler`.
     
@@ -177,21 +191,14 @@ the :class:`EventHandler`.
 
 * **data_received** fired when new data has arrived
 '''
-    ONE_TIME_EVENTS = ('connection_made', 'closing', 'connection_lost', 'timeout')
-    MANY_TIMES_EVENTS = ('data_received', 'pause', 'resume')
-    
-    default_timeout = 30
-    def __init__(self, event_loop, sock, max_buffer_size=None,
-                  read_chunk_size=None, timeout=None):
-        super(SocketTransport, self).__init__()
-        timeout = timeout if timeout is not None else self.default_timeout
-        self._timeout = max(0, timeout)
+    def __init__(self, event_loop, sock, protocol, max_buffer_size=None,
+                  read_chunk_size=None):
+        self._protocol = protocol
         self._sock = sock
         self._event_loop = event_loop
         self._closing = False
         self._paused = False
-        self._read_timeout = None
-        self._connecting = False
+        self._connector = None
         self._read_chunk_size = read_chunk_size or io.DEFAULT_BUFFER_SIZE
         self._read_buffer = []
         self._write_buffer = deque()
@@ -207,7 +214,7 @@ the :class:`EventHandler`.
     
     @property
     def connecting(self):
-        return self._connecting
+        return bool(self._connector)
     
     @property
     def writing(self):
@@ -252,33 +259,22 @@ the :class:`EventHandler`.
         if not self.connecting and not writing:
             self._ready_write()
     
-    def writelines(self, list_of_data):
-        if isgenerator(list_of_data):
-            self._write_lines_async(list_of_data)
-        else:
-            for data in list_of_data:
-                self.write(data)
-    
     def pause(self):
         if not self._paused:
             self._paused = True
-            self.fire_event('pause', self)
 
     def resume(self):
         if self._paused:
             self._paused = False
-            self.fire_event('resume', self)
-            if not self._paused:
-                buffer = self._read_buffer
-                self._read_buffer = []
-                for data in buffer:
-                    self._data_received(chunk)
+            buffer = self._read_buffer
+            self._read_buffer = []
+            for data in buffer:
+                self._data_received(chunk)
     
     def close(self, async=True):
         if not self.closing:
             self._closing = True
-            self.fire_event('closing', self)
-            self.close_read()
+            self._event_loop.remove_reader(self._sock.fileno())
             if not async:
                 self._write_buffer = deque()
                 self._shutdown()
@@ -293,57 +289,34 @@ the :class:`EventHandler`.
     def connect(self):
         '''Connect this :class:`Transport` to a remote server and
 returns ``self``.'''
-        if not self.connecting:
-            self._connecting = True
-            try:
-                if self._protocol_connect():
-                    self._connecting = False
-                    self.fire_event('connection_made', self)
-            except Exception as e:
-                #self._protocol.connection_made(self)
-                self._protocol.connection_lost(e)
-                raise
-        return self
-    
-    def add_read_write(self):
-        '''Called by :class:`Connection`'''
-        self._event_loop.add_writer(self.fileno(), self._ready_write)
-        self.add_reader()
+        connector = Connector(self)
+        try:
+            if self._protocol_connect():
+                connector.callback(self)
+        except Exception as e:
+            connector.callback(e)
+        return connector
         
-    def add_listener(self, callback):
+    def add_listener(self):
         '''Called by :class:`Server`'''
-        raise NotImplementedError
+        self._event_loop.add_reader(self.fileno(), self._protocol_accept)
         
     def add_reader(self):
+        '''Add reader to the event loop'''
         self._event_loop.add_reader(self.fileno(), self._ready_read)
-        self.add_read_timeout()
+        
+    def add_writer(self):
+        '''Add writer to the event loop'''
+        self._event_loop.add_writer(self.fileno(), self._ready_write)
     
-    def close_read(self):
-        self._event_loop.remove_reader(self._sock.fileno())
-        if self._read_timeout:
-            self._read_timeout.cancel()
-            self._read_timeout = None
-    
+    ############################################################################
+    ###    INTERNALS
     def _data_received(self, data):
         if self._paused:
             self._read_buffer.append(data)
         else:
-            self.fire_event('data_received', data)
-            
-    ############################################################################
-    ###    INTERNALS
-    def _write_lines_async(self, lines):
-        try:
-            result = next(lines)
-            if result == b'':
-                # stop writing and resume at next loop
-                self._event_loop.call_soon(self._write_lines_async, lines)
-            else:
-                self.write(result)
-                self._write_lines_async(lines)
-        except StopIteration:
-            pass
-        
+            self._protocol.data_received(data)
+                 
     def _check_closed(self):
         if self.closed:
             raise IOError("Transport is closed")
@@ -355,33 +328,24 @@ returns ``self``.'''
             self._event_loop.remove_writer(self.fileno())
             self._sock.close()
             self._sock = None
-            self.fire_event('connection_lost', exc)
+            self._protocol.connection_lost(exc)
         
     def _ready_read(self):
         # Read from the socket until we get EWOULDBLOCK or equivalent.
-        # SSL sockets do some internal buffering, and if the data is
-        # sitting in the SSL object's buffer select() and friends
-        # can't see it; the only way to find out if it's there is to
-        # try to read it.
         chunk = True
         while chunk:
             try:
                 chunk = self._protocol_read()
                 if chunk:
-                    if self._read_timeout:
-                        self._read_timeout.cancel()
-                        self._read_timeout = None
                     self._data_received(chunk)
             except Exception:
                 self.abort()
                 raise
-        self.add_read_timeout()
             
     def _ready_write(self):
         # keep count how many bytes we write
         if self.connecting:
-            self._connecting = False
-            self.fire_event('connection_made', self)
+            self._connector.callback(self)
         try:
             self._protocol_write()
         except socket.error as e:
@@ -395,15 +359,6 @@ returns ``self``.'''
         elif self._closing:
             # shutdown
             self._event_loop.call_soon(self._shutdown)
-                
-    def _timed_out(self):
-        self.fire_event('timeout', self._timeout)
-        self.close()
-        
-    def add_read_timeout(self):
-        if not self.closed and not self._read_timeout and self._timeout:
-            self._read_timeout = self._event_loop.call_later(self._timeout,
-                                                             self._timed_out)
     
     ############################################################################
     ##    PURE VIRTUALS
@@ -421,13 +376,15 @@ returns ``self``.'''
             
 
 class TransportProxy(object):
-    
-    def __init__(self, transport):
-        self._transport = transport
+    '''Provides :class:`Transport` like methods and attributes.'''
+    _transport = None
     
     def __repr__(self):
-        return self._transport.__repr__()
-    
+        if self._transport:
+            return self._transport.__repr__()
+        else:
+            return '<closed>'
+        
     def __str__(self):
         return self.__repr__()
     
@@ -437,29 +394,29 @@ class TransportProxy(object):
     
     @property
     def event_loop(self):
-        return self._transport.event_loop
+        if self._transport:
+            return self._transport.event_loop
     
     @property
     def sock(self):
-        return self._transport.sock
-    
-    @property
-    def address(self):
-        return self._transport.address
+        if self._transport:
+            return self._transport.sock
         
     @property
     def closing(self):
-        return self._transport.closing
+        return self._transport.closing if self._transport else True
     
     @property
     def closed(self):
-        return self._transport.closed
+        return self._transport.closed if self._transport else True
     
     def fileno(self):
-        return self._transport.fileno()
+        if self._transport:
+            return self._transport.fileno()
     
     def close(self, async=True):
-        self._transport.close(async)
+        if self._transport:
+            self._transport.close(async)
         
     def abort(self):
         self.close(async=False)

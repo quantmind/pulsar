@@ -216,7 +216,7 @@ Users access the arbiter (in the arbiter process domain) by the high level api::
     def _exit(self, res=None):
         if res:
             self.state = ACTOR_STATES.CLOSE
-            self.mailbox.close()
+            self.mailbox.abort()
         else:
             active = multi_async((self.close_monitors(), self.close_actors()),
                                  log_failure=True)

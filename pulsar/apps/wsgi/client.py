@@ -257,7 +257,7 @@ class HttpResponse(pulsar.ClientProtocolConsumer):
                                       history=history, **params)
 
 
-class HttpClient(pulsar.ClientPool):
+class HttpClient(pulsar.Client):
     '''A client for an HTTP/HTTPS server which handles a pool of synchronous
 or asynchronous connections.
 
@@ -310,9 +310,8 @@ or asynchronous connections.
             ('Accept-Encoding', 'compress'),
             ('Accept-Encoding', 'gzip')],
             kind='client')
-    request_parameters = pulsar.ClientPool.request_parameters +\
-                        ('encode_multipart', 'max_redirects', 'decompress',
-                         'allow_redirects', 'multipart_boundary', 'version')
+    request_parameters = ('encode_multipart', 'max_redirects', 'decompress',
+                          'allow_redirects', 'multipart_boundary', 'version')
     # Default hosts not affected by proxy settings. This can be overwritten
     # by specifying the "no" key in the proxy_info dictionary
     no_proxy = set(('localhost', urllibr.localhost(), platform.node()))

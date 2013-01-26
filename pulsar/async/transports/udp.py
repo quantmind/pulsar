@@ -4,16 +4,13 @@ import socket
 
 from pulsar.utils.sockets import *
  
-from .transport import SocketTransport
+from .transport import SocketTransport, LOGGER
 
 __all__ = ['UDP']
 
 
 TRY_READ_AGAIN = (EINTR, EWOULDBLOCK, EMSGSIZE, EINPROGRESS)
 ERROR_READ = (ECONNREFUSED, ECONNRESET, ENETRESET, ETIMEDOUT)
-
-
-LOGGER = logging.getLogger('pulsar.tcp')
 
 
 class UDP(SocketTransport):
@@ -24,8 +21,6 @@ transmission channels or data paths.'''
     TYPE = socket.SOCK_DGRAM
     max_packet_size = 8192
     max_throughput = 256 * 1024 # max bytes we read in one eventloop iteration
-    MANY_TIMES_EVENTS = SocketTransport.MANY_TIMES_EVENTS +\
-                                         ('datagram_received',)
     
     def _protocol_accept(self):
         try:
@@ -56,10 +51,6 @@ transmission channels or data paths.'''
                 raise
             else:
                 read += len(data)
-                self.fire_event('datagram_received', (data, addr))
+                self.datagram_received(data, addr)
     _protocol_accept = _protocol_read
-                
-    def add_listener(self, callback):
-        '''Called by :class:`Server`'''
-        self.bind_event('datagram_received', callback)
-        self.event_loop.add_reader(self.fileno(), self._protocol_accept)
+    
