@@ -16,13 +16,13 @@ from pulsar.utils.security import gen_unique_id
 
 from .access import get_actor, set_actor, PulsarThread
 from .defer import make_async, log_failure, Deferred
-from .transports import ProtocolConsumer, Client
+from .transports import ProtocolConsumer, Client, Request
 from .proxy import actorid, get_proxy, get_command, CommandError, ActorProxy
 
 
 LOGGER = logging.getLogger('pulsar.mailbox')
     
-Request = namedtuple('Request', 'actor caller connection')
+CommandRequest = namedtuple('CommandRequest', 'actor caller connection')
     
 class MonitorMailbox(object):
     '''A :class:`Mailbox` for a :class:`Monitor`. This is a proxy for the
@@ -48,7 +48,22 @@ arbiter mailbox.'''
     def close(self):
         pass
     
-        
+
+def create_request(command, sender, target, args, kwargs):
+    # Build the request and write
+    command = get_command(command)
+    data = {'command': command.__name__,
+            'sender': actorid(sender),
+            'target': actorid(target),
+            'args': args if args is not None else (),
+            'kwargs': kwargs if kwargs is not None else {}}
+    d = None
+    if command.ack:
+        d = Deferred()
+        data['ack'] = gen_unique_id()[:8]
+    return data, d
+
+
 class MailboxMixin(object):
     # A Mixin for both Server and Client protocol consumers
     def __new__(cls, *args, **kwargs):
@@ -64,20 +79,6 @@ class MailboxMixin(object):
             message = pickle.loads(msg.body)
             log_failure(self.responde(message))
             msg = self._parser.decode()
-    
-    def create_request(self, command, sender, target, args, kwargs):
-        # Build the request and write
-        command = get_command(command)
-        data = {'command': command.__name__,
-                'sender': actorid(sender),
-                'target': actorid(target),
-                'args': args if args is not None else (),
-                'kwargs': kwargs if kwargs is not None else {}}
-        d = None
-        if command.ack:
-            d = Deferred()
-            data['ack'] = gen_unique_id()[:8]
-        return data, d
     
     def callback(self, ack, result):
         if not ack:
@@ -104,7 +105,8 @@ class MailboxMixin(object):
                 actor = target
             caller = actor.get_actor(message['sender'])
             command = get_command(command)
-            req = Request(target, get_proxy(caller, safe=True), self.connection)
+            req = CommandRequest(target, get_proxy(caller, safe=True),
+                                 self.connection)
             result = command(req, message['args'], message['kwargs'])
         except Exception:
             result = sys.exc_info()
@@ -135,7 +137,7 @@ class MailboxMixin(object):
 class MailboxServerConsumer(MailboxMixin, ProtocolConsumer):
  
     def request(self, command, sender, target, args, kwargs):
-        data, d = self.create_request(command, sender, target, args, kwargs)
+        data, d = create_request(command, sender, target, args, kwargs)
         self.write(data, d)
         return d
         
@@ -155,9 +157,10 @@ class MailboxClientConsumer(MailboxMixin, ProtocolConsumer):
 class MailboxClient(Client):
     # mailbox for actors client
     consumer_factory = MailboxClientConsumer
+    max_connections = 1
      
     def __init__(self, address, actor):
-        super(MailboxClient, self).__init__(max_connections=1)
+        super(MailboxClient, self).__init__()
         self.address = address
         self.consumer = None
         self.name = 'Mailbox for %s' % actor
@@ -180,14 +183,11 @@ class MailboxClient(Client):
     def request(self, command, sender, target, args, kwargs):
         # Build the request and write
         if not self.consumer:
-            req = clients.Request(self.address, self.timeout)
+            req = Request(self.address, self.timeout)
             self.consumer = self.response(req)
         c = self.consumer
-        data, d = c.create_request(command, sender, target, args, kwargs)
-        if c.protocol.on_connection.called:
-            c.write(data, d)
-        else:
-            c.protocol.on_connection.add_callback(lambda r: c.write(data, d))
+        data, d = create_request(command, sender, target, args, kwargs)
+        c.write(data, d)
         return d
         
     def _start_on_thread(self):

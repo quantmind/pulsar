@@ -19,9 +19,9 @@ class TCP(SocketTransport):
     '''Transport for the TCP protocol.'''
     TYPE = socket.SOCK_STREAM
     
-    def _protocol_connect(self, sock):
+    def _protocol_connect(self):
         try:
-            sock.connect(self.address)
+            self.sock.connect(self.address)
         except socket.error as e:
             if e.args[0] in TRY_WRITE_AGAIN:
                 return False

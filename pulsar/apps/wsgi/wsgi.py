@@ -12,20 +12,14 @@ import pulsar
 from pulsar import maybe_async, is_async, is_failure, log_failure, NOT_DONE
 from pulsar.utils.httpurl import Headers, SimpleCookie, responses,\
                                  has_empty_content, string_type, ispy3k,\
-                                 to_bytes, REDIRECT_CODES
+                                 to_bytes, REDIRECT_CODES, iteritems
 
 from .middleware import is_streamed
 
-if ispy3k:  #thanks to @chrismcdonoug
-    from urllib.parse import unquote_to_bytes
-    unquote_to_bytes_wsgi = lambda bs: unquote_to_bytes(bs).decode('latin-1')
-else:   #pragma    nocover
-    from urlparse import unquote as unquote_to_bytes_wsgi
 
 __all__ = ['WsgiHandler',
            'WsgiResponse',
            'WsgiResponseGenerator',
-           'wsgi_iterator',
            'handle_wsgi_error',
            'wsgi_error_msg']
 
@@ -33,28 +27,14 @@ __all__ = ['WsgiHandler',
 LOGGER = logging.getLogger('pulsar.wsgi')
 
 
-def wsgi_iterator(gen, encoding=None):
-    encoding = encoding or 'utf-8'
+def wsgi_iterator(gen, encoding):
     for data in gen:
-        data = maybe_async(data)
-        while is_async(data):
-            yield b''
-            data = maybe_async(data)
-        if data is NOT_DONE:
-            yield b''
-        elif data is None:
-            continue
-        elif is_failure(data):
-            log_failure(data)
+        if isinstance(data, bytes):
+            yield data
         else:
-            if isinstance(data, bytes):
-                yield data
-            elif isinstance(data, string_type):
-                yield data.encode(encoding)
-            else:
-                for b in wsgi_iterator(data, encoding):
-                    yield b
-
+            yield data.encode(encoding)
+                    
+                    
 def cookie_date(epoch_seconds=None):
     """Formats the time to ensure compatibility with Netscape's cookie
     standard.
@@ -152,7 +132,7 @@ client.
                  start_response=None):
         super(WsgiResponse, self).__init__(environ, start_response)
         self.status_code = status or self.DEFAULT_STATUS_CODE
-        self.encoding = encoding
+        self.encoding = encoding or 'utf-8'
         self.cookies = SimpleCookie()
         self.headers = Headers(response_headers, kind='server')
         self.content = content
@@ -184,12 +164,12 @@ client.
         if not self._started:
             if content is None:
                 content = ()
-            elif ispy3k: #what a fucking pain
+            elif ispy3k: #what a pain
                 if isinstance(content, str):
-                    content = bytes(content, 'latin-1')
+                    content = bytes(content, self.encoding)
             else: #pragma    nocover
                 if isinstance(content, unicode):
-                    content = bytes(content, 'latin-1')
+                    content = bytes(content, self.encoding)
             if isinstance(content, bytes):
                 content = (content,)
             self._content = content
@@ -215,7 +195,7 @@ client.
                 except Exception:
                     LOGGER.error('Exception in response middleware',
                                  exc_info=True)
-        start_response(self.status, self.get_headers(), exc_info=exc_info)
+        start_response(self.status, self.get_headers(), exc_info)
         return self
     
     def start(self):
@@ -278,11 +258,14 @@ This is usually `True` if a generator is passed to the response object."""
         if has_empty_content(self.status_code, self.method):
             headers.pop('content-type', None)
             headers.pop('content-length', None)
-        elif not self.is_streamed:
-            cl = 0
-            for c in self.content:
-                cl += len(c)
-            headers['Content-Length'] = str(cl)
+        else:
+            if not self.is_streamed:
+                cl = 0
+                for c in self.content:
+                    cl += len(c)
+                headers['Content-Length'] = str(cl)
+            if not self.content_type:
+                headers['Content-Type'] = 'text/plain'
         for c in self.cookies.values():
             headers['Set-Cookie'] = c.OutputString()
         return list(headers)
@@ -348,8 +331,19 @@ def wsgi_error_msg(response, msg):
     else:
         return msg
     
+class dump_environ(object):
+    __slots__ = ('environ',)
+    
+    def __init__(self, environ):
+        self.environ = environ
+        
+    def __str__(self):
+        env = iteritems(self.environ)
+        return '\n%s\n' % '\n'.join(('%s = %s' % (k, v) for k, v in env))
+    
+    
 def handle_wsgi_error(environ, trace=None, content_type=None,
-                      encoding=None):
+                        encoding=None):
     '''The default handler for errors while serving an Http requests.
 
 :parameter environ: The WSGI environment.
@@ -359,23 +353,26 @@ def handle_wsgi_error(environ, trace=None, content_type=None,
 :parameter encoding: Optional charset.
 :return: a :class:`WsgiResponse`
 '''
-    content_type=content_type or environ.get('CONTENT_TYPE')
-    response = WsgiResponse(content_type=content_type,
-                            environ=environ,
-                            encoding=encoding)
+    content_type = content_type or environ.get('CONTENT_TYPE')
     if not trace:
         trace = sys.exc_info()
     error = trace[1]
+    if not content_type:
+        content_type = getattr(error, 'content_type', content_type)
+    response = WsgiResponse(content_type=content_type,
+                            environ=environ,
+                            encoding=encoding)
     content = None
     response.status_code = getattr(error, 'status', 500)
     response.headers.update(getattr(error, 'headers', None) or ())
     path = ' @ path "%s"' % environ.get('PATH_INFO','/')
+    e = dump_environ(environ)
     if response.status_code == 500:
-        LOGGER.critical('Unhandled exception during WSGI response %s',
-                        path, exc_info=trace)
+        LOGGER.critical('Unhandled exception during WSGI response %s.%s',
+                        path, e, exc_info=trace)
     else:
-        LOGGER.info('WSGI %s status code %s',
-                    response.status_code, path, exc_info=trace)
+        LOGGER.warn('WSGI %s status code %s.', response.status_code, path)
+        LOGGER.debug('%s', e, exc_info=trace)
     if has_empty_content(response.status_code) or\
        response.status_code in REDIRECT_CODES:
         content = ()
@@ -392,7 +389,7 @@ def handle_wsgi_error(environ, trace=None, content_type=None,
                 LOGGER.critical('Error while rendering error', exc_info=True)
                 content = None
     if content is None:
-        msg = error_messages.get(response.status_code) or response.response
+        msg = error_messages.get(response.status_code) or ''
         if response.content_type == 'text/html':
             content = textwrap.dedent("""\
             <!DOCTYPE html>

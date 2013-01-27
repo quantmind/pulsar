@@ -162,7 +162,7 @@ the following algorithm:
         headers = self.request_headers
         if headers is not None and headers.get('Expect') == '100-continue':
             if not self.parser.is_message_complete():
-                self.protocol.write(b'HTTP/1.1 100 Continue\r\n\r\n')
+                self.transport.write(b'HTTP/1.1 100 Continue\r\n\r\n')
     
     @property
     def status(self):
@@ -243,20 +243,25 @@ invocation of the application.
         '''The write function required by WSGI specification.'''
         head = self.send_headers(force=data)
         if head:
-            self.protocol.write(head)
+            self.transport.write(head)
         if data:
-            self.protocol.write(data)
+            self.transport.write(data)
 
     def generate(self, environ):
         exc_info = None
         keep_alive = self.keep_alive
-        # Inject upgrade_protocol into the environment
+        # Inject connection.upgrade into the environment
         # TODO: is this the best way to do it?
-        environ['upgrade_protocol'] = self.connection.upgrade
-        wsgi = lambda e, s, err: self.wsgi_callable(e,s)
+        environ['connection.upgrade'] = self.connection.upgrade
+        exc_info = None
+        wsgi_iterable = None
         while True:
             try:
-                for b in wsgi(environ, self.start_response, exc_info):
+                if exc_info is None:
+                    wsgi_iterable = self.wsgi_callable(environ,
+                                                       self.start_response)
+                    iterable = wsgi_iterable
+                for b in iterable:
                     head = self.send_headers(force=b)
                     if head is not None:
                         yield head
@@ -279,12 +284,13 @@ invocation of the application.
                     break
                 else:
                     exc_info = sys.exc_info()
-                    wsgi = handle_wsgi_error(environ, exc_info)
-                    if keep_alive and wsgi.status_code in REDIRECT_CODES:
-                        wsgi.headers['connection'] = 'keep-alive'
+                    response = handle_wsgi_error(environ, exc_info)
+                    if keep_alive and response.status_code in REDIRECT_CODES:
+                        response.headers['connection'] = 'keep-alive'
                     else:
                         keep_alive = False
-                        wsgi.headers['connection'] = 'close'
+                        response.headers['connection'] = 'close'
+                    iterable = response(environ, self.start_response, exc_info)
             else:
                 head = self.send_headers(force=True)
                 if head is not None:
@@ -294,8 +300,18 @@ invocation of the application.
                     yield chunk_encoding(b'')
                 break
         # close transport if required
+        # If the iterable returned by the application has a close() method,
+        # the server or gateway must call that method upon completion of the
+        # current request, whether the request was completed normally, or
+        # terminated early due to an application error during iteration or
+        # an early disconnect of the browser. (The close() method requirement
+        # is to support resource release by the application. This protocol is
+        # intended to complement PEP 342's generator support, and other common
+        # iterables with close() methods.)
+        if hasattr(wsgi_iterable, 'close'):
+            wsgi_iterable.close()
         if not keep_alive:
-            self.protocol.close()
+            self.connection.close()
         self.finished()
 
     def is_chunked(self):

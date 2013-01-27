@@ -5,6 +5,7 @@ from inspect import isgenerator
 from collections import deque
 
 from pulsar.utils import sockets
+from pulsar.utils.pep import get_event_loop
 from pulsar.utils.sockets import WRITE_BUFFER_MAX_SIZE, get_transport_type,\
                                  create_socket
 from pulsar.async.defer import Deferred
@@ -19,7 +20,7 @@ def create_transport(protocol, sock=None, address=None, event_loop=None,
                        source_address=None, **kw):
     '''Create a new connection with a remote server. It returns
 a :class:`Transport` for the connection.'''
-    sock = create_socket(sock=sock, address=address, bindto=False)
+    sock = create_socket(sock=sock, address=address)
     sock.settimeout(0)
     if source_address:
         sock.bind(source_address)
@@ -148,20 +149,6 @@ passed to the :meth:`Protocol.data_received` method."""
                 self._write_lines_async(lines)
         except StopIteration:
             pass
-    
-
-class Connector(Deferred):
-    
-    def __init__(self, transport):
-        super(Connector, self).__init__(self)
-        self._transport = transport
-        self.add_callback(self._connection_made, self._connection_failure)
-        
-    def _connection_made(self, result):
-        self._transport._protocol.connection_made(self._transport)
-        
-    def _connection_failure(self, failure):
-        self._transport._protocol.connection_lost(failure)
         
     
 class SocketTransport(Transport):
@@ -192,7 +179,7 @@ the :class:`EventHandler`.
 * **data_received** fired when new data has arrived
 '''
     def __init__(self, event_loop, sock, protocol, max_buffer_size=None,
-                  read_chunk_size=None):
+                  read_chunk_size=None, as_server=False):
         self._protocol = protocol
         self._sock = sock
         self._event_loop = event_loop
@@ -202,6 +189,11 @@ the :class:`EventHandler`.
         self._read_chunk_size = read_chunk_size or io.DEFAULT_BUFFER_SIZE
         self._read_buffer = []
         self._write_buffer = deque()
+        if as_server:
+            self.add_listener()
+        else:
+            self.add_writer()
+            self.add_reader()
     
     def __repr__(self):
         if self._sock:
@@ -214,7 +206,7 @@ the :class:`EventHandler`.
     
     @property
     def connecting(self):
-        return bool(self._connector)
+        return self._connector is not None
     
     @property
     def writing(self):
@@ -292,9 +284,11 @@ returns ``self``.'''
         connector = Connector(self)
         try:
             if self._protocol_connect():
-                connector.callback(self)
+                return connector.callback(True)
         except Exception as e:
-            connector.callback(e)
+            return connector.callback(e)
+        # waiting for a callback
+        self._connector = connector
         return connector
         
     def add_listener(self):
@@ -420,3 +414,21 @@ class TransportProxy(object):
         
     def abort(self):
         self.close(async=False)
+        
+        
+class Connector(Deferred, TransportProxy):
+    
+    def __init__(self, transport):
+        super(Connector, self).__init__('%s connector' % transport)
+        self._transport = transport
+        self.add_callback(self._connection_made, self._connection_failure)
+        
+    def _connection_made(self, result):
+        self._transport._protocol.connection_made(self._transport)
+        return self._transport._protocol
+        
+    def _connection_failure(self, failure):
+        self._transport._protocol.connection_lost(failure)
+        
+    def set_consumer(self, consumer):
+        self.add_callback(lambda c: c.set_consumer(consumer))

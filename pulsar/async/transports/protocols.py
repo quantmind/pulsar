@@ -53,15 +53,22 @@ be :meth:`Producer.data_received`.
 
     The :class:`Transport` of this consumer
     
+.. attribute:: request
+
+    Optional :class:`Request` instance (used for clients).
+    
 .. attribute:: on_finished
 
     A :class:`Deferred` called once the :class:`ProtocolConsumer` has
     finished consuming the :attr:`protocol`. It is called by the
     :attr:`connection` before disposing of this consumer.
 '''
-    def __init__(self, connection):
+    def __init__(self, connection, request=None, consumer=None):
         super(ProtocolConsumer, self).__init__()
         self._connection = connection
+        self._request = request
+        if consumer:
+            self.bind_event('data_received', consumer)
             
     @property
     def connection(self):
@@ -91,6 +98,7 @@ be :meth:`Producer.data_received`.
         '''Call this method when done with this :class:`ProtocolConsumer`.
 By default it calls the :meth:`Connection.finished` method of the
 :attr:`connection` attribute.'''
+        self.fire_event('data_received', b'')
         return self._connection.finished(self, result)
     
     ############################################################################
@@ -185,6 +193,7 @@ connected until :meth:`Protocol.connection_made` is called.
         '''Set a new :class:`ProtocolConsumer` for this :class:`Connection`.'''
         assert self._current_consumer is None, 'Consumer is not None'
         self._current_consumer = consumer
+        consumer._connection = self
         consumer.fire_event('start')
         self._processed += 1
     
@@ -193,9 +202,6 @@ connected until :meth:`Protocol.connection_made` is called.
         self._transport = transport
         # let everyone know we have a connection with endpoint
         self.fire_event('connection_made')
-        #TODO, this is specific to the Transport implementation
-        transport.add_writer()
-        transport.add_reader()
         self._add_idle_timeout()
         
     def data_received(self, data):
@@ -214,6 +220,7 @@ connected until :meth:`Protocol.connection_made` is called.
         self._add_idle_timeout()
     
     def connection_lost(self, exc):
+        self._cancel_timeout()
         if self._current_consumer:
             self._current_consumer.connection_lost(exc)
         self.fire_event('connection_lost')
@@ -277,9 +284,10 @@ The main method in this class is :meth:`new_connection` where a new
     means no limit.
 '''
     connection_factory = Connection
-    def __init__(self, max_connections=0, connection_factory=None):
+    def __init__(self, max_connections=0, timeout=0, connection_factory=None):
         super(Producer, self).__init__()
         self._received = 0
+        self._timeout = timeout
         self._max_connections = max_connections
         self._concurrent_connections = set()
         if connection_factory:
@@ -287,7 +295,7 @@ The main method in this class is :meth:`new_connection` where a new
     
     @property
     def timeout(self):
-        raise NotImplemented
+        return self._timeout
     
     @property
     def received(self):

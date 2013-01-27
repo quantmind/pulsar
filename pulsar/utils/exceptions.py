@@ -14,6 +14,10 @@ class ProtocolError(Exception):
 the socket connection.'''
 
 
+class TooManyConnections(Exception):
+    '''Raised when there are too many concurrent connections.'''
+    
+    
 class AuthenticationError(Exception):
     pass
 
@@ -53,19 +57,22 @@ class NotRegisteredWithServer(PulsarException):
 class HttpException(Exception):
     status = 500
     def __init__(self, msg='', status=None, handler=None, strict=False,
-                 headers=None):
+                 headers=None, content_type=None):
         self.status = status or self.status
         self.handler = handler
         self.strict = strict
         self.headers = headers
+        self.content_type = content_type
         super(HttpException, self).__init__(msg)
 
 
 class HttpRedirect(HttpException):
     status = 302
-    def __init__(self, location, status=None):
+    def __init__(self, location, status=None, headers=None, **kw):
+        headers = [] if headers is None else headers
+        headers.append(('location', location))
         super(HttpRedirect, self).__init__(status=status or self.status,
-              headers=[('location', location)])
+                                           headers=headers, **kw)
 
 
 class PermissionDenied(HttpException):

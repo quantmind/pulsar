@@ -149,7 +149,7 @@ class HttpRequest(pulsar.Request):
                                    self.params, self.query, ''))
         
         
-class HttpResponse(pulsar.ClientProtocolConsumer):
+class HttpResponse(pulsar.ProtocolConsumer):
     '''Http client request initialised by a call to the
 :class:`HttpClient.request` method.
 
@@ -161,34 +161,39 @@ class HttpResponse(pulsar.ClientProtocolConsumer):
 
     The scheme of the of the URI requested. One of http, https
 '''
-
+    ONE_TIME_EVENTS = ('start', 'headers', 'finish')
     _tunnel_host = None
     _has_proxy = False
     consumer = None # Remove default consumer
     next_url = None
     
+    def __init__(self, *args, **kw):
+        super(HttpResponse, self).__init__(self, *args, **kw)
+        self._buffer = []
+    
     @property
     def parser(self):
         return self.request.parser
     
-    def feed(self, data):
+    @property
+    def content(self):
+        return b''.join(self._buffer)
+    
+    def data_received(self, data):
         had_headers = self.parser.is_headers_complete()
         if self.parser.execute(data, len(data)) == len(data):
-            if had_headers:
-                return self.close()
-            elif self.parser.is_headers_complete():
-                res = self.build_response()
-                res = self.request.client.build_response(self) or self
-                if not res.parser.is_message_complete():
-                    res._read()
-                return res
-            # Not streaming. wait until we have the whole message
-            elif self.parser.is_headers_complete() and\
-                 self.parser.is_message_complete():
-                return self.request.client.build_response(self)
+            if self.parser.is_headers_complete():
+                body = self.parser.recv_body()
+                self._buffer.append(body)
+                self.fire_event('data_received', body)
+                if had_headers:
+                    self.fire_event('headers')
+                    new_response = self.handle_headers()
+                    if new_response:
+                        return
+                if res.parser.is_message_complete():
+                    self.finished()
         else:
-            # This is an error in the parsing. Raise an error so that the
-            # connection is closed
             raise pulsar.ProtocolError
         
     def close(self):
@@ -198,10 +203,9 @@ class HttpResponse(pulsar.ClientProtocolConsumer):
                 return self.new_request(self.next_url)
             return self
         
-    def build_response(self):
+    def handle_headers(self):
         '''The response headers are available. Build the response.'''
         request = self.request
-        request.dispatch_hook('response', response)
         headers = self.headers
         client = request.client
         # store cookies in clinet if needed
@@ -209,7 +213,8 @@ class HttpResponse(pulsar.ClientProtocolConsumer):
             client.cookies.extract_cookies(self, request)
         # check redirect
         if self.status_code in REDIRECT_CODES and 'location' in headers and\
-                request.allow_redirects:
+                request.allow_redirects and self.parser.is_message_complete():
+            # done with current response
             url = headers.get('location')
             # Handle redirection without scheme (see: RFC 1808 Section 4)
             if url.startswith('//'):
@@ -224,17 +229,12 @@ class HttpResponse(pulsar.ClientProtocolConsumer):
                               # encode the url.
                               requote_uri(url))
             return self.new_request(url)
-        elif self.status_code == 100:
-            # Continue with current response
-            return self
         elif self.status_code == 101:
             # Upgrading response handler
             return client.upgrade(response)
-        else:
-            # We need to read the rest of the message
-            return response.close()
         
     def new_request(self, url=None):
+        self.finished()
         request = self.request
         params = request.params()
         url = url or request.full_url
@@ -242,7 +242,6 @@ class HttpResponse(pulsar.ClientProtocolConsumer):
         if len(history) >= request.max_redirects:
             raise TooManyRedirects
         history.append(self)
-        request.client.release_connection(request)
         method = params.pop('method')
         # http://www.w3.org/Protocols/rfc2616/rfc2616-sec10.html#sec10.3.4
         if response.status_code is 303:

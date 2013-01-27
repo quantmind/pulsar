@@ -57,9 +57,8 @@ on a socket. It is a producer of :class:`Transport` for server protocols.
                          'connection_lost')
     consumer_factory = None
     
-    def __init__(self, consumer_factory=None, timeout=None, **kw):
+    def __init__(self, consumer_factory=None, **kw):
         super(Server, self).__init__(**kw)
-        self._timeout = timeout
         if consumer_factory:
             self.consumer_factory = consumer_factory
         
@@ -81,9 +80,12 @@ on a socket. It is a producer of :class:`Transport` for server protocols.
     def timeout(self):
         return self._timeout
     
+    @property
+    def address(self):
+        return self.transport.address
+    
     def connection_made(self, transport):
         self._transport = transport
-        self.event_loop.add_reader(self.fileno(), transport._protocol_accept)
         LOGGER.debug('Registered server listening on %s', self)
         self.fire_event('start')
         
@@ -109,12 +111,13 @@ on a socket. It is a producer of :class:`Transport` for server protocols.
                 # Create one and set it as the event loop
                 loop = new_event_loop()
                 set_event_loop(loop)
-                transport = transport_type(loop, sock, server)
+                transport = transport_type(loop, sock, server, as_server=True)
                 # Shutdown eventloop when server closes
                 close_event_loop = True
                 # start the server on a different thread
                 eventloop.call_soon_threadsafe(_start_on_thread, name, server)
-        transport = transport or transport_type(loop, sock, server)
+        if transport is None:
+            transport = transport_type(loop, sock, server, as_server=True)
         server.connection_made(transport)
         if close_event_loop:
             server.bind_event('finish',

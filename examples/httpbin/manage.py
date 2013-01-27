@@ -9,6 +9,7 @@ import sys
 import string
 import time
 from random import choice
+from wsgiref.validate import validator
 try:
     import pulsar
 except ImportError: #pragma    nocover
@@ -120,38 +121,27 @@ class HttpBin(LocalMixin):
         return response(environ, start_response)
 
     def request(self, environ):
-        try:
-            path = environ.get('PATH_INFO')
-            if not path or path == '/':
-                return self.home(environ)
-            else:
-                path = path[1:]
-                leaf = True
-                if path.endswith('/'):
-                    leaf = False
-                    path = path[:-1]
-                keys = tuple(path.split('/'))
-                bits = []
-                route = None
-                while keys:
-                    route = self.routes.get(keys)
-                    if route:
-                        break
-                    bits.insert(0, keys[-1])
-                    keys = keys[:-1]
-                if route is None:
-                    raise HttpException(status=404)
-                return route(self, environ, bits)
-        except HttpException as e:
-            status = e.status
-            if has_empty_content(status, environ['REQUEST_METHOD']):
-                return wsgi.WsgiResponse(status, response_headers=e.headers)
-            else:
-                content = error_messages.get(status,'')
-                title = responses.get(status)
-                content = '<h1>%s - %s</h1>%s' % (status, title, content)
-                return self.render(content, title=title, status=status,
-                                   headers=e.headers)
+        path = environ.get('PATH_INFO')
+        if not path or path == '/':
+            return self.home(environ)
+        else:
+            path = path[1:]
+            leaf = True
+            if path.endswith('/'):
+                leaf = False
+                path = path[:-1]
+            keys = tuple(path.split('/'))
+            bits = []
+            route = None
+            while keys:
+                route = self.routes.get(keys)
+                if route:
+                    break
+                bits.insert(0, keys[-1])
+                keys = keys[:-1]
+            if route is None:
+                raise HttpException(status=404)
+            return route(self, environ, bits)
 
     def load(self, name):
         name = os.path.join(os.path.dirname(os.path.abspath(__file__)),name)
@@ -171,7 +161,7 @@ class HttpBin(LocalMixin):
     def render(self, body, title=None, status=200, headers=None):
         template = self.load('template.html')
         title = title or 'Pulsar HttpBin'
-        html = (template % (title, version, body, pyversion)).encode('utf-8')
+        html = template % (title, version, body, pyversion, pulsar.JAPANESE)
         return self.response(html, status=status, content_type='text/html',
                              headers=headers)
 
@@ -275,7 +265,7 @@ class HttpBin(LocalMixin):
             number = int(bits[0]) if len(bits) == 1 else 404
         except Exception:
             raise HttpException(status=404)
-        raise HttpException(status=number)
+        raise HttpException(status=number, content_type='text/html')
 
     @route('response-headers', title='Returns response headers')
     def request_response_headers(self, environ, bits):
@@ -366,7 +356,7 @@ def server(description=None, **kwargs):
                                        wsgi.cookies_middleware,
                                        wsgi.authorization_middleware,
                                        HttpBin(),))
-    return wsgi.WSGIServer(app, description=description, **kwargs)
+    return wsgi.WSGIServer(validator(app), description=description, **kwargs)
 
 
 if __name__ == '__main__':  #pragma    nocover

@@ -41,15 +41,16 @@ def clean_path_middleware(environ, start_response):
 def cookies_middleware(environ, start_response):
     '''Parse the ``HTTP_COOKIE`` key in the *environ*. The ``HTTP_COOKIE``
 string is replaced with a dictionary.'''
-    c = environ.get('HTTP_COOKIE', '')
+    c = environ.get('http.cookie')
     if not isinstance(c, dict):
+        c = environ.get('HTTP_COOKIE', '')
         if not c:
             c = {}
         else:
             if not isinstance(c, str):
                 c = c.encode('utf-8')
             c = parse_cookie(c)
-        environ['HTTP_COOKIE'] = c
+        environ['http.cookie'] = c
 
 def authorization_middleware(environ, start_response):
     """An `Authorization` middleware."""
