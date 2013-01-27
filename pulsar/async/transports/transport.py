@@ -179,7 +179,7 @@ the :class:`EventHandler`.
 * **data_received** fired when new data has arrived
 '''
     def __init__(self, event_loop, sock, protocol, max_buffer_size=None,
-                  read_chunk_size=None, as_server=False):
+                  read_chunk_size=None):
         self._protocol = protocol
         self._sock = sock
         self._event_loop = event_loop
@@ -189,11 +189,6 @@ the :class:`EventHandler`.
         self._read_chunk_size = read_chunk_size or io.DEFAULT_BUFFER_SIZE
         self._read_buffer = []
         self._write_buffer = deque()
-        if as_server:
-            self.add_listener()
-        else:
-            self.add_writer()
-            self.add_reader()
     
     def __repr__(self):
         if self._sock:
@@ -277,13 +272,14 @@ the :class:`EventHandler`.
         self.close(async=False)
     
     ############################################################################
-    ###    PULSAR TRANSPORT METHODS
-    def connect(self):
+    ###    PULSAR TRANSPORT METHODS.
+    def connect(self, address):
         '''Connect this :class:`Transport` to a remote server and
 returns ``self``.'''
+        self.add_writer()
         connector = Connector(self)
         try:
-            if self._protocol_connect():
+            if self._protocol_connect(address):
                 return connector.callback(True)
         except Exception as e:
             return connector.callback(e)
@@ -339,7 +335,9 @@ returns ``self``.'''
     def _ready_write(self):
         # keep count how many bytes we write
         if self.connecting:
-            self._connector.callback(self)
+            connector = self._connector
+            self._connector = None
+            connector.callback(self)
         try:
             self._protocol_write()
         except socket.error as e:
@@ -425,6 +423,7 @@ class Connector(Deferred, TransportProxy):
         
     def _connection_made(self, result):
         self._transport._protocol.connection_made(self._transport)
+        self._transport.add_reader()
         return self._transport._protocol
         
     def _connection_failure(self, failure):

@@ -67,7 +67,7 @@ protocols. It maintains a live set of connections.
                                              client.consumer_factory)
             #IMPORTANT: create client transport an connect to endpoint
             transport = create_transport(connection, address=connection.address)
-            return transport.connect()
+            return transport.connect(connection.address)
         else:
             return connection
     
@@ -89,7 +89,9 @@ class Client(EventHandler):
     max_connections = 0
     '''Maximum number of concurrent connections.'''
     
-    MANY_TIMES_EVENTS = ('pre_request', 'post_request')
+    ONE_TIME_EVENTS = ('finish',)
+    MANY_TIMES_EVENTS = ('connection_made', 'pre_request','post_request',
+                         'connection_lost')
     
     def __init__(self, max_connections=None, timeout=None, client_version=None,
                  trust_env=True, consumer_factory=None,**params):
@@ -105,6 +107,12 @@ class Client(EventHandler):
     
     def setup(self, **params):
         '''Setup the client. By default it does nothing.'''
+    
+    def __str__(self):
+        return self.__repr__()
+    
+    def __repr__(self):
+        return self.__class__.__name__
     
     def hash(self, address, timeout, request):
         return hash((address, timeout))
@@ -153,9 +161,13 @@ in :attr:`request_parameters` tuple.'''
                 params[name] = chooks
         return params
         
-    def close_connections(self):
+    def close_connections(self, async=True):
         for p in self.connection_pools.values():
-            p.close_connections()
+            p.close_connections(async=async)
             
-    def close(self):
-        self.close_connections()
+    def close(self, async=True):
+        self.close_connections(async)
+        self.fire_event('finish')
+        
+    def abort(self):
+        self.close(async=False)

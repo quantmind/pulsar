@@ -1,6 +1,4 @@
+from . import client
 
-
-
-
-#class TestAsyncHttpClientWithProxy(TestAsyncHttpClient):
-#    with_proxy = True
+class TestHttpClientWithProxy(client.TestHttpClient):
+    with_proxy = True

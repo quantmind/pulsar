@@ -53,7 +53,7 @@ MIN_NOTIFY = 5     # DON'T NOTIFY BELOW THIS INTERVAL
 MAX_NOTIFY = 30    # NOTIFY AT LEAST AFTER THESE SECONDS
 ACTOR_TERMINATE_TIMEOUT = 2 # TIMEOUT WHEN JOINING A TERMINATING ACTOR
 ACTOR_TIMEOUT_TOLERANCE = 0.6
-ACTOR_STOPPING_LOOPS = 10
+ACTOR_STOPPING_LOOPS = 100
 
 def is_actor(obj):
     return isinstance(obj, Actor)
@@ -315,25 +315,37 @@ properly this actor will go out of scope.'''
             # The actor has not started the stopping process. Starts it now.
             self.exit_code = 1 if exc else 0
             self.state = ACTOR_STATES.STOPPING
+            self.logger.debug('Started stopping %s', self)
             # if CPU bound and the requestloop is still running, stop it
-            if self.cpubound and self.requestloop.running:
-                self.requestloop.call_soon_threadsafe(self._stop)
-                self.requestloop.stop()
+            if self.cpubound and self.ioloop.running:
+                # shuts down the request loop
+                self.mailbox.event_loop.call_soon_threadsafe(self._stop, False)
+                self.mailbox.close()
             else:
                 self._stop()
-        else:
+        elif self.stopped():
             # The actor has finished the stopping process.
             #Remove itself from the actors dictionary
             remove_actor(self)
             self.fire_event('stop')
         return self.event('stop')
         
-    def _stop(self):
+    def _stop(self, inthread=True):
         '''Exit from the :class:`Actor` domain.'''
-        if not self.stopped():
+        if not inthread:
+            self.requestloop.call_soon_threadsafe(self._stop)
+        else:
+            self.bind_event('stop', self._bye)
             self.state = ACTOR_STATES.CLOSE
-            self.mailbox.close()
-            
+            if self.cpubound:
+                self.requestloop.stop()
+            else:
+                self.mailbox.close()
+    
+    def _bye(self, r):
+        self.logger.debug('Bye from "%s"', self)
+        return r
+    
     ############################################################################
     #    INTERNALS
     ############################################################################

@@ -1,6 +1,6 @@
-from . import httpurl
+from . import client
 
-class TestStreamingHttpClient(httpurl.TestHttpClientBase):
+class TestStreamingHttpClient(client.TestHttpClientBase):
     timeout = 0
     
     def test_stream_response(self):

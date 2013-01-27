@@ -69,6 +69,8 @@ on a socket. It is a producer of :class:`Transport` for server protocols.
         protocol = self.new_connection(address, self.consumer_factory)
         transport = create_transport(protocol, sock=sock,
                                      event_loop=self.event_loop)
+        transport.add_writer()
+        transport.add_reader()
         protocol.copy_many_times_events(self)
         protocol.connection_made(transport)
         return protocol
@@ -86,6 +88,7 @@ on a socket. It is a producer of :class:`Transport` for server protocols.
     
     def connection_made(self, transport):
         self._transport = transport
+        transport.add_listener()
         LOGGER.debug('Registered server listening on %s', self)
         self.fire_event('start')
         
@@ -111,13 +114,13 @@ on a socket. It is a producer of :class:`Transport` for server protocols.
                 # Create one and set it as the event loop
                 loop = new_event_loop()
                 set_event_loop(loop)
-                transport = transport_type(loop, sock, server, as_server=True)
+                transport = transport_type(loop, sock, server)
                 # Shutdown eventloop when server closes
                 close_event_loop = True
                 # start the server on a different thread
                 eventloop.call_soon_threadsafe(_start_on_thread, name, server)
         if transport is None:
-            transport = transport_type(loop, sock, server, as_server=True)
+            transport = transport_type(loop, sock, server)
         server.connection_made(transport)
         if close_event_loop:
             server.bind_event('finish',

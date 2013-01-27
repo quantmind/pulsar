@@ -14,7 +14,7 @@ from .actor import Actor, ACTOR_STATES
 from .monitor import PoolMixin, _spawn_actor
 from .defer import multi_async, log_failure
 from .access import get_actor, set_actor
-from .mailbox import MailboxServerConsumer
+from .mailbox import MailboxConsumer
 from . import proxy
 
 
@@ -93,8 +93,11 @@ def start_arbiter(self):
     os.environ["SERVER_SOFTWARE"] = pulsar.SERVER_SOFTWARE
     pidfile = self.cfg.pidfile
     if pidfile is not None:
-        p = Pidfile(pidfile)
-        p.create(self.pid)
+        try:
+            p = Pidfile(pidfile)
+            p.create(self.pid)
+        except RuntimeError as e:
+            raise HaltServer(str(e))
         self.pidfile = p
     
 def info_arbiter(args):
@@ -236,7 +239,7 @@ Users access the arbiter (in the arbiter process domain) by the high level api::
         address = ('127.0.0.1', 0)
         mailbox = self.requestloop.create_server(address=address,
                                         name='Mailbox for %s' % self,
-                                        consumer_factory=MailboxServerConsumer,
+                                        consumer_factory=MailboxConsumer,
                                         timeout=0,
                                         close_event_loop=True)
         mailbox.event_loop.call_soon_threadsafe(self.hand_shake)

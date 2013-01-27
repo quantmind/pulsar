@@ -10,7 +10,8 @@ from collections import namedtuple
 
 from pulsar import platform, PulsarException, Config, ProtocolError
 from pulsar.utils.pep import to_bytes, ispy3k, ispy3k, pickle, set_event_loop,\
-                             get_event_loop, new_event_loop
+                             new_event_loop
+from pulsar.utils.sockets import nice_address
 from pulsar.utils.websocket import FrameParser
 from pulsar.utils.security import gen_unique_id
 
@@ -64,15 +65,14 @@ def create_request(command, sender, target, args, kwargs):
     return data, d
 
 
-class MailboxMixin(object):
-    # A Mixin for both Server and Client protocol consumers
-    def __new__(cls, *args, **kwargs):
-        self = super(MailboxMixin, cls).__new__(cls)
+class MailboxConsumer(ProtocolConsumer):
+
+    def __init__(self, *args, **kwargs):
+        super(MailboxConsumer, self).__init__(*args, **kwargs)
         self._pending_responses = {}
         self._parser = FrameParser(kind=2)
-        return self
     
-    def feed(self, data):
+    def data_received(self, data):
         # Feed data into the parser
         msg = self._parser.decode(data)
         while msg:
@@ -132,31 +132,15 @@ class MailboxMixin(object):
     def _write(self, data):
         self.transport.write(data)
 
-################################################################################
-##    Mailbox Server (Arbiter) Classes
-class MailboxServerConsumer(MailboxMixin, ProtocolConsumer):
- 
     def request(self, command, sender, target, args, kwargs):
         data, d = create_request(command, sender, target, args, kwargs)
         self.write(data, d)
         return d
-        
-    
-################################################################################
-##    Mailbox Client (Actor) Classes
-class MailboxClientConsumer(MailboxMixin, ProtocolConsumer):
-    '''The Protocol consumer for a Mailbox client'''    
-    def send(self, *args):
-        # This is only called at the first request
-        pass
-    
-    def _write(self, data):
-        self.event_loop.call_soon_threadsafe(self.transport.write, data)
-    
+
     
 class MailboxClient(Client):
     # mailbox for actors client
-    consumer_factory = MailboxClientConsumer
+    consumer_factory = MailboxConsumer
     max_connections = 1
      
     def __init__(self, address, actor):
@@ -164,17 +148,19 @@ class MailboxClient(Client):
         self.address = address
         self.consumer = None
         self.name = 'Mailbox for %s' % actor
-        self._cpubound = False
-        eventloop = get_event_loop()
+        eventloop = actor.requestloop
         # The eventloop is cpubound
-        if eventloop is None or getattr(eventloop, 'cpubound', False):
-            # No IO event loop available in the current thread.
-            # Create one and set it as the event loop
-            self._cpubound = True
+        if actor.cpubound:
             eventloop = new_event_loop()
             set_event_loop(eventloop)
+            # starts in a new thread
             actor.requestloop.call_soon_threadsafe(self._start_on_thread)
+        # when the mailbox shutdown, the event loop must stop.
+        self.bind_event('finish', lambda s: s.event_loop.stop())
         self._event_loop = eventloop
+    
+    def __repr__(self):
+        return '%s %s' % (self.__class__.__name__, nice_address(self.address))
     
     @property
     def event_loop(self):
@@ -193,12 +179,3 @@ class MailboxClient(Client):
     def _start_on_thread(self):
         PulsarThread(name=self.name, target=self._event_loop.run).start()
         
-    def connect(self):
-        request = clients.Request(self.address, self.timeout)
-        self.consumer = self.response(request)
-    
-    def close(self):
-        if self._cpubound:
-            self._event_loop.stop()
-        return super(MailboxClient, self).close()
-

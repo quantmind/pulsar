@@ -1,4 +1,5 @@
 from pulsar import ProtocolError
+from pulsar.utils.sockets import nice_address
 from pulsar.async.access import NOTHING
 from pulsar.async.defer import EventHandler
 
@@ -157,10 +158,7 @@ connected until :meth:`Protocol.connection_made` is called.
         self._consumer_factory = consumer_factory
         
     def __repr__(self):
-        address = self._address
-        if isinstance(address, tuple):
-            address = ':'.join((str(s) for s in address[:2]))
-        return '%s session %s' % (address, self._session)
+        return '%s session %s' % (nice_address(self._address), self._session)
     
     def __str__(self):
         return self.__repr__()
@@ -322,14 +320,14 @@ The main method in this class is :meth:`new_connection` where a new
         conn.bind_event('connection_lost', self._remove_connection)
         return conn
     
-    def close_connections(self, connection=None):
+    def close_connections(self, connection=None, async=True):
         '''Close *connection* if specified, otherwise close all
 active connections.'''
         if connection:
-            connection.transport.close()
+            connection.transport.close(async)
         else:
-            for connection in self._concurrent_connections:
-                connection.transport.close()
+            for connection in list(self._concurrent_connections):
+                connection.transport.close(async)
             
     def _add_connection(self, connection):
         self._concurrent_connections.add(connection)

@@ -166,10 +166,10 @@ client.
                 content = ()
             elif ispy3k: #what a pain
                 if isinstance(content, str):
-                    content = bytes(content, self.encoding)
+                    content = content.encode(self.encoding)
             else: #pragma    nocover
                 if isinstance(content, unicode):
-                    content = bytes(content, self.encoding)
+                    content = content.encode(self.encoding)
             if isinstance(content, bytes):
                 content = (content,)
             self._content = content

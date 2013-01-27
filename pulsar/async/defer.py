@@ -475,17 +475,21 @@ times.'''
 a callable which accept one argument.'''
         if event in self.ONE_TIME_EVENTS:
             self.ONE_TIME_EVENTS[event].add_callback(callback)
-        else:
+        elif event in self.MANY_TIMES_EVENTS:
             self.MANY_TIMES_EVENTS[event].append(callback)
+        else:
+            LOGGER.warn('unknown event "%s" for %s', event, self)
         
     def fire_event(self, event, event_data=NOTHING):
         """Dispatches *event_data* to the *event* listeners."""
         event_data = self if event_data is NOTHING else event_data
         if event in self.ONE_TIME_EVENTS:
             log_failure(self.ONE_TIME_EVENTS[event].callback(event_data))
-        else:
+        elif event in self.MANY_TIMES_EVENTS:
             for callback in self.MANY_TIMES_EVENTS[event]:
                 callback(event_data)
+        else:
+            LOGGER.warn('unknown event "%s" for %s', event, self)
         events.fire(event, event_data)
         
     def all_events(self):

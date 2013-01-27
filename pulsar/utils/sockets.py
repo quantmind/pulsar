@@ -216,6 +216,14 @@ def is_ipv6(address):
         return False
     return True
 
+def nice_address(address, family=None):
+    if isinstance(address, tuple):
+        return ':'.join((str(s) for s in address[:2]))
+    elif family:
+        return '%s:%s' % (family, address)
+    else:
+        return address
+    
 def parse_address(netloc, default_port=8000):
     '''Parse an address and return a tuple with host and port'''
     if isinstance(netloc, tuple):
