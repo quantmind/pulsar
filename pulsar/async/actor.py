@@ -318,8 +318,8 @@ properly this actor will go out of scope.'''
             self.logger.debug('Started stopping %s', self)
             # if CPU bound and the requestloop is still running, stop it
             if self.cpubound and self.ioloop.running:
-                # shuts down the request loop
-                self.mailbox.event_loop.call_soon_threadsafe(self._stop, False)
+                # shuts down the mailbox first
+                self.mailbox.event_loop.call_soon_threadsafe(self._stop)
                 self.mailbox.close()
             else:
                 self._stop()
@@ -330,17 +330,14 @@ properly this actor will go out of scope.'''
             self.fire_event('stop')
         return self.event('stop')
         
-    def _stop(self, inthread=True):
+    def _stop(self):
         '''Exit from the :class:`Actor` domain.'''
-        if not inthread:
-            self.requestloop.call_soon_threadsafe(self._stop)
+        self.bind_event('stop', self._bye)
+        self.state = ACTOR_STATES.CLOSE
+        if self.cpubound:
+            self.requestloop.stop()
         else:
-            self.bind_event('stop', self._bye)
-            self.state = ACTOR_STATES.CLOSE
-            if self.cpubound:
-                self.requestloop.stop()
-            else:
-                self.mailbox.close()
+            self.mailbox.close()
     
     def _bye(self, r):
         self.logger.debug('Bye from "%s"', self)
