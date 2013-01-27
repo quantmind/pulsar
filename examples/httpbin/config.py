@@ -2,10 +2,10 @@
 
 requests = {}
 
-def pre_request(worker, request):
+def _pre_request(worker, request):
     pass
 
-def post_request(worker, response):
+def _post_request(worker, response):
     environ = response.environ
     connection = response.connection
     user_agent = environ['HTTP_USER_AGENT']
@@ -15,5 +15,3 @@ def post_request(worker, response):
     request_in_session = connection.processed
     pass
     
-def arbiter_task(actor):
-    pass

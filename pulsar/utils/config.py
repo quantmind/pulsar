@@ -55,10 +55,7 @@ KNOWN_SETTINGS = {}
 KNOWN_SETTINGS_ORDER = []
 
 
-def def_arity1(server):
-    pass
-
-def def_arity2(worker, req):
+def pass_through(arg):
     pass
 
 def wrap_method(func):
@@ -131,6 +128,9 @@ attribute by exposing the :attr:`Setting.name` as attribute.
     def __setstate__(self, state):
         for k, v in state.items():
             self.__dict__[k] = v
+        config = getattr(self, 'config', None)
+        if config:
+            self.import_from_module(config)
 
     def __getattr__(self, name):
         return self.get(name)
@@ -321,7 +321,10 @@ custom initialization for this :class:`Setting`.'''
 
 class Function:
     
-    pass
+    def __getstate__(self):
+        d = self.__dict__.copy()
+        d['value'] = pass_through
+        return d
 
 
 class SimpleSetting(SettingBase):
@@ -760,39 +763,12 @@ class DefaultProcName(Setting):
         """
 
 
-class WhenReady(Function, Setting):
-    name = "when_ready"
-    section = "Server Hooks"
-    validator = validate_callable(1)
-    type = "callable"
-    default = staticmethod(def_arity1)
-    desc = """\
-        Called just after the server is started.
-
-        The callable needs to accept a single instance variable for the Arbiter.
-        """
-
-
-class Prefork(Function, Setting):
-    name = "pre_fork"
-    section = "Server Hooks"
-    validator = validate_callable(1)
-    default = staticmethod(def_arity1)
-    type = "callable"
-    desc = """\
-        Called just before a worker is forked.
-
-        The callable needs to accept two instance variables for the Arbiter and
-        new Worker.
-        """
-
-
 class Postfork(Function, Setting):
     name = "post_fork"
     section = "Server Hooks"
     validator = validate_callable(1)
     type = "callable"
-    default = staticmethod(def_arity1)
+    default = staticmethod(pass_through)
     desc = """\
         Called just after a worker has been forked.
 
@@ -801,25 +777,40 @@ class Postfork(Function, Setting):
         """
 
 
-class PreExec(Function, Setting):
-    name = "pre_exec"
+class ConnectionMade(Function, Setting):
+    name = "connection_made"
     section = "Server Hooks"
     validator = validate_callable(1)
     type = "callable"
-    default = staticmethod(def_arity1)
+    default = staticmethod(pass_through)
     desc = """\
-        Called just before a new master process is forked.
+        Called after a new connection is made.
 
-        The callable needs to accept a single instance variable for the Arbiter.
+        The callable needs to accept one instance variables for the
+        connection instance.
+        """
+
+
+class ConnectionLost(Function, Setting):
+    name = "connection_lost"
+    section = "Server Hooks"
+    validator = validate_callable(1)
+    type = "callable"
+    default = staticmethod(pass_through)
+    desc = """
+        Called after a connection is lost.
+
+        The callable needs to accept one instance variables for the
+        connection instance.
         """
 
 
 class PreRequest(Function, Setting):
     name = "pre_request"
     section = "Server Hooks"
-    validator = validate_callable(2)
+    validator = validate_callable(1)
     type = "callable"
-    default = staticmethod(def_arity2)
+    default = staticmethod(pass_through)
     desc = """\
         Called just before a worker processes the request.
 
@@ -831,49 +822,12 @@ class PreRequest(Function, Setting):
 class PostRequest(Function, Setting):
     name = "post_request"
     section = "Server Hooks"
-    validator = validate_callable(2)
+    validator = validate_callable(1)
     type = "callable"
-    default = staticmethod(def_arity2)
+    default = staticmethod(pass_through)
     desc = """\
         Called after a worker processes the request.
 
         The callable needs to accept two instance variables for the Worker and
         the Request.
-        """
-
-
-class WorkerExit(Function, Setting):
-    name = "worker_exit"
-    section = "Server Hooks"
-    validator = validate_callable(1)
-    type = "callable"
-    default = staticmethod(def_arity1)
-    desc = """Called just after a worker has been exited.
-
-        The callable needs to accept one variable for the
-        the just-exited Worker.
-        """
-
-
-class WorkerTask(Function, Setting):
-    name = "worker_task"
-    section = "Server Hooks"
-    validator = validate_callable(1)
-    type = "callable"
-    default = staticmethod(def_arity1)
-    desc = """Called at every event loop by the worker.
-
-        The callable needs to accept one variable for the Worker.
-        """
-        
-        
-class ArbiterTask(Function, Setting):
-    name = "arbiter_task"
-    section = "Server Hooks"
-    validator = validate_callable(1)
-    type = "callable"
-    default = staticmethod(def_arity1)
-    desc = """Called at every event loop by the arbiter.
-
-        The callable needs to accept one variable for the Arbiter.
         """

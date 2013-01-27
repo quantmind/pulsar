@@ -1,15 +1,11 @@
 import sys
 import os
 import atexit
-import socket
 import logging
 from time import time
 import random
-import threading
 from functools import partial
-from multiprocessing import current_process
 from multiprocessing.queues import Empty
-from threading import current_thread
 
 try:    #pragma nocover
     import queue
@@ -21,7 +17,6 @@ from pulsar import AlreadyCalledError, AlreadyRegistered,\
                    ActorAlreadyStarted, LogginMixin, system, Config
 from pulsar.utils.structures import AttributeDictionary
 from pulsar.utils.pep import pickle, set_event_loop_policy
-from pulsar.utils import events
 
 from .eventloop import EventLoop, setid, signal
 from .defer import Deferred, EventHandler, log_failure
@@ -186,6 +181,10 @@ an :class:`ActorProxy`.
         self.params = AttributeDictionary(**impl.params)
         del impl.params
         setid(self)
+        try:
+            self.cfg.post_fork(self)
+        except Exception:
+            pass
 
     def __repr__(self):
         return self.impl.unique_name
@@ -315,7 +314,6 @@ properly this actor will go out of scope.'''
             # The actor has not started the stopping process. Starts it now.
             self.exit_code = 1 if exc else 0
             self.state = ACTOR_STATES.STOPPING
-            self.logger.debug('Started stopping %s', self)
             # if CPU bound and the requestloop is still running, stop it
             if self.cpubound and self.ioloop.running:
                 # shuts down the mailbox first
