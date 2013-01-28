@@ -171,7 +171,7 @@ class Silence(logging.Handler):
         pass
     
 
-class LogginMixin(Synchronized):
+class LogginMixin(LocalMixin):
     '''A Mixin used throught the library. It provides built in logging object
 and utilities for pickle.'''    
     @property

@@ -331,7 +331,9 @@ active connections.'''
             
     def _add_connection(self, connection):
         self._concurrent_connections.add(connection)
+        return connection
         
     def _remove_connection(self, connection):
         self._concurrent_connections.discard(connection)
+        return connection
     
