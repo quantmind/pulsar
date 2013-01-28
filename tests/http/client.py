@@ -66,11 +66,10 @@ class TestHttpClient(TestHttpClientBase):
     def test_200_get(self):
         http = self.client()
         response = http.get(self.httpbin())
-        yield response.when_done
+        yield response.on_finished
         self.assertEqual(str(response), '200 OK')
-        self.assertEqual(repr(r), 'HttpResponse(200 OK)')
-        self.assertEqual(r.client, http)
-        self.assertEqual(r.status_code, 200)
-        self.assertEqual(r.response, 'OK')
-        self.assertTrue(r.content)
-        self.assertEqual(r.url, self.httpbin())
+        self.assertEqual(repr(response), 'HttpResponse(200 OK)')
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.response, 'OK')
+        self.assertTrue(response.content)
+        self.assertEqual(response.url, self.httpbin())

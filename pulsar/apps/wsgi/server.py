@@ -45,7 +45,7 @@ nothing."""
         'CONTENT_TYPE': '',
         "CONTENT_LENGTH": '',
         'SERVER_NAME': response.server_name,
-        'SERVER_PORT': response.server_port,
+        'SERVER_PORT': str(response.server_port),
         "wsgi.multithread": False,
         "wsgi.multiprocess":False
     }

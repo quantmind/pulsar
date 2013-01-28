@@ -82,6 +82,10 @@ be :meth:`Producer.data_received`.
     @property
     def sock(self):
         return self._connection.sock
+    
+    @property
+    def request(self):
+        return self._request
         
     @property
     def transport(self):
@@ -192,6 +196,7 @@ connected until :meth:`Protocol.connection_made` is called.
         assert self._current_consumer is None, 'Consumer is not None'
         self._current_consumer = consumer
         consumer._connection = self
+        self.fire_event('pre_request', consumer)
         consumer.fire_event('start')
         self._processed += 1
     
@@ -235,6 +240,7 @@ response).'''
     def finished(self, consumer, result=NOTHING):
         '''Call this method to close the current *consumer*.'''
         if consumer is self._current_consumer:
+            self.fire_event('post_request', consumer)
             consumer.fire_event('finish', result)
             self._current_consumer = None
             consumer._connection = None
