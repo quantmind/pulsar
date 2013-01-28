@@ -185,10 +185,7 @@ is a group of tests specified in a test class.
                             }
                          }
            }
-
-    def handler(self):
-        return self
-
+    
     def python_path(self):
         #Override the python path so that we put the directory where the script
         #is in the ppython path

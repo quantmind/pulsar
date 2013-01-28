@@ -14,4 +14,5 @@ class QueueTransport(transport.Transport):
         try:
             return self.queue.poll(self.timeout)
         except (Empty, IOError, TypeError, EOFError):
-            return () 
+            return ()
+    _protocol_accept = read

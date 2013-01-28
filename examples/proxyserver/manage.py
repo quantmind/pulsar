@@ -3,17 +3,15 @@
     python manage.py
 '''
 import io
-import json
 import sys
 try:
     import pulsar
 except ImportError:
     sys.path.append('../../')
 
-from pulsar import HttpException, LocalMixin, maybe_async,\
-                    is_async, is_failure, local_property
 from pulsar.apps import wsgi
 from pulsar.utils.httpurl import Headers
+from pulsar.utils.log import LocalMixin, local_property
 
 ENVIRON_HEADERS = ('content-type', 'content-length')
 USER_AGENT = 'Pulsar-Proxy-Server'
@@ -22,7 +20,7 @@ USER_AGENT = 'Pulsar-Proxy-Server'
 def x_forwarded_for(environ, headers):
     headers.add_header('x-forwarded-for', environ['REMOTE_ADDR'])
 
-
+    
 class ProxyMiddleware(LocalMixin):
     '''WSGI middleware for an asynchronous proxy server. To perform
 processing on headers you can pass a list of ``headers_middleware``.
@@ -48,12 +46,10 @@ An headers middleware is a callable which accepts two parameters, the wsgi
         headers = self.request_headers(environ)
         method = environ['REQUEST_METHOD']
         stream = environ.get('wsgi.input') or io.BytesIO()
-        target_response = self.http_client.request(method, uri,
-                                                   data=stream.getvalue(),
-                                                   headers=headers)
-        wsgi_response.content = self.response_generator(target_response,
-                                                        wsgi_response)
-        return wsgi_response
+        response = self.http_client.request(method, uri,
+                                            data=stream.getvalue(),
+                                            headers=headers)
+        return self.response_generator(wsgi_response, response)
     
     def request_headers(self, environ):
         '''Modify request headers via the list of :attr:`headers_middleware`.
@@ -73,23 +69,20 @@ The returned headers will be sent to the target uri.'''
             middleware(environ, headers)
         return headers
         
-    def response_generator(self, response, wsgi_response):
-        response = maybe_async(response)
-        while is_async(response):
+    def response_generator(self, wsgi_response, response):
+        parser = response.parser
+        while not parser.is_headers_complete():
             yield b''
-            response = maybe_async(response)
-        stream_content = None
-        if is_failure(response):
-            wsgi_response.status_code = 500
-        else:
-            wsgi_response.status_code = response.status_code
-            wsgi_response.headers.update(response.headers)
-            stream_content = response.stream()
+        wsgi_response.status_code = response.status_code
+        wsgi_response.headers.update(response.headers)
         wsgi_response.start()
-        if stream_content:
-            for content in stream_content:
-                yield content
-
+        while not parser.is_message_complete():
+            body = parser.recv_body()
+            yield body
+        body = parser.recv_body()
+        if body:
+            yield body
+            
 
 def server(description=None, name='proxy-server', **kwargs):
     description = description or 'Pulsar Proxy Server'

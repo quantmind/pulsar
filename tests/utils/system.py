@@ -7,9 +7,9 @@ class TestSystem(unittest.TestCase):
     
     @unittest.skipUnless(platform.is_posix, 'Posix platform required')
     def testPlatform(self):
-        self.assertFalse(platform.isVista)
-        self.assertFalse(platform.isWindows)
-        self.assertFalse(platform.isWinNT)
+        self.assertFalse(platform.is_vista)
+        self.assertFalse(platform.is_windows)
+        self.assertFalse(platform.is_winNT)
         
     def test_maxfd(self):
         m = system.get_maxfd()

@@ -8,29 +8,32 @@ from pulsar import get_actor, Config
 from pulsar.apps.test import unittest
 
 
-def worker_task(worker):
-    return worker
+def connection_made(conn):
+    return conn
+
+def post_fork(actor):
+    return actor
 
 class TestConfig(unittest.TestCase):
     
     def testFunction(self):
         cfg = Config()
         worker = get_actor()
-        self.assertTrue(cfg.arbiter_task)
-        self.assertEqual(cfg.arbiter_task(worker), None)
-        cfg.set('arbiter_task', worker_task)
-        self.assertEqual(cfg.arbiter_task(worker), worker)
+        self.assertTrue(cfg.post_fork)
+        self.assertEqual(cfg.post_fork(worker), None)
+        cfg.set('post_fork', post_fork)
+        self.assertEqual(cfg.post_fork(worker), worker)
         cfg1 = pickle.loads(pickle.dumps(cfg))
-        self.assertEqual(cfg1.arbiter_task(worker), worker)
+        self.assertEqual(cfg1.post_fork(worker), worker)
         
     def testFunctionFromConfigFile(self):
         worker = get_actor()
         cfg = Config()
-        self.assertEqual(cfg.worker_task(worker), None)
+        self.assertEqual(cfg.connection_made(worker), None)
         self.assertTrue(cfg.import_from_module(__file__))
-        self.assertEqual(cfg.worker_task(worker), worker)
+        self.assertEqual(cfg.connection_made(worker), worker)
         cfg1 = pickle.loads(pickle.dumps(cfg))
-        self.assertEqual(cfg1.worker_task(worker), worker)
+        self.assertEqual(cfg1.connection_made(worker), worker)
         
     def testBadConfig(self):
         cfg = Config()
@@ -42,8 +45,7 @@ class TestConfig(unittest.TestCase):
         
     def testDefaults(self):
         from pulsar.utils import config
-        self.assertFalse(config.def_arity1(None))
-        self.assertFalse(config.def_arity2(None, None))
+        self.assertFalse(config.pass_through(None))
         cfg = Config()
         self.assertEqual(list(sorted(cfg)), list(sorted(cfg.settings)))
         def _():

@@ -46,7 +46,7 @@ magenta = _wrap_with('magenta','35')
 cyan = _wrap_with('cyan','36')
 white = _wrap_with('white','37')
 
-if platform.isWindows:  #pragma    nocover
+if platform.is_windows:  #pragma    nocover
     ColorFormatter = logging.Formatter
 else:
     class ColorFormatter(logging.Formatter):

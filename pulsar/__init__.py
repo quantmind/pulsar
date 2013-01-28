@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -
 '''Event driven concurrent framework for Python'''
 VERSION = (0, 5, 0, 'alpha', 2)
 
@@ -31,13 +32,13 @@ CLASSIFIERS  = ['Development Status :: 4 - Beta',
                 'Topic :: Internet :: WWW/HTTP :: WSGI :: Server',
                 'Topic :: Internet :: WWW/HTTP :: Dynamic Content']
 
-from .utils.log import *
 
 DEFAULT_PORT = 8060
 ASYNC_TIMEOUT = None
-SERVER_SOFTWARE = "python-{0}/{1}".format(SERVER_NAME, version)
+SERVER_NAME = 'Pulsar'
 JAPANESE = b'\xe3\x83\x91\xe3\x83\xab\xe3\x82\xb5\xe3\x83\xbc'.decode('utf-8')
 CHINESE = b'\xe8\x84\x89\xe5\x86\xb2\xe6\x98\x9f'.decode('utf-8')
+SERVER_SOFTWARE = "python-{0}/{1}".format(SERVER_NAME, version)
 
 from .utils.exceptions import *
 from .utils import system

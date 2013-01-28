@@ -16,8 +16,9 @@ except ImportError: #pragma    nocover
     sys.path.append('../../')
     import pulsar
     
-from pulsar import HttpRedirect, LocalMixin, local_property, version
+from pulsar import HttpRedirect, version
 from pulsar.apps import wsgi, ws
+from pulsar.utils.log import LocalMixin, local_property 
 from pulsar.utils.structures import OrderedDict
 from pulsar.utils.httpurl import Headers, parse_qs, ENCODE_URL_METHODS,\
                                  responses, has_empty_content, addslash,\
@@ -350,13 +351,24 @@ class handle(ws.WS):
             return json.dumps([(i,random()) for i in range(100)])
 
 
+class LazyWsgi(LocalMixin):
+    '''We use a Lazy wsgi class because the wsgi validator is not pickable'''
+    def __call__(self, environ, start_response):
+        handler = self.local.handler
+        if handler is None:
+            self.local.handler = handler = self.setup()
+        return handler(environ, start_response)
+    
+    def setup(self):
+        app = wsgi.WsgiHandler(middleware=(wsgi.clean_path_middleware,
+                                           wsgi.cookies_middleware,
+                                           wsgi.authorization_middleware,
+                                           HttpBin(),))
+        return validator(app)
+    
 def server(description=None, **kwargs):
     description = description or 'Pulsar HttpBin'
-    app = wsgi.WsgiHandler(middleware=(wsgi.clean_path_middleware,
-                                       wsgi.cookies_middleware,
-                                       wsgi.authorization_middleware,
-                                       HttpBin(),))
-    return wsgi.WSGIServer(validator(app), description=description, **kwargs)
+    return wsgi.WSGIServer(LazyWsgi(), description=description, **kwargs)
 
 
 if __name__ == '__main__':  #pragma    nocover

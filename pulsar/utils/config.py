@@ -25,7 +25,6 @@ from .importer import import_system_file
 __all__ = ['Config',
            'SimpleSetting',
            'Setting',
-           'Function',
            'defaults',
            'safe',
            'ordered_settings',
@@ -328,14 +327,6 @@ custom initialization for this :class:`Setting`.'''
         pass
 
 
-class Function:
-    
-    def __getstate__(self):
-        d = self.__dict__.copy()
-        d['value'] = pass_through
-        return d
-
-
 class SimpleSetting(SettingBase):
 
     def __init__(self, name, value):
@@ -563,7 +554,7 @@ class Backlog(Setting):
 
 
 class Timeout(Setting):
-    inherit = False     # not ineritable by the arbiter
+    inherit = False     # not inheritable by the arbiter
     name = "timeout"
     section = "Worker Processes"
     flags = ["-t", "--timeout"]
@@ -571,13 +562,8 @@ class Timeout(Setting):
     type = int
     default = 30
     desc = """\
-        Workers silent for more than this many seconds are killed and restarted.
-
-        Generally set to thirty seconds. Only set this noticeably higher if
-        you're sure of the repercussions for sync workers. For the non sync
-        workers it just means that the worker process is still communicating and
-        is not tied to the length of time required to handle a single request.
-        """
+        Workers silent for more than this many seconds are
+        killed and restarted."""
 
 
 class HttpProxyServer(Setting):
@@ -772,7 +758,7 @@ class DefaultProcName(Setting):
         """
 
 
-class Postfork(Function, Setting):
+class Postfork(Setting):
     name = "post_fork"
     section = "Server Hooks"
     validator = validate_callable(1)
@@ -786,7 +772,7 @@ class Postfork(Function, Setting):
         """
 
 
-class ConnectionMade(Function, Setting):
+class ConnectionMade(Setting):
     name = "connection_made"
     section = "Server Hooks"
     validator = validate_callable(1)
@@ -800,7 +786,7 @@ class ConnectionMade(Function, Setting):
         """
 
 
-class ConnectionLost(Function, Setting):
+class ConnectionLost(Setting):
     name = "connection_lost"
     section = "Server Hooks"
     validator = validate_callable(1)
@@ -814,7 +800,7 @@ class ConnectionLost(Function, Setting):
         """
 
 
-class PreRequest(Function, Setting):
+class PreRequest(Setting):
     name = "pre_request"
     section = "Server Hooks"
     validator = validate_callable(1)
@@ -828,7 +814,7 @@ class PreRequest(Function, Setting):
         """
 
 
-class PostRequest(Function, Setting):
+class PostRequest(Setting):
     name = "post_request"
     section = "Server Hooks"
     validator = validate_callable(1)

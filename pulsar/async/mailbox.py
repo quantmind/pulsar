@@ -74,9 +74,13 @@ class MailboxConsumer(ProtocolConsumer):
     
     def data_received(self, data):
         # Feed data into the parser
+        #LOGGER.debug('Got new data of %s length', len(data))
         msg = self._parser.decode(data)
         while msg:
-            message = pickle.loads(msg.body)
+            try:
+                message = pickle.loads(msg.body)
+            except Exception:
+                raise ProtocolError('Could not decode message body')
             log_failure(self.responde(message))
             msg = self._parser.decode()
     
@@ -93,6 +97,7 @@ class MailboxConsumer(ProtocolConsumer):
         actor = get_actor()
         try:
             command = message['command']
+            #LOGGER.debug('handling message %s', command)
             if command == 'callback':   #this is a callback
                 return self.callback(message.get('ack'), message.get('result'))
             target = actor.get_actor(message['target'])
@@ -115,6 +120,7 @@ class MailboxConsumer(ProtocolConsumer):
     def _responde(self, data, result):
         if data.get('ack'):
             data = {'command': 'callback', 'result': result, 'ack': data['ack']}
+            # We could have received the response on a different thread.
             self.write(data)
         #Return the result so a failure can be logged
         return result
@@ -126,16 +132,20 @@ class MailboxConsumer(ProtocolConsumer):
     def write(self, data, consumer=None):
         if consumer and 'ack' in data:
             self._pending_responses[data['ack']] = consumer
-        data = self.dump_data(data)
-        self._write(data)
-    
-    def _write(self, data):
-        self.transport.write(data)
+        raw = self.dump_data(data)
+        #LOGGER.debug('Sending "%s" command of %s in length',
+        #             data['command'], len(raw))
+        self._write(raw)
 
     def request(self, command, sender, target, args, kwargs):
         data, d = create_request(command, sender, target, args, kwargs)
         self.write(data, d)
         return d
+    
+    def _write(self, data):
+        # We do this thread safe
+        self.transport.event_loop.call_soon_threadsafe(
+                    self.transport.write, data)
 
     
 class MailboxClient(Client):
@@ -172,9 +182,7 @@ class MailboxClient(Client):
             req = Request(self.address, self.timeout)
             self.consumer = self.response(req)
         c = self.consumer
-        data, d = create_request(command, sender, target, args, kwargs)
-        c.write(data, d)
-        return d
+        return c.request(command, sender, target, args, kwargs)
         
     def _start_on_thread(self):
         PulsarThread(name=self.name, target=self._event_loop.run).start()

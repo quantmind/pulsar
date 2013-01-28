@@ -310,7 +310,8 @@ or asynchronous connections.
             ('Accept-Encoding', 'gzip')],
             kind='client')
     request_parameters = ('encode_multipart', 'max_redirects', 'decompress',
-                          'allow_redirects', 'multipart_boundary', 'version')
+                          'allow_redirects', 'multipart_boundary', 'version',
+                          'timeout')
     # Default hosts not affected by proxy settings. This can be overwritten
     # by specifying the "no" key in the proxy_info dictionary
     no_proxy = set(('localhost', urllibr.localhost(), platform.node()))

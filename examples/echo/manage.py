@@ -18,47 +18,31 @@ import pulsar
 from pulsar.apps.socket import SocketServer
 
 
-class EchoServerConsumer(pulsar.ProtocolConsumer):
-    '''Protocol consumer for the server'''
-    separator = b'\r\n'
-    def feed(self, data):
+class EchoProtocol(pulsar.ProtocolConsumer):
+    '''Protocol consumer for the client'''
+    separator = b'\r\n\r\n'
+    
+    def data_received(self, data):
         idx = data.find(self.separator)
-        if idx: # we have the message
+        if idx: # we have a full message
             idx += len(self.separator)
             data, rest = data[:idx], data[idx:]
-            if rest:
-                raise pulsar.ProtocolError
-            self.write(data)
+            self.response(data)
             self.finished()
-        else:
-            self.write(data)
-    
-    
-class EchoProtocol(pulsar.ClientProtocolConsumer):
-    separator = b'\r\n'
-    @property
-    def buffer(self):
-        if not hasattr(self, '_buffer'):
-            self._buffer = b''
-        return self._buffer
-
-    def feed(self, data):
-        idx = data.find(self.separator)
-        if idx: # we have the message
-            data, rest = data[:idx], data[idx+len(self.separator):]
-            if rest:
-                raise pulsar.ProtocolError
-            self.consumer(data)
-            self.message = self.buffer + data
-            self.finished() # done with this response
-        else:
-            self.buffer = self.buffer + data
-
-    def send(self, *args):
-        message = self.request.message.encode('utf-8') + self.separator
-        self.write(message)
+            return rest
+        
+    def response(self, data):
+        # We store the result
+        self.result = data[:len(self.separator)]
         
 
+class EchoServerProtocol(EchoProtocol):
+    
+    def response(self, data):
+        # write it back
+        self.transport.write(data)
+    
+    
 class Echo(pulsar.Client):
     consumer_factory = EchoProtocol
 
@@ -66,7 +50,7 @@ class Echo(pulsar.Client):
         super(Echo, self).__init__(**params)
         self.address = address
 
-    def request(self, message, consumer=None):
+    def request(self, message):
         request = pulsar.Request(self.address, self.timeout)
         request.message = message
         return self.response(request, consumer)
@@ -75,7 +59,7 @@ class Echo(pulsar.Client):
 
 def server(description=None, **kwargs):
     description = description or 'Echo Server'
-    return SocketServer(callable=EchoServerConsumer,
+    return SocketServer(callable=EchoServerProtocol,
                         description=description,
                         **kwargs)
     

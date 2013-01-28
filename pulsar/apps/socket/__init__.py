@@ -138,6 +138,12 @@ requests. The request handler is constructued from the
     _app_name = 'socket'
     address = None
     
+    def protocol_consumer(self):
+        '''Returns the callable application handler which is stored in
+:attr:`Worker.app_handler`, used by :class:`Worker` to carry out its task.
+By default it returns the :attr:`Application.callable`.'''
+        return self.callable
+    
     def monitor_start(self, monitor):
         # if the platform does not support multiprocessing sockets set
         # the number of workers to 0.
@@ -181,7 +187,7 @@ uses the :meth:`handler` as its response protocol.'''
         cfg = self.cfg
         server = pulsar.create_server(eventloop=worker.requestloop,
                                       sock=worker.params.sock,
-                                      consumer_factory=self.handler(),
+                                      consumer_factory=self.protocol_consumer(),
                                       max_connections=cfg.max_requests,
                                       timeout=cfg.keepalive)
         server.bind_event('connection_made', safe(cfg.connection_made))

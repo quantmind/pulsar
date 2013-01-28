@@ -147,10 +147,10 @@ method should invoke this method to start the response dance.
         conn.set_consumer(response)
         return response
     
-    def update_parameters(self, params):
+    def update_parameters(self, parameter_list, params):
         '''Update *param* with attributes of this :class:`Client` defined
 in :attr:`request_parameters` tuple.'''
-        for name in self.request_parameters:
+        for name in parameter_list:
             if name not in params:
                 params[name] = getattr(self, name)
             elif name == 'hooks':

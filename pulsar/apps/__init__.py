@@ -41,11 +41,8 @@ the :class:`Application` associated with *name* if available. If not in the
         
 def monitor_start(self):
     self.app.monitor_start(self)
-    # If no workers available invoke the worker start method too
     if not self.cfg.workers:
         self.app.worker_start(self)
-    else:
-        self.app_handler = self.app.monitor_handler()
     self.app.fire_event('start')
 
 def monitor_info(self, data):
@@ -66,16 +63,7 @@ An :class:`Actor` for serving a pulsar :class:`Application`.
 
 .. attribute:: app
 
-    Instance of the :class:`Application` to be performed by the worker
-
-.. attribute:: cfg
-
-    Configuration dictionary
-
-.. attribute:: app_handler
-
-    The application handler obtained from :meth:`Application.handler`.
-
+    Instance of the :class:`Application` served by the worker
 """
     def __init__(self, *args, **kwargs):
         super(Worker, self).__init__(*args, **kwargs)
@@ -279,6 +267,10 @@ These are the most important facts about a pulsar :class:`Application`
         if actor:
             return actor.monitors.get(self.name)
 
+    def __setstate__(self, state):
+        super(Application, self).__setstate__(state)
+        self.local.events = AppEvents()
+        
     def fire_event(self, name):
         return self.local.events.fire_event(name, self)
         
@@ -287,12 +279,6 @@ These are the most important facts about a pulsar :class:`Application`
         
     def event(self, name):
         return self.local.events.event(name)
-        
-    def handler(self):
-        '''Returns the callable application handler which is stored in
-:attr:`Worker.app_handler`, used by :class:`Worker` to carry out its task.
-By default it returns the :attr:`Application.callable`.'''
-        return self.callable
 
     def io_poller(self, worker):
         '''called by :meth:`Actor.io_pooler`.'''

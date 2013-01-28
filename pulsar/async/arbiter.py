@@ -8,6 +8,7 @@ import pulsar
 from pulsar.utils.tools import Pidfile
 from pulsar.utils.security import gen_unique_id
 from pulsar.utils.pep import itervalues, iteritems
+from pulsar.utils.log import process_global
 from pulsar import HaltServer, system
 
 from .actor import Actor, ACTOR_STATES
@@ -17,8 +18,6 @@ from .access import get_actor, set_actor
 from .mailbox import MailboxConsumer
 from . import proxy
 
-
-process_global = pulsar.process_global
 
 __all__ = ['arbiter', 'spawn', 'Arbiter']
 

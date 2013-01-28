@@ -14,9 +14,10 @@ except ImportError: #pragma nocover
 ThreadQueue = queue.Queue
 
 from pulsar import AlreadyCalledError, AlreadyRegistered,\
-                   ActorAlreadyStarted, LogginMixin, system, Config
+                   ActorAlreadyStarted, system, Config, platform
 from pulsar.utils.structures import AttributeDictionary
 from pulsar.utils.pep import pickle, set_event_loop_policy
+from pulsar.utils.log import LogginMixin
 
 from .eventloop import EventLoop, setid, signal
 from .defer import Deferred, EventHandler, log_failure
@@ -263,6 +264,29 @@ nothing so that the best handler for the system is chosen.'''
     def spawn(self, **params):
         raise RuntimeError('Cannot spawn an actor from an actor.')
     
+    def stop(self, exc=None):
+        '''Stop the actor by stopping its :attr:`Actor.requestloop`
+and closing its :attr:`Actor.mailbox`. Once everything is closed
+properly this actor will go out of scope.'''
+        log_failure(exc)
+        if self.state <= ACTOR_STATES.RUN:
+            # The actor has not started the stopping process. Starts it now.
+            self.exit_code = 1 if exc else 0
+            self.state = ACTOR_STATES.STOPPING
+            # if CPU bound and the requestloop is still running, stop it
+            if self.cpubound and self.ioloop.running:
+                # shuts down the mailbox first
+                self.mailbox.event_loop.call_soon_threadsafe(self._stop)
+                self.mailbox.close()
+            else:
+                self._stop()
+        elif self.stopped():
+            # The actor has finished the stopping process.
+            #Remove itself from the actors dictionary
+            remove_actor(self)
+            self.fire_event('stop')
+        return self.event('stop')
+    
     ###############################################################  STATES
     def running(self):
         '''``True`` if actor is running.'''
@@ -301,33 +325,10 @@ mean it is running.'''
     def __reduce__(self):
         raise pickle.PicklingError('{0} - Cannot pickle Actor instances'\
                                    .format(self))
-
+    
     ############################################################################
-    # STOPPING
+    #    INTERNALS
     ############################################################################
-    def stop(self, exc=None):
-        '''Stop the actor by stopping its :attr:`Actor.requestloop`
-and closing its :attr:`Actor.mailbox`. Once everything is closed
-properly this actor will go out of scope.'''
-        log_failure(exc)
-        if self.state <= ACTOR_STATES.RUN:
-            # The actor has not started the stopping process. Starts it now.
-            self.exit_code = 1 if exc else 0
-            self.state = ACTOR_STATES.STOPPING
-            # if CPU bound and the requestloop is still running, stop it
-            if self.cpubound and self.ioloop.running:
-                # shuts down the mailbox first
-                self.mailbox.event_loop.call_soon_threadsafe(self._stop)
-                self.mailbox.close()
-            else:
-                self._stop()
-        elif self.stopped():
-            # The actor has finished the stopping process.
-            #Remove itself from the actors dictionary
-            remove_actor(self)
-            self.fire_event('stop')
-        return self.event('stop')
-        
     def _stop(self):
         '''Exit from the :class:`Actor` domain.'''
         self.bind_event('stop', self._bye)
@@ -341,9 +342,6 @@ properly this actor will go out of scope.'''
         self.logger.debug('Bye from "%s"', self)
         return r
     
-    ############################################################################
-    #    INTERNALS
-    ############################################################################
     def periodic_task(self):
         if self.can_continue():
             if self.running():
@@ -359,8 +357,8 @@ properly this actor will go out of scope.'''
         
     @stop_on_error
     def _got_notified(self, result):
-        self.fire_event('start')
         self.logger.info('%s started', self)
+        self.fire_event('start')
         
     @stop_on_error
     def hand_shake(self):
@@ -418,16 +416,22 @@ status and performance.'''
             if system.set_proctitle(proc_name):
                 self.logger.debug('Set process title to %s', proc_name)
             #system.set_owner_process(cfg.uid, cfg.gid)
-            if is_mainthread() and signal:
+            if is_mainthread() and signal and not platform.is_windows:
                 self.logger.debug('Installing signals')
                 self.signal_queue = ThreadQueue()
-                for name in system.ALL_SIGNALS:
-                    sig = getattr(signal, 'SIG%s' % name)
+                for sig in system.EXIT_SIGNALS:
                     try:
                         handler = partial(self.signal_queue.put, sig)
                         self.requestloop.add_signal_handler(sig, handler)
                     except ValueError:
                         break
+                #for name in system.SIG_NAMES:
+                #    sig = getattr(signal, 'SIG%s' % name)
+                #    try:
+                #        handler = partial(self.signal_queue.put, sig)
+                #        self.requestloop.add_signal_handler(sig, handler)
+                #    except ValueError:
+                #        break
         
     def can_continue(self):
         if self.signal_queue is not None:
@@ -457,7 +461,7 @@ status and performance.'''
         try:
             self.requestloop.run()
         except Exception as e:
-            self.logger.exception('Unhadled exception in %s', self.requestloop)
+            self.logger.exception('Unhandled exception in %s', self.requestloop)
             exc = e
         finally:
             self.stop(exc)

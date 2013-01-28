@@ -134,15 +134,13 @@ class TestTestWorker(unittest.TestCase):
         yield future
         self.assertTrue(is_failure(future.result[0]))
         
-    def __test_multiple_execute(self):
+    def test_multiple_execute(self):
         result1 = send('arbiter', 'run', wait, 0.2)
         result2 = send('arbiter', 'ping')
         result3 = send('arbiter', 'echo', 'ciao!')
         result4 = send('arbiter', 'run', wait, 0.1)
         result5 = send('arbiter', 'echo', 'ciao again!')
-        yield multi_async((result1.when_ready,result2.when_ready,
-                           result3.when_ready,result4.when_ready,
-                           result5.when_ready))
+        yield multi_async((result1, result2, result3, result4, result5))
         self.assertEqual(result1.result, 0.2)
         self.assertEqual(result2.result, 'pong')
         self.assertEqual(result3.result, 'ciao!')

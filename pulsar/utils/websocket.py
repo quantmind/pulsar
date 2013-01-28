@@ -105,10 +105,6 @@ specification supporting protocol version 13::
     def is_close(self):
         return self.opcode == 0x8
     
-    def on_received(self):
-        if self.opcode == 0x9:
-            return self.pong(self.body, self.version)
-    
     def _build_frame(self, message):
         #Builds a frame from the instance's attributes
         header = BytesIO()
@@ -263,13 +259,18 @@ class FrameParser(object):
         '''return a `close` :class:`Frame`.'''
         return self.encode(body, opcode=0x8)
     
-    def continuation(self, body=None):
+    def continuation(self, body=None, final=True):
         '''return a `continuation` :class:`Frame`.'''
-        return self.encode(body, opcode=0, final=False)
+        return self.encode(body, opcode=0, final=final)
     
+    def replay_to(self, frame):
+        '''Build a :class:`Frame` as a reply to *frame*.'''
+        if frame.opcode == 0x9:
+            return self.pong(frame.body)
+        
     def decode(self, data=None):
         '''Decode bytes data into a :class:`Frame`. If :attr:`kind` is 0
-it descodes into a client frame (masked frame) while if is 1 it decodes
+it decodes into a client frame (masked frame) while if is 1 or 2 it decodes
 into a server frame (unmasked).'''
         if data:
             if self._buf:
@@ -335,8 +336,8 @@ into a server frame (unmasked).'''
             self.save_buf(frame, data)
         # We have a frame
         else:
-            data = data[:frame.payload_length] # payload data
-            frame.msg.extend(data)
+            payload = data[:frame.payload_length] # payload data
+            frame.msg.extend(payload)
             self.save_buf(None, data[frame.payload_length:])
             for extension in self.extensions:
                 data = extension.receive(frame, data)

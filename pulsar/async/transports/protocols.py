@@ -221,6 +221,8 @@ connected until :meth:`Protocol.connection_made` is called.
         self._cancel_timeout()
         if self._current_consumer:
             self._current_consumer.connection_lost(exc)
+            if self._current_consumer:
+                self.finished(self._current_consumer, exc)
         self.fire_event('connection_lost')
                              
     def upgrade(self, consumer_factory):

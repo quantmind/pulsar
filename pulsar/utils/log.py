@@ -2,7 +2,7 @@ import sys
 import copy
 from time import time
 import logging
-from multiprocessing import current_process, Lock
+from multiprocessing import current_process
 
 if sys.version_info < (2,7):    #pragma    nocover
     from .fallbacks._dictconfig import dictConfig
@@ -16,11 +16,9 @@ else:
     
 from .structures import AttributeDictionary
 
-SERVER_NAME = 'Pulsar'
 NOLOG = 100
 
-__all__ = ['SERVER_NAME',
-           'dictConfig',
+__all__ = ['dictConfig',
            'NullHandler',
            'process_global',
            'LogginMixin',
@@ -130,31 +128,6 @@ def local_property(f):
     return property(local_method(f), doc=f.__doc__)
     
     
-class SynchronizedMixin(object):
-    '''A mixin to be used with class:`LocalMixin` class.'''
-    @local_property
-    def lock(self):
-        return Lock()
-    
-    @classmethod
-    def make(cls, f):
-        """Synchronization decorator for Synchronized member functions. """
-        def _(self, *args, **kw):
-            lock = self.lock
-            lock.acquire()
-            try:
-                return f(self, *args, **kw)
-            finally:
-                lock.release()
-        _.thread_safe = True
-        _.__doc__ = f.__doc__
-        return _
-    
-    
-class Synchronized(LocalMixin, SynchronizedMixin):
-    pass
-
-
 def process_global(name, val=None, setval=False):
     '''Access and set global variables for the current process.'''
     p = current_process()

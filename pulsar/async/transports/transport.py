@@ -5,7 +5,7 @@ from inspect import isgenerator
 from collections import deque
 
 from pulsar.utils import sockets
-from pulsar.utils.pep import get_event_loop
+from pulsar.utils.pep import get_event_loop, range
 from pulsar.utils.sockets import WRITE_BUFFER_MAX_SIZE, get_transport_type,\
                                  create_socket
 from pulsar.async.defer import Deferred
@@ -191,9 +191,9 @@ the :class:`EventHandler`.
         self._write_buffer = deque()
     
     def __repr__(self):
-        if self._sock:
+        try:
             return self._sock.__repr__()
-        else:
+        except Exception:
             return '<closed>'
     
     def __str__(self):
@@ -234,7 +234,6 @@ the :class:`EventHandler`.
 
     def write(self, data):
         self._check_closed()
-        writing = self.writing
         if data:
             assert isinstance(data, bytes)
             if len(data) > WRITE_BUFFER_MAX_SIZE:
@@ -243,7 +242,7 @@ the :class:`EventHandler`.
             else:
                 self._write_buffer.append(data)
         # Try to write only when not waiting for write callbacks
-        if not self.connecting and not writing:
+        if not self.connecting:
             self._ready_write()
     
     def pause(self):
@@ -258,18 +257,18 @@ the :class:`EventHandler`.
             for data in buffer:
                 self._data_received(chunk)
     
-    def close(self, async=True):
+    def close(self, async=True, exc=None):
         if not self.closing:
             self._closing = True
             self._event_loop.remove_reader(self._sock.fileno())
             if not async:
                 self._write_buffer = deque()
-                self._shutdown()
+                self._shutdown(exc)
             elif not self.writing:
-                self._event_loop.call_soon(self._shutdown)
+                self._event_loop.call_soon(self._shutdown, exc)
     
-    def abort(self):
-        self.close(async=False)
+    def abort(self, exc=None):
+        self.close(async=False, exc=exc)
     
     ############################################################################
     ###    PULSAR TRANSPORT METHODS.
@@ -328,8 +327,8 @@ returns ``self``.'''
                 chunk = self._protocol_read()
                 if chunk:
                     self._data_received(chunk)
-            except Exception:
-                self.abort()
+            except Exception as e:
+                self.abort(exc=e)
                 raise
             
     def _ready_write(self):
@@ -342,13 +341,9 @@ returns ``self``.'''
             self._protocol_write()
         except socket.error as e:
             LOGGER.warning("Write error on %s: %s", self, e)
-            self.abort()
+            self.abort(exc=e)
             return
-        if self.writing:
-            # more to do
-            # TODO: should this be call_soon?
-            self._event_loop.call_soon_threadsafe(self._ready_write)
-        elif self._closing:
+        if self._closing and not self.writing:
             # shutdown
             self._event_loop.call_soon(self._shutdown)
     
@@ -406,20 +401,23 @@ class TransportProxy(object):
         if self._transport:
             return self._transport.fileno()
     
-    def close(self, async=True):
+    def close(self, async=True, exc=None):
         if self._transport:
-            self._transport.close(async)
+            self._transport.close(async=async, exc=exc)
         
-    def abort(self):
-        self.close(async=False)
+    def abort(self, exc=None):
+        self.close(async=False, exc=exc)
         
         
 class Connector(Deferred, TransportProxy):
     
     def __init__(self, transport):
-        super(Connector, self).__init__('%s connector' % transport)
         self._transport = transport
+        super(Connector, self).__init__()
         self.add_callback(self._connection_made, self._connection_failure)
+    
+    def __repr__(self):
+        return 'Connector for %s' % self._transport
         
     def _connection_made(self, result):
         self._transport._protocol.connection_made(self._transport)

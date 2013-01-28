@@ -6,6 +6,7 @@
 from optparse import make_option
 
 from django.core.management.base import BaseCommand, CommandError
+from django.core.servers.basehttp import get_internal_wsgi_application
 
 from pulsar.apps.wsgi import WSGIServer
 from pulsar import make_settings

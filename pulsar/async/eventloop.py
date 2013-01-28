@@ -18,6 +18,7 @@ from pulsar.utils.pep import default_timer, set_event_loop_policy,\
                              set_event_loop, new_event_loop, get_event_loop,\
                              EventLoop as BaseEventLoop,\
                              EventLoopPolicy as BaseEventLoopPolicy
+from pulsar.utils.sockets import SOCKET_INTERRUPT_ERRORS
 from .access import thread_local_data
 from .defer import log_failure, Deferred, as_failure
 from .transports import create_server
@@ -26,7 +27,7 @@ __all__ = ['EventLoop', 'TimedCall', 'asynchronous']
 
 LOGGER = logging.getLogger('pulsar.eventloop')
 
-    
+
 def file_descriptor(fd):
     if hasattr(fd, 'fileno'):
         return fd.fileno()
@@ -482,7 +483,10 @@ be called. Returns a :class:`TimedCall` handler which can be used to cancel
 the signal callback.'''
         self._check_signal(sig)
         handler = TimedCall(None, callback, args)
-        prev = signal.signal(sig, handler)
+        def h(n, frame):
+            print('got signal %s' % n)
+            
+        prev = signal.signal(sig, h)
         if isinstance(prev, TimedCall):
             prev.cancel()
         return handler
@@ -547,18 +551,8 @@ default signal handler ``signal.SIG_DFL``.'''
                 poll_timeout = min(seconds, poll_timeout)
         try:
             event_pairs = self._impl.poll(poll_timeout)
-        except Exception as e:
-            # Depending on python version and EventLoop implementation,
-            # different exception types may be thrown and there are
-            # two ways EINTR might be signaled:
-            # * e.errno == errno.EINTR
-            # * e.args is like (errno.EINTR, 'Interrupted system call')
-            eno = getattr(e, 'errno', None)
-            if eno != errno.EINTR:
-                args = getattr(e, 'args', None)
-                if isinstance(args, tuple) and len(args) == 2:
-                    eno = args[0]
-            if eno != errno.EINTR and self._running:
+        except socket.error as e:
+            if e not in SOCKET_INTERRUPT_ERRORS and self._running:
                 raise
         else:
             for fd, events in event_pairs:
@@ -570,6 +564,11 @@ default signal handler ``signal.SIG_DFL``.'''
         for callback in callbacks:
             try:
                 log_failure(callback())
+            except socket.error as e:
+                if e.args[0] in SOCKET_INTERRUPT_ERRORS:
+                    pass
+                else:
+                    LOGGER.exception('Exception in event loop callback.')
             except Exception:
                 LOGGER.exception('Exception in event loop callback.')
 

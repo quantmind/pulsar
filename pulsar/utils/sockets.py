@@ -105,7 +105,7 @@ class Socket(SocketType('SocketBase', (), {})):
         return getattr(self._sock, name)
         
         
-if platform.isWindows:    #pragma    nocover
+if platform.is_windows:    #pragma    nocover
     EPERM = object()
     from errno import WSAEINVAL as EINVAL
     from errno import WSAEWOULDBLOCK as EWOULDBLOCK
@@ -136,6 +136,7 @@ else:
 
 TCP_ACCEPT_ERRORS = (EMFILE, ENOBUFS, ENFILE, ENOMEM, ECONNABORTED)
 
+SOCKET_INTERRUPT_ERRORS = (EINTR, ECONNRESET)
         
 class TCPSocket(Socket):
     TYPE = socket.SOCK_STREAM
@@ -173,7 +174,7 @@ class UDPSocket(Socket):
     
     
 
-if not platform.isWindows:
+if not platform.is_windows:
     
     class UnixSocket(TCPSocket):
         FAMILY = socket.AF_UNIX

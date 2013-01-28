@@ -56,7 +56,7 @@ class WSGIServer(SocketServer):
     cfg_apps = ('socket',)
     _app_name = 'wsgi'
 
-    def handler(self):
+    def protocol_consumer(self):
         '''Build a :class:`WsgiHandler` for the WSGI callable provided
 and return an :class:`HttpResponse` factory function.'''
         return partial(HttpServerResponse, self.callable)

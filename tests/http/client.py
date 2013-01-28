@@ -55,9 +55,11 @@ class TestHttpClientBase(unittest.TestCase):
 class TestHttpClient(TestHttpClientBase):
     
     def testClient(self):
-        http = self.client()
-        self.assertTrue('accept-encoding' in http.DEFAULT_HTTP_HEADERS)
+        http = self.client(max_redirects=5)
+        self.assertTrue('accept-encoding' in http.headers)
         self.assertEqual(http.timeout, self.timeout)
+        self.assertEqual(http.version, 'HTTP/1.1')
+        self.assertEqual(http.max_redirects, 5)
         if self.with_proxy:
             self.assertEqual(http.proxy_info, {'http': self.proxy_uri})
         

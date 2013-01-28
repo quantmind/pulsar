@@ -242,11 +242,12 @@ class WebSocketProtocol(pulsar.ProtocolConsumer):
         self.started = False
         self.closed = False
         
-    def feed(self, data):
+    def data_received(self, data):
         environ = self.environ
-        frame = self.parser.decode(data)
-        if frame:
-            self.write(frame.on_received())
+        parser = self.parser
+        frame = parser.decode(data)
+        while frame:
+            self.write(parser.replay_to(frame))
             if not self.started:
                 # call on_start (first message received)
                 self.started = True
@@ -256,6 +257,7 @@ class WebSocketProtocol(pulsar.ProtocolConsumer):
                 self.close()
             elif frame.is_data:
                 self.write(self.handler.on_message(environ, frame.body))
+            frame = parser.decode()
     
     def write(self, frame):
         if frame is None:
@@ -283,7 +285,7 @@ class WebSocketClientProtocol(pulsar.ProtocolConsumer):
         super(WebSocketClientProtocol, self).__init__(*args)
         self.parser = FrameParser(kind=1)
         
-    def feed(self, data):
+    def data_received(self, data):
         frame = self.parser.decode(data)
         while frame:
             # Got a frame

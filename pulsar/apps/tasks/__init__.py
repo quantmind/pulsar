@@ -287,6 +287,14 @@ for implementation.'''
     def request_instance(self, request):
         return self.scheduler.get_task(request)
 
+    def monitor_start(self, monitor):
+        # Load the application callable, the task consumer
+        if self.callable:
+            self.callable()
+        import_modules(self.cfg.tasks_path)
+        self.local.scheduler = Scheduler(self)
+        return self
+    
     def monitor_task(self, monitor):
         '''Override the :meth:`pulsar.Application.monitor_task` callback
 to check if the scheduler needs to perform a new run.'''
@@ -295,16 +303,8 @@ to check if the scheduler needs to perform a new run.'''
             if s.next_run <= datetime.now():
                 s.tick(monitor)
 
-    def handler(self):
-        # Load the application callable, the task consumer
-        if self.callable:
-            self.callable()
-        import_modules(self.cfg.tasks_path)
-        self.local.scheduler = Scheduler(self)
-        return self
-
-    def monitor_handler(self):
-        return self.handler()
+    def worker_start(self, worker):
+        return self.monitor_start(worker)
 
     def job_list(self, jobnames=None):
         return self.scheduler.job_list(jobnames=jobnames)
