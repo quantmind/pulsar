@@ -1123,24 +1123,6 @@ class HttpResponse(IOClientRead):
         self.strict=strict
         self.__headers = None
 
-    def __str__(self):
-        if self.status_code:
-            return '%s %s' % (self.status_code, self.response)
-        else:
-            return '<None>'
-
-    def __repr__(self):
-        return '%s(%s)' % (self.__class__.__name__, self)
-
-    @property
-    def streaming(self):
-        return self.request.stream
-    
-    @property
-    def status_code(self):
-        if self.parser:
-            return self.parser.get_status_code()
-
     @property
     def content(self):
         if self.parser:
@@ -1159,11 +1141,6 @@ class HttpResponse(IOClientRead):
     def is_error(self):
         if self.status_code:
             return not is_succesful(self.status_code)
-
-    @property
-    def response(self):
-        if self.status_code:
-            return responses.get(self.status_code)
 
     @property
     def url(self):

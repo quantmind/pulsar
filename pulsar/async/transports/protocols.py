@@ -77,19 +77,22 @@ be :meth:`Producer.data_received`.
     
     @property
     def event_loop(self):
-        return self._connection.event_loop
+        if self._connection:
+            return self._connection.event_loop
     
     @property
-    def sock(self):
-        return self._connection.sock
+    def request(self):
+        return self._request
         
     @property
     def transport(self):
-        return self._connection.transport
+        if self._connection:
+            return self._connection.transport
     
     @property
     def address(self):
-        return self._connection.address
+        if self._connection:
+            return self._connection.address
     
     @property
     def on_finished(self):
@@ -101,16 +104,6 @@ By default it calls the :meth:`Connection.finished` method of the
 :attr:`connection` attribute.'''
         self.fire_event('data_received', b'')
         return self._connection.finished(self, result)
-    
-    ############################################################################
-    ###    TRANSPORT SHURTCUTS
-    def write(self, data):
-        '''Proxy of :meth:`Transport.write` method of :attr:`transport`.'''
-        self.transport.write(data)
-            
-    def writelines(self, lines):
-        '''Proxy of :meth:`Transport.writelines` method of :attr:`transport`.'''
-        self.transport.writelines(lines)
         
         
 class Connection(Protocol, TransportProxy):
@@ -192,6 +185,7 @@ connected until :meth:`Protocol.connection_made` is called.
         assert self._current_consumer is None, 'Consumer is not None'
         self._current_consumer = consumer
         consumer._connection = self
+        self.fire_event('pre_request', consumer)
         consumer.fire_event('start')
         self._processed += 1
     
@@ -235,6 +229,7 @@ response).'''
     def finished(self, consumer, result=NOTHING):
         '''Call this method to close the current *consumer*.'''
         if consumer is self._current_consumer:
+            self.fire_event('post_request', consumer)
             consumer.fire_event('finish', result)
             self._current_consumer = None
             consumer._connection = None

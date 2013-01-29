@@ -262,48 +262,6 @@ class TestHttpClientBase(unittest.TestCase):
     
 class TestHttpClient(TestHttpClientBase):
     
-    def testClient(self):
-        http = self.client()
-        self.assertTrue('accept-encoding' in http.DEFAULT_HTTP_HEADERS)
-        self.assertEqual(http.timeout, self.timeout)
-        if self.with_proxy:
-            self.assertEqual(http.proxy_info, {'http': self.proxy_uri})
-        
-    def test_200_get(self):
-        http = self.client()
-        response = http.get(self.httpbin())
-        yield response.when_done
-        self.assertEqual(str(response), '200 OK')
-        self.assertEqual(repr(r), 'HttpResponse(200 OK)')
-        self.assertEqual(r.client, http)
-        self.assertEqual(r.status_code, 200)
-        self.assertEqual(r.response, 'OK')
-        self.assertTrue(r.content)
-        self.assertEqual(r.url, self.httpbin())
-        
-    def test_200_get_data(self):
-        http = self.client()
-        r = make_async(http.get(self.httpbin('get',''), data={'bla':'foo'}))
-        yield r
-        r = r.result
-        self.assertEqual(r.status_code, 200)
-        self.assertEqual(r.response, 'OK')
-        result = r.content_json()
-        self.assertEqual(result['args'], {'bla':['foo']})
-        self.assertEqual(r.url,
-                self.httpbin(httpurl.iri_to_uri('get/',{'bla':'foo'})))
-        
-    def test_200_gzip(self):
-        http = self.client()
-        r = make_async(http.get(self.httpbin('gzip')))
-        yield r
-        r = r.result
-        headers = r.headers
-        self.assertEqual(r.status_code, 200)
-        self.assertEqual(r.response, 'OK')
-        content = r.content_json()
-        self.assertTrue(content['gzipped'])
-        self.assertTrue(r.headers['content-encoding'],'gzip')
         
     def test_400_get(self):
         '''Bad request 400'''

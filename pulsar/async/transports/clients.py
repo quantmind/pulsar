@@ -12,7 +12,8 @@ __all__ = ['ConnectionPool', 'Client', 'Request']
 
     
 class Request(object):
-    '''A :class:`Client` request class.'''
+    '''A :class:`Client` request class is an hashable object used to select
+the appropiate :class:`ConnectionPool` for the client request.'''
     def __init__(self, address, timeout=0):
         self.address = address
         self.timeout = timeout
@@ -65,6 +66,7 @@ protocols. It maintains a live set of connections.
             # build the new connection
             connection = self.new_connection(self.address,
                                              client.consumer_factory)
+            connection.copy_many_times_events(client)
             #IMPORTANT: create client transport an connect to endpoint
             transport = create_transport(connection, address=connection.address)
             return transport.connect(connection.address)
@@ -144,6 +146,7 @@ method should invoke this method to start the response dance.
         conn = pool.get_or_create_connection(self)
         # conn could be a Connection or a Connector (Deferred)
         response = self.consumer_factory(conn, request, consumer)
+        # The request has not been sent yet. Fire the pre_request signal
         conn.set_consumer(response)
         return response
     
@@ -153,12 +156,6 @@ in :attr:`request_parameters` tuple.'''
         for name in parameter_list:
             if name not in params:
                 params[name] = getattr(self, name)
-            elif name == 'hooks':
-                hooks = params[name]
-                chooks = dict(((e, copy(h)) for e, h in iteritems(self.hooks)))
-                for e, h in iteritems(hooks):
-                    chooks[e].append(h)
-                params[name] = chooks
         return params
         
     def close_connections(self, async=True):

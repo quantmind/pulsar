@@ -240,7 +240,7 @@ class HttpBin(LocalMixin):
 
     @route('cookies', title='Returns cookie data')
     def request_cookies(self, environ, bits):
-        cookies = {'cookies': environ['HTTP_COOKIE']}
+        cookies = {'cookies': environ.get('HTTP_COOKIE')}
         return self.response(jsonbytes(cookies))
 
     @route('cookies/set', 'GET', 'Sets a simple cookie',
