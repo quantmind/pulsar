@@ -209,16 +209,6 @@ class TestTools(unittest.TestCase):
     
 class TestHttpClient:
         
-    def testRedirect(self):
-        http = self.client()
-        r = make_async(http.get(self.httpbin('redirect', '1')))
-        yield r
-        r = r.result
-        self.assertEqual(r.status_code, 200)
-        history = r.request.history
-        self.assertEqual(len(history), 1)
-        self.assertTrue(history[0].url.endswith('/redirect/1'))
-        
     def testTooManyRedirects(self):
         http = self.client()
         r = safe_async(http.get, (self.httpbin('redirect', '5'),),

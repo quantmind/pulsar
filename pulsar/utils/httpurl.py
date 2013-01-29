@@ -524,7 +524,7 @@ the entity-header fields.'''
         return '\r\n'.join(self._ordered())
 
     def __bytes__(self):
-        return str(self).encode(DEFAULT_CHARSET)
+        return str(self).encode('latin-1')
 
     def __iter__(self):
         headers = self._headers

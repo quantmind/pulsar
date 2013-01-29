@@ -13,7 +13,7 @@ from pulsar.utils.httpurl import urlparse, urljoin, DEFAULT_CHARSET,\
                                     Headers, urllibr, get_environ_proxies,\
                                     choose_boundary, urlunparse,\
                                     host_and_port, responses, is_succesful,\
-                                    HTTPError, request_host
+                                    HTTPError, request_host, requote_uri
 
 from .plugins import *
 
@@ -40,7 +40,7 @@ class HttpRequest(pulsar.Request):
         self._set_hostport(*host_and_port(self.full_host))
         super(HttpRequest, self).__init__((self.host, self.port), timeout)
         #self.bind_event(hooks)
-        self.history = history
+        self.history = history or []
         self.wait_continue = wait_continue
         self.max_redirects = max_redirects
         self.allow_redirects = allow_redirects
@@ -105,18 +105,17 @@ class HttpRequest(pulsar.Request):
         buffer = []
         self.body = body = self.encode_body()
         if body:
-            #self.headers['content-length'] = str(len(body))
+            self.headers['content-length'] = str(len(body))
             if self.wait_continue:
                 self.headers['expect'] = '100-continue'
                 body = None
         request = self.first_line()
         buffer.append(request.encode('ascii'))
+        buffer.append(b'\r\n')
         buffer.append(bytes(self.headers))
-        buffer.append(b'')
-        buffer.append(b'')
         if body:
             buffer.append(body)
-        return b'\r\n'.join(buffer)
+        return b''.join(buffer)
         
     def encode_body(self):
         '''Encode body or url if the method does not have body'''
@@ -268,14 +267,15 @@ class HttpResponse(pulsar.ProtocolConsumer):
         had_headers = self.parser.is_headers_complete()
         if self.parser.execute(data, len(data)) == len(data):
             if self.parser.is_headers_complete():
-                body = self.parser.recv_body()
-                self._buffer.append(body)
-                self.fire_event('data_received', body)
-                if had_headers:
+                if not had_headers:
                     self.fire_event('headers')
                     new_response = self.handle_headers()
                     if new_response:
                         return
+                body = self.parser.recv_body()
+                if body:
+                    self._buffer.append(body)
+                    self.fire_event('data_received', body)
                 if self.parser.is_message_complete():
                     self.finished()
         else:
@@ -326,26 +326,10 @@ class HttpResponse(pulsar.ProtocolConsumer):
         return client
     
     def new_request(self, url=None):
-        self.finished()
-        request = self.request
-        params = request.params()
-        url = url or request.full_url
-        history = params.pop('history') or []
-        if len(history) >= request.max_redirects:
+        if len(self.history) >= request.max_redirects:
             raise TooManyRedirects
-        history.append(self)
-        method = params.pop('method')
-        # http://www.w3.org/Protocols/rfc2616/rfc2616-sec10.html#sec10.3.4
-        if response.status_code is 303:
-            method = 'GET'
-            params.pop('data')
-            params.pop('files')
-        headers = params.pop('headers')
-        headers.pop('Cookie', None)
-        params.pop('hooks')
-        # Build a new request
-        return request.client.request(method, url, headers=headers,
-                                      history=history, **params)
+        url = url or self.url
+        return request.client.request(method, url, previous_response=self)
 
 
 class HttpClient(pulsar.Client):
@@ -507,7 +491,7 @@ object.
         return self.request('DELETE', url, **kwargs)
     
     def request(self, method, url, cookies=None, headers=None,
-                consumer=None, **params):
+                consumer=None, previous_response=None, **params):
         '''Constructs and sends a request to a remote server.
 It returns an :class:`HttpResponse` object.
 
@@ -518,7 +502,25 @@ the :class:`HttpRequest` constructor.
 
 :rtype: a :class:`HttpResponse` object.
 '''
-        params = self.update_parameters(self.request_parameters, params)
+        if previous_response:
+            connection = previous_response.connection
+            response = self.consumer_factory(previous_response.connection,
+                                             previous_response.request,
+                                             previous_response.consumer)
+            history = copy(request.history)
+            history.append(response)
+            pparams = request.params()
+            headers = headers or pparams.pop('headers')
+            headers.pop('Cookie', None)
+            method = params.pop('method')
+            # http://www.w3.org/Protocols/rfc2616/rfc2616-sec10.html#sec10.3.4
+            if previous_response.status_code is 303:
+                method = 'GET'
+                pparams.pop('data')
+                pparams.pop('files')
+            params.update(pparams)
+        else:
+            params = self.update_parameters(self.request_parameters, params)
         request = HttpRequest(self, url, method, **params)
         request.headers = self.get_headers(request, headers)
         if self.cookies:
@@ -528,6 +530,10 @@ the :class:`HttpRequest` constructor.
                 cookies = cookiejar_from_dict(cookies)
             cookies.add_cookie_header(request)
         response = self.response(request, consumer)
+        if previous_response:
+            previous_response._connection = response._connection
+            previous_response._request = response._request
+            response = previous_response
         response.transport.write(request.encode())
         return response
     

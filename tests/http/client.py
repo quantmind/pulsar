@@ -176,3 +176,12 @@ class TestHttpClient(TestHttpClientBase):
         result = response.content_json()
         self.assertTrue(result['args'])
         self.assertEqual(result['args']['numero'],['1','2'])
+        
+    def testRedirect(self):
+        http = self.client()
+        response = http.get(self.httpbin('redirect', '1'))
+        yield response.on_finished
+        self.assertEqual(response.status_code, 200)
+        history = response.request.history
+        self.assertEqual(len(history), 1)
+        self.assertTrue(history[0].url.endswith('/redirect/1'))
