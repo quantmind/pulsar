@@ -1,5 +1,5 @@
 '''Tests asynchronous HttpClient.'''
-from pulsar import send, make_async, safe_async, is_failure
+from pulsar import send
 from pulsar.apps.test import unittest
 from pulsar.utils import httpurl
 from pulsar.utils.httpurl import to_bytes, urlencode
@@ -73,3 +73,25 @@ class TestHttpClient(TestHttpClientBase):
         self.assertEqual(response.response, 'OK')
         self.assertTrue(response.content)
         self.assertEqual(response.url, self.httpbin())
+        
+    def test_200_get_data(self):
+        http = self.client()
+        response = http.get(self.httpbin('get',''), data={'bla':'foo'})
+        yield response.on_finished
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.response, 'OK')
+        result = response.content_json()
+        self.assertEqual(result['args'], {'bla':['foo']})
+        self.assertEqual(response.url,
+                self.httpbin(httpurl.iri_to_uri('get/',{'bla':'foo'})))
+        
+    def test_200_gzip(self):
+        http = self.client()
+        response = http.get(self.httpbin('gzip'))
+        yield response.on_finished
+        headers = response.headers
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.response, 'OK')
+        content = response.content_json()
+        self.assertTrue(content['gzipped'])
+        self.assertTrue(response.headers['content-encoding'],'gzip')

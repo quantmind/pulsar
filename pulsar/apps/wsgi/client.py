@@ -30,10 +30,10 @@ class HttpRequest(pulsar.Request):
                   allow_redirects=False, max_redirects=10, decompress=True,
                   version=None, **ignored):
         self.client = client
-        self.type, self.host, self.path, self.params,\
+        self.type, self.full_host, self.path, self.params,\
         self.query, self.fragment = urlparse(url)
         self.full_url = self._get_full_url()
-        self._set_hostport(*host_and_port(self.host))
+        self._set_hostport(*host_and_port(self.full_host))
         super(HttpRequest, self).__init__((self.host, self.port), timeout)
         #self.bind_event(hooks)
         self.history = history
@@ -52,6 +52,15 @@ class HttpRequest(pulsar.Request):
         
     def __hash__(self):
         return hash((self.type, self.address, self.timeout))
+    
+    def __repr__(self):
+        return self.first_line()
+    
+    def __str__(self):
+        return self.__repr__()
+    
+    def first_line(self):
+        return '%s %s %s' % (self.method, self.full_url, self.version)
     
     def set_proxy(self, host, type):
         if self.type == 'https' and not self._tunnel_host:
@@ -90,7 +99,7 @@ class HttpRequest(pulsar.Request):
     def encode(self):
         buffer = []
         body = self.encode_body()
-        request = '%s %s %s' % (self.method, self.full_url, self.version)
+        request = self.first_line()
         buffer.append(request.encode('ascii'))
         buffer.append(bytes(self.headers))
         buffer.append(b'')
@@ -146,7 +155,7 @@ class HttpRequest(pulsar.Request):
         self.full_url = self._get_full_url()
 
     def _get_full_url(self):
-        return urlunparse((self.type, self.host, self.path,
+        return urlunparse((self.type, self.full_host, self.path,
                                    self.params, self.query, ''))
         
         
@@ -171,6 +180,7 @@ class HttpResponse(pulsar.ProtocolConsumer):
     def __init__(self, connection, request, consumer=None):
         super(HttpResponse, self).__init__(connection, request, consumer)
         self._buffer = []
+        self._headers = None
     
     @property
     def parser(self):
@@ -198,6 +208,27 @@ class HttpResponse(pulsar.ProtocolConsumer):
     def response(self):
         if self.status_code:
             return responses.get(self.status_code)
+        
+    @property
+    def url(self):
+        return self.request.full_url
+    
+    @property
+    def headers(self):
+        if self._headers is None:
+            if self.parser and self.parser.is_headers_complete():
+                self._headers = Headers(self.parser.get_headers())
+        return self._headers
+    
+    def content_string(self, charset=None, errors=None):
+        '''Decode content as a string.'''
+        data = self.content
+        if data is not None:
+            return data.decode(charset or 'utf-8', errors or 'strict')
+
+    def content_json(self, charset=None, **kwargs):
+        '''Decode content as a JSON object.'''
+        return json.loads(self.content_string(charset), **kwargs)
         
     def data_received(self, data):
         had_headers = self.parser.is_headers_complete()
@@ -456,8 +487,7 @@ the :class:`HttpRequest` constructor.
                 cookies = cookiejar_from_dict(cookies)
             cookies.add_cookie_header(request)
         response = self.response(request, consumer)
-        data = request.encode()
-        response.transport.write(data)
+        response.transport.write(request.encode())
         return response
 
     def get_headers(self, request, headers):

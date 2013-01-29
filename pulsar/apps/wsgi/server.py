@@ -37,6 +37,8 @@ nothing."""
         "wsgi.version": version,
         "wsgi.run_once": True,
         "wsgi.url_scheme": prot,
+        'wsgi.multithread': False,
+        'wsgi.multiprocess':False,
         "SERVER_SOFTWARE": pulsar.SERVER_SOFTWARE,
         "REQUEST_METHOD": parser.get_method(),
         "QUERY_STRING": parser.get_query_string(),
@@ -45,9 +47,7 @@ nothing."""
         'CONTENT_TYPE': '',
         "CONTENT_LENGTH": '',
         'SERVER_NAME': response.server_name,
-        'SERVER_PORT': str(response.server_port),
-        "wsgi.multithread": False,
-        "wsgi.multiprocess":False
+        'SERVER_PORT': str(response.server_port)
     }
     # REMOTE_HOST and REMOTE_ADDR may not qualify the remote addr:
     # http://www.ietf.org/rfc/rfc3875
@@ -122,7 +122,7 @@ class HttpServerResponse(pulsar.ProtocolConsumer):
     def __init__(self, wsgi_callable, connection):
         super(HttpServerResponse, self).__init__(connection)
         self.wsgi_callable = wsgi_callable
-        host, port = self.sock.address[:2]
+        host, port = self.transport.address
         self.server_name = socket.getfqdn(host)
         self.server_port = port
         self.parser = lib.Http_Parser(kind=0)
@@ -136,7 +136,7 @@ class HttpServerResponse(pulsar.ProtocolConsumer):
                 self.expect_continue()
             if p.is_message_complete(): # message is done
                 self.environ = wsgi_environ(self, p)
-                self.writelines(self.generate(self.environ))
+                self.transport.writelines(self.generate(self.environ))
         else:
             # This is a parsing error, the client must have sent
             # bogus data
