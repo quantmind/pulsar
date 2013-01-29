@@ -110,31 +110,8 @@ class JsonCall:
         return self.__class__(self._client, name)
         
     def __call__(self, *args, **kwargs):
-        c = self._client
-        data, raw = c._get_data(self._name, *args, **kwargs)
-        body = c._json.dumps(data).encode('latin-1')
-        # Always make sure the content-type is application/json
-        c.http.headers['content-type'] = 'application/json'
-        resp = c.http.post(c.url, data=body)
-        if self._client._full_response:
-            return resp
-        elif is_async(resp):
-            return resp.add_callback(lambda r: self._end_call(r, raw))
-        else:
-            return self._end_call(resp, raw)
+        return self._client._call(self._name, *args, **kwargs)
     
-    def _end_call(self, resp, raw):
-        content = resp.content.decode('utf-8')
-        if resp.is_error:
-            if 'error' in content:
-                return self._client.loads(content)
-            else:
-                resp.raise_for_status()
-        else:
-            if raw:
-                return content
-            else:
-                return self._client.loads(content)
         
 class JsonProxy(object):
     '''A python Proxy class for :class:`JSONRPC` Servers.
@@ -217,6 +194,32 @@ usage is simple::
             func(*args, **kwargs)
         return default_timer() - start
 
+    def _call(self, name, *args, **kwargs):
+        data, raw = self._get_data(name, *args, **kwargs)
+        body = self._json.dumps(data).encode('latin-1')
+        # Always make sure the content-type is application/json
+        self.http.headers['content-type'] = 'application/json'
+        resp = self.http.post(self.url, data=body)
+        if self._client._full_response:
+            return resp
+        elif is_async(resp):
+            return resp.add_callback(lambda r: self._end_call(r, raw))
+        else:
+            return self._end_call(resp, raw)
+        
+    def _end_call(self, resp, raw):
+        content = resp.content.decode('utf-8')
+        if resp.is_error:
+            if 'error' in content:
+                return self.loads(content)
+            else:
+                resp.raise_for_status()
+        else:
+            if raw:
+                return content
+            else:
+                return self.loads(content)
+        
     def _get_data(self, func_name, *args, **kwargs):
         id = self.makeid()
         fs = func_name.split('_')
@@ -264,8 +267,8 @@ domain.'''
         self.local.handler = handler
         self.local.environ = environ
 
-    def __call__(self, *args, **kwargs):
-        data, raw = self._get_data(*args, **kwargs)
+    def _call(self, name, *args, **kwargs):
+        data, raw = self._get_data(name, *args, **kwargs)
         hnd = self.local.handler
         environ = self.local.environ
         method, args, kwargs, id, version = hnd.get_method_and_args(data)
