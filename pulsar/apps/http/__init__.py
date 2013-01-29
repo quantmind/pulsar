@@ -13,7 +13,9 @@ from pulsar.utils.httpurl import urlparse, urljoin, DEFAULT_CHARSET,\
                                     Headers, urllibr, get_environ_proxies,\
                                     choose_boundary, urlunparse,\
                                     host_and_port, responses, is_succesful,\
-                                    HTTPError
+                                    HTTPError, request_host
+
+from .plugins import *
 
 __all__ = ['HttpClient']
 
@@ -103,7 +105,7 @@ class HttpRequest(pulsar.Request):
         buffer = []
         self.body = body = self.encode_body()
         if body:
-            self.headers['content-length'] = str(len(body))
+            #self.headers['content-length'] = str(len(body))
             if self.wait_continue:
                 self.headers['expect'] = '100-continue'
                 body = None
@@ -255,7 +257,11 @@ class HttpResponse(pulsar.ProtocolConsumer):
         if self.is_error:
             raise HTTPError(self.url, self.status_code,
                             self.content, self.headers, None)
-        
+    
+    def get_origin_req_host(self):
+        response = self.history[-1] if self.history else self
+        return request_host(request)
+    
     ############################################################################
     ##    PROTOCOL IMPLEMENTATION
     def data_received(self, data):
@@ -524,6 +530,13 @@ the :class:`HttpRequest` constructor.
         response = self.response(request, consumer)
         response.transport.write(request.encode())
         return response
+    
+    def add_basic_authentication(self, username, password):
+        '''Add a :class:`HTTPBasicAuth` handler to the *pre_requests* hooks.'''
+        self.bind_event('pre_request', HTTPBasicAuth(username, password))
+        
+    def add_digest_authentication(self, username, password):
+        self.bind_event('pre_request', HTTPDigestAuth(username, password))
 
     def get_headers(self, request, headers):
         '''Returns a :class:`Header` obtained from combining
