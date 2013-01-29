@@ -45,7 +45,6 @@ nothing."""
         "RAW_URI": parser.get_url(),
         "SERVER_PROTOCOL": prot,
         'CONTENT_TYPE': '',
-        "CONTENT_LENGTH": '',
         'SERVER_NAME': response.server_name,
         'SERVER_PORT': str(response.server_port)
     }
@@ -170,7 +169,7 @@ the following algorithm:
 
     @property
     def upgrade(self):
-        if self.headers:
+        if self.request_headers:
             return self.headers.get('Upgrade')
 
     @property

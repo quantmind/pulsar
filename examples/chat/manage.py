@@ -16,8 +16,10 @@ except ImportError: #pragma nocover
     sys.path.append('../../')
     import pulsar
 from pulsar.apps import ws, wsgi
-from pulsar.utils.httpurl import range
+from pulsar.apps.wsgi import Html
 
+CHAT_DIR = os.path.dirname(__file__)
+CHAT_URL = 'http://127.0.0.1:8015'
 
 class handle(ws.WS):
     
@@ -32,22 +34,25 @@ class handle(ws.WS):
             return json.dumps([(i,random()) for i in range(100)])
 
 
-def page(environ, start_response):
+def page(request):
     """ This resolves to the web page or the websocket depending on the path."""
-    path = environ.get('PATH_INFO')
-    if not path or path == '/':
-        data = open(os.path.join(os.path.dirname(__file__), 
-                     'websocket.html')).read()
-        data = data % environ
-        start_response('200 OK', [('Content-Type', 'text/html'),
-                                  ('Content-Length', str(len(data)))])
-        return [pulsar.to_bytes(data)]
+    html = request.html_document(title='Pulsar Chat')
+    html.head.scripts.append('http://ajax.googleapis.com/ajax/libs/jquery/1.9.0/jquery.min.js')
+    html.head.scripts.append('/media/chat.js')
+    html.body.data('chat_url', CHAT_URL)
+    return html.http_response(request)
 
 
 
 def server(**kwargs):
-    app = wsgi.WsgiHandler(middleware=(page, ws.WebSocket(handle())))
-    return wsgi.WSGIServer(callable=app, **kwargs)
+    websocket = ws.WebSocket(handle())
+    static = wsgi.MediaRouter('/media', os.path.join(CHAT_DIR, 'media'))
+    main = wsgi.Router('/', get=page)
+    app = wsgi.WsgiHandler(middleware=(static, main))
+    wsgiserver = wsgi.WSGIServer(callable=app, **kwargs)
+    chatserver = wsgi.WSGIServer(callable=websocket, name='chat',
+                                 bind=':8015', workers=1)
+    wsgiserver.start()
 
 
 if __name__ == '__main__':  #pragma nocover

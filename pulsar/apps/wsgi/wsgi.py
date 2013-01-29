@@ -1,3 +1,4 @@
+'''WSGI utilities and wrappers.'''
 import os
 import sys
 import json
@@ -9,16 +10,22 @@ from functools import partial, reduce
 from email.utils import formatdate
 
 import pulsar
-from pulsar import maybe_async, is_async, is_failure, log_failure, NOT_DONE
+from pulsar import is_failure, HttpException
+from pulsar.utils.multipart import parse_form_data
 from pulsar.utils.httpurl import Headers, SimpleCookie, responses,\
                                  has_empty_content, string_type, ispy3k,\
-                                 to_bytes, REDIRECT_CODES, iteritems
+                                 to_bytes, REDIRECT_CODES, iteritems,\
+                                 ENCODE_URL_METHODS
 
 from .middleware import is_streamed
+from .route import Route
+from .content import HtmlDocument
 
 
 __all__ = ['WsgiHandler',
            'WsgiResponse',
+           'WsgiRequest',
+           'Router',
            'WsgiResponseGenerator',
            'handle_wsgi_error',
            'wsgi_error_msg']
@@ -132,7 +139,7 @@ client.
                  start_response=None):
         super(WsgiResponse, self).__init__(environ, start_response)
         self.status_code = status or self.DEFAULT_STATUS_CODE
-        self.encoding = encoding or 'utf-8'
+        self.encoding = encoding
         self.cookies = SimpleCookie()
         self.headers = Headers(response_headers, kind='server')
         self.content = content
@@ -166,10 +173,10 @@ client.
                 content = ()
             elif ispy3k: #what a pain
                 if isinstance(content, str):
-                    content = content.encode(self.encoding)
+                    content = content.encode(self.encoding or 'utf-8')
             else: #pragma    nocover
                 if isinstance(content, unicode):
-                    content = content.encode(self.encoding)
+                    content = content.encode(self.encoding or 'utf-8')
             if isinstance(content, bytes):
                 content = (content,)
             self._content = content
@@ -199,7 +206,7 @@ client.
         return self
     
     def start(self):
-        self.__call__(self.environ, self.start_response)
+        return self.__call__(self.environ, self.start_response)
 
     def length(self):
         if not self.is_streamed:
@@ -232,7 +239,7 @@ This is usually `True` if a generator is passed to the response object."""
             raise RuntimeError('WsgiResponse can be iterated only once')
         self._started = True
         if self.is_streamed:
-            return wsgi_iterator(self.content, self.encoding)
+            return wsgi_iterator(self.content, self.encoding or 'utf-8')
         else:
             return iter(self.content)
 
@@ -271,6 +278,113 @@ This is usually `True` if a generator is passed to the response object."""
         return list(headers)
 
 
+class WsgiRequest(object):
+    slots = ('environ',)
+    
+    def __init__(self, environ, start_response, urlargs):
+        self.environ = environ
+        if 'pulsar.cache' not in environ:
+            environ['pulsar.cache'] = {}
+            self.cache['response'] = WsgiResponse(environ=environ,
+                                                  start_response=start_response)
+        self.cache['urlargs'] = urlargs 
+    
+    @property
+    def cache(self):
+        return self.environ['pulsar.cache']
+    
+    @property
+    def response(self):
+        return self.cache['response']
+    
+    @property
+    def urlargs(self):
+        return self.cache['urlargs']
+    
+    ############################################################################
+    #    environ shortcuts
+    @property
+    def is_xhr(self):
+        return self.environ.get('HTTP_X_REQUESTED_WITH') == 'XMLHttpRequest'
+    
+    @property
+    def is_secure(self):
+        return 'wsgi.url_scheme' in self.environ \
+            and self.environ['wsgi.url_scheme'] == 'https'
+
+    @property
+    def path(self):
+        return self.environ.get('PATH_INFO', '/')
+
+    @property
+    def method(self):
+        return self.environ['REQUEST_METHOD'].lower()      
+
+    def body_data(self):
+        cache = self.cache
+        if 'body_data' not in cache:
+            if self.method not in ENCODE_URL_METHODS:
+                cache['body_data'] = {}, None
+            else:
+                cache['body_data'] = parse_form_data(environ)
+        return cache['body_data']
+     
+    ############################################################################
+    #    Html tools
+    @property
+    def html_document(self):
+        cache = self.cache
+        if 'html_document' not in cache:
+            cache['html_document'] = HtmlDocument()
+        return cache['html_document']
+    
+    
+class Router(object):
+    '''A WSGI application which handle multiple routes.'''
+    default_content_type=None
+    def __init__(self, rule, *routes, **handlers):
+        self.route = Route(rule)
+        self.routes = []
+        for handle, callable in handlers.items():
+            if not hasattr(self, handle) and hasattr(callable, '__call__'):
+                setattr(self, handle, callable)
+        
+    def __repr__(self):
+        return self.route.__repr__()
+        
+    def __call__(self, environ, start_response):
+        path = environ.get('PATH_INFO') or '/'
+        path = path[1:]
+        router_args = self.resolve(path)
+        if router_args:
+            router, args = router_args
+            request = WsgiRequest(environ, start_response, args)
+            method = request.method
+            callable = getattr(router, method, None)
+            if callable is None:
+                raise HttpException(status=405,
+                                    msg='Method "%s" not allowed' % method)
+            return callable(request)
+        
+    def resolve(self, path, urlargs=None):
+        urlargs = urlargs if urlargs is not None else {}
+        match = self.route.match(path)
+        if match is None:
+            return
+        if '__remaining__' in match:
+            for handler in self.routes:
+                match = handler.route.match(path)
+                if match is None:
+                    continue
+                remaining_path = match.pop('__remaining__','')
+                urlargs.update(match)
+                view_args = handler.resolve(remaining_path, urlargs)
+                if view_args:
+                    return view_args
+        else:
+            return self, match
+    
+        
 class WsgiHandler(object):
     '''An handler for application conforming to python WSGI_.
 

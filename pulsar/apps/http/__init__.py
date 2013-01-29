@@ -3,15 +3,17 @@ import json
 
 import pulsar
 from pulsar import create_transport
-from pulsar.utils.pep import native_str
+from pulsar.utils.pep import native_str, is_string
 from pulsar.utils.structures import mapping_iterator
+from pulsar.utils.websocket import FrameParser
 from pulsar.utils.httpurl import urlparse, urljoin, DEFAULT_CHARSET,\
                                     REDIRECT_CODES, HttpParser, httpclient,\
                                     ENCODE_URL_METHODS, parse_qsl,\
                                     encode_multipart_formdata, urlencode,\
                                     Headers, urllibr, get_environ_proxies,\
                                     choose_boundary, urlunparse,\
-                                    host_and_port, responses
+                                    host_and_port, responses, is_succesful,\
+                                    HTTPError
 
 __all__ = ['HttpClient']
 
@@ -28,7 +30,7 @@ class HttpRequest(pulsar.Request):
                   charset=None, encode_multipart=True, multipart_boundary=None,
                   timeout=None, hooks=None, history=None, source_address=None,
                   allow_redirects=False, max_redirects=10, decompress=True,
-                  version=None, **ignored):
+                  version=None, wait_continue=False, **ignored):
         self.client = client
         self.type, self.full_host, self.path, self.params,\
         self.query, self.fragment = urlparse(url)
@@ -37,6 +39,7 @@ class HttpRequest(pulsar.Request):
         super(HttpRequest, self).__init__((self.host, self.port), timeout)
         #self.bind_event(hooks)
         self.history = history
+        self.wait_continue = wait_continue
         self.max_redirects = max_redirects
         self.allow_redirects = allow_redirects
         self.charset = charset or 'utf-8'
@@ -98,17 +101,23 @@ class HttpRequest(pulsar.Request):
     
     def encode(self):
         buffer = []
-        body = self.encode_body()
+        self.body = body = self.encode_body()
+        if body:
+            self.headers['content-length'] = str(len(body))
+            if self.wait_continue:
+                self.headers['expect'] = '100-continue'
+                body = None
         request = self.first_line()
         buffer.append(request.encode('ascii'))
         buffer.append(bytes(self.headers))
         buffer.append(b'')
         buffer.append(b'')
-        if isinstance(body, bytes):
+        if body:
             buffer.append(body)
         return b'\r\n'.join(buffer)
         
     def encode_body(self):
+        '''Encode body or url if the method does not have body'''
         body = None
         if self.method in ENCODE_URL_METHODS:
             self.files = None
@@ -128,12 +137,12 @@ class HttpRequest(pulsar.Request):
                                             boundary=self.multipart_boundary,
                                             charset=self.charset)
                 else:
-                    body = urlencode(self.data)
+                    body = urlencode(self.data).encode(self.charset)
                 self.headers['Content-Type'] = content_type
             elif content_type == 'application/json':
-                body = json.dumps(self.data).encode('latin-1')
+                body = json.dumps(self.data).encode(self.charset)
             else:
-                body = json.dumps(self.data).encode('latin-1')
+                body = json.dumps(self.data).encode(self.charset)
         return body
          
     def params(self):
@@ -214,12 +223,22 @@ class HttpResponse(pulsar.ProtocolConsumer):
         return self.request.full_url
     
     @property
+    def history(self):
+        if self.request is not None:
+           return self.request.history
+    
+    @property
     def headers(self):
         if self._headers is None:
             if self.parser and self.parser.is_headers_complete():
                 self._headers = Headers(self.parser.get_headers())
         return self._headers
     
+    @property
+    def is_error(self):
+        if self.status_code:
+            return not is_succesful(self.status_code)
+        
     def content_string(self, charset=None, errors=None):
         '''Decode content as a string.'''
         data = self.content
@@ -229,7 +248,16 @@ class HttpResponse(pulsar.ProtocolConsumer):
     def content_json(self, charset=None, **kwargs):
         '''Decode content as a JSON object.'''
         return json.loads(self.content_string(charset), **kwargs)
+    
+    def raise_for_status(self):
+        """Raises stored :class:`HTTPError` or :class:`URLError`,
+ if one occured."""
+        if self.is_error:
+            raise HTTPError(self.url, self.status_code,
+                            self.content, self.headers, None)
         
+    ############################################################################
+    ##    PROTOCOL IMPLEMENTATION
     def data_received(self, data):
         had_headers = self.parser.is_headers_complete()
         if self.parser.execute(data, len(data)) == len(data):
@@ -283,7 +311,14 @@ class HttpResponse(pulsar.ProtocolConsumer):
         elif self.status_code == 101:
             # Upgrading response handler
             return client.upgrade(response)
-        
+    
+                
+    def upgrade(self, response):
+        self.parser = FrameParser(kind=1)
+        client = WebSocketClient(response.sock, response.url)
+        client.handshake = response
+        return client
+    
     def new_request(self, url=None):
         self.finished()
         request = self.request

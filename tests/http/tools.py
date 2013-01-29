@@ -6,7 +6,6 @@ from pulsar import send, make_async, safe_async, is_failure
 from pulsar.apps.test import unittest
 from pulsar.utils import httpurl
 from pulsar.utils.httpurl import to_bytes, urlencode
-from pulsar.apps.wsgi import HttpClient
 
 BIN_HOST = 'httpbin.org'
 HTTPBIN_URL = 'http://' + BIN_HOST + '/'
@@ -207,135 +206,8 @@ class TestTools(unittest.TestCase):
         self.assertEqual(j, j2)
         
 
-def request_callback(result):
-    return result
     
-def request(r):
-    return make_async(r).addBoth(request_callback)
-
-
-class TestHttpClientBase(unittest.TestCase):
-    app = None
-    with_proxy = False
-    proxy_app = None
-    timeout = 10
-    
-    @classmethod
-    def setUpClass(cls):
-        # Create the HttpBin server by sending this request to the arbiter
-        from examples.proxyserver.manage import server as pserver
-        from examples.httpbin.manage import server
-        concurrency = cls.cfg.concurrency
-        s = server(bind='127.0.0.1:0', concurrency=concurrency,
-                   name='httpbin-%s' % cls.__name__.lower())
-        outcome = send('arbiter', 'run', s)
-        yield outcome
-        cls.app = outcome.result
-        cls.uri = 'http://{0}:{1}'.format(*cls.app.address)
-        if cls.with_proxy:
-            s = pserver(bind='127.0.0.1:0', concurrency=concurrency,
-                        name='proxyserver-%s' % cls.__name__.lower())
-            outcome = send('arbiter', 'run', s)
-            yield outcome
-            cls.proxy_app = outcome.result
-            cls.proxy_uri = 'http://{0}:{1}'.format(*cls.proxy_app.address)
-        
-    @classmethod
-    def tearDownClass(cls):
-        if cls.app is not None:
-            yield send('arbiter', 'kill_actor', cls.app.name)
-        if cls.proxy_app is not None:
-            yield send('arbiter', 'kill_actor', cls.proxy_app.name)
-        
-    def client(self, **kwargs):
-        kwargs['timeout'] = self.timeout
-        if self.with_proxy:
-            kwargs['proxy_info'] = {'http': self.proxy_uri}
-        return HttpClient(**kwargs)
-    
-    def httpbin(self, *suffix):
-        if suffix:
-            return self.uri + '/' + '/'.join(suffix)
-        else:
-            return self.uri
-    
-    
-class TestHttpClient(TestHttpClientBase):
-    
-        
-    def test_400_get(self):
-        '''Bad request 400'''
-        http = self.client()
-        r = make_async(http.get(self.httpbin('status', '400')))
-        yield r
-        r = r.result
-        self.assertEqual(r.status_code, 400)
-        self.assertEqual(r.response, 'Bad Request')
-        self.assertTrue(r.content)
-        self.assertRaises(httpurl.HTTPError, r.raise_for_status)
-        
-    def test_404_get(self):
-        '''Not Found 404'''
-        http = self.client()
-        r = make_async(http.get(self.httpbin('status', '404')))
-        yield r
-        r = r.result
-        self.assertEqual(r.status_code, 404)
-        self.assertEqual(r.response, 'Not Found')
-        self.assertTrue(r.content)
-        self.assertRaises(httpurl.HTTPError, r.raise_for_status)
-        
-    def test_post(self):
-        data = (('bla', 'foo'), ('unz', 'whatz'),
-                ('numero', '1'), ('numero', '2'))
-        http = self.client()
-        r = request(http.post(self.httpbin('post'), data=data))
-        yield r
-        r = r.result
-        self.assertEqual(r.status_code, 200)
-        self.assertEqual(r.response, 'OK')
-        result = r.content_json()
-        self.assertTrue(result['args'])
-        self.assertEqual(result['args']['numero'],['1','2'])
-        
-    def test_put(self):
-        data = (('bla', 'foo'), ('unz', 'whatz'),
-                ('numero', '1'), ('numero', '2'))
-        http = self.client()
-        r = request(http.put(self.httpbin('put'), data=data))
-        yield r
-        r = r.result
-        self.assertEqual(r.status_code, 200)
-        self.assertEqual(r.response, 'OK')
-        result = r.content_json()
-        self.assertTrue(result['args'])
-        self.assertEqual(result['args']['numero'],['1','2'])
-        
-    def test_patch(self):
-        data = (('bla', 'foo'), ('unz', 'whatz'),
-                ('numero', '1'), ('numero', '2'))
-        http = self.client()
-        r = request(http.patch(self.httpbin('patch'), data=data))
-        yield r
-        r = r.result
-        self.assertEqual(r.status_code, 200)
-        self.assertEqual(r.response, 'OK')
-        result = r.content_json()
-        self.assertTrue(result['args'])
-        self.assertEqual(result['args']['numero'],['1','2'])
-        
-    def test_delete(self):
-        data = (('bla', 'foo'), ('unz', 'whatz'),
-                ('numero', '1'), ('numero', '2'))
-        http = self.client()
-        r = request(http.delete(self.httpbin('delete'), data=data))
-        yield r
-        r = r.result
-        self.assertEqual(r.status_code, 200)
-        self.assertEqual(r.response, 'OK')
-        result = r.content_json()
-        self.assertTrue(result['args'])
-        self.assertEqual(result['args']['numero'],['1','2'])
+class TestHttpClient:
         
     def testRedirect(self):
         http = self.client()

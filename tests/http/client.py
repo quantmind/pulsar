@@ -3,7 +3,7 @@ from pulsar import send
 from pulsar.apps.test import unittest
 from pulsar.utils import httpurl
 from pulsar.utils.httpurl import to_bytes, urlencode
-from pulsar.apps.wsgi import HttpClient
+from pulsar.apps.http import HttpClient
 
 
 class TestHttpClientBase(unittest.TestCase):
@@ -95,3 +95,84 @@ class TestHttpClient(TestHttpClientBase):
         content = response.content_json()
         self.assertTrue(content['gzipped'])
         self.assertTrue(response.headers['content-encoding'],'gzip')
+        
+    def test_400_get(self):
+        '''Bad request 400'''
+        http = self.client()
+        response = http.get(self.httpbin('status', '400'))
+        yield response.on_finished
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(response.response, 'Bad Request')
+        self.assertTrue(response.content)
+        self.assertRaises(httpurl.HTTPError, response.raise_for_status)
+        
+    def test_404_get(self):
+        '''Not Found 404'''
+        http = self.client()
+        response = http.get(self.httpbin('status', '404'))
+        yield response.on_finished
+        self.assertEqual(response.status_code, 404)
+        self.assertEqual(response.response, 'Not Found')
+        self.assertTrue(response.content)
+        self.assertRaises(httpurl.HTTPError, response.raise_for_status)
+        
+    def test_post(self):
+        data = (('bla', 'foo'), ('unz', 'whatz'),
+                ('numero', '1'), ('numero', '2'))
+        http = self.client()
+        response = http.post(self.httpbin('post'), encode_multipart=False,
+                             data=data)
+        yield response.on_finished
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.response, 'OK')
+        result = response.content_json()
+        self.assertTrue(result['args'])
+        self.assertEqual(result['args']['numero'],['1','2'])
+    
+    def test_post_multipart(self):
+        data = (('bla', 'foo'), ('unz', 'whatz'),
+                ('numero', '1'), ('numero', '2'))
+        http = self.client()
+        response = http.post(self.httpbin('post'), data=data)
+        yield response.on_finished
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.response, 'OK')
+        result = response.content_json()
+        self.assertTrue(result['args'])
+        self.assertEqual(result['args']['numero'],['1','2'])
+        
+    def test_put(self):
+        data = (('bla', 'foo'), ('unz', 'whatz'),
+                ('numero', '1'), ('numero', '2'))
+        http = self.client()
+        response = http.put(self.httpbin('put'), data=data)
+        yield response.on_finished
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.response, 'OK')
+        result = response.content_json()
+        self.assertTrue(result['args'])
+        self.assertEqual(result['args']['numero'],['1','2'])
+        
+    def test_patch(self):
+        data = (('bla', 'foo'), ('unz', 'whatz'),
+                ('numero', '1'), ('numero', '2'))
+        http = self.client()
+        response = http.patch(self.httpbin('patch'), data=data)
+        yield response.on_finished
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.response, 'OK')
+        result = response.content_json()
+        self.assertTrue(result['args'])
+        self.assertEqual(result['args']['numero'],['1','2'])
+        
+    def test_delete(self):
+        data = (('bla', 'foo'), ('unz', 'whatz'),
+                ('numero', '1'), ('numero', '2'))
+        http = self.client()
+        response = http.delete(self.httpbin('delete'), data=data)
+        yield response.on_finished
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.response, 'OK')
+        result = response.content_json()
+        self.assertTrue(result['args'])
+        self.assertEqual(result['args']['numero'],['1','2'])

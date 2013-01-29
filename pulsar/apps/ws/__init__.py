@@ -278,27 +278,5 @@ class WebSocketProtocol(pulsar.ProtocolConsumer):
             self.handler.on_close(self.environ)
             self.transport.close()
     
-    
-class WebSocketClientProtocol(pulsar.ProtocolConsumer):
-    
-    def __init__(self, *args):
-        super(WebSocketClientProtocol, self).__init__(*args)
-        self.parser = FrameParser(kind=1)
         
-    def data_received(self, data):
-        frame = self.parser.decode(data)
-        while frame:
-            # Got a frame
-            self.consumer(frame)
-            frame = self.parser.decode()
-        # No more frames
-        
-            
-
-class HttpClient(wsgi.HttpClient):
-    
-    def upgrade(self, response):
-        client = WebSocketClient(response.sock, response.url)
-        client.handshake = response
-        return client
         

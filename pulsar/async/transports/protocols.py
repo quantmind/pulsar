@@ -102,8 +102,9 @@ be :meth:`Producer.data_received`.
         '''Call this method when done with this :class:`ProtocolConsumer`.
 By default it calls the :meth:`Connection.finished` method of the
 :attr:`connection` attribute.'''
-        self.fire_event('data_received', b'')
-        return self._connection.finished(self, result)
+        if self._connection:
+            self.fire_event('data_received', b'')
+            return self._connection.finished(self, result)
         
         
 class Connection(Protocol, TransportProxy):
