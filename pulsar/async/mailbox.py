@@ -50,19 +50,23 @@ arbiter mailbox.'''
         pass
     
 
-def create_request(command, sender, target, args, kwargs):
-    # Build the request and write
-    command = get_command(command)
-    data = {'command': command.__name__,
-            'sender': actorid(sender),
-            'target': actorid(target),
-            'args': args if args is not None else (),
-            'kwargs': kwargs if kwargs is not None else {}}
-    d = None
-    if command.ack:
-        d = Deferred()
-        data['ack'] = gen_unique_id()[:8]
-    return data, d
+class Message(Request):
+    
+    def __init__(self, command, sender, target, args, kwargs, address=None,
+                 timeout=None):
+        super(Message, self).__init__(address, timeout)
+        # Build the request and write
+        command = get_command(command)
+        self.data = {'command': command.__name__,
+                     'sender': actorid(sender),
+                     'target': actorid(target),
+                     'args': args if args is not None else (),
+                     'kwargs': kwargs if kwargs is not None else {}}
+        if command.ack:
+            self.consumer = Deferred()
+            self.data['ack'] = gen_unique_id()[:8]
+        else:
+            self.consumer = None
 
 
 class MailboxConsumer(ProtocolConsumer):
@@ -84,6 +88,15 @@ class MailboxConsumer(ProtocolConsumer):
             log_failure(self.responde(message))
             msg = self._parser.decode()
     
+    def start_request(self):
+        # Always called in thread
+        req = self.request
+        if req.consumer and 'ack' in req.data:
+            self._pending_responses[req.data['ack']] = req.consumer
+        obj = pickle.dumps(req.data, protocol=2)
+        data = self._parser.encode(obj, opcode=0x2).msg
+        self.transport.write(data)
+        
     def callback(self, ack, result):
         if not ack:
             raise ProtocolError('A callback without id')
@@ -119,33 +132,17 @@ class MailboxConsumer(ProtocolConsumer):
         
     def _responde(self, data, result):
         if data.get('ack'):
-            data = {'command': 'callback', 'result': result, 'ack': data['ack']}
-            # We could have received the response on a different thread.
-            self.write(data)
+            self._request = {'command': 'callback', 'result': result,
+                             'ack': data['ack']}
+            self.start_request()
         #Return the result so a failure can be logged
         return result
-            
-    def dump_data(self, obj):
-        obj = pickle.dumps(obj, protocol=2)
-        return self._parser.encode(obj, opcode=0x2).msg
-
-    def write(self, data, consumer=None):
-        if consumer and 'ack' in data:
-            self._pending_responses[data['ack']] = consumer
-        raw = self.dump_data(data)
-        #LOGGER.debug('Sending "%s" command of %s in length',
-        #             data['command'], len(raw))
-        self._write(raw)
 
     def request(self, command, sender, target, args, kwargs):
-        data, d = create_request(command, sender, target, args, kwargs)
-        self.write(data, d)
-        return d
-    
-    def _write(self, data):
-        # We do this thread safe
-        self.transport.event_loop.call_soon_threadsafe(
-                    self.transport.write, data)
+        '''Used by the server'''
+        req = Message(command, sender, target, args, kwargs)
+        self.new_request(req)
+        return req.consumer
 
     
 class MailboxClient(Client):
@@ -177,12 +174,16 @@ class MailboxClient(Client):
         return self._event_loop
     
     def request(self, command, sender, target, args, kwargs):
-        # Build the request and write
+        red = Message(command, sender, target, args, kwargs,
+                      self.address, self.timeout)
+        self._event_loop.call_soon_threadsafe(self._request, req)
+        return req.consumer
+    
+    def _request(self, req):
         if not self.consumer:
-            req = Request(self.address, self.timeout)
             self.consumer = self.response(req)
-        c = self.consumer
-        return c.request(command, sender, target, args, kwargs)
+        else:
+            self.consumer.new_request(req)
         
     def _start_on_thread(self):
         PulsarThread(name=self.name, target=self._event_loop.run).start()

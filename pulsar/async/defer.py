@@ -213,18 +213,21 @@ def coroutine(f):
         
 ############################################################### FAILURE
 class Failure(object):
-    '''Aggregate failures during :class:`Deferred` callbacks.
+    '''Aggregate errors during :class:`Deferred` callbacks.
 
 .. attribute:: traces
 
     List of (``errorType``, ``errvalue``, ``traceback``) occured during
     the execution of a :class:`Deferred`.
 
+.. attribute:: logged
+
+    Check if the last error was logged. It can be a way ofm switching off
+    logging for certain errors.
 '''
     def __init__(self, err=None, msg=None):
         self.should_stop = False
         self.msg = msg or ''
-        self.logged = False
         self.traces = []
         self.append(err)
 
@@ -232,6 +235,15 @@ class Failure(object):
         return '\n\n'.join(self.format_all())
     __str__ = __repr__
 
+    
+    def _get_logged(self):
+        return getattr(self.trace[1], '_failure_logged', False)
+    def _set_logged(self, value):
+        err = self.trace[1]
+        if err:
+            setattr(err, '_failure_logged', value)
+    logged = property(_get_logged, _set_logged)
+    
     def append(self, trace):
         '''Add new failure to self.'''
         if trace:
@@ -254,7 +266,10 @@ class Failure(object):
                 yield '\n'.join(tb)
             else:
                 yield str(value)
-
+    
+    def is_instance(self, classes):
+        return isinstance(self.trace[1], classes)
+            
     def __getstate__(self):
         self.log()
         traces = []
@@ -479,7 +494,7 @@ of callables.'''
 a callable which accept one argument only.'''
         callback = self.safe_callback(event, callback)
         if event in self.ONE_TIME_EVENTS:
-            self.ONE_TIME_EVENTS[event].add_callback(callback)
+            self.ONE_TIME_EVENTS[event].add_both(callback)
         elif event in self.MANY_TIMES_EVENTS:
             self.MANY_TIMES_EVENTS[event].append(callback)
         else:
@@ -487,16 +502,18 @@ a callable which accept one argument only.'''
         
     def fire_event(self, event, event_data=NOTHING):
         """Dispatches *event_data* to the *event* listeners.
-If *event_data* is not provided, this instanca will be dispatched."""
-        event_data = self if event_data is NOTHING else event_data
+If *event_data* is not provided, this instance will be dispatched.
+If *event_data* is an error it will be converted to a :class:`Failure`."""
+        event_data = self if event_data is NOTHING else as_failure(event_data)
         if event in self.ONE_TIME_EVENTS:
-            log_failure(self.ONE_TIME_EVENTS[event].callback(event_data))
+            self.ONE_TIME_EVENTS[event].callback(event_data)
         elif event in self.MANY_TIMES_EVENTS:
             for callback in self.MANY_TIMES_EVENTS[event]:
                 callback(event_data)
         else:
             LOGGER.warn('unknown event "%s" for %s', event, self)
         events.fire(event, event_data)
+        log_failure(event_data)
         
     def all_events(self):
         return chain(self.ONE_TIME_EVENTS, self.MANY_TIMES_EVENTS)
@@ -578,24 +595,20 @@ current thread.'''
                 return self.conclude()
             return self._consume()
         else:
-            if result == NOT_DONE:
-                # The NOT_DONE object indicates that the generator needs to
-                # abort so that the event loop can continue. This generator
-                # will resume at the next event loop.
-                self.loop.call_soon(self._consume)
-                return self
-            result = maybe_async(result)
-            if is_async(result):
-                # The result is asynchronous and it is not ready yet.
-                # We pause the generator and attach a callback to continue
-                # on the same thread.
-                return result.add_both(self._resume_in_thread)
+            return self._check_async(result)
+
+    def _check_async(self, result):
+        result = maybe_async(result)
+        if is_async(result):
+            self.loop.call_soon_threadsafe(self._check_async, result)
+        elif result == NOT_DONE:
+            self.loop.call_soon_threadsafe(self._consume)
+        else:
             if result == CLEAR_ERRORS:
                 self.errors.clear()
                 result = None
-            # continue with the loop
-            return self._consume(result)
-
+            self._consume(result)
+        
     def should_stop(self, failure):
         self.errors.append(failure)
         return self.max_errors and len(self.errors) >= self.max_errors

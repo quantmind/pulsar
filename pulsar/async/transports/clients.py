@@ -1,12 +1,13 @@
+import socket
 from functools import partial
 
 from pulsar import TooManyConnections
 from pulsar.utils.pep import get_event_loop
 from pulsar.utils.sockets import get_transport_type, create_socket
-from pulsar.async.defer import is_async
+from pulsar.async.defer import as_failure, is_failure
 
 from .protocols import ProtocolConsumer, EventHandler, Producer, NOTHING
-from .transport import create_transport
+from .transport import create_transport, LOGGER
 
 __all__ = ['ConnectionPool', 'Client', 'Request']
 
@@ -21,6 +22,9 @@ the appropiate :class:`ConnectionPool` for the client request.'''
     @property
     def key(self):
         return (self.address, self.timeout)
+    
+    def encode(self):
+        raise NotImplementedError
     
     
 class ConnectionPool(Producer):
@@ -52,15 +56,17 @@ of available connections.'''
         self._concurrent_connections.remove(connection)
         self._available_connections.add(connection)
         
-    def get_or_create_connection(self, client):
+    def get_or_create_connection(self, client, new=False):
         "Get or create a new connection for *client*"
-        try:
-            connection = self._available_connections.pop()
-        except KeyError:
-            connection = None
-        else:
-            # we have a connection, lets added it to the concurrent set
-            self._concurrent_connections.add(connection)
+        connection = None
+        if not new:
+            try:
+                connection = self._available_connections.pop()
+            except KeyError:
+                pass
+            else:
+                # we have a connection, lets added it to the concurrent set
+                self._concurrent_connections.add(connection)
         if connection is None:
             # build the new connection
             connection = self.new_connection(self.address,
@@ -68,28 +74,53 @@ of available connections.'''
                                              producer=client)
             # Bind the post request event to the release connection function
             connection.bind_event('post_request', self._release_response)
+            # Bind the connection_lost to connection to handle dangling connections
+            connection.bind_event('connection_lost',
+                                  partial(self._socket_exception, connection))
             #IMPORTANT: create client transport an connect to endpoint
             transport = create_transport(connection, address=connection.address)
             return transport.connect(connection.address)
         else:
             return connection
         
+    ############################################################################
+    ##    INTERNALS
+    def _socket_exception(self, connection, exc):
+        # handle Read Exception on the transport
+        if is_failure(exc) and exc.is_instance((socket.timeout, socket.error)):
+            # Have we been here before?
+            consumer = connection.current_consumer
+            client = connection.producer
+            received = getattr(consumer, '_received_count', -1)
+            # The connection has processed request before and the consumer
+            # has never received data. If the client allows it, try to
+            # reconnect, it was probably a stale connection.
+            if client.reconnect and not received and connection.processed > 1:
+                # switch off error logging
+                exc.logged = True
+                LOGGER.debug('Try to reconnect')
+                connection._current_consumer = None
+                self._remove_connection(connection)
+                # get a new connection
+                conn = self.get_or_create_connection(client)
+                # Start the response without firing the events
+                conn.set_consumer(consumer, False)
+                consumer.start_request()
+                
     def _remove_connection(self, connection):
         super(ConnectionPool, self)._remove_connection(connection)
         self._available_connections.discard(connection)
-        try:
-            connection.close()
-        except Exception:
-            pass
     
     def _release_response(self, response):
         self.release_connection(response.connection)
-    
+
 
 class Client(EventHandler):
     '''A client for a remote server which handles one or more
 :class:`ConnectionPool` of asynchronous connections.
 '''
+    reconnect = True
+    '''Can reconnect on socket error.'''
     connection_pool = ConnectionPool
     '''Factory of :class:`ConnectionPool`.'''
     consumer_factory = None
@@ -102,6 +133,7 @@ class Client(EventHandler):
     '''Optional timeout in seconds for idle connections.'''
     max_connections = 0
     '''Maximum number of concurrent connections.'''
+    
     
     ONE_TIME_EVENTS = ('finish',)
     MANY_TIMES_EVENTS = ('connection_made', 'pre_request','post_request',
@@ -132,34 +164,26 @@ class Client(EventHandler):
         return hash((address, timeout))
     
     def request(self, *args, **params):
-        '''Create a request and invoke the :meth:`response` method.
-Must be implemented by subclasses.'''
+        '''Abstract method for creating a request to send to the server.
+and invoke the :meth:`response` method. Must be implemented
+by subclasses.'''
         raise NotImplementedError
     
     def response(self, request, consumer=None):
         '''Once a *request* object has been constructed, the :meth:`request`
-method should invoke this method to start the response dance.
+method can invoke this method to build the protocol consumer and
+start the response.
 
 :parameter request: A custom :class:`Request` for the :class:`Client`.
-:parameter consumer: An optional consumer of streaming data, it is the
-    :attr:`ClientProtocolConsumer.consumer` attribute of the
-    consumer returned by this method.
-:rtype: An :class:`ClientProtocolConsumer` obtained form
+:parameter consumer: An optional consumer of streaming data.
+:rtype: An :class:`ProtocolConsumer` obtained form
     :attr:`consumer_factory`.
 '''
         conn = self.get_connection(request)
-        # conn could be a Connection or a Connector (Deferred)
-        response = self.consumer_factory(conn, request, consumer)
-        # The request has not been sent yet. Fire the pre_request signal
-        conn.set_consumer(response)
+        consumer = self.consumer_factory(conn, request, consumer)
+        conn.set_consumer(consumer)
+        consumer.start_request()
         return response
-    
-    def new_request(self, response, request):
-        '''Perform a new request using the same *response* consumer.'''
-        response.new_request(request)
-        conn = self.get_connection(request)
-        connection.set_consumer(response)
-        return response 
     
     def get_connection(self, request):
         '''Get a suitable :class:`Connection` for *request*.'''

@@ -77,6 +77,7 @@ and `data_received` :ref:`many times event <many-times-event>`.
         super(ProtocolConsumer, self).__init__()
         self._connection = connection
         self._request = request
+        self._received_count = 0
         if consumer:
             self.bind_event('data_received', consumer)
             
@@ -112,6 +113,11 @@ and `data_received` :ref:`many times event <many-times-event>`.
     def on_finished(self):
         return self.event('finish')
     
+    def start_request(self):
+        '''Invoked by client consumer to kick start the request with
+remote server.'''
+        raise NotImplementedError
+    
     def new_request(self, request):
         '''Reset this consumer for with a new *request*. This method is used by
 :class:`Client` consumers when a request needs to be resubmitted. Not used
@@ -131,11 +137,21 @@ By default it calls the :meth:`Connection.finished` method of the
             self.fire_event('data_received', b'')
             return self._connection.finished(self, result)
         
+    def connection_lost(self, exc):
+        self.finished(exc)
+        
         
 class Connection(Protocol, TransportProxy):
     '''A client or server connection with an endpoint. This is not
 connected until :meth:`Protocol.connection_made` is called by the
-:class:`Transport`.
+:class:`Transport`. This class is the bridge between the :class:`Transport`
+and the :class:`ProtocolConsumer`. It has a :class:`Protocol`
+interface and it routes data arriving from the :attr:`transport` to
+the :attr:`current_consumer`, an instance of :class:`ProtocolConsumer`.
+
+It has two :ref:`one time events <one-time-event>`, *connection_made* and
+*connection_lost*, and three :ref:`many times events <many-times-event>`,
+*pre_request*, *data_received* and *post_request*.
 
 .. attribute:: producer
 
@@ -212,14 +228,15 @@ connected until :meth:`Protocol.connection_made` is called by the
     def producer(self):
         return self._producer
     
-    def set_consumer(self, consumer):
+    def set_consumer(self, consumer, new=True):
         '''Set a new :class:`ProtocolConsumer` for this :class:`Connection`.'''
         assert self._current_consumer is None, 'Consumer is not None'
         self._current_consumer = consumer
         consumer._connection = self
-        self.fire_event('pre_request', consumer)
-        consumer.fire_event('start')
         self._processed += 1
+        if new:
+            self.fire_event('pre_request', consumer)
+            consumer.fire_event('start')
     
     def connection_made(self, transport):
         # Implements protocol connection_made
@@ -235,7 +252,8 @@ connected until :meth:`Protocol.connection_made` is called by the
             if consumer is None:
                 # New consumer
                 consumer = self._consumer_factory(self)
-                self.set_consumer(consumer) 
+                self.set_consumer(consumer)
+            consumer._received_count += 1 
             data = consumer.data_received(data)
             if data and self._current_consumer:
                 # if data is returned from the response feed method and the
@@ -244,12 +262,17 @@ connected until :meth:`Protocol.connection_made` is called by the
         self._add_idle_timeout()
     
     def connection_lost(self, exc):
+        '''Implements the :class:`Protocol.connection_lost` callback.
+It performs these actions in the following order:
+* Cancel the idle timeout if set
+* Fire the *connection_lost* :ref:`one time event <one-time-event>` with *exc*
+  as event data.
+* Invokes the connection_lost method in the :attr:`current_consumer` if
+  available.'''
         self._cancel_timeout()
+        self.fire_event('connection_lost', exc)
         if self._current_consumer:
             self._current_consumer.connection_lost(exc)
-            if self._current_consumer:
-                self.finished(self._current_consumer, exc)
-        self.fire_event('connection_lost')
                              
     def upgrade(self, consumer_factory):
         '''Update the :attr:`consumer_factory` attribute with a new

@@ -6,7 +6,7 @@ from pulsar.utils.httpurl import to_bytes, urlencode
 from pulsar.apps.http import HttpClient
 
 
-class TestHttpClientBase(unittest.TestCase):
+class TestHttpClientBase:
     app = None
     with_proxy = False
     proxy_app = None
@@ -45,15 +45,6 @@ class TestHttpClientBase(unittest.TestCase):
             kwargs['proxy_info'] = {'http': self.proxy_uri}
         return HttpClient(**kwargs)
     
-    def httpbin(self, *suffix):
-        if suffix:
-            return self.uri + '/' + '/'.join(suffix)
-        else:
-            return self.uri
-    
-    
-class TestHttpClient(TestHttpClientBase):
-    
     def _check_pool(self, http, response, available=1, processed=1):
         self.assertEqual(len(http.connection_pools), 1)
         pool = http.connection_pools[response.request.key]
@@ -62,6 +53,35 @@ class TestHttpClient(TestHttpClientBase):
         if available == 1:
             connection = tuple(pool._available_connections)[0]
             self.assertEqual(connection.processed, processed)
+            
+    def httpbin(self, *suffix):
+        if suffix:
+            return self.uri + '/' + '/'.join(suffix)
+        else:
+            return self.uri
+    
+
+class TestHttpClientReconnect(TestHttpClientBase, unittest.TestCase):
+    
+    def test_400_get(self):
+        '''Bad request 400'''
+        http = self.client()
+        response = http.get(self.httpbin('status', '400'))
+        yield response.on_finished
+        #self._check_pool(http, response, 0)
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(response.response, 'Bad Request')
+        self.assertTrue(response.content)
+        self.assertRaises(httpurl.HTTPError, response.raise_for_status)
+        # Make sure we only have one connection after a valid request
+        response = http.get(self.httpbin('get'))
+        yield response.on_finished
+        self.assertEqual(response.status_code, 200)
+        self._check_pool(http, response)
+    
+
+class TestHttpClient:        
+#class TestHttpClient(TestHttpClientBase, unittest.TestCase):
         
     def testClient(self):
         http = self.client(max_redirects=5)
@@ -85,6 +105,7 @@ class TestHttpClient(TestHttpClientBase):
         self._check_pool(http, response)
         response = http.get(self.httpbin('get'))
         yield response.on_finished
+        self.assertEqual(response.status_code, 200)
         self._check_pool(http, response, processed=2)
         
     def test_200_get_data(self):
@@ -110,21 +131,6 @@ class TestHttpClient(TestHttpClientBase):
         content = response.content_json()
         self.assertTrue(content['gzipped'])
         self.assertTrue(response.headers['content-encoding'],'gzip')
-        
-    def test_400_get(self):
-        '''Bad request 400'''
-        http = self.client()
-        response = http.get(self.httpbin('status', '400'))
-        yield response.on_finished
-        #self._check_pool(http, response, 0)
-        self.assertEqual(response.status_code, 400)
-        self.assertEqual(response.response, 'Bad Request')
-        self.assertTrue(response.content)
-        self.assertRaises(httpurl.HTTPError, response.raise_for_status)
-        # Make sure we only have one connection after a valid request
-        response = http.get(self.httpbin('get'))
-        yield response.on_finished
-        self._check_pool(http, response)
         
     def test_404_get(self):
         '''Not Found 404'''

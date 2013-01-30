@@ -568,7 +568,7 @@ default signal handler ``signal.SIG_DFL``.'''
                 if e.args[0] in SOCKET_INTERRUPT_ERRORS:
                     pass
                 else:
-                    LOGGER.exception('Exception in event loop callback.')
-            except Exception:
-                LOGGER.exception('Exception in event loop callback.')
+                    log_failure(e).log('Exception in event loop callback.')
+            except Exception as e:
+                log_failure(e).log('Exception in event loop callback.')
 

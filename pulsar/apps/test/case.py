@@ -19,6 +19,53 @@ def test_method(cls, method):
         return None
 
 
+class SequentialConsumer(object):
+    
+    def __init__(self, gen, handle_failure=None):
+        self.request_loop = get_request_loop()
+        self.errors = Failure()
+        self.gen = gen
+        self.handle_failure = handle_failure
+        
+    def _resume(self, result):
+        self.request_loop.add_soon_threadsafe(self.consume, result)
+        #TODO: Do we need to return?
+        return result
+        
+    def consume(self, last_result=None):
+        try:
+            result = next(self.gen)
+        except StopIteration:
+            pass
+        except Exception as e:
+            result = e
+        else:
+            result = maybe_async(result)
+            if is_async(result):
+                result.add_both(self._resume)
+                return self.request_loop.call_soon_threadsafe(self._consume)
+        result = as_failure(result)
+        if is_failure(result):
+            result = self.handle_failure(failure)
+            if is_failure(result):
+                return result
+        return self.consume(result)
+        
+    def handle_failure(self, failure):
+        self.errors.append(failure)
+        
+
+def test_generator(f):
+    def _(self, test, *args):
+        runner = self.runner
+        handle_failure = partial(self.add_failure(test, runner)) 
+        gen = f(self, *args)
+        tasks = SequentialConsumer(gen, handle_failure)
+        return tasks.consume()
+    return _
+
+        
+
 class TestRequest(object):
     '''A class which wraps a test case class and runs all its test functions
 

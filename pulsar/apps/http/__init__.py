@@ -268,6 +268,9 @@ class HttpResponse(pulsar.ProtocolConsumer):
     
     ############################################################################
     ##    PROTOCOL IMPLEMENTATION
+    def start_request(self):
+        self.transport.write(self.request.encode())
+        
     def data_received(self, data):
         had_headers = self.parser.is_headers_complete()
         if self.parser.execute(data, len(data)) == len(data):
@@ -518,11 +521,14 @@ the :class:`HttpRequest` constructor.
                 cookies = cookiejar_from_dict(cookies)
             cookies.add_cookie_header(request)
         if response:
-            response = self.new_request(response, request)
+            response.new_request(request)
+            conn = self.get_connection(request)
+            conn.set_consumer(response, False)
+            self.start_response(response)
+            return response
         else:
-            response = self.response(request, consumer)
-        response.transport.write(request.encode())
-        return response
+            return self.response(request, consumer)
+        return self.start_response(response)
     
     def add_basic_authentication(self, username, password):
         '''Add a :class:`HTTPBasicAuth` handler to the *pre_requests* hooks.'''

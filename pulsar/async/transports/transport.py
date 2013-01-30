@@ -276,6 +276,7 @@ the :class:`EventHandler`.
         '''Connect this :class:`Transport` to a remote server and
 returns ``self``.'''
         self.add_writer()
+        self.add_reader()
         connector = Connector(self)
         try:
             if self._protocol_connect(address):
@@ -291,7 +292,10 @@ returns ``self``.'''
         self._event_loop.add_reader(self.fileno(), self._protocol_accept)
         
     def add_reader(self):
-        '''Add reader to the event loop'''
+        '''Add reader to the event loop. An optional *error_handler*
+can be passed. The error handler will be called once an exception occurs
+during asynchronous reading, with the exception instance
+as only attribute.'''
         self._event_loop.add_reader(self.fileno(), self._ready_read)
         
     def add_writer(self):
@@ -321,6 +325,7 @@ returns ``self``.'''
         
     def _ready_read(self):
         # Read from the socket until we get EWOULDBLOCK or equivalent.
+        # If any other error occur, abort the connection and re-raise.
         chunk = True
         while chunk:
             try:
@@ -330,7 +335,7 @@ returns ``self``.'''
             except Exception as e:
                 self.abort(exc=e)
                 raise
-            
+                
     def _ready_write(self):
         # keep count how many bytes we write
         if self.connecting:
@@ -340,9 +345,8 @@ returns ``self``.'''
         try:
             self._protocol_write()
         except socket.error as e:
-            LOGGER.warning("Write error on %s: %s", self, e)
             self.abort(exc=e)
-            return
+            raise
         if self._closing and not self.writing:
             # shutdown
             self._event_loop.call_soon(self._shutdown)
@@ -421,11 +425,10 @@ class Connector(Deferred, TransportProxy):
         
     def _connection_made(self, result):
         self._transport._protocol.connection_made(self._transport)
-        self._transport.add_reader()
         return self._transport._protocol
         
     def _connection_failure(self, failure):
         self._transport._protocol.connection_lost(failure)
         
-    def set_consumer(self, consumer):
-        self.add_callback(lambda c: c.set_consumer(consumer))
+    def set_consumer(self, consumer, new=True):
+        self.add_callback(lambda c: c.set_consumer(consumer, new))
