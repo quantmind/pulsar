@@ -41,20 +41,16 @@ protocols. It maintains a live set of connections.
     def address(self):
         return self._address
     
+    @property
+    def available_connections(self):
+        return len(self._available_connections)
+        
     def release_connection(self, connection):
         '''Releases the connection back to the pool. This function remove
 the *connection* from the set of concurrent connections and add it to the set
 of available connections.'''
         self._concurrent_connections.remove(connection)
         self._available_connections.add(connection)
-        
-    def _remove_connection(self, connection):
-        super(ConnectionPool, self)._remove_connection(connection)
-        self._available_connections.discard(connection)
-        try:
-            connection.close()
-        except Exception:
-            pass
         
     def get_or_create_connection(self, client):
         "Get or create a new connection for *client*"
@@ -70,14 +66,24 @@ of available connections.'''
             connection = self.new_connection(self.address,
                                              client.consumer_factory,
                                              producer=client)
-            connection.copy_many_times_events(client)
             # Bind the post request event to the release connection function
-            connection.bind_event('post_request', self.release_connection)
+            connection.bind_event('post_request', self._release_response)
             #IMPORTANT: create client transport an connect to endpoint
             transport = create_transport(connection, address=connection.address)
             return transport.connect(connection.address)
         else:
             return connection
+        
+    def _remove_connection(self, connection):
+        super(ConnectionPool, self)._remove_connection(connection)
+        self._available_connections.discard(connection)
+        try:
+            connection.close()
+        except Exception:
+            pass
+    
+    def _release_response(self, response):
+        self.release_connection(response.connection)
     
 
 class Client(EventHandler):
@@ -141,7 +147,22 @@ method should invoke this method to start the response dance.
 :rtype: An :class:`ClientProtocolConsumer` obtained form
     :attr:`consumer_factory`.
 '''
-        # Get a suitable connection pool
+        conn = self.get_connection(request)
+        # conn could be a Connection or a Connector (Deferred)
+        response = self.consumer_factory(conn, request, consumer)
+        # The request has not been sent yet. Fire the pre_request signal
+        conn.set_consumer(response)
+        return response
+    
+    def new_request(self, response, request):
+        '''Perform a new request using the same *response* consumer.'''
+        response.new_request(request)
+        conn = self.get_connection(request)
+        connection.set_consumer(response)
+        return response 
+    
+    def get_connection(self, request):
+        '''Get a suitable :class:`Connection` for *request*.'''
         pool = self.connection_pools.get(request.key)
         if pool is None:
             pool = self.connection_pool(
@@ -149,13 +170,8 @@ method should invoke this method to start the response dance.
                                     max_connections=self.max_connections,
                                     connection_factory=self.connection_factory)
             self.connection_pools[request.key] = pool
-        conn = pool.get_or_create_connection(self)
-        # conn could be a Connection or a Connector (Deferred)
-        response = self.consumer_factory(conn, request, consumer)
-        # The request has not been sent yet. Fire the pre_request signal
-        conn.set_consumer(response)
-        return response
-    
+        return pool.get_or_create_connection(self)
+        
     def update_parameters(self, parameter_list, params):
         '''Update *param* with attributes of this :class:`Client` defined
 in :attr:`request_parameters` tuple.'''

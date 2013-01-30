@@ -15,8 +15,8 @@ __all__ = ['create_server', 'Server']
 
      
 class Server(Producer, TransportProxy):
-    '''A :class:`Producer` for all server's listening for connections
-on a socket. It is a producer of :class:`Transport` for server protocols.
+    '''A :class:`Producer` for all server's listening for connections.
+It is a producer of :class:`Transport` for server protocols.
     
 .. attribute:: transport:
 
@@ -24,21 +24,9 @@ on a socket. It is a producer of :class:`Transport` for server protocols.
     
 .. attribute:: consumer_factory
 
-    Callable or a :class:`ProtocolConsumer` class used
-    to override the :class:`Protocol.consumer_factory` attribute. It produces
+    Callable or a :class:`ProtocolConsumer` class for producing
     :class:`ProtocolConsumer` which handle the receiving, decoding and
     sending of data.
-    
-.. attribute:: connection_factory
-
-    A factory producing the :class:`Connection` for a socket created
-    from a connection of a remote client with this server. This is a function
-    or a :class:`Connection` class which accept two arguments,
-    the client address and the :attr:`consumer_factory` attribute.
-    This attribute is used in the :meth:`create_connection` method.
-    **By default pulsar uses a connection appropiate to the socket type** .
-    There shouldn't be any reason to change the default,
-    it is here just in case.
     
 .. attribute:: event_loop
 
@@ -71,7 +59,6 @@ on a socket. It is a producer of :class:`Transport` for server protocols.
                                      event_loop=self.event_loop)
         transport.add_writer()
         transport.add_reader()
-        protocol.copy_many_times_events(self)
         protocol.connection_made(transport)
         return protocol
         

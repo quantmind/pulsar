@@ -80,7 +80,14 @@ Failure
    :members:
    :member-order: bysource
 
+Events Handler
+~~~~~~~~~~~~~~~~~~~~
 
+.. autoclass:: EventHandler
+   :members:
+   :member-order: bysource
+   
+   
 Decorators
 ~~~~~~~~~~~~~~~~~~~~~
 

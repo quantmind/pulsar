@@ -54,6 +54,15 @@ class TestHttpClientBase(unittest.TestCase):
     
 class TestHttpClient(TestHttpClientBase):
     
+    def _check_pool(self, http, response, available=1, processed=1):
+        self.assertEqual(len(http.connection_pools), 1)
+        pool = http.connection_pools[response.request.key]
+        self.assertEqual(pool.concurrent_connections, 0)
+        self.assertEqual(pool.available_connections, available)
+        if available == 1:
+            connection = tuple(pool._available_connections)[0]
+            self.assertEqual(connection.processed, processed)
+        
     def testClient(self):
         http = self.client(max_redirects=5)
         self.assertTrue('accept-encoding' in http.headers)
@@ -73,14 +82,16 @@ class TestHttpClient(TestHttpClientBase):
         self.assertEqual(response.response, 'OK')
         self.assertTrue(response.content)
         self.assertEqual(response.url, self.httpbin())
+        self._check_pool(http, response)
         response = http.get(self.httpbin('get'))
-        producer = response.producer
         yield response.on_finished
+        self._check_pool(http, response, processed=2)
         
     def test_200_get_data(self):
         http = self.client()
         response = http.get(self.httpbin('get',''), data={'bla':'foo'})
         yield response.on_finished
+        self._check_pool(http, response)
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.response, 'OK')
         result = response.content_json()
@@ -92,6 +103,7 @@ class TestHttpClient(TestHttpClientBase):
         http = self.client()
         response = http.get(self.httpbin('gzip'))
         yield response.on_finished
+        self._check_pool(http, response)
         headers = response.headers
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.response, 'OK')
@@ -104,16 +116,22 @@ class TestHttpClient(TestHttpClientBase):
         http = self.client()
         response = http.get(self.httpbin('status', '400'))
         yield response.on_finished
+        #self._check_pool(http, response, 0)
         self.assertEqual(response.status_code, 400)
         self.assertEqual(response.response, 'Bad Request')
         self.assertTrue(response.content)
         self.assertRaises(httpurl.HTTPError, response.raise_for_status)
+        # Make sure we only have one connection after a valid request
+        response = http.get(self.httpbin('get'))
+        yield response.on_finished
+        self._check_pool(http, response)
         
     def test_404_get(self):
         '''Not Found 404'''
         http = self.client()
         response = http.get(self.httpbin('status', '404'))
         yield response.on_finished
+        #self._check_pool(http, response, 0)
         self.assertEqual(response.status_code, 404)
         self.assertEqual(response.response, 'Not Found')
         self.assertTrue(response.content)

@@ -1,6 +1,20 @@
-'''A HTTP proxy server in Pulsar::
+'''An asynchronous multi-process HTTP proxy server with *headers middleware*
+to manipulate the original request headers. To run the server::
 
     python manage.py
+    
+An header middleware is a callable which receives the wsgi *environ* and
+the list of request *headers*. By default the example uses:
+
+.. autofunction:: x_forwarded_for
+
+To run with different headers middleware create a new script and do::
+
+    from proxyserver.manage import server
+    
+    if __name__ == '__main__':
+        server(headers_middleware=[...]).start()
+        
 '''
 import io
 import sys
@@ -18,6 +32,7 @@ USER_AGENT = 'Pulsar-Proxy-Server'
 
 
 def x_forwarded_for(environ, headers):
+    '''Add *x-forwarded-for* header'''
     headers.add_header('x-forwarded-for', environ['REMOTE_ADDR'])
 
     
@@ -84,10 +99,12 @@ The returned headers will be sent to the target uri.'''
             yield body
             
 
-def server(description=None, name='proxy-server', **kwargs):
+def server(description=None, name='proxy-server',
+           headers_middleware=None, **kwargs):
     description = description or 'Pulsar Proxy Server'
+    headers_middleware = headers_middleware or [x_forwarded_for]
     wsgi_proxy = ProxyMiddleware(user_agent=USER_AGENT,
-                                 headers_middleware=[x_forwarded_for])
+                                 headers_middleware=headers_middleware)
     app = wsgi.WsgiHandler(middleware=[wsgi_proxy])
     return wsgi.WSGIServer(app, name=name, description=description, **kwargs)
 

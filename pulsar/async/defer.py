@@ -449,13 +449,17 @@ directly the :attr:`result` attribute.'''
             self.result = Failure(e)
         else:
             self.result.append(e)
-
-
+    
+    
 class EventHandler(object):
     '''A Mixin for handling one time events and events that occur several
-times.'''
+times. This mixin is used in :class:`Protocol` and :class:`Producer`
+for scheduling connections and requests.'''
     ONE_TIME_EVENTS = ()
+    '''Event names which occur once only. Implemented as :class:`Deferred`.'''
     MANY_TIMES_EVENTS = ()
+    '''Event names which occur several times. Implemented as list
+of callables.'''
     
     def __init__(self):
         o = dict(((e, Deferred()) for e in self.ONE_TIME_EVENTS))
@@ -472,7 +476,8 @@ times.'''
     
     def bind_event(self, event, callback):
         '''Register a *callback* with *event*. The callback must be
-a callable which accept one argument.'''
+a callable which accept one argument only.'''
+        callback = self.safe_callback(event, callback)
         if event in self.ONE_TIME_EVENTS:
             self.ONE_TIME_EVENTS[event].add_callback(callback)
         elif event in self.MANY_TIMES_EVENTS:
@@ -481,7 +486,8 @@ a callable which accept one argument.'''
             LOGGER.warn('unknown event "%s" for %s', event, self)
         
     def fire_event(self, event, event_data=NOTHING):
-        """Dispatches *event_data* to the *event* listeners."""
+        """Dispatches *event_data* to the *event* listeners.
+If *event_data* is not provided, this instanca will be dispatched."""
         event_data = self if event_data is NOTHING else event_data
         if event in self.ONE_TIME_EVENTS:
             log_failure(self.ONE_TIME_EVENTS[event].callback(event_data))
@@ -506,6 +512,16 @@ a callable which accept one argument.'''
                     d = self.ONE_TIME_EVENTS[name]
                     for callback in many[name]:
                         d.add_callback(callback)
+    
+    def safe_callback(self, event, callback):
+        def _(result):
+            try:
+                callback(result)
+            except Exception:
+                LOGGER.exception('Unhandled exception in "%s" event', event)
+            # always return result
+            return result
+        return _
             
                     
 class DeferredGenerator(Deferred):

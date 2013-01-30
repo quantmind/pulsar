@@ -321,7 +321,7 @@ class HttpResponse(pulsar.ProtocolConsumer):
             if len(self.history) >= request.max_redirects:
                 raise TooManyRedirects
             url = url or self.url
-            return client.request(request.method, url, previous_response=self)
+            return client.request(request.method, url, response=self)
         elif self.status_code == 101:
             # Upgrading response handler
             return client.upgrade(response)
@@ -486,7 +486,7 @@ object.
         return self.request('DELETE', url, **kwargs)
     
     def request(self, method, url, cookies=None, headers=None,
-                consumer=None, previous_response=None, **params):
+                consumer=None, response=None, **params):
         '''Constructs and sends a request to a remote server.
 It returns an :class:`HttpResponse` object.
 
@@ -497,18 +497,12 @@ the :class:`HttpRequest` constructor.
 
 :rtype: a :class:`HttpResponse` object.
 '''
-        if previous_response:
-            response = self.consumer_factory(previous_response.connection,
-                                             previous_response.request,
-                                             previous_response.consumer)
-            history = copy(response.history)
-            history.append(response)
-            previous_response.finish()
+        if response:
             pparams = response.request.all_params()
             headers = headers or pparams.pop('headers')
             headers.pop('Cookie', None)
             # http://www.w3.org/Protocols/rfc2616/rfc2616-sec10.html#sec10.3.4
-            if previous_response.status_code is 303:
+            if response.status_code is 303:
                 method = 'GET'
                 pparams.pop('data')
                 pparams.pop('files')
@@ -523,11 +517,10 @@ the :class:`HttpRequest` constructor.
             if not isinstance(cookies, CookieJar):
                 cookies = cookiejar_from_dict(cookies)
             cookies.add_cookie_header(request)
-        response = self.response(request, consumer)
-        if previous_response:
-            previous_response._connection = response._connection
-            previous_response._request = response._request
-            response = previous_response
+        if response:
+            response = self.new_request(response, request)
+        else:
+            response = self.response(request, consumer)
         response.transport.write(request.encode())
         return response
     

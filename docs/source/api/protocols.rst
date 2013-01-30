@@ -60,20 +60,11 @@ Client Connection Pool
 .. autoclass:: ConnectionPool
    :members:
    :member-order: bysource
-   
-   
-Client Protocol Consumer
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-.. autoclass:: ClientProtocolConsumer
-   :members:
-   :member-order: bysource
 
-
-Servers
-==================
 
 Server
-~~~~~~~~~~~~~~~~~~~
+==================
+
 .. autoclass:: Server
    :members:
    :member-order: bysource

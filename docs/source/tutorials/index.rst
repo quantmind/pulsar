@@ -16,7 +16,6 @@ Tutorials
    wsgi
    clients
    proxy
-   life
    
    
 Topics
@@ -28,6 +27,7 @@ These sections cover **pulsar internals** for the curious reader.
    :maxdepth: 1
    
    messages
+   events
    signal
    
    

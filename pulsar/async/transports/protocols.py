@@ -1,3 +1,5 @@
+from copy import copy
+
 from pulsar import ProtocolError
 from pulsar.utils.sockets import nice_address
 from pulsar.async.access import NOTHING
@@ -10,8 +12,8 @@ __all__ = ['Protocol', 'ProtocolConsumer', 'Connection', 'Producer']
 
 
 class Protocol(EventHandler):
-    ONE_TIME_EVENTS = ('start', 'finish')
-    MANY_TIMES_EVENTS = ('data_received',)
+    '''Abstract class implemented in :class:`Connection`
+and :class:`ProtocolConsumer`'''
     def connection_made(self, transport):
         '''Indicates that the :class:`Transport` is ready and connected
 to the entity at the other end. The protocol should probably save the
@@ -39,12 +41,16 @@ the transport to give up.'''
 
     
 class ProtocolConsumer(Protocol):
-    '''The :class:`Protocol` consumer is one most important classes
-in :ref:`pulsar framework <pulsar_framework>`. It is responsible for receiving
-incoming data from a the :meth:`Connection.data_received` method, decoding,
-and producing responses, i.e. writing back to the client or server via
+    '''The :class:`Protocol` consumer is one most important
+:ref:`pulsar primitive <pulsar_primitives>`. It is responsible for receiving
+incoming data from a the :meth:`Protocol.data_received` method implemented
+in :class:`Connection`. It is used to decode and producing responses, i.e.
+writing back to the client or server via
 the :attr:`transport` attribute. The only method to implement should
-be :meth:`Producer.data_received`.
+be :meth:`Protocol.data_received`.
+
+By default it has `start` and `finish` :ref:`one time event <one-time-event>`
+and `data_received` :ref:`many times event <many-times-event>`.
 
 .. attribute:: connection
 
@@ -61,9 +67,12 @@ be :meth:`Producer.data_received`.
 .. attribute:: on_finished
 
     A :class:`Deferred` called once the :class:`ProtocolConsumer` has
-    finished consuming the :attr:`protocol`. It is called by the
-    :attr:`connection` before disposing of this consumer.
+    finished consuming protocol. It is called by the
+    :attr:`connection` before disposing of this consumer. It is
+    a proxy of ``self.event('finish')``.
 '''
+    ONE_TIME_EVENTS = ('start', 'finish')
+    MANY_TIMES_EVENTS = ('data_received',)
     def __init__(self, connection, request=None, consumer=None):
         super(ProtocolConsumer, self).__init__()
         self._connection = connection
@@ -103,6 +112,17 @@ be :meth:`Producer.data_received`.
     def on_finished(self):
         return self.event('finish')
     
+    def new_request(self, request):
+        '''Reset this consumer for with a new *request*. This method is used by
+:class:`Client` consumers when a request needs to be resubmitted. Not used
+by :class:`Server` consumers.'''
+        consumer = copy(self)
+        self._connection._current_consumer = consumer
+        self._connection = None
+        self._request = request
+        consumer.finish()
+        return self
+        
     def finished(self, result=NOTHING):
         '''Call this method when done with this :class:`ProtocolConsumer`.
 By default it calls the :meth:`Connection.finished` method of the
@@ -114,7 +134,8 @@ By default it calls the :meth:`Connection.finished` method of the
         
 class Connection(Protocol, TransportProxy):
     '''A client or server connection with an endpoint. This is not
-connected until :meth:`Protocol.connection_made` is called.
+connected until :meth:`Protocol.connection_made` is called by the
+:class:`Transport`.
 
 .. attribute:: producer
 
@@ -272,6 +293,14 @@ The main method in this class is :meth:`new_connection` where a new
 :class:`Connection` is created and added to the set of
 :attr:`concurrent_connections`.
 
+.. attribute:: connection_factory
+
+    A factory producing the :class:`Connection` from a
+    remote client with this producer.
+    This attribute is used in the :meth:`new_connection` method.
+    There shouldn't be any reason to change the default :class:`Connection`,
+    it is here just in case.
+    
 .. attribute:: concurrent_connections
 
     Number of concurrent active connections
@@ -316,7 +345,10 @@ The main method in this class is :meth:`new_connection` where a new
         return len(self._concurrent_connections)
     
     def new_connection(self, address, consumer_factory, producer=None):
-        ''''Called when a new connection is created'''
+        '''Called when a new :class:`Connection` is created. The *producer*
+is either a :class:`Server` or a :class:`Client`. If the number of
+:attr:`concurrent_connections` is greater or equal :attr:`max_connections`
+a :class:`RuntimeError` is raised.'''
         if self._max_connections and self._received >= self._max_connections:
             raise RuntimeError('Too many connections')
         # increased the connections counter
@@ -326,6 +358,7 @@ The main method in this class is :meth:`new_connection` where a new
         conn = self.connection_factory(address, session, self.timeout,
                                        consumer_factory, producer)
         conn.bind_event('connection_made', self._add_connection)
+        conn.copy_many_times_events(producer)
         conn.bind_event('connection_lost', self._remove_connection)
         return conn
     
@@ -340,9 +373,7 @@ active connections.'''
             
     def _add_connection(self, connection):
         self._concurrent_connections.add(connection)
-        return connection
         
     def _remove_connection(self, connection):
         self._concurrent_connections.discard(connection)
-        return connection
     
