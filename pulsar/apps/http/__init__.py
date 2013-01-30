@@ -1,5 +1,6 @@
 import platform
 import json
+from copy import copy
 
 import pulsar
 from pulsar import create_transport
@@ -55,8 +56,9 @@ class HttpRequest(pulsar.Request):
         self.source_address = source_address
         self.parser = self.parser_class(kind=1, decompress=self.decompress)
         
-    def __hash__(self):
-        return hash((self.type, self.address, self.timeout))
+    @property
+    def key(self):
+        return (self.type, self.address, self.timeout)
     
     def __repr__(self):
         return self.first_line()
@@ -146,8 +148,11 @@ class HttpRequest(pulsar.Request):
                 body = json.dumps(self.data).encode(self.charset)
         return body
          
-    def params(self):
-        return self.__dict__.copy()
+    def all_params(self):
+        d = self.__dict__.copy()
+        d.pop('client')
+        d.pop('method')
+        return d
     
     def _encode_url(self, body):
         query = self.query
@@ -313,24 +318,14 @@ class HttpResponse(pulsar.ProtocolConsumer):
                               # Compliant with RFC3986, we percent
                               # encode the url.
                               requote_uri(url))
-            return self.new_request(url)
+            if len(self.history) >= request.max_redirects:
+                raise TooManyRedirects
+            url = url or self.url
+            return client.request(request.method, url, previous_response=self)
         elif self.status_code == 101:
             # Upgrading response handler
             return client.upgrade(response)
     
-                
-    def upgrade(self, response):
-        self.parser = FrameParser(kind=1)
-        client = WebSocketClient(response.sock, response.url)
-        client.handshake = response
-        return client
-    
-    def new_request(self, url=None):
-        if len(self.history) >= request.max_redirects:
-            raise TooManyRedirects
-        url = url or self.url
-        return request.client.request(method, url, previous_response=self)
-
 
 class HttpClient(pulsar.Client):
     '''A client for an HTTP/HTTPS server which handles a pool of synchronous
@@ -503,16 +498,15 @@ the :class:`HttpRequest` constructor.
 :rtype: a :class:`HttpResponse` object.
 '''
         if previous_response:
-            connection = previous_response.connection
             response = self.consumer_factory(previous_response.connection,
                                              previous_response.request,
                                              previous_response.consumer)
-            history = copy(request.history)
+            history = copy(response.history)
             history.append(response)
-            pparams = request.params()
+            previous_response.finish()
+            pparams = response.request.all_params()
             headers = headers or pparams.pop('headers')
             headers.pop('Cookie', None)
-            method = params.pop('method')
             # http://www.w3.org/Protocols/rfc2616/rfc2616-sec10.html#sec10.3.4
             if previous_response.status_code is 303:
                 method = 'GET'

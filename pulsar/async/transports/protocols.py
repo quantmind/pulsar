@@ -93,6 +93,11 @@ be :meth:`Producer.data_received`.
     def address(self):
         if self._connection:
             return self._connection.address
+        
+    @property
+    def producer(self):
+        if self._connection:
+            return self._connection.producer
     
     @property
     def on_finished(self):
@@ -141,7 +146,7 @@ connected until :meth:`Protocol.connection_made` is called.
     ONE_TIME_EVENTS = ('connection_made', 'connection_lost')
     MANY_TIMES_EVENTS = ('data_received', 'pre_request', 'post_request')
     #
-    def __init__(self, address, session, timeout, consumer_factory):
+    def __init__(self, address, session, timeout, consumer_factory, producer):
         super(Connection, self).__init__()
         self._address = address
         self._session = session 
@@ -150,6 +155,7 @@ connected until :meth:`Protocol.connection_made` is called.
         self._idle_timeout = None
         self._current_consumer = None
         self._consumer_factory = consumer_factory
+        self._producer = producer
         
     def __repr__(self):
         return '%s session %s' % (nice_address(self._address), self._session)
@@ -180,6 +186,10 @@ connected until :meth:`Protocol.connection_made` is called.
     @property
     def timeout(self):
         return self._timeout
+    
+    @property
+    def producer(self):
+        return self._producer
     
     def set_consumer(self, consumer):
         '''Set a new :class:`ProtocolConsumer` for this :class:`Connection`.'''
@@ -305,15 +315,16 @@ The main method in this class is :meth:`new_connection` where a new
     def concurrent_connections(self):
         return len(self._concurrent_connections)
     
-    def new_connection(self, address, consumer_factory):
+    def new_connection(self, address, consumer_factory, producer=None):
         ''''Called when a new connection is created'''
         if self._max_connections and self._received >= self._max_connections:
             raise RuntimeError('Too many connections')
         # increased the connections counter
         self._received = session = self._received + 1
         # new connection - not yet connected!
+        producer = producer or self
         conn = self.connection_factory(address, session, self.timeout,
-                                       consumer_factory)
+                                       consumer_factory, producer)
         conn.bind_event('connection_made', self._add_connection)
         conn.bind_event('connection_lost', self._remove_connection)
         return conn

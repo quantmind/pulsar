@@ -73,6 +73,9 @@ class TestHttpClient(TestHttpClientBase):
         self.assertEqual(response.response, 'OK')
         self.assertTrue(response.content)
         self.assertEqual(response.url, self.httpbin())
+        response = http.get(self.httpbin('get'))
+        producer = response.producer
+        yield response.on_finished
         
     def test_200_get_data(self):
         http = self.client()
@@ -177,7 +180,7 @@ class TestHttpClient(TestHttpClientBase):
         self.assertTrue(result['args'])
         self.assertEqual(result['args']['numero'],['1','2'])
         
-    def testRedirect(self):
+    def __testRedirect(self):
         http = self.client()
         response = http.get(self.httpbin('redirect', '1'))
         yield response.on_finished

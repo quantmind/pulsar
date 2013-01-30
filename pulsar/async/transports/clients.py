@@ -18,8 +18,9 @@ the appropiate :class:`ConnectionPool` for the client request.'''
         self.address = address
         self.timeout = timeout
         
-    def __hash__(self):
-        return hash((self.address, self.timeout))
+    @property
+    def key(self):
+        return (self.address, self.timeout)
     
     
 class ConnectionPool(Producer):
@@ -40,8 +41,10 @@ protocols. It maintains a live set of connections.
     def address(self):
         return self._address
     
-    def release(self, connection):
-        "Releases the connection back to the pool"
+    def release_connection(self, connection):
+        '''Releases the connection back to the pool. This function remove
+the *connection* from the set of concurrent connections and add it to the set
+of available connections.'''
         self._concurrent_connections.remove(connection)
         self._available_connections.add(connection)
         
@@ -65,8 +68,11 @@ protocols. It maintains a live set of connections.
         if connection is None:
             # build the new connection
             connection = self.new_connection(self.address,
-                                             client.consumer_factory)
+                                             client.consumer_factory,
+                                             producer=client)
             connection.copy_many_times_events(client)
+            # Bind the post request event to the release connection function
+            connection.bind_event('post_request', self.release_connection)
             #IMPORTANT: create client transport an connect to endpoint
             transport = create_transport(connection, address=connection.address)
             return transport.connect(connection.address)
@@ -136,13 +142,13 @@ method should invoke this method to start the response dance.
     :attr:`consumer_factory`.
 '''
         # Get a suitable connection pool
-        pool = self.connection_pools.get(request)
+        pool = self.connection_pools.get(request.key)
         if pool is None:
             pool = self.connection_pool(
                                     request,
                                     max_connections=self.max_connections,
                                     connection_factory=self.connection_factory)
-            self.connection_pools[request] = pool
+            self.connection_pools[request.key] = pool
         conn = pool.get_or_create_connection(self)
         # conn could be a Connection or a Connector (Deferred)
         response = self.consumer_factory(conn, request, consumer)
