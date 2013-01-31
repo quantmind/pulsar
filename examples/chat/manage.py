@@ -115,7 +115,7 @@ def server(**kwargs):
     chat = ws.WebSocket(Chat())
     api = rpc.RpcMiddleware(Rpc(), path='/rpc')
     app = wsgi.WsgiHandler(middleware=(chat, api, page))
-    wsgi.WSGIServer(callable=app, **kwargs)
+    return wsgi.WSGIServer(callable=app, **kwargs)
 
 
 if __name__ == '__main__':  #pragma nocover
