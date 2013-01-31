@@ -1,3 +1,7 @@
+Master
+==============================
+* Added websocket chat example.
+
 Ver. 0.4.5 - 2013-Jan-27
 ==============================
 * Refactored :class:`pulsar.apps.rpc.JsonProxy` class.
