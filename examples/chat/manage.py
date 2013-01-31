@@ -2,7 +2,14 @@
 
     python manage.py
     
-and open web browsers at http://localhost:8060    
+and open web browsers at http://localhost:8060
+
+To send messages from the JSON RPC open a python shell and::
+
+    >>> from pulsar.apps import rpc
+    >>> p = rpc.JsonProxy('http://127.0.0.1:8060/rpc')
+    >>> p.message('Hi from rpc')
+    'OK'
 '''
 import os
 import sys
@@ -108,7 +115,7 @@ def server(**kwargs):
     chat = ws.WebSocket(Chat())
     api = rpc.RpcMiddleware(Rpc(), path='/rpc')
     app = wsgi.WsgiHandler(middleware=(chat, api, page))
-    wsgi.WSGIServer(callable=app, **kwargs).start()
+    wsgi.WSGIServer(callable=app, **kwargs)
 
 
 if __name__ == '__main__':  #pragma nocover

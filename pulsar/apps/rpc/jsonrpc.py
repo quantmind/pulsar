@@ -200,7 +200,7 @@ usage is simple::
         # Always make sure the content-type is application/json
         self.http.headers['content-type'] = 'application/json'
         resp = self.http.post(self.url, data=body)
-        if self._client._full_response:
+        if self._full_response:
             return resp
         elif is_async(resp):
             return resp.add_callback(lambda r: self._end_call(r, raw))
