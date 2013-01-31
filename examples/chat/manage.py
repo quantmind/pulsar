@@ -15,44 +15,98 @@ try:
 except ImportError: #pragma nocover
     sys.path.append('../../')
     import pulsar
-from pulsar.apps import ws, wsgi
-from pulsar.apps.wsgi import Html
+from pulsar.apps import ws, wsgi, rpc
 
 CHAT_DIR = os.path.dirname(__file__)
-CHAT_URL = 'http://127.0.0.1:8015'
 
-class handle(ws.WS):
+################################################################################
+##    Publish and clients methods
+def publish(message):
+    message = {'time': time.time(),
+               'message': message}
+    pulsar.send('webchat', 'publish_message', json.dumps(message))
+
+def broadcast(message):
+    remove = set()
+    clients = get_clients()
+    for client in clients:
+        try:
+            client.current_consumer.write(message)
+        except Exception:
+            remove.add(client)
+    clients.difference_update(remove)
+    
+def get_clients():
+    actor = pulsar.get_actor()
+    clients = actor.params.clients
+    if clients is None:
+        clients = set()
+        actor.params.clients = clients
+    return clients
+
+################################################################################
+##    Internal message passing
+@pulsar.command(ack=False)
+def publish_message(request, message):
+    monitor = request.actor
+    if monitor.managed_actors:
+        for worker in monitor.managed_actors.values():
+            monitor.send(worker, 'broadcast_message', message)
+    else:
+        broadcast(message)
+        
+@pulsar.command(ack=False)
+def broadcast_message(request, message):
+    broadcast(message)
+
+################################################################################
+##    MIDDLEWARE
+
+class Rpc(rpc.PulsarServerCommands):
+    
+    def rpc_message(self, request, message):
+        publish(message)
+        return 'OK'
+    
+    
+class Chat(ws.WS):
     
     def match(self, environ):
-        return environ.get('PATH_INFO') in ('/echo', '/data')
-    
+        return environ.get('PATH_INFO') in ('/message',)
+        
+    def on_open(self, environ):
+        # Add pulsar.connection environ extension to the set of active clients
+        get_clients().add(environ['pulsar.connection'])
+        
     def on_message(self, environ, msg):
-        path = environ.get('PATH_INFO')
-        if path == '/echo':
-            return msg
-        elif path == '/data':
-            return json.dumps([(i,random()) for i in range(100)])
+        if msg:
+            lines = []
+            for l in msg.split('\n'):
+                l = l.strip()
+                if l:
+                    lines.append(l)
+            msg = ' '.join(lines)
+            if msg:
+                publish(msg)
 
 
-def page(request):
+def page(environ, start_response):
     """ This resolves to the web page or the websocket depending on the path."""
-    html = request.html_document(title='Pulsar Chat')
-    html.head.scripts.append('http://ajax.googleapis.com/ajax/libs/jquery/1.9.0/jquery.min.js')
-    html.head.scripts.append('/media/chat.js')
-    html.body.data('chat_url', CHAT_URL)
-    return html.http_response(request)
+    path = environ.get('PATH_INFO')
+    if not path or path == '/':
+        data = open(os.path.join(CHAT_DIR, 'chat.html')).read()
+        data = data % environ
+        start_response('200 OK', [('Content-Type', 'text/html'),
+                                  ('Content-Length', str(len(data)))])
+        return [pulsar.to_bytes(data)]
 
 
 
 def server(**kwargs):
-    websocket = ws.WebSocket(handle())
-    static = wsgi.MediaRouter('/media', os.path.join(CHAT_DIR, 'media'))
-    main = wsgi.Router('/', get=page)
-    app = wsgi.WsgiHandler(middleware=(static, main))
-    wsgiserver = wsgi.WSGIServer(callable=app, **kwargs)
-    chatserver = wsgi.WSGIServer(callable=websocket, name='chat',
-                                 bind=':8015', workers=1)
-    wsgiserver.start()
+    chat = ws.WebSocket(Chat())
+    api = rpc.RpcMiddleware(Rpc(), path='/rpc')
+    middleware = wsgi.WsgiHandler(middleware=(chat, api, page))
+    return wsgi.WSGIServer(name='webchat', callable=middleware, **kwargs)
 
 
 if __name__ == '__main__':  #pragma nocover

@@ -26,7 +26,6 @@ __all__ = ['Config',
            'SimpleSetting',
            'Setting',
            'defaults',
-           'safe',
            'ordered_settings',
            'validate_string',
            'validate_callable',
@@ -62,14 +61,6 @@ def wrap_method(func):
     def _wrapped(instance, *args, **kwargs):
         return func(*args, **kwargs)
     return _wrapped
-
-def safe(f):
-    def _(*args, **kwargs):
-        try:
-            return f(*args, **kwargs)
-        except Exception:
-            pass
-    return _
 
 def ordered_settings():
     for name in KNOWN_SETTINGS_ORDER:

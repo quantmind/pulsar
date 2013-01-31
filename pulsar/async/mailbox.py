@@ -24,6 +24,15 @@ from .proxy import actorid, get_proxy, get_command, CommandError, ActorProxy
 LOGGER = logging.getLogger('pulsar.mailbox')
     
 CommandRequest = namedtuple('CommandRequest', 'actor caller connection')
+
+def command_in_context(actor, caller, command, *args, **kwargs):
+    cmnd = get_command(command)
+    if not cmnd:
+        raise CommandError('unknown %s' % command)
+    request = CommandRequest(actor, caller, None)
+    return cmnd(request, args, kwargs)
+    
+    
     
 class MonitorMailbox(object):
     '''A :class:`Mailbox` for a :class:`Monitor`. This is a proxy for the
@@ -144,7 +153,6 @@ class MailboxConsumer(ProtocolConsumer):
         if data.get('ack'):
             req = Message.callback(result, data['ack'])
             self.new_request(req)
-            self.start_request()
         #Return the result so a failure can be logged
         return result
 
@@ -152,7 +160,6 @@ class MailboxConsumer(ProtocolConsumer):
         '''Used by the server'''
         req = Message.command(command, sender, target, args, kwargs)
         self.new_request(req)
-        self.start_request()
         return req.future
 
     

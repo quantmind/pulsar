@@ -4,14 +4,13 @@ import sys
 from inspect import isfunction
 
 import pulsar
-from pulsar import Actor, Monitor, get_actor, maybe_async_deco, EventHandler
+from pulsar import Actor, Monitor, get_actor, maybe_async_deco, EventHandler,\
+                    QueueServer, QueueTransport
 from pulsar.utils.importer import module_attribute
 from pulsar.utils.pep import pickle
-from pulsar.utils.queue import IOQueue
 
 __all__ = ['Application',
            'CPUboundApplication',
-           'MultiApp',
            'Worker',
            'ApplicationMonitor',
            'get_application']
@@ -456,31 +455,20 @@ This type of application is served by :ref:`CPU bound workers <cpubound>`.'''
         super(CPUboundApplication, self).__init__(*args, **kwargs)
         
     def io_poller(self, worker):
-        self.local.queue = worker.params.ioqueue 
-        return IOQueue(self.ioqueue, self)
-    
-    def can_poll(self):
-        '''Check if the :class:`Worker` can poll from the distributed task
-queue. If the number of concurrent requests is above the ``backlog`` parameter
-it retuns ``False``.'''
-        if self.local.can_poll:
-            if len(self.concurrent_requests) > self.cfg.backlog:
-                self.logger.debug('Cannot poll. There are %s concurrent tasks.',
-                                  len(self.concurrent_requests))
-            else:
-                return True
+        server = QueueServer(consumer_factory=self.request_instance,
+                             backlog=self.cfg.backlog)
+        worker.servers[self.name] = server
+        return server.poller(worker.params.queue)
     
     @property
-    def concurrent_request(self):
-        return len(self.concurrent_requests)
-    
-    @property
-    def ioqueue(self):
-        return self.local.queue
+    def transport(self):
+        if self.local.transport is None:
+            self.local.transport = QueueTransport(self.local.queue)
+        return self.local.transport
     
     def put(self, request):
-        '''Put a *request* into the :attr:`ioqueue` if available.'''
-        self.ioqueue.put(('request', request))
+        '''Put a *request* into the :attr:`transport` if available.'''
+        self.transport.write(request)
 
     def request_instance(self, request):
         '''Build a request class from a *request*. By default it returns the
@@ -489,10 +477,8 @@ request has been obtained from the :attr:`ioqueue`.'''
         return request
 
     def worker_start(self, worker):
-        # Set up the cpu bound worker by registering its file descriptor
-        # and enabling polling from the queue
-        worker.requestloop.add_reader('request', self.on_request, worker)
-        self.local.can_poll = True
+        self.transport.event_loop = worker.requestloop
+        worker.servers[self.name].connection_made(self.transport)
     
     def monitor_info(self, worker, data):
         tq = self.ioqueue
@@ -511,33 +497,5 @@ request has been obtained from the :attr:`ioqueue`.'''
     def actorparams(self, monitor, params):
         if 'queue' not in self.local:
             self.local.queue = self.cfg.task_queue_factory()
-        params['ioqueue'] = self.ioqueue
+        params['queue'] = self.local.queue
         return params
-    
-    @maybe_async_deco
-    def on_request(self, worker, request):
-        request = self.request_instance(request)
-        if request is not None:
-            self.received += 1
-            self.logger.debug('New request %s. Total requests %s',
-                              request, self.received)
-            self.concurrent_requests.add(request)
-            try:
-                yield request.start(worker)
-            finally:
-                self.concurrent_requests.discard(request)
-
-
-class MultiApp:
-    
-    def __init__(self, name='taskqueue', **params):
-        self.name = name
-        self.params = params
-        self.apps = []
-        
-    def __call__(self, actor=None):
-        raise NotImplementedError()
-        
-    def start(self):
-        for app in self.apps:
-            app.start()

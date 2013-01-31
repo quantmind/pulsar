@@ -22,7 +22,7 @@ from pulsar.utils.log import LogginMixin
 from .eventloop import EventLoop, setid, signal
 from .defer import Deferred, EventHandler, log_failure
 from .proxy import ActorProxy, get_proxy, ActorProxyMonitor
-from .mailbox import MailboxClient
+from .mailbox import MailboxClient, command_in_context
 from .access import set_actor, is_mainthread, get_actor, remove_actor, NOTHING
 
 
@@ -180,6 +180,7 @@ an :class:`ActorProxy`.
                 self.bind_event(name, hook)
         self.monitor = impl.params.pop('monitor', None)
         self.params = AttributeDictionary(**impl.params)
+        self.servers = {}
         del impl.params
         setid(self)
         try:
@@ -250,7 +251,10 @@ logging is configured, the :attr:`Actor.mailbox` is registered and the
         '''Send a message to *target* to perform *action* with given
 parameters *params*.'''
         target = self.monitor if target == 'monitor' else target
-        if isinstance(target, ActorProxyMonitor):
+        actor = self.get_actor(target)
+        if isinstance(actor, Actor):
+            return command_in_context(actor, self, action, *args, **params)
+        elif isinstance(target, ActorProxyMonitor):
             mailbox = target.mailbox
         else:
             mailbox = self.mailbox

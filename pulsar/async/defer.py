@@ -12,7 +12,7 @@ from pulsar import AlreadyCalledError, HaltServer
 from pulsar.utils import events
 from pulsar.utils.pep import raise_error_trace, iteritems, default_timer
 
-from .access import get_request_loop, NOTHING
+from .access import get_request_loop
 
 
 __all__ = ['Deferred',
@@ -481,6 +481,15 @@ of callables.'''
         self.ONE_TIME_EVENTS = o
         self.MANY_TIMES_EVENTS = m
         
+    def __copy__(self):
+        d = self.__dict__.copy()
+        cls = self.__class__
+        obj = cls.__new__(cls)
+        o = dict(((e, Deferred()) for e in self.ONE_TIME_EVENTS))
+        d['ONE_TIME_EVENTS'] = o
+        obj.__dict__ = d
+        return obj
+        
     def event(self, name):
         '''Return the handler for event *name*.'''
         if name in self.ONE_TIME_EVENTS:
@@ -499,11 +508,11 @@ a callable which accept one argument only.'''
         else:
             LOGGER.warn('unknown event "%s" for %s', event, self)
         
-    def fire_event(self, event, event_data=NOTHING):
+    def fire_event(self, event, event_data=None):
         """Dispatches *event_data* to the *event* listeners.
 If *event_data* is not provided, this instance will be dispatched.
 If *event_data* is an error it will be converted to a :class:`Failure`."""
-        event_data = self if event_data is NOTHING else as_failure(event_data)
+        event_data = self if event_data is None else as_failure(event_data)
         if event in self.ONE_TIME_EVENTS:
             self.ONE_TIME_EVENTS[event].callback(event_data)
         elif event in self.MANY_TIMES_EVENTS:
@@ -586,7 +595,7 @@ occurred.
         if is_async(result):
             if default_timer() - self._start > self.timeout:
                 try:
-                    raise RuntimeError('Timeout!')
+                    raise RuntimeError('Timeout %s seconds!' % self.timeout)
                 except Exception as e:
                     return self.callback(e)
             self.loop.call_soon_threadsafe(self._check_async, result)

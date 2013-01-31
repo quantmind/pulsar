@@ -2,10 +2,9 @@ from copy import copy
 
 from pulsar import ProtocolError
 from pulsar.utils.sockets import nice_address
-from pulsar.async.access import NOTHING
 from pulsar.async.defer import EventHandler
 
-from .transport import TransportProxy, LOGGER
+from .transport import TransportProxy, Connector, LOGGER
 
 
 __all__ = ['Protocol', 'ProtocolConsumer', 'Connection', 'Producer']
@@ -73,7 +72,7 @@ and `data_received` :ref:`many times event <many-times-event>`.
 '''
     ONE_TIME_EVENTS = ('finish',)
     MANY_TIMES_EVENTS = ('data_received',)
-    def __init__(self, connection, request=None):
+    def __init__(self, connection):
         super(ProtocolConsumer, self).__init__()
         self._connection = None
         self._current_request = None
@@ -81,13 +80,21 @@ and `data_received` :ref:`many times event <many-times-event>`.
         self._data_received_count = 0
         # this counter is updated via the new_request method
         self._request_processed = 0
+        # Number of times the consumer has tried to reconnect (for clients only)
         self._reconnect_retries = 0
-        self.new_request(request)
         connection.set_consumer(self)
     
     @property
     def connection(self):
         return self._connection
+    
+    @property
+    def connected(self):
+        return isinstance(self._connection, Connection)
+    
+    @property
+    def connecting(self):
+        return isinstance(self._connection, Connector)
     
     @property
     def event_loop(self):
@@ -118,25 +125,36 @@ and `data_received` :ref:`many times event <many-times-event>`.
         return self.event('finish')
     
     def start_request(self):
-        '''Invoked by client consumer to kick start the request with
-remote server.'''
-        raise NotImplementedError
+        '''Invoked by the :meth:`new_request` method to kick start the
+request with remote server. For server consumer this is usually
+not implemented.'''
+        pass
     
-    def new_request(self, request):
-        '''Reset this consumer for with a new *request*. This method is used by
-:class:`Client` consumers when a request needs to be resubmitted. Not used
-by :class:`Server` consumers.'''
-        self._request_processed += 1
-        self._current_request = request
+    def new_request(self, request=None):
+        '''Starts a new *request* for this consumer.'''
+        if self.connected:
+            self._request_processed += 1
+            self._current_request = request
+            self._connection.fire_event('pre_request', request)
+            if request is not None:
+                self.start_request()
+        elif self.connecting:
+            self._connection.add_callback(lambda r: self.new_request(request))
+        else:
+            raise RuntimeError('Cannot start new request. No connection.')
     
     def reset_connection(self):
-        if self._connection:
-            consumer = copy(self)
-            self._connection._current_consumer = consumer
+        '''Cleanly dispose of the current :attr:`connection`. Used
+by client consumers only.'''
+        if self.connected:
+            conn = self._connection
+            clone = copy(self)
+            conn._current_consumer = clone
             self._connection = None
-            consumer.finish()
+            clone.finished()
+            return clone
         
-    def finished(self, result=NOTHING):
+    def finished(self, result=None):
         '''Call this method when done with this :class:`ProtocolConsumer`.
 By default it calls the :meth:`Connection.finished` method of the
 :attr:`connection` attribute.'''
@@ -146,7 +164,23 @@ By default it calls the :meth:`Connection.finished` method of the
     def connection_lost(self, exc):
         self.finished(exc)
         
+    def can_reconnect(self, max_reconnect, exc):
+        conn = self._connection
+        # First we check if this was caused by a stale connection
+        if conn and not self._data_received_count and conn.processed > 1:
+            # switch off logging for this exception
+            exc.logged = True
+            return 1
+        elif self._reconnect_retries < max_reconnect:
+            self._reconnect_retries += 1
+            exc.log()
+            return self._reconnect_retries
+        else:
+            return 0
+        
     def _data_received(self, data):
+        # Called by Connection, it updates the counters and invoke
+        # the high level data_received
         self._data_received_count += 1 
         self._reconnect_retries = 0
         return self.data_received(data)
@@ -239,13 +273,12 @@ It has two :ref:`one time events <one-time-event>`, *connection_made* and
     def producer(self):
         return self._producer
     
-    def set_consumer(self, consumer, new=True):
+    def set_consumer(self, consumer):
         '''Set a new :class:`ProtocolConsumer` for this :class:`Connection`.'''
         assert self._current_consumer is None, 'Consumer is not None'
         self._current_consumer = consumer
         consumer._connection = self
         self._processed += 1
-        self.fire_event('pre_request', consumer)
     
     def connection_made(self, transport):
         # Implements protocol connection_made
@@ -259,8 +292,11 @@ It has two :ref:`one time events <one-time-event>`, *connection_made* and
         while data:
             consumer = self._current_consumer
             if consumer is None:
-                # New consumer
+                # New consumer.
+                # These two lines are used by server connections only.
                 consumer = self._consumer_factory(self)
+                consumer.new_request()
+            # Call the consumer _data_received method
             data = consumer._data_received(data)
             if data and self._current_consumer:
                 # if data is returned from the response feed method and the
@@ -288,9 +324,9 @@ specification changes during a response (an example is a WebSocket
 response).'''
         self._consumer_factory = consumer_factory
         
-    def finished(self, consumer, result=NOTHING):
+    def finished(self, consumer, result=None):
         '''Call this method to close the current *consumer*.'''
-        if consumer is self._current_consumer:
+        if consumer and consumer is self._current_consumer:
             self.fire_event('post_request', consumer)
             consumer.fire_event('finish', result)
             self._current_consumer = None

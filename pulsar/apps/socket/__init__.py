@@ -96,7 +96,6 @@ In addition, a :class:`SocketServer` in multi-process mode is only available for
  * Windows running python 3.2 or above.
 '''
 import pulsar
-from pulsar import safe
 
 
 class Bind(pulsar.Setting):
@@ -190,9 +189,9 @@ uses the :meth:`handler` as its response protocol.'''
                                       consumer_factory=self.protocol_consumer(),
                                       max_connections=cfg.max_requests,
                                       timeout=cfg.keepalive)
-        server.bind_event('connection_made', safe(cfg.connection_made))
-        server.bind_event('pre_request', safe(cfg.pre_request))
-        server.bind_event('post_request', safe(cfg.post_request))
-        server.bind_event('connection_lost', safe(cfg.connection_lost))
+        server.bind_event('connection_made', cfg.connection_made)
+        server.bind_event('pre_request', cfg.pre_request)
+        server.bind_event('post_request', cfg.post_request)
+        server.bind_event('connection_lost', cfg.connection_lost)
         return server
         

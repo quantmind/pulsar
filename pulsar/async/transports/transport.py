@@ -86,6 +86,7 @@ capabilities in some transport mechanisms.
 
     ``True`` if the transport is closed.
 '''
+    closed = False
     def write(self, data):
         '''Write some data bytes to the transport.
         This does not block; it buffers the data and arranges for it
@@ -417,6 +418,7 @@ class Connector(Deferred, TransportProxy):
     
     def __init__(self, transport):
         self._transport = transport
+        self._consumer = None
         super(Connector, self).__init__()
         self.add_callback(self._connection_made, self._connection_failure)
     
@@ -433,3 +435,4 @@ class Connector(Deferred, TransportProxy):
     def set_consumer(self, consumer):
         consumer._connection = self
         self.add_callback(lambda c: c.set_consumer(consumer))
+        

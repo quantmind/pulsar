@@ -209,34 +209,6 @@ class TestTools(unittest.TestCase):
     
 class TestHttpClient:
         
-    def testTooManyRedirects(self):
-        http = self.client()
-        r = safe_async(http.get, (self.httpbin('redirect', '5'),),
-                                {'max_redirects': 2})
-        # do this so that the test suite does not fail on the test
-        yield r.addBoth(lambda f: [f])
-        r = r.result[0]
-        self.assertTrue(is_failure(r))
-        self.assertTrue(isinstance(r.trace[1], httpurl.TooManyRedirects))
-        
-    def testResponseHeaders(self):
-        http = self.client()
-        r = make_async(http.get(self.httpbin('response-headers')))
-        yield r
-        r = r.result
-        self.assertEqual(r.status_code, 200)
-        result = r.content_json()
-        self.assertEqual(result['Transfer-Encoding'], 'chunked')
-        parser = r.parser
-        self.assertTrue(parser.is_chunked())
-        
-    def testLargeResponse(self):
-        http = self.client()
-        r = http.get(self.httpbin('getsize/600000'))
-        yield r
-        r = r.result
-        self.assertEqual(r.status_code, 200)
-        
     def test_Cookie(self):
         http = self.client()
         # First set the cookies
@@ -274,30 +246,6 @@ class TestHttpClient:
                          {'key':'true'})
         self.assertEqual(httpurl.parse_cookie('invalid;key=true'),
                          {'key':'true'})
-        
-    def test_stream_response(self):
-        http = self.client()
-        r = make_async(http.get(self.httpbin('stream/3000/20')))
-        yield r
-        r = r.result
-        self.assertEqual(r.status_code, 200)
-        
-    def test_expect(self):
-        http = self.client()
-        data = (('bla', 'foo'), ('unz', 'whatz'),
-                ('numero', '1'), ('numero', '2'))
-        bdata = urlencode(data)
-        r = make_async(http.post(self.httpbin('post'), data=b'',
-                                 headers=[('expect','100-continue'),
-                                          ('Content-length', str(len(bdata)))]))
-        yield r
-        response = r.result
-        self.assertEqual(response.status_code, 100)
-        r = make_async(response.write(bdata))
-        yield r
-        response = r.result
-        self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.connection, None)
         
     def test_basic_authentication(self):
         http = self.client()

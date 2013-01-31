@@ -6,7 +6,7 @@ from pulsar.utils.pep import get_event_loop
 from pulsar.utils.sockets import get_transport_type, create_socket
 from pulsar.async.defer import as_failure, is_failure
 
-from .protocols import ProtocolConsumer, EventHandler, Producer, NOTHING
+from .protocols import ProtocolConsumer, EventHandler, Producer
 from .transport import create_transport, LOGGER
 
 __all__ = ['ConnectionPool', 'Client', 'Request', 'SingleClient']
@@ -53,7 +53,7 @@ protocols. It maintains a live set of connections.
         '''Releases the connection back to the pool. This function remove
 the *connection* from the set of concurrent connections and add it to the set
 of available connections.'''
-        self._concurrent_connections.remove(connection)
+        self._concurrent_connections.discard(connection)
         self._available_connections.add(connection)
         
     def get_or_create_connection(self, client, new=False):
@@ -76,7 +76,7 @@ of available connections.'''
             connection.bind_event('post_request', self._release_response)
             # Bind the connection_lost to connection to handle dangling connections
             connection.bind_event('connection_lost',
-                                  partial(self._socket_exception, connection))
+                                  partial(self._try_reconnect, connection))
             #IMPORTANT: create client transport an connect to endpoint
             transport = create_transport(connection, address=connection.address)
             return transport.connect(connection.address)
@@ -85,7 +85,7 @@ of available connections.'''
         
     ############################################################################
     ##    INTERNALS
-    def _socket_exception(self, connection, exc):
+    def _try_reconnect(self, connection, exc):
         # handle Read Exception on the transport
         if is_failure(exc) and exc.is_instance((socket.timeout, socket.error)):
             # Have we been here before?
@@ -95,17 +95,24 @@ of available connections.'''
             # The connection has processed request before and the consumer
             # has never received data. If the client allows it, try to
             # reconnect, it was probably a stale connection.
-            if client.reconnect and not received and connection.processed > 1:
-                # switch off error logging
-                exc.logged = True
-                LOGGER.debug('Try to reconnect')
+            retries = consumer.can_reconnect(client.max_reconnect, exc)
+            if retries:
                 connection._current_consumer = None
-                self._remove_connection(connection)
-                # get a new connection
-                conn = self.get_or_create_connection(client)
-                # Start the response without firing the events
-                conn.set_consumer(consumer, False)
-                consumer.start_request()
+                lag = retries - 1
+                if lag:
+                    lag = client.reconnect_time_lag(lag)
+                    LOGGER.debug('Try to reconnect in %s seconds', lag)
+                    loop = get_event_loop()
+                    loop.call_later(lag, self._reconnect, client, consumer)
+                else:
+                    self._reconnect(client, consumer)
+                    
+    def _reconnect(self, client, consumer):
+        # get a new connection
+        conn = self.get_or_create_connection(client)
+        # Start the response without firing the events
+        conn.set_consumer(consumer)
+        consumer.new_request(consumer.current_request)
                 
     def _remove_connection(self, connection):
         super(ConnectionPool, self)._remove_connection(connection)
@@ -133,6 +140,8 @@ class Client(EventHandler):
     '''Optional timeout in seconds for idle connections.'''
     max_connections = 0
     '''Maximum number of concurrent connections.'''
+    reconnecting_gap = 2
+    '''Reconnecting gap in seconds.'''
     
     
     ONE_TIME_EVENTS = ('finish',)
@@ -183,9 +192,9 @@ start the response.
 '''
         conn = self.get_connection(request)
         # build the protocol consumer
-        consumer = self.consumer_factory(conn, request)
+        consumer = self.consumer_factory(conn)
         # start the request
-        consumer.start_request()
+        consumer.new_request(request)
         return consumer
     
     def get_connection(self, request):
@@ -217,7 +226,10 @@ in :attr:`request_parameters` tuple.'''
         
     def abort(self):
         self.close(async=False)
-        
+
+    def reconnect_time_lag(self, lag):
+        lag = self.reconnect_time_lag*(math.log(lag) + 1)
+        return round(lag, 1)
         
 class SingleClient(Client):
     '''A :class:`Client` which handle one connection only.'''
@@ -232,6 +244,5 @@ class SingleClient(Client):
             self._consumer = super(SingleClient, self).response(request)
         else:
             self._consumer.new_request(request)
-            self._consumer.start_request()
         return self._consumer
             

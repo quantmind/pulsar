@@ -85,7 +85,7 @@ class TestRequest(object):
         return self.testcls.__name__
     __str__ = __repr__
 
-    def start(self, worker):
+    def start(self):
         '''Run all test functions from the :attr:`testcls` using the
 following algorithm:
 
@@ -94,6 +94,7 @@ following algorithm:
 * Run the class method ``tearDownClass`` of :attr:`testcls` if defined.
 '''
         # Reset the runner
+        worker = get_actor()
         worker.app.local.pop('runner')
         runner = worker.app.runner
         testcls = self.testcls

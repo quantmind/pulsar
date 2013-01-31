@@ -40,11 +40,11 @@ from datetime import datetime, timedelta
 from email.utils import formatdate
 from io import BytesIO
 import zlib
-from collections import deque, Mapping
+from collections import deque
 from copy import copy
 
-ispy3k = sys.version_info >= (3, 0)
-ispy26 = sys.version_info < (2, 7)
+from .structures import mapping_iterator
+from .pep import ispy3k, ispy26
 
 create_connection = socket.create_connection
 LOGGER = logging.getLogger('httpurl')
@@ -207,17 +207,6 @@ parse_http_list = urllibr.parse_http_list
 class SSLError(HTTPError):
     "Raised when SSL certificate fails in an HTTPS connection."
     pass
-
-class HTTPurlError(Exception):
-    pass
-
-class TooManyRedirects(HTTPurlError):
-    pass
-
-def mapping_iterator(iterable):
-    if isinstance(iterable, Mapping):
-        iterable = iteritems(iterable)
-    return iterable
 
 ####################################################    URI & IRI SUFF
 #

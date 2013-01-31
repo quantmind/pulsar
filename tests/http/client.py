@@ -1,9 +1,9 @@
 '''Tests asynchronous HttpClient.'''
-from pulsar import send
+from pulsar import send, is_failure
 from pulsar.apps.test import unittest
 from pulsar.utils import httpurl
 from pulsar.utils.httpurl import to_bytes, urlencode
-from pulsar.apps.http import HttpClient
+from pulsar.apps.http import HttpClient, TooManyRedirects
 
 
 class TestHttpClientBase:
@@ -19,7 +19,8 @@ class TestHttpClientBase:
         from examples.httpbin.manage import server
         concurrency = cls.cfg.concurrency
         s = server(bind='127.0.0.1:0', concurrency=concurrency,
-                   name='httpbin-%s' % cls.__name__.lower())
+                   name='httpbin-%s' % cls.__name__.lower(),
+                   keepalive=30)
         outcome = send('arbiter', 'run', s)
         yield outcome
         cls.app = outcome.result
@@ -45,10 +46,11 @@ class TestHttpClientBase:
             kwargs['proxy_info'] = {'http': self.proxy_uri}
         return HttpClient(**kwargs)
     
-    def _check_pool(self, http, response, available=1, processed=1):
+    def _check_pool(self, http, response, available=1, processed=1, created=1):
         self.assertEqual(len(http.connection_pools), 1)
-        pool = http.connection_pools[response.request.key]
-        self.assertEqual(pool.concurrent_connections, 0)
+        pool = http.connection_pools[response.current_request.key]
+        #self.assertEqual(pool.concurrent_connections, 0)
+        self.assertEqual(pool.received, created)
         self.assertEqual(pool.available_connections, available)
         if available == 1:
             connection = tuple(pool._available_connections)[0]
@@ -60,8 +62,8 @@ class TestHttpClientBase:
         else:
             return self.uri
     
-
-class TestHttpClientReconnect(TestHttpClientBase, unittest.TestCase):
+class b:
+#class TestHttpClientReconnect(TestHttpClientBase, unittest.TestCase):
     
     def test_400_get(self):
         '''Bad request 400'''
@@ -77,11 +79,35 @@ class TestHttpClientReconnect(TestHttpClientBase, unittest.TestCase):
         response = http.get(self.httpbin('get'))
         yield response.on_finished
         self.assertEqual(response.status_code, 200)
-        self._check_pool(http, response)
+        self._check_pool(http, response,created=2)
     
 
-class TestHttpClient:        
-#class TestHttpClient(TestHttpClientBase, unittest.TestCase):
+class TestHttpClientRedirect(TestHttpClientBase, unittest.TestCase):
+    
+    def testRedirect(self):
+        http = self.client()
+        response = http.get(self.httpbin('redirect', '1'))
+        yield response.on_finished
+        self.assertEqual(response.status_code, 200)
+        history = response.history
+        self.assertEqual(len(history), 1)
+        self.assertTrue(history[0].url.endswith('/redirect/1'))
+    
+    def testTooManyRedirects(self):
+        http = self.client()
+        response = http.get(self.httpbin('redirect', '5'), max_redirects=2)
+        # do this so that the test suite does not fail on the test
+        yield response.on_finished.add_errback(lambda f: [f])
+        r = response.on_finished.result[0]
+        self.assertTrue(is_failure(r))
+        self.assertTrue(isinstance(r.trace[1], TooManyRedirects))
+        history = response.history
+        self.assertEqual(len(history), 2)
+        self.assertTrue(history[0].url.endswith('/redirect/5'))
+        self.assertTrue(history[1].url.endswith('/redirect/4'))
+   
+
+class TestHttpClient(TestHttpClientBase, unittest.TestCase):
         
     def testClient(self):
         http = self.client(max_redirects=5)
@@ -203,12 +229,39 @@ class TestHttpClient:
         result = response.content_json()
         self.assertTrue(result['args'])
         self.assertEqual(result['args']['numero'],['1','2'])
-        
-    def __testRedirect(self):
+
+    def testResponseHeaders(self):
         http = self.client()
-        response = http.get(self.httpbin('redirect', '1'))
+        response = http.get(self.httpbin('response-headers'))
         yield response.on_finished
         self.assertEqual(response.status_code, 200)
-        history = response.request.history
-        self.assertEqual(len(history), 1)
-        self.assertTrue(history[0].url.endswith('/redirect/1'))
+        result = response.content_json()
+        self.assertEqual(result['Transfer-Encoding'], 'chunked')
+        parser = response.parser
+        self.assertTrue(parser.is_chunked())
+        
+    def testLargeResponse(self):
+        http = self.client(timeout=60)
+        response = http.get(self.httpbin('getsize/600000'))
+        yield response.on_finished
+        self.assertEqual(response.status_code, 200)
+        data = response.content_json()
+        self.assertEqual(data['size'], 600000)
+        self.assertEqual(len(data['data']), 600000)
+        self.assertFalse(response.parser.is_chunked())
+        
+    def test_stream_response(self):
+        http = self.client()
+        response = http.get(self.httpbin('stream/3000/20'))
+        yield response.on_finished
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(response.parser.is_chunked())
+        
+    def test_expect(self):
+        http = self.client()
+        data = (('bla', 'foo'), ('unz', 'whatz'),
+                ('numero', '1'), ('numero', '2'))
+        response = http.post(self.httpbin('post'), data=data,
+                             wait_continue=True)
+        yield response.on_finished
+        self.assertEqual(response.status_code, 200)

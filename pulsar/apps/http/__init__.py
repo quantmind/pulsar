@@ -54,7 +54,7 @@ class HttpRequest(pulsar.Request):
         self.data = data if data is not None else {}
         self.files = files
         self.source_address = source_address
-        self.parser = self.parser_class(kind=1, decompress=self.decompress)
+        self.new_parser()
         
     @property
     def key(self):
@@ -69,6 +69,9 @@ class HttpRequest(pulsar.Request):
     def first_line(self):
         return '%s %s %s' % (self.method, self.full_url, self.version)
     
+    def new_parser(self):
+        self.parser = self.parser_class(kind=1, decompress=self.decompress)
+        
     def set_proxy(self, host, type):
         if self.type == 'https' and not self._tunnel_host:
             self._tunnel_host = self.host
@@ -186,24 +189,16 @@ class HttpResponse(pulsar.ProtocolConsumer):
 
     The scheme of the of the URI requested. One of http, https
 '''
-    ONE_TIME_EVENTS = ('start', 'headers', 'finish')
     _tunnel_host = None
     _has_proxy = False
-    consumer = None # Remove default consumer
-    next_url = None
-    
-    def __init__(self, connection, request, consumer=None):
-        super(HttpResponse, self).__init__(connection, request, consumer)
-        self._buffer = []
-        self._headers = None
     
     @property
     def parser(self):
-        return self.request.parser
+        return self.current_request.parser
     
     @property
     def content(self):
-        return b''.join(self._buffer)
+        return self.parser.recv_body()
     
     def __str__(self):
         if self.status_code:
@@ -226,19 +221,20 @@ class HttpResponse(pulsar.ProtocolConsumer):
         
     @property
     def url(self):
-        return self.request.full_url
+        if self.current_request is not None:
+            return self.current_request.full_url
     
     @property
     def history(self):
-        if self.request is not None:
-           return self.request.history
+        if self.current_request is not None:
+           return self.current_request.history
     
     @property
     def headers(self):
-        if self._headers is None:
+        if not hasattr(self, '_headers'):
             if self.parser and self.parser.is_headers_complete():
                 self._headers = Headers(self.parser.get_headers())
-        return self._headers
+        return getattr(self, '_headers')
     
     @property
     def is_error(self):
@@ -269,21 +265,18 @@ class HttpResponse(pulsar.ProtocolConsumer):
     ############################################################################
     ##    PROTOCOL IMPLEMENTATION
     def start_request(self):
-        self.transport.write(self.request.encode())
+        self.transport.write(self.current_request.encode())
         
     def data_received(self, data):
         had_headers = self.parser.is_headers_complete()
         if self.parser.execute(data, len(data)) == len(data):
             if self.parser.is_headers_complete():
                 if not had_headers:
-                    self.fire_event('headers')
                     new_response = self.handle_headers()
                     if new_response:
+                        had_headers = False
                         return
-                body = self.parser.recv_body()
-                if body:
-                    self._buffer.append(body)
-                    self.fire_event('data_received', body)
+                self.fire_event('data_received')
                 if self.parser.is_message_complete():
                     self.finished()
         else:
@@ -298,7 +291,7 @@ class HttpResponse(pulsar.ProtocolConsumer):
         
     def handle_headers(self):
         '''The response headers are available. Build the response.'''
-        request = self.request
+        request = self.current_request
         headers = self.headers
         client = request.client
         # store cookies in clinet if needed
@@ -325,6 +318,10 @@ class HttpResponse(pulsar.ProtocolConsumer):
                 raise TooManyRedirects
             url = url or self.url
             return client.request(request.method, url, response=self)
+        elif self.status_code == 100:
+            request.new_parser()
+            self.transport.write(request.body)
+            return True
         elif self.status_code == 101:
             # Upgrading response handler
             return client.upgrade(response)
@@ -489,7 +486,7 @@ object.
         return self.request('DELETE', url, **kwargs)
     
     def request(self, method, url, cookies=None, headers=None,
-                consumer=None, response=None, **params):
+                response=None, **params):
         '''Constructs and sends a request to a remote server.
 It returns an :class:`HttpResponse` object.
 
@@ -501,15 +498,18 @@ the :class:`HttpRequest` constructor.
 :rtype: a :class:`HttpResponse` object.
 '''
         if response:
-            pparams = response.request.all_params()
-            headers = headers or pparams.pop('headers')
+            rparams = response.current_request.all_params()
+            headers = headers or rparams.pop('headers')
             headers.pop('Cookie', None)
+            history = copy(rparams['history']) 
+            history.append(response.reset_connection())
             # http://www.w3.org/Protocols/rfc2616/rfc2616-sec10.html#sec10.3.4
             if response.status_code is 303:
                 method = 'GET'
-                pparams.pop('data')
-                pparams.pop('files')
-            params.update(pparams)
+                rparams.pop('data')
+                rparams.pop('files')
+            params.update(rparams)
+            params['history'] = history
         else:
             params = self.update_parameters(self.request_parameters, params)
         request = HttpRequest(self, url, method, **params)
@@ -520,15 +520,14 @@ the :class:`HttpRequest` constructor.
             if not isinstance(cookies, CookieJar):
                 cookies = cookiejar_from_dict(cookies)
             cookies.add_cookie_header(request)
+        #response already available
         if response:
-            response.new_request(request)
             conn = self.get_connection(request)
-            conn.set_consumer(response, False)
-            self.start_response(response)
+            conn.set_consumer(response)
+            response.new_request(request)
             return response
         else:
-            return self.response(request, consumer)
-        return self.start_response(response)
+            return self.response(request)
     
     def add_basic_authentication(self, username, password):
         '''Add a :class:`HTTPBasicAuth` handler to the *pre_requests* hooks.'''
