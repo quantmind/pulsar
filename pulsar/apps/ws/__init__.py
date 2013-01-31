@@ -82,7 +82,7 @@ class GeneralWebSocket(object):
         if self.handle.match(environ):
             headers, parser = self.handle_handshake(environ, start_response)
             response = wsgi.WsgiResponse(101, (b'',), response_headers=headers)
-            upgrade = environ['connection.upgrade']
+            upgrade = environ['pulsar.connection'].upgrade
             upgrade(partial(WebSocketProtocol, self.handle, environ, parser))
             return response(environ, start_response)
     

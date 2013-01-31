@@ -249,9 +249,9 @@ invocation of the application.
     def generate(self, environ):
         exc_info = None
         keep_alive = self.keep_alive
-        # Inject connection.upgrade into the environment
+        # Inject connection into the environment
         # TODO: is this the best way to do it?
-        environ['connection.upgrade'] = self.connection.upgrade
+        environ['pulsar.connection'] = self.connection
         exc_info = None
         wsgi_iterable = None
         while True:
