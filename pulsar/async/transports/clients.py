@@ -9,7 +9,7 @@ from pulsar.async.defer import as_failure, is_failure
 from .protocols import ProtocolConsumer, EventHandler, Producer, NOTHING
 from .transport import create_transport, LOGGER
 
-__all__ = ['ConnectionPool', 'Client', 'Request']
+__all__ = ['ConnectionPool', 'Client', 'Request', 'SingleClient']
 
     
 class Request(object):
@@ -119,7 +119,7 @@ class Client(EventHandler):
     '''A client for a remote server which handles one or more
 :class:`ConnectionPool` of asynchronous connections.
 '''
-    reconnect = True
+    max_reconnect = 1
     '''Can reconnect on socket error.'''
     connection_pool = ConnectionPool
     '''Factory of :class:`ConnectionPool`.'''
@@ -140,7 +140,8 @@ class Client(EventHandler):
                          'connection_lost')
     
     def __init__(self, max_connections=None, timeout=None, client_version=None,
-                 trust_env=True, consumer_factory=None,**params):
+                 trust_env=True, consumer_factory=None, max_reconnect=None,
+                 **params):
         super(Client, self).__init__()
         self.trust_env = trust_env
         self.client_version = client_version or self.client_version
@@ -149,6 +150,8 @@ class Client(EventHandler):
             self.consumer_factory = consumer_factory
         self.max_connections = max_connections or self.max_connections or 2**31
         self.connection_pools = {}
+        if max_reconnect:
+            self.max_reconnect = max_reconnect
         self.setup(**params)
     
     def setup(self, **params):
@@ -165,25 +168,25 @@ class Client(EventHandler):
     
     def request(self, *args, **params):
         '''Abstract method for creating a request to send to the server.
-and invoke the :meth:`response` method. Must be implemented
-by subclasses.'''
+**Must be implemented by subclasses**. The method should return a
+:class:`ProtocolConsumer` via invoking the :meth:`response` method. '''
         raise NotImplementedError
     
-    def response(self, request, consumer=None):
+    def response(self, request):
         '''Once a *request* object has been constructed, the :meth:`request`
 method can invoke this method to build the protocol consumer and
 start the response.
 
 :parameter request: A custom :class:`Request` for the :class:`Client`.
-:parameter consumer: An optional consumer of streaming data.
 :rtype: An :class:`ProtocolConsumer` obtained form
     :attr:`consumer_factory`.
 '''
         conn = self.get_connection(request)
-        consumer = self.consumer_factory(conn, request, consumer)
-        conn.set_consumer(consumer)
+        # build the protocol consumer
+        consumer = self.consumer_factory(conn, request)
+        # start the request
         consumer.start_request()
-        return response
+        return consumer
     
     def get_connection(self, request):
         '''Get a suitable :class:`Connection` for *request*.'''
@@ -214,3 +217,21 @@ in :attr:`request_parameters` tuple.'''
         
     def abort(self):
         self.close(async=False)
+        
+        
+class SingleClient(Client):
+    '''A :class:`Client` which handle one connection only.'''
+    def __init__(self, address, **kwargs):
+        kwargs['max_connections'] = 1
+        super(SingleClient, self).__init__(**kwargs)
+        self.address = address
+        self._consumer = None
+    
+    def response(self, request):
+        if self._consumer is None:
+            self._consumer = super(SingleClient, self).response(request)
+        else:
+            self._consumer.new_request(request)
+            self._consumer.start_request()
+        return self._consumer
+            

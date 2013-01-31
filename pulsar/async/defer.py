@@ -7,11 +7,10 @@ from threading import current_thread, local
 from collections import deque, namedtuple
 from itertools import chain
 from inspect import isgenerator, isfunction, ismethod, istraceback
-from time import sleep
 
 from pulsar import AlreadyCalledError, HaltServer
 from pulsar.utils import events
-from pulsar.utils.pep import raise_error_trace, iteritems
+from pulsar.utils.pep import raise_error_trace, iteritems, default_timer
 
 from .access import get_request_loop, NOTHING
 
@@ -553,35 +552,20 @@ occurred.
     generator will continue regardless of errors, accumulating them into
     the final result.
 '''
-    def __init__(self, gen, max_errors=None, description=None):
+    def __init__(self, gen, max_errors=None, description=None,
+                 error_handler=None, timeout=30):
         self.gen = gen
         self.max_errors = max(1, max_errors) if max_errors else 0
+        self.timeout = timeout
         self.errors = Failure()
         super(DeferredGenerator,self).__init__(description=description)
         # the loop in the current thread... with preference to the request loop
         self.loop = get_request_loop()
         self._consume()
 
-    def _resume_in_thread(self, result=None):
-        # When the generator finds an asynchronous object still waiting
-        # for results, it adds this callback to resume the generator at the
-        # next iteration in the eventloop.
-        if self.loop.tid != current_thread().ident:
-            # Generators are not thread-safe. If the callback is on a different
-            # thread we restart the generator on the original thread
-            # by adding a callback in the generator eventloop.
-            self.loop.call_soon_threadsafe(self._consume, result)
-        else:
-            # If we are on the same thread, continue to consume
-            self._consume(result)
-        # IMPORTANT! We return the original result.
-        # Otherwise we just keep adding deferred objects to the callbacks.
-        return result
-
     def _consume(self, last_result=None):
-        '''override the deferred consume private method for handling the
-generator. Important! Callbacks are always added to the event loop on the
-current thread.'''
+        # Consume the generator
+        self._start = default_timer()
         if isinstance(last_result, Failure):
             if self.should_stop(last_result):
                 return self.conclude()
@@ -600,6 +584,11 @@ current thread.'''
     def _check_async(self, result):
         result = maybe_async(result)
         if is_async(result):
+            if default_timer() - self._start > self.timeout:
+                try:
+                    raise RuntimeError('Timeout!')
+                except Exception as e:
+                    return self.callback(e)
             self.loop.call_soon_threadsafe(self._check_async, result)
         elif result == NOT_DONE:
             self.loop.call_soon_threadsafe(self._consume)

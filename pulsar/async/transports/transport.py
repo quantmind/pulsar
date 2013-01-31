@@ -430,5 +430,6 @@ class Connector(Deferred, TransportProxy):
     def _connection_failure(self, failure):
         self._transport._protocol.connection_lost(failure)
         
-    def set_consumer(self, consumer, new=True):
-        self.add_callback(lambda c: c.set_consumer(consumer, new))
+    def set_consumer(self, consumer):
+        consumer._connection = self
+        self.add_callback(lambda c: c.set_consumer(consumer))

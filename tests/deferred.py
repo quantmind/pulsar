@@ -104,8 +104,8 @@ class TestDeferred(unittest.TestCase):
         a = make_async(_gen())
         result = d.callback('ciao')
         self.assertTrue(d.called)
-        self.assertEqual(d.paused,1)
-        self.assertEqual(len(d._callbacks), 2)
+        self.assertEqual(d.paused, 1)
+        self.assertEqual(len(d._callbacks), 1)
         self.assertEqual(len(rd._callbacks), 1)
         #
         self.assertEqual(rd.r, ('ciao',))
@@ -113,6 +113,8 @@ class TestDeferred(unittest.TestCase):
         #
         # set callback
         rd.set_result('luca')
+        # release the loop
+        yield a
         self.assertTrue(a.called)
         self.assertFalse(d.paused)
         self.assertEqual(d.result,('ciao','luca','second'))
@@ -125,12 +127,12 @@ class TestDeferred(unittest.TestCase):
         d.add_callback(lambda r : r + ('second',))
         def _gen():
             yield d
-        a = make_async(_gen())
+        a = make_async(_gen()).add_errback(lambda failure: [failure])
         result = d.callback('ciao')
         self.assertTrue(d.called)
         self.assertEqual(d.paused, 1)
         # The generator has added its consume callback
-        self.assertEqual(len(d._callbacks), 2)
+        self.assertEqual(len(d._callbacks), 1)
         self.assertEqual(len(rd._callbacks), 1)
         #
         self.assertEqual(rd.r, ('ciao',))
@@ -139,8 +141,10 @@ class TestDeferred(unittest.TestCase):
         # set Error back
         rd.set_error()
         self.assertFalse(d.paused)
-        self.assertTrue(a.called)
         self.assertTrue(is_failure(d.result))
+        yield a
+        self.assertTrue(a.called)
+        self.assertTrue(is_failure(a.result[0]))
         
     def testSafeAsync(self):
         pass

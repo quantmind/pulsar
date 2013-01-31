@@ -19,6 +19,7 @@ from pulsar.utils.pep import default_timer, set_event_loop_policy,\
                              EventLoop as BaseEventLoop,\
                              EventLoopPolicy as BaseEventLoopPolicy
 from pulsar.utils.sockets import SOCKET_INTERRUPT_ERRORS
+
 from .access import thread_local_data
 from .defer import log_failure, Deferred, as_failure
 from .transports import create_server
@@ -511,6 +512,13 @@ default signal handler ``signal.SIG_DFL``.'''
         '''Wake up the eventloop.'''
         if self.running:
             self._waker.wake()
+            
+    ############################################################ NON PEP METHODS
+    def call_now_threadsafe(self, callback, *args):
+        if self.tid != current_thread().ident:
+            return self.call_soon_threadsafe(callback, *args)
+        else:
+            self._call(callback, *args)
 
     ############################################################ INTERNALS
     def _remove_timeout(self, timeout):
@@ -561,14 +569,18 @@ default signal handler ``signal.SIG_DFL``.'''
                 else:
                     LOGGER.warning('Received an event on unregistered file '\
                                    'descriptor %s' % fd)
+        call = self._call
         for callback in callbacks:
-            try:
-                log_failure(callback())
-            except socket.error as e:
-                if e.args[0] in SOCKET_INTERRUPT_ERRORS:
-                    pass
-                else:
-                    log_failure(e).log('Exception in event loop callback.')
-            except Exception as e:
+            call(callback)
+            
+    def _call(self, callback, *args):
+        try:
+            log_failure(callback(*args))
+        except socket.error as e:
+            if e.args[0] in SOCKET_INTERRUPT_ERRORS:
+                pass
+            else:
                 log_failure(e).log('Exception in event loop callback.')
+        except Exception as e:
+            log_failure(e).log('Exception in event loop callback.')
 

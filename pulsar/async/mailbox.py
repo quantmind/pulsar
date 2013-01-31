@@ -17,7 +17,7 @@ from pulsar.utils.security import gen_unique_id
 
 from .access import get_actor, set_actor, PulsarThread
 from .defer import make_async, log_failure, Deferred
-from .transports import ProtocolConsumer, Client, Request
+from .transports import ProtocolConsumer, SingleClient, Request
 from .proxy import actorid, get_proxy, get_command, CommandError, ActorProxy
 
 
@@ -52,22 +52,32 @@ arbiter mailbox.'''
 
 class Message(Request):
     
-    def __init__(self, command, sender, target, args, kwargs, address=None,
-                 timeout=None):
+    def __init__(self, data, future=None, address=None, timeout=None):
         super(Message, self).__init__(address, timeout)
-        # Build the request and write
+        self.data = data
+        self.future = future
+    
+    @classmethod
+    def command(cls, command, sender, target, args, kwargs, address=None,
+                 timeout=None):
         command = get_command(command)
-        self.data = {'command': command.__name__,
-                     'sender': actorid(sender),
-                     'target': actorid(target),
-                     'args': args if args is not None else (),
-                     'kwargs': kwargs if kwargs is not None else {}}
+        data = {'command': command.__name__,
+                'sender': actorid(sender),
+                'target': actorid(target),
+                'args': args if args is not None else (),
+                'kwargs': kwargs if kwargs is not None else {}}
         if command.ack:
-            self.consumer = Deferred()
-            self.data['ack'] = gen_unique_id()[:8]
+            future = Deferred()
+            data['ack'] = gen_unique_id()[:8]
         else:
-            self.consumer = None
-
+            future = None
+        return cls(data, future, address, timeout)
+        
+    @classmethod
+    def callback(cls, result, ack):
+        data = {'command': 'callback', 'result': result, 'ack': ack}
+        return cls(data)
+        
 
 class MailboxConsumer(ProtocolConsumer):
 
@@ -90,9 +100,9 @@ class MailboxConsumer(ProtocolConsumer):
     
     def start_request(self):
         # Always called in thread
-        req = self.request
-        if req.consumer and 'ack' in req.data:
-            self._pending_responses[req.data['ack']] = req.consumer
+        req = self.current_request
+        if req.future and 'ack' in req.data:
+            self._pending_responses[req.data['ack']] = req.future
         obj = pickle.dumps(req.data, protocol=2)
         data = self._parser.encode(obj, opcode=0x2).msg
         self.transport.write(data)
@@ -132,28 +142,26 @@ class MailboxConsumer(ProtocolConsumer):
         
     def _responde(self, data, result):
         if data.get('ack'):
-            self._request = {'command': 'callback', 'result': result,
-                             'ack': data['ack']}
+            req = Message.callback(result, data['ack'])
+            self.new_request(req)
             self.start_request()
         #Return the result so a failure can be logged
         return result
 
     def request(self, command, sender, target, args, kwargs):
         '''Used by the server'''
-        req = Message(command, sender, target, args, kwargs)
+        req = Message.command(command, sender, target, args, kwargs)
         self.new_request(req)
-        return req.consumer
+        self.start_request()
+        return req.future
 
     
-class MailboxClient(Client):
+class MailboxClient(SingleClient):
     # mailbox for actors client
     consumer_factory = MailboxConsumer
-    max_connections = 1
      
     def __init__(self, address, actor):
-        super(MailboxClient, self).__init__()
-        self.address = address
-        self.consumer = None
+        super(MailboxClient, self).__init__(address)
         self.name = 'Mailbox for %s' % actor
         eventloop = actor.requestloop
         # The eventloop is cpubound
@@ -174,16 +182,12 @@ class MailboxClient(Client):
         return self._event_loop
     
     def request(self, command, sender, target, args, kwargs):
-        red = Message(command, sender, target, args, kwargs,
-                      self.address, self.timeout)
-        self._event_loop.call_soon_threadsafe(self._request, req)
-        return req.consumer
-    
-    def _request(self, req):
-        if not self.consumer:
-            self.consumer = self.response(req)
-        else:
-            self.consumer.new_request(req)
+        # the request method
+        req = Message.command(command, sender, target, args, kwargs,
+                              self.address, self.timeout)
+        # we make sure responses are run on the event loop thread
+        self._event_loop.call_now_threadsafe(self.response, req)
+        return req.future
         
     def _start_on_thread(self):
         PulsarThread(name=self.name, target=self._event_loop.run).start()

@@ -71,16 +71,20 @@ and `data_received` :ref:`many times event <many-times-event>`.
     :attr:`connection` before disposing of this consumer. It is
     a proxy of ``self.event('finish')``.
 '''
-    ONE_TIME_EVENTS = ('start', 'finish')
+    ONE_TIME_EVENTS = ('finish',)
     MANY_TIMES_EVENTS = ('data_received',)
-    def __init__(self, connection, request=None, consumer=None):
+    def __init__(self, connection, request=None):
         super(ProtocolConsumer, self).__init__()
-        self._connection = connection
-        self._request = request
-        self._received_count = 0
-        if consumer:
-            self.bind_event('data_received', consumer)
-            
+        self._connection = None
+        self._current_request = None
+        # this counter is updated by the connection
+        self._data_received_count = 0
+        # this counter is updated via the new_request method
+        self._request_processed = 0
+        self._reconnect_retries = 0
+        self.new_request(request)
+        connection.set_consumer(self)
+    
     @property
     def connection(self):
         return self._connection
@@ -91,8 +95,8 @@ and `data_received` :ref:`many times event <many-times-event>`.
             return self._connection.event_loop
     
     @property
-    def request(self):
-        return self._request
+    def current_request(self):
+        return self._current_request
         
     @property
     def transport(self):
@@ -122,23 +126,30 @@ remote server.'''
         '''Reset this consumer for with a new *request*. This method is used by
 :class:`Client` consumers when a request needs to be resubmitted. Not used
 by :class:`Server` consumers.'''
-        consumer = copy(self)
-        self._connection._current_consumer = consumer
-        self._connection = None
-        self._request = request
-        consumer.finish()
-        return self
+        self._request_processed += 1
+        self._current_request = request
+    
+    def reset_connection(self):
+        if self._connection:
+            consumer = copy(self)
+            self._connection._current_consumer = consumer
+            self._connection = None
+            consumer.finish()
         
     def finished(self, result=NOTHING):
         '''Call this method when done with this :class:`ProtocolConsumer`.
 By default it calls the :meth:`Connection.finished` method of the
 :attr:`connection` attribute.'''
         if self._connection:
-            self.fire_event('data_received', b'')
             return self._connection.finished(self, result)
         
     def connection_lost(self, exc):
         self.finished(exc)
+        
+    def _data_received(self, data):
+        self._data_received_count += 1 
+        self._reconnect_retries = 0
+        return self.data_received(data)
         
         
 class Connection(Protocol, TransportProxy):
@@ -234,9 +245,7 @@ It has two :ref:`one time events <one-time-event>`, *connection_made* and
         self._current_consumer = consumer
         consumer._connection = self
         self._processed += 1
-        if new:
-            self.fire_event('pre_request', consumer)
-            consumer.fire_event('start')
+        self.fire_event('pre_request', consumer)
     
     def connection_made(self, transport):
         # Implements protocol connection_made
@@ -252,9 +261,7 @@ It has two :ref:`one time events <one-time-event>`, *connection_made* and
             if consumer is None:
                 # New consumer
                 consumer = self._consumer_factory(self)
-                self.set_consumer(consumer)
-            consumer._received_count += 1 
-            data = consumer.data_received(data)
+            data = consumer._data_received(data)
             if data and self._current_consumer:
                 # if data is returned from the response feed method and the
                 # response has not done yet raise a Protocol Error
