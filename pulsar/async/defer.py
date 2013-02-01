@@ -633,6 +633,8 @@ which may be :class:`Deferred`.
     The type of multideferred. Either a ``list`` or a ``dict``.
 '''
     _locked = False
+    _time_locked = None
+    _time_finished = None
 
     def __init__(self, data=None, type=None, fireOnOneErrback=False,
                  handle_value=None, log_failure=False):
@@ -647,6 +649,7 @@ which may be :class:`Deferred`.
             type = list
         self._stream = type()
         super(MultiDeferred, self).__init__()
+        self._time_start = default_timer()
         if data:
             self.update(data)
 
@@ -657,6 +660,20 @@ which may be :class:`Deferred`.
     @property
     def type(self):
         return self._stream.__class__.__name__
+    
+    @property
+    def total_time(self):
+        if self._time_finished:
+            return self._time_finished - self._time_start
+        
+    @property
+    def locked_time(self):
+        if self._time_finished:
+            return self._time_finished - self._time_locked
+        
+    @property
+    def num_failures(self):
+        return len(self._failures)
 
     def lock(self):
         '''Lock the :class:`MultiDeferred` so that no new items can be added.
@@ -664,6 +681,7 @@ If it was alread :attr:`locked` a runtime exception is raised.'''
         if self._locked:
             raise RuntimeError(self.__class__.__name__ +\
                         ' cannot be locked twice.')
+        self._time_locked = default_timer()
         self._locked = True
         if not self._deferred:
             self._finish()
@@ -731,6 +749,7 @@ both ``list`` and ``dict`` types.'''
             raise RuntimeError(self.__class__.__name__ +\
                                ' cannot finish whilst waiting for '
                                'dependents %r' % self._deferred)
+        self._time_finished = default_timer()
         if self.fireOnOneErrback and self._failures:
             self.callback(self._failures)
         else:

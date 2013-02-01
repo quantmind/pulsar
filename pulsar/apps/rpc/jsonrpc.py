@@ -11,10 +11,11 @@ The specification is at http://groups.google.com/group/json-rpc/web/json-rpc-2-0
 '''
 import logging
 import json
+from functools import partial
 from timeit import default_timer
 
 import pulsar
-from pulsar import is_async
+from pulsar import is_async, multi_async
 from pulsar.utils.structures import AttributeDictionary
 from pulsar.utils.security import gen_unique_id
 from pulsar.utils.pep import to_string, range
@@ -188,27 +189,23 @@ usage is simple::
     0.56...
     >>> _
     '''
-        r = range(times)
         func = getattr(self, func)
-        start = default_timer()
-        for t in r:
-            func(*args, **kwargs)
-        return default_timer() - start
+        return multi_async((func(*args, **kwargs) for t in range(times)))
 
     def _call(self, name, *args, **kwargs):
         data, raw = self._get_data(name, *args, **kwargs)
-        body = self._json.dumps(data).encode('latin-1')
+        body = self._json.dumps(data).encode('utf-8')
         # Always make sure the content-type is application/json
         self.http.headers['content-type'] = 'application/json'
         resp = self.http.post(self.url, data=body)
         if self._full_response:
             return resp
-        elif is_async(resp):
-            return resp.add_callback(lambda r: self._end_call(r, raw))
+        elif hasattr(resp, 'on_finished'):
+            return resp.on_finished.add_callback(partial(self._end_call, raw))
         else:
-            return self._end_call(resp, raw)
+            return self._end_call(raw, resp)
         
-    def _end_call(self, resp, raw):
+    def _end_call(self, raw, resp):
         content = resp.content.decode('utf-8')
         if resp.is_error:
             if 'error' in content:

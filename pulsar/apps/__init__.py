@@ -34,7 +34,7 @@ the :class:`Application` associated with *name* if available. If not in the
 :class:`Arbiter` domain it returns nothing.'''
     actor = get_actor()
     if actor and actor.is_arbiter():
-        monitor = actor.monitors.get(name)
+        monitor = actor.registered.get(name)
         if monitor:
             return getattr(monitor, 'app', None)
         
@@ -264,7 +264,7 @@ These are the most important facts about a pulsar :class:`Application`
     def monitor(self):
         actor = get_actor()
         if actor:
-            return actor.monitors.get(self.name)
+            return actor.registered.get(self.name)
 
     def __setstate__(self, state):
         super(Application, self).__setstate__(state)

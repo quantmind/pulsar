@@ -54,7 +54,8 @@ protocols. It maintains a live set of connections.
 the *connection* from the set of concurrent connections and add it to the set
 of available connections.'''
         self._concurrent_connections.discard(connection)
-        self._available_connections.add(connection)
+        if connection.producer.can_reuse_connection(connection):
+            self._available_connections.add(connection)
         
     def get_or_create_connection(self, client):
         "Get or create a new connection for *client*"
@@ -123,6 +124,7 @@ of available connections.'''
         self._available_connections.discard(connection)
     
     def _release_response(self, response):
+        #proxy to release_connection
         self.release_connection(response.connection)
 
 
@@ -231,9 +233,13 @@ in :attr:`request_parameters` tuple.'''
     def abort(self):
         self.close(async=False)
 
+    def can_reuse_connection(self, connection):
+        return True
+    
     def reconnect_time_lag(self, lag):
         lag = self.reconnect_time_lag*(math.log(lag) + 1)
         return round(lag, 1)
+    
         
 class SingleClient(Client):
     '''A :class:`Client` which handle one connection only.'''
@@ -249,4 +255,3 @@ class SingleClient(Client):
         else:
             self._consumer.new_request(request)
         return self._consumer
-            

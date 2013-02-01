@@ -3,7 +3,7 @@ import json
 from copy import copy
 
 import pulsar
-from pulsar import create_transport
+from pulsar import create_transport, multi_async
 from pulsar.utils.pep import native_str, is_string
 from pulsar.utils.structures import mapping_iterator
 from pulsar.utils.websocket import FrameParser
@@ -17,8 +17,6 @@ from pulsar.utils.httpurl import urlparse, urljoin, DEFAULT_CHARSET,\
                                     HTTPError, request_host, requote_uri
 
 from .plugins import *
-
-__all__ = ['HttpClient']
 
 
 class TooManyRedirects(Exception):
@@ -563,3 +561,11 @@ the :class:`HttpRequest` constructor.
     def build_protocol(self, address, timeout):
         type, address = address[0], address[1:] 
         return create_connection(address, timeout)
+    
+    def can_reuse_connection(self, connection):
+        response = connection.current_consumer
+        return response.headers.get('connection') == 'keep-alive'
+    
+    def timeit(self, times, method, url, **kwargs):
+        return multi_async((self.request(method, url).on_finished\
+                                for _ in range(times)))

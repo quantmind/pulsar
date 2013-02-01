@@ -4,8 +4,8 @@ import re
 from gzip import GzipFile
 
 import pulsar
-from pulsar.utils.httpurl import BytesIO, parse_authorization_header,\
-                                     parse_cookie
+from pulsar.apps.http import parse_authorization_header 
+from pulsar.utils.httpurl import BytesIO, parse_cookie
 
 re_accepts_gzip = re.compile(r'\bgzip\b')
 

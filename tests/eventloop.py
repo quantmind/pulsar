@@ -2,65 +2,82 @@ import time
 from threading import current_thread
 
 import pulsar
+from pulsar.utils.pep import get_event_loop
 from pulsar.apps.test import unittest
 
 
 class TestEventLoop(unittest.TestCase):
     
     def testIOloop(self):
-        ioloop = pulsar.thread_ioloop()
+        ioloop = get_event_loop()
         self.assertTrue(ioloop)
         self.assertNotEqual(ioloop.tid, current_thread().ident)
         
     def test_add_callback(self):
-        ioloop = pulsar.thread_ioloop()
+        ioloop = get_event_loop()
         d = pulsar.Deferred()
-        ioloop.add_callback(lambda: d.callback(current_thread().ident))
+        callback = lambda: d.callback(current_thread().ident)
+        cbk = ioloop.call_soon(callback)
+        self.assertEqual(cbk.callback, callback)
+        self.assertEqual(cbk.args, ())
         # we should be able to wait less than a second
         yield d
         self.assertEqual(d.result, ioloop.tid)
         
-    def test_add_timeout(self):
-        ioloop = pulsar.thread_ioloop()
+    def test_add_timeouts(self):
+        ioloop = get_event_loop()
         d = pulsar.Deferred()
-        now = time.time()
-        timeout1 = ioloop.add_timeout(now+20,
+        timeout1 = ioloop.call_later(20,
                             lambda: d.callback(current_thread().ident))
-        timeout2 = ioloop.add_timeout(now+10,
+        timeout2 = ioloop.call_later(10,
                             lambda: d.callback(current_thread().ident))
         # lets wake the ioloop
-        ioloop.wake()
-        self.assertTrue(timeout1 in ioloop._timeouts)
-        self.assertTrue(timeout2 in ioloop._timeouts)
-        ioloop.remove_timeout(timeout1)
-        ioloop.remove_timeout(timeout2)
-        self.assertFalse(timeout1 in ioloop._timeouts)
-        self.assertFalse(timeout2 in ioloop._timeouts)
-        timeout1 = ioloop.add_timeout(now+0.1,
+        self.assertTrue(ioloop.has_callback(timeout1))
+        self.assertTrue(ioloop.has_callback(timeout2))
+        timeout1.cancel()
+        timeout2.cancel()
+        self.assertTrue(timeout1.cancelled)
+        self.assertTrue(timeout2.cancelled)
+        self.assertFalse(ioloop.has_callback(timeout1))
+        self.assertFalse(ioloop.has_callback(timeout2))
+        timeout1 = ioloop.call_later(0.1,
                             lambda: d.callback(current_thread().ident))
-        ioloop.wake()
-        time.sleep(0.2)
+        yield d
         self.assertTrue(d.called)
         self.assertEqual(d.result, ioloop.tid)
-        self.assertFalse(timeout1 in ioloop._timeouts)
+        self.assertFalse(ioloop.has_callback(timeout1))
         
     def test_periodic(self):
-        ioloop = pulsar.thread_ioloop()
-        d = pulsar.Deferred()
+        ioloop = get_event_loop()
         class p:
             def __init__(self):
                 self.c = 0
-            def __call__(self, periodic):
+            def __call__(self):
                 self.c += 1
                 if self.c == 2:
                     raise ValueError()
-                elif self.c == 3:
-                    periodic.stop()
-                    d.callback(self.c)
-        periodic = ioloop.add_periodic(p(), 1)
-        yield d
-        self.assertEqual(d.result, 3)
-        self.assertFalse(periodic._running)
+        track = p()
+        periodic = ioloop.call_repeatedly(1, track)
+        while track.c < 2:
+            yield pulsar.NOT_DONE
+        self.assertEqual(track.c, 2)
+        self.assertFalse(ioloop.has_callback(periodic))
+        
+    def test_call_every(self):
+        ioloop = get_event_loop()
+        class p:
+            def __init__(self):
+                self.c = 0
+            def __call__(self):
+                self.c += 1
+                if self.c == 2:
+                    raise ValueError()
+        track = p()
+        periodic = ioloop.call_every(track)
+        while track.c < 2:
+            yield pulsar.NOT_DONE
+        self.assertEqual(track.c, 2)
+        self.assertFalse(ioloop.has_callback(periodic))
         
         
         

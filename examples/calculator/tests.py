@@ -29,11 +29,12 @@ class TestRpcOnThread(unittest.TestCase):
         
     def setUp(self):
         self.assertEqual(self.p.url, self.uri)
-        self.assertEqual(self.p.path, None)
-        proxy = self.p.bla
-        self.assertEqual(proxy.path, 'bla')
-        self.assertEqual(proxy.url, self.uri)
         self.assertTrue(str(self.p))
+        proxy = self.p.bla
+        self.assertEqual(proxy.name, 'bla')
+        self.assertEqual(proxy.url, self.uri)
+        self.assertEqual(proxy._client, self.p)
+        self.assertEqual(str(proxy), 'bla')
         
     def testHandler(self):
         s = self.app
@@ -41,7 +42,7 @@ class TestRpcOnThread(unittest.TestCase):
         middleware = s.callable
         root = middleware.handler
         self.assertEqual(root.content_type, 'application/json')
-        self.assertEqual(middleware.path,'/')
+        self.assertEqual(middleware.path, '/')
         self.assertEqual(len(root.subHandlers), 1)
         hnd = root.subHandlers['calc']
         self.assertFalse(hnd.isroot())
@@ -49,16 +50,21 @@ class TestRpcOnThread(unittest.TestCase):
         
     # Pulsar server commands
     def testPing(self):
-        result = self.p.ping()
-        self.assertEqual(result, 'pong')
+        response = self.p.ping()
+        yield response
+        self.assertEqual(response.result, 'pong')
         
     def testListOfFunctions(self):
-        result = self.p.functions_list()
-        self.assertTrue(result)
+        response = self.p.functions_list()
+        yield response
+        self.assertTrue(response.result)
         
     def testTimeIt(self):
-        r = self.p.timeit('ping', 5)
-        self.assertTrue(r > 0)
+        response = self.p.timeit('ping', 20)
+        yield response
+        self.assertTrue(response.locked_time > 0)
+        self.assertTrue(response.total_time > response.locked_time)
+        self.assertEqual(response.num_failures, 0)
         
     # Test Object method
     def test_check_request(self):

@@ -10,7 +10,7 @@ from functools import partial
 from threading import current_thread
 try:
     import signal
-except ImportError:
+except ImportError: #pragma    nocover
     signal = None
 
 from pulsar.utils.system import IObase, IOpoll, close_on_exec, platform, Waker
@@ -108,9 +108,8 @@ it is created by :meth:`EventLoop.call_soon`, :meth:`EventLoop.call_later`,
     Flag indicating this callback is cancelled.
     """
 
-    def __init__(self, deadline, callback, args, canceller=None):
+    def __init__(self, deadline, callback, args):
         self.reschedule(deadline)
-        self._canceller = canceller
         self._callback = callback
         self._args = args
 
@@ -135,10 +134,7 @@ it is created by :meth:`EventLoop.call_soon`, :meth:`EventLoop.call_later`,
     
     def cancel(self):
         '''Attempt to cancel the callback.'''
-        if not self._cancelled:
-            self._cancelled = True
-            if self._canceller:
-                self._canceller(self)
+        self._cancelled = True
                 
     def reschedule(self, new_deadline):
         self._deadline = new_deadline
@@ -146,8 +142,6 @@ it is created by :meth:`EventLoop.call_soon`, :meth:`EventLoop.call_later`,
     
     def __call__(self, *args, **kwargs):
         if not self._cancelled:
-            if self._deadline:  # cancel of if a deadline !important
-                self._cancelled = True
             args = self._args + args
             return self._callback(*args, **kwargs)
         
@@ -349,6 +343,8 @@ event loop is the place where most asynchronous operations are carried out.
     def active(self):
         return bool(self._callbacks or self._scheduled or self._handlers)
     
+    ############################################################################
+    ##    PEP 3156 Methods
     def run(self):
         '''Run the event loop until nothing left to do or stop() called.'''
         if not self._running:
@@ -382,10 +378,6 @@ event loop is the place where most asynchronous operations are carried out.
         '''Stop the loop after the current event loop iteration is complete'''
         self.call_soon_threadsafe(self._raise_stop_event_loop)
         
-    def _raise_stop_event_loop(self):
-        self.logger.debug('Stopping %s', self)
-        raise StopEventLoop
-
     def call_later(self, seconds, callback, *args):
         """Arrange for a *callback* to be called at a given time in the future.
 Return an :class:`TimedCall` with a :meth:`TimedCall.cancel' method
@@ -406,8 +398,7 @@ using a negative time.
 Any positional arguments after the callback will be passed to
 the callback when it is called."""
         if seconds > 0:
-            timeout = TimedCall(self.timer() + seconds, callback, args,
-                                self._remove_timeout)
+            timeout = TimedCall(self.timer() + seconds, callback, args)
             heapq.heappush(self._scheduled, timeout)
             return timeout
         else:
@@ -431,15 +422,23 @@ to transfer control from other threads to the EventLoop's thread.'''
         return timeout
 
     def call_repeatedly(self, interval, callback, *args):
-        """Call a *callback* every *interval* seconds.
-        
-**TODO: be able to cancel it.**"""
+        """Call a *callback* every *interval* seconds."""
+        if interval > 0:
+            def wrapper():
+                callback(*args)  # If this fails, the chain is broken.
+                handler.reschedule(self.timer() + interval)
+                heapq.heappush(self._scheduled, handler)
+            handler = self.call_later(interval, wrapper)
+            return handler
+        else:
+            return self.call_every(callback, *args)
+    
+    def call_every(self, callback, *args):
+        """Call a *callback* at every loop."""
         def wrapper():
             callback(*args)  # If this fails, the chain is broken.
-            handler.reschedule(self.timer() + interval)
-            heapq.heappush(self._scheduled, handler)
-        handler = TimedCall(interval, wrapper, (), self._remove_timeout)
-        heapq.heappush(self._scheduled, handler)
+            self._callbacks.append(handler)
+        handler = self.call_soon(wrapper)
         return handler
         
     def add_reader(self, fd, callback, *args):
@@ -516,14 +515,18 @@ default signal handler ``signal.SIG_DFL``.'''
             return self.call_soon_threadsafe(callback, *args)
         else:
             self._call(callback, *args)
+            
+    def has_callback(self, callback):
+        if callback.deadline:
+            return callback in self._scheduled
+        else:
+            return callback in self._callbacks
 
     ############################################################ INTERNALS
-    def _remove_timeout(self, timeout):
-        try:
-            self._scheduled.remove(timeout)
-        except ValueError:
-            LOGGER.warn('trying to remove a timeout not scheduled.')
-            
+    def _raise_stop_event_loop(self):
+        self.logger.debug('Stopping %s', self)
+        raise StopEventLoop
+
     def _check_signal(self, sig):
         """Internal helper to validate a signal.
 

@@ -16,7 +16,7 @@ from pulsar.utils.websocket import FrameParser
 from pulsar.utils.security import gen_unique_id
 
 from .access import get_actor, set_actor, PulsarThread
-from .defer import make_async, log_failure, Deferred
+from .defer import make_async, log_failure, Deferred, as_failure
 from .transports import ProtocolConsumer, SingleClient, Request
 from .proxy import actorid, get_proxy, get_command, CommandError, ActorProxy
 
@@ -25,7 +25,7 @@ LOGGER = logging.getLogger('pulsar.mailbox')
     
 CommandRequest = namedtuple('CommandRequest', 'actor caller connection')
 
-def command_in_context(actor, caller, command, *args, **kwargs):
+def command_in_context(command, caller, actor, args, kwargs):
     cmnd = get_command(command)
     if not cmnd:
         raise CommandError('unknown %s' % command)
@@ -95,16 +95,23 @@ class MailboxConsumer(ProtocolConsumer):
         self._pending_responses = {}
         self._parser = FrameParser(kind=2)
     
+    def request(self, command, sender, target, args, kwargs):
+        '''Used by the server to send messages to the client.'''
+        req = Message.command(command, sender, target, args, kwargs)
+        self.new_request(req)
+        return req.future
+    
+    ############################################################################
+    ##    PROTOCOL CONSUMER IMPLEMENTATION
     def data_received(self, data):
         # Feed data into the parser
-        #LOGGER.debug('Got new data of %s length', len(data))
         msg = self._parser.decode(data)
         while msg:
             try:
                 message = pickle.loads(msg.body)
             except Exception:
                 raise ProtocolError('Could not decode message body')
-            log_failure(self.responde(message))
+            log_failure(self._responde(message))
             msg = self._parser.decode()
     
     def start_request(self):
@@ -112,26 +119,27 @@ class MailboxConsumer(ProtocolConsumer):
         req = self.current_request
         if req.future and 'ack' in req.data:
             self._pending_responses[req.data['ack']] = req.future
-        obj = pickle.dumps(req.data, protocol=2)
-        data = self._parser.encode(obj, opcode=0x2).msg
-        self.transport.write(data)
-        
-    def callback(self, ack, result):
-        if not ack:
-            raise ProtocolError('A callback without id')
-        try:
-            pending = self._pending_responses.pop(ack)
-        except KeyError:
-            raise KeyError('Callback %s not in pending callbacks' % ack)
-        pending.callback(result)
-        
-    def responde(self, message):
+            try:
+                self._write(req)
+            except IOError as e:
+                e = as_failure(e)
+                e.logged = True
+                LOGGER.warn('Mailbox closed. Shut down actor.')
+                req.future.callback(e)
+            except Exception as e:
+                req.future.callback(e)
+        else:
+            self._write(req)
+    
+    ############################################################################
+    ##    INTERNALS
+    def _responde(self, message):
         actor = get_actor()
         try:
             command = message['command']
             #LOGGER.debug('handling message %s', command)
             if command == 'callback':   #this is a callback
-                return self.callback(message.get('ack'), message.get('result'))
+                return self._callback(message.get('ack'), message.get('result'))
             target = actor.get_actor(message['target'])
             if target is None:
                 raise CommandError('unknown actor %s' % message['target'])
@@ -147,21 +155,29 @@ class MailboxConsumer(ProtocolConsumer):
             result = command(req, message['args'], message['kwargs'])
         except Exception:
             result = sys.exc_info()
-        return make_async(result).add_both(partial(self._responde, message))
+        return make_async(result).add_both(partial(self._response, message))
         
-    def _responde(self, data, result):
+    def _response(self, data, result):
         if data.get('ack'):
             req = Message.callback(result, data['ack'])
             self.new_request(req)
         #Return the result so a failure can be logged
         return result
 
-    def request(self, command, sender, target, args, kwargs):
-        '''Used by the server'''
-        req = Message.command(command, sender, target, args, kwargs)
-        self.new_request(req)
-        return req.future
-
+    def _callback(self, ack, result):
+        if not ack:
+            raise ProtocolError('A callback without id')
+        try:
+            pending = self._pending_responses.pop(ack)
+        except KeyError:
+            raise KeyError('Callback %s not in pending callbacks' % ack)
+        pending.callback(result)
+        
+    def _write(self, req):
+        obj = pickle.dumps(req.data, protocol=2)
+        data = self._parser.encode(obj, opcode=0x2).msg
+        self.transport.write(data)
+        
     
 class MailboxClient(SingleClient):
     # mailbox for actors client

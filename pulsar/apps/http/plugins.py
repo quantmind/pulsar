@@ -1,6 +1,11 @@
-from pulsar.utils.httpurl import basic_auth_str
+from base64 import b64encode, b64decode
 
-__all__ = ['Auth', 'HTTPBasicAuth', 'HTTPDigestAuth']
+from pulsar.utils.httpurl import parse_dict_header
+from pulsar.utils.pep import native_str
+
+
+__all__ = ['Auth', 'HTTPBasicAuth', 'HTTPDigestAuth', 'basic_auth_str',
+           'parse_authorization_header']
 
 
 class Auth(object):
@@ -155,3 +160,38 @@ class HTTPDigestAuth(Auth):
         elif qop == "auth-int":
             return self.hex("%s:%s:%s" % (method, uri, self.hex(body)))
         raise ValueError()
+
+
+def basic_auth_str(username, password):
+    """Returns a Basic Auth string."""
+    b64 = b64encode(('%s:%s' % (username, password)).encode('latin1'))
+    return 'Basic %s' % native_str(b64.strip(), 'latin1')
+
+digest_parameters=frozenset(('username', 'realm', 'nonce', 'uri', 'nc',
+                             'cnonce',  'response'))
+def parse_authorization_header(value, charset='utf-8'):
+    """Parse an HTTP basic/digest authorization header transmitted by the web
+browser.  The return value is either `None` if the header was invalid or
+not given, otherwise an :class:`Auth` object.
+
+:param value: the authorization header to parse.
+:return: a :class:`Auth` or `None`."""
+    if not value:
+        return
+    try:
+        auth_type, auth_info = value.split(None, 1)
+        auth_type = auth_type.lower()
+    except ValueError:
+        return
+    if auth_type == 'basic':
+        try:
+            up = b64decode(auth_info.encode('latin-1')).decode(charset)
+            username, password = up.split(':', 1)
+        except Exception as e:
+            return
+        return HTTPBasicAuth(username, password)
+    elif auth_type == 'digest':
+        auth_map = parse_dict_header(auth_info)
+        if not digest_parameters.difference(auth_map):
+            return HTTPDigestAuth(auth_map.pop('username'),
+                                  options=auth_map)

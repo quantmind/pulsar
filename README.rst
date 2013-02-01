@@ -82,6 +82,7 @@ pulsar alone. It includes:
 * A simple JSON-RPC Calculator server.
 * A taskqueue application with a JSON-RPC interface.
 * Websocket graph.
+* Websocket Web Chat.
 * The `dining philosophers problem <http://en.wikipedia.org/wiki/Dining_philosophers_problem>`_.
 * Asynchronous shell.
 

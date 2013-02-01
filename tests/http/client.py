@@ -3,7 +3,7 @@ from pulsar import send, is_failure
 from pulsar.apps.test import unittest
 from pulsar.utils import httpurl
 from pulsar.utils.httpurl import to_bytes, urlencode
-from pulsar.apps.http import HttpClient, TooManyRedirects
+from pulsar.apps.http import HttpClient, TooManyRedirects, HttpResponse
 
 
 class TestHttpClientBase:
@@ -82,8 +82,7 @@ class TestHttpClientReconnect(TestHttpClientBase, unittest.TestCase):
         self._check_pool(http, response,created=2)
     
 
-class a:
-#class TestHttpClientRedirect(TestHttpClientBase, unittest.TestCase):
+class TestHttpClientRedirect(TestHttpClientBase, unittest.TestCase):
     
     def testRedirect(self):
         http = self.client()
@@ -108,8 +107,7 @@ class a:
         self.assertTrue(history[1].url.endswith('/redirect/4'))
    
 
-class b:
-#class TestHttpClient(TestHttpClientBase, unittest.TestCase):
+class TestHttpClient(TestHttpClientBase, unittest.TestCase):
         
     def testClient(self):
         http = self.client(max_redirects=5)
@@ -119,6 +117,11 @@ class b:
         self.assertEqual(http.max_redirects, 5)
         if self.with_proxy:
             self.assertEqual(http.proxy_info, {'http': self.proxy_uri})
+            
+    def test_HttpResponse(self):
+        r = HttpResponse(None)
+        self.assertEqual(r.status_code, None)
+        self.assertEqual(str(r), '<None>')
         
     def test_200_get(self):
         http = self.client()
@@ -267,3 +270,97 @@ class b:
                              wait_continue=True)
         yield response.on_finished
         self.assertEqual(response.status_code, 200)
+        
+        
+    
+class a:
+#class CookieAndAuthentication(TestHttpClientBase, unittest.TestCase):
+        
+    def test_Cookie(self):
+        http = self.client()
+        # First set the cookies
+        r = make_async(http.get(self.httpbin('cookies', 'set', 'bla', 'foo')))
+        yield r
+        r = r.result
+        self.assertEqual(r.status_code, 200)
+        self.assertTrue(r.history)
+        self.assertTrue(r.history[0].headers['set-cookie'])
+        # Now check if I get them
+        r = make_async(http.get(self.httpbin('cookies')))
+        yield r
+        r = r.result
+        self.assertEqual(r.status_code, 200)
+        result = r.content_json()
+        self.assertTrue(result['cookies'])
+        self.assertEqual(result['cookies']['bla'],'foo')
+        # Try without saving cookies
+        http = self.client(store_cookies=False)
+        r = make_async(http.get(self.httpbin('cookies', 'set', 'bla', 'foo')))
+        yield r
+        r = r.result
+        self.assertEqual(r.status_code, 200)
+        self.assertTrue(r.history)
+        self.assertTrue(r.history[0].headers['set-cookie'])
+        r = make_async(http.get(self.httpbin('cookies')))
+        yield r
+        r = r.result
+        self.assertEqual(r.status_code, 200)
+        result = r.content_json()
+        self.assertFalse(result['cookies'])
+
+    def test_parse_cookie(self):
+        self.assertEqual(httpurl.parse_cookie('invalid key=true'),
+                         {'key':'true'})
+        self.assertEqual(httpurl.parse_cookie('invalid;key=true'),
+                         {'key':'true'})
+        
+    def test_basic_authentication(self):
+        http = self.client()
+        r = make_async(http.get(self.httpbin('basic-auth/bla/foo')))
+        yield r
+        r = r.result
+        self.assertEqual(r.status_code, 401)
+        http.add_basic_authentication('bla', 'foo')
+        r = make_async(http.get(self.httpbin('basic-auth/bla/foo')))
+        yield r
+        r = r.result
+        self.assertEqual(r.status_code, 200)
+        
+    def test_digest_authentication(self):
+        http = self.client()
+        r = make_async(http.get(self.httpbin('digest-auth/auth/bla/foo')))
+        yield r
+        r = r.result
+        self.assertEqual(r.status_code, 401)
+        http.add_digest_authentication('bla', 'foo')
+        r = make_async(http.get(self.httpbin('digest-auth/auth/bla/foo')))
+        yield r
+        r = r.result
+        self.assertEqual(r.status_code, 200)
+    
+    #### TO INCLUDE
+    def __test_far_expiration(self):
+        "Cookie will expire when an distant expiration time is provided"
+        response = Response(self.environ())
+        response.set_cookie('datetime', expires=datetime(2028, 1, 1, 4, 5, 6))
+        datetime_cookie = response.cookies['datetime']
+        self.assertEqual(datetime_cookie['expires'], 'Sat, 01-Jan-2028 04:05:06 GMT')
+
+    def __test_max_age_expiration(self):
+        "Cookie will expire if max_age is provided"
+        response = Response(self.environ())
+        response.set_cookie('max_age', max_age=10)
+        max_age_cookie = response.cookies['max_age']
+        self.assertEqual(max_age_cookie['max-age'], 10)
+        self.assertEqual(max_age_cookie['expires'], http.cookie_date(time.time()+10))
+
+    def __test_httponly_cookie(self):
+        response = Response(self.environ())
+        response.set_cookie('example', httponly=True)
+        example_cookie = response.cookies['example']
+        # A compat cookie may be in use -- check that it has worked
+        # both as an output string, and using the cookie attributes
+        self.assertTrue('; httponly' in str(example_cookie))
+        self.assertTrue(example_cookie['httponly'])
+        
+    

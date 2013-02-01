@@ -116,6 +116,8 @@ class PulsarShell(pulsar.CPUboundApplication):
     def monitor_start(self, monitor):
         monitor.cfg.set('workers', 1)
         monitor.cfg.set('concurrency', 'thread')
+        
+    def worker_start(self, worker):  #pragma    nocover
         imported_objects = {'pshell': self,
                             'pulsar': pulsar,
                             'get_actor': pulsar.get_actor,
@@ -132,12 +134,15 @@ class PulsarShell(pulsar.CPUboundApplication):
             readline.parse_and_bind("tab:complete")
         self.local.console = self.console_class(imported_objects)
         self.console.setup()
+        worker.requestloop.call_every(self.interact, worker)
         
-    def worker_task(self, worker):  #pragma    nocover
+    def interact(self, worker):
         try:
             self.console.interact(0.5*self.cfg.timeout)
-        except pulsar.EXIT_EXCEPTIONS:
+        except Exception:
+            raise
+        except:
             worker.send('arbiter', 'stop')
-            worker.state = pulsar.ACTOR_STATES.INACTIVE
+            raise
             
 

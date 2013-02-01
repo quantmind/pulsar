@@ -45,10 +45,10 @@ ACTOR_STATES.DESCRIPTION = {ACTOR_STATES.INACTIVE: 'inactive',
 SPECIAL_ACTORS = ('monitor', 'arbiter')
 #
 # LOW LEVEL CONSTANTS - NO NEED TO CHANGE THOSE ###########################
-MIN_NOTIFY = 5     # DON'T NOTIFY BELOW THIS INTERVAL
-MAX_NOTIFY = 30    # NOTIFY AT LEAST AFTER THESE SECONDS
+MIN_NOTIFY = 1     # DON'T NOTIFY BELOW THIS INTERVAL
+MAX_NOTIFY = 10    # NOTIFY AT LEAST AFTER THESE SECONDS
+ACTOR_TIMEOUT_TOLE = 0.2  # NOTIFY AFTER THIS TIMES THE TIMEOUT
 ACTOR_TERMINATE_TIMEOUT = 2 # TIMEOUT WHEN JOINING A TERMINATING ACTOR
-ACTOR_TIMEOUT_TOLERANCE = 0.6
 ACTOR_STOPPING_LOOPS = 100
 
 def is_actor(obj):
@@ -258,7 +258,9 @@ parameters *params*.'''
             if actor is None:
                 mailbox = self.mailbox
             else:
-                target = actor
+                # this occur when sending a message from arbiter tomonitors or
+                # viceversa. Same signature as mailbox.request
+                return command_in_context(action, self, actor, args, params)
         return mailbox.request(action, self, target, args, params)
     
     def io_poller(self):
@@ -353,11 +355,17 @@ mean it is running.'''
         if self.can_continue():
             if self.running():
                 self.logger.debug('%s notifying the monitor', self)
-                r = self.send('monitor', 'notify', self.info())
-                secs = max(ACTOR_TIMEOUT_TOLERANCE*self.cfg.timeout, MIN_NOTIFY)
-                next = min(secs, MAX_NOTIFY)
-                self.ioloop.call_later(next, self.periodic_task)
-                return r
+                # if an error occurs, shut down the actor
+                try:
+                    r = self.send('monitor', 'notify', self.info())\
+                            .add_errback(self.stop)
+                except Exception as e:
+                    self.stop(e)
+                else:
+                    secs = max(ACTOR_TIMEOUT_TOLE*self.cfg.timeout, MIN_NOTIFY)
+                    next = min(secs, MAX_NOTIFY)
+                    self.ioloop.call_later(next, self.periodic_task)
+                    return r
             else:
                 # The actor is not yet active, come back at the next requestloop
                 self.requestloop.call_soon_threadsafe(self.periodic_task)
@@ -375,7 +383,7 @@ mean it is running.'''
         self.state = ACTOR_STATES.RUN
         r = self.periodic_task()
         if r:
-            r.add_callback(self._got_notified, self.stop)
+            r.add_callback(self._got_notified)
         else:
             self.stop()
     

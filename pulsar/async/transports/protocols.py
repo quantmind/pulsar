@@ -126,8 +126,9 @@ and `data_received` :ref:`many times event <many-times-event>`.
     
     def start_request(self):
         '''Invoked by the :meth:`new_request` method to kick start the
-request with remote server. For server consumer this is usually
-not implemented.'''
+request with remote server/client. For server consumers this is usually
+not implemented. If implemented this is critical method where errors caused
+by stale socket connections can arise.'''
         pass
     
     def new_request(self, request=None):
@@ -436,6 +437,9 @@ active connections.'''
         else:
             for connection in list(self._concurrent_connections):
                 connection.transport.close(async)
+                
+    def can_reuse_connection(self, connection):
+        return True
             
     def _add_connection(self, connection):
         self._concurrent_connections.add(connection)
