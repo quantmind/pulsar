@@ -118,7 +118,7 @@ the :meth:`Protocol.data_received` method until :meth:`resume` is called.
 passed to the :meth:`Protocol.data_received` method."""
         raise NotImplementedError
     
-    def close(self):
+    def close(self, async=True, exc=None):
         """Closes the transport.
 
         Buffered data will be flushed asynchronously.  No more data
@@ -128,14 +128,14 @@ passed to the :meth:`Protocol.data_received` method."""
         """
         raise NotImplementedError
     
-    def abort(self):
+    def abort(self, exc=None):
         """Closes the transport immediately.
 
         Buffered data will be lost.  No more data will be received.
         The protocol's connection_lost() method will (eventually) be
         called with None as its argument.
         """
-        raise NotImplementedError
+        self.close(async=False, exc=exc)
     
     ############################################################################
     ###    INTERNALS
@@ -268,9 +268,6 @@ the :class:`EventHandler`.
             elif not self.writing:
                 self._event_loop.call_soon(self._shutdown, exc)
     
-    def abort(self, exc=None):
-        self.close(async=False, exc=exc)
-    
     ############################################################################
     ###    PULSAR TRANSPORT METHODS.
     def connect(self, address):
@@ -303,6 +300,12 @@ as only attribute.'''
         '''Add writer to the event loop'''
         self._event_loop.add_writer(self.fileno(), self._ready_write)
     
+    def is_stale(self):
+        if self._sock:
+            return sockets.is_closed(self._sock)
+        else:
+            return True
+        
     ############################################################################
     ###    INTERNALS
     def _data_received(self, data):
@@ -405,6 +408,9 @@ class TransportProxy(object):
     def fileno(self):
         if self._transport:
             return self._transport.fileno()
+    
+    def is_stale(self):
+        return self._transport.is_stale() if self._transport else True
     
     def close(self, async=True, exc=None):
         if self._transport:

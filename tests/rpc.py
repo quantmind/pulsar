@@ -14,9 +14,8 @@ class rpcTest(unittest.TestCase):
         p = self.proxy()
         http = p.http
         self.assertTrue(len(http.headers))
-        self.assertNotEqual(http.headers['user-agent'], 'testing')
-        http.headers['user-agent'] = 'testing'
-        self.assertEqual(http.headers['user-agent'], 'testing')
+        self.assertEqual(http.headers['user-agent'], 'Pulsar-Http-Test-Client')
+        self.assertEqual(http.test, self)
 
     def testInvalidFunction(self):
         from pulsar.apps.rpc import NoSuchFunction

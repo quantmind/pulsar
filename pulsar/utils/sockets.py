@@ -2,6 +2,15 @@ import os
 import sys
 import socket
 
+try:
+    from select import poll, POLLIN
+except ImportError: #pragma    nocover
+    poll = False
+    try:
+        from select import select
+    except ImportError: #pragma    nocover
+        select = False
+        
 from .system import platform
 from .httpurl import native_str
 
@@ -303,3 +312,25 @@ which is bound to ``127.0.0.1`` at any available port.
             remote_client.close()
     remote_client.setblocking(blocking)
     return remote_client, server
+
+def is_closed(sock):    #pragma nocover
+    """Check if socket is connected."""
+    if not sock:
+        return False
+    try:
+        if not poll:
+            if not select:
+                return False
+            try:
+                return bool(select([sock], [], [], 0.0)[0])
+            except socket.error:
+                return True
+        # This version is better on platforms that support it.
+        p = poll()
+        p.register(sock, POLLIN)
+        for (fno, ev) in p.poll(0.0):
+            if fno == sock.fileno():
+                # Either data is buffered (bad), or the connection is dropped.
+                return True
+    except:
+        return True

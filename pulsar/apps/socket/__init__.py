@@ -164,13 +164,7 @@ By default it returns the :attr:`Application.callable`.'''
     
     def worker_start(self, worker):
         # Start the worker by starting the socket server
-        worker.socket_server = self.create_server(worker)
-    
-    def worker_stop(self, worker):
-        if hasattr(worker, 'socket_server'):
-            # we don't shut down the socket, simply remove all active
-            # connections and othe clean up operations.
-            worker.socket_server.abort()
+        worker.servers[self.name] = self.create_server(worker)
     
     def on_info(self, worker, data):
         server = worker.socket_server

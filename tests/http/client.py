@@ -61,9 +61,9 @@ class TestHttpClientBase:
             return self.uri + '/' + '/'.join(suffix)
         else:
             return self.uri
+
     
-class b:
-#class TestHttpClientReconnect(TestHttpClientBase, unittest.TestCase):
+class TestHttpClientReconnect(TestHttpClientBase, unittest.TestCase):
     
     def test_400_get(self):
         '''Bad request 400'''
@@ -82,7 +82,8 @@ class b:
         self._check_pool(http, response,created=2)
     
 
-class TestHttpClientRedirect(TestHttpClientBase, unittest.TestCase):
+class a:
+#class TestHttpClientRedirect(TestHttpClientBase, unittest.TestCase):
     
     def testRedirect(self):
         http = self.client()
@@ -107,7 +108,8 @@ class TestHttpClientRedirect(TestHttpClientBase, unittest.TestCase):
         self.assertTrue(history[1].url.endswith('/redirect/4'))
    
 
-class TestHttpClient(TestHttpClientBase, unittest.TestCase):
+class b:
+#class TestHttpClient(TestHttpClientBase, unittest.TestCase):
         
     def testClient(self):
         http = self.client(max_redirects=5)

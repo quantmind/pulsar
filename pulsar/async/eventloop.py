@@ -484,10 +484,7 @@ be called. Returns a :class:`TimedCall` handler which can be used to cancel
 the signal callback.'''
         self._check_signal(sig)
         handler = TimedCall(None, callback, args)
-        def h(n, frame):
-            print('got signal %s' % n)
-            
-        prev = signal.signal(sig, h)
+        prev = signal.signal(sig, handler)
         if isinstance(prev, TimedCall):
             prev.cancel()
         return handler
@@ -560,7 +557,7 @@ default signal handler ``signal.SIG_DFL``.'''
         try:
             event_pairs = self._impl.poll(poll_timeout)
         except socket.error as e:
-            if e not in SOCKET_INTERRUPT_ERRORS and self._running:
+            if self._raise_loop_error(e):
                 raise
         else:
             for fd, events in event_pairs:
@@ -577,10 +574,21 @@ default signal handler ``signal.SIG_DFL``.'''
         try:
             log_failure(callback(*args))
         except socket.error as e:
-            if e.args[0] in SOCKET_INTERRUPT_ERRORS:
-                pass
-            else:
+            if self._raise_loop_error(e):
                 log_failure(e).log('Exception in event loop callback.')
         except Exception as e:
             log_failure(e).log('Exception in event loop callback.')
 
+    def _raise_loop_error(self, e):
+        # Depending on python version and EventLoop implementation,
+        # different exception types may be thrown and there are
+        # two ways EINTR might be signaled:
+        # * e.errno == errno.EINTR
+        # * e.args is like (errno.EINTR, 'Interrupted system call')
+        eno = getattr(e, 'errno', None)
+        if eno not in SOCKET_INTERRUPT_ERRORS:
+            args = getattr(e, 'args', None)
+            if isinstance(args, tuple) and len(args) == 2:
+                eno = args[0]
+        if eno not in SOCKET_INTERRUPT_ERRORS and self._running:
+            return True

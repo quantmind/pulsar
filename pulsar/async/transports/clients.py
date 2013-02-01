@@ -56,17 +56,20 @@ of available connections.'''
         self._concurrent_connections.discard(connection)
         self._available_connections.add(connection)
         
-    def get_or_create_connection(self, client, new=False):
+    def get_or_create_connection(self, client):
         "Get or create a new connection for *client*"
-        connection = None
-        if not new:
-            try:
+        try:
+            closed = True
+            while closed:
                 connection = self._available_connections.pop()
-            except KeyError:
-                pass
-            else:
-                # we have a connection, lets added it to the concurrent set
-                self._concurrent_connections.add(connection)
+                closed = connection.is_stale()
+                if closed and not connection.closed:
+                    connection.transport.close()
+        except KeyError:
+            connection = None
+        else:
+            # we have a connection, lets added it to the concurrent set
+            self._concurrent_connections.add(connection)
         if connection is None:
             # build the new connection
             connection = self.new_connection(self.address,
@@ -105,6 +108,7 @@ of available connections.'''
                     loop = get_event_loop()
                     loop.call_later(lag, self._reconnect, client, consumer)
                 else:
+                    LOGGER.debug('Try to reconnect')
                     self._reconnect(client, consumer)
                     
     def _reconnect(self, client, consumer):

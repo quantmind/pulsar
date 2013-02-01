@@ -16,7 +16,7 @@ ThreadQueue = queue.Queue
 from pulsar import AlreadyCalledError, AlreadyRegistered,\
                    ActorAlreadyStarted, system, Config, platform
 from pulsar.utils.structures import AttributeDictionary
-from pulsar.utils.pep import pickle, set_event_loop_policy
+from pulsar.utils.pep import pickle, set_event_loop_policy, itervalues
 from pulsar.utils.log import LogginMixin
 
 from .eventloop import EventLoop, setid, signal
@@ -251,13 +251,14 @@ logging is configured, the :attr:`Actor.mailbox` is registered and the
         '''Send a message to *target* to perform *action* with given
 parameters *params*.'''
         target = self.monitor if target == 'monitor' else target
-        actor = self.get_actor(target)
-        if isinstance(actor, Actor):
-            return command_in_context(actor, self, action, *args, **params)
-        elif isinstance(target, ActorProxyMonitor):
+        if isinstance(target, ActorProxyMonitor):
             mailbox = target.mailbox
         else:
-            mailbox = self.mailbox
+            actor = self.get_actor(target)
+            if actor is None:
+                mailbox = self.mailbox
+            else:
+                target = actor
         return mailbox.request(action, self, target, args, params)
     
     def io_poller(self):
@@ -275,12 +276,14 @@ properly this actor will go out of scope.'''
         log_failure(exc)
         if self.state <= ACTOR_STATES.RUN:
             # The actor has not started the stopping process. Starts it now.
+            for server in itervalues(self.servers):
+                server.abort()
             self.exit_code = 1 if exc else 0
             self.state = ACTOR_STATES.STOPPING
             # if CPU bound and the requestloop is still running, stop it
             if self.cpubound and self.ioloop.running:
                 # shuts down the mailbox first
-                self.mailbox.event_loop.call_soon_threadsafe(self._stop)
+                self.ioloop.call_soon_threadsafe(self._stop)
                 self.mailbox.close()
             else:
                 self._stop()
@@ -370,7 +373,11 @@ mean it is running.'''
         if a is not self:
             set_actor(self)
         self.state = ACTOR_STATES.RUN
-        self.periodic_task().add_callback(self._got_notified, self.stop)
+        r = self.periodic_task()
+        if r:
+            r.add_callback(self._got_notified, self.stop)
+        else:
+            self.stop()
     
     def get_actor(self, aid):
         '''Given an actor unique id return the actor proxy.'''
@@ -423,19 +430,13 @@ status and performance.'''
             if is_mainthread() and signal and not platform.is_windows:
                 self.logger.debug('Installing signals')
                 self.signal_queue = ThreadQueue()
-                for sig in system.EXIT_SIGNALS:
+                for name in system.ALL_SIGNALS:
+                    sig = getattr(signal, 'SIG%s' % name)
                     try:
                         handler = partial(self.signal_queue.put, sig)
                         self.requestloop.add_signal_handler(sig, handler)
                     except ValueError:
                         break
-                #for name in system.SIG_NAMES:
-                #    sig = getattr(signal, 'SIG%s' % name)
-                #    try:
-                #        handler = partial(self.signal_queue.put, sig)
-                #        self.requestloop.add_signal_handler(sig, handler)
-                #    except ValueError:
-                #        break
         
     def can_continue(self):
         if self.signal_queue is not None:

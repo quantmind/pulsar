@@ -21,6 +21,9 @@ class QueueTransport(transport.Transport):
     def fileno(self):
         return 1
     
+    def close(self, async=False, exc=None):
+        pass
+    
 
 class Task(protocols.ProtocolConsumer):
     

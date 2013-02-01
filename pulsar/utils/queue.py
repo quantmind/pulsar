@@ -23,7 +23,7 @@ class QueueWaker(object):
     def wake(self):
         try:
             self._queue.put(QUEUE_WAKER)
-        except (IOError,TypeError):
+        except (IOError, TypeError, AssertionError):
             pass
 
     def consume(self):
