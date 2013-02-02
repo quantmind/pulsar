@@ -61,16 +61,7 @@ class InteractiveConsole(code.InteractiveConsole):  #pragma    nocover
                     (sys.version, sys.platform, cprt,pulsar.__version__)
      
     def setup(self, banner=None):
-        """Closely emulate the interactive Python console.
-
-        The optional banner argument specify the banner to print
-        before the first interaction; by default it prints a banner
-        similar to the one printed by the real Python interpreter,
-        followed by the current class name in parentheses (so as not
-        to confuse this with the real interpreter -- since it's so
-        close!).
-
-        """
+        """Closely emulate the interactive Python console."""
         try:
             sys.ps1
         except AttributeError:
@@ -100,18 +91,10 @@ class InteractiveConsole(code.InteractiveConsole):  #pragma    nocover
 
 
 class PulsarShell(pulsar.CPUboundApplication):
-    can_kill_arbiter = True
-    _app_name = 'pulsarshell'
     console_class = InteractiveConsole
     cfg_apps = ('cpubound',)
-    cfg = {'timeout':5,
-           'workers':1,
-           'loglevel':'none',
-           'concurrency':'thread'}
-    
-    @property
-    def console(self):
-        return self.local.console
+    cfg = {'loglevel':'none',
+           'process_name': 'Pulsar shell'}
     
     def monitor_start(self, monitor):
         monitor.cfg.set('workers', 1)
@@ -133,14 +116,12 @@ class PulsarShell(pulsar.CPUboundApplication):
             readline.set_completer(rlcompleter.Completer(imported_objects).complete)
             readline.parse_and_bind("tab:complete")
         self.local.console = self.console_class(imported_objects)
-        self.console.setup()
+        self.local.console.setup()
         worker.requestloop.call_every(self.interact, worker)
         
     def interact(self, worker):
         try:
-            self.console.interact(0.5*self.cfg.timeout)
-        except Exception:
-            raise
+            self.local.console.interact(0.5*self.cfg.timeout)
         except:
             worker.send('arbiter', 'stop')
             raise
