@@ -38,6 +38,7 @@ class in the global dictionary::
 import os
 import sys
 import code
+from functools import partial
 from time import time
 
 import pulsar
@@ -138,9 +139,13 @@ class PulsarShell(tasks.CPUboundServer):
         monitor.cfg.set('workers', 1)
         monitor.cfg.set('concurrency', 'thread')
         
+    def worker_start(self, worker):
+        worker.requestloop.add_callback(partial(self.worker_task, worker))
+        
     def worker_task(self, worker):  #pragma    nocover
         try:
             self.console.interact(0.5*self.cfg.timeout)
+            self.worker_start(worker)
         except pulsar.EXIT_EXCEPTIONS:
             worker.send('arbiter', 'stop')
             worker.state = pulsar.ACTOR_STATES.INACTIVE
