@@ -34,6 +34,11 @@ USER_AGENT = 'Pulsar-Proxy-Server'
 def x_forwarded_for(environ, headers):
     '''Add *x-forwarded-for* header'''
     headers.add_header('x-forwarded-for', environ['REMOTE_ADDR'])
+    
+def user_agent(agent):
+    def modify_user_agent(environ, headers):
+        headers['user-agent'] = agent
+    return modify_user_agent
 
     
 class ProxyMiddleware(LocalMixin):
@@ -44,8 +49,6 @@ An headers middleware is a callable which accepts two parameters, the wsgi
     def __init__(self, user_agent=None, headers_middleware=None):
         self.headers = headers = Headers(kind='client')
         self.headers_middleware = headers_middleware or []
-        if user_agent:
-            headers['user-agent'] = user_agent
     
     @local_property
     def http_client(self):
@@ -80,7 +83,6 @@ The returned headers will be sent to the target uri.'''
             v = environ.get(k)
             if v:
                 headers[head] = v
-        headers.update(self.headers)
         for middleware in self.headers_middleware:
             middleware(environ, headers)
         return headers
@@ -106,7 +108,8 @@ The returned headers will be sent to the target uri.'''
 def server(description=None, name='proxy-server',
            headers_middleware=None, **kwargs):
     description = description or 'Pulsar Proxy Server'
-    headers_middleware = headers_middleware or [x_forwarded_for]
+    if headers_middleware is None:
+        headers_middleware = [user_agent(USER_AGENT), x_forwarded_for]
     wsgi_proxy = ProxyMiddleware(user_agent=USER_AGENT,
                                  headers_middleware=headers_middleware)
     app = wsgi.WsgiHandler(middleware=[wsgi_proxy])
@@ -114,4 +117,4 @@ def server(description=None, name='proxy-server',
 
 
 if __name__ == '__main__':
-    server().start()
+    server(headers_middleware=[]).start()

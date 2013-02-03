@@ -94,7 +94,6 @@ def pickup_fork(request, fork_right):
 class DiningPhilosophers(pulsar.Application):
     description = 'Dining philosophers sit at a table around a bowl of '\
                   'spaghetti and waits for available forks.'
-    commands_set = philosophers_commands
     cfg = {'workers': 5}
     
     def monitor_start(self, monitor):
@@ -174,7 +173,7 @@ available.'''
         self.take_action(philosopher)
     
     def actorparams(self, monitor, params):
-        number = len(monitor.managed_actors) + len(monitor.spawning_actors) + 1
+        number = len(monitor.managed_actors) + 1
         name = 'Philosopher %s' % number
         params.update({'name': name,
                        'number': number,

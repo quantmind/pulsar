@@ -348,12 +348,17 @@ as only attribute.'''
     def _ready_read(self):
         # Read from the socket until we get EWOULDBLOCK or equivalent.
         # If any other error occur, abort the connection and re-raise.
+        passes = 0
         chunk = True
         while chunk:
             try:
                 chunk = self._protocol_read()
                 if chunk:
                     self._data_received(chunk)
+                elif not passes and chunk == b'':
+                    # We got empty data. Close the socket
+                    self.close()
+                passes += 1
             except Exception as e:
                 self.abort(exc=e)
                 raise
