@@ -236,6 +236,7 @@ class WebSocketProtocol(pulsar.ProtocolConsumer):
     
     def __init__(self, handler, environ, parser, connection):
         super(WebSocketProtocol, self).__init__(connection)
+        connection.set_timeout(0)
         self.handler = handler
         self.environ = environ
         self.parser = parser

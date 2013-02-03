@@ -35,10 +35,12 @@ def x_forwarded_for(environ, headers):
     '''Add *x-forwarded-for* header'''
     headers.add_header('x-forwarded-for', environ['REMOTE_ADDR'])
     
-def user_agent(agent):
-    def modify_user_agent(environ, headers):
-        headers['user-agent'] = agent
-    return modify_user_agent
+class user_agent:
+    def __init__(self, agent):
+        self.agent = agent
+        
+    def __call__(environ, headers):
+        headers['user-agent'] = self.agent
 
     
 class ProxyMiddleware(LocalMixin):

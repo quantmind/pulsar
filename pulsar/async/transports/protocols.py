@@ -276,6 +276,11 @@ It has two :ref:`one time events <one-time-event>`, *connection_made* and
     def producer(self):
         return self._producer
     
+    def set_timeout(self, timeout):
+        self._cancel_timeout()
+        self._timeout = timeout
+        self._add_idle_timeout()
+        
     def set_consumer(self, consumer):
         '''Set a new :class:`ProtocolConsumer` for this :class:`Connection`.'''
         assert self._current_consumer is None, 'Consumer is not None'
