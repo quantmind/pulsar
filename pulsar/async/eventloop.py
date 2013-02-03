@@ -147,18 +147,11 @@ it is created by :meth:`EventLoop.call_soon`, :meth:`EventLoop.call_later`,
         
         
 class FileDescriptor(IObase):
-    def __init__(self, fd, eventloop, read=None, write=None, connect=None):
+    def __init__(self, fd, eventloop):
         self.fd = fd
         self.eventloop = eventloop
-        self._connecting = False
         self.handle_write = None
         self.handle_read = None
-        if connect:
-            self.add_connector(connect)
-        elif write:
-            self.add_writer(write)
-        if read:
-            self.add_reader(read)
 
     @property
     def poller(self):
@@ -171,10 +164,6 @@ class FileDescriptor(IObase):
     @property
     def writing(self):
         return bool(self.handle_write)
-    
-    @property
-    def connecting(self):
-        return self._connecting
     
     @property
     def state(self):
@@ -200,43 +189,45 @@ class FileDescriptor(IObase):
         return ' '.join(s) if s else 'idle'
     
     def add_connector(self, callback):
-        if self.state is not None:
-            raise RuntimeError('Cannot connect. State is %s.' % self.state_code)
-        self._connecting = True
-        self.add_writer(callback)
+        self.add_writer(callback, 'connector')
         
     def add_reader(self, callback):
         if self.reading:
             raise RuntimeError('Read handler already registered')
         else:
+            LOGGER.debug('Add reader on file descriptor %s', self.fd)
             current_state = self.state
             self.handle_read = callback
             self.modify_state(current_state, self.READ)
         
-    def add_writer(self, callback):
+    def add_writer(self, callback, name=None):
+        name = name or 'writer'
         if self.writing:
-            raise RuntimeError('Write handler already registered')
+            raise RuntimeError('%s handler already registered', name)
         else:
+            LOGGER.debug('Add %s on file descriptor %s', name, self.fd)
             current_state = self.state
             self.handle_write = callback
             self.modify_state(current_state, self.WRITE)
         
     def remove_connector(self):
-        self._connecting = False
-        return self.remove_writer()
+        return self.remove_writer('connector')
     
     def remove_reader(self):
         '''Remove reader and return True if writing'''
         if self.writing:
-            self.modify_state(self.state, self.WRITE)
+            LOGGER.debug('Remove reader from file descriptor %s', self.fd)
+            self.poller.modify(self.fd, self.WRITE)
         else:
             self.remove_handler()
         self.handle_read = None
 
-    def remove_writer(self):
+    def remove_writer(self, name=None):
         '''Remove writer and return True if reading'''
         if self.reading:
-            self.modify_state(self.state, self.READ)
+            LOGGER.debug('Remove %s from file descriptor %s',
+                         name or 'writer', self.fd)
+            self.poller.modify(self.fd, self.READ)
         else:
             self.remove_handler()
         self.handle_write = None
@@ -245,9 +236,15 @@ class FileDescriptor(IObase):
         if events & self.READ:
             if self.handle_read:
                 self.handle_read()
+            else:
+                LOGGER.warn('Read callback without handler for file'
+                            ' descriptor %s.', self.fd)
         if events & self.WRITE:
             if self.handle_write:
                 self.handle_write()
+            else:
+                LOGGER.warn('Write callback without handler for file'
+                            ' descriptor %s.', self.fd)
             
     def modify_state(self, current_state, state):
         if current_state != state:
@@ -263,6 +260,7 @@ class FileDescriptor(IObase):
             self.poller.unregister(fd)
         except (OSError, IOError):
             self.eventloop.logger.error("Error removing %s from EventLoop", fd)
+        LOGGER.debug('Remove file descriptor %s', fd)
         self.eventloop._handlers.pop(fd, None)
 
 
@@ -445,20 +443,26 @@ to transfer control from other threads to the EventLoop's thread.'''
         """Add a reader callback.  Return a Handler instance."""
         handler = TimedCall(None, callback, args)
         fd = file_descriptor(fd)
-        if fd in self._handlers:
-            self._handlers[fd].add_reader(callback)
-        else:
-            self._handlers[fd] = self.fd_factory(fd, self, read=handler)
+        if fd not in self._handlers:
+            self._handlers[fd] = self.fd_factory(fd, self)
+        self._handlers[fd].add_reader(handler)
         return handler
     
     def add_writer(self, fd, callback, *args):
         """Add a reader callback.  Return a Handler instance."""
         handler = TimedCall(None, callback, args)
         fd = file_descriptor(fd)
-        if fd in self._handlers:
-            self._handlers[fd].add_writer(callback)
-        else:
-            self._handlers[fd] = self.fd_factory(fd, self, write=handler)
+        if fd not in self._handlers:
+            self._handlers[fd] = self.fd_factory(fd, self)
+        self._handlers[fd].add_writer(handler)
+        return handler
+    
+    def add_connector(self, fd, callback, *args):
+        handler = TimedCall(None, callback, args)
+        fd = file_descriptor(fd)
+        if fd not in self._handlers:
+            self._handlers[fd] = self.fd_factory(fd, self)
+        self._handlers[fd].add_connector(handler)
         return handler
     
     def remove_reader(self, fd):
@@ -476,6 +480,11 @@ descriptor.'''
         fd = file_descriptor(fd)
         if fd in self._handlers:
             self._handlers[fd].remove_writer()
+            
+    def remove_connector(self, fd):
+        fd = file_descriptor(fd)
+        if fd in self._handlers:
+            self._handlers[fd].remove_connector()
     
     def add_signal_handler(self, sig, callback, *args):
         '''Whenever signal ``sig`` is received, arrange for callback(*args) to
@@ -559,7 +568,7 @@ default signal handler ``signal.SIG_DFL``.'''
                 poll_timeout = min(seconds, poll_timeout)
         try:
             event_pairs = self._impl.poll(poll_timeout)
-        except socket.error as e:
+        except Exception as e:
             if self._raise_loop_error(e):
                 raise
         else:

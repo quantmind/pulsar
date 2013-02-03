@@ -57,7 +57,6 @@ It is a producer of :class:`Transport` for server protocols.
         protocol = self.new_connection(address, self.consumer_factory)
         transport = create_transport(protocol, sock=sock,
                                      event_loop=self.event_loop)
-        transport.add_writer()
         transport.add_reader()
         protocol.connection_made(transport)
         return protocol

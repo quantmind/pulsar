@@ -16,7 +16,7 @@ from pulsar.utils.websocket import FrameParser
 from pulsar.utils.security import gen_unique_id
 
 from .access import get_actor, set_actor, PulsarThread
-from .defer import make_async, log_failure, Deferred, as_failure
+from .defer import make_async, log_failure, Deferred
 from .transports import ProtocolConsumer, SingleClient, Request
 from .proxy import actorid, get_proxy, get_command, CommandError, ActorProxy
 
@@ -121,11 +121,6 @@ class MailboxConsumer(ProtocolConsumer):
             self._pending_responses[req.data['ack']] = req.future
             try:
                 self._write(req)
-            except IOError as e:
-                e = as_failure(e)
-                e.logged = True
-                LOGGER.warn('Mailbox closed. Shut down actor.')
-                req.future.callback(e)
             except Exception as e:
                 req.future.callback(e)
         else:
@@ -137,7 +132,7 @@ class MailboxConsumer(ProtocolConsumer):
         actor = get_actor()
         try:
             command = message['command']
-            #LOGGER.debug('handling message %s', command)
+            LOGGER.debug('%s handling message "%s"', actor, command)
             if command == 'callback':   #this is a callback
                 return self._callback(message.get('ack'), message.get('result'))
             target = actor.get_actor(message['target'])
@@ -182,6 +177,7 @@ class MailboxConsumer(ProtocolConsumer):
 class MailboxClient(SingleClient):
     # mailbox for actors client
     consumer_factory = MailboxConsumer
+    max_reconnect = 0
      
     def __init__(self, address, actor):
         super(MailboxClient, self).__init__(address)

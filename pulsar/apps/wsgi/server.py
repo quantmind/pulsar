@@ -170,7 +170,7 @@ the following algorithm:
     @property
     def upgrade(self):
         if self.request_headers:
-            return self.headers.get('Upgrade')
+            return self.request_headers.get('Upgrade')
 
     @property
     def chunked(self):

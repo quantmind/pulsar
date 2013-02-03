@@ -1,13 +1,13 @@
 from functools import partial
 
 import pulsar
-from pulsar.apps.test import unittest
+from pulsar.apps.test import unittest, dont_run_with_thread
 
-from .manage import server, Echo, EchoServerConsumer
+from .manage import server, Echo, EchoServerProtocol
 
 
 
-class TestEchoServer(unittest.TestCase):
+class TestEchoServerThread(unittest.TestCase):
     concurrency = 'thread'
     server = None
     
@@ -16,8 +16,8 @@ class TestEchoServer(unittest.TestCase):
         s = server(name=cls.__name__.lower(), bind='127.0.0.1:0',
                    backlog=1024, concurrency=cls.concurrency)
         outcome = pulsar.send('arbiter', 'run', s)
-        yield outcome.when_ready
-        cls.server = outcome.when_ready.result
+        yield outcome
+        cls.server = outcome.result
         
     @classmethod
     def tearDownClass(cls):
@@ -26,11 +26,16 @@ class TestEchoServer(unittest.TestCase):
             
     def test_server(self):
         self.assertTrue(self.server)
-        self.assertEqual(self.server.callable, EchoServerConsumer)
+        self.assertEqual(self.server.callable, EchoServerProtocol)
         self.assertTrue(self.server.address)
         
     def test_ping(self):
         c = Echo(self.server.address)
         response = c.request(b'ciao')
-        yield response.when_ready
-        self.assertEqual(response.message, b'ciao')
+        yield response.on_finished
+        self.assertEqual(response.result, b'ciao')
+        
+
+@dont_run_with_thread
+class TestEchoServerProcess(TestEchoServerThread):
+    concurrency = 'process'

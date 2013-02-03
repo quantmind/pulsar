@@ -42,6 +42,8 @@ class TCP(SocketTransport):
     def _protocol_write(self):
         buffer = self._write_buffer
         tot_bytes = 0
+        if not buffer:
+            LOGGER.warn('handling write on a 0 length buffer')
         while buffer:
             try:
                 sent = self.sock.send(buffer[0])

@@ -40,11 +40,11 @@ class TestHttpClientBase:
         if cls.proxy_app is not None:
             yield send('arbiter', 'kill_actor', cls.proxy_app.name)
         
-    def client(self, **kwargs):
-        kwargs['timeout'] = self.timeout
+    def client(self, timeout=None, **kwargs):
+        timeout = timeout or self.timeout
         if self.with_proxy:
             kwargs['proxy_info'] = {'http': self.proxy_uri}
-        return HttpClient(**kwargs)
+        return HttpClient(timeout=timeout, **kwargs)
     
     def _check_pool(self, http, response, available=1, processed=1, created=1):
         self.assertEqual(len(http.connection_pools), 1)
@@ -61,11 +61,28 @@ class TestHttpClientBase:
             return self.uri + '/' + '/'.join(suffix)
         else:
             return self.uri
-
     
-class TestHttpClientReconnect(TestHttpClientBase, unittest.TestCase):
     
+class TestHttpClient(TestHttpClientBase, unittest.TestCase):
+    
+    def testClient(self):
+        http = HttpClient(max_redirects=5, timeout=33)
+        self.assertTrue('accept-encoding' in http.headers)
+        self.assertEqual(http.timeout, 33)
+        self.assertEqual(http.version, 'HTTP/1.1')
+        self.assertEqual(http.max_redirects, 5)
+        if self.with_proxy:
+            self.assertEqual(http.proxy_info, {'http': self.proxy_uri})
+    
+    def test_HttpResponse(self):
+        r = HttpResponse(None)
+        self.assertEqual(r.current_request, None)
+        self.assertEqual(str(r), '<None>')
+        
     def test_400_get(self):
+        import time
+        time.sleep(1)
+        return
         '''Bad request 400'''
         http = self.client()
         response = http.get(self.httpbin('status', '400'))
@@ -79,11 +96,18 @@ class TestHttpClientReconnect(TestHttpClientBase, unittest.TestCase):
         response = http.get(self.httpbin('get'))
         yield response.on_finished
         self.assertEqual(response.status_code, 200)
-        self._check_pool(http, response,created=2)
-    
-
-class TestHttpClientRedirect(TestHttpClientBase, unittest.TestCase):
-    
+        self._check_pool(http, response, created=1)
+        
+    def test_large_response(self):
+        http = self.client(timeout=60)
+        response = http.get(self.httpbin('getsize/600000'))
+        yield response.on_finished
+        self.assertEqual(response.status_code, 200)
+        data = response.content_json()
+        self.assertEqual(data['size'], 600000)
+        self.assertEqual(len(data['data']), 600000)
+        self.assertFalse(response.parser.is_chunked())
+       
     def testRedirect(self):
         http = self.client()
         response = http.get(self.httpbin('redirect', '1'))
@@ -105,23 +129,6 @@ class TestHttpClientRedirect(TestHttpClientBase, unittest.TestCase):
         self.assertEqual(len(history), 2)
         self.assertTrue(history[0].url.endswith('/redirect/5'))
         self.assertTrue(history[1].url.endswith('/redirect/4'))
-   
-
-class TestHttpClient(TestHttpClientBase, unittest.TestCase):
-        
-    def testClient(self):
-        http = self.client(max_redirects=5)
-        self.assertTrue('accept-encoding' in http.headers)
-        self.assertEqual(http.timeout, self.timeout)
-        self.assertEqual(http.version, 'HTTP/1.1')
-        self.assertEqual(http.max_redirects, 5)
-        if self.with_proxy:
-            self.assertEqual(http.proxy_info, {'http': self.proxy_uri})
-            
-    def test_HttpResponse(self):
-        r = HttpResponse(None)
-        self.assertEqual(r.status_code, None)
-        self.assertEqual(str(r), '<None>')
         
     def test_200_get(self):
         http = self.client()
@@ -245,7 +252,7 @@ class TestHttpClient(TestHttpClientBase, unittest.TestCase):
         parser = response.parser
         self.assertTrue(parser.is_chunked())
         
-    def testLargeResponse(self):
+    def test_large_response(self):
         http = self.client(timeout=60)
         response = http.get(self.httpbin('getsize/600000'))
         yield response.on_finished

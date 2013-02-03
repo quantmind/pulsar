@@ -31,6 +31,9 @@ class EchoProtocol(pulsar.ProtocolConsumer):
             self.finished()
             return rest
         
+    def start_request(self):
+        self.transport.write(self.current_request.message+self.separator)
+        
     def response(self, data):
         # We store the result
         self.result = data[:len(self.separator)]
@@ -53,7 +56,7 @@ class Echo(pulsar.Client):
     def request(self, message):
         request = pulsar.Request(self.address, self.timeout)
         request.message = message
-        return self.response(request, consumer)
+        return self.response(request)
         
 
 

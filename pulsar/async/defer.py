@@ -562,7 +562,7 @@ occurred.
     the final result.
 '''
     def __init__(self, gen, max_errors=None, description=None,
-                 error_handler=None, timeout=30):
+                 error_handler=None, timeout=0):
         self.gen = gen
         self.max_errors = max(1, max_errors) if max_errors else 0
         self.timeout = timeout
@@ -593,14 +593,16 @@ occurred.
     def _check_async(self, result):
         result = maybe_async(result)
         if is_async(result):
-            if default_timer() - self._start > self.timeout:
+            if self.timeout and default_timer() - self._start > self.timeout:
                 try:
                     raise RuntimeError('Timeout %s seconds!' % self.timeout)
                 except Exception as e:
                     return self.callback(e)
-            self.loop.call_soon_threadsafe(self._check_async, result)
+            #self.loop.call_soon_threadsafe(self._check_async, result)
+            self.loop.call_soon(self._check_async, result)
         elif result == NOT_DONE:
-            self.loop.call_soon_threadsafe(self._consume)
+            #self.loop.call_soon_threadsafe(self._consume)
+            self.loop.call_soon(self._consume)
         else:
             if result == CLEAR_ERRORS:
                 self.errors.clear()

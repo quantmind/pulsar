@@ -31,8 +31,11 @@ if ispy3k: # Python 3
         '''Convert *s* into bytes'''
         if not isinstance(s, bytes):
             return ('%s' % s).encode(encoding or 'utf-8', errors or 'strict')
-        else:
+        elif not encoding or encoding == 'utf-8':
             return s
+        else:
+            d = s.decode('utf-8')
+            return d.encode(encoding, errors or 'strict')
 
     def to_string(s, encoding=None, errors='strict'):
         """Inverse of to_bytes"""

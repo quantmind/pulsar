@@ -235,6 +235,7 @@ the :class:`EventHandler`.
 
     def write(self, data):
         self._check_closed()
+        writing = self.writing
         if data:
             assert isinstance(data, bytes)
             if len(data) > WRITE_BUFFER_MAX_SIZE:
@@ -243,8 +244,8 @@ the :class:`EventHandler`.
             else:
                 self._write_buffer.append(data)
         # Try to write only when not waiting for write callbacks
-        if not self.connecting:
-            self._ready_write()
+        if not self.connecting and not writing:
+            self._do_write()
     
     def pause(self):
         if not self._paused:
@@ -273,17 +274,18 @@ the :class:`EventHandler`.
     def connect(self, address):
         '''Connect this :class:`Transport` to a remote server and
 returns ``self``.'''
-        self.add_writer()
         self.add_reader()
-        connector = Connector(self)
+        self.add_connector()
+        self._connector = c = Connector(self)
         try:
             if self._protocol_connect(address):
-                return connector.callback(True)
+                self.remove_connector()
+                return c.callback(True)
         except Exception as e:
-            return connector.callback(e)
+            self.remove_connector()
+            return c.callback(e)
         # waiting for a callback
-        self._connector = connector
-        return connector
+        return c
         
     def add_listener(self):
         '''Called by :class:`Server`'''
@@ -299,7 +301,18 @@ as only attribute.'''
     def add_writer(self):
         '''Add writer to the event loop'''
         self._event_loop.add_writer(self.fileno(), self._ready_write)
+        
+    def add_connector(self):
+        '''Add writer to the event loop'''
+        self._event_loop.add_connector(self.fileno(), self._ready_connect)
     
+    def remove_writer(self):
+        self._event_loop.remove_writer(self.fileno())
+        
+    def remove_connector(self):
+        self._connector = None
+        self._event_loop.remove_connector(self.fileno())
+        
     def is_stale(self):
         if self._sock:
             return sockets.is_closed(self._sock)
@@ -327,6 +340,11 @@ as only attribute.'''
             self._sock = None
             self._protocol.connection_lost(exc)
         
+    def _ready_connect(self):
+        connector = self._connector
+        self.remove_connector()
+        connector.callback(self)
+        
     def _ready_read(self):
         # Read from the socket until we get EWOULDBLOCK or equivalent.
         # If any other error occur, abort the connection and re-raise.
@@ -341,18 +359,27 @@ as only attribute.'''
                 raise
                 
     def _ready_write(self):
-        # keep count how many bytes we write
-        if self.connecting:
-            connector = self._connector
-            self._connector = None
-            connector.callback(self)
-        try:
-            self._protocol_write()
-        except socket.error as e:
-            self.abort(exc=e)
-            raise
-        if self._closing and not self.writing:
-            # shutdown
+        if self.writing:
+            try:
+                self._protocol_write()
+            except socket.error as e:
+                self.abort(exc=e)
+                raise
+        if not self.writing:
+            self.remove_writer()
+            if self._closing:
+                self._event_loop.call_soon(self._shutdown)
+        
+    def _do_write(self):
+        if self.writing:
+            try:
+                self._protocol_write()
+            except socket.error as e:
+                self.abort(exc=e)
+                raise
+        if self.writing:
+            self.add_writer()
+        elif self._closing:
             self._event_loop.call_soon(self._shutdown)
     
     ############################################################################

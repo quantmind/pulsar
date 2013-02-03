@@ -45,9 +45,9 @@ ACTOR_STATES.DESCRIPTION = {ACTOR_STATES.INACTIVE: 'inactive',
 SPECIAL_ACTORS = ('monitor', 'arbiter')
 #
 # LOW LEVEL CONSTANTS - NO NEED TO CHANGE THOSE ###########################
-MIN_NOTIFY = 1     # DON'T NOTIFY BELOW THIS INTERVAL
-MAX_NOTIFY = 10    # NOTIFY AT LEAST AFTER THESE SECONDS
-ACTOR_TIMEOUT_TOLE = 0.2  # NOTIFY AFTER THIS TIMES THE TIMEOUT
+MIN_NOTIFY = 3     # DON'T NOTIFY BELOW THIS INTERVAL
+MAX_NOTIFY = 30    # NOTIFY AT LEAST AFTER THESE SECONDS
+ACTOR_TIMEOUT_TOLE = 0.3  # NOTIFY AFTER THIS TIMES THE TIMEOUT
 ACTOR_TERMINATE_TIMEOUT = 2 # TIMEOUT WHEN JOINING A TERMINATING ACTOR
 ACTOR_STOPPING_LOOPS = 100
 
@@ -278,8 +278,6 @@ properly this actor will go out of scope.'''
         log_failure(exc)
         if self.state <= ACTOR_STATES.RUN:
             # The actor has not started the stopping process. Starts it now.
-            for server in itervalues(self.servers):
-                server.abort()
             self.exit_code = 1 if exc else 0
             self.state = ACTOR_STATES.STOPPING
             # if CPU bound and the requestloop is still running, stop it

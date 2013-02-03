@@ -1,4 +1,5 @@
 from copy import copy
+from functools import partial
 
 from pulsar import ProtocolError
 from pulsar.utils.sockets import nice_address
@@ -72,7 +73,7 @@ and `data_received` :ref:`many times event <many-times-event>`.
 '''
     ONE_TIME_EVENTS = ('finish',)
     MANY_TIMES_EVENTS = ('data_received',)
-    def __init__(self, connection):
+    def __init__(self, connection=None):
         super(ProtocolConsumer, self).__init__()
         self._connection = None
         self._current_request = None
@@ -82,7 +83,8 @@ and `data_received` :ref:`many times event <many-times-event>`.
         self._request_processed = 0
         # Number of times the consumer has tried to reconnect (for clients only)
         self._reconnect_retries = 0
-        connection.set_consumer(self)
+        if connection is not None:
+            connection.set_consumer(self)
     
     @property
     def connection(self):
@@ -426,7 +428,8 @@ a :class:`RuntimeError` is raised.'''
                                        consumer_factory, producer)
         conn.bind_event('connection_made', self._add_connection)
         conn.copy_many_times_events(producer)
-        conn.bind_event('connection_lost', self._remove_connection)
+        conn.bind_event('connection_lost', partial(self._remove_connection,
+                                                   conn))
         return conn
     
     def close_connections(self, connection=None, async=True):
@@ -444,6 +447,6 @@ active connections.'''
     def _add_connection(self, connection):
         self._concurrent_connections.add(connection)
         
-    def _remove_connection(self, connection):
+    def _remove_connection(self, connection, exc=None):
         self._concurrent_connections.discard(connection)
     

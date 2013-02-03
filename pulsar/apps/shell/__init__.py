@@ -93,8 +93,7 @@ class InteractiveConsole(code.InteractiveConsole):  #pragma    nocover
 class PulsarShell(pulsar.CPUboundApplication):
     console_class = InteractiveConsole
     cfg_apps = ('cpubound',)
-    cfg = {'loglevel':'none',
-           'process_name': 'Pulsar shell'}
+    cfg = {'loglevel':'none', 'process_name': 'Pulsar shell'}
     
     def monitor_start(self, monitor):
         monitor.cfg.set('workers', 1)
@@ -117,13 +116,13 @@ class PulsarShell(pulsar.CPUboundApplication):
             readline.parse_and_bind("tab:complete")
         self.local.console = self.console_class(imported_objects)
         self.local.console.setup()
-        worker.requestloop.call_every(self.interact, worker)
-        
+        worker.requestloop.call_soon(self.interact, worker)
+                
     def interact(self, worker):
         try:
-            self.local.console.interact(0.5*self.cfg.timeout)
+            self.local.console.interact(self.cfg.timeout)
+            worker.requestloop.call_soon(self.interact, worker)
         except:
             worker.send('arbiter', 'stop')
-            raise
             
 

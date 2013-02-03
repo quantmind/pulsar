@@ -192,7 +192,8 @@ class HttpResponse(pulsar.ProtocolConsumer):
     
     @property
     def parser(self):
-        return self.current_request.parser
+        if self.current_request:
+            return self.current_request.parser
     
     @property
     def content(self):
@@ -232,7 +233,7 @@ class HttpResponse(pulsar.ProtocolConsumer):
         if not hasattr(self, '_headers'):
             if self.parser and self.parser.is_headers_complete():
                 self._headers = Headers(self.parser.get_headers())
-        return getattr(self, '_headers')
+        return getattr(self, '_headers', None)
     
     @property
     def is_error(self):
@@ -564,7 +565,11 @@ the :class:`HttpRequest` constructor.
     
     def can_reuse_connection(self, connection):
         response = connection.current_consumer
-        return response.headers.get('connection') == 'keep-alive'
+        headers = response.headers
+        if headers:
+            return headers.get('connection') == 'keep-alive'
+        else:
+            return False
     
     def timeit(self, times, method, url, **kwargs):
         return multi_async((self.request(method, url).on_finished\

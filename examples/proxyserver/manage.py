@@ -23,7 +23,7 @@ try:
 except ImportError:
     sys.path.append('../../')
 
-from pulsar.apps import wsgi
+from pulsar.apps import wsgi, http
 from pulsar.utils.httpurl import Headers
 from pulsar.utils.log import LocalMixin, local_property
 
@@ -49,7 +49,8 @@ An headers middleware is a callable which accepts two parameters, the wsgi
     
     @local_property
     def http_client(self):
-        return wsgi.HttpClient(decompress=False, store_cookies=False)
+        return http.HttpClient(decompress=False, store_cookies=False,
+                               timeout=0)
         
     def __call__(self, environ, start_response):
         # The WSGI thing
@@ -85,6 +86,9 @@ The returned headers will be sent to the target uri.'''
         return headers
         
     def response_generator(self, wsgi_response, response):
+        parser = response.parser
+        while response.parser is None:
+            yield b''
         parser = response.parser
         while not parser.is_headers_complete():
             yield b''

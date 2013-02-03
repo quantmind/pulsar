@@ -1,8 +1,8 @@
 import socket
-from functools import partial
+from functools import partial, reduce
 
 from pulsar import TooManyConnections
-from pulsar.utils.pep import get_event_loop
+from pulsar.utils.pep import get_event_loop, itervalues
 from pulsar.utils.sockets import get_transport_type, create_socket
 from pulsar.async.defer import as_failure, is_failure
 
@@ -56,6 +56,7 @@ of available connections.'''
         self._concurrent_connections.discard(connection)
         if connection.producer.can_reuse_connection(connection):
             self._available_connections.add(connection)
+        self._remove_self(connection.producer)
         
     def get_or_create_connection(self, client):
         "Get or create a new connection for *client*"
@@ -119,13 +120,18 @@ of available connections.'''
         conn.set_consumer(consumer)
         consumer.new_request(consumer.current_request)
                 
-    def _remove_connection(self, connection):
-        super(ConnectionPool, self)._remove_connection(connection)
+    def _remove_connection(self, connection, exc=None):
+        super(ConnectionPool, self)._remove_connection(connection, exc)
         self._available_connections.discard(connection)
+        self._remove_self(connection.producer)
     
     def _release_response(self, response):
         #proxy to release_connection
         self.release_connection(response.connection)
+
+    def _remove_self(self, client):
+        if not self._available_connections and not self._concurrent_connections:
+            client.remove_pool(self)
 
 
 class Client(EventHandler):
@@ -177,6 +183,16 @@ class Client(EventHandler):
     
     def __repr__(self):
         return self.__class__.__name__
+    
+    @property
+    def concurrent_connections(self):
+        return reduce(lambda x,y: x + y, (p.concurrent_connections for p in\
+                                          itervalues(self.connection_pools)), 0)
+    
+    @property
+    def available_connections(self):
+        return reduce(lambda x,y: x + y, (p.available_connections for p in\
+                                          itervalues(self.connection_pools)), 0)
     
     def hash(self, address, timeout, request):
         return hash((address, timeout))
@@ -240,11 +256,17 @@ in :attr:`request_parameters` tuple.'''
         lag = self.reconnect_time_lag*(math.log(lag) + 1)
         return round(lag, 1)
     
+    def remove_pool(self, pool):
+        key = None
+        for key, p in self.connection_pools.items():
+            if pool is p:
+                break
+        if key:
+            self.connection_pools.pop(key)
         
 class SingleClient(Client):
     '''A :class:`Client` which handle one connection only.'''
     def __init__(self, address, **kwargs):
-        kwargs['max_connections'] = 1
         super(SingleClient, self).__init__(**kwargs)
         self.address = address
         self._consumer = None
