@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset='utf-8'>
+<title>Websocket example in pulsar</title>
+<style type='text/css' media='all'>
+html, body {
+    margin: 0;
+    padding: 0;
+}
+body {
+    color: #222;
+    background: #F0F9FF;
+    font-family: Optima,Segoe,"Segoe UI",Candara,Calibri,Arial,sans-serif;
+    font-size: 17px;
+    padding: 10px;
+    line-height: 24px;
+}
+
+#messages {
+    height: 600px;
+    background: #fff;
+    border: solid 1px #E6E6E6;
+}
+
+#messages p {
+    padding: 10px 5px;
+    margin: 0;
+    color: #666666;
+    border-bottom: 1px solid #F2F2F2;
+}
+
+#input textarea {
+    border: solid 1px #E6E6E6;
+    width: 960px;
+}
+.layout {
+    width: 960px;
+    margin: 20px auto;
+}
+</style>
+<script src="http://ajax.googleapis.com/ajax/libs/jquery/1.9.0/jquery.min.js"></script>
+</head>
+<body>
+<div id="messages" class="layout"></div>
+<div id="input" class="layout">
+<textarea id="message" rows="3" placeholder='Write your message'></textarea>
+<button id="publish">publish</button>
+</div>
+<script>
+(function($) {
+    $(document).ready(function() {
+        var ws = new WebSocket("ws://%(HTTP_HOST)s/message"),
+            messages = $('#messages'),
+            message = $('#message');
+        ws.onmessage = function(e) {
+            if (e.data) {
+                var data = e.data;
+                messages.prepend('<p>'+e.data+'</p>');
+            }
+        };
+        $('#publish').click(function () {
+            var msg = message.val();
+            ws.send(msg);
+            message.val('');
+        });
+        ws.onopen = function() {
+            // Send empty message so that we connect this client
+            ws.send('');
+        };
+        
+    });
+}(jQuery));
+</script>
+</body>
+</html>
