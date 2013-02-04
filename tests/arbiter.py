@@ -4,9 +4,13 @@ import time
 from threading import current_thread
 
 import pulsar
-from pulsar import send, spawn, system
-from pulsar.async.actor import ACTOR_STOPPING_LOOPS
+from pulsar import send, spawn, system, ACTOR_ACTION_TIMEOUT
+from pulsar.utils.pep import default_timer
 from pulsar.apps.test import unittest, run_on_arbiter, ActorTestMixin, dont_run_with_thread
+
+
+def timeout(start):
+    return default_timer() - start > 1.5*ACTOR_ACTION_TIMEOUT
 
 
 class BogusActor(pulsar.Actor):
@@ -32,22 +36,19 @@ class TestArbiterThread(ActorTestMixin, unittest.TestCase):
         self.assertEqual(arbiter.name, 'arbiter')
         self.assertTrue(len(arbiter.monitors) >= 1)
         future = spawn(name='testSpawning', concurrency=self.concurrency)
-        self.assertTrue(future.aid in arbiter.spawning_actors)
-        self.assertFalse(future.aid in arbiter.managed_actors)
+        self.assertTrue(future.aid in arbiter.managed_actors)
         yield future
         proxy = future.result
         self.assertEqual(future.aid, proxy.aid)
-        self.assertFalse(future.aid in arbiter.spawning_actors)
         self.assertEqual(proxy.name, 'testSpawning')
         self.assertTrue(proxy.aid in arbiter.managed_actors)
         yield send(proxy, 'stop')
         
-    def testArbiter(self):
+    def test_no_arbiter_in_worker_domain(self):
         worker = pulsar.get_actor()
         self.assertEqual(pulsar.arbiter(), None)
-        arbiter = worker.arbiter
-        self.assertTrue(arbiter)
-        self.assertEqual(arbiter.name, 'arbiter')
+        self.assertTrue(worker.monitor)
+        self.assertNotEqual(worker.monitor.name, 'arbiter')
         
     @run_on_arbiter
     def testArbiterObject(self):
@@ -59,7 +60,6 @@ class TestArbiterThread(ActorTestMixin, unittest.TestCase):
         self.assertEqual(arbiter.ioloop, arbiter.requestloop)
         self.assertFalse(arbiter.cpubound)
         self.assertEqual(arbiter.exit_code, None)
-        self.assertEqual(arbiter.on_event(None, None), None)
         info = arbiter.info()
         self.assertTrue('server' in info)
         server = info['server']
@@ -79,16 +79,13 @@ class TestArbiterThread(ActorTestMixin, unittest.TestCase):
         yield self.spawn(actor_class=BogusActor, name='foo', timeout=1)
         proxy = self.a
         self.assertEqual(proxy.name, 'foo')
-        self.assertFalse(proxy.aid in arbiter.spawning_actors)
         self.assertTrue(proxy.aid in arbiter.managed_actors)
         proxy = arbiter.managed_actors[proxy.aid]
-        self.assertEqual(proxy.stopping_loops, 0)
+        self.assertEqual(proxy.stopping_start, None)
         time.sleep(1.5)
         self.assertTrue(arbiter.manage_actors())
-        self.assertEqual(proxy.stopping_loops, 1)
-        c = 0
-        while c<20 and proxy.aid in arbiter.managed_actors:
-            c += 1
+        self.assertTrue(proxy.stopping_start)
+        while not timeout(proxy.stopping_start) and proxy.aid in arbiter.managed_actors:
             yield pulsar.NOT_DONE
             arbiter.manage_actors()
         self.assertFalse(proxy.aid in arbiter.managed_actors)
@@ -103,17 +100,14 @@ class TestArbiterThread(ActorTestMixin, unittest.TestCase):
         proxy = self.a
         self.assertEqual(proxy.name, 'foo')
         proxy = arbiter.managed_actors[proxy.aid]
-        self.assertEqual(proxy.stopping_loops, 0)
+        self.assertEqual(proxy.stopping_start, None)
         time.sleep(1.5)
         n = arbiter.manage_actors()
         self.assertTrue(n)
-        self.assertEqual(proxy.stopping_loops, 1)
-        c = 0
-        while c < 10 and proxy.aid in arbiter.managed_actors:
-            c += 1
+        self.assertTrue(proxy.stopping_start)
+        while not timeout(proxy.stopping_start) and proxy.aid in arbiter.managed_actors:
             yield pulsar.NOT_DONE
             arbiter.manage_actors()
-        self.assertEqual(proxy.stopping_loops, ACTOR_STOPPING_LOOPS)
         thread_actors = pulsar.process_local_data('thread_actors')
         self.assertFalse(proxy.aid in thread_actors)
         

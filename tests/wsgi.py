@@ -84,8 +84,6 @@ class testWsgiApplication(unittest.TestCase):
         from examples.httpbin.manage import server
         app = server(bind='127.0.0.1:0')
         app2 = pickle.loads(pickle.dumps(app))
-        self.assertEqual(len(app.callable.middleware),
-                         len(app2.callable.middleware))
         
         
 class TestWsgiMiddleware(unittest.TestCase):

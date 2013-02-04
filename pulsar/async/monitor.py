@@ -7,8 +7,7 @@ from pulsar.utils.structures import AttributeDictionary
 from pulsar.utils.pep import iteritems, itervalues, range
 
 from . import proxy
-from .actor import Actor, ACTOR_STATES, ACTOR_TERMINATE_TIMEOUT,\
-                     ACTOR_STOPPING_LOOPS, send
+from .actor import Actor, ACTOR_STATES, ACTOR_TERMINATE_TIMEOUT, send
 from .access import NOTHING
 from .defer import async
 from .concurrency import concurrency
@@ -148,40 +147,34 @@ the timeout. Stop the arbiter.'''
         if not self.running():
             stop = True
         if not actor.is_alive():
-            if actor.spawning_loops is not NOTHING and not stop:
-                if actor.spawning_loops < ACTOR_STOPPING_LOOPS:
-                    actor.spawning_loops += 1
-                    return 1
+            if not actor.should_be_alive() and not stop:
+                return 1
             actor.join(ACTOR_TERMINATE_TIMEOUT)
             self._remove_actor(actor)
             return 0
-        else:
-            actor.spawning_loops = NOTHING
-            lp = actor.stopping_loops
-            timeout = bool(lp)
-            stop = stop or lp
-            if not stop and actor.notified:
-                gap = time() - actor.notified
-                stop = timeout = gap > actor.cfg.timeout
-            if stop:   # we are shutting down
-                if not actor.mailbox or lp >= ACTOR_STOPPING_LOOPS:
-                    if timeout:
-                        self.logger.warn('Terminating %s. Timeout.', actor)
-                    else:
-                        self.logger.info('Terminating %s. No mailbox.', actor)
-                    actor.terminate()
-                    self.terminated_actors.append(actor)
-                    self._remove_actor(actor)
-                    return 0
+        timeout = None
+        started_stopping = bool(actor.stopping_start)
+        stop = stop or started_stopping
+        if not stop and actor.notified:
+            gap = time() - actor.notified
+            stop = timeout = gap > actor.cfg.timeout
+        if stop:   # we are shutting down
+            if not actor.mailbox or actor.should_terminate():
+                if not actor.mailbox:
+                    self.logger.info('Terminating %s. No mailbox.', actor)
                 else:
-                    actor.stopping_loops += 1
-                    if not lp:
-                        if timeout:
-                            self.logger.warn('Stopping %s. Timeout', actor)
-                        else:
-                            self.logger.info('Stopping %s.', actor)
-                        self.send(actor, 'stop')
-            return 1
+                    self.logger.warn('Terminating %s. Timeout.', actor)
+                actor.terminate()
+                self.terminated_actors.append(actor)
+                self._remove_actor(actor)
+                return 0
+            elif not started_stopping:
+                if timeout:
+                    self.logger.warn('Stopping %s. Timeout', actor)
+                else:
+                    self.logger.info('Stopping %s.', actor)
+                self.send(actor, 'stop')
+        return 1
 
     def spawn_actors(self):
         '''Spawn new actors if needed. If the :class:`PoolMixin` is spawning
@@ -310,7 +303,7 @@ Users shouldn't need to override this method, but use
         if not self.started():
             return data
         data['workers'] = [a.info for a in itervalues(self.managed_actors)]
-        self.fire_event('info', (self, data))
+        return data
 
     def proxy_mailbox(address):
         return self.arbiter.proxy_mailboxes.get(address)

@@ -6,7 +6,10 @@ Ver. 0.5.0
   in a bidirectional communication between the :class:`Arbiter` and actors.
 * :class:`CPUboundApplication` created as base class for CPU bound applications.
 * Added ability to add Websocket sub-protocols and extensions.
-* Log environ on HTTP response errors.
+* Added web chat example.
+* Log WSGI environ on HTTP response errors.
+* Spawning and stopping actors is monitored using a timeout set at 5 seconds.
+* **374 regression tests**, **87% coverage**.
 
 Ver. 0.4.4 - 2013-Jan-13
 ==============================

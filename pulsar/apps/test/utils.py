@@ -186,10 +186,11 @@ the tearDown method is overwritten.'''
         self.assertTrue(ad.aid)
         self.assertTrue(isinstance(ad, pulsar.ActorProxyDeferred))
         yield ad
-        self.a = ad.result
-        self.all_spawned.append(self.a)
-        self.assertEqual(self.a.aid, ad.aid)
-        self.assertTrue(self.a.address)
+        self.a = proxy = ad.result
+        self.all_spawned.append(proxy)
+        self.assertEqual(proxy.aid, ad.aid)
+        self.assertEqual(proxy.callback, None)
+        self.assertTrue(proxy.mailbox)
     
     def stop_actors(self, *args):
         all = args or self.all_spawned

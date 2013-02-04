@@ -69,7 +69,8 @@ An headers middleware is a callable which accepts two parameters, the wsgi
         stream = environ.get('wsgi.input') or io.BytesIO()
         response = self.http_client.request(method, uri,
                                             data=stream.getvalue(),
-                                            headers=headers)
+                                            headers=headers,
+                                            version=environ['SERVER_PROTOCOL'])
         return self.response_generator(wsgi_response, response)
     
     def request_headers(self, environ):

@@ -49,7 +49,6 @@ MIN_NOTIFY = 3     # DON'T NOTIFY BELOW THIS INTERVAL
 MAX_NOTIFY = 30    # NOTIFY AT LEAST AFTER THESE SECONDS
 ACTOR_TIMEOUT_TOLE = 0.3  # NOTIFY AFTER THIS TIMES THE TIMEOUT
 ACTOR_TERMINATE_TIMEOUT = 2 # TIMEOUT WHEN JOINING A TERMINATING ACTOR
-ACTOR_STOPPING_LOOPS = 100
 
 def is_actor(obj):
     return isinstance(obj, Actor)
@@ -165,7 +164,6 @@ an :class:`ActorProxy`.
 **METHODS**
 '''
     ONE_TIME_EVENTS = ('stop', 'start')
-    MANY_TIMES_EVENTS = ('info',)
     exit_code = None
     mailbox = None
     signal_queue = None
@@ -414,7 +412,6 @@ status and performance.'''
         data = {'actor': actor, 'events': events}
         if isp:
             data['system'] = system.system_info(self.pid)
-        self.fire_event('info', (self, data))
         return data
 
     def _setup_ioloop(self):

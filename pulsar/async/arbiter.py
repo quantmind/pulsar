@@ -67,8 +67,7 @@ A typical usage::
     # We send a message to the Arbiter to spawn a new Actor
     if not isinstance(actor, Arbiter):
         # send the request to the arbiter
-        response = actor.send('arbiter', 'spawn', **kwargs)
-        msg = response.when_ready.add_callback(actor.link_actor)
+        msg = actor.send('arbiter', 'spawn', **kwargs)
         return proxy.ActorProxyDeferred(aid, msg)
     else:
         return actor.spawn(**kwargs)
@@ -98,23 +97,6 @@ def start_arbiter(self):
         except RuntimeError as e:
             raise HaltServer(str(e))
         self.pidfile = p
-    
-def info_arbiter(args):
-    self, data = args
-    monitors = [p.info() for p in itervalues(self.monitors)]
-    server = data.pop('actor')
-    server.update({'version': pulsar.__version__,
-                   'name': pulsar.SERVER_NAME,
-                   'number_of_monitors': len(self.monitors),
-                   'number_of_actors': len(self.managed_actors)})
-    server.pop('is_process', None)
-    server.pop('ppid', None)
-    server.pop('actor_id', None)
-    server.pop('age', None)
-    data['server'] = server
-    data['workers'] = [a.info for a in itervalues(self.managed_actors)]
-    data['monitors'] = monitors
-    return data
     
     
 class Arbiter(PoolMixin):
@@ -178,11 +160,32 @@ Users access the arbiter (in the arbiter process domain) by the high level api::
         '''Given an actor unique id return the actor proxy.'''
         a = super(Arbiter, self).get_actor(aid)
         if a is None:
-            if aid in self.monitors:
+            if aid in self.monitors:    # Check in monitors aid
                 return self.monitors[aid]
-            else:
+            elif aid in self.managed_actors:
+                return self.managed_actors[aid]
+            else:   # Finally check in registered names
                 return self.registered.get(aid)
+        else:
+            return a
     
+    def info(self):
+        data = super(Arbiter, self).info()
+        monitors = [p.info() for p in itervalues(self.monitors)]
+        server = data.pop('actor')
+        server.update({'version': pulsar.__version__,
+                       'name': pulsar.SERVER_NAME,
+                       'number_of_monitors': len(self.monitors),
+                       'number_of_actors': len(self.managed_actors)})
+        server.pop('is_process', None)
+        server.pop('ppid', None)
+        server.pop('actor_id', None)
+        server.pop('age', None)
+        data['server'] = server
+        data['workers'] = [a.info for a in itervalues(self.managed_actors)]
+        data['monitors'] = monitors
+        return data
+
     ############################################################################
     # INTERNALS
     ############################################################################

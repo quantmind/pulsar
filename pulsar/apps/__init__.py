@@ -7,6 +7,7 @@ import pulsar
 from pulsar import Actor, Monitor, get_actor, maybe_async_deco, EventHandler,\
                     QueueServer, QueueTransport
 from pulsar.utils.importer import module_attribute
+from pulsar.utils.queue import Queue
 from pulsar.utils.pep import pickle
 
 __all__ = ['Application',
@@ -43,12 +44,6 @@ def monitor_start(self):
     if not self.cfg.workers:
         self.app.worker_start(self)
     self.app.fire_event('start')
-
-def monitor_info(self, data):
-    if not self.cfg.workers:
-        self.app.worker_info((self, data))
-    else:
-        self.app.monitor_info((self, data))
         
 def monitor_stop(self):
     if not self.cfg.workers:
@@ -68,7 +63,6 @@ An :class:`Actor` for serving a pulsar :class:`Application`.
         super(Worker, self).__init__(*args, **kwargs)
         self.bind_event('start', self.app.worker_start)
         self.bind_event('stop', self.app.worker_stop)
-        self.bind_event('info', self.app.worker_info)
         
     @property
     def app(self):
@@ -76,6 +70,10 @@ An :class:`Actor` for serving a pulsar :class:`Application`.
     
     def io_poller(self):
         return self.app.io_poller(self)
+    
+    def info(self):
+        data = super(Worker, self).info()
+        return self.app.worker_info(self, data)
     
 
 class ApplicationMonitor(Monitor):
@@ -92,7 +90,6 @@ class ApplicationMonitor(Monitor):
         super(ApplicationMonitor, self).__init__(*args, **kwargs)
         self.bind_event('start', monitor_start)
         self.bind_event('stop', monitor_stop)
-        self.bind_event('info', monitor_info)
         
     @property
     def app(self):
@@ -111,11 +108,18 @@ class ApplicationMonitor(Monitor):
         p.update({'app': app,
                   'name': '{0}-worker'.format(app.name)})
         return self.app.actorparams(self, p)
+    
+    def info(self):
+        data = super(ApplicationMonitor, self).info()
+        if not self.cfg.workers:
+            return self.app.worker_info(self, data)
+        else:
+            return self.app.monitor_info(self, data)
+        
 
 
 class AppEvents(EventHandler):
     ONE_TIME_EVENTS = ('ready', 'start', 'stop')
-    MANY_TIMES_EVENTS = ('info',)
     
     
 class Application(pulsar.Pulsar):
@@ -404,8 +408,8 @@ By default it returns ``None``.'''
 :ref:`callback <actor-callbacks>` method.'''
         pass
 
-    def worker_info(self, arg):
-        pass
+    def worker_info(self, worker, data):
+        return data
     
     def worker_stop(self, worker):
         '''Called by the :class:`Worker` :meth:`pulsar.Actor.on_stop`
@@ -423,7 +427,7 @@ before a new :class:`Worker` is spawned.'''
 The application is now in the arbiter but has not yet started.'''
         pass
 
-    def monitor_info(self, worker, data):
+    def monitor_info(self, monitor, data):
         return data
     
     def monitor_stop(self, monitor):
@@ -481,7 +485,7 @@ request has been obtained from the :attr:`ioqueue`.'''
         worker.servers[self.name].connection_made(self.transport)
     
     def monitor_info(self, worker, data):
-        tq = self.ioqueue
+        tq = self.transport.queue
         if tq is not None:
             if isinstance(tq, Queue):
                 tqs = 'multiprocessing.Queue'

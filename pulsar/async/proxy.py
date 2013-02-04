@@ -3,8 +3,11 @@ import json
 from collections import deque
 
 from pulsar import AuthenticationError
+from pulsar.utils.pep import default_timer
 
 from .defer import Deferred
+
+ACTOR_ACTION_TIMEOUT = 5
 
 __all__ = ['ActorProxyDeferred',
            'ActorProxy',
@@ -13,6 +16,7 @@ __all__ = ['ActorProxyDeferred',
            'CommandNotFound',
            'get_proxy',
            'command',
+           'ACTOR_ACTION_TIMEOUT',
            'get_command']
 
 global_commands_table = {}
@@ -84,8 +88,8 @@ is fully functional.
 '''
     def __init__(self, aid, msg=None):
         super(ActorProxyDeferred,self).__init__()
-        if msg is None:
-            # In this case aid is an instance of an ActorProxyMonitor
+        if isinstance(aid, ActorProxyMonitor):
+            aid.callback = self
             self.aid = aid.aid
         else:
             self.aid = aid
@@ -168,8 +172,9 @@ process where they have been created.
         self.impl = impl
         self.info = {}
         self.mailbox = None
-        self.stopping_loops = 0
-        self.spawning_loops = 0
+        self.callback = None
+        self.spawning_start = None
+        self.stopping_start = None
         super(ActorProxyMonitor,self).__init__(impl)
         
     @property
@@ -199,6 +204,16 @@ provided, it raises an exception if the timeout is reached.'''
 
     def start(self):
         '''Start the remote actor.'''
+        self.spawning_start = default_timer()
         self.impl.start()
+        
+    def should_be_alive(self):
+        return default_timer() - self.spawning_start > ACTOR_ACTION_TIMEOUT
 
+    def should_terminate(self):
+        if self.stopping_start is None:
+            self.stopping_start = default_timer()
+            return False
+        else:
+            return default_timer() - self.stopping_start > ACTOR_ACTION_TIMEOUT
     

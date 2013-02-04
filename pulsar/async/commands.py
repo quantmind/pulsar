@@ -1,7 +1,8 @@
 from time import time
 
 from pulsar import AuthenticationError
-from .proxy import command, CommandError
+from .defer import is_async
+from .proxy import command, CommandError, ActorProxyMonitor
 
 #############################################################  COMMANDS
 
@@ -49,9 +50,16 @@ The command perform the following actions:
 '''
     t = time()
     remote_actor = request.caller
-    remote_actor.mailbox = request.connection.current_consumer
-    info['last_notified'] = t
-    remote_actor.info = info
+    if isinstance(remote_actor, ActorProxyMonitor):
+        remote_actor.mailbox = request.connection.current_consumer
+        info['last_notified'] = t
+        remote_actor.info = info
+        callback = remote_actor.callback
+        # if a callback is still available, this is the first
+        # time we got notified
+        if callback:
+            remote_actor.callback = None
+            callback.callback(remote_actor)
     return t
     
 @command()
