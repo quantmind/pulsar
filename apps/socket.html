@@ -6,13 +6,13 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>Socket Servers &mdash; pulsar v0.5a1 documentation</title>
+    <title>Socket Servers &mdash; pulsar v0.5b2 documentation</title>
     <link rel="stylesheet" href="../static/celery.css" type="text/css" />
     <link rel="stylesheet" href="../static/pygments.css" type="text/css" />
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../',
-        VERSION:     '0.5a1',
+        VERSION:     '0.5b2',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -21,7 +21,7 @@
     <script type="text/javascript" src="../static/jquery.js"></script>
     <script type="text/javascript" src="../static/underscore.js"></script>
     <script type="text/javascript" src="../static/doctools.js"></script>
-    <link rel="top" title="pulsar v0.5a1 documentation" href="../index.html" />
+    <link rel="top" title="pulsar v0.5b2 documentation" href="../index.html" />
     <link rel="next" title="WSGI Servers" href="wsgi.html" />
     <link rel="prev" title="Settings" href="../settings.html" /> 
   </head>
@@ -41,7 +41,7 @@
         <li class="right" >
           <a href="../settings.html" title="Settings"
              accesskey="P">previous</a> |</li>
-        <li><a href="../index.html">pulsar v0.5a1 documentation</a> &raquo;</li> 
+        <li><a href="../index.html">pulsar v0.5b2 documentation</a> &raquo;</li> 
       </ul>
     </div>  
 
@@ -168,6 +168,14 @@ requests. The request handler is constructued from the
 </dd></dl>
 
 <dl class="method">
+<dt id="pulsar.apps.socket.SocketServer.protocol_consumer">
+<tt class="descname">protocol_consumer</tt><big>(</big><big>)</big><a class="headerlink" href="#pulsar.apps.socket.SocketServer.protocol_consumer" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the callable application handler which is stored in
+<tt class="xref py py-attr docutils literal"><span class="pre">Worker.app_handler</span></tt>, used by <tt class="xref py py-class docutils literal"><span class="pre">Worker</span></tt> to carry out its task.
+By default it returns the <tt class="xref py py-attr docutils literal"><span class="pre">Application.callable</span></tt>.</p>
+</dd></dl>
+
+<dl class="method">
 <dt id="pulsar.apps.socket.SocketServer.create_server">
 <tt class="descname">create_server</tt><big>(</big><em>worker</em><big>)</big><a class="headerlink" href="#pulsar.apps.socket.SocketServer.create_server" title="Permalink to this definition">¶</a></dt>
 <dd><p>Create the Server Protocol which will listen for requests. It
@@ -253,7 +261,7 @@ uses the <tt class="xref py py-meth docutils literal"><span class="pre">handler(
         <li class="right" >
           <a href="../settings.html" title="Settings"
              >previous</a> |</li>
-        <li><a href="../index.html">pulsar v0.5a1 documentation</a> &raquo;</li> 
+        <li><a href="../index.html">pulsar v0.5b2 documentation</a> &raquo;</li> 
       </ul>
     </div>
 

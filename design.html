@@ -6,13 +6,13 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>Design &mdash; pulsar v0.5a1 documentation</title>
+    <title>Design &mdash; pulsar v0.5b2 documentation</title>
     <link rel="stylesheet" href="static/celery.css" type="text/css" />
     <link rel="stylesheet" href="static/pygments.css" type="text/css" />
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '',
-        VERSION:     '0.5a1',
+        VERSION:     '0.5b2',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -21,7 +21,7 @@
     <script type="text/javascript" src="static/jquery.js"></script>
     <script type="text/javascript" src="static/underscore.js"></script>
     <script type="text/javascript" src="static/doctools.js"></script>
-    <link rel="top" title="pulsar v0.5a1 documentation" href="index.html" />
+    <link rel="top" title="pulsar v0.5b2 documentation" href="index.html" />
     <link rel="next" title="FAQ" href="faq.html" />
     <link rel="prev" title="Overview" href="overview.html" /> 
   </head>
@@ -41,7 +41,7 @@
         <li class="right" >
           <a href="overview.html" title="Overview"
              accesskey="P">previous</a> |</li>
-        <li><a href="index.html">pulsar v0.5a1 documentation</a> &raquo;</li> 
+        <li><a href="index.html">pulsar v0.5b2 documentation</a> &raquo;</li> 
       </ul>
     </div>  
 
@@ -143,10 +143,10 @@ separate thread. It is accessed via the <a class="reference internal" href="api/
 </div>
 <div class="section" id="mailbox">
 <span id="design-mailbox"></span><h3>Mailbox<a class="headerlink" href="#mailbox" title="Permalink to this headline">¶</a></h3>
-<p>Each actor, with the only exception of <a class="reference internal" href="api/actor.html#pulsar.Monitor" title="pulsar.Monitor"><tt class="xref py py-class docutils literal"><span class="pre">Monitor</span></tt></a>, have its own
-<a class="reference internal" href="api/actor.html#pulsar.Actor.mailbox" title="pulsar.Actor.mailbox"><tt class="xref py py-attr docutils literal"><span class="pre">Actor.mailbox</span></tt></a>, an asynchronous socket server which listen for
-messages from other actors. In other words, each actor has an associated
-<strong>address</strong>.</p>
+<p>Each <a class="reference internal" href="api/actor.html#pulsar.Actor" title="pulsar.Actor"><tt class="xref py py-class docutils literal"><span class="pre">Actor</span></tt></a>, with the only exception of <a class="reference internal" href="api/actor.html#pulsar.Monitor" title="pulsar.Monitor"><tt class="xref py py-class docutils literal"><span class="pre">Monitor</span></tt></a>, have its own
+<a class="reference internal" href="api/actor.html#pulsar.Actor.mailbox" title="pulsar.Actor.mailbox"><tt class="xref py py-attr docutils literal"><span class="pre">Actor.mailbox</span></tt></a>, an asynchronous client of the <a class="reference internal" href="api/actor.html#pulsar.Arbiter" title="pulsar.Arbiter"><tt class="xref py py-class docutils literal"><span class="pre">Arbiter</span></tt></a>
+mailbox server. Check the <a class="reference internal" href="tutorials/messages.html#tutorials-messages"><em>message passing documentation</em></a>
+for more information.</p>
 </div>
 <div class="section" id="spawning">
 <span id="design-spawning"></span><h3>Spawning<a class="headerlink" href="#spawning" title="Permalink to this headline">¶</a></h3>
@@ -185,7 +185,7 @@ actor will eventually stop.</p>
 used to customise its behaviour. These functions do nothing in the
 standard <a class="reference internal" href="api/actor.html#pulsar.Actor" title="pulsar.Actor"><tt class="xref py py-class docutils literal"><span class="pre">Actor</span></tt></a> implementation.</p>
 <p><strong>on_start</strong></p>
-<p>The <a class="reference internal" href="api/actor.html#pulsar.Actor.on_start" title="pulsar.Actor.on_start"><tt class="xref py py-meth docutils literal"><span class="pre">Actor.on_start()</span></tt></a> method is called, <strong>once only</strong>, just before the actor
+<p>The <tt class="xref py py-meth docutils literal"><span class="pre">Actor.on_start()</span></tt> method is called, <strong>once only</strong>, just before the actor
 starts its <a class="reference internal" href="#eventloop"><em>event loop</em></a>. This function can be used to setup
 the application and register event handlers. For example, the
 <a class="reference internal" href="apps/socket.html#apps-socket"><em>socket server application</em></a> creates the server and register
@@ -195,7 +195,7 @@ its file descriptor with the <a class="reference internal" href="api/actor.html#
 <p>The <tt class="xref py py-meth docutils literal"><span class="pre">Actor.on_stop()</span></tt> method is called, <strong>once only</strong>, just before the
 actor is garbage collected.</p>
 <p><strong>on_info</strong></p>
-<p>The <a class="reference internal" href="api/actor.html#pulsar.Actor.on_info" title="pulsar.Actor.on_info"><tt class="xref py py-meth docutils literal"><span class="pre">Actor.on_info()</span></tt></a> method is called to provide information about
+<p>The <tt class="xref py py-meth docutils literal"><span class="pre">Actor.on_info()</span></tt> method is called to provide information about
 the actor.</p>
 </div>
 <div class="section" id="commands">
@@ -220,7 +220,12 @@ commands via the <a class="reference internal" href="api/actor.html#pulsar.comma
 <div class="highlight-python"><div class="highlight"><pre><span class="k">def</span> <span class="nf">dosomething</span><span class="p">(</span><span class="n">actor</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
     <span class="o">...</span>
 
-<span class="n">send</span><span class="p">(</span><span class="s">&#39;arbiter&#39;</span><span class="p">,</span> <span class="s">&#39;run&#39;</span><span class="p">,</span> <span class="n">dosomething</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+<span class="n">send</span><span class="p">(</span><span class="s">&#39;monitor&#39;</span><span class="p">,</span> <span class="s">&#39;run&#39;</span><span class="p">,</span> <span class="n">dosomething</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+</pre></div>
+</div>
+<p id="actor-stop-command"><strong>stop</strong></p>
+<p>Tell the remote actor <tt class="docutils literal"><span class="pre">abc</span></tt> to gracefully shutdown:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">send</span><span class="p">(</span><span class="s">&#39;abc&#39;</span><span class="p">,</span> <span class="s">&#39;stop&#39;</span><span class="p">)</span>
 </pre></div>
 </div>
 </div>
@@ -308,7 +313,7 @@ framework, the library ships with the <tt class="xref py py-class docutils liter
         <li class="right" >
           <a href="overview.html" title="Overview"
              >previous</a> |</li>
-        <li><a href="index.html">pulsar v0.5a1 documentation</a> &raquo;</li> 
+        <li><a href="index.html">pulsar v0.5b2 documentation</a> &raquo;</li> 
       </ul>
     </div>
 

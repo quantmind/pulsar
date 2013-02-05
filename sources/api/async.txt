@@ -80,7 +80,14 @@ Failure
    :members:
    :member-order: bysource
 
+Events Handler
+~~~~~~~~~~~~~~~~~~~~
 
+.. autoclass:: EventHandler
+   :members:
+   :member-order: bysource
+   
+   
 Decorators
 ~~~~~~~~~~~~~~~~~~~~~
 
@@ -88,8 +95,7 @@ Decorators
 
 .. autofunction:: multi_async
 
-.. autofunction:: raise_failure
-
 
 
 .. _pep-3156: http://www.python.org/dev/peps/pep-3156/
+.. _twisted: http://twistedmatrix.com/trac/

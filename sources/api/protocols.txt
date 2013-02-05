@@ -24,6 +24,13 @@ Protocol
    :members:
    :member-order: bysource
 
+
+Connection
+==========================
+.. autoclass:: Connection
+   :members:
+   :member-order: bysource
+   
    
 Protocol Consumer
 =====================================
@@ -34,13 +41,6 @@ Protocol Consumer
 Producer
 ==========================
 .. autoclass:: Producer
-   :members:
-   :member-order: bysource
-
-
-Connection
-==========================
-.. autoclass:: Connection
    :members:
    :member-order: bysource
 
@@ -60,20 +60,11 @@ Client Connection Pool
 .. autoclass:: ConnectionPool
    :members:
    :member-order: bysource
-   
-   
-Client Protocol Consumer
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-.. autoclass:: ClientProtocolConsumer
-   :members:
-   :member-order: bysource
 
-
-Servers
-==================
 
 Server
-~~~~~~~~~~~~~~~~~~~
+==================
+
 .. autoclass:: Server
    :members:
    :member-order: bysource

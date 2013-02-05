@@ -6,13 +6,13 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>Changelog &mdash; pulsar v0.5a1 documentation</title>
+    <title>Changelog &mdash; pulsar v0.5b2 documentation</title>
     <link rel="stylesheet" href="static/celery.css" type="text/css" />
     <link rel="stylesheet" href="static/pygments.css" type="text/css" />
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '',
-        VERSION:     '0.5a1',
+        VERSION:     '0.5b2',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -21,7 +21,7 @@
     <script type="text/javascript" src="static/jquery.js"></script>
     <script type="text/javascript" src="static/underscore.js"></script>
     <script type="text/javascript" src="static/doctools.js"></script>
-    <link rel="top" title="pulsar v0.5a1 documentation" href="index.html" />
+    <link rel="top" title="pulsar v0.5b2 documentation" href="index.html" />
     <link rel="next" title="Settings" href="settings.html" />
     <link rel="prev" title="Tools" href="api/utilities.html" /> 
   </head>
@@ -41,7 +41,7 @@
         <li class="right" >
           <a href="api/utilities.html" title="Tools"
              accesskey="P">previous</a> |</li>
-        <li><a href="index.html">pulsar v0.5a1 documentation</a> &raquo;</li> 
+        <li><a href="index.html">pulsar v0.5b2 documentation</a> &raquo;</li> 
       </ul>
     </div>  
 
@@ -69,11 +69,18 @@
 <li><a class="reference external" href="http://www.python.org/dev/peps/pep-3156/">pep-3156</a> implementation with considerable amount of internal refactoring.</li>
 <li>Initial <a class="reference external" href="http://twistedmatrix.com/">twisted</a> integration.</li>
 <li><tt class="xref py py-class docutils literal"><span class="pre">Actor</span></tt> internal message passing uses the (unmasked) websocket protocol
-in a bidirectional communications between the <tt class="xref py py-class docutils literal"><span class="pre">Arbiter</span></tt> and actors.</li>
+in a bidirectional communication between the <tt class="xref py py-class docutils literal"><span class="pre">Arbiter</span></tt> and actors.</li>
+<li><tt class="xref py py-class docutils literal"><span class="pre">CPUboundApplication</span></tt> created as base class for CPU bound applications.</li>
+<li>Added ability to add Websocket sub-protocols and extensions.</li>
+<li>Added web chat example.</li>
+<li>Log WSGI environ on HTTP response errors.</li>
+<li>Spawning and stopping actors is monitored using a timeout set at 5 seconds.</li>
+<li>New asynchronous <a class="reference internal" href="apps/http.html#pulsar.apps.http.HttpClient" title="pulsar.apps.http.HttpClient"><tt class="xref py py-class docutils literal"><span class="pre">pulsar.apps.http.HttpClient</span></tt></a> with websocket support.</li>
+<li><strong>374 regression tests</strong>, <strong>87% coverage</strong>.</li>
 </ul>
 </div>
-<div class="section" id="ver-0-4-4">
-<h2>Ver. 0.4.4<a class="headerlink" href="#ver-0-4-4" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="ver-0-4-4-2013-jan-13">
+<h2>Ver. 0.4.4 - 2013-Jan-13<a class="headerlink" href="#ver-0-4-4-2013-jan-13" title="Permalink to this headline">¶</a></h2>
 <ul class="simple">
 <li>Documentation for development version hosted on github.</li>
 <li>Modified <tt class="xref py py-meth docutils literal"><span class="pre">pulsar.Actor.exit()</span></tt> so that it shuts down <a class="reference internal" href="api/actor.html#pulsar.Actor.mailbox" title="pulsar.Actor.mailbox"><tt class="xref py py-attr docutils literal"><span class="pre">pulsar.Actor.mailbox</span></tt></a>
@@ -115,7 +122,7 @@ callbacks or timeouts.</li>
 <li><tt class="xref py py-func docutils literal"><span class="pre">pulsar.apps.wsgi.handle_wsgi_error()</span></tt> accepts optional <tt class="docutils literal"><span class="pre">content_type</span></tt>
 and <tt class="docutils literal"><span class="pre">encoding</span></tt> parameters.</li>
 <li>Fix issue #20, test plugins not included are not available in the command line.</li>
-<li><tt class="xref py py-class docutils literal"><span class="pre">pulsar.Application</span></tt> call <a class="reference internal" href="api/application.html#pulsar.Config.on_start" title="pulsar.Config.on_start"><tt class="xref py py-meth docutils literal"><span class="pre">pulsar.Config.on_start()</span></tt></a> before starting.</li>
+<li><tt class="xref py py-class docutils literal"><span class="pre">pulsar.Application</span></tt> call <tt class="xref py py-meth docutils literal"><span class="pre">pulsar.Config.on_start()</span></tt> before starting.</li>
 <li><strong>304 regression tests</strong>, <strong>83% coverage</strong>.</li>
 </ul>
 </div>
@@ -125,7 +132,7 @@ and <tt class="docutils literal"><span class="pre">encoding</span></tt> paramete
 <li>Overall refactoring of API and therefore incompatible with previous versions.</li>
 <li>Development status set to <tt class="docutils literal"><span class="pre">Beta</span></tt>.</li>
 <li>Support <a class="reference external" href="http://pypy.org/">pypy</a> and python 3.3.</li>
-<li>Added the new <a class="reference internal" href="api/utility.html#module-pulsar.utils.httpurl" title="pulsar.utils.httpurl"><tt class="xref py py-mod docutils literal"><span class="pre">pulsar.utils.httpurl</span></tt></a> module for HTTP tools and HTTP
+<li>Added the new <a class="reference internal" href="api/utilities.html#module-pulsar.utils.httpurl" title="pulsar.utils.httpurl"><tt class="xref py py-mod docutils literal"><span class="pre">pulsar.utils.httpurl</span></tt></a> module for HTTP tools and HTTP
 synchronous and asynchronous clients.</li>
 <li>Refactored <a class="reference internal" href="api/async.html#pulsar.Deferred" title="pulsar.Deferred"><tt class="xref py py-class docutils literal"><span class="pre">pulsar.Deferred</span></tt></a> to be more compatible with twisted. You
 can add separate callbacks for handling errors.</li>
@@ -233,7 +240,7 @@ asynchronous test suite and asynchronous shell.</li>
   <ul>
 <li><a class="reference internal" href="#">Changelog</a><ul>
 <li><a class="reference internal" href="#ver-0-5-0">Ver. 0.5.0</a></li>
-<li><a class="reference internal" href="#ver-0-4-4">Ver. 0.4.4</a></li>
+<li><a class="reference internal" href="#ver-0-4-4-2013-jan-13">Ver. 0.4.4 - 2013-Jan-13</a></li>
 <li><a class="reference internal" href="#ver-0-4-3-2012-dec-28">Ver. 0.4.3 - 2012-Dec-28</a></li>
 <li><a class="reference internal" href="#ver-0-4-2-2012-dec-12">Ver. 0.4.2 - 2012-Dec-12</a></li>
 <li><a class="reference internal" href="#ver-0-4-1-2012-dec-04">Ver. 0.4.1 - 2012-Dec-04</a></li>
@@ -289,7 +296,7 @@ asynchronous test suite and asynchronous shell.</li>
         <li class="right" >
           <a href="api/utilities.html" title="Tools"
              >previous</a> |</li>
-        <li><a href="index.html">pulsar v0.5a1 documentation</a> &raquo;</li> 
+        <li><a href="index.html">pulsar v0.5b2 documentation</a> &raquo;</li> 
       </ul>
     </div>
 

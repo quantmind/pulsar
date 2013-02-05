@@ -6,13 +6,13 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>Writing Clients &mdash; pulsar v0.5a1 documentation</title>
+    <title>Writing Clients &mdash; pulsar v0.5b2 documentation</title>
     <link rel="stylesheet" href="../static/celery.css" type="text/css" />
     <link rel="stylesheet" href="../static/pygments.css" type="text/css" />
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../',
-        VERSION:     '0.5a1',
+        VERSION:     '0.5b2',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -21,9 +21,9 @@
     <script type="text/javascript" src="../static/jquery.js"></script>
     <script type="text/javascript" src="../static/underscore.js"></script>
     <script type="text/javascript" src="../static/doctools.js"></script>
-    <link rel="top" title="pulsar v0.5a1 documentation" href="../index.html" />
-    <link rel="up" title="Tutorials" href="index.html" />
-    <link rel="next" title="Actor messages" href="messages.html" />
+    <link rel="top" title="pulsar v0.5b2 documentation" href="../index.html" />
+    <link rel="up" title="Tutorials &amp; Topics" href="index.html" />
+    <link rel="next" title="HTTP Proxy Server" href="proxy.html" />
     <link rel="prev" title="WSGI" href="wsgi.html" /> 
   </head>
   <body>
@@ -37,13 +37,13 @@
           <a href="../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
         <li class="right" >
-          <a href="messages.html" title="Actor messages"
+          <a href="proxy.html" title="HTTP Proxy Server"
              accesskey="N">next</a> |</li>
         <li class="right" >
           <a href="wsgi.html" title="WSGI"
              accesskey="P">previous</a> |</li>
-        <li><a href="../index.html">pulsar v0.5a1 documentation</a> &raquo;</li>
-          <li><a href="index.html" accesskey="U">Tutorials</a> &raquo;</li> 
+        <li><a href="../index.html">pulsar v0.5b2 documentation</a> &raquo;</li>
+          <li><a href="index.html" accesskey="U">Tutorials &amp; Topics</a> &raquo;</li> 
       </ul>
     </div>  
 
@@ -66,13 +66,13 @@
   <div class="section" id="writing-clients">
 <span id="tutorials-writing-clients"></span><h1>Writing Clients<a class="headerlink" href="#writing-clients" title="Permalink to this headline">¶</a></h1>
 <p>Pulsar provides several classes for writing clients. The first step
-is to sublcass <a class="reference internal" href="../api/protocols.html#pulsar.ClientProtocolConsumer" title="pulsar.ClientProtocolConsumer"><tt class="xref py py-class docutils literal"><span class="pre">pulsar.ClientProtocolConsumer</span></tt></a> which is needed
+is to sublcass <tt class="xref py py-class docutils literal"><span class="pre">pulsar.ClientProtocolConsumer</span></tt> which is needed
 for two reasons:</p>
 <ul class="simple">
 <li>It sends the request to the remote server.</li>
 <li>It listen (if needed) for incoming data from the remote server.</li>
 </ul>
-<p>The <a class="reference internal" href="../api/protocols.html#pulsar.ClientProtocolConsumer" title="pulsar.ClientProtocolConsumer"><tt class="xref py py-class docutils literal"><span class="pre">pulsar.ClientProtocolConsumer</span></tt></a> should called the
+<p>The <tt class="xref py py-class docutils literal"><span class="pre">pulsar.ClientProtocolConsumer</span></tt> should called the
 <a class="reference internal" href="../api/protocols.html#pulsar.ProtocolConsumer.finished" title="pulsar.ProtocolConsumer.finished"><tt class="xref py py-class docutils literal"><span class="pre">pulsar.ProtocolConsumer.finished</span></tt></a> method once a complete
 response from the server is received, or, if no responjse is expected, as soon
 as it sends the data to the server.</p>
@@ -138,8 +138,8 @@ as it sends the data to the server.</p>
   <p class="topless"><a href="wsgi.html"
                         title="previous chapter">WSGI</a></p>
   <h4>Next topic</h4>
-  <p class="topless"><a href="messages.html"
-                        title="next chapter">Actor messages</a></p>
+  <p class="topless"><a href="proxy.html"
+                        title="next chapter">HTTP Proxy Server</a></p>
   <h3>This Page</h3>
   <ul class="this-page-menu">
     <li><a href="../sources/tutorials/clients.txt"
@@ -172,13 +172,13 @@ as it sends the data to the server.</p>
           <a href="../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
         <li class="right" >
-          <a href="messages.html" title="Actor messages"
+          <a href="proxy.html" title="HTTP Proxy Server"
              >next</a> |</li>
         <li class="right" >
           <a href="wsgi.html" title="WSGI"
              >previous</a> |</li>
-        <li><a href="../index.html">pulsar v0.5a1 documentation</a> &raquo;</li>
-          <li><a href="index.html" >Tutorials</a> &raquo;</li> 
+        <li><a href="../index.html">pulsar v0.5b2 documentation</a> &raquo;</li>
+          <li><a href="index.html" >Tutorials &amp; Topics</a> &raquo;</li> 
       </ul>
     </div>
 

@@ -6,13 +6,13 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>pulsar.utils.httpurl &mdash; pulsar v0.5a1 documentation</title>
+    <title>pulsar.utils.httpurl &mdash; pulsar v0.5b2 documentation</title>
     <link rel="stylesheet" href="../../../static/celery.css" type="text/css" />
     <link rel="stylesheet" href="../../../static/pygments.css" type="text/css" />
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../../',
-        VERSION:     '0.5a1',
+        VERSION:     '0.5b2',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -21,7 +21,7 @@
     <script type="text/javascript" src="../../../static/jquery.js"></script>
     <script type="text/javascript" src="../../../static/underscore.js"></script>
     <script type="text/javascript" src="../../../static/doctools.js"></script>
-    <link rel="top" title="pulsar v0.5a1 documentation" href="../../../index.html" />
+    <link rel="top" title="pulsar v0.5b2 documentation" href="../../../index.html" />
     <link rel="up" title="pulsar" href="../../pulsar.html" /> 
   </head>
   <body>
@@ -34,7 +34,7 @@
         <li class="right" >
           <a href="../../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li><a href="../../../index.html">pulsar v0.5a1 documentation</a> &raquo;</li>
+        <li><a href="../../../index.html">pulsar v0.5b2 documentation</a> &raquo;</li>
           <li><a href="../../index.html" >Module code</a> &raquo;</li>
           <li><a href="../../pulsar.html" accesskey="U">pulsar</a> &raquo;</li> 
       </ul>
@@ -714,7 +714,7 @@
     <span class="sd">&quot;&quot;&quot; error raised when we parse an invalid chunk size &quot;&quot;&quot;</span>
 
 
-<div class="viewcode-block" id="HttpParser"><a class="viewcode-back" href="../../../api/utility.html#pulsar.utils.httpurl.HttpParser">[docs]</a><span class="k">class</span> <span class="nc">HttpParser</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+<div class="viewcode-block" id="HttpParser"><a class="viewcode-back" href="../../../api/utilities.html#pulsar.utils.httpurl.HttpParser">[docs]</a><span class="k">class</span> <span class="nc">HttpParser</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
     <span class="sd">&#39;&#39;&#39;A python HTTP parser.</span>
 
 <span class="sd">Original code from https://github.com/benoitc/http-parser</span>
@@ -806,30 +806,30 @@
     <span class="k">def</span> <span class="nf">get_body</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_body</span>
 
-<div class="viewcode-block" id="HttpParser.recv_body"><a class="viewcode-back" href="../../../api/utility.html#pulsar.utils.httpurl.HttpParser.recv_body">[docs]</a>    <span class="k">def</span> <span class="nf">recv_body</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<div class="viewcode-block" id="HttpParser.recv_body"><a class="viewcode-back" href="../../../api/utilities.html#pulsar.utils.httpurl.HttpParser.recv_body">[docs]</a>    <span class="k">def</span> <span class="nf">recv_body</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot; return last chunk of the parsed body&quot;&quot;&quot;</span>
         <span class="n">body</span> <span class="o">=</span> <span class="n">b</span><span class="s">&#39;&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_body</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_body</span> <span class="o">=</span> <span class="p">[]</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_partial_body</span> <span class="o">=</span> <span class="bp">False</span>
         <span class="k">return</span> <span class="n">body</span>
 </div>
-<div class="viewcode-block" id="HttpParser.is_headers_complete"><a class="viewcode-back" href="../../../api/utility.html#pulsar.utils.httpurl.HttpParser.is_headers_complete">[docs]</a>    <span class="k">def</span> <span class="nf">is_headers_complete</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<div class="viewcode-block" id="HttpParser.is_headers_complete"><a class="viewcode-back" href="../../../api/utilities.html#pulsar.utils.httpurl.HttpParser.is_headers_complete">[docs]</a>    <span class="k">def</span> <span class="nf">is_headers_complete</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot; return True if all headers have been parsed. &quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">__on_headers_complete</span>
 </div>
-<div class="viewcode-block" id="HttpParser.is_partial_body"><a class="viewcode-back" href="../../../api/utility.html#pulsar.utils.httpurl.HttpParser.is_partial_body">[docs]</a>    <span class="k">def</span> <span class="nf">is_partial_body</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<div class="viewcode-block" id="HttpParser.is_partial_body"><a class="viewcode-back" href="../../../api/utilities.html#pulsar.utils.httpurl.HttpParser.is_partial_body">[docs]</a>    <span class="k">def</span> <span class="nf">is_partial_body</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot; return True if a chunk of body have been parsed &quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_partial_body</span>
 </div>
-<div class="viewcode-block" id="HttpParser.is_message_begin"><a class="viewcode-back" href="../../../api/utility.html#pulsar.utils.httpurl.HttpParser.is_message_begin">[docs]</a>    <span class="k">def</span> <span class="nf">is_message_begin</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<div class="viewcode-block" id="HttpParser.is_message_begin"><a class="viewcode-back" href="../../../api/utilities.html#pulsar.utils.httpurl.HttpParser.is_message_begin">[docs]</a>    <span class="k">def</span> <span class="nf">is_message_begin</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot; return True if the parsing start &quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">__on_message_begin</span>
 </div>
-<div class="viewcode-block" id="HttpParser.is_message_complete"><a class="viewcode-back" href="../../../api/utility.html#pulsar.utils.httpurl.HttpParser.is_message_complete">[docs]</a>    <span class="k">def</span> <span class="nf">is_message_complete</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<div class="viewcode-block" id="HttpParser.is_message_complete"><a class="viewcode-back" href="../../../api/utilities.html#pulsar.utils.httpurl.HttpParser.is_message_complete">[docs]</a>    <span class="k">def</span> <span class="nf">is_message_complete</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot; return True if the parsing is done (we get EOF) &quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">__on_message_complete</span>
 </div>
-<div class="viewcode-block" id="HttpParser.is_chunked"><a class="viewcode-back" href="../../../api/utility.html#pulsar.utils.httpurl.HttpParser.is_chunked">[docs]</a>    <span class="k">def</span> <span class="nf">is_chunked</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<div class="viewcode-block" id="HttpParser.is_chunked"><a class="viewcode-back" href="../../../api/utilities.html#pulsar.utils.httpurl.HttpParser.is_chunked">[docs]</a>    <span class="k">def</span> <span class="nf">is_chunked</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot; return True if Transfer-Encoding header value is chunked&quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_chunked</span>
 </div>
@@ -2517,7 +2517,7 @@
         <li class="right" >
           <a href="../../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li><a href="../../../index.html">pulsar v0.5a1 documentation</a> &raquo;</li>
+        <li><a href="../../../index.html">pulsar v0.5b2 documentation</a> &raquo;</li>
           <li><a href="../../index.html" >Module code</a> &raquo;</li>
           <li><a href="../../pulsar.html" >pulsar</a> &raquo;</li> 
       </ul>

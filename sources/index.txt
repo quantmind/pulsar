@@ -17,7 +17,6 @@ in a single code base.
    tutorials/index
    api/index
    changelog
-   http
    settings
    
 .. Note::
@@ -26,7 +25,7 @@ in a single code base.
     It will improve with time and, hopefully, with help from the community.
     In the mean time, a lot of insight can be gained by
     visiting and running, the :ref:`example applications <examples>`
-    which are located in the ``examples`` module at the top level of
+    which are located in the :mod:`examples` module at the top level of
     pulsar distribution.
 
 .. _apps-framework:
@@ -55,6 +54,7 @@ found in the :mod:`pulsar.apps` module:
    apps/rpc
    apps/tasks
    apps/websockets
+   apps/http
    apps/test
    apps/shell
    

@@ -6,13 +6,13 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>Tools &mdash; pulsar v0.5a1 documentation</title>
+    <title>Tools &mdash; pulsar v0.5b2 documentation</title>
     <link rel="stylesheet" href="../static/celery.css" type="text/css" />
     <link rel="stylesheet" href="../static/pygments.css" type="text/css" />
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../',
-        VERSION:     '0.5a1',
+        VERSION:     '0.5b2',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -21,7 +21,7 @@
     <script type="text/javascript" src="../static/jquery.js"></script>
     <script type="text/javascript" src="../static/underscore.js"></script>
     <script type="text/javascript" src="../static/doctools.js"></script>
-    <link rel="top" title="pulsar v0.5a1 documentation" href="../index.html" />
+    <link rel="top" title="pulsar v0.5b2 documentation" href="../index.html" />
     <link rel="up" title="API" href="index.html" />
     <link rel="next" title="Changelog" href="../changelog.html" />
     <link rel="prev" title="Applications API" href="application.html" /> 
@@ -42,7 +42,7 @@
         <li class="right" >
           <a href="application.html" title="Applications API"
              accesskey="P">previous</a> |</li>
-        <li><a href="../index.html">pulsar v0.5a1 documentation</a> &raquo;</li>
+        <li><a href="../index.html">pulsar v0.5b2 documentation</a> &raquo;</li>
           <li><a href="index.html" accesskey="U">API</a> &raquo;</li> 
       </ul>
     </div>  
@@ -63,14 +63,94 @@
         <div class="bodywrapper">
           <div class="body">
             
-  <div class="section" id="tools">
-<h1>Tools<a class="headerlink" href="#tools" title="Permalink to this headline">¶</a></h1>
+  <div class="section" id="module-pulsar.utils.httpurl">
+<span id="tools"></span><h1>Tools<a class="headerlink" href="#module-pulsar.utils.httpurl" title="Permalink to this headline">¶</a></h1>
+<p>This is a substantial module which imports several classes and functions
+from the standard library in a python 2.6 to python 3.3 compatible fashion.
+On top of that, it implements the <tt class="xref py py-class docutils literal"><span class="pre">HttpClient</span></tt> for handling synchronous
+and asynchronous HTTP requests in a pythonic way.</p>
+<p>It is a thin layer on top of urllib2 in python2 / urllib in Python 3.
+Several opensource efforts have been used as source of snippets:</p>
+<ul class="simple">
+<li><a class="reference external" href="https://github.com/benoitc/http-parser">http-parser</a></li>
+<li><a class="reference external" href="https://github.com/kennethreitz/requests">request</a></li>
+<li><a class="reference external" href="https://github.com/shazow/urllib3">urllib3</a></li>
+<li><a class="reference external" href="https://github.com/mitsuhiko/werkzeug">werkzeug</a></li>
+</ul>
+<p>This is a long stand-alone module which can be dropped in any library and used
+as it is.</p>
+<div class="section" id="id1">
+<h2>HTTP Parser<a class="headerlink" href="#id1" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="pulsar.utils.httpurl.HttpParser">
+<em class="property">class </em><tt class="descclassname">pulsar.utils.httpurl.</tt><tt class="descname">HttpParser</tt><big>(</big><em>kind=2</em>, <em>decompress=False</em><big>)</big><a class="reference internal" href="../modules/pulsar/utils/httpurl.html#HttpParser"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.utils.httpurl.HttpParser" title="Permalink to this definition">¶</a></dt>
+<dd><p>A python HTTP parser.</p>
+<p>Original code from <a class="reference external" href="https://github.com/benoitc/http-parser">https://github.com/benoitc/http-parser</a></p>
+<p>2011 (c) Benoit Chesneau &lt;<a class="reference external" href="mailto:benoitc&#37;&#52;&#48;e-engura&#46;org">benoitc<span>&#64;</span>e-engura<span>&#46;</span>org</a>&gt;</p>
+<p>Permission is hereby granted, free of charge, to any person
+obtaining a copy of this software and associated documentation
+files (the &#8220;Software&#8221;), to deal in the Software without
+restriction, including without limitation the rights to use,
+copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the
+Software is furnished to do so, subject to the following
+conditions:</p>
+<p>The above copyright notice and this permission notice shall be
+included in all copies or substantial portions of the Software.</p>
+<p>THE SOFTWARE IS PROVIDED &#8220;AS IS&#8221;, WITHOUT WARRANTY OF ANY KIND,
+EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES
+OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT
+HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
+WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
+OTHER DEALINGS IN THE SOFTWARE.</p>
+<dl class="method">
+<dt id="pulsar.utils.httpurl.HttpParser.recv_body">
+<tt class="descname">recv_body</tt><big>(</big><big>)</big><a class="reference internal" href="../modules/pulsar/utils/httpurl.html#HttpParser.recv_body"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.utils.httpurl.HttpParser.recv_body" title="Permalink to this definition">¶</a></dt>
+<dd><p>return last chunk of the parsed body</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="pulsar.utils.httpurl.HttpParser.is_headers_complete">
+<tt class="descname">is_headers_complete</tt><big>(</big><big>)</big><a class="reference internal" href="../modules/pulsar/utils/httpurl.html#HttpParser.is_headers_complete"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.utils.httpurl.HttpParser.is_headers_complete" title="Permalink to this definition">¶</a></dt>
+<dd><p>return True if all headers have been parsed.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="pulsar.utils.httpurl.HttpParser.is_partial_body">
+<tt class="descname">is_partial_body</tt><big>(</big><big>)</big><a class="reference internal" href="../modules/pulsar/utils/httpurl.html#HttpParser.is_partial_body"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.utils.httpurl.HttpParser.is_partial_body" title="Permalink to this definition">¶</a></dt>
+<dd><p>return True if a chunk of body have been parsed</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="pulsar.utils.httpurl.HttpParser.is_message_begin">
+<tt class="descname">is_message_begin</tt><big>(</big><big>)</big><a class="reference internal" href="../modules/pulsar/utils/httpurl.html#HttpParser.is_message_begin"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.utils.httpurl.HttpParser.is_message_begin" title="Permalink to this definition">¶</a></dt>
+<dd><p>return True if the parsing start</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="pulsar.utils.httpurl.HttpParser.is_message_complete">
+<tt class="descname">is_message_complete</tt><big>(</big><big>)</big><a class="reference internal" href="../modules/pulsar/utils/httpurl.html#HttpParser.is_message_complete"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.utils.httpurl.HttpParser.is_message_complete" title="Permalink to this definition">¶</a></dt>
+<dd><p>return True if the parsing is done (we get EOF)</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="pulsar.utils.httpurl.HttpParser.is_chunked">
+<tt class="descname">is_chunked</tt><big>(</big><big>)</big><a class="reference internal" href="../modules/pulsar/utils/httpurl.html#HttpParser.is_chunked"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.utils.httpurl.HttpParser.is_chunked" title="Permalink to this definition">¶</a></dt>
+<dd><p>return True if Transfer-Encoding header value is chunked</p>
+</dd></dl>
+
+</dd></dl>
+
 <div class="section" id="module-pulsar.utils.websocket">
-<span id="websocket-frame-parser"></span><h2>Websocket Frame &amp; Parser<a class="headerlink" href="#module-pulsar.utils.websocket" title="Permalink to this headline">¶</a></h2>
+<span id="websocket-frame-parser"></span><h3>Websocket Frame &amp; Parser<a class="headerlink" href="#module-pulsar.utils.websocket" title="Permalink to this headline">¶</a></h3>
 <p><a class="reference external" href="http://tools.ietf.org/html/rfc6455">WebSocket</a> Protocol <a class="reference internal" href="#pulsar.utils.websocket.Frame" title="pulsar.utils.websocket.Frame"><tt class="xref py py-class docutils literal"><span class="pre">Frame</span></tt></a> and <a class="reference internal" href="#pulsar.utils.websocket.FrameParser" title="pulsar.utils.websocket.FrameParser"><tt class="xref py py-class docutils literal"><span class="pre">FrameParser</span></tt></a> classes.
 These two classes can be used for both clients and server protocols.</p>
+</div>
+</div>
 <div class="section" id="frame">
-<h3>Frame<a class="headerlink" href="#frame" title="Permalink to this headline">¶</a></h3>
+<h2>Frame<a class="headerlink" href="#frame" title="Permalink to this headline">¶</a></h2>
 <dl class="class">
 <dt id="pulsar.utils.websocket.Frame">
 <em class="property">class </em><tt class="descclassname">pulsar.utils.websocket.</tt><tt class="descname">Frame</tt><big>(</big><em>message=None</em>, <em>opcode=None</em>, <em>version=None</em>, <em>masking_key=None</em>, <em>final=False</em>, <em>rsv1=0</em>, <em>rsv2=0</em>, <em>rsv3=0</em>, <em>build_frame=True</em><big>)</big><a class="reference internal" href="../modules/pulsar/utils/websocket.html#Frame"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.utils.websocket.Frame" title="Permalink to this definition">¶</a></dt>
@@ -108,10 +188,10 @@ transformed-octet-i = original-octet-i XOR masking-key-octet-j</pre>
 
 </div>
 <div class="section" id="frame-parser">
-<h3>Frame Parser<a class="headerlink" href="#frame-parser" title="Permalink to this headline">¶</a></h3>
+<h2>Frame Parser<a class="headerlink" href="#frame-parser" title="Permalink to this headline">¶</a></h2>
 <dl class="class">
 <dt id="pulsar.utils.websocket.FrameParser">
-<em class="property">class </em><tt class="descclassname">pulsar.utils.websocket.</tt><tt class="descname">FrameParser</tt><big>(</big><em>version=None</em>, <em>kind=0</em><big>)</big><a class="reference internal" href="../modules/pulsar/utils/websocket.html#FrameParser"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.utils.websocket.FrameParser" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><tt class="descclassname">pulsar.utils.websocket.</tt><tt class="descname">FrameParser</tt><big>(</big><em>version=None</em>, <em>kind=0</em>, <em>extensions=None</em>, <em>protocols=None</em><big>)</big><a class="reference internal" href="../modules/pulsar/utils/websocket.html#FrameParser"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.utils.websocket.FrameParser" title="Permalink to this definition">¶</a></dt>
 <dd><p>Decoder and encoder for the websocket protocol.</p>
 <dl class="attribute">
 <dt id="pulsar.utils.websocket.FrameParser.version">
@@ -170,21 +250,171 @@ by the client)</li>
 
 <dl class="method">
 <dt id="pulsar.utils.websocket.FrameParser.continuation">
-<tt class="descname">continuation</tt><big>(</big><em>body=None</em><big>)</big><a class="reference internal" href="../modules/pulsar/utils/websocket.html#FrameParser.continuation"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.utils.websocket.FrameParser.continuation" title="Permalink to this definition">¶</a></dt>
+<tt class="descname">continuation</tt><big>(</big><em>body=None</em>, <em>final=True</em><big>)</big><a class="reference internal" href="../modules/pulsar/utils/websocket.html#FrameParser.continuation"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.utils.websocket.FrameParser.continuation" title="Permalink to this definition">¶</a></dt>
 <dd><p>return a <cite>continuation</cite> <a class="reference internal" href="#pulsar.utils.websocket.Frame" title="pulsar.utils.websocket.Frame"><tt class="xref py py-class docutils literal"><span class="pre">Frame</span></tt></a>.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="pulsar.utils.websocket.FrameParser.replay_to">
+<tt class="descname">replay_to</tt><big>(</big><em>frame</em><big>)</big><a class="headerlink" href="#pulsar.utils.websocket.FrameParser.replay_to" title="Permalink to this definition">¶</a></dt>
+<dd><p>Build a <a class="reference internal" href="#pulsar.utils.websocket.Frame" title="pulsar.utils.websocket.Frame"><tt class="xref py py-class docutils literal"><span class="pre">Frame</span></tt></a> as a reply to <em>frame</em>.</p>
 </dd></dl>
 
 <dl class="method">
 <dt id="pulsar.utils.websocket.FrameParser.decode">
 <tt class="descname">decode</tt><big>(</big><em>data=None</em><big>)</big><a class="reference internal" href="../modules/pulsar/utils/websocket.html#FrameParser.decode"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.utils.websocket.FrameParser.decode" title="Permalink to this definition">¶</a></dt>
 <dd><p>Decode bytes data into a <a class="reference internal" href="#pulsar.utils.websocket.Frame" title="pulsar.utils.websocket.Frame"><tt class="xref py py-class docutils literal"><span class="pre">Frame</span></tt></a>. If <a class="reference internal" href="#pulsar.utils.websocket.FrameParser.kind" title="pulsar.utils.websocket.FrameParser.kind"><tt class="xref py py-attr docutils literal"><span class="pre">kind</span></tt></a> is 0
-it descodes into a client frame (masked frame) while if is 1 it decodes
+it decodes into a client frame (masked frame) while if is 1 or 2 it decodes
 into a server frame (unmasked).</p>
 </dd></dl>
 
 </dd></dl>
 
+<div class="section" id="module-pulsar.utils.config">
+<span id="configuration"></span><span id="api-config"></span><h3>Configuration<a class="headerlink" href="#module-pulsar.utils.config" title="Permalink to this headline">¶</a></h3>
+<p>Configuration utilities. originally from <a class="reference external" href="http://gunicorn.org/">gunicorn</a>,
+adapted and modified for pulsar.</p>
+<p>Original Gunicorn Licence</p>
+<p>This file is part of gunicorn released under the MIT license.
+See the NOTICE for more information.</p>
 </div>
+</div>
+<div class="section" id="config">
+<h2>Config<a class="headerlink" href="#config" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="pulsar.utils.config.Config">
+<em class="property">class </em><tt class="descclassname">pulsar.utils.config.</tt><tt class="descname">Config</tt><big>(</big><em>description=None</em>, <em>epilog=None</em>, <em>version=None</em>, <em>app=None</em>, <em>include=None</em>, <em>exclude=None</em>, <em>settings=None</em><big>)</big><a class="reference internal" href="../modules/pulsar/utils/config.html#Config"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.utils.config.Config" title="Permalink to this definition">¶</a></dt>
+<dd><p>Dictionary containing <a class="reference internal" href="#pulsar.utils.config.Setting" title="pulsar.utils.config.Setting"><tt class="xref py py-class docutils literal"><span class="pre">Setting</span></tt></a> parameters for
+fine tuning pulsar servers. It provides easy access to <tt class="xref py py-attr docutils literal"><span class="pre">Setting.value</span></tt>
+attribute by exposing the <tt class="xref py py-attr docutils literal"><span class="pre">Setting.name</span></tt> as attribute.</p>
+<dl class="attribute">
+<dt id="pulsar.utils.config.Config.settings">
+<tt class="descname">settings</tt><a class="headerlink" href="#pulsar.utils.config.Config.settings" title="Permalink to this definition">¶</a></dt>
+<dd><p>Dictionary of all <tt class="xref py py-class docutils literal"><span class="pre">Settings</span></tt> instances available. The
+keys are given by the <tt class="xref py py-attr docutils literal"><span class="pre">Setting.name</span></tt> attribute.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="pulsar.utils.config.Config.parser">
+<tt class="descname">parser</tt><big>(</big><big>)</big><a class="reference internal" href="../modules/pulsar/utils/config.html#Config.parser"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.utils.config.Config.parser" title="Permalink to this definition">¶</a></dt>
+<dd><p>Create the <a class="reference external" href="http://docs.python.org/dev/library/argparse.html">argparser</a> for this configuration by adding all
+settings via the <a class="reference internal" href="#pulsar.utils.config.Setting.add_argument" title="pulsar.utils.config.Setting.add_argument"><tt class="xref py py-meth docutils literal"><span class="pre">Setting.add_argument()</span></tt></a>.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field"><th class="field-name">Return type:</th><td class="field-body">an instance of <tt class="xref py py-class docutils literal"><span class="pre">argparse.ArgumentParser</span></tt>.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="pulsar.utils.config.Config.on_start">
+<tt class="descname">on_start</tt><big>(</big><big>)</big><a class="reference internal" href="../modules/pulsar/utils/config.html#Config.on_start"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.utils.config.Config.on_start" title="Permalink to this definition">¶</a></dt>
+<dd><p>Invoked by a <tt class="xref py py-class docutils literal"><span class="pre">pulsar.Application</span></tt> just before starting.</p>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="setting">
+<h2>Setting<a class="headerlink" href="#setting" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="pulsar.utils.config.Setting">
+<em class="property">class </em><tt class="descclassname">pulsar.utils.config.</tt><tt class="descname">Setting</tt><big>(</big><em>name=None</em>, <em>flags=None</em>, <em>action=None</em>, <em>type=None</em>, <em>default=None</em>, <em>nargs=None</em>, <em>desc=None</em>, <em>validator=None</em><big>)</big><a class="reference internal" href="../modules/pulsar/utils/config.html#Setting"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.utils.config.Setting" title="Permalink to this definition">¶</a></dt>
+<dd><p>A configuration parameter for pulsar. Parameters can be specified
+on the command line or on a config file.</p>
+<dl class="attribute">
+<dt id="pulsar.utils.config.Setting.virtual">
+<tt class="descname">virtual</tt><a class="headerlink" href="#pulsar.utils.config.Setting.virtual" title="Permalink to this definition">¶</a></dt>
+<dd><p>If set to <tt class="xref docutils literal"><span class="pre">True</span></tt> the settings won&#8217;t be loaded and it can be only used
+as base class for other settings.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="pulsar.utils.config.Setting.app">
+<tt class="descname">app</tt><a class="headerlink" href="#pulsar.utils.config.Setting.app" title="Permalink to this definition">¶</a></dt>
+<dd><p>Setting for a specific <tt class="xref py py-class docutils literal"><span class="pre">Application</span></tt>.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="pulsar.utils.config.Setting.choices">
+<tt class="descname">choices</tt><a class="headerlink" href="#pulsar.utils.config.Setting.choices" title="Permalink to this definition">¶</a></dt>
+<dd><p>Restrict the argument to the choices provided.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="pulsar.utils.config.Setting.default">
+<tt class="descname">default</tt><a class="headerlink" href="#pulsar.utils.config.Setting.default" title="Permalink to this definition">¶</a></dt>
+<dd><p>Default value</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="pulsar.utils.config.Setting.flags">
+<tt class="descname">flags</tt><a class="headerlink" href="#pulsar.utils.config.Setting.flags" title="Permalink to this definition">¶</a></dt>
+<dd><p>List of options strings, e.g. <tt class="docutils literal"><span class="pre">[-f,</span> <span class="pre">--foo]</span></tt>.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="pulsar.utils.config.Setting.nargs">
+<tt class="descname">nargs</tt><a class="headerlink" href="#pulsar.utils.config.Setting.nargs" title="Permalink to this definition">¶</a></dt>
+<dd><p>For positional arguments. Same usage as argparse.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="pulsar.utils.config.Setting.section">
+<tt class="descname">section</tt><a class="headerlink" href="#pulsar.utils.config.Setting.section" title="Permalink to this definition">¶</a></dt>
+<dd><p>Setting section, used for creating documentation.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="pulsar.utils.config.Setting.add_argument">
+<tt class="descname">add_argument</tt><big>(</big><em>parser</em><big>)</big><a class="reference internal" href="../modules/pulsar/utils/config.html#Setting.add_argument"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.utils.config.Setting.add_argument" title="Permalink to this definition">¶</a></dt>
+<dd><p>Add itself to the argparser.</p>
+</dd></dl>
+
+</dd></dl>
+
+<div class="section" id="internals">
+<span id="id2"></span><h3>Internals<a class="headerlink" href="#internals" title="Permalink to this headline">¶</a></h3>
+<span class="target" id="module-pulsar.utils.system"></span></div>
+</div>
+<div class="section" id="system-info">
+<h2>System info<a class="headerlink" href="#system-info" title="Permalink to this headline">¶</a></h2>
+<dl class="function">
+<dt id="pulsar.utils.system.system_info">
+<tt class="descclassname">pulsar.utils.system.</tt><tt class="descname">system_info</tt><big>(</big><em>pid</em><big>)</big><a class="reference internal" href="../modules/pulsar/utils/system.html#system_info"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.utils.system.system_info" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns a dictionary of system information for the process with id <em>pid</em>.
+It uses the <a class="reference external" href="http://code.google.com/p/psutil/">psutil</a> module for the purpose. If <a class="reference external" href="http://code.google.com/p/psutil/">psutil</a> is not available
+it returns an empty dictionary.</p>
+</dd></dl>
+
+<span class="target" id="module-pulsar.utils.tools"></span></div>
+<div class="section" id="checkarity">
+<h2>checkarity<a class="headerlink" href="#checkarity" title="Permalink to this headline">¶</a></h2>
+<dl class="function">
+<dt id="pulsar.utils.tools.checkarity">
+<tt class="descclassname">pulsar.utils.tools.</tt><tt class="descname">checkarity</tt><big>(</big><em>func</em>, <em>args</em>, <em>kwargs</em>, <em>discount=0</em><big>)</big><a class="headerlink" href="#pulsar.utils.tools.checkarity" title="Permalink to this definition">¶</a></dt>
+<dd><p>Check if arguments respect a given function arity and return
+a error message if the check did not pass, otherwise it returns <tt class="xref docutils literal"><span class="pre">None</span></tt>.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>func</strong> &#8211; the function.</li>
+<li><strong>args</strong> &#8211; function arguments.</li>
+<li><strong>kwargs</strong> &#8211; function key-valued parameters.</li>
+<li><strong>discount</strong> &#8211; optional integer which discount the number of
+positional argument to check. Default <tt class="docutils literal"><span class="pre">0</span></tt>.</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
 </div>
 </div>
 
@@ -202,11 +432,22 @@ into a server frame (unmasked).</p>
   <h3><a href="../index.html">Table Of Contents</a></h3>
   <ul>
 <li><a class="reference internal" href="#">Tools</a><ul>
-<li><a class="reference internal" href="#module-pulsar.utils.websocket">Websocket Frame &amp; Parser</a><ul>
-<li><a class="reference internal" href="#frame">Frame</a></li>
-<li><a class="reference internal" href="#frame-parser">Frame Parser</a></li>
+<li><a class="reference internal" href="#id1">HTTP Parser</a><ul>
+<li><a class="reference internal" href="#module-pulsar.utils.websocket">Websocket Frame &amp; Parser</a></li>
 </ul>
 </li>
+<li><a class="reference internal" href="#frame">Frame</a></li>
+<li><a class="reference internal" href="#frame-parser">Frame Parser</a><ul>
+<li><a class="reference internal" href="#module-pulsar.utils.config">Configuration</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#config">Config</a></li>
+<li><a class="reference internal" href="#setting">Setting</a><ul>
+<li><a class="reference internal" href="#internals">Internals</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#system-info">System info</a></li>
+<li><a class="reference internal" href="#checkarity">checkarity</a></li>
 </ul>
 </li>
 </ul>
@@ -254,7 +495,7 @@ into a server frame (unmasked).</p>
         <li class="right" >
           <a href="application.html" title="Applications API"
              >previous</a> |</li>
-        <li><a href="../index.html">pulsar v0.5a1 documentation</a> &raquo;</li>
+        <li><a href="../index.html">pulsar v0.5b2 documentation</a> &raquo;</li>
           <li><a href="index.html" >API</a> &raquo;</li> 
       </ul>
     </div>
