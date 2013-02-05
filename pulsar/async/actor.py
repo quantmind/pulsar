@@ -21,7 +21,7 @@ from pulsar.utils.log import LogginMixin
 
 from .eventloop import EventLoop, setid, signal
 from .defer import Deferred, EventHandler, log_failure
-from .proxy import ActorProxy, get_proxy, ActorProxyMonitor
+from .proxy import ActorProxy, get_proxy, ActorProxyMonitor, ActorIdentity
 from .mailbox import MailboxClient, command_in_context
 from .access import set_actor, is_mainthread, get_actor, remove_actor, NOTHING
 
@@ -99,7 +99,7 @@ class Pulsar(LogginMixin):
                           handlers=self.cfg.loghandlers)
         
 
-class Actor(EventHandler, Pulsar):
+class Actor(EventHandler, Pulsar, ActorIdentity):
     '''The base class for parallel execution in pulsar. In computer science,
 the **Actor model** is a mathematical model of concurrent computation that
 treats *actors* as the universal primitives of computation.
@@ -253,12 +253,11 @@ parameters *params*.'''
             mailbox = target.mailbox
         else:
             actor = self.get_actor(target)
-            if actor is None:
-                mailbox = self.mailbox
-            else:
+            if isinstance(actor, Actor):
                 # this occur when sending a message from arbiter tomonitors or
                 # viceversa. Same signature as mailbox.request
                 return command_in_context(action, self, actor, args, params)
+            mailbox = self.mailbox
         return mailbox.request(action, self, target, args, params)
     
     def io_poller(self):

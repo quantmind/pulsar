@@ -164,8 +164,13 @@ Users access the arbiter (in the arbiter process domain) by the high level api::
                 return self.monitors[aid]
             elif aid in self.managed_actors:
                 return self.managed_actors[aid]
-            else:   # Finally check in registered names
-                return self.registered.get(aid)
+            elif aid in self.registered:
+                return self.registered[aid]
+            else:    # Finally check in workers in monitors
+                for m in itervalues(self.monitors):
+                    a = m.get_actor(aid)
+                    if a:
+                        return a
         else:
             return a
     
@@ -185,7 +190,10 @@ Users access the arbiter (in the arbiter process domain) by the high level api::
         data['workers'] = [a.info for a in itervalues(self.managed_actors)]
         data['monitors'] = monitors
         return data
-
+    
+    def identity(self):
+        return self.name
+    
     ############################################################################
     # INTERNALS
     ############################################################################

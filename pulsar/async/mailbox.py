@@ -138,16 +138,19 @@ class MailboxConsumer(ProtocolConsumer):
             target = actor.get_actor(message['target'])
             if target is None:
                 raise CommandError('unknown actor %s' % message['target'])
+            caller = get_proxy(actor.get_actor(message['sender']), safe=True)
             if isinstance(target, ActorProxy):
-                # route the message to the actor
-                raise NotImplementedError()
+                # route the message to the actor proxy
+                if caller is None:
+                    raise CommandError("'%s' got message from unknown '%s'" %
+                                       (actor, message['sender']))
+                result = actor.send(target, command, *message['args'],
+                                    **message['kwargs'])
             else:
                 actor = target
-            caller = actor.get_actor(message['sender'])
-            command = get_command(command)
-            req = CommandRequest(target, get_proxy(caller, safe=True),
-                                 self.connection)
-            result = command(req, message['args'], message['kwargs'])
+                command = get_command(command)
+                req = CommandRequest(target, caller, self.connection)
+                result = command(req, message['args'], message['kwargs'])
         except Exception:
             result = sys.exc_info()
         return make_async(result).add_both(partial(self._response, message))

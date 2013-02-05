@@ -3,7 +3,7 @@ from inspect import isclass
 import threading
 
 import pulsar
-from pulsar import is_failure, async, get_actor
+from pulsar import is_failure, async, get_actor, send
 from pulsar.async import commands
 from pulsar.utils.pep import pickle
 
@@ -189,15 +189,15 @@ the tearDown method is overwritten.'''
         self.a = proxy = ad.result
         self.all_spawned.append(proxy)
         self.assertEqual(proxy.aid, ad.aid)
-        self.assertEqual(proxy.callback, None)
-        self.assertTrue(proxy.mailbox)
+        self.assertEqual(proxy.proxy, proxy)
+        self.assertTrue(proxy.cfg)
     
     def stop_actors(self, *args):
         all = args or self.all_spawned
         if len(all) == 1:
-            return all[0].stop()
+            return send(all[0], 'stop')
         elif all:
-            return MultiDeferred((a.stop() for a in all)).lock()
+            return MultiDeferred((send(a, 'stop') for a in all)).lock()
             
     def tearDown(self):
         return self.stop_actors()

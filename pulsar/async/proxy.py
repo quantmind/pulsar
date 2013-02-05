@@ -44,7 +44,7 @@ def get_proxy(obj, safe=False):
             raise ValueError('"%s" is not an actor or actor proxy.' % obj)
 
 def actorid(actor):
-    return actor.aid if hasattr(actor, 'aid') else actor
+    return actor.identity() if hasattr(actor, 'identity') else actor
 
 def get_command(name):
     '''Get the command function *name*'''
@@ -75,8 +75,14 @@ class command:
         global_commands_table[self.name] = command_function
         return command_function
             
-            
-class ActorProxyDeferred(Deferred):
+
+class ActorIdentity(object):
+    
+    def identity(self):
+        return self.aid
+    
+    
+class ActorProxyDeferred(Deferred, ActorIdentity):
     '''A :class:`Deferred` for an :class:`ActorProxy`. The callback will
 be an :class:`ActorProxy` which will be received once the remote :class:`Actor`
 is fully functional.
@@ -101,7 +107,7 @@ is fully functional.
     __str__ = __repr__
     
     
-class ActorProxy(object):
+class ActorProxy(ActorIdentity):
     '''This is an important component in pulsar concurrent framework. An
 instance of this class is as a proxy for a remote `underlying` 
 :class:`Actor`. This is a lightweight class which delegates
@@ -155,9 +161,8 @@ parameter ``"hello there!"``.
 class ActorProxyMonitor(ActorProxy):
     '''A specialised :class:`ActorProxy` class which contains additional
 information about the remote underlying :class:`pulsar.Actor`. Unlike the
-:class:`pulsar.ActorProxy` class, instances of this class are not pickable and
-therefore remain in the :class:`Arbiter` process domain, which is the
-process where they have been created.
+:class:`pulsar.ActorProxy` class, instances of this class serialise
+into their :attr:`proxy` attribute..
 
 .. attribute:: impl
 
@@ -188,6 +193,9 @@ process where they have been created.
     @property
     def proxy(self):
         return ActorProxy(self)
+    
+    def __reduce__(self):
+        return self.proxy.__reduce__()
     
     def is_alive(self):
         '''True if underlying actor is alive'''
