@@ -6,13 +6,13 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>Actors API &mdash; pulsar v0.5b2 documentation</title>
+    <title>Actors API &mdash; pulsar v0.5b3 documentation</title>
     <link rel="stylesheet" href="../static/celery.css" type="text/css" />
     <link rel="stylesheet" href="../static/pygments.css" type="text/css" />
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../',
-        VERSION:     '0.5b2',
+        VERSION:     '0.5b3',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -21,7 +21,7 @@
     <script type="text/javascript" src="../static/jquery.js"></script>
     <script type="text/javascript" src="../static/underscore.js"></script>
     <script type="text/javascript" src="../static/doctools.js"></script>
-    <link rel="top" title="pulsar v0.5b2 documentation" href="../index.html" />
+    <link rel="top" title="pulsar v0.5b3 documentation" href="../index.html" />
     <link rel="up" title="API" href="index.html" />
     <link rel="next" title="Protocols API" href="protocols.html" />
     <link rel="prev" title="Asynchonous API" href="async.html" /> 
@@ -42,7 +42,7 @@
         <li class="right" >
           <a href="async.html" title="Asynchonous API"
              accesskey="P">previous</a> |</li>
-        <li><a href="../index.html">pulsar v0.5b2 documentation</a> &raquo;</li>
+        <li><a href="../index.html">pulsar v0.5b3 documentation</a> &raquo;</li>
           <li><a href="index.html" accesskey="U">API</a> &raquo;</li> 
       </ul>
     </div>  
@@ -592,9 +592,8 @@ is fully functional.</p>
 <em class="property">class </em><tt class="descclassname">pulsar.</tt><tt class="descname">ActorProxyMonitor</tt><big>(</big><em>impl</em><big>)</big><a class="headerlink" href="#pulsar.ActorProxyMonitor" title="Permalink to this definition">¶</a></dt>
 <dd><p>A specialised <a class="reference internal" href="#pulsar.ActorProxy" title="pulsar.ActorProxy"><tt class="xref py py-class docutils literal"><span class="pre">ActorProxy</span></tt></a> class which contains additional
 information about the remote underlying <a class="reference internal" href="#pulsar.Actor" title="pulsar.Actor"><tt class="xref py py-class docutils literal"><span class="pre">pulsar.Actor</span></tt></a>. Unlike the
-<a class="reference internal" href="#pulsar.ActorProxy" title="pulsar.ActorProxy"><tt class="xref py py-class docutils literal"><span class="pre">pulsar.ActorProxy</span></tt></a> class, instances of this class are not pickable and
-therefore remain in the <a class="reference internal" href="#pulsar.Arbiter" title="pulsar.Arbiter"><tt class="xref py py-class docutils literal"><span class="pre">Arbiter</span></tt></a> process domain, which is the
-process where they have been created.</p>
+<a class="reference internal" href="#pulsar.ActorProxy" title="pulsar.ActorProxy"><tt class="xref py py-class docutils literal"><span class="pre">pulsar.ActorProxy</span></tt></a> class, instances of this class serialise
+into their <tt class="xref py py-attr docutils literal"><span class="pre">proxy</span></tt> attribute..</p>
 <dl class="attribute">
 <dt id="pulsar.ActorProxyMonitor.impl">
 <tt class="descname">impl</tt><a class="headerlink" href="#pulsar.ActorProxyMonitor.impl" title="Permalink to this definition">¶</a></dt>
@@ -785,7 +784,7 @@ response. Usually is set to <tt class="xref docutils literal"><span class="pre">
         <li class="right" >
           <a href="async.html" title="Asynchonous API"
              >previous</a> |</li>
-        <li><a href="../index.html">pulsar v0.5b2 documentation</a> &raquo;</li>
+        <li><a href="../index.html">pulsar v0.5b3 documentation</a> &raquo;</li>
           <li><a href="index.html" >API</a> &raquo;</li> 
       </ul>
     </div>

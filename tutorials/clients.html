@@ -6,13 +6,13 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>Writing Clients &mdash; pulsar v0.5b2 documentation</title>
+    <title>Writing Clients &mdash; pulsar v0.5b3 documentation</title>
     <link rel="stylesheet" href="../static/celery.css" type="text/css" />
     <link rel="stylesheet" href="../static/pygments.css" type="text/css" />
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../',
-        VERSION:     '0.5b2',
+        VERSION:     '0.5b3',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -21,7 +21,7 @@
     <script type="text/javascript" src="../static/jquery.js"></script>
     <script type="text/javascript" src="../static/underscore.js"></script>
     <script type="text/javascript" src="../static/doctools.js"></script>
-    <link rel="top" title="pulsar v0.5b2 documentation" href="../index.html" />
+    <link rel="top" title="pulsar v0.5b3 documentation" href="../index.html" />
     <link rel="up" title="Tutorials &amp; Topics" href="index.html" />
     <link rel="next" title="HTTP Proxy Server" href="proxy.html" />
     <link rel="prev" title="WSGI" href="wsgi.html" /> 
@@ -42,7 +42,7 @@
         <li class="right" >
           <a href="wsgi.html" title="WSGI"
              accesskey="P">previous</a> |</li>
-        <li><a href="../index.html">pulsar v0.5b2 documentation</a> &raquo;</li>
+        <li><a href="../index.html">pulsar v0.5b3 documentation</a> &raquo;</li>
           <li><a href="index.html" accesskey="U">Tutorials &amp; Topics</a> &raquo;</li> 
       </ul>
     </div>  
@@ -65,61 +65,67 @@
             
   <div class="section" id="writing-clients">
 <span id="tutorials-writing-clients"></span><h1>Writing Clients<a class="headerlink" href="#writing-clients" title="Permalink to this headline">¶</a></h1>
-<p>Pulsar provides several classes for writing clients. The first step
-is to sublcass <tt class="xref py py-class docutils literal"><span class="pre">pulsar.ClientProtocolConsumer</span></tt> which is needed
+<p>The code for this example is located in the <a class="reference internal" href="#module-examples.echo.manage" title="examples.echo.manage"><tt class="xref py py-mod docutils literal"><span class="pre">examples.echo.manage</span></tt></a>
+module.</p>
+<span class="target" id="module-examples.echo.manage"></span><p>Pulsar provides several classes for writing clients. The first step
+is to subclass <a class="reference internal" href="../api/protocols.html#pulsar.ProtocolConsumer" title="pulsar.ProtocolConsumer"><tt class="xref py py-class docutils literal"><span class="pre">pulsar.ProtocolConsumer</span></tt></a> which is needed
 for two reasons:</p>
 <ul class="simple">
-<li>It sends the request to the remote server.</li>
+<li>It encodes and sends the request to the remote server.</li>
 <li>It listen (if needed) for incoming data from the remote server.</li>
 </ul>
-<p>The <tt class="xref py py-class docutils literal"><span class="pre">pulsar.ClientProtocolConsumer</span></tt> should called the
-<a class="reference internal" href="../api/protocols.html#pulsar.ProtocolConsumer.finished" title="pulsar.ProtocolConsumer.finished"><tt class="xref py py-class docutils literal"><span class="pre">pulsar.ProtocolConsumer.finished</span></tt></a> method once a complete
-response from the server is received, or, if no responjse is expected, as soon
-as it sends the data to the server.</p>
-<p>This is a simple Client for an echo server:</p>
-<div class="highlight-python"><div class="highlight"><pre><span class="k">class</span> <span class="nc">EchoProtocol</span><span class="p">(</span><span class="n">pulsar</span><span class="o">.</span><span class="n">ClientProtocolConsumer</span><span class="p">):</span>
-    <span class="n">separator</span> <span class="o">=</span> <span class="n">b</span><span class="s">&#39;</span><span class="se">\r\n</span><span class="s">&#39;</span>
-    <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">buffer</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="k">if</span> <span class="ow">not</span> <span class="nb">hasattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s">&#39;_buffer&#39;</span><span class="p">):</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">_buffer</span> <span class="o">=</span> <span class="n">b</span><span class="s">&#39;&#39;</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_buffer</span>
+<p>There are two methods which needs implementing:</p>
+<ul class="simple">
+<li><a class="reference internal" href="../api/protocols.html#pulsar.ProtocolConsumer.start_request" title="pulsar.ProtocolConsumer.start_request"><tt class="xref py py-meth docutils literal"><span class="pre">pulsar.ProtocolConsumer.start_request()</span></tt></a> to kick start a request to a
+remote server.</li>
+<li><a class="reference internal" href="../api/protocols.html#pulsar.Protocol.data_received" title="pulsar.Protocol.data_received"><tt class="xref py py-meth docutils literal"><span class="pre">pulsar.Protocol.data_received()</span></tt></a>, invoked by the
+<a class="reference internal" href="../api/protocols.html#pulsar.Connection" title="pulsar.Connection"><tt class="xref py py-class docutils literal"><span class="pre">pulsar.Connection</span></tt></a> when new data has been received from the
+remote server.</li>
+</ul>
+<p>In this example we implement a very simple Echo server/client pair. Because
+this example has symmetric client and server protocols, the
+<a class="reference internal" href="#examples.echo.manage.EchoProtocol" title="examples.echo.manage.EchoProtocol"><tt class="xref py py-class docutils literal"><span class="pre">EchoProtocol</span></tt></a> will also be used for the server.</p>
+<div class="section" id="echo-protocol">
+<h2>Echo Protocol<a class="headerlink" href="#echo-protocol" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="examples.echo.manage.EchoProtocol">
+<em class="property">class </em><tt class="descclassname">examples.echo.manage.</tt><tt class="descname">EchoProtocol</tt><big>(</big><em>connection=None</em><big>)</big><a class="reference internal" href="../modules/examples/echo/manage.html#EchoProtocol"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#examples.echo.manage.EchoProtocol" title="Permalink to this definition">¶</a></dt>
+<dd><p>Echo protocol consumer for client and servers.</p>
+<dl class="attribute">
+<dt id="examples.echo.manage.EchoProtocol.separator">
+<tt class="descname">separator</tt><a class="headerlink" href="#examples.echo.manage.EchoProtocol.separator" title="Permalink to this definition">¶</a></dt>
+<dd><p>A separator for messages.</p>
+</dd></dl>
 
-    <span class="k">def</span> <span class="nf">feed</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">):</span>
-        <span class="n">idx</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">separator</span><span class="p">)</span>
-        <span class="k">if</span> <span class="n">idx</span><span class="p">:</span> <span class="c"># we have the message</span>
-            <span class="n">data</span><span class="p">,</span> <span class="n">rest</span> <span class="o">=</span> <span class="n">data</span><span class="p">[:</span><span class="n">idx</span><span class="p">],</span> <span class="n">data</span><span class="p">[</span><span class="n">idx</span><span class="o">+</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">separator</span><span class="p">):]</span>
-            <span class="k">if</span> <span class="n">rest</span><span class="p">:</span>
-                <span class="k">raise</span> <span class="n">pulsar</span><span class="o">.</span><span class="n">ProtocolError</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">consumer</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">message</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">buffer</span> <span class="o">+</span> <span class="n">data</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">finished</span><span class="p">()</span> <span class="c"># done with this response</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">buffer</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">buffer</span> <span class="o">+</span> <span class="n">data</span>
+<dl class="method">
+<dt id="examples.echo.manage.EchoProtocol.data_received">
+<tt class="descname">data_received</tt><big>(</big><em>data</em><big>)</big><a class="reference internal" href="../modules/examples/echo/manage.html#EchoProtocol.data_received"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#examples.echo.manage.EchoProtocol.data_received" title="Permalink to this definition">¶</a></dt>
+<dd><p>Implements the <a class="reference internal" href="../api/protocols.html#pulsar.Protocol.data_received" title="pulsar.Protocol.data_received"><tt class="xref py py-meth docutils literal"><span class="pre">pulsar.Protocol.data_received()</span></tt></a> method.
+It simple search for the <a class="reference internal" href="#examples.echo.manage.EchoProtocol.separator" title="examples.echo.manage.EchoProtocol.separator"><tt class="xref py py-attr docutils literal"><span class="pre">separator</span></tt></a> and if found it invokes the
+<a class="reference internal" href="#examples.echo.manage.EchoProtocol.response" title="examples.echo.manage.EchoProtocol.response"><tt class="xref py py-meth docutils literal"><span class="pre">response()</span></tt></a> method with the value of the message.</p>
+</dd></dl>
 
-    <span class="k">def</span> <span class="nf">send</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">):</span>
-        <span class="n">message</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">request</span><span class="o">.</span><span class="n">message</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="s">&#39;utf-8&#39;</span><span class="p">)</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">separator</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">message</span><span class="p">)</span>
+<dl class="method">
+<dt id="examples.echo.manage.EchoProtocol.response">
+<tt class="descname">response</tt><big>(</big><em>data</em><big>)</big><a class="reference internal" href="../modules/examples/echo/manage.html#EchoProtocol.response"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#examples.echo.manage.EchoProtocol.response" title="Permalink to this definition">¶</a></dt>
+<dd><p>Clients store the message in the <strong>result</strong> attribute, while servers
+sends the message back to the client.</p>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="run-the-example">
+<h2>Run The example<a class="headerlink" href="#run-the-example" title="Permalink to this headline">¶</a></h2>
+<p>To run the server:</p>
+<div class="highlight-python"><pre>python manage.py</pre>
+</div>
+<p>Open a new shell, in this directory, launch python and type:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">manage</span> <span class="kn">import</span> <span class="n">Echo</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">p</span> <span class="o">=</span> <span class="n">Echo</span><span class="p">(</span><span class="s">&#39;localhost:8060&#39;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">response</span> <span class="o">=</span> <span class="n">p</span><span class="o">.</span><span class="n">request</span><span class="p">(</span><span class="s">&#39;Hello&#39;</span><span class="p">)</span>
 </pre></div>
 </div>
-<p>The <tt class="docutils literal"><span class="pre">Echo</span></tt> client is built by subclassing <a class="reference internal" href="../api/protocols.html#pulsar.Client" title="pulsar.Client"><tt class="xref py py-class docutils literal"><span class="pre">pulsar.Client</span></tt></a>:</p>
-<div class="highlight-python"><div class="highlight"><pre><span class="k">class</span> <span class="nc">Echo</span><span class="p">(</span><span class="n">pulsar</span><span class="o">.</span><span class="n">Client</span><span class="p">):</span>
-    <span class="n">response_factory</span> <span class="o">=</span> <span class="n">EchoProtocol</span>
-
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">address</span><span class="p">,</span> <span class="o">**</span><span class="n">params</span><span class="p">):</span>
-        <span class="nb">super</span><span class="p">(</span><span class="n">Echo</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="o">**</span><span class="n">params</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">address</span> <span class="o">=</span> <span class="n">address</span>
-
-    <span class="k">def</span> <span class="nf">request</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">message</span><span class="p">,</span> <span class="n">consumer</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
-        <span class="n">request</span> <span class="o">=</span> <span class="n">pulsar</span><span class="o">.</span><span class="n">Request</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">address</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">timeout</span><span class="p">)</span>
-        <span class="n">request</span><span class="o">.</span><span class="n">message</span> <span class="o">=</span> <span class="n">message</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">response</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="n">consumer</span><span class="p">)</span>
-</pre></div>
-</div>
-<p>To send requests:</p>
-<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">echo</span> <span class="o">=</span> <span class="n">Echo</span><span class="p">(</span><span class="s">&#39;localhost:8060&#39;</span><span class="p">)</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">response</span> <span class="o">=</span> <span class="n">echo</span><span class="o">.</span><span class="n">request</span><span class="p">(</span><span class="s">&#39;Hello!&#39;</span><span class="p">)</span>
-</pre></div>
 </div>
 </div>
 
@@ -134,6 +140,15 @@ as it sends the data to the server.</p>
   <img class="logo" width="200" src="../static/pulsar.png" alt="pulsar" title="Pulsar"/>
 </a>
 </p>
+  <h3><a href="../index.html">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">Writing Clients</a><ul>
+<li><a class="reference internal" href="#echo-protocol">Echo Protocol</a></li>
+<li><a class="reference internal" href="#run-the-example">Run The example</a></li>
+</ul>
+</li>
+</ul>
+
   <h4>Previous topic</h4>
   <p class="topless"><a href="wsgi.html"
                         title="previous chapter">WSGI</a></p>
@@ -177,7 +192,7 @@ as it sends the data to the server.</p>
         <li class="right" >
           <a href="wsgi.html" title="WSGI"
              >previous</a> |</li>
-        <li><a href="../index.html">pulsar v0.5b2 documentation</a> &raquo;</li>
+        <li><a href="../index.html">pulsar v0.5b3 documentation</a> &raquo;</li>
           <li><a href="index.html" >Tutorials &amp; Topics</a> &raquo;</li> 
       </ul>
     </div>

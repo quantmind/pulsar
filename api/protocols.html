@@ -6,13 +6,13 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>Protocols API &mdash; pulsar v0.5b2 documentation</title>
+    <title>Protocols API &mdash; pulsar v0.5b3 documentation</title>
     <link rel="stylesheet" href="../static/celery.css" type="text/css" />
     <link rel="stylesheet" href="../static/pygments.css" type="text/css" />
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../',
-        VERSION:     '0.5b2',
+        VERSION:     '0.5b3',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -21,7 +21,7 @@
     <script type="text/javascript" src="../static/jquery.js"></script>
     <script type="text/javascript" src="../static/underscore.js"></script>
     <script type="text/javascript" src="../static/doctools.js"></script>
-    <link rel="top" title="pulsar v0.5b2 documentation" href="../index.html" />
+    <link rel="top" title="pulsar v0.5b3 documentation" href="../index.html" />
     <link rel="up" title="API" href="index.html" />
     <link rel="next" title="Applications API" href="application.html" />
     <link rel="prev" title="Actors API" href="actor.html" /> 
@@ -42,7 +42,7 @@
         <li class="right" >
           <a href="actor.html" title="Actors API"
              accesskey="P">previous</a> |</li>
-        <li><a href="../index.html">pulsar v0.5b2 documentation</a> &raquo;</li>
+        <li><a href="../index.html">pulsar v0.5b3 documentation</a> &raquo;</li>
           <li><a href="index.html" accesskey="U">API</a> &raquo;</li> 
       </ul>
     </div>  
@@ -66,8 +66,8 @@
   <span class="target" id="module-pulsar"></span><div class="section" id="protocols-api">
 <span id="protocol-api"></span><h1>Protocols API<a class="headerlink" href="#protocols-api" title="Permalink to this headline">¶</a></h1>
 <p>This part of the <a class="reference internal" href="index.html#api"><em>pulsar API</em></a> is about classes responsible for
-implementing the Protocol/Transport paradigm as well as the <a class="reference internal" href="#pulsar.Server" title="pulsar.Server"><tt class="xref py py-class docutils literal"><span class="pre">Server</span></tt></a>,
-the base class for all socket servers.</p>
+implementing the Protocol/Transport paradigm as well as <a class="reference internal" href="#pulsar.Server" title="pulsar.Server"><tt class="xref py py-class docutils literal"><span class="pre">Server</span></tt></a> and
+<a class="reference internal" href="#pulsar.Client" title="pulsar.Client"><tt class="xref py py-class docutils literal"><span class="pre">Client</span></tt></a>.</p>
 <div class="section" id="transport">
 <h2>Transport<a class="headerlink" href="#transport" title="Permalink to this headline">¶</a></h2>
 <dl class="class">
@@ -290,13 +290,12 @@ or a client <a class="reference internal" href="#pulsar.Client" title="pulsar.Cl
 <dl class="method">
 <dt id="pulsar.Connection.connection_lost">
 <tt class="descname">connection_lost</tt><big>(</big><em>exc</em><big>)</big><a class="headerlink" href="#pulsar.Connection.connection_lost" title="Permalink to this definition">¶</a></dt>
-<dd><p>Implements the <a class="reference internal" href="#pulsar.Protocol.connection_lost" title="pulsar.Protocol.connection_lost"><tt class="xref py py-class docutils literal"><span class="pre">Protocol.connection_lost</span></tt></a> callback.
-It performs these actions in the following order:
-* Cancel the idle timeout if set
-* Fire the <em>connection_lost</em> <a class="reference internal" href="../tutorials/events.html#one-time-event"><em>one time event</em></a> with <em>exc</em></p>
-<blockquote>
-<div>as event data.</div></blockquote>
+<dd><p>Implements the <a class="reference internal" href="#pulsar.Protocol.connection_lost" title="pulsar.Protocol.connection_lost"><tt class="xref py py-meth docutils literal"><span class="pre">Protocol.connection_lost()</span></tt></a> method. It performs
+these actions in the following order:</p>
 <ul class="simple">
+<li>Cancel the idle timeout if set.</li>
+<li>Fire the <em>connection_lost</em> <a class="reference internal" href="../tutorials/events.html#one-time-event"><em>one time event</em></a> with <em>exc</em>
+as event data.</li>
 <li>Invokes the connection_lost method in the <a class="reference internal" href="#pulsar.Connection.current_consumer" title="pulsar.Connection.current_consumer"><tt class="xref py py-attr docutils literal"><span class="pre">current_consumer</span></tt></a> if
 available.</li>
 </ul>
@@ -729,7 +728,7 @@ sending of data.</p>
         <li class="right" >
           <a href="actor.html" title="Actors API"
              >previous</a> |</li>
-        <li><a href="../index.html">pulsar v0.5b2 documentation</a> &raquo;</li>
+        <li><a href="../index.html">pulsar v0.5b3 documentation</a> &raquo;</li>
           <li><a href="index.html" >API</a> &raquo;</li> 
       </ul>
     </div>

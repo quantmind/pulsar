@@ -7,8 +7,8 @@ Protocols API
 =======================
 
 This part of the :ref:`pulsar API <api>` is about classes responsible for
-implementing the Protocol/Transport paradigm as well as the :class:`Server`,
-the base class for all socket servers.
+implementing the Protocol/Transport paradigm as well as :class:`Server` and
+:class:`Client`.
 
 Transport
 ==========================

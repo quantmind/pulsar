@@ -7,13 +7,13 @@ WSGI
 ========
 
 We assume you are familiar with python Web Standard Gateway Interface (WSGI),
-if not you should read the pep-3333_ first.
+if not you should read pep-3333_ first.
 
 Setting Up
 ================
 
 All pulsar needs to setup a WSGI server is the wsgi callable of your
-application. We start by creationg a script, called ``managed.py``
+application. We start by creating a script, called ``managed.py``
 which will be used to run your server::
 
     from pulsar.apps import wsgi
@@ -46,16 +46,16 @@ enough. To add power, you can run the server using 2 or more process (workers)::
 
     python manage.py --workers 4
  
-Multi-process server are only available for:
+Multi-process servers are only available for:
 
-* Posix system
-* Windows running python 3.2 or above
+* Posix systems.
+* Windows running python 3.2 or above.
 
 
 Serving More than one application
 ====================================
 
-You can server as many application, on different addresses, as you like.
+You can serve as many applications, on different addresses, as you like.
 For example, our ``manage.py`` script could be::
 
     from pulsar import arbiter 

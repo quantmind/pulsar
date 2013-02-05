@@ -6,13 +6,13 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>WSGI &mdash; pulsar v0.5b2 documentation</title>
+    <title>WSGI &mdash; pulsar v0.5b3 documentation</title>
     <link rel="stylesheet" href="../static/celery.css" type="text/css" />
     <link rel="stylesheet" href="../static/pygments.css" type="text/css" />
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../',
-        VERSION:     '0.5b2',
+        VERSION:     '0.5b3',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -21,7 +21,7 @@
     <script type="text/javascript" src="../static/jquery.js"></script>
     <script type="text/javascript" src="../static/underscore.js"></script>
     <script type="text/javascript" src="../static/doctools.js"></script>
-    <link rel="top" title="pulsar v0.5b2 documentation" href="../index.html" />
+    <link rel="top" title="pulsar v0.5b3 documentation" href="../index.html" />
     <link rel="up" title="Tutorials &amp; Topics" href="index.html" />
     <link rel="next" title="Writing Clients" href="clients.html" />
     <link rel="prev" title="Tutorials &amp; Topics" href="index.html" /> 
@@ -42,7 +42,7 @@
         <li class="right" >
           <a href="index.html" title="Tutorials &amp; Topics"
              accesskey="P">previous</a> |</li>
-        <li><a href="../index.html">pulsar v0.5b2 documentation</a> &raquo;</li>
+        <li><a href="../index.html">pulsar v0.5b3 documentation</a> &raquo;</li>
           <li><a href="index.html" accesskey="U">Tutorials &amp; Topics</a> &raquo;</li> 
       </ul>
     </div>  
@@ -66,11 +66,11 @@
   <span class="target" id="module-pulsar"></span><div class="section" id="wsgi">
 <span id="tutorials-wsgi"></span><h1>WSGI<a class="headerlink" href="#wsgi" title="Permalink to this headline">¶</a></h1>
 <p>We assume you are familiar with python Web Standard Gateway Interface (WSGI),
-if not you should read the <a class="reference external" href="http://www.python.org/dev/peps/pep-3333/">pep-3333</a> first.</p>
+if not you should read <a class="reference external" href="http://www.python.org/dev/peps/pep-3333/">pep-3333</a> first.</p>
 <div class="section" id="setting-up">
 <h2>Setting Up<a class="headerlink" href="#setting-up" title="Permalink to this headline">¶</a></h2>
 <p>All pulsar needs to setup a WSGI server is the wsgi callable of your
-application. We start by creationg a script, called <tt class="docutils literal"><span class="pre">managed.py</span></tt>
+application. We start by creating a script, called <tt class="docutils literal"><span class="pre">managed.py</span></tt>
 which will be used to run your server:</p>
 <div class="highlight-python"><div class="highlight"><pre><span class="kn">from</span> <span class="nn">pulsar.apps</span> <span class="kn">import</span> <span class="n">wsgi</span>
 
@@ -96,15 +96,15 @@ request and return control to pulsar as fast as possible.</p>
 enough. To add power, you can run the server using 2 or more process (workers):</p>
 <div class="highlight-python"><pre>python manage.py --workers 4</pre>
 </div>
-<p>Multi-process server are only available for:</p>
+<p>Multi-process servers are only available for:</p>
 <ul class="simple">
-<li>Posix system</li>
-<li>Windows running python 3.2 or above</li>
+<li>Posix systems.</li>
+<li>Windows running python 3.2 or above.</li>
 </ul>
 </div>
 <div class="section" id="serving-more-than-one-application">
 <h2>Serving More than one application<a class="headerlink" href="#serving-more-than-one-application" title="Permalink to this headline">¶</a></h2>
-<p>You can server as many application, on different addresses, as you like.
+<p>You can serve as many applications, on different addresses, as you like.
 For example, our <tt class="docutils literal"><span class="pre">manage.py</span></tt> script could be:</p>
 <div class="highlight-python"><div class="highlight"><pre><span class="kn">from</span> <span class="nn">pulsar</span> <span class="kn">import</span> <span class="n">arbiter</span>
 <span class="kn">from</span> <span class="nn">pulsar.apps</span> <span class="kn">import</span> <span class="n">wsgi</span>
@@ -189,7 +189,7 @@ For example, our <tt class="docutils literal"><span class="pre">manage.py</span>
         <li class="right" >
           <a href="index.html" title="Tutorials &amp; Topics"
              >previous</a> |</li>
-        <li><a href="../index.html">pulsar v0.5b2 documentation</a> &raquo;</li>
+        <li><a href="../index.html">pulsar v0.5b3 documentation</a> &raquo;</li>
           <li><a href="index.html" >Tutorials &amp; Topics</a> &raquo;</li> 
       </ul>
     </div>
