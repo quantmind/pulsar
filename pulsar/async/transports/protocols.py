@@ -313,9 +313,10 @@ It has two :ref:`one time events <one-time-event>`, *connection_made* and
         self._add_idle_timeout()
     
     def connection_lost(self, exc):
-        '''Implements the :class:`Protocol.connection_lost` callback.
-It performs these actions in the following order:
-* Cancel the idle timeout if set
+        '''Implements the :meth:`Protocol.connection_lost` method. It performs
+these actions in the following order:
+
+* Cancel the idle timeout if set.
 * Fire the *connection_lost* :ref:`one time event <one-time-event>` with *exc*
   as event data.
 * Invokes the connection_lost method in the :attr:`current_consumer` if
