@@ -17,7 +17,6 @@ in a single code base.
    tutorials/index
    api/index
    changelog
-   http
    settings
    
 .. Note::
@@ -55,6 +54,7 @@ found in the :mod:`pulsar.apps` module:
    apps/rpc
    apps/tasks
    apps/websockets
+   apps/http
    apps/test
    apps/shell
    

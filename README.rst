@@ -133,7 +133,7 @@ Kudos
 ============
 Pulsar project started as a fork of gunicorn_ (from where the arbiter idea) and has been developed using
 ideas from nodejs_ (api design), twisted_ (the deferred implementation), tornado_ web server
-(the event-loop implementation), celery_ (the task queue application) and
+(the initial event-loop implementation), celery_ (the task queue application) and
 many other open-source efforts.
 
 .. _contributing:

@@ -378,7 +378,7 @@ event loop is the place where most asynchronous operations are carried out.
         
     def call_later(self, seconds, callback, *args):
         """Arrange for a *callback* to be called at a given time in the future.
-Return an :class:`TimedCall` with a :meth:`TimedCall.cancel' method
+Return an :class:`TimedCall` with a :meth:`TimedCall.cancel` method
 that can be used to
 cancel the call. The delay can be an int or float, expressed in
 seconds.  It is always a relative time.
@@ -487,7 +487,7 @@ descriptor.'''
             self._handlers[fd].remove_connector()
     
     def add_signal_handler(self, sig, callback, *args):
-        '''Whenever signal ``sig`` is received, arrange for callback(*args) to
+        '''Whenever signal ``sig`` is received, arrange for `callback(*args)` to
 be called. Returns a :class:`TimedCall` handler which can be used to cancel
 the signal callback.'''
         self._check_signal(sig)

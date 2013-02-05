@@ -1,3 +1,4 @@
+'''HTTP protocol for asynchronous clients.'''
 import platform
 import json
 from copy import copy
@@ -24,6 +25,7 @@ class TooManyRedirects(Exception):
 
 
 class HttpRequest(pulsar.Request):
+    '''A client request for an HTTP resource.'''
     parser_class = HttpParser
     _tunnel_host = None
     _has_proxy = False
@@ -176,16 +178,8 @@ class HttpRequest(pulsar.Request):
         
         
 class HttpResponse(pulsar.ProtocolConsumer):
-    '''Http client request initialised by a call to the
-:class:`HttpClient.request` method.
-
-.. attribute:: client
-
-    The :class:`HttpClient` performing the request
-
-.. attribute:: type
-
-    The scheme of the of the URI requested. One of http, https
+    '''A :class:`pulsar.ProtocolConsumer` for the HTTP client protocol.
+Initialised by a call to the :class:`HttpClient.request` method.
 '''
     _tunnel_host = None
     _has_proxy = False
@@ -327,15 +321,14 @@ class HttpResponse(pulsar.ProtocolConsumer):
     
 
 class HttpClient(pulsar.Client):
-    '''A client for an HTTP/HTTPS server which handles a pool of synchronous
-or asynchronous connections.
+    '''A :class:`pulsar.Client` for an HTTP/HTTPS servers which handles
+a pool of asynchronous :class:`pulsar.Connection`.
 
 .. attribute:: headers
 
-    Default headers for this :class:`HttpClient`. If supplied, it must be an
-    iterable over two-elements tuple.
+    Default headers for this :class:`HttpClient`.
 
-    Default: ``None``.
+    Default: :attr:`DEFAULT_HTTP_HEADERS`.
 
 .. attribute:: cookies
 
@@ -347,10 +340,6 @@ or asynchronous connections.
 
     Default timeout for the connecting sockets. If 0 it is an asynchronous
     client.
-
-.. attribute:: hooks
-
-    Dictionary of event-handling hooks (idea from request_).
 
 .. attribute:: encode_multipart
 

@@ -9,6 +9,7 @@ Ver. 0.5.0
 * Added web chat example.
 * Log WSGI environ on HTTP response errors.
 * Spawning and stopping actors is monitored using a timeout set at 5 seconds.
+* New asynchronous :class:`pulsar.apps.http.HttpClient` with websocket support.
 * **374 regression tests**, **87% coverage**.
 
 Ver. 0.4.4 - 2013-Jan-13

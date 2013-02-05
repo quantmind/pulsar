@@ -4,6 +4,16 @@
 Tools
 ==================
 
+.. automodule:: pulsar.utils.httpurl
+
+HTTP Parser
+~~~~~~~~~~~~~~~~~
+
+.. autoclass:: HttpParser
+   :members:
+   :member-order: bysource
+   
+
 Websocket Frame & Parser
 ==============================
 
