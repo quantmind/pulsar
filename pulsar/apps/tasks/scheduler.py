@@ -1,9 +1,11 @@
 import time
+import logging
 from datetime import timedelta, datetime
 
 from pulsar.utils.httpurl import itervalues, iteritems
 from pulsar.utils.timeutils import remaining, timedelta_seconds,\
                                      humanize_seconds
+from pulsar.utils.importer import import_modules
 
 from .models import registry
 from .exceptions import SchedulingError, TaskNotAvailable
@@ -12,6 +14,8 @@ from .states import PENDING
 
 __all__ = ['Scheduler']
 
+
+LOGGER = logging.getLogger('pulsar.tasks')
 
 EMPTY_TUPLE = ()
 EMPTY_DICT = {}
@@ -114,29 +118,34 @@ class SchedulerEntry(object):
 
 
 class Scheduler(object):
-    """Scheduler for periodic tasks. This class is the main driver of tasks
-and task scheduling.
+    """Scheduler is responsible for creating tasks and put them into
+the distributed :attr:`queue`. It also schedule the run of periodic tasks if
+enabled to do so.
+This class is the main driver of tasks and task scheduling.
 
 .. attribute:: task_class
 
     The :attr:`TaskQueue.task_class` for producing new :class:`Task`.
 
 """
-    def __init__(self, app):
+    def __init__(self, queue, task_class, tasks_path=None, logger=None,
+                 schedule_periodic=False):
+        if tasks_path:
+            import_modules(tasks_path)
+        self.schedule_periodic = schedule_periodic
         self._entries = self.setup_schedule()
         self.next_run = datetime.now()
-        self.task_class = app.task_class
-        self.logger = app.logger
+        self.task_class = task_class
+        self.queue = queue
+        self.logger = logger or LOGGER
 
     @property
     def entries(self):
         return self._entries
 
-    def queue_task(self, monitor, jobname, targs=None, tkwargs=None, **params):
+    def queue_task(self, jobname, targs=None, tkwargs=None, **params):
         '''Create a new :class:`Task` which may or may not queued.
 
-:parameter monitor: the :class:`pulsar.ApplicationMonitor` running the
-    :class:`TaskQueue` application.
 :parameter jobname: the name of a :class:`Job` registered
     with the :class:`TaskQueue` application.
 :parameter targs: optional tuple used for the positional arguments in the
@@ -150,23 +159,25 @@ and task scheduling.
         task = self._make_request(jobname, targs, tkwargs, **params)
         if task.needs_queuing():
             task._queued = True
-            monitor.put(task.serialize_for_queue())
+            self.queue.put(('request', task.serialize_for_queue()))
         else:
             task._queued = False
             self.logger.debug('Task %s already requested, abort.', task)
         return task
 
-    def tick(self, monitor, now=None):
+    def tick(self, now=None):
         '''Run a tick, that is one iteration of the scheduler.
 Executes all due tasks calculate the time in seconds to wait before
 running a new :meth:`tick`. For testing purposes a :class:`datetime.datetime`
 value ``now`` can be passed.'''
+        if not self.schedule_periodic:
+            return
         remaining_times = []
         try:
             for entry in itervalues(self._entries):
                 is_due, next_time_to_run = entry.is_due(now=now)
                 if is_due:
-                    self.queue_task(monitor, entry.name)
+                    self.queue_task(entry.name)
                 if next_time_to_run:
                     remaining_times.append(next_time_to_run)
         except:
@@ -176,6 +187,8 @@ value ``now`` can be passed.'''
             self.next_run += timedelta(seconds = min(remaining_times))
 
     def maybe_schedule(self, s, anchor):
+        if not self.schedule_periodic:
+            return
         if isinstance(s, int):
             s = timedelta(seconds=s)
         if not isinstance(s, timedelta):
@@ -183,6 +196,8 @@ value ``now`` can be passed.'''
         return Schedule(s, anchor)
 
     def setup_schedule(self):
+        if not self.schedule_periodic:
+            return
         entries = {}
         for name, task in registry.filter_types('periodic'):
             schedule = self.maybe_schedule(task.run_every, task.anchor)
@@ -212,6 +227,8 @@ value ``now`` can be passed.'''
             yield (name,d)
 
     def next_scheduled(self, jobnames=None):
+        if not self.schedule_periodic:
+            return
         if jobnames:
             entries = (self._entries.get(name, None) for name in jobnames)
         else:

@@ -99,17 +99,17 @@ class TestTaskQueueOnThread(unittest.TestCase):
     def testCheckNextRun(self):
         app = get_application(self.name_tq())
         scheduler = app.scheduler
-        scheduler.tick(app)
+        scheduler.tick()
         self.assertTrue(scheduler.next_run > datetime.now())
         
     @run_on_arbiter
     def testNotOverlap(self):
         app = get_application(self.name_tq())
         self.assertTrue('notoverlap' in app.registry)
-        r1 = app.scheduler.queue_task(app.monitor, 'notoverlap', (1,), {})
+        r1 = app.scheduler.queue_task('notoverlap', (1,), {})
         self.assertEqual(str(r1), 'notoverlap(%s)' % r1.id)
         self.assertTrue(r1._queued)
-        r2 = app.scheduler.queue_task(app.monitor, 'notoverlap', (1,), {})
+        r2 = app.scheduler.queue_task('notoverlap', (1,), {})
         self.assertFalse(r2._queued)
         id = r1.id
         self.assertEqual(id, r2.id)
@@ -144,7 +144,7 @@ class TestTaskQueueOnThread(unittest.TestCase):
     @run_on_arbiter
     def testDeleteTask(self):
         app = get_application(self.name_tq())
-        r1 = app.scheduler.queue_task(app.monitor, 'addition', (1,4), {})
+        r1 = app.scheduler.queue_task('addition', (1,4), {})
         id = r1.id
         get_task = app.scheduler.get_task
         while get_task(id).status in tasks.UNREADY_STATES:
