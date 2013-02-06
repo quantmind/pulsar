@@ -8,7 +8,7 @@ from pulsar.utils.html import slugify, INLINE_TAGS, tag_attributes, attr_iter,\
                                 csslink, dump_data_value
 from pulsar.utils.httpurl import remove_double_slash, urljoin
 
-__all__ = ['AsyncString', 'Html']
+__all__ = ['AsyncString', 'Html', 'Json']
 
 
 class StreamRenderer(Deferred):
@@ -52,6 +52,7 @@ Users should always call the content method before.'''
 class AsyncString(object):
     '''An asynchronous concatenating string for WSGI servers.'''
     content_type = None
+    encoding = None
     
     def __init__(self, *children):
         self._streamed = False
@@ -124,6 +125,14 @@ This is useful during testing.'''
     def _stream(self, request):
         raise NotImplementedError
             
+
+class Json(AsyncString):
+    '''An :class:`AsyncString` which renders into a json string.'''
+    
+    @property
+    def content_type(self):
+        return 'application/json'
+        
     
 class Html(AsyncString):
     
