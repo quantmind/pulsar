@@ -81,8 +81,8 @@ INSTALLED_APPS = (
     'django.contrib.sites',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'djangotest.testing',
-    'djangotest.pulsard',
+    'djangotest',
+    'djpulsar'
 )
 
 LOGGING = {

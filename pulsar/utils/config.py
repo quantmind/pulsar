@@ -33,7 +33,8 @@ __all__ = ['Config',
            'validate_list',
            'validate_pos_int',
            'validate_pos_float',
-           'make_settings']
+           'make_settings',
+           'make_optparse_options']
 
 class DefaultSettings:
 
@@ -167,12 +168,15 @@ settings via the :meth:`Setting.add_argument`.
         parser.add_argument('--version',
                             action='version',
                             version=self.version)
+        return self.add_to_parser(parser)
+
+    def add_to_parser(self, parser):
         setts = self.settings
         sorter = lambda x: (setts[x].section, setts[x].order)
         for k in sorted(setts, key=sorter):
             setts[k].add_argument(parser)
         return parser
-
+        
     def import_from_module(self, mod=None):
         if mod:
             self.set('config', mod)
@@ -466,6 +470,19 @@ def validate_callable(arity):
         return val
     return _validate_callable
 
+
+def make_optparse_options(apps=None, exclude=None, include=None): # pragma nocover
+    '''Create a tuple of optparse options'''
+    from optparse import make_option
+    class AddOptParser(list):
+        def add_argument(self, *args, **kwargs):
+            self.append(make_option(*args, **kwargs))
+    settings = make_settings(apps=apps, exclude=exclude, include=include)
+    config = Config(settings=settings)
+    parser = AddOptParser()
+    config.add_to_parser(parser)
+    return tuple(parser)
+    
 
 class ConfigFile(Setting):
     name = "config"
