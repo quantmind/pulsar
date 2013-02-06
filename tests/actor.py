@@ -83,6 +83,17 @@ class TestActorThread(ActorTestMixin, unittest.TestCase):
         yield self.async.assertEqual(send(proxy, 'ping'), 'pong')
         yield self.async.assertEqual(send(proxy, 'echo', 'Hello!'), 'Hello!')
         #yield send(proxy, 'run', check_actor, 'pluto')
+        
+    def test_info(self):
+        yield self.spawn(name='pippo')
+        proxy = self.a
+        self.assertEqual(proxy.name, 'pippo')
+        outcome = send(proxy, 'info')
+        yield outcome
+        info = outcome.result
+        self.assertTrue('actor' in info)
+        ainfo = info['actor']
+        self.assertEqual(ainfo['is_process'], self.concurrency=='process')
       
         
 class a:
@@ -105,38 +116,6 @@ class a:
         # lets join the
         proxy_monitor.join(0.5)
         self.assertFalse(proxy_monitor.is_alive())
-        
-    def test_spawn_actor(self):
-        '''Test spawning from actor domain.'''
-        yield self.spawn(name='pippo')
-        proxy = self.a
-        self.assertEqual(proxy.name, 'pippo')
-        # The current actor is linked with the actor just spawned
-        actor = pulsar.get_actor()
-        self.assertEqual(actor.get_actor(proxy.aid), proxy)
-        yield self.async.assertEqual(send(proxy, 'ping'), 'pong')
-        yield self.async.assertEqual(send(proxy, 'echo', 'Hello!'), 'Hello!')
-        yield send(proxy, 'run', check_actor, 'pippo')
-        
-    def testPasswordProtected(self):
-        yield self.spawn(password='bla', name='pluto')
-        proxy = self.a
-        self.assertEqual(proxy.name, 'pluto')
-        yield self.async.assertEqual(send(proxy, 'ping'), 'pong')
-        yield self.async.assertRaises(pulsar.AuthenticationError,
-                                      send(proxy, 'shutdown'))
-        yield self.async.assertEqual(send(proxy, 'auth', 'bla'), True)
-        
-    def testInfo(self):
-        yield self.spawn(name='pippo')
-        proxy = self.a
-        self.assertEqual(proxy.name, 'pippo')
-        outcome = send(proxy, 'info')
-        yield outcome
-        info = outcome.result
-        self.assertTrue('actor' in info)
-        ainfo = info['actor']
-        self.assertEqual(ainfo['is_process'], self.concurrency=='process')
         
     @run_on_arbiter
     def testDodgyActor(self):

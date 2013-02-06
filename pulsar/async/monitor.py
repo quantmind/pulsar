@@ -105,7 +105,7 @@ during its life time.
             return self
         elif aid in self.managed_actors:
             return self.managed_actors[aid]
-        elif self.monitor and aid == self.monitor.aid:
+        elif self.monitor and aid==self.monitor.aid:
             return self.monitor
         
     def active(self):

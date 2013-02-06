@@ -168,9 +168,8 @@ Users access the arbiter (in the arbiter process domain) by the high level api::
                 return self.registered[aid]
             else:    # Finally check in workers in monitors
                 for m in itervalues(self.monitors):
-                    a = m.get_actor(aid)
-                    if a:
-                        return a
+                    if aid in m.managed_actors:
+                        return m.managed_actors[aid]
         else:
             return a
     
