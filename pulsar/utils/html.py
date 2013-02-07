@@ -1,3 +1,4 @@
+'''HTML utilities'''
 import re
 import json
 from unicodedata import normalize
