@@ -59,7 +59,8 @@ class TestRpcOnThread(unittest.TestCase):
         yield response
         self.assertTrue(response.result)
         
-    def testTimeIt(self):
+    def test_time_it(self):
+        '''Ping server 20 times'''
         response = self.p.timeit('ping', 20)
         yield response
         self.assertTrue(response.locked_time > 0)

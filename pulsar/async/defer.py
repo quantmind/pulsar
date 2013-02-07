@@ -575,6 +575,7 @@ occurred.
     def _consume(self, last_result=None):
         # Consume the generator
         self._start = default_timer()
+        self._async_count = 0
         if isinstance(last_result, Failure):
             if self.should_stop(last_result):
                 return self.conclude()
@@ -593,6 +594,9 @@ occurred.
     def _check_async(self, result):
         result = maybe_async(result)
         if is_async(result):
+            if not self._async_count:
+                result.add_both(self._wake_loop)
+            self._async_count += 1
             if self.timeout and default_timer() - self._start > self.timeout:
                 try:
                     raise RuntimeError('Timeout %s seconds!' % self.timeout)
@@ -601,13 +605,17 @@ occurred.
             #self.loop.call_soon_threadsafe(self._check_async, result)
             self.loop.call_soon(self._check_async, result)
         elif result == NOT_DONE:
-            #self.loop.call_soon_threadsafe(self._consume)
             self.loop.call_soon(self._consume)
         else:
             if result == CLEAR_ERRORS:
                 self.errors.clear()
                 result = None
             self._consume(result)
+    
+    def _wake_loop(self, result):
+        # wake loop and return result
+        self.loop.wake()
+        return result
         
     def should_stop(self, failure):
         self.errors.append(failure)
