@@ -6,6 +6,7 @@ from pulsar.utils.httpurl import itervalues, iteritems
 from pulsar.utils.timeutils import remaining, timedelta_seconds,\
                                      humanize_seconds
 from pulsar.utils.importer import import_modules
+from pulsar import Empty
 
 from .models import registry
 from .exceptions import SchedulingError, TaskNotAvailable
@@ -143,6 +144,10 @@ This class is the main driver of tasks and task scheduling.
     def entries(self):
         return self._entries
 
+    def run(self, jobname, *args, **kwargs):
+        '''A shortcut for :meth:`queue_task`.'''
+        return self.queue_task(jobname, args, kwargs)
+    
     def queue_task(self, jobname, targs=None, tkwargs=None, **params):
         '''Create a new :class:`Task` which may or may not queued.
 
@@ -186,6 +191,14 @@ value ``now`` can be passed.'''
         if remaining_times:
             self.next_run += timedelta(seconds = min(remaining_times))
 
+    def flush(self):
+        '''Remove all pending tasks'''
+        try:
+            while True:
+                task = self.queue.get(timeout=0.5)
+        except Empty:
+            pass
+        
     def maybe_schedule(self, s, anchor):
         if not self.schedule_periodic:
             return
@@ -287,7 +300,7 @@ value ``now`` can be passed.'''
             if task:
                 return task.to_queue(self)
             else:
-                if job.name in self.entries:
+                if self.entries and job.name in self.entries:
                     self.entries[job.name].next()
                 time_executed = datetime.now()
                 if expiry is not None:
