@@ -93,7 +93,7 @@ class Socket(SocketType('SocketBase', (), {})):
         # If the socket is not bound, bind it to the address
         if bindto and address:
             self.bind(address)
-        if self._backlog:
+        if self._backlog is not None:
             sock.setblocking(0)
             sock.listen(self._backlog)
     
@@ -157,6 +157,10 @@ class TCPSocket(Socket):
             return '%s:%s' % address
         else:
             return 'tcp:closed'
+        
+    def accept(self):
+        sock, addr = self._sock.accept()
+        return wrap_socket(self.TYPE, sock), addr
         
         
 class TCP6Socket(TCPSocket):

@@ -5,21 +5,40 @@ import time
 
 import pulsar
 from pulsar import platform
+from pulsar.utils.sockets import is_closed
 from pulsar.utils.pep import pickle
 from pulsar.apps.test import unittest, mock
 
 
-class TestSockUtils(unittest.TestCase):
+class TestSocketsUtilities(unittest.TestCase):
     
-    def testClientSocket(self):
-        sock = pulsar.create_client_socket(('', 8080))
-        self.assertFalse(sock.is_server)
-        self.assertTrue(sock.name in (None, ('0.0.0.0', 0)))
-        sock2 = pulsar.create_client_socket('0.0.0.0:8080')
-        self.assertFalse(sock2.is_server)
-        self.assertTrue(sock2.name in (None, ('0.0.0.0', 0)))
+    def test_tcp_server_socket(self):
+        self.assertRaises(RuntimeError, pulsar.create_socket, ':')
+        sock = pulsar.create_socket(':0', bindto=True, backlog=1)
+        self.assertTrue(str(sock)[:8], '0.0.0.0:')
+        self.assertEqual(sock.address[0], '0.0.0.0')
+        self.assertEqual(sock.FAMILY, socket.AF_INET)
+        self.assertFalse(is_closed(sock))
+        _sock = sock._sock
+        sock.close()
+        self.assertTrue(is_closed(_sock))
         
-    def test_get_socket_timeout(self):
+    def test_tcp_client_server_socket(self):
+        listener = pulsar.create_socket(':0', bindto=True, backlog=0)
+        client = pulsar.create_socket(listener.address)
+        client.setblocking(3)
+        client.connect(listener.address)
+        self.assertTrue(client.address)
+        # Get the server socket
+        server, addr = listener.accept()
+        self.assertEqual(addr, client.address)
+        client2 = pulsar.create_socket(listener.address)
+        client2.setblocking(3)
+        client2.connect(listener.address)
+        server2, addr = listener.accept()
+        self.assertEqual(addr, client2.address)
+        
+    def __test_get_socket_timeout(self):
         self.assertEqual(pulsar.get_socket_timeout(None), None)
         self.assertEqual(pulsar.get_socket_timeout(-2.3), None)
         self.assertEqual(pulsar.get_socket_timeout('-1'), None)
@@ -31,7 +50,7 @@ class TestSockUtils(unittest.TestCase):
         self.assertEqual(pulsar.get_socket_timeout(3.2),3.2)
         self.assertEqual(pulsar.get_socket_timeout(5),5)
         
-    def test_socket_pair(self):
+    def __test_socket_pair(self):
         server_connection, client = pulsar.server_client_sockets(blocking=1)
         self.assertEqual(client.write(b'ciao'), 4)
         self.assertEqual(server_connection.recv(), b'ciao')
@@ -43,11 +62,11 @@ class TestSockUtils(unittest.TestCase):
         time.sleep(0.2)
         self.assertEqual(client.write(b'ciao'), 4)
         
-    def test_invalid_address(self):
+    def __test_invalid_address(self):
         self.assertRaises(RuntimeError, pulsar.create_socket,
                           ('jsdchbjscbhd.com', 9000))
         
-    def testRepr(self):
+    def __testRepr(self):
         sock = pulsar.create_client_socket(':0')
         self.assertTrue(repr(sock))
         self.assertTrue(sock.info().startswith('client '))
@@ -55,13 +74,13 @@ class TestSockUtils(unittest.TestCase):
         state = sock.__getstate__()
         self.assertEqual(fd, state['fd'])
         
-    def test_parse_address(self):
+    def __test_parse_address(self):
         a = pulsar.parse_address('bla.com')
         self.assertEqual(a, ('bla.com', 8000))
         self.assertRaises(RuntimeError, pulsar.parse_address, 'bla.com:ciao')
         
     @unittest.skipUnless(platform.has_multiProcessSocket, 'Posix platform only')
-    def testSerialise(self):
+    def __testSerialise(self):
         sock = pulsar.create_socket('127.0.0.1:0')
         v = pickle.dumps(sock)
         sock2 = pickle.loads(v)
@@ -71,7 +90,7 @@ class TestSockUtils(unittest.TestCase):
         self.assertTrue(sock.closed)
         self.assertEqual(sock.write(b'bla'), 0)
         
-    def testWrite(self):
+    def __testWrite(self):
         server = pulsar.create_socket('127.0.0.1:0')
         self.assertEqual(server.accept(), (None, None))
         client = pulsar.create_connection(server.name, blocking=3)
@@ -93,7 +112,7 @@ class TestSockUtils(unittest.TestCase):
         # The socket has shutdown
         self.assertEqual(data, b'')
         
-    def testWriteError(self):
+    def __testWriteError(self):
         server = pulsar.create_socket('127.0.0.1:0')
         client = pulsar.create_connection(server.name, blocking=3)
         client_connection, address = server.accept()
@@ -119,10 +138,10 @@ class UnixSocket(unittest.TestCase):
         if os.path.exists(self.tmpfile):
             os.remove(self.tmpfile)
         
-    def testUnixSocket(self):
-        sock = pulsar.create_socket(self.tmpfile)
+    def __testUnixSocket(self):
+        sock = pulsar.create_socket('unix:%s' % self.tmpfile)
         self.assertEqual(sock.FAMILY, socket.AF_UNIX)
-        self.assertEqual(sock.name, self.tmpfile)
+        self.assertEqual(sock.address, self.tmpfile)
         self.assertEqual(str(sock), 'unix:%s' % self.tmpfile)
         sock.close()
         self.assertFalse(os.path.exists(self.tmpfile))

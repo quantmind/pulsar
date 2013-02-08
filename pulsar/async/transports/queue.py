@@ -10,6 +10,24 @@ from . import protocols
 __all__ = ['QueueServer', 'QueueTransport']
 
 
+class QueueServerProtocol(protocols.ProtocolConsumer):
+    separator = ''
+    def data_received(self, data):
+        # new request from clients
+        idx = data.find(self.separator)
+        if data == 'poll':
+            if self.producer.queue:
+                task = self.producer.queue.popleft()
+                self.write(task)
+            else:
+                self.write(b'')
+        elif data == 'put':
+            # put a new task on the queue
+            self.producer.queue.append(task)
+        else:
+            raise ProtocolError
+            
+        
 class QueueTransport(transport.Transport):
     event_loop = None
     def __init__(self, queue):

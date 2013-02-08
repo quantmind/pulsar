@@ -523,3 +523,37 @@ def handle_wsgi_error(environ, trace=None, content_type=None,
             content = wsgi_error_msg(response, msg)
     response.content = content
     return response
+
+
+def render_trace(environ, response, exc_info):
+    '''Render the traceback into the content type in *response*.'''
+    if exc_info:
+        request = Request(environ)
+        trace = exc_info[2]
+        if istraceback(trace):
+            trace = traceback.format_exception(*exc_info)
+        is_html = response.content_type == 'text/html'
+        if is_html:
+            html = request.html(error=True)
+            #html.title = response.response
+            error = Widget('div', cn='section traceback error')
+            html.body.append(error)
+        else:
+            error = []
+        for traces in trace:
+            counter = 0
+            for trace in traces.split('\n'):
+                if trace.startswith('  '):
+                    counter += 1
+                    trace = trace[2:]
+                if not trace:
+                    continue
+                if is_html:
+                    trace = Widget('p', escape(trace))
+                    if counter:
+                        trace.css({'margin-left':'%spx' % (20*counter)})
+                error.append(trace)
+        if is_html:
+            return html.render(request)
+        else:
+            return wsgi_error_msg(response, '\n'.join(error))

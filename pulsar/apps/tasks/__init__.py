@@ -291,8 +291,10 @@ for implementation.'''
         # Load the application callable, the task consumer
         if self.callable:
             self.callable()
-        import_modules(self.cfg.tasks_path)
-        self.local.scheduler = Scheduler(self)
+        self.local.scheduler = Scheduler(self.local.queue, self.task_class,
+                                         tasks_path=self.cfg.tasks_path,
+                                         logger=self.logger,
+                                         schedule_periodic=True)
         return self
     
     def monitor_task(self, monitor):
@@ -316,7 +318,6 @@ to check if the scheduler needs to perform a new run.'''
 
     # Internals
     def _addtask(self, monitor, caller, jobname, task_extra, ack, args, kwargs):
-        task = self.scheduler.queue_task(monitor, jobname, args, kwargs,
-                                         **task_extra)
+        task = self.scheduler.queue_task(jobname, args, kwargs, **task_extra)
         if ack:
             return task
