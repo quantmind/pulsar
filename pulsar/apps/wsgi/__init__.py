@@ -38,6 +38,7 @@ from .wsgi import *
 from .server import *
 from .middleware import *
 from .route import *
+from .router import *
 from .content import *
 from .media import *
 

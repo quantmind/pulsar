@@ -8,13 +8,14 @@ from .pep import to_string, iteritems, is_string, string_type
 
 NOTHING = ('', None)
 INLINE_TAGS = set(('input', 'meta', 'hr'))
-DEFAULT_HTML_ATTRIBUTES = ('id', 'title', 'dir', 'style')
+DEFAULT_HTML_ATTRIBUTES = ('id', 'title')
 HTML_ATTRIBUTES = {}
 
 e = lambda *t: DEFAULT_HTML_ATTRIBUTES + t
 
 HTML_ATTRIBUTES['a'] = e('href', 'name', 'target')
 HTML_ATTRIBUTES['meta'] = e('name', 'charset', 'content')
+HTML_ATTRIBUTES['th'] = e('colspan', 'headers', 'rowspan', 'scope')
 
 
 csslink = namedtuple('cssentry', 'link condition')
