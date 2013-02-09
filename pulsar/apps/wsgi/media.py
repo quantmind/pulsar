@@ -7,7 +7,7 @@ from email.utils import parsedate_tz, mktime_tz
 from pulsar.utils.httpurl import http_date, CacheControl, remove_double_slash
 from pulsar import Http404, PermissionDenied
 
-from .wsgi import Router
+from .router import Router
 from .content import Html
 
 __all__ = ['MediaRouter']

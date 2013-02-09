@@ -3,7 +3,7 @@ import io
 import logging
 from inspect import istraceback
 
-from pulsar import is_failure, CLEAR_ERRORS, make_async, get_actor, async
+from pulsar import is_failure, CLEAR_ERRORS, make_async, get_actor, async, as_failure
 from pulsar.utils.pep import pickle
 
 
@@ -193,6 +193,7 @@ Run a *test* function using the following algorithm
             runner.addSuccess(test)
 
     def add_failure(self, test, runner, failure):
+        failure = as_failure(failure)
         if is_failure(failure):
             for trace in failure:
                 e = trace[1]

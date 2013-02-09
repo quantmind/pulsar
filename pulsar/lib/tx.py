@@ -1,19 +1,43 @@
-'''Pulsar & twisted utilities'''
+'''Pulsar & twisted utilities, very much alpha.'''
 import twisted
 from twisted.internet.main import installReactor
 from twisted.internet.posixbase import PosixReactorBase
 from twisted.internet.defer import Deferred
+from twisted.python.failure import Failure
 
+from pulsar.async.defer import default_is_async, default_is_failure, set_async
 from pulsar.utils.pep import get_event_loop
 
 
-def wrap_deferred(d):
-    if isinstance(d, Deferred) and not hasattr(d, 'add_both'):
-        # twisted likes camels
-        d.add_both = d.addBoth
-        d.add_callback = d.addCallback
-        d.add_errback = d.addErrback
-    return d
+def result_or_self(self):
+    return self.result if self.called and not self.callbacks else self
+    
+def is_async(obj):
+    if not default_is_async(obj):
+        if isinstance(obj, Deferred):
+            if not hasattr(obj, 'add_both'):
+                # twisted likes camels
+                obj.add_both = obj.addBoth
+                obj.add_callback = obj.addCallback
+                obj.add_errback = obj.addErrback
+                obj.result_or_self = lambda : result_or_self(obj)
+            return True
+    else:
+        return True
+    return False
+
+def is_failure(e):
+    if not default_is_failure(e):
+        if isinstance(e, Failure):
+            #TODO, make it compatible with pulsar
+            return True
+    else:
+        return True
+    return False
+        
+
+# Set the new async discovery functions
+set_async(is_async, is_failure)
 
 
 class PulsarReactor(PosixReactorBase):
@@ -42,11 +66,9 @@ class PulsarReactor(PosixReactorBase):
         get_event_loop().remove_all()
         
     def run(self, installSignalHandlers=True):
-        get_event_loop().call_soon_threadsafe(self.startRunning)
-        
-    def startRunning(self, *args):
         self._started = True
         self._stopped = False
+        return self
     
     
-installReactor(PulsarReactor())
+installReactor(PulsarReactor().run())

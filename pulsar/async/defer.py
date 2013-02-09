@@ -24,6 +24,7 @@ __all__ = ['Deferred',
            'is_failure',
            'log_failure',
            'is_async',
+           'set_async',
            'maybe_async',
            'make_async',
            'safe_async',
@@ -78,7 +79,7 @@ def is_stack_trace(trace):
                  (trace[2] is None and isinstance(trace[1],trace[0]))
     return False
 
-def is_failure(value):
+def default_is_failure(value):
     return isinstance(value, Failure)
 
 def as_failure(value, msg=None):
@@ -95,8 +96,8 @@ exception, otherwise returns *value*.'''
     else:
         return value
 
-def is_async(obj):
-    '''Check if *obj* is an asynchronous instance'''
+def default_is_async(obj):
+    '''Check if *obj* is an asynchronous instance.'''
     return isinstance(obj, Deferred)
 
 def maybe_async(val, description=None, max_errors=None):
@@ -172,6 +173,21 @@ def log_failure(failure):
         failure.log()
     return failure
 
+def is_async(obj):
+    return _is_async(obj)
+
+def is_failure(obj):
+    return _is_failure(obj)
+
+
+_is_async = default_is_async
+_is_failure = default_is_failure
+
+def set_async(is_async_callable, is_failure_callable):
+    global _is_async, _is_failure
+    _is_async = is_async_callable
+    _is_failure = is_failure_callable
+    
 ############################################################### DECORATORS
 class async:
     '''A decorator class which transforms a function into

@@ -54,6 +54,11 @@ class HttpParser(pulsar.Setting):
         Specify `python` if you wich to use the pure python implementation
         """
 
+class WsgiFactory(object):
+    
+    def __call__(self):
+        raise NotImplementedError
+
 
 class WSGIServer(SocketServer):
     cfg_apps = ('socket',)
@@ -62,4 +67,7 @@ class WSGIServer(SocketServer):
     def protocol_consumer(self):
         '''Build a :class:`WsgiHandler` for the WSGI callable provided
 and return an :class:`HttpResponse` factory function.'''
-        return partial(HttpServerResponse, self.callable)
+        callable = self.callable
+        if isinstance(callable, WsgiFactory):
+            callable = callable()
+        return partial(HttpServerResponse, callable)
