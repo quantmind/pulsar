@@ -27,7 +27,7 @@ based on the current request. If the reqi=uest headers are not ready it returns
 nothing."""
     version = parser.get_version()
     input = BytesIO()
-    for b in parser.get_body():
+    for b in parser.recv_body():
         input.write(b)
     input.seek(0)
     prot = parser.get_protocol()

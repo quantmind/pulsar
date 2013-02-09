@@ -721,9 +721,6 @@ OTHER DEALINGS IN THE SOFTWARE.'''
     def get_protocol(self):
         return self._server_protocol
 
-    def get_body(self):
-        return self._body
-
     def recv_body(self):
         """ return last chunk of the parsed body"""
         body = b''.join(self._body)

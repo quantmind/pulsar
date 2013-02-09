@@ -1,16 +1,16 @@
-'''An Socket implementation of a distributed queue.
-'''
+'''An HTTP message queue implementation.'''
 from collections import deque
 
 import pulsar
 from pulsar import get_actor, send
+from pulsar.apps.http import HttpClient
 from pulsar.apps import wsgi, ws
 
 
 class QueueManager(object):
     '''The :class:`QueueManager` is responsible for the actual queue in the
-queue server. It is a callable object which create server protocol
-instances.'''
+queue server. It is a wsgi callable object which add itself to the WSGI environ
+so that workers can poll data from it.'''
     protocol_factory = None
     
     def put(self, message):
@@ -81,7 +81,7 @@ def poll_queue_message(request):
     return queue.poll()
 
 
-class QueueList(QueueManager):
+class PulsarQueue(QueueManager):
     '''A :class:`QueueManager` implementation which keeps waiting workers
 into a deque.'''
     def __init__(self, name):
@@ -108,11 +108,12 @@ into a deque.'''
             self._pollers.append(client)
     
     
-def queue_server(name='message_queue', queue_middleware=None,
-                  queue_manager=None, **kwargs):
+def server(name='message_queue', queue_middleware=None,
+            queue_manager=None, **kwargs):
     if queue_manager is None:
-        queue_manager = QueueList(name)
+        queue_manager = PulsarQueue(name)
     if queue_middleware is None:
-        queue_middleware = QueueMiddleware
-    middleware = [queue_manager, queue_middleware(), QueueSocket('/messages')]
+        queue_middleware = QueueMiddleware('/')
+    websocket = ws.WebSocket('/messages', QueueSocket)
+    middleware = [queue_manager, websocket, queue_middleware]
     return wsgi.WSGIServer(callable=middleware, name=name, **kwargs)

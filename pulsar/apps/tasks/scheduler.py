@@ -1,4 +1,5 @@
 import time
+import logging
 from datetime import timedelta, datetime
 
 from pulsar.utils.httpurl import itervalues, iteritems

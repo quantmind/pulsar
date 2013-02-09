@@ -60,7 +60,7 @@ from . import extensions
 WEBSOCKET_GUID = '258EAFA5-E914-47DA-95CA-C5AB0DC85B11'
 
 
-class GeneralWebSocket(object):
+class GeneralWebSocket(wsgi.Router):
     '''A websocket middleware.
     
 .. attribute:: frame_parser
@@ -70,21 +70,24 @@ class GeneralWebSocket(object):
     namespace = ''
     frame_parser = FrameParser
     
-    def __init__(self, handle, frame_parser=None):
+    def __init__(self, route, handle, frame_parser=None, **kwargs):
+        super(GeneralWebSocket, self).__init__(route, **kwargs)
         self.handle = handle
         if frame_parser:
             self.frame_parser = frame_parser
-
+        
     def get_client(self):
         return self.handle(self)
     
-    def __call__(self, environ, start_response):
-        if self.handle.match(environ):
-            headers, parser = self.handle_handshake(environ, start_response)
-            response = wsgi.WsgiResponse(101, (b'',), response_headers=headers)
-            upgrade = environ['pulsar.connection'].upgrade
-            upgrade(partial(WebSocketProtocol, self.handle, environ, parser))
-            return response(environ, start_response)
+    def get(self, request):
+        headers, parser = self.handle_handshake(environ, start_response)
+        request.response.status_code = 101
+        request.response.content = b''
+        request.response.headers.update(headers)
+        upgrade = request.environ['pulsar.connection'].upgrade
+        upgrade(partial(WebSocketProtocol, self.handle,
+                        request.environ, parser))
+        return request.response.start()
     
     def handle_handshake(self, environ, start_response):
         '''handle the websocket handshake. Must return a list of HTTP
@@ -208,10 +211,7 @@ back to the client::
         def on_close(self, environ):
             print("WebSocket closed")
             
-'''
-    def match(self, environ):
-        pass
-    
+'''    
     def on_handshake(self, environ, headers):
         """Invoked just before sending the upgraded **headers** to the
 client. This is a chance to add or remove header's entries."""
@@ -230,8 +230,8 @@ client. This is a chance to add or remove header's entries."""
     def on_close(self, environ):
         """Invoked when the WebSocket is closed."""
         pass
-    
-    
+ 
+        
 class WebSocketProtocol(pulsar.ProtocolConsumer):
     
     def __init__(self, handler, environ, parser, connection):

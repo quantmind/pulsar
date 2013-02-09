@@ -83,7 +83,6 @@ def run_setup(with_cext):
         params['cmdclass']['install_data'] = osx_install_data
     else:
         params['cmdclass']['install_data'] = install_data
-    
     params.update({'name': package_fullname,
                    'version': mod.__version__,
                    'author': mod.__author__,
@@ -104,7 +103,8 @@ def status_msgs(*msgs):
     print('*' * 75)
     
 try:
-    run_setup(True)
+    #run_setup(True)
+    run_setup(False)
 except BuildFailed as exc:
     status_msgs(
             exc.msg,

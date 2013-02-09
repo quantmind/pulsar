@@ -1,12 +1,9 @@
 '''Test twisted integration'''
-import socket
-
 import pulsar
 from pulsar import is_failure, is_async
 from pulsar.utils.pep import to_bytes, to_string
 from pulsar.utils.security import gen_unique_id
-from pulsar.apps.socket import SocketServer
-from pulsar.apps.test import unittest, run_on_arbiter, dont_run_with_thread
+from pulsar.apps.test import unittest, dont_run_with_thread
 
 from examples.echo.manage import server, EchoProtocol
 
@@ -59,7 +56,7 @@ try:
         point = TCP4ClientEndpoint(reactor, *address)
         return point.connect(EchoClientFactory())
     
-except:
+except ImportError:
     twisted = None
         
     
