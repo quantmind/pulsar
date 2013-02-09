@@ -11,7 +11,7 @@ from pulsar.apps.test import unittest, run_on_arbiter, dont_run_with_thread
 from examples.echo.manage import server, EchoProtocol
 
 try:
-    # This must import must be done before twisted
+    # This import must be done before importing twisted
     from pulsar.lib.tx import twisted
     from twisted.internet.protocol import Factory, Protocol
     from twisted.internet.defer import Deferred
