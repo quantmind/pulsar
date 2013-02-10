@@ -5,7 +5,7 @@ from copy import copy
 
 import pulsar
 from pulsar import create_transport, multi_async
-from pulsar.utils.pep import native_str, is_string
+from pulsar.utils.pep import native_str, is_string, to_bytes
 from pulsar.utils.structures import mapping_iterator
 from pulsar.utils.websocket import FrameParser
 from pulsar.utils.httpurl import urlparse, urljoin, DEFAULT_CHARSET,\

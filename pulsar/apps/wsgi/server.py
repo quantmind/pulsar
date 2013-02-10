@@ -7,7 +7,7 @@ from io import BytesIO
 
 import pulsar
 from pulsar import lib, HttpException
-from pulsar.utils.pep import is_string, to_bytes
+from pulsar.utils.pep import is_string, to_bytes, native_str
 from pulsar.utils.httpurl import Headers, unquote, has_empty_content,\
                                     host_and_port_default, mapping_iterator,\
                                     Headers, REDIRECT_CODES
@@ -26,11 +26,8 @@ def wsgi_environ(response, parser):
 based on the current request. If the reqi=uest headers are not ready it returns
 nothing."""
     version = parser.get_version()
-    input = BytesIO()
-    for b in parser.recv_body():
-        input.write(b)
-    input.seek(0)
-    prot = parser.get_protocol()
+    input = BytesIO(parser.recv_body())
+    prot = "HTTP/%s" % ".".join(('%s' % v for v in version))
     environ = {
         "wsgi.input": input,
         "wsgi.errors": sys.stderr,
@@ -40,7 +37,7 @@ nothing."""
         'wsgi.multithread': False,
         'wsgi.multiprocess':False,
         "SERVER_SOFTWARE": pulsar.SERVER_SOFTWARE,
-        "REQUEST_METHOD": parser.get_method(),
+        "REQUEST_METHOD": native_str(parser.get_method()),
         "QUERY_STRING": parser.get_query_string(),
         "RAW_URI": parser.get_url(),
         "SERVER_PROTOCOL": prot,
@@ -253,13 +250,12 @@ invocation of the application.
         # TODO: is this the best way to do it?
         environ['pulsar.connection'] = self.connection
         exc_info = None
-        wsgi_iterable = None
+        wsgi_iter = None
         while True:
             try:
                 if exc_info is None:
-                    wsgi_iterable = self.wsgi_callable(environ,
-                                                       self.start_response)
-                    iterable = wsgi_iterable
+                    wsgi_iter = self.wsgi_callable(environ, self.start_response)
+                    iterable = wsgi_iter
                 for b in iterable:
                     head = self.send_headers(force=b)
                     if head is not None:
@@ -307,8 +303,8 @@ invocation of the application.
         # is to support resource release by the application. This protocol is
         # intended to complement PEP 342's generator support, and other common
         # iterables with close() methods.)
-        if hasattr(wsgi_iterable, 'close'):
-            wsgi_iterable.close()
+        if hasattr(wsgi_iter, 'close'):
+            wsgi_iter.close()
         if not keep_alive:
             self.connection.close()
         self.finished()

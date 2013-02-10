@@ -1,4 +1,4 @@
-'''A chat application using redis pubsub
+'''A websocket chat application.
 To run the server type::
 
     python manage.py
@@ -70,9 +70,6 @@ class Rpc(rpc.PulsarServerCommands):
     
     
 class Chat(ws.WS):
-    
-    def match(self, environ):
-        return environ.get('PATH_INFO') in ('/message',)
         
     def on_open(self, environ):
         # Add pulsar.connection environ extension to the set of active clients
@@ -103,7 +100,7 @@ def page(environ, start_response):
 
 
 def server(**kwargs):
-    chat = ws.WebSocket(Chat())
+    chat = ws.WebSocket('/message', Chat())
     api = rpc.RpcMiddleware(Rpc(), path='/rpc')
     middleware = wsgi.WsgiHandler(middleware=(chat, api, page))
     return wsgi.WSGIServer(name='webchat', callable=middleware, **kwargs)

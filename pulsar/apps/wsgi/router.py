@@ -3,6 +3,7 @@ from inspect import isfunction
 from pulsar import HttpException
 
 from .route import Route
+from .wsgi import WsgiRequest
 
 __all__ = ['Router', 'route']
 

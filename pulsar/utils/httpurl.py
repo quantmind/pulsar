@@ -668,7 +668,6 @@ OTHER DEALINGS IN THE SOFTWARE.'''
         self._buf = []
         self._version = None
         self._method = None
-        self._server_protocol = None
         self._status_code = None
         self._status = None
         self._reason = None
@@ -717,9 +716,6 @@ OTHER DEALINGS IN THE SOFTWARE.'''
 
     def get_headers(self):
         return self._headers
-
-    def get_protocol(self):
-        return self._server_protocol
 
     def recv_body(self):
         """ return last chunk of the parsed body"""
@@ -867,7 +863,6 @@ OTHER DEALINGS IN THE SOFTWARE.'''
         self._path = parts.path or ""
         self._query_string = parts.query or ""
         self._fragment = parts.fragment or ""
-        self._server_protocol = bits[2]
         # Version
         match = VERSION_RE.match(bits[2])
         if match is None:

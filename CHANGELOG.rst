@@ -10,6 +10,7 @@ Ver. 0.5.0
 * Log WSGI environ on HTTP response errors.
 * Spawning and stopping actors is monitored using a timeout set at 5 seconds.
 * New asynchronous :class:`pulsar.apps.http.HttpClient` with websocket support.
+* Support http-parser_ for faster http protocol parsing.
 * **374 regression tests**, **87% coverage**.
 
 Ver. 0.4.4 - 2013-Jan-13
@@ -143,3 +144,4 @@ Ver. 0.1.0 - 2011-Aug-24
 .. _pypy: http://pypy.org/
 .. _pep-3156: http://www.python.org/dev/peps/pep-3156/
 .. _twisted: http://twistedmatrix.com/
+.. _http-parser: https://github.com/benoitc/http-parser

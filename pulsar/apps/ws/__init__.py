@@ -80,7 +80,7 @@ class GeneralWebSocket(wsgi.Router):
         return self.handle(self)
     
     def get(self, request):
-        headers, parser = self.handle_handshake(environ, start_response)
+        headers, parser = self.handle_handshake(request.environ)
         request.response.status_code = 101
         request.response.content = b''
         request.response.headers.update(headers)
@@ -89,7 +89,7 @@ class GeneralWebSocket(wsgi.Router):
                         request.environ, parser))
         return request.response.start()
     
-    def handle_handshake(self, environ, start_response):
+    def handle_handshake(self, environ):
         '''handle the websocket handshake. Must return a list of HTTP
 headers to send back to the client.'''
         raise NotImplementedError
@@ -119,7 +119,7 @@ a valid :class:`WebSocket` middleware initialise as follow::
 See http://tools.ietf.org/html/rfc6455 for the websocket server protocol and
 http://www.w3.org/TR/websockets/ for details on the JavaScript interface.
     """        
-    def handle_handshake(self, environ, start_response):
+    def handle_handshake(self, environ):
         connections = environ.get("HTTP_CONNECTION", '').lower()\
                                     .replace(' ','').split(',')
         if environ.get("HTTP_UPGRADE", '').lower() != "websocket" or \
