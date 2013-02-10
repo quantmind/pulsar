@@ -38,6 +38,11 @@ and optional logging.
         self.worker = worker
         self.job = job
         self.task = task
+        
+    @property
+    def scheduler(self):
+        return self.worker.app.scheduler
+    
 
 
 class Task(object):

@@ -179,7 +179,7 @@ from datetime import datetime
 
 import pulsar
 from pulsar import to_string, safe_async
-from pulsar.utils.importer import import_modules, module_attribute
+from pulsar.utils.importer import module_attribute
 
 from .exceptions import *
 from .task import *
@@ -225,7 +225,9 @@ class CPUboundServer(pulsar.Application):
     def get_ioqueue(self):
         '''Return the distributed task queue which produces tasks to
 be consumed by the workers.'''
-        return self.cfg.task_queue_factory()
+        if self.local.ioqueue is None:
+            self.local.ioqueue = self.cfg.task_queue_factory()
+        return self.local.ioqueue
 
     def request_instance(self, worker, fd, request):
         return request
@@ -335,14 +337,17 @@ to check if the scheduler needs to perform a new run.'''
         s = self.scheduler
         if s:
             if s.next_run <= datetime.now():
-                s.tick(monitor)
+                s.tick()
 
     def handler(self):
         # Load the application callable, the task consumer
         if self.callable:
             self.callable()
-        import_modules(self.cfg.tasks_path)
-        self.local.scheduler = Scheduler(self)
+        self.local.scheduler = Scheduler(self.get_ioqueue(),
+                                         self.task_class,
+                                         self.cfg.tasks_path,
+                                         logger=self.logger,
+                                         schedule_periodic=True)
         return self
 
     def monitor_handler(self):
@@ -358,7 +363,6 @@ to check if the scheduler needs to perform a new run.'''
 
     # Internals
     def _addtask(self, monitor, caller, jobname, task_extra, ack, args, kwargs):
-        task = self.scheduler.queue_task(monitor, jobname, args, kwargs,
-                                         **task_extra)
+        task = self.scheduler.queue_task(jobname, args, kwargs, **task_extra)
         if ack:
             return task
