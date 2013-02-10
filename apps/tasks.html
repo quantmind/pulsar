@@ -6,13 +6,13 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>Distributed Task Queues &mdash; pulsar v0.5b3 documentation</title>
+    <title>Distributed Task Queues &mdash; pulsar v0.5b4 documentation</title>
     <link rel="stylesheet" href="../static/celery.css" type="text/css" />
     <link rel="stylesheet" href="../static/pygments.css" type="text/css" />
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../',
-        VERSION:     '0.5b3',
+        VERSION:     '0.5b4',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -21,7 +21,7 @@
     <script type="text/javascript" src="../static/jquery.js"></script>
     <script type="text/javascript" src="../static/underscore.js"></script>
     <script type="text/javascript" src="../static/doctools.js"></script>
-    <link rel="top" title="pulsar v0.5b3 documentation" href="../index.html" />
+    <link rel="top" title="pulsar v0.5b4 documentation" href="../index.html" />
     <link rel="next" title="WebSockets" href="websockets.html" />
     <link rel="prev" title="JSON-RPC" href="rpc.html" /> 
   </head>
@@ -41,7 +41,7 @@
         <li class="right" >
           <a href="rpc.html" title="JSON-RPC"
              accesskey="P">previous</a> |</li>
-        <li><a href="../index.html">pulsar v0.5b3 documentation</a> &raquo;</li> 
+        <li><a href="../index.html">pulsar v0.5b4 documentation</a> &raquo;</li> 
       </ul>
     </div>  
 
@@ -764,7 +764,7 @@ a dictionary. By default it returns an empty dictionary.</p>
 <h3>Scheduler<a class="headerlink" href="#scheduler" title="Permalink to this headline">¶</a></h3>
 <dl class="class">
 <dt id="pulsar.apps.tasks.Scheduler">
-<em class="property">class </em><tt class="descclassname">pulsar.apps.tasks.</tt><tt class="descname">Scheduler</tt><big>(</big><em>app</em><big>)</big><a class="headerlink" href="#pulsar.apps.tasks.Scheduler" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><tt class="descclassname">pulsar.apps.tasks.</tt><tt class="descname">Scheduler</tt><big>(</big><em>queue</em>, <em>task_class</em>, <em>tasks_path=None</em>, <em>logger=None</em>, <em>schedule_periodic=False</em><big>)</big><a class="headerlink" href="#pulsar.apps.tasks.Scheduler" title="Permalink to this definition">¶</a></dt>
 <dd><p>Scheduler for periodic tasks. This class is the main driver of tasks
 and task scheduling.</p>
 <dl class="attribute">
@@ -775,15 +775,13 @@ and task scheduling.</p>
 
 <dl class="method">
 <dt id="pulsar.apps.tasks.Scheduler.queue_task">
-<tt class="descname">queue_task</tt><big>(</big><em>monitor</em>, <em>jobname</em>, <em>targs=None</em>, <em>tkwargs=None</em>, <em>**params</em><big>)</big><a class="headerlink" href="#pulsar.apps.tasks.Scheduler.queue_task" title="Permalink to this definition">¶</a></dt>
+<tt class="descname">queue_task</tt><big>(</big><em>jobname</em>, <em>targs=None</em>, <em>tkwargs=None</em>, <em>**params</em><big>)</big><a class="headerlink" href="#pulsar.apps.tasks.Scheduler.queue_task" title="Permalink to this definition">¶</a></dt>
 <dd><p>Create a new <a class="reference internal" href="#pulsar.apps.tasks.Task" title="pulsar.apps.tasks.Task"><tt class="xref py py-class docutils literal"><span class="pre">Task</span></tt></a> which may or may not queued.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
-<li><strong>monitor</strong> &#8211; the <tt class="xref py py-class docutils literal"><span class="pre">pulsar.ApplicationMonitor</span></tt> running the
-<a class="reference internal" href="#pulsar.apps.tasks.TaskQueue" title="pulsar.apps.tasks.TaskQueue"><tt class="xref py py-class docutils literal"><span class="pre">TaskQueue</span></tt></a> application.</li>
 <li><strong>jobname</strong> &#8211; the name of a <a class="reference internal" href="#pulsar.apps.tasks.Job" title="pulsar.apps.tasks.Job"><tt class="xref py py-class docutils literal"><span class="pre">Job</span></tt></a> registered
 with the <a class="reference internal" href="#pulsar.apps.tasks.TaskQueue" title="pulsar.apps.tasks.TaskQueue"><tt class="xref py py-class docutils literal"><span class="pre">TaskQueue</span></tt></a> application.</li>
 <li><strong>targs</strong> &#8211; optional tuple used for the positional arguments in the
@@ -804,7 +802,7 @@ constructor (not its callable function).</li>
 
 <dl class="method">
 <dt id="pulsar.apps.tasks.Scheduler.tick">
-<tt class="descname">tick</tt><big>(</big><em>monitor</em>, <em>now=None</em><big>)</big><a class="headerlink" href="#pulsar.apps.tasks.Scheduler.tick" title="Permalink to this definition">¶</a></dt>
+<tt class="descname">tick</tt><big>(</big><em>now=None</em><big>)</big><a class="headerlink" href="#pulsar.apps.tasks.Scheduler.tick" title="Permalink to this definition">¶</a></dt>
 <dd><p>Run a tick, that is one iteration of the scheduler.
 Executes all due tasks calculate the time in seconds to wait before
 running a new <a class="reference internal" href="#pulsar.apps.tasks.Scheduler.tick" title="pulsar.apps.tasks.Scheduler.tick"><tt class="xref py py-meth docutils literal"><span class="pre">tick()</span></tt></a>. For testing purposes a <tt class="xref py py-class docutils literal"><span class="pre">datetime.datetime</span></tt>
@@ -982,7 +980,7 @@ same as above.</li>
         <li class="right" >
           <a href="rpc.html" title="JSON-RPC"
              >previous</a> |</li>
-        <li><a href="../index.html">pulsar v0.5b3 documentation</a> &raquo;</li> 
+        <li><a href="../index.html">pulsar v0.5b4 documentation</a> &raquo;</li> 
       </ul>
     </div>
 

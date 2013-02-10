@@ -6,13 +6,13 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>Overview &mdash; pulsar v0.5b3 documentation</title>
+    <title>Overview &mdash; pulsar v0.5b4 documentation</title>
     <link rel="stylesheet" href="static/celery.css" type="text/css" />
     <link rel="stylesheet" href="static/pygments.css" type="text/css" />
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '',
-        VERSION:     '0.5b3',
+        VERSION:     '0.5b4',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -21,7 +21,7 @@
     <script type="text/javascript" src="static/jquery.js"></script>
     <script type="text/javascript" src="static/underscore.js"></script>
     <script type="text/javascript" src="static/doctools.js"></script>
-    <link rel="top" title="pulsar v0.5b3 documentation" href="index.html" />
+    <link rel="top" title="pulsar v0.5b4 documentation" href="index.html" />
     <link rel="next" title="Design" href="design.html" />
     <link rel="prev" title="Pulsar" href="index.html" /> 
   </head>
@@ -41,7 +41,7 @@
         <li class="right" >
           <a href="index.html" title="Pulsar"
              accesskey="P">previous</a> |</li>
-        <li><a href="index.html">pulsar v0.5b3 documentation</a> &raquo;</li> 
+        <li><a href="index.html">pulsar v0.5b4 documentation</a> &raquo;</li> 
       </ul>
     </div>  
 
@@ -79,7 +79,8 @@ activities in different threads and/or processes.</p>
 </tr>
 <tr class="field"><th class="field-name">Source:</th><td class="field-body"><a class="reference external" href="https://github.com/quantmind/pulsar">https://github.com/quantmind/pulsar</a></td>
 </tr>
-<tr class="field"><th class="field-name">Keywords:</th><td class="field-body">server, asynchronous, concurrency, actor, thread, process, socket, task queue, wsgi</td>
+<tr class="field"><th class="field-name">Keywords:</th><td class="field-body">server, asynchronous, concurrency, actor, thread, process, socket,
+task queue, wsgi, websocket</td>
 </tr>
 </tbody>
 </table>
@@ -164,9 +165,10 @@ of them as a pool of actors.</p>
 </div>
 <div class="section" id="add-ons">
 <h2>Add-ons<a class="headerlink" href="#add-ons" title="Permalink to this headline">¶</a></h2>
-<p>Pulsar checks if some additional libraries are available, either
-during installation or at runtime, and uses them to add new functionalities.</p>
+<p>Pulsar checks if some additional libraries are available at runtime, and
+uses them to add additional functionalities.</p>
 <ul class="simple">
+<li><a class="reference external" href="https://github.com/benoitc/http-parser">http-parser</a>: upgrade the HTTP parser to a faster C version.</li>
 <li><a class="reference external" href="http://code.google.com/p/py-setproctitle/">setproctitle</a>: if installed, pulsar can use it to change the processes names of
 the running application.</li>
 <li><a class="reference external" href="http://code.google.com/p/psutil/">psutil</a>: if installed, a <tt class="docutils literal"><span class="pre">system</span></tt> key is available in the dictionary returned by
@@ -282,7 +284,7 @@ file in the top distribution directory for the full license text.</p>
         <li class="right" >
           <a href="index.html" title="Pulsar"
              >previous</a> |</li>
-        <li><a href="index.html">pulsar v0.5b3 documentation</a> &raquo;</li> 
+        <li><a href="index.html">pulsar v0.5b4 documentation</a> &raquo;</li> 
       </ul>
     </div>
 

@@ -6,13 +6,13 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>Changelog &mdash; pulsar v0.5b3 documentation</title>
+    <title>Changelog &mdash; pulsar v0.5b4 documentation</title>
     <link rel="stylesheet" href="static/celery.css" type="text/css" />
     <link rel="stylesheet" href="static/pygments.css" type="text/css" />
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '',
-        VERSION:     '0.5b3',
+        VERSION:     '0.5b4',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -21,7 +21,7 @@
     <script type="text/javascript" src="static/jquery.js"></script>
     <script type="text/javascript" src="static/underscore.js"></script>
     <script type="text/javascript" src="static/doctools.js"></script>
-    <link rel="top" title="pulsar v0.5b3 documentation" href="index.html" />
+    <link rel="top" title="pulsar v0.5b4 documentation" href="index.html" />
     <link rel="next" title="Settings" href="settings.html" />
     <link rel="prev" title="Tools" href="api/utilities.html" /> 
   </head>
@@ -41,7 +41,7 @@
         <li class="right" >
           <a href="api/utilities.html" title="Tools"
              accesskey="P">previous</a> |</li>
-        <li><a href="index.html">pulsar v0.5b3 documentation</a> &raquo;</li> 
+        <li><a href="index.html">pulsar v0.5b4 documentation</a> &raquo;</li> 
       </ul>
     </div>  
 
@@ -63,11 +63,10 @@
             
   <div class="section" id="changelog">
 <span id="id1"></span><h1>Changelog<a class="headerlink" href="#changelog" title="Permalink to this headline">¶</a></h1>
-<div class="section" id="ver-0-5-0">
-<h2>Ver. 0.5.0<a class="headerlink" href="#ver-0-5-0" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="ver-0-5-0-development">
+<h2>Ver. 0.5.0 - DEVELOPMENT<a class="headerlink" href="#ver-0-5-0-development" title="Permalink to this headline">¶</a></h2>
 <ul class="simple">
 <li><a class="reference external" href="http://www.python.org/dev/peps/pep-3156/">pep-3156</a> implementation with considerable amount of internal refactoring.</li>
-<li>Initial <a class="reference external" href="http://twistedmatrix.com/">twisted</a> integration.</li>
 <li><tt class="xref py py-class docutils literal"><span class="pre">Actor</span></tt> internal message passing uses the (unmasked) websocket protocol
 in a bidirectional communication between the <tt class="xref py py-class docutils literal"><span class="pre">Arbiter</span></tt> and actors.</li>
 <li><tt class="xref py py-class docutils literal"><span class="pre">CPUboundApplication</span></tt> created as base class for CPU bound applications.</li>
@@ -76,6 +75,25 @@ in a bidirectional communication between the <tt class="xref py py-class docutil
 <li>Log WSGI environ on HTTP response errors.</li>
 <li>Spawning and stopping actors is monitored using a timeout set at 5 seconds.</li>
 <li>New asynchronous <a class="reference internal" href="apps/http.html#pulsar.apps.http.HttpClient" title="pulsar.apps.http.HttpClient"><tt class="xref py py-class docutils literal"><span class="pre">pulsar.apps.http.HttpClient</span></tt></a> with websocket support.</li>
+<li>Support <a class="reference external" href="https://github.com/benoitc/http-parser">http-parser</a> for faster http protocol parsing.</li>
+<li>Initial <a class="reference internal" href="tutorials/twisted.html#tutorials-twisted"><em>twisted integration</em></a>.</li>
+<li><strong>374 regression tests</strong>, <strong>87% coverage</strong>.</li>
+</ul>
+</div>
+<div class="section" id="ver-0-4-6-2013-feb-8">
+<h2>Ver. 0.4.6 - 2013-Feb-8<a class="headerlink" href="#ver-0-4-6-2013-feb-8" title="Permalink to this headline">¶</a></h2>
+<ul class="simple">
+<li>Added websocket chat example.</li>
+<li>Fixed bug in wsgi parser.</li>
+<li>Several bug-fixes in tasks application.</li>
+<li><strong>374 regression tests</strong>, <strong>87% coverage</strong>.</li>
+</ul>
+</div>
+<div class="section" id="ver-0-4-5-2013-jan-27">
+<h2>Ver. 0.4.5 - 2013-Jan-27<a class="headerlink" href="#ver-0-4-5-2013-jan-27" title="Permalink to this headline">¶</a></h2>
+<ul class="simple">
+<li>Refactored <a class="reference internal" href="apps/rpc.html#pulsar.apps.rpc.JsonProxy" title="pulsar.apps.rpc.JsonProxy"><tt class="xref py py-class docutils literal"><span class="pre">pulsar.apps.rpc.JsonProxy</span></tt></a> class.</li>
+<li>Websocket does not support any extensions by default.</li>
 <li><strong>374 regression tests</strong>, <strong>87% coverage</strong>.</li>
 </ul>
 </div>
@@ -239,7 +257,9 @@ asynchronous test suite and asynchronous shell.</li>
   <h3><a href="index.html">Table Of Contents</a></h3>
   <ul>
 <li><a class="reference internal" href="#">Changelog</a><ul>
-<li><a class="reference internal" href="#ver-0-5-0">Ver. 0.5.0</a></li>
+<li><a class="reference internal" href="#ver-0-5-0-development">Ver. 0.5.0 - DEVELOPMENT</a></li>
+<li><a class="reference internal" href="#ver-0-4-6-2013-feb-8">Ver. 0.4.6 - 2013-Feb-8</a></li>
+<li><a class="reference internal" href="#ver-0-4-5-2013-jan-27">Ver. 0.4.5 - 2013-Jan-27</a></li>
 <li><a class="reference internal" href="#ver-0-4-4-2013-jan-13">Ver. 0.4.4 - 2013-Jan-13</a></li>
 <li><a class="reference internal" href="#ver-0-4-3-2012-dec-28">Ver. 0.4.3 - 2012-Dec-28</a></li>
 <li><a class="reference internal" href="#ver-0-4-2-2012-dec-12">Ver. 0.4.2 - 2012-Dec-12</a></li>
@@ -296,7 +316,7 @@ asynchronous test suite and asynchronous shell.</li>
         <li class="right" >
           <a href="api/utilities.html" title="Tools"
              >previous</a> |</li>
-        <li><a href="index.html">pulsar v0.5b3 documentation</a> &raquo;</li> 
+        <li><a href="index.html">pulsar v0.5b4 documentation</a> &raquo;</li> 
       </ul>
     </div>
 

@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>Overview: module code &mdash; pulsar v0.5b4 documentation</title>
+    <title>Twisted Integration &mdash; pulsar v0.5b4 documentation</title>
     <link rel="stylesheet" href="../static/celery.css" type="text/css" />
     <link rel="stylesheet" href="../static/pygments.css" type="text/css" />
     <script type="text/javascript">
@@ -21,7 +21,10 @@
     <script type="text/javascript" src="../static/jquery.js"></script>
     <script type="text/javascript" src="../static/underscore.js"></script>
     <script type="text/javascript" src="../static/doctools.js"></script>
-    <link rel="top" title="pulsar v0.5b4 documentation" href="../index.html" /> 
+    <link rel="top" title="pulsar v0.5b4 documentation" href="../index.html" />
+    <link rel="up" title="Tutorials &amp; Topics" href="index.html" />
+    <link rel="next" title="API" href="../api/index.html" />
+    <link rel="prev" title="Signal Handling" href="signal.html" /> 
   </head>
   <body>
     <div class="related">
@@ -33,7 +36,14 @@
         <li class="right" >
           <a href="../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li><a href="../index.html">pulsar v0.5b4 documentation</a> &raquo;</li> 
+        <li class="right" >
+          <a href="../api/index.html" title="API"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="signal.html" title="Signal Handling"
+             accesskey="P">previous</a> |</li>
+        <li><a href="../index.html">pulsar v0.5b4 documentation</a> &raquo;</li>
+          <li><a href="index.html" accesskey="U">Tutorials &amp; Topics</a> &raquo;</li> 
       </ul>
     </div>  
 
@@ -53,25 +63,14 @@
         <div class="bodywrapper">
           <div class="body">
             
-  <h1>All modules for which code is available</h1>
-<ul><li><a href="examples/echo/manage.html">examples.echo.manage</a></li>
-<li><a href="examples/life/manage.html">examples.life.manage</a></li>
-<li><a href="examples/proxyserver/manage.html">examples.proxyserver.manage</a></li>
-<li><a href="pulsar.html">pulsar</a></li>
-<ul><li><a href="pulsar/apps.html">pulsar.apps</a></li>
-<ul><li><a href="pulsar/apps/http.html">pulsar.apps.http</a></li>
-<li><a href="pulsar/apps/rpc.html">pulsar.apps.rpc</a></li>
-<li><a href="pulsar/apps/socket.html">pulsar.apps.socket</a></li>
-<li><a href="pulsar/apps/tasks.html">pulsar.apps.tasks</a></li>
-<li><a href="pulsar/apps/test.html">pulsar.apps.test</a></li>
-<li><a href="pulsar/apps/ws.html">pulsar.apps.ws</a></li>
-<li><a href="pulsar/apps/wsgi.html">pulsar.apps.wsgi</a></li>
-</ul><li><a href="pulsar/utils/config.html">pulsar.utils.config</a></li>
-<li><a href="pulsar/utils/httpurl.html">pulsar.utils.httpurl</a></li>
-<li><a href="pulsar/utils/system.html">pulsar.utils.system</a></li>
-<li><a href="pulsar/utils/tools.html">pulsar.utils.tools</a></li>
-<li><a href="pulsar/utils/websocket.html">pulsar.utils.websocket</a></li>
-</ul></ul>
+  <div class="section" id="module-pulsar.lib.tx">
+<span id="twisted-integration"></span><span id="tutorials-twisted"></span><h1>Twisted Integration<a class="headerlink" href="#module-pulsar.lib.tx" title="Permalink to this headline">¶</a></h1>
+<p>Pulsar concurrent framework and applications can be used with <a class="reference external" href="http://twistedmatrix.com/">twisted</a>, an
+event driven network engine for python. Twisted has implementation
+for several protocols which can be used in pulsar by importing the
+<a class="reference internal" href="#module-pulsar.lib.tx" title="pulsar.lib.tx"><tt class="xref py py-mod docutils literal"><span class="pre">pulsar.lib.tx</span></tt></a> module.</p>
+</div>
+
 
           </div>
         </div>
@@ -83,6 +82,17 @@
   <img class="logo" width="200" src="../static/pulsar.png" alt="pulsar" title="Pulsar"/>
 </a>
 </p>
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="signal.html"
+                        title="previous chapter">Signal Handling</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="../api/index.html"
+                        title="next chapter">API</a></p>
+  <h3>This Page</h3>
+  <ul class="this-page-menu">
+    <li><a href="../sources/tutorials/twisted.txt"
+           rel="nofollow">Show Source</a></li>
+  </ul>
 <div id="searchbox" style="display: none">
   <h3>Quick search</h3>
     <form class="search" action="../search.html" method="get">
@@ -109,7 +119,14 @@
         <li class="right" >
           <a href="../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li><a href="../index.html">pulsar v0.5b4 documentation</a> &raquo;</li> 
+        <li class="right" >
+          <a href="../api/index.html" title="API"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="signal.html" title="Signal Handling"
+             >previous</a> |</li>
+        <li><a href="../index.html">pulsar v0.5b4 documentation</a> &raquo;</li>
+          <li><a href="index.html" >Tutorials &amp; Topics</a> &raquo;</li> 
       </ul>
     </div>
 
