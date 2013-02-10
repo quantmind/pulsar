@@ -6,7 +6,7 @@ from wsgiref.handlers import format_date_time
 from io import BytesIO
 
 import pulsar
-from pulsar import lib, HttpException
+from pulsar import lib, HttpException, ProtocolError
 from pulsar.utils.pep import is_string, to_bytes, native_str
 from pulsar.utils.httpurl import Headers, unquote, has_empty_content,\
                                     host_and_port_default, mapping_iterator,\

@@ -262,14 +262,17 @@ class Failure(object):
     def append(self, trace):
         '''Add new failure to self.'''
         if trace:
-            if isinstance(trace, Failure):
-                self.traces.extend(trace.traces)
+            if is_failure(trace):
+                self.traces.extend(trace.get_traces())
             elif isinstance(trace, Exception):
                 self.traces.append(sys.exc_info())
             elif is_stack_trace(trace):
                 self.traces.append(trace)
         return self
 
+    def get_traces(self):
+        return self.traces
+    
     def clear(self):
         self.traces = []
 
@@ -592,7 +595,7 @@ occurred.
         # Consume the generator
         self._start = default_timer()
         self._async_count = 0
-        if isinstance(last_result, Failure):
+        if is_failure(last_result):
             if self.should_stop(last_result):
                 return self.conclude()
         try:

@@ -22,7 +22,7 @@ from pulsar.utils.pep import to_string, range
 from pulsar.utils.jsontools import DefaultJSONEncoder, DefaultJSONHook
 from pulsar.apps.http import HttpClient
 
-from .handlers import RpcHandler, RpcRequest
+from .handlers import RpcHandler
 from .exceptions import exception, INTERNAL_ERROR, REQUIRES_AUTHENTICATION
 
 __all__ = ['JSONRPC', 'JsonProxy', 'LocalJsonProxy']

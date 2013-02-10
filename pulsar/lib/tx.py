@@ -1,4 +1,11 @@
-'''Pulsar & twisted utilities, very much alpha.'''
+'''
+Pulsar concurrent framework and applications can be used with twisted_, an
+event driven network engine for python. Twisted has implementation
+for several protocols which can be used in pulsar by importing the
+:mod:`pulsar.lib.tx` module.
+
+.. _twisted: http://twistedmatrix.com/
+'''
 import twisted
 from twisted.internet.main import installReactor
 from twisted.internet.posixbase import PosixReactorBase
@@ -30,6 +37,8 @@ def is_failure(e):
     if not default_is_failure(e):
         if isinstance(e, Failure):
             #TODO, make it compatible with pulsar
+            if not hasattr(e, 'get_traces'):
+                e.get_traces = lambda : get_traces(e)
             return True
     else:
         return True

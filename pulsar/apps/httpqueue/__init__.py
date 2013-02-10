@@ -1,9 +1,11 @@
 '''An HTTP message queue implementation.'''
 from collections import deque
+from functools import partial
 
 import pulsar
 from pulsar import get_actor, send
 from pulsar.apps.http import HttpClient
+from pulsar.apps.wsgi import async_wsgi
 from pulsar.apps import wsgi, ws
 
 
@@ -35,11 +37,14 @@ class QueueMiddleware(wsgi.Router):
     def post(self, request):
         '''Add a new task to the queue.'''
         data = request.environ['wsgi.input'].read()
-        queue = environ['queue.manager']
-        queue.put(data)
+        result = request.environ['queue.manager'].put(data)
+        return async_wsgi(request, result, self._post)
+            
+    def _post(self, request, size):
         request.response.status_code = 200
         request.response.content_type = 'text/plain'
-        request.response.content = '%s' % queue.size()
+        request.response.content = '%s' % size
+        return request.response.start()
         
 
 class QueueSocket(ws.WS):
@@ -76,9 +81,11 @@ class QueueClient(object):
 ## Queue Manager pulsar implementation
 @pulsar.command()
 def poll_queue_message(request):
-    caller = request.caller
-    queue = get_queue()
-    return queue.poll()
+    return request.actor.app.queue_manager.poll(actor=request.actor)
+
+@pulsar.command()
+def put_queue_message(request, msg):
+    return request.actor.app.queue_manager.put(msg, actor=request.actor)
 
 
 class PulsarQueue(QueueManager):
@@ -89,23 +96,24 @@ into a deque.'''
         self._pollers = deque()
         self._queue = deque()
         
-    def poll(self, client):
+    def poll(self, client=None, actor=None):
         '''Call by a client when it needs to poll data from the queue.'''
-        send(self._name, 'poll_message').add_callback(
-                                        partial(self._send_data, client))
+        if actor:
+            if self._queue:
+                return self._queue.popleft()
+        else:
+            send(self._name, 'poll_queue_message').add_callback(
+                                            partial(self._send_data, client))
         
-    def put(self, data):
-        self._queue.append(data)
-        self._send_data()
+    def put(self, msg, actor=None):
+        if actor:
+            self._queue.append(msg)
+            return self.size()
+        else:
+            return send(self._name, 'put_queue_message', msg)
         
     def size(self):
         return len(self._queue)
-        
-    def _send_data(self, client, data):
-        if data is not None:
-            client.write(data)
-        else:
-            self._pollers.append(client)
     
     
 def server(name='message_queue', queue_middleware=None,
@@ -115,5 +123,6 @@ def server(name='message_queue', queue_middleware=None,
     if queue_middleware is None:
         queue_middleware = QueueMiddleware('/')
     websocket = ws.WebSocket('/messages', QueueSocket)
-    middleware = [queue_manager, websocket, queue_middleware]
-    return wsgi.WSGIServer(callable=middleware, name=name, **kwargs)
+    middleware = wsgi.WsgiHandler([queue_manager, websocket, queue_middleware])
+    return wsgi.WSGIServer(callable=middleware, name=name,
+                           queue_manager=queue_manager, **kwargs)

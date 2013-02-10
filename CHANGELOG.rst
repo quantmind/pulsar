@@ -1,7 +1,6 @@
 Ver. 0.5.0
 ==============================
 * pep-3156_ implementation with considerable amount of internal refactoring.
-* Initial twisted_ integration.
 * :class:`Actor` internal message passing uses the (unmasked) websocket protocol
   in a bidirectional communication between the :class:`Arbiter` and actors.
 * :class:`CPUboundApplication` created as base class for CPU bound applications.
@@ -11,6 +10,20 @@ Ver. 0.5.0
 * Spawning and stopping actors is monitored using a timeout set at 5 seconds.
 * New asynchronous :class:`pulsar.apps.http.HttpClient` with websocket support.
 * Support http-parser_ for faster http protocol parsing.
+* Initial :ref:`twisted integration <tutorials-twisted>`.
+* **374 regression tests**, **87% coverage**.
+
+Ver. 0.4.6 - 2013-Feb-8
+==============================
+* Added websocket chat example.
+* Fixed bug in wsgi parser.
+* Several bug-fixes in tasks application.
+* **374 regression tests**, **87% coverage**.
+
+Ver. 0.4.5 - 2013-Jan-27
+==============================
+* Refactored :class:`pulsar.apps.rpc.JsonProxy` class.
+* Websocket does not support any extensions by default.
 * **374 regression tests**, **87% coverage**.
 
 Ver. 0.4.4 - 2013-Jan-13
@@ -143,5 +156,4 @@ Ver. 0.1.0 - 2011-Aug-24
 .. _psutil: http://code.google.com/p/psutil/
 .. _pypy: http://pypy.org/
 .. _pep-3156: http://www.python.org/dev/peps/pep-3156/
-.. _twisted: http://twistedmatrix.com/
 .. _http-parser: https://github.com/benoitc/http-parser

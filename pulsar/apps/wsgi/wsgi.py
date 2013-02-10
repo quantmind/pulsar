@@ -10,7 +10,7 @@ from functools import partial, reduce
 from email.utils import formatdate
 
 import pulsar
-from pulsar import is_failure, HttpException
+from pulsar import is_failure, HttpException, maybe_async, is_async
 from pulsar.utils.multipart import parse_form_data
 from pulsar.utils.httpurl import Headers, SimpleCookie, responses,\
                                  has_empty_content, string_type, ispy3k,\
@@ -25,9 +25,9 @@ from .content import HtmlDocument
 __all__ = ['WsgiHandler',
            'WsgiResponse',
            'WsgiRequest',
-           'WsgiResponseGenerator',
            'handle_wsgi_error',
-           'wsgi_error_msg']
+           'wsgi_error_msg',
+           'async_wsgi']
 
 
 LOGGER = logging.getLogger('pulsar.wsgi')
@@ -39,6 +39,15 @@ def wsgi_iterator(gen, encoding):
             yield data
         else:
             yield data.encode(encoding)
+
+
+def async_wsgi(request, result, callback):
+    result = maybe_async(result)
+    while is_async(result):
+        yield b''
+        result = maybe_async(result)
+    for b in callback(request, result):
+        yield b
                     
                     
 def cookie_date(epoch_seconds=None):
@@ -85,26 +94,9 @@ def set_cookie(cookies, key, value='', max_age=None, expires=None, path='/',
         cookies[key]['secure'] = True
     if httponly:
         cookies[key]['httponly'] = True
-        
-
-class WsgiResponseGenerator(object):
-
-    def __init__(self, environ, start_response):
-        self.environ = environ
-        self.start_response = start_response
-        self.middleware = []
-
-    def __iter__(self):
-        raise NotImplementedError()
-
-    def start(self, response):
-        '''Start the response generator'''
-        response.middleware.extend(self.middleware)
-        for b in response(self.environ, self.start_response):
-            yield b
 
 
-class WsgiResponse(WsgiResponseGenerator):
+class WsgiResponse(object):
     '''A WSGI response wrapper initialized by a WSGI request middleware.
 Instances are callable using the standard WSGI call::
 
@@ -136,7 +128,9 @@ client.
     def __init__(self, status=None, content=None, response_headers=None,
                  content_type=None, encoding=None, environ=None,
                  start_response=None):
-        super(WsgiResponse, self).__init__(environ, start_response)
+        self.environ = environ
+        self.start_response = start_response
+        self.middleware = []
         self.status_code = status or self.DEFAULT_STATUS_CODE
         self.encoding = encoding
         self.cookies = SimpleCookie()
@@ -280,13 +274,13 @@ This is usually `True` if a generator is passed to the response object."""
 class WsgiRequest(object):
     slots = ('environ',)
     
-    def __init__(self, environ, start_response, urlargs):
+    def __init__(self, environ, start_response, urlargs=None):
         self.environ = environ
         if 'pulsar.cache' not in environ:
             environ['pulsar.cache'] = {}
             self.cache['response'] = WsgiResponse(environ=environ,
                                                   start_response=start_response)
-        self.cache['urlargs'] = urlargs 
+        self.cache['urlargs'] = urlargs
     
     @property
     def cache(self):

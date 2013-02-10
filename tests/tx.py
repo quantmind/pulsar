@@ -28,9 +28,9 @@ try:
             self.connected = True
             
         def send_message(self, msg):
-            id = gen_unique_id()[:8]
+            id = to_bytes(gen_unique_id()[:8])
             self.requests[id] = Deferred()
-            self.transport.write(to_bytes(id) + to_bytes(msg) + self.separator)
+            self.transport.write(id + to_bytes(msg) + self.separator)
             return self.requests[id]
             
         def dataReceived(self, data):

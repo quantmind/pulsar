@@ -7,7 +7,7 @@ from pulsar import log_failure, is_async, is_failure,\
 from pulsar.utils.pep import to_bytes
 from pulsar.utils.tools import checkarity
 from pulsar.utils.structures import AttributeDictionary
-from pulsar.apps.wsgi import WsgiResponse, WsgiResponseGenerator
+from pulsar.apps.wsgi import WsgiResponse, WsgiRequest
 
 from .decorators import rpcerror, wrap_object_call
 from .exceptions import *
@@ -16,25 +16,6 @@ from .exceptions import *
 __all__ = ['RpcHandler', 'RpcMiddleware']
 
 LOGGER = logging.getLogger('pulsar.rpc')
-
-
-class RpcRequest:
-
-    def __init__(self, environ):
-        self.environ = environ
-
-    def __repr__(self):
-        return self.rpc.method
-    __str__ = __repr__
-
-    def __getattr__(self, name):
-        return self.environ.get(name)
-
-    def __getitem__(self, name):
-        return self.environ[name]
-    
-    def __setitem__(self, name, value):
-        self.environ[name] = value
 
 
 class RPC:
@@ -61,44 +42,6 @@ class RPC:
             else:
                 raise
     
-
-class ResponseGenerator(WsgiResponseGenerator):
-    '''Asynchronous response generator invoked by the djpcms WSGI middleware'''
-    def __init__(self, request, start_response):
-        self.request = request
-        super(ResponseGenerator, self).__init__(request.environ, start_response)
-
-    def __iter__(self):
-        request = self.request
-        rpc = request['rpc']
-        status_code = 200
-        try:
-            result = rpc.process(request)
-        except Exception as e:
-            result = as_failure(e)
-        handler = rpc.handler
-        result = maybe_async(result)
-        while is_async(result):
-            yield b''
-            result = maybe_async(result)
-        try:
-            if is_failure(result):
-                e = result.trace[1]
-                status_code = getattr(e, 'status', 400)
-                log_failure(result)
-                result = handler.dumps(rpc.id, rpc.version, error=e)
-            else:
-                result = handler.dumps(rpc.id, rpc.version, result=result)
-        except Exception as e:
-            LOGGER.error('Could not serialize', exc_info=True)
-            status_code = 500
-            result = handler.dumps(rpc.id, rpc.version, error=e)
-        content = to_bytes(result)
-        response = WsgiResponse(status_code, content,
-                                content_type=handler.content_type)
-        for c in self.start(response):
-            yield c
-
 
 class MetaRpcHandler(type):
     '''A metaclass for rpc handlers.
@@ -285,7 +228,7 @@ class RpcMiddleware(object):
     A class which is used to wrap the WSGI *environ* dictionary. Must have
     a dictionary-like interface.
 '''
-    request_class = RpcRequest
+    request_class = WsgiRequest
 
     def __init__(self, handler, path=None, request_class=None):
         if request_class:
@@ -305,6 +248,7 @@ class RpcMiddleware(object):
 
     def __call__(self, environ, start_response):
         '''The WSGI handler which consume the remote procedure call'''
+        request = self.request_class(environ, start_response)
         path = environ['PATH_INFO'] or '/'
         if path == self.path:
             method = environ['REQUEST_METHOD'].lower()
@@ -315,6 +259,33 @@ class RpcMiddleware(object):
             hnd = self.handler
             method, args, kwargs, id, version = hnd.get_method_and_args(data)
             hnd.request(environ, method, args, kwargs, id, version)
-            request = self.request_class(environ)
-            return ResponseGenerator(request, start_response)
-
+            rpc = environ['rpc']
+            status_code = 200
+            try:
+                result = rpc.process(request)
+            except Exception as e:
+                result = as_failure(e)
+            handler = rpc.handler
+            result = maybe_async(result)
+            while is_async(result):
+                yield b''
+                result = maybe_async(result)
+            try:
+                if is_failure(result):
+                    e = result.trace[1]
+                    status_code = getattr(e, 'status', 400)
+                    log_failure(result)
+                    result = handler.dumps(rpc.id, rpc.version, error=e)
+                else:
+                    result = handler.dumps(rpc.id, rpc.version, result=result)
+            except Exception as e:
+                LOGGER.error('Could not serialize', exc_info=True)
+                status_code = 500
+                result = handler.dumps(rpc.id, rpc.version, error=e)
+            response = request.response
+            response.status_code = status_code
+            response.content = result
+            response.content_type = handler.content_type
+            for c in response.start():
+                yield c
+                

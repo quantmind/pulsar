@@ -264,7 +264,7 @@ class WebSocketProtocol(pulsar.ProtocolConsumer):
         if frame is None:
             return
         elif is_async(frame):
-            return result.add_callback(self.write, self.close)
+            return frame.add_callback(self.write, self.close)
         elif not isinstance(frame, Frame):
             frame = self.parser.encode(frame)
             self.transport.write(frame.msg)

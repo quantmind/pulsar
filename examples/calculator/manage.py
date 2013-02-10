@@ -52,8 +52,7 @@ def randompaths(request, num_paths=1, size=250, mu=0, sigma=1):
 class RequestCheck:
     
     def __call__(self, request, name):
-        assert(str(request)==name)
-        assert(request.user==None)
+        assert(request.environ['rpc'].method==name)
         return True
 
 
