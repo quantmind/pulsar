@@ -4,7 +4,7 @@ from distutils.core import setup
 from distutils.command.install_data import install_data
 from distutils.command.install import INSTALL_SCHEMES
 
-from lib.setup import libparams, BuildFailed
+#from lib.setup import libparams, BuildFailed
 
 package_name  = 'pulsar'
 package_fullname = package_name
@@ -103,22 +103,25 @@ def status_msgs(*msgs):
         print(msg)
     print('*' * 75)
     
-try:
-    run_setup(True)
-except BuildFailed as exc:
-    status_msgs(
-            exc.msg,
+run_setup(False)
+
+def _():
+    try:
+        run_setup(True)
+    except BuildFailed as exc:
+        status_msgs(
+                exc.msg,
+                "WARNING: The C extension could not be compiled, " +
+                    "speedups are not enabled.",
+                "Failure information, if any, is above.",
+                "Retrying the build without the C extension now."
+            )
+    
+        run_setup(False)
+    
+        status_msgs(
             "WARNING: The C extension could not be compiled, " +
                 "speedups are not enabled.",
-            "Failure information, if any, is above.",
-            "Retrying the build without the C extension now."
+            "Plain-Python build succeeded."
         )
-
-    run_setup(False)
-
-    status_msgs(
-        "WARNING: The C extension could not be compiled, " +
-            "speedups are not enabled.",
-        "Plain-Python build succeeded."
-    )
-
+    

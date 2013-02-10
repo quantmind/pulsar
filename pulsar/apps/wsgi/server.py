@@ -9,7 +9,7 @@ from io import BytesIO
 import pulsar
 from pulsar import lib, make_async, is_async, AsyncSocketServer, Deferred,\
                    AsyncConnection, AsyncResponse, HttpException
-from pulsar.utils.httpurl import Headers, is_string, unquote,\
+from pulsar.utils.httpurl import Headers, is_string, unquote, native_str,\
                                     has_empty_content, to_bytes,\
                                     host_and_port_default, mapping_iterator,\
                                     Headers, REDIRECT_CODES
@@ -38,7 +38,7 @@ nothing."""
         "wsgi.run_once": True,
         "wsgi.url_scheme": protocol,
         "SERVER_SOFTWARE": pulsar.SERVER_SOFTWARE,
-        "REQUEST_METHOD": parser.get_method(),
+        "REQUEST_METHOD": native_str(parser.get_method()),
         "QUERY_STRING": parser.get_query_string(),
         "RAW_URI": parser.get_url(),
         "SERVER_PROTOCOL": protocol,

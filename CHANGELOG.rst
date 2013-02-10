@@ -1,6 +1,8 @@
-Master
+Ver. 0.4.6 - 2013-Feb-27
 ==============================
 * Added websocket chat example.
+* Fixed bug in wsgi parser.
+* **374 regression tests**, **87% coverage**.
 
 Ver. 0.4.5 - 2013-Jan-27
 ==============================
@@ -138,3 +140,4 @@ Ver. 0.1.0 - 2011-Aug-24
 
 .. _psutil: http://code.google.com/p/psutil/
 .. _pypy: http://pypy.org/
+.. _http-parser: https://github.com/benoitc/http-parser
