@@ -18,6 +18,9 @@ from pulsar.utils.pep import get_event_loop
 
 def result_or_self(self):
     return self.result if self.called and not self.callbacks else self
+
+def get_traces(self):
+    return [(self.type, self.value, self.tb)]
     
 def is_async(obj):
     if not default_is_async(obj):
@@ -36,7 +39,6 @@ def is_async(obj):
 def is_failure(e):
     if not default_is_failure(e):
         if isinstance(e, Failure):
-            #TODO, make it compatible with pulsar
             if not hasattr(e, 'get_traces'):
                 e.get_traces = lambda : get_traces(e)
             return True

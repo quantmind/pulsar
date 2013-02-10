@@ -1,4 +1,4 @@
-'''A webmail application.
+'''A webmail application to demonstrate pulsar-twisted integration.
 To run the server type::
 
     python manage.py
@@ -47,6 +47,7 @@ class Mail(ws.WS):
     def on_open(self, environ):
         # Add pulsar.connection environ extension to the set of active clients
         return mail_client().add_callback(partial(self._on_open, environ))
+                            
         
     def _on_open(self, environ, client):
         environ['mail.client'] = client
