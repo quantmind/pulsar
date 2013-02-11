@@ -1,6 +1,7 @@
 '''Tests the websocket middleware in pulsar.apps.ws.'''
 from pulsar import send
-from pulsar.apps.ws import WebSocket, HttpClient
+from pulsar.apps.ws import WebSocket
+from pulsar.apps.http import HttpClient
 from pulsar.apps.test import unittest, dont_run_with_thread
 
 from .manage import server
@@ -33,30 +34,26 @@ class TestWebSocketThread(unittest.TestCase):
         
     def testBadRequests(self):
         c = HttpClient()
-        outcome = c.post(self.ws_uri)
-        yield outcome
-        response = outcome.result
+        response = c.post(self.ws_uri)
+        yield response.on_finished
         self.assertEqual(response.status_code, 400)
         #
-        outcome = c.get(self.ws_uri, headers=[('Sec-Websocket-Key', '')])
-        yield outcome
-        response = outcome.result
+        response = c.get(self.ws_uri, headers=[('Sec-Websocket-Key', '')])
+        yield response.on_finished
         self.assertEqual(response.status_code, 400)
         #
-        outcome = c.get(self.ws_uri, headers=[('Sec-Websocket-Key', 'bla')])
-        yield outcome
-        response = outcome.result
+        response = c.get(self.ws_uri, headers=[('Sec-Websocket-Key', 'bla')])
+        yield response.on_finished
         self.assertEqual(response.status_code, 400)
         #
-        outcome = c.get(self.ws_uri, headers=[('Sec-Websocket-version', 'xxx')])
-        yield outcome
-        response = outcome.result
+        response = c.get(self.ws_uri, headers=[('Sec-Websocket-version', 'xxx')])
+        yield response.on_finished
         self.assertEqual(response.status_code, 400)
     
     def testUpgrade(self):
         c = HttpClient()
-        outcome = c.get(self.ws_echo)
-        yield outcome
+        response = c.get(self.ws_echo)
+        yield response.on_finished
         ws = outcome.result
         response = ws.handshake 
         self.assertEqual(response.status_code, 101)

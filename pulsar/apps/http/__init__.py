@@ -1,13 +1,15 @@
 '''HTTP protocol for asynchronous clients.'''
+import os
 import platform
 import json
 from copy import copy
+from base64 import b64encode, b64decode
 
 import pulsar
 from pulsar import create_transport, multi_async
 from pulsar.utils.pep import native_str, is_string, to_bytes
 from pulsar.utils.structures import mapping_iterator
-from pulsar.utils.websocket import FrameParser
+from pulsar.utils.websocket import FrameParser, SUPPORTED_VERSIONS
 from pulsar.utils.httpurl import urlparse, urljoin, DEFAULT_CHARSET,\
                                     REDIRECT_CODES, HttpParser, httpclient,\
                                     ENCODE_URL_METHODS, parse_qsl,\
@@ -317,7 +319,7 @@ Initialised by a call to the :class:`HttpClient.request` method.
             return True
         elif self.status_code == 101:
             # Upgrading response handler
-            return client.upgrade(response)
+            return client.upgrade(self)
     
 
 class HttpClient(pulsar.Client):
@@ -530,7 +532,7 @@ the :class:`HttpRequest` constructor.
         if request.type in ('ws','wss'):
             d = Headers((('Connection', 'Upgrade'),
                          ('Upgrade', 'websocket'),
-                         ('Sec-WebSocket-Version', str(max(WEBSOCKET_VERSION))),
+                         ('Sec-WebSocket-Version', str(max(SUPPORTED_VERSIONS))),
                          ('Sec-WebSocket-Key', self.websocket_key),
                          ('user-agent', self.client_version)),
                          kind='client')
@@ -559,6 +561,19 @@ the :class:`HttpRequest` constructor.
             return headers.get('connection') == 'keep-alive'
         else:
             return False
+    
+    def upgrade(self, protocol):
+        '''Upgrade the protocol to another one'''
+        upgrade = protocol.headers['upgrade']
+        callable = getattr(self, 'upgrade_%s' % upgrade, None)
+        if not callable:
+            raise pulsar.ProtocolError
+        p = callable(protocol)
+        protocol.upgrade = p
+        return p
+    
+    def upgrade_websocket(self, protocol):
+        return WebSocketProtocol(protocol.connection, handshake=protocol)
     
     def timeit(self, times, method, url, **kwargs):
         return multi_async((self.request(method, url).on_finished\

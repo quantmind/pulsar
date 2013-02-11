@@ -1,11 +1,59 @@
 from base64 import b64encode, b64decode
 
+import pulsar
 from pulsar.utils.httpurl import parse_dict_header
 from pulsar.utils.pep import native_str
+from pulsar.utils.websocket import FrameParser
 
 
 __all__ = ['Auth', 'HTTPBasicAuth', 'HTTPDigestAuth', 'basic_auth_str',
            'parse_authorization_header']
+
+
+class WebSocketProtocol(pulsar.ProtocolConsumer):
+    
+    def __init__(self, connection, parser=None, handshake=None):
+        super(WebSocketProtocol, self).__init__(connection)
+        connection.set_timeout(0)
+        self.handshake = handshake
+        self.parser = parser or FrameParser(kind=1)
+        
+    def data_received(self, data):
+        environ = self.environ
+        parser = self.parser
+        frame = parser.decode(data)
+        while frame:
+            self.write(parser.replay_to(frame))
+            if not self.started:
+                # call on_start (first message received)
+                self.started = True
+                self.write(self.handler.on_open(environ))
+            if frame.is_close:
+                # Close the connection
+                self.close()
+            elif frame.is_data:
+                self.write(self.handler.on_message(environ, frame.body))
+            frame = parser.decode()
+    
+    def write(self, frame):
+        if frame is None:
+            return
+        elif is_async(frame):
+            return frame.add_callback(self.write, self.close)
+        elif not isinstance(frame, Frame):
+            frame = self.parser.encode(frame)
+            self.transport.write(frame.msg)
+        else:
+            self.transport.write(frame.msg)
+        if frame.is_close:
+            self.close()
+            
+    def close(self, error=None):
+        if not self.closed:
+            log_failure(error)
+            self.closed = True
+            self.handler.on_close(self.environ)
+            self.transport.close()
 
 
 class Auth(object):

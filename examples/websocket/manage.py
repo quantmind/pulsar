@@ -20,17 +20,15 @@ from pulsar.apps import ws, wsgi
 from pulsar.utils.httpurl import range
 
 
-class handle(ws.WS):
-    
-    def match(self, environ):
-        return environ.get('PATH_INFO') in ('/echo', '/data')
+class Graph(ws.WS):
     
     def on_message(self, environ, msg):
-        path = environ.get('PATH_INFO')
-        if path == '/echo':
-            return msg
-        elif path == '/data':
-            return json.dumps([(i,random()) for i in range(100)])
+        return json.dumps([(i,random()) for i in range(100)])
+    
+class Echo(ws.WS):
+    
+    def on_message(self, environ, msg):
+        return msg
 
 
 def page(environ, start_response):
@@ -47,7 +45,9 @@ def page(environ, start_response):
 
 
 def server(**kwargs):
-    app = wsgi.WsgiHandler(middleware=(page, ws.WebSocket(handle())))
+    app = wsgi.WsgiHandler(middleware=(page,
+                                       ws.WebSocket('/data', Graph()),
+                                       ws.WebSocket('/echo', Echo())))
     return wsgi.WSGIServer(callable=app, **kwargs)
 
 

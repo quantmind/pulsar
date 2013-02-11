@@ -1,4 +1,4 @@
-Ver. 0.5.0
+Ver. 0.5.0 - DEVELOPMENT
 ==============================
 * pep-3156_ implementation with considerable amount of internal refactoring.
 * :class:`Actor` internal message passing uses the (unmasked) websocket protocol

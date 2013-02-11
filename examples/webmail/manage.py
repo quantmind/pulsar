@@ -14,9 +14,9 @@ try:
 except ImportError: #pragma nocover
     sys.path.append('../../')
     import pulsar
-from pulsar.apps import ws, wsgi, rpc
+from pulsar.apps import ws, wsgi
 from pulsar.lib.tx import twisted
-from twisted.internet import protocol, defer, endpoints, task, reactor
+from twisted.internet import protocol, defer, endpoints, reactor
 from twisted.mail import imap4
 
 try:
@@ -27,8 +27,9 @@ except ImportError:
     exit(0)
     
 @pulsar.async(1)
-def mail_client():
+def mail_client(timeout=10):
     endpoint = endpoints.clientFromString(reactor, config.incoming_mail)
+    endpoint._timeout = timeout
     factory = protocol.Factory()
     factory.protocol = imap4.IMAP4Client
     future = endpoint.connect(factory)
@@ -85,5 +86,18 @@ def server(**kwargs):
     return wsgi.WSGIServer(name='webmail', callable=middleware, **kwargs)
 
 
+@defer.inlineCallbacks
+def main(reactor, *args):
+    endpoint = endpoints.clientFromString(reactor, config.incoming_mail)
+    factory = protocol.Factory()
+    factory.protocol = imap4.IMAP4Client
+    future = endpoint.connect(factory)
+    yield future
+    client = future.result
+    yield client.login(config.username, config.password)
+    yield client.select('INBOX')
+    
 if __name__ == '__main__':  #pragma nocover
     server().start()
+    from twisted.internet import task
+    task.react(main, sys.argv[1:])
