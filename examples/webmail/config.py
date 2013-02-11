@@ -1,5 +1,0 @@
-incoming_mail = 'ssl:host=imap.gmail.com:port=993'
-#incoming_mail = 'ssl:host=smtp.gmail.com:port=465'
-#outgoing_mail = 'ssl:host=smtp.gmail.com:port=993'
-username = 'luca.sbardella@gmail.com'
-password = 'nfhq hvnh fblx lvma'
