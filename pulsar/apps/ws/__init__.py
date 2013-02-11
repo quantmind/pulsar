@@ -231,6 +231,9 @@ client. This is a chance to add or remove header's entries."""
         """Invoked when the WebSocket is closed."""
         pass
  
+    def write(self, environ, data):
+        environ['ws.writer'](data)
+        
         
 class WebSocketProtocol(pulsar.ProtocolConsumer):
     
@@ -240,6 +243,7 @@ class WebSocketProtocol(pulsar.ProtocolConsumer):
         self.handler = handler
         self.environ = environ
         self.parser = parser
+        self.environ['ws.writer'] = self.write
         self.started = False
         self.closed = False
         

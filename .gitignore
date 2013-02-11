@@ -13,5 +13,4 @@ htmlprof
 cfg.py
 MANIFEST
 .settings
-lib/src/parser.c
-pulsar/http/cparser/parser.*
+examples/webmail/config.py
