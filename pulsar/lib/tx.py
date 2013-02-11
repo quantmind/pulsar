@@ -52,15 +52,16 @@ set_async(is_async, is_failure)
 
 
 class PulsarReactor(PosixReactorBase):
-    '''A proxy for the a twisted reactor.'''
-    _registerAsIOThread = False
+    '''A twisted reactor which acts as a proxy to pulsar eventloop.'''
+    def callLater(self, _seconds, f, *args, **kw):
+        return get_event_loop().call_later(_seconds, lambda : f(*args, **kw))
     
-    def installWaker(self):
-        pass
+    def callFromThread(self, f, *args, **kw):
+        return get_event_loop().call_soon_threadsafe(lambda : f(*args, **kw))
     
-    def callLater(self, _seconds, _f, *args, **kw):
-        return get_event_loop().call_later(_seconds, lambda : _f(*args, **kw))
-    
+    def callInThread(self, f, *args, **kw):
+        return get_event_loop().call_soon(lambda : f(*args, **kw))
+        
     def addReader(self, reader):
         return get_event_loop().add_reader(reader.fileno(), reader.doRead)
         
@@ -75,11 +76,20 @@ class PulsarReactor(PosixReactorBase):
         
     def removeAll(self):
         return get_event_loop().remove_all()
+            
+    # Functions not needed by pulsar
+    _registerAsIOThread = False
+    
+    def installWaker(self):
+        pass
     
     def mainLoop(self):
         pass
     
     def doIteration(self, delay):
+        pass
+    
+    def _initThreads(self):
         pass
         
     
