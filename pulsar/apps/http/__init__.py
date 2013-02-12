@@ -35,7 +35,8 @@ class HttpRequest(pulsar.Request):
                   charset=None, encode_multipart=True, multipart_boundary=None,
                   timeout=None, hooks=None, history=None, source_address=None,
                   allow_redirects=False, max_redirects=10, decompress=True,
-                  version=None, wait_continue=False, **ignored):
+                  version=None, wait_continue=False, websocket_handler=None,
+                  **ignored):
         self.client = client
         self.type, self.full_host, self.path, self.params,\
         self.query, self.fragment = urlparse(url)
@@ -53,6 +54,7 @@ class HttpRequest(pulsar.Request):
         self.decompress = decompress
         self.encode_multipart = encode_multipart 
         self.multipart_boundary = multipart_boundary
+        self.websocket_handler = websocket_handler
         self.data = data if data is not None else {}
         self.files = files
         self.source_address = source_address
@@ -372,7 +374,7 @@ a pool of asynchronous :class:`pulsar.Connection`.
             kind='client')
     request_parameters = ('encode_multipart', 'max_redirects', 'decompress',
                           'allow_redirects', 'multipart_boundary', 'version',
-                          'timeout')
+                          'timeout', 'websocket_handler')
     # Default hosts not affected by proxy settings. This can be overwritten
     # by specifying the "no" key in the proxy_info dictionary
     no_proxy = set(('localhost', urllibr.localhost(), platform.node()))
@@ -381,7 +383,7 @@ a pool of asynchronous :class:`pulsar.Connection`.
               encode_multipart=True, multipart_boundary=None,
               key_file=None, cert_file=None, cert_reqs='CERT_NONE',
               ca_certs=None, cookies=None, store_cookies=True,
-              max_redirects=10, decompress=True):
+              max_redirects=10, decompress=True, websocket_handler=None):
         self.store_cookies = store_cookies
         self.max_redirects = max_redirects
         self.cookies = cookies
@@ -398,6 +400,7 @@ a pool of asynchronous :class:`pulsar.Connection`.
                 self.proxy_info['no'] = ','.join(self.no_proxy)
         self.encode_multipart = encode_multipart
         self.multipart_boundary = multipart_boundary or choose_boundary()
+        self.websocket_handler = websocket_handler
         self.https_defaults = {'key_file': key_file,
                                'cert_file': cert_file,
                                'cert_reqs': cert_reqs,
@@ -568,13 +571,15 @@ the :class:`HttpRequest` constructor.
         callable = getattr(self, 'upgrade_%s' % upgrade, None)
         if not callable:
             raise pulsar.ProtocolError
-        p = callable(protocol)
-        protocol.upgrade = p
-        return p
+        return callable(protocol.connection, protocol)
     
-    def upgrade_websocket(self, protocol):
-        return WebSocketProtocol(protocol.connection, handshake=protocol)
+    def upgrade_websocket(self, connection, handshake):
+        '''Upgrade the *protocol* to a websocket response. Invoked
+by the :meth:`upgrade` method.'''
+        return WebSocketResponse(connection, handshake)
     
     def timeit(self, times, method, url, **kwargs):
+        '''Send *times* requests asynchronously and evaluate the time
+taken to obtain all responses.'''
         return multi_async((self.request(method, url).on_finished\
                                 for _ in range(times)))

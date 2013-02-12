@@ -28,7 +28,7 @@ class TestWebSocketThread(unittest.TestCase):
             yield send('arbiter', 'kill_actor', cls.app.name)
     
     def testHyBiKey(self):
-        w = WebSocket(None)
+        w = WebSocket('/', None)
         v = w.challenge_response('dGhlIHNhbXBsZSBub25jZQ==')
         self.assertEqual(v, "s3pPLMBiTxaQ9kYGzzhZRbK+xOo=")
         
@@ -54,12 +54,12 @@ class TestWebSocketThread(unittest.TestCase):
         c = HttpClient()
         response = c.get(self.ws_echo)
         yield response.on_finished
-        ws = outcome.result
+        ws = response.on_finished.result
         response = ws.handshake 
         self.assertEqual(response.status_code, 101)
         self.assertEqual(response.headers['upgrade'], 'websocket')
         # Send a message to the websocket
-        outcome = ws.execute('Hi there!')
+        outcome = ws.write('Hi there!')
         yield outcome
         response = outcome.result
         self.assertEqual(response.body, 'Hi there!')

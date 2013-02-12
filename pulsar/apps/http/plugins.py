@@ -7,32 +7,43 @@ from pulsar.utils.websocket import FrameParser
 
 
 __all__ = ['Auth', 'HTTPBasicAuth', 'HTTPDigestAuth', 'basic_auth_str',
-           'parse_authorization_header']
+           'parse_authorization_header', 'WebSocketResponse']
 
 
-class WebSocketProtocol(pulsar.ProtocolConsumer):
+class WebSocketClient(object):
     
-    def __init__(self, connection, parser=None, handshake=None):
-        super(WebSocketProtocol, self).__init__(connection)
-        connection.set_timeout(0)
+    def on_open(self, protocol, frame):
+        pass
+    
+    def on_message(self, protocol, frame):
+        pass
+    
+    
+class WebSocketResponse(pulsar.ProtocolConsumer):
+    
+    def __init__(self, connection, handshake, parser=None):
+        # keep a reference to the websocket
         self.handshake = handshake
+        handshake.finished(self)
+        super(WebSocketResponse, self).__init__(connection)
+        connection.set_timeout(0)
         self.parser = parser or FrameParser(kind=1)
+        self.handler = handshake.current_request.websocket_handler
+        self.started = False
+        if not self.handler:
+            self.handler = WebSocketClient()
         
     def data_received(self, data):
-        environ = self.environ
-        parser = self.parser
-        frame = parser.decode(data)
+        frame = self.parser.decode(data)
         while frame:
-            self.write(parser.replay_to(frame))
             if not self.started:
-                # call on_start (first message received)
                 self.started = True
-                self.write(self.handler.on_open(environ))
+                self.write(self.handler.on_open(self, frame))
             if frame.is_close:
                 # Close the connection
                 self.close()
             elif frame.is_data:
-                self.write(self.handler.on_message(environ, frame.body))
+                self.write(self.handler.on_message(self, frame))
             frame = parser.decode()
     
     def write(self, frame):
