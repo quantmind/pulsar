@@ -1,10 +1,22 @@
-.. _tools
+.. _tools:
 
 ==================
 Tools
 ==================
 
 .. automodule:: pulsar.utils.httpurl
+
+.. _tools-http-headers:
+
+HTTP Headers
+~~~~~~~~~~~~~~~~~
+
+.. autoclass:: Headers
+   :members:
+   :member-order: bysource
+   
+   
+.. _tools-http-parser:
 
 HTTP Parser
 ~~~~~~~~~~~~~~~~~
@@ -13,6 +25,8 @@ HTTP Parser
    :members:
    :member-order: bysource
    
+
+.. _tools-ws-parser:
 
 Websocket Frame & Parser
 ==============================

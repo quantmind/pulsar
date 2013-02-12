@@ -1,12 +1,13 @@
-'''The :mod:`pulsar.apps.ws` contains a WSGI_ middleware for
+'''The :mod:`pulsar.apps.ws` contains WSGI_ middleware for
 handling the WebSocket_ protocol.
 Web sockets allow for bidirectional communication between the browser
 and server. Pulsar implementation uses the WSGI middleware
-:class:`WebSocket` for the handshake and a class derived from
+:class:`WebSocket` for the handshake_ and a class derived from
 :class:`WS` handler for the communication part.
 
 .. _WSGI: http://www.python.org/dev/peps/pep-3333/
 .. _WebSocket: http://tools.ietf.org/html/rfc6455
+.. _handshake: http://tools.ietf.org/html/rfc6455#section-1.3
 
 API
 ==============
@@ -19,26 +20,20 @@ WebSocket
    :member-order: bysource
 
 
-WebSocket Handler
+WebSocket handler
 ~~~~~~~~~~~~~~~~~~~~
 
 .. autoclass:: WS
    :members:
    :member-order: bysource
+   
 
-Frame
-~~~~~~~~~~~~~~~~~~~
+WebSocket protocol
+~~~~~~~~~~~~~~~~~~~~
 
-.. autoclass:: Frame
+.. autoclass:: WebSocketProtocol
    :members:
    :member-order: bysource
-   
-   
-.. autoclass:: FrameParser
-   :members:
-   :member-order: bysource
-
-
 '''
 import logging
 import socket
@@ -96,24 +91,21 @@ headers to send back to the client.'''
         
     
 class WebSocket(GeneralWebSocket):
-    """A :ref:`WSGI <apps-wsgi>` middleware for handling w websocket handshake
-and starting a custom :class:`WS` connection.
-It implements the protocol version 13 as specified at
-http://www.whatwg.org/specs/web-socket-protocol/.
+    """A :class:`pulsar.apps.wsgi.Router` middleware for handling
+the websocket handshake at a given route. Once the handshake is succesful,
+it upgrades the websocket protocol served by a custom :class:`WS`
+handler.
 
-Web Sockets are not standard HTTP connections. The "handshake" is HTTP,
-but after that, the protocol is message-based. To create
-a valid :class:`WebSocket` middleware initialise as follow::
+To create a valid :class:`WebSocket` middleware initialise as follow::
 
     from pulsar.apps import wsgi, ws
     
     class MyWS(ws.WS):
         ...
     
-    wm = ws.WebSocket(handle=MyWS())
+    wm = ws.WebSocket('/bla', MyWS())
     app = wsgi.WsgiHandler(middleware=(..., wm))
-    
-    wsgi.createServer(callable=app).start()
+    wsgi.WSGIServer(callable=app).start()
 
 
 See http://tools.ietf.org/html/rfc6455 for the websocket server protocol and
@@ -175,7 +167,7 @@ http://www.w3.org/TR/websockets/ for details on the JavaScript interface.
         if parser.extensions:
             headers.append(('Sec-WebSocket-Extensions',
                             ','.join(parser.extensions)))
-        return self.handle.on_handshake(environ, headers), parser
+        return headers, parser
         
     def challenge_response(self, key):
         sha1 = hashlib.sha1(to_bytes(key+WEBSOCKET_GUID))
@@ -211,12 +203,7 @@ back to the client::
         def on_close(self, environ):
             print("WebSocket closed")
             
-'''    
-    def on_handshake(self, environ, headers):
-        """Invoked just before sending the upgraded **headers** to the
-client. This is a chance to add or remove header's entries."""
-        return headers
-    
+'''
     def on_open(self, environ):
         """Invoked when a new WebSocket is opened."""
         pass
@@ -236,7 +223,9 @@ client. This is a chance to add or remove header's entries."""
         
         
 class WebSocketProtocol(pulsar.ProtocolConsumer):
-    
+    '''Created after a successful websocket handshake. Tjis is a
+:class:`pulsar.ProtocolConsumer` which manages the communication with the
+websocket client.'''
     def __init__(self, handler, environ, parser, connection):
         super(WebSocketProtocol, self).__init__(connection)
         connection.set_timeout(0)

@@ -131,12 +131,21 @@ For full coverage run tests with the following flags::
 
     python runtests.py --concurrency thread --profile --benchmark --http-py-parser --verbosity 2
 
+
+.. _kudos:
+
 Kudos
 ============
-Pulsar project started as a fork of gunicorn_ (from where the arbiter idea) and has been developed using
-ideas from nodejs_ (api design), twisted_ (the deferred implementation), tornado_ web server
-(the initial event-loop implementation), celery_ (the task queue application) and
+Pulsar project started as a fork of gunicorn_ (from where the arbiter idea)
+and has been developed using ideas from nodejs_ (api design), twisted_
+(the deferred implementation), tornado_ web server (the initial event-loop
+implementation), celery_ (the task queue application) and
 many other open-source efforts.
+In addition it uses several snippets of code from around the open-source community,
+in particular:
+
+* An HTTP Parser originally written by benoitc_.
+* A ``url`` Rule class originally from werkzeug_.
 
 .. _contributing:
 
@@ -175,3 +184,5 @@ file in the top distribution directory for the full license text.
 .. _BSD: http://www.opensource.org/licenses/bsd-license.php
 .. _pulsar: https://github.com/quantmind/pulsar
 .. _singleton: http://en.wikipedia.org/wiki/Singleton_pattern
+.. _benoitc: https://github.com/benoitc
+.. _werkzeug: http://werkzeug.pocoo.org/

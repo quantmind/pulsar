@@ -14,11 +14,28 @@ __all__ = ['MediaRouter']
     
 
 class MediaRouter(Router):
+    '''A :class:`Router` for serving static media files from a given 
+directory.
+
+:param rute: The top-level url for this router. For example ``/media``
+    will serve the ``/media/<path:path>`` :class:`Route`.
+:param path: Check the :attr:`path` attribute.
+:param show_indexes: Check the :attr:`show_indexes` attribute.
+
+.. attribute::    path
+
+    The file-system path of the media files to serve.
+    
+.. attribute::    show_indexes
+
+    If ``True`` (default), the router will serve media file directories as
+    well as media files.
+'''
     default_content_type = 'application/octet-stream'
     cache_control = CacheControl(maxage=86400)
 
-    def __init__(self, rule, path, show_indexes=True):
-        super(MediaRouter, self).__init__('%s/<path:path>' % rule)
+    def __init__(self, rute, path, show_indexes=True):
+        super(MediaRouter, self).__init__('%s/<path:path>' % rute)
         self._show_indexes = show_indexes
         self._file_path = path
         
@@ -78,19 +95,13 @@ class MediaRouter(Router):
         return response.start()
 
     def was_modified_since(self, header=None, mtime=0, size=0):
-        """
-        Was something modified since the user last downloaded it?
+        '''Check if an item was modified since the user last downloaded it
 
-        header
-          This is the value of the If-Modified-Since header.  If this is None,
-          I'll just return True.
-
-        mtime
-          This is the modification time of the item we're talking about.
-
-        size
-          This is the size of the item we're talking about.
-        """
+:param header: the value of the ``If-Modified-Since`` header. If this is None,
+    simply return ``True``.
+:param mtime: the modification time of the item in question.
+:param size: the size of the item.
+'''
         try:
             if header is None:
                 raise ValueError

@@ -273,6 +273,10 @@ This is usually `True` if a generator is passed to the response object."""
 
 
 class WsgiRequest(object):
+    '''A thin wrapper around a WSGI_ environ. Instances of this class
+only have the :attr:`environ` attribute as their private data. Every
+other attribute is stored in the :attr:`environ` itself at the
+``pulsar.cache`` wsgi-extension key.'''
     slots = ('environ',)
     
     def __init__(self, environ, start_response, urlargs=None):
@@ -285,14 +289,19 @@ class WsgiRequest(object):
     
     @property
     def cache(self):
+        '''dictionary of pulsar-specific data stored in the :attr:`environ`
+at the wsgi-extension ket ``pulsar.cache``.'''
         return self.environ['pulsar.cache']
     
     @property
     def response(self):
+        '''The :class:`WsgiResponse` for this request.'''
         return self.cache['response']
     
     @property
     def urlargs(self):
+        '''Dictionary of url parameters obtained when matching the
+:class:`Router` with :attr:`path`.'''
         return self.cache['urlargs']
     
     ############################################################################

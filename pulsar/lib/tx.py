@@ -4,8 +4,9 @@ event driven network engine for python. Twisted has implementation
 for several protocols which can be used in pulsar by importing the
 :mod:`pulsar.lib.tx` module.
 
-The implementation replaces the twisted reactor with a proxy for pulsar
-event loop. Twisted Deferred and Failures are made compatible with pulsar
+The implementation replaces the twisted reactor with a proxy for
+:class:`pulsar.EventLoop`.
+Twisted Deferred and Failures are made compatible with pulsar
 by installing two different discovery functions via the :func:`pulsar.set_async`
 function.
 

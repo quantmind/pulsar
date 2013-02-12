@@ -7,6 +7,11 @@ Original License
 :copyright: (c) 2011 by the Werkzeug Team, see AUTHORS for more details.
 :license: BSD
 
+.. autoclass:: Route
+   :members:
+   :member-order: bysource
+   
+   
 .. _werkzeug: https://github.com/mitsuhiko/werkzeug
 '''
 import re
@@ -77,8 +82,7 @@ def parse_rule(rule):
 
 
 class Route(object):
-    '''A Route is a class with a relative path and a dictionary
-of possible :class:`Route`.
+    '''A Route is a class with a relative :attr:`path`.
     
 :parameter rule: Rule strings basically are just normal URL paths
     with placeholders in the format ``<converter(arguments):name>``

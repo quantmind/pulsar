@@ -1,9 +1,9 @@
 """A specialized :class:`pulsar.apps.socket.SocketServer` for
 serving web applications which conforms with the python web server
 gateway interface (WSGI_).
-
 The application can be used in conjunction with several web frameworks
-as well as the :ref:`pulsar RPC middleware <apps-rpc>` and
+as well as :ref:`pulsar wsgi application handlers <apps-wsgi-handlers>`,
+the :ref:`pulsar RPC middleware <apps-rpc>` and
 the :ref:`websocket middleware <apps-ws>`.
 
 An example of a web server written with ``pulsar.apps.wsgi`` which responds
@@ -13,10 +13,8 @@ with "Hello World!" for every request::
 
     def hello(environ, start_response):
         data = b"Hello World!"
-        response_headers = (
-            ('Content-type','text/plain'),
-            ('Content-Length', str(len(data)))
-        )
+        response_headers = [('Content-type','text/plain'),
+                            ('Content-Length', str(len(data)))]
         start_response("200 OK", response_headers)
         return [data]
 
@@ -25,6 +23,13 @@ with "Hello World!" for every request::
 
 
 For more information regarding WSGI check the pep3333_ specification.
+To run the application::
+
+    python script.py
+    
+For available run options::
+
+    python script.py --help
 
 .. _pep3333: http://www.python.org/dev/peps/pep-3333/
 .. _WSGI: http://www.wsgi.org
