@@ -274,9 +274,9 @@ the :class:`EventHandler`.
     def connect(self, address):
         '''Connect this :class:`Transport` to a remote server and
 returns ``self``.'''
+        self._connector = c = Connector(self)
         self.add_reader()
         self.add_connector()
-        self._connector = c = Connector(self)
         try:
             if self._protocol_connect(address):
                 self.remove_connector()
