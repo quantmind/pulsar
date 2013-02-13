@@ -5,7 +5,7 @@ from threading import current_thread
 
 import pulsar
 from pulsar import defaults, send, is_async, multi_async, is_async, is_failure
-from pulsar.apps.test import unittest, run_on_arbiter, TestSuite
+from pulsar.apps.test import unittest, run_on_arbiter, TestSuite, sequential
 from pulsar.utils.pep import get_event_loop
 
 def simple_function(actor):
@@ -64,7 +64,7 @@ class TestTestWorker(unittest.TestCase):
         self.assertNotEqual(worker.tid, mailbox.event_loop.tid)
         self.assertTrue(mailbox.address)
         self.assertTrue(mailbox.name)
-        self.assertEqual(mailbox.max_connections, 1)
+        self.assertEqual(mailbox.concurrent_connections, 1)
         
     def testIOloop(self):
         '''Test event loop in test worker'''
@@ -81,7 +81,6 @@ class TestTestWorker(unittest.TestCase):
         worker = pulsar.get_actor()
         count = worker.requestloop.num_loops
         yield pulsar.NOT_DONE
-        self.assertFalse(worker.requestloop._callbacks)
         self.assertEqual(worker.requestloop.num_loops, count+1)
         yield pulsar.NOT_DONE
         self.assertEqual(worker.requestloop.num_loops, count+2)
@@ -102,25 +101,12 @@ class TestTestWorker(unittest.TestCase):
         self.assertNotEqual(d.result, worker.tid)
         self.assertEqual(worker.ioloop.tid, d.result)
         self.assertEqual(worker.tid, current_thread().ident)
-    
-    def __testReconnect(self):
-        #TODO: new test for drop connections
-        worker = pulsar.get_actor()
-        # the worker closes all arbiters connection
-        worker.arbiter.mailbox.close_connections()
-        response = send(worker.arbiter, 'ping')
-        yield self.async.assertEqual(response.when_ready, 'pong')
         
-    def testPingMonitor(self):
-        worker = pulsar.get_actor()
-        future = send('monitor', 'ping')
-        self.assertTrue(is_async(future))
-        yield future
-        self.assertEqual(future.result, 'pong')
-        yield self.async.assertEqual(send(worker.monitor, 'ping'), 'pong')
-        response = worker.send(worker.monitor, 'notify', worker.info())
-        yield response
-        self.assertTrue(response.result < time.time())
+    def testInline(self):
+        val = yield 3
+        self.assertEqual(val, 3)
+        future = yield send('monitor', 'ping')
+        self.assertEqual(future, 'pong')
         
     def __test_run_on_arbiter(self):
         actor = pulsar.get_actor()

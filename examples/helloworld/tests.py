@@ -20,9 +20,7 @@ class TestHelloWorldThread(unittest.TestCase):
     def setUpClass(cls):
         s = server(name=cls.name(), concurrency=cls.concurrency,
                    bind='127.0.0.1:0')
-        outcome = send('arbiter', 'run', s)
-        yield outcome
-        cls.app = outcome.result
+        cls.app = yield send('arbiter', 'run', s)
         cls.uri = 'http://{0}:{1}'.format(*cls.app.address)
         
     @classmethod
@@ -41,8 +39,7 @@ class TestHelloWorldThread(unittest.TestCase):
         
     def testResponse(self):
         c = HttpClient()
-        response = c.get(self.uri)
-        yield response.on_finished
+        response = yield c.get(self.uri).on_finished
         self.assertEqual(response.status_code, 200)
         content = response.content
         self.assertEqual(content, b'Hello World!\n')

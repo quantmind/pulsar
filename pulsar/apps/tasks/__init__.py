@@ -179,7 +179,6 @@ from datetime import datetime
 
 import pulsar
 from pulsar import to_string
-from pulsar.utils.importer import import_modules
 
 from .exceptions import *
 from .task import *
@@ -288,25 +287,21 @@ for implementation.'''
         return self.scheduler.get_task(request)
 
     def monitor_start(self, monitor):
-        # Load the application callable, the task consumer
-        if self.callable:
-            self.callable()
-        self.local.scheduler = Scheduler(self.local.queue, self.task_class,
-                                         tasks_path=self.cfg.tasks_path,
-                                         logger=self.logger,
-                                         schedule_periodic=True)
-        return self
+        super(TaskQueue, self).monitor_start(monitor)
+        self._create_scheduler()
+        
+    def worker_start(self, worker):
+        super(TaskQueue, self).worker_start(worker)
+        self._create_scheduler(False)
     
     def monitor_task(self, monitor):
         '''Override the :meth:`pulsar.Application.monitor_task` callback
 to check if the scheduler needs to perform a new run.'''
+        super(TaskQueue, self).monitor_task(monitor)
         s = self.scheduler
         if s:
             if s.next_run <= datetime.now():
                 s.tick(monitor)
-
-    def worker_start(self, worker):
-        return self.monitor_start(worker)
 
     def job_list(self, jobnames=None):
         return self.scheduler.job_list(jobnames=jobnames)
@@ -316,7 +311,18 @@ to check if the scheduler needs to perform a new run.'''
         global registry
         return registry
 
-    # Internals
+    ############################################################################
+    ##    INTERNALS
+    def _create_scheduler(self, schedule_periodic=True):
+        # Load the application callable, the task consumer
+        if self.callable:
+            self.callable()
+        self.local.scheduler = Scheduler(self.queue,
+                                         self.task_class,
+                                         self.cfg.tasks_path,
+                                         logger=self.logger,
+                                         schedule_periodic=schedule_periodic)
+        
     def _addtask(self, monitor, caller, jobname, task_extra, ack, args, kwargs):
         task = self.scheduler.queue_task(jobname, args, kwargs, **task_extra)
         if ack:

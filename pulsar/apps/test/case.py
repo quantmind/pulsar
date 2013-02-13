@@ -3,14 +3,18 @@ import io
 import logging
 from inspect import istraceback
 
-from pulsar import is_failure, CLEAR_ERRORS, make_async, get_actor, async, as_failure
+from pulsar import is_failure, multi_async, CLEAR_ERRORS, get_actor, async, as_failure
 from pulsar.utils.pep import pickle
 
 
-__all__ = ['TestRequest']
+__all__ = ['TestRequest', 'sequential']
 
 
 LOGGER = logging.getLogger('pulsar.test')
+
+def sequential(cls):
+    cls._sequential_execution = True
+    return cls
 
 def test_method(cls, method):
     try:
@@ -18,53 +22,6 @@ def test_method(cls, method):
     except ValueError:
         return None
 
-
-class SequentialConsumer(object):
-    
-    def __init__(self, gen, handle_failure=None):
-        self.request_loop = get_request_loop()
-        self.errors = Failure()
-        self.gen = gen
-        self.handle_failure = handle_failure
-        
-    def _resume(self, result):
-        self.request_loop.add_soon_threadsafe(self.consume, result)
-        #TODO: Do we need to return?
-        return result
-        
-    def consume(self, last_result=None):
-        try:
-            result = next(self.gen)
-        except StopIteration:
-            pass
-        except Exception as e:
-            result = e
-        else:
-            result = maybe_async(result)
-            if is_async(result):
-                result.add_both(self._resume)
-                return self.request_loop.call_soon_threadsafe(self._consume)
-        result = as_failure(result)
-        if is_failure(result):
-            result = self.handle_failure(failure)
-            if is_failure(result):
-                return result
-        return self.consume(result)
-        
-    def handle_failure(self, failure):
-        self.errors.append(failure)
-        
-
-def test_generator(f):
-    def _(self, test, *args):
-        runner = self.runner
-        handle_failure = partial(self.add_failure(test, runner)) 
-        gen = f(self, *args)
-        tasks = SequentialConsumer(gen, handle_failure)
-        return tasks.consume()
-    return _
-
-        
 
 class TestRequest(object):
     '''A class which wraps a test case class and runs all its test functions
@@ -85,6 +42,7 @@ class TestRequest(object):
         return self.testcls.__name__
     __str__ = __repr__
 
+    @async(max_errors=0)
     def start(self):
         '''Run all test functions from the :attr:`testcls` using the
 following algorithm:
@@ -102,6 +60,7 @@ following algorithm:
             testcls = testcls()
         testcls.tag = self.tag
         testcls.cfg = worker.cfg
+        sequential_execution = getattr(testcls, '_sequential_execution', False)
         LOGGER.debug('Testing %s', self)
         all_tests = runner.loadTestsFromTestCase(testcls)
         run_test_function = runner.run_test_function
@@ -110,20 +69,22 @@ following algorithm:
             should_stop = False
             test_cls = test_method(testcls, 'setUpClass')
             if test_cls and not skip_tests:
-                outcome = run_test_function(testcls,
+                outcome = yield run_test_function(testcls,
                                             getattr(testcls,'setUpClass'))
-                yield outcome
-                should_stop = self.add_failure(test_cls, runner, outcome.result)
+                should_stop = self.add_failure(test_cls, runner, outcome)
             if not should_stop:
-                # Loop over all test cases in class
-                for test in all_tests:
-                    yield self.run_test(test, runner)
+                if sequential_execution:
+                    # Loop over all test cases in class
+                    for test in all_tests:
+                        yield self.run_test(test, runner)
+                else:
+                    all = (self.run_test(test, runner) for test in all_tests)
+                    yield multi_async(all)
             test_cls = test_method(testcls, 'tearDownClass')
             if test_cls and not skip_tests:
-                outcome = run_test_function(testcls,getattr(testcls,
+                outcome = yield run_test_function(testcls,getattr(testcls,
                                                         'tearDownClass'))
-                yield outcome
-                self.add_failure(test_cls, runner, outcome.result)
+                self.add_failure(test_cls, runner, outcome)
             # Clear errors
             yield CLEAR_ERRORS
         # send runner result to monitor
@@ -131,6 +92,7 @@ following algorithm:
         worker.send('monitor', 'test_result', testcls.tag,
                     testcls.__name__, runner.result)
 
+    @async(max_errors=0)
     def run_test(self, test, runner):
         '''\
 Run a *test* function using the following algorithm
@@ -142,7 +104,7 @@ Run a *test* function using the following algorithm
 * Run :meth:`_post_teardown` method if available in :attr:`testcls`.
 '''
         try:
-            success = True
+            ok = True
             runner.startTest(test)
             run_test_function = runner.run_test_function
             testMethod = getattr(test, test._testMethodName)
@@ -153,46 +115,40 @@ Run a *test* function using the following algorithm
                           getattr(testMethod,
                                   '__unittest_skip_why__', ''))
                 runner.addSkip(test, reason)
-                raise StopIteration()
+                raise StopIteration
             # _pre_setup function if available
             if hasattr(test,'_pre_setup'):
-                outcome = run_test_function(test, test._pre_setup)
-                yield outcome
-                success = not self.add_failure(test, runner, outcome.result)
+                outcome = yield run_test_function(test, test._pre_setup)
+                ok = ok and not self.add_failure(test, runner, outcome)
             # _setup function if available
-            if success:
-                outcome = run_test_function(test, test.setUp)
-                yield outcome
-                if not self.add_failure(test, runner, outcome.result):
+            if ok:
+                outcome = yield run_test_function(test, test.setUp)
+                ok = not self.add_failure(test, runner, outcome)
+                if ok:
                     # Here we perform the actual test
-                    outcome = run_test_function(test, testMethod)
-                    yield outcome
-                    success = not self.add_failure(test, runner, outcome.result)
-                    if success:
-                        test.result = outcome.result
-                    outcome = run_test_function(test, test.tearDown)
-                    yield outcome
-                    if self.add_failure(test, runner, outcome.result):
-                        success = False
-                else:
-                    success = False
+                    outcome = yield run_test_function(test, testMethod)
+                    ok = not self.add_failure(test, runner, outcome)
+                    if ok:
+                        test.result = outcome
+                    outcome = yield run_test_function(test, test.tearDown)
+                    ok = ok and not self.add_failure(test, runner, outcome)
             # _post_teardown
             if hasattr(test,'_post_teardown'):
-                outcome = run_test_function(test,test._post_teardown)
-                yield outcome
-                if self.add_failure(test, runner, outcome.result):
-                    success = False
+                outcome = yield run_test_function(test,test._post_teardown)
+                ok = ok and not self.add_failure(test, runner, outcome)
             # run the stopTest
             runner.stopTest(test)
         except StopIteration:
-            success = False
+            pass
         except Exception as e:
-            self.add_failure(test, runner, e)
-            success = False
-        if success:
-            runner.addSuccess(test)
+            ok = ok and not self.add_failure(test, runner, e)
+        else:
+            if ok:
+                runner.addSuccess(test)
 
     def add_failure(self, test, runner, failure):
+        '''Add *failure* to the list of errors if *failure* is indeed a failure.
+Return `True` if *failure* is a failure, otherwise return `False`.'''
         failure = as_failure(failure)
         if is_failure(failure):
             for trace in failure:

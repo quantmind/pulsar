@@ -29,6 +29,37 @@ In the above example the test suite will look for all python files
 in the ``regression`` module (in a recursive fashion), and for modules
 called ``tests`` in the ``example`` module.
 
+Wiring a Test Case
+===========================
+Only subclasses of  ``unittest.TestCase`` are collected by this application.
+When running a test, pulsar looks for two extra method: ``_pre_setup`` and
+``_post_teardown``. If the former is available, it is run just before the
+``setUp`` method while if the latter is available, it is run
+just after the ``tearDown`` method. In addition if the ``setUpClass``
+class methods is available, is run just before
+all tests functions are run and the ``tearDownClass``, if available, is run
+just after all tests functions are run.
+
+An example test case::
+
+    # This import is equivalent in python2.6 to
+    #     import unittest2 as unittest
+    # Otherwise it is the same as
+    #     import unittest
+    from pulsar.apps.test import unittest
+    
+    class MyTest(unittest.TestCase):
+        
+        def test_async_test(self):
+            result = yield maybe_async_function()
+            yield self.assertEqual(result, ...)
+            
+        def test_simple_test(self):
+            self.assertEqual(1, 1)
+
+Test function can be asynchronous, when they return a generator or
+:class:`pulsar.Deferred`, or synchronous, when they return anything else.
+
 .. _apps-test-loading:
 
 Loading Tests
@@ -46,15 +77,6 @@ These are the rules for loading tests:
   nor will any objects it contains.
 * If an object defines a ``__test__`` attribute that does not evaluate to True,
   that object will not be collected, nor will any objects it contains.
-
-
-Test Case
-=============
-Only subclasses of  ``unittest.TestCase`` are collected by this application.
-When running a test, pulsar looks for two extra method: ``_pre_setup`` and
-``_post_teardown``. If the former is available, it is run just before the
-``setUp`` method while if the latter is available, it is run
-just after the ``tearDown`` method.
 
 .. _unittest2: http://pypi.python.org/pypi/unittest2
 .. _mock: http://pypi.python.org/pypi/mock
@@ -251,6 +273,7 @@ configuration and plugins.'''
     def monitor_start(self, monitor):
         # When the monitor starts load all :class:`TestRequest` into the
         # in the :attr:`pulsar.Actor.ioqueue`.
+        super(TestSuite, self).monitor_start(monitor)
         loader = self.local.loader
         tags = self.cfg.labels
         try:
@@ -272,6 +295,7 @@ configuration and plugins.'''
             monitor.arbiter.stop()
 
     def monitor_task(self, monitor):
+        super(TestSuite, self).monitor_task(monitor)
         if self._time_start is None and self.local.tests:
             self.logger.info('sending %s test classes to the task queue',
                           len(self.local.tests))

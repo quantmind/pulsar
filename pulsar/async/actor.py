@@ -15,7 +15,6 @@ ThreadQueue = queue.Queue
 
 from pulsar import AlreadyCalledError, AlreadyRegistered,\
                    ActorAlreadyStarted, system, Config, platform
-from pulsar.utils.structures import AttributeDictionary
 from pulsar.utils.pep import pickle, set_event_loop_policy, itervalues
 from pulsar.utils.log import LogginMixin
 
@@ -23,32 +22,12 @@ from .eventloop import EventLoop, setid, signal
 from .defer import Deferred, EventHandler, log_failure
 from .proxy import ActorProxy, get_proxy, ActorProxyMonitor, ActorIdentity
 from .mailbox import MailboxClient, command_in_context
-from .access import set_actor, is_mainthread, get_actor, remove_actor, NOTHING
+from .access import set_actor, is_mainthread, get_actor, remove_actor
+from .consts import *
 
 
 __all__ = ['is_actor', 'send', 'Actor', 'ACTOR_STATES', 'Pulsar', 'ThreadQueue']
 
-ACTOR_STATES = AttributeDictionary(INITIAL=0X0,
-                                   INACTIVE=0X1,
-                                   STARTING=0x2,
-                                   RUN=0x3,
-                                   STOPPING=0x4,
-                                   CLOSE=0x5,
-                                   TERMINATE=0x6)
-ACTOR_STATES.DESCRIPTION = {ACTOR_STATES.INACTIVE: 'inactive',
-                            ACTOR_STATES.INITIAL: 'initial',
-                            ACTOR_STATES.STARTING: 'starting',
-                            ACTOR_STATES.RUN: 'running',
-                            ACTOR_STATES.STOPPING: 'stopping',
-                            ACTOR_STATES.CLOSE: 'closed',
-                            ACTOR_STATES.TERMINATE:'terminated'}
-SPECIAL_ACTORS = ('monitor', 'arbiter')
-#
-# LOW LEVEL CONSTANTS - NO NEED TO CHANGE THOSE ###########################
-MIN_NOTIFY = 3     # DON'T NOTIFY BELOW THIS INTERVAL
-MAX_NOTIFY = 30    # NOTIFY AT LEAST AFTER THESE SECONDS
-ACTOR_TIMEOUT_TOLE = 0.3  # NOTIFY AFTER THIS TIMES THE TIMEOUT
-ACTOR_TERMINATE_TIMEOUT = 2 # TIMEOUT WHEN JOINING A TERMINATING ACTOR
 
 def is_actor(obj):
     return isinstance(obj, Actor)
@@ -337,7 +316,7 @@ mean it is running.'''
         '''Exit from the :class:`Actor` domain.'''
         self.bind_event('stop', self._bye)
         self.state = ACTOR_STATES.CLOSE
-        if self.cpubound:
+        if self.cpubound:   # we need to stop the requestloop
             self.requestloop.stop()
         else:
             self.mailbox.close()

@@ -90,7 +90,7 @@ and a :ref:`task queue <apps-tasks>` application installed in the
         
     def rpc_run_new_task(self, request, jobname=None, **kw):
         result = self.run_new_task(request, jobname, **kw)
-        return result.addBoth(task_to_json)
+        return result.add_both(task_to_json)
         
     def rpc_get_task(self, request, id=None):
         if id:

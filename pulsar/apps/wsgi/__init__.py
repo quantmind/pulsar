@@ -46,6 +46,7 @@ from .route import *
 from .router import *
 from .content import *
 from .media import *
+from .plugins import *
 
 
 class HttpParser(pulsar.Setting):

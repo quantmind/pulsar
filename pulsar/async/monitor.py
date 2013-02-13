@@ -7,12 +7,12 @@ from pulsar.utils.structures import AttributeDictionary
 from pulsar.utils.pep import iteritems, itervalues, range
 
 from . import proxy
-from .actor import Actor, ACTOR_STATES, ACTOR_TERMINATE_TIMEOUT, send
-from .access import NOTHING
+from .actor import Actor, send
 from .defer import async
 from .concurrency import concurrency
 from .mailbox import MonitorMailbox
 from .eventloop import asynchronous
+from .consts import *
 
 
 __all__ = ['Monitor', 'PoolMixin']

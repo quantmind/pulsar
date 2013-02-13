@@ -10,6 +10,7 @@ from pulsar import create_transport, multi_async
 from pulsar.utils.pep import native_str, is_string, to_bytes
 from pulsar.utils.structures import mapping_iterator
 from pulsar.utils.websocket import FrameParser, SUPPORTED_VERSIONS
+from pulsar.apps.wsgi import HTTPBasicAuth, HTTPDigestAuth
 from pulsar.utils.httpurl import urlparse, urljoin, DEFAULT_CHARSET,\
                                     REDIRECT_CODES, HttpParser, httpclient,\
                                     ENCODE_URL_METHODS, parse_qsl,\

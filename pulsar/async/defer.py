@@ -580,7 +580,7 @@ occurred.
     generator will continue regardless of errors, accumulating them into
     the final result.
 '''
-    def __init__(self, gen, max_errors=None, description=None,
+    def __init__(self, gen, max_errors=1, description=None,
                  error_handler=None, timeout=0):
         self.gen = gen
         self.max_errors = max(1, max_errors) if max_errors else 0
@@ -589,27 +589,37 @@ occurred.
         super(DeferredGenerator,self).__init__(description=description)
         # the loop in the current thread... with preference to the request loop
         self.loop = get_request_loop()
-        self._consume()
+        self._start()
 
-    def _consume(self, last_result=None):
+    def _start(self):
         # Consume the generator
-        self._start = default_timer()
-        self._async_count = 0
-        if is_failure(last_result):
-            if self.should_stop(last_result):
-                return self.conclude()
+        self._reset()
         try:
             result = next(self.gen)
-        except StopIteration as e:
-            # The generator has finished producing data
-            return self.conclude(last_result)
+        except StopIteration:
+            return self.conclude()
         except Exception as e:
-            if self.should_stop(e):
-                return self.conclude()
-            return self._consume()
+            return self._continue(e)
         else:
             return self._check_async(result)
-
+    
+    def _continue(self, last_result):
+        self._reset()
+        if last_result != NOT_DONE:
+            if is_failure(last_result):
+                self.errors.append(last_result)
+                if self.max_errors and len(self.errors) >= self.max_errors:
+                    return self.conclude()
+                last_result = as_failure(last_result)
+        try:
+            result = self.gen.send(last_result)
+        except StopIteration:
+            return self.conclude(last_result)
+        except Exception as e:
+            return self._continue(e)
+        else:
+            return self._check_async(result)
+        
     def _check_async(self, result):
         result = maybe_async(result)
         if is_async(result):
@@ -624,29 +634,28 @@ occurred.
             #self.loop.call_soon_threadsafe(self._check_async, result)
             self.loop.call_soon(self._check_async, result)
         elif result == NOT_DONE:
-            self.loop.call_soon(self._consume)
+            self.loop.call_soon(self._continue, NOT_DONE)
         else:
             if result == CLEAR_ERRORS:
                 self.errors.clear()
                 result = None
-            self._consume(result)
-    
+            self._continue(result)
+
+    def conclude(self, last_result=None):
+        # Conclude the generator and callback the listeners
+        result = last_result if not self.errors else self.errors
+        del self.gen
+        del self.errors
+        return self.callback(result)
+
     def _wake_loop(self, result):
         # wake loop and return result
         self.loop.wake()
         return result
         
-    def should_stop(self, failure):
-        self.errors.append(failure)
-        return self.max_errors and len(self.errors) >= self.max_errors
-
-    def conclude(self, last_result=None):
-        # Conclude the generator and callback the listeners
-        result = last_result if not self.errors else self.errors
-        self.gen = None
-        self.errors = None
-        return self.callback(result)
-
+    def _reset(self):
+        self._start = default_timer()
+        self._async_count = 0
 
 ############################################################### MultiDeferred
 class MultiDeferred(Deferred):

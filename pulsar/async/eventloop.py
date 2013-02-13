@@ -36,8 +36,10 @@ def file_descriptor(fd):
         return fd
 
 def setid(self):
-    self.tid = current_thread().ident
+    ct = current_thread()
+    self.tid = ct.ident
     self.pid = os.getpid()
+    return ct
 
 
 class StopEventLoop(BaseException):
@@ -302,7 +304,8 @@ event loop is the place where most asynchronous operations are carried out.
     # Never use an infinite timeout here - it can stall epoll
     poll_timeout = 0.5
 
-    def __init__(self, io=None, logger=None, poll_timeout=None, timer=None):
+    def __init__(self, io=None, logger=None, poll_timeout=None, timer=None,
+                  iothreadloop=True):
         self._impl = io or IOpoll()
         self.fd_factory = getattr(self._impl, 'fd_factory', FileDescriptor)
         self.timer = timer or default_timer
@@ -310,21 +313,26 @@ event loop is the place where most asynchronous operations are carried out.
         self.logger = logger or LOGGER
         if hasattr(self._impl, 'fileno'):
             close_on_exec(self._impl.fileno())
+        self._iothreadloop = iothreadloop
         self._handlers = {}
         self._callbacks = []
         self._scheduled = []
-        self._running = False
+        self._name = None
         self.num_loops = 0
-        self._waker = getattr(self._impl, 'waker', Waker)()
-        self.add_reader(self._waker, self._waker.consume)
+        self._waker = self.install_waker()
     
     def __repr__(self):
-        if self.cpubound:
-            return 'request loop for %s' % current_thread().name
-        else:
-            return 'event loop for %s' % current_thread().name
+        return self.name
     __str__ = __repr__
-        
+    
+    @property
+    def name(self):
+        name = ' %s' % self._name if self._name else ' <not running>'
+        if self.cpubound:
+            return 'CPU bound %s %s' % (self.__class__.__name__, name)
+        else:
+            return '%s %s' % (self.__class__.__name__, name)
+            
     @property
     def io(self):
         return self._impl
@@ -335,7 +343,7 @@ event loop is the place where most asynchronous operations are carried out.
     
     @property
     def running(self):
-        return self._running
+        return bool(self._name)
     
     @property
     def active(self):
@@ -345,9 +353,8 @@ event loop is the place where most asynchronous operations are carried out.
     ##    PEP 3156 Methods
     def run(self):
         '''Run the event loop until nothing left to do or stop() called.'''
-        if not self._running:
-            set_event_loop(self)
-            LOGGER.debug('Starting %s' % self)
+        if not self.running:
+            self._before_run()
             try:
                 while self.active:
                     try:
@@ -355,22 +362,22 @@ event loop is the place where most asynchronous operations are carried out.
                     except StopEventLoop:
                         break
             finally:
-                self._running = False
+                self._after_run()
 
     def run_once(self, timeout=None):
         """Run through all callbacks and all I/O polls once.
 
         Calling stop() will break out of this too.
         """
-        if not self._running:
-            set_event_loop(self)
+        if not self.running:
+            self._before_run()
             try:
                 try:
                     self._run_once(timeout)
                 except StopEventLoop:
                     pass
             finally:
-                self._running = False
+                self._after_run()
         
     def stop(self):
         '''Stop the loop after the current event loop iteration is complete'''
@@ -515,10 +522,10 @@ default signal handler ``signal.SIG_DFL``.'''
     
     def wake(self):
         '''Wake up the eventloop.'''
-        if self.running:
+        if self.running and self._waker:
             self._waker.wake()
             
-    ############################################################ NON PEP METHODS
+    ############################################################ NON PEP METHODS        
     def call_now_threadsafe(self, callback, *args):
         if self.tid != current_thread().ident:
             return self.call_soon_threadsafe(callback, *args)
@@ -530,8 +537,27 @@ default signal handler ``signal.SIG_DFL``.'''
             return callback in self._scheduled
         else:
             return callback in self._callbacks
+        
+    def install_waker(self):
+        # Install event loop wake if possible
+        if hasattr(self._impl, 'install_waker'):
+            return self._impl.install_waker(self)
+        else:
+            waker = Waker()
+            self.add_reader(waker, waker.consume)
+            return waker
 
     ############################################################ INTERNALS
+    def _before_run(self):
+        ct = setid(self)
+        self._name = ct.name
+        if self._iothreadloop:
+            set_event_loop(self)
+    
+    def _after_run(self):
+        self._name = None
+        self.tid = None
+        
     def _raise_stop_event_loop(self):
         self.logger.debug('Stopping %s', self)
         raise StopEventLoop
@@ -551,9 +577,7 @@ default signal handler ``signal.SIG_DFL``.'''
                                                                  signal.NSIG))
 
     def _run_once(self, timeout=None):
-        self._running = True
         poll_timeout = timeout or self.poll_timeout
-        setid(self)
         self.num_loops += 1
         # Prevent IO event starvation by delaying new callbacks
         # to the next iteration of the event loop.
@@ -602,5 +626,5 @@ default signal handler ``signal.SIG_DFL``.'''
             args = getattr(e, 'args', None)
             if isinstance(args, tuple) and len(args) == 2:
                 eno = args[0]
-        if eno not in SOCKET_INTERRUPT_ERRORS and self._running:
+        if eno not in SOCKET_INTERRUPT_ERRORS and self.running:
             return True

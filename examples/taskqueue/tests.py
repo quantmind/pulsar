@@ -106,7 +106,7 @@ class TestTaskQueueOnThread(unittest.TestCase):
     def testNotOverlap(self):
         app = get_application(self.name_tq())
         self.assertTrue('notoverlap' in app.registry)
-        r1 = app.scheduler.queue_task(app.monitor, 'notoverlap', (1,), {})
+        r1 = app.scheduler.run('notoverlap', 1)
         self.assertEqual(str(r1), 'notoverlap(%s)' % r1.id)
         self.assertTrue(r1._queued)
         r2 = app.scheduler.queue_task(app.monitor, 'notoverlap', (1,), {})
@@ -144,7 +144,7 @@ class TestTaskQueueOnThread(unittest.TestCase):
     @run_on_arbiter
     def testDeleteTask(self):
         app = get_application(self.name_tq())
-        r1 = app.scheduler.queue_task(app.monitor, 'addition', (1,4), {})
+        r1 = app.scheduler.run('addition', 1, 4)
         id = r1.id
         get_task = app.scheduler.get_task
         while get_task(id).status in tasks.UNREADY_STATES:
@@ -157,7 +157,7 @@ class TestTaskQueueOnThread(unittest.TestCase):
         app.scheduler.delete_tasks()
         
     def test_rpc_ping(self):
-        self.assertEqual(self.proxy.ping(), 'pong')
+        self.async.assertEqual(self.proxy.ping(), 'pong')
         
     def test_rpc_job_list(self):
         jobs = self.proxy.job_list()
@@ -217,7 +217,7 @@ class TestTaskQueueOnThread(unittest.TestCase):
         self.assertTrue('kaputt' in r['result'])
         
     def test_run_new_task_asynchronous(self):
-        r = self.proxy.run_new_task(jobname='asynchronous', loops=3)
+        response = yield self.proxy.run_new_task(jobname='asynchronous', loops=3).result
         while r['status'] in tasks.UNREADY_STATES:
             yield NOT_DONE
             r = self.proxy.get_task(id=r['id'])

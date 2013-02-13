@@ -5,13 +5,13 @@ from inspect import isfunction
 
 import pulsar
 from pulsar import Actor, Monitor, get_actor, maybe_async_deco, EventHandler,\
-                    QueueServer, QueueTransport
+                    QueueServer, Queue
 from pulsar.utils.importer import module_attribute
-from pulsar.utils.queue import Queue
 from pulsar.utils.pep import pickle
 
 __all__ = ['Application',
            'CPUboundApplication',
+           'MultiApp',
            'Worker',
            'ApplicationMonitor',
            'get_application']
@@ -22,7 +22,7 @@ class TaskQueueFactory(pulsar.Setting):
     name = "task_queue_factory"
     section = "Task Consumer"
     flags = ["-q", "--task-queue"]
-    default = "multiprocessing.queues.Queue"
+    default = "pulsar.PythonMessageQueue"
     desc = """The task queue factory to use."""
 
     def get(self):
@@ -231,7 +231,7 @@ These are the most important facts about a pulsar :class:`Application`
             actor = get_actor()
         monitor = None
         if actor and actor.is_arbiter():
-            monitor = actor.monitors.get(self.name)
+            monitor = actor.get_actor(self.name)
         if monitor is None and (not actor or actor.is_arbiter()):
             self.cfg.on_start()
             self.configure_logging()
@@ -459,20 +459,21 @@ This type of application is served by :ref:`CPU bound workers <cpubound>`.'''
         super(CPUboundApplication, self).__init__(*args, **kwargs)
         
     def io_poller(self, worker):
+        '''Create the queue server and the IO poller for the *worker*
+:class:`EventLoop`.'''
+        self.local.queue = worker.params.queue
         server = QueueServer(consumer_factory=self.request_instance,
                              backlog=self.cfg.backlog)
         worker.servers[self.name] = server
-        return server.poller(worker.params.queue)
+        return self.queue.poller(server)
     
     @property
-    def transport(self):
-        if self.local.transport is None:
-            self.local.transport = QueueTransport(self.local.queue)
-        return self.local.transport
+    def queue(self):
+        return self.local.queue
     
     def put(self, request):
         '''Put a *request* into the :attr:`transport` if available.'''
-        self.transport.write(request)
+        self.queue.put(request)
 
     def request_instance(self, request):
         '''Build a request class from a *request*. By default it returns the
@@ -480,9 +481,13 @@ request. This method is called by the :meth:`on_request` once a new
 request has been obtained from the :attr:`ioqueue`.'''
         return request
 
+    def monitor_start(self, monitor):
+        self.local.queue = self.cfg.task_queue_factory()
+        
     def worker_start(self, worker):
-        self.transport.event_loop = worker.requestloop
-        worker.servers[self.name].connection_made(self.transport)
+        #once the worker starts we set the queue event loop
+        self.queue.event_loop = worker.requestloop
+        worker.servers[self.name].connection_made(self.queue)
     
     def monitor_info(self, worker, data):
         tq = self.transport.queue
@@ -499,7 +504,29 @@ request has been obtained from the :attr:`ioqueue`.'''
         return data
     
     def actorparams(self, monitor, params):
-        if 'queue' not in self.local:
-            self.local.queue = self.cfg.task_queue_factory()
         params['queue'] = self.local.queue
         return params
+
+
+class MultiApp:
+    
+    def __init__(self, name='multi', **params):
+        self.name = name
+        self.params = params
+        self.apps = []
+        
+    def add(self, app):
+        if isinstance(app, Application):
+            self.apps.append(app)
+            
+    def __call__(self, actor=None):
+        self.build()
+        if self.apps:
+            return self.apps[-1](actor)
+        
+    def build(self):
+        raise NotImplementedError()
+        
+    def start(self):
+        for app in self.apps:
+            app.start()

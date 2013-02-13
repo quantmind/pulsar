@@ -3,6 +3,7 @@ Ver. 0.5.0 - DEVELOPMENT
 * pep-3156_ implementation with considerable amount of internal refactoring.
 * :class:`Actor` internal message passing uses the (unmasked) websocket protocol
   in a bidirectional communication between the :class:`Arbiter` and actors.
+* New pep-3156_ compatible :class:`pulsar.EventLoop`.
 * :class:`CPUboundApplication` created as base class for CPU bound applications.
 * Added ability to add Websocket sub-protocols and extensions.
 * Added web chat example.
@@ -11,6 +12,10 @@ Ver. 0.5.0 - DEVELOPMENT
 * New asynchronous :class:`pulsar.apps.http.HttpClient` with websocket support.
 * Support http-parser_ for faster http protocol parsing.
 * Initial :ref:`twisted integration <tutorials-twisted>`.
+* :class:`pulsar.DeferredGenerator` stops after the first error by default. It also
+  sends the last result back to the generator for better inline syntax.
+* Small refactoring of asynchronous :mod:`pulsar.apps.test` application.
+* Added :mod:`pulsar.async.const` module for low level actor constants.
 * **374 regression tests**, **87% coverage**.
 
 Ver. 0.4.6 - 2013-Feb-8

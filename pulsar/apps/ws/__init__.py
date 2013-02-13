@@ -80,7 +80,7 @@ class GeneralWebSocket(wsgi.Router):
         request.response.content = b''
         request.response.headers.update(headers)
         upgrade = request.environ['pulsar.connection'].upgrade
-        upgrade(partial(WebSocketProtocol, self.handle,
+        upgrade(partial(WebSocketServerProtocol, self.handle,
                         request.environ, parser))
         return request.response.start()
     
@@ -204,38 +204,26 @@ back to the client::
             print("WebSocket closed")
             
 '''
-    def on_open(self, environ):
+    def on_open(self, protocol):
         """Invoked when a new WebSocket is opened."""
         pass
 
-    def on_message(self, environ, message):
+    def on_message(self, protocol, message):
         """Handle incoming messages on the WebSocket.
         This method must be overloaded.
         """
         raise NotImplementedError()
 
-    def on_close(self, environ):
+    def on_close(self, protocol):
         """Invoked when the WebSocket is closed."""
         pass
- 
-    def write(self, environ, data):
-        environ['ws.writer'](data)
         
         
 class WebSocketProtocol(pulsar.ProtocolConsumer):
-    '''Created after a successful websocket handshake. Tjis is a
-:class:`pulsar.ProtocolConsumer` which manages the communication with the
-websocket client.'''
-    def __init__(self, handler, environ, parser, connection):
-        super(WebSocketProtocol, self).__init__(connection)
-        connection.set_timeout(0)
-        self.handler = handler
-        self.environ = environ
-        self.parser = parser
-        self.environ['ws.writer'] = self.write
-        self.started = False
-        self.closed = False
-        
+    '''Websocket protocol for servers and clients.'''
+    started = False
+    closed = False
+    
     def data_received(self, data):
         environ = self.environ
         parser = self.parser
@@ -254,6 +242,8 @@ websocket client.'''
             frame = parser.decode()
     
     def write(self, frame):
+        '''Write a new *frame* into the wire, frame can be byes, asynchronous
+or  nothing. This is a utility method for the transport write method.'''
         if frame is None:
             return
         elif is_async(frame):
@@ -272,6 +262,18 @@ websocket client.'''
             self.closed = True
             self.handler.on_close(self.environ)
             self.transport.close()
+    
+    
+class WebSocketServerProtocol(WebSocketProtocol):
+    '''Created after a successful websocket handshake. Tjis is a
+:class:`pulsar.ProtocolConsumer` which manages the communication with the
+websocket client.'''
+    def __init__(self, handler, environ, parser, connection):
+        super(WebSocketServerProtocol, self).__init__(connection)
+        connection.set_timeout(0)
+        self.handler = handler
+        self.environ = environ
+        self.parser = parser
     
         
         

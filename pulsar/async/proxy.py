@@ -6,8 +6,7 @@ from pulsar import AuthenticationError
 from pulsar.utils.pep import default_timer
 
 from .defer import Deferred
-
-ACTOR_ACTION_TIMEOUT = 5
+from .consts import *
 
 __all__ = ['ActorProxyDeferred',
            'ActorProxy',
@@ -16,7 +15,6 @@ __all__ = ['ActorProxyDeferred',
            'CommandNotFound',
            'get_proxy',
            'command',
-           'ACTOR_ACTION_TIMEOUT',
            'get_command']
 
 global_commands_table = {}

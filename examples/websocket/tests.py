@@ -59,11 +59,7 @@ class TestWebSocketThread(unittest.TestCase):
         self.assertEqual(response.status_code, 101)
         self.assertEqual(response.headers['upgrade'], 'websocket')
         # Send a message to the websocket
-        outcome = ws.write('Hi there!')
-        yield outcome
-        response = outcome.result
-        self.assertEqual(response.body, 'Hi there!')
-        self.assertFalse(response.masking_key)
+        ws.write('Hi there!')
         
 
 @dont_run_with_thread

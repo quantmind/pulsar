@@ -22,12 +22,12 @@ from pulsar.utils.httpurl import range
 
 class Graph(ws.WS):
     
-    def on_message(self, environ, msg):
+    def on_message(self, protocol, msg):
         return json.dumps([(i,random()) for i in range(100)])
     
 class Echo(ws.WS):
     
-    def on_message(self, environ, msg):
+    def on_message(self, protocol, msg):
         return msg
 
 

@@ -3,6 +3,7 @@ import logging
 from datetime import timedelta, datetime
 
 from pulsar.utils.httpurl import itervalues, iteritems
+from pulsar.utils.importer import import_modules
 from pulsar.utils.timeutils import remaining, timedelta_seconds,\
                                      humanize_seconds
 
@@ -112,17 +113,28 @@ class SchedulerEntry(object):
         return self
 
     def is_due(self, now = None):
-        return self.schedule.is_due(self.scheduled_last_run_at, now = now)
+        return self.schedule.is_due(self.scheduled_last_run_at, now=now)
 
 
 class Scheduler(object):
     """Scheduler for periodic tasks. This class is the main driver of tasks
 and task scheduling.
 
+.. attribute:: queue
+
+    The task queue instance. It must have a python Queue API.
+    
 .. attribute:: task_class
 
     The :attr:`TaskQueue.task_class` for producing new :class:`Task`.
+    
+.. attribute:: task_path
 
+    Optional list of paths where to upload :class:`Job` and :class:`PeriodicJob`
+    
+.. attribute:: schedule_periodic
+
+    `True` if the schedulter schedule periodic tasks.
 """
     def __init__(self, queue, task_class, tasks_path=None, logger=None,
                  schedule_periodic=False):
@@ -139,6 +151,10 @@ and task scheduling.
     def entries(self):
         return self._entries
 
+    def run(self, jobname, *args, **kwargs):
+        '''Shurtcut for :meth:`queue_task`'''
+        return self.queue_task(jobname, args, kwargs)
+    
     def queue_task(self, jobname, targs=None, tkwargs=None, **params):
         '''Create a new :class:`Task` which may or may not queued.
 

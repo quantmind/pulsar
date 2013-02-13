@@ -43,7 +43,7 @@ class TestCallable:
             return '%s.%s' % (self.test.__class__.__name__, self.method_name)
     __str__ = __repr__        
     
-    @async(max_errors=1)
+    @async()
     def run_test(self, actor):
         test = self.test
         if self.istest:
