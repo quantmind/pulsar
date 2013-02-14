@@ -3,7 +3,7 @@ import inspect
 import logging
 
 from pulsar import log_failure, is_async, is_failure,\
-                    as_failure, maybe_async, HttpException
+                    maybe_failure, maybe_async, HttpException
 from pulsar.utils.pep import to_bytes
 from pulsar.utils.tools import checkarity
 from pulsar.utils.structures import AttributeDictionary
@@ -264,7 +264,7 @@ class RpcMiddleware(object):
             try:
                 result = rpc.process(request)
             except Exception as e:
-                result = as_failure(e)
+                result = maybe_failure(e)
             handler = rpc.handler
             result = maybe_async(result)
             while is_async(result):

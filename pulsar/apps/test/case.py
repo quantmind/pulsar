@@ -2,8 +2,10 @@ import sys
 import io
 import logging
 from inspect import istraceback
+from functools import partial
 
-from pulsar import is_failure, multi_async, CLEAR_ERRORS, get_actor, async, as_failure
+from pulsar import is_failure, multi_async, get_actor, maybe_async,\
+                     is_async, maybe_failure, send
 from pulsar.utils.pep import pickle
 
 
@@ -42,16 +44,7 @@ class TestRequest(object):
         return self.testcls.__name__
     __str__ = __repr__
 
-    @async(max_errors=0)
     def start(self):
-        '''Run all test functions from the :attr:`testcls` using the
-following algorithm:
-
-* Run the class method ``setUpClass`` of :attr:`testcls` if defined.
-* Call :meth:`run_test` for each test functions in :attr:`testcls`
-* Run the class method ``tearDownClass`` of :attr:`testcls` if defined.
-'''
-        # Reset the runner
         worker = get_actor()
         worker.app.local.pop('runner')
         runner = worker.app.runner
@@ -60,40 +53,63 @@ following algorithm:
             testcls = testcls()
         testcls.tag = self.tag
         testcls.cfg = worker.cfg
-        sequential_execution = getattr(testcls, '_sequential_execution', False)
         LOGGER.debug('Testing %s', self)
         all_tests = runner.loadTestsFromTestCase(testcls)
+        num = all_tests.countTestCases()
+        if num:
+            result = self.run(runner, testcls, all_tests)
+            timeout = worker.cfg.timeout
+            result = maybe_async(result, max_errors=0, timeout=num*timeout)
+            if is_async(result):
+                return result.add_both(partial(self.close, runner, testcls))
+        return self.close(runner, testcls)
+        
+    def run(self, runner, testcls, all_tests):
+        '''Run all test functions from the :attr:`testcls` using the
+following algorithm:
+
+* Run the class method ``setUpClass`` of :attr:`testcls` if defined.
+* Call :meth:`run_test` for each test functions in :attr:`testcls`
+* Run the class method ``tearDownClass`` of :attr:`testcls` if defined.
+'''
         run_test_function = runner.run_test_function
-        if all_tests.countTestCases():
-            skip_tests = getattr(testcls, "__unittest_skip__", False)
-            should_stop = False
-            test_cls = test_method(testcls, 'setUpClass')
-            if test_cls and not skip_tests:
-                outcome = yield run_test_function(testcls,
-                                            getattr(testcls,'setUpClass'))
-                should_stop = self.add_failure(test_cls, runner, outcome)
-            if not should_stop:
-                if sequential_execution:
-                    # Loop over all test cases in class
-                    for test in all_tests:
-                        yield self.run_test(test, runner)
-                else:
-                    all = (self.run_test(test, runner) for test in all_tests)
-                    yield multi_async(all)
-            test_cls = test_method(testcls, 'tearDownClass')
-            if test_cls and not skip_tests:
-                outcome = yield run_test_function(testcls,getattr(testcls,
-                                                        'tearDownClass'))
-                self.add_failure(test_cls, runner, outcome)
-            # Clear errors
-            yield CLEAR_ERRORS
+        sequential_execution = getattr(testcls, '_sequential_execution', False)
+        skip_tests = getattr(testcls, "__unittest_skip__", False)
+        should_stop = False
+        test_cls = test_method(testcls, 'setUpClass')
+        if test_cls and not skip_tests:
+            outcome = yield run_test_function(testcls,
+                                        getattr(testcls,'setUpClass'))
+            should_stop = self.add_failure(test_cls, runner, outcome)
+        #
+        # run the tests
+        if not should_stop:
+            if sequential_execution:
+                # Loop over all test cases in class
+                for test in all_tests:
+                    yield self.run_test(test, runner)
+            else:
+                all = (self.run_test(test, runner) for test in all_tests)
+                yield multi_async(all)
+        #
+        test_cls = test_method(testcls, 'tearDownClass')
+        if test_cls and not skip_tests:
+            outcome = yield run_test_function(testcls,getattr(testcls,
+                                                    'tearDownClass'))
+            self.add_failure(test_cls, runner, outcome)
+    
+    def close(self, runner, testcls, result=None):
         # send runner result to monitor
         LOGGER.debug('Sending %s results back to monitor', self)
-        worker.send('monitor', 'test_result', testcls.tag,
-                    testcls.__name__, runner.result)
+        send('monitor', 'test_result', testcls.tag,
+             testcls.__name__, runner.result)
 
-    @async(max_errors=0)
     def run_test(self, test, runner):
+        timeout = get_actor().cfg.timeout
+        result = self._run_test(test, runner)
+        return maybe_async(result, max_errors=0, timeout=timeout)
+        
+    def _run_test(self, test, runner):
         '''\
 Run a *test* function using the following algorithm
 
@@ -149,7 +165,7 @@ Run a *test* function using the following algorithm
     def add_failure(self, test, runner, failure):
         '''Add *failure* to the list of errors if *failure* is indeed a failure.
 Return `True` if *failure* is a failure, otherwise return `False`.'''
-        failure = as_failure(failure)
+        failure = maybe_failure(failure)
         if is_failure(failure):
             for trace in failure:
                 e = trace[1]

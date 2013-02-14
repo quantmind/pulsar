@@ -2,6 +2,8 @@ import time
 import logging
 from datetime import timedelta, datetime
 
+
+from pulsar import EMPTY_TUPLE, EMPTY_DICT
 from pulsar.utils.httpurl import itervalues, iteritems
 from pulsar.utils.importer import import_modules
 from pulsar.utils.timeutils import remaining, timedelta_seconds,\
@@ -15,9 +17,6 @@ from .states import PENDING
 __all__ = ['Scheduler', 'LOGGER']
 
 LOGGER = logging.getLogger('pulsar.tasks')
-
-EMPTY_TUPLE = ()
-EMPTY_DICT = {}
 
 
 def get_datetime(expiry, start):

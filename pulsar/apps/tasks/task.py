@@ -7,7 +7,7 @@ import traceback
 from io import StringIO
 
 from pulsar.utils.pep import itervalues, iteritems
-from pulsar import maybe_async, as_failure, is_async, is_failure, send
+from pulsar import maybe_async, maybe_failure, is_async, is_failure, send
 
 from .models import registry
 from .exceptions import *
@@ -110,7 +110,7 @@ callback.'''
                     yield result
                     result = maybe_async(result)
         except Exception as e:
-            result = as_failure(e)
+            result = maybe_failure(e)
         finally:
             yield self.finish(worker, result)
 

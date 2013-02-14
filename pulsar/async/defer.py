@@ -4,7 +4,7 @@ from copy import copy
 import logging
 import traceback
 from threading import current_thread, local
-from collections import deque, namedtuple
+from collections import deque, namedtuple, Mapping
 from itertools import chain
 from inspect import isgenerator, isfunction, ismethod, istraceback
 
@@ -13,14 +13,15 @@ from pulsar.utils import events
 from pulsar.utils.pep import raise_error_trace, iteritems, default_timer
 
 from .access import get_request_loop
+from .consts import *
 
 
 __all__ = ['Deferred',
            'EventHandler',
            'MultiDeferred',
-           'DeferredGenerator',
+           'DeferredCoroutine',
            'Failure',
-           'as_failure',
+           'maybe_failure',
            'is_failure',
            'log_failure',
            'is_async',
@@ -29,31 +30,18 @@ __all__ = ['Deferred',
            'make_async',
            'safe_async',
            'async',
-           'multi_async',
-           'maybe_async_deco',
-           'NOT_DONE',
-           'STOP_ON_FAILURE',
-           'CLEAR_ERRORS']
-
-# Special objects
-class NOT_DONE(object):
-    pass
-
-class STOP_ON_FAILURE(object):
-    pass
-
-class CLEAR_ERRORS(object):
-    pass
+           'multi_async']
 
 class DeferredFailure(Exception):
     '''Raised when no other information is available on a Failure'''
-    
 
-EMPTY_DICT = {}
-EMPTY_TUPLE = ()
+class CancelledError(DeferredFailure):
+    pass
+
 LOGGER = logging.getLogger('pulsar.defer')
 
 remote_stacktrace = namedtuple('remote_stacktrace', 'error_class error trace')
+call_back = namedtuple('call_back', 'call error continuation')
 
 pass_through = lambda result: result
 
@@ -61,7 +49,7 @@ def iterdata(stream, start=0):
     '''Iterate over a stream which is either a dictionary or a list. This
 iterator is over key-value pairs for a dictionary, and index-value pairs
 for a list.'''
-    if isinstance(stream, dict):
+    if isinstance(stream, Mapping):
         return iteritems(stream)
     else:
         return enumerate(stream, start)
@@ -79,51 +67,12 @@ def is_stack_trace(trace):
                  (trace[2] is None and isinstance(trace[1],trace[0]))
     return False
 
-def default_is_failure(value):
-    return isinstance(value, Failure)
-
-def as_failure(value, msg=None):
-    '''Convert *value* into a :class:`Failure` if it is a stack trace or an
-exception, otherwise returns *value*.'''
-    if isinstance(value, Exception):
-        exc_info = sys.exc_info()
-        if value == exc_info[1]:
-            return Failure(exc_info, msg)
-        else:
-            return Failure((value.__class__, value, None), msg)
-    elif is_stack_trace(value):
-        return Failure(value, msg)
-    else:
-        return value
-
-def default_is_async(obj):
-    '''Check if *obj* is an asynchronous instance.'''
-    return isinstance(obj, Deferred)
-
-def maybe_async(val, description=None, max_errors=None):
-    '''Convert *val* into an asynchronous instance only if *val* is a generator
-or a function. If *val* is a :class:`Deferred` it checks if it has been
-called and all callbacks have been consumed.
-In this case it returns the :attr:`Deferred.result` attribute.'''
-    if isgenerator(val):
-        val = DeferredGenerator(val, max_errors=max_errors,
-                                description=description)
-    if is_async(val):
-        return val.result_or_self()
-    else:
-        return as_failure(val)
-    
-def maybe_async_deco(f):
-    def _(*args, **kwargs):
-        return maybe_async(f(*args, **kwargs))
-    return _
-
 def make_async(val=None, description=None, max_errors=None):
     '''Convert *val* into an :class:`Deferred` asynchronous instance
 so that callbacks can be attached to it.
 
 :parameter val: can be a generator or any other value. If a generator, a
-    :class:`DeferredGenerator` instance will be returned.
+    :class:`DeferredCoroutine` instance will be returned.
 :parameter max_errors: the maximum number of errors tolerated if *val* is
     a generator. Default `None`.
 :return: a :class:`Deferred` instance.
@@ -153,7 +102,7 @@ result.
 :parameter args: tuple of positional arguments for *f*.
 :parameter kwargs: dictionary of key-word parameters for *f*.
 :parameter description: Optional description for the :class:`Deferred` returned.
-:parameter max_errors: the maximum number of errors tolerated if a :class:`DeferredGenerator`
+:parameter max_errors: the maximum number of errors tolerated if a :class:`DeferredCoroutine`
     is returned.
 :return: a :class:`Deferred` instance.
 '''
@@ -174,19 +123,75 @@ def log_failure(failure):
     return failure
 
 def is_async(obj):
-    return _is_async(obj)
+    '''Return ``True`` if *obj* is an asynchronous object'''
+    return isinstance(obj, Deferred)
 
 def is_failure(obj):
-    return _is_failure(obj)
+    '''Return ``True`` if *obj* is a failure'''
+    return isinstance(obj, Failure)
 
+def default_maybe_failure(value, msg=None):
+    if isinstance(value, Exception):
+        exc_info = sys.exc_info()
+        if value == exc_info[1]:
+            return Failure(exc_info, msg)
+        else:
+            return Failure((value.__class__, value, None), msg)
+    elif is_stack_trace(value):
+        return Failure(value, msg)
+    else:
+        return value
 
-_is_async = default_is_async
-_is_failure = default_is_failure
+def default_maybe_async(val, description=None, max_errors=1, timeout=None):
+    if isgenerator(val):
+        val = DeferredCoroutine(val, max_errors=max_errors,
+                                description=description,
+                                timeout=timeout)
+    if is_async(val):
+        return val.result_or_self()
+    else:
+        return maybe_failure(val)
+    
+def maybe_async(value, description=None, max_errors=1, timeout=None):
+    '''Return an asynchronous instance only if *value* is
+a generator or already an asynchronous instance. If *value* is asynchronous
+it checks if it has been called. In this case it returns the *result*.
 
-def set_async(is_async_callable, is_failure_callable):
-    global _is_async, _is_failure
-    _is_async = is_async_callable
-    _is_failure = is_failure_callable
+:parameter value: the value to convert to an asynchronous instance
+    if it needs to.
+:parameter description: optional description, rarely used.
+:parameter max_errors: The maximum number of exceptions allowed before
+    stopping the generator and raise exceptions. By default it is 1.
+:parameter timeout: optional timeout after which any asynchronous element get
+    a cancellation.
+:return: a :class:`Deferred` or *value*.
+'''
+    global _maybe_async
+    return _maybe_async(value, description=description,
+                        max_errors=max_errors, timeout=timeout)
+    
+def maybe_failure(value, msg=None):
+    '''Convert *value* into a :class:`Failure` if it is a stack trace or an
+exception, otherwise returns *value*.
+
+:parameter value: the value to convert to a :class:`Failure` instance
+    if it needs to.
+:parameter msg: Optional message to display in the log if *value* is a failure.
+:return: a :class:`Failure` or *value*.
+'''
+    global _maybe_failure
+    return _maybe_failure(value, msg=msg)
+
+_maybe_async = default_maybe_async
+_maybe_failure = default_maybe_failure
+
+def set_async(maybe_async_callable, maybe_failure_callable):
+    '''Set the asynchronous and failure discovery functions. This can be
+used when third-party asynchronous objects are used instead or in conjunction
+with pulsar :class:`Deferred` and :class:`Failure`.'''
+    global _maybe_async, _maybe_failure
+    _maybe_async = maybe_async_callable
+    _maybe_failure = maybe_failure_callable
     
 ############################################################### DECORATORS
 class async:
@@ -194,7 +199,7 @@ class async:
 an asynchronous callable.
     
 :parameter max_errors: The maximum number of errors permitted if the
-    asynchronous value is a :class:`DeferredGenerator`.
+    asynchronous value is a :class:`DeferredCoroutine`.
 :parameter description: optional description.
 
 Typical usage::
@@ -338,6 +343,7 @@ class Failure(object):
             for e in self:
                 log.critical(self.msg, exc_info=e)
 
+
 ############################################################### Deferred
 class Deferred(object):
     """The main class of the pulsar asynchronous tools.
@@ -390,26 +396,38 @@ The implementation is very similar to the ``twisted.defer.Deferred`` object.
     def running(self):
         return self._runningCallbacks
 
-    def add_callback(self, callback, errback=None):
+    def done(self):
+        return self.called
+    
+    def cancel(self, msg=''):
+        '''Cancel the deferred and schedule callbacks.
+If the deferred is waiting for another :class:`Deferred`, forward the
+cancellation to that one.'''
+        if not self.called:
+            return self.callback(CancelledError(msg))
+        elif is_async(self.result, Deferred):
+            return self.result.cancel(msg)
+    
+    def add_callback(self, callback, errback=None, continuation=None):
         """Add a callback as a callable function.
 The function takes at most one argument, the result passed to the
 :meth:`callback` method. If the *errback* callable is provided it will
 be called when an exception occurs."""
         errback = errback if errback is not None else pass_through
         if hasattr(callback, '__call__') and hasattr(errback, '__call__'):
-            self._callbacks.append((callback, errback))
+            self._callbacks.append(call_back(callback, errback, continuation))
             self._run_callbacks()
         else:
-            raise TypeError('callback must be callable')
+            raise TypeError('callbacks must be callable')
         return self
 
-    def add_errback(self, errback):
+    def add_errback(self, errback, continuation=None):
         '''Same as :meth:`add_callback` but only for errors.'''
-        return self.add_callback(pass_through, errback)
+        return self.add_callback(pass_through, errback, continuation)
 
-    def add_both(self, callback):
+    def add_both(self, callback, continuation=None):
         '''Equivalent to `self.add_callback(callback, callback)`.'''
-        return self.add_callback(callback, callback)
+        return self.add_callback(callback, callback, continuation)
 
     def add_callback_args(self, callback, *args, **kwargs):
         return self.add_callback(\
@@ -428,7 +446,7 @@ this point, :meth:`add_callback` will run the *callbacks* immediately.
                                'callback function')
         elif self._called:
             raise AlreadyCalledError('Deferred %s already called' % self)
-        self.result = as_failure(result)
+        self.result = maybe_failure(result)
         self._called = True
         self._run_callbacks()
         return self.result
@@ -438,7 +456,10 @@ this point, :meth:`add_callback` will run the *callbacks* immediately.
 callbacks have been consumed, otherwise it returns this :class:`Deferred`.
 Users should use this method to obtain the result, rather than accessing
 directly the :attr:`result` attribute.'''
-        return self.result if self._called and not self._callbacks else self
+        if self._called and not self._callbacks:
+            return self.result
+        else:
+            return self
 
     ##################################################    INTERNAL METHODS
     def _run_callbacks(self):
@@ -456,11 +477,12 @@ directly the :attr:`result` attribute.'''
             except Exception as e:
                 self._add_exception(e)
             else:
-                if isinstance(self.result, Deferred):
+                # if we received an asynchronous instance we add a continuation
+                if is_async(self.result):
                     # Add a pause
                     self._pause()
                     # Add a callback to the result to resume callbacks
-                    self.result.add_both(self._continue)
+                    self.result.add_both(self._continue, self)
                     break
 
     def _pause(self):
@@ -531,7 +553,7 @@ a callable which accept one argument only.'''
         """Dispatches *event_data* to the *event* listeners.
 If *event_data* is not provided, this instance will be dispatched.
 If *event_data* is an error it will be converted to a :class:`Failure`."""
-        event_data = self if event_data is None else as_failure(event_data)
+        event_data = self if event_data is None else maybe_failure(event_data)
         if event in self.ONE_TIME_EVENTS:
             self.ONE_TIME_EVENTS[event].callback(event_data)
         elif event in self.MANY_TIMES_EVENTS:
@@ -568,25 +590,20 @@ If *event_data* is an error it will be converted to a :class:`Failure`."""
         return _
             
                     
-class DeferredGenerator(Deferred):
+class DeferredCoroutine(Deferred):
     '''A :class:`Deferred` for a generator over, possibly, deferred objects.
 The callback will occur once the generator has stopped
 (when it raises StopIteration), or a preset maximum number of errors has
-occurred.
-
-:parameter gen: a generator.
-:parameter max_errors: The maximum number of exceptions allowed before
-    stopping the generator and raise exceptions. By default the
-    generator will continue regardless of errors, accumulating them into
-    the final result.
-'''
+occurred. Instances of :class:`DeferredCoroutine` are never
+initialised directly, they are created by the :func:`maybe_async`
+function when a generator is passed as argument.'''
     def __init__(self, gen, max_errors=1, description=None,
                  error_handler=None, timeout=0):
         self.gen = gen
         self.max_errors = max(1, max_errors) if max_errors else 0
         self.timeout = timeout
         self.errors = Failure()
-        super(DeferredGenerator,self).__init__(description=description)
+        super(DeferredCoroutine,self).__init__(description=description)
         # the loop in the current thread... with preference to the request loop
         self.loop = get_request_loop()
         self._start()
@@ -610,7 +627,7 @@ occurred.
                 self.errors.append(last_result)
                 if self.max_errors and len(self.errors) >= self.max_errors:
                     return self.conclude()
-                last_result = as_failure(last_result)
+                last_result = maybe_failure(last_result)
         try:
             result = self.gen.send(last_result)
         except StopIteration:
@@ -623,22 +640,15 @@ occurred.
     def _check_async(self, result):
         result = maybe_async(result)
         if is_async(result):
-            if not self._async_count:
+            if not self._async_count: # first time for this async, add wake
                 result.add_both(self._wake_loop)
             self._async_count += 1
             if self.timeout and default_timer() - self._start > self.timeout:
-                try:
-                    raise RuntimeError('Timeout %s seconds!' % self.timeout)
-                except Exception as e:
-                    return self.callback(e)
-            #self.loop.call_soon_threadsafe(self._check_async, result)
+                result.cancel('Timeout %s seconds!' % self.timeout)
             self.loop.call_soon(self._check_async, result)
         elif result == NOT_DONE:
             self.loop.call_soon(self._continue, NOT_DONE)
         else:
-            if result == CLEAR_ERRORS:
-                self.errors.clear()
-                result = None
             self._continue(result)
 
     def conclude(self, last_result=None):
@@ -754,7 +764,7 @@ both ``list`` and ``dict`` types.'''
             try:
                 val = self.handle_value(value)
             except Exception as e:
-                value = as_failure(e)
+                value = maybe_failure(e)
             else:
                 if val is not value:
                     return self._add(key, val)

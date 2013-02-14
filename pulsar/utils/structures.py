@@ -1,3 +1,29 @@
+'''
+Collection of data structures and function used throughout the library.
+
+MultiValueDict
+~~~~~~~~~~~~~~~~~~~~~~~
+
+.. autoclass:: MultiValueDict
+   :members:
+   :member-order: bysource
+   
+   
+AttributeDictionary
+~~~~~~~~~~~~~~~~~~~~~~~
+
+.. autoclass:: AttributeDictionary
+   :members:
+   :member-order: bysource
+   
+   
+FrozenDict
+~~~~~~~~~~~~~~~~~~~~~~~
+
+.. autoclass:: FrozenDict
+   :members:
+   :member-order: bysource
+'''
 from copy import copy
 from collections import *
 
@@ -174,6 +200,42 @@ class AttributeDictionary(Mapping):
             return self.__dict__.iteritems()
     
     
+class FrozenDict(dict):
+    '''A dictionary which cannot be changed once initialised.'''
+
+    def __init__(self, *iterable, **kwargs):
+        update = super(FrozenDict, self).update
+        if iterable:
+            if len(iterable) > 1:
+                raise TypeError('%s exceped at most 1 arguments, got %s.' %\
+                                (self.__class__.__name__, len(iterable)))
+            update(iterable[0])
+        if kwargs:
+            update(kwargs)
+
+    def __setitem__(self, key, value):
+        raise TypeError("'%s' object does not support item assignment"\
+                         % self.__class__.__name__)
+        
+    def update(self, iterable):
+        raise TypeError("'%s' object does not support update"\
+                         % self.__class__.__name__)
+        
+    def pop(self, key):
+        raise TypeError("'%s' object does not support pop"\
+                         % self.__class__.__name__)
+
+    def __gt__(self, other):
+        if hasattr(other, '__len__'):
+            return len(self) > len(other)
+        else:
+            return False
+        
+    def __lt__(self, other):
+        if hasattr(other, '__len__'):
+            return len(self) < len(other)
+        else:
+            return False
     
 def merge_prefix(deque, size):
     """Replace the first entries in a deque of bytes with a single

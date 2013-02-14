@@ -21,7 +21,8 @@ from twisted.internet.posixbase import PosixReactorBase
 from twisted.internet.defer import Deferred
 from twisted.python.failure import Failure
 
-from pulsar.async.defer import default_is_async, default_is_failure, set_async
+import pulsar
+from pulsar.async.defer import default_as_async, default_maybe_failure, set_async
 from pulsar.utils.pep import get_event_loop
 
 
@@ -31,33 +32,23 @@ def result_or_self(self):
 def get_traces(self):
     return [(self.type, self.value, self.tb)]
     
-def is_async(obj):
-    if not default_is_async(obj):
-        if isinstance(obj, Deferred):
-            if not hasattr(obj, 'add_both'):
-                # twisted likes camels
-                obj.add_both = obj.addBoth
-                obj.add_callback = obj.addCallback
-                obj.add_errback = obj.addErrback
-                obj.result_or_self = lambda : result_or_self(obj)
-            return True
-    else:
-        return True
-    return False
+def maybe_async(obj, **params):
+    if isinstance(obj, Deferred):
+        d = pulsar.Deferred()
+        d._twisted_deferred = obj
+        obj.addBoth(d.callback)
+        obj = d
+    return default_as_async(obj)
 
-def is_failure(e):
-    if not default_is_failure(e):
-        if isinstance(e, Failure):
-            if not hasattr(e, 'get_traces'):
-                e.get_traces = lambda : get_traces(e)
-            return True
+def maybe_failure(e):
+    if isinstance(e, Failure):
+        return pulsar.Failure((e.type, e.value, e.tb))
     else:
-        return True
-    return False
+        return default_maybe_failure(e)
         
 
 # Set the new async discovery functions
-set_async(is_async, is_failure)
+set_async(maybe_async, maybe_failure)
 
 
 class PulsarReactor(PosixReactorBase):

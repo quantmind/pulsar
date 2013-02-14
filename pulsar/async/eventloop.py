@@ -21,7 +21,7 @@ from pulsar.utils.pep import default_timer, set_event_loop_policy,\
 from pulsar.utils.sockets import SOCKET_INTERRUPT_ERRORS
 
 from .access import thread_local_data
-from .defer import log_failure, Deferred, as_failure
+from .defer import log_failure, Deferred
 from .transports import create_server
 
 __all__ = ['EventLoop', 'TimedCall', 'asynchronous']
@@ -86,9 +86,9 @@ class asynchronous:
             return eventloop.call_soon_threadsafe(self.generate, eventloop,
                                                   callback, gen, value)
         except StopIteration:
-            pass
+            return
         except Exception as e:
-            value = as_failure(e)
+            value = e
         callback(log_failure(value))
                 
             

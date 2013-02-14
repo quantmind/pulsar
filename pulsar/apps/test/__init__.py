@@ -198,7 +198,7 @@ is a group of tests specified in a test class.
     _app_name = 'test'
     cfg_apps = ('cpubound',)
     cfg = {'loglevel': 'none',
-           'timeout': 3600,
+           'timeout': 120,   #2 minutes max per test function
            'backlog': 1,
            'logconfig': {
                 'loggers': {

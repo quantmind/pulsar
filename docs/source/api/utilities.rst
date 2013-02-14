@@ -4,6 +4,9 @@
 Tools
 ==================
 
+HTTP
+============
+
 .. automodule:: pulsar.utils.httpurl
 
 .. _tools-http-headers:
@@ -28,7 +31,7 @@ HTTP Parser
 
 .. _tools-ws-parser:
 
-Websocket Frame & Parser
+Websocket
 ==============================
 
 .. automodule:: pulsar.utils.websocket
@@ -96,5 +99,8 @@ checkarity
 .. autofunction:: checkarity
 
 
+Structures
+==================
 
+.. automodule:: pulsar.utils.structures
    

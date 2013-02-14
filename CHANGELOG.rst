@@ -6,22 +6,30 @@ Ver. 0.5.0 - DEVELOPMENT
 * New pep-3156_ compatible :class:`pulsar.EventLoop`.
 * :class:`CPUboundApplication` created as base class for CPU bound applications.
 * Added ability to add Websocket sub-protocols and extensions.
-* Added web chat example.
-* Log WSGI environ on HTTP response errors.
 * Spawning and stopping actors is monitored using a timeout set at 5 seconds.
 * New asynchronous :class:`pulsar.apps.http.HttpClient` with websocket support.
 * Support http-parser_ for faster http protocol parsing.
 * Initial :ref:`twisted integration <tutorials-twisted>`.
-* :class:`pulsar.DeferredGenerator` stops after the first error by default. It also
-  sends the last result back to the generator for better inline syntax.
+* :class:`pulsar.DeferredCoroutine` stops after the first error by default.
+  This class replace the old DeferredGenerator and provides a cleaner
+  API with inline syntax. Check the
+  :ref:`asynchronous components <tutorials-coroutine>` tutorial for
+  further information.
 * Small refactoring of asynchronous :mod:`pulsar.apps.test` application.
 * Added :mod:`pulsar.async.const` module for low level actor constants.
+* Added :func:`pulsar.set_async` function which can be used to change
+  the asynchronous discovery functions :func:`pulsar.maybe_async`
+  and :func:`pulsar.maybe_failure`. The function is used in the implementation of
+  :ref:`twisted integration <tutorials-twisted>` and could be used in conjunction
+  with other asynchronous libraries as well.
+* Added :mod:`pulsar.utils.structures.FrozenDict`.
 * **374 regression tests**, **87% coverage**.
 
 Ver. 0.4.6 - 2013-Feb-8
 ==============================
 * Added websocket chat example.
 * Fixed bug in wsgi parser.
+* Log WSGI environ on HTTP response errors.
 * Several bug-fixes in tasks application.
 * **374 regression tests**, **87% coverage**.
 

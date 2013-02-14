@@ -34,6 +34,16 @@ While :class:`Actor` represents the concurrent side of pulsar,
 the :class:`Deferred` adds the asynchronous flavour to it by using callbacks
 functions similar to twisted_.
 
+Maybe Async
+~~~~~~~~~~~~~~~~~~~~
+
+.. autofunction:: maybe_async
+
+Maybe Failure
+~~~~~~~~~~~~~~~~~~~~
+
+.. autofunction:: maybe_failure
+
 Make Async
 ~~~~~~~~~~~~~~~~~
 
@@ -46,10 +56,19 @@ Safe Async
 .. autofunction:: safe_async
 
 
-Maybe Async
-~~~~~~~~~~~~~~~~~~~~
+Is Async
+~~~~~~~~~~~~~~~~~~~~~~
 
-.. autofunction:: maybe_async
+.. autofunction:: is_async
+
+Is failure
+~~~~~~~~~~~~~~~~~~~~~~
+.. autofunction:: is_failure
+
+
+Set Async
+~~~~~~~~~~~~~~~~~~~~~~
+.. autofunction:: set_async
 
 
 Deferred
@@ -66,10 +85,10 @@ Multi Deferred
    :members:
    :member-order: bysource
    
-Deferred Generator
+Deferred Coroutine
 ~~~~~~~~~~~~~~~~~~~~~~
 
-.. autoclass:: DeferredGenerator
+.. autoclass:: DeferredCoroutine
    :members:
    :member-order: bysource
    

@@ -4,7 +4,7 @@ from functools import partial, reduce
 from pulsar import TooManyConnections
 from pulsar.utils.pep import get_event_loop, itervalues
 from pulsar.utils.sockets import get_transport_type, create_socket
-from pulsar.async.defer import as_failure, is_failure
+from pulsar.async.defer import is_failure
 
 from .protocols import ProtocolConsumer, EventHandler, Producer
 from .transport import create_transport, LOGGER
