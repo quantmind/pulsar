@@ -89,8 +89,8 @@ and a :ref:`task queue <apps-tasks>` application installed in the
         return self._rq(request, 'next_scheduled', jobnames=jobnames)
         
     def rpc_run_new_task(self, request, jobname=None, **kw):
-        result = self.run_new_task(request, jobname, **kw)
-        return result.add_both(task_to_json)
+        result = yield self.run_new_task(request, jobname, **kw)
+        yield task_to_json(result)
         
     def rpc_get_task(self, request, id=None):
         if id:

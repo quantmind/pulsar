@@ -1,11 +1,9 @@
-import logging
 import os
 import sys
-from inspect import isfunction
+import logging
 
 import pulsar
-from pulsar import Actor, Monitor, get_actor, maybe_async_deco, EventHandler,\
-                    QueueServer, Queue
+from pulsar import Actor, Monitor, get_actor, EventHandler, QueueServer
 from pulsar.utils.importer import module_attribute
 from pulsar.utils.pep import pickle
 
@@ -482,6 +480,7 @@ request has been obtained from the :attr:`ioqueue`.'''
         return request
 
     def monitor_start(self, monitor):
+        '''Create the :attr:`queue` from the config dictionary.'''
         self.local.queue = self.cfg.task_queue_factory()
         
     def worker_start(self, worker):
@@ -490,17 +489,9 @@ request has been obtained from the :attr:`ioqueue`.'''
         worker.servers[self.name].connection_made(self.queue)
     
     def monitor_info(self, worker, data):
-        tq = self.transport.queue
+        tq = self.queue
         if tq is not None:
-            if isinstance(tq, Queue):
-                tqs = 'multiprocessing.Queue'
-            else:
-                tqs = str(tq)
-            try:
-                size = tq.qsize()
-            except NotImplementedError: #pragma    nocover
-                size = 0
-            data['queue'] = {'ioqueue': tqs, 'ioqueue_size': size}
+            data['queue'] = {'ioqueue': str(tq), 'ioqueue_size': tq.size()}
         return data
     
     def actorparams(self, monitor, params):

@@ -31,6 +31,16 @@ class MessageQueue(transport.Transport):
     
     def write(self, data):
         self.put(data)
+        
+    def size(self):
+        '''Approximate size of the message queue.'''
+        raise NotImplementedError
+        
+    def __repr__(self):
+        return self.__class__.__name__
+    
+    def __str__(self):
+        return self.__repr__()
     
 
 class Task(protocols.ProtocolConsumer):
@@ -98,6 +108,12 @@ so that the :meth:`get` method returns as soon possible.'''
 
     def put(self, message):
         self._queue.put(message)
+        
+    def size(self):
+        try:
+            return self._queue.qsize()
+        except NotImplementedError: #pragma    nocover
+            return 0
         
     def fileno(self):
         '''dummy file number'''

@@ -191,6 +191,7 @@ the tearDown method is overwritten.'''
         self.assertEqual(proxy.aid, ad.aid)
         self.assertEqual(proxy.proxy, proxy)
         self.assertTrue(proxy.cfg)
+        yield proxy
     
     def stop_actors(self, *args):
         all = args or self.all_spawned
