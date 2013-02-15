@@ -286,9 +286,7 @@ class a:
     def test_Cookie(self):
         http = self.client()
         # First set the cookies
-        r = make_async(http.get(self.httpbin('cookies', 'set', 'bla', 'foo')))
-        yield r
-        r = r.result
+        r = yield http.get(self.httpbin('cookies', 'set', 'bla', 'foo')).on_finished
         self.assertEqual(r.status_code, 200)
         self.assertTrue(r.history)
         self.assertTrue(r.history[0].headers['set-cookie'])

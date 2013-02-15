@@ -43,7 +43,6 @@ class TestCallable:
             return '%s.%s' % (self.test.__class__.__name__, self.method_name)
     __str__ = __repr__        
     
-    @async()
     def run_test(self, actor):
         test = self.test
         if self.istest:
@@ -52,14 +51,14 @@ class TestCallable:
         test_function = getattr(test, self.method_name)
         return test_function()
     
+    @async(max_errors=0)
     def __call__(self, actor=None):
         actor = actor or get_actor()
         test = self.test
-        outcome = self.run_test(actor)
+        result = yield self.run_test(actor)
         if self.istest:
-            outcome.add_both(lambda result:
-                actor.app.runner.after_test_function_run(test, result))
-        return outcome
+            yield actor.app.runner.after_test_function_run(test, result)
+        yield result
     
 
 class TestFunction:

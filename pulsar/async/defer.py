@@ -27,8 +27,6 @@ __all__ = ['Deferred',
            'is_async',
            'set_async',
            'maybe_async',
-           'make_async',
-           'safe_async',
            'async',
            'multi_async']
 
@@ -66,53 +64,9 @@ def is_stack_trace(trace):
         return istraceback(trace[2]) or\
                  (trace[2] is None and isinstance(trace[1],trace[0]))
     return False
-
-def make_async(val=None, description=None, max_errors=None):
-    '''Convert *val* into an :class:`Deferred` asynchronous instance
-so that callbacks can be attached to it.
-
-:parameter val: can be a generator or any other value. If a generator, a
-    :class:`DeferredCoroutine` instance will be returned.
-:parameter max_errors: the maximum number of errors tolerated if *val* is
-    a generator. Default `None`.
-:return: a :class:`Deferred` instance.
-
-This function is useful when someone needs to treat a value as a deferred::
-
-    v = ...
-    make_async(v).add_callback(...)
-
-'''
-    val = maybe_async(val, description, max_errors)
-    if not is_async(val):
-        d = Deferred(description=description)
-        d.callback(val)
-        return d
-    else:
-        return val
     
 def multi_async(iterable, **kwargs):
     return MultiDeferred(iterable, **kwargs).lock()
-    
-def safe_async(f, args=None, kwargs=None, description=None, max_errors=None):
-    '''Execute function *f* safely and **always** returns an asynchronous
-result.
-
-:parameter f: function to execute
-:parameter args: tuple of positional arguments for *f*.
-:parameter kwargs: dictionary of key-word parameters for *f*.
-:parameter description: Optional description for the :class:`Deferred` returned.
-:parameter max_errors: the maximum number of errors tolerated if a :class:`DeferredCoroutine`
-    is returned.
-:return: a :class:`Deferred` instance.
-'''
-    try:
-        kwargs = kwargs if kwargs is not None else EMPTY_DICT
-        args = args or EMPTY_TUPLE
-        result = f(*args, **kwargs)
-    except Exception:
-        result = sys.exc_info()
-    return make_async(result, max_errors=max_errors, description=description)
 
 def log_failure(failure):
     '''Log the *failure* if *failure* is a :class:`Failure` or a
@@ -208,16 +162,20 @@ Typical usage::
     def myfunction(...):
         ...
 '''
-    def __init__(self, max_errors=None, description=None):
+    def __init__(self, max_errors=None, description=None, timeout=0):
          self.max_errors = max_errors
          self.description = description or 'async decorator for '
+         self.timeout = timeout
 
     def __call__(self, func):
         description = '%s%s' % (self.description, func.__name__)
         def _(*args, **kwargs):
-            return safe_async(func, args=args, kwargs=kwargs,
-                              max_errors=self.max_errors,
-                              description=description)
+            try:
+                result = func(*args, **kwargs)
+            except Exception as e:
+                result = e
+            return maybe_async(result, description=description,
+                               max_errors=self.max_errors, timeout=self.timeout)
         _.__name__ = func.__name__
         _.__doc__ = func.__doc__
         return _

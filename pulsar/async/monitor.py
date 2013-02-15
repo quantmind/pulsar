@@ -8,10 +8,9 @@ from pulsar.utils.pep import iteritems, itervalues, range
 
 from . import proxy
 from .actor import Actor, send
-from .defer import async
+from .defer import async, NOT_DONE
 from .concurrency import concurrency
 from .mailbox import MonitorMailbox
-from .eventloop import asynchronous
 from .consts import *
 
 
@@ -197,13 +196,13 @@ as required."""
                         w, kage = w, age
                 self.manage_actor(w, True)
     
-    @asynchronous()
+    @async()
     def close_actors(self):
         '''Close all managed :class:`Actor`.'''
         # Stop all of them
         to_stop = self.manage_actors(stop=True)
         while to_stop:
-            yield to_stop
+            yield NOT_DONE
             to_stop = self.manage_actors(stop=True)
     
     
@@ -275,7 +274,7 @@ Users shouldn't need to override this method, but use
         self.ioloop.call_soon(self.periodic_task)
 
     # HOOKS
-    @async()
+    @async(max_errors=0)
     def _stop(self):
         yield self.close_actors()
         if not self.terminated_actors:

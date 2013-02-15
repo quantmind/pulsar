@@ -16,7 +16,7 @@ from pulsar.utils.websocket import FrameParser
 from pulsar.utils.security import gen_unique_id
 
 from .access import get_actor, set_actor, PulsarThread
-from .defer import make_async, log_failure, Deferred
+from .defer import async, maybe_failure, log_failure, Deferred
 from .transports import ProtocolConsumer, SingleClient, Request
 from .proxy import actorid, get_proxy, get_command, CommandError, ActorProxy
 
@@ -128,32 +128,34 @@ class MailboxConsumer(ProtocolConsumer):
     
     ############################################################################
     ##    INTERNALS
+    @async(max_errors=0)
     def _responde(self, message):
         actor = get_actor()
-        try:
-            command = message['command']
-            LOGGER.debug('%s handling message "%s"', actor, command)
-            if command == 'callback':   #this is a callback
-                return self._callback(message.get('ack'), message.get('result'))
-            target = actor.get_actor(message['target'])
-            if target is None:
-                raise CommandError('unknown actor %s' % message['target'])
-            caller = get_proxy(actor.get_actor(message['sender']), safe=True)
-            if isinstance(target, ActorProxy):
-                # route the message to the actor proxy
-                if caller is None:
-                    raise CommandError("'%s' got message from unknown '%s'" %
-                                       (actor, message['sender']))
-                result = actor.send(target, command, *message['args'],
-                                    **message['kwargs'])
-            else:
-                actor = target
-                command = get_command(command)
-                req = CommandRequest(target, caller, self.connection)
-                result = command(req, message['args'], message['kwargs'])
-        except Exception:
-            result = sys.exc_info()
-        return make_async(result).add_both(partial(self._response, message))
+        command = message.get('command')
+        LOGGER.debug('%s handling message "%s"', actor, command)
+        if command == 'callback':   #this is a callback
+            yield self._callback(message.get('ack'), message.get('result'))
+        else:
+            try:
+                target = actor.get_actor(message['target'])
+                if target is None:
+                    raise CommandError('unknown actor %s' % message['target'])
+                caller = get_proxy(actor.get_actor(message['sender']), safe=True)
+                if isinstance(target, ActorProxy):
+                    # route the message to the actor proxy
+                    if caller is None:
+                        raise CommandError("'%s' got message from unknown '%s'" %
+                                           (actor, message['sender']))
+                    result = yield actor.send(target, command, *message['args'],
+                                              **message['kwargs'])
+                else:
+                    actor = target
+                    command = get_command(command)
+                    req = CommandRequest(target, caller, self.connection)
+                    result = yield command(req, message['args'], message['kwargs'])
+            except Exception as e:
+                result = maybe_failure(e)
+            yield self._response(message, result)
         
     def _response(self, data, result):
         if data.get('ack'):

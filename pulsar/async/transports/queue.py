@@ -2,7 +2,7 @@ from functools import partial
 from multiprocessing.queues import Empty, Queue
 
 from pulsar.utils.system import IObase
-from pulsar.async.defer import make_async
+from pulsar.async.defer import async
 
 from . import transport
 from . import servers
@@ -49,10 +49,11 @@ class Task(protocols.ProtocolConsumer):
         self.request_factory = request_factory
         super(Task, self).__init__(connection)
         
+    @async()
     def data_received(self, data):
-        request = self.request_factory(data)
-        make_async(request.start()).add_callback(self.finished,
-                                  self.connection.connection_lost)
+        request = yield self.request_factory(data)
+        result = yield request.start()
+        yield self.finished(result)
     
     def finished(self, result):
         self.connection.connection_lost(None)

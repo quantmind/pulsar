@@ -13,7 +13,7 @@ except ImportError: #pragma nocover
     import Queue as queue
 ThreadQueue = queue.Queue
 
-from pulsar import AlreadyCalledError, AlreadyRegistered,\
+from pulsar import AlreadyCalledError, AlreadyRegistered, HaltServer,\
                    ActorAlreadyStarted, system, Config, platform
 from pulsar.utils.pep import pickle, set_event_loop_policy, itervalues
 from pulsar.utils.log import LogginMixin
@@ -449,6 +449,8 @@ status and performance.'''
         except Exception as e:
             self.logger.exception('Unhandled exception in %s', self.requestloop)
             exc = e
+        except HaltServer as e:
+            self.logger.warn('Halting server. %s', e)
         finally:
             self.stop(exc)
         

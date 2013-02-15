@@ -3,8 +3,7 @@ import sys
 from functools import reduce
 
 from pulsar import AlreadyCalledError, Deferred, is_async,\
-                     make_async, is_failure, MultiDeferred,\
-                     maybe_async
+                     is_failure, MultiDeferred, maybe_async
 from pulsar.apps.test import unittest
 
 
@@ -101,7 +100,7 @@ class TestDeferred(unittest.TestCase):
         d.add_callback(lambda r : r + ('second',))
         def _gen():
             yield d
-        a = make_async(_gen())
+        a = maybe_async(_gen())
         result = d.callback('ciao')
         self.assertTrue(d.called)
         self.assertEqual(d.paused, 1)
@@ -127,7 +126,7 @@ class TestDeferred(unittest.TestCase):
         d.add_callback(lambda r : r + ('second',))
         def _gen():
             yield d
-        a = make_async(_gen()).add_errback(lambda failure: [failure])
+        a = maybe_async(_gen()).add_errback(lambda failure: [failure])
         result = d.callback('ciao')
         self.assertTrue(d.called)
         self.assertEqual(d.paused, 1)
