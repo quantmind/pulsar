@@ -24,15 +24,16 @@ EventLoop
    :members:
    :member-order: bysource
       
-   
-Asyncronous Tools
-=====================
 
-This section describes the asynchronous utilities used throughout the library
-and which form the building block of the event driven concurrent framework.
-While :class:`Actor` represents the concurrent side of pulsar,
-the :class:`Deferred` adds the asynchronous flavour to it by using callbacks
-functions similar to twisted_.
+.. _async-discovery:
+
+Async Deiscovery Functions
+=================================
+
+This section describes the asynchronous discover functions which are used
+throughout the library to access if objects are asynchronous or not.
+There are two important functions: :func:`maybe_async` and :func:`maybe_failure`
+for asynchronous exceptions.
 
 Maybe Async
 ~~~~~~~~~~~~~~~~~~~~
@@ -44,19 +45,12 @@ Maybe Failure
 
 .. autofunction:: maybe_failure
 
-Make Async
-~~~~~~~~~~~~~~~~~
-
-.. autofunction:: make_async
-
-
-Safe Async
-~~~~~~~~~~~~~~~~~~~~
-
-.. autofunction:: safe_async
+Set Async
+~~~~~~~~~~~~~~~~~~~~~~
+.. autofunction:: set_async
 
 
-Is Async
+Is async
 ~~~~~~~~~~~~~~~~~~~~~~
 
 .. autofunction:: is_async
@@ -66,10 +60,26 @@ Is failure
 .. autofunction:: is_failure
 
 
-Set Async
-~~~~~~~~~~~~~~~~~~~~~~
-.. autofunction:: set_async
+Async Decorators
+====================
 
+Async
+~~~~~~~~~~~~~~~~~~~~~
+
+.. autoclass:: async
+
+
+Multi Async
+~~~~~~~~~~~~~~~~~~~~~~~~
+.. autofunction:: multi_async
+
+
+Asynchronous Classes
+==========================
+
+While :class:`Actor` represents the concurrent side of pulsar,
+the :class:`Deferred` adds the asynchronous flavour to it by using callbacks
+functions similar to twisted_.
 
 Deferred
 ~~~~~~~~~~~~~~~~~~~~
@@ -105,14 +115,6 @@ Events Handler
 .. autoclass:: EventHandler
    :members:
    :member-order: bysource
-   
-   
-Decorators
-~~~~~~~~~~~~~~~~~~~~~
-
-.. autoclass:: async
-
-.. autofunction:: multi_async
 
 
 

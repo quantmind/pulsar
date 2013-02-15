@@ -6,13 +6,12 @@
 Design
 =====================
 
-Pulsar is an asynchronous concurrent framework for python. It implements
-a double layer of components for building a vast array of parallel and asynchronous
-applications.
+Pulsar implements a double layer of components for building a vast array
+of parallel and asynchronous applications.
 
 * The first layer is based on the building blocks of pulsar library:
-  the :class:`Actor` class for concurrency and the the :class:`Deferred` class
-  for handling asynchronous events.
+  the :class:`Actor` class for parallel execution and the the :class:`Deferred`
+  class for handling asynchronous events via an actor's :class:`EventLoop`.
 * The second layer, built on top of the first one, is based on the
   :class:`Application` class.
    
@@ -21,8 +20,8 @@ Server State
 ==================
 
 Pulsar can be used as a stand-alone asynchronous library, without using
-:ref:`actors <design-actor>` to provide parallel execution.
-When using :ref:`pulsar application framework <design-application>`
+:ref:`actors <design-actor>` to provide parallel execution. However,
+when using :ref:`pulsar application framework <design-application>`,
 you need to use pulsar in **server state**, that is to say, there
 will be a centralised :class:`Arbiter` controlling the main
 :class:`EventLoop` in the **main thread** of the **master process**.

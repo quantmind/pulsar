@@ -118,7 +118,7 @@ it checks if it has been called. In this case it returns the *result*.
     stopping the generator and raise exceptions. By default it is 1.
 :parameter timeout: optional timeout after which any asynchronous element get
     a cancellation.
-:return: a :class:`Deferred` or *value*.
+:return: a :class:`Deferred` or  a :class:`Failure` or a **synchronous value**.
 '''
     global _maybe_async
     return _maybe_async(value, description=description,
@@ -131,7 +131,7 @@ exception, otherwise returns *value*.
 :parameter value: the value to convert to a :class:`Failure` instance
     if it needs to.
 :parameter msg: Optional message to display in the log if *value* is a failure.
-:return: a :class:`Failure` or *value*.
+:return: a :class:`Failure` or the original *value*.
 '''
     global _maybe_failure
     return _maybe_failure(value, msg=msg)
