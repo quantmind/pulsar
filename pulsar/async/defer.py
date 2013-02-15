@@ -1,9 +1,6 @@
-'''A deferred module with almost the same API as twisted.'''
 import sys
-from copy import copy
 import logging
 import traceback
-from threading import current_thread, local
 from collections import deque, namedtuple, Mapping
 from itertools import chain
 from inspect import isgenerator, isfunction, ismethod, istraceback
@@ -141,7 +138,7 @@ _maybe_failure = default_maybe_failure
 
 def set_async(maybe_async_callable, maybe_failure_callable):
     '''Set the asynchronous and failure discovery functions. This can be
-used when third-party asynchronous objects are used instead or in conjunction
+used when third-party asynchronous objects are used in conjunction
 with pulsar :class:`Deferred` and :class:`Failure`.'''
     global _maybe_async, _maybe_failure
     _maybe_async = maybe_async_callable
@@ -149,12 +146,9 @@ with pulsar :class:`Deferred` and :class:`Failure`.'''
     
 ############################################################### DECORATORS
 class async:
-    '''A decorator class which transforms a function into
-an asynchronous callable.
-    
-:parameter max_errors: The maximum number of errors permitted if the
-    asynchronous value is a :class:`DeferredCoroutine`.
-:parameter description: optional description.
+    '''A decorator class which invokes :func:`maybe_async` on the return
+value of the function it is decorating. The input parameters and the outcome
+are the same as :func:`maybe_async`.
 
 Typical usage::
 
@@ -180,14 +174,6 @@ Typical usage::
         _.__doc__ = func.__doc__
         return _
 
-
-def coroutine(f):
-    def _(*args, **kwargs):
-        gen = f(*args, **kwargs)
-        next(gen)
-        return gen
-    return _
-            
         
 ############################################################### FAILURE
 class Failure(object):
@@ -204,7 +190,6 @@ class Failure(object):
     logging for certain errors.
 '''
     def __init__(self, err=None, msg=None):
-        self.should_stop = False
         self.msg = msg or ''
         self.traces = []
         self.append(err)
@@ -304,9 +289,9 @@ class Failure(object):
 
 ############################################################### Deferred
 class Deferred(object):
-    """The main class of the pulsar asynchronous tools.
-It is a callback which will be put off until later.
-The implementation is very similar to the ``twisted.defer.Deferred`` object.
+    """The main class of pulsar asynchronous engine. It is a callback
+which will be put off until later.
+The implementation is similar to the ``twisted.defer.Deferred`` class.
 
 .. attribute:: called
 
@@ -549,82 +534,65 @@ If *event_data* is an error it will be converted to a :class:`Failure`."""
             
                     
 class DeferredCoroutine(Deferred):
-    '''A :class:`Deferred` for a generator over, possibly, deferred objects.
-The callback will occur once the generator has stopped
-(when it raises StopIteration), or a preset maximum number of errors has
-occurred. Instances of :class:`DeferredCoroutine` are never
+    '''A :class:`Deferred` coroutine is a consumer of, possibly,
+asynchronous objects.
+The callback will occur once the coroutine has stopped
+(when it raises StopIteration), or a preset maximum number of errors (default 1)
+has occurred. Instances of :class:`DeferredCoroutine` are never
 initialised directly, they are created by the :func:`maybe_async`
 function when a generator is passed as argument.'''
     def __init__(self, gen, max_errors=1, description=None,
                  error_handler=None, timeout=0):
         self.gen = gen
         self.max_errors = max(1, max_errors) if max_errors else 0
+        self._timeout_call = None
         self.timeout = timeout
         self.errors = Failure()
         super(DeferredCoroutine,self).__init__(description=description)
         # the loop in the current thread... with preference to the request loop
         self.loop = get_request_loop()
-        self._start()
-
-    def _start(self):
-        # Consume the generator
-        self._reset()
-        try:
-            result = next(self.gen)
-        except StopIteration:
-            return self.conclude()
-        except Exception as e:
-            return self._continue(e)
-        else:
-            return self._check_async(result)
+        self._consume(None)
     
-    def _continue(self, last_result):
-        self._reset()
-        if last_result != NOT_DONE:
-            if is_failure(last_result):
-                self.errors.append(last_result)
-                if self.max_errors and len(self.errors) >= self.max_errors:
-                    return self.conclude()
-                last_result = maybe_failure(last_result)
+    def _consume(self, last_result):
+        if is_failure(last_result):
+            self.errors.append(last_result)
+            if self.max_errors and len(self.errors) >= self.max_errors:
+                return self._conclude()
         try:
             result = self.gen.send(last_result)
         except StopIteration:
-            return self.conclude(last_result)
+            return self._conclude(last_result)
         except Exception as e:
-            return self._continue(e)
-        else:
-            return self._check_async(result)
+            result = e
+        return self._check_async(result)
         
     def _check_async(self, result):
         result = maybe_async(result)
         if is_async(result):
-            if not self._async_count: # first time for this async, add wake
-                result.add_both(self._wake_loop)
-            self._async_count += 1
-            if self.timeout and default_timer() - self._start > self.timeout:
-                result.cancel('Timeout %s seconds!' % self.timeout)
-            self.loop.call_soon(self._check_async, result)
+            result.add_both(self._restart)
+            if self.timeout:
+                self._timeout_call = self.loop.call_later(self.timeout,
+                                        self._cancel, result)
         elif result == NOT_DONE:
-            self.loop.call_soon(self._continue, NOT_DONE)
+            self.loop.call_soon(self._consume, None)
         else:
-            self._continue(result)
+            self._consume(result)
 
-    def conclude(self, last_result=None):
+    def _restart(self, result):
+        #restart the coroutine once we get a callback from an asynchronous
+        #element
+        if self._timeout_call:
+            self._timeout_call.cancel()
+            self._timeout_call = None
+        self.loop.call_soon_threadsafe(self._consume, result)
+    
+    def _conclude(self, last_result=None):
         # Conclude the generator and callback the listeners
         result = last_result if not self.errors else self.errors
         del self.gen
         del self.errors
         return self.callback(result)
-
-    def _wake_loop(self, result):
-        # wake loop and return result
-        self.loop.wake()
-        return result
         
-    def _reset(self):
-        self._start = default_timer()
-        self._async_count = 0
-
 ############################################################### MultiDeferred
 class MultiDeferred(Deferred):
     '''A :class:`Deferred` for managing a stream if independent objects
@@ -636,7 +604,7 @@ which may be :class:`Deferred`.
     
 .. attribute:: type
 
-    The type of multideferred. Either a ``list`` or a ``dict``.
+    The type of multi-deferred. Either a ``list`` or a ``dict``.
 '''
     _locked = False
     _time_locked = None

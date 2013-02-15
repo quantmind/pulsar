@@ -450,7 +450,7 @@ status and performance.'''
             self.logger.exception('Unhandled exception in %s', self.requestloop)
             exc = e
         except HaltServer as e:
-            self.logger.warn('Halting server. %s', e)
+            self.logger.error('Halting server. %s', e)
         finally:
             self.stop(exc)
         

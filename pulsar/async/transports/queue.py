@@ -1,4 +1,5 @@
 from functools import partial
+from threading import Lock
 from multiprocessing.queues import Empty, Queue
 
 from pulsar.utils.system import IObase
@@ -93,7 +94,8 @@ the file descriptor is a dummy number and the waker is `self`.
 The waker, when invoked via the :meth:`wake`, reduces the poll timeout to 0
 so that the :meth:`get` method returns as soon possible.'''
     def __init__(self):
-        self._wakeup = True
+        self._lock = Lock()
+        self._wakeup = 0
         self._queue = Queue()
         
     def poller(self, server):
@@ -101,11 +103,15 @@ so that the :meth:`get` method returns as soon possible.'''
     
     def get(self, timeout=0.5):
         '''Get an item from the queue.'''
-        if self._wakeup:
-            self._wakeup = False
-            return self._queue.get(block=False)
-        else:
-            return self._queue.get(timeout=timeout)
+        block = True
+        self._lock.acquire()
+        try:
+            if self._wakeup:
+                block = False
+                self._wakeup -= 1
+        finally:
+            self._lock.release()
+        return self._queue.get(block=block, timeout=timeout)
 
     def put(self, message):
         self._queue.put(message)
@@ -125,7 +131,11 @@ so that the :meth:`get` method returns as soon possible.'''
     
     def wake(self):
         '''Waker implementation. This message queue is its own waker.'''
-        self._wakeup = True
+        self._lock.acquire()
+        try:
+            self._wakeup += 1
+        finally:
+            self._lock.release()
         
 
 class TaskFactory:

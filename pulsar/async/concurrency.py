@@ -38,7 +38,7 @@ and are shared between the :class:`Actor` and its
 :class:`ActorProxyMonitor`.
 
 :parameter concurrency: string indicating the concurrency implementation.
-    Valid choices are ``monitor``, ``process``, ``thread``, 'coroutine``.
+    Valid choices are ``monitor``, ``process``, ``thread``.
 :parameter actor_class: :class:`Actor` or one of its subclasses.
 :parameter timeout: timeout in seconds for the actor.
 :parameter kwargs: additional key-valued arguments to be passed to the actor
