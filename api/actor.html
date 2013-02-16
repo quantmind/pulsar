@@ -6,13 +6,13 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>Actors API &mdash; pulsar v0.5b4 documentation</title>
+    <title>Actors API &mdash; pulsar v0.5b5 documentation</title>
     <link rel="stylesheet" href="../static/celery.css" type="text/css" />
     <link rel="stylesheet" href="../static/pygments.css" type="text/css" />
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../',
-        VERSION:     '0.5b4',
+        VERSION:     '0.5b5',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -21,7 +21,7 @@
     <script type="text/javascript" src="../static/jquery.js"></script>
     <script type="text/javascript" src="../static/underscore.js"></script>
     <script type="text/javascript" src="../static/doctools.js"></script>
-    <link rel="top" title="pulsar v0.5b4 documentation" href="../index.html" />
+    <link rel="top" title="pulsar v0.5b5 documentation" href="../index.html" />
     <link rel="up" title="API" href="index.html" />
     <link rel="next" title="Protocols API" href="protocols.html" />
     <link rel="prev" title="Asynchonous API" href="async.html" /> 
@@ -42,7 +42,7 @@
         <li class="right" >
           <a href="async.html" title="Asynchonous API"
              accesskey="P">previous</a> |</li>
-        <li><a href="../index.html">pulsar v0.5b4 documentation</a> &raquo;</li>
+        <li><a href="../index.html">pulsar v0.5b5 documentation</a> &raquo;</li>
           <li><a href="index.html" accesskey="U">API</a> &raquo;</li> 
       </ul>
     </div>  
@@ -421,6 +421,12 @@ do nothing.</p>
 as required.</p>
 </dd></dl>
 
+<dl class="method">
+<dt id="pulsar.PoolMixin.close_actors">
+<tt class="descname">close_actors</tt><big>(</big><em>*args</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#pulsar.PoolMixin.close_actors" title="Permalink to this definition">¶</a></dt>
+<dd><p>Close all managed <a class="reference internal" href="#pulsar.Actor" title="pulsar.Actor"><tt class="xref py py-class docutils literal"><span class="pre">Actor</span></tt></a>.</p>
+</dd></dl>
+
 </dd></dl>
 
 </div>
@@ -649,7 +655,7 @@ and are shared between the <a class="reference internal" href="#pulsar.Actor" ti
 <tbody valign="top">
 <tr class="field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
 <li><strong>concurrency</strong> &#8211; string indicating the concurrency implementation.
-Valid choices are <tt class="docutils literal"><span class="pre">monitor</span></tt>, <tt class="docutils literal"><span class="pre">process</span></tt>, <tt class="docutils literal"><span class="pre">thread</span></tt>, &#8216;coroutine``.</li>
+Valid choices are <tt class="docutils literal"><span class="pre">monitor</span></tt>, <tt class="docutils literal"><span class="pre">process</span></tt>, <tt class="docutils literal"><span class="pre">thread</span></tt>.</li>
 <li><strong>actor_class</strong> &#8211; <a class="reference internal" href="#pulsar.Actor" title="pulsar.Actor"><tt class="xref py py-class docutils literal"><span class="pre">Actor</span></tt></a> or one of its subclasses.</li>
 <li><strong>timeout</strong> &#8211; timeout in seconds for the actor.</li>
 <li><strong>kwargs</strong> &#8211; additional key-valued arguments to be passed to the actor
@@ -784,7 +790,7 @@ response. Usually is set to <tt class="xref docutils literal"><span class="pre">
         <li class="right" >
           <a href="async.html" title="Asynchonous API"
              >previous</a> |</li>
-        <li><a href="../index.html">pulsar v0.5b4 documentation</a> &raquo;</li>
+        <li><a href="../index.html">pulsar v0.5b5 documentation</a> &raquo;</li>
           <li><a href="index.html" >API</a> &raquo;</li> 
       </ul>
     </div>

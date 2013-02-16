@@ -6,13 +6,13 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>Protocols API &mdash; pulsar v0.5b4 documentation</title>
+    <title>Protocols API &mdash; pulsar v0.5b5 documentation</title>
     <link rel="stylesheet" href="../static/celery.css" type="text/css" />
     <link rel="stylesheet" href="../static/pygments.css" type="text/css" />
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../',
-        VERSION:     '0.5b4',
+        VERSION:     '0.5b5',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -21,7 +21,7 @@
     <script type="text/javascript" src="../static/jquery.js"></script>
     <script type="text/javascript" src="../static/underscore.js"></script>
     <script type="text/javascript" src="../static/doctools.js"></script>
-    <link rel="top" title="pulsar v0.5b4 documentation" href="../index.html" />
+    <link rel="top" title="pulsar v0.5b5 documentation" href="../index.html" />
     <link rel="up" title="API" href="index.html" />
     <link rel="next" title="Applications API" href="application.html" />
     <link rel="prev" title="Actors API" href="actor.html" /> 
@@ -42,7 +42,7 @@
         <li class="right" >
           <a href="actor.html" title="Actors API"
              accesskey="P">previous</a> |</li>
-        <li><a href="../index.html">pulsar v0.5b4 documentation</a> &raquo;</li>
+        <li><a href="../index.html">pulsar v0.5b5 documentation</a> &raquo;</li>
           <li><a href="index.html" accesskey="U">API</a> &raquo;</li> 
       </ul>
     </div>  
@@ -364,15 +364,19 @@ a proxy of <tt class="docutils literal"><span class="pre">self.event('finish')</
 <dt id="pulsar.ProtocolConsumer.start_request">
 <tt class="descname">start_request</tt><big>(</big><big>)</big><a class="headerlink" href="#pulsar.ProtocolConsumer.start_request" title="Permalink to this definition">¶</a></dt>
 <dd><p>Invoked by the <a class="reference internal" href="#pulsar.ProtocolConsumer.new_request" title="pulsar.ProtocolConsumer.new_request"><tt class="xref py py-meth docutils literal"><span class="pre">new_request()</span></tt></a> method to kick start the
-request with remote server/client. For server consumers this is usually
-not implemented. If implemented this is critical method where errors caused
-by stale socket connections can arise.</p>
+request with remote server/client. For server <a class="reference internal" href="#pulsar.ProtocolConsumer" title="pulsar.ProtocolConsumer"><tt class="xref py py-class docutils literal"><span class="pre">ProtocolConsumer</span></tt></a> this
+method is usually not implemented and therefore is simply a pass-through.
+If implemented this is critical method
+where errors caused by stale socket connections can arise.
+<strong>This method should not be called directly.</strong> Use <a class="reference internal" href="#pulsar.ProtocolConsumer.new_request" title="pulsar.ProtocolConsumer.new_request"><tt class="xref py py-meth docutils literal"><span class="pre">new_request()</span></tt></a>
+instead.</p>
 </dd></dl>
 
 <dl class="method">
 <dt id="pulsar.ProtocolConsumer.new_request">
 <tt class="descname">new_request</tt><big>(</big><em>request=None</em><big>)</big><a class="headerlink" href="#pulsar.ProtocolConsumer.new_request" title="Permalink to this definition">¶</a></dt>
-<dd><p>Starts a new <em>request</em> for this consumer.</p>
+<dd><p>Starts a new <em>request</em> for this protocol consumer if
+<tt class="xref py py-attr docutils literal"><span class="pre">connected</span></tt> is <cite>True</cite>.</p>
 </dd></dl>
 
 <dl class="method">
@@ -728,7 +732,7 @@ sending of data.</p>
         <li class="right" >
           <a href="actor.html" title="Actors API"
              >previous</a> |</li>
-        <li><a href="../index.html">pulsar v0.5b4 documentation</a> &raquo;</li>
+        <li><a href="../index.html">pulsar v0.5b5 documentation</a> &raquo;</li>
           <li><a href="index.html" >API</a> &raquo;</li> 
       </ul>
     </div>

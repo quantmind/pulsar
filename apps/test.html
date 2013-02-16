@@ -6,13 +6,13 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>Asynchronous Test Suite &mdash; pulsar v0.5b4 documentation</title>
+    <title>Asynchronous Test Suite &mdash; pulsar v0.5b5 documentation</title>
     <link rel="stylesheet" href="../static/celery.css" type="text/css" />
     <link rel="stylesheet" href="../static/pygments.css" type="text/css" />
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../',
-        VERSION:     '0.5b4',
+        VERSION:     '0.5b5',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -21,7 +21,7 @@
     <script type="text/javascript" src="../static/jquery.js"></script>
     <script type="text/javascript" src="../static/underscore.js"></script>
     <script type="text/javascript" src="../static/doctools.js"></script>
-    <link rel="top" title="pulsar v0.5b4 documentation" href="../index.html" />
+    <link rel="top" title="pulsar v0.5b5 documentation" href="../index.html" />
     <link rel="next" title="Asynchronous Shell" href="shell.html" />
     <link rel="prev" title="Asynchornous HTTP client" href="http.html" /> 
   </head>
@@ -41,7 +41,7 @@
         <li class="right" >
           <a href="http.html" title="Asynchornous HTTP client"
              accesskey="P">previous</a> |</li>
-        <li><a href="../index.html">pulsar v0.5b4 documentation</a> &raquo;</li> 
+        <li><a href="../index.html">pulsar v0.5b5 documentation</a> &raquo;</li> 
       </ul>
     </div>  
 
@@ -92,6 +92,36 @@ In the above example the test suite will look for all python files
 in the <tt class="docutils literal"><span class="pre">regression</span></tt> module (in a recursive fashion), and for modules
 called <tt class="docutils literal"><span class="pre">tests</span></tt> in the <tt class="docutils literal"><span class="pre">example</span></tt> module.</p>
 </div>
+<div class="section" id="wiring-a-test-case">
+<h2>Wiring a Test Case<a class="headerlink" href="#wiring-a-test-case" title="Permalink to this headline">¶</a></h2>
+<p>Only subclasses of  <tt class="docutils literal"><span class="pre">unittest.TestCase</span></tt> are collected by this application.
+When running a test, pulsar looks for two extra method: <tt class="docutils literal"><span class="pre">_pre_setup</span></tt> and
+<tt class="docutils literal"><span class="pre">_post_teardown</span></tt>. If the former is available, it is run just before the
+<tt class="docutils literal"><span class="pre">setUp</span></tt> method while if the latter is available, it is run
+just after the <tt class="docutils literal"><span class="pre">tearDown</span></tt> method. In addition if the <tt class="docutils literal"><span class="pre">setUpClass</span></tt>
+class methods is available, is run just before
+all tests functions are run and the <tt class="docutils literal"><span class="pre">tearDownClass</span></tt>, if available, is run
+just after all tests functions are run.</p>
+<p>An example test case:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="c"># This import is equivalent in python2.6 to</span>
+<span class="c">#     import unittest2 as unittest</span>
+<span class="c"># Otherwise it is the same as</span>
+<span class="c">#     import unittest</span>
+<span class="kn">from</span> <span class="nn">pulsar.apps.test</span> <span class="kn">import</span> <span class="n">unittest</span>
+
+<span class="k">class</span> <span class="nc">MyTest</span><span class="p">(</span><span class="n">unittest</span><span class="o">.</span><span class="n">TestCase</span><span class="p">):</span>
+    
+    <span class="k">def</span> <span class="nf">test_async_test</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">result</span> <span class="o">=</span> <span class="k">yield</span> <span class="n">maybe_async_function</span><span class="p">()</span>
+        <span class="k">yield</span> <span class="bp">self</span><span class="o">.</span><span class="n">assertEqual</span><span class="p">(</span><span class="n">result</span><span class="p">,</span> <span class="o">...</span><span class="p">)</span>
+        
+    <span class="k">def</span> <span class="nf">test_simple_test</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">assertEqual</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Test function can be asynchronous, when they return a generator or
+<a class="reference internal" href="../api/async.html#pulsar.Deferred" title="pulsar.Deferred"><tt class="xref py py-class docutils literal"><span class="pre">pulsar.Deferred</span></tt></a>, or synchronous, when they return anything else.</p>
+</div>
 <div class="section" id="loading-tests">
 <span id="apps-test-loading"></span><h2>Loading Tests<a class="headerlink" href="#loading-tests" title="Permalink to this headline">¶</a></h2>
 <p>Loading test cases is accomplished via the <a class="reference internal" href="#pulsar.apps.test.TestLoader" title="pulsar.apps.test.TestLoader"><tt class="xref py py-class docutils literal"><span class="pre">TestLoader</span></tt></a> class. In
@@ -106,14 +136,6 @@ nor will any objects it contains.</li>
 <li>If an object defines a <tt class="docutils literal"><span class="pre">__test__</span></tt> attribute that does not evaluate to True,
 that object will not be collected, nor will any objects it contains.</li>
 </ul>
-</div>
-<div class="section" id="test-case">
-<h2>Test Case<a class="headerlink" href="#test-case" title="Permalink to this headline">¶</a></h2>
-<p>Only subclasses of  <tt class="docutils literal"><span class="pre">unittest.TestCase</span></tt> are collected by this application.
-When running a test, pulsar looks for two extra method: <tt class="docutils literal"><span class="pre">_pre_setup</span></tt> and
-<tt class="docutils literal"><span class="pre">_post_teardown</span></tt>. If the former is available, it is run just before the
-<tt class="docutils literal"><span class="pre">setUp</span></tt> method while if the latter is available, it is run
-just after the <tt class="docutils literal"><span class="pre">tearDown</span></tt> method.</p>
 </div>
 <div class="section" id="api">
 <h2>API<a class="headerlink" href="#api" title="Permalink to this headline">¶</a></h2>
@@ -393,28 +415,22 @@ cases. By default it returns <em>test</em>.</p>
 </dd></dl>
 
 <dl class="method">
-<dt id="pulsar.apps.test.TestRequest.start">
-<tt class="descname">start</tt><big>(</big><big>)</big><a class="headerlink" href="#pulsar.apps.test.TestRequest.start" title="Permalink to this definition">¶</a></dt>
+<dt id="pulsar.apps.test.TestRequest.run">
+<tt class="descname">run</tt><big>(</big><em>runner</em>, <em>testcls</em>, <em>all_tests</em>, <em>cfg</em><big>)</big><a class="headerlink" href="#pulsar.apps.test.TestRequest.run" title="Permalink to this definition">¶</a></dt>
 <dd><p>Run all test functions from the <a class="reference internal" href="#pulsar.apps.test.TestRequest.testcls" title="pulsar.apps.test.TestRequest.testcls"><tt class="xref py py-attr docutils literal"><span class="pre">testcls</span></tt></a> using the
 following algorithm:</p>
 <ul class="simple">
 <li>Run the class method <tt class="docutils literal"><span class="pre">setUpClass</span></tt> of <a class="reference internal" href="#pulsar.apps.test.TestRequest.testcls" title="pulsar.apps.test.TestRequest.testcls"><tt class="xref py py-attr docutils literal"><span class="pre">testcls</span></tt></a> if defined.</li>
-<li>Call <a class="reference internal" href="#pulsar.apps.test.TestRequest.run_test" title="pulsar.apps.test.TestRequest.run_test"><tt class="xref py py-meth docutils literal"><span class="pre">run_test()</span></tt></a> for each test functions in <a class="reference internal" href="#pulsar.apps.test.TestRequest.testcls" title="pulsar.apps.test.TestRequest.testcls"><tt class="xref py py-attr docutils literal"><span class="pre">testcls</span></tt></a></li>
+<li>Call <tt class="xref py py-meth docutils literal"><span class="pre">run_test()</span></tt> for each test functions in <a class="reference internal" href="#pulsar.apps.test.TestRequest.testcls" title="pulsar.apps.test.TestRequest.testcls"><tt class="xref py py-attr docutils literal"><span class="pre">testcls</span></tt></a></li>
 <li>Run the class method <tt class="docutils literal"><span class="pre">tearDownClass</span></tt> of <a class="reference internal" href="#pulsar.apps.test.TestRequest.testcls" title="pulsar.apps.test.TestRequest.testcls"><tt class="xref py py-attr docutils literal"><span class="pre">testcls</span></tt></a> if defined.</li>
 </ul>
 </dd></dl>
 
 <dl class="method">
-<dt id="pulsar.apps.test.TestRequest.run_test">
-<tt class="descname">run_test</tt><big>(</big><em>test</em>, <em>runner</em><big>)</big><a class="headerlink" href="#pulsar.apps.test.TestRequest.run_test" title="Permalink to this definition">¶</a></dt>
-<dd><p>Run a <em>test</em> function using the following algorithm</p>
-<ul class="simple">
-<li>Run <tt class="xref py py-meth docutils literal"><span class="pre">_pre_setup()</span></tt> method if available in <a class="reference internal" href="#pulsar.apps.test.TestRequest.testcls" title="pulsar.apps.test.TestRequest.testcls"><tt class="xref py py-attr docutils literal"><span class="pre">testcls</span></tt></a>.</li>
-<li>Run <tt class="xref py py-meth docutils literal"><span class="pre">setUp()</span></tt> method in <a class="reference internal" href="#pulsar.apps.test.TestRequest.testcls" title="pulsar.apps.test.TestRequest.testcls"><tt class="xref py py-attr docutils literal"><span class="pre">testcls</span></tt></a>.</li>
-<li>Run the test function.</li>
-<li>Run <tt class="xref py py-meth docutils literal"><span class="pre">tearDown()</span></tt> method in <a class="reference internal" href="#pulsar.apps.test.TestRequest.testcls" title="pulsar.apps.test.TestRequest.testcls"><tt class="xref py py-attr docutils literal"><span class="pre">testcls</span></tt></a>.</li>
-<li>Run <tt class="xref py py-meth docutils literal"><span class="pre">_post_teardown()</span></tt> method if available in <a class="reference internal" href="#pulsar.apps.test.TestRequest.testcls" title="pulsar.apps.test.TestRequest.testcls"><tt class="xref py py-attr docutils literal"><span class="pre">testcls</span></tt></a>.</li>
-</ul>
+<dt id="pulsar.apps.test.TestRequest.add_failure">
+<tt class="descname">add_failure</tt><big>(</big><em>test</em>, <em>runner</em>, <em>failure</em><big>)</big><a class="headerlink" href="#pulsar.apps.test.TestRequest.add_failure" title="Permalink to this definition">¶</a></dt>
+<dd><p>Add <em>failure</em> to the list of errors if <em>failure</em> is indeed a failure.
+Return <cite>True</cite> if <em>failure</em> is a failure, otherwise return <cite>False</cite>.</p>
 </dd></dl>
 
 </dd></dl>
@@ -449,8 +465,8 @@ can be useful to test Arbiter mechanics.</p>
 <li><a class="reference internal" href="#">Asynchronous Test Suite</a><ul>
 <li><a class="reference internal" href="#requirements">Requirements</a></li>
 <li><a class="reference internal" href="#introduction">Introduction</a></li>
+<li><a class="reference internal" href="#wiring-a-test-case">Wiring a Test Case</a></li>
 <li><a class="reference internal" href="#loading-tests">Loading Tests</a></li>
-<li><a class="reference internal" href="#test-case">Test Case</a></li>
 <li><a class="reference internal" href="#api">API</a><ul>
 <li><a class="reference internal" href="#testsuite">TestSuite</a></li>
 <li><a class="reference internal" href="#testplugin">TestPlugin</a></li>
@@ -508,7 +524,7 @@ can be useful to test Arbiter mechanics.</p>
         <li class="right" >
           <a href="http.html" title="Asynchornous HTTP client"
              >previous</a> |</li>
-        <li><a href="../index.html">pulsar v0.5b4 documentation</a> &raquo;</li> 
+        <li><a href="../index.html">pulsar v0.5b5 documentation</a> &raquo;</li> 
       </ul>
     </div>
 

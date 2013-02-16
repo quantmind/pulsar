@@ -6,13 +6,13 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>Changelog &mdash; pulsar v0.5b4 documentation</title>
+    <title>Changelog &mdash; pulsar v0.5b5 documentation</title>
     <link rel="stylesheet" href="static/celery.css" type="text/css" />
     <link rel="stylesheet" href="static/pygments.css" type="text/css" />
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '',
-        VERSION:     '0.5b4',
+        VERSION:     '0.5b5',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -21,7 +21,7 @@
     <script type="text/javascript" src="static/jquery.js"></script>
     <script type="text/javascript" src="static/underscore.js"></script>
     <script type="text/javascript" src="static/doctools.js"></script>
-    <link rel="top" title="pulsar v0.5b4 documentation" href="index.html" />
+    <link rel="top" title="pulsar v0.5b5 documentation" href="index.html" />
     <link rel="next" title="Settings" href="settings.html" />
     <link rel="prev" title="Tools" href="api/utilities.html" /> 
   </head>
@@ -41,7 +41,7 @@
         <li class="right" >
           <a href="api/utilities.html" title="Tools"
              accesskey="P">previous</a> |</li>
-        <li><a href="index.html">pulsar v0.5b4 documentation</a> &raquo;</li> 
+        <li><a href="index.html">pulsar v0.5b5 documentation</a> &raquo;</li> 
       </ul>
     </div>  
 
@@ -69,14 +69,26 @@
 <li><a class="reference external" href="http://www.python.org/dev/peps/pep-3156/">pep-3156</a> implementation with considerable amount of internal refactoring.</li>
 <li><tt class="xref py py-class docutils literal"><span class="pre">Actor</span></tt> internal message passing uses the (unmasked) websocket protocol
 in a bidirectional communication between the <tt class="xref py py-class docutils literal"><span class="pre">Arbiter</span></tt> and actors.</li>
+<li>New <a class="reference external" href="http://www.python.org/dev/peps/pep-3156/">pep-3156</a> compatible <a class="reference internal" href="api/async.html#pulsar.EventLoop" title="pulsar.EventLoop"><tt class="xref py py-class docutils literal"><span class="pre">pulsar.EventLoop</span></tt></a>.</li>
 <li><tt class="xref py py-class docutils literal"><span class="pre">CPUboundApplication</span></tt> created as base class for CPU bound applications.</li>
 <li>Added ability to add Websocket sub-protocols and extensions.</li>
-<li>Added web chat example.</li>
-<li>Log WSGI environ on HTTP response errors.</li>
 <li>Spawning and stopping actors is monitored using a timeout set at 5 seconds.</li>
 <li>New asynchronous <a class="reference internal" href="apps/http.html#pulsar.apps.http.HttpClient" title="pulsar.apps.http.HttpClient"><tt class="xref py py-class docutils literal"><span class="pre">pulsar.apps.http.HttpClient</span></tt></a> with websocket support.</li>
 <li>Support <a class="reference external" href="https://github.com/benoitc/http-parser">http-parser</a> for faster http protocol parsing.</li>
 <li>Initial <a class="reference internal" href="tutorials/twisted.html#tutorials-twisted"><em>twisted integration</em></a>.</li>
+<li><a class="reference internal" href="api/async.html#pulsar.DeferredCoroutine" title="pulsar.DeferredCoroutine"><tt class="xref py py-class docutils literal"><span class="pre">pulsar.DeferredCoroutine</span></tt></a> stops after the first error by default.
+This class replace the old DeferredGenerator and provides a cleaner
+API with inline syntax. Check the
+<a class="reference internal" href="tutorials/coroutine.html#tutorials-coroutine"><em>asynchronous components</em></a> tutorial for
+further information.</li>
+<li>Small refactoring of asynchronous <a class="reference internal" href="apps/test.html#module-pulsar.apps.test" title="pulsar.apps.test"><tt class="xref py py-mod docutils literal"><span class="pre">pulsar.apps.test</span></tt></a> application.</li>
+<li>Added <tt class="xref py py-mod docutils literal"><span class="pre">pulsar.async.const</span></tt> module for low level actor constants.</li>
+<li>Added <a class="reference internal" href="api/async.html#pulsar.set_async" title="pulsar.set_async"><tt class="xref py py-func docutils literal"><span class="pre">pulsar.set_async()</span></tt></a> function which can be used to change
+the asynchronous discovery functions <a class="reference internal" href="api/async.html#pulsar.maybe_async" title="pulsar.maybe_async"><tt class="xref py py-func docutils literal"><span class="pre">pulsar.maybe_async()</span></tt></a>
+and <a class="reference internal" href="api/async.html#pulsar.maybe_failure" title="pulsar.maybe_failure"><tt class="xref py py-func docutils literal"><span class="pre">pulsar.maybe_failure()</span></tt></a>. The function is used in the implementation of
+<a class="reference internal" href="tutorials/twisted.html#tutorials-twisted"><em>twisted integration</em></a> and could be used in conjunction
+with other asynchronous libraries as well.</li>
+<li>Added <a class="reference internal" href="api/utilities.html#pulsar.utils.structures.FrozenDict" title="pulsar.utils.structures.FrozenDict"><tt class="xref py py-mod docutils literal"><span class="pre">pulsar.utils.structures.FrozenDict</span></tt></a>.</li>
 <li><strong>374 regression tests</strong>, <strong>87% coverage</strong>.</li>
 </ul>
 </div>
@@ -85,6 +97,7 @@ in a bidirectional communication between the <tt class="xref py py-class docutil
 <ul class="simple">
 <li>Added websocket chat example.</li>
 <li>Fixed bug in wsgi parser.</li>
+<li>Log WSGI environ on HTTP response errors.</li>
 <li>Several bug-fixes in tasks application.</li>
 <li><strong>374 regression tests</strong>, <strong>87% coverage</strong>.</li>
 </ul>
@@ -316,7 +329,7 @@ asynchronous test suite and asynchronous shell.</li>
         <li class="right" >
           <a href="api/utilities.html" title="Tools"
              >previous</a> |</li>
-        <li><a href="index.html">pulsar v0.5b4 documentation</a> &raquo;</li> 
+        <li><a href="index.html">pulsar v0.5b5 documentation</a> &raquo;</li> 
       </ul>
     </div>
 

@@ -6,13 +6,13 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>Twisted Integration &mdash; pulsar v0.5b4 documentation</title>
+    <title>Twisted Integration &mdash; pulsar v0.5b5 documentation</title>
     <link rel="stylesheet" href="../static/celery.css" type="text/css" />
     <link rel="stylesheet" href="../static/pygments.css" type="text/css" />
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../',
-        VERSION:     '0.5b4',
+        VERSION:     '0.5b5',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -21,7 +21,7 @@
     <script type="text/javascript" src="../static/jquery.js"></script>
     <script type="text/javascript" src="../static/underscore.js"></script>
     <script type="text/javascript" src="../static/doctools.js"></script>
-    <link rel="top" title="pulsar v0.5b4 documentation" href="../index.html" />
+    <link rel="top" title="pulsar v0.5b5 documentation" href="../index.html" />
     <link rel="up" title="Tutorials &amp; Topics" href="index.html" />
     <link rel="next" title="API" href="../api/index.html" />
     <link rel="prev" title="Signal Handling" href="signal.html" /> 
@@ -42,7 +42,7 @@
         <li class="right" >
           <a href="signal.html" title="Signal Handling"
              accesskey="P">previous</a> |</li>
-        <li><a href="../index.html">pulsar v0.5b4 documentation</a> &raquo;</li>
+        <li><a href="../index.html">pulsar v0.5b5 documentation</a> &raquo;</li>
           <li><a href="index.html" accesskey="U">Tutorials &amp; Topics</a> &raquo;</li> 
       </ul>
     </div>  
@@ -69,6 +69,13 @@
 event driven network engine for python. Twisted has implementation
 for several protocols which can be used in pulsar by importing the
 <a class="reference internal" href="#module-pulsar.lib.tx" title="pulsar.lib.tx"><tt class="xref py py-mod docutils literal"><span class="pre">pulsar.lib.tx</span></tt></a> module.</p>
+<p>The implementation replaces the twisted reactor with a proxy for
+<a class="reference internal" href="../api/async.html#pulsar.EventLoop" title="pulsar.EventLoop"><tt class="xref py py-class docutils literal"><span class="pre">pulsar.EventLoop</span></tt></a>.
+Twisted Deferred and Failures are made compatible with pulsar
+by installing two different discovery functions via the <a class="reference internal" href="../api/async.html#pulsar.set_async" title="pulsar.set_async"><tt class="xref py py-func docutils literal"><span class="pre">pulsar.set_async()</span></tt></a>
+function.</p>
+<p>Threads, signal handling, scheduling and so forth is handled by pulsar itself,
+twisted implementation is switched off.</p>
 </div>
 
 
@@ -125,7 +132,7 @@ for several protocols which can be used in pulsar by importing the
         <li class="right" >
           <a href="signal.html" title="Signal Handling"
              >previous</a> |</li>
-        <li><a href="../index.html">pulsar v0.5b4 documentation</a> &raquo;</li>
+        <li><a href="../index.html">pulsar v0.5b5 documentation</a> &raquo;</li>
           <li><a href="index.html" >Tutorials &amp; Topics</a> &raquo;</li> 
       </ul>
     </div>

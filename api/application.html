@@ -6,13 +6,13 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>Applications API &mdash; pulsar v0.5b4 documentation</title>
+    <title>Applications API &mdash; pulsar v0.5b5 documentation</title>
     <link rel="stylesheet" href="../static/celery.css" type="text/css" />
     <link rel="stylesheet" href="../static/pygments.css" type="text/css" />
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../',
-        VERSION:     '0.5b4',
+        VERSION:     '0.5b5',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -21,7 +21,7 @@
     <script type="text/javascript" src="../static/jquery.js"></script>
     <script type="text/javascript" src="../static/underscore.js"></script>
     <script type="text/javascript" src="../static/doctools.js"></script>
-    <link rel="top" title="pulsar v0.5b4 documentation" href="../index.html" />
+    <link rel="top" title="pulsar v0.5b5 documentation" href="../index.html" />
     <link rel="up" title="API" href="index.html" />
     <link rel="next" title="Tools" href="utilities.html" />
     <link rel="prev" title="Protocols API" href="protocols.html" /> 
@@ -42,7 +42,7 @@
         <li class="right" >
           <a href="protocols.html" title="Protocols API"
              accesskey="P">previous</a> |</li>
-        <li><a href="../index.html">pulsar v0.5b4 documentation</a> &raquo;</li>
+        <li><a href="../index.html">pulsar v0.5b5 documentation</a> &raquo;</li>
           <li><a href="index.html" accesskey="U">API</a> &raquo;</li> 
       </ul>
     </div>  
@@ -267,6 +267,13 @@ handles events with a task to complete and the time complete the task is
 determined principally by the speed of the CPU.
 This type of application is served by <a class="reference internal" href="../design.html#cpubound"><em>CPU bound workers</em></a>.</p>
 <dl class="method">
+<dt id="pulsar.apps.CPUboundApplication.io_poller">
+<tt class="descname">io_poller</tt><big>(</big><em>worker</em><big>)</big><a class="headerlink" href="#pulsar.apps.CPUboundApplication.io_poller" title="Permalink to this definition">¶</a></dt>
+<dd><p>Create the queue server and the IO poller for the <em>worker</em>
+<tt class="xref py py-class docutils literal"><span class="pre">EventLoop</span></tt>.</p>
+</dd></dl>
+
+<dl class="method">
 <dt id="pulsar.apps.CPUboundApplication.put">
 <tt class="descname">put</tt><big>(</big><em>request</em><big>)</big><a class="headerlink" href="#pulsar.apps.CPUboundApplication.put" title="Permalink to this definition">¶</a></dt>
 <dd><p>Put a <em>request</em> into the <tt class="xref py py-attr docutils literal"><span class="pre">transport</span></tt> if available.</p>
@@ -278,6 +285,12 @@ This type of application is served by <a class="reference internal" href="../des
 <dd><p>Build a request class from a <em>request</em>. By default it returns the
 request. This method is called by the <tt class="xref py py-meth docutils literal"><span class="pre">on_request()</span></tt> once a new
 request has been obtained from the <tt class="xref py py-attr docutils literal"><span class="pre">ioqueue</span></tt>.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="pulsar.apps.CPUboundApplication.monitor_start">
+<tt class="descname">monitor_start</tt><big>(</big><em>monitor</em><big>)</big><a class="headerlink" href="#pulsar.apps.CPUboundApplication.monitor_start" title="Permalink to this definition">¶</a></dt>
+<dd><p>Create the <tt class="xref py py-attr docutils literal"><span class="pre">queue</span></tt> from the config dictionary.</p>
 </dd></dl>
 
 </dd></dl>
@@ -387,7 +400,7 @@ request has been obtained from the <tt class="xref py py-attr docutils literal">
         <li class="right" >
           <a href="protocols.html" title="Protocols API"
              >previous</a> |</li>
-        <li><a href="../index.html">pulsar v0.5b4 documentation</a> &raquo;</li>
+        <li><a href="../index.html">pulsar v0.5b5 documentation</a> &raquo;</li>
           <li><a href="index.html" >API</a> &raquo;</li> 
       </ul>
     </div>

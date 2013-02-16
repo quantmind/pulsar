@@ -6,13 +6,13 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>Asynchornous HTTP client &mdash; pulsar v0.5b4 documentation</title>
+    <title>Asynchornous HTTP client &mdash; pulsar v0.5b5 documentation</title>
     <link rel="stylesheet" href="../static/celery.css" type="text/css" />
     <link rel="stylesheet" href="../static/pygments.css" type="text/css" />
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../',
-        VERSION:     '0.5b4',
+        VERSION:     '0.5b5',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -21,7 +21,7 @@
     <script type="text/javascript" src="../static/jquery.js"></script>
     <script type="text/javascript" src="../static/underscore.js"></script>
     <script type="text/javascript" src="../static/doctools.js"></script>
-    <link rel="top" title="pulsar v0.5b4 documentation" href="../index.html" />
+    <link rel="top" title="pulsar v0.5b5 documentation" href="../index.html" />
     <link rel="next" title="Asynchronous Test Suite" href="test.html" />
     <link rel="prev" title="WebSockets" href="websockets.html" /> 
   </head>
@@ -41,7 +41,7 @@
         <li class="right" >
           <a href="websockets.html" title="WebSockets"
              accesskey="P">previous</a> |</li>
-        <li><a href="../index.html">pulsar v0.5b4 documentation</a> &raquo;</li> 
+        <li><a href="../index.html">pulsar v0.5b5 documentation</a> &raquo;</li> 
       </ul>
     </div>  
 
@@ -281,6 +281,26 @@ It returns an <a class="reference internal" href="#pulsar.apps.http.HttpResponse
 <a class="reference internal" href="#pulsar.apps.http.HttpClient.headers" title="pulsar.apps.http.HttpClient.headers"><tt class="xref py py-attr docutils literal"><span class="pre">headers</span></tt></a> with <em>headers</em>. It handles websocket requests.</p>
 </dd></dl>
 
+<dl class="method">
+<dt id="pulsar.apps.http.HttpClient.upgrade">
+<tt class="descname">upgrade</tt><big>(</big><em>protocol</em><big>)</big><a class="headerlink" href="#pulsar.apps.http.HttpClient.upgrade" title="Permalink to this definition">¶</a></dt>
+<dd><p>Upgrade the protocol to another one</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="pulsar.apps.http.HttpClient.upgrade_websocket">
+<tt class="descname">upgrade_websocket</tt><big>(</big><em>connection</em>, <em>handshake</em><big>)</big><a class="headerlink" href="#pulsar.apps.http.HttpClient.upgrade_websocket" title="Permalink to this definition">¶</a></dt>
+<dd><p>Upgrade the <em>protocol</em> to a websocket response. Invoked
+by the <a class="reference internal" href="#pulsar.apps.http.HttpClient.upgrade" title="pulsar.apps.http.HttpClient.upgrade"><tt class="xref py py-meth docutils literal"><span class="pre">upgrade()</span></tt></a> method.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="pulsar.apps.http.HttpClient.timeit">
+<tt class="descname">timeit</tt><big>(</big><em>times</em>, <em>method</em>, <em>url</em>, <em>**kwargs</em><big>)</big><a class="reference internal" href="../modules/pulsar/apps/http.html#HttpClient.timeit"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.http.HttpClient.timeit" title="Permalink to this definition">¶</a></dt>
+<dd><p>Send <em>times</em> requests asynchronously and evaluate the time
+taken to obtain all responses.</p>
+</dd></dl>
+
 </dd></dl>
 
 </div>
@@ -288,7 +308,7 @@ It returns an <a class="reference internal" href="#pulsar.apps.http.HttpResponse
 <h3>HTTP Request<a class="headerlink" href="#http-request" title="Permalink to this headline">¶</a></h3>
 <dl class="class">
 <dt id="pulsar.apps.http.HttpRequest">
-<em class="property">class </em><tt class="descclassname">pulsar.apps.http.</tt><tt class="descname">HttpRequest</tt><big>(</big><em>client</em>, <em>url</em>, <em>method</em>, <em>data=None</em>, <em>files=None</em>, <em>charset=None</em>, <em>encode_multipart=True</em>, <em>multipart_boundary=None</em>, <em>timeout=None</em>, <em>hooks=None</em>, <em>history=None</em>, <em>source_address=None</em>, <em>allow_redirects=False</em>, <em>max_redirects=10</em>, <em>decompress=True</em>, <em>version=None</em>, <em>wait_continue=False</em>, <em>**ignored</em><big>)</big><a class="reference internal" href="../modules/pulsar/apps/http.html#HttpRequest"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.http.HttpRequest" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><tt class="descclassname">pulsar.apps.http.</tt><tt class="descname">HttpRequest</tt><big>(</big><em>client</em>, <em>url</em>, <em>method</em>, <em>data=None</em>, <em>files=None</em>, <em>charset=None</em>, <em>encode_multipart=True</em>, <em>multipart_boundary=None</em>, <em>timeout=None</em>, <em>hooks=None</em>, <em>history=None</em>, <em>source_address=None</em>, <em>allow_redirects=False</em>, <em>max_redirects=10</em>, <em>decompress=True</em>, <em>version=None</em>, <em>wait_continue=False</em>, <em>websocket_handler=None</em>, <em>**ignored</em><big>)</big><a class="reference internal" href="../modules/pulsar/apps/http.html#HttpRequest"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.http.HttpRequest" title="Permalink to this definition">¶</a></dt>
 <dd><p>A client request for an HTTP resource.</p>
 <dl class="attribute">
 <dt id="pulsar.apps.http.HttpRequest.parser_class">
@@ -410,7 +430,7 @@ if one occured.</p>
         <li class="right" >
           <a href="websockets.html" title="WebSockets"
              >previous</a> |</li>
-        <li><a href="../index.html">pulsar v0.5b4 documentation</a> &raquo;</li> 
+        <li><a href="../index.html">pulsar v0.5b5 documentation</a> &raquo;</li> 
       </ul>
     </div>
 

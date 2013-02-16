@@ -6,13 +6,13 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>Design &mdash; pulsar v0.5b4 documentation</title>
+    <title>Design &mdash; pulsar v0.5b5 documentation</title>
     <link rel="stylesheet" href="static/celery.css" type="text/css" />
     <link rel="stylesheet" href="static/pygments.css" type="text/css" />
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '',
-        VERSION:     '0.5b4',
+        VERSION:     '0.5b5',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -21,7 +21,7 @@
     <script type="text/javascript" src="static/jquery.js"></script>
     <script type="text/javascript" src="static/underscore.js"></script>
     <script type="text/javascript" src="static/doctools.js"></script>
-    <link rel="top" title="pulsar v0.5b4 documentation" href="index.html" />
+    <link rel="top" title="pulsar v0.5b5 documentation" href="index.html" />
     <link rel="next" title="FAQ" href="faq.html" />
     <link rel="prev" title="Overview" href="overview.html" /> 
   </head>
@@ -41,7 +41,7 @@
         <li class="right" >
           <a href="overview.html" title="Overview"
              accesskey="P">previous</a> |</li>
-        <li><a href="index.html">pulsar v0.5b4 documentation</a> &raquo;</li> 
+        <li><a href="index.html">pulsar v0.5b5 documentation</a> &raquo;</li> 
       </ul>
     </div>  
 
@@ -63,21 +63,20 @@
             
   <span class="target" id="module-pulsar"><span id="design"></span></span><div class="section" id="id1">
 <h1>Design<a class="headerlink" href="#id1" title="Permalink to this headline">¶</a></h1>
-<p>Pulsar is an asynchronous concurrent framework for python. It implements
-a double layer of components for building a vast array of parallel and asynchronous
-applications.</p>
+<p>Pulsar implements a double layer of components for building a vast array
+of parallel and asynchronous applications.</p>
 <ul class="simple">
 <li>The first layer is based on the building blocks of pulsar library:
-the <a class="reference internal" href="api/actor.html#pulsar.Actor" title="pulsar.Actor"><tt class="xref py py-class docutils literal"><span class="pre">Actor</span></tt></a> class for concurrency and the the <a class="reference internal" href="api/async.html#pulsar.Deferred" title="pulsar.Deferred"><tt class="xref py py-class docutils literal"><span class="pre">Deferred</span></tt></a> class
-for handling asynchronous events.</li>
+the <a class="reference internal" href="api/actor.html#pulsar.Actor" title="pulsar.Actor"><tt class="xref py py-class docutils literal"><span class="pre">Actor</span></tt></a> class for parallel execution and the the <a class="reference internal" href="api/async.html#pulsar.Deferred" title="pulsar.Deferred"><tt class="xref py py-class docutils literal"><span class="pre">Deferred</span></tt></a>
+class for handling asynchronous events via an actor&#8217;s <a class="reference internal" href="api/async.html#pulsar.EventLoop" title="pulsar.EventLoop"><tt class="xref py py-class docutils literal"><span class="pre">EventLoop</span></tt></a>.</li>
 <li>The second layer, built on top of the first one, is based on the
 <tt class="xref py py-class docutils literal"><span class="pre">Application</span></tt> class.</li>
 </ul>
 <div class="section" id="server-state">
 <h2>Server State<a class="headerlink" href="#server-state" title="Permalink to this headline">¶</a></h2>
 <p>Pulsar can be used as a stand-alone asynchronous library, without using
-<a class="reference internal" href="#design-actor"><em>actors</em></a> to provide parallel execution.
-When using <a class="reference internal" href="#design-application"><em>pulsar application framework</em></a>
+<a class="reference internal" href="#design-actor"><em>actors</em></a> to provide parallel execution. However,
+when using <a class="reference internal" href="#design-application"><em>pulsar application framework</em></a>,
 you need to use pulsar in <strong>server state</strong>, that is to say, there
 will be a centralised <a class="reference internal" href="api/actor.html#pulsar.Arbiter" title="pulsar.Arbiter"><tt class="xref py py-class docutils literal"><span class="pre">Arbiter</span></tt></a> controlling the main
 <a class="reference internal" href="api/async.html#pulsar.EventLoop" title="pulsar.EventLoop"><tt class="xref py py-class docutils literal"><span class="pre">EventLoop</span></tt></a> in the <strong>main thread</strong> of the <strong>master process</strong>.
@@ -117,7 +116,7 @@ actor&#8217;s thread starts for thread-based actors).
 Pulsar <a class="reference internal" href="api/async.html#pulsar.EventLoop" title="pulsar.EventLoop"><tt class="xref py py-class docutils literal"><span class="pre">EventLoop</span></tt></a> will be following <a class="reference external" href="http://www.python.org/dev/peps/pep-3156/">pep-3156</a> guidelines.
 In addition to the <a class="reference internal" href="api/actor.html#pulsar.Actor.requestloop" title="pulsar.Actor.requestloop"><tt class="xref py py-attr docutils literal"><span class="pre">Actor.requestloop</span></tt></a>, <a class="reference internal" href="#cpubound"><em>cpu bound</em></a>
 actors have another <a class="reference internal" href="api/async.html#pulsar.EventLoop" title="pulsar.EventLoop"><tt class="xref py py-class docutils literal"><span class="pre">EventLoop</span></tt></a>, on a different thread, for
-handling IO requests on their <em class="xref std std-ref">mailbox</em>.</p>
+handling IO requests on their mailbox.</p>
 </div>
 <div class="section" id="io-bound">
 <span id="iobound"></span><h3>IO-bound<a class="headerlink" href="#io-bound" title="Permalink to this headline">¶</a></h3>
@@ -313,7 +312,7 @@ framework, the library ships with the <tt class="xref py py-class docutils liter
         <li class="right" >
           <a href="overview.html" title="Overview"
              >previous</a> |</li>
-        <li><a href="index.html">pulsar v0.5b4 documentation</a> &raquo;</li> 
+        <li><a href="index.html">pulsar v0.5b5 documentation</a> &raquo;</li> 
       </ul>
     </div>
 

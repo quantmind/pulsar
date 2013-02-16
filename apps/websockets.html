@@ -6,13 +6,13 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>WebSockets &mdash; pulsar v0.5b4 documentation</title>
+    <title>WebSockets &mdash; pulsar v0.5b5 documentation</title>
     <link rel="stylesheet" href="../static/celery.css" type="text/css" />
     <link rel="stylesheet" href="../static/pygments.css" type="text/css" />
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../',
-        VERSION:     '0.5b4',
+        VERSION:     '0.5b5',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -21,7 +21,7 @@
     <script type="text/javascript" src="../static/jquery.js"></script>
     <script type="text/javascript" src="../static/underscore.js"></script>
     <script type="text/javascript" src="../static/doctools.js"></script>
-    <link rel="top" title="pulsar v0.5b4 documentation" href="../index.html" />
+    <link rel="top" title="pulsar v0.5b5 documentation" href="../index.html" />
     <link rel="next" title="Asynchornous HTTP client" href="http.html" />
     <link rel="prev" title="Distributed Task Queues" href="tasks.html" /> 
   </head>
@@ -41,7 +41,7 @@
         <li class="right" >
           <a href="tasks.html" title="Distributed Task Queues"
              accesskey="P">previous</a> |</li>
-        <li><a href="../index.html">pulsar v0.5b4 documentation</a> &raquo;</li> 
+        <li><a href="../index.html">pulsar v0.5b5 documentation</a> &raquo;</li> 
       </ul>
     </div>  
 
@@ -63,11 +63,11 @@
             
   <div class="section" id="module-pulsar.apps.ws">
 <span id="websockets"></span><span id="apps-ws"></span><h1>WebSockets<a class="headerlink" href="#module-pulsar.apps.ws" title="Permalink to this headline">¶</a></h1>
-<p>The <a class="reference internal" href="#module-pulsar.apps.ws" title="pulsar.apps.ws"><tt class="xref py py-mod docutils literal"><span class="pre">pulsar.apps.ws</span></tt></a> contains a <a class="reference external" href="http://www.python.org/dev/peps/pep-3333/">WSGI</a> middleware for
+<p>The <a class="reference internal" href="#module-pulsar.apps.ws" title="pulsar.apps.ws"><tt class="xref py py-mod docutils literal"><span class="pre">pulsar.apps.ws</span></tt></a> contains <a class="reference external" href="http://www.python.org/dev/peps/pep-3333/">WSGI</a> middleware for
 handling the <a class="reference external" href="http://tools.ietf.org/html/rfc6455">WebSocket</a> protocol.
 Web sockets allow for bidirectional communication between the browser
 and server. Pulsar implementation uses the WSGI middleware
-<a class="reference internal" href="#pulsar.apps.ws.WebSocket" title="pulsar.apps.ws.WebSocket"><tt class="xref py py-class docutils literal"><span class="pre">WebSocket</span></tt></a> for the handshake and a class derived from
+<a class="reference internal" href="#pulsar.apps.ws.WebSocket" title="pulsar.apps.ws.WebSocket"><tt class="xref py py-class docutils literal"><span class="pre">WebSocket</span></tt></a> for the <a class="reference external" href="http://tools.ietf.org/html/rfc6455#section-1.3">handshake</a> and a class derived from
 <a class="reference internal" href="#pulsar.apps.ws.WS" title="pulsar.apps.ws.WS"><tt class="xref py py-class docutils literal"><span class="pre">WS</span></tt></a> handler for the communication part.</p>
 <div class="section" id="api">
 <h2>API<a class="headerlink" href="#api" title="Permalink to this headline">¶</a></h2>
@@ -76,22 +76,19 @@ and server. Pulsar implementation uses the WSGI middleware
 <dl class="class">
 <dt id="pulsar.apps.ws.WebSocket">
 <em class="property">class </em><tt class="descclassname">pulsar.apps.ws.</tt><tt class="descname">WebSocket</tt><big>(</big><em>route</em>, <em>handle</em>, <em>frame_parser=None</em>, <em>**kwargs</em><big>)</big><a class="reference internal" href="../modules/pulsar/apps/ws.html#WebSocket"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.ws.WebSocket" title="Permalink to this definition">¶</a></dt>
-<dd><p>A <a class="reference internal" href="wsgi.html#apps-wsgi"><em>WSGI</em></a> middleware for handling w websocket handshake
-and starting a custom <a class="reference internal" href="#pulsar.apps.ws.WS" title="pulsar.apps.ws.WS"><tt class="xref py py-class docutils literal"><span class="pre">WS</span></tt></a> connection.
-It implements the protocol version 13 as specified at
-<a class="reference external" href="http://www.whatwg.org/specs/web-socket-protocol/">http://www.whatwg.org/specs/web-socket-protocol/</a>.</p>
-<p>Web Sockets are not standard HTTP connections. The &#8220;handshake&#8221; is HTTP,
-but after that, the protocol is message-based. To create
-a valid <a class="reference internal" href="#pulsar.apps.ws.WebSocket" title="pulsar.apps.ws.WebSocket"><tt class="xref py py-class docutils literal"><span class="pre">WebSocket</span></tt></a> middleware initialise as follow:</p>
+<dd><p>A <a class="reference internal" href="wsgi.html#pulsar.apps.wsgi.Router" title="pulsar.apps.wsgi.Router"><tt class="xref py py-class docutils literal"><span class="pre">pulsar.apps.wsgi.Router</span></tt></a> middleware for handling
+the websocket handshake at a given route. Once the handshake is succesful,
+it upgrades the websocket protocol served by a custom <a class="reference internal" href="#pulsar.apps.ws.WS" title="pulsar.apps.ws.WS"><tt class="xref py py-class docutils literal"><span class="pre">WS</span></tt></a>
+handler.</p>
+<p>To create a valid <a class="reference internal" href="#pulsar.apps.ws.WebSocket" title="pulsar.apps.ws.WebSocket"><tt class="xref py py-class docutils literal"><span class="pre">WebSocket</span></tt></a> middleware initialise as follow:</p>
 <div class="highlight-python"><div class="highlight"><pre><span class="kn">from</span> <span class="nn">pulsar.apps</span> <span class="kn">import</span> <span class="n">wsgi</span><span class="p">,</span> <span class="n">ws</span>
 
 <span class="k">class</span> <span class="nc">MyWS</span><span class="p">(</span><span class="n">ws</span><span class="o">.</span><span class="n">WS</span><span class="p">):</span>
     <span class="o">...</span>
 
-<span class="n">wm</span> <span class="o">=</span> <span class="n">ws</span><span class="o">.</span><span class="n">WebSocket</span><span class="p">(</span><span class="n">handle</span><span class="o">=</span><span class="n">MyWS</span><span class="p">())</span>
+<span class="n">wm</span> <span class="o">=</span> <span class="n">ws</span><span class="o">.</span><span class="n">WebSocket</span><span class="p">(</span><span class="s">&#39;/bla&#39;</span><span class="p">,</span> <span class="n">MyWS</span><span class="p">())</span>
 <span class="n">app</span> <span class="o">=</span> <span class="n">wsgi</span><span class="o">.</span><span class="n">WsgiHandler</span><span class="p">(</span><span class="n">middleware</span><span class="o">=</span><span class="p">(</span><span class="o">...</span><span class="p">,</span> <span class="n">wm</span><span class="p">))</span>
-
-<span class="n">wsgi</span><span class="o">.</span><span class="n">createServer</span><span class="p">(</span><span class="nb">callable</span><span class="o">=</span><span class="n">app</span><span class="p">)</span><span class="o">.</span><span class="n">start</span><span class="p">()</span>
+<span class="n">wsgi</span><span class="o">.</span><span class="n">WSGIServer</span><span class="p">(</span><span class="nb">callable</span><span class="o">=</span><span class="n">app</span><span class="p">)</span><span class="o">.</span><span class="n">start</span><span class="p">()</span>
 </pre></div>
 </div>
 <p>See <a class="reference external" href="http://tools.ietf.org/html/rfc6455">http://tools.ietf.org/html/rfc6455</a> for the websocket server protocol and
@@ -100,7 +97,7 @@ a valid <a class="reference internal" href="#pulsar.apps.ws.WebSocket" title="pu
 
 </div>
 <div class="section" id="websocket-handler">
-<h3>WebSocket Handler<a class="headerlink" href="#websocket-handler" title="Permalink to this headline">¶</a></h3>
+<h3>WebSocket handler<a class="headerlink" href="#websocket-handler" title="Permalink to this headline">¶</a></h3>
 <dl class="class">
 <dt id="pulsar.apps.ws.WS">
 <em class="property">class </em><tt class="descclassname">pulsar.apps.ws.</tt><tt class="descname">WS</tt><a class="reference internal" href="../modules/pulsar/apps/ws.html#WS"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.ws.WS" title="Permalink to this definition">¶</a></dt>
@@ -128,148 +125,38 @@ back to the client:</p>
 </pre></div>
 </div>
 <dl class="method">
-<dt id="pulsar.apps.ws.WS.on_handshake">
-<tt class="descname">on_handshake</tt><big>(</big><em>environ</em>, <em>headers</em><big>)</big><a class="reference internal" href="../modules/pulsar/apps/ws.html#WS.on_handshake"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.ws.WS.on_handshake" title="Permalink to this definition">¶</a></dt>
-<dd><p>Invoked just before sending the upgraded <strong>headers</strong> to the
-client. This is a chance to add or remove header&#8217;s entries.</p>
-</dd></dl>
-
-<dl class="method">
 <dt id="pulsar.apps.ws.WS.on_open">
-<tt class="descname">on_open</tt><big>(</big><em>environ</em><big>)</big><a class="reference internal" href="../modules/pulsar/apps/ws.html#WS.on_open"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.ws.WS.on_open" title="Permalink to this definition">¶</a></dt>
+<tt class="descname">on_open</tt><big>(</big><em>protocol</em><big>)</big><a class="reference internal" href="../modules/pulsar/apps/ws.html#WS.on_open"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.ws.WS.on_open" title="Permalink to this definition">¶</a></dt>
 <dd><p>Invoked when a new WebSocket is opened.</p>
 </dd></dl>
 
 <dl class="method">
 <dt id="pulsar.apps.ws.WS.on_message">
-<tt class="descname">on_message</tt><big>(</big><em>environ</em>, <em>message</em><big>)</big><a class="reference internal" href="../modules/pulsar/apps/ws.html#WS.on_message"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.ws.WS.on_message" title="Permalink to this definition">¶</a></dt>
+<tt class="descname">on_message</tt><big>(</big><em>protocol</em>, <em>message</em><big>)</big><a class="reference internal" href="../modules/pulsar/apps/ws.html#WS.on_message"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.ws.WS.on_message" title="Permalink to this definition">¶</a></dt>
 <dd><p>Handle incoming messages on the WebSocket.
 This method must be overloaded.</p>
 </dd></dl>
 
 <dl class="method">
 <dt id="pulsar.apps.ws.WS.on_close">
-<tt class="descname">on_close</tt><big>(</big><em>environ</em><big>)</big><a class="reference internal" href="../modules/pulsar/apps/ws.html#WS.on_close"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.ws.WS.on_close" title="Permalink to this definition">¶</a></dt>
+<tt class="descname">on_close</tt><big>(</big><em>protocol</em><big>)</big><a class="reference internal" href="../modules/pulsar/apps/ws.html#WS.on_close"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.ws.WS.on_close" title="Permalink to this definition">¶</a></dt>
 <dd><p>Invoked when the WebSocket is closed.</p>
 </dd></dl>
 
 </dd></dl>
 
 </div>
-<div class="section" id="frame">
-<h3>Frame<a class="headerlink" href="#frame" title="Permalink to this headline">¶</a></h3>
+<div class="section" id="websocket-protocol">
+<h3>WebSocket protocol<a class="headerlink" href="#websocket-protocol" title="Permalink to this headline">¶</a></h3>
 <dl class="class">
-<dt id="pulsar.apps.ws.Frame">
-<em class="property">class </em><tt class="descclassname">pulsar.apps.ws.</tt><tt class="descname">Frame</tt><big>(</big><em>message=None</em>, <em>opcode=None</em>, <em>version=None</em>, <em>masking_key=None</em>, <em>final=False</em>, <em>rsv1=0</em>, <em>rsv2=0</em>, <em>rsv3=0</em>, <em>build_frame=True</em><big>)</big><a class="headerlink" href="#pulsar.apps.ws.Frame" title="Permalink to this definition">¶</a></dt>
-<dd><p>Implements the framing protocol as defined by
-specification supporting protocol version 13:</p>
-<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">f</span> <span class="o">=</span> <span class="n">Frame</span><span class="p">(</span><span class="s">&#39;hello world&#39;</span><span class="p">,</span> <span class="n">final</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">data</span> <span class="o">=</span> <span class="n">f</span><span class="o">.</span><span class="n">build</span><span class="p">()</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">f</span> <span class="o">=</span> <span class="n">Frame</span><span class="p">()</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">f</span><span class="o">.</span><span class="n">parser</span><span class="o">.</span><span class="n">send</span><span class="p">(</span><span class="nb">bytes</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">f</span><span class="o">.</span><span class="n">parser</span><span class="o">.</span><span class="n">send</span><span class="p">(</span><span class="nb">bytes</span><span class="p">[</span><span class="mi">2</span><span class="p">])</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">f</span><span class="o">.</span><span class="n">parser</span><span class="o">.</span><span class="n">send</span><span class="p">(</span><span class="nb">bytes</span><span class="p">[</span><span class="mi">2</span><span class="p">:])</span>
-</pre></div>
-</div>
+<dt id="pulsar.apps.ws.WebSocketProtocol">
+<em class="property">class </em><tt class="descclassname">pulsar.apps.ws.</tt><tt class="descname">WebSocketProtocol</tt><big>(</big><em>connection=None</em><big>)</big><a class="headerlink" href="#pulsar.apps.ws.WebSocketProtocol" title="Permalink to this definition">¶</a></dt>
+<dd><p>Websocket protocol for servers and clients.</p>
 <dl class="method">
-<dt id="pulsar.apps.ws.Frame.mask">
-<tt class="descname">mask</tt><big>(</big><em>data</em><big>)</big><a class="headerlink" href="#pulsar.apps.ws.Frame.mask" title="Permalink to this definition">¶</a></dt>
-<dd><p>Performs the masking or unmasking operation on data
-using the simple masking algorithm:</p>
-<div class="highlight-python"><pre>j = i MOD 4
-transformed-octet-i = original-octet-i XOR masking-key-octet-j</pre>
-</div>
-</dd></dl>
-
-<dl class="method">
-<dt id="pulsar.apps.ws.Frame.unmask">
-<tt class="descname">unmask</tt><big>(</big><em>data</em><big>)</big><a class="headerlink" href="#pulsar.apps.ws.Frame.unmask" title="Permalink to this definition">¶</a></dt>
-<dd><p>Performs the masking or unmasking operation on data
-using the simple masking algorithm:</p>
-<div class="highlight-python"><pre>j = i MOD 4
-transformed-octet-i = original-octet-i XOR masking-key-octet-j</pre>
-</div>
-</dd></dl>
-
-</dd></dl>
-
-<dl class="class">
-<dt id="pulsar.apps.ws.FrameParser">
-<em class="property">class </em><tt class="descclassname">pulsar.apps.ws.</tt><tt class="descname">FrameParser</tt><big>(</big><em>version=None</em>, <em>kind=0</em>, <em>extensions=None</em>, <em>protocols=None</em><big>)</big><a class="headerlink" href="#pulsar.apps.ws.FrameParser" title="Permalink to this definition">¶</a></dt>
-<dd><p>Decoder and encoder for the websocket protocol.</p>
-<dl class="attribute">
-<dt id="pulsar.apps.ws.FrameParser.version">
-<tt class="descname">version</tt><a class="headerlink" href="#pulsar.apps.ws.FrameParser.version" title="Permalink to this definition">¶</a></dt>
-<dd><p>Optional protocol version (Default 13).</p>
-</dd></dl>
-
-<dl class="attribute">
-<dt id="pulsar.apps.ws.FrameParser.kind">
-<tt class="descname">kind</tt><a class="headerlink" href="#pulsar.apps.ws.FrameParser.kind" title="Permalink to this definition">¶</a></dt>
-<dd><ul class="simple">
-<li>0 for parsing client&#8217;s frames and sending server frames (to be used
-in the server)</li>
-<li>1 for parsing server frames and sending client frames (to be used
-by the client)</li>
-<li>2 Assumes always unmasked data</li>
-</ul>
-</dd></dl>
-
-<dl class="method">
-<dt id="pulsar.apps.ws.FrameParser.encode">
-<tt class="descname">encode</tt><big>(</big><em>data</em>, <em>final=True</em>, <em>masking_key=None</em>, <em>**params</em><big>)</big><a class="headerlink" href="#pulsar.apps.ws.FrameParser.encode" title="Permalink to this definition">¶</a></dt>
-<dd><p>Encode data into a <a class="reference internal" href="#pulsar.apps.ws.Frame" title="pulsar.apps.ws.Frame"><tt class="xref py py-class docutils literal"><span class="pre">Frame</span></tt></a>.</p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
-<li><strong>final</strong> &#8211; Indicating if this is a final Frame.</li>
-<li><strong>masking_key</strong> &#8211; Optional making key used only if <a class="reference internal" href="#pulsar.apps.ws.FrameParser.kind" title="pulsar.apps.ws.FrameParser.kind"><tt class="xref py py-attr docutils literal"><span class="pre">kind</span></tt></a> is 1 
-(Client frames).</li>
-</ul>
-</td>
-</tr>
-</tbody>
-</table>
-</dd></dl>
-
-<dl class="method">
-<dt id="pulsar.apps.ws.FrameParser.ping">
-<tt class="descname">ping</tt><big>(</big><em>body=None</em><big>)</big><a class="headerlink" href="#pulsar.apps.ws.FrameParser.ping" title="Permalink to this definition">¶</a></dt>
-<dd><p>return a <cite>ping</cite> <a class="reference internal" href="#pulsar.apps.ws.Frame" title="pulsar.apps.ws.Frame"><tt class="xref py py-class docutils literal"><span class="pre">Frame</span></tt></a>.</p>
-</dd></dl>
-
-<dl class="method">
-<dt id="pulsar.apps.ws.FrameParser.pong">
-<tt class="descname">pong</tt><big>(</big><em>body=None</em><big>)</big><a class="headerlink" href="#pulsar.apps.ws.FrameParser.pong" title="Permalink to this definition">¶</a></dt>
-<dd><p>return a <cite>pong</cite> <a class="reference internal" href="#pulsar.apps.ws.Frame" title="pulsar.apps.ws.Frame"><tt class="xref py py-class docutils literal"><span class="pre">Frame</span></tt></a>.</p>
-</dd></dl>
-
-<dl class="method">
-<dt id="pulsar.apps.ws.FrameParser.close">
-<tt class="descname">close</tt><big>(</big><em>body=None</em><big>)</big><a class="headerlink" href="#pulsar.apps.ws.FrameParser.close" title="Permalink to this definition">¶</a></dt>
-<dd><p>return a <cite>close</cite> <a class="reference internal" href="#pulsar.apps.ws.Frame" title="pulsar.apps.ws.Frame"><tt class="xref py py-class docutils literal"><span class="pre">Frame</span></tt></a>.</p>
-</dd></dl>
-
-<dl class="method">
-<dt id="pulsar.apps.ws.FrameParser.continuation">
-<tt class="descname">continuation</tt><big>(</big><em>body=None</em>, <em>final=True</em><big>)</big><a class="headerlink" href="#pulsar.apps.ws.FrameParser.continuation" title="Permalink to this definition">¶</a></dt>
-<dd><p>return a <cite>continuation</cite> <a class="reference internal" href="#pulsar.apps.ws.Frame" title="pulsar.apps.ws.Frame"><tt class="xref py py-class docutils literal"><span class="pre">Frame</span></tt></a>.</p>
-</dd></dl>
-
-<dl class="method">
-<dt id="pulsar.apps.ws.FrameParser.replay_to">
-<tt class="descname">replay_to</tt><big>(</big><em>frame</em><big>)</big><a class="headerlink" href="#pulsar.apps.ws.FrameParser.replay_to" title="Permalink to this definition">¶</a></dt>
-<dd><p>Build a <a class="reference internal" href="#pulsar.apps.ws.Frame" title="pulsar.apps.ws.Frame"><tt class="xref py py-class docutils literal"><span class="pre">Frame</span></tt></a> as a reply to <em>frame</em>.</p>
-</dd></dl>
-
-<dl class="method">
-<dt id="pulsar.apps.ws.FrameParser.decode">
-<tt class="descname">decode</tt><big>(</big><em>data=None</em><big>)</big><a class="headerlink" href="#pulsar.apps.ws.FrameParser.decode" title="Permalink to this definition">¶</a></dt>
-<dd><p>Decode bytes data into a <a class="reference internal" href="#pulsar.apps.ws.Frame" title="pulsar.apps.ws.Frame"><tt class="xref py py-class docutils literal"><span class="pre">Frame</span></tt></a>. If <a class="reference internal" href="#pulsar.apps.ws.FrameParser.kind" title="pulsar.apps.ws.FrameParser.kind"><tt class="xref py py-attr docutils literal"><span class="pre">kind</span></tt></a> is 0
-it decodes into a client frame (masked frame) while if is 1 or 2 it decodes
-into a server frame (unmasked).</p>
+<dt id="pulsar.apps.ws.WebSocketProtocol.write">
+<tt class="descname">write</tt><big>(</big><em>frame</em><big>)</big><a class="headerlink" href="#pulsar.apps.ws.WebSocketProtocol.write" title="Permalink to this definition">¶</a></dt>
+<dd><p>Write a new <em>frame</em> into the wire, frame can be byes, asynchronous
+or  nothing. This is a utility method for the transport write method.</p>
 </dd></dl>
 
 </dd></dl>
@@ -294,8 +181,8 @@ into a server frame (unmasked).</p>
 <li><a class="reference internal" href="#">WebSockets</a><ul>
 <li><a class="reference internal" href="#api">API</a><ul>
 <li><a class="reference internal" href="#id1">WebSocket</a></li>
-<li><a class="reference internal" href="#websocket-handler">WebSocket Handler</a></li>
-<li><a class="reference internal" href="#frame">Frame</a></li>
+<li><a class="reference internal" href="#websocket-handler">WebSocket handler</a></li>
+<li><a class="reference internal" href="#websocket-protocol">WebSocket protocol</a></li>
 </ul>
 </li>
 </ul>
@@ -345,7 +232,7 @@ into a server frame (unmasked).</p>
         <li class="right" >
           <a href="tasks.html" title="Distributed Task Queues"
              >previous</a> |</li>
-        <li><a href="../index.html">pulsar v0.5b4 documentation</a> &raquo;</li> 
+        <li><a href="../index.html">pulsar v0.5b5 documentation</a> &raquo;</li> 
       </ul>
     </div>
 
