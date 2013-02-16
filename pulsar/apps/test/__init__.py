@@ -162,6 +162,16 @@ class TestList(TestOption):
     default = False
     validator = pulsar.validate_bool
     desc = """List all test labels without performing tests."""
+    
+
+class TestSequential(TestOption):
+    name = "sequential"
+    flags = ['--sequential']
+    action = 'store_true'
+    default = False
+    validator = pulsar.validate_bool
+    desc = """Run test functions sequentially. Don't run them asynchronously."""
+    
 
 @pulsar.command(ack=False)
 def test_result(request, tag, clsname, result):

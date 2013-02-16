@@ -50,14 +50,17 @@ class Task(protocols.ProtocolConsumer):
         self.request_factory = request_factory
         super(Task, self).__init__(connection)
         
-    @async()
     def data_received(self, data):
-        request = yield self.request_factory(data)
-        result = yield request.start()
-        yield self.finished(result)
+        self._run_task(data)
     
     def finished(self, result):
         self.connection.connection_lost(None)
+    
+    @async()
+    def _run_task(self, data):
+        request = yield self.request_factory(data)
+        result = yield request.start()
+        yield self.finished(result)
     
     
 class QueueServer(servers.Server):
@@ -104,13 +107,10 @@ so that the :meth:`get` method returns as soon possible.'''
     def get(self, timeout=0.5):
         '''Get an item from the queue.'''
         block = True
-        self._lock.acquire()
-        try:
+        with self._lock:
             if self._wakeup:
                 block = False
                 self._wakeup -= 1
-        finally:
-            self._lock.release()
         return self._queue.get(block=block, timeout=timeout)
 
     def put(self, message):
@@ -131,11 +131,8 @@ so that the :meth:`get` method returns as soon possible.'''
     
     def wake(self):
         '''Waker implementation. This message queue is its own waker.'''
-        self._lock.acquire()
-        try:
+        with self._lock:
             self._wakeup += 1
-        finally:
-            self._lock.release()
         
 
 class TaskFactory:

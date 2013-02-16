@@ -134,7 +134,7 @@ class MailboxConsumer(ProtocolConsumer):
         command = message.get('command')
         LOGGER.debug('%s handling message "%s"', actor, command)
         if command == 'callback':   #this is a callback
-            yield self._callback(message.get('ack'), message.get('result'))
+            self._callback(message.get('ack'), message.get('result'))
         else:
             try:
                 target = actor.get_actor(message['target'])

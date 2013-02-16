@@ -171,7 +171,6 @@ class ActorTestMixin(object):
 is the first class you derive from, before the unittest.TestCase, so that
 the tearDown method is overwritten.'''
     concurrency = 'thread'
-    a = None
     
     @property
     def all_spawned(self):
@@ -180,12 +179,13 @@ the tearDown method is overwritten.'''
         return self._spawned
         
     def spawn(self, concurrency=None, **kwargs):
+        '''Spawn a new actor and perform some tests.'''
         concurrency = concurrency or self.concurrency
         ad = pulsar.spawn(concurrency=concurrency, **kwargs)
         self.assertTrue(ad.aid)
         self.assertTrue(isinstance(ad, pulsar.ActorProxyDeferred))
         yield ad
-        self.a = proxy = ad.result
+        proxy = ad.result
         self.all_spawned.append(proxy)
         self.assertEqual(proxy.aid, ad.aid)
         self.assertEqual(proxy.proxy, proxy)

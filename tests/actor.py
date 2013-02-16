@@ -71,26 +71,21 @@ class TestActorThread(ActorTestMixin, unittest.TestCase):
     
     def test_spawn_actor(self):
         '''Test spawning from actor domain.'''
-        yield self.spawn(name='pippo')
-        proxy = self.a
+        proxy = yield self.spawn(name='pippo')
         yield self.assertEqual(proxy.name, 'pippo')
         # The current actor is linked with the actor just spawned
         
     def test_spawn_and_interact(self):
-        yield self.spawn(name='pluto')
-        proxy = self.a
+        proxy = yield self.spawn(name='pluto')
         self.assertEqual(proxy.name, 'pluto')
         yield self.async.assertEqual(send(proxy, 'ping'), 'pong')
         yield self.async.assertEqual(send(proxy, 'echo', 'Hello!'), 'Hello!')
         #yield send(proxy, 'run', check_actor, 'pluto')
         
     def test_info(self):
-        yield self.spawn(name='pippo')
-        proxy = self.a
+        proxy = yield self.spawn(name='pippo')
         self.assertEqual(proxy.name, 'pippo')
-        outcome = send(proxy, 'info')
-        yield outcome
-        info = outcome.result
+        info = yield send(proxy, 'info')
         self.assertTrue('actor' in info)
         ainfo = info['actor']
         self.assertEqual(ainfo['is_process'], self.concurrency=='process')

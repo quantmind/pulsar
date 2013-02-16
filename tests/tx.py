@@ -1,6 +1,6 @@
 '''Test twisted integration'''
 import pulsar
-from pulsar import is_failure, is_async
+from pulsar import is_failure, is_async, multi_async
 from pulsar.utils.pep import to_bytes, to_string
 from pulsar.utils.security import gen_unique_id
 from pulsar.apps.test import unittest, dont_run_with_thread
@@ -77,16 +77,30 @@ class TestTwistedIntegration(unittest.TestCase):
         if cls.server:
             yield pulsar.send('arbiter', 'kill_actor', cls.server.name)
         
-    def testEchoClient(self):
-        client = get_client(self.server.address)
-        self.assertTrue(is_async(client))
-        yield client
-        client = client.result
+    def test_echo_client(self):
+        client = yield get_client(self.server.address)
         self.assertTrue(client.connected)
-        future = client.send_message('Hello')
-        yield future
-        self.assertEqual(future.result, 'Hello')
-        future = client.send_message('Ciao')
-        yield future
-        self.assertEqual(future.result, 'Ciao')
+        result = yield client.send_message('Hello')
+        self.assertEqual(result, 'Hello')
+        result = yield client.send_message('Ciao')
+        self.assertEqual(result, 'Ciao')
         
+    def test_multi_requests(self):
+        client = yield get_client(self.server.address)
+        requests = (client.send_message('Msg%s' % n) for n in range(20))
+        results = yield multi_async(requests)
+        self.assertEqual(len(results), 20)
+        for n, result in enumerate(results):
+            self.assertEqual(result, 'Msg%s' % n)
+            
+
+@unittest.skipUnless(twisted, 'Requires twisted')        
+class TestPulsarReactor(unittest.TestCase):
+
+    def test_meta(self):
+        self.assertTrue(reactor.running)
+        self.assertEqual(reactor.threadpool, None)
+        self.assertEqual(reactor.waker, None)
+
+    def test_switched_off_methods(self):
+        self.assertRaises(NotImplementedError, reactor.spawnProcess)

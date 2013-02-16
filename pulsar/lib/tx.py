@@ -22,33 +22,29 @@ from twisted.internet.defer import Deferred
 from twisted.python.failure import Failure
 
 import pulsar
-from pulsar.async.defer import default_as_async, default_maybe_failure, set_async
+from pulsar.async.defer import default_maybe_async, default_maybe_failure, set_async
 from pulsar.utils.pep import get_event_loop
 
-
-def result_or_self(self):
-    return self.result if self.called and not self.callbacks else self
-
-def get_traces(self):
-    return [(self.type, self.value, self.tb)]
     
-def maybe_async(obj, **params):
+def _maybe_async(obj, **params):
     if isinstance(obj, Deferred):
+        if obj.called:
+            return _maybe_async(obj.result, **params)
         d = pulsar.Deferred()
         d._twisted_deferred = obj
         obj.addBoth(d.callback)
         obj = d
-    return default_as_async(obj)
+    return default_maybe_async(obj)
 
-def maybe_failure(e):
+def _maybe_failure(e, msg=''):
     if isinstance(e, Failure):
-        return pulsar.Failure((e.type, e.value, e.tb))
+        return pulsar.Failure((e.type, e.value, e.tb), msg=msg)
     else:
-        return default_maybe_failure(e)
+        return default_maybe_failure(e, msg=msg)
         
 
 # Set the new async discovery functions
-set_async(maybe_async, maybe_failure)
+set_async(_maybe_async, _maybe_failure)
 
 
 class PulsarReactor(PosixReactorBase):
@@ -89,6 +85,9 @@ class PulsarReactor(PosixReactorBase):
     
     def doIteration(self, delay):
         pass
+    
+    def spawnProcess(self, *args, **kwargs):
+        raise NotImplementedError('Cannot spawn process from Pulsar reactor')
     
     def _initThreads(self):
         pass

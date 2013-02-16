@@ -15,6 +15,8 @@ __all__ = ['TestRequest', 'sequential']
 LOGGER = logging.getLogger('pulsar.test')
 
 def sequential(cls):
+    '''Decorator for a :class:`TestCase` which cause its test functions to run
+sequentially rather than in an asynchronous fashion.'''
     cls._sequential_execution = True
     return cls
 
@@ -57,14 +59,14 @@ class TestRequest(object):
         all_tests = runner.loadTestsFromTestCase(testcls)
         num = all_tests.countTestCases()
         if num:
-            result = self.run(runner, testcls, all_tests)
+            result = self.run(runner, testcls, all_tests, worker.cfg)
             timeout = worker.cfg.timeout
             result = maybe_async(result, max_errors=0, timeout=num*timeout)
             if is_async(result):
                 return result.add_both(partial(self.close, runner, testcls))
         return self.close(runner, testcls)
         
-    def run(self, runner, testcls, all_tests):
+    def run(self, runner, testcls, all_tests, cfg):
         '''Run all test functions from the :attr:`testcls` using the
 following algorithm:
 
@@ -73,7 +75,7 @@ following algorithm:
 * Run the class method ``tearDownClass`` of :attr:`testcls` if defined.
 '''
         run_test_function = runner.run_test_function
-        sequential_execution = getattr(testcls, '_sequential_execution', False)
+        sequential = getattr(testcls, '_sequential_execution', cfg.sequential)
         skip_tests = getattr(testcls, "__unittest_skip__", False)
         should_stop = False
         test_cls = test_method(testcls, 'setUpClass')
@@ -84,7 +86,7 @@ following algorithm:
         #
         # run the tests
         if not should_stop:
-            if sequential_execution:
+            if sequential:
                 # Loop over all test cases in class
                 for test in all_tests:
                     yield self.run_test(test, runner)

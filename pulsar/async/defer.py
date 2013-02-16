@@ -7,7 +7,7 @@ from inspect import isgenerator, isfunction, ismethod, istraceback
 
 from pulsar import AlreadyCalledError, HaltServer
 from pulsar.utils import events
-from pulsar.utils.pep import raise_error_trace, iteritems, default_timer
+from pulsar.utils.pep import raise_error_trace, iteritems, default_timer, get_event_loop
 
 from .access import get_request_loop
 from .consts import *
@@ -293,6 +293,15 @@ class Deferred(object):
 which will be put off until later.
 The implementation is similar to the ``twisted.defer.Deferred`` class.
 
+:params description: optional description which set the :attr:`description`
+    attribute.
+:params timeout: optional timeout. If greater than zero the deferred will be
+    cancelled after *timeout* seconds if no result available.
+
+.. attribute:: description
+
+    A description of the :class:`Deferred`.
+    
 .. attribute:: called
 
     ``True`` if the deferred was called. In this case the asynchronous result
@@ -317,10 +326,14 @@ The implementation is similar to the ``twisted.defer.Deferred`` class.
     paused = 0
     _called = False
     _runningCallbacks = False
+    _timeout = None
 
-    def __init__(self, description=None):
+    def __init__(self, description=None, timeout=None):
         self._description = description
         self._callbacks = deque()
+        if timeout and timeout > 0:
+            loop = get_event_loop()
+            self._timeout = loop.call_later(timeout, self.cancel, 'timeout')
 
     def __repr__(self):
         v = self._description or self.__class__.__name__
@@ -389,6 +402,8 @@ this point, :meth:`add_callback` will run the *callbacks* immediately.
                                'callback function')
         elif self._called:
             raise AlreadyCalledError('Deferred %s already called' % self)
+        if self._timeout:
+            self._timeout.cancel()
         self.result = maybe_failure(result)
         self._called = True
         self._run_callbacks()
@@ -541,14 +556,11 @@ The callback will occur once the coroutine has stopped
 has occurred. Instances of :class:`DeferredCoroutine` are never
 initialised directly, they are created by the :func:`maybe_async`
 function when a generator is passed as argument.'''
-    def __init__(self, gen, max_errors=1, description=None,
-                 error_handler=None, timeout=0):
+    def __init__(self, gen, max_errors=1, **kwargs):
         self.gen = gen
         self.max_errors = max(1, max_errors) if max_errors else 0
-        self._timeout_call = None
-        self.timeout = timeout
         self.errors = Failure()
-        super(DeferredCoroutine,self).__init__(description=description)
+        super(DeferredCoroutine, self).__init__(**kwargs)
         # the loop in the current thread... with preference to the request loop
         self.loop = get_request_loop()
         self._consume(None)
@@ -564,27 +576,20 @@ function when a generator is passed as argument.'''
             return self._conclude(last_result)
         except Exception as e:
             result = e
-        return self._check_async(result)
-        
-    def _check_async(self, result):
         result = maybe_async(result)
         if is_async(result):
             result.add_both(self._restart)
-            if self.timeout:
-                self._timeout_call = self.loop.call_later(self.timeout,
-                                        self._cancel, result)
         elif result == NOT_DONE:
             self.loop.call_soon(self._consume, None)
         else:
             self._consume(result)
 
     def _restart(self, result):
-        #restart the coroutine once we get a callback from an asynchronous
-        #element
-        if self._timeout_call:
-            self._timeout_call.cancel()
-            self._timeout_call = None
+        #restart the coroutine
         self.loop.call_soon_threadsafe(self._consume, result)
+        # Important, this is a callback of a deferred, therefore we return
+        # the passed result (which is not asynchronous).
+        return result
     
     def _conclude(self, last_result=None):
         # Conclude the generator and callback the listeners

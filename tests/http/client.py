@@ -21,9 +21,7 @@ class TestHttpClientBase:
         s = server(bind='127.0.0.1:0', concurrency=concurrency,
                    name='httpbin-%s' % cls.__name__.lower(),
                    keepalive=30)
-        outcome = send('arbiter', 'run', s)
-        yield outcome
-        cls.app = outcome.result
+        cls.app = yield send('arbiter', 'run', s)
         cls.uri = 'http://{0}:{1}'.format(*cls.app.address)
         if cls.with_proxy:
             s = pserver(bind='127.0.0.1:0', concurrency=concurrency,

@@ -128,13 +128,17 @@ and `data_received` :ref:`many times event <many-times-event>`.
     
     def start_request(self):
         '''Invoked by the :meth:`new_request` method to kick start the
-request with remote server/client. For server consumers this is usually
-not implemented. If implemented this is critical method where errors caused
-by stale socket connections can arise.'''
+request with remote server/client. For server :class:`ProtocolConsumer` this
+method is usually not implemented and therefore is simply a pass-through.
+If implemented this is critical method
+where errors caused by stale socket connections can arise.
+**This method should not be called directly.** Use :meth:`new_request`
+instead.'''
         pass
     
     def new_request(self, request=None):
-        '''Starts a new *request* for this consumer.'''
+        '''Starts a new *request* for this protocol consumer if
+:attr:`connected` is `True`.'''
         if self.connected:
             self._request_processed += 1
             self._current_request = request
@@ -309,7 +313,7 @@ It has two :ref:`one time events <one-time-event>`, *connection_made* and
             if data and self._current_consumer:
                 # if data is returned from the response feed method and the
                 # response has not done yet raise a Protocol Error
-                raise ProtocolError
+                raise ProtocolError('current consumer not done.')
         self._add_idle_timeout()
     
     def connection_lost(self, exc):
