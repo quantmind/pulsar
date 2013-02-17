@@ -1,5 +1,3 @@
-.. module:: pulsar
-
 .. _tutorials-messages:
 
 =======================

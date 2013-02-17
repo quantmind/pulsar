@@ -69,7 +69,7 @@ actor's thread starts for thread-based actors).
 Pulsar :class:`EventLoop` will be following pep-3156_ guidelines.
 In addition to the :attr:`Actor.requestloop`, :ref:`cpu bound <cpubound>`
 actors have another :class:`EventLoop`, on a different thread, for
-handling IO requests on their :ref:`mailbox <actor-mailbox>`.
+handling IO requests on their mailbox.
 
 .. _iobound:
 

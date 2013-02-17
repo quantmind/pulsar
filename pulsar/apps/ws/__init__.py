@@ -132,12 +132,6 @@ http://www.w3.org/TR/websockets/ for details on the JavaScript interface.
             raise HttpException(msg='Not a valid HyBi WebSocket request. '
                                     'Missing Sec-Websocket-Key header.',
                                 status=400)
-        version = environ.get('HTTP_SEC_WEBSOCKET_VERSION')
-        if version:
-            try:
-                version = int(version)
-            except Exception:
-                pass
         # Collect supported subprotocols
         subprotocols = environ.get('HTTP_SEC_WEBSOCKET_PROTOCOL')
         ws_protocols = []
@@ -151,6 +145,7 @@ http://www.w3.org/TR/websockets/ for details on the JavaScript interface.
             for ext in extensions.split(','):
                 ws_extensions.append(ext.strip())
         # Build the frame parser
+        version = environ.get('HTTP_SEC_WEBSOCKET_VERSION')
         try:
             parser = self.frame_parser(version=version, protocols=ws_protocols,
                                        extensions=ws_extensions)

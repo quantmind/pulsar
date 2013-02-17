@@ -38,8 +38,6 @@ class TestEventLoop(unittest.TestCase):
         timeout2.cancel()
         self.assertTrue(timeout1.cancelled)
         self.assertTrue(timeout2.cancelled)
-        self.assertFalse(ioloop.has_callback(timeout1))
-        self.assertFalse(ioloop.has_callback(timeout2))
         timeout1 = ioloop.call_later(0.1,
                             lambda: d.callback(current_thread().ident))
         yield d

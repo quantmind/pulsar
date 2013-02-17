@@ -104,7 +104,7 @@ class TestDeferred(unittest.TestCase):
         result = d.callback('ciao')
         self.assertTrue(d.called)
         self.assertEqual(d.paused, 1)
-        self.assertEqual(len(d._callbacks), 1)
+        self.assertEqual(len(d._callbacks), 2)
         self.assertEqual(len(rd._callbacks), 1)
         #
         self.assertEqual(rd.r, ('ciao',))
@@ -127,11 +127,11 @@ class TestDeferred(unittest.TestCase):
         def _gen():
             yield d
         a = maybe_async(_gen()).add_errback(lambda failure: [failure])
-        result = d.callback('ciao')
+        result = d.callback('ciao') # first callback
         self.assertTrue(d.called)
         self.assertEqual(d.paused, 1)
         # The generator has added its consume callback
-        self.assertEqual(len(d._callbacks), 1)
+        self.assertEqual(len(d._callbacks), 2)
         self.assertEqual(len(rd._callbacks), 1)
         #
         self.assertEqual(rd.r, ('ciao',))
@@ -145,8 +145,11 @@ class TestDeferred(unittest.TestCase):
         self.assertTrue(a.called)
         self.assertTrue(is_failure(a.result[0]))
         
-    def testSafeAsync(self):
-        pass
+    def testCancel(self):
+        d = Deferred()
+        d.cancel('timeout')
+        self.assertTrue(d.called)
+        self.assertTrue(is_failure(d.result))
         
         
 class TestMultiDeferred(unittest.TestCase):

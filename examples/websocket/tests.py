@@ -36,18 +36,18 @@ class TestWebSocketThread(unittest.TestCase):
         c = HttpClient()
         response = c.post(self.ws_uri)
         yield response.on_finished
+        self.assertEqual(response.status_code, 405)
+        #
+        response = yield c.get(self.ws_uri,
+                        headers=[('Sec-Websocket-Key', '')]).on_finished
         self.assertEqual(response.status_code, 400)
         #
-        response = c.get(self.ws_uri, headers=[('Sec-Websocket-Key', '')])
-        yield response.on_finished
+        response = yield c.get(self.ws_uri,
+                        headers=[('Sec-Websocket-Key', 'bla')]).on_finished
         self.assertEqual(response.status_code, 400)
         #
-        response = c.get(self.ws_uri, headers=[('Sec-Websocket-Key', 'bla')])
-        yield response.on_finished
-        self.assertEqual(response.status_code, 400)
-        #
-        response = c.get(self.ws_uri, headers=[('Sec-Websocket-version', 'xxx')])
-        yield response.on_finished
+        response = yield c.get(self.ws_uri,
+                        headers=[('Sec-Websocket-version', 'xxx')]).on_finished
         self.assertEqual(response.status_code, 400)
     
     def testUpgrade(self):

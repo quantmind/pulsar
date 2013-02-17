@@ -559,7 +559,7 @@ function when a generator is passed as argument.'''
     def __init__(self, gen, max_errors=1, **kwargs):
         self.gen = gen
         self.max_errors = max(1, max_errors) if max_errors else 0
-        self.errors = Failure()
+        self.errors = None
         super(DeferredCoroutine, self).__init__(**kwargs)
         # the loop in the current thread... with preference to the request loop
         self.loop = get_request_loop()
@@ -567,7 +567,10 @@ function when a generator is passed as argument.'''
     
     def _consume(self, last_result):
         if is_failure(last_result):
-            self.errors.append(last_result)
+            if not self.errors:
+                self.errors = last_result
+            elif last_result is not self.errors:
+                self.errors.append(last_result)
             if self.max_errors and len(self.errors) >= self.max_errors:
                 return self._conclude()
         try:

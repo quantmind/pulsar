@@ -7,5 +7,4 @@ include docs/Makefile
 include docs/source/conf.py
 recursive-include examples *.py *.html
 recursive-include pulsar/apps/test/plugins/htmlfiles *
-recursive-include lib *.py *.h *.c *.pyx *.pxd
 recursive-include docs *.rst

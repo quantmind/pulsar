@@ -33,7 +33,10 @@ def int2bytes(*ints):
     return b''.join((i2b(i) for i in ints))
 
 def get_version(version):
-    version = int(version or DEFAULT_VERSION)
+    try:
+        version = int(version or DEFAULT_VERSION)
+    except:
+        pass
     if version not in SUPPORTED_VERSIONS:
         raise ProtocolError('Version %s not supported.' % version)
     return version
