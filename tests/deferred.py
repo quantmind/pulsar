@@ -2,7 +2,7 @@
 import sys
 from functools import reduce
 
-from pulsar import AlreadyCalledError, Deferred, is_async,\
+from pulsar import AlreadyCalledError, Deferred, is_async, NOT_DONE,\
                      is_failure, MultiDeferred, maybe_async, CancelledError
 from pulsar.apps.test import unittest
 
@@ -154,6 +154,20 @@ class TestDeferred(unittest.TestCase):
     def testTimeout(self):
         d = Deferred(timeout=1).add_errback(lambda f : [f])
         yield d
+        failure = d.result[0]
+        self.assertEqual(failure.trace[0], CancelledError)
+        
+    def test_embedded_timeout(self):
+        '''Embed an never ending coroutine into a deferred with timeout'''
+        def gen(r):
+            # A never ending coroutine.
+            while True:
+                yield NOT_DONE
+        d = Deferred(timeout=1).add_callback(gen).add_errback(lambda f: [f])
+        res = d.callback(True)
+        self.assertTrue(is_async(res))
+        self.assertEqual(d.result, res)
+        yield res
         failure = d.result[0]
         self.assertEqual(failure.trace[0], CancelledError)
         

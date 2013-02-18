@@ -360,6 +360,7 @@ a pool of asynchronous :class:`pulsar.Connection`.
 .. attribute:: proxy_info
 
     Dictionary of proxy servers for this client.
+    
 '''
     consumer_factory = HttpResponse
     allow_redirects = False

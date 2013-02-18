@@ -164,12 +164,12 @@ specification supporting protocol version 13::
         return header.getvalue()
                 
     def mask(self, data):
-        """Performs the masking or unmasking operation on data
+        ''''Performs the masking or un-masking operation on data
 using the simple masking algorithm::
 
     j = i MOD 4
     transformed-octet-i = original-octet-i XOR masking-key-octet-j
-"""
+    '''
         mask_size = len(self.masking_key)
         key = array('B', self.masking_key)
         data = array('B', data)

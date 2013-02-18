@@ -12,6 +12,8 @@ and server. Pulsar implementation uses the WSGI middleware
 API
 ==============
 
+.. _websocket-middleware:
+
 WebSocket
 ~~~~~~~~~~~~~~~~
 
@@ -19,6 +21,8 @@ WebSocket
    :members:
    :member-order: bysource
 
+
+.. _websocket-handler:
 
 WebSocket handler
 ~~~~~~~~~~~~~~~~~~~~

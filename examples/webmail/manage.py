@@ -1,19 +1,37 @@
-'''A webmail application to demonstrate pulsar-twisted integration.
-To run the server you need to create a config.py file containing::
+'''The example is a :ref:`WSGI application <apps-wsgi>`
+with a :ref:`websocket middleware <apps-ws>` which connects to an
+IMAP4 server to retrieve and send emails.
 
+The connection with the IMAP4 server is obtained using the IMAP4 API in
+twisted 12.3 or later. The example uses
+:ref:`pulsar-twisted integration <tutorials-twisted>` module.
+
+To run the server you need to create a :mod:`config.py` file in the
+the :mod:`examples.webmail` directory containing::
+
+    # the adress of your mail server
     incoming_mail='ssl:host=imap.gmail.com:port=993'
+    # username & password
     username=
     password=
 
-type::
+And type::
 
     python manage.py
     
-and open a web browser at http://localhost:8060
+Open a web browser at http://localhost:8060 and you should see the web app.
 
-Adapted from this example
+For information on twised IMAP4 client library check this example:
 
 http://twistedmatrix.com/documents/current/mail/examples/imap4client.py
+
+Implementation
+==================
+
+.. autoclass:: WsMail
+   :members:
+   :member-order: bysource
+   
 '''
 import os
 import sys
@@ -41,15 +59,13 @@ except ImportError:
 THIS_DIR = os.path.dirname(__file__)
 
     
-@pulsar.async(1)
 def mail_client(timeout=10):
+    '''Create a new mail client using twisted IMAP4 library.'''
     endpoint = endpoints.clientFromString(reactor, config.incoming_mail)
     endpoint._timeout = timeout
     factory = protocol.Factory()
     factory.protocol = imap4.IMAP4Client
-    future = endpoint.connect(factory)
-    yield future
-    client = future.result
+    client = yield endpoint.connect(factory)
     yield client.login(config.username, config.password)
     yield client.select('INBOX')
     yield client
@@ -57,13 +73,17 @@ def mail_client(timeout=10):
     #print 'First message subject:', info[1]['ENVELOPE'][1]
 
 
-class Mail(ws.WS):
-    '''Websocket handler for fetching and sending mail'''    
-    def on_open(self, environ):
-        # Add pulsar.connection environ extension to the set of active clients
-        return mail_client().add_callback(partial(self._on_open, environ))
+class WsMail(ws.WS):
+    ''':ref:`Websocket handler <websocket-handler>` for fetching and
+sending mail via the twisted IMAP4 library.'''    
+    def on_open(self, request):
+        '''When the websocket starts, it create a new mail client.'''
+        client = yield mail_client()
+        request.cache['mailclient'] = client
+        # retrieve the list of mailboxes
+        yield self._send_mailboxes(request)
         
-    def on_message(self, environ, msg):
+    def on_message(self, request, msg):
         client = environ.get('mail.client')
         if msg and client:
             msg = json.loads(msg)
@@ -74,11 +94,10 @@ class Mail(ws.WS):
                 result = future.result
                 self.write(environ, json.dumps({'mailbox': result}))
 
-    def _on_open(self, environ, client):
-        environ['mail.client'] = client
-        future = client.list("","*")
-        yield future
-        result = sorted([e[2] for e in future.result])
+    def _send_mailboxes(self, environ, client):
+        client = request.cache['mail.client']
+        result = yield client.list("","*")
+        result = sorted([e[2] for e in result])
         self.write(environ, json.dumps({'list': result}))
 
 
@@ -96,7 +115,7 @@ class Web(wsgi.Router):
 
 
 def server(**kwargs):
-    mail = ws.WebSocket('/message', Mail())
+    mail = ws.WebSocket('/message', WsMail())
     media = wsgi.MediaRouter('/media', THIS_DIR)
     web = Web('/')
     middleware = wsgi.WsgiHandler(middleware=(media, mail, web))

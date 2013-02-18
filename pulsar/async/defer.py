@@ -297,7 +297,7 @@ The implementation is similar to the ``twisted.defer.Deferred`` class.
 :params description: optional description which set the :attr:`description`
     attribute.
 :params timeout: optional timeout. If greater than zero the deferred will be
-    cancelled after *timeout* seconds if no result available.
+    cancelled after *timeout* seconds if no result is available.
 
 .. attribute:: description
 
@@ -334,6 +334,8 @@ The implementation is similar to the ``twisted.defer.Deferred`` class.
         self._callbacks = deque()
         if timeout and timeout > 0:
             loop = get_event_loop()
+            # create the timeout. We don't cancel the timeout after
+            # a callback is received since the result may be still asynchronous
             self._timeout = loop.call_later(timeout, self.cancel, 'timeout')
 
     def __repr__(self):
@@ -354,15 +356,18 @@ The implementation is similar to the ``twisted.defer.Deferred`` class.
         return self._runningCallbacks
 
     def done(self):
+        '''Returns ``True`` if the :class:`Deferred` has been called done.
+Note that a cancelled :class:`Deferred` is considered done too.'''
         return self.called
     
     def cancel(self, msg=''):
         '''Cancel the deferred and schedule callbacks.
 If the deferred is waiting for another :class:`Deferred`, forward the
-cancellation to that one.'''
+cancellation to that one. If the :class:`Deferred` is already :meth:`done`,
+it does nothing.'''
         if not self.called:
             return self.callback(CancelledError(msg))
-        elif is_async(self.result, Deferred):
+        elif is_async(self.result):
             return self.result.cancel(msg)
     
     def add_callback(self, callback, errback=None, continuation=None):
@@ -403,8 +408,6 @@ this point, :meth:`add_callback` will run the *callbacks* immediately.
                                'callback function')
         elif self._called:
             raise AlreadyCalledError('Deferred %s already called' % self)
-        if self._timeout:
-            self._timeout.cancel()
         self.result = maybe_failure(result)
         self._called = True
         self._run_callbacks()

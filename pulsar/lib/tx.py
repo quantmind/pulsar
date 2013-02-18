@@ -13,6 +13,14 @@ function.
 Threads, signal handling, scheduling and so forth is handled by pulsar itself,
 twisted implementation is switched off.
 
+Pulsar Reactor
+====================
+
+.. autoclass:: PulsarReactor
+   :members:
+   :member-order: bysource
+   
+
 .. _twisted: http://twistedmatrix.com/
 '''
 import twisted
@@ -34,7 +42,7 @@ def _maybe_async(obj, **params):
         d._twisted_deferred = obj
         obj.addBoth(d.callback)
         obj = d
-    return default_maybe_async(obj)
+    return default_maybe_async(obj, **params)
 
 def _maybe_failure(e, msg=''):
     if isinstance(e, Failure):
