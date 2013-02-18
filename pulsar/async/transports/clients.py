@@ -140,6 +140,9 @@ class Client(EventHandler):
 '''
     max_reconnect = 1
     '''Can reconnect on socket error.'''
+    connection_pools = None
+    '''Dictionar of :class:`ConnectionPool`. If initialized at class level it
+will remain as a class attribute, otherwise it will be an instance attribute.'''
     connection_pool = ConnectionPool
     '''Factory of :class:`ConnectionPool`.'''
     consumer_factory = None
@@ -170,7 +173,8 @@ class Client(EventHandler):
         if consumer_factory:
             self.consumer_factory = consumer_factory
         self.max_connections = max_connections or self.max_connections or 2**31
-        self.connection_pools = {}
+        if self.connection_pools is None:
+            self.connection_pools = {}
         if max_reconnect:
             self.max_reconnect = max_reconnect
         self.setup(**params)
