@@ -111,6 +111,7 @@ importing tests.
                 pattern = re.compile(pattern.replace('*', '(.*)'))
             names = name.split('.') if name else ()
             absolute_path = os.path.join(self.root, *names)
+            self.logger.debug('Loading from "%s"', absolute_path)
             if os.path.isdir(absolute_path):
                 pathbase = os.path.dirname(absolute_path)
                 if pathbase not in sys.path:

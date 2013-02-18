@@ -45,7 +45,7 @@ it returns an empty dictionary.
     return {'memory': mem.rss,
             'memory_virtual': mem.vms,
             'cpu_percent': p.get_cpu_percent(),
-            'nice': p.nice,
+            'nice': p.get_nice(),
             'num_threads': p.get_num_threads()}
     
     

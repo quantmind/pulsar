@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 '''Python script for linkin the ``pulsar`` directory to your python distribution package directory
 '''
 import sys

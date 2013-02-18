@@ -6,9 +6,8 @@
 #
 import os
 import sys
-from pulsar.apps.test import TestSuite
+from pulsar.apps.test import TestSuite, TestPlugin
 from pulsar.apps.test.plugins import bench, profile
-
 
 if __name__ == '__main__':
     print(sys.version)
