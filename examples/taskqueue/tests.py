@@ -47,12 +47,8 @@ class TestTaskQueueOnThread(unittest.TestCase):
         # The name of the task queue application
         s = server(cls.name_tq(), bind='127.0.0.1:0',
                    concurrency=cls.concurrency)
-        outcome = send('arbiter', 'run', s)
-        yield outcome
-        app = outcome.result
-        cls.app = app
-        uri = 'http://{0}:{1}'.format(*cls.app.address)
-        cls.proxy = rpc.JsonProxy(uri)
+        cls.app = yield send('arbiter', 'run', s)
+        cls.proxy = rpc.JsonProxy('http://{0}:{1}'.format(*cls.app.address))
 
     @classmethod
     def tearDownClass(cls):

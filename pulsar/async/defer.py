@@ -17,6 +17,7 @@ __all__ = ['Deferred',
            'EventHandler',
            'MultiDeferred',
            'DeferredCoroutine',
+           'CancelledError',
            'Failure',
            'maybe_failure',
            'is_failure',
@@ -509,18 +510,31 @@ a callable which accept one argument only.'''
         
     def fire_event(self, event, event_data=None):
         """Dispatches *event_data* to the *event* listeners.
-If *event_data* is not provided, this instance will be dispatched.
-If *event_data* is an error it will be converted to a :class:`Failure`."""
+        
+* If *event_data* is not provided, this instance will be dispatched.
+* If *event_data* is an error it will be converted to a :class:`Failure`.
+* If *event* is a one-time event, it makes sure that it was not fired before.
+
+:return: boolean indicating if the event was fired or not.
+"""
         event_data = self if event_data is None else maybe_failure(event_data)
+        fired = True
         if event in self.ONE_TIME_EVENTS:
-            self.ONE_TIME_EVENTS[event].callback(event_data)
+            fired = not self.ONE_TIME_EVENTS[event].called
+            if fired:
+                self.ONE_TIME_EVENTS[event].callback(event_data)
+            else:
+                LOGGER.debug('Event "%s" already fired for %s', event, self)
         elif event in self.MANY_TIMES_EVENTS:
             for callback in self.MANY_TIMES_EVENTS[event]:
                 callback(event_data)
         else:
+            fired = False
             LOGGER.warn('unknown event "%s" for %s', event, self)
-        events.fire(event, event_data)
-        log_failure(event_data)
+        if fired:
+            events.fire(event, event_data)
+            log_failure(event_data)
+        return fired
         
     def all_events(self):
         return chain(self.ONE_TIME_EVENTS, self.MANY_TIMES_EVENTS)

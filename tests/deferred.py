@@ -3,7 +3,7 @@ import sys
 from functools import reduce
 
 from pulsar import AlreadyCalledError, Deferred, is_async,\
-                     is_failure, MultiDeferred, maybe_async
+                     is_failure, MultiDeferred, maybe_async, CancelledError
 from pulsar.apps.test import unittest
 
 
@@ -150,6 +150,12 @@ class TestDeferred(unittest.TestCase):
         d.cancel('timeout')
         self.assertTrue(d.called)
         self.assertTrue(is_failure(d.result))
+        
+    def testTimeout(self):
+        d = Deferred(timeout=1).add_errback(lambda f : [f])
+        yield d
+        failure = d.result[0]
+        self.assertEqual(failure.trace[0], CancelledError)
         
         
 class TestMultiDeferred(unittest.TestCase):

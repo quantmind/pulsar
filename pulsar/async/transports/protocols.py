@@ -325,10 +325,10 @@ these actions in the following order:
   as event data.
 * Invokes the connection_lost method in the :attr:`current_consumer` if
   available.'''
-        self._cancel_timeout()
-        self.fire_event('connection_lost', exc)
-        if self._current_consumer:
-            self._current_consumer.connection_lost(exc)
+        if self.fire_event('connection_lost', exc):
+            self._cancel_timeout()
+            if self._current_consumer:
+                self._current_consumer.connection_lost(exc)
                              
     def upgrade(self, consumer_factory):
         '''Update the :attr:`consumer_factory` attribute with a new
