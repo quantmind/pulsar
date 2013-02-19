@@ -9,6 +9,7 @@ from multiprocessing import Pipe
 from .base import *
 
 __all__ = ['IOpoll',
+           'Epoll',
            'close_on_exec',
            'Waker',
            'daemonize',
@@ -19,10 +20,11 @@ __all__ = ['IOpoll',
 
 
 import select
-if hasattr(select,'epoll'):
+if hasattr(select, 'epoll'):
     IOpoll = select.epoll
 else:   #pragma    nocover
     IOpoll = IOselect
+    Epoll = IOselect
 
 # standard signal quit
 EXIT_SIGNALS = (signal.SIGINT, signal.SIGTERM, signal.SIGABRT, signal.SIGQUIT)
@@ -125,3 +127,32 @@ class Waker(object):
                  r.recv()
         except IOError:
             pass
+
+
+if hasattr(select, 'epoll'):
+    
+    class Epoll(EpollInterface):
+        
+        def __init__(self, ep=None):
+            self._epoll = ep or select.epoll()
+        
+        def close(self):
+            self._epoll.close()
+            
+        def fileno(self):
+            return self._epoll.fileno()
+        
+        def fromfd(self, fd):
+            return self._epoll.fromfd(fd)
+        
+        def register(self, fd, events):
+            return self._epoll.register(fd, events)
+        
+        def modify(self, fd, events):
+            return self._epoll.modify(fd, events)
+        
+        def unregister(self, fd):
+            return self._epoll.unregister(fd)
+        
+        def poll(self, timeout=-1):
+            return self._epoll.poll(timeout=timeout)

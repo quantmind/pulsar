@@ -12,7 +12,8 @@ except ImportError: #pragma    nocover
         select = False
         
 from .system import platform
-from .httpurl import native_str
+from .pep import native_str
+from .httpurl import urlsplit, parse_qsl 
 
 
 WRITE_BUFFER_MAX_SIZE = 128 * 1024  # 128 kb
@@ -264,7 +265,35 @@ def parse_address(netloc, default_port=8000):
     else:
         port = default_port 
     return (host, port)
-        
+    
+def parse_connection_string(netloc, default_port=8000):
+    """Converts the "netloc" into the database connection parameters.
+It returns a (scheme, host, params) tuple."""
+    if '://' not in netloc:
+        netloc = 'dummy://%s' % netloc
+    scheme, host, path, query, fragment = urlsplit(netloc)
+    if not scheme and not host:
+        host, path = path, ''
+    elif scheme not in ('https', 'http'):
+        query = path
+        path = ''
+        if query:
+            if query.find('?'):
+                path = query
+            else:
+                query = query[1:]
+    else:
+        path, query = r.path, r.query
+    if path:
+        raise ValueError("Address must not have a path. Found '%s'" % path)
+    if query:
+        params = dict(parse_qsl(query))
+    else:
+        params = {}
+    if scheme == 'dummy':
+        scheme = ''
+    return scheme, parse_address(host, default_port), params
+    
 def create_socket(address=None, sock=None, bindto=False, backlog=1024):
     if isinstance(sock, Socket):
         return sock

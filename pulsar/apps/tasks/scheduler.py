@@ -181,6 +181,8 @@ and task scheduling.
 Executes all due tasks calculate the time in seconds to wait before
 running a new :meth:`tick`. For testing purposes a :class:`datetime.datetime`
 value ``now`` can be passed.'''
+        if not self.schedule_periodic:
+            return
         remaining_times = []
         try:
             for entry in itervalues(self._entries):

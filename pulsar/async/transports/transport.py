@@ -453,7 +453,7 @@ class TransportProxy(object):
         
         
 class Connector(Deferred, TransportProxy):
-    
+    processed = 0
     def __init__(self, transport):
         self._transport = transport
         self._consumer = None

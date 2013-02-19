@@ -301,7 +301,7 @@ to check if the scheduler needs to perform a new run.'''
         s = self.scheduler
         if s:
             if s.next_run <= datetime.now():
-                s.tick(monitor)
+                s.tick()
 
     def job_list(self, jobnames=None):
         return self.scheduler.job_list(jobnames=jobnames)

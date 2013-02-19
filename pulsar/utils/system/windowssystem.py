@@ -46,9 +46,10 @@ def chown(path, uid, gid):
     pass
 
 def close_on_exec(fd):
-    success = SetHandleInformation(fd, HANDLE_FLAG_INHERIT, 0)
-    if not success:
-        raise ctypes.GetLastError()
+    if fd:
+        success = SetHandleInformation(fd, HANDLE_FLAG_INHERIT, 0)
+        if not success:
+            raise ctypes.GetLastError()
         
 def _set_non_blocking(fd):
     pass

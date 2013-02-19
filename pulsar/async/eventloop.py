@@ -315,8 +315,7 @@ event loop is the place where most asynchronous operations are carried out.
         self.timer = timer or default_timer
         self.poll_timeout = poll_timeout if poll_timeout else self.poll_timeout
         self.logger = logger or LOGGER
-        if hasattr(self._impl, 'fileno'):
-            close_on_exec(self._impl.fileno())
+        close_on_exec(self._impl.fileno())
         self._iothreadloop = iothreadloop
         self._handlers = {}
         self._callbacks = []

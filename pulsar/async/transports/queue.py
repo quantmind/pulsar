@@ -2,7 +2,8 @@ from functools import partial
 from threading import Lock
 from multiprocessing.queues import Empty, Queue
 
-from pulsar.utils.system import IObase
+from pulsar.utils.system import EpollInterface
+from pulsar.utils.log import LocalMixin
 from pulsar.async.defer import async
 
 from . import transport
@@ -90,24 +91,23 @@ the total number of concurrent connections is les then the maximum'''
 ################################################################################
 ##    MESSAGE QUEUE BASED ON PYTHON MUTIPROCESSING QUEUE
 ################################################################################
-class PythonMessageQueue(MessageQueue):
+class PythonMessageQueue(MessageQueue, LocalMixin):
     '''A :class:`MessageQueue` based on python multiprocessing Queue.
 This queue is not socket based therefore it requires a specialised IO poller,
 the file descriptor is a dummy number and the waker is `self`.
 The waker, when invoked via the :meth:`wake`, reduces the poll timeout to 0
 so that the :meth:`get` method returns as soon possible.'''
     def __init__(self):
-        self._lock = Lock()
         self._wakeup = 0
         self._queue = Queue()
-        
+    
     def poller(self, server):
         return IOQueue(self, server)
     
     def get(self, timeout=0.5):
         '''Get an item from the queue.'''
         block = True
-        with self._lock:
+        with self.lock:
             if self._wakeup:
                 block = False
                 self._wakeup -= 1
@@ -131,9 +131,15 @@ so that the :meth:`get` method returns as soon possible.'''
     
     def wake(self):
         '''Waker implementation. This message queue is its own waker.'''
-        with self._lock:
+        with self.lock:
             self._wakeup += 1
-        
+    
+    @property
+    def lock(self):
+        if self.local.lock is None:
+            self.local.lock = Lock()
+        return self.local.lock    
+
 
 class TaskFactory:
     
@@ -169,7 +175,7 @@ class TaskFactory:
         return self.handle_read(request)
 
 
-class IOQueue(IObase):
+class IOQueue(EpollInterface):
     '''Epoll like class for a IO based on queues rather than sockets.
 The interface is the same as the python epoll_ implementation.
 
@@ -181,6 +187,9 @@ The interface is the same as the python epoll_ implementation.
         self._app = app
         self._handler = None
 
+    def fileno(self):
+        pass
+    
     def register(self, fd, events=None):
         pass
 

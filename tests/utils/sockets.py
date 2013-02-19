@@ -5,11 +5,45 @@ import time
 
 import pulsar
 from pulsar import platform
-from pulsar.utils.sockets import is_closed
+from pulsar.utils.sockets import is_closed, parse_address,\
+                                 parse_connection_string
 from pulsar.utils.pep import pickle
 from pulsar.apps.test import unittest, mock
 
 
+class TestParse(unittest.TestCase):
+    
+    def test_parse_tcp(self):
+        scheme, address, params = parse_connection_string('127.0.0.1:8050')
+        self.assertEqual(scheme, '')
+        self.assertEqual(address, ('127.0.0.1', 8050))
+        self.assertEqual(params, {})
+        
+    def test_parse_tcp_default(self):
+        scheme, address, params = parse_connection_string('127.0.0.1', 8095)
+        self.assertEqual(scheme, '')
+        self.assertEqual(address, ('127.0.0.1', 8095))
+        self.assertEqual(params, {})
+        
+    def test_parse_unix(self):
+        scheme, address, params = parse_connection_string('unix:bla.foo')
+        self.assertEqual(scheme, '')
+        self.assertEqual(address, 'bla.foo')
+        self.assertEqual(params, {})
+        
+    def test_parse_unix_with_scheme(self):
+        scheme, address, params = parse_connection_string('redis://unix:bla.foo')
+        self.assertEqual(scheme, 'redis')
+        self.assertEqual(address, 'bla.foo')
+        self.assertEqual(params, {})
+        
+    def test_parse_tcp_with_scheme_and_params(self):
+        scheme, address, params = parse_connection_string('redis://:6439?db=3')
+        self.assertEqual(scheme, 'redis')
+        self.assertEqual(address, ('', 6439))
+        self.assertEqual(params, {'db': '3'})
+        
+        
 class TestSocketsUtilities(unittest.TestCase):
     
     def test_tcp_server_socket(self):

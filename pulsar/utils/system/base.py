@@ -15,7 +15,7 @@ __all__ = ['ALL_SIGNALS',
            'set_proctitle',
            'set_owner_process',
            'IObase',
-           'EpollProxy',
+           'EpollInterface',
            'IOselect']
 
 
@@ -80,14 +80,41 @@ class IObase(object):
     ERROR = _EPOLLERR | _EPOLLHUP | _EPOLLRDHUP
         
     
-class EpollProxy(object):
-    '''An epoll like class. Idea from tornado.'''
+class EpollInterface(object):
+    
+    def close(self):
+        raise NotImplementedError
+    
+    def fileno(self):
+        raise NotImplementedError
+    
+    def fromfd(self, fd):
+        raise NotImplementedError
+    
+    def register(self, fd, events):
+        raise NotImplementedError
+    
+    def modify(self, fd, events):
+        raise NotImplementedError
+    
+    def unregister(self, fd):
+        raise NotImplementedError
+    
+    def poll(self, timeout=-1):
+        raise NotImplementedError
+        
+        
+class IOselect(EpollInterface):
+    '''An epoll like select class.'''
     def __init__(self):
         self.read_fds = set()
         self.write_fds = set()
         self.error_fds = set()
         self.fd_dict = (self.read_fds, self.write_fds, self.error_fds)
 
+    def fileno(self):
+        return None
+    
     def register(self, fd, events):
         if events & IObase.READ:
             self.read_fds.add(fd)
@@ -108,13 +135,7 @@ class EpollProxy(object):
         self.read_fds.discard(fd)
         self.write_fds.discard(fd)
         self.error_fds.discard(fd)
-    
-    def poll(self, timeout=None):
-        raise NotImplementedError
-    
-    
-class IOselect(EpollProxy):
-    '''An epoll like select class.'''        
+            
     def poll(self, timeout=None):
         readable, writeable, errors = _select(
             self.read_fds, self.write_fds, self.error_fds, timeout)
@@ -129,3 +150,6 @@ class IOselect(EpollProxy):
         for fd in errors:
             events[fd] = events.get(fd, 0) | IObase.ERROR
         return list(iteritems(events))
+    
+
+Epoll = IOselect
