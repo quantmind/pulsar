@@ -30,6 +30,11 @@ class TestTaskClasses(unittest.TestCase):
         self.assertFalse(task.on_finish())
         
 
+def wait_for_task(proxy, result):
+    while result['status'] in tasks.UNREADY_STATES:
+        result = yield proxy.get_task(id=result['id'])
+            
+            
 class TestTaskQueueOnThread(unittest.TestCase):
     concurrency = 'thread'
     app = None
@@ -156,22 +161,24 @@ class TestTaskQueueOnThread(unittest.TestCase):
         self.async.assertEqual(self.proxy.ping(), 'pong')
         
     def test_rpc_job_list(self):
-        jobs = self.proxy.job_list()
+        jobs = yield self.proxy.job_list()
         self.assertTrue(jobs)
         self.assertTrue(isinstance(jobs, list))
         d = dict(jobs)
         pycode = d['runpycode']
         self.assertEqual(pycode['type'], 'regular')
-        jobs = self.proxy.job_list(jobnames=['runpycode'])
+        
+    def test_rpc_job_list_with_names(self):
+        jobs = yield self.proxy.job_list(jobnames=['runpycode'])
         self.assertEqual(len(jobs), 1)
-        jobs = self.proxy.job_list(jobnames=['xxxxxx'])
+        jobs = yield self.proxy.job_list(jobnames=['xxxxxx'])
         self.assertEqual(len(jobs), 0)
         
     def test_rpc_next_scheduled_tasks(self):
-        next = self.proxy.next_scheduled_tasks()
+        next = yield self.proxy.next_scheduled_tasks()
         self.assertTrue(next)
         self.assertEqual(len(next), 2)
-        next = self.proxy.next_scheduled_tasks(jobnames=['testperiodic'])
+        next = yield self.proxy.next_scheduled_tasks(jobnames=['testperiodic'])
         self.assertTrue(next)
         self.assertEqual(len(next), 2)
         self.assertEqual(next[0], 'testperiodic')
@@ -184,41 +191,33 @@ class TestTaskQueueOnThread(unittest.TestCase):
         
     def test_run_new_task_RunPyCode(self):
         '''Run a new task from the *runpycode* task factory.'''
-        r = self.proxy.run_new_task(jobname='runpycode', code=CODE_TEST, N=3)
+        r = yield self.proxy.run_new_task(jobname='runpycode', code=CODE_TEST, N=3)
         self.assertTrue(r)
         self.assertTrue(r['id'])
         self.assertTrue(r['time_executed'])
-        while r['status'] in tasks.UNREADY_STATES:
-            yield NOT_DONE
-            r = self.proxy.get_task(id=r['id'])
+        r = yield wait_for_task(self.proxy, r)
         self.assertEqual(r['status'], tasks.SUCCESS)
         self.assertEqual(r['result'], 9)
         
     def test_run_new_task_addition(self):
-        r = self.proxy.run_new_task(jobname='addition', a=40, b=50)
+        r = yield self.proxy.run_new_task(jobname='addition', a=40, b=50)
         self.assertTrue(r)
         self.assertTrue(r['time_executed'])
-        while r['status'] in tasks.UNREADY_STATES:
-            yield NOT_DONE
-            r = self.proxy.get_task(id=r['id'])
+        r = yield wait_for_task(self.proxy, r)
         self.assertEqual(r['status'], tasks.SUCCESS)
         self.assertEqual(r['result'], 90)
         
     def test_run_new_task_periodicerror(self):
-        r = self.proxy.run_new_task(jobname='testperiodicerror')
-        while r['status'] in tasks.UNREADY_STATES:
-            yield NOT_DONE
-            r = self.proxy.get_task(id=r['id'])
+        r = yield self.proxy.run_new_task(jobname='testperiodicerror')
+        r = yield wait_for_task(self.proxy, r)
         self.assertEqual(r['status'], tasks.FAILURE)
         self.assertTrue('kaputt' in r['result'])
         
     def test_run_new_task_asynchronous(self):
-        response = yield self.proxy.run_new_task(jobname='asynchronous', loops=3).result
-        while r['status'] in tasks.UNREADY_STATES:
-            yield NOT_DONE
-            r = self.proxy.get_task(id=r['id'])
-        self.assertEqual(r['status'], tasks.SUCCESS)
-        result = r['result']
+        response = yield self.proxy.run_new_task(jobname='asynchronous',loops=3)
+        r = yield wait_for_task(self.proxy, response)
+        self.assertEqual(response['status'], tasks.SUCCESS)
+        result = response['result']
         self.assertEqual(result['loops'], 3)
         self.assertEqual(result['end']-result['start'], 3)
         

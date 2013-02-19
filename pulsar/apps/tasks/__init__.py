@@ -229,7 +229,7 @@ def delete_tasks(request, ids):
     return request.actor.app.scheduler.delete_tasks(ids)
 
 @pulsar.command()
-def get_task(crequest, id):
+def get_task(request, id):
     return request.actor.app.scheduler.get_task(id)
 
 @pulsar.command()

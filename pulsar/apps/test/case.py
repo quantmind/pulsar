@@ -60,8 +60,7 @@ class TestRequest(object):
         num = all_tests.countTestCases()
         if num:
             result = self.run(runner, testcls, all_tests, worker.cfg)
-            timeout = worker.cfg.timeout
-            result = maybe_async(result, max_errors=0, timeout=num*timeout)
+            result = maybe_async(result, max_errors=0)
             if is_async(result):
                 return result.add_both(partial(self.close, runner, testcls))
         return self.close(runner, testcls)

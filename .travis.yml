@@ -9,6 +9,9 @@ python:
 install:
   - if [[ $TRAVIS_PYTHON_VERSION == '2.6' ]]; then pip install --use-mirrors argparse unittest2; fi 
   - python setup.py install
+  - rm -rf pulsar
+  #Temporary solution to travis issue #155
+  - sudo rm -rf /dev/shm && sudo ln -s /run/shm /dev/shm
 script: python -m runtests --profile --benchmark --verbosity 2
 
 branches:
