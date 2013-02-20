@@ -428,7 +428,7 @@ class TestRunner(TestResultProxy):
                 p.after_test_function_run(test, local, result)
         return result
             
-    def run_test_function(self, test, func):
+    def run_test_function(self, test, func, timeout):
         '''Run function *func* which belong to *test*.
     
 :parameter test: test instance or class
@@ -440,4 +440,4 @@ class TestRunner(TestResultProxy):
         tfunc = getattr(func, 'testfunction', None)
         if tfunc is None:
             tfunc = TestFunction(func.__name__)
-        return tfunc(test)
+        return tfunc(test, timeout)

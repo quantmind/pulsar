@@ -15,9 +15,14 @@ import time
 def task_function(N = 10, lag = 0.1):
     time.sleep(lag)
     return N*N
-'''
+'''        
+def wait_for_task(proxy, result):
+    while result['status'] in tasks.UNREADY_STATES:
+        result = yield proxy.get_task(id=result['id'])
+            
 
-class TestTaskClasses(unittest.TestCase):
+class c:
+#class TestTaskClasses(unittest.TestCase):
     
     def testTask(self):
         self.assertRaises(NotImplementedError, tasks.Task.get_task, None, 1)
@@ -28,14 +33,51 @@ class TestTaskClasses(unittest.TestCase):
         self.assertFalse(task.on_start())
         self.assertFalse(task.on_timeout())
         self.assertFalse(task.on_finish())
-        
 
-def wait_for_task(proxy, result):
-    while result['status'] in tasks.UNREADY_STATES:
-        result = yield proxy.get_task(id=result['id'])
-            
-            
+
 class TestTaskQueueOnThread(unittest.TestCase):
+    concurrency = 'thread'
+    app = None
+    
+    @classmethod
+    def name_tq(cls):
+        return 'testtask_'+cls.concurrency
+    
+    @classmethod
+    def name_rpc(cls):
+        return cls.name_tq() + '_rpc'
+    
+    @classmethod
+    def setUpClass(cls):
+        # The name of the task queue application
+        s = server(cls.name_tq(), bind='127.0.0.1:0',
+                   concurrency=cls.concurrency)
+        cls.app = yield send('arbiter', 'run', s)
+        cls.proxy = rpc.JsonProxy('http://{0}:{1}'.format(*cls.app.address))
+
+    @classmethod
+    def tearDownClass(cls):
+        if cls.app:
+            yield send('arbiter', 'kill_actor', cls.name_tq())
+            yield send('arbiter', 'kill_actor', cls.name_rpc())
+
+    @run_on_arbiter
+    def test_delete_task(self):
+        app = get_application(self.name_tq())
+        r1 = app.scheduler.run('addition', 1, 4)
+        id = r1.id
+        get_task = app.scheduler.get_task
+        while get_task(id).status in tasks.UNREADY_STATES:
+            yield NOT_DONE
+        r2 = get_task(id)
+        self.assertEqual(r1.id, r2.id)
+        r2 = get_task(id, remove=True)
+        self.assertEqual(get_task(id), None)
+        self.assertEqual(get_task(r1), r1)
+        app.scheduler.delete_tasks()
+        
+class a:                        
+#class TestTaskQueueOnThread(unittest.TestCase):
     concurrency = 'thread'
     app = None
     
@@ -249,8 +291,8 @@ class TestTaskQueueOnThread(unittest.TestCase):
         self.assertEqual(len(stasks), sample)
         
 
+class b:
 #class TestTaskRpc(unittest.TestCase):
-class TestTaskRpc(object):
     '''Test the Rpc and Taskqueue server, including rpc commands
 in the TaskQueueRpcMixin class'''
     concurrency = 'process'
@@ -274,6 +316,6 @@ in the TaskQueueRpcMixin class'''
             self.assertTrue(r)
 
 
-@dont_run_with_thread
-class TestTaskQueueOnProcess(TestTaskQueueOnThread):
-    concurrency = 'process'
+#@dont_run_with_thread
+#class TestTaskQueueOnProcess(TestTaskQueueOnThread):
+#    concurrency = 'process'

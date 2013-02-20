@@ -78,9 +78,11 @@ following algorithm:
         skip_tests = getattr(testcls, "__unittest_skip__", False)
         should_stop = False
         test_cls = test_method(testcls, 'setUpClass')
+        timeout = cfg.timeout
         if test_cls and not skip_tests:
             outcome = yield run_test_function(testcls,
-                                        getattr(testcls,'setUpClass'))
+                                        getattr(testcls,'setUpClass'),
+                                        timeout)
             should_stop = self.add_failure(test_cls, runner, outcome)
         #
         # run the tests
@@ -88,15 +90,16 @@ following algorithm:
             if sequential:
                 # Loop over all test cases in class
                 for test in all_tests:
-                    yield self.run_test(test, runner)
+                    yield self.run_test(test, runner, timeout)
             else:
-                all = (self.run_test(test, runner) for test in all_tests)
+                all = (self.run_test(test, runner, timeout) for test in all_tests)
                 yield multi_async(all)
         #
         test_cls = test_method(testcls, 'tearDownClass')
         if test_cls and not skip_tests:
-            outcome = yield run_test_function(testcls,getattr(testcls,
-                                                    'tearDownClass'))
+            outcome = yield run_test_function(testcls,
+                                              getattr(testcls,'tearDownClass'),
+                                              timeout)
             self.add_failure(test_cls, runner, outcome)
     
     def close(self, runner, testcls, result=None):
@@ -104,13 +107,8 @@ following algorithm:
         LOGGER.debug('Sending %s results back to monitor', self)
         send('monitor', 'test_result', testcls.tag,
              testcls.__name__, runner.result)
-
-    def run_test(self, test, runner):
-        timeout = get_actor().cfg.timeout
-        result = self._run_test(test, runner)
-        return maybe_async(result, max_errors=0, timeout=timeout)
-        
-    def _run_test(self, test, runner):
+       
+    def run_test(self, test, runner, timeout):
         '''\
 Run a *test* function using the following algorithm
 
@@ -135,23 +133,23 @@ Run a *test* function using the following algorithm
                 raise StopIteration
             # _pre_setup function if available
             if hasattr(test,'_pre_setup'):
-                outcome = yield run_test_function(test, test._pre_setup)
+                outcome = yield run_test_function(test, test._pre_setup, timeout)
                 ok = ok and not self.add_failure(test, runner, outcome)
             # _setup function if available
             if ok:
-                outcome = yield run_test_function(test, test.setUp)
+                outcome = yield run_test_function(test, test.setUp, timeout)
                 ok = not self.add_failure(test, runner, outcome)
                 if ok:
                     # Here we perform the actual test
-                    outcome = yield run_test_function(test, testMethod)
+                    outcome = yield run_test_function(test, testMethod, timeout)
                     ok = not self.add_failure(test, runner, outcome)
                     if ok:
                         test.result = outcome
-                    outcome = yield run_test_function(test, test.tearDown)
+                    outcome = yield run_test_function(test, test.tearDown, timeout)
                     ok = ok and not self.add_failure(test, runner, outcome)
             # _post_teardown
             if hasattr(test,'_post_teardown'):
-                outcome = yield run_test_function(test,test._post_teardown)
+                outcome = yield run_test_function(test,test._post_teardown, timeout)
                 ok = ok and not self.add_failure(test, runner, outcome)
             # run the stopTest
             runner.stopTest(test)

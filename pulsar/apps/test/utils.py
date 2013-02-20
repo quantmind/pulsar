@@ -3,7 +3,7 @@ from inspect import isclass
 import threading
 
 import pulsar
-from pulsar import is_failure, async, get_actor, send
+from pulsar import is_failure, maybe_async, get_actor, send
 from pulsar.async import commands
 from pulsar.utils.pep import pickle
 
@@ -31,33 +31,32 @@ NOT_TEST_METHODS = ('setUp', 'tearDown', '_pre_setup', '_post_teardown',
 
 class TestCallable:
 
-    def __init__(self, test, method_name, istest):
+    def __init__(self, test, method_name, istest, timeout):
         self.test = test
         self.method_name = method_name
         self.istest = istest
+        self.timeout = timeout
         
     def __repr__(self):
         if isclass(self.test):
             return '%s.%s' % (self.test.__name__, self.method_name)
         else:
             return '%s.%s' % (self.test.__class__.__name__, self.method_name)
-    __str__ = __repr__        
+    __str__ = __repr__
     
-    def run_test(self, actor):
+    def __call__(self, actor=None):
+        actor = actor or get_actor()
+        return maybe_async(self._run(actor), max_errors=0, timeout=self.timeout)
+    
+    def _run(self, actor):
         test = self.test
         if self.istest:
             test = actor.app.runner.before_test_function_run(test)
         inject_async_assert(test)
         test_function = getattr(test, self.method_name)
-        return test_function()
-    
-    @async(max_errors=0)
-    def __call__(self, actor=None):
-        actor = actor or get_actor()
-        test = self.test
-        result = yield self.run_test(actor)
+        result = yield test_function()
         if self.istest:
-            yield actor.app.runner.after_test_function_run(test, result)
+            yield actor.app.runner.after_test_function_run(self.test, result)
         yield result
     
 
@@ -71,8 +70,8 @@ class TestFunction:
         return self.method_name
     __str__ = __repr__
     
-    def __call__(self, test):
-        callable = TestCallable(test, self.method_name, self.istest)
+    def __call__(self, test, timeout):
+        callable = TestCallable(test, self.method_name, self.istest, timeout)
         return self.run(callable)
         
     def run(self, callable):

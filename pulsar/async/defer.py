@@ -583,6 +583,10 @@ function when a generator is passed as argument.'''
         self._consume(None)
     
     def _consume(self, last_result):
+        if self.done():
+            # if the deferred has received a callback (a cancellation) stop
+            # consuming data
+            return
         if is_failure(last_result):
             if not self.errors:
                 self.errors = last_result
