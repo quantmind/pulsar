@@ -118,7 +118,7 @@ class Profile(test.TestPlugin):
             local.tmp = tempfile.mktemp(dir=self.profile_temp_path)
             local.prof.enable()
         
-    def after_test_function_run(self, test, local, result):
+    def after_test_function_run(self, test, local, result, async):
         if self.config.profile:
             local.prof.disable()
             local.prof.dump_stats(local.tmp)

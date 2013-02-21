@@ -5,7 +5,6 @@ import logging
 from inspect import istraceback
 from copy import deepcopy
 
-from pulsar import HaltServer
 from pulsar.utils.structures import AttributeDictionary
 
 from .utils import TestFunction
@@ -70,7 +69,12 @@ the _post_teardown function.'''
 behaviour in the process domain where the test run.'''
         return test
     
-    def after_test_function_run(self, test, local, result):
+    def async_test_result(self, test, async_result):
+        '''Called when a test function returns an asynchronous result not
+yet called'''
+        pass
+    
+    def after_test_function_run(self, test, local, result, async):
         '''Given a test-function instance return a, possibly, modified test
 instance. This function can be used by plugins to modify the behaviour of test
 cases. By default it returns *test*.'''
@@ -138,13 +142,22 @@ class TestStream(TestResultProxy):
         self.dots = verbosity == 1
 
     def handler(self, name):
-        return self._handlers.get(name,self.stream)
+        return self._handlers.get(name, elf.stream)
 
     def startTest(self, test):
         if self.showAll:
             v = self.getDescription(test) + ' ... '
             self.stream.write(v)
             self.stream.flush()
+            
+    def async_test_result(self, test, result):
+        if self.showAll:
+            setattr(test, '_waiting_for_result', True)
+            self.head(test, 'waiting for result')
+            
+    def after_test_function_run(self, test, local, result, async):
+        if async:
+            self.startTest(test)
 
     def head(self, test, v):
         #v = self.getDescription(test) + ' ... ' + v + '\n'
@@ -352,8 +365,6 @@ def testsafe(name, return_val=None):
                 c = getattr(p, name)(*args)
                 if c:
                     return return_val(c)
-            except HaltServer:
-                raise
             except Exception:
                 LOGGER.critical('Unhadled error in %s.%s' % (p, name),
                                 exc_info=True)
@@ -392,6 +403,7 @@ class TestRunner(TestResultProxy):
     addSkip = testsafe('addSkip')
     printErrors = testsafe('printErrors')
     printSummary = testsafe('printSummary')
+    async_test_result = testsafe('async_test_result')
 
     def loadTestsFromTestCase(self, cls):
         '''Load all *test* functions for the test class *cls*.'''
@@ -420,19 +432,20 @@ class TestRunner(TestResultProxy):
             test = p.before_test_function_run(test, local) or test
         return test
     
-    def after_test_function_run(self, test, result):
+    def after_test_function_run(self, test, result, async):
         '''Called before the test starts.'''
         for p in self.plugins:
             local = test.plugins.get(p.name)
             if local is not None:
-                p.after_test_function_run(test, local, result)
+                p.after_test_function_run(test, local, result, async)
         return result
             
-    def run_test_function(self, test, func, timeout):
+    def run_test_function(self, test, func, timeout=None):
         '''Run function *func* which belong to *test*.
     
 :parameter test: test instance or class
 :parameter func: test function belonging to *test*
+:parameter timeout: An optional timeout for asynchronous tests.
 :return: an asynchronous result
 '''
         if func is None:

@@ -1,18 +1,16 @@
 import sys
 from inspect import isclass
+from functools import partial
 import threading
 
 import pulsar
-from pulsar import is_failure, maybe_async, get_actor, send
+from pulsar import is_failure, maybe_async, is_async, get_actor, send
 from pulsar.async import commands
 from pulsar.utils.pep import pickle
 
 
-__all__ = ['create_test_arbiter',
-           'run_on_arbiter',
+__all__ = ['run_on_arbiter',
            'NOT_TEST_METHODS',
-           'halt_server',
-           'arbiter_test',
            'ActorTestMixin',
            'AsyncAssert']
 
@@ -44,9 +42,8 @@ class TestCallable:
             return '%s.%s' % (self.test.__class__.__name__, self.method_name)
     __str__ = __repr__
     
-    def __call__(self, actor=None):
-        actor = actor or get_actor()
-        return maybe_async(self._run(actor), max_errors=0, timeout=self.timeout)
+    def __call__(self, actor):
+        return maybe_async(self._run(actor))
     
     def _run(self, actor):
         test = self.test
@@ -54,10 +51,22 @@ class TestCallable:
             test = actor.app.runner.before_test_function_run(test)
         inject_async_assert(test)
         test_function = getattr(test, self.method_name)
-        result = yield test_function()
+        try:
+            result = test_function()
+        except Exception as e:
+            result = e
+        result = maybe_async(result, timeout=self.timeout)
+        if is_async(result):
+            if self.istest:
+                actor.app.runner.async_test_result(test, result)
+            return result.add_both(partial(self._end, actor, True))
+        else:
+            return self._end(actor, False, result) 
+        
+    def _end(self, actor, async, result):
         if self.istest:
-            yield actor.app.runner.after_test_function_run(self.test, result)
-        yield result
+            actor.app.runner.after_test_function_run(self.test, result, async)
+        return result
     
 
 class TestFunction:
@@ -75,7 +84,7 @@ class TestFunction:
         return self.run(callable)
         
     def run(self, callable):
-        return callable()
+        return callable(get_actor())
         
         
 class TestFunctionOnArbiter(TestFunction):
@@ -85,49 +94,14 @@ class TestFunctionOnArbiter(TestFunction):
         if actor.is_monitor():
             return callable(actor)
         else:
+            # send the callable to the actor monitor
             return actor.send(actor.monitor, 'run', callable)
         
-        
-def create_test_arbiter(test=True):
-    '''Create an instance of MockArbiter for testing'''
-    commands_set = set(commands.actor_commands)
-    commands_set.update(commands.arbiter_commands)
-    arbiter = pulsar.concurrency('monitor', MockArbiter, 1000,
-                                 None, 'arbiter', commands_set,
-                                 {'__test_arbiter__': test})
-    arbiter.start()
-    return arbiter
-    
-def halt_server(exception=None):
-    exception = exception or pulsar.HaltServer('testing')
-    raise exception
-    
 def run_on_arbiter(f):
     '''Decorator for running a test function in the arbiter domain. This
 can be useful to test Arbiter mechanics.'''
     f.testfunction = TestFunctionOnArbiter(f.__name__)
     return f
-    
-def arbiter_test(f):
-    '''Decorator for testing arbiter mechanics. It creates a mock arbiter
-running on a separate thread and run the tet function on the arbiter thread.'''
-    d = pulsar.Deferred()
-    def work(self):
-        yield f(self)
-        yield self.arbiter.stop()
-    @pulsar.async
-    def safe(self):
-        yield work(self)
-        d.callback(True)
-    def _(self):
-        self.arbiter = create_test_arbiter()
-        while not self.arbiter.started:
-            yield pulsar.NOT_DONE
-        self.arbiter.ioloop.add_callback(lambda: safe(self))
-        yield d
-    _.__name__ = f.__name__
-    _.__doc__ = f.__doc__
-    return _
     
     
 class AsyncAssertTest(object):
