@@ -170,7 +170,7 @@ and task scheduling.
         task = self._make_request(jobname, targs, tkwargs, **params)
         if task.needs_queuing():
             task._queued = True
-            self.queue.put(('request', task.serialize_for_queue()))
+            self.queue.put(task.serialize_for_queue())
         else:
             task._queued = False
             self.logger.debug('Task %s already requested, abort.', task)

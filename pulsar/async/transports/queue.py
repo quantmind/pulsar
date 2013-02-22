@@ -4,7 +4,7 @@ from multiprocessing.queues import Empty, Queue
 
 from pulsar.utils.system import EpollInterface
 from pulsar.utils.log import LocalMixin
-from pulsar.async.defer import async
+from pulsar.async.defer import async, log_failure
 
 from . import transport
 from . import servers
@@ -55,12 +55,16 @@ class Task(protocols.ProtocolConsumer):
         self._run_task(data)
     
     def finished(self, result):
+        log_failure(result)
         self.connection.connection_lost(None)
     
-    @async()
+    @async(max_errors=0)
     def _run_task(self, data):
-        request = yield self.request_factory(data)
-        result = yield request.start()
+        try:
+            request = yield self.request_factory(data)
+            result = yield request.start()
+        except Exception as e:
+            result = e
         yield self.finished(result)
     
     
