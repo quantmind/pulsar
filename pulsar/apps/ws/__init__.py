@@ -85,7 +85,7 @@ class GeneralWebSocket(wsgi.Router):
         request.response.headers.update(headers)
         upgrade = request.environ['pulsar.connection'].upgrade
         upgrade(partial(WebSocketServerProtocol, self.handle,
-                        request.environ, parser))
+                        request, parser))
         return request.response.start()
     
     def handle_handshake(self, environ):
@@ -203,28 +203,29 @@ back to the client::
             print("WebSocket closed")
             
 '''
-    def on_open(self, protocol):
+    def on_open(self, request):
         """Invoked when a new WebSocket is opened."""
         pass
 
-    def on_message(self, protocol, message):
+    def on_message(self, request, message):
         """Handle incoming messages on the WebSocket.
         This method must be overloaded.
         """
         raise NotImplementedError()
 
-    def on_close(self, protocol):
+    def on_close(self, request):
         """Invoked when the WebSocket is closed."""
         pass
         
         
 class WebSocketProtocol(pulsar.ProtocolConsumer):
     '''Websocket protocol for servers and clients.'''
+    request = None
     started = False
     closed = False
     
     def data_received(self, data):
-        environ = self.environ
+        request = self.request
         parser = self.parser
         frame = parser.decode(data)
         while frame:
@@ -232,12 +233,12 @@ class WebSocketProtocol(pulsar.ProtocolConsumer):
             if not self.started:
                 # call on_start (first message received)
                 self.started = True
-                self.write(self.handler.on_open(environ))
+                self.write(self.handler.on_open(request))
             if frame.is_close:
                 # Close the connection
                 self.close()
             elif frame.is_data:
-                self.write(self.handler.on_message(environ, frame.body))
+                self.write(self.handler.on_message(request, frame.body))
             frame = parser.decode()
     
     def write(self, frame):
@@ -267,12 +268,13 @@ class WebSocketServerProtocol(WebSocketProtocol):
     '''Created after a successful websocket handshake. Tjis is a
 :class:`pulsar.ProtocolConsumer` which manages the communication with the
 websocket client.'''
-    def __init__(self, handler, environ, parser, connection):
+    def __init__(self, handler, request, parser, connection):
         super(WebSocketServerProtocol, self).__init__(connection)
         connection.set_timeout(0)
         self.handler = handler
-        self.environ = environ
+        self.request = request
         self.parser = parser
+        request.cache['websocket'] = self
     
         
         

@@ -365,5 +365,5 @@ def is_closed(sock):    #pragma nocover
             if fno == sock.fileno():
                 # Either data is buffered (bad), or the connection is dropped.
                 return True
-    except:
+    except Exception:
         return True

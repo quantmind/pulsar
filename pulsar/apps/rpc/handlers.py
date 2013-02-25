@@ -251,41 +251,44 @@ class RpcMiddleware(object):
         request = self.request_class(environ, start_response)
         path = environ['PATH_INFO'] or '/'
         if path == self.path:
-            method = environ['REQUEST_METHOD'].lower()
-            if method not in self.handler.methods:
-                raise HttpException(status=405, msg='Method "%s" not allowed' %\
-                                    method)
-            data = environ['wsgi.input'].read()
-            hnd = self.handler
-            method, args, kwargs, id, version = hnd.get_method_and_args(data)
-            hnd.request(environ, method, args, kwargs, id, version)
-            rpc = environ['rpc']
-            status_code = 200
-            try:
-                result = rpc.process(request)
-            except Exception as e:
-                result = maybe_failure(e)
-            handler = rpc.handler
+            return self._call(environ, start_response)
+        
+    def _call(self, environ, start_response):
+        method = environ['REQUEST_METHOD'].lower()
+        if method not in self.handler.methods:
+            raise HttpException(status=405, msg='Method "%s" not allowed' %\
+                                method)
+        data = environ['wsgi.input'].read()
+        hnd = self.handler
+        method, args, kwargs, id, version = hnd.get_method_and_args(data)
+        hnd.request(environ, method, args, kwargs, id, version)
+        rpc = environ['rpc']
+        status_code = 200
+        try:
+            result = rpc.process(request)
+        except Exception as e:
+            result = maybe_failure(e)
+        handler = rpc.handler
+        result = maybe_async(result)
+        while is_async(result):
+            yield b''
             result = maybe_async(result)
-            while is_async(result):
-                yield b''
-                result = maybe_async(result)
-            try:
-                if is_failure(result):
-                    e = result.trace[1]
-                    status_code = getattr(e, 'status', 400)
-                    log_failure(result)
-                    result = handler.dumps(rpc.id, rpc.version, error=e)
-                else:
-                    result = handler.dumps(rpc.id, rpc.version, result=result)
-            except Exception as e:
-                LOGGER.error('Could not serialize', exc_info=True)
-                status_code = 500
+        try:
+            if is_failure(result):
+                e = result.trace[1]
+                status_code = getattr(e, 'status', 400)
+                log_failure(result)
                 result = handler.dumps(rpc.id, rpc.version, error=e)
-            response = request.response
-            response.status_code = status_code
-            response.content = result
-            response.content_type = handler.content_type
-            for c in response.start():
-                yield c
-                
+            else:
+                result = handler.dumps(rpc.id, rpc.version, result=result)
+        except Exception as e:
+            LOGGER.error('Could not serialize', exc_info=True)
+            status_code = 500
+            result = handler.dumps(rpc.id, rpc.version, error=e)
+        response = request.response
+        response.status_code = status_code
+        response.content = result
+        response.content_type = handler.content_type
+        for c in response.start():
+            yield c
+            

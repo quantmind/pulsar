@@ -35,7 +35,7 @@ def int2bytes(*ints):
 def get_version(version):
     try:
         version = int(version or DEFAULT_VERSION)
-    except:
+    except Exception:
         pass
     if version not in SUPPORTED_VERSIONS:
         raise ProtocolError('Version %s not supported.' % version)

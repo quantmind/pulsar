@@ -69,11 +69,6 @@ the _post_teardown function.'''
 behaviour in the process domain where the test run.'''
         return test
     
-    def async_test_result(self, test, async_result):
-        '''Called when a test function returns an asynchronous result not
-yet called'''
-        pass
-    
     def after_test_function_run(self, test, local, result, async):
         '''Given a test-function instance return a, possibly, modified test
 instance. This function can be used by plugins to modify the behaviour of test
@@ -103,7 +98,7 @@ cases. By default it returns *test*.'''
 
     def getDescription(self, test):
         doc_first_line = test.shortDescription()
-        teststr = '{0}.{1}'.format(test.tag,test)
+        teststr = '%s.%s' % (test.tag, test)
         if self.descriptions and doc_first_line:
             return '\n'.join((teststr, doc_first_line))
         else:
@@ -146,42 +141,34 @@ class TestStream(TestResultProxy):
 
     def startTest(self, test):
         if self.showAll:
-            v = self.getDescription(test) + ' ... '
-            self.stream.write(v)
-            self.stream.flush()
-            
-    def async_test_result(self, test, result):
-        if self.showAll:
-            setattr(test, '_waiting_for_result', True)
-            self.head(test, 'waiting for result')
+            self.head(test, 'Started')
             
     def after_test_function_run(self, test, local, result, async):
         if async:
             self.startTest(test)
 
     def head(self, test, v):
-        #v = self.getDescription(test) + ' ... ' + v + '\n'
-        v += '\n'
+        v = self.getDescription(test) + ' ... %s\n' % v
         self.stream.write(v)
         self.stream.flush()
 
     def addSuccess(self, test):
         if self.showAll:
-            self.head(test, 'ok')
+            self.head(test, 'OK')
         elif self.dots:
             self.stream.write('.')
             self.stream.flush()
 
     def addError(self, test, err):
         if self.showAll:
-            self.head(test,"ERROR")
+            self.head(test, 'ERROR')
         elif self.dots:
             self.stream.write('E')
             self.stream.flush()
 
     def addFailure(self, test, err):
         if self.showAll:
-            self.head(test,"FAIL")
+            self.head(test, "FAIL")
         elif self.dots:
             self.stream.write('F')
             self.stream.flush()
@@ -195,14 +182,14 @@ class TestStream(TestResultProxy):
 
     def addExpectedFailure(self, test, err):
         if self.showAll:
-            self.head(test,"expected failure")
+            self.head(test, "expected failure")
         elif self.dots:
             self.stream.write("x")
             self.stream.flush()
 
     def addUnexpectedSuccess(self, test):
         if self.showAll:
-            self.head(test,"unexpected success")
+            self.head(test, "unexpected success")
         elif self.dots:
             self.stream.write("u")
             self.stream.flush()
@@ -403,7 +390,6 @@ class TestRunner(TestResultProxy):
     addSkip = testsafe('addSkip')
     printErrors = testsafe('printErrors')
     printSummary = testsafe('printSummary')
-    async_test_result = testsafe('async_test_result')
 
     def loadTestsFromTestCase(self, cls):
         '''Load all *test* functions for the test class *cls*.'''

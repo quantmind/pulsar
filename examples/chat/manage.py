@@ -71,11 +71,11 @@ class Rpc(rpc.PulsarServerCommands):
     
 class Chat(ws.WS):
         
-    def on_open(self, protocol):
+    def on_open(self, request):
         # Add pulsar.connection environ extension to the set of active clients
-        get_clients().add(protocol)
+        get_clients().add(request.cache['websocket'])
         
-    def on_message(self, protocol, msg):
+    def on_message(self, request, msg):
         if msg:
             lines = []
             for l in msg.split('\n'):

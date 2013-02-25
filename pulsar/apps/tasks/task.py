@@ -7,7 +7,7 @@ import traceback
 from io import StringIO
 
 from pulsar.utils.pep import itervalues, iteritems
-from pulsar import maybe_async, maybe_failure, is_async, is_failure, send
+from pulsar import maybe_async, maybe_failure, get_actor, is_failure, send
 
 from .models import registry
 from .exceptions import *
@@ -34,8 +34,8 @@ and optional logging.
 
     the :class:`pulsar.apps.Worker` running the process.
 '''
-    def __init__(self, task, worker, job):
-        self.worker = worker
+    def __init__(self, task, job):
+        self.worker = get_actor()
         self.job = job
         self.task = task
 
@@ -90,31 +90,30 @@ class Task(object):
 Lower number higher precedence.'''
         return PRECEDENCE_MAPPING.get(self.status, UNKNOWN_STATE)
 
-    def start(self, worker):
-        '''Called by the :class:`pulsar.Worker` *worker* when the task
-start its execution. If no timeout has occured the task will switch to
-a ``STARTED`` :attr:`Task.status` and invoke the :meth:`on_start`
-callback.'''
+    def start(self):
+        '''Starts execution of this :class:`Task`. If no timeout has
+occurred the task will switch to a ``STARTED`` :attr:`Task.status` and
+invoke the :meth:`on_start` callback.'''
+        maybe_async(self.run(), max_errors=0)
+        
+    def run(self):
         job = registry[self.name]
         result = None
         try:
             if self.maybe_revoked():
-                yield self.on_timeout(worker)
+                yield self.on_timeout()
             else:
                 self.status = STARTED
                 self.time_start = datetime.now()
-                yield self.on_start(worker)
-                consumer = TaskConsumer(self, worker, job)
-                result = maybe_async(job(consumer, *self.args, **self.kwargs))
-                if is_async(result):
-                    yield result
-                    result = maybe_async(result)
+                yield self.on_start()
+                consumer = TaskConsumer(self, job)
+                result = yield job(consumer, *self.args, **self.kwargs)
         except Exception as e:
             result = maybe_failure(e)
         finally:
-            yield self.finish(worker, result)
+            yield self.finish(result)
 
-    def finish(self, worker, result):
+    def finish(self, result):
         '''Called when the task has finished and a ``result`` is ready.
 It sets the :attr:`time_end` attribute if not already set
 (in case the :class:`Task` was revoked) and
@@ -131,7 +130,7 @@ the :ref:`task callback <tasks-callbacks>` :meth:`on_finish`.'''
             elif self.status == STARTED:
                 self.status = SUCCESS
                 self.result = result
-        return self.on_finish(worker)
+        return self.on_finish()
 
     def to_queue(self, schedulter=None):
         '''The task has been received by the scheduler. If its status
@@ -208,16 +207,16 @@ has been created.
 has been received by the scheduler.'''
         pass
 
-    def on_start(self, worker=None):
+    def on_start(self):
         '''A :ref:`task callback <tasks-callbacks>` when the task starts
 its execution'''
         pass
 
-    def on_timeout(self, worker=None):
+    def on_timeout(self):
         '''A :ref:`task callback <tasks-callbacks>` when the task is expired'''
         pass
 
-    def on_finish(self, worker=None):
+    def on_finish(self):
         '''A :ref:`task callback <tasks-callbacks>` when the task finish
 its execution'''
         pass
@@ -288,17 +287,14 @@ class TaskInMemory(Task):
         # Called by the scheduler
         self.save_task(scheduler, self)
 
-    def on_start(self, worker=None):
-        if worker:
-            return worker.send(worker.monitor, 'save_task', self)
+    def on_start(self):
+        return send('monitor', 'save_task', self)
 
-    def on_timeout(self, worker=None):
-        if worker:
-            return worker.send(worker.monitor, 'save_task', self)
+    def on_timeout(self):
+        return send('monitor', 'save_task', self)
 
-    def on_finish(self, worker=None):
-        if worker:
-            return worker.send(worker.monitor, 'save_task', self)
+    def on_finish(self):
+        return send('monitor', 'save_task', self)
 
     @classmethod
     def task_container(cls, scheduler):

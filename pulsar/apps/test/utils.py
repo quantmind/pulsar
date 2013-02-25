@@ -57,8 +57,6 @@ class TestCallable:
             result = e
         result = maybe_async(result, timeout=self.timeout)
         if is_async(result):
-            if self.istest:
-                actor.app.runner.async_test_result(test, result)
             return result.add_both(partial(self._end, actor, True))
         else:
             return self._end(actor, False, result) 
