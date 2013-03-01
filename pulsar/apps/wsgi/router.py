@@ -8,8 +8,22 @@ from .wsgi import WsgiRequest
 
 __all__ = ['Router', 'route']
 
-           
-class Router(object):
+
+class RouterType(type):
+    
+    def __new__(cls, name, bases, attrs):
+        routes = []
+        for name, callable in attrs.items():
+            rule_method = getattr(callable, 'rule_method', None)
+            if isinstance(rule_method, tuple):
+                rule, method = rule_method
+                router = Router(rule, **{method: callable})
+                routes.append(router)
+        attrs['routes'] = routes
+        return super(RouterType, cls).__new__(cls, name, bases, attrs)
+    
+    
+class Router(RouterType('RouterBase', (object,), {})):
     '''A WSGI application which handle multiple routes.'''
     default_content_type=None
     routes = []
@@ -44,14 +58,12 @@ class Router(object):
             return
         if '__remaining__' in match:
             for handler in self.routes:
-                match = handler.route.match(path)
-                if match is None:
+                view_args = handler.resolve(path, urlargs)
+                if view_args is None:
                     continue
-                remaining_path = match.pop('__remaining__','')
-                urlargs.update(match)
-                view_args = handler.resolve(remaining_path, urlargs)
-                if view_args:
-                    return view_args
+                #remaining_path = match.pop('__remaining__','')
+                #urlargs.update(match)
+                return view_args
         else:
             return self, match
         
@@ -61,29 +73,25 @@ class Router(object):
 
 class route(object):
     
-    def __init__(self, route=None, method=None):
+    def __init__(self, rule=None, method=None):
         '''Create a new Router'''
-        self.router = route
+        self.rule = rule
         self.method = method
         
     def __call__(self, func):
         '''func could be an unbound method of a Router class or a standard
 python function.'''
         bits = func.__name__.split('_')
-        method = self.method
+        method = None
         if len(bits) > 1:
             m = bits[0].upper()
             if m in ENCODE_URL_METHODS or method in ENCODE_BODY_METHODS:
                 method = m
                 bits = bits[1:]
-        method = (method or 'get').lower()
-        route = self.router or '_'.join(bits)
-        if ismethod(func):
-            cls = func.__objclass__
-            router = self._get_router(cls, route)
-        else:
-            router = Router(route)
-        router.add_method(method, func)
+        method = (self.method or method or 'get').lower()
+        rule = self.rule or '_'.join(bits)
+        func.rule_method = (rule, method)
+        return func
             
     def _get_router(self, cls, route):
         for router in cls.routers:
