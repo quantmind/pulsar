@@ -33,7 +33,6 @@ def command_in_context(command, caller, actor, args, kwargs):
     return cmnd(request, args, kwargs)
     
     
-    
 class MonitorMailbox(object):
     '''A :class:`Mailbox` for a :class:`Monitor`. This is a proxy for the
 arbiter mailbox.'''
@@ -60,7 +59,7 @@ arbiter mailbox.'''
     
 
 class Message(Request):
-    
+    '''A message which travels from actor to actor.'''
     def __init__(self, data, future=None, address=None, timeout=None):
         super(Message, self).__init__(address, timeout)
         self.data = data

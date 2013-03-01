@@ -10,7 +10,7 @@ from pulsar import Http404, PermissionDenied
 from .router import Router
 from .content import Html
 
-__all__ = ['MediaRouter', 'FileRouter']
+__all__ = ['MediaRouter', 'FileRouter', 'MediaMixin']
 
 
 class MediaMixin(Router):
@@ -58,8 +58,29 @@ class MediaMixin(Router):
             return True
         return False
     
+    def directory_index(self, request, fullpath):
+        names = [Html('a', '../', href='../', cn='folder')]
+        files = []
+        for f in sorted(os.listdir(fullpath)):
+            if not f.startswith('.'):
+                if os.path.isdir(os.path.join(fullpath, f)):
+                    names.append(Html('a', f, href=f+'/', cn='folder'))
+                else:
+                    files.append(Html('a', f, href=f))
+        names.extend(files)
+        return self.static_index(request, names)
     
-
+    def html_title(self, request):
+        return 'Index of %s' % request.path
+    
+    def static_index(self, request, links):
+        title = Html('h2', self.html_title(request))
+        list = Html('ul', *[Html('li', a) for a in links])
+        body = Html('div', title, list)
+        doc = request.html_document(title=title, body=body)
+        return doc.http_response(request)
+    
+    
 class MediaRouter(MediaMixin):
     '''A :class:`Router` for serving static media files from a given 
 directory.
@@ -98,33 +119,11 @@ directory.
         else:
             raise Http404()
 
-    def directory_index(self, request, fullpath):
-        names = [Html('a', '../', href='../', cn='folder')]
-        files = []
-        for f in sorted(os.listdir(fullpath)):
-            if not f.startswith('.'):
-                if os.path.isdir(os.path.join(fullpath, f)):
-                    names.append(Html('a', f, href=f+'/', cn='folder'))
-                else:
-                    files.append(Html('a', f, href=f))
-        names.extend(files)
-        return self.static_index(request, names)
-    
-    def html_title(self, request):
-        return 'Index of %s' % request.path
-    
-    def static_index(self, request, links):
-        title = Html('h2', self.html_title(request))
-        list = Html('ul', *[Html('li', a) for a in links])
-        body = Html('div', title, list)
-        doc = request.html_document(title=title, body=body)
-        return doc.http_response(request)
-
 
 class FileRouter(MediaMixin):
     
     def __init__(self, route, file_path):
-        super(Favicon, self).__init__(route)
+        super(FileRouter, self).__init__(route)
         self._file_path = file_path
         
     def get(self, request):

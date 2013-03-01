@@ -26,10 +26,12 @@ class RouterType(type):
 class Router(RouterType('RouterBase', (object,), {})):
     '''A WSGI application which handle multiple routes.'''
     default_content_type=None
+    request_class = WsgiRequest
     routes = []
     def __init__(self, rule, *routes, **handlers):
         self.route = Route(rule)
         self.routes = list(self.routes)
+        self.routes.extend(routes)
         for handle, callable in handlers.items():
             if not hasattr(self, handle) and hasattr(callable, '__call__'):
                 setattr(self, handle, callable)
@@ -43,7 +45,7 @@ class Router(RouterType('RouterBase', (object,), {})):
         router_args = self.resolve(path)
         if router_args:
             router, args = router_args
-            request = WsgiRequest(environ, start_response, args)
+            request = self.request_class(environ, start_response, args)
             method = request.method
             callable = getattr(router, method, None)
             if callable is None:
