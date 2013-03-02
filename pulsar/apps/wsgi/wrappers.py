@@ -1,4 +1,23 @@
-'''WSGI utilities and wrappers.'''
+'''WSGI utilities and wrappers.
+
+
+Wsgi Request
+=====================
+
+.. autoclass:: WsgiRequest
+   :members:
+   :member-order: bysource
+   
+   
+Wsgi Response
+=====================
+
+.. autoclass:: WsgiResponse
+   :members:
+   :member-order: bysource
+   
+.. _WSGI: http://www.wsgi.org
+'''
 import os
 import sys
 import json
@@ -12,6 +31,7 @@ from email.utils import formatdate
 import pulsar
 from pulsar import is_failure, HttpException, maybe_async, is_async
 from pulsar.utils.multipart import parse_form_data
+from pulsar.utils.structures import MultiValueDict
 from pulsar.utils.httpurl import Headers, SimpleCookie, responses,\
                                  has_empty_content, string_type, ispy3k,\
                                  to_bytes, REDIRECT_CODES, iteritems,\
@@ -22,8 +42,7 @@ from .route import Route
 from .content import HtmlDocument
 
 
-__all__ = ['WsgiHandler',
-           'WsgiResponse',
+__all__ = ['WsgiResponse',
            'WsgiRequest',
            'handle_wsgi_error',
            'wsgi_error_msg',
@@ -230,7 +249,7 @@ This is usually `True` if a generator is passed to the response object."""
 
     def __iter__(self):
         if self._started:
-            raise RuntimeError('WsgiResponse can be iterated only once')
+            raise RuntimeError('WsgiResponse can be iterated once only')
         self._started = True
         if self.is_streamed:
             return wsgi_iterator(self.content, self.encoding or 'utf-8')
@@ -272,6 +291,15 @@ This is usually `True` if a generator is passed to the response object."""
         return list(headers)
 
 
+def wsgi_cache_property(f):
+    name = f.__name__
+    def _(self):
+        if name not in self.cache:
+            self.cache[name] = f(self)
+        return self.cache[name]
+    return property(_, doc=f.__doc__)
+    
+    
 class WsgiRequest(object):
     '''A thin wrapper around a WSGI_ environ. Instances of this class
 only have the :attr:`environ` attribute as their private data. Every
@@ -287,10 +315,16 @@ other attribute is stored in the :attr:`environ` itself at the
                                                   start_response=start_response)
         self.cache['urlargs'] = urlargs
     
+    def __repr__(self):
+        return self.path
+    
+    def __str__(self):
+        return self.__repr__()
+    
     @property
     def cache(self):
         '''dictionary of pulsar-specific data stored in the :attr:`environ`
-at the wsgi-extension ket ``pulsar.cache``.'''
+at the wsgi-extension key ``pulsar.cache``.'''
         return self.environ['pulsar.cache']
     
     @property
@@ -321,75 +355,58 @@ at the wsgi-extension ket ``pulsar.cache``.'''
 
     @property
     def method(self):
-        return self.environ['REQUEST_METHOD'].lower()      
+        '''The request method (uppercase).'''
+        return self.environ['REQUEST_METHOD']      
 
-    def body_data(self):
-        cache = self.cache
-        if 'body_data' not in cache:
-            if self.method not in ENCODE_URL_METHODS:
-                cache['body_data'] = {}, None
-            else:
-                cache['body_data'] = parse_form_data(environ)
-        return cache['body_data']
-     
-    ############################################################################
-    #    Html tools
+    @wsgi_cache_property
+    def encoding(self):
+        return 'utf-8'
+    
+    @wsgi_cache_property
+    def data_and_files(self):
+        if self.method not in ENCODE_URL_METHODS:
+            return parse_form_data(environ)
+        else:
+            return MultiValueDict(), None
+            
     @property
+    def body_data(self):
+        '''A :class:`pulsar.utils.structures.MultiValueDict` containing
+data from the request body.'''
+        data, files = self.data_and_files
+        return data
+    
+    @wsgi_cache_property
+    def url_data(self):
+        '''A :class:`pulsar.utils.structures.MultiValueDict` containing
+data from the `QUERY_STRING` in :attr:`environ`.'''
+        return query_dict(self.environ.get('QUERY_STRING', ''),
+                          encoding=self.encoding)
+    
+    @wsgi_cache_property
     def html_document(self):
-        cache = self.cache
-        if 'html_document' not in cache:
-            cache['html_document'] = HtmlDocument()
-        return cache['html_document']
+        return HtmlDocument()
+    
+    def get(self, key, default=None):
+        '''Shortcut to the :attr:`environ` get method.'''
+        return self.environ.get(key, default)
     
     
-class WsgiHandler(object):
-    '''An handler for application conforming to python WSGI_.
+################################################################################
+##    Utilities
+def _gen_query(query_string, encoding):
+    # keep_blank_values=True
+    for key, value in parse_qsl((query_string or ''), True):
+        yield to_string(key, encoding, errors='replace'),\
+              to_string(value, encoding, errors='replace')
 
-.. attribute:: middleware
-
-    List of callable WSGI middleware callable which accept
-    ``environ`` and ``start_response`` as arguments.
-    The order matter, since the response returned by the callable
-    is the non ``None`` value returned by a middleware.
-
-.. attribute:: response_middleware
-
-    List of functions of the form::
-
-        def ..(environ, start_response, response):
-            ...
-
-    where ``response`` is the first not ``None`` value returned by
-    the middleware.
-
-'''
-    def __init__(self, middleware=None, response_middleware=None, **kwargs):
-        if middleware:
-            middleware = list(middleware)
-        self.middleware = middleware or []
-        self.response_middleware = response_middleware or []
-
-    def __call__(self, environ, start_response):
-        '''The WSGI callable'''
-        response = None
-        for middleware in self.middleware:
-            response = middleware(environ, start_response)
-            if response is not None:
-                break
-        if response is None:
-            raise pulsar.Http404(environ.get('PATH_INFO','/'))
-        if hasattr(response, 'middleware'):
-            response.middleware.extend(self.response_middleware)
-        return response
-
-    def get(self, route='/'):
-        '''Fetch a middleware with the given *route*. If it is not found
- return ``None``.'''
-        for m in self.middleware:
-            if getattr(m,'route',None) == route:
-                return m
-
-
+def query_dict(query_string, encoding='utf-8'):
+    if query_string:
+        return MultiValueDict(_gen_query(query_string, encoding))
+    else:
+        return MultiValueDict()
+    
+    
 error_messages = {
     500: 'An exception has occurred while evaluating your request.',
     404: 'Cannot find what you are looking for.'

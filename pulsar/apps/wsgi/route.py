@@ -1,27 +1,49 @@
-'''Routing classes for managing urls.
-Several classes were originally taken in november 2011
-from the routing module in werkzeug_.
+'''Routing classes for managing urls. Originally from the routing
+module in werkzeug_.
 
 Original License
 
-:copyright: (c) 2011 by the Werkzeug Team, see AUTHORS for more details.
-:license: BSD
+copyright (c) 2011 by the Werkzeug Team. License BSD
+
+.. _werkzeug: https://github.com/mitsuhiko/werkzeug
+
+A :class:`Route` is a class for relative url paths::
+
+    Route('bla')
+    Route('bla/foo')
+
+Integers::
+
+    # accept any integer
+    Route('<int:size>')
+    # accept an integer between 1 and 200 only
+    Route('<int(min=1,max=200):size>')
+
+Route decorator
+==================
+
+.. autoclass:: route
+   :members:
+   :member-order: bysource
+   
+   
+Route
+================
 
 .. autoclass:: Route
    :members:
    :member-order: bysource
    
-   
-.. _werkzeug: https://github.com/mitsuhiko/werkzeug
 '''
 import re
 
 from pulsar import Http404, HttpException
 from pulsar.utils.httpurl import iteritems, iri_to_uri, remove_double_slash
+from pulsar.utils.httpurl import ENCODE_URL_METHODS, ENCODE_BODY_METHODS
 from pulsar.utils.pep import to_string
 
 
-__all__ = ['Route']
+__all__ = ['route', 'Route']
 
 
 _rule_re = re.compile(r'''
@@ -81,6 +103,41 @@ def parse_rule(rule):
     return converter, data['args'] or None, data['variable']
 
 
+class route(object):
+    '''Decorator for creating a (:class:`Route`, HTTP method, parameters) tuple
+and assign it to the `rule_method` attribute of the functon which
+is decorated. Check the :ref:`HttpBin example <httpbin-example>`
+for a sample usage.
+
+:param rule: Optional string for the relative url served by the method which
+    is decorated. If not supplied, the method name is used.
+:param method: Optional HTTP method name. Default is `get`.
+:param rule: Optional dictionary of defaults parameter.
+    Used when creating the :class:`Route`.
+'''
+    def __init__(self, rule=None, method=None, defaults=None, **parameters):
+        '''Create a new Router'''
+        self.rule = rule
+        self.defaults = defaults
+        self.method = method
+        self.parameters = parameters
+        
+    def __call__(self, func):
+        '''func could be an unbound method of a Router class or a standard
+python function.'''
+        bits = func.__name__.split('_')
+        method = None
+        if len(bits) > 1:
+            m = bits[0].upper()
+            if m in ENCODE_URL_METHODS or method in ENCODE_BODY_METHODS:
+                method = m
+                bits = bits[1:]
+        method = (self.method or method or 'get').lower()
+        rule = Route(self.rule or '_'.join(bits), defaults=self.defaults)
+        func.rule_method = (rule, method, self.parameters)
+        return func
+        
+    
 class Route(object):
     '''A Route is a class with a relative :attr:`path`.
     
@@ -195,13 +252,13 @@ class Route(object):
                 val = self._converters[val].to_url(values[val])
             yield val
             
-    def url(self, **values):
-        '''Build a *url* from key valued pairs of variable values.'''
+    def url(self, **urlargs):
+        '''Build a *url* from *urlargs* dictionary.'''
         if self.defaults:
             d = self.defaults.copy()
-            d.update(values)
-            values = d
-        url = '/'.join(self._url_generator(values))
+            d.update(urlargs)
+            urlargs = d
+        url = '/'.join(self._url_generator(urlargs))
         if not url:
             return '/'
         else:

@@ -1,4 +1,27 @@
-'''Utility classes for Asynchronous Http body strings.'''
+'''Utility classes for Asynchronous Http body strings.
+
+Asynchronous String
+=====================
+
+.. autoclass:: AsyncString
+   :members:
+   :member-order: bysource
+   
+Asynchronous Html
+=====================
+
+.. autoclass:: Html
+   :members:
+   :member-order: bysource
+   
+StreamRenderer
+==================
+
+.. autoclass:: StreamRenderer
+   :members:
+   :member-order: bysource
+   
+'''
 from collections import Mapping
 from functools import partial
 
@@ -12,7 +35,8 @@ __all__ = ['AsyncString', 'Html', 'Json']
 
 
 class StreamRenderer(Deferred):
-
+    '''A specialised :class:`pulsar.Deferred` returned by the
+:meth:`AsyncString.content` method.'''
     def __init__(self, stream, renderer=None, handle_value=None, **params):
         super(StreamRenderer, self).__init__()
         handle_value = handle_value or self._handle_value
@@ -50,9 +74,12 @@ Users should always call the content method before.'''
     
 
 class AsyncString(object):
-    '''An asynchronous concatenating string for WSGI servers.'''
+    '''Class for asynchronous strings which can be used with
+pulsar WSGI servers.'''
     content_type = None
+    '''Content type for this :class:`AsyncString`'''
     encoding = None
+    '''Charset encoding for this :class:`AsyncString`'''
     
     def __init__(self, *children):
         self._streamed = False
@@ -68,10 +95,14 @@ class AsyncString(object):
         return self.__repr__()
     
     def content(self, request=None):
-        '''Return a string or an asynchronous instance.'''
+        '''Return the :class:`StreamRenderer` for this instance.
+This method can be called once only.'''
         return StreamRenderer(self.stream(request))
     
     def stream(self, request):
+        '''Return an iterable over strings, that means unicode/str
+for python 2, and str for python 3. This method can be called once only
+otherwise a RuntimeError occurs.'''
         if self._streamed:
             raise RuntimeError('%s already streamed' % self)
         self._streamed = True
@@ -106,24 +137,30 @@ class AsyncString(object):
             body = maybe_async(body)
         if is_failure(body):
             body.raise_all()
+        response.content_type = self.content_type
         response.content = body
-        response.content_type = body
         for data in response.start():
             yield data
     
     def render(self, request=None):
-        '''A shortcut function for syncronously rendering a Content.
+        '''A shortcut function for synchronously rendering a Content.
 This is useful during testing.'''
         value = maybe_async(self.content(request))
         if is_failure(value):
             value.raise_all()
         elif is_async(value):
-            raise 'Could not render. Asynchronous value'
+            raise ValueError('Could not render. Asynchronous value')
         else:
             return value
     
     def _stream(self, request):
-        raise NotImplementedError
+        '''This method can be re-implemented by subclasses'''
+        for child in self._children:
+            if isinstance(child, AsyncString):
+                for bit in child.stream(request):
+                    yield bit
+            else:
+                yield child
             
 
 class Json(AsyncString):
@@ -135,7 +172,14 @@ class Json(AsyncString):
         
     
 class Html(AsyncString):
+    '''An :class:`AsyncString` for html elements.
+The :attr:`AsyncString.content_type` attribute is set to `text/html`.
     
+.. attribute:: tag
+    
+    The tag for this HTML element
+    
+'''
     def __init__(self, tag, *children, **params):
         self._tag = tag
         self._classes = set()
@@ -308,6 +352,8 @@ class Css(AsyncString, Media):
         
     def append(self, value):
         if value:
+            if isinstance(value, str):
+                value = {'all': [value]}
             for media, values in value.items():
                 m = self._children.get(media, [])
                 for value in values:
@@ -343,7 +389,16 @@ class Js(AsyncString, Media):
         
         
 class Head(Html):
+    '''Html head tag.
+    
+.. attribute:: title
 
+    Text in the title tag
+    
+.. attribute:: meta
+
+    Container of meta tags
+'''
     def __init__(self, media_path=None, title=None, js=None,
                  css=None, meta=None):
         super(Head, self).__init__('head')
@@ -406,7 +461,17 @@ request object and a dictionary for rendering children with a key.
                 
                 
 class HtmlDocument(Html):
+    '''HTML5 asynchronous document.
     
+.. attribute:: head
+
+    The Head part of this :class:`HtmlDocument`
+
+.. attribute:: body
+
+    The Body part of this :class:`HtmlDocument`
+    
+'''
     def __init__(self, title=None, media_path='/media/', **params):
         super(HtmlDocument, self).__init__(None, **params)
         self.head = Head(title=title, media_path=media_path)

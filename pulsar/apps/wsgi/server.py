@@ -13,7 +13,7 @@ from pulsar.utils.httpurl import Headers, unquote, has_empty_content,\
                                     Headers, REDIRECT_CODES
 from pulsar.utils import events
 
-from .wsgi import WsgiResponse, handle_wsgi_error, LOGGER
+from .wrappers import WsgiResponse, handle_wsgi_error, LOGGER
 
 
 __all__ = ['wsgi_environ', 'HttpServerResponse', 'MAX_CHUNK_SIZE']

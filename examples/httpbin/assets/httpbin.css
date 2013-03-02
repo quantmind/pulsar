@@ -1,0 +1,27 @@
+html, body {
+    margin: 0;
+    padding: 0;
+}
+body {
+    color: #222;
+    background: #F0F9FF;
+    font-family: Optima,Segoe,"Segoe UI",Candara,Calibri,Arial,sans-serif;
+    font-size: 17px;
+    padding: 10px;
+    line-height: 24px;
+}
+h1 a, h1 a:visited {
+    text-decoration: none;
+    color: #003366;
+}
+a, a:visited {
+    color: #008AE6;
+}
+h1 a:hover, a:hover {
+    color: #AD5700;
+}
+ul {
+    list-style: disc outside none;
+    margin: 0 0 9px 25px;
+    padding: 0;
+}
