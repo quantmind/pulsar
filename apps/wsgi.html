@@ -6,13 +6,13 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>WSGI Servers &mdash; pulsar v0.5b5 documentation</title>
+    <title>WSGI Servers &mdash; pulsar v0.5a6 documentation</title>
     <link rel="stylesheet" href="../static/celery.css" type="text/css" />
     <link rel="stylesheet" href="../static/pygments.css" type="text/css" />
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../',
-        VERSION:     '0.5b5',
+        VERSION:     '0.5a6',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -21,7 +21,7 @@
     <script type="text/javascript" src="../static/jquery.js"></script>
     <script type="text/javascript" src="../static/underscore.js"></script>
     <script type="text/javascript" src="../static/doctools.js"></script>
-    <link rel="top" title="pulsar v0.5b5 documentation" href="../index.html" />
+    <link rel="top" title="pulsar v0.5a6 documentation" href="../index.html" />
     <link rel="next" title="JSON-RPC" href="rpc.html" />
     <link rel="prev" title="Socket Servers" href="socket.html" /> 
   </head>
@@ -41,7 +41,7 @@
         <li class="right" >
           <a href="socket.html" title="Socket Servers"
              accesskey="P">previous</a> |</li>
-        <li><a href="../index.html">pulsar v0.5b5 documentation</a> &raquo;</li> 
+        <li><a href="../index.html">pulsar v0.5a6 documentation</a> &raquo;</li> 
       </ul>
     </div>  
 
@@ -265,67 +265,19 @@ return <tt class="xref docutils literal"><span class="pre">None</span></tt>.</p>
 </div>
 <div class="section" id="id2">
 <h3>Router<a class="headerlink" href="#id2" title="Permalink to this headline">¶</a></h3>
-<dl class="class">
+<dl class="attribute">
 <dt id="pulsar.apps.wsgi.Router">
-<em class="property">class </em><tt class="descclassname">pulsar.apps.wsgi.</tt><tt class="descname">Router</tt><big>(</big><em>rule</em>, <em>*routes</em>, <em>**handlers</em><big>)</big><a class="headerlink" href="#pulsar.apps.wsgi.Router" title="Permalink to this definition">¶</a></dt>
-<dd><p>A WSGI application which handle multiple routes.</p>
+<tt class="descclassname">pulsar.apps.wsgi.</tt><tt class="descname">Router</tt><a class="headerlink" href="#pulsar.apps.wsgi.Router" title="Permalink to this definition">¶</a></dt>
+<dd><p>alias of <tt class="xref py py-class docutils literal"><span class="pre">add_method</span></tt></p>
 </dd></dl>
 
 </div>
 <div class="section" id="mediarouter">
 <h3>MediaRouter<a class="headerlink" href="#mediarouter" title="Permalink to this headline">¶</a></h3>
-<dl class="class">
+<dl class="attribute">
 <dt id="pulsar.apps.wsgi.MediaRouter">
-<em class="property">class </em><tt class="descclassname">pulsar.apps.wsgi.</tt><tt class="descname">MediaRouter</tt><big>(</big><em>rute</em>, <em>path</em>, <em>show_indexes=True</em><big>)</big><a class="headerlink" href="#pulsar.apps.wsgi.MediaRouter" title="Permalink to this definition">¶</a></dt>
-<dd><p>A <a class="reference internal" href="#pulsar.apps.wsgi.Router" title="pulsar.apps.wsgi.Router"><tt class="xref py py-class docutils literal"><span class="pre">Router</span></tt></a> for serving static media files from a given 
-directory.</p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
-<li><strong>rute</strong> &#8211; The top-level url for this router. For example <tt class="docutils literal"><span class="pre">/media</span></tt>
-will serve the <tt class="docutils literal"><span class="pre">/media/&lt;path:path&gt;</span></tt> <tt class="xref py py-class docutils literal"><span class="pre">Route</span></tt>.</li>
-<li><strong>path</strong> &#8211; Check the <a class="reference internal" href="#pulsar.apps.wsgi.MediaRouter.path" title="pulsar.apps.wsgi.MediaRouter.path"><tt class="xref py py-attr docutils literal"><span class="pre">path</span></tt></a> attribute.</li>
-<li><strong>show_indexes</strong> &#8211; Check the <a class="reference internal" href="#pulsar.apps.wsgi.MediaRouter.show_indexes" title="pulsar.apps.wsgi.MediaRouter.show_indexes"><tt class="xref py py-attr docutils literal"><span class="pre">show_indexes</span></tt></a> attribute.</li>
-</ul>
-</td>
-</tr>
-</tbody>
-</table>
-<dl class="attribute">
-<dt id="pulsar.apps.wsgi.MediaRouter.path">
-<tt class="descname">path</tt><a class="headerlink" href="#pulsar.apps.wsgi.MediaRouter.path" title="Permalink to this definition">¶</a></dt>
-<dd><p>The file-system path of the media files to serve.</p>
-</dd></dl>
-
-<dl class="attribute">
-<dt id="pulsar.apps.wsgi.MediaRouter.show_indexes">
-<tt class="descname">show_indexes</tt><a class="headerlink" href="#pulsar.apps.wsgi.MediaRouter.show_indexes" title="Permalink to this definition">¶</a></dt>
-<dd><p>If <tt class="xref docutils literal"><span class="pre">True</span></tt> (default), the router will serve media file directories as
-well as media files.</p>
-</dd></dl>
-
-<dl class="method">
-<dt id="pulsar.apps.wsgi.MediaRouter.was_modified_since">
-<tt class="descname">was_modified_since</tt><big>(</big><em>header=None</em>, <em>mtime=0</em>, <em>size=0</em><big>)</big><a class="headerlink" href="#pulsar.apps.wsgi.MediaRouter.was_modified_since" title="Permalink to this definition">¶</a></dt>
-<dd><p>Check if an item was modified since the user last downloaded it</p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
-<li><strong>header</strong> &#8211; the value of the <tt class="docutils literal"><span class="pre">If-Modified-Since</span></tt> header. If this is None,
-simply return <tt class="xref docutils literal"><span class="pre">True</span></tt>.</li>
-<li><strong>mtime</strong> &#8211; the modification time of the item in question.</li>
-<li><strong>size</strong> &#8211; the size of the item.</li>
-</ul>
-</td>
-</tr>
-</tbody>
-</table>
-</dd></dl>
-
+<tt class="descclassname">pulsar.apps.wsgi.</tt><tt class="descname">MediaRouter</tt><a class="headerlink" href="#pulsar.apps.wsgi.MediaRouter" title="Permalink to this definition">¶</a></dt>
+<dd><p>alias of <tt class="xref py py-class docutils literal"><span class="pre">get</span></tt></p>
 </dd></dl>
 
 </div>
@@ -529,7 +481,7 @@ the root route and <tt class="xref docutils literal"><span class="pre">None</spa
         <li class="right" >
           <a href="socket.html" title="Socket Servers"
              >previous</a> |</li>
-        <li><a href="../index.html">pulsar v0.5b5 documentation</a> &raquo;</li> 
+        <li><a href="../index.html">pulsar v0.5a6 documentation</a> &raquo;</li> 
       </ul>
     </div>
 

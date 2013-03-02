@@ -6,13 +6,13 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>Distributed Task Queues &mdash; pulsar v0.5b5 documentation</title>
+    <title>Distributed Task Queues &mdash; pulsar v0.5b6 documentation</title>
     <link rel="stylesheet" href="../static/celery.css" type="text/css" />
     <link rel="stylesheet" href="../static/pygments.css" type="text/css" />
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../',
-        VERSION:     '0.5b5',
+        VERSION:     '0.5b6',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -21,7 +21,7 @@
     <script type="text/javascript" src="../static/jquery.js"></script>
     <script type="text/javascript" src="../static/underscore.js"></script>
     <script type="text/javascript" src="../static/doctools.js"></script>
-    <link rel="top" title="pulsar v0.5b5 documentation" href="../index.html" />
+    <link rel="top" title="pulsar v0.5b6 documentation" href="../index.html" />
     <link rel="next" title="WebSockets" href="websockets.html" />
     <link rel="prev" title="JSON-RPC" href="rpc.html" /> 
   </head>
@@ -41,7 +41,7 @@
         <li class="right" >
           <a href="rpc.html" title="JSON-RPC"
              accesskey="P">previous</a> |</li>
-        <li><a href="../index.html">pulsar v0.5b5 documentation</a> &raquo;</li> 
+        <li><a href="../index.html">pulsar v0.5b6 documentation</a> &raquo;</li> 
       </ul>
     </div>  
 
@@ -529,16 +529,15 @@ Lower number higher precedence.</p>
 
 <dl class="method">
 <dt id="pulsar.apps.tasks.Task.start">
-<tt class="descname">start</tt><big>(</big><em>worker</em><big>)</big><a class="headerlink" href="#pulsar.apps.tasks.Task.start" title="Permalink to this definition">¶</a></dt>
-<dd><p>Called by the <tt class="xref py py-class docutils literal"><span class="pre">pulsar.Worker</span></tt> <em>worker</em> when the task
-start its execution. If no timeout has occured the task will switch to
-a <tt class="docutils literal"><span class="pre">STARTED</span></tt> <a class="reference internal" href="#pulsar.apps.tasks.Task.status" title="pulsar.apps.tasks.Task.status"><tt class="xref py py-attr docutils literal"><span class="pre">Task.status</span></tt></a> and invoke the <a class="reference internal" href="#pulsar.apps.tasks.Task.on_start" title="pulsar.apps.tasks.Task.on_start"><tt class="xref py py-meth docutils literal"><span class="pre">on_start()</span></tt></a>
-callback.</p>
+<tt class="descname">start</tt><big>(</big><big>)</big><a class="headerlink" href="#pulsar.apps.tasks.Task.start" title="Permalink to this definition">¶</a></dt>
+<dd><p>Starts execution of this <a class="reference internal" href="#pulsar.apps.tasks.Task" title="pulsar.apps.tasks.Task"><tt class="xref py py-class docutils literal"><span class="pre">Task</span></tt></a>. If no timeout has
+occurred the task will switch to a <tt class="docutils literal"><span class="pre">STARTED</span></tt> <a class="reference internal" href="#pulsar.apps.tasks.Task.status" title="pulsar.apps.tasks.Task.status"><tt class="xref py py-attr docutils literal"><span class="pre">Task.status</span></tt></a> and
+invoke the <a class="reference internal" href="#pulsar.apps.tasks.Task.on_start" title="pulsar.apps.tasks.Task.on_start"><tt class="xref py py-meth docutils literal"><span class="pre">on_start()</span></tt></a> callback.</p>
 </dd></dl>
 
 <dl class="method">
 <dt id="pulsar.apps.tasks.Task.finish">
-<tt class="descname">finish</tt><big>(</big><em>worker</em>, <em>result</em><big>)</big><a class="headerlink" href="#pulsar.apps.tasks.Task.finish" title="Permalink to this definition">¶</a></dt>
+<tt class="descname">finish</tt><big>(</big><em>result</em><big>)</big><a class="headerlink" href="#pulsar.apps.tasks.Task.finish" title="Permalink to this definition">¶</a></dt>
 <dd><p>Called when the task has finished and a <tt class="docutils literal"><span class="pre">result</span></tt> is ready.
 It sets the <a class="reference internal" href="#pulsar.apps.tasks.Task.time_end" title="pulsar.apps.tasks.Task.time_end"><tt class="xref py py-attr docutils literal"><span class="pre">time_end</span></tt></a> attribute if not already set
 (in case the <a class="reference internal" href="#pulsar.apps.tasks.Task" title="pulsar.apps.tasks.Task"><tt class="xref py py-class docutils literal"><span class="pre">Task</span></tt></a> was revoked) and
@@ -620,20 +619,20 @@ has been received by the scheduler.</p>
 
 <dl class="method">
 <dt id="pulsar.apps.tasks.Task.on_start">
-<tt class="descname">on_start</tt><big>(</big><em>worker=None</em><big>)</big><a class="headerlink" href="#pulsar.apps.tasks.Task.on_start" title="Permalink to this definition">¶</a></dt>
+<tt class="descname">on_start</tt><big>(</big><big>)</big><a class="headerlink" href="#pulsar.apps.tasks.Task.on_start" title="Permalink to this definition">¶</a></dt>
 <dd><p>A <a class="reference internal" href="#tasks-callbacks"><em>task callback</em></a> when the task starts
 its execution</p>
 </dd></dl>
 
 <dl class="method">
 <dt id="pulsar.apps.tasks.Task.on_timeout">
-<tt class="descname">on_timeout</tt><big>(</big><em>worker=None</em><big>)</big><a class="headerlink" href="#pulsar.apps.tasks.Task.on_timeout" title="Permalink to this definition">¶</a></dt>
+<tt class="descname">on_timeout</tt><big>(</big><big>)</big><a class="headerlink" href="#pulsar.apps.tasks.Task.on_timeout" title="Permalink to this definition">¶</a></dt>
 <dd><p>A <a class="reference internal" href="#tasks-callbacks"><em>task callback</em></a> when the task is expired</p>
 </dd></dl>
 
 <dl class="method">
 <dt id="pulsar.apps.tasks.Task.on_finish">
-<tt class="descname">on_finish</tt><big>(</big><em>worker=None</em><big>)</big><a class="headerlink" href="#pulsar.apps.tasks.Task.on_finish" title="Permalink to this definition">¶</a></dt>
+<tt class="descname">on_finish</tt><big>(</big><big>)</big><a class="headerlink" href="#pulsar.apps.tasks.Task.on_finish" title="Permalink to this definition">¶</a></dt>
 <dd><p>A <a class="reference internal" href="#tasks-callbacks"><em>task callback</em></a> when the task finish
 its execution</p>
 </dd></dl>
@@ -840,7 +839,7 @@ value <tt class="docutils literal"><span class="pre">now</span></tt> can be pass
 <h3>TaskConsumer<a class="headerlink" href="#taskconsumer" title="Permalink to this headline">¶</a></h3>
 <dl class="class">
 <dt id="pulsar.apps.tasks.TaskConsumer">
-<em class="property">class </em><tt class="descclassname">pulsar.apps.tasks.</tt><tt class="descname">TaskConsumer</tt><big>(</big><em>task</em>, <em>worker</em>, <em>job</em><big>)</big><a class="headerlink" href="#pulsar.apps.tasks.TaskConsumer" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><tt class="descclassname">pulsar.apps.tasks.</tt><tt class="descname">TaskConsumer</tt><big>(</big><em>task</em>, <em>job</em><big>)</big><a class="headerlink" href="#pulsar.apps.tasks.TaskConsumer" title="Permalink to this definition">¶</a></dt>
 <dd><p>A context manager for consuming tasks. This is used by the
 <a class="reference internal" href="#pulsar.apps.tasks.Scheduler" title="pulsar.apps.tasks.Scheduler"><tt class="xref py py-class docutils literal"><span class="pre">Scheduler</span></tt></a> in a <tt class="docutils literal"><span class="pre">with</span></tt> block to correctly handle exceptions
 and optional logging.</p>
@@ -1004,7 +1003,7 @@ same as above.</li>
         <li class="right" >
           <a href="rpc.html" title="JSON-RPC"
              >previous</a> |</li>
-        <li><a href="../index.html">pulsar v0.5b5 documentation</a> &raquo;</li> 
+        <li><a href="../index.html">pulsar v0.5b6 documentation</a> &raquo;</li> 
       </ul>
     </div>
 

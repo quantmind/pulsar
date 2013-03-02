@@ -1,0 +1,478 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>pulsar.apps.wsgi.handlers &mdash; pulsar v0.5b6 documentation</title>
+    <link rel="stylesheet" href="../../../../static/celery.css" type="text/css" />
+    <link rel="stylesheet" href="../../../../static/pygments.css" type="text/css" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../../../',
+        VERSION:     '0.5b6',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../../../../static/jquery.js"></script>
+    <script type="text/javascript" src="../../../../static/underscore.js"></script>
+    <script type="text/javascript" src="../../../../static/doctools.js"></script>
+    <link rel="top" title="pulsar v0.5b6 documentation" href="../../../../index.html" />
+    <link rel="up" title="pulsar.apps.wsgi" href="../wsgi.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li><a href="../../../../index.html">pulsar v0.5b6 documentation</a> &raquo;</li>
+          <li><a href="../../../index.html" >Module code</a> &raquo;</li>
+          <li><a href="../../../pulsar.html" >pulsar</a> &raquo;</li>
+          <li><a href="../../apps.html" >pulsar.apps</a> &raquo;</li>
+          <li><a href="../wsgi.html" accesskey="U">pulsar.apps.wsgi</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+<div class="deck">
+
+    
+        <p class="developmentversion">
+        Documentation for pulsar's DEVELOPMENT version. Get the 
+        <a href="http://packages.python.org/pulsar/">release docs here</a>.
+        </p>
+    
+
+</div>
+
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <h1>Source code for pulsar.apps.wsgi.handlers</h1><div class="highlight"><pre>
+<span class="sd">&#39;&#39;&#39;Pulsar is shipped with several WSGI application handlers which facilitate the</span>
+<span class="sd">development of server-side python web applications. A WSGI application handler</span>
+<span class="sd">is always a callable, either a function or a callable instance, which</span>
+<span class="sd">accept two positional arguments: *environ* and *start_response*.</span>
+
+<span class="sd">WsgiHandler</span>
+<span class="sd">~~~~~~~~~~~~~~~~~~~~</span>
+
+<span class="sd">The first and most basic handler is the :class:`WsgiHandler` which is</span>
+<span class="sd">a step above the hello callable above. It accepts two iterables,</span>
+<span class="sd">a list of wsgi middleware and an optional list of response middleware.</span>
+
+<span class="sd">Response middleware is a callable of the form::</span>
+
+<span class="sd">    def my_response_middleware(environ, response):</span>
+<span class="sd">        ...</span>
+<span class="sd">        </span>
+<span class="sd">where *environ* is the WSGI environ dictionary and *response* is an instance</span>
+<span class="sd">of :class:`WsgiResponse`. </span>
+
+<span class="sd">.. autoclass:: WsgiHandler</span>
+<span class="sd">   :members:</span>
+<span class="sd">   :member-order: bysource</span>
+<span class="sd">   </span>
+<span class="sd">   </span>
+<span class="sd">Router</span>
+<span class="sd">~~~~~~~~~~~~~~~~~~~~</span>
+
+<span class="sd">Next up is routing. Routing is the process of match and</span>
+<span class="sd">parse the URL to something we can use. Pulsar provides a flexible integrated</span>
+<span class="sd">routing system you can use for that. It works by creating a</span>
+<span class="sd">:class:`Router` instance with its own ``rule`` and, optionally, additional</span>
+<span class="sd">sub-routers for handling additional urls::</span>
+
+<span class="sd">    class Page(Router):</span>
+<span class="sd">        </span>
+<span class="sd">        def get(self, request):</span>
+<span class="sd">            &quot;This method handle request with get-method&quot; </span>
+<span class="sd">            ...</span>
+<span class="sd">            </span>
+<span class="sd">        def post(self, request):</span>
+<span class="sd">            &quot;This method handle request with post-method&quot; </span>
+<span class="sd">            ...</span>
+<span class="sd">            </span>
+<span class="sd">    middleware = Page(&#39;/bla&#39;)</span>
+<span class="sd">    </span>
+<span class="sd">The ``middleware`` constructed can be used to serve ``get`` and ``post`` methods</span>
+<span class="sd">at ``/bla``.</span>
+
+<span class="sd">The :class:`Router` introduces a new element into pulsar WSGI handlers, the</span>
+<span class="sd">:class:`WsgiRequest` instance ``request``, which is a light-weight</span>
+<span class="sd">wrapper of the WSGI environ.</span>
+
+<span class="sd">.. autoclass:: Router</span>
+<span class="sd">   :members:</span>
+<span class="sd">   :member-order: bysource</span>
+<span class="sd">   </span>
+
+<span class="sd">Media Router</span>
+<span class="sd">~~~~~~~~~~~~~~~~~~~~~</span>
+
+<span class="sd">.. autoclass:: MediaRouter</span>
+<span class="sd">   :members:</span>
+<span class="sd">   :member-order: bysource</span>
+<span class="sd">&#39;&#39;&#39;</span>
+<span class="kn">import</span> <span class="nn">os</span>
+<span class="kn">import</span> <span class="nn">re</span>
+<span class="kn">import</span> <span class="nn">stat</span>
+<span class="kn">import</span> <span class="nn">mimetypes</span>
+<span class="kn">from</span> <span class="nn">email.utils</span> <span class="kn">import</span> <span class="n">parsedate_tz</span><span class="p">,</span> <span class="n">mktime_tz</span>
+
+<span class="kn">from</span> <span class="nn">pulsar.utils.httpurl</span> <span class="kn">import</span> <span class="n">http_date</span><span class="p">,</span> <span class="n">CacheControl</span><span class="p">,</span> <span class="n">remove_double_slash</span>
+<span class="kn">from</span> <span class="nn">pulsar.utils.httpurl</span> <span class="kn">import</span> <span class="n">ENCODE_URL_METHODS</span><span class="p">,</span> <span class="n">ENCODE_BODY_METHODS</span>
+<span class="kn">from</span> <span class="nn">pulsar.utils.log</span> <span class="kn">import</span> <span class="n">LocalMixin</span>
+<span class="kn">from</span> <span class="nn">pulsar</span> <span class="kn">import</span> <span class="n">Http404</span><span class="p">,</span> <span class="n">PermissionDenied</span><span class="p">,</span> <span class="n">HttpException</span>
+
+<span class="kn">from</span> <span class="nn">.route</span> <span class="kn">import</span> <span class="n">Route</span>
+<span class="kn">from</span> <span class="nn">.wrappers</span> <span class="kn">import</span> <span class="n">WsgiRequest</span>
+<span class="kn">from</span> <span class="nn">.content</span> <span class="kn">import</span> <span class="n">Html</span>
+
+<span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span><span class="s">&#39;WsgiHandler&#39;</span><span class="p">,</span> <span class="s">&#39;LazyWsgi&#39;</span><span class="p">,</span> <span class="s">&#39;Router&#39;</span><span class="p">,</span> <span class="s">&#39;route&#39;</span><span class="p">,</span>
+           <span class="s">&#39;MediaRouter&#39;</span><span class="p">,</span> <span class="s">&#39;FileRouter&#39;</span><span class="p">,</span> <span class="s">&#39;MediaMixin&#39;</span><span class="p">]</span>
+
+
+<div class="viewcode-block" id="WsgiHandler"><a class="viewcode-back" href="../../../../apps/wsgi/handlers.html#pulsar.apps.wsgi.handlers.WsgiHandler">[docs]</a><span class="k">class</span> <span class="nc">WsgiHandler</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39;An handler for application conforming to python WSGI_.</span>
+
+<span class="sd">.. attribute:: middleware</span>
+
+<span class="sd">    List of callable WSGI middleware callable which accept</span>
+<span class="sd">    ``environ`` and ``start_response`` as arguments.</span>
+<span class="sd">    The order matter, since the response returned by the callable</span>
+<span class="sd">    is the non ``None`` value returned by a middleware.</span>
+
+<span class="sd">.. attribute:: response_middleware</span>
+
+<span class="sd">    List of functions of the form::</span>
+
+<span class="sd">        def ..(environ, start_response, response):</span>
+<span class="sd">            ...</span>
+
+<span class="sd">    where ``response`` is the first not ``None`` value returned by</span>
+<span class="sd">    the middleware.</span>
+
+<span class="sd">&#39;&#39;&#39;</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">middleware</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">response_middleware</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">middleware</span><span class="p">:</span>
+            <span class="n">middleware</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">middleware</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">middleware</span> <span class="o">=</span> <span class="n">middleware</span> <span class="ow">or</span> <span class="p">[]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">response_middleware</span> <span class="o">=</span> <span class="n">response_middleware</span> <span class="ow">or</span> <span class="p">[]</span>
+
+    <span class="k">def</span> <span class="nf">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">environ</span><span class="p">,</span> <span class="n">start_response</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;The WSGI callable&#39;&#39;&#39;</span>
+        <span class="n">response</span> <span class="o">=</span> <span class="bp">None</span>
+        <span class="k">for</span> <span class="n">middleware</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">middleware</span><span class="p">:</span>
+            <span class="n">response</span> <span class="o">=</span> <span class="n">middleware</span><span class="p">(</span><span class="n">environ</span><span class="p">,</span> <span class="n">start_response</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">response</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
+                <span class="k">break</span>
+        <span class="k">if</span> <span class="n">response</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">pulsar</span><span class="o">.</span><span class="n">Http404</span><span class="p">(</span><span class="n">environ</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s">&#39;PATH_INFO&#39;</span><span class="p">,</span><span class="s">&#39;/&#39;</span><span class="p">))</span>
+        <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">response</span><span class="p">,</span> <span class="s">&#39;middleware&#39;</span><span class="p">):</span>
+            <span class="n">response</span><span class="o">.</span><span class="n">middleware</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">response_middleware</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">response</span>
+    
+</div>
+<div class="viewcode-block" id="LazyWsgi"><a class="viewcode-back" href="../../../../apps/wsgi/handlers.html#pulsar.apps.wsgi.handlers.LazyWsgi">[docs]</a><span class="k">class</span> <span class="nc">LazyWsgi</span><span class="p">(</span><span class="n">LocalMixin</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39;A :ref:`wsgi handler &lt;wsgi-handlers&gt;` which loads its middleware the</span>
+<span class="sd">first time it is called. Subclasses must implement the :meth:`setup` method.&#39;&#39;&#39;</span>
+    <span class="k">def</span> <span class="nf">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">environ</span><span class="p">,</span> <span class="n">start_response</span><span class="p">):</span>
+        <span class="n">handler</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">local</span><span class="o">.</span><span class="n">handler</span>
+        <span class="k">if</span> <span class="n">handler</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">local</span><span class="o">.</span><span class="n">handler</span> <span class="o">=</span> <span class="n">handler</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">setup</span><span class="p">()</span>
+        <span class="k">return</span> <span class="n">handler</span><span class="p">(</span><span class="n">environ</span><span class="p">,</span> <span class="n">start_response</span><span class="p">)</span>
+    
+    <span class="k">def</span> <span class="nf">setup</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="ne">NotImplementedError</span>
+    
+    </div>
+<div class="viewcode-block" id="route"><a class="viewcode-back" href="../../../../apps/wsgi/handlers.html#pulsar.apps.wsgi.handlers.route">[docs]</a><span class="k">class</span> <span class="nc">route</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+    
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">rule</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;Create a new Router&#39;&#39;&#39;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">rule</span> <span class="o">=</span> <span class="n">rule</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">method</span> <span class="o">=</span> <span class="n">method</span>
+        
+    <span class="k">def</span> <span class="nf">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">func</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;func could be an unbound method of a Router class or a standard</span>
+<span class="sd">python function.&#39;&#39;&#39;</span>
+        <span class="n">bits</span> <span class="o">=</span> <span class="n">func</span><span class="o">.</span><span class="n">__name__</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s">&#39;_&#39;</span><span class="p">)</span>
+        <span class="n">method</span> <span class="o">=</span> <span class="bp">None</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">bits</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="n">m</span> <span class="o">=</span> <span class="n">bits</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">upper</span><span class="p">()</span>
+            <span class="k">if</span> <span class="n">m</span> <span class="ow">in</span> <span class="n">ENCODE_URL_METHODS</span> <span class="ow">or</span> <span class="n">method</span> <span class="ow">in</span> <span class="n">ENCODE_BODY_METHODS</span><span class="p">:</span>
+                <span class="n">method</span> <span class="o">=</span> <span class="n">m</span>
+                <span class="n">bits</span> <span class="o">=</span> <span class="n">bits</span><span class="p">[</span><span class="mi">1</span><span class="p">:]</span>
+        <span class="n">method</span> <span class="o">=</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">method</span> <span class="ow">or</span> <span class="n">method</span> <span class="ow">or</span> <span class="s">&#39;get&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span>
+        <span class="n">rule</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">rule</span> <span class="ow">or</span> <span class="s">&#39;_&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">bits</span><span class="p">)</span>
+        <span class="n">func</span><span class="o">.</span><span class="n">rule_method</span> <span class="o">=</span> <span class="p">(</span><span class="n">rule</span><span class="p">,</span> <span class="n">method</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">func</span>
+            
+    <span class="k">def</span> <span class="nf">_get_router</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">cls</span><span class="p">,</span> <span class="n">route</span><span class="p">):</span>
+        <span class="k">for</span> <span class="n">router</span> <span class="ow">in</span> <span class="n">cls</span><span class="o">.</span><span class="n">routers</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">router</span><span class="o">.</span><span class="n">path</span> <span class="o">==</span> <span class="n">route</span><span class="p">:</span>
+                <span class="k">return</span> <span class="n">router</span>
+        <span class="n">router</span> <span class="o">=</span> <span class="n">Router</span><span class="p">(</span><span class="n">route</span><span class="p">)</span>
+        <span class="n">cls</span><span class="o">.</span><span class="n">routers</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">router</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">router</span>
+    
+    </div>
+<span class="k">class</span> <span class="nc">RouterType</span><span class="p">(</span><span class="nb">type</span><span class="p">):</span>
+    
+    <span class="k">def</span> <span class="nf">__new__</span><span class="p">(</span><span class="n">cls</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">bases</span><span class="p">,</span> <span class="n">attrs</span><span class="p">):</span>
+        <span class="n">routes</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="nb">callable</span> <span class="ow">in</span> <span class="n">attrs</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="n">rule_method</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="nb">callable</span><span class="p">,</span> <span class="s">&#39;rule_method&#39;</span><span class="p">,</span> <span class="bp">None</span><span class="p">)</span>
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">rule_method</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">):</span>
+                <span class="n">rule</span><span class="p">,</span> <span class="n">method</span> <span class="o">=</span> <span class="n">rule_method</span>
+                <span class="n">router</span> <span class="o">=</span> <span class="n">Router</span><span class="p">(</span><span class="n">rule</span><span class="p">,</span> <span class="o">**</span><span class="p">{</span><span class="n">method</span><span class="p">:</span> <span class="nb">callable</span><span class="p">})</span>
+                <span class="n">routes</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">router</span><span class="p">)</span>
+        <span class="n">attrs</span><span class="p">[</span><span class="s">&#39;routes&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">routes</span>
+        <span class="k">return</span> <span class="nb">super</span><span class="p">(</span><span class="n">RouterType</span><span class="p">,</span> <span class="n">cls</span><span class="p">)</span><span class="o">.</span><span class="n">__new__</span><span class="p">(</span><span class="n">cls</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">bases</span><span class="p">,</span> <span class="n">attrs</span><span class="p">)</span>
+    
+    
+<div class="viewcode-block" id="Router"><a class="viewcode-back" href="../../../../apps/wsgi/handlers.html#pulsar.apps.wsgi.handlers.Router">[docs]</a><span class="k">class</span> <span class="nc">Router</span><span class="p">(</span><span class="n">RouterType</span><span class="p">(</span><span class="s">&#39;RouterBase&#39;</span><span class="p">,</span> <span class="p">(</span><span class="nb">object</span><span class="p">,),</span> <span class="p">{})):</span>
+    <span class="sd">&#39;&#39;&#39;A WSGI application which handle multiple routes.&#39;&#39;&#39;</span>
+    <span class="n">default_content_type</span><span class="o">=</span><span class="bp">None</span>
+    <span class="n">request_class</span> <span class="o">=</span> <span class="n">WsgiRequest</span>
+    <span class="n">routes</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">rule</span><span class="p">,</span> <span class="o">*</span><span class="n">routes</span><span class="p">,</span> <span class="o">**</span><span class="n">handlers</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">route</span> <span class="o">=</span> <span class="n">Route</span><span class="p">(</span><span class="n">rule</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">routes</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">routes</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">routes</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">routes</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">handle</span><span class="p">,</span> <span class="nb">callable</span> <span class="ow">in</span> <span class="n">handlers</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="nb">hasattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">handle</span><span class="p">)</span> <span class="ow">and</span> <span class="nb">hasattr</span><span class="p">(</span><span class="nb">callable</span><span class="p">,</span> <span class="s">&#39;__call__&#39;</span><span class="p">):</span>
+                <span class="nb">setattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">handle</span><span class="p">,</span> <span class="nb">callable</span><span class="p">)</span>
+        
+    <span class="k">def</span> <span class="nf">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">route</span><span class="o">.</span><span class="n">__repr__</span><span class="p">()</span>
+        
+    <span class="k">def</span> <span class="nf">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">environ</span><span class="p">,</span> <span class="n">start_response</span><span class="p">):</span>
+        <span class="n">path</span> <span class="o">=</span> <span class="n">environ</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s">&#39;PATH_INFO&#39;</span><span class="p">)</span> <span class="ow">or</span> <span class="s">&#39;/&#39;</span>
+        <span class="n">path</span> <span class="o">=</span> <span class="n">path</span><span class="p">[</span><span class="mi">1</span><span class="p">:]</span>
+        <span class="n">router_args</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">resolve</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">router_args</span><span class="p">:</span>
+            <span class="n">router</span><span class="p">,</span> <span class="n">args</span> <span class="o">=</span> <span class="n">router_args</span>
+            <span class="n">request</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">request_class</span><span class="p">(</span><span class="n">environ</span><span class="p">,</span> <span class="n">start_response</span><span class="p">,</span> <span class="n">args</span><span class="p">)</span>
+            <span class="n">method</span> <span class="o">=</span> <span class="n">request</span><span class="o">.</span><span class="n">method</span>
+            <span class="nb">callable</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">router</span><span class="p">,</span> <span class="n">method</span><span class="p">,</span> <span class="bp">None</span><span class="p">)</span>
+            <span class="k">if</span> <span class="nb">callable</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="n">HttpException</span><span class="p">(</span><span class="n">status</span><span class="o">=</span><span class="mi">405</span><span class="p">,</span>
+                                    <span class="n">msg</span><span class="o">=</span><span class="s">&#39;Method &quot;</span><span class="si">%s</span><span class="s">&quot; not allowed&#39;</span> <span class="o">%</span> <span class="n">method</span><span class="p">)</span>
+            <span class="k">return</span> <span class="nb">callable</span><span class="p">(</span><span class="n">request</span><span class="p">)</span>
+        
+    <span class="k">def</span> <span class="nf">resolve</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">path</span><span class="p">,</span> <span class="n">urlargs</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+        <span class="n">urlargs</span> <span class="o">=</span> <span class="n">urlargs</span> <span class="k">if</span> <span class="n">urlargs</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span> <span class="k">else</span> <span class="p">{}</span>
+        <span class="n">match</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">route</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">match</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="k">return</span>
+        <span class="k">if</span> <span class="s">&#39;__remaining__&#39;</span> <span class="ow">in</span> <span class="n">match</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">handler</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">routes</span><span class="p">:</span>
+                <span class="n">view_args</span> <span class="o">=</span> <span class="n">handler</span><span class="o">.</span><span class="n">resolve</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="n">urlargs</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">view_args</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+                    <span class="k">continue</span>
+                <span class="c">#remaining_path = match.pop(&#39;__remaining__&#39;,&#39;&#39;)</span>
+                <span class="c">#urlargs.update(match)</span>
+                <span class="k">return</span> <span class="n">view_args</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="p">,</span> <span class="n">match</span>
+        
+    <span class="k">def</span> <span class="nf">add_method</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">method</span><span class="p">,</span> <span class="n">func</span><span class="p">):</span>
+        <span class="nb">setattr</span><span class="p">(</span><span class="n">method</span><span class="p">,</span> <span class="n">func</span><span class="p">)</span>
+    
+</div>
+<span class="k">class</span> <span class="nc">MediaMixin</span><span class="p">(</span><span class="n">Router</span><span class="p">):</span>
+    <span class="n">default_content_type</span> <span class="o">=</span> <span class="s">&#39;application/octet-stream&#39;</span>
+    <span class="n">cache_control</span> <span class="o">=</span> <span class="n">CacheControl</span><span class="p">(</span><span class="n">maxage</span><span class="o">=</span><span class="mi">86400</span><span class="p">)</span>
+    
+    <span class="k">def</span> <span class="nf">serve_file</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">request</span><span class="p">,</span> <span class="n">fullpath</span><span class="p">):</span>
+        <span class="c"># Respect the If-Modified-Since header.</span>
+        <span class="n">statobj</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">stat</span><span class="p">(</span><span class="n">fullpath</span><span class="p">)</span>
+        <span class="n">mimetype</span><span class="p">,</span> <span class="n">encoding</span> <span class="o">=</span> <span class="n">mimetypes</span><span class="o">.</span><span class="n">guess_type</span><span class="p">(</span><span class="n">fullpath</span><span class="p">)</span>
+        <span class="n">mimetype</span> <span class="o">=</span> <span class="n">mimetype</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">default_content_type</span>
+        <span class="n">response</span> <span class="o">=</span> <span class="n">request</span><span class="o">.</span><span class="n">response</span>
+        <span class="n">response</span><span class="o">.</span><span class="n">content_type</span> <span class="o">=</span> <span class="n">mimetype</span>
+        <span class="n">response</span><span class="o">.</span><span class="n">encoding</span> <span class="o">=</span> <span class="n">encoding</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">was_modified_since</span><span class="p">(</span><span class="n">request</span><span class="o">.</span><span class="n">environ</span><span class="o">.</span><span class="n">get</span><span class="p">(</span>
+                                            <span class="s">&#39;HTTP_IF_MODIFIED_SINCE&#39;</span><span class="p">),</span>
+                                       <span class="n">statobj</span><span class="p">[</span><span class="n">stat</span><span class="o">.</span><span class="n">ST_MTIME</span><span class="p">],</span>
+                                       <span class="n">statobj</span><span class="p">[</span><span class="n">stat</span><span class="o">.</span><span class="n">ST_SIZE</span><span class="p">]):</span>
+            <span class="n">response</span><span class="o">.</span><span class="n">status_code</span> <span class="o">=</span> <span class="mi">304</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">response</span><span class="o">.</span><span class="n">content</span> <span class="o">=</span> <span class="nb">open</span><span class="p">(</span><span class="n">fullpath</span><span class="p">,</span> <span class="s">&#39;rb&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">read</span><span class="p">()</span>
+            <span class="n">response</span><span class="o">.</span><span class="n">headers</span><span class="p">[</span><span class="s">&quot;Last-Modified&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">http_date</span><span class="p">(</span><span class="n">statobj</span><span class="p">[</span><span class="n">stat</span><span class="o">.</span><span class="n">ST_MTIME</span><span class="p">])</span>
+        <span class="k">return</span> <span class="n">response</span><span class="o">.</span><span class="n">start</span><span class="p">()</span>
+
+    <span class="k">def</span> <span class="nf">was_modified_since</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">header</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">mtime</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">size</span><span class="o">=</span><span class="mi">0</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;Check if an item was modified since the user last downloaded it</span>
+
+<span class="sd">:param header: the value of the ``If-Modified-Since`` header. If this is None,</span>
+<span class="sd">    simply return ``True``.</span>
+<span class="sd">:param mtime: the modification time of the item in question.</span>
+<span class="sd">:param size: the size of the item.</span>
+<span class="sd">&#39;&#39;&#39;</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">header</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span>
+            <span class="n">matches</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="s">r&quot;^([^;]+)(; length=([0-9]+))?$&quot;</span><span class="p">,</span> <span class="n">header</span><span class="p">,</span>
+                               <span class="n">re</span><span class="o">.</span><span class="n">IGNORECASE</span><span class="p">)</span>
+            <span class="n">header_mtime</span> <span class="o">=</span> <span class="n">mktime_tz</span><span class="p">(</span><span class="n">parsedate_tz</span><span class="p">(</span><span class="n">matches</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="mi">1</span><span class="p">)))</span>
+            <span class="n">header_len</span> <span class="o">=</span> <span class="n">matches</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="mi">3</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">header_len</span> <span class="ow">and</span> <span class="nb">int</span><span class="p">(</span><span class="n">header_len</span><span class="p">)</span> <span class="o">!=</span> <span class="n">size</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">()</span>
+            <span class="k">if</span> <span class="n">mtime</span> <span class="o">&gt;</span> <span class="n">header_mtime</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">()</span>
+        <span class="k">except</span> <span class="p">(</span><span class="ne">AttributeError</span><span class="p">,</span> <span class="ne">ValueError</span><span class="p">,</span> <span class="ne">OverflowError</span><span class="p">):</span>
+            <span class="k">return</span> <span class="bp">True</span>
+        <span class="k">return</span> <span class="bp">False</span>
+    
+    <span class="k">def</span> <span class="nf">directory_index</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">request</span><span class="p">,</span> <span class="n">fullpath</span><span class="p">):</span>
+        <span class="n">names</span> <span class="o">=</span> <span class="p">[</span><span class="n">Html</span><span class="p">(</span><span class="s">&#39;a&#39;</span><span class="p">,</span> <span class="s">&#39;../&#39;</span><span class="p">,</span> <span class="n">href</span><span class="o">=</span><span class="s">&#39;../&#39;</span><span class="p">,</span> <span class="n">cn</span><span class="o">=</span><span class="s">&#39;folder&#39;</span><span class="p">)]</span>
+        <span class="n">files</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">listdir</span><span class="p">(</span><span class="n">fullpath</span><span class="p">)):</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">f</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s">&#39;.&#39;</span><span class="p">):</span>
+                <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">isdir</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">fullpath</span><span class="p">,</span> <span class="n">f</span><span class="p">)):</span>
+                    <span class="n">names</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">Html</span><span class="p">(</span><span class="s">&#39;a&#39;</span><span class="p">,</span> <span class="n">f</span><span class="p">,</span> <span class="n">href</span><span class="o">=</span><span class="n">f</span><span class="o">+</span><span class="s">&#39;/&#39;</span><span class="p">,</span> <span class="n">cn</span><span class="o">=</span><span class="s">&#39;folder&#39;</span><span class="p">))</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">files</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">Html</span><span class="p">(</span><span class="s">&#39;a&#39;</span><span class="p">,</span> <span class="n">f</span><span class="p">,</span> <span class="n">href</span><span class="o">=</span><span class="n">f</span><span class="p">))</span>
+        <span class="n">names</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">files</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">static_index</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="n">names</span><span class="p">)</span>
+    
+    <span class="k">def</span> <span class="nf">html_title</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">request</span><span class="p">):</span>
+        <span class="k">return</span> <span class="s">&#39;Index of </span><span class="si">%s</span><span class="s">&#39;</span> <span class="o">%</span> <span class="n">request</span><span class="o">.</span><span class="n">path</span>
+    
+    <span class="k">def</span> <span class="nf">static_index</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">request</span><span class="p">,</span> <span class="n">links</span><span class="p">):</span>
+        <span class="n">title</span> <span class="o">=</span> <span class="n">Html</span><span class="p">(</span><span class="s">&#39;h2&#39;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">html_title</span><span class="p">(</span><span class="n">request</span><span class="p">))</span>
+        <span class="nb">list</span> <span class="o">=</span> <span class="n">Html</span><span class="p">(</span><span class="s">&#39;ul&#39;</span><span class="p">,</span> <span class="o">*</span><span class="p">[</span><span class="n">Html</span><span class="p">(</span><span class="s">&#39;li&#39;</span><span class="p">,</span> <span class="n">a</span><span class="p">)</span> <span class="k">for</span> <span class="n">a</span> <span class="ow">in</span> <span class="n">links</span><span class="p">])</span>
+        <span class="n">body</span> <span class="o">=</span> <span class="n">Html</span><span class="p">(</span><span class="s">&#39;div&#39;</span><span class="p">,</span> <span class="n">title</span><span class="p">,</span> <span class="nb">list</span><span class="p">)</span>
+        <span class="n">doc</span> <span class="o">=</span> <span class="n">request</span><span class="o">.</span><span class="n">html_document</span><span class="p">(</span><span class="n">title</span><span class="o">=</span><span class="n">title</span><span class="p">,</span> <span class="n">body</span><span class="o">=</span><span class="n">body</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">doc</span><span class="o">.</span><span class="n">http_response</span><span class="p">(</span><span class="n">request</span><span class="p">)</span>
+    
+    
+<div class="viewcode-block" id="MediaRouter"><a class="viewcode-back" href="../../../../apps/wsgi/handlers.html#pulsar.apps.wsgi.handlers.MediaRouter">[docs]</a><span class="k">class</span> <span class="nc">MediaRouter</span><span class="p">(</span><span class="n">MediaMixin</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39;A :class:`Router` for serving static media files from a given </span>
+<span class="sd">directory.</span>
+
+<span class="sd">:param rute: The top-level url for this router. For example ``/media``</span>
+<span class="sd">    will serve the ``/media/&lt;path:path&gt;`` :class:`Route`.</span>
+<span class="sd">:param path: Check the :attr:`path` attribute.</span>
+<span class="sd">:param show_indexes: Check the :attr:`show_indexes` attribute.</span>
+
+<span class="sd">.. attribute::    path</span>
+
+<span class="sd">    The file-system path of the media files to serve.</span>
+<span class="sd">    </span>
+<span class="sd">.. attribute::    show_indexes</span>
+
+<span class="sd">    If ``True`` (default), the router will serve media file directories as</span>
+<span class="sd">    well as media files.</span>
+<span class="sd">&#39;&#39;&#39;</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">rute</span><span class="p">,</span> <span class="n">path</span><span class="p">,</span> <span class="n">show_indexes</span><span class="o">=</span><span class="bp">True</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">MediaRouter</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="s">&#39;</span><span class="si">%s</span><span class="s">/&lt;path:path&gt;&#39;</span> <span class="o">%</span> <span class="n">rute</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_show_indexes</span> <span class="o">=</span> <span class="n">show_indexes</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_file_path</span> <span class="o">=</span> <span class="n">path</span>
+        
+    <span class="k">def</span> <span class="nf">get</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">request</span><span class="p">):</span>
+        <span class="n">paths</span> <span class="o">=</span> <span class="n">request</span><span class="o">.</span><span class="n">urlargs</span><span class="p">[</span><span class="s">&#39;path&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s">&#39;/&#39;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">paths</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span> <span class="ow">and</span> <span class="n">paths</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="s">&#39;&#39;</span><span class="p">:</span>
+            <span class="n">paths</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+        <span class="n">fullpath</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_file_path</span><span class="p">,</span> <span class="o">*</span><span class="n">paths</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">isdir</span><span class="p">(</span><span class="n">fullpath</span><span class="p">):</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_show_indexes</span><span class="p">:</span>
+                <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">directory_index</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="n">fullpath</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="n">PermissionDenied</span><span class="p">()</span>
+        <span class="k">elif</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">fullpath</span><span class="p">):</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">serve_file</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="n">fullpath</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">Http404</span><span class="p">()</span>
+
+</div>
+<span class="k">class</span> <span class="nc">FileRouter</span><span class="p">(</span><span class="n">MediaMixin</span><span class="p">):</span>
+    
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">route</span><span class="p">,</span> <span class="n">file_path</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">FileRouter</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="n">route</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_file_path</span> <span class="o">=</span> <span class="n">file_path</span>
+        
+    <span class="k">def</span> <span class="nf">get</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">request</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">serve_file</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_file_path</span><span class="p">)</span>
+    
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper"><p class="logo">
+<a href="../../../../index.html">
+  <img class="logo" width="200" src="../../../../static/pulsar.png" alt="pulsar" title="Pulsar"/>
+</a>
+</p>
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="../../../../search.html" method="get">
+      <input type="text" name="q" size="18" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li><a href="../../../../index.html">pulsar v0.5b6 documentation</a> &raquo;</li>
+          <li><a href="../../../index.html" >Module code</a> &raquo;</li>
+          <li><a href="../../../pulsar.html" >pulsar</a> &raquo;</li>
+          <li><a href="../../apps.html" >pulsar.apps</a> &raquo;</li>
+          <li><a href="../wsgi.html" >pulsar.apps.wsgi</a> &raquo;</li> 
+      </ul>
+    </div>
+
+    <div class="footer">
+        &copy; Copyright 2011, Luca Sbardella.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.0.7.
+    </div>
+<script type="text/javascript">
+
+  var _gaq = _gaq || [];
+  
+  _gaq.push(['_setAccount', 'UA-3900561-8']);
+  
+  _gaq.push(['_trackPageview']);
+
+  (function() {
+    var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+    ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+    var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+  })();
+
+</script>
+
+  </body>
+</html>

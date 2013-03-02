@@ -41,7 +41,7 @@ found in the :mod:`pulsar.apps` module:
    :maxdepth: 1
    
    apps/socket
-   apps/wsgi
+   apps/wsgi/index
    apps/rpc
    apps/tasks
    apps/websockets

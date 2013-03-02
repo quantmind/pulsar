@@ -6,13 +6,13 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>Asynchonous API &mdash; pulsar v0.5b5 documentation</title>
+    <title>Asynchonous API &mdash; pulsar v0.5b6 documentation</title>
     <link rel="stylesheet" href="../static/celery.css" type="text/css" />
     <link rel="stylesheet" href="../static/pygments.css" type="text/css" />
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../',
-        VERSION:     '0.5b5',
+        VERSION:     '0.5b6',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -21,7 +21,7 @@
     <script type="text/javascript" src="../static/jquery.js"></script>
     <script type="text/javascript" src="../static/underscore.js"></script>
     <script type="text/javascript" src="../static/doctools.js"></script>
-    <link rel="top" title="pulsar v0.5b5 documentation" href="../index.html" />
+    <link rel="top" title="pulsar v0.5b6 documentation" href="../index.html" />
     <link rel="up" title="API" href="index.html" />
     <link rel="next" title="Actors API" href="actor.html" />
     <link rel="prev" title="API" href="index.html" /> 
@@ -42,7 +42,7 @@
         <li class="right" >
           <a href="index.html" title="API"
              accesskey="P">previous</a> |</li>
-        <li><a href="../index.html">pulsar v0.5b5 documentation</a> &raquo;</li>
+        <li><a href="../index.html">pulsar v0.5b6 documentation</a> &raquo;</li>
           <li><a href="index.html" accesskey="U">API</a> &raquo;</li> 
       </ul>
     </div>  
@@ -417,7 +417,7 @@ The implementation is similar to the <tt class="docutils literal"><span class="p
 attribute.</td>
 </tr>
 <tr class="field"><th class="field-name">Params timeout:</th><td class="field-body">optional timeout. If greater than zero the deferred will be
-cancelled after <em>timeout</em> seconds if no result available.</td>
+cancelled after <em>timeout</em> seconds if no result is available.</td>
 </tr>
 </tbody>
 </table>
@@ -457,11 +457,19 @@ this attribute when <a class="reference internal" href="#pulsar.Deferred.called"
 </dd></dl>
 
 <dl class="method">
+<dt id="pulsar.Deferred.done">
+<tt class="descname">done</tt><big>(</big><big>)</big><a class="headerlink" href="#pulsar.Deferred.done" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns <tt class="xref docutils literal"><span class="pre">True</span></tt> if the <a class="reference internal" href="#pulsar.Deferred" title="pulsar.Deferred"><tt class="xref py py-class docutils literal"><span class="pre">Deferred</span></tt></a> has been called done.
+Note that a cancelled <a class="reference internal" href="#pulsar.Deferred" title="pulsar.Deferred"><tt class="xref py py-class docutils literal"><span class="pre">Deferred</span></tt></a> is considered done too.</p>
+</dd></dl>
+
+<dl class="method">
 <dt id="pulsar.Deferred.cancel">
 <tt class="descname">cancel</tt><big>(</big><em>msg=''</em><big>)</big><a class="headerlink" href="#pulsar.Deferred.cancel" title="Permalink to this definition">¶</a></dt>
 <dd><p>Cancel the deferred and schedule callbacks.
 If the deferred is waiting for another <a class="reference internal" href="#pulsar.Deferred" title="pulsar.Deferred"><tt class="xref py py-class docutils literal"><span class="pre">Deferred</span></tt></a>, forward the
-cancellation to that one.</p>
+cancellation to that one. If the <a class="reference internal" href="#pulsar.Deferred" title="pulsar.Deferred"><tt class="xref py py-class docutils literal"><span class="pre">Deferred</span></tt></a> is already <a class="reference internal" href="#pulsar.Deferred.done" title="pulsar.Deferred.done"><tt class="xref py py-meth docutils literal"><span class="pre">done()</span></tt></a>,
+it does nothing.</p>
 </dd></dl>
 
 <dl class="method">
@@ -637,9 +645,20 @@ a callable which accept one argument only.</p>
 <dl class="method">
 <dt id="pulsar.EventHandler.fire_event">
 <tt class="descname">fire_event</tt><big>(</big><em>event</em>, <em>event_data=None</em><big>)</big><a class="headerlink" href="#pulsar.EventHandler.fire_event" title="Permalink to this definition">¶</a></dt>
-<dd><p>Dispatches <em>event_data</em> to the <em>event</em> listeners.
-If <em>event_data</em> is not provided, this instance will be dispatched.
-If <em>event_data</em> is an error it will be converted to a <a class="reference internal" href="#pulsar.Failure" title="pulsar.Failure"><tt class="xref py py-class docutils literal"><span class="pre">Failure</span></tt></a>.</p>
+<dd><p>Dispatches <em>event_data</em> to the <em>event</em> listeners.</p>
+<ul class="simple">
+<li>If <em>event_data</em> is not provided, this instance will be dispatched.</li>
+<li>If <em>event_data</em> is an error it will be converted to a <a class="reference internal" href="#pulsar.Failure" title="pulsar.Failure"><tt class="xref py py-class docutils literal"><span class="pre">Failure</span></tt></a>.</li>
+<li>If <em>event</em> is a one-time event, it makes sure that it was not fired before.</li>
+</ul>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field"><th class="field-name">Returns:</th><td class="field-body">boolean indicating if the event was fired or not.</td>
+</tr>
+</tbody>
+</table>
 </dd></dl>
 
 </dd></dl>
@@ -735,7 +754,7 @@ If <em>event_data</em> is an error it will be converted to a <a class="reference
         <li class="right" >
           <a href="index.html" title="API"
              >previous</a> |</li>
-        <li><a href="../index.html">pulsar v0.5b5 documentation</a> &raquo;</li>
+        <li><a href="../index.html">pulsar v0.5b6 documentation</a> &raquo;</li>
           <li><a href="index.html" >API</a> &raquo;</li> 
       </ul>
     </div>

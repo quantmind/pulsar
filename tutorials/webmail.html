@@ -1,0 +1,195 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>Web Mail &mdash; pulsar v0.5b6 documentation</title>
+    <link rel="stylesheet" href="../static/celery.css" type="text/css" />
+    <link rel="stylesheet" href="../static/pygments.css" type="text/css" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../',
+        VERSION:     '0.5b6',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../static/jquery.js"></script>
+    <script type="text/javascript" src="../static/underscore.js"></script>
+    <script type="text/javascript" src="../static/doctools.js"></script>
+    <link rel="top" title="pulsar v0.5b6 documentation" href="../index.html" />
+    <link rel="up" title="Tutorials &amp; Topics" href="index.html" />
+    <link rel="next" title="Asynchronous Components" href="coroutine.html" />
+    <link rel="prev" title="HTTP Proxy Server" href="proxy.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="coroutine.html" title="Asynchronous Components"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="proxy.html" title="HTTP Proxy Server"
+             accesskey="P">previous</a> |</li>
+        <li><a href="../index.html">pulsar v0.5b6 documentation</a> &raquo;</li>
+          <li><a href="index.html" accesskey="U">Tutorials &amp; Topics</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+<div class="deck">
+
+    
+        <p class="developmentversion">
+        Documentation for pulsar's DEVELOPMENT version. Get the 
+        <a href="http://packages.python.org/pulsar/">release docs here</a>.
+        </p>
+    
+
+</div>
+
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="web-mail">
+<span id="tutorials-webmail"></span><h1>Web Mail<a class="headerlink" href="#web-mail" title="Permalink to this headline">¶</a></h1>
+<p>The code for this example is located in the <a class="reference internal" href="#module-examples.webmail.manage" title="examples.webmail.manage"><tt class="xref py py-mod docutils literal"><span class="pre">examples.webmail.manage</span></tt></a> module.</p>
+<span class="target" id="module-examples.webmail.manage"></span><p>The example is a <a class="reference internal" href="../apps/wsgi/index.html#apps-wsgi"><em>WSGI application</em></a>
+with a <a class="reference internal" href="../apps/websockets.html#apps-ws"><em>websocket middleware</em></a> which connects to an
+IMAP4 server to retrieve and send emails.</p>
+<p>The connection with the IMAP4 server is obtained using the IMAP4 API in
+twisted 12.3 or later. The example uses
+<a class="reference internal" href="twisted.html#tutorials-twisted"><em>pulsar-twisted integration</em></a> module.</p>
+<p>To run the server you need to create a <tt class="xref py py-mod docutils literal"><span class="pre">config.py</span></tt> file in the
+the <tt class="xref py py-mod docutils literal"><span class="pre">examples.webmail</span></tt> directory containing:</p>
+<div class="highlight-python"><pre># the adress of your mail server
+incoming_mail='ssl:host=imap.gmail.com:port=993'
+# username &amp; password
+username=
+password=</pre>
+</div>
+<p>And type:</p>
+<div class="highlight-python"><pre>python manage.py</pre>
+</div>
+<p>Open a web browser at <a class="reference external" href="http://localhost:8060">http://localhost:8060</a> and you should see the web app.</p>
+<p>For information on twised IMAP4 client library check this example:</p>
+<p><a class="reference external" href="http://twistedmatrix.com/documents/current/mail/examples/imap4client.py">http://twistedmatrix.com/documents/current/mail/examples/imap4client.py</a></p>
+<div class="section" id="implementation">
+<h2>Implementation<a class="headerlink" href="#implementation" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="examples.webmail.manage.WsMail">
+<em class="property">class </em><tt class="descclassname">examples.webmail.manage.</tt><tt class="descname">WsMail</tt><a class="reference internal" href="../modules/examples/webmail/manage.html#WsMail"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#examples.webmail.manage.WsMail" title="Permalink to this definition">¶</a></dt>
+<dd><p><a class="reference internal" href="../apps/websockets.html#websocket-handler"><em>Websocket handler</em></a> for fetching and
+sending mail via the twisted IMAP4 library.</p>
+<dl class="method">
+<dt id="examples.webmail.manage.WsMail.on_open">
+<tt class="descname">on_open</tt><big>(</big><em>request</em><big>)</big><a class="reference internal" href="../modules/examples/webmail/manage.html#WsMail.on_open"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#examples.webmail.manage.WsMail.on_open" title="Permalink to this definition">¶</a></dt>
+<dd><p>When the websocket starts, it create a new mail client.</p>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper"><p class="logo">
+<a href="../index.html">
+  <img class="logo" width="200" src="../static/pulsar.png" alt="pulsar" title="Pulsar"/>
+</a>
+</p>
+  <h3><a href="../index.html">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">Web Mail</a><ul>
+<li><a class="reference internal" href="#implementation">Implementation</a></li>
+</ul>
+</li>
+</ul>
+
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="proxy.html"
+                        title="previous chapter">HTTP Proxy Server</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="coroutine.html"
+                        title="next chapter">Asynchronous Components</a></p>
+  <h3>This Page</h3>
+  <ul class="this-page-menu">
+    <li><a href="../sources/tutorials/webmail.txt"
+           rel="nofollow">Show Source</a></li>
+  </ul>
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" size="18" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="coroutine.html" title="Asynchronous Components"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="proxy.html" title="HTTP Proxy Server"
+             >previous</a> |</li>
+        <li><a href="../index.html">pulsar v0.5b6 documentation</a> &raquo;</li>
+          <li><a href="index.html" >Tutorials &amp; Topics</a> &raquo;</li> 
+      </ul>
+    </div>
+
+    <div class="footer">
+        &copy; Copyright 2011, Luca Sbardella.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.0.7.
+    </div>
+<script type="text/javascript">
+
+  var _gaq = _gaq || [];
+  
+  _gaq.push(['_setAccount', 'UA-3900561-8']);
+  
+  _gaq.push(['_trackPageview']);
+
+  (function() {
+    var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+    ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+    var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+  })();
+
+</script>
+
+  </body>
+</html>

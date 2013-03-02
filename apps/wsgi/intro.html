@@ -1,0 +1,179 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>WSGI Servers &mdash; pulsar v0.5b6 documentation</title>
+    <link rel="stylesheet" href="../../static/celery.css" type="text/css" />
+    <link rel="stylesheet" href="../../static/pygments.css" type="text/css" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../',
+        VERSION:     '0.5b6',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../../static/jquery.js"></script>
+    <script type="text/javascript" src="../../static/underscore.js"></script>
+    <script type="text/javascript" src="../../static/doctools.js"></script>
+    <link rel="top" title="pulsar v0.5b6 documentation" href="../../index.html" />
+    <link rel="up" title="WSGI" href="index.html" />
+    <link rel="next" title="WSGI application handlers" href="handlers.html" />
+    <link rel="prev" title="WSGI" href="index.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="handlers.html" title="WSGI application handlers"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="index.html" title="WSGI"
+             accesskey="P">previous</a> |</li>
+        <li><a href="../../index.html">pulsar v0.5b6 documentation</a> &raquo;</li>
+          <li><a href="index.html" accesskey="U">WSGI</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+<div class="deck">
+
+    
+        <p class="developmentversion">
+        Documentation for pulsar's DEVELOPMENT version. Get the 
+        <a href="http://packages.python.org/pulsar/">release docs here</a>.
+        </p>
+    
+
+</div>
+
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="module-pulsar.apps.wsgi">
+<span id="wsgi-servers"></span><h1>WSGI Servers<a class="headerlink" href="#module-pulsar.apps.wsgi" title="Permalink to this headline">¶</a></h1>
+<p>A specialized <a class="reference internal" href="../socket.html#pulsar.apps.socket.SocketServer" title="pulsar.apps.socket.SocketServer"><tt class="xref py py-class docutils literal"><span class="pre">pulsar.apps.socket.SocketServer</span></tt></a> for
+serving web applications which conforms with the python web server
+gateway interface (<a class="reference external" href="http://www.wsgi.org">WSGI</a>).
+The application can be used in conjunction with several web frameworks
+as well as <a class="reference internal" href="handlers.html#apps-wsgi-handlers"><em>pulsar wsgi application handlers</em></a>,
+the <a class="reference internal" href="../rpc.html#apps-rpc"><em>pulsar RPC middleware</em></a> and
+the <a class="reference internal" href="../websockets.html#apps-ws"><em>websocket middleware</em></a>.</p>
+<p>An example of a web server written with <tt class="docutils literal"><span class="pre">pulsar.apps.wsgi</span></tt> which responds
+with &#8220;Hello World!&#8221; for every request:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="kn">from</span> <span class="nn">pulsar.apps</span> <span class="kn">import</span> <span class="n">wsgi</span>
+
+<span class="k">def</span> <span class="nf">hello</span><span class="p">(</span><span class="n">environ</span><span class="p">,</span> <span class="n">start_response</span><span class="p">):</span>
+    <span class="n">data</span> <span class="o">=</span> <span class="n">b</span><span class="s">&quot;Hello World!&quot;</span>
+    <span class="n">response_headers</span> <span class="o">=</span> <span class="p">[(</span><span class="s">&#39;Content-type&#39;</span><span class="p">,</span><span class="s">&#39;text/plain&#39;</span><span class="p">),</span>
+                        <span class="p">(</span><span class="s">&#39;Content-Length&#39;</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">data</span><span class="p">)))]</span>
+    <span class="n">start_response</span><span class="p">(</span><span class="s">&quot;200 OK&quot;</span><span class="p">,</span> <span class="n">response_headers</span><span class="p">)</span>
+    <span class="k">return</span> <span class="p">[</span><span class="n">data</span><span class="p">]</span>
+
+<span class="k">if</span> <span class="n">__name__</span> <span class="o">==</span> <span class="s">&#39;__main__&#39;</span><span class="p">:</span>
+    <span class="n">wsgi</span><span class="o">.</span><span class="n">WSGIServer</span><span class="p">(</span><span class="nb">callable</span><span class="o">=</span><span class="n">hello</span><span class="p">)</span><span class="o">.</span><span class="n">start</span><span class="p">()</span>
+</pre></div>
+</div>
+<p>For more information regarding WSGI check the <a class="reference external" href="http://www.python.org/dev/peps/pep-3333/">pep3333</a> specification.
+To run the application:</p>
+<div class="highlight-python"><pre>python script.py</pre>
+</div>
+<p>For available run options:</p>
+<div class="highlight-python"><pre>python script.py --help</pre>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper"><p class="logo">
+<a href="../../index.html">
+  <img class="logo" width="200" src="../../static/pulsar.png" alt="pulsar" title="Pulsar"/>
+</a>
+</p>
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="index.html"
+                        title="previous chapter">WSGI</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="handlers.html"
+                        title="next chapter">WSGI application handlers</a></p>
+  <h3>This Page</h3>
+  <ul class="this-page-menu">
+    <li><a href="../../sources/apps/wsgi/intro.txt"
+           rel="nofollow">Show Source</a></li>
+  </ul>
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" size="18" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="handlers.html" title="WSGI application handlers"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="index.html" title="WSGI"
+             >previous</a> |</li>
+        <li><a href="../../index.html">pulsar v0.5b6 documentation</a> &raquo;</li>
+          <li><a href="index.html" >WSGI</a> &raquo;</li> 
+      </ul>
+    </div>
+
+    <div class="footer">
+        &copy; Copyright 2011, Luca Sbardella.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.0.7.
+    </div>
+<script type="text/javascript">
+
+  var _gaq = _gaq || [];
+  
+  _gaq.push(['_setAccount', 'UA-3900561-8']);
+  
+  _gaq.push(['_trackPageview']);
+
+  (function() {
+    var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+    ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+    var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+  })();
+
+</script>
+
+  </body>
+</html>
