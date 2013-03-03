@@ -22,6 +22,7 @@ StreamRenderer
    :member-order: bysource
    
 '''
+import json
 from collections import Mapping
 from functools import partial
 
@@ -37,20 +38,13 @@ __all__ = ['AsyncString', 'Html', 'Json']
 class StreamRenderer(Deferred):
     '''A specialised :class:`pulsar.Deferred` returned by the
 :meth:`AsyncString.content` method.'''
-    def __init__(self, stream, renderer=None, handle_value=None, **params):
+    def __init__(self, stream, renderer, handle_value=None, **params):
         super(StreamRenderer, self).__init__()
         handle_value = handle_value or self._handle_value
         self._m = MultiDeferred(stream, fireOnOneErrback=True,
                                 handle_value=handle_value,
                                 **params).lock()
-        self.renderer = renderer
-        self._m.add_callback(self.post_process).add_both(self.callback)
-
-    def post_process(self, stream):
-        if self.renderer:
-            return self.renderer(stream)
-        else:
-            return ''.join(self._post_process(stream))
+        self._m.add_callback(renderer).add_both(self.callback)
 
     def _handle_value(self, value):
         '''It makes sure that :class:`Content` is unwond.
@@ -61,16 +55,17 @@ Users should always call the content method before.'''
         else:
             return value
     
-    def _post_process(self, stream):
-        for value in stream:
-            if value is None:
-                continue
-            elif isinstance(value, bytes):
-                yield value.decode('utf-8')
-            elif isinstance(value, str):
-                yield value
-            else:
-                yield str(value)
+    
+def stream_to_string(stream):
+    for value in stream:
+        if value is None:
+            continue
+        elif isinstance(value, bytes):
+            yield value.decode('utf-8')
+        elif isinstance(value, str):
+            yield value
+        else:
+            yield str(value)
     
 
 class AsyncString(object):
@@ -97,7 +92,7 @@ pulsar WSGI servers.'''
     def content(self, request=None):
         '''Return the :class:`StreamRenderer` for this instance.
 This method can be called once only.'''
-        return StreamRenderer(self.stream(request))
+        return StreamRenderer(self.stream(request), self.to_string)
     
     def stream(self, request):
         '''Return an iterable over strings, that means unicode/str
@@ -109,7 +104,9 @@ otherwise a RuntimeError occurs.'''
         return self._stream(request)
     
     def http_response(self, request):
-        '''Return the WSGI iterable.'''
+        '''Return the WSGI iterable. The iterable yields empty bytes untill the
+:class:`AsyncString` has its result ready. Once ready it sets its value as the
+content of a :class:`WsgiResponse`'''
         body = self.content(request)
         return self._generate_response(body, request.response)
     
@@ -153,6 +150,15 @@ This is useful during testing.'''
         else:
             return value
     
+    def to_string(self, stream):
+        '''Once the stream is ready (no more asynchronous elements) this
+functions get called to transform the stream into a string.
+
+:param stream: a collections containg data used to build the string.
+:return: a string or bytes
+'''
+        return ''.join(stream_to_string(stream))
+    
     def _stream(self, request):
         '''This method can be re-implemented by subclasses'''
         for child in self._children:
@@ -169,6 +175,12 @@ class Json(AsyncString):
     @property
     def content_type(self):
         return 'application/json'
+        
+    def to_string(self, stream):
+        if len(stream) == 1:
+            return json.dumps(stream[0])
+        else:
+            return json.dumps(stream)
         
     
 class Html(AsyncString):
@@ -400,7 +412,7 @@ class Head(Html):
     Container of meta tags
 '''
     def __init__(self, media_path=None, title=None, js=None,
-                 css=None, meta=None):
+                 css=None, meta=None, charset=None):
         super(Head, self).__init__('head')
         self.title = title
         self.append(Html(None, meta))
@@ -408,6 +420,7 @@ class Head(Html):
         self.append(Js(js))
         self.links.media_path = media_path
         self.scripts.media_path = media_path
+        self.add_meta(charset=charset or 'utf-8')
     
     @property
     def meta(self):
@@ -428,7 +441,11 @@ class Head(Html):
         
     def body(self, request):
         return self.js_body.content(request)
-                        
+    
+    def add_meta(self, **kwargs):
+        meta = Html('meta', **kwargs)
+        self.meta.append(meta)
+            
     def add(self, other):
         if isinstance(other, Head):
             self.style.append(other.style)

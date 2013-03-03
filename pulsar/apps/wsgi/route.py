@@ -115,7 +115,10 @@ for a sample usage.
 :param rule: Optional dictionary of defaults parameter.
     Used when creating the :class:`Route`.
 '''
+    creation_count = 0
     def __init__(self, rule=None, method=None, defaults=None, **parameters):
+        self.__class__.creation_count += 1
+        self.creation_count = self.__class__.creation_count
         '''Create a new Router'''
         self.rule = rule
         self.defaults = defaults
@@ -134,7 +137,7 @@ python function.'''
                 bits = bits[1:]
         method = (self.method or method or 'get').lower()
         rule = Route(self.rule or '_'.join(bits), defaults=self.defaults)
-        func.rule_method = (rule, method, self.parameters)
+        func.rule_method = (rule, method, self.parameters, self.creation_count)
         return func
         
     

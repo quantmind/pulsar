@@ -304,7 +304,12 @@ class WsgiRequest(object):
     '''A thin wrapper around a WSGI_ environ. Instances of this class
 only have the :attr:`environ` attribute as their private data. Every
 other attribute is stored in the :attr:`environ` itself at the
-``pulsar.cache`` wsgi-extension key.'''
+``pulsar.cache`` wsgi-extension key.
+
+.. attribute:: environ
+
+    WSGI_ environ dictionary
+'''
     slots = ('environ',)
     
     def __init__(self, environ, start_response, urlargs=None):
@@ -334,8 +339,8 @@ at the wsgi-extension key ``pulsar.cache``.'''
     
     @property
     def urlargs(self):
-        '''Dictionary of url parameters obtained when matching the
-:class:`Router` with :attr:`path`.'''
+        '''Dictionary of url parameters obtained when matching a
+:ref:`router <apps-wsgi-router>` with this request :attr:`path`.'''
         return self.cache['urlargs']
     
     ############################################################################
@@ -351,6 +356,7 @@ at the wsgi-extension key ``pulsar.cache``.'''
 
     @property
     def path(self):
+        '''Shortcut to the :attr:`environ` `PATH_INFO` value.'''
         return self.environ.get('PATH_INFO', '/')
 
     @property

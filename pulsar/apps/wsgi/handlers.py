@@ -26,7 +26,9 @@ of :class:`WsgiResponse`.
    :members:
    :member-order: bysource
    
-   
+
+.. _apps-wsgi-router:
+
 Router
 ======================
 
@@ -164,24 +166,32 @@ class Router(object):
 
     Dictionary of parameters
 '''
+    creation_count = 0
     default_content_type=None
     request_class = WsgiRequest
     routes = []
     def __init__(self, rule, *routes, **parameters):
+        self.__class__.creation_count += 1
+        self.creation_count = self.__class__.creation_count
         if not isinstance(rule, Route):
             rule = Route(rule)
         self.route = rule
         self.routes = list(self.routes)
         self.routes.extend(routes)
         self.parameters = {}
+        rule_methods = []
         for name, callable in self.__class__.__dict__.items():
             rule_method = getattr(callable, 'rule_method', None)
             if isinstance(rule_method, tuple):
-                rule, method, params = rule_method
-                parameters = params.copy()
-                parameters[method] = getattr(self, name)
-                router = Router(rule, **parameters)
-                self.routes.append(router)
+                rule_method = list(rule_method)
+                rule_method.append(name)
+                rule_methods.append(rule_method)
+        for rule_method in sorted(rule_methods, key=lambda r: r[3]):
+            rule, method, params, count, name = rule_method
+            parameters = params.copy()
+            parameters[method] = getattr(self, name)
+            router = Router(rule, **parameters)
+            self.routes.append(router)
         for name, value in parameters.items():
             if not hasattr(self, name) and hasattr(value, '__call__'):
                 setattr(self, name, value)
@@ -222,6 +232,8 @@ class Router(object):
             return self, match
     
     def link(self, *args, **urlargs):
+        '''Return an anchor :class:`Html` element with the `href` attribute
+set to the url of this :class:`Router`.'''
         if len(args) > 1:
             raise ValueError
         url = self.route.url(**urlargs)
