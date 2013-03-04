@@ -1,11 +1,15 @@
-'''Pulsar "Hello World!" application. It runs a HTTP server which
-display the two famous words::
+'''This example is a simple WSGI_ script which displays
+the "Hello World!" message. To run the script simply type::
 
     python manage.py
     
-To see options type::
+To see all options available type::
 
     python manage.py -h
+
+.. autofunction:: hello
+
+.. _WSGI: http://www.python.org/dev/peps/pep-3333/ 
 '''
 try:
     import pulsar
@@ -16,7 +20,8 @@ from pulsar.apps import wsgi
 
 
 def hello(environ, start_response):
-    '''Pulsar HTTP "Hello World!" application'''
+    '''The WSGI_ application handler which returns the an
+iterable over the "Hello World!" message.'''
     data = b'Hello World!\n'
     status = '200 OK'
     response_headers = [

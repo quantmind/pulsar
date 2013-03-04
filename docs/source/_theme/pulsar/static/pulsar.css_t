@@ -1,8 +1,8 @@
 /*
- * celery.css_t
+ * pulsar.css_t
  * ~~~~~~~~~~~~
  *
- * :copyright: Copyright 2010 by Armin Ronacher.
+ * :copyright: Copyright 2013 by Luca Sbardella.
  * :license: BSD, see LICENSE for details.
  */
 
@@ -20,8 +20,8 @@ body {
     font-family: {{ body_font_stack }};
     font-size: 17px;
     background-color: white;
-    color: #000;
-    margin: 30px 0 0 0;
+    color: #333;
+    margin: 0;
     padding: 0;
 }
 
@@ -31,12 +31,21 @@ div.document {
 }
 
 div.related {
-    width: {{ page_width - 20 }}px;
+    width: 100%;
     padding: 5px 10px;
-    background: #F2FCEE;
-    margin: 15px auto 15px auto;
+    background-color: #F3F3F3;
+    background-image: linear-gradient(#F9F9F9, #F3F3F3);
+    background-repeat: repeat-x;
+    border-bottom: 1px solid #E5E5E5;
 }
-
+div.related ul {
+    width: {{ page_width }}px;
+    margin: 0 auto;
+}
+div.header {
+    width: {{ page_width - 20}}px;
+    margin: 0 auto;
+}
 div.documentwrapper {
     float: left;
     width: 100%;
@@ -61,7 +70,8 @@ div.body {
 }
  
 div.footer {
-    width: {{ page_width - 15 }}px;
+    width: 100%;
+    background: #eee;
     margin: 10px auto 30px auto;
     padding-right: 15px;
     font-size: 14px;
@@ -142,12 +152,11 @@ div.sphinxsidebar input {
 /* -- body styles ----------------------------------------------------------- */
  
 a {
-    color: #348613;
-    text-decoration: underline;
+    color: #4183C4;
+    text-decoration: none;
 }
  
 a:hover {
-    color: #59B833;
     text-decoration: underline;
 }
  
@@ -342,34 +351,28 @@ ul {
 }
  
 pre {
-    background: #F0FFEB;
+    background: #F8F8F8;
     padding: 7px 10px;
     margin: 15px 0;
-    border: 1px solid #C7ECB8;
-    border-radius: 2px;
-    -moz-border-radius: 2px;
-    -webkit-border-radius: 2px;
+    border: 1px solid #CCCCCC;
+    border-radius: 3px;
+    -moz-border-radius: 3px;
+    -webkit-border-radius: 3px;
     line-height: 1.3em;
 }
  
 tt {
-    background: #F0FFEB;
-    color: #222;
-    /* padding: 1px 2px; */
+    background: #F8F8F8;
+    border: 1px solid #EAEAEA;
+    border-radius: 3px;
+    -moz-border-radius: 3px;
+    -webkit-border-radius: 3px;
+     margin: 0 2px;
+    padding: 0 5px;
 }
 
 tt.xref, a tt {
-    background: #F0FFEB;
-    border-bottom: 1px solid white;
-}
-
-a.reference {
-    text-decoration: none;
-    border-bottom: 1px dashed #DCF0D5;
-}
-
-a.reference:hover {
-    border-bottom: 1px solid #6D4100;
+    background: #F8F8F8;
 }
 
 a.footnote-reference {
@@ -388,6 +391,6 @@ a:hover tt {
 }
 
 .deck {
-    background: #F2FCEE;
-    padding: 5px 10px;
+    background-color: #F6F6F6;
+    overflow: hidden;
 }

@@ -302,7 +302,7 @@ def wsgi_cache_property(f):
     
 class WsgiRequest(object):
     '''A thin wrapper around a WSGI_ environ. Instances of this class
-only have the :attr:`environ` attribute as their private data. Every
+have the :attr:`environ` attribute as their only private data. Every
 other attribute is stored in the :attr:`environ` itself at the
 ``pulsar.cache`` wsgi-extension key.
 

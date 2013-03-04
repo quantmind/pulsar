@@ -1,6 +1,10 @@
 '''Pulsar HTTP test application::
 
     python manage.py
+    
+.. autoclass:: HttpBin
+   :members:
+   :member-order: bysource
 '''
 import re
 import os

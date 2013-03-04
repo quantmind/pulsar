@@ -58,7 +58,7 @@ master_doc = 'index'
 project = 'pulsar'
 copyright = '2011, Luca Sbardella'
 
-html_theme = 'celery'
+html_theme = 'pulsar'
 pygments_style = 'sphinx'
 templates_path = ['_templates']
 html_static_path = ['_static']
@@ -97,7 +97,7 @@ exclude_trees = []
 # The name of an image file (within the static path) to use as favicon of the
 # docs.  This file should be a Windows icon file (.ico) being 16x16 or 32x32
 # pixels large.
-#html_favicon = None
+html_favicon = 'Game_of_life_pulsar.gif'
 
 # If not '', a 'Last updated on:' timestamp is inserted at every page bottom,
 # using the given strftime format.

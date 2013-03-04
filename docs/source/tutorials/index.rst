@@ -13,8 +13,10 @@ Tutorials
 .. toctree::
    :maxdepth: 1
    
+   hello
    wsgi
    clients
+   httpbin
    proxy
    webmail
    
