@@ -19,6 +19,8 @@ Integers::
     # accept an integer between 1 and 200 only
     Route('<int(min=1,max=200):size>')
 
+.. _apps-wsgi-route-decorator:
+
 Route decorator
 ==================
 
@@ -26,7 +28,8 @@ Route decorator
    :members:
    :member-order: bysource
    
-   
+.. _apps-wsgi-route:
+
 Route
 ================
 

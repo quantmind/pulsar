@@ -1,5 +1,6 @@
 '''WSGI utilities and wrappers.
 
+.. _app-wsgi-request:
 
 Wsgi Request
 =====================
@@ -20,18 +21,15 @@ Wsgi Response
 '''
 import os
 import sys
-import json
-import textwrap
-import logging
 import time
 from datetime import datetime, timedelta
 from functools import partial, reduce
 from email.utils import formatdate
 
 import pulsar
-from pulsar import is_failure, HttpException, maybe_async, is_async
 from pulsar.utils.multipart import parse_form_data
 from pulsar.utils.structures import MultiValueDict
+from pulsar.utils.html import escape
 from pulsar.utils.httpurl import Headers, SimpleCookie, responses,\
                                  has_empty_content, string_type, ispy3k,\
                                  to_bytes, REDIRECT_CODES, iteritems,\
@@ -40,79 +38,21 @@ from pulsar.utils.httpurl import Headers, SimpleCookie, responses,\
 from .middleware import is_streamed
 from .route import Route
 from .content import HtmlDocument
+from .utils import LOGGER, set_wsgi_request_class, set_cookie
 
 
 __all__ = ['WsgiResponse',
            'WsgiRequest',
-           'handle_wsgi_error',
-           'wsgi_error_msg',
-           'async_wsgi']
+           'wsgi_cache_property']
 
 
-LOGGER = logging.getLogger('pulsar.wsgi')
-
-
-def wsgi_iterator(gen, encoding):
-    for data in gen:
-        if isinstance(data, bytes):
-            yield data
-        else:
-            yield data.encode(encoding)
-
-
-def async_wsgi(request, result, callback):
-    result = maybe_async(result)
-    while is_async(result):
-        yield b''
-        result = maybe_async(result)
-    for b in callback(request, result):
-        yield b
-                    
-                    
-def cookie_date(epoch_seconds=None):
-    """Formats the time to ensure compatibility with Netscape's cookie
-    standard.
-
-    Accepts a floating point number expressed in seconds since the epoch in, a
-    datetime object or a timetuple.  All times in UTC.  The :func:`parse_date`
-    function can be used to parse such a date.
-
-    Outputs a string in the format ``Wdy, DD-Mon-YYYY HH:MM:SS GMT``.
-
-    :param expires: If provided that date is used, otherwise the current.
-    """
-    rfcdate = formatdate(epoch_seconds)
-    return '%s-%s-%s GMT' % (rfcdate[:7], rfcdate[8:11], rfcdate[12:25])
-
-def set_cookie(cookies, key, value='', max_age=None, expires=None, path='/',
-                domain=None, secure=False, httponly=False):
-    '''Set a cookie key into the cookies dictionary *cookies*.'''
-    cookies[key] = value
-    if expires is not None:
-        if isinstance(expires, datetime):
-            delta = expires - expires.utcnow()
-            # Add one second so the date matches exactly (a fraction of
-            # time gets lost between converting to a timedelta and
-            # then the date string).
-            delta = delta + timedelta(seconds=1)
-            # Just set max_age - the max_age logic will set expires.
-            expires = None
-            max_age = max(0, delta.days * 86400 + delta.seconds)
-        else:
-            cookies[key]['expires'] = expires
-    if max_age is not None:
-        cookies[key]['max-age'] = max_age
-        # IE requires expires, so set it if hasn't been already.
-        if not expires:
-            cookies[key]['expires'] = cookie_date(time.time() + max_age)
-    if path is not None:
-        cookies[key]['path'] = path
-    if domain is not None:
-        cookies[key]['domain'] = domain
-    if secure:
-        cookies[key]['secure'] = True
-    if httponly:
-        cookies[key]['httponly'] = True
+def wsgi_cache_property(f):
+    name = f.__name__
+    def _(self):
+        if name not in self.cache:
+            self.cache[name] = f(self)
+        return self.cache[name]
+    return property(_, doc=f.__doc__)
 
 
 class WsgiResponse(object):
@@ -289,16 +229,7 @@ This is usually `True` if a generator is passed to the response object."""
         for c in self.cookies.values():
             headers['Set-Cookie'] = c.OutputString()
         return list(headers)
-
-
-def wsgi_cache_property(f):
-    name = f.__name__
-    def _(self):
-        if name not in self.cache:
-            self.cache[name] = f(self)
-        return self.cache[name]
-    return property(_, doc=f.__doc__)
-    
+        
     
 class WsgiRequest(object):
     '''A thin wrapper around a WSGI_ environ. Instances of this class
@@ -312,13 +243,15 @@ other attribute is stored in the :attr:`environ` itself at the
 '''
     slots = ('environ',)
     
-    def __init__(self, environ, start_response, urlargs=None):
+    def __init__(self, environ, start_response=None, app_handler=None,
+                 urlargs=None):
         self.environ = environ
         if 'pulsar.cache' not in environ:
             environ['pulsar.cache'] = {}
             self.cache['response'] = WsgiResponse(environ=environ,
                                                   start_response=start_response)
-        self.cache['urlargs'] = urlargs
+            self.cache['app_handler'] = app_handler
+            self.cache['urlargs'] = urlargs
     
     def __repr__(self):
         return self.path
@@ -336,6 +269,11 @@ at the wsgi-extension key ``pulsar.cache``.'''
     def response(self):
         '''The :class:`WsgiResponse` for this request.'''
         return self.cache['response']
+    
+    @property
+    def app_handler(self):
+        '''The WSGI application handling this request.'''
+        return self.cache['app_handler']
     
     @property
     def urlargs(self):
@@ -391,149 +329,15 @@ data from the `QUERY_STRING` in :attr:`environ`.'''
     
     @wsgi_cache_property
     def html_document(self):
+        '''Return a cached instance of an
+:ref:`Html document <app-wsgi-html-document>`.'''
         return HtmlDocument()
     
     def get(self, key, default=None):
         '''Shortcut to the :attr:`environ` get method.'''
         return self.environ.get(key, default)
     
-    
-################################################################################
-##    Utilities
-def _gen_query(query_string, encoding):
-    # keep_blank_values=True
-    for key, value in parse_qsl((query_string or ''), True):
-        yield to_string(key, encoding, errors='replace'),\
-              to_string(value, encoding, errors='replace')
 
-def query_dict(query_string, encoding='utf-8'):
-    if query_string:
-        return MultiValueDict(_gen_query(query_string, encoding))
-    else:
-        return MultiValueDict()
-    
-    
-error_messages = {
-    500: 'An exception has occurred while evaluating your request.',
-    404: 'Cannot find what you are looking for.'
-}
+set_wsgi_request_class(WsgiRequest)
 
-def wsgi_error_msg(response, msg):
-    if response.content_type == 'application/json':
-        return json.dumps({'status': response.status_code,
-                           'message': msg})
-    else:
-        return msg
     
-class dump_environ(object):
-    __slots__ = ('environ',)
-    
-    def __init__(self, environ):
-        self.environ = environ
-        
-    def __str__(self):
-        env = iteritems(self.environ)
-        return '\n%s\n' % '\n'.join(('%s = %s' % (k, v) for k, v in env))
-    
-    
-def handle_wsgi_error(environ, trace=None, content_type=None,
-                        encoding=None):
-    '''The default handler for errors while serving an Http requests.
-
-:parameter environ: The WSGI environment.
-:parameter trace: the error traceback. If not avaiable it will be obtained from
-    ``sys.exc_info()``.
-:parameter content_type: Optional content type.
-:parameter encoding: Optional charset.
-:return: a :class:`WsgiResponse`
-'''
-    content_type = content_type or environ.get('CONTENT_TYPE')
-    if not trace:
-        trace = sys.exc_info()
-    error = trace[1]
-    if not content_type:
-        content_type = getattr(error, 'content_type', content_type)
-    response = WsgiResponse(content_type=content_type,
-                            environ=environ,
-                            encoding=encoding)
-    content = None
-    response.status_code = getattr(error, 'status', 500)
-    response.headers.update(getattr(error, 'headers', None) or ())
-    path = ' @ path "%s"' % environ.get('PATH_INFO','/')
-    e = dump_environ(environ)
-    if response.status_code == 500:
-        LOGGER.critical('Unhandled exception during WSGI response %s.%s',
-                        path, e, exc_info=trace)
-    else:
-        LOGGER.warn('WSGI %s status code %s.', response.status_code, path)
-        LOGGER.debug('%s', e, exc_info=trace)
-    if has_empty_content(response.status_code) or\
-       response.status_code in REDIRECT_CODES:
-        content = ()
-        response.content_type = None
-    else:
-        renderer = environ.get('wsgi_error_handler')
-        if renderer:
-            try:
-                content = renderer(environ, response, trace)
-                if is_failure(content):
-                    content.log()
-                    content = None
-            except Exception:
-                LOGGER.critical('Error while rendering error', exc_info=True)
-                content = None
-    if content is None:
-        msg = error_messages.get(response.status_code) or ''
-        if response.content_type == 'text/html':
-            content = textwrap.dedent("""\
-            <!DOCTYPE html>
-            <html>
-              <head>
-                <title>{0[reason]}</title>
-              </head>
-              <body>
-                <h1>{0[reason]}</h1>
-                {0[msg]}
-                <h3>{0[version]}</h3>
-              </body>
-            </html>
-            """).format({"reason": response.status, "msg": msg,
-                         "version": pulsar.SERVER_SOFTWARE})
-        else:
-            content = wsgi_error_msg(response, msg)
-    response.content = content
-    return response
-
-
-def render_trace(environ, response, exc_info):
-    '''Render the traceback into the content type in *response*.'''
-    if exc_info:
-        request = Request(environ)
-        trace = exc_info[2]
-        if istraceback(trace):
-            trace = traceback.format_exception(*exc_info)
-        is_html = response.content_type == 'text/html'
-        if is_html:
-            html = request.html(error=True)
-            #html.title = response.response
-            error = Widget('div', cn='section traceback error')
-            html.body.append(error)
-        else:
-            error = []
-        for traces in trace:
-            counter = 0
-            for trace in traces.split('\n'):
-                if trace.startswith('  '):
-                    counter += 1
-                    trace = trace[2:]
-                if not trace:
-                    continue
-                if is_html:
-                    trace = Widget('p', escape(trace))
-                    if counter:
-                        trace.css({'margin-left':'%spx' % (20*counter)})
-                error.append(trace)
-        if is_html:
-            return html.render(request)
-        else:
-            return wsgi_error_msg(response, '\n'.join(error))

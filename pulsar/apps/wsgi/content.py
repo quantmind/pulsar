@@ -14,6 +14,15 @@ Asynchronous Html
    :members:
    :member-order: bysource
    
+.. _app-wsgi-html-document:
+
+Html Document
+==================
+
+.. autoclass:: HtmlDocument
+   :members:
+   :member-order: bysource
+   
 StreamRenderer
 ==================
 
@@ -32,7 +41,7 @@ from pulsar.utils.html import slugify, INLINE_TAGS, tag_attributes, attr_iter,\
                                 csslink, dump_data_value
 from pulsar.utils.httpurl import remove_double_slash, urljoin
 
-__all__ = ['AsyncString', 'Html', 'Json']
+__all__ = ['AsyncString', 'Html', 'Json', 'HtmlDocument']
 
 
 class StreamRenderer(Deferred):
@@ -478,7 +487,8 @@ request object and a dictionary for rendering children with a key.
                 
                 
 class HtmlDocument(Html):
-    '''HTML5 asynchronous document.
+    '''HTML5 asynchronous document. An instance of this class can be obtained
+via the :attr:`pulsar.apps.wsgi.wrappers.WsgiRequest.html_document` attribute.
     
 .. attribute:: head
 

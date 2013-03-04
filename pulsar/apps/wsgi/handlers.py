@@ -10,9 +10,10 @@ development of server-side python web applications.
 WsgiHandler
 ======================
 
-The first and most basic handler is the :class:`WsgiHandler` which is
-a step above the hello callable above. It accepts two iterables,
-a list of wsgi middleware and an optional list of response middleware.
+The first and most basic application handler is the :class:`WsgiHandler`
+which is a step above the :ref:`hello callable <tutorials-hello-world>`
+in the tutorial. It accepts two iterables, a list of wsgi middleware
+and an optional list of response middleware.
 
 Response middleware is a callable of the form::
 
@@ -78,6 +79,8 @@ Lazy Wsgi Handler
 .. autoclass:: LazyWsgi
    :members:
    :member-order: bysource
+   
+.. _WSGI: http://www.wsgi.org
 '''
 import os
 import re
@@ -90,7 +93,7 @@ from pulsar.utils.log import LocalMixin
 from pulsar import Http404, PermissionDenied, HttpException
 
 from .route import Route
-from .wrappers import WsgiRequest
+from .utils import wsgi_request
 from .content import Html
 
 __all__ = ['WsgiHandler', 'LazyWsgi', 'Router',
@@ -152,15 +155,26 @@ first time it is called. Subclasses must implement the :meth:`setup` method.'''
     
     
 class Router(object):
-    '''A WSGI application which handle multiple :class:`Route`.
+    '''A WSGI application which handle multiple
+:ref:`routes <apps-wsgi-route>`. user must implement the HTTP method
+required by her application. For example if the route needs to serve a ``GET``
+request, the ``get(self, request)`` method must be implemented.
     
 .. attribute:: route
 
-    The class:`Route` served by this :class:`Router`.
+    The :ref:`Route <apps-wsgi-route>` served by this :class:`Router`.
 
 .. attribute:: routes
 
-    List of children :class.:`Router` of this :class:`Router`.
+    List of children :class:`Router` of this :class:`Router`.
+
+.. attribute:: parent
+
+    The parent :class:`Router` of this :class:`Router`.
+        
+.. attribute:: default_content_type
+
+    Default content type for this :class:`Router`
     
 .. attribute:: parameters
 
@@ -168,16 +182,16 @@ class Router(object):
 '''
     creation_count = 0
     default_content_type=None
-    request_class = WsgiRequest
-    routes = []
+    _parent = None
     def __init__(self, rule, *routes, **parameters):
         self.__class__.creation_count += 1
         self.creation_count = self.__class__.creation_count
         if not isinstance(rule, Route):
             rule = Route(rule)
         self.route = rule
-        self.routes = list(self.routes)
-        self.routes.extend(routes)
+        self.routes = []
+        for router in routes:
+            self.add_child(router)
         self.parameters = {}
         rule_methods = []
         for name, callable in self.__class__.__dict__.items():
@@ -191,13 +205,24 @@ class Router(object):
             parameters = params.copy()
             parameters[method] = getattr(self, name)
             router = Router(rule, **parameters)
-            self.routes.append(router)
+            self.add_child(router)
         for name, value in parameters.items():
             if not hasattr(self, name) and hasattr(value, '__call__'):
                 setattr(self, name, value)
             else:
                 self.parameters[name] = value
-        
+    
+    @property
+    def root(self):
+        if self.parent:
+            return self.parent.root
+        else:
+            return self
+     
+    @property
+    def parent(self):
+        return self._parent
+       
     def __repr__(self):
         return self.route.__repr__()
         
@@ -207,7 +232,8 @@ class Router(object):
         router_args = self.resolve(path)
         if router_args:
             router, args = router_args
-            request = self.request_class(environ, start_response, args)
+            request = wsgi_request(environ, start_response, router, args)
+            request.response.content_type = self.content_type(request)
             method = request.method.lower()
             callable = getattr(router, method, None)
             if callable is None:
@@ -216,6 +242,8 @@ class Router(object):
             return callable(request)
         
     def resolve(self, path, urlargs=None):
+        '''Resolve a path and return a ``(handler, urlargs)`` tuple or
+``None`` if the path could not be resolved.'''
         urlargs = urlargs if urlargs is not None else {}
         match = self.route.match(path)
         if match is None:
@@ -231,6 +259,21 @@ class Router(object):
         else:
             return self, match
     
+    def add_child(self, router):
+        '''Add a new :class:`Router` to the :attr:`routes` list.'''
+        assert isinstance(router, Router), 'Not a valid Router'
+        assert router is not self, 'cannot add self to children'
+        if router.parent:
+            router.parent.remove_child(router)
+        router._parent = self
+        self.routes.append(router)
+        
+    def remove_child(self, router):
+        '''remove a :class:`Router` from the :attr:`routes` list.'''
+        if router in self.routes:
+             self.routes.remove(router)
+             router._parent = None
+        
     def link(self, *args, **urlargs):
         '''Return an anchor :class:`Html` element with the `href` attribute
 set to the url of this :class:`Router`.'''
@@ -242,6 +285,37 @@ set to the url of this :class:`Router`.'''
         else:
             text = url
         return Html('a', text, href=url)
+    
+    def sitemap(self, root=None):
+        '''This utility method returns a sitemap starting at root.
+If *root* is ``None`` it starts from this :class:`Router`.
+
+:param request: a :ref:`wsgi request wrapper <app-wsgi-request>`
+:param root: Optional url path where to start the sitemap.
+    By default it starts from this :class:`Router`. Pass `"/"` to
+    start from the root :class:`Router`.
+:param levels: Number of nested levels to include.
+:return: A list of children
+'''
+        if not root:
+            root = self
+        else:
+            handler_urlargs = self.root.resolve(root)
+            if handler_urlargs:
+                root, urlargs = handler_urlargs
+            else:
+                return []
+        return list(self.routes)
+    
+    def content_type(self, request):
+        '''The content type of this :class:`Router`. By default it returns
+the :attr:`default_content_type`. Override if you need to.'''
+        return self.default_content_type
+    
+    def encoding(self, request):
+        '''The encoding to use for the response. By default it
+returns ``utf-8``.'''
+        return 'utf-8'
     
 
 class MediaMixin(Router):

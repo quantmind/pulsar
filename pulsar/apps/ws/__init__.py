@@ -95,9 +95,10 @@ headers to send back to the client.'''
         
     
 class WebSocket(GeneralWebSocket):
-    """A :class:`pulsar.apps.wsgi.Router` middleware for handling
-the websocket handshake at a given route. Once the handshake is succesful,
-it upgrades the websocket protocol served by a custom :class:`WS`
+    """A specialised :ref:`Router <apps-wsgi-router>` middleware for
+handling the websocket handshake at a given route.
+Once the handshake is succesful,
+it upgrades to the websocket protocol served by a custom :class:`WS`
 handler.
 
 To create a valid :class:`WebSocket` middleware initialise as follow::
