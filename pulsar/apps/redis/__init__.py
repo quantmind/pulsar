@@ -81,8 +81,8 @@ class RedisRequest(object):
                 return self.close()
     
     def close(self):
-        c = self.client
-        response = c.parse_response(self, self.command_name, **self.options)
+        response = self.client.parse_response(self, self.command_name,
+                                              **self.options)
         if isinstance(response, Exception):
             raise response
         return response

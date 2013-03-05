@@ -38,7 +38,7 @@ from pulsar.utils.httpurl import Headers, SimpleCookie, responses,\
 from .middleware import is_streamed
 from .route import Route
 from .content import HtmlDocument
-from .utils import LOGGER, set_wsgi_request_class, set_cookie
+from .utils import LOGGER, set_wsgi_request_class, set_cookie, query_dict
 
 
 __all__ = ['WsgiResponse',
@@ -250,6 +250,8 @@ other attribute is stored in the :attr:`environ` itself at the
             environ['pulsar.cache'] = {}
             self.cache['response'] = WsgiResponse(environ=environ,
                                                   start_response=start_response)
+        if start_response:
+            self.response.start_response = start_response
             self.cache['app_handler'] = app_handler
             self.cache['urlargs'] = urlargs
     

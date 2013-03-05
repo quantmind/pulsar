@@ -4,9 +4,9 @@ from pulsar.apps.redis import RedisClient, StrictRedis
 from pulsar.apps.test import unittest
 
 try:
-    import stdnet
+    from stdnet import getdb
 except ImportError:
-    stdnet = None
+    getdb = None
     
 
 class RedisTestMixin(object):
@@ -18,14 +18,6 @@ class RedisTestMixin(object):
     
     def client(self, **options):
         raise NotImplementedError
-        
-    
-    
-@unittest.skipUnless(StrictRedis, 'Requires redis installed')
-class RedisTest(RedisTestMixin, unittest.TestCase):
-    
-    def client(self, **options):
-        return StrictRedis(connection_pool=self._client(**options))
     
     def test_ping(self):
         client = self.client()
@@ -38,8 +30,21 @@ class RedisTest(RedisTestMixin, unittest.TestCase):
         self.assertTrue(result)
         result = yield client.get('a')
         self.assertEqual(result, b'foo')
+        
+        
+@unittest.skipUnless(StrictRedis, 'Requires redis installed')
+class RedisTest(RedisTestMixin, unittest.TestCase):
+    
+    def client(self, **options):
+        return StrictRedis(connection_pool=self._client(**options))
             
 
-@unittest.skipUnless(stdnet, 'Requires stdnet installed')
+@unittest.skipUnless(getdb, 'Requires stdnet installed')
 class StednetTest(RedisTestMixin, unittest.TestCase):
-    pass
+    
+    def getdb(self, **options):
+        return getdb(self.cfg.redis_server, connection_pool=RedisClient)
+    
+    def client(self):
+        return self.getdb().client
+    

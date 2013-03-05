@@ -38,10 +38,10 @@ from functools import partial
 from pulsar import Deferred, MultiDeferred, is_async, maybe_async, is_failure
 from pulsar.utils.pep import iteritems, is_string
 from pulsar.utils.html import slugify, INLINE_TAGS, tag_attributes, attr_iter,\
-                                csslink, dump_data_value
+                                csslink, dump_data_value, child_tag
 from pulsar.utils.httpurl import remove_double_slash, urljoin
 
-__all__ = ['AsyncString', 'Html', 'Json', 'HtmlDocument']
+__all__ = ['AsyncString', 'Html', 'Json', 'HtmlDocument', 'html_factory']
 
 
 class StreamRenderer(Deferred):
@@ -191,7 +191,17 @@ class Json(AsyncString):
         else:
             return json.dumps(stream)
         
-    
+
+def html_factory(tag, **defaults):
+    '''Returns an :class:`Html` factory function for *tag* and a given
+dictionary of *defaults* parameters.'''
+    def html_input(**params):
+        p = defaults.copy()
+        p.update(params)
+        return Html(tag, **p)
+    return html_input
+
+
 class Html(AsyncString):
     '''An :class:`AsyncString` for html elements.
 The :attr:`AsyncString.content_type` attribute is set to `text/html`.
@@ -220,7 +230,7 @@ The :attr:`AsyncString.content_type` attribute is set to `text/html`.
     
     @property
     def available_attributes(self):
-        return tag_attributes(self._tag)
+        return tag_attributes(self._tag, self._attr.get('type'))
     
     def __repr__(self):
         if self._tag and self._tag in INLINE_TAGS:
@@ -230,12 +240,24 @@ The :attr:`AsyncString.content_type` attribute is set to `text/html`.
         else:
             return self.__class__.__name__
     
-    def _setup(self, cn=None, attr=None, css=None, data=None, **params):
+    def append(self, child):
+        if child:
+            tag = child_tag(self._tag)
+            if tag and ((isinstance(child, Html) and child.tag != tag) or not
+                        child.startswith('<%s' % tag)):
+                child = Html(tag, child)
+        return super(Html, self).append(child)
+             
+    def _setup(self, cn=None, attr=None, css=None, data=None, type=None,
+               **params):
         self.addClass(cn)
         self.data(data)
         self.attr(attr)
         self.css(css)
         attributes = self.available_attributes
+        if type and type in attrbutes:
+            self.attr('type', type)
+            attributes = self.available_attributes
         for name, value in iteritems(params):
             if name in attributes:
                 self.attr(name, value)

@@ -167,6 +167,9 @@ By default it calls the :meth:`Connection.finished` method of the
 :attr:`connection` attribute.'''
         if self._connection:
             return self._connection.finished(self, result)
+        else:
+            # No connection available. Just fire the finish callback
+            self.fire_event('finish', result)
         
     def connection_lost(self, exc):
         self.finished(exc)

@@ -95,6 +95,9 @@ of available connections.'''
         if is_failure(exc) and exc.is_instance((socket.timeout, socket.error)):
             # Have we been here before?
             consumer = connection.current_consumer
+            if consumer is None:
+                # No consumer, The address was probably wrong. Connection Refused
+                return
             client = connection.producer
             received = getattr(consumer, '_received_count', -1)
             # The connection has processed request before and the consumer

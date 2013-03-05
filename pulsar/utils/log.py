@@ -126,6 +126,18 @@ def local_method(f):
 
 def local_property(f):
     return property(local_method(f), doc=f.__doc__)
+
+def lazymethod(f):
+    name = '_lazy_%s' % f.__name__
+    def _(self):
+        if not hasattr(self, name):
+            setattr(local, name, f(self))
+        return getattr(self, name)
+    _.__doc__ = f.__doc__
+    return _
+
+def lazyproperty(f):
+    return property(local_method(f), doc=f.__doc__)
     
     
 def process_global(name, val=None, setval=False):
@@ -157,7 +169,7 @@ and utilities for pickle.'''
         self.configure_logging(**info)
     
     def configure_logging(self, logger=None, config=None, level=None,
-                          handlers=None):
+                            handlers=None):
         '''Configure logging. This function is invoked every time an
 instance of this class is un-serialised (possibly in a different
 process domain).'''

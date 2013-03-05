@@ -4,6 +4,7 @@ import logging
 import traceback
 from inspect import istraceback
 
+import pulsar
 from pulsar.utils.structures import MultiValueDict
 from pulsar import is_failure, HttpException, maybe_async, is_async, get_actor
 from pulsar.utils.html import escape

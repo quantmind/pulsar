@@ -338,9 +338,18 @@ as only attribute.'''
             self._event_loop.remove_writer(self.fileno())
             self._sock.close()
             self._sock = None
-            self._protocol.connection_lost(exc)
+            if self.connecting:
+                if not exc:
+                    try:
+                        raise RuntimeError('Could not connect. Closing.')
+                    except RuntimeError as e:
+                        exc = e
+                self._connector.callback(exc)
+            else:
+                self._protocol.connection_lost(exc)
         
     def _ready_connect(self):
+        # Called when a connection has been made
         connector = self._connector
         self.remove_connector()
         connector.callback(self)
@@ -453,6 +462,9 @@ class TransportProxy(object):
         
         
 class Connector(Deferred, TransportProxy):
+    '''A :class:`Connector` is in place of the :class:`Connection` during
+a connection operation. Once the connection with end-point is established, the
+connector fires its callbacks.'''
     processed = 0
     def __init__(self, transport):
         self._transport = transport
@@ -469,8 +481,16 @@ class Connector(Deferred, TransportProxy):
         
     def _connection_failure(self, failure):
         self._transport._protocol.connection_lost(failure)
+        return failure
         
     def set_consumer(self, consumer):
         consumer._connection = self
-        self.add_callback(lambda c: c.set_consumer(consumer))
+        # add callback and errorback to self
+        self.add_callback(lambda c: c.set_consumer(consumer),
+                          lambda f: consumer.connection_lost(f))
+        
+    def finished(self, consumer, exc):
+        # Called by the protocol consumer when the connector is still in place
+        # of the connection
+        consumer.fire_event('finish')
         

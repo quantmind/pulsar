@@ -89,8 +89,9 @@ import mimetypes
 from email.utils import parsedate_tz, mktime_tz
 
 from pulsar.utils.httpurl import http_date, CacheControl, remove_double_slash
+from pulsar.utils.structures import AttributeDictionary
 from pulsar.utils.log import LocalMixin
-from pulsar import Http404, PermissionDenied, HttpException
+from pulsar import Http404, PermissionDenied, HttpException, async
 
 from .route import Route
 from .utils import wsgi_request
@@ -178,7 +179,7 @@ request, the ``get(self, request)`` method must be implemented.
     
 .. attribute:: parameters
 
-    Dictionary of parameters
+    A :class:`pulsar.utils.structures.AttributeDictionary` of parameters.
 '''
     creation_count = 0
     default_content_type=None
@@ -192,7 +193,7 @@ request, the ``get(self, request)`` method must be implemented.
         self.routes = []
         for router in routes:
             self.add_child(router)
-        self.parameters = {}
+        self.parameters = AttributeDictionary()
         rule_methods = []
         for name, callable in self.__class__.__dict__.items():
             rule_method = getattr(callable, 'rule_method', None)
@@ -200,12 +201,15 @@ request, the ``get(self, request)`` method must be implemented.
                 rule_method = list(rule_method)
                 rule_method.append(name)
                 rule_methods.append(rule_method)
+        # Create the method handler
         for rule_method in sorted(rule_methods, key=lambda r: r[3]):
             rule, method, params, count, name = rule_method
-            parameters = params.copy()
-            parameters[method] = getattr(self, name)
-            router = Router(rule, **parameters)
-            self.add_child(router)
+            rparameters = params.copy()
+            handler = getattr(self, name)
+            if rparameters.pop('async', False): # asynchronous method
+                handler = async(handler)
+            router = self.add_child(Router(rule, **rparameters))
+            setattr(router, method, getattr(self, name))
         for name, value in parameters.items():
             if not hasattr(self, name) and hasattr(value, '__call__'):
                 setattr(self, name, value)
@@ -263,10 +267,15 @@ request, the ``get(self, request)`` method must be implemented.
         '''Add a new :class:`Router` to the :attr:`routes` list.'''
         assert isinstance(router, Router), 'Not a valid Router'
         assert router is not self, 'cannot add self to children'
+        for r in self.routes:
+            if r.route == router.route:
+                r.paramaters.update(router.parameters)
+                return r
         if router.parent:
             router.parent.remove_child(router)
         router._parent = self
         self.routes.append(router)
+        return router
         
     def remove_child(self, router):
         '''remove a :class:`Router` from the :attr:`routes` list.'''
@@ -300,7 +309,7 @@ If *root* is ``None`` it starts from this :class:`Router`.
         if not root:
             root = self
         else:
-            handler_urlargs = self.root.resolve(root)
+            handler_urlargs = self.root.resolve(root[1:])
             if handler_urlargs:
                 root, urlargs = handler_urlargs
             else:

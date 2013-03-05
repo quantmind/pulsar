@@ -13,7 +13,7 @@ class RedisServer(TestPlugin):
     name = "redis_server"
     flags = ["--redis-server"]
     desc = 'Back-end data server where to run redis tests.'
-    default = 'redis://127.0.0.1:6349'
+    default = 'redis://127.0.0.1:6379'
 
 if __name__ == '__main__':
     print(sys.version)

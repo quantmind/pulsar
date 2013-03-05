@@ -6,23 +6,50 @@ from collections import namedtuple
 
 from .pep import to_string, iteritems, is_string, string_type
 
-NOTHING = ('', None)
+NOTHING = ('', b'', None)
 INLINE_TAGS = set(('input', 'meta', 'hr'))
 DEFAULT_HTML_ATTRIBUTES = ('id', 'title')
 HTML_ATTRIBUTES = {}
+HTML_CHILDREN_TAG = {}
 
 e = lambda *t: DEFAULT_HTML_ATTRIBUTES + t
+input_attr = lambda *t: e('type', 'autocomplete', 'autofocus', 'disabled', 'form',
+                          'formnovalidate', 'list', 'max', 'maxlength', 'min',
+                          'multiple', 'name', 'pattern', 'placeholder',
+                          'required', 'size', 'step', 'value', *t)
 
 HTML_ATTRIBUTES['a'] = e('href', 'name', 'target')
 HTML_ATTRIBUTES['meta'] = e('name', 'charset', 'content')
 HTML_ATTRIBUTES['th'] = e('colspan', 'headers', 'rowspan', 'scope')
+HTML_ATTRIBUTES['select'] = e('autofocus', 'disabled', 'form', 'multiple',
+                              'name', 'required', 'size')
+HTML_ATTRIBUTES['input'] = input_attr()
+HTML_ATTRIBUTES['input[type="checkbox"]'] = input_attr('checked')
+HTML_ATTRIBUTES['input[type="file"]'] = input_attr('accept')
+HTML_ATTRIBUTES['input[type="image"]'] = input_attr('alt', 'formaction',
+                                    'formenctype', 'formmethod', 'formtarget',
+                                    'height', 'src', 'width')
+HTML_ATTRIBUTES['input[type="radio"]'] = input_attr('checked')
+HTML_ATTRIBUTES['input[type="submit"]'] = input_attr('formaction',
+                                    'formenctype', 'formmethod', 'formtarget')
 
+HTML_CHILDREN_TAG['ul'] = 'li'
+HTML_CHILDREN_TAG['ol'] = 'li'
+HTML_CHILDREN_TAG['select'] = 'option'
 
 csslink = namedtuple('cssentry', 'link condition')
 
-def tag_attributes(tag):
+def tag_attributes(tag, type=None):
+    '''Return a tuple of valid attributes for *tag* and optional *type*.'''
+    if type:
+        ntag = '%s[type="%s"]' % (tag, type)
+        if ntag in HTML_ATTRIBUTES:
+            return HTML_ATTRIBUTES[ntag]
     return HTML_ATTRIBUTES.get(tag, DEFAULT_HTML_ATTRIBUTES)
     
+def child_tag(tag):
+    return HTML_CHILDREN_TAG.get(tag)
+
 def slugify(value, rtx='_'):
     '''Normalizes string, removes non-alpha characters,
 and converts spaces to hyphens *rtx* character'''
