@@ -54,7 +54,7 @@ class TestCallable:
         try:
             result = test_function()
         except Exception as e:
-            result = e
+            result = sys.exc_info()
         result = maybe_async(result, timeout=self.timeout)
         if is_async(result):
             return result.add_both(partial(self._end, actor, True))
