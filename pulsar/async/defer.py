@@ -169,8 +169,8 @@ Typical usage::
         def _(*args, **kwargs):
             try:
                 result = func(*args, **kwargs)
-            except Exception as e:
-                result = e
+            except Exception:
+                result = sys.exc_info()
             return maybe_async(result, description=description,
                                max_errors=self.max_errors, timeout=self.timeout)
         _.__name__ = func.__name__
@@ -600,8 +600,8 @@ function when a generator is passed as argument.'''
             result = self.gen.send(last_result)
         except StopIteration:
             return self._conclude(last_result)
-        except Exception as e:
-            result = e
+        except Exception:
+            result = sys.exc_info()
         result = maybe_async(result)
         if is_async(result):
             result.add_both(self._restart)
