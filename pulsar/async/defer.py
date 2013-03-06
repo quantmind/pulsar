@@ -58,12 +58,14 @@ inspect.isgenerator function.'''
 def is_stack_trace(trace):
     if isinstance(trace, remote_stacktrace):
         return True
-    elif isinstance(trace,tuple) and len(trace) == 3:
+    elif isinstance(trace, tuple) and len(trace) == 3:
         return istraceback(trace[2]) or\
-                 (trace[2] is None and isinstance(trace[1],trace[0]))
+                 (trace[2] is None and isinstance(trace[1], trace[0]))
     return False
     
 def multi_async(iterable, **kwargs):
+    '''This is an utility function to convert an *iterable* into a
+:class:`MultiDeferred` element.'''
     return MultiDeferred(iterable, **kwargs).lock()
 
 def log_failure(failure):
