@@ -1,4 +1,5 @@
 import io
+import sys
 import socket
 import logging
 from inspect import isgenerator
@@ -281,9 +282,10 @@ returns ``self``.'''
             if self._protocol_connect(address):
                 self.remove_connector()
                 return c.callback(True)
-        except Exception as e:
+        except Exception:
             self.remove_connector()
-            return c.callback(e)
+            c.callback(sys.exc_info())
+            raise
         # waiting for a callback
         return c
         
