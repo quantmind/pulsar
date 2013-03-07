@@ -343,9 +343,10 @@ response).'''
     def finished(self, consumer, result=None):
         '''Call this method to close the current *consumer*.'''
         if consumer and consumer is self._current_consumer:
+            # make sure the current consumer is set to None before callbacks
+            self._current_consumer = None
             self.fire_event('post_request', consumer)
             consumer.fire_event('finish', result)
-            self._current_consumer = None
             consumer._connection = None
         else:
             raise RuntimeError()
