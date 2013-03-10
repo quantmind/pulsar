@@ -619,7 +619,8 @@ function when a generator is passed as argument.'''
     
     def _conclude(self, last_result=None):
         # Conclude the generator and callback the listeners
-        result = last_result if not self.errors else self.errors
+        #result = last_result if not self.errors else self.errors
+        result = last_result
         del self.gen
         del self.errors
         return self.callback(result)
@@ -641,12 +642,12 @@ which may be :class:`Deferred`.
     _time_locked = None
     _time_finished = None
 
-    def __init__(self, data=None, type=None, fireOnOneErrback=False,
+    def __init__(self, data=None, type=None, raise_on_error=False,
                  handle_value=None, log_failure=False):
         self._deferred = {}
         self._failures = Failure()
         self.log_failure = log_failure
-        self.fireOnOneErrback = fireOnOneErrback
+        self.raise_on_error = raise_on_error
         self.handle_value = handle_value
         if not type:
             type = data.__class__ if data is not None else list
@@ -731,7 +732,7 @@ both ``list`` and ``dict`` types.'''
             self._add_deferred(key, value)
 
     def _make(self, value):
-        md = self.__class__(value, fireOnOneErrback=self.fireOnOneErrback,
+        md = self.__class__(value, raise_on_error=self.raise_on_error,
                             handle_value=self.handle_value)
         return maybe_async(md.lock())
 
@@ -755,7 +756,7 @@ both ``list`` and ``dict`` types.'''
                                ' cannot finish whilst waiting for '
                                'dependents %r' % self._deferred)
         self._time_finished = default_timer()
-        if self.fireOnOneErrback and self._failures:
+        if self.raise_on_error and self._failures:
             self.callback(self._failures)
         else:
             self.callback(self._stream)

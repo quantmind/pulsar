@@ -35,7 +35,7 @@ import json
 from collections import Mapping
 from functools import partial
 
-from pulsar import Deferred, MultiDeferred, is_async, maybe_async, is_failure
+from pulsar import Deferred, multi_async, is_async, maybe_async, is_failure
 from pulsar.utils.pep import iteritems, is_string
 from pulsar.utils.html import slugify, INLINE_TAGS, tag_attributes, attr_iter,\
                                 csslink, dump_data_value, child_tag
@@ -50,9 +50,8 @@ class StreamRenderer(Deferred):
     def __init__(self, stream, renderer, handle_value=None, **params):
         super(StreamRenderer, self).__init__()
         handle_value = handle_value or self._handle_value
-        self._m = MultiDeferred(stream, fireOnOneErrback=True,
-                                handle_value=handle_value,
-                                **params).lock()
+        self._m = multi_async(stream, raise_on_error=True,
+                              handle_value=handle_value, **params)
         self._m.add_callback(renderer).add_both(self.callback)
 
     def _handle_value(self, value):
