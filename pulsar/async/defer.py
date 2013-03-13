@@ -595,7 +595,7 @@ function when a generator is passed as argument.'''
             elif last_result is not self.errors:
                 self.errors.append(last_result)
             if self.max_errors and len(self.errors) >= self.max_errors:
-                return self._conclude()
+                return self._conclude(last_result)
         try:
             result = self.gen.send(last_result)
         except StopIteration:
@@ -617,13 +617,11 @@ function when a generator is passed as argument.'''
         # the passed result (which is not asynchronous).
         return result
     
-    def _conclude(self, last_result=None):
+    def _conclude(self, last_result):
         # Conclude the generator and callback the listeners
-        #result = last_result if not self.errors else self.errors
-        result = last_result
         del self.gen
         del self.errors
-        return self.callback(result)
+        return self.callback(last_result)
         
 ############################################################### MultiDeferred
 class MultiDeferred(Deferred):
