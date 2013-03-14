@@ -18,7 +18,7 @@ __all__ = ['Transport', 'SocketTransport', 'TransportProxy', 'create_transport']
 
 
 def create_transport(protocol, sock=None, address=None, event_loop=None, 
-                       source_address=None, **kw):
+                     source_address=None, **kw):
     '''Create a new connection with a remote server. It returns
 a :class:`Transport` for the connection.'''
     sock = create_socket(sock=sock, address=address)

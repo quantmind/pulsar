@@ -2,7 +2,7 @@ import socket
 from functools import partial, reduce
 
 from pulsar import TooManyConnections
-from pulsar.utils.pep import get_event_loop, itervalues
+from pulsar.utils.pep import get_event_loop, new_event_loop, itervalues
 from pulsar.utils.sockets import get_transport_type, create_socket
 from pulsar.async.defer import is_failure
 
@@ -83,7 +83,8 @@ of available connections.'''
             connection.bind_event('connection_lost',
                                   partial(self._try_reconnect, connection))
             #IMPORTANT: create client transport an connect to endpoint
-            transport = create_transport(connection, address=connection.address)
+            transport = create_transport(connection, address=connection.address,
+                                         event_loop=client.get_event_loop())
             return transport.connect(connection.address)
         else:
             return connection
@@ -140,6 +141,12 @@ of available connections.'''
 class Client(EventHandler):
     '''A client for a remote server which handles one or more
 :class:`ConnectionPool` of asynchronous connections.
+
+.. attribute:: force_sync
+    Force a synchronous client, that is a client which has it
+    own :class:`EventLoop`.
+    
+    Default: `False`
 '''
     max_reconnect = 1
     '''Can reconnect on socket error.'''
@@ -168,7 +175,7 @@ will remain as a class attribute, otherwise it will be an instance attribute.'''
     
     def __init__(self, max_connections=None, timeout=None, client_version=None,
                  trust_env=True, consumer_factory=None, max_reconnect=None,
-                 **params):
+                 force_sync=False, **params):
         super(Client, self).__init__()
         self.trust_env = trust_env
         self.client_version = client_version or self.client_version
@@ -180,6 +187,8 @@ will remain as a class attribute, otherwise it will be an instance attribute.'''
             self.connection_pools = {}
         if max_reconnect:
             self.max_reconnect = max_reconnect
+        self.force_sync = force_sync
+        self._event_loop = None
         self.setup(**params)
     
     def setup(self, **params):
@@ -200,6 +209,15 @@ will remain as a class attribute, otherwise it will be an instance attribute.'''
     def available_connections(self):
         return reduce(lambda x,y: x + y, (p.available_connections for p in\
                                           itervalues(self.connection_pools)), 0)
+        
+    def get_event_loop(self):
+        if self._event_loop:
+            return self._event_loop
+        elif self.force_sync:
+            self._event_loop = new_event_loop(iothreadloop=False)
+            return self._event_loop
+        else:
+            return get_event_loop()
     
     def hash(self, address, timeout, request):
         return hash((address, timeout))
@@ -224,7 +242,8 @@ start the response.
         consumer = self.consumer_factory(conn)
         # start the request
         consumer.new_request(request)
-        return consumer
+        result = self.get_event_loop().run_until_complete(consumer.on_finished)
+        return result or consumer
     
     def get_connection(self, request):
         '''Get a suitable :class:`Connection` for *request*.'''

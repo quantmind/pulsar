@@ -127,7 +127,7 @@ class EventLoopPolicy:
         """XXX"""
         raise NotImplementedError
 
-    def new_event_loop(self):
+    def new_event_loop(self, **kwargs):
         """XXX"""
         raise NotImplementedError
 
@@ -157,6 +157,6 @@ def set_event_loop(event_loop):
     """XXX"""
     get_event_loop_policy().set_event_loop(event_loop)
 
-def new_event_loop():
+def new_event_loop(**kwargs):
     """XXX"""
-    return get_event_loop_policy().new_event_loop()
+    return get_event_loop_policy().new_event_loop(**kwargs)

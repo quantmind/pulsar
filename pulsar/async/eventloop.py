@@ -21,7 +21,7 @@ from pulsar.utils.pep import default_timer, set_event_loop_policy,\
 from pulsar.utils.sockets import SOCKET_INTERRUPT_ERRORS
 
 from .access import thread_local_data
-from .defer import log_failure, Deferred
+from .defer import log_failure, Deferred, CancelledError
 from .transports import create_server
 
 __all__ = ['EventLoop', 'TimedCall', 'asynchronous']
@@ -44,6 +44,10 @@ def setid(self):
 
 class StopEventLoop(BaseException):
     """Raised to stop the event loop."""
+    
+    
+class TimeoutEventLoop(StopEventLoop):
+    """Raised when timing out the event loop."""
 
 
 class EventLoopPolicy(BaseEventLoopPolicy):
@@ -309,7 +313,7 @@ event loop is the place where most asynchronous operations are carried out.
     poll_timeout = 0.5
 
     def __init__(self, io=None, logger=None, poll_timeout=None, timer=None,
-                  iothreadloop=True):
+                 iothreadloop=True):
         self._impl = io or IOpoll()
         self.fd_factory = getattr(self._impl, 'fd_factory', FileDescriptor)
         self.timer = timer or default_timer
@@ -381,6 +385,29 @@ event loop is the place where most asynchronous operations are carried out.
                     pass
             finally:
                 self._after_run()
+                
+    def run_until_complete(self, future, timeout=None):
+        '''Run the event loop until a Future is done.
+
+        Return the Future's result, or raise its exception.
+
+        If timeout is not None, run it for at most that long;
+        if the Future is still not done, raise TimeoutError
+        (but don't cancel the Future).'''
+        if not self.running:
+            self.call_soon(future.add_both, self._raise_stop_event_loop)
+            handler = None
+            if timeout:
+                handler = self.call_later(timeout,
+                                          self._raise_timeout_event_loop)
+            try:
+                self.run()
+            except TimeoutEventLoop:
+                raise CancelledError
+            except StopEventLoop:
+                if handler:
+                    handler.cancel()
+            return future.result_or_self()
         
     def stop(self):
         '''Stop the loop after the current event loop iteration is complete'''
@@ -564,6 +591,10 @@ default signal handler ``signal.SIG_DFL``.'''
     def _raise_stop_event_loop(self):
         self.logger.debug('Stopping %s', self)
         raise StopEventLoop
+    
+    def _raise_timeout_event_loop(self):
+        self.logger.debug('Timing out %s', self)
+        raise TimeoutEventLoop
 
     def _check_signal(self, sig):
         """Internal helper to validate a signal.

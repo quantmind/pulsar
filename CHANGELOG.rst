@@ -1,5 +1,6 @@
 Ver. 0.5.0 - DEVELOPMENT
 ==============================
+* This is a major release with considerable ammount of internal refactoring.
 * Asynchronous Framework:
    * pep-3156_ implementation with considerable amount of internal refactoring.
    * :class:`pulsar.Actor` internal message passing uses the (unmasked) websocket protocol

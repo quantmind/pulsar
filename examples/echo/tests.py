@@ -15,9 +15,7 @@ class TestEchoServerThread(unittest.TestCase):
     def setUpClass(cls):
         s = server(name=cls.__name__.lower(), bind='127.0.0.1:0',
                    backlog=1024, concurrency=cls.concurrency)
-        outcome = pulsar.send('arbiter', 'run', s)
-        yield outcome
-        cls.server = outcome.result
+        cls.server = yield pulsar.send('arbiter', 'run', s)
         
     @classmethod
     def tearDownClass(cls):
