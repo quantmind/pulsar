@@ -26,7 +26,6 @@ import re
 import io
 import string
 import time
-import json
 import mimetypes
 import platform
 import codecs
@@ -309,6 +308,12 @@ def is_closed(sock):    #pragma nocover
                 return True
     except Exception:
         return True
+
+####################################################    CONTENT TYPES
+JSON_CONTENT_TYPES = frozenset(('application/json',
+                                'application/javascript',
+                                'text/json',
+                                'text/x-json')) 
 
 ####################################################    REQUEST METHODS
 ENCODE_URL_METHODS = frozenset(['DELETE', 'GET', 'HEAD', 'OPTIONS'])

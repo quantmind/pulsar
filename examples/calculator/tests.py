@@ -36,10 +36,9 @@ class TestRpcOnThread(unittest.TestCase):
     def test_handler(self):
         s = self.app
         self.assertTrue(s.callable)
-        middleware = s.callable
-        root = middleware.handler
-        self.assertEqual(root.content_type, 'application/json')
-        self.assertEqual(middleware.path, '/')
+        router = s.callable.middleware[-1]
+        self.assertEqual(router.route.path, '/')
+        root = router.post
         self.assertEqual(len(root.subHandlers), 1)
         hnd = root.subHandlers['calc']
         self.assertFalse(hnd.isroot())
@@ -50,50 +49,48 @@ class TestRpcOnThread(unittest.TestCase):
         response = yield self.p.ping()
         self.assertEqual(response, 'pong')
         
-    def testListOfFunctions(self):
-        response = self.p.functions_list()
-        yield response
-        self.assertTrue(response.result)
+    def test_functions_list(self):
+        result = yield self.p.functions_list()
+        self.assertTrue(result)
+        d = dict(result)
+        self.assertTrue('ping' in d)
+        self.assertTrue('echo' in d)
+        self.assertTrue('functions_list' in d)
+        self.assertTrue('calc.add' in d)
+        self.assertTrue('calc.divide' in d)
         
     def test_time_it(self):
         '''Ping server 20 times'''
-        response = self.p.timeit('ping', 20)
-        yield response
+        response = yield self.p.timeit('ping', 20)
         self.assertTrue(response.locked_time > 0)
         self.assertTrue(response.total_time > response.locked_time)
         self.assertEqual(response.num_failures, 0)
         
     # Test Object method
     def test_check_request(self):
-        result = self.p.check_request('check_request')
+        result = yield self.p.check_request('check_request')
         self.assertTrue(result)
         
     def testAdd(self):
-        response = self.p.calc.add(3,7)
-        yield response
-        self.assertEqual(response.result, 10)
+        response = yield self.p.calc.add(3,7)
+        self.assertEqual(response, 10)
         
     def testSubtract(self):
-        response = self.p.calc.subtract(546, 46)
-        yield response
-        self.assertEqual(response.result, 500)
+        response = yield self.p.calc.subtract(546, 46)
+        self.assertEqual(response, 500)
         
     def testMultiply(self):
-        response = self.p.calc.multiply(3, 9)
-        yield response
-        self.assertEqual(response.result, 27)
+        response = yield self.p.calc.multiply(3, 9)
+        self.assertEqual(response, 27)
         
     def testDivide(self):
-        response = self.p.calc.divide(50, 25)
-        yield response
-        self.assertEqual(response.result, 2)
+        response = yield self.p.calc.divide(50, 25)
+        self.assertEqual(response, 2)
         
     def testInfo(self):
-        response = self.p.server_info()
-        yield response
-        result = response.result
-        self.assertTrue('server' in result)
-        server = result['server']
+        response = yield self.p.server_info()
+        self.assertTrue('server' in response)
+        server = response['server']
         self.assertTrue('version' in server)
         
     def testInvalidParams(self):
@@ -115,10 +112,9 @@ class TestRpcOnThread(unittest.TestCase):
         
     def testpaths(self):
         '''Fetch a sizable ammount of data'''
-        response = self.p.calc.randompaths(num_paths=20, size=100,
-                                           mu=1, sigma=2)
-        yield response
-        self.assertTrue(response.result)
+        response = yield self.p.calc.randompaths(num_paths=20, size=100,
+                                                 mu=1, sigma=2)
+        self.assertTrue(response)
         
 
 @dont_run_with_thread

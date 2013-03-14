@@ -135,6 +135,17 @@ class TestVerbosity(TestOption):
     type = int
     default = 1
     desc = """Test verbosity, 0, 1, 2, 3"""
+    
+    
+class TestTimeout(TestOption):
+    name = 'test_timeout'
+    flags = ['--test-timeout']
+    validator = pulsar.validate_pos_int
+    type = int
+    default = 30
+    desc = '''\
+        Tests which take longer than this many seconds are timed-out
+        and failed.'''
 
 
 class TestLabels(TestOption):
@@ -208,7 +219,6 @@ is a group of tests specified in a test class.
     _app_name = 'test'
     cfg_apps = ('cpubound',)
     cfg = {'loglevel': 'none',
-           'timeout': 120,   #2 minutes max per test function
            'backlog': 1,
            'logconfig': {
                 'loggers': {

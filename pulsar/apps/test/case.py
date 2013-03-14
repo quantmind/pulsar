@@ -14,6 +14,7 @@ __all__ = ['TestRequest', 'sequential']
 
 LOGGER = logging.getLogger('pulsar.test')
 
+
 def sequential(cls):
     '''Decorator for a :class:`TestCase` which cause its test functions to run
 sequentially rather than in an asynchronous fashion.'''
@@ -81,7 +82,7 @@ following algorithm:
         if test_cls and not skip_tests:
             outcome = yield run_test_function(testcls,
                                         getattr(testcls,'setUpClass'),
-                                        cfg.timeout)
+                                        cfg.test_timeout)
             should_stop = self.add_failure(test_cls, runner, outcome)
         #
         # run the tests
@@ -98,7 +99,7 @@ following algorithm:
         if test_cls and not skip_tests:
             outcome = yield run_test_function(testcls,
                                               getattr(testcls,'tearDownClass'),
-                                              cfg.timeout)
+                                              cfg.test_timeout)
             self.add_failure(test_cls, runner, outcome)
     
     def close(self, runner, testcls, result=None):
@@ -117,10 +118,10 @@ Run a *test* function using the following algorithm
 * Run :meth:`tearDown` method in :attr:`testcls`.
 * Run :meth:`_post_teardown` method if available in :attr:`testcls`.
 '''
-        timeout = cfg.timeout
-        return maybe_async(self._run_test(test, runner, timeout), max_errors=0)
+        return maybe_async(self._run_test(test, runner, cfg.test_timeout),
+                           max_errors=0)
     
-    def _run_test(self, test, runner, timeout):
+    def _run_test(self, test, runner, test_timeout):
         try:
             ok = True
             runner.startTest(test)
@@ -136,23 +137,28 @@ Run a *test* function using the following algorithm
                 raise StopIteration
             # _pre_setup function if available
             if hasattr(test,'_pre_setup'):
-                outcome = yield run_test_function(test, test._pre_setup, timeout)
+                outcome = yield run_test_function(test, test._pre_setup,
+                                                  test_timeout)
                 ok = ok and not self.add_failure(test, runner, outcome)
             # _setup function if available
             if ok:
-                outcome = yield run_test_function(test, test.setUp, timeout)
+                outcome = yield run_test_function(test, test.setUp,
+                                                  test_timeout)
                 ok = not self.add_failure(test, runner, outcome)
                 if ok:
                     # Here we perform the actual test
-                    outcome = yield run_test_function(test, testMethod, timeout)
+                    outcome = yield run_test_function(test, testMethod,
+                                                      test_timeout)
                     ok = not self.add_failure(test, runner, outcome)
                     if ok:
                         test.result = outcome
-                    outcome = yield run_test_function(test, test.tearDown, timeout)
+                    outcome = yield run_test_function(test, test.tearDown,
+                                                      test_timeout)
                     ok = ok and not self.add_failure(test, runner, outcome)
             # _post_teardown
             if hasattr(test,'_post_teardown'):
-                outcome = yield run_test_function(test,test._post_teardown, timeout)
+                outcome = yield run_test_function(test,test._post_teardown,
+                                                  test_timeout)
                 if ok:
                     ok = not self.add_failure(test, runner, outcome)
             # run the stopTest

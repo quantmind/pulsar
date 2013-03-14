@@ -2,110 +2,133 @@ import sys
 import inspect
 import logging
 
-from pulsar import log_failure, is_async, is_failure,\
-                    maybe_failure, maybe_async, HttpException
-from pulsar.utils.pep import to_bytes
-from pulsar.utils.tools import checkarity
-from pulsar.utils.structures import AttributeDictionary
-from pulsar.apps.wsgi import WsgiResponse, WsgiRequest
-
-from .decorators import rpcerror, wrap_object_call
-from .exceptions import *
+from pulsar import HttpException
+from pulsar.apps.wsgi import WsgiRequest
 
 
-__all__ = ['RpcHandler']
+__all__ = ['RpcHandler', 'rpc_method', 'InvalidRequest', 'InvalidParams',
+           'NoSuchFunction', 'InternalError']
 
 LOGGER = logging.getLogger('pulsar.rpc')
+_exceptions = {}
 
+def rpc_exception(cls):
+    global _exceptions
+    code = cls.fault_code
+    _exceptions[code] = cls
+    return cls
 
-class RPC:
+@rpc_exception
+class InvalidRequest(HttpException):
+    status = 400
+    fault_code = -32600
+    msg = 'Invalid RPC request'
     
-    def __init__(self, handler, method, func, args, kwargs,
-                 id=None, version=None):
-        self.handler = handler
-        self.method = method
-        self.func = func
-        self.args = args
-        self.kwargs = kwargs
-        self.id = id
-        self.version = version
-        
-    def process(self, request):
-        func = self.func
-        if not func:
-            raise NoSuchFunction('Function "%s" not available.' % self.method)
+
+@rpc_exception    
+class ParseExcetion(InvalidRequest):
+    fault_code = -32700
+    msg = 'Parse error'
+    
+
+@rpc_exception
+class NoSuchFunction(InvalidRequest):
+    fault_code = -32601
+    msg = 'The method does not exist'
+
+
+@rpc_exception
+class InvalidParams(InvalidRequest):
+    fault_code = -32602
+    msg = 'Invalid method parameters'
+    
+    
+@rpc_exception
+class InternalError(InvalidRequest):
+    fault_code = -32602
+    msg = 'Internal error'
+
+
+def exception(code, msg):
+    global _exceptions
+    cls = _exceptions.get(code, Exception)
+    raise cls(msg)
+    
+def wrap_object_call(fname, namefunc):
+    def _(self,*args,**kwargs):
+        f = getattr(self, fname)
+        return f(*args,**kwargs)
+    _.__name__ = namefunc
+    return _
+
+def rpc_method(func, doc=None, format='json', request_handler=None):
+    '''A decorator which exposes a function ``func`` as an rpc function.
+
+:parameter func: The function to expose.
+:parameter doc: Optional doc string. If not provided the doc string of
+    ``func`` will be used.
+:parameter format: Optional output format.
+:parameter request_handler: function which takes ``request``, ``format`` and
+    ``kwargs`` and return a new ``kwargs`` to be passed to ``func``.
+    It can be used to add additional parameters based on request and format.
+    '''
+    def _(self, *args, **kwargs):
+        request = args[0]
+        if request_handler:
+            kwargs = request_handler(request, format, kwargs)
+        request.format = kwargs.pop('format', format)
         try:
-            return func(self.handler, request, *self.args, **self.kwargs)
-        except TypeError as e:
-            if not getattr(func, 'FromApi', False):
-                rpcerror(func, self.args, self.kwargs, discount=2)
-            else:
-                raise
-    
+            return func(*args, **kwargs)
+        except TypeError:
+            rpcerror(func, args, kwargs)
+        
+    _.__doc__ = doc or func.__doc__
+    _.__name__ = func.__name__
+    _.FromApi = True
+    return _
+
 
 class MetaRpcHandler(type):
     '''A metaclass for rpc handlers.
 Add a limited ammount of magic to RPC handlers.'''
     def __new__(cls, name, bases, attrs):
         make = super(MetaRpcHandler, cls).__new__
-        if attrs.pop('virtual',None):
-            return make(cls,name,bases,attrs)
-        funcprefix = attrs.get('serve_as',None)
+        if attrs.pop('virtual', None):
+            return make(cls, name, bases, attrs)
+        funcprefix = attrs.get('serve_as')
         if not funcprefix:
             for base in bases[::-1]:
                 if isinstance(base, MetaRpcHandler):
                     funcprefix = base.serve_as
                     if funcprefix:
                         break
-        rpc = {}
         if funcprefix:
+            rpc = set()
             fprefix = '%s_' % funcprefix
+            n = len(fprefix)
             for key, method in list(attrs.items()):
-                if hasattr(method,'__call__') and key.startswith(fprefix):
-                    namefunc = key[len(fprefix):]
-                    func = attrs.pop(key)
-                    if not inspect.isfunction(func):
-                        key = '_{0}'.format(key)
-                        attrs[key] = func
-                        func = wrap_object_call(key, namefunc)
-                    rpc[namefunc] = func
+                if hasattr(method, '__call__') and key.startswith(fprefix):
+                    method_name = key[n:]
+                    rpc.add(method_name)
             for base in bases[::-1]:
-                if hasattr(base, 'rpcfunctions'):
-                    rpcbase = base.rpcfunctions
-                    for key,method in rpcbase.items():
-                        if key not in rpc:
-                            rpc[key] = method
-
-        attrs['rpcfunctions'] = rpc
+                if hasattr(base, 'rpc_methods'):
+                    rpc.update(base.rpc_methods)
+            attrs['rpc_methods'] = frozenset(rpc)
         return make(cls, name, bases, attrs)
-
-
+    
+    
 class RpcHandler(MetaRpcHandler('_RpcHandler', (object,), {'virtual': True})):
-    '''The base class for rpc handlers.
-
-.. attribute:: content_type
-
-    Default content type. Default: ``text/plain``.
-
-.. attribute:: charset
-
-    The default charset for this handler. Default: ``utf-8``.
-'''
     serve_as     = 'rpc'
     '''Prefix for class methods providing remote services. Default: ``rpc``.'''
     separator    = '.'
-    '''Separator between :attr:`subHandlers`.'''
-    content_type = 'text/plain'
-    methods = ('get','post','put','head','delete','trace','connect')
     '''HTTP method allowed by this handler.'''
-    charset = 'utf-8'
-    _info_exceptions = (Fault,)
+    virtual = True
 
     def __init__(self, subhandlers=None, title=None, documentation=None):
         self._parent = None
         self.subHandlers = {}
         self.title = title or self.__class__.__name__
-        self.documentation = documentation or ''
+        self.documentation = documentation or self.__doc__
         if subhandlers:
             for prefix,handler in subhandlers.items():
                 if inspect.isclass(handler):
@@ -128,31 +151,6 @@ is the root handler.'''
         '''``True`` if this is the root handler.'''
         return self._parent == None
 
-    def get_method_and_args(self, data):
-        '''Obtain function information form ``wsgi.input``. Needs to be
-implemented by subclasses. It should return a five elements tuple containing::
-
-    method, args, kwargs, id, version
-
-where ``method`` is the function name, ``args`` are positional parameters
-for ``method``, ``kwargs`` are keyworded parameters for ``method``,
-``id`` is an identifier for the client,
-``version`` is the version of the RPC protocol.
-    '''
-        raise NotImplementedError
-
-    def __getstate__(self):
-        d = self.__dict__.copy()
-        if not self.isroot():
-            # Avoid duplicating handlers
-            d['_parent'] = True
-        return d
-
-    def __setstate__(self, state):
-        self.__dict__ = state
-        for handler in self.subHandlers.values():
-            handler._parent = self
-
     def putSubHandler(self, prefix, handler):
         '''Add a sub :class:`RpcHandler` with prefix ``prefix``.
 
@@ -170,7 +168,9 @@ for ``method``, ``kwargs`` are keyworded parameters for ``method``,
     def wrap_function_decorator(self, request, *args, **kwargs):
         return request.func(rpc.handler, request, *args,**kwargs)
 
-    def request(self, environ, method, args, kwargs, id, version):
+    def get_handler(self, method):
+        if not method:
+            raise NoSuchFunction('RPC method not supplied')
         bits = method.split(self.separator, 1)
         handler = self
         method_name = bits[-1]
@@ -181,23 +181,20 @@ for ``method``, ``kwargs`` are keyworded parameters for ``method``,
                 break
             else:
                 handler = subhandler
-        try:
-            func = handler.rpcfunctions[method_name]
-        except Exception:
-            func = None
-        environ['rpc'] = RPC(handler, method, func, args, kwargs, id, version)
+        if method_name in handler.rpc_methods:
+            return getattr(handler, '%s_%s' % (self.serve_as, method_name))
+        else:
+            raise NoSuchFunction('RPC method "%s" not available.' % method)
 
-    def invokeServiceEndpoint(self, meth, args):
-        return meth(*args)
-
-    def listFunctions(self, prefix = ''):
-        for name,func in self.rpcfunctions.items():
-            doc = {'doc':func.__doc__ or 'No docs','section':prefix}
-            yield '{0}{1}'.format(prefix,name),doc
-        for name,handler in self.subHandlers.items():
-            pfx = '{0}{1}{2}'.format(prefix,name,self.separator)
-            for f,doc in handler.listFunctions(pfx):
-                yield f,doc
+    def listFunctions(self, prefix=''):
+        for name in sorted(self.rpc_methods):
+            method = getattr(self, '%s_%s' % (self.serve_as, name))
+            doc = {'doc': method.__doc__ or 'No docs', 'section': prefix}
+            yield '%s%s' % (prefix, name), doc
+        for name, handler in self.subHandlers.items():
+            pfx = '%s%s%s' % (prefix, name, self.separator)
+            for f, doc in handler.listFunctions(pfx):
+                yield f, doc
 
     def _docs(self):
         for name, data in self.listFunctions():

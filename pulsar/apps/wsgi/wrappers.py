@@ -22,16 +22,17 @@ Wsgi Response
 import os
 import sys
 import time
+import json
 from functools import partial, reduce
 
 import pulsar
-from pulsar.utils.multipart import parse_form_data
+from pulsar.utils.multipart import parse_form_data, parse_options_header
 from pulsar.utils.structures import MultiValueDict
 from pulsar.utils.html import escape
 from pulsar.utils.httpurl import Headers, SimpleCookie, responses,\
                                  has_empty_content, string_type, ispy3k,\
                                  to_bytes, REDIRECT_CODES, iteritems,\
-                                 ENCODE_URL_METHODS
+                                 ENCODE_URL_METHODS, JSON_CONTENT_TYPES
 
 from .middleware import is_streamed
 from .route import Route
@@ -43,6 +44,7 @@ __all__ = ['WsgiResponse',
            'WsgiRequest',
            'wsgi_cache_property']
 
+MAX_BUFFER_SIZE = 2**16
 
 def wsgi_cache_property(f):
     name = f.__name__
@@ -52,6 +54,12 @@ def wsgi_cache_property(f):
         return self.cache[name]
     return property(_, doc=f.__doc__)
 
+def wsgi_encoder(gen, encoding):
+    for data in gen:
+        if not isinstance(data, bytes):
+            yield data.encode(encoding)
+        else:
+            yield data
 
 class WsgiResponse(object):
     '''A WSGI response wrapper initialized by a WSGI request middleware.
@@ -189,8 +197,8 @@ This is usually `True` if a generator is passed to the response object."""
         if self._started:
             raise RuntimeError('WsgiResponse can be iterated once only')
         self._started = True
-        if self.is_streamed:
-            return wsgi_iterator(self.content, self.encoding or 'utf-8')
+        if is_streamed(self.content):
+            return wsgi_encoder(self.content, self.encoding or 'utf-8')
         else:
             return iter(self.content)
 
@@ -304,7 +312,19 @@ at the wsgi-extension key ``pulsar.cache``.'''
 
     @wsgi_cache_property
     def encoding(self):
-        return 'utf-8'
+        return self.content_type_options[1].get('charset', 'utf-8')
+    
+    @wsgi_cache_property
+    def content_type(self):
+        return self.content_type_options[0]
+    
+    @wsgi_cache_property
+    def content_type_options(self):
+        content_type = self.environ.get('CONTENT_TYPE')
+        if content_type:
+            return parse_options_header(content_type)
+        else:
+            return None, {}
     
     @wsgi_cache_property
     def data_and_files(self):
@@ -312,7 +332,14 @@ at the wsgi-extension key ``pulsar.cache``.'''
             return parse_form_data(self.environ)
         else:
             return MultiValueDict(), None
-            
+    
+    @wsgi_cache_property
+    def json_data(self):
+        if self.method not in ENCODE_URL_METHODS:
+            if self.content_type in JSON_CONTENT_TYPES:
+                data = self.environ['wsgi.input'].read(MAX_BUFFER_SIZE)
+                return json.loads(data.decode(self.encoding))
+        
     @property
     def body_data(self):
         '''A :class:`pulsar.utils.structures.MultiValueDict` containing

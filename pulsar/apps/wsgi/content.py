@@ -37,6 +37,7 @@ from functools import partial
 
 from pulsar import Deferred, multi_async, is_async, maybe_async, is_failure
 from pulsar.utils.pep import iteritems, is_string
+from pulsar.utils.structures import AttributeDictionary
 from pulsar.utils.html import slugify, INLINE_TAGS, tag_attributes, attr_iter,\
                                 csslink, dump_data_value, child_tag
 from pulsar.utils.httpurl import remove_double_slash, urljoin
@@ -179,16 +180,23 @@ functions get called to transform the stream into a string.
 
 class Json(AsyncString):
     '''An :class:`AsyncString` which renders into a json string.'''
-    
+    def __init__(self, *children, **params):
+        super(Json, self).__init__(*children)
+        self.parameters = AttributeDictionary(params)
+        
+    @property
+    def json(self):
+        return self.parameters.json or json
+        
     @property
     def content_type(self):
         return 'application/json'
         
     def to_string(self, stream):
         if len(stream) == 1:
-            return json.dumps(stream[0])
+            return self.json.dumps(stream[0])
         else:
-            return json.dumps(stream)
+            return self.json.dumps(stream)
         
 
 def html_factory(tag, **defaults):

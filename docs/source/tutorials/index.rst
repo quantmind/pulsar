@@ -19,6 +19,7 @@ Tutorials
    httpbin
    proxy
    webmail
+   calculator
    
    
 Topics

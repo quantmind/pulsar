@@ -1,5 +1,5 @@
 '''\
-A a JSON-RPC Server with some simple functions.
+This is a a :ref:`JSON-RPC <apps-rpc>` server with some simple functions.
 To run the server type::
 
     python manage.py
@@ -11,11 +11,21 @@ Open a new shell and launch python and type::
     >>> p.ping()
     'pong'
     >>> p.functions_list()
-    >>> ...
+    [[...
     >>> p.calc.add(3,4)
     7.0
-    >>>
 
+Implementation
+-----------------
+
+The calculator rpc functions are implemented by the :class:`Calculator`
+handler, while the :class:`Root` handler exposes utility methods from
+the :class:`pulsar.apps.rpc.PulsarServerCommands` handler.
+
+.. autoclass:: Calculator
+   :members:
+   :member-order: bysource
+   
 '''
 from wsgiref.validate import validator
 try:
@@ -31,7 +41,8 @@ from pulsar.utils.httpurl import range
 
 
 def divide(request, a, b):
-    '''Divide two numbers'''
+    '''Divide two numbers. This method illustrate how to use the
+:func:`pulsar.apps.rpc.rpc_method` decorator.'''
     return float(a)/float(b)
 
 def request_handler(request, format, kwargs):
@@ -39,6 +50,7 @@ def request_handler(request, format, kwargs):
     return kwargs
 
 def randompaths(request, num_paths=1, size=250, mu=0, sigma=1):
+    '''Lists of random walks.'''
     r = []
     for p in range(num_paths):
         v = 0
@@ -68,18 +80,22 @@ json serializable.'''
 
 
 class Calculator(rpc.JSONRPC):
-
+    '''A :class:`pulsar.apps.rpc.JSONRPC` handler which implements few simple
+remote functions.'''
     def rpc_add(self, request, a, b):
+        '''Add two numbers'''
         return float(a) + float(b)
 
     def rpc_subtract(self, request, a, b):
+        '''Subtract two numbers'''
         return float(a) - float(b)
 
     def rpc_multiply(self, request, a, b):
+        '''Multiply two numbers'''
         return float(a) * float(b)
 
-    rpc_divide = rpc.FromApi(divide, request_handler=request_handler)
-    rpc_randompaths = rpc.FromApi(randompaths)
+    rpc_divide = rpc.rpc_method(divide, request_handler=request_handler)
+    rpc_randompaths = rpc.rpc_method(randompaths)
 
 
 class Site(wsgi.LazyWsgi):

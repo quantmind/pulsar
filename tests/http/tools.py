@@ -10,7 +10,7 @@ from pulsar.utils.httpurl import urlencode, Headers, accept_content_type,\
                                  encode_multipart_formdata, http_date,\
                                  cookiejar_from_dict
 from pulsar.utils.pep import to_bytes, native_str, force_native_str
-from pulsar.apps.http import Auth, HTTPBasicAuth, HTTPDigestAuth,\
+from pulsar.apps.wsgi import Auth, HTTPBasicAuth, HTTPDigestAuth,\
                                 parse_authorization_header, basic_auth_str
 
 

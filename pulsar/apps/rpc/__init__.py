@@ -1,45 +1,51 @@
-'''Asynchronous WSGI Remote Procedure Calls middleware. It implements a
-JSON-RPC_ server and client.
+'''Asynchronous WSGI_ Remote Procedure Calls middleware. It implements a
+JSON-RPC_ server and client. Check out the
+:ref:`json-rpc tutorial <tutorials-calculator>` if you want to get started
+quickly with a working example.
 
-RPC server
-=====================
-To create a server first you create your rpc handler and
-(optional) subhandlers::
+API
+===========
 
-    from pulsar.apps import rpc, wsgi
-    
-    class Root(rpc.PulsarServerCommands):
-        pass
-        
-    class Calculator(rpc.JSONRPC):
-        
-        def rpc_add(self, request, a, b):
-            return float(a) + float(b)
-        
-        def rpc_subtract(self, request, a, b):
-            return float(a) - float(b)
-        
-        def rpc_multiply(self, request, a, b):
-            return float(a) * float(b)
-        
-        def rpc_divide(self, request, a, b):
-            return float(a) / float(b)
-    
+RpcHandler
+~~~~~~~~~~~~~~
 
-Then you create the WSGI_ middleware::
+.. autoclass:: RpcHandler
+   :members:
+   :member-order: bysource
+   
+   
+JSON RPC
+~~~~~~~~~~~~~~~~
 
-    def server():
-        root = Root().putSubHandler('calc',Calculator())
-        return wsgi.WSGIServer(callable=rpc.RpcMiddleware(root))
-    
-    if __name__ == '__main__':
-        server().start()
-    
+.. autoclass:: JSONRPC
+   :members:
+   :member-order: bysource
+   
+   
+JsonProxy
+~~~~~~~~~~~~~~~~
+
+.. autoclass:: JsonProxy
+   :members:
+   :member-order: bysource
+   
+   
+rpc method decorator
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. autofunction:: rpc_method
+
+
+Server Commands
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. autoclass:: PulsarServerCommands
+   :members:
+   :member-order: bysource  
+   
 .. _JSON-RPC: http://www.jsonrpc.org/specification
 .. _WSGI: http://www.python.org/dev/peps/pep-3333/
 '''
-from .exceptions import *
 from .handlers import *
 from .jsonrpc import *
-from .decorators import *
 from .mixins import *

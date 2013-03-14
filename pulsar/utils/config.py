@@ -25,7 +25,7 @@ from .importer import import_system_file
 __all__ = ['Config',
            'SimpleSetting',
            'Setting',
-           'defaults',
+           #'defaults',
            'ordered_settings',
            'validate_string',
            'validate_callable',
@@ -309,7 +309,7 @@ accepting one positional argument, the value to validate.'''
 
     def set(self, val):
         '''Set *val* as the value in this :class:`Setting`.'''
-        if hasattr(self.validator,'__call__'):
+        if hasattr(self.validator, '__call__'):
             val = self.validator(val)
         self.value = val
 
@@ -368,8 +368,6 @@ as base class for other settings.'''
         self.desc = desc or self.desc
         self.short = self.short or self.desc
         self.desc = self.desc or self.short
-        #if validator:
-        #    self.validator = wrap_method(validator)
         if self.app and not self.section:
             self.section = self.app
         if not self.section:

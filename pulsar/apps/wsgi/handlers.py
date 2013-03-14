@@ -110,7 +110,7 @@ class ResponseGenerator(object):
         
     def __iter__(self):
         request = self.request
-        cache = multi_async(request.cache, raise_on_error=True)
+        cache = maybe_async(multi_async(request.cache, raise_on_error=True))
         while is_async(cache):
             yield b''
             cache = maybe_async(cache)
@@ -200,7 +200,9 @@ request, the ``get(self, request)`` method must be implemented.
         
 .. attribute:: default_content_type
 
-    Default content type for this :class:`Router`
+    Class attribute which specify the default content type for
+    this :class:`Router`. Overwritten during initialization by the optional
+    ``content_type`` parameter.
     
 .. attribute:: parameters
 
@@ -235,6 +237,10 @@ request, the ``get(self, request)`` method must be implemented.
                 handler = async(handler)
             router = self.add_child(Router(rule, **rparameters))
             setattr(router, method, getattr(self, name))
+        self.setup(**parameters)
+        
+    def setup(self, content_type=None, **parameters):
+        self.parameters.content_type = content_type or self.default_content_type
         for name, value in parameters.items():
             if not hasattr(self, name) and hasattr(value, '__call__'):
                 setattr(self, name, value)
@@ -344,7 +350,7 @@ If *root* is ``None`` it starts from this :class:`Router`.
     def content_type(self, request):
         '''The content type of this :class:`Router`. By default it returns
 the :attr:`default_content_type`. Override if you need to.'''
-        return self.default_content_type
+        return self.parameters.content_type
     
     def encoding(self, request):
         '''The encoding to use for the response. By default it
@@ -359,10 +365,10 @@ class MediaMixin(Router):
     def serve_file(self, request, fullpath):
         # Respect the If-Modified-Since header.
         statobj = os.stat(fullpath)
-        mimetype, encoding = mimetypes.guess_type(fullpath)
-        mimetype = mimetype or self.default_content_type
+        content_type, encoding = mimetypes.guess_type(fullpath)
         response = request.response
-        response.content_type = mimetype
+        if content_type: 
+            response.content_type = content_type
         response.encoding = encoding
         if not self.was_modified_since(request.environ.get(
                                             'HTTP_IF_MODIFIED_SINCE'),

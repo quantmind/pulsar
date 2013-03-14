@@ -9,21 +9,23 @@ The request is a single object serialized using JSON.
 
 The specification is at http://groups.google.com/group/json-rpc/web/json-rpc-2-0
 '''
+import sys
 import logging
 import json
 from functools import partial
 from timeit import default_timer
 
 import pulsar
-from pulsar import is_async, multi_async
+from pulsar import maybe_async, maybe_failure, is_failure, multi_async
 from pulsar.utils.structures import AttributeDictionary
 from pulsar.utils.security import gen_unique_id
 from pulsar.utils.pep import to_string, range
 from pulsar.utils.jsontools import DefaultJSONEncoder, DefaultJSONHook
+from pulsar.utils.tools import checkarity
+from pulsar.apps.wsgi import Json
 from pulsar.apps.http import HttpClient
 
-from .handlers import RpcHandler
-from .exceptions import exception, INTERNAL_ERROR, REQUIRES_AUTHENTICATION
+from .handlers import RpcHandler, InvalidRequest, exception
 
 __all__ = ['JSONRPC', 'JsonProxy', 'LocalJsonProxy']
 
@@ -40,91 +42,57 @@ class JsonToolkit(object):
 
 
 class JSONRPC(RpcHandler):
-    '''A :class:`RpcHandler` for class for JSON-RPC services.
+    '''An :class:`RpcHandler` for class for JSON-RPC services.
 Design to comply with the `JSON-RPC 2.0`_ Specification.
 
-.. _`JSON-RPC 2.0`: http://groups.google.com/group/json-rpc/web/json-rpc-2-0'''
-    content_type = 'application/json'
+.. _`JSON-RPC 2.0`: http://www.jsonrpc.org/
+'''
+    version = '2.0'
     methods = ('post',)
     _json = JsonToolkit
 
     def __call__(self, request):
-        data = request.body_data
-        if not isinstance(data, dict):
-            data = self._json.loads(data)
-        method  = data.get('method',None)
-        params  = data.get('params',None)
-        id      = data.get('id',None)
-        version = data.get('jsonrpc',None)
-        kwargs  = {}
-        args    = ()
-        if isinstance(params, dict):
-            for k, v in params.items():
-                kwargs[str(k)] = v
-        elif params:
-            args = tuple(params)
-        return method, args, kwargs, id, version
-
-    def dumps(self, id, version, result=None, error=None):
-        '''Modify JSON dumps method to comply with JSON-RPC Specification 2.0'''
-        res = {'id': id, "jsonrpc": version}
-        if error:
-            if hasattr(error, 'faultCode'):
-                code = error.faultCode
-                msg = getattr(error, 'faultString', str(error))
-            else:
-                msg = str(error)
-                if getattr(error, 'status', None) == 403:
-                    code = REQUIRES_AUTHENTICATION
-                else:
-                    code = INTERNAL_ERROR
-            res['error'] =  {'code': code,
-                             'message': msg,
-                             'data': getattr(error,'data','')}
-        else:
-            res['result'] = result
-        return self._json.dumps(res)
+        result = maybe_async(self._call(request), max_errors=0)
+        return Json(result, json=self._json).http_response(request)
     
     def _call(self, request):
-        if request.method.lower() not in self.handler.methods:
-            raise HttpException(status=405, msg='Method "%s" not allowed' %\
-                                method)
-        
-        data = environ['wsgi.input'].read()
-        
-        hnd = self.handler
-        method, args, kwargs, id, version = hnd.get_method_and_args(request)
-        hnd.request(environ, method, args, kwargs, id, version)
-        rpc = environ['rpc']
-        status_code = 200
         try:
-            result = rpc.process(request)
-        except Exception as e:
-            result = maybe_failure(e)
-        handler = rpc.handler
-        result = maybe_async(result)
-        while is_async(result):
-            yield b''
-            result = maybe_async(result)
-        try:
-            if is_failure(result):
-                e = result.trace[1]
-                status_code = getattr(e, 'status', 400)
-                log_failure(result)
-                result = handler.dumps(rpc.id, rpc.version, error=e)
+            if request.content_type != 'application/json':
+                raise InvalidRequest(status=415,
+                            msg='Content-Type header must be application/json')
+            try:
+                data = request.json_data
+            except ValueError:
+                raise ParseExcetion
+            if data.get('jsonrpc') != self.version:
+                raise InvalidRequest(
+                    'jsonrpc must be supplied and equal to "%s"' % self.version)
+            params = data.get('params')
+            if isinstance(params, dict):
+                args, kwargs = (), params
             else:
-                result = handler.dumps(rpc.id, rpc.version, result=result)
-        except Exception as e:
-            LOGGER.error('Could not serialize', exc_info=True)
-            status_code = 500
-            result = handler.dumps(rpc.id, rpc.version, error=e)
-        response = request.response
-        response.status_code = status_code
-        response.content = result
-        response.content_type = handler.content_type
-        for c in response.start():
-            yield c
-
+                args, kwargs = tuple(params or ()), {}
+            callable = self.get_handler(data.get('method'))
+            result = yield callable(request, *args, **kwargs)
+        except Exception:
+            result = maybe_failure(sys.exc_info())
+        id = data.get('id')
+        res = {'id': id, "jsonrpc": self.version}
+        if is_failure(result):
+            msg = None
+            error = result.trace[1]
+            if isinstance(error, TypeError):
+                msg = checkarity(callable, args, kwargs, discount=1)
+            msg = msg or str(error) or 'JSON RPC exception'
+            result = {'code': getattr(error, 'fault_code', -32603),
+                      'message': msg,
+                      'data': getattr(error,'data','')}
+            request.response.status_code = getattr(error, 'status', 500)
+            res['error'] = result
+        else:
+            res['result'] = result
+        yield res
+    
 
 class JsonCall:
     
@@ -289,11 +257,9 @@ usage is simple::
         if isinstance(res, dict):
             if 'error' in res:
                 error = res['error']
-                code    = error['code']
-                message = error['message']
-                raise exception(code, message)
+                raise exception(error.get('code'), error.get('message'))
             else:
-                return res.get('result',None)
+                return res.get('result')
         return res
 
 

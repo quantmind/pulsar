@@ -4,7 +4,7 @@ import time
 from threading import current_thread
 
 import pulsar
-from pulsar import defaults, send, is_async, multi_async, is_async, is_failure
+from pulsar import send, is_async, multi_async, is_async, is_failure
 from pulsar.apps.test import unittest, run_on_arbiter, TestSuite, sequential
 from pulsar.utils.pep import get_event_loop
 
