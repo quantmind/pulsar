@@ -6,13 +6,13 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>Index &mdash; pulsar v0.5b6 documentation</title>
-    <link rel="stylesheet" href="static/celery.css" type="text/css" />
+    <title>Index &mdash; pulsar v0.5b7 documentation</title>
+    <link rel="stylesheet" href="static/pulsar.css" type="text/css" />
     <link rel="stylesheet" href="static/pygments.css" type="text/css" />
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '',
-        VERSION:     '0.5b6',
+        VERSION:     '0.5b7',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -21,9 +21,11 @@
     <script type="text/javascript" src="static/jquery.js"></script>
     <script type="text/javascript" src="static/underscore.js"></script>
     <script type="text/javascript" src="static/doctools.js"></script>
-    <link rel="top" title="pulsar v0.5b6 documentation" href="index.html" /> 
+    <link rel="shortcut icon" href="static/Game_of_life_pulsar.gif"/>
+    <link rel="top" title="pulsar v0.5b7 documentation" href="index.html" /> 
   </head>
   <body>
+
     <div class="related">
       <h3>Navigation</h3>
       <ul>
@@ -33,22 +35,22 @@
         <li class="right" >
           <a href="py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li><a href="index.html">pulsar v0.5b6 documentation</a> &raquo;</li> 
+        <li><a href="index.html">pulsar v0.5b7 documentation</a> &raquo;</li> 
       </ul>
-    </div>  
-
-    <div class="document">
+    </div>
 <div class="deck">
-
+<div class="header">
     
         <p class="developmentversion">
         Documentation for pulsar's DEVELOPMENT version. Get the 
         <a href="http://packages.python.org/pulsar/">release docs here</a>.
         </p>
     
-
 </div>
+</div>
+  
 
+    <div class="document">
       <div class="documentwrapper">
         <div class="bodywrapper">
           <div class="body">
@@ -82,6 +84,7 @@
     <dt><a href="apps/http.html#pulsar.apps.http.HttpClient.add_basic_authentication">add_basic_authentication() (pulsar.apps.http.HttpClient method)</a></dt>
     <dt><a href="api/async.html#pulsar.Deferred.add_both">add_both() (pulsar.Deferred method)</a></dt>
     <dt><a href="api/async.html#pulsar.Deferred.add_callback">add_callback() (pulsar.Deferred method)</a></dt>
+    <dt><a href="apps/wsgi/handlers.html#pulsar.apps.wsgi.handlers.Router.add_child">add_child() (pulsar.apps.wsgi.handlers.Router method)</a></dt>
     <dt><a href="api/async.html#pulsar.Deferred.add_errback">add_errback() (pulsar.Deferred method)</a></dt>
     <dt><a href="apps/test.html#pulsar.apps.test.TestRequest.add_failure">add_failure() (pulsar.apps.test.TestRequest method)</a></dt>
     <dt><a href="api/utilities.html#pulsar.utils.httpurl.Headers.add_header">add_header() (pulsar.utils.httpurl.Headers method)</a></dt>
@@ -115,6 +118,9 @@
       <dt><a href="api/utilities.html#pulsar.utils.config.Setting.app">(pulsar.utils.config.Setting attribute)</a></dt>
   </dl></dd>
     <dt><a href="api/application.html#pulsar.apps.ApplicationMonitor.app_handler">app_handler (pulsar.apps.ApplicationMonitor attribute)</a></dt>
+    <dd><dl>
+      <dt><a href="apps/wsgi/wrappers.html#pulsar.apps.wsgi.wrappers.WsgiRequest.app_handler">(pulsar.apps.wsgi.wrappers.WsgiRequest attribute)</a></dt>
+  </dl></dd>
     <dt><a href="api/async.html#pulsar.Failure.append">append() (pulsar.Failure method)</a></dt>
     <dd><dl>
       <dt><a href="api/async.html#pulsar.MultiDeferred.append">(pulsar.MultiDeferred method)</a></dt>
@@ -142,6 +148,7 @@
     <dt><a href="api/async.html#pulsar.EventHandler.bind_event">bind_event() (pulsar.EventHandler method)</a></dt>
 </dl></td>
   <td style="width: 33%" valign="top"><dl>
+    <dt><a href="apps/wsgi/content.html#pulsar.apps.wsgi.content.HtmlDocument.body">body (pulsar.apps.wsgi.content.HtmlDocument attribute)</a></dt>
     <dt><a href="apps/wsgi/wrappers.html#pulsar.apps.wsgi.wrappers.WsgiRequest.body_data">body_data (pulsar.apps.wsgi.wrappers.WsgiRequest attribute)</a></dt>
 </dl></td>
 </tr></table>
@@ -150,6 +157,7 @@
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%" valign="top"><dl>
     <dt><a href="apps/wsgi/wrappers.html#pulsar.apps.wsgi.wrappers.WsgiRequest.cache">cache (pulsar.apps.wsgi.wrappers.WsgiRequest attribute)</a></dt>
+    <dt><a href="tutorials/calculator.html#examples.calculator.manage.Calculator">Calculator (class in examples.calculator.manage)</a></dt>
     <dt><a href="api/async.html#pulsar.EventLoop.call_every">call_every() (pulsar.EventLoop method)</a></dt>
     <dt><a href="api/async.html#pulsar.EventLoop.call_later">call_later() (pulsar.EventLoop method)</a></dt>
     <dt><a href="api/async.html#pulsar.EventLoop.call_repeatedly">call_repeatedly() (pulsar.EventLoop method)</a></dt>
@@ -167,7 +175,6 @@
     <dt><a href="api/async.html#pulsar.TimedCall.cancelled">cancelled (pulsar.TimedCall attribute)</a></dt>
     <dt><a href="api/application.html#pulsar.apps.Application.cfg">cfg (pulsar.apps.Application attribute)</a></dt>
     <dt><a href="api/application.html#pulsar.apps.Application.cfg_apps">cfg_apps (pulsar.apps.Application attribute)</a></dt>
-    <dt><a href="apps/rpc.html#pulsar.apps.rpc.RpcHandler.charset">charset (pulsar.apps.rpc.RpcHandler attribute)</a></dt>
     <dt><a href="api/utilities.html#pulsar.utils.tools.checkarity">checkarity() (in module pulsar.utils.tools)</a></dt>
     <dt><a href="apps/test.html#pulsar.apps.test.TestLoader.checktag">checktag() (pulsar.apps.test.TestLoader method)</a></dt>
     <dt><a href="api/utilities.html#pulsar.utils.config.Setting.choices">choices (pulsar.utils.config.Setting attribute)</a></dt>
@@ -183,9 +190,9 @@
     <dt><a href="api/protocols.html#pulsar.Transport.closed">closed (pulsar.Transport attribute)</a></dt>
     <dt><a href="api/actor.html#pulsar.Actor.closed">closed() (pulsar.Actor method)</a></dt>
     <dt><a href="api/protocols.html#pulsar.Transport.closing">closing (pulsar.Transport attribute)</a></dt>
+    <dt><a href="api/actor.html#pulsar.command">command (class in pulsar)</a></dt>
 </dl></td>
   <td style="width: 33%" valign="top"><dl>
-    <dt><a href="api/actor.html#pulsar.command">command (class in pulsar)</a></dt>
     <dt><a href="api/actor.html#pulsar.Concurrency">Concurrency (class in pulsar)</a></dt>
     <dt><a href="api/protocols.html#pulsar.Producer.concurrent_connections">concurrent_connections (pulsar.Producer attribute)</a></dt>
     <dt><a href="api/utilities.html#pulsar.utils.config.Config">Config (class in pulsar.utils.config)</a></dt>
@@ -214,10 +221,8 @@
     <dt><a href="apps/wsgi/content.html#pulsar.apps.wsgi.content.AsyncString.content">content() (pulsar.apps.wsgi.content.AsyncString method)</a></dt>
     <dt><a href="apps/http.html#pulsar.apps.http.HttpResponse.content_json">content_json() (pulsar.apps.http.HttpResponse method)</a></dt>
     <dt><a href="apps/http.html#pulsar.apps.http.HttpResponse.content_string">content_string() (pulsar.apps.http.HttpResponse method)</a></dt>
-    <dt><a href="apps/rpc.html#pulsar.apps.rpc.RpcHandler.content_type">content_type (pulsar.apps.rpc.RpcHandler attribute)</a></dt>
-    <dd><dl>
-      <dt><a href="apps/wsgi/content.html#pulsar.apps.wsgi.content.AsyncString.content_type">(pulsar.apps.wsgi.content.AsyncString attribute)</a></dt>
-  </dl></dd>
+    <dt><a href="apps/wsgi/content.html#pulsar.apps.wsgi.content.AsyncString.content_type">content_type (pulsar.apps.wsgi.content.AsyncString attribute)</a></dt>
+    <dt><a href="apps/wsgi/handlers.html#pulsar.apps.wsgi.handlers.Router.content_type">content_type() (pulsar.apps.wsgi.handlers.Router method)</a></dt>
     <dt><a href="api/utilities.html#pulsar.utils.websocket.FrameParser.continuation">continuation() (pulsar.utils.websocket.FrameParser method)</a></dt>
     <dt><a href="apps/http.html#pulsar.apps.http.HttpClient.cookies">cookies (pulsar.apps.http.HttpClient attribute)</a></dt>
     <dt><a href="api/actor.html#pulsar.Actor.cpubound">cpubound (pulsar.Actor attribute)</a></dt>
@@ -230,6 +235,7 @@
     <dd><dl>
       <dt><a href="api/async.html#pulsar.EventLoop.create_server">(pulsar.EventLoop method)</a></dt>
   </dl></dd>
+    <dt><a href="apps/wsgi/handlers.html#pulsar.apps.wsgi.route.route.creation_count">creation_count (pulsar.apps.wsgi.route.route attribute)</a></dt>
     <dt><a href="apps/wsgi/content.html#pulsar.apps.wsgi.content.Html.css">css() (pulsar.apps.wsgi.content.Html method)</a></dt>
     <dt><a href="api/protocols.html#pulsar.Connection.current_consumer">current_consumer (pulsar.Connection attribute)</a></dt>
 </dl></td>
@@ -246,11 +252,12 @@
     <dt><a href="api/async.html#pulsar.TimedCall.deadline">deadline (pulsar.TimedCall attribute)</a></dt>
     <dt><a href="api/utilities.html#pulsar.utils.websocket.FrameParser.decode">decode() (pulsar.utils.websocket.FrameParser method)</a></dt>
     <dt><a href="api/utilities.html#pulsar.utils.config.Setting.default">default (pulsar.utils.config.Setting attribute)</a></dt>
+    <dt><a href="apps/wsgi/handlers.html#pulsar.apps.wsgi.handlers.Router.default_content_type">default_content_type (pulsar.apps.wsgi.handlers.Router attribute)</a></dt>
     <dt><a href="apps/http.html#pulsar.apps.http.HttpClient.DEFAULT_HTTP_HEADERS">DEFAULT_HTTP_HEADERS (pulsar.apps.http.HttpClient attribute)</a></dt>
     <dt><a href="api/async.html#pulsar.Deferred">Deferred (class in pulsar)</a></dt>
-    <dt><a href="api/async.html#pulsar.DeferredCoroutine">DeferredCoroutine (class in pulsar)</a></dt>
 </dl></td>
   <td style="width: 33%" valign="top"><dl>
+    <dt><a href="api/async.html#pulsar.DeferredCoroutine">DeferredCoroutine (class in pulsar)</a></dt>
     <dt><a href="apps/http.html#pulsar.apps.http.HttpClient.delete">delete() (pulsar.apps.http.HttpClient method)</a></dt>
     <dt><a href="api/async.html#pulsar.Deferred.description">description (pulsar.Deferred attribute)</a></dt>
     <dt><a href="apps/tasks.html#pulsar.apps.tasks.Job.doc_syntax">doc_syntax (pulsar.apps.tasks.Job attribute)</a></dt>
@@ -258,7 +265,6 @@
     <dd><dl>
       <dt><a href="api/async.html#pulsar.Deferred.done">(pulsar.Deferred method)</a></dt>
   </dl></dd>
-    <dt><a href="apps/rpc.html#pulsar.apps.rpc.JSONRPC.dumps">dumps() (pulsar.apps.rpc.JSONRPC method)</a></dt>
     <dt><a href="apps/tasks.html#pulsar.apps.tasks.Task.duration">duration() (pulsar.apps.tasks.Task method)</a></dt>
 </dl></td>
 </tr></table>
@@ -272,17 +278,24 @@
     <dt><a href="apps/http.html#pulsar.apps.http.HttpRequest.encode_body">encode_body() (pulsar.apps.http.HttpRequest method)</a></dt>
     <dt><a href="apps/http.html#pulsar.apps.http.HttpClient.encode_multipart">encode_multipart (pulsar.apps.http.HttpClient attribute)</a></dt>
     <dt><a href="apps/wsgi/content.html#pulsar.apps.wsgi.content.AsyncString.encoding">encoding (pulsar.apps.wsgi.content.AsyncString attribute)</a></dt>
-    <dt><a href="apps/wsgi/wrappers.html#pulsar.apps.wsgi.wrappers.WsgiResponse.environ">environ (pulsar.apps.wsgi.wrappers.WsgiResponse attribute)</a></dt>
+    <dt><a href="apps/wsgi/handlers.html#pulsar.apps.wsgi.handlers.Router.encoding">encoding() (pulsar.apps.wsgi.handlers.Router method)</a></dt>
+    <dt><a href="apps/wsgi/wrappers.html#pulsar.apps.wsgi.wrappers.WsgiRequest.environ">environ (pulsar.apps.wsgi.wrappers.WsgiRequest attribute)</a></dt>
+    <dd><dl>
+      <dt><a href="apps/wsgi/wrappers.html#pulsar.apps.wsgi.wrappers.WsgiResponse.environ">(pulsar.apps.wsgi.wrappers.WsgiResponse attribute)</a></dt>
+  </dl></dd>
     <dt><a href="api/protocols.html#pulsar.Protocol.eof_received">eof_received() (pulsar.Protocol method)</a></dt>
     <dt><a href="api/async.html#pulsar.EventHandler.event">event() (pulsar.EventHandler method)</a></dt>
     <dt><a href="api/protocols.html#pulsar.Server.event_loop">event_loop (pulsar.Server attribute)</a></dt>
+    <dt><a href="api/async.html#pulsar.EventHandler">EventHandler (class in pulsar)</a></dt>
 </dl></td>
   <td style="width: 33%" valign="top"><dl>
-    <dt><a href="api/async.html#pulsar.EventHandler">EventHandler (class in pulsar)</a></dt>
     <dt><a href="api/async.html#pulsar.EventLoop">EventLoop (class in pulsar)</a></dt>
     <dt><a href="api/protocols.html#pulsar.Transport.eventloop">eventloop (pulsar.Transport attribute)</a></dt>
     <dt><a href="tutorials/index.html#module-examples">examples (module)</a></dt>
+    <dt><a href="tutorials/calculator.html#module-examples.calculator.manage">examples.calculator.manage (module)</a></dt>
     <dt><a href="tutorials/clients.html#module-examples.echo.manage">examples.echo.manage (module)</a></dt>
+    <dt><a href="tutorials/hello.html#module-examples.helloworld.manage">examples.helloworld.manage (module)</a></dt>
+    <dt><a href="tutorials/httpbin.html#module-examples.httpbin.manage">examples.httpbin.manage (module)</a></dt>
     <dt><a href="tutorials/proxy.html#module-examples.proxyserver.manage">examples.proxyserver.manage (module)</a></dt>
     <dt><a href="tutorials/webmail.html#module-examples.webmail.manage">examples.webmail.manage (module)</a></dt>
     <dt><a href="apps/tasks.html#pulsar.apps.tasks.Task.expiry">expiry (pulsar.apps.tasks.Task attribute)</a></dt>
@@ -304,24 +317,24 @@
     <dt><a href="api/async.html#pulsar.EventHandler.fire_event">fire_event() (pulsar.EventHandler method)</a></dt>
     <dt><a href="api/utilities.html#pulsar.utils.config.Setting.flags">flags (pulsar.utils.config.Setting attribute)</a></dt>
     <dt><a href="api/utilities.html#pulsar.utils.httpurl.Headers.flat">flat() (pulsar.utils.httpurl.Headers method)</a></dt>
-    <dt><a href="apps/wsgi/content.html#pulsar.apps.wsgi.content.Html.flatatt">flatatt() (pulsar.apps.wsgi.content.Html method)</a></dt>
 </dl></td>
   <td style="width: 33%" valign="top"><dl>
+    <dt><a href="apps/wsgi/content.html#pulsar.apps.wsgi.content.Html.flatatt">flatatt() (pulsar.apps.wsgi.content.Html method)</a></dt>
+    <dt><a href="api/protocols.html#pulsar.Client.force_sync">force_sync (pulsar.Client attribute)</a></dt>
     <dt><a href="api/utilities.html#pulsar.utils.websocket.Frame">Frame (class in pulsar.utils.websocket)</a></dt>
     <dt><a href="api/utilities.html#pulsar.utils.websocket.FrameParser">FrameParser (class in pulsar.utils.websocket)</a></dt>
     <dt><a href="apps/tasks.html#pulsar.apps.tasks.Task.from_task">from_task (pulsar.apps.tasks.Task attribute)</a></dt>
-    <dt><a href="apps/rpc.html#pulsar.apps.rpc.FromApi">FromApi() (in module pulsar.apps.rpc)</a></dt>
     <dt><a href="api/utilities.html#pulsar.utils.structures.FrozenDict">FrozenDict (class in pulsar.utils.structures)</a></dt>
     <dt><a href="apps/tasks.html#pulsar.apps.tasks.FULL_RUN_STATES">FULL_RUN_STATES (in module pulsar.apps.tasks)</a></dt>
-    <dt><a href="apps/rpc.html#pulsar.apps.rpc.PulsarServerCommands.functions_list">functions_list() (pulsar.apps.rpc.PulsarServerCommands method)</a></dt>
 </dl></td>
 </tr></table>
 
 <h2 id="G">G</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%" valign="top"><dl>
-    <dt><a href="apps/http.html#pulsar.apps.http.HttpClient.get">get() (pulsar.apps.http.HttpClient method)</a></dt>
+    <dt><a href="tutorials/httpbin.html#examples.httpbin.manage.HttpBin.get">get() (examples.httpbin.manage.HttpBin method)</a></dt>
     <dd><dl>
+      <dt><a href="apps/http.html#pulsar.apps.http.HttpClient.get">(pulsar.apps.http.HttpClient method)</a></dt>
       <dt><a href="apps/wsgi/wrappers.html#pulsar.apps.wsgi.wrappers.WsgiRequest.get">(pulsar.apps.wsgi.wrappers.WsgiRequest method)</a></dt>
   </dl></dd>
     <dt><a href="api/actor.html#pulsar.get_actor">get_actor() (in module pulsar)</a></dt>
@@ -331,10 +344,6 @@
   </dl></dd>
     <dt><a href="api/protocols.html#pulsar.Client.get_connection">get_connection() (pulsar.Client method)</a></dt>
     <dt><a href="apps/http.html#pulsar.apps.http.HttpClient.get_headers">get_headers() (pulsar.apps.http.HttpClient method)</a></dt>
-    <dt><a href="apps/rpc.html#pulsar.apps.rpc.JSONRPC.get_method_and_args">get_method_and_args() (pulsar.apps.rpc.JSONRPC method)</a></dt>
-    <dd><dl>
-      <dt><a href="apps/rpc.html#pulsar.apps.rpc.RpcHandler.get_method_and_args">(pulsar.apps.rpc.RpcHandler method)</a></dt>
-  </dl></dd>
     <dt><a href="api/protocols.html#pulsar.ConnectionPool.get_or_create_connection">get_or_create_connection() (pulsar.ConnectionPool method)</a></dt>
     <dt><a href="apps/rpc.html#pulsar.apps.rpc.JsonProxy.get_params">get_params() (pulsar.apps.rpc.JsonProxy method)</a></dt>
 </dl></td>
@@ -358,15 +367,19 @@
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%" valign="top"><dl>
     <dt><a href="apps/http.html#pulsar.apps.http.HttpResponse.handle_headers">handle_headers() (pulsar.apps.http.HttpResponse method)</a></dt>
-    <dt><a href="apps/rpc.html#pulsar.apps.rpc.RpcMiddleware.handler">handler (pulsar.apps.rpc.RpcMiddleware attribute)</a></dt>
     <dt><a href="apps/wsgi/content.html#pulsar.apps.wsgi.content.Html.hasClass">hasClass() (pulsar.apps.wsgi.content.Html method)</a></dt>
+    <dt><a href="apps/wsgi/content.html#pulsar.apps.wsgi.content.HtmlDocument.head">head (pulsar.apps.wsgi.content.HtmlDocument attribute)</a></dt>
     <dt><a href="apps/http.html#pulsar.apps.http.HttpClient.head">head() (pulsar.apps.http.HttpClient method)</a></dt>
     <dt><a href="api/utilities.html#pulsar.utils.httpurl.Headers">Headers (class in pulsar.utils.httpurl)</a></dt>
     <dt><a href="apps/http.html#pulsar.apps.http.HttpClient.headers">headers (pulsar.apps.http.HttpClient attribute)</a></dt>
+    <dt><a href="tutorials/hello.html#examples.helloworld.manage.hello">hello() (in module examples.helloworld.manage)</a></dt>
+    <dt><a href="apps/wsgi/content.html#pulsar.apps.wsgi.content.Html">Html (class in pulsar.apps.wsgi.content)</a></dt>
 </dl></td>
   <td style="width: 33%" valign="top"><dl>
-    <dt><a href="apps/wsgi/content.html#pulsar.apps.wsgi.content.Html">Html (class in pulsar.apps.wsgi.content)</a></dt>
+    <dt><a href="apps/wsgi/wrappers.html#pulsar.apps.wsgi.wrappers.WsgiRequest.html_document">html_document (pulsar.apps.wsgi.wrappers.WsgiRequest attribute)</a></dt>
+    <dt><a href="apps/wsgi/content.html#pulsar.apps.wsgi.content.HtmlDocument">HtmlDocument (class in pulsar.apps.wsgi.content)</a></dt>
     <dt><a href="apps/wsgi/content.html#pulsar.apps.wsgi.content.AsyncString.http_response">http_response() (pulsar.apps.wsgi.content.AsyncString method)</a></dt>
+    <dt><a href="tutorials/httpbin.html#examples.httpbin.manage.HttpBin">HttpBin (class in examples.httpbin.manage)</a></dt>
     <dt><a href="apps/http.html#pulsar.apps.http.HttpClient">HttpClient (class in pulsar.apps.http)</a></dt>
     <dt><a href="api/utilities.html#pulsar.utils.httpurl.HttpParser">HttpParser (class in pulsar.utils.httpurl)</a></dt>
     <dt><a href="apps/http.html#pulsar.apps.http.HttpRequest">HttpRequest (class in pulsar.apps.http)</a></dt>
@@ -429,9 +442,6 @@
 <h2 id="K">K</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%" valign="top"><dl>
-    <dt><a href="apps/rpc.html#pulsar.apps.rpc.PulsarServerCommands.kill_actor">kill_actor() (pulsar.apps.rpc.PulsarServerCommands method)</a></dt>
-</dl></td>
-  <td style="width: 33%" valign="top"><dl>
     <dt><a href="api/utilities.html#pulsar.utils.websocket.FrameParser.kind">kind (pulsar.utils.websocket.FrameParser attribute)</a></dt>
 </dl></td>
 </tr></table>
@@ -440,12 +450,13 @@
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%" valign="top"><dl>
     <dt><a href="apps/wsgi/handlers.html#pulsar.apps.wsgi.handlers.LazyWsgi">LazyWsgi (class in pulsar.apps.wsgi.handlers)</a></dt>
+    <dt><a href="apps/wsgi/handlers.html#pulsar.apps.wsgi.handlers.Router.link">link() (pulsar.apps.wsgi.handlers.Router method)</a></dt>
     <dt><a href="api/utilities.html#pulsar.utils.structures.MultiValueDict.lists">lists() (pulsar.utils.structures.MultiValueDict method)</a></dt>
     <dt><a href="api/application.html#pulsar.apps.Application.load_config">load_config() (pulsar.apps.Application method)</a></dt>
     <dt><a href="apps/test.html#pulsar.apps.test.TestRunner.loadTestsFromTestCase">loadTestsFromTestCase() (pulsar.apps.test.TestRunner method)</a></dt>
-    <dt><a href="api/async.html#pulsar.MultiDeferred.lock">lock (pulsar.MultiDeferred attribute)</a></dt>
 </dl></td>
   <td style="width: 33%" valign="top"><dl>
+    <dt><a href="api/async.html#pulsar.MultiDeferred.lock">lock (pulsar.MultiDeferred attribute)</a></dt>
     <dt><a href="api/async.html#pulsar.MultiDeferred.lock">lock() (pulsar.MultiDeferred method)</a></dt>
     <dt><a href="api/async.html#pulsar.Failure.logged">logged (pulsar.Failure attribute)</a></dt>
     <dt><a href="apps/tasks.html#pulsar.apps.tasks.Job.logger">logger (pulsar.apps.tasks.Job attribute)</a></dt>
@@ -477,7 +488,6 @@
     <dt><a href="apps/tasks.html#pulsar.apps.tasks.Task.maybe_revoked">maybe_revoked() (pulsar.apps.tasks.Task method)</a></dt>
     <dt><a href="apps/wsgi/handlers.html#pulsar.apps.wsgi.handlers.MediaRouter">MediaRouter (class in pulsar.apps.wsgi.handlers)</a></dt>
     <dt><a href="apps/wsgi/wrappers.html#pulsar.apps.wsgi.wrappers.WsgiRequest.method">method (pulsar.apps.wsgi.wrappers.WsgiRequest attribute)</a></dt>
-    <dt><a href="apps/rpc.html#pulsar.apps.rpc.RpcHandler.methods">methods (pulsar.apps.rpc.RpcHandler attribute)</a></dt>
     <dt><a href="apps/wsgi/handlers.html#pulsar.apps.wsgi.handlers.WsgiHandler.middleware">middleware (pulsar.apps.wsgi.handlers.WsgiHandler attribute)</a></dt>
     <dt><a href="api/actor.html#pulsar.Monitor">Monitor (class in pulsar)</a></dt>
     <dt><a href="api/application.html#pulsar.apps.Application.monitor_handler">monitor_handler() (pulsar.apps.Application method)</a></dt>
@@ -552,23 +562,23 @@
     <dt><a href="apps/wsgi/handlers.html#pulsar.apps.wsgi.handlers.Router.parameters">parameters (pulsar.apps.wsgi.handlers.Router attribute)</a></dt>
     <dt><a href="api/actor.html#pulsar.Actor.params">params (pulsar.Actor attribute)</a></dt>
     <dt><a href="apps/rpc.html#pulsar.apps.rpc.RpcHandler.parent">parent (pulsar.apps.rpc.RpcHandler attribute)</a></dt>
+    <dd><dl>
+      <dt><a href="apps/wsgi/handlers.html#pulsar.apps.wsgi.handlers.Router.parent">(pulsar.apps.wsgi.handlers.Router attribute)</a></dt>
+  </dl></dd>
     <dt><a href="api/utilities.html#pulsar.utils.config.Config.parser">parser() (pulsar.utils.config.Config method)</a></dt>
     <dt><a href="apps/http.html#pulsar.apps.http.HttpRequest.parser_class">parser_class (pulsar.apps.http.HttpRequest attribute)</a></dt>
     <dt><a href="apps/http.html#pulsar.apps.http.HttpClient.patch">patch() (pulsar.apps.http.HttpClient method)</a></dt>
-    <dt><a href="apps/rpc.html#pulsar.apps.rpc.RpcMiddleware.path">path (pulsar.apps.rpc.RpcMiddleware attribute)</a></dt>
+    <dt><a href="apps/wsgi/handlers.html#pulsar.apps.wsgi.handlers.MediaRouter.path">path (pulsar.apps.wsgi.handlers.MediaRouter attribute)</a></dt>
     <dd><dl>
-      <dt><a href="apps/wsgi/handlers.html#pulsar.apps.wsgi.handlers.MediaRouter.path">(pulsar.apps.wsgi.handlers.MediaRouter attribute)</a></dt>
       <dt><a href="apps/wsgi/handlers.html#pulsar.apps.wsgi.route.Route.path">(pulsar.apps.wsgi.route.Route attribute)</a></dt>
+      <dt><a href="apps/wsgi/wrappers.html#pulsar.apps.wsgi.wrappers.WsgiRequest.path">(pulsar.apps.wsgi.wrappers.WsgiRequest attribute)</a></dt>
   </dl></dd>
     <dt><a href="api/protocols.html#pulsar.Transport.pause">pause() (pulsar.Transport method)</a></dt>
     <dt><a href="api/async.html#pulsar.Deferred.paused">paused (pulsar.Deferred attribute)</a></dt>
     <dt><a href="apps/tasks.html#pulsar.apps.tasks.JobRegistry.periodic">periodic() (pulsar.apps.tasks.JobRegistry method)</a></dt>
     <dt><a href="api/actor.html#pulsar.Monitor.periodic_task">periodic_task() (pulsar.Monitor method)</a></dt>
     <dt><a href="apps/tasks.html#pulsar.apps.tasks.PeriodicJob">PeriodicJob (class in pulsar.apps.tasks)</a></dt>
-    <dt><a href="apps/rpc.html#pulsar.apps.rpc.PulsarServerCommands.ping">ping() (pulsar.apps.rpc.PulsarServerCommands method)</a></dt>
-    <dd><dl>
-      <dt><a href="api/utilities.html#pulsar.utils.websocket.FrameParser.ping">(pulsar.utils.websocket.FrameParser method)</a></dt>
-  </dl></dd>
+    <dt><a href="api/utilities.html#pulsar.utils.websocket.FrameParser.ping">ping() (pulsar.utils.websocket.FrameParser method)</a></dt>
     <dt><a href="apps/test.html#pulsar.apps.test.Plugin">Plugin (class in pulsar.apps.test)</a></dt>
     <dt><a href="api/async.html#pulsar.EventLoop.poll_timeout">poll_timeout (pulsar.EventLoop attribute)</a></dt>
     <dt><a href="api/utilities.html#pulsar.utils.websocket.FrameParser.pong">pong() (pulsar.utils.websocket.FrameParser method)</a></dt>
@@ -639,6 +649,7 @@
     <dt><a href="apps/tasks.html#pulsar.apps.tasks.TaskQueue.registry">registry (pulsar.apps.tasks.TaskQueue attribute)</a></dt>
     <dt><a href="apps/tasks.html#pulsar.apps.tasks.JobRegistry.regular">regular() (pulsar.apps.tasks.JobRegistry method)</a></dt>
     <dt><a href="api/protocols.html#pulsar.ConnectionPool.release_connection">release_connection() (pulsar.ConnectionPool method)</a></dt>
+    <dt><a href="apps/wsgi/handlers.html#pulsar.apps.wsgi.handlers.Router.remove_child">remove_child() (pulsar.apps.wsgi.handlers.Router method)</a></dt>
     <dt><a href="api/async.html#pulsar.EventLoop.remove_reader">remove_reader() (pulsar.EventLoop method)</a></dt>
     <dt><a href="api/async.html#pulsar.EventLoop.remove_signal_handler">remove_signal_handler() (pulsar.EventLoop method)</a></dt>
     <dt><a href="api/async.html#pulsar.EventLoop.remove_writer">remove_writer() (pulsar.EventLoop method)</a></dt>
@@ -650,13 +661,10 @@
     <dd><dl>
       <dt><a href="api/protocols.html#pulsar.Client.request">(pulsar.Client method)</a></dt>
   </dl></dd>
-    <dt><a href="apps/rpc.html#pulsar.apps.rpc.RpcMiddleware.request_class">request_class (pulsar.apps.rpc.RpcMiddleware attribute)</a>, <a href="apps/rpc.html#pulsar.apps.rpc.RpcMiddleware.request_class">[1]</a></dt>
-    <dd><dl>
-      <dt><a href="apps/wsgi/handlers.html#pulsar.apps.wsgi.handlers.Router.request_class">(pulsar.apps.wsgi.handlers.Router attribute)</a></dt>
-  </dl></dd>
     <dt><a href="api/application.html#pulsar.apps.CPUboundApplication.request_instance">request_instance() (pulsar.apps.CPUboundApplication method)</a></dt>
     <dt><a href="api/actor.html#pulsar.Actor.requestloop">requestloop (pulsar.Actor attribute)</a></dt>
     <dt><a href="api/protocols.html#pulsar.ProtocolConsumer.reset_connection">reset_connection() (pulsar.ProtocolConsumer method)</a></dt>
+    <dt><a href="apps/wsgi/handlers.html#pulsar.apps.wsgi.handlers.Router.resolve">resolve() (pulsar.apps.wsgi.handlers.Router method)</a></dt>
     <dt><a href="apps/wsgi/wrappers.html#pulsar.apps.wsgi.wrappers.WsgiRequest.response">response (pulsar.apps.wsgi.wrappers.WsgiRequest attribute)</a></dt>
     <dd><dl>
       <dt><a href="apps/wsgi/wrappers.html#pulsar.apps.wsgi.wrappers.WsgiResponse.response">(pulsar.apps.wsgi.wrappers.WsgiResponse attribute)</a></dt>
@@ -665,20 +673,31 @@
     <dd><dl>
       <dt><a href="api/protocols.html#pulsar.Client.response">(pulsar.Client method)</a></dt>
   </dl></dd>
-</dl></td>
-  <td style="width: 33%" valign="top"><dl>
     <dt><a href="apps/wsgi/handlers.html#pulsar.apps.wsgi.handlers.WsgiHandler.response_middleware">response_middleware (pulsar.apps.wsgi.handlers.WsgiHandler attribute)</a></dt>
     <dt><a href="api/async.html#pulsar.Deferred.result">result (pulsar.Deferred attribute)</a></dt>
     <dt><a href="api/async.html#pulsar.Deferred.result_or_self">result_or_self() (pulsar.Deferred method)</a></dt>
     <dt><a href="api/protocols.html#pulsar.Transport.resume">resume() (pulsar.Transport method)</a></dt>
     <dt><a href="apps/rpc.html#pulsar.apps.rpc.RpcHandler.root">root (pulsar.apps.rpc.RpcHandler attribute)</a></dt>
+</dl></td>
+  <td style="width: 33%" valign="top"><dl>
     <dt><a href="apps/wsgi/handlers.html#pulsar.apps.wsgi.route.route">route (class in pulsar.apps.wsgi.route)</a></dt>
     <dt><a href="apps/wsgi/handlers.html#pulsar.apps.wsgi.route.Route">Route (class in pulsar.apps.wsgi.route)</a></dt>
     <dt><a href="apps/wsgi/handlers.html#pulsar.apps.wsgi.handlers.Router.route">route (pulsar.apps.wsgi.handlers.Router attribute)</a></dt>
     <dt><a href="apps/wsgi/handlers.html#pulsar.apps.wsgi.handlers.Router">Router (class in pulsar.apps.wsgi.handlers)</a></dt>
     <dt><a href="apps/wsgi/handlers.html#pulsar.apps.wsgi.handlers.Router.routes">routes (pulsar.apps.wsgi.handlers.Router attribute)</a></dt>
+    <dt><a href="tutorials/calculator.html#examples.calculator.manage.Calculator.rpc_add">rpc_add() (examples.calculator.manage.Calculator method)</a></dt>
+    <dt><a href="tutorials/calculator.html#examples.calculator.manage.Calculator.rpc_divide">rpc_divide() (examples.calculator.manage.Calculator method)</a></dt>
+    <dt><a href="apps/rpc.html#pulsar.apps.rpc.PulsarServerCommands.rpc_documentation">rpc_documentation() (pulsar.apps.rpc.PulsarServerCommands method)</a></dt>
+    <dt><a href="apps/rpc.html#pulsar.apps.rpc.PulsarServerCommands.rpc_echo">rpc_echo() (pulsar.apps.rpc.PulsarServerCommands method)</a></dt>
+    <dt><a href="apps/rpc.html#pulsar.apps.rpc.PulsarServerCommands.rpc_functions_list">rpc_functions_list() (pulsar.apps.rpc.PulsarServerCommands method)</a></dt>
+    <dt><a href="apps/rpc.html#pulsar.apps.rpc.PulsarServerCommands.rpc_kill_actor">rpc_kill_actor() (pulsar.apps.rpc.PulsarServerCommands method)</a></dt>
+    <dt><a href="apps/rpc.html#pulsar.apps.rpc.rpc_method">rpc_method() (in module pulsar.apps.rpc)</a></dt>
+    <dt><a href="tutorials/calculator.html#examples.calculator.manage.Calculator.rpc_multiply">rpc_multiply() (examples.calculator.manage.Calculator method)</a></dt>
+    <dt><a href="apps/rpc.html#pulsar.apps.rpc.PulsarServerCommands.rpc_ping">rpc_ping() (pulsar.apps.rpc.PulsarServerCommands method)</a></dt>
+    <dt><a href="tutorials/calculator.html#examples.calculator.manage.Calculator.rpc_randompaths">rpc_randompaths() (examples.calculator.manage.Calculator method)</a></dt>
+    <dt><a href="apps/rpc.html#pulsar.apps.rpc.PulsarServerCommands.rpc_server_info">rpc_server_info() (pulsar.apps.rpc.PulsarServerCommands method)</a></dt>
+    <dt><a href="tutorials/calculator.html#examples.calculator.manage.Calculator.rpc_subtract">rpc_subtract() (examples.calculator.manage.Calculator method)</a></dt>
     <dt><a href="apps/rpc.html#pulsar.apps.rpc.RpcHandler">RpcHandler (class in pulsar.apps.rpc)</a></dt>
-    <dt><a href="apps/rpc.html#pulsar.apps.rpc.RpcMiddleware">RpcMiddleware (class in pulsar.apps.rpc)</a></dt>
     <dt><a href="apps/tasks.html#pulsar.apps.tasks.Scheduler.run">run() (pulsar.apps.tasks.Scheduler method)</a></dt>
     <dd><dl>
       <dt><a href="api/async.html#pulsar.EventLoop.run">(pulsar.EventLoop method)</a></dt>
@@ -690,6 +709,7 @@
     <dt><a href="api/async.html#pulsar.EventLoop.run_once">run_once() (pulsar.EventLoop method)</a></dt>
     <dt><a href="apps/test.html#pulsar.apps.test.TestRequest.run_test">run_test() (pulsar.apps.test.TestRequest method)</a></dt>
     <dt><a href="apps/test.html#pulsar.apps.test.TestRunner.run_test_function">run_test_function() (pulsar.apps.test.TestRunner method)</a></dt>
+    <dt><a href="api/async.html#pulsar.EventLoop.run_until_complete">run_until_complete() (pulsar.EventLoop method)</a></dt>
     <dt><a href="apps/test.html#pulsar.apps.test.TestSuite.runner">runner (pulsar.apps.test.TestSuite attribute)</a></dt>
     <dt><a href="api/async.html#pulsar.Deferred.running">running (pulsar.Deferred attribute)</a></dt>
     <dt><a href="api/actor.html#pulsar.Actor.running">running() (pulsar.Actor method)</a></dt>
@@ -715,7 +735,6 @@
   </dl></dd>
     <dt><a href="apps/rpc.html#pulsar.apps.rpc.RpcHandler.serve_as">serve_as (pulsar.apps.rpc.RpcHandler attribute)</a></dt>
     <dt><a href="api/protocols.html#pulsar.Server">Server (class in pulsar)</a></dt>
-    <dt><a href="apps/rpc.html#pulsar.apps.rpc.PulsarServerCommands.server_info">server_info() (pulsar.apps.rpc.PulsarServerCommands method)</a></dt>
     <dt><a href="api/protocols.html#pulsar.Connection.session">session (pulsar.Connection attribute)</a></dt>
     <dt><a href="api/async.html#pulsar.set_async">set_async() (in module pulsar)</a></dt>
     <dt><a href="api/protocols.html#pulsar.Connection.set_consumer">set_consumer() (pulsar.Connection method)</a></dt>
@@ -724,6 +743,7 @@
     <dt><a href="api/utilities.html#pulsar.utils.config.Config.settings">settings (pulsar.utils.config.Config attribute)</a></dt>
     <dt><a href="api/protocols.html#pulsar.Client.setup">setup() (pulsar.Client method)</a></dt>
     <dt><a href="apps/wsgi/handlers.html#pulsar.apps.wsgi.handlers.MediaRouter.show_indexes">show_indexes (pulsar.apps.wsgi.handlers.MediaRouter attribute)</a></dt>
+    <dt><a href="apps/wsgi/handlers.html#pulsar.apps.wsgi.handlers.Router.sitemap">sitemap() (pulsar.apps.wsgi.handlers.Router method)</a></dt>
 </dl></td>
   <td style="width: 33%" valign="top"><dl>
     <dt><a href="api/protocols.html#pulsar.Transport.sock">sock (pulsar.Transport attribute)</a></dt>
@@ -811,6 +831,7 @@
       <dt><a href="apps/tasks.html#pulsar.apps.tasks.Task.timeout">(pulsar.apps.tasks.Task attribute)</a></dt>
   </dl></dd>
     <dt><a href="apps/tasks.html#pulsar.apps.tasks.Task.to_queue">to_queue() (pulsar.apps.tasks.Task method)</a></dt>
+    <dt><a href="apps/wsgi/content.html#pulsar.apps.wsgi.content.AsyncString.to_string">to_string() (pulsar.apps.wsgi.content.AsyncString method)</a></dt>
     <dt><a href="apps/tasks.html#pulsar.apps.tasks.Task.tojson">tojson() (pulsar.apps.tasks.Task method)</a></dt>
     <dt><a href="api/async.html#pulsar.Failure.traces">traces (pulsar.Failure attribute)</a></dt>
     <dt><a href="api/protocols.html#pulsar.Transport">Transport (class in pulsar)</a></dt>
@@ -900,7 +921,6 @@
           </div>
         </div>
       </div>
-
       <div class="sphinxsidebar">
         <div class="sphinxsidebarwrapper"><p class="logo">
 <a href="index.html">
@@ -923,18 +943,6 @@
         </div>
       </div>
       <div class="clearer"></div>
-    </div>
-    <div class="related">
-      <h3>Navigation</h3>
-      <ul>
-        <li class="right" style="margin-right: 10px">
-          <a href="#" title="General Index"
-             >index</a></li>
-        <li class="right" >
-          <a href="py-modindex.html" title="Python Module Index"
-             >modules</a> |</li>
-        <li><a href="index.html">pulsar v0.5b6 documentation</a> &raquo;</li> 
-      </ul>
     </div>
 
     <div class="footer">

@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>Twisted Integration &mdash; pulsar v0.5b7 documentation</title>
+    <title>Http Bin &mdash; pulsar v0.5b7 documentation</title>
     <link rel="stylesheet" href="../static/pulsar.css" type="text/css" />
     <link rel="stylesheet" href="../static/pygments.css" type="text/css" />
     <script type="text/javascript">
@@ -24,8 +24,8 @@
     <link rel="shortcut icon" href="../static/Game_of_life_pulsar.gif"/>
     <link rel="top" title="pulsar v0.5b7 documentation" href="../index.html" />
     <link rel="up" title="Tutorials &amp; Topics" href="index.html" />
-    <link rel="next" title="API" href="../api/index.html" />
-    <link rel="prev" title="Signal Handling" href="signal.html" /> 
+    <link rel="next" title="HTTP Proxy Server" href="proxy.html" />
+    <link rel="prev" title="Writing Clients" href="clients.html" /> 
   </head>
   <body>
 
@@ -39,10 +39,10 @@
           <a href="../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
         <li class="right" >
-          <a href="../api/index.html" title="API"
+          <a href="proxy.html" title="HTTP Proxy Server"
              accesskey="N">next</a> |</li>
         <li class="right" >
-          <a href="signal.html" title="Signal Handling"
+          <a href="clients.html" title="Writing Clients"
              accesskey="P">previous</a> |</li>
         <li><a href="../index.html">pulsar v0.5b7 documentation</a> &raquo;</li>
           <li><a href="index.html" accesskey="U">Tutorials &amp; Topics</a> &raquo;</li> 
@@ -65,28 +65,24 @@
         <div class="bodywrapper">
           <div class="body">
             
-  <div class="section" id="module-pulsar.lib.tx">
-<span id="twisted-integration"></span><span id="tutorials-twisted"></span><h1>Twisted Integration<a class="headerlink" href="#module-pulsar.lib.tx" title="Permalink to this headline">¶</a></h1>
-<p>Pulsar concurrent framework and applications can be used with <a class="reference external" href="http://twistedmatrix.com/">twisted</a>, an
-event driven network engine for python. Twisted has implementation
-for several protocols which can be used in pulsar by importing the
-<a class="reference internal" href="#module-pulsar.lib.tx" title="pulsar.lib.tx"><tt class="xref py py-mod docutils literal"><span class="pre">pulsar.lib.tx</span></tt></a> module.</p>
-<p>The implementation replaces the twisted reactor with a proxy for
-<a class="reference internal" href="../api/async.html#pulsar.EventLoop" title="pulsar.EventLoop"><tt class="xref py py-class docutils literal"><span class="pre">pulsar.EventLoop</span></tt></a>.
-Twisted Deferred and Failures are made compatible with pulsar
-by installing two different discovery functions via the <a class="reference internal" href="../api/async.html#pulsar.set_async" title="pulsar.set_async"><tt class="xref py py-func docutils literal"><span class="pre">pulsar.set_async()</span></tt></a>
-function.</p>
-<p>Threads, signal handling, scheduling and so forth is handled by pulsar itself,
-twisted implementation is switched off.</p>
-<div class="section" id="pulsar-reactor">
-<h2>Pulsar Reactor<a class="headerlink" href="#pulsar-reactor" title="Permalink to this headline">¶</a></h2>
+  <div class="section" id="http-bin">
+<span id="tutorials-httpbin"></span><h1>Http Bin<a class="headerlink" href="#http-bin" title="Permalink to this headline">¶</a></h1>
+<p>The code for this example is located in the <a class="reference internal" href="#module-examples.httpbin.manage" title="examples.httpbin.manage"><tt class="xref py py-mod docutils literal"><span class="pre">examples.httpbin.manage</span></tt></a>
+module.</p>
+<span class="target" id="module-examples.httpbin.manage"></span><p>Pulsar HTTP test application:</p>
+<div class="highlight-python"><pre>python manage.py</pre>
+</div>
 <dl class="class">
-<dt id="pulsar.lib.tx.PulsarReactor">
-<em class="property">class </em><tt class="descclassname">pulsar.lib.tx.</tt><tt class="descname">PulsarReactor</tt><a class="reference internal" href="../modules/pulsar/lib/tx.html#PulsarReactor"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.lib.tx.PulsarReactor" title="Permalink to this definition">¶</a></dt>
-<dd><p>A twisted reactor which acts as a proxy to pulsar eventloop.</p>
+<dt id="examples.httpbin.manage.HttpBin">
+<em class="property">class </em><tt class="descclassname">examples.httpbin.manage.</tt><tt class="descname">HttpBin</tt><big>(</big><em>rule</em>, <em>*routes</em>, <em>**parameters</em><big>)</big><a class="reference internal" href="../modules/examples/httpbin/manage.html#HttpBin"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#examples.httpbin.manage.HttpBin" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="method">
+<dt id="examples.httpbin.manage.HttpBin.get">
+<tt class="descname">get</tt><big>(</big><em>request</em><big>)</big><a class="reference internal" href="../modules/examples/httpbin/manage.html#HttpBin.get"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#examples.httpbin.manage.HttpBin.get" title="Permalink to this definition">¶</a></dt>
+<dd><p>The home page of this router</p>
 </dd></dl>
 
-</div>
+</dd></dl>
+
 </div>
 
 
@@ -99,23 +95,15 @@ twisted implementation is switched off.</p>
   <img class="logo" width="200" src="../static/pulsar.png" alt="pulsar" title="Pulsar"/>
 </a>
 </p>
-  <h3><a href="../index.html">Table Of Contents</a></h3>
-  <ul>
-<li><a class="reference internal" href="#">Twisted Integration</a><ul>
-<li><a class="reference internal" href="#pulsar-reactor">Pulsar Reactor</a></li>
-</ul>
-</li>
-</ul>
-
   <h4>Previous topic</h4>
-  <p class="topless"><a href="signal.html"
-                        title="previous chapter">Signal Handling</a></p>
+  <p class="topless"><a href="clients.html"
+                        title="previous chapter">Writing Clients</a></p>
   <h4>Next topic</h4>
-  <p class="topless"><a href="../api/index.html"
-                        title="next chapter">API</a></p>
+  <p class="topless"><a href="proxy.html"
+                        title="next chapter">HTTP Proxy Server</a></p>
   <h3>This Page</h3>
   <ul class="this-page-menu">
-    <li><a href="../sources/tutorials/twisted.txt"
+    <li><a href="../sources/tutorials/httpbin.txt"
            rel="nofollow">Show Source</a></li>
   </ul>
 <div id="searchbox" style="display: none">

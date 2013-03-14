@@ -60,7 +60,7 @@ Is failure
 .. autofunction:: is_failure
 
 
-Async Decorators
+Async Utilities
 ====================
 
 Async

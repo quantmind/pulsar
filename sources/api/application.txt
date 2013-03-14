@@ -1,10 +1,10 @@
-.. module:: pulsar.apps
-
 .. _application-api:
 
 ========================
 Applications API
 ========================
+
+.. automodule:: pulsar.apps
 
 Application
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
