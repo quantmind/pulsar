@@ -15,11 +15,8 @@ class TestRpcOnThread(unittest.TestCase):
     def setUpClass(cls):
         name = 'calc_' + cls.concurrency
         s = server(bind='127.0.0.1:0', name=name, concurrency=cls.concurrency)
-        outcome = send('arbiter', 'run', s)
-        yield outcome
-        app = outcome.result
-        cls.app = app
-        cls.uri = 'http://{0}:{1}'.format(*app.address)
+        cls.app = yield send('arbiter', 'run', s)
+        cls.uri = 'http://{0}:{1}'.format(*cls.app.address)
         cls.p = rpc.JsonProxy(cls.uri, timeout=cls.client_timeout)
         
     @classmethod
@@ -36,7 +33,7 @@ class TestRpcOnThread(unittest.TestCase):
         self.assertEqual(proxy._client, self.p)
         self.assertEqual(str(proxy), 'bla')
         
-    def testHandler(self):
+    def test_handler(self):
         s = self.app
         self.assertTrue(s.callable)
         middleware = s.callable
@@ -50,9 +47,8 @@ class TestRpcOnThread(unittest.TestCase):
         
     # Pulsar server commands
     def test_ping(self):
-        response = self.p.ping()
-        yield response
-        self.assertEqual(response.result, 'pong')
+        response = yield self.p.ping()
+        self.assertEqual(response, 'pong')
         
     def testListOfFunctions(self):
         response = self.p.functions_list()

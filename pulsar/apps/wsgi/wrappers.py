@@ -309,7 +309,7 @@ at the wsgi-extension key ``pulsar.cache``.'''
     @wsgi_cache_property
     def data_and_files(self):
         if self.method not in ENCODE_URL_METHODS:
-            return parse_form_data(environ)
+            return parse_form_data(self.environ)
         else:
             return MultiValueDict(), None
             

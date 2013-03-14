@@ -17,6 +17,7 @@ Open a new shell and launch python and type::
     >>>
 
 '''
+from wsgiref.validate import validator
 try:
     import pulsar
 except ImportError: #pragma nocover
@@ -81,11 +82,17 @@ class Calculator(rpc.JSONRPC):
     rpc_randompaths = rpc.FromApi(randompaths)
 
 
-def wsgi_handler():
-    return rpc.RpcMiddleware(Root().putSubHandler('calc',Calculator()))
+class Site(wsgi.LazyWsgi):
+    
+    def setup(self):
+        json_handler = Root().putSubHandler('calc', Calculator())
+        middleware = wsgi.Router('/', post=json_handler)
+        app = wsgi.WsgiHandler(middleware=[middleware])
+        return validator(app)
+    
 
 def server(callable=None, **params):
-    return wsgi.WSGIServer(callable=wsgi_handler(), **params)
+    return wsgi.WSGIServer(Site(), **params)
 
 
 if __name__ == '__main__':  #pragma nocover

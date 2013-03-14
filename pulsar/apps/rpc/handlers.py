@@ -13,7 +13,7 @@ from .decorators import rpcerror, wrap_object_call
 from .exceptions import *
 
 
-__all__ = ['RpcHandler', 'RpcMiddleware']
+__all__ = ['RpcHandler']
 
 LOGGER = logging.getLogger('pulsar.rpc')
 
@@ -139,7 +139,7 @@ for ``method``, ``kwargs`` are keyworded parameters for ``method``,
 ``id`` is an identifier for the client,
 ``version`` is the version of the RPC protocol.
     '''
-        raise NotImplementedError()
+        raise NotImplementedError
 
     def __getstate__(self):
         d = self.__dict__.copy()
@@ -208,87 +208,3 @@ for ``method``, ``kwargs`` are keyworded parameters for ``method``,
 
     def docs(self):
         return '\n'.join(self._docs())
-
-
-class RpcMiddleware(object):
-    '''A WSGI_ middleware for serving an :class:`RpcHandler`.
-
-.. attribute:: handler
-
-    The :class:`RpcHandler` to serve.
-
-.. attribute:: path
-
-    The path where the RPC is located
-
-    Default ``None``
-    
-.. attribute:: request_class
-
-    A class which is used to wrap the WSGI *environ* dictionary. Must have
-    a dictionary-like interface.
-'''
-    request_class = WsgiRequest
-
-    def __init__(self, handler, path=None, request_class=None):
-        if request_class:
-            self.request_class = request_class
-        self.handler = handler
-        self.path = path or '/'
-
-    def __str__(self):
-        return self.path
-
-    def __repr__(self):
-        return '{0}({1})'.format(self.__class__.__name__,self)
-
-    @property
-    def route(self):
-        return self.path
-
-    def __call__(self, environ, start_response):
-        '''The WSGI handler which consume the remote procedure call'''
-        request = self.request_class(environ, start_response)
-        path = environ['PATH_INFO'] or '/'
-        if path == self.path:
-            return self._call(environ, start_response)
-        
-    def _call(self, environ, start_response):
-        method = environ['REQUEST_METHOD'].lower()
-        if method not in self.handler.methods:
-            raise HttpException(status=405, msg='Method "%s" not allowed' %\
-                                method)
-        data = environ['wsgi.input'].read()
-        hnd = self.handler
-        method, args, kwargs, id, version = hnd.get_method_and_args(data)
-        hnd.request(environ, method, args, kwargs, id, version)
-        rpc = environ['rpc']
-        status_code = 200
-        try:
-            result = rpc.process(request)
-        except Exception as e:
-            result = maybe_failure(e)
-        handler = rpc.handler
-        result = maybe_async(result)
-        while is_async(result):
-            yield b''
-            result = maybe_async(result)
-        try:
-            if is_failure(result):
-                e = result.trace[1]
-                status_code = getattr(e, 'status', 400)
-                log_failure(result)
-                result = handler.dumps(rpc.id, rpc.version, error=e)
-            else:
-                result = handler.dumps(rpc.id, rpc.version, result=result)
-        except Exception as e:
-            LOGGER.error('Could not serialize', exc_info=True)
-            status_code = 500
-            result = handler.dumps(rpc.id, rpc.version, error=e)
-        response = request.response
-        response.status_code = status_code
-        response.content = result
-        response.content_type = handler.content_type
-        for c in response.start():
-            yield c
-            
