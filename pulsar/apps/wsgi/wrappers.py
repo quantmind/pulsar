@@ -20,8 +20,6 @@ Wsgi Response
 .. _WSGI: http://www.wsgi.org
 '''
 import os
-import sys
-import time
 import json
 from functools import partial, reduce
 

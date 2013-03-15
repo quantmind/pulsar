@@ -32,6 +32,12 @@ class RpcRoot(rpc.PulsarServerCommands, tasks.TaskQueueRpcMixin):
         return self.task_run(request, 'runpycode', code=code, **params)
         
 
+class Rpc(wsgi.LazyWsgi):
+    
+    def setup(self):
+        return wsgi.Router('/', post=RpcRoot())
+    
+    
 class server(pulsar.MultiApp):
     
     def build(self):
@@ -39,8 +45,7 @@ class server(pulsar.MultiApp):
         params = self.params
         self.add(tasks.TaskQueue(name=name, tasks_path=TASK_PATHS,
                                  script=__file__, **params))
-        self.add(wsgi.WSGIServer(rpc.RpcMiddleware(RpcRoot(name)),
-                                 name = '%s_rpc' % name, **params))
+        self.add(wsgi.WSGIServer(Rpc(), name='%s_rpc' % name, **params))
     
 
 if __name__ == '__main__':

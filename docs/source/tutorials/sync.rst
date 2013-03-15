@@ -9,5 +9,3 @@ However, sometimes, mainly for testing purposing, can be useful to have
 :class:`pulsar.Client` which behave in a synchronous fashion.
 
 Pulsar achieves this by using the ``force_sync`` keyword when building a client.
-
-  

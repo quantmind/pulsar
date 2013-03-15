@@ -31,7 +31,6 @@ the :class:`pulsar.apps.rpc.PulsarServerCommands` handler.
    :member-order: bysource
    
 '''
-from wsgiref.validate import validator
 try:
     import pulsar
 except ImportError: #pragma nocover
@@ -69,7 +68,7 @@ def randompaths(request, num_paths=1, size=250, mu=0, sigma=1):
 class RequestCheck:
     
     def __call__(self, request, name):
-        assert(request.environ['rpc'].method==name)
+        assert(request.json_data['method'] == name)
         return True
 
 
@@ -107,8 +106,7 @@ class Site(wsgi.LazyWsgi):
     def setup(self):
         json_handler = Root().putSubHandler('calc', Calculator())
         middleware = wsgi.Router('/', post=json_handler)
-        app = wsgi.WsgiHandler(middleware=[middleware])
-        return validator(app)
+        return wsgi.WsgiHandler(middleware=[middleware])
     
 
 def server(callable=None, **params):

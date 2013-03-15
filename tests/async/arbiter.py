@@ -4,9 +4,10 @@ import time
 from threading import current_thread
 
 import pulsar
-from pulsar import send, spawn, system, ACTOR_ACTION_TIMEOUT
+from pulsar import send, spawn, system, platform, ACTOR_ACTION_TIMEOUT
 from pulsar.utils.pep import default_timer
-from pulsar.apps.test import unittest, run_on_arbiter, ActorTestMixin, dont_run_with_thread
+from pulsar.apps.test import unittest, run_on_arbiter, ActorTestMixin,\
+                                dont_run_with_thread
 
 
 def timeout(start):
@@ -117,7 +118,8 @@ class TestArbiterThread(ActorTestMixin, unittest.TestCase):
             arbiter.manage_actors()
         thread_actors = pulsar.process_local_data('thread_actors')
         self.assertFalse(proxy.aid in thread_actors)
-        
+    
+    @unittest.skipUnless(platform.is_posix, 'For posix systems only')
     @run_on_arbiter
     def testFakeSignal(self):
         arbiter = pulsar.get_actor()
@@ -130,7 +132,8 @@ class TestArbiterThread(ActorTestMixin, unittest.TestCase):
         # The arbiter should have processed the fake signal
         #TODO this is not valid in multiprocessing!
         #self.assertEqual(arbiter.signal_queue.qsize(), 0)
-        
+    
+    @unittest.skipUnless(platform.is_posix, 'For posix systems only')    
     @run_on_arbiter
     def testSignal(self):
         arbiter = pulsar.get_actor()

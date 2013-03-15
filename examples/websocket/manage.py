@@ -43,12 +43,16 @@ def page(environ, start_response):
         return [pulsar.to_bytes(data)]
 
 
+class Site(wsgi.LazyWsgi):
+    
+    def setup(self):
+        return wsgi.WsgiHandler(middleware=(page,
+                                            ws.WebSocket('/data', Graph()),
+                                            ws.WebSocket('/echo', Echo())))
+
 
 def server(**kwargs):
-    app = wsgi.WsgiHandler(middleware=(page,
-                                       ws.WebSocket('/data', Graph()),
-                                       ws.WebSocket('/echo', Echo())))
-    return wsgi.WSGIServer(callable=app, **kwargs)
+    return wsgi.WSGIServer(callable=Site(), **kwargs)
 
 
 if __name__ == '__main__':  #pragma nocover

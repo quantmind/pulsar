@@ -173,7 +173,7 @@ first time it is called. Subclasses must implement the :meth:`setup` method.
 
 This application handler is particularly useful when working in multiprocessing
 mode so that wsgi middleware can be rebuild consistently in ever application
-domain without causing serialization issues.'''
+domain without causing serialization issues.'''        
     def __call__(self, environ, start_response):
         return self.middleware(environ, start_response)
     

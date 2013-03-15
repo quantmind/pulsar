@@ -23,9 +23,10 @@ class TestRouter(unittest.TestCase):
             @route()
             def post_pluto(self, request):
                 return 'This is /pluto POST route'
-            
-        self.assertEqual(len(testRouter.routes), 3)
-        return testRouter(path)
+        
+        router = testRouter(path)
+        self.assertEqual(len(router.routes), 3)
+        return router
     
     def test_router(self):
         router = self.router()

@@ -36,7 +36,9 @@ class TestRpcOnThread(unittest.TestCase):
     def test_handler(self):
         s = self.app
         self.assertTrue(s.callable)
-        router = s.callable.middleware[-1]
+        wsgi_handler = s.callable.middleware
+        self.assertEqual(len(wsgi_handler.middleware), 1)
+        router = wsgi_handler.middleware[0]
         self.assertEqual(router.route.path, '/')
         root = router.post
         self.assertEqual(len(root.subHandlers), 1)
@@ -61,7 +63,8 @@ class TestRpcOnThread(unittest.TestCase):
         
     def test_time_it(self):
         '''Ping server 20 times'''
-        response = yield self.p.timeit('ping', 20)
+        response = self.p.timeit('ping', 20)
+        yield response
         self.assertTrue(response.locked_time > 0)
         self.assertTrue(response.total_time > response.locked_time)
         self.assertEqual(response.num_failures, 0)

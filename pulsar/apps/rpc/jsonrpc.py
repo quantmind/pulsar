@@ -129,6 +129,8 @@ class JsonProxy(object):
 :param version: JSONRPC server version. Default ``2.0``
 :param id: optional request id, generated if not provided. Default ``None``.
 :param data: Extra data to include in all requests. Default ``None``.
+:param full_response: return the full Http response rather than
+    just the content.
 :param http: optional http opener. If provided it must have the ``request``
     method available which must be of the form::
 

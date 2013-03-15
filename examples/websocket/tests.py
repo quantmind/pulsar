@@ -15,9 +15,7 @@ class TestWebSocketThread(unittest.TestCase):
     def setUpClass(cls):
         s = server(bind='127.0.0.1:0', name=cls.__name__,
                    concurrency=cls.concurrency)
-        outcome = send('arbiter', 'run', s)
-        yield outcome
-        cls.app = outcome.result
+        cls.app = yield send('arbiter', 'run', s)
         cls.uri = 'http://{0}:{1}'.format(*cls.app.address)
         cls.ws_uri = 'ws://{0}:{1}/data'.format(*cls.app.address)
         cls.ws_echo = 'ws://{0}:{1}/echo'.format(*cls.app.address)
@@ -34,8 +32,7 @@ class TestWebSocketThread(unittest.TestCase):
         
     def testBadRequests(self):
         c = HttpClient()
-        response = c.post(self.ws_uri)
-        yield response.on_finished
+        response = yield c.post(self.ws_uri).on_finished
         self.assertEqual(response.status_code, 405)
         #
         response = yield c.get(self.ws_uri,

@@ -24,7 +24,7 @@ from .access import thread_local_data
 from .defer import log_failure, is_failure, Deferred
 from .transports import create_server
 
-__all__ = ['EventLoop', 'TimedCall', 'asynchronous']
+__all__ = ['EventLoop', 'TimedCall', 'TimeoutError']
 
 LOGGER = logging.getLogger('pulsar.eventloop')
 
@@ -69,29 +69,6 @@ class EventLoopPolicy(BaseEventLoopPolicy):
         
     
 set_event_loop_policy(EventLoopPolicy())
-
-
-class asynchronous:
-    
-    def __call__(self, f):
-        assert inspect.isgeneratorfunction(f), 'required generator function'
-        self.func = f
-        def _(*args, **kwargs):
-            d = Deferred()
-            self.generate(get_event_loop(), d.callback, f(*args, **kwargs))
-            return d
-        return _
-    
-    def generate(self, eventloop, callback, gen, value=None):
-        try:
-            value = next(gen)
-            return eventloop.call_soon_threadsafe(self.generate, eventloop,
-                                                  callback, gen, value)
-        except StopIteration:
-            return
-        except Exception as e:
-            value = e
-        callback(log_failure(value))
                 
             
 class TimedCall(object):
@@ -329,7 +306,7 @@ event loop is the place where most asynchronous operations are carried out.
     
     @property
     def name(self):
-        name = ' %s' % self._name if self._name else ' <not running>'
+        name = self._name if self._name else '<not running>'
         if self.cpubound:
             return 'CPU bound %s %s' % (self.__class__.__name__, name)
         else:
@@ -423,7 +400,7 @@ Each callback will be called exactly once.  If two callbacks
 are scheduled for exactly the same time, it is undefined which
 will be called first.
 
-Callbacks scheduled in the past are passed on to call_soon(),
+Callbacks scheduled in the past are passed on to :meth:`call_soon` method,
 so these will be called in the order in which they were
 registered rather than by time due.  This is so you can't
 cheat and insert yourself at the front of the ready queue by
@@ -439,7 +416,7 @@ the callback when it is called."""
             return self.call_soon(callback, *args)
         
     def call_soon(self, callback, *args):
-        '''Equivalent to ``self.call_later(0, callback, *args, **kw)``.'''
+        '''Equivalent to ``self.call_later(0, callback, *args)``.'''
         timeout = TimedCall(None, callback, args)
         self._callbacks.append(timeout)
         return timeout

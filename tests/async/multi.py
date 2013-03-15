@@ -8,7 +8,12 @@ from pulsar import multi_async
 
 class TestApi(unittest.TestCase):
     
-    def test_empy(self):
+    def test_empy_list(self):
         r = multi_async(())
         self.assertTrue(r.called)
         self.assertEqual(r.result, [])
+        
+    def test_empy_dict(self):
+        r = multi_async({})
+        self.assertTrue(r.called)
+        self.assertEqual(r.result, {})
