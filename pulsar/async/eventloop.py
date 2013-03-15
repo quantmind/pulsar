@@ -45,10 +45,6 @@ def setid(self):
 class StopEventLoop(BaseException):
     """Raised to stop the event loop."""
     
-    
-class TimeoutEventLoop(StopEventLoop):
-    """Raised when timing out the event loop."""
-
 
 class EventLoopPolicy(BaseEventLoopPolicy):
     
@@ -398,15 +394,10 @@ event loop is the place where most asynchronous operations are carried out.
             self.call_soon(future.add_both, self._raise_stop_event_loop)
             handler = None
             if timeout:
-                handler = self.call_later(timeout,
-                                          self._raise_timeout_event_loop)
-            try:
-                self.run()
-            except TimeoutEventLoop:
-                raise CancelledError
-            except StopEventLoop:
-                if handler:
-                    handler.cancel()
+                handler = self.call_later(timeout, self._raise_stop_event_loop)
+            self.run()
+            if handler and future.called:
+                handler.cancel()
             return future.result_or_self()
         
     def stop(self):
@@ -588,13 +579,9 @@ default signal handler ``signal.SIG_DFL``.'''
         self._name = None
         self.tid = None
         
-    def _raise_stop_event_loop(self):
+    def _raise_stop_event_loop(self, exc=None):
         self.logger.debug('Stopping %s', self)
         raise StopEventLoop
-    
-    def _raise_timeout_event_loop(self):
-        self.logger.debug('Timing out %s', self)
-        raise TimeoutEventLoop
 
     def _check_signal(self, sig):
         """Internal helper to validate a signal.

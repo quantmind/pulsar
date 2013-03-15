@@ -50,29 +50,31 @@ from pulsar.apps.socket import SocketServer
 
 
 class EchoProtocol(pulsar.ProtocolConsumer):
-    '''Echo protocol consumer for client and servers.'''
+    '''A symmetric echo protocol consumer for client and servers.
+The only difference between client and server is the implementation of the
+:meth:`response` method.'''
     separator = b'\r\n\r\n'
     '''A separator for messages.'''
     
     def data_received(self, data):
-        '''Implements the :meth:`pulsar.Protocol.data_received` method.
+        '''Implements the :meth`pulsar.Protocol.data_received` method.
 It simple search for the :attr:`separator` and if found it invokes the
 :meth:`response` method with the value of the message.'''
         idx = data.find(self.separator)
         if idx: # we have a full message
             idx += len(self.separator)
             data, rest = data[:idx], data[idx:]
-            self.response(data)
-            self.finished()
+            self.finished(self.response(data))
             return rest
     
     def start_request(self):
-        self.transport.write(self.current_request.message+self.separator)
+        self.transport.write(self.current_request.message + self.separator)
         
     def response(self, data):
-        '''Clients store the message in the **result** attribute, while servers
-sends the message back to the client.'''
-        self.result = data[:len(self.separator)]
+        '''Clients return the message so that the
+:attr:`pulsar.ProtocolConsumer.on_finished` deferred is called back with the
+message value, while servers sends the message back to the client.'''
+        return data[:-len(self.separator)]
         
 
 class EchoServerProtocol(EchoProtocol):
@@ -94,7 +96,6 @@ class Echo(pulsar.Client):
         request.message = message
         return self.response(request)
         
-
 
 def server(description=None, **kwargs):
     description = description or 'Echo Server'

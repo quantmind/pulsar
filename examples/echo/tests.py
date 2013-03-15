@@ -1,6 +1,7 @@
 from functools import partial
 
 import pulsar
+from pulsar import multi_async
 from pulsar.apps.test import unittest, dont_run_with_thread
 
 from .manage import server, Echo, EchoServerProtocol
@@ -29,9 +30,18 @@ class TestEchoServerThread(unittest.TestCase):
         
     def test_ping(self):
         c = Echo(self.server.address)
-        response = c.request(b'ciao')
-        yield response.on_finished
-        self.assertEqual(response.result, b'ciao')
+        result = yield c.request(b'ciao luca').on_finished
+        self.assertEqual(result, b'ciao luca')
+        
+    def test_multi(self):
+        c = Echo(self.server.address)
+        result = yield multi_async((c.request(b'ciao').on_finished,
+                                    c.request(b'pippo').on_finished,
+                                    c.request(b'foo').on_finished))
+        self.assertEqual(len(result), 3)
+        self.assertTrue(b'ciao' in result)
+        self.assertTrue(b'pippo' in result)
+        self.assertTrue(b'foo' in result)
         
 
 @dont_run_with_thread
