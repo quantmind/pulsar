@@ -21,7 +21,7 @@ from pulsar.utils.pep import default_timer, set_event_loop_policy,\
 from pulsar.utils.sockets import SOCKET_INTERRUPT_ERRORS
 
 from .access import thread_local_data
-from .defer import log_failure, Deferred, CancelledError
+from .defer import log_failure, is_failure, Deferred
 from .transports import create_server
 
 __all__ = ['EventLoop', 'TimedCall', 'asynchronous']
@@ -45,6 +45,8 @@ def setid(self):
 class StopEventLoop(BaseException):
     """Raised to stop the event loop."""
     
+class TimeoutError(Exception):
+    pass
 
 class EventLoopPolicy(BaseEventLoopPolicy):
     
@@ -241,13 +243,13 @@ class FileDescriptor(IObase):
     def __call__(self, events):
         if events & self.READ:
             if self.handle_read:
-                self.handle_read()
+                log_failure(self.handle_read())
             else:
                 LOGGER.warn('Read callback without handler for file'
                             ' descriptor %s.', self.fd)
         if events & self.WRITE:
             if self.handle_write:
-                self.handle_write()
+                log_failure(self.handle_write())
             else:
                 LOGGER.warn('Write callback without handler for file'
                             ' descriptor %s.', self.fd)
@@ -273,8 +275,6 @@ class FileDescriptor(IObase):
 class EventLoop(IObase, BaseEventLoop):
     """A pluggable event loop which conforms with the pep-3156_ API. The
 event loop is the place where most asynchronous operations are carried out.
-
-**ATTRIBUTES**
 
 .. attribute:: io
 
@@ -303,7 +303,6 @@ event loop is the place where most asynchronous operations are carried out.
 
     The thread id where the eventloop is running
 
-**METHODS**
 """
     # Never use an infinite timeout here - it can stall epoll
     poll_timeout = 0.5
@@ -339,6 +338,12 @@ event loop is the place where most asynchronous operations are carried out.
     @property
     def io(self):
         return self._impl
+    
+    @property
+    def iothreadloop(self):
+        '''``True`` if this :class:`EventLoop` install itself as the event
+loop of the thread where it is run.'''
+        return self._iothreadloop
     
     @property
     def cpubound(self):
@@ -383,22 +388,25 @@ event loop is the place where most asynchronous operations are carried out.
                 self._after_run()
                 
     def run_until_complete(self, future, timeout=None):
-        '''Run the event loop until a Future is done.
-
-        Return the Future's result, or raise its exception.
-
-        If timeout is not None, run it for at most that long;
-        if the Future is still not done, raise TimeoutError
-        (but don't cancel the Future).'''
-        if not self.running:
-            self.call_soon(future.add_both, self._raise_stop_event_loop)
-            handler = None
-            if timeout:
-                handler = self.call_later(timeout, self._raise_stop_event_loop)
-            self.run()
-            if handler and future.called:
+        '''Run the event loop until a :class:`Deferred` *future* is done.
+Return the future's result, or raise its exception. If timeout is not
+``None``, run it for at most that long;  if the future is still not done,
+raise TimeoutError (but don't cancel the future).'''
+        self.call_soon(future.add_both, self._raise_stop_event_loop)
+        handler = None
+        if timeout:
+            handler = self.call_later(timeout, self._raise_stop_event_loop)
+        self.run()
+        if handler:
+            if future.called:
                 handler.cancel()
-            return future.result_or_self()
+            else:
+                raise TimeoutError
+        result = future.result_or_self()
+        if is_failure(result):
+            result.raise_all()
+        else:
+            return result
         
     def stop(self):
         '''Stop the loop after the current event loop iteration is complete'''

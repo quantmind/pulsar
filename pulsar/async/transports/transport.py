@@ -354,7 +354,8 @@ as only attribute.'''
         # Called when a connection has been made
         connector = self._connector
         self.remove_connector()
-        connector.callback(self)
+        # return so that errors get logged
+        return connector.callback(self)
         
     def _ready_read(self):
         # Read from the socket until we get EWOULDBLOCK or equivalent.
@@ -486,6 +487,8 @@ connector fires its callbacks.'''
         return failure
         
     def set_consumer(self, consumer):
+        '''Set the :class:`ProtocolConsumer` which will consume the protocol
+once the connection is made.'''
         consumer._connection = self
         # add callback and errorback to self
         self.add_callback(lambda c: c.set_consumer(consumer),

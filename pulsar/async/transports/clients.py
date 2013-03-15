@@ -143,8 +143,9 @@ class Client(EventHandler):
 :class:`ConnectionPool` of asynchronous connections.
 
 .. attribute:: force_sync
+
     Force a synchronous client, that is a client which has it
-    own :class:`EventLoop`.
+    own :class:`EventLoop` and blocks until a response is available.
     
     Default: `False`
 '''
@@ -242,8 +243,10 @@ start the response.
         consumer = self.consumer_factory(conn)
         # start the request
         consumer.new_request(request)
-        result = self.get_event_loop().run_until_complete(consumer.on_finished)
-        return result or consumer
+        event_loop = self.get_event_loop()
+        if self.force_sync:
+            event_loop.run_until_complete(consumer.on_finished)
+        return consumer
     
     def get_connection(self, request):
         '''Get a suitable :class:`Connection` for *request*.'''

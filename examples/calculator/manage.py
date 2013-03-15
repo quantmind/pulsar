@@ -7,13 +7,17 @@ To run the server type::
 Open a new shell and launch python and type::
 
     >>> from pulsar.apps import rpc
-    >>> p = rpc.JsonProxy('http://localhost:8060')
+    >>> p = rpc.JsonProxy('http://localhost:8060', force_sync=True)
     >>> p.ping()
     'pong'
     >>> p.functions_list()
     [[...
     >>> p.calc.add(3,4)
     7.0
+
+The ``force_sync`` keyword is used here to force the Json RPC client to
+wait for a full response rather than returning a :class:`pulsar.Deferred`.
+Check the :ref:`creating synchronous clients <tutorials-synchronous>` tutorial. 
 
 Implementation
 -----------------

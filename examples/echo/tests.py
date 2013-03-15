@@ -17,6 +17,7 @@ class TestEchoServerThread(unittest.TestCase):
         s = server(name=cls.__name__.lower(), bind='127.0.0.1:0',
                    backlog=1024, concurrency=cls.concurrency)
         cls.server = yield pulsar.send('arbiter', 'run', s)
+        cls.client = Echo(cls.server.address)
         
     @classmethod
     def tearDownClass(cls):
@@ -29,19 +30,25 @@ class TestEchoServerThread(unittest.TestCase):
         self.assertTrue(self.server.address)
         
     def test_ping(self):
-        c = Echo(self.server.address)
-        result = yield c.request(b'ciao luca').on_finished
+        c = self.client
+        result = yield c.request(b'ciao luca')
         self.assertEqual(result, b'ciao luca')
         
     def test_multi(self):
-        c = Echo(self.server.address)
-        result = yield multi_async((c.request(b'ciao').on_finished,
-                                    c.request(b'pippo').on_finished,
-                                    c.request(b'foo').on_finished))
+        c = self.client
+        result = yield multi_async((c.request(b'ciao'),
+                                    c.request(b'pippo'),
+                                    c.request(b'foo')))
         self.assertEqual(len(result), 3)
         self.assertTrue(b'ciao' in result)
         self.assertTrue(b'pippo' in result)
         self.assertTrue(b'foo' in result)
+        
+    def test_client(self):
+        c = self.client
+        yield self.test_multi()
+        self.assertTrue(len(c.connection_pools), 1)
+        self.assertTrue(c.available_connections)
         
 
 @dont_run_with_thread

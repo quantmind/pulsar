@@ -1,4 +1,5 @@
 '''A websocket chat application.
+
 To run the server type::
 
     python manage.py
@@ -61,7 +62,6 @@ def broadcast_message(request, message):
 
 ################################################################################
 ##    MIDDLEWARE
-
 class Rpc(rpc.PulsarServerCommands):
     
     def rpc_message(self, request, message):
@@ -96,8 +96,6 @@ def page(environ, start_response):
         start_response('200 OK', [('Content-Type', 'text/html'),
                                   ('Content-Length', str(len(data)))])
         return [pulsar.to_bytes(data)]
-
-
 
 def server(**kwargs):
     chat = ws.WebSocket('/message', Chat())

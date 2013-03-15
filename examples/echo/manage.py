@@ -25,6 +25,12 @@ Echo Protocol
    :members:
    :member-order: bysource
 
+Echo Client
+==================
+
+.. autoclass:: Echo
+   :members:
+   :member-order: bysource
 
 Run The example
 ====================
@@ -36,8 +42,15 @@ To run the server::
 Open a new shell, in this directory, launch python and type::
 
     >>> from manage import Echo
-    >>> p = Echo('localhost:8060')
-    >>> response = p.request('Hello')
+    >>> p = Echo('localhost:8060', force_sync=True)
+    
+The `force_sync` set to ``True``, force the client to wait for results rather
+than returning a :class:`pulsar.Deferred`.
+Check the :ref:`creating synchronous clients <tutorials-synchronous>` tutorial
+for further information.
+
+    >>> p.request('Hello')
+    'Hello'
 '''
 try:
     import pulsar
@@ -57,8 +70,8 @@ The only difference between client and server is the implementation of the
     '''A separator for messages.'''
     
     def data_received(self, data):
-        '''Implements the :meth`pulsar.Protocol.data_received` method.
-It simple search for the :attr:`separator` and if found it invokes the
+        '''Implements the :meth:`pulsar.Protocol.data_received` method.
+It simply search for the :attr:`separator` and, if found, it invokes the
 :meth:`response` method with the value of the message.'''
         idx = data.find(self.separator)
         if idx: # we have a full message
@@ -85,6 +98,7 @@ class EchoServerProtocol(EchoProtocol):
     
     
 class Echo(pulsar.Client):
+    '''Echo client'''
     consumer_factory = EchoProtocol
 
     def __init__(self, address, **params):
@@ -92,9 +106,11 @@ class Echo(pulsar.Client):
         self.address = address
 
     def request(self, message):
+        '''Build the client request and return a :class:`pulsar.Deferred`
+which will be called once the server has sent back its response.'''
         request = pulsar.Request(self.address, self.timeout)
         request.message = message
-        return self.response(request)
+        return self.response(request).on_finished.result_or_self()
         
 
 def server(description=None, **kwargs):

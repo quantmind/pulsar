@@ -61,6 +61,14 @@ specification supporting protocol version 13::
     >>> f.parser.send(bytes[1])
     >>> f.parser.send(bytes[2])
     >>> f.parser.send(bytes[2:])
+
+.. attribute:: version
+
+    The version of the frame protocol.
+        
+.. attribute:: masking_key
+
+    The frame masking key used for encoding and decoding data.
 """
     __slots__ = ('fin', 'opcode', 'masking_key', 'rsv1', 'rsv2', 'rsv3',
                  'msg', 'version', 'payload_length', 'body')
@@ -164,12 +172,14 @@ specification supporting protocol version 13::
         return header.getvalue()
                 
     def mask(self, data):
-        ''''Performs the masking or un-masking operation on data
-using the simple masking algorithm::
-
+        '''Performs the masking or un-masking operation on data using the
+simple masking algorithm::
+    
     j = i MOD 4
     transformed-octet-i = original-octet-i XOR masking-key-octet-j
-    '''
+    
+This method is invoked when encoding/decoding frames with a :attr:`masking_key`
+attribute set.'''
         mask_size = len(self.masking_key)
         key = array('B', self.masking_key)
         data = array('B', data)

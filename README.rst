@@ -8,7 +8,7 @@ activities in different threads and/or processes.
 :Dowloads: http://pypi.python.org/pypi/pulsar
 :Source: https://github.com/quantmind/pulsar
 :Keywords: server, asynchronous, concurrency, actor, thread, process, socket,
-    task queue, wsgi, websocket
+    task queue, wsgi, websocket, json-rpc
 
 
 .. |pulsar-build| image:: https://secure.travis-ci.org/quantmind/pulsar.png?branch=master

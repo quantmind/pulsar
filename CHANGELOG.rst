@@ -1,8 +1,8 @@
 Ver. 0.5.0 - DEVELOPMENT
 ==============================
 * This is a major release with considerable ammount of internal refactoring.
-* Asynchronous Framework:
-   * pep-3156_ implementation with considerable amount of internal refactoring.
+* Asynchronous framework:
+   * pep-3156_ implementation.
    * :class:`pulsar.Actor` internal message passing uses the (unmasked) websocket protocol
      in a bidirectional communication between the :class:`pulsar.Arbiter` and actors.
    * Spawning and stopping actors is monitored using a timeout set at 5 seconds.

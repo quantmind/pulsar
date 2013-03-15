@@ -168,16 +168,30 @@ class WsgiHandler(object):
     
 
 class LazyWsgi(LocalMixin):
-    '''A :ref:`wsgi handler <wsgi-handlers>` which loads its middleware the
-first time it is called. Subclasses must implement the :meth:`setup` method.'''
+    '''A :ref:`wsgi handler <apps-wsgi-handlers>` which loads its middleware the
+first time it is called. Subclasses must implement the :meth:`setup` method.
+
+This application handler is particularly useful when working in multiprocessing
+mode so that wsgi middleware can be rebuild consistently in ever application
+domain without causing serialization issues.'''
     def __call__(self, environ, start_response):
-        handler = self.local.handler
-        if handler is None:
-            self.local.handler = handler = self.setup()
-        return handler(environ, start_response)
+        return self.middleware(environ, start_response)
+    
+    @property
+    def middleware(self):
+        '''The lazy middleware.'''
+        m = self.local.middleware
+        if m is None:
+            self.local.middleware = m = self.setup()
+        return m
     
     def setup(self):
+        '''The setup function for this :class:`LazyWsgi`. Called once only
+the first time this application handler is invoked. This **must** be implemented
+by subclasses and **must** return a
+:ref:`wsgi application handler <apps-wsgi-handlers>`.'''
         raise NotImplementedError
+    
     
     
 class Router(object):

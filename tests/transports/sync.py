@@ -24,6 +24,6 @@ class TestSyncClient(unittest.TestCase):
         self.assertTrue(self.client.force_sync)
     
     def test_echo(self):
-        self.assertEqual(self.client.request('ciao!'), 'ciao!')
+        self.assertEqual(self.client.request(b'ciao!'), b'ciao!')
     
     

@@ -1,3 +1,4 @@
+import sys
 from copy import copy
 from functools import partial
 
@@ -23,7 +24,8 @@ at this point.'''
         raise NotImplementedError
     
     def data_received(self, data):
-        '''The transport has read some data from the connection.'''
+        '''The :class:`Transport` has read some data from *other end*
+and it invokes this method.'''
         raise NotImplementedError
     
     def eof_received(self):
@@ -32,8 +34,8 @@ something equivalent).'''
         raise NotImplementedError
         
     def connection_lost(self, exc):
-        '''The transport has been closed or aborted, has detected that the
-other end has closed the connection cleanly, or has encountered an
+        '''The :class:`Transport` has been closed or aborted, has detected
+that the other end has closed the connection cleanly, or has encountered an
 unexpected error. In the first three cases the argument is None;
 for an unexpected error, the argument is the exception that caused
 the transport to give up.'''
@@ -49,8 +51,16 @@ writing back to the client or server via
 the :attr:`transport` attribute. The only method to implement should
 be :meth:`Protocol.data_received`.
 
-By default it has `start` and `finish` :ref:`one time event <one-time-event>`
-and `data_received` :ref:`many times event <many-times-event>`.
+It has one :ref:`one time events <one-time-event>`:
+
+* *finish* fired when this :class:`ProtocolConsumer` has finished consuming
+  data and a response/exception is available.
+
+and three :ref:`many times events <many-times-event>`:
+
+* *data_received* fired each time new data is consumed by
+  this :class:`ProtocolConsumer`.
+  
 
 .. attribute:: connection
 
@@ -70,6 +80,7 @@ and `data_received` :ref:`many times event <many-times-event>`.
     finished consuming protocol. It is called by the
     :attr:`connection` before disposing of this consumer. It is
     a proxy of ``self.event('finish')``.
+
 '''
     ONE_TIME_EVENTS = ('finish',)
     MANY_TIMES_EVENTS = ('data_received',)
@@ -138,13 +149,17 @@ instead.'''
     
     def new_request(self, request=None):
         '''Starts a new *request* for this protocol consumer if
-:attr:`connected` is `True`.'''
+:attr:`connected` is `True`. There is no need to override this method,
+implement :meth:`start_request` instead.'''
         if self.connected:
             self._request_processed += 1
             self._current_request = request
             self._connection.fire_event('pre_request', request)
             if request is not None:
-                self.start_request()
+                try:
+                    self.start_request()
+                except Exception:
+                    self.finished(sys.exc_info())
         elif self.connecting:
             self._connection.add_callback(lambda r: self.new_request(request))
         else:
@@ -204,9 +219,16 @@ and the :class:`ProtocolConsumer`. It has a :class:`Protocol`
 interface and it routes data arriving from the :attr:`transport` to
 the :attr:`current_consumer`, an instance of :class:`ProtocolConsumer`.
 
-It has two :ref:`one time events <one-time-event>`, *connection_made* and
-*connection_lost*, and three :ref:`many times events <many-times-event>`,
-*pre_request*, *data_received* and *post_request*.
+It has two :ref:`one time events <one-time-event>`:
+
+* *connection_made*
+* *connection_lost*
+
+and three :ref:`many times events <many-times-event>`:
+
+* *pre_request*
+* *data_received*
+* *post_request*
 
 .. attribute:: producer
 
