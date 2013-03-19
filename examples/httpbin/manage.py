@@ -103,12 +103,8 @@ class HttpBin(wsgi.Router):
     
     @route('gzip', title='Returns gzip encoded data')
     def gzip(self, request):
-        request.response.content = self.info_data(request, gzipped=True)
-        request.response.content_type = 'application/json'
-        middleware = wsgi.middleware.GZipMiddleware(10)
-        # Apply the gzip middleware
-        middleware(request.environ, request.response)
-        return request.response.start()
+        request.response.middleware.append(wsgi.middleware.GZipMiddleware(10))
+        return self.info_data_response(request, gzipped=True)
     
     @route('cookies', title='Returns cookie data')
     def cookies(self, request):

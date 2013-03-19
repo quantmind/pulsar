@@ -12,8 +12,11 @@ import pulsar
 from pulsar.utils.structures import MultiValueDict
 from pulsar import is_failure, HttpException, maybe_async, is_async, get_actor
 from pulsar.utils.html import escape
+from pulsar.utils.pep import to_string
 from pulsar.utils.httpurl import responses, has_empty_content, ispy3k,\
-                                 REDIRECT_CODES, iteritems, ENCODE_URL_METHODS
+                                 REDIRECT_CODES, iteritems, ENCODE_URL_METHODS,\
+                                 parse_qsl
+                                 
                                  
 from .content import Html
 

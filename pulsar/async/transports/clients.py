@@ -49,12 +49,17 @@ protocols. It maintains a live set of connections.
     def available_connections(self):
         return len(self._available_connections)
         
-    def release_connection(self, connection):
-        '''Releases the connection back to the pool. This function remove
+    def release_connection(self, connection, response=None):
+        '''Releases the *connection* back to the pool. This function remove
 the *connection* from the set of concurrent connections and add it to the set
-of available connections.'''
+of available connections.
+
+:parameter connection: The connection to release
+:parameter response: Optional :class:`ProtocolConsumer` which consumed the
+    connection.
+'''
         self._concurrent_connections.discard(connection)
-        if connection.producer.can_reuse_connection(connection):
+        if connection.producer.can_reuse_connection(connection, response):
             self._available_connections.add(connection)
         self._remove_self(connection.producer)
         
@@ -131,7 +136,7 @@ of available connections.'''
     
     def _release_response(self, response):
         #proxy to release_connection
-        self.release_connection(response.connection)
+        self.release_connection(response.connection, response)
 
     def _remove_self(self, client):
         if not self._available_connections and not self._concurrent_connections:
@@ -278,7 +283,15 @@ in :attr:`request_parameters` tuple.'''
     def abort(self):
         self.close(async=False)
 
-    def can_reuse_connection(self, connection):
+    def can_reuse_connection(self, connection, response):
+        '''Invoked by the :meth:`ConnectionPool.release_connection`, it checks
+whether the *connection* can be reused in the future or it must be disposed.
+
+:param connection: the :class:`Connection` to check.
+:param response: the :class:`ProtocolConsumer` which last consumed the incoming
+    data from the connection (it can be ``None``).
+:return: ``True`` or ``False``.
+'''
         return True
     
     def reconnect_time_lag(self, lag):

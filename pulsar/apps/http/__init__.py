@@ -559,8 +559,7 @@ the :class:`HttpRequest` constructor.
         type, address = address[0], address[1:] 
         return create_connection(address, timeout)
     
-    def can_reuse_connection(self, connection):
-        response = connection.current_consumer
+    def can_reuse_connection(self, connection, response):
         if response and response.headers:
             return response.headers.get('connection') == 'keep-alive'
         else:

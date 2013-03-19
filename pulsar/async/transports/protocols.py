@@ -363,7 +363,8 @@ response).'''
         self._consumer_factory = consumer_factory
         
     def finished(self, consumer, result=None):
-        '''Call this method to close the current *consumer*.'''
+        '''Call this method to finish with the the current *consumer*.
+the *consumer* must be the same as the :attr:`current_consumer` attribute.'''
         if consumer and consumer is self._current_consumer:
             # make sure the current consumer is set to None before callbacks
             self._current_consumer = None
@@ -477,7 +478,7 @@ active connections.'''
             for connection in list(self._concurrent_connections):
                 connection.transport.close(async)
                 
-    def can_reuse_connection(self, connection):
+    def can_reuse_connection(self, connection, response):
         return True
             
     def _add_connection(self, connection):

@@ -105,7 +105,7 @@ class TestHttpClient(TestHttpClientBase, unittest.TestCase):
         self.assertEqual(len(data['data']), 600000)
         self.assertFalse(response.parser.is_chunked())
        
-    def testRedirect(self):
+    def test_redirect(self):
         http = self.client()
         response = yield http.get(self.httpbin('redirect', '1')).on_finished
         self.assertEqual(response.status_code, 200)
@@ -113,7 +113,7 @@ class TestHttpClient(TestHttpClientBase, unittest.TestCase):
         self.assertEqual(len(history), 1)
         self.assertTrue(history[0].url.endswith('/redirect/1'))
     
-    def testTooManyRedirects(self):
+    def test_too_many_redirects(self):
         http = self.client()
         response = http.get(self.httpbin('redirect', '5'), max_redirects=2)
         # do this so that the test suite does not fail on the test
@@ -142,34 +142,29 @@ class TestHttpClient(TestHttpClientBase, unittest.TestCase):
         
     def test_200_get_data(self):
         http = self.client()
-        response = http.get(self.httpbin('get',''), data={'bla':'foo'})
-        yield response.on_finished
-        self._check_pool(http, response)
+        response = yield http.get(self.httpbin('get'), data={'bla': 'foo'}).on_finished
         self.assertEqual(response.status_code, 200)
+        self._check_pool(http, response)
         self.assertEqual(response.response, 'OK')
         result = response.content_json()
         self.assertEqual(result['args'], {'bla':['foo']})
         self.assertEqual(response.url,
-                self.httpbin(httpurl.iri_to_uri('get/',{'bla':'foo'})))
+                self.httpbin(httpurl.iri_to_uri('get',{'bla': 'foo'})))
         
     def test_200_gzip(self):
         http = self.client()
-        response = http.get(self.httpbin('gzip'))
-        yield response.on_finished
-        self._check_pool(http, response)
-        headers = response.headers
+        response = yield http.get(self.httpbin('gzip')).on_finished
         self.assertEqual(response.status_code, 200)
+        self._check_pool(http, response)
         self.assertEqual(response.response, 'OK')
         content = response.content_json()
         self.assertTrue(content['gzipped'])
-        self.assertTrue(response.headers['content-encoding'],'gzip')
+        self.assertTrue(response.headers['content-encoding'], 'gzip')
         
     def test_404_get(self):
         '''Not Found 404'''
         http = self.client()
-        response = http.get(self.httpbin('status', '404'))
-        yield response.on_finished
-        #self._check_pool(http, response, 0)
+        response = yield http.get(self.httpbin('status', '404')).on_finished
         self.assertEqual(response.status_code, 404)
         self.assertEqual(response.response, 'Not Found')
         self.assertTrue(response.content)
@@ -235,10 +230,9 @@ class TestHttpClient(TestHttpClientBase, unittest.TestCase):
         self.assertTrue(result['args'])
         self.assertEqual(result['args']['numero'],['1','2'])
 
-    def testResponseHeaders(self):
+    def test_response_headers(self):
         http = self.client()
-        response = http.get(self.httpbin('response-headers'))
-        yield response.on_finished
+        response = yield http.get(self.httpbin('response-headers')).on_finished
         self.assertEqual(response.status_code, 200)
         result = response.content_json()
         self.assertEqual(result['Transfer-Encoding'], 'chunked')
@@ -266,9 +260,8 @@ class TestHttpClient(TestHttpClientBase, unittest.TestCase):
         http = self.client()
         data = (('bla', 'foo'), ('unz', 'whatz'),
                 ('numero', '1'), ('numero', '2'))
-        response = http.post(self.httpbin('post'), data=data,
-                             wait_continue=True)
-        yield response.on_finished
+        response = yield http.post(self.httpbin('post'), data=data,
+                                   wait_continue=True).on_finished
         self.assertEqual(response.status_code, 200)
         
         

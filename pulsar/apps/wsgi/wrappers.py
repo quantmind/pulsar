@@ -60,11 +60,13 @@ def wsgi_encoder(gen, encoding):
             yield data
 
 class WsgiResponse(object):
-    '''A WSGI response wrapper initialized by a WSGI request middleware.
-Instances are callable using the standard WSGI call::
+    '''A WSGI response wrapper initialized by a
+:ref:`pulsar WSGI application handler <apps-wsgi-handlers>`.
+Instances are callable using the standard WSGI call and, importantly, iterable::
 
     response = WsgiResponse(200)
-    response(environ, start_response)
+    for data in response(environ, start_response):
+        ...
 
 A :class:`WsgiResponse` is an iterable over bytes to send back to the requesting
 client.
@@ -85,6 +87,11 @@ client.
 
     The dictionary of WSGI environment if passed to the constructor.
 
+.. attribute:: middleware
+
+    A list of :ref:`response middleware` functions which will be invoked
+    when this :class:`WsgiResponse` get called (the callable method of the
+    instance is invoked).
 '''
     _started = False
     DEFAULT_STATUS_CODE = 200
