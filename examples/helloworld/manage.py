@@ -20,8 +20,8 @@ from pulsar.apps import wsgi
 
 
 def hello(environ, start_response):
-    '''The WSGI_ application handler which returns the an
-iterable over the "Hello World!" message.'''
+    '''The WSGI_ application handler which returns an iterable
+over the "Hello World!" message.'''
     data = b'Hello World!\n'
     status = '200 OK'
     response_headers = [

@@ -80,6 +80,10 @@ class HttpBin(wsgi.Router):
     def _put(self, request):
         return self.info_data_response(request)
     
+    @route('delete', method='delete', title='Returns DELETE data')
+    def _delete(self, request):
+        return self.info_data_response(request)
+    
     @route('redirect/<int(min=1,max=10):times>', defaults={'times': 5},
            title='302 Redirect n times')
     def redirect(self, request):

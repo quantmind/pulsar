@@ -98,8 +98,7 @@ class TestHttpClient(TestHttpClientBase, unittest.TestCase):
         
     def test_large_response(self):
         http = self.client(timeout=60)
-        response = http.get(self.httpbin('getsize/600000'))
-        yield response.on_finished
+        response = yield http.get(self.httpbin('getsize/600000')).on_finished
         self.assertEqual(response.status_code, 200)
         data = response.content_json()
         self.assertEqual(data['size'], 600000)
@@ -108,8 +107,7 @@ class TestHttpClient(TestHttpClientBase, unittest.TestCase):
        
     def testRedirect(self):
         http = self.client()
-        response = http.get(self.httpbin('redirect', '1'))
-        yield response.on_finished
+        response = yield http.get(self.httpbin('redirect', '1')).on_finished
         self.assertEqual(response.status_code, 200)
         history = response.history
         self.assertEqual(len(history), 1)
@@ -130,8 +128,7 @@ class TestHttpClient(TestHttpClientBase, unittest.TestCase):
         
     def test_200_get(self):
         http = self.client()
-        response = http.get(self.httpbin())
-        yield response.on_finished
+        response = yield http.get(self.httpbin()).on_finished
         self.assertEqual(str(response), '200 OK')
         self.assertEqual(repr(response), 'HttpResponse(200 OK)')
         self.assertEqual(response.status_code, 200)
@@ -139,8 +136,7 @@ class TestHttpClient(TestHttpClientBase, unittest.TestCase):
         self.assertTrue(response.content)
         self.assertEqual(response.url, self.httpbin())
         self._check_pool(http, response)
-        response = http.get(self.httpbin('get'))
-        yield response.on_finished
+        response = yield http.get(self.httpbin('get')).on_finished
         self.assertEqual(response.status_code, 200)
         self._check_pool(http, response, processed=2)
         
@@ -232,8 +228,7 @@ class TestHttpClient(TestHttpClientBase, unittest.TestCase):
         data = (('bla', 'foo'), ('unz', 'whatz'),
                 ('numero', '1'), ('numero', '2'))
         http = self.client()
-        response = http.delete(self.httpbin('delete'), data=data)
-        yield response.on_finished
+        response = yield http.delete(self.httpbin('delete'), data=data).on_finished
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.response, 'OK')
         result = response.content_json()

@@ -250,9 +250,12 @@ The :attr:`AsyncString.content_type` attribute is set to `text/html`.
     def append(self, child):
         if child:
             tag = child_tag(self._tag)
-            if tag and ((isinstance(child, Html) and child.tag != tag) or not
-                        child.startswith('<%s' % tag)):
-                child = Html(tag, child)
+            if tag:
+                if isinstance(child, Html):
+                    if child.tag != tag:
+                        child = Html(tag, child)
+                elif child.startswith('<%s' % tag):
+                    child = Html(tag, child)
         return super(Html, self).append(child)
              
     def _setup(self, cn=None, attr=None, css=None, data=None, type=None,

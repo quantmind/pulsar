@@ -109,7 +109,7 @@ def parse_rule(rule):
 class route(object):
     '''Decorator for creating a (:class:`Route`, HTTP method, parameters) tuple
 and assign it to the `rule_method` attribute of the functon which
-is decorated. Check the :ref:`HttpBin example <httpbin-example>`
+is decorated. Check the :ref:`HttpBin example <tutorials-httpbin>`
 for a sample usage.
 
 :param rule: Optional string for the relative url served by the method which

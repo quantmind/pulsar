@@ -38,7 +38,7 @@ class JsonToolkit(object):
 
     @classmethod
     def loads(cls, content):
-        return json.loads(to_string(content), object_hook=DefaultJSONHook)
+        return json.loads(content, object_hook=DefaultJSONHook)
 
 
 class JSONRPC(RpcHandler):
