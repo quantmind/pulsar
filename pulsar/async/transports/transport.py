@@ -498,4 +498,6 @@ once the connection is made.'''
         # Called by the protocol consumer when the connector is still in place
         # of the connection
         consumer.fire_event('finish')
+        # important, return the original result
+        return exc
         

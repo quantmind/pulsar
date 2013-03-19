@@ -185,9 +185,10 @@ By default it calls the :meth:`Connection.finished` method of the
         else:
             # No connection available. Just fire the finish callback
             self.fire_event('finish', result)
+            return result
         
     def connection_lost(self, exc):
-        self.finished(exc)
+        return self.finished(exc)
         
     def can_reconnect(self, max_reconnect, exc):
         conn = self._connection
