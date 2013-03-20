@@ -18,6 +18,16 @@ Integers::
     Route('<int:size>')
     # accept an integer between 1 and 200 only
     Route('<int(min=1,max=200):size>')
+    
+
+Paths::
+
+    # accept any path (including slashes)
+    Route('<path:pages>')
+    # accept an integer between 1 and 200 only
+    Route('<path:pages>/edit')
+    
+
 
 .. _apps-wsgi-route-decorator:
 
