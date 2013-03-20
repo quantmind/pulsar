@@ -97,7 +97,7 @@ Lower number higher precedence.'''
 
     def start(self, worker):
         '''Called by the :class:`pulsar.Worker` *worker* when the task
-start its execution. If no timeout has occured the task will switch to
+start its execution. If no timeout has occurred the task will switch to
 a ``STARTED`` :attr:`Task.status` and invoke the :meth:`on_start`
 callback.'''
         job = registry[self.name]
