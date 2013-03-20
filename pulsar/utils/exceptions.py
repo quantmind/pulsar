@@ -2,61 +2,39 @@
 class PulsarException(Exception):
     '''Base class of all Pulsar Exception'''
 
-class Timeout(PulsarException):
-    '''Raised when a timeout occurs'''
-    def __init__(self, msg, timeout=None):
-        self.timeout = timeout
-        if timeout:
-            msg = msg + ' Timeout {0} surpassed.'.format(self.timeout)
-        super(Timeout,self).__init__(msg)
 
 class ImproperlyConfigured(PulsarException):
     '''A :class:`PulsarException` raised when pulsar has inconsistent
 configuration.'''
     pass
 
-class PulsarInternetException(PulsarException):
-    '''base class of all Pulsar Internet Exception'''
+    
+class ProtocolError(Exception):
+    '''Raised when the protocol encounter unexpected data. It will close
+the socket connection.'''
+
+
+class TooManyConnections(Exception):
+    '''Raised when there are too many concurrent connections.'''
+    
+    
+class AuthenticationError(Exception):
     pass
 
-class MailboxError(PulsarException):
+
+class ConnectionError(Exception):
     pass
+
 
 class ActorAlreadyStarted(PulsarException):
     '''A :class:`PulsarException` raised when trying to start an actor already started'''
 
-class HaltServer(PulsarInternetException):
+
+class HaltServer(BaseException):
 
     def __init__(self, reason='Halt', signal=None):
         super(HaltServer,self).__init__(reason)
         self.signal = signal
-
-
-class CommandError(PulsarException):
-    '''Exception raised when executing a Command'''
-    pass
-
-
-class CommandNotFound(PulsarException):
-
-    def __init__(self, name):
-        super(CommandNotFound, self).__init__(
-                            'Command "%s" not available' % name)
-
-class AuthenticationError(PulsarException):
-    pass
-
-
-class ConnectionError(PulsarInternetException):
-    pass
-
-
-class CouldNotParse(PulsarInternetException):
-    pass
-
-
-class DeferredFailure(PulsarException):
-    pass
 
 
 class AlreadyCalledError(PulsarException):
@@ -79,19 +57,22 @@ class NotRegisteredWithServer(PulsarException):
 class HttpException(Exception):
     status = 500
     def __init__(self, msg='', status=None, handler=None, strict=False,
-                 headers=None):
+                 headers=None, content_type=None):
         self.status = status or self.status
         self.handler = handler
         self.strict = strict
         self.headers = headers
-        super(HttpException,self).__init__(msg)
+        self.content_type = content_type
+        super(HttpException, self).__init__(msg)
 
 
 class HttpRedirect(HttpException):
     status = 302
-    def __init__(self, location, status=None):
+    def __init__(self, location, status=None, headers=None, **kw):
+        headers = [] if headers is None else headers
+        headers.append(('location', location))
         super(HttpRedirect, self).__init__(status=status or self.status,
-              headers=[('location', location)])
+                                           headers=headers, **kw)
 
 
 class PermissionDenied(HttpException):

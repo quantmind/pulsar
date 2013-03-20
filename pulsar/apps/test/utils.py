@@ -1,18 +1,16 @@
 import sys
 from inspect import isclass
+from functools import partial
 import threading
 
 import pulsar
-from pulsar import is_failure, async, get_actor
+from pulsar import is_failure, maybe_async, is_async, get_actor, send
 from pulsar.async import commands
-from pulsar.async.defer import pickle
+from pulsar.utils.pep import pickle
 
 
-__all__ = ['create_test_arbiter',
-           'run_on_arbiter',
+__all__ = ['run_on_arbiter',
            'NOT_TEST_METHODS',
-           'halt_server',
-           'arbiter_test',
            'ActorTestMixin',
            'AsyncAssert']
 
@@ -31,35 +29,42 @@ NOT_TEST_METHODS = ('setUp', 'tearDown', '_pre_setup', '_post_teardown',
 
 class TestCallable:
 
-    def __init__(self, test, method_name, istest):
+    def __init__(self, test, method_name, istest, timeout):
         self.test = test
         self.method_name = method_name
         self.istest = istest
+        self.timeout = timeout
         
     def __repr__(self):
         if isclass(self.test):
             return '%s.%s' % (self.test.__name__, self.method_name)
         else:
             return '%s.%s' % (self.test.__class__.__name__, self.method_name)
-    __str__ = __repr__        
+    __str__ = __repr__
     
-    @async(max_errors=1, description='Test ')
-    def run_test(self, actor):
+    def __call__(self, actor):
+        return maybe_async(self._run(actor))
+    
+    def _run(self, actor):
         test = self.test
         if self.istest:
             test = actor.app.runner.before_test_function_run(test)
         inject_async_assert(test)
         test_function = getattr(test, self.method_name)
-        return test_function()
-    
-    def __call__(self, actor=None):
-        actor = actor or get_actor()
-        test = self.test
-        outcome = self.run_test(actor)
+        try:
+            result = test_function()
+        except Exception as e:
+            result = sys.exc_info()
+        result = maybe_async(result, timeout=self.timeout)
+        if is_async(result):
+            return result.add_both(partial(self._end, actor, True))
+        else:
+            return self._end(actor, False, result) 
+        
+    def _end(self, actor, async, result):
         if self.istest:
-            outcome.addBoth(lambda result:
-                actor.app.runner.after_test_function_run(test, result))
-        return outcome
+            actor.app.runner.after_test_function_run(self.test, result, async)
+        return result
     
 
 class TestFunction:
@@ -72,12 +77,12 @@ class TestFunction:
         return self.method_name
     __str__ = __repr__
     
-    def __call__(self, test):
-        callable = TestCallable(test, self.method_name, self.istest)
+    def __call__(self, test, timeout):
+        callable = TestCallable(test, self.method_name, self.istest, timeout)
         return self.run(callable)
         
     def run(self, callable):
-        return callable()
+        return callable(get_actor())
         
         
 class TestFunctionOnArbiter(TestFunction):
@@ -87,49 +92,14 @@ class TestFunctionOnArbiter(TestFunction):
         if actor.is_monitor():
             return callable(actor)
         else:
+            # send the callable to the actor monitor
             return actor.send(actor.monitor, 'run', callable)
         
-        
-def create_test_arbiter(test=True):
-    '''Create an instance of MockArbiter for testing'''
-    commands_set = set(commands.actor_commands)
-    commands_set.update(commands.arbiter_commands)
-    arbiter = pulsar.concurrency('monitor', MockArbiter, 1000,
-                                 None, 'arbiter', commands_set,
-                                 {'__test_arbiter__': test})
-    arbiter.start()
-    return arbiter
-    
-def halt_server(exception=None):
-    exception = exception or pulsar.HaltServer('testing')
-    raise exception
-    
 def run_on_arbiter(f):
     '''Decorator for running a test function in the arbiter domain. This
 can be useful to test Arbiter mechanics.'''
     f.testfunction = TestFunctionOnArbiter(f.__name__)
     return f
-    
-def arbiter_test(f):
-    '''Decorator for testing arbiter mechanics. It creates a mock arbiter
-running on a separate thread and run the tet function on the arbiter thread.'''
-    d = pulsar.Deferred()
-    def work(self):
-        yield f(self)
-        yield self.arbiter.stop()
-    @pulsar.async
-    def safe(self):
-        yield work(self)
-        d.callback(True)
-    def _(self):
-        self.arbiter = create_test_arbiter()
-        while not self.arbiter.started:
-            yield pulsar.NOT_DONE
-        self.arbiter.ioloop.add_callback(lambda: safe(self))
-        yield d
-    _.__name__ = f.__name__
-    _.__doc__ = f.__doc__
-    return _
     
     
 class AsyncAssertTest(object):
@@ -172,7 +142,6 @@ class ActorTestMixin(object):
 is the first class you derive from, before the unittest.TestCase, so that
 the tearDown method is overwritten.'''
     concurrency = 'thread'
-    a = None
     
     @property
     def all_spawned(self):
@@ -181,22 +150,25 @@ the tearDown method is overwritten.'''
         return self._spawned
         
     def spawn(self, concurrency=None, **kwargs):
+        '''Spawn a new actor and perform some tests.'''
         concurrency = concurrency or self.concurrency
         ad = pulsar.spawn(concurrency=concurrency, **kwargs)
         self.assertTrue(ad.aid)
         self.assertTrue(isinstance(ad, pulsar.ActorProxyDeferred))
         yield ad
-        self.a = ad.result
-        self.all_spawned.append(self.a)
-        self.assertEqual(self.a.aid, ad.aid)
-        self.assertTrue(self.a.address)
+        proxy = ad.result
+        self.all_spawned.append(proxy)
+        self.assertEqual(proxy.aid, ad.aid)
+        self.assertEqual(proxy.proxy, proxy)
+        self.assertTrue(proxy.cfg)
+        yield proxy
     
     def stop_actors(self, *args):
         all = args or self.all_spawned
         if len(all) == 1:
-            return all[0].stop()
+            return send(all[0], 'stop')
         elif all:
-            return MultiDeferred((a.stop() for a in all)).lock()
+            return MultiDeferred((send(a, 'stop') for a in all)).lock()
             
     def tearDown(self):
         return self.stop_actors()

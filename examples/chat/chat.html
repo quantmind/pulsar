@@ -54,10 +54,8 @@ body {
             messages = $('#messages'),
             message = $('#message');
         ws.onmessage = function(e) {
-            if (e.data) {
-                var data = e.data;
-                messages.prepend('<p>'+e.data+'</p>');
-            }
+            var data = $.parseJSON(e.data);
+            messages.prepend('<p>'+data.message+'</p>');
         };
         $('#publish').click(function () {
             var msg = message.val();

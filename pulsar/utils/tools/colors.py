@@ -46,27 +46,23 @@ magenta = _wrap_with('magenta','35')
 cyan = _wrap_with('cyan','36')
 white = _wrap_with('white','37')
 
-
-class ColorFormatter(logging.Formatter):
+if platform.is_windows:  #pragma    nocover
+    ColorFormatter = logging.Formatter
+else:
+    class ColorFormatter(logging.Formatter):
+        
+        COLORS = {"DEBUG": "blue",
+                  "WARNING": "yellow",
+                  "ERROR": "red",
+                  "CRITICAL": "red",
+                  "default": "green"}
     
-    COLORS = {"DEBUG": "blue",
-              "WARNING": "yellow",
-              "ERROR": "red",
-              "CRITICAL": "red",
-              "default": "green"}
+        def formatException(self, ei):
+            r = logging.Formatter.formatException(self, ei)
+            return to_string(r,"utf-8","replace")
     
-    def __init__(self, *args, **kwargs):
-        self.use_color = kwargs.pop('use_color', not platform.isWindows)
-        logging.Formatter.__init__(self, *args, **kwargs)
-
-    def formatException(self, ei):
-        r = logging.Formatter.formatException(self, ei)
-        return to_string(r,"utf-8","replace")
-
-    def format(self, record):
-        levelname = record.levelname
-
-        if self.use_color:
+        def format(self, record):
+            levelname = record.levelname
             COLORS = self.COLORS
             if not levelname in COLORS:
                 levelname = 'default'
@@ -75,5 +71,4 @@ class ColorFormatter(logging.Formatter):
                 if name in _COLOR_MAP:
                     wrap = _COLOR_MAP[name]
                     record.msg = wrap(record.msg)
-
-        return logging.Formatter.format(self, record)
+            return logging.Formatter.format(self, record)

@@ -1,26 +1,33 @@
 import os
 import sys
+import heapq
 import logging
 import traceback
-import time
-import signal
+import inspect
 import errno
-import bisect
 import socket
+from functools import partial
 from threading import current_thread
+try:
+    import signal
+except ImportError: #pragma    nocover
+    signal = None
 
-from pulsar import HaltServer, Timeout
 from pulsar.utils.system import IObase, IOpoll, close_on_exec, platform, Waker
-from pulsar.utils.security import gen_unique_id
-from pulsar.utils.log import Synchronized
-from pulsar.utils.structures import WeakList
+from pulsar.utils.pep import default_timer, set_event_loop_policy,\
+                             set_event_loop, new_event_loop, get_event_loop,\
+                             EventLoop as BaseEventLoop,\
+                             EventLoopPolicy as BaseEventLoopPolicy
+from pulsar.utils.sockets import SOCKET_INTERRUPT_ERRORS
 
-from .defer import Deferred, is_async, maybe_async, thread_loop, make_async,\
-                    log_failure, EXIT_EXCEPTIONS
+from .access import thread_local_data
+from .defer import log_failure, is_failure, Deferred
+from .transports import create_server
 
-__all__ = ['IOLoop', 'PeriodicCallback', 'loop_timeout']
+__all__ = ['EventLoop', 'TimedCall', 'TimeoutError']
 
 LOGGER = logging.getLogger('pulsar.eventloop')
+
 
 def file_descriptor(fd):
     if hasattr(fd, 'fileno'):
@@ -29,47 +36,229 @@ def file_descriptor(fd):
         return fd
 
 def setid(self):
-    self.tid = current_thread().ident
+    ct = current_thread()
+    self.tid = ct.ident
     self.pid = os.getpid()
+    return ct
 
 
-class LoopGuard(object):
-    '''Context manager for the eventloop'''
-    def __init__(self, loop):
-        self.loop = loop
+class StopEventLoop(BaseException):
+    """Raised to stop the event loop."""
+    
+class TimeoutError(Exception):
+    pass
 
-    def __enter__(self):
-        loop = self.loop
-        loop.logger.subdebug("Starting event loop")
-        loop._running = True
-        if not loop._started:
-            loop._started = time.time()
-        setid(loop)
-        loop._on_exit = Deferred(description='IOloop.on_exit')
-        return self
+class EventLoopPolicy(BaseEventLoopPolicy):
+    
+    def get_event_loop(self):
+        return thread_local_data('_event_loop')
+    
+    def get_request_loop(self):
+        return thread_local_data('_request_loop') or self.get_event_loop()
+    
+    def new_event_loop(self, **kwargs):
+        return EventLoop(**kwargs)
+    
+    def set_event_loop(self, event_loop):
+        """Set the event loop."""
+        assert event_loop is None or isinstance(event_loop, BaseEventLoop)
+        if event_loop.cpubound:
+            thread_local_data('_request_loop', event_loop)
+        else:
+            thread_local_data('_event_loop', event_loop)
+        
+    
+set_event_loop_policy(EventLoopPolicy())
+                
+            
+class TimedCall(object):
+    """An EventLoop callback handler. This is not initialised directly, instead
+it is created by :meth:`EventLoop.call_soon`, :meth:`EventLoop.call_later`,
+:meth:`EventLoop.call_soon_threadsafe` and so forth.
+    
+.. attribute:: deadline
 
-    def __exit__(self, type, value, traceback):
-        loop = self.loop
-        loop._running = False
-        loop.logger.subdebug('Exiting event loop')
-        loop._on_exit.callback(loop)
+    a time in the future or ``None``.
+    
+.. attribute:: callback
+
+    The callback to execute in the eventloop
+    
+.. attribute:: cancelled
+
+    Flag indicating this callback is cancelled.
+    """
+
+    def __init__(self, deadline, callback, args):
+        self.reschedule(deadline)
+        self._callback = callback
+        self._args = args
+
+    def __lt__(self, other):
+        return self.deadline < other.deadline
+        
+    @property
+    def deadline(self):
+        return self._deadline
+    
+    @property
+    def cancelled(self):
+        return self._cancelled
+    
+    @property
+    def callback(self):
+        return self._callback
+    
+    @property
+    def args(self):
+        return self._args
+    
+    def cancel(self):
+        '''Attempt to cancel the callback.'''
+        self._cancelled = True
+                
+    def reschedule(self, new_deadline):
+        self._deadline = new_deadline
+        self._cancelled = False
+    
+    def __call__(self, *args, **kwargs):
+        if not self._cancelled:
+            args = self._args + args
+            return self._callback(*args, **kwargs)
+        
+        
+class FileDescriptor(IObase):
+    def __init__(self, fd, eventloop):
+        self.fd = fd
+        self.eventloop = eventloop
+        self.handle_write = None
+        self.handle_read = None
+
+    @property
+    def poller(self):
+        return self.eventloop._impl
+    
+    @property
+    def reading(self):
+        return bool(self.handle_read)
+    
+    @property
+    def writing(self):
+        return bool(self.handle_write)
+    
+    @property
+    def state(self):
+        if self.reading:
+            if self.writing:
+                return self.READ | self.WRITE
+            else:
+                return self.READ
+        elif self.writing:
+            return self.WRITE
+            
+    @property
+    def state_code(self):
+        s = []
+        if self.state is None:
+            return 'closed'
+        if self.connecting:
+            s.append('connecting')
+        elif self.writing:
+            s.append('writing')
+        if self.reading:
+            s.append('reading')
+        return ' '.join(s) if s else 'idle'
+    
+    def add_connector(self, callback):
+        self.add_writer(callback, 'connector')
+        
+    def add_reader(self, callback):
+        handle_read = self.handle_read
+        if handle_read:
+            if handle_read.callback != callback.callback:
+                raise RuntimeError('Read handler already registered')
+        else:
+            LOGGER.debug('Add reader on file descriptor %s', self.fd)
+            current_state = self.state
+            self.handle_read = callback
+            self.modify_state(current_state, self.READ)
+        
+    def add_writer(self, callback, name=None):
+        name = name or 'writer'
+        handle_write = self.handle_write
+        if handle_write:
+            if handle_write.callback != callback.callback:
+                raise RuntimeError('%s handler already registered', name)
+        else:
+            LOGGER.debug('Add %s on file descriptor %s', name, self.fd)
+            current_state = self.state
+            self.handle_write = callback
+            self.modify_state(current_state, self.WRITE)
+        
+    def remove_connector(self):
+        return self.remove_writer('connector')
+    
+    def remove_reader(self):
+        '''Remove reader and return True if writing'''
+        if self.writing:
+            LOGGER.debug('Remove reader from file descriptor %s', self.fd)
+            self.poller.modify(self.fd, self.WRITE)
+        else:
+            self.remove_handler()
+        self.handle_read = None
+
+    def remove_writer(self, name=None):
+        '''Remove writer and return True if reading'''
+        if self.reading:
+            LOGGER.debug('Remove %s from file descriptor %s',
+                         name or 'writer', self.fd)
+            self.poller.modify(self.fd, self.READ)
+        else:
+            self.remove_handler()
+        self.handle_write = None
+    
+    def __call__(self, events):
+        if events & self.READ:
+            if self.handle_read:
+                log_failure(self.handle_read())
+            else:
+                LOGGER.warn('Read callback without handler for file'
+                            ' descriptor %s.', self.fd)
+        if events & self.WRITE:
+            if self.handle_write:
+                log_failure(self.handle_write())
+            else:
+                LOGGER.warn('Write callback without handler for file'
+                            ' descriptor %s.', self.fd)
+            
+    def modify_state(self, current_state, state):
+        if current_state != state:
+            if current_state is None:
+                self.poller.register(self.fd, state)
+            else:
+                self.poller.modify(self.fd, current_state | state)
+    
+    def remove_handler(self):
+        """Stop listening for events on fd."""
+        fd = self.fd
+        try:
+            self.poller.unregister(fd)
+        except (OSError, IOError):
+            self.eventloop.logger.error("Error removing %s from EventLoop", fd)
+        LOGGER.debug('Remove file descriptor %s', fd)
+        self.eventloop._handlers.pop(fd, None)
 
 
-class IOLoop(IObase, Synchronized):
-    """\
-A level-triggered I/O event loop adapted from tornado.
+class EventLoop(IObase, BaseEventLoop):
+    """A pluggable event loop which conforms with the pep-3156_ API. The
+event loop is the place where most asynchronous operations are carried out.
 
-:parameter io: The I/O implementation. If not supplied, the best possible
+.. attribute:: io
+
+    The I/O implementation. If not supplied, the best possible
     implementation available will be used. On posix system this is ``epoll``,
     or else ``select``. It can be any other custom implementation as long as
-    it has an ``epoll`` like interface. Pulsar ships with an additional
-    I/O implementation based on distributed queue :class:`IOQueue`.
-
-**ATTRIBUTES**
-
-.. attribute:: _impl
-
-    The IO implementation
+    it has an ``epoll`` like interface.
 
 .. attribute:: cpubound
 
@@ -90,280 +279,358 @@ A level-triggered I/O event loop adapted from tornado.
 .. attribute:: tid
 
     The thread id where the eventloop is running
-    
-.. attribute:: tasks
 
-    A list of callables to be executed at each iteration of the event loop.
-    Task can be added and deleted via the :meth:`add_task` and
-    :meth:`remove_task`. Extra care must be taken when adding tasks to
-    I/O event loops. These tasks should be fast to perform and not block.
-
-**METHODS**
 """
     # Never use an infinite timeout here - it can stall epoll
     poll_timeout = 0.5
 
-    def __init__(self, io=None, logger=None, poll_timeout=None):
+    def __init__(self, io=None, logger=None, poll_timeout=None, timer=None,
+                 iothreadloop=True):
         self._impl = io or IOpoll()
+        self.fd_factory = getattr(self._impl, 'fd_factory', FileDescriptor)
+        self.timer = timer or default_timer
         self.poll_timeout = poll_timeout if poll_timeout else self.poll_timeout
         self.logger = logger or LOGGER
-        if hasattr(self._impl, 'fileno'):
-            close_on_exec(self._impl.fileno())
+        close_on_exec(self._impl.fileno())
+        self._iothreadloop = iothreadloop
         self._handlers = {}
-        self._events = {}
         self._callbacks = []
-        self._timeouts = []
-        self._started = None
-        self._running = False
+        self._scheduled = []
+        self._name = None
         self.num_loops = 0
-        self._waker = getattr(self._impl, 'waker', Waker)()
-        self._on_exit = None
-        self.add_handler(self._waker,
-                         lambda fd, events: self._waker.consume(),
-                         self.READ)
-
+        self._waker = self.install_waker()
+    
+    def __repr__(self):
+        return self.name
+    __str__ = __repr__
+    
+    @property
+    def name(self):
+        name = self._name if self._name else '<not running>'
+        if self.cpubound:
+            return 'CPU bound %s %s' % (self.__class__.__name__, name)
+        else:
+            return '%s %s' % (self.__class__.__name__, name)
+            
+    @property
+    def io(self):
+        return self._impl
+    
+    @property
+    def iothreadloop(self):
+        '''``True`` if this :class:`EventLoop` install itself as the event
+loop of the thread where it is run.'''
+        return self._iothreadloop
+    
     @property
     def cpubound(self):
         return getattr(self._impl, 'cpubound', False)
-
-    def add_handler(self, fd, handler, events):
-        """Registers the given *handler* to receive the given events for the
-file descriptor *fd*.
-
-:parameter fd: A file descriptor or an object with the ``fileno`` method.
-:parameter handler: A callable which will be called when events occur on the
-    file descriptor *fd*.
-:rtype: ``True`` if the handler was succesfully added."""
-        if fd is not None:
-            fdd = file_descriptor(fd)
-            if fdd not in self._handlers:
-                self._handlers[fdd] = handler
-                self._impl.register(fdd, events | self.ERROR)
-                return True
-            else:
-                self.logger.debug('Handler for %s already available.', fd)
-
-    def update_handler(self, fd, events):
-        """Changes the events we listen for fd."""
-        self._impl.modify(file_descriptor(fd), events | self.ERROR)
-
-    def remove_handler(self, fd):
-        """Stop listening for events on fd."""
-        fdd = file_descriptor(fd)
-        self._handlers.pop(fdd, None)
-        self._events.pop(fdd, None)
-        try:
-            self._impl.unregister(fdd)
-        except (OSError, IOError):
-            self.logger.error("Error removing %s from IOLoop", fd, exc_info=True)
-
-    def start(self):
-        if self._running:
-            return False
-        self._run()
-
-    def stop(self):
-        '''Stop the loop after the current event loop iteration is complete.
-If the event loop is not currently running, the next call to :meth:`start`
-will return immediately.
-
-To use asynchronous methods from otherwise-synchronous code (such as
-unit tests), you can start and stop the event loop like this::
-
-    ioloop = IOLoop()
-    async_method(ioloop=ioloop, callback=ioloop.stop)
-    ioloop.start()
-
-:meth:`start` will return after async_method has run its callback,
-whether that callback was invoked before or after ioloop.start.'''
-        if self.running():
-            self._running = False
-            self.wake()
-        return self._on_exit
-
+    
+    @property
     def running(self):
-        """Returns true if this IOLoop is currently running."""
-        return self._running
+        return bool(self._name)
+    
+    @property
+    def active(self):
+        return bool(self._callbacks or self._scheduled or self._handlers)
+    
+    ############################################################################
+    ##    PEP 3156 Methods
+    def run(self):
+        '''Run the event loop until nothing left to do or stop() called.'''
+        if not self.running:
+            self._before_run()
+            try:
+                while self.active:
+                    try:
+                        self._run_once()
+                    except StopEventLoop:
+                        break
+            finally:
+                self._after_run()
 
-    def add_timeout(self, deadline, callback):
-        """Add a timeout *callback*. A timeout callback  it is called
-at the time *deadline* from the :class:`IOLoop`.
-It returns an handle that may be passed to remove_timeout to cancel."""
-        timeout = _Timeout(deadline, callback)
-        bisect.insort(self._timeouts, timeout)
+    def run_once(self, timeout=None):
+        """Run through all callbacks and all I/O polls once.
+
+        Calling stop() will break out of this too.
+        """
+        if not self.running:
+            self._before_run()
+            try:
+                try:
+                    self._run_once(timeout)
+                except StopEventLoop:
+                    pass
+            finally:
+                self._after_run()
+                
+    def run_until_complete(self, future, timeout=None):
+        '''Run the event loop until a :class:`Deferred` *future* is done.
+Return the future's result, or raise its exception. If timeout is not
+``None``, run it for at most that long;  if the future is still not done,
+raise TimeoutError (but don't cancel the future).'''
+        self.call_soon(future.add_both, self._raise_stop_event_loop)
+        handler = None
+        if timeout:
+            handler = self.call_later(timeout, self._raise_stop_event_loop)
+        self.run()
+        if handler:
+            if future.called:
+                handler.cancel()
+            else:
+                raise TimeoutError
+        result = future.result_or_self()
+        if is_failure(result):
+            result.raise_all()
+        else:
+            return result
+        
+    def stop(self):
+        '''Stop the loop after the current event loop iteration is complete'''
+        self.call_soon_threadsafe(self._raise_stop_event_loop)
+        
+    def call_later(self, seconds, callback, *args):
+        """Arrange for a *callback* to be called at a given time in the future.
+Return an :class:`TimedCall` with a :meth:`TimedCall.cancel` method
+that can be used to
+cancel the call. The delay can be an int or float, expressed in
+seconds.  It is always a relative time.
+
+Each callback will be called exactly once.  If two callbacks
+are scheduled for exactly the same time, it is undefined which
+will be called first.
+
+Callbacks scheduled in the past are passed on to :meth:`call_soon` method,
+so these will be called in the order in which they were
+registered rather than by time due.  This is so you can't
+cheat and insert yourself at the front of the ready queue by
+using a negative time.
+
+Any positional arguments after the callback will be passed to
+the callback when it is called."""
+        if seconds > 0:
+            timeout = TimedCall(self.timer() + seconds, callback, args)
+            heapq.heappush(self._scheduled, timeout)
+            return timeout
+        else:
+            return self.call_soon(callback, *args)
+        
+    def call_soon(self, callback, *args):
+        '''Equivalent to ``self.call_later(0, callback, *args)``.'''
+        timeout = TimedCall(None, callback, args)
+        self._callbacks.append(timeout)
+        return timeout
+    
+    def call_soon_threadsafe(self, callback, *args):
+        '''Calls the given callback on the next I/O loop iteration.
+It is safe to call this method from any thread at any time.
+Note that this is the *only* method in :class:`EventLoop` that
+makes this guarantee. all other interaction with the :class:`EventLoop`
+must be done from that :class:`EventLoop`'s thread. It may be used
+to transfer control from other threads to the EventLoop's thread.'''
+        timeout = self.call_soon(callback, *args)
+        self.wake()
         return timeout
 
-    def remove_timeout(self, timeout):
-        """Cancels a pending *timeout*. The argument is an handle as returned
-by the :meth:`add_timeout` method."""
-        self._timeouts.remove(timeout)
-
-    def add_callback(self, callback, wake=True):
-        """Calls the given callback on the next I/O loop iteration.
-
-        It is safe to call this method from any thread at any time.
-        Note that this is the *only* method in IOLoop that makes this
-        guarantee; all other interaction with the IOLoop must be done
-        from that IOLoop's thread.  add_callback() may be used to transfer
-        control from other threads to the IOLoop's thread.
-        """
-        self._callbacks.append(callback)
-        if wake:
-            self.wake()
-
-    def add_periodic(self, callback, period):
-        """Add a :class:`PeriodicCallback` to the event loop."""
-        p = PeriodicCallback(callback, period, self)
-        p.start()
-        return p
+    def call_repeatedly(self, interval, callback, *args):
+        """Call a *callback* every *interval* seconds."""
+        if interval > 0:
+            def wrapper():
+                callback(*args)  # If this fails, the chain is broken.
+                handler.reschedule(self.timer() + interval)
+                heapq.heappush(self._scheduled, handler)
+            handler = self.call_later(interval, wrapper)
+            return handler
+        else:
+            return self.call_every(callback, *args)
+    
+    def call_every(self, callback, *args):
+        """Call a *callback* at every loop."""
+        def wrapper():
+            callback(*args)  # If this fails, the chain is broken.
+            self._callbacks.append(handler)
+        handler = self.call_soon(wrapper)
+        return handler
         
+    def add_reader(self, fd, callback, *args):
+        """Add a reader callback.  Return a Handler instance."""
+        handler = TimedCall(None, callback, args)
+        fd = file_descriptor(fd)
+        if fd not in self._handlers:
+            self._handlers[fd] = self.fd_factory(fd, self)
+        self._handlers[fd].add_reader(handler)
+        return handler
+    
+    def add_writer(self, fd, callback, *args):
+        """Add a reader callback.  Return a Handler instance."""
+        handler = TimedCall(None, callback, args)
+        fd = file_descriptor(fd)
+        if fd not in self._handlers:
+            self._handlers[fd] = self.fd_factory(fd, self)
+        self._handlers[fd].add_writer(handler)
+        return handler
+    
+    def add_connector(self, fd, callback, *args):
+        handler = TimedCall(None, callback, args)
+        fd = file_descriptor(fd)
+        if fd not in self._handlers:
+            self._handlers[fd] = self.fd_factory(fd, self)
+        self._handlers[fd].add_connector(handler)
+        return handler
+    
+    def remove_reader(self, fd):
+        '''Cancels the current read callback for file descriptor fd,
+if one is set. A no-op if no callback is currently set for the file
+descriptor.'''
+        fd = file_descriptor(fd)
+        if fd in self._handlers:
+            self._handlers[fd].remove_reader()
+    
+    def remove_writer(self, fd):
+        '''Cancels the current write callback for file descriptor fd,
+if one is set. A no-op if no callback is currently set for the file
+descriptor.'''
+        fd = file_descriptor(fd)
+        if fd in self._handlers:
+            self._handlers[fd].remove_writer()
+            
+    def remove_connector(self, fd):
+        fd = file_descriptor(fd)
+        if fd in self._handlers:
+            self._handlers[fd].remove_connector()
+    
+    def add_signal_handler(self, sig, callback, *args):
+        '''Whenever signal ``sig`` is received, arrange for `callback(*args)` to
+be called. Returns a :class:`TimedCall` handler which can be used to cancel
+the signal callback.'''
+        self._check_signal(sig)
+        handler = TimedCall(None, callback, args)
+        prev = signal.signal(sig, handler)
+        if isinstance(prev, TimedCall):
+            prev.cancel()
+        return handler
+    
+    def remove_signal_handler(self, sig):
+        '''Remove the signal ``sig`` if it was installed and reinstal the
+default signal handler ``signal.SIG_DFL``.'''
+        self._check_signal(sig)
+        handler = signal.signal(sig, signal.SIG_DFL)
+        if handler:
+            handler.cancel()
+            return True
+        else:
+            return False
+        
+    def create_server(self, **kwargs):
+        '''Create a new :class:`Server`.'''
+        kwargs['eventloop'] = self
+        return create_server(**kwargs)
+    
     def wake(self):
         '''Wake up the eventloop.'''
-        if self.running():
+        if self.running and self._waker:
             self._waker.wake()
+            
+    ############################################################ NON PEP METHODS        
+    def call_now_threadsafe(self, callback, *args):
+        if self.tid != current_thread().ident:
+            return self.call_soon_threadsafe(callback, *args)
+        else:
+            self._call(callback, *args)
+            
+    def has_callback(self, callback):
+        if callback.deadline:
+            return callback in self._scheduled
+        else:
+            return callback in self._callbacks
+        
+    def install_waker(self):
+        # Install event loop wake if possible
+        if hasattr(self._impl, 'install_waker'):
+            return self._impl.install_waker(self)
+        else:
+            waker = Waker()
+            self.add_reader(waker, waker.consume)
+            return waker
 
-    ############################################################ INTERNALS    
-    def _run_callback(self, callback, name='callback'):
+    ############################################################ INTERNALS
+    def _before_run(self):
+        ct = setid(self)
+        self._name = ct.name
+        if self._iothreadloop:
+            set_event_loop(self)
+    
+    def _after_run(self):
+        self._name = None
+        self.tid = None
+        
+    def _raise_stop_event_loop(self, exc=None):
+        self.logger.debug('Stopping %s', self)
+        raise StopEventLoop
+
+    def _check_signal(self, sig):
+        """Internal helper to validate a signal.
+
+        Raise ValueError if the signal number is invalid or uncatchable.
+        Raise RuntimeError if there is a problem setting up the handler.
+        """
+        if not isinstance(sig, int):
+            raise TypeError('sig must be an int, not {!r}'.format(sig))
+        if signal is None:
+            raise RuntimeError('Signals are not supported')
+        if not (1 <= sig < signal.NSIG):
+            raise ValueError('sig {} out of range(1, {})'.format(sig,
+                                                                 signal.NSIG))
+
+    def _run_once(self, timeout=None):
+        poll_timeout = timeout or self.poll_timeout
+        self.num_loops += 1
+        # Prevent IO event starvation by delaying new callbacks
+        # to the next iteration of the event loop.
+        callbacks = self._callbacks
+        self._callbacks = []
+        if self._scheduled:
+            now = self.timer()
+            while self._scheduled and self._scheduled[0].deadline <= now:
+                callbacks.append(self._scheduled.pop(0))
+            if self._scheduled:
+                seconds = self._scheduled[0].deadline - now
+                poll_timeout = min(seconds, poll_timeout)
         try:
-            callback()
-        except EXIT_EXCEPTIONS:
-            raise
-        except:
-            self.logger.critical('Unhandled exception in %s.', name,
-                                 exc_info=True)
-
-    def _run(self):
-        """Runs the I/O loop until one of the I/O handlers calls stop(), which
-will make the loop stop after the current event iteration completes."""
-        with LoopGuard(self) as guard:
-            while self._running:
-                poll_timeout = self.poll_timeout
-                self.num_loops += 1
-                _run_callback = self._run_callback
-                # Prevent IO event starvation by delaying new callbacks
-                # to the next iteration of the event loop.
-                callbacks = self._callbacks
-                if callbacks:
-                    self._callbacks = []
-                    for callback in callbacks:
-                        _run_callback(callback)
-                if self._timeouts:
-                    now = time.time()
-                    while self._timeouts and self._timeouts[0].deadline <= now:
-                        timeout = self._timeouts.pop(0)
-                        self._run_callback(timeout.callback)
-                    if self._timeouts:
-                        milliseconds = self._timeouts[0].deadline - now
-                        poll_timeout = min(milliseconds, poll_timeout)
-                # A chance to exit
-                if not self._running:
-                    break
-                try:
-                    event_pairs = self._impl.poll(poll_timeout)
-                except Exception as e:
-                    # Depending on python version and IOLoop implementation,
-                    # different exception types may be thrown and there are
-                    # two ways EINTR might be signaled:
-                    # * e.errno == errno.EINTR
-                    # * e.args is like (errno.EINTR, 'Interrupted system call')
-                    eno = getattr(e, 'errno', None)
-                    if eno != errno.EINTR:
-                        args = getattr(e, 'args', None)
-                        if isinstance(args, tuple) and len(args) == 2:
-                            eno = args[0]
-                    if eno != errno.EINTR and self._running:
-                        raise
-                    continue
-                # Pop one fd at a time from the set of pending fds and run
-                # its handler. Since that handler may perform actions on
-                # other file descriptors, there may be reentrant calls to
-                # this IOLoop that update self._events
-                if event_pairs:
-                    self._events.update(event_pairs)
-                    _events = self._events
-                    while _events:
-                        fd, events = _events.popitem()
-                        try:
-                            self._handlers[fd](fd, events)
-                        except EXIT_EXCEPTIONS:
-                            raise
-                        except (OSError, IOError) as e:
-                            if e.args[0] == errno.EPIPE:
-                                # Happens when the client closes the connection
-                                pass
-                            else:
-                                self.logger.error(
-                                    "Exception in I/O handler for fd %s",
-                                              fd, exc_info=True)
-                        except KeyError:
-                            self.logger.info("File descriptor %s missing", fd)
-                        except:
-                            self.logger.error("Exception in I/O handler for fd %s",
-                                          fd, exc_info=True)
-
-
-class _Timeout(object):
-    """An IOLoop timeout, a UNIX timestamp and a callback"""
-    __slots__ = ('deadline', 'callback')
-
-    def __init__(self, deadline, callback):
-        self.deadline = deadline
-        self.callback = callback
-
-    def __lt__(self, other):
-        return ((self.deadline, id(self.callback)) <
-                (other.deadline, id(other.callback)))
-
-
-class PeriodicCallback(object):
-    """Schedules the given callback to be called periodically.
-
-    The callback is called every callback_time seconds.
-    """
-    def __init__(self, callback, callback_time, ioloop):
-        self.callback = callback
-        self.callback_time = callback_time
-        self.ioloop = ioloop
-        self._running = False
-
-    def start(self):
-        self._running = True
-        timeout = time.time() + self.callback_time
-        self.ioloop.add_timeout(timeout, self._run)
-
-    def stop(self):
-        self._running = False
-
-    def _run(self):
-        if not self._running:
-            return
+            event_pairs = self._impl.poll(poll_timeout)
+        except Exception as e:
+            if self._raise_loop_error(e):
+                raise
+        else:
+            for fd, events in event_pairs:
+                if fd in self._handlers:
+                    callbacks.append(partial(self._handlers[fd], events))
+                else:
+                    LOGGER.warning('Received an event on unregistered file '\
+                                   'descriptor %s' % fd)
+        call = self._call
+        for callback in callbacks:
+            call(callback)
+            
+    def _call(self, callback, *args):
         try:
-            self.callback(self)
-        except (KeyboardInterrupt, SystemExit):
-            raise
-        except:
-            LOGGER.error("Error in periodic callback", exc_info=True)
-        if self._running:
-            self.start()
+            log_failure(callback(*args))
+        except socket.error as e:
+            if self._raise_loop_error(e):
+                log_failure(e).log('Exception in event loop callback.')
+        except Exception as e:
+            log_failure(e).log('Exception in event loop callback.')
 
-
-class _not_called_exception:
-
-    def __init__(self, value):
-        self.value = value
-
-    def __call__(self):
-        if not self.value.called:
-            try:
-                raise Timeout('"%s" timed out.' % self.value)
-            except:
-                self.value.callback(sys.exc_info())
-
-
-def loop_timeout(value, timeout, ioloop=None):
-    value = maybe_async(value)
-    if timeout and is_async(value):
-        ioloop = ioloop or thread_loop()
-        return ioloop.add_timeout(time.time() + timeout,
-                                  _not_called_exception(value))
-
+    def _raise_loop_error(self, e):
+        # Depending on python version and EventLoop implementation,
+        # different exception types may be thrown and there are
+        # two ways EINTR might be signaled:
+        # * e.errno == errno.EINTR
+        # * e.args is like (errno.EINTR, 'Interrupted system call')
+        eno = getattr(e, 'errno', None)
+        if eno not in SOCKET_INTERRUPT_ERRORS:
+            args = getattr(e, 'args', None)
+            if isinstance(args, tuple) and len(args) == 2:
+                eno = args[0]
+        if eno not in SOCKET_INTERRUPT_ERRORS and self.running:
+            return True

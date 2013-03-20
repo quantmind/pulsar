@@ -1,7 +1,7 @@
-'''\
-An asynchronous parallel testing suite :class:`pulsar.Application`.
-Used for testing pulsar itself but it can be used as a test suite for
-any other library.
+'''The :class:`TestSuite` is a testing framework for
+asynchronous applications or for running synchronous tests
+in parallel. It is used for testing pulsar itself but it can be used
+as a test suite for any other library.
 
 Requirements
 ====================
@@ -29,6 +29,37 @@ In the above example the test suite will look for all python files
 in the ``regression`` module (in a recursive fashion), and for modules
 called ``tests`` in the ``example`` module.
 
+Wiring a Test Case
+===========================
+Only subclasses of  ``unittest.TestCase`` are collected by this application.
+When running a test, pulsar looks for two extra method: ``_pre_setup`` and
+``_post_teardown``. If the former is available, it is run just before the
+``setUp`` method while if the latter is available, it is run
+just after the ``tearDown`` method. In addition if the ``setUpClass``
+class methods is available, is run just before
+all tests functions are run and the ``tearDownClass``, if available, is run
+just after all tests functions are run.
+
+An example test case::
+
+    # This import is equivalent in python2.6 to
+    #     import unittest2 as unittest
+    # Otherwise it is the same as
+    #     import unittest
+    from pulsar.apps.test import unittest
+    
+    class MyTest(unittest.TestCase):
+        
+        def test_async_test(self):
+            result = yield maybe_async_function()
+            yield self.assertEqual(result, ...)
+            
+        def test_simple_test(self):
+            self.assertEqual(1, 1)
+
+Test function can be asynchronous, when they return a generator or
+:class:`pulsar.Deferred`, or synchronous, when they return anything else.
+
 .. _apps-test-loading:
 
 Loading Tests
@@ -47,15 +78,6 @@ These are the rules for loading tests:
 * If an object defines a ``__test__`` attribute that does not evaluate to True,
   that object will not be collected, nor will any objects it contains.
 
-
-Test Case
-=============
-Only subclasses of  ``unittest.TestCase`` are collected by this application.
-When running a test, pulsar looks for two extra method: ``_pre_setup`` and
-``_post_teardown``. If the former is available, it is run just before the
-``setUp`` method while if the latter is available, it is run
-just after the ``tearDown`` method.
-
 .. _unittest2: http://pypi.python.org/pypi/unittest2
 .. _mock: http://pypi.python.org/pypi/mock
 '''
@@ -64,29 +86,29 @@ import logging
 import os
 import sys
 import time
-import inspect
 
-if sys.version_info >= (2,7):
-    import unittest
-else:   # pragma nocover
+from pulsar.utils.pep import ispy26, ispy33
+
+if ispy26: # pragma nocover
     try:
         import unittest2 as unittest
     except ImportError:
         print('To run tests in python 2.6 you need to install\
  the unittest2 package')
         exit(0)
-
-if sys.version_info < (3,3): # pragma nocover
+else:
+    import unittest
+    
+if ispy33: 
+    from unittest import mock
+else: # pragma nocover
     try:
         import mock
     except ImportError:
         print('To run tests you need to install the mock package')
         exit(0)
-else:
-    from unittest import mock
-    
+
 import pulsar
-from pulsar.apps import tasks
 from pulsar.utils import events
 
 from .result import *
@@ -113,6 +135,17 @@ class TestVerbosity(TestOption):
     type = int
     default = 1
     desc = """Test verbosity, 0, 1, 2, 3"""
+    
+    
+class TestTimeout(TestOption):
+    name = 'test_timeout'
+    flags = ['--test-timeout']
+    validator = pulsar.validate_pos_int
+    type = int
+    default = 30
+    desc = '''\
+        Tests which take longer than this many seconds are timed-out
+        and failed.'''
 
 
 class TestLabels(TestOption):
@@ -140,18 +173,25 @@ class TestList(TestOption):
     default = False
     validator = pulsar.validate_bool
     desc = """List all test labels without performing tests."""
+    
 
+class TestSequential(TestOption):
+    name = "sequential"
+    flags = ['--sequential']
+    action = 'store_true'
+    default = False
+    validator = pulsar.validate_bool
+    desc = """Run test functions sequentially. Don't run them asynchronously."""
+    
 
-test_commands = set()
-
-@pulsar.command(internal=True, ack=False, commands_set=test_commands)
-def test_result(client, actor, sender, tag, clsname, result):
+@pulsar.command(ack=False)
+def test_result(request, tag, clsname, result):
     '''Command for sending test results from test workers to the test monitor.'''
-    actor.logger.debug('Got a test results from %s.%s', tag, clsname)
-    return actor.app.add_result(actor, result)
+    request.actor.logger.debug('Got test results from %s.%s', tag, clsname)
+    request.actor.app.add_result(request.actor, result)
 
 
-class TestSuite(tasks.CPUboundServer):
+class TestSuite(pulsar.CPUboundApplication):
     '''An asynchronous test suite which works like a task queue where each task
 is a group of tests specified in a test class.
 
@@ -178,9 +218,7 @@ is a group of tests specified in a test class.
 '''
     _app_name = 'test'
     cfg_apps = ('cpubound',)
-    commands_set = test_commands
     cfg = {'loglevel': 'none',
-           'timeout': 3600,
            'backlog': 1,
            'logconfig': {
                 'loggers': {
@@ -189,10 +227,7 @@ is a group of tests specified in a test class.
                             }
                          }
            }
-
-    def handler(self):
-        return self
-
+    
     def python_path(self):
         #Override the python path so that we put the directory where the script
         #is in the ppython path
@@ -258,16 +293,17 @@ configuration and plugins.'''
     def monitor_start(self, monitor):
         # When the monitor starts load all :class:`TestRequest` into the
         # in the :attr:`pulsar.Actor.ioqueue`.
+        super(TestSuite, self).monitor_start(monitor)
         loader = self.local.loader
         tags = self.cfg.labels
         try:
             self.local.tests = tests = list(loader.testclasses(tags))
+            self._time_start = None
             if tests:
                 self.logger.info('loaded %s test classes', len(tests))
                 self.runner.on_start()
                 events.fire('tests', self, tests=tests)
                 monitor.cfg.set('workers', min(self.cfg.workers, len(tests)))
-                self._time_start = None
             else:
                 raise ExitTest('Could not find any tests.')
         except ExitTest as e:
@@ -279,19 +315,19 @@ configuration and plugins.'''
             monitor.arbiter.stop()
 
     def monitor_task(self, monitor):
-        if self._time_start is None:
-            tests = self.local.tests
+        super(TestSuite, self).monitor_task(monitor)
+        if self._time_start is None and self.local.tests:
             self.logger.info('sending %s test classes to the task queue',
-                          len(tests))
+                          len(self.local.tests))
             self._time_start = time.time()
-            for tag, testcls in tests:
-                monitor.put(TestRequest(testcls, tag))
+            for tag, testcls in self.local.tests:
+                self.put(TestRequest(testcls, tag))
 
     def add_result(self, monitor, result):
         #Check if we got all results
         runner = self.runner
         runner.add(result)
-        if runner.count == len(self.local.tests):
+        if runner.count >= len(self.local.tests):
             time_taken = time.time() - self._time_start
             runner.on_end()
             runner.printSummary(time_taken)
@@ -300,5 +336,5 @@ configuration and plugins.'''
                 exit_code = 1
             else:
                 exit_code = 0 
-            return monitor.arbiter.stop(exit_code=exit_code)
+            return monitor.arbiter.stop(exit_code)
 

@@ -5,19 +5,19 @@ import signal
 from multiprocessing import current_process
 
 import pulsar
-from pulsar.utils import system
 from pulsar.utils.tools import Pidfile
 from pulsar.utils.security import gen_unique_id
-from pulsar import HaltServer
+from pulsar.utils.pep import itervalues, iteritems
+from pulsar.utils.log import process_global
+from pulsar import HaltServer, system
 
-from .defer import itervalues, iteritems, multi_async, async
 from .actor import Actor, ACTOR_STATES
 from .monitor import PoolMixin, _spawn_actor
+from .defer import multi_async, log_failure
 from .access import get_actor, set_actor
+from .mailbox import MailboxConsumer
 from . import proxy
 
-
-process_global = pulsar.process_global
 
 __all__ = ['arbiter', 'spawn', 'Arbiter']
 
@@ -27,19 +27,16 @@ def arbiter(commands_set=None, **params):
     arbiter = get_actor()
     if arbiter is None:
         # Create the arbiter
-        cset = set(proxy.actor_commands)
-        cset.update(proxy.arbiter_commands)
-        cset.update(commands_set or ())
-        return set_actor(_spawn_actor(Arbiter, commands_set=cset, **params))
+        return set_actor(_spawn_actor(Arbiter, None, **params))
     elif isinstance(arbiter, Actor) and arbiter.is_arbiter():
         return arbiter
 
-
+#TODO: why cfg is set to None?
 def spawn(cfg=None, **kwargs):
     '''Spawn a new :class:`Actor` and return an :class:`ActorProxyDeferred`.
 This method can be used from any :class:`Actor`.
 If not in the :class:`Arbiter` domain,
-the method send a request to the :class:`Arbiter` to spawn a new actor, once
+the method send a request to the :class:`Arbiter` to spawn a new actor. Once
 the arbiter creates the actor it returns the proxy to the original caller.
 
 **Parameter kwargs**
@@ -69,18 +66,44 @@ A typical usage::
     # The actor is not the Arbiter domain.
     # We send a message to the Arbiter to spawn a new Actor
     if not isinstance(actor, Arbiter):
-        msg = actor.send('arbiter', 'spawn', **kwargs)\
-                            .add_callback(actor.link_actor)
+        # send the request to the arbiter
+        msg = actor.send('arbiter', 'spawn', **kwargs)
         return proxy.ActorProxyDeferred(aid, msg)
     else:
         return actor.spawn(**kwargs)
 
+
+def stop_arbiter(self):
+    p = self.pidfile
+    if p is not None:
+        self.logger.debug('Removing %s' % p.fname)
+        p.unlink()
+    if self.managed_actors:
+        self.state = ACTOR_STATES.TERMINATE
+    self.logger.info("Bye.")
+    if self.exit_code:
+        sys.exit(self.exit_code)
     
-class Arbiter(PoolMixin, Actor):
+def start_arbiter(self):
+    if current_process().daemon:
+        raise pulsar.PulsarException(
+                'Cannot create the arbiter in a daemon process')
+    os.environ["SERVER_SOFTWARE"] = pulsar.SERVER_SOFTWARE
+    pidfile = self.cfg.pidfile
+    if pidfile is not None:
+        try:
+            p = Pidfile(pidfile)
+            p.create(self.pid)
+        except RuntimeError as e:
+            raise HaltServer(str(e))
+        self.pidfile = p
+    
+    
+class Arbiter(PoolMixin):
     '''The Arbiter is the most important a :class:`Actor`
 and :class:`PoolMixin` in pulsar concurrent framework. It is used as singleton
 in the main process and it manages one or more :class:`Monitor`.
-It runs the main :class:`IOLoop` of your concurrent application.
+It runs the main :class:`EventLoop` of your concurrent application.
 It is the equivalent of the gunicorn_ arbiter, the twisted_ reactor
 and the tornado_ eventloop.
 
@@ -95,7 +118,13 @@ Users access the arbiter (in the arbiter process domain) by the high level api::
 .. _tornado: http://www.tornadoweb.org/
 '''
     pidfile = None
-    restarted = False
+    
+    def __init__(self, impl):
+        super(Arbiter, self).__init__(impl)
+        self.monitors = {}
+        self.registered = {'arbiter': self}
+        self.bind_event('start', start_arbiter)
+        self.bind_event('stop', stop_arbiter)
 
     ############################################################################
     # ARBITER HIGH LEVEL API
@@ -110,30 +139,42 @@ Users access the arbiter (in the arbiter process domain) by the high level api::
 :parameter monitor_name: a unique name for the monitor.
 :parameter kwargs: dictionary of key-valued parameters for the monitor.
 :rtype: an instance of a :class:`pulsar.Monitor`.'''
-        if monitor_name in self.monitors:
+        if monitor_name in self.registered: 
             raise KeyError('Monitor "{0}" already available'\
                            .format(monitor_name))
         params['name'] = monitor_name
         m = self.spawn(monitor_class, **params)
-        self.linked_actors[m.aid] = m
-        self.monitors[m.name] = m
+        self.registered[m.name] = m
+        self.monitors[m.aid] = m
         return m
 
     def is_process(self):
         return True
 
-    def get_all_monitors(self):
-        '''A dictionary of all :class:`Monitor` in the arbiter'''
-        return dict(((mon.name, mon.proxy) for mon in\
-                      itervalues(self.monitors) if mon.mailbox))
-
-    @multi_async
     def close_monitors(self):
         '''Close all :class:`Monitor` at once.'''
-        for pool in list(itervalues(self.monitors)):
-            yield pool.stop(True)
+        return multi_async([m.stop() for m in list(itervalues(self.monitors))],
+                           log_failure=True)
 
-    def on_info(self, data):
+    def get_actor(self, aid):
+        '''Given an actor unique id return the actor proxy.'''
+        a = super(Arbiter, self).get_actor(aid)
+        if a is None:
+            if aid in self.monitors:    # Check in monitors aid
+                return self.monitors[aid]
+            elif aid in self.managed_actors:
+                return self.managed_actors[aid]
+            elif aid in self.registered:
+                return self.registered[aid]
+            else:    # Finally check in workers in monitors
+                for m in itervalues(self.monitors):
+                    if aid in m.managed_actors:
+                        return m.managed_actors[aid]
+        else:
+            return a
+    
+    def info(self):
+        data = super(Arbiter, self).info()
         monitors = [p.info() for p in itervalues(self.monitors)]
         server = data.pop('actor')
         server.update({'version': pulsar.__version__,
@@ -148,99 +189,67 @@ Users access the arbiter (in the arbiter process domain) by the high level api::
         data['workers'] = [a.info for a in itervalues(self.managed_actors)]
         data['monitors'] = monitors
         return data
-
+    
+    def identity(self):
+        return self.name
+    
     ############################################################################
-    # OVERRIDE ACTOR HOOKS
+    # INTERNALS
     ############################################################################
-    def on_start(self):
-        if current_process().daemon:
-            raise pulsar.PulsarException(
-                    'Cannot create the arbiter in a daemon process')
-        os.environ["SERVER_SOFTWARE"] = pulsar.SERVER_SOFTWARE
-        pidfile = self.cfg.pidfile
-        if pidfile is not None:
-            p = Pidfile(pidfile)
-            p.create(self.pid)
-            self.pidfile = p
-        PoolMixin.on_start(self)
-
+    def _remove_actor(self, actor, log=True):
+        super(Arbiter, self)._remove_actor(actor, log)
+        self.registered.pop(actor.name, None)
+        self.monitors.pop(actor.aid, None)
+        
     def periodic_task(self):
         # Arbiter periodic task
-        if self.restarted:
-            self.stop(exit_code=self.exit_code)
         if self.can_continue() and self.running():
             # managed actors job
             self.manage_actors()
             for m in list(itervalues(self.monitors)):
                 if m.started():
                     if not m.running():
-                        self.logger.info('Removing monitor %s', m)
-                        self.monitors.pop(m.name)
+                        self._remove_actor(m)
                 else:
                     m.start()
             try:
                 self.cfg.arbiter_task(self)
-            except:
+            except Exception:
                 pass
-        self.ioloop.add_callback(self.periodic_task, False)
+        # requestloop and ioloop are the same. Use requestloop because ioloop
+        # is not available at startup
+        self.requestloop.call_soon(self.periodic_task)
 
-    @async()
-    def on_stop(self):
+    def _stop(self):
         '''Stop the pools the message queue and remaining actors.'''
-        if not self.ioloop.running():
-            for pool in list(itervalues(self.monitors)):
-                pool.state = ACTOR_STATES.INACTIVE
-            self.state = ACTOR_STATES.RUN
-            self.restarted = True
-            self.ioloop.start()
+        self.requestloop.call_soon_threadsafe(self._exit)
+        self.requestloop.run()
+        
+    def _exit(self, res=None):
+        if res:
+            self.state = ACTOR_STATES.CLOSE
+            self.mailbox.abort()
         else:
-            self.state = ACTOR_STATES.STOPPING
-            yield self.close_monitors()
-            yield self.close_actors()
-            yield self._close_message_queue()
-    
-    def on_exit(self):
-        p = self.pidfile
-        if p is not None:
-            p.unlink()
-        if self.managed_actors or self.linked_actors:
-            self.state = ACTOR_STATES.TERMINATE
-        self.logger.info("Bye.")
-        if self.exit_code:
-            sys.exit(self.exit_code)
-
-    ############################################################################
-    # INTERNALS
-    ############################################################################
+            active = multi_async((self.close_monitors(), self.close_actors()),
+                                 log_failure=True)
+            active.add_both(self._exit)
+                
     def start(self):
         if self.state == ACTOR_STATES.INITIAL:
             if self.cfg.daemon: #pragma    nocover
                 system.daemonize()
             return Actor.start(self)
-            
-    def _run(self):
-        try:
-            self.cfg.when_ready(self)
-        except:
-            pass
-        try:
-            self.requestloop.start()
-        except HaltServer as e:
-            self._halt(reason=str(e))
-        except (KeyboardInterrupt, SystemExit) as e:
-            self._halt(e.__class__.__name__)
-        except:
-            self._halt(code=1)
-
-    def _halt(self, reason=None, code=None):
-        if not self.closed():
-            if not reason:
-                self.logger.critical("Unhandled exception in main loop.",
-                                     exc_info=True)
-            else:
-                self.logger.info(reason)
-            self.stop(True, exit_code=code)
-
-    def _close_message_queue(self):
-        return
-
+        
+    def _mailbox(self):
+        #if platform.type == 'posix':
+        #    address = 'unix:%s.pulsar' % actor.aid
+        #else:   #pragma    nocover
+        #    address = ('127.0.0.1', 0)
+        address = ('127.0.0.1', 0)
+        mailbox = self.requestloop.create_server(address=address,
+                                        name='Mailbox for %s' % self,
+                                        consumer_factory=MailboxConsumer,
+                                        timeout=0,
+                                        close_event_loop=True)
+        mailbox.event_loop.call_soon_threadsafe(self.hand_shake)
+        return mailbox

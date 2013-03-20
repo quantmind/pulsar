@@ -1,28 +1,48 @@
-'''A HTTP proxy server in Pulsar::
+'''An asynchronous multi-process HTTP proxy server with *headers middleware*
+to manipulate the original request headers. To run the server::
 
     python manage.py
+    
+An header middleware is a callable which receives the wsgi *environ* and
+the list of request *headers*. By default the example uses:
+
+.. autofunction:: x_forwarded_for
+
+To run with different headers middleware create a new script and do::
+
+    from proxyserver.manage import server
+    
+    if __name__ == '__main__':
+        server(headers_middleware=[...]).start()
+        
 '''
 import io
-import json
 import sys
 try:
     import pulsar
 except ImportError:
     sys.path.append('../../')
 
-from pulsar import HttpException, LocalMixin, HttpClient, maybe_async,\
-                    is_async, is_failure, local_property
-from pulsar.apps import wsgi
+from pulsar.apps import wsgi, http
 from pulsar.utils.httpurl import Headers
+from pulsar.utils.log import LocalMixin, local_property
 
 ENVIRON_HEADERS = ('content-type', 'content-length')
 USER_AGENT = 'Pulsar-Proxy-Server'
 
 
 def x_forwarded_for(environ, headers):
+    '''Add *x-forwarded-for* header'''
     headers.add_header('x-forwarded-for', environ['REMOTE_ADDR'])
     
+class user_agent:
+    def __init__(self, agent):
+        self.agent = agent
+        
+    def __call__(environ, headers):
+        headers['user-agent'] = self.agent
 
+    
 class ProxyMiddleware(LocalMixin):
     '''WSGI middleware for an asynchronous proxy server. To perform
 processing on headers you can pass a list of ``headers_middleware``.
@@ -31,13 +51,11 @@ An headers middleware is a callable which accepts two parameters, the wsgi
     def __init__(self, user_agent=None, headers_middleware=None):
         self.headers = headers = Headers(kind='client')
         self.headers_middleware = headers_middleware or []
-        if user_agent:
-            headers['user-agent'] = user_agent
-            
+    
     @local_property
     def http_client(self):
-        return HttpClient(timeout=0, decompress=False, store_cookies=False,
-                          stream=True)
+        return http.HttpClient(decompress=False, store_cookies=False,
+                               timeout=0)
         
     def __call__(self, environ, start_response):
         # The WSGI thing
@@ -49,12 +67,11 @@ An headers middleware is a callable which accepts two parameters, the wsgi
         headers = self.request_headers(environ)
         method = environ['REQUEST_METHOD']
         stream = environ.get('wsgi.input') or io.BytesIO()
-        target_response = self.http_client.request(method, uri,
-                                                   data=stream.getvalue(),
-                                                   headers=headers)
-        wsgi_response.content = self.response_generator(target_response,
-                                                        wsgi_response)
-        return wsgi_response
+        response = self.http_client.request(method, uri,
+                                            data=stream.getvalue(),
+                                            headers=headers,
+                                            version=environ['SERVER_PROTOCOL'])
+        return self.response_generator(wsgi_response, response)
     
     def request_headers(self, environ):
         '''Modify request headers via the list of :attr:`headers_middleware`.
@@ -69,36 +86,38 @@ The returned headers will be sent to the target uri.'''
             v = environ.get(k)
             if v:
                 headers[head] = v
-        headers.update(self.headers)
         for middleware in self.headers_middleware:
             middleware(environ, headers)
         return headers
         
-    def response_generator(self, response, wsgi_response):
-        response = maybe_async(response)
-        while is_async(response):
+    def response_generator(self, wsgi_response, response):
+        parser = response.parser
+        while response.parser is None:
             yield b''
-            response = maybe_async(response)
-        stream_content = None
-        if is_failure(response):
-            wsgi_response.status_code = 500
-        else:
-            wsgi_response.status_code = response.status_code
-            wsgi_response.headers.update(response.headers)
-            stream_content = response.stream()
+        parser = response.parser
+        while not parser.is_headers_complete():
+            yield b''
+        wsgi_response.status_code = response.status_code
+        wsgi_response.headers.update(response.headers)
         wsgi_response.start()
-        if stream_content:
-            for content in stream_content:
-                yield content
+        while not parser.is_message_complete():
+            body = parser.recv_body()
+            yield body
+        body = parser.recv_body()
+        if body:
+            yield body
+            
 
-
-def server(description=None, name='proxy-server', **kwargs):
+def server(description=None, name='proxy-server',
+           headers_middleware=None, **kwargs):
     description = description or 'Pulsar Proxy Server'
+    if headers_middleware is None:
+        headers_middleware = [user_agent(USER_AGENT), x_forwarded_for]
     wsgi_proxy = ProxyMiddleware(user_agent=USER_AGENT,
-                                 headers_middleware=[x_forwarded_for])
+                                 headers_middleware=headers_middleware)
     app = wsgi.WsgiHandler(middleware=[wsgi_proxy])
     return wsgi.WSGIServer(app, name=name, description=description, **kwargs)
 
 
 if __name__ == '__main__':
-    server().start()
+    server(headers_middleware=[]).start()

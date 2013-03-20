@@ -1,3 +1,4 @@
+import sys
 import signal
 import ctypes
 import ctypes.wintypes
@@ -6,7 +7,7 @@ import socket
 import getpass
 from time import sleep
 
-from pulsar.utils.sock import socket_pair
+from pulsar.utils.sockets import socket_pair
 
 from .winprocess import WINEXE
 from .base import *
@@ -15,7 +16,7 @@ __all__ = ['IOpoll',
            'close_on_exec',
            'Waker',
            'daemonize',
-           'SIGQUIT',
+           'EXIT_SIGNALS',
            'get_uid',
            'get_gid',
            'get_maxfd']
@@ -29,8 +30,11 @@ SetHandleInformation.restype = ctypes.wintypes.BOOL
 HANDLE_FLAG_INHERIT = 0x00000001
 
 # The BREAK signal for windows
-SIGQUIT = signal.SIGBREAK
-   
+EXIT_SIGNALS = (signal.SIGINT, signal.SIGTERM, signal.SIGABRT, signal.SIGBREAK)
+if sys.version_info >= (2, 7):
+    SIG_NAMES[signal.CTRL_C_EVENT] = 'CTRL C EVENT'
+    EXIT_SIGNALS += (signal.CTRL_C_EVENT,)
+    
     
 def get_parent_id():
     if ispy32:
@@ -42,9 +46,10 @@ def chown(path, uid, gid):
     pass
 
 def close_on_exec(fd):
-    success = SetHandleInformation(fd, HANDLE_FLAG_INHERIT, 0)
-    if not success:
-        raise ctypes.GetLastError()
+    if fd:
+        success = SetHandleInformation(fd, HANDLE_FLAG_INHERIT, 0)
+        if not success:
+            raise ctypes.GetLastError()
         
 def _set_non_blocking(fd):
     pass
@@ -90,7 +95,7 @@ class IOpoll(IOselect):
 class Waker(object):
     '''In windows'''
     def __init__(self):
-        self._writer, s = socket_pair(backlog = 1)
+        self._writer, s = socket_pair(backlog=1)
         s.setblocking(True)   
         self._reader, addr = s.accept()
         self._writer.setblocking(False)

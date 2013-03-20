@@ -6,7 +6,7 @@ seconds = platform.seconds
 
 from .base import *
 
-if platform.type == 'posix':    #pragma nocover
+if platform.type == 'posix':
     from .posixsystem import *
 elif platform.type == 'win':    #pragma nocover
     from .windowssystem import *
@@ -31,7 +31,7 @@ kilo, mega, giga, tera, peta, exa, zetta, yotta'''
             return '%.1f%sB' % (value, s)
     return "%sB" % b
     
-def system_info(pid):
+def system_info(pid=None):
     '''Returns a dictionary of system information for the process with id *pid*.
 It uses the psutil_ module for the purpose. If psutil_ is not available
 it returns an empty dictionary.
@@ -40,6 +40,7 @@ it returns an empty dictionary.
 '''
     if psutil is None:  #pragma    nocover
         return {}
+    pid = pid or os.getpid()
     p = psutil.Process(pid)
     mem = p.get_memory_info()
     return {'memory': mem.rss,

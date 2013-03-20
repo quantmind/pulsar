@@ -1,24 +1,35 @@
 import sys
+import json
 from collections import deque
 
-from pulsar import CommandNotFound, AuthenticationError
+from pulsar import AuthenticationError
+from pulsar.utils.pep import default_timer
 
-from .defer import Deferred, is_async, make_async, AlreadyCalledError
-from .mailbox import mailbox, ActorMessage
-from .access import get_actor
+from .defer import Deferred
+from .consts import *
 
-__all__ = ['ActorMessage',
-           'ActorProxyDeferred',
+__all__ = ['ActorProxyDeferred',
            'ActorProxy',
            'ActorProxyMonitor',
+           'CommandError',
+           'CommandNotFound',
            'get_proxy',
            'command',
            'get_command']
 
 global_commands_table = {}
-actor_commands = set()
-arbiter_commands = set()
 
+class CommandError(Exception):
+    pass
+
+
+class CommandNotFound(CommandError):
+
+    def __init__(self, name):
+        super(CommandNotFound, self).__init__(
+                            'Command "%s" not available' % name)
+        
+        
 def get_proxy(obj, safe=False):
     if isinstance(obj, ActorProxy):
         return obj
@@ -29,66 +40,50 @@ def get_proxy(obj, safe=False):
             return None
         else:
             raise ValueError('"%s" is not an actor or actor proxy.' % obj)
-            
-def get_command(name, commands_set=None):
+
+def actorid(actor):
+    return actor.identity() if hasattr(actor, 'identity') else actor
+
+def get_command(name):
     '''Get the command function *name*'''
-    name = name.lower()
-    if commands_set and name not in commands_set:
-        return
-    return global_commands_table.get(name)
-
-
+    command = global_commands_table.get(name.lower())
+    if not command:
+        raise CommandNotFound(name)
+    return command
+    
+    
 class command:
     '''Decorator for pulsar command functions.
     
 :parameter ack: ``True`` if the command acknowledge the sender with a
     response. Usually is set to ``True`` (which is also the default value).
-:parameter authenticated: If ``True`` the action can only be invoked by
-    remote actors which have authenticated with the actor for which
-    the action has been requested.
-:parameter internal: Internal commands are for internal use only, not for
-    external clients. They accept the actor proxy calling as third positional
-    arguments.
 '''
-    def __init__(self, ack=True, authenticated=False, internal=False,
-                 commands_set=None):
+    def __init__(self, ack=True):
         self.ack = ack
-        self.authenticated = authenticated
-        self.internal = internal
-        if commands_set is None:
-            commands_set = actor_commands
-        self.commands_set = commands_set
     
     def __call__(self, f):
         self.name = f.__name__.lower()
         
-        def command_function(client, actor, *args, **kwargs):
-            if self.authenticated:
-                password = actor.cfg.get('password')
-                if password and not client.connection.authenticated:
-                    raise AuthenticationError()
-            if self.internal:
-                caller = get_proxy(args[0]) if args else None
-                if not caller:
-                    raise AuthenticationError()
-                args = args[1:]
-                return f(client, actor, caller, *args, **kwargs)
-            else:
-                return f(client, actor, *args, **kwargs)
+        def command_function(request, args, kwargs):
+            return f(request, *args, **kwargs)
         
         command_function.ack = self.ack
-        command_function.internal = self.internal
         command_function.__name__ = self.name
         command_function.__doc__ = f.__doc__
-        self.commands_set.add(self.name)
         global_commands_table[self.name] = command_function
         return command_function
             
-            
-class ActorProxyDeferred(Deferred):
-    '''A :class:`Deferred` for an :class:`ActorProxy`. This instance will be
-obtain and :class:`ActorProxy` result once the remote :class:`Actor` is fully
-functional.
+
+class ActorIdentity(object):
+    
+    def identity(self):
+        return self.aid
+    
+    
+class ActorProxyDeferred(Deferred, ActorIdentity):
+    '''A :class:`Deferred` for an :class:`ActorProxy`. The callback will
+be an :class:`ActorProxy` which will be received once the remote :class:`Actor`
+is fully functional.
 
 .. attribute:: aid
 
@@ -97,23 +92,20 @@ functional.
 '''
     def __init__(self, aid, msg=None):
         super(ActorProxyDeferred,self).__init__()
-        if msg is None:
-            # In this case aid is an instance of an ActorProxyMonitor
-            proxy = aid
-            self.aid = proxy.aid
-            # callback for the mailbox
-            proxy.on_address = self
+        if isinstance(aid, ActorProxyMonitor):
+            aid.callback = self
+            self.aid = aid.aid
         else:
             self.aid = aid
-            # simply listent for the calbacks and errorbacks
-            msg.addBoth(self.callback)
+            # Listen for the callbacks and errorbacks
+            msg.add_both(self.callback)
     
     def __repr__(self):
         return '%s(%s)' % (self.__class__, self.aid)
     __str__ = __repr__
     
     
-class ActorProxy(object):
+class ActorProxy(ActorIdentity):
     '''This is an important component in pulsar concurrent framework. An
 instance of this class is as a proxy for a remote `underlying` 
 :class:`Actor`. This is a lightweight class which delegates
@@ -144,47 +136,17 @@ parameter ``"hello there!"``.
     def __init__(self, impl):
         self.aid = impl.aid
         self.name = impl.name
-        self.commands_set = impl.commands_set
-        self.address = impl.address
         self.cfg = impl.cfg
+        if hasattr(impl, 'address'):
+            self.address = impl.address
     
     def __repr__(self):
         return '%s(%s)' % (self.name, self.aid)
     __str__ = __repr__
-    
-    @property
-    def mailbox(self):
-        '''Actor mailbox'''
-        if self.address:
-            return get_actor().proxy_mailbox(self.address)
         
     @property
     def proxy(self):
         return self
-    
-    def receive_from(self, sender, command, *args, **kwargs):
-        '''Send an :class:`ActorMessage` to the underlying actor
-(the receiver). This is the low level function call for
-communicating between actors.
-
-:parameter sender: :class:`Actor` sending the message.
-:parameter command: the :class:`command` to perform in the actor underlying
-    this proxy.
-:parameter args: non positional arguments of command.
-:parameter kwargs: key-valued arguments of command.
-:rtype: an asynchronous :class:`ActorMessage`.'''
-        if sender is None:
-            sender = get_actor()
-        if not self.mailbox:
-            sender.logger.critical('Cannot send a message to %s. No\
- mailbox available.', self)
-            return
-        cmd = get_command(command, self.commands_set)
-        if not cmd:
-            raise CommandNotFound(command)
-        msg = ActorMessage(cmd.__name__, sender, self.aid, args, kwargs)
-        send = self.mailbox.execute if cmd.ack else self.mailbox.send
-        return send(msg)
     
     def __eq__(self, o):
         o = get_proxy(o,True)
@@ -193,17 +155,12 @@ communicating between actors.
     def __ne__(self, o):
         return not self.__eq__(o)
         
-    def stop(self, sender=None):
-        '''Stop the remote :class:`Actor`'''
-        self.receive_from(sender, 'stop')
-        
 
 class ActorProxyMonitor(ActorProxy):
     '''A specialised :class:`ActorProxy` class which contains additional
 information about the remote underlying :class:`pulsar.Actor`. Unlike the
-:class:`pulsar.ActorProxy` class, instances of this class are not pickable and
-therefore remain in the :class:`Arbiter` process domain, which is the
-process where they have been created.
+:class:`pulsar.ActorProxy` class, instances of this class serialise
+into their :attr:`proxy` attribute..
 
 .. attribute:: impl
 
@@ -217,7 +174,10 @@ process where they have been created.
     def __init__(self, impl):
         self.impl = impl
         self.info = {}
-        self.stopping_loops = 0
+        self.mailbox = None
+        self.callback = None
+        self.spawning_start = None
+        self.stopping_start = None
         super(ActorProxyMonitor,self).__init__(impl)
         
     @property
@@ -231,6 +191,9 @@ process where they have been created.
     @property
     def proxy(self):
         return ActorProxy(self)
+    
+    def __reduce__(self):
+        return self.proxy.__reduce__()
     
     def is_alive(self):
         '''True if underlying actor is alive'''
@@ -247,6 +210,16 @@ provided, it raises an exception if the timeout is reached.'''
 
     def start(self):
         '''Start the remote actor.'''
+        self.spawning_start = default_timer()
         self.impl.start()
+        
+    def should_be_alive(self):
+        return default_timer() - self.spawning_start > ACTOR_ACTION_TIMEOUT
 
+    def should_terminate(self):
+        if self.stopping_start is None:
+            self.stopping_start = default_timer()
+            return False
+        else:
+            return default_timer() - self.stopping_start > ACTOR_ACTION_TIMEOUT
     

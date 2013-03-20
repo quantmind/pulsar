@@ -213,7 +213,7 @@ tag,module pairs.
             except ImportError:
                self.logger.error('failed to import module %s. Skipping.',
                                  name, exc_info=True)
-            except:
+            except Exception:
                self.logger.critical('Failed to import module %s. Skipping.',
                                     name, exc_info=True)
 

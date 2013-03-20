@@ -2,20 +2,26 @@ import threading
 from threading import Thread, current_thread
 from multiprocessing import current_process
 
-__all__ = ['thread_loop',
-           'thread_ioloop',
+from pulsar.utils.pep import get_event_loop_policy
+
+__all__ = ['get_request_loop',
            'get_actor',
-           'set_local_data',
            'is_mainthread',
            'PulsarThread',
            'process_local_data',
-           'thread_local_data']
+           'thread_local_data',
+           'NOTHING']
+
+NOTHING = object()
 
 def is_mainthread(thread=None):
     '''Check if thread is the main thread. If *thread* is not supplied check
 the current thread'''
     thread = thread if thread is not None else current_thread() 
     return isinstance(thread, threading._MainThread)
+
+def get_request_loop():
+    return get_event_loop_policy().get_request_loop()
 
 def process_local_data(name=None):
     '''Fetch the current process local data dictionary. If *name* is not
@@ -30,7 +36,7 @@ dictionary.'''
     else:
         return loc
             
-def thread_local_data(name, value=None):
+def thread_local_data(name, value=NOTHING):
     '''Set or retrieve an attribute *name* from the curren thread. If *value*
 is None, it will get the value otherwise it will set the value.'''
     ct = current_thread()
@@ -41,7 +47,7 @@ is None, it will get the value otherwise it will set the value.'''
         loc = ct._pulsar_local
     else:
         loc = ct._pulsar_local
-    if value is not None:
+    if value is not NOTHING:
         if hasattr(loc, name):
             if getattr(loc, name) is not value:
                 raise RuntimeError(
@@ -49,15 +55,6 @@ is None, it will get the value otherwise it will set the value.'''
         else:
             setattr(loc, name, value)
     return getattr(loc, name, None)
-
-def thread_loop(ioloop=None):
-    '''Returns the event loop (:class:`IOLoop`) on the current thread
-if available.'''
-    return thread_local_data('eventloop', ioloop)
-
-def thread_ioloop(ioloop=None):
-    '''Returns the :class:`IOLoop` on the current thread if available.'''
-    return thread_local_data('ioloop', ioloop)
 
 get_actor = lambda: thread_local_data('actor')
 
@@ -79,11 +76,6 @@ actors with thread concurrency ince they live in the arbiter process domain.'''
     actors = process_local_data('thread_actors')
     if actors:
         return actors.get(aid)
-
-def set_local_data(actor):
-    set_actor(actor)
-    thread_loop(actor.requestloop)
-    thread_ioloop(actor.ioloop)
     
     
 class PulsarThread(Thread):
@@ -93,7 +85,7 @@ class PulsarThread(Thread):
         super(PulsarThread, self).__init__(*args, **kwargs)
         
     def run(self):
-        set_local_data(self.actor)
+        set_actor(self.actor)
         super(PulsarThread, self).run()
         
         

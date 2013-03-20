@@ -70,7 +70,7 @@ def data_stream(lines, num=None):
             for f in fields[1:-1]:
                 try:
                     float(f)
-                except:
+                except Exception:
                     valid = False
                     break
                 new_fields.append(f)
@@ -118,7 +118,7 @@ class Profile(test.TestPlugin):
             local.tmp = tempfile.mktemp(dir=self.profile_temp_path)
             local.prof.enable()
         
-    def after_test_function_run(self, test, local, result):
+    def after_test_function_run(self, test, local, result, async):
         if self.config.profile:
             local.prof.disable()
             local.prof.dump_stats(local.tmp)
@@ -160,7 +160,7 @@ class Profile(test.TestPlugin):
                     bits = line.split(' ')
                     try:
                         ncalls = int(bits[0])
-                    except:
+                    except Exception:
                         continue
                     else:
                         run_info += ' ' + line

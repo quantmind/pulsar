@@ -27,7 +27,7 @@ class ServiceManagerLogHandler(logging.Handler):
                 servicemanager.LogErrorMsg(msg)
             elif record.levelno >= logging.INFO:
                 servicemanager.LogiNFOMsg(msg)
-        except:
+        except Exception:
             pass
             
 

@@ -1,17 +1,12 @@
 '''Response middleware
 '''
 import re
-import os
-import stat
-import mimetypes
-from email.utils import parsedate_tz, mktime_tz
 from gzip import GzipFile
 
 import pulsar
-from pulsar.utils.httpurl import BytesIO, parse_authorization_header,\
-                                     parse_cookie, http_date
-                                     
-from .wsgi import WsgiResponse
+from pulsar.utils.httpurl import BytesIO, parse_cookie
+
+from .plugins import parse_authorization_header
 
 re_accepts_gzip = re.compile(r'\bgzip\b')
 
@@ -21,8 +16,15 @@ __all__ = ['clean_path_middleware',
            'GZipMiddleware',
            'cookies_middleware',
            'authorization_middleware',
-           'MediaMiddleware']
+           'is_streamed']
 
+
+def is_streamed(content):
+    try:
+        len(content)
+    except TypeError:
+        return True
+    return False
 
 def clean_path_middleware(environ, start_response):
     '''Clean url and redirect if needed'''
@@ -39,15 +41,16 @@ def clean_path_middleware(environ, start_response):
 def cookies_middleware(environ, start_response):
     '''Parse the ``HTTP_COOKIE`` key in the *environ*. The ``HTTP_COOKIE``
 string is replaced with a dictionary.'''
-    c = environ.get('HTTP_COOKIE', '')
+    c = environ.get('http.cookie')
     if not isinstance(c, dict):
+        c = environ.get('HTTP_COOKIE', '')
         if not c:
             c = {}
         else:
             if not isinstance(c, str):
                 c = c.encode('utf-8')
             c = parse_cookie(c)
-        environ['HTTP_COOKIE'] = c
+        environ['http.cookie'] = c
 
 def authorization_middleware(environ, start_response):
     """An `Authorization` middleware."""
@@ -130,65 +133,3 @@ base their storage on the Accept-Encoding header.
         zfile.write(s)
         zfile.close()
         return zbuf.getvalue()
-
-
-class MediaMiddleware:
-    DEFAULT_CONTENT_TYPE = 'text/css'
-    def __init__(self, dir_path, url_path='/media/'):
-        self.dir_path = dir_path
-        self.url_path = url_path
-        
-    def __call__(self, environ, start_response):
-        path = environ.get('PATH_INFO')
-        if path.startswith(self.url_path):
-            path = self.dir_path + path[len(self.url_path):]
-            if os.path.isfile(path):
-                response = self.serve_file(environ, path)
-                return response(environ, start_response)
-        
-    def serve_file(self, environ, fullpath):
-        # Respect the If-Modified-Since header.
-        statobj = os.stat(fullpath)
-        content_type, encoding = mimetypes.guess_type(fullpath)
-        content_type = content_type or self.DEFAULT_CONTENT_TYPE
-        if not self.was_modified_since(environ.get('HTTP_IF_MODIFIED_SINCE'),
-                                       statobj[stat.ST_MTIME],
-                                       statobj[stat.ST_SIZE]):
-            return wsgi.WsgiResponse(status=304,
-                                     content_type=content_type,
-                                     encoding=encoding)
-        contents = open(fullpath, 'rb').read()
-        response = wsgi.WsgiResponse(content=contents,
-                                     content_type=content_type,
-                                     encoding=encoding)
-        response.headers["Last-Modified"] = http_date(statobj[stat.ST_MTIME])
-        return response
-    
-    def was_modified_since(self, header=None, mtime=0, size=0):
-        """
-        Was something modified since the user last downloaded it?
-
-        header
-          This is the value of the If-Modified-Since header.  If this is None,
-          I'll just return True.
-
-        mtime
-          This is the modification time of the item we're talking about.
-
-        size
-          This is the size of the item we're talking about.
-        """
-        try:
-            if header is None:
-                raise ValueError
-            matches = re.match(r"^([^;]+)(; length=([0-9]+))?$", header,
-                               re.IGNORECASE)
-            header_mtime = mktime_tz(parsedate_tz(matches.group(1)))
-            header_len = matches.group(3)
-            if header_len and int(header_len) != size:
-                raise ValueError()
-            if mtime > header_mtime:
-                raise ValueError()
-        except (AttributeError, ValueError, OverflowError):
-            return True
-        return False

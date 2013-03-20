@@ -96,7 +96,6 @@ In addition, a :class:`SocketServer` in multi-process mode is only available for
  * Windows running python 3.2 or above.
 '''
 import pulsar
-from pulsar import AsyncIOStream
 
 
 class Bind(pulsar.Setting):
@@ -129,59 +128,43 @@ class Keepalive(pulsar.Setting):
 class SocketServer(pulsar.Application):
     '''This application bind a socket to a given address and listen for
 requests. The request handler is constructued from the
-:attr:`socket_server_factory` parameter/attribute.
-    
-.. attribute:: socket_server_factory
-
-    Callable which returns the asynchronous socket server, usually
-    a subclass of :class:`pulsar.AsyncSocketServer`.
+:attr:`handler` parameter/attribute.
     
 .. attribute:: address
 
     The socket address, available once the application has started.
     '''
     _app_name = 'socket'
-    socket_server_factory = None
     address = None
+    
+    def protocol_consumer(self):
+        '''Returns the callable application handler which is stored in
+:attr:`Worker.app_handler`, used by :class:`Worker` to carry out its task.
+By default it returns the :attr:`Application.callable`.'''
+        return self.callable
     
     def monitor_start(self, monitor):
         # if the platform does not support multiprocessing sockets set
         # the number of workers to 0.
         cfg = self.cfg
-        if not self.socket_server_factory:
-            raise TypeError('Socket server class not specified.')
         if not pulsar.platform.has_multiProcessSocket\
             or cfg.concurrency == 'thread':
             cfg.set('workers', 0)
         # Open the socket and bind to address
         address = self.cfg.address
         if address:
-            socket = pulsar.create_socket(address, backlog=self.cfg.backlog)
+            sock = pulsar.create_socket(address, bindto=True,
+                                        backlog=self.cfg.backlog)
         else:
             raise pulsar.ImproperlyConfigured('Could not open a socket. '
                                               'No address to bind to')
-        self.logger.info('Listening on %s', socket)
-        monitor.params.socket = socket
-        self.address = socket.name
+        self.logger.info('Listening on %s', sock)
+        monitor.params.sock = sock
+        self.address = sock.address
     
     def worker_start(self, worker):
         # Start the worker by starting the socket server
-        s = self.socket_server_factory(worker, worker.params.socket,
-                                       timeout=self.cfg.keepalive)
-        # We add the file descriptor handler
-        s.on_connection_callbacks.append(worker.handle_fd_event)
-        worker.socket_server = s
-    
-    def worker_stop(self, worker):
-        if hasattr(worker, 'socket_server'):
-            # we don't shut down the socket, simply remove all active
-            # connections and othe clean up operations.
-            worker.socket_server.on_close()
-        
-    def on_event(self, worker, fd, events):
-        connection = worker.socket_server.accept()
-        if connection is not None:
-            return connection.on_closed
+        worker.servers[self.name] = self.create_server(worker)
     
     def on_info(self, worker, data):
         server = worker.socket_server
@@ -190,3 +173,19 @@ requests. The request handler is constructued from the
                           'active_connections': server.active_connections,
                           'received_connections': server.received}
         return data
+
+    def create_server(self, worker):
+        '''Create the Server Protocol which will listen for requests. It
+uses the :meth:`handler` as its response protocol.'''
+        cfg = self.cfg
+        server = pulsar.create_server(eventloop=worker.requestloop,
+                                      sock=worker.params.sock,
+                                      consumer_factory=self.protocol_consumer(),
+                                      max_connections=cfg.max_requests,
+                                      timeout=cfg.keepalive)
+        server.bind_event('connection_made', cfg.connection_made)
+        server.bind_event('pre_request', cfg.pre_request)
+        server.bind_event('post_request', cfg.post_request)
+        server.bind_event('connection_lost', cfg.connection_lost)
+        return server
+        

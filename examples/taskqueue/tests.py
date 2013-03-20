@@ -15,7 +15,11 @@ import time
 def task_function(N = 10, lag = 0.1):
     time.sleep(lag)
     return N*N
-'''
+'''        
+def wait_for_task(proxy, result):
+    while result['status'] in tasks.UNREADY_STATES:
+        result = yield proxy.get_task(id=result['id'])
+            
 
 class TestTaskClasses(unittest.TestCase):
     
@@ -28,8 +32,8 @@ class TestTaskClasses(unittest.TestCase):
         self.assertFalse(task.on_start())
         self.assertFalse(task.on_timeout())
         self.assertFalse(task.on_finish())
-        
 
+        
 class TestTaskQueueOnThread(unittest.TestCase):
     concurrency = 'thread'
     app = None
@@ -47,12 +51,8 @@ class TestTaskQueueOnThread(unittest.TestCase):
         # The name of the task queue application
         s = server(cls.name_tq(), bind='127.0.0.1:0',
                    concurrency=cls.concurrency)
-        outcome = send('arbiter', 'run', s)
-        yield outcome
-        app = outcome.result
-        cls.app = app
-        uri = 'http://{0}:{1}'.format(*cls.app.address)
-        cls.proxy = rpc.JsonProxy(uri)
+        cls.app = yield send('arbiter', 'run', s)
+        cls.proxy = rpc.JsonProxy('http://{0}:{1}'.format(*cls.app.address))
 
     @classmethod
     def tearDownClass(cls):
@@ -61,7 +61,7 @@ class TestTaskQueueOnThread(unittest.TestCase):
             yield send('arbiter', 'kill_actor', cls.name_rpc())
 
     @run_on_arbiter
-    def testMeta(self):
+    def test_meta(self):
         '''Tests meta attributes of taskqueue'''
         app = get_application(self.name_tq())
         self.assertTrue(app)
@@ -77,7 +77,7 @@ class TestTaskQueueOnThread(unittest.TestCase):
         self.assertNotEqual(id,job.make_task_id((),{}))
         
     @run_on_arbiter
-    def testRegistry(self):
+    def test_registry(self):
         app = get_application(self.name_tq())
         self.assertTrue(isinstance(app.registry, dict))
         regular = app.registry.regular()
@@ -86,7 +86,7 @@ class TestTaskQueueOnThread(unittest.TestCase):
         self.assertTrue(periodic)
         
     @run_on_arbiter
-    def testRpcMeta(self):
+    def test_rpc_meta(self):
         app = get_application(self.name_rpc())
         self.assertTrue(app)
         self.assertEqual(app.name, self.name_rpc())
@@ -96,20 +96,20 @@ class TestTaskQueueOnThread(unittest.TestCase):
         self.assertEqual(tq, self.name_tq())
 
     @run_on_arbiter
-    def testCheckNextRun(self):
+    def test_check_next_run(self):
         app = get_application(self.name_tq())
         scheduler = app.scheduler
         scheduler.tick()
         self.assertTrue(scheduler.next_run > datetime.now())
         
     @run_on_arbiter
-    def testNotOverlap(self):
+    def test_not_overlap(self):
         app = get_application(self.name_tq())
         self.assertTrue('notoverlap' in app.registry)
-        r1 = app.scheduler.queue_task('notoverlap', (1,), {})
+        r1 = app.scheduler.run('notoverlap', 1)
         self.assertEqual(str(r1), 'notoverlap(%s)' % r1.id)
         self.assertTrue(r1._queued)
-        r2 = app.scheduler.queue_task('notoverlap', (1,), {})
+        r2 = app.scheduler.run('notoverlap', 1)
         self.assertFalse(r2._queued)
         id = r1.id
         self.assertEqual(id, r2.id)
@@ -120,7 +120,7 @@ class TestTaskQueueOnThread(unittest.TestCase):
         self.assertEqual(get_task(id).status, tasks.SUCCESS)
     
     @run_on_arbiter    
-    def testIdNotOverlap(self):
+    def test_id_not_overlap(self):
         '''Check `make_task_id` when `can_overlap` attribute is set to False.'''
         app = get_application(self.name_tq())
         job = app.registry['notoverlap']
@@ -142,9 +142,9 @@ class TestTaskQueueOnThread(unittest.TestCase):
         self.assertNotEqual(id,job.make_task_id((),{'p':45,'c':'blas'}))
         
     @run_on_arbiter
-    def testDeleteTask(self):
+    def test_delete_task(self):
         app = get_application(self.name_tq())
-        r1 = app.scheduler.queue_task('addition', (1,4), {})
+        r1 = app.scheduler.run('addition', 1, 4)
         id = r1.id
         get_task = app.scheduler.get_task
         while get_task(id).status in tasks.UNREADY_STATES:
@@ -157,93 +157,83 @@ class TestTaskQueueOnThread(unittest.TestCase):
         app.scheduler.delete_tasks()
         
     def test_rpc_ping(self):
-        self.assertEqual(self.proxy.ping(), 'pong')
+        self.async.assertEqual(self.proxy.ping(), 'pong')
         
     def test_rpc_job_list(self):
-        jobs = self.proxy.job_list()
+        jobs = yield self.proxy.job_list()
         self.assertTrue(jobs)
         self.assertTrue(isinstance(jobs, list))
         d = dict(jobs)
         pycode = d['runpycode']
         self.assertEqual(pycode['type'], 'regular')
-        jobs = self.proxy.job_list(jobnames=['runpycode'])
+        
+    def test_rpc_job_list_with_names(self):
+        jobs = yield self.proxy.job_list(jobnames=['runpycode'])
         self.assertEqual(len(jobs), 1)
-        jobs = self.proxy.job_list(jobnames=['xxxxxx'])
+        jobs = yield self.proxy.job_list(jobnames=['xxxxxx'])
         self.assertEqual(len(jobs), 0)
         
     def test_rpc_next_scheduled_tasks(self):
-        next = self.proxy.next_scheduled_tasks()
+        next = yield self.proxy.next_scheduled_tasks()
         self.assertTrue(next)
         self.assertEqual(len(next), 2)
-        next = self.proxy.next_scheduled_tasks(jobnames=['testperiodic'])
+        next = yield self.proxy.next_scheduled_tasks(jobnames=['testperiodic'])
         self.assertTrue(next)
         self.assertEqual(len(next), 2)
         self.assertEqual(next[0], 'testperiodic')
         self.assertTrue(next[1] >= 0)
         
-    def test_run_new_task_Error(self):
-        self.assertRaises(rpc.InvalidParams, self.proxy.run_new_task)
-        self.assertRaises(rpc.InvalidParams, self.proxy.run_new_task,
-                          jobname='xxxx', bla='foo')
+    def test_run_new_task_error(self):
+        self.async.assertRaises(rpc.InvalidParams, self.proxy.run_new_task)
+        self.async.assertRaises(rpc.InvalidParams, self.proxy.run_new_task,
+                                jobname='xxxx', bla='foo')
         
     def test_run_new_task_RunPyCode(self):
         '''Run a new task from the *runpycode* task factory.'''
-        r = self.proxy.run_new_task(jobname='runpycode', code=CODE_TEST, N=3)
+        r = yield self.proxy.run_new_task(jobname='runpycode', code=CODE_TEST, N=3)
         self.assertTrue(r)
         self.assertTrue(r['id'])
         self.assertTrue(r['time_executed'])
-        while r['status'] in tasks.UNREADY_STATES:
-            yield NOT_DONE
-            r = self.proxy.get_task(id=r['id'])
+        r = yield wait_for_task(self.proxy, r)
         self.assertEqual(r['status'], tasks.SUCCESS)
         self.assertEqual(r['result'], 9)
         
     def test_run_new_task_addition(self):
-        r = self.proxy.run_new_task(jobname='addition', a=40, b=50)
+        r = yield self.proxy.run_new_task(jobname='addition', a=40, b=50)
         self.assertTrue(r)
         self.assertTrue(r['time_executed'])
-        while r['status'] in tasks.UNREADY_STATES:
-            yield NOT_DONE
-            r = self.proxy.get_task(id=r['id'])
+        r = yield wait_for_task(self.proxy, r)
         self.assertEqual(r['status'], tasks.SUCCESS)
         self.assertEqual(r['result'], 90)
         
     def test_run_new_task_periodicerror(self):
-        r = self.proxy.run_new_task(jobname='testperiodicerror')
-        while r['status'] in tasks.UNREADY_STATES:
-            yield NOT_DONE
-            r = self.proxy.get_task(id=r['id'])
+        r = yield self.proxy.run_new_task(jobname='testperiodicerror')
+        r = yield wait_for_task(self.proxy, r)
         self.assertEqual(r['status'], tasks.FAILURE)
         self.assertTrue('kaputt' in r['result'])
         
     def test_run_new_task_asynchronous(self):
-        r = self.proxy.run_new_task(jobname='asynchronous', loops=3)
-        while r['status'] in tasks.UNREADY_STATES:
-            yield NOT_DONE
-            r = self.proxy.get_task(id=r['id'])
-        self.assertEqual(r['status'], tasks.SUCCESS)
-        result = r['result']
+        response = yield self.proxy.run_new_task(jobname='asynchronous',loops=3)
+        r = yield wait_for_task(self.proxy, response)
+        self.assertEqual(response['status'], tasks.SUCCESS)
+        result = response['result']
         self.assertEqual(result['loops'], 3)
         self.assertEqual(result['end']-result['start'], 3)
         
     def test_run_new_task_expiry(self):
-        r = self.proxy.run_new_task(jobname='addition', a=40, b=50,
-                                    meta_data={'expiry': time()})
+        r = yield self.proxy.run_new_task(jobname='addition', a=40, b=50,
+                                          meta_data={'expiry': time()})
         self.assertTrue(r)
-        while r['status'] in tasks.UNREADY_STATES:
-            yield NOT_DONE
-            r = self.proxy.get_task(id=r['id'])
+        r = yield wait_for_task(self.proxy, r)
         self.assertEqual(r['status'], tasks.REVOKED)
         
     def test_run_producerconsumer(self):
         '''A task which produce other tasks'''
         sample = 10
-        r = self.proxy.run_new_task(jobname='standarddeviation',
-                                    sample=sample, size=100)
+        r = yield self.proxy.run_new_task(jobname='standarddeviation',
+                                          sample=sample, size=100)
         self.assertTrue(r)
-        while r['status'] in tasks.UNREADY_STATES:
-            yield NOT_DONE
-            r = self.proxy.get_task(id=r['id'])
+        r = yield wait_for_task(self.proxy, r)
         self.assertEqual(r['status'], tasks.SUCCESS)
         self.assertTrue(tasks.nice_task_message(r))
         # We check for the tasks created
@@ -258,8 +248,8 @@ class TestTaskQueueOnThread(unittest.TestCase):
         self.assertEqual(len(stasks), sample)
         
 
+class b:
 #class TestTaskRpc(unittest.TestCase):
-class TestTaskRpc(object):
     '''Test the Rpc and Taskqueue server, including rpc commands
 in the TaskQueueRpcMixin class'''
     concurrency = 'process'
@@ -283,6 +273,6 @@ in the TaskQueueRpcMixin class'''
             self.assertTrue(r)
 
 
-@dont_run_with_thread
-class TestTaskQueueOnProcess(TestTaskQueueOnThread):
-    concurrency = 'process'
+#@dont_run_with_thread
+#class TestTaskQueueOnProcess(TestTaskQueueOnThread):
+#    concurrency = 'process'

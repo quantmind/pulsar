@@ -1,15 +1,18 @@
-'''The :mod:`pulsar.apps.ws` contains a WSGI_ middleware for
+'''The :mod:`pulsar.apps.ws` contains WSGI_ middleware for
 handling the WebSocket_ protocol.
 Web sockets allow for bidirectional communication between the browser
 and server. Pulsar implementation uses the WSGI middleware
-:class:`WebSocket` for the handshake and a class derived from
+:class:`WebSocket` for the handshake_ and a class derived from
 :class:`WS` handler for the communication part.
 
 .. _WSGI: http://www.python.org/dev/peps/pep-3333/
 .. _WebSocket: http://tools.ietf.org/html/rfc6455
+.. _handshake: http://tools.ietf.org/html/rfc6455#section-1.3
 
 API
 ==============
+
+.. _websocket-middleware:
 
 WebSocket
 ~~~~~~~~~~~~~~~~
@@ -19,26 +22,22 @@ WebSocket
    :member-order: bysource
 
 
-WebSocket Handler
+.. _websocket-handler:
+
+WebSocket handler
 ~~~~~~~~~~~~~~~~~~~~
 
 .. autoclass:: WS
    :members:
    :member-order: bysource
+   
 
-Frame
-~~~~~~~~~~~~~~~~~~~
+WebSocket protocol
+~~~~~~~~~~~~~~~~~~~~
 
-.. autoclass:: Frame
+.. autoclass:: WebSocketProtocol
    :members:
    :member-order: bysource
-   
-   
-.. autoclass:: FrameParser
-   :members:
-   :member-order: bysource
-
-
 '''
 import logging
 import socket
@@ -50,163 +49,125 @@ import hashlib
 from functools import partial
 
 import pulsar
-from pulsar import maybe_async, is_async, safe_async, is_failure, ClientSocket
-from pulsar.utils.httpurl import ispy3k, to_bytes, native_str,\
-                                 itervalues, parse_qs, WEBSOCKET_VERSION
-from pulsar.apps.wsgi import WsgiResponse, wsgi_iterator
+from pulsar import is_async, HttpException, ProtocolError, log_failure
+from pulsar.utils.httpurl import to_bytes, native_str
+from pulsar.utils.websocket import FrameParser, Frame
+from pulsar.apps import wsgi
 
-from .frame import *
+from . import extensions
 
 WEBSOCKET_GUID = '258EAFA5-E914-47DA-95CA-C5AB0DC85B11'
 
 
-class GeneralWebSocket(object):
-    namespace = ''
-    extensions = []
+class GeneralWebSocket(wsgi.Router):
+    '''A websocket middleware.
     
-    def __init__(self, handle, extensions=None):
-        self.handle = handle
-        if extensions is None:
-            extensions = self.extensions
-        self.extensions = extensions
+.. attribute:: frame_parser
 
+    A factory of websocket frame parsers
+'''
+    namespace = ''
+    frame_parser = FrameParser
+    
+    def __init__(self, route, handle, frame_parser=None, **kwargs):
+        super(GeneralWebSocket, self).__init__(route, **kwargs)
+        self.handle = handle
+        if frame_parser:
+            self.frame_parser = frame_parser
+        
     def get_client(self):
         return self.handle(self)
     
-    def __call__(self, environ, start_response):
-        if self.handle.match(environ):
-            return self.handle_handshake(environ, start_response)
+    def get(self, request):
+        headers, parser = self.handle_handshake(request.environ)
+        request.response.status_code = 101
+        request.response.content = b''
+        request.response.headers.update(headers)
+        upgrade = request.environ['pulsar.connection'].upgrade
+        upgrade(partial(WebSocketServerProtocol, self.handle,
+                        request, parser))
+        return request.response.start()
     
-    def handle_handshake(self, environ, start_response):
-        raise NotImplementedError()
-    
-    def upgrade_connection(self, environ, version):
-        '''Upgrade the connection so it handles the websocket protocol.'''
-        connection = environ['pulsar.connection']
-        connection.environ = environ
-        #connection.read_timeout = 0
-        connection.protocol = FrameParser(version)
-        connection.response_class = self.on_message
-        
-    def on_message(self, connection, frame):
-        environ = connection.environ
-        if not environ.get('websocket-opened'):
-            environ['websocket-opened'] = True
-            self.handle.on_open(environ)
-        rframe = frame.on_received()
-        if rframe:
-            yield rframe.msg
-        elif frame.is_close:
-            # Close
-            connection.close()
-        elif frame.is_data:
-            yield self.as_frame(connection,
-                                self.handle.on_message(environ, frame.body))
-
-    def as_frame(self, connection, body):
-        '''Build a websocket server frame from body.'''
-        body = maybe_async(body)
-        if is_async(body):
-            return body.addBoth(lambda b: self.as_frame(connection, b))
-        if is_failure(body):
-            # We have a failure. shut down connection
-            body.log()
-            body = Frame.close('Server error')
-        elif not isinstance(body, Frame):
-            # If the body is not a frame, build a final frame from it.
-            body = Frame(body or '', version=connection.protocol.version,
-                         final=True)
-        return body.msg
+    def handle_handshake(self, environ):
+        '''handle the websocket handshake. Must return a list of HTTP
+headers to send back to the client.'''
+        raise NotImplementedError
         
     
 class WebSocket(GeneralWebSocket):
-    """A :ref:`WSGI <apps-wsgi>` middleware for handling w websocket handshake
-and starting a custom :class:`WS` connection.
-It implements the protocol version 13 as specified at
-http://www.whatwg.org/specs/web-socket-protocol/.
+    """A specialised :ref:`Router <apps-wsgi-router>` middleware for
+handling the websocket handshake at a given route.
+Once the handshake is succesful,
+it upgrades to the websocket protocol served by a custom :class:`WS`
+handler.
 
-Web Sockets are not standard HTTP connections. The "handshake" is HTTP,
-but after that, the protocol is message-based. To create
-a valid :class:`WebSocket` middleware initialise as follow::
+To create a valid :class:`WebSocket` middleware initialise as follow::
 
     from pulsar.apps import wsgi, ws
     
     class MyWS(ws.WS):
         ...
     
-    wm = ws.WebSocket(handle=MyWS())
+    wm = ws.WebSocket('/bla', MyWS())
     app = wsgi.WsgiHandler(middleware=(..., wm))
-    
-    wsgi.createServer(callable=app).start()
+    wsgi.WSGIServer(callable=app).start()
 
 
 See http://tools.ietf.org/html/rfc6455 for the websocket server protocol and
 http://www.w3.org/TR/websockets/ for details on the JavaScript interface.
     """        
-    def handle_handshake(self, environ, start_response):
+    def handle_handshake(self, environ):
         connections = environ.get("HTTP_CONNECTION", '').lower()\
                                     .replace(' ','').split(',')
         if environ.get("HTTP_UPGRADE", '').lower() != "websocket" or \
            'upgrade' not in connections:
             return
         if environ['REQUEST_METHOD'].upper() != 'GET':
-            raise WebSocketError('Method is not GET', status=400)
+            raise HttpException(msg='Method is not GET', status=400)
         key = environ.get('HTTP_SEC_WEBSOCKET_KEY')
         if key:
             try:
                 ws_key = base64.b64decode(key.encode('latin-1'))
-            except:
+            except Exception:
                 ws_key = ''
             if len(ws_key) != 16:
-                raise WebSocketError("WebSocket key's length is invalid",
-                                     status=400)
+                raise HttpException(msg="WebSocket key's length is invalid",
+                                    status=400)
         else:
-            raise WebSocketError('Not a valid HyBi WebSocket request. '
-                                 'Missing Sec-Websocket-Key header.',
-                                 status=400)
-        version = environ.get('HTTP_SEC_WEBSOCKET_VERSION')
-        if version:
-            try:
-                version = int(version)
-            except:
-                pass
-        if version not in WEBSOCKET_VERSION:
-            raise WebSocketError('Unsupported WebSocket version {0}'\
-                                 .format(version),
-                                 status=400)
+            raise HttpException(msg='Not a valid HyBi WebSocket request. '
+                                    'Missing Sec-Websocket-Key header.',
+                                status=400)
         # Collect supported subprotocols
         subprotocols = environ.get('HTTP_SEC_WEBSOCKET_PROTOCOL')
         ws_protocols = []
         if subprotocols:
             for s in subprotocols.split(','):
-                s = s.strip()
-                if s in protocols:
-                    ws_protocols.append(s)
+                ws_protocols.append(s.strip())
         # Collect supported extensions
         ws_extensions = []
         extensions = environ.get('HTTP_SEC_WEBSOCKET_EXTENSIONS')
         if extensions:
-            exts = self.extensions
             for ext in extensions.split(','):
-                ext = ext.strip()
-                if ext in exts:
-                    ws_extensions.append(ext)
-        # Build and start the HTTP response
+                ws_extensions.append(ext.strip())
+        # Build the frame parser
+        version = environ.get('HTTP_SEC_WEBSOCKET_VERSION')
+        try:
+            parser = self.frame_parser(version=version, protocols=ws_protocols,
+                                       extensions=ws_extensions)
+        except ProtocolError as e:
+            raise HttpException(str(e), status=400)
         headers = [
             ('Upgrade', 'websocket'),
             ('Connection', 'Upgrade'),
             ('Sec-WebSocket-Accept', self.challenge_response(key))
         ]
-        if ws_protocols:
+        if parser.protocols:
             headers.append(('Sec-WebSocket-Protocol',
-                            ', '.join(ws_protocols)))
-        if ws_extensions:
+                            ', '.join(parser.protocols)))
+        if parser.extensions:
             headers.append(('Sec-WebSocket-Extensions',
-                            ','.join(ws_extensions)))
-        self.handle.on_handshake(environ, headers)
-        self.upgrade_connection(environ, version)
-        response = WsgiResponse(101, content=(), response_headers=headers)
-        return response(environ, start_response)
+                            ','.join(parser.extensions)))
+        return headers, parser
         
     def challenge_response(self, key):
         sha1 = hashlib.sha1(to_bytes(key+WEBSOCKET_GUID))
@@ -243,48 +204,75 @@ back to the client::
             print("WebSocket closed")
             
 '''
-    def match(self, environ):
-        pass
-    
-    def on_handshake(self, environ, headers):
-        """Invoked just before sending the upgraded **headers** to the
-client. This is a chance to add or remove header's entries."""
-        pass
-    
-    def on_open(self, environ):
+    def on_open(self, request):
         """Invoked when a new WebSocket is opened."""
         pass
 
-    def on_message(self, environ, message):
+    def on_message(self, request, message):
         """Handle incoming messages on the WebSocket.
         This method must be overloaded.
         """
         raise NotImplementedError()
 
-    def on_close(self, environ):
+    def on_close(self, request):
         """Invoked when the WebSocket is closed."""
         pass
-    
-    def close(self, environ, msg=None):
-        '''Invoked when the web-socket needs closing.'''
-        connection = environ['pulsar.connection']
-        return Frame.close(msg, version=connection.protocol.version)
-    
-    
-class WebSocketClient(ClientSocket):
-    
-    def isclosed(self):
-        # For compatibility with HttpResponse
-        return self.closed
-    
-    def protocol_factory(self):
-        return FrameParser(kind=1)
-    
-
-class HttpClient(pulsar.HttpClient):
-    
-    def upgrade(self, response):
-        client = WebSocketClient(response.sock, response.url)
-        client.handshake = response
-        return client
         
+        
+class WebSocketProtocol(pulsar.ProtocolConsumer):
+    '''Websocket protocol for servers and clients.'''
+    request = None
+    started = False
+    closed = False
+    
+    def data_received(self, data):
+        request = self.request
+        parser = self.parser
+        frame = parser.decode(data)
+        while frame:
+            self.write(parser.replay_to(frame))
+            if not self.started:
+                # call on_start (first message received)
+                self.started = True
+                self.write(self.handler.on_open(request))
+            if frame.is_close:
+                # Close the connection
+                self.close()
+            elif frame.is_data:
+                self.write(self.handler.on_message(request, frame.body))
+            frame = parser.decode()
+    
+    def write(self, frame):
+        '''Write a new *frame* into the wire, frame can be byes, asynchronous
+or  nothing. This is a utility method for the transport write method.'''
+        if frame is None:
+            return
+        elif is_async(frame):
+            return frame.add_callback(self.write, self.close)
+        elif not isinstance(frame, Frame):
+            frame = self.parser.encode(frame)
+            self.transport.write(frame.msg)
+        else:
+            self.transport.write(frame.msg)
+        if frame.is_close:
+            self.close()
+            
+    def close(self, error=None):
+        if not self.closed:
+            log_failure(error)
+            self.closed = True
+            self.handler.on_close(self.environ)
+            self.transport.close()
+    
+    
+class WebSocketServerProtocol(WebSocketProtocol):
+    '''Created after a successful websocket handshake. Tjis is a
+:class:`pulsar.ProtocolConsumer` which manages the communication with the
+websocket client.'''
+    def __init__(self, handler, request, parser, connection):
+        super(WebSocketServerProtocol, self).__init__(connection)
+        connection.set_timeout(0)
+        self.handler = handler
+        self.request = request
+        self.parser = parser
+        request.cache['websocket'] = self

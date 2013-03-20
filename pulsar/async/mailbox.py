@@ -1,315 +1,217 @@
-import io
+'''Actors communicate with each other by sending and receiving messages.
+The :mod:`pulsar.async.mailbox` module implements the message passing layer
+via a bidirectional socket connections between the :class:`Arbiter`
+and actors.'''
 import sys
 import logging
-import socket
-import time
-import threading
-from multiprocessing.queues import Empty, Queue
+import tempfile
+from functools import partial
+from collections import namedtuple
 
-from pulsar import create_connection, MailboxError, server_socket,\
-                    wrap_socket, CouldNotParse, CommandNotFound,\
-                    defaults
-from pulsar.utils.httpurl import to_bytes
+from pulsar import platform, PulsarException, Config, ProtocolError
+from pulsar.utils.pep import to_bytes, ispy3k, ispy3k, pickle, set_event_loop,\
+                             new_event_loop
+from pulsar.utils.sockets import nice_address
+from pulsar.utils.websocket import FrameParser
+from pulsar.utils.security import gen_unique_id
 
-from .defer import maybe_async, pickle, is_async, log_failure,\
-                    async, is_failure, ispy3k, raise_failure, CLEAR_ERRORS
-from .iostream import AsyncIOStream, AsyncSocketServer,\
-                        AsyncConnection, ReconnectingClient, AsyncResponse
-from .access import get_actor
-
-
-__all__ = ['PulsarClient', 'mailbox', 'Mailbox', 'IOQueue',
-           'Empty', 'Queue', 'ActorMessage']
+from .access import get_actor, set_actor, PulsarThread
+from .defer import async, maybe_failure, log_failure, Deferred
+from .transports import ProtocolConsumer, SingleClient, Request
+from .proxy import actorid, get_proxy, get_command, CommandError, ActorProxy
 
 
 LOGGER = logging.getLogger('pulsar.mailbox')
+    
+CommandRequest = namedtuple('CommandRequest', 'actor caller connection')
 
-
-def mailbox(actor=None, address=None):
-    '''Creates a :class:`Mailbox` instances for :class:`Actor` instances.
-If an address is provided, the communication is implemented using a socket,
-otherwise a queue is used.'''
-    if address:
-        return PulsarClient.connect(address, timeout=0)
-    else:
-        if actor.is_monitor():
-            return MonitorMailbox(actor)
-        else:
-            return Mailbox.make(actor)
-
-def actorid(actor):
-    return actor.aid if hasattr(actor, 'aid') else actor
-
-
-class MessageParser(object):
-
-    def encode(self, msg):
-        if isinstance(msg, ActorMessage):
-            return msg.encode()
-        else:
-            return to_bytes(msg)
-
-    def decode(self, buffer):
-        return ActorMessage.decode(buffer)
-
-
-class ActorMessage(object):
-    '''A message which travels from :class:`Actor` to
-:class:`Actor` to perform a specific *command*. :class:`ActorMessage`
-are not directly initialised using the constructor, instead they are
-created by :meth:`ActorProxy.send` method.
-
-.. attribute:: sender
-
-    id of the actor sending the message.
-
-.. attribute:: receiver
-
-    id of the actor receiving the message.
-
-.. attribute:: command
-
-    command to be performed
-
-.. attribute:: args
-
-    Positional arguments in the message body
-
-.. attribute:: kwargs
-
-    Optional arguments in the message body
-'''
-    def __init__(self, command, sender=None, receiver=None,
-                 args=None, kwargs=None):
-        self.command = command
-        self.sender = actorid(sender)
-        self.receiver = actorid(receiver)
-        self.args = args if args is not None else ()
-        self.kwargs = kwargs if kwargs is not None else {}
-
-    @classmethod
-    def decode(cls, buffer):
-        separator = b'\r\n'
-        if buffer[0] != 42:
-            raise CouldNotParse()
-        idx = buffer.find(separator)
-        if idx < 0:
-            return None, buffer
-        length = int(buffer[1:idx])
-        idx += len(separator)
-        total_length = idx + length
-        if len(buffer) >= total_length:
-            data, buffer = buffer[idx:total_length:], buffer[total_length:]
-            if not ispy3k:
-                data = bytes(data)
-            args = pickle.loads(data)
-            return cls(*args), buffer
-        else:
-            return None, buffer
-
-    def encode(self):
-        data = (self.command, self.sender, self.receiver,
-                self.args, self.kwargs)
-        bdata = pickle.dumps(data, protocol=2)
-        return ('*%s\r\n' % len(bdata)).encode('utf-8') + bdata
-
-    def __repr__(self):
-        return self.command
-
-
-class PulsarClient(ReconnectingClient):
-    '''A proxy for the :attr:`Actor.inbox` attribute. It is used by the
-:class:`ActorProxy` to send messages to the remote actor.'''
-    protocol_factory = MessageParser
-
-    def parsedata(self, data):
-        msg = super(PulsarClient, self).parsedata(data)
-        if msg:
-            # Those two messages are special
-            if msg.command in ('callback', 'errback'):
-                return msg.args[0] or ''
-            else:
-                return msg
-
-    @raise_failure
-    def ping(self):
-        return self.execute(ActorMessage('ping'))
-
-    @raise_failure
-    def echo(self, message):
-        return self.execute(ActorMessage('echo', args=(message,)))
-
-    @raise_failure
-    def run_code(self, code):
-        return self.execute(ActorMessage('run_code', args=(code,)))
-
-    @raise_failure
-    def info(self):
-        return self.execute(ActorMessage('info'))
-
-    @raise_failure
-    def quit(self):
-        return self.execute(ActorMessage('quit'))
-
-    @raise_failure
-    def shutdown(self):
-        return self.execute(ActorMessage('stop'))
-
-
-class MailboxResponse(AsyncResponse):
-    __slots__ = ('connection', 'parsed_data')
-    def __iter__(self):
-        # The receiver could be different from the mail box actor. For
-        # example a monitor uses the same mailbox as the arbiter
-        message = self.parsed_data
-        actor = self.connection.actor
-        receiver = actor.get_actor(message.receiver) or actor
-        sender = receiver.get_actor(message.sender)
-        command = receiver.command(message.command)
-        try:
-            if not command:
-                raise CommandNotFound(message.command)
-            args = message.args
-            # If this is an internal command add the sender information
-            if command.internal:
-                args = (sender,) + args
-            result = command(self, receiver, *args, **message.kwargs)
-        except:
-            result = sys.exc_info()
-        result = maybe_async(result)
-        while is_async(result):
-            yield b''
-            result = maybe_async(result)
-        log_failure(result)
-        if command.ack:
-            # Send back the result as an ActorMessage
-            if is_failure(result):
-                m = ActorMessage('errback', sender=receiver, args=(result,))
-            else:
-                m = ActorMessage('callback', sender=receiver, args=(result,))
-            yield self.protocol.encode(m)
-
-
-class MailboxConnection(AsyncConnection):
-    '''A :class:`MailboxClient` is a socket which receives messages
-from a remote :class:`Actor`.
-An instance of this class is created when a new connection is made
-with a :class:`Mailbox`.'''
-    authenticated = False
-
-
-class Mailbox(AsyncSocketServer):
-    '''Mailbox for an :class:`Actor`. If the actor is a
-:ref:`CPU bound worker <cpubound>`, the class:`Mailbox`
-creates its own :class:`IOLoop` which runs on a separate thread
-of execution.'''
-    protocol_factory = MessageParser
-    connection_class = MailboxConnection
-    response_class = MailboxResponse
-
-    @classmethod
-    def make(cls, actor, backlog=64):
-        server = super(Mailbox, cls).make(actor=actor, backlog=backlog,
-                                          onthread=actor.cpubound,
-                                          timeout=None)
-        if not server.actor.is_arbiter():
-            server.ioloop.add_callback(server.send_mailbox_address)
-        return server
-
-    def send_mailbox_address(self):
-        actor = self.actor
-        return actor.send(actor.monitor, 'mailbox_address', self.address)\
-                    .add_callback(actor.link_actor)
-
-
+def command_in_context(command, caller, actor, args, kwargs):
+    cmnd = get_command(command)
+    if not cmnd:
+        raise CommandError('unknown %s' % command)
+    request = CommandRequest(actor, caller, None)
+    return cmnd(request, args, kwargs)
+    
+    
 class MonitorMailbox(object):
     '''A :class:`Mailbox` for a :class:`Monitor`. This is a proxy for the
-arbiter inbox.'''
+arbiter mailbox.'''
     active_connections = 0
     def __init__(self, actor):
-        self.mailbox = actor.arbiter.mailbox
+        self.mailbox = actor.monitor.mailbox
+        # make sure the monitor get the hand shake!
+        self.mailbox.event_loop.call_soon_threadsafe(actor.hand_shake)
 
-    @property
-    def address(self):
-        return self.mailbox.address
-
-    @property
-    def ioloop(self):
-        return self.mailbox.ioloop
-
+    def __repr__(self):
+        return self.mailbox.__repr__()
+    
+    def __str__(self):
+        return self.mailbox.__str__()
+    
+    def __getattr__(self, name):
+        return getattr(self.mailbox, name)
+    
     def _run(self):
         pass
     
     def close(self):
         pass
+    
 
+class Message(Request):
+    '''A message which travels from actor to actor.'''
+    def __init__(self, data, future=None, address=None, timeout=None):
+        super(Message, self).__init__(address, timeout)
+        self.data = data
+        self.future = future
+    
+    @classmethod
+    def command(cls, command, sender, target, args, kwargs, address=None,
+                 timeout=None):
+        command = get_command(command)
+        data = {'command': command.__name__,
+                'sender': actorid(sender),
+                'target': actorid(target),
+                'args': args if args is not None else (),
+                'kwargs': kwargs if kwargs is not None else {}}
+        if command.ack:
+            future = Deferred()
+            data['ack'] = gen_unique_id()[:8]
+        else:
+            future = None
+        return cls(data, future, address, timeout)
+        
+    @classmethod
+    def callback(cls, result, ack):
+        data = {'command': 'callback', 'result': result, 'ack': ack}
+        return cls(data)
+        
 
-class QueueWaker(object):
-    '''A waker for :class:`IOQueue`. Used by CPU-bound actors.'''
-    def __init__(self, queue):
-        self._queue = queue
-        self._fd = 'waker'
+class MailboxConsumer(ProtocolConsumer):
 
-    def __str__(self):
-        return '%s %s' % (self.__class__.__name__, self._fd)
+    def __init__(self, *args, **kwargs):
+        super(MailboxConsumer, self).__init__(*args, **kwargs)
+        self._pending_responses = {}
+        self._parser = FrameParser(kind=2)
+    
+    def request(self, command, sender, target, args, kwargs):
+        '''Used by the server to send messages to the client.'''
+        req = Message.command(command, sender, target, args, kwargs)
+        self.new_request(req)
+        return req.future
+    
+    ############################################################################
+    ##    PROTOCOL CONSUMER IMPLEMENTATION
+    def data_received(self, data):
+        # Feed data into the parser
+        msg = self._parser.decode(data)
+        while msg:
+            try:
+                message = pickle.loads(msg.body)
+            except Exception:
+                raise ProtocolError('Could not decode message body')
+            log_failure(self._responde(message))
+            msg = self._parser.decode()
+    
+    def start_request(self):
+        # Always called in thread
+        req = self.current_request
+        if req.future and 'ack' in req.data:
+            self._pending_responses[req.data['ack']] = req.future
+            try:
+                self._write(req)
+            except Exception as e:
+                req.future.callback(e)
+        else:
+            self._write(req)
+    
+    ############################################################################
+    ##    INTERNALS
+    @async(max_errors=0)
+    def _responde(self, message):
+        actor = get_actor()
+        command = message.get('command')
+        LOGGER.debug('%s handling message "%s"', actor, command)
+        if command == 'callback':   #this is a callback
+            self._callback(message.get('ack'), message.get('result'))
+        else:
+            try:
+                target = actor.get_actor(message['target'])
+                if target is None:
+                    raise CommandError('unknown actor %s' % message['target'])
+                caller = get_proxy(actor.get_actor(message['sender']), safe=True)
+                if isinstance(target, ActorProxy):
+                    # route the message to the actor proxy
+                    if caller is None:
+                        raise CommandError("'%s' got message from unknown '%s'" %
+                                           (actor, message['sender']))
+                    result = yield actor.send(target, command, *message['args'],
+                                              **message['kwargs'])
+                else:
+                    actor = target
+                    command = get_command(command)
+                    req = CommandRequest(target, caller, self.connection)
+                    result = yield command(req, message['args'], message['kwargs'])
+            except Exception as e:
+                result = maybe_failure(e)
+            yield self._response(message, result)
+        
+    def _response(self, data, result):
+        if data.get('ack'):
+            req = Message.callback(result, data['ack'])
+            self.new_request(req)
+        #Return the result so a failure can be logged
+        return result
 
-    def fileno(self):
-        return self._fd
-
-    def wake(self):
+    def _callback(self, ack, result):
+        if not ack:
+            raise ProtocolError('A callback without id')
         try:
-            self._queue.put((self._fd, None))
-        except (IOError,TypeError):
-            pass
-
-    def consume(self):
-        pass
-
-    def close(self):
-        pass
-
-
-class IOQueue(object):
-    '''Epoll like class for a IO based on queues rather than sockets.
-The interface is the same as the python epoll_ implementation.
-
-.. _epoll: http://docs.python.org/library/select.html#epoll-objects'''
-    cpubound = True
-    def __init__(self, queue, actor=None):
-        self._queue = queue
-        self._actor = actor
-        self._fds = set()
-        self._empty = ()
-
+            pending = self._pending_responses.pop(ack)
+        except KeyError:
+            raise KeyError('Callback %s not in pending callbacks' % ack)
+        pending.callback(result)
+        
+    def _write(self, req):
+        obj = pickle.dumps(req.data, protocol=2)
+        data = self._parser.encode(obj, opcode=0x2).msg
+        self.transport.write(data)
+        
+    
+class MailboxClient(SingleClient):
+    # mailbox for actors client
+    consumer_factory = MailboxConsumer
+    max_reconnect = 0
+     
+    def __init__(self, address, actor):
+        super(MailboxClient, self).__init__(address)
+        self.name = 'Mailbox for %s' % actor
+        eventloop = actor.requestloop
+        # The eventloop is cpubound
+        if actor.cpubound:
+            eventloop = new_event_loop()
+            set_event_loop(eventloop)
+            # starts in a new thread
+            actor.requestloop.call_soon_threadsafe(self._start_on_thread)
+        # when the mailbox shutdown, the event loop must stop.
+        self.bind_event('finish', lambda s: s.event_loop.stop())
+        self._event_loop = eventloop
+    
+    def __repr__(self):
+        return '%s %s' % (self.__class__.__name__, nice_address(self.address))
+    
     @property
-    def queue(self):
-        '''The underlying distributed queue used for I/O.'''
-        return self._queue
-
-    def register(self, fd, events=None):
-        '''Register a fd descriptor with the io queue object'''
-        self._fds.add(fd)
-
-    def modify(self, fd, events=None):
-        '''Modify a registered file descriptor'''
-        self.unregister(fd)
-        self.register(fd, events)
-
-    def unregister(self, fd):
-        '''Remove a registered file descriptor from the ioqueue object.. '''
-        self._fds.discard(fd)
-
-    def poll(self, timeout=0.5):
-        '''Wait for events. timeout in seconds (float)'''
-        if self._actor:
-            if not self._actor.can_poll():
-                return self._empty
-        try:
-            event = self._queue.get(timeout=timeout)
-        except (Empty,IOError,TypeError,EOFError):
-            return self._empty
-        return (event,)
-
-    def waker(self):
-        return QueueWaker(self._queue)
-
+    def event_loop(self):
+        return self._event_loop
+    
+    def request(self, command, sender, target, args, kwargs):
+        # the request method
+        req = Message.command(command, sender, target, args, kwargs,
+                              self.address, self.timeout)
+        # we make sure responses are run on the event loop thread
+        self._event_loop.call_now_threadsafe(self.response, req)
+        return req.future
+        
+    def _start_on_thread(self):
+        PulsarThread(name=self.name, target=self._event_loop.run).start()
+        

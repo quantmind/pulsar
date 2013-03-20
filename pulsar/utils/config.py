@@ -25,7 +25,7 @@ from .importer import import_system_file
 __all__ = ['Config',
            'SimpleSetting',
            'Setting',
-           'defaults',
+           #'defaults',
            'ordered_settings',
            'validate_string',
            'validate_callable',
@@ -33,7 +33,8 @@ __all__ = ['Config',
            'validate_list',
            'validate_pos_int',
            'validate_pos_float',
-           'make_settings']
+           'make_settings',
+           'make_optparse_options']
 
 class DefaultSettings:
 
@@ -54,17 +55,13 @@ KNOWN_SETTINGS = {}
 KNOWN_SETTINGS_ORDER = []
 
 
-def def_arity1(server):
-    pass
-
-def def_arity2(worker, req):
+def pass_through(arg):
     pass
 
 def wrap_method(func):
     def _wrapped(instance, *args, **kwargs):
         return func(*args, **kwargs)
     return _wrapped
-
 
 def ordered_settings():
     for name in KNOWN_SETTINGS_ORDER:
@@ -129,8 +126,11 @@ attribute by exposing the :attr:`Setting.name` as attribute.
         return self.__dict__.copy()
 
     def __setstate__(self, state):
-        for k,v in state.items():
+        for k, v in state.items():
             self.__dict__[k] = v
+        config = getattr(self, 'config', None)
+        if config:
+            self.import_from_module(config)
 
     def __getattr__(self, name):
         return self.get(name)
@@ -168,12 +168,15 @@ settings via the :meth:`Setting.add_argument`.
         parser.add_argument('--version',
                             action='version',
                             version=self.version)
+        return self.add_to_parser(parser)
+
+    def add_to_parser(self, parser):
         setts = self.settings
         sorter = lambda x: (setts[x].section, setts[x].order)
         for k in sorted(setts, key=sorter):
             setts[k].add_argument(parser)
         return parser
-
+        
     def import_from_module(self, mod=None):
         if mod:
             self.set('config', mod)
@@ -306,7 +309,7 @@ accepting one positional argument, the value to validate.'''
 
     def set(self, val):
         '''Set *val* as the value in this :class:`Setting`.'''
-        if hasattr(self.validator,'__call__'):
+        if hasattr(self.validator, '__call__'):
             val = self.validator(val)
         self.value = val
 
@@ -365,8 +368,6 @@ as base class for other settings.'''
         self.desc = desc or self.desc
         self.short = self.short or self.desc
         self.desc = self.desc or self.short
-        #if validator:
-        #    self.validator = wrap_method(validator)
         if self.app and not self.section:
             self.section = self.app
         if not self.section:
@@ -403,7 +404,7 @@ as base class for other settings.'''
 
     def copy(self):
         return copy.copy(self)
-
+        
 
 def validate_bool(val):
     if isinstance(val, bool):
@@ -468,6 +469,19 @@ def validate_callable(arity):
     return _validate_callable
 
 
+def make_optparse_options(apps=None, exclude=None, include=None): # pragma nocover
+    '''Create a tuple of optparse options'''
+    from optparse import make_option
+    class AddOptParser(list):
+        def add_argument(self, *args, **kwargs):
+            self.append(make_option(*args, **kwargs))
+    settings = make_settings(apps=apps, exclude=exclude, include=include)
+    config = Config(settings=settings)
+    parser = AddOptParser()
+    config.add_to_parser(parser)
+    return tuple(parser)
+    
+
 class ConfigFile(Setting):
     name = "config"
     section = "Config File"
@@ -476,10 +490,8 @@ class ConfigFile(Setting):
     validator = validate_string
     default = 'config.py'
     desc = """\
-        The path to a Pulsar config file.
-
-        Only has an effect when specified on the command line or as part of an
-        application specific configuration.
+        The path to a Pulsar config file, where default Settings
+        paramaters can be specified.
         """
 
 
@@ -548,7 +560,7 @@ class Backlog(Setting):
 
 
 class Timeout(Setting):
-    inherit = False     # not ineritable by the arbiter
+    inherit = False     # not inheritable by the arbiter
     name = "timeout"
     section = "Worker Processes"
     flags = ["-t", "--timeout"]
@@ -556,13 +568,8 @@ class Timeout(Setting):
     type = int
     default = 30
     desc = """\
-        Workers silent for more than this many seconds are killed and restarted.
-
-        Generally set to thirty seconds. Only set this noticeably higher if
-        you're sure of the repercussions for sync workers. For the non sync
-        workers it just means that the worker process is still communicating and
-        is not tied to the length of time required to handle a single request.
-        """
+        Workers silent for more than this many seconds are
+        killed and restarted."""
 
 
 class HttpProxyServer(Setting):
@@ -757,39 +764,12 @@ class DefaultProcName(Setting):
         """
 
 
-class WhenReady(Setting):
-    name = "when_ready"
-    section = "Server Hooks"
-    validator = validate_callable(1)
-    type = "callable"
-    default = staticmethod(def_arity1)
-    desc = """\
-        Called just after the server is started.
-
-        The callable needs to accept a single instance variable for the Arbiter.
-        """
-
-
-class Prefork(Setting):
-    name = "pre_fork"
-    section = "Server Hooks"
-    validator = validate_callable(1)
-    default = staticmethod(def_arity1)
-    type = "callable"
-    desc = """\
-        Called just before a worker is forked.
-
-        The callable needs to accept two instance variables for the Arbiter and
-        new Worker.
-        """
-
-
 class Postfork(Setting):
     name = "post_fork"
     section = "Server Hooks"
     validator = validate_callable(1)
     type = "callable"
-    default = staticmethod(def_arity1)
+    default = staticmethod(pass_through)
     desc = """\
         Called just after a worker has been forked.
 
@@ -798,25 +778,40 @@ class Postfork(Setting):
         """
 
 
-class PreExec(Setting):
-    name = "pre_exec"
+class ConnectionMade(Setting):
+    name = "connection_made"
     section = "Server Hooks"
     validator = validate_callable(1)
     type = "callable"
-    default = staticmethod(def_arity1)
+    default = staticmethod(pass_through)
     desc = """\
-        Called just before a new master process is forked.
+        Called after a new connection is made.
 
-        The callable needs to accept a single instance variable for the Arbiter.
+        The callable needs to accept one instance variables for the
+        connection instance.
+        """
+
+
+class ConnectionLost(Setting):
+    name = "connection_lost"
+    section = "Server Hooks"
+    validator = validate_callable(1)
+    type = "callable"
+    default = staticmethod(pass_through)
+    desc = """
+        Called after a connection is lost.
+
+        The callable needs to accept one instance variables for the
+        connection instance.
         """
 
 
 class PreRequest(Setting):
     name = "pre_request"
     section = "Server Hooks"
-    validator = validate_callable(2)
+    validator = validate_callable(1)
     type = "callable"
-    default = staticmethod(def_arity2)
+    default = staticmethod(pass_through)
     desc = """\
         Called just before a worker processes the request.
 
@@ -828,49 +823,12 @@ class PreRequest(Setting):
 class PostRequest(Setting):
     name = "post_request"
     section = "Server Hooks"
-    validator = validate_callable(2)
+    validator = validate_callable(1)
     type = "callable"
-    default = staticmethod(def_arity2)
+    default = staticmethod(pass_through)
     desc = """\
         Called after a worker processes the request.
 
         The callable needs to accept two instance variables for the Worker and
         the Request.
-        """
-
-
-class WorkerExit(Setting):
-    name = "worker_exit"
-    section = "Server Hooks"
-    validator = validate_callable(1)
-    type = "callable"
-    default = staticmethod(def_arity1)
-    desc = """Called just after a worker has been exited.
-
-        The callable needs to accept one variable for the
-        the just-exited Worker.
-        """
-
-
-class WorkerTask(Setting):
-    name = "worker_task"
-    section = "Server Hooks"
-    validator = validate_callable(1)
-    type = "callable"
-    default = staticmethod(def_arity1)
-    desc = """Called at every event loop by the worker.
-
-        The callable needs to accept one variable for the Worker.
-        """
-        
-        
-class ArbiterTask(Setting):
-    name = "arbiter_task"
-    section = "Server Hooks"
-    validator = validate_callable(1)
-    type = "callable"
-    default = staticmethod(def_arity1)
-    desc = """Called at every event loop by the arbiter.
-
-        The callable needs to accept one variable for the Arbiter.
         """

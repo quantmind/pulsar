@@ -2,7 +2,10 @@ import time
 import logging
 from datetime import timedelta, datetime
 
+
+from pulsar import EMPTY_TUPLE, EMPTY_DICT
 from pulsar.utils.httpurl import itervalues, iteritems
+from pulsar.utils.importer import import_modules
 from pulsar.utils.timeutils import remaining, timedelta_seconds,\
                                      humanize_seconds
 from pulsar.utils.importer import import_modules
@@ -13,13 +16,9 @@ from .exceptions import SchedulingError, TaskNotAvailable
 from .states import PENDING
 
 
-__all__ = ['Scheduler']
-
+__all__ = ['Scheduler', 'LOGGER']
 
 LOGGER = logging.getLogger('pulsar.tasks')
-
-EMPTY_TUPLE = ()
-EMPTY_DICT = {}
 
 
 def get_datetime(expiry, start):
@@ -115,7 +114,7 @@ class SchedulerEntry(object):
         return self
 
     def is_due(self, now = None):
-        return self.schedule.is_due(self.scheduled_last_run_at, now = now)
+        return self.schedule.is_due(self.scheduled_last_run_at, now=now)
 
 
 class Scheduler(object):
@@ -124,10 +123,21 @@ the distributed :attr:`queue`. It also schedule the run of periodic tasks if
 enabled to do so.
 This class is the main driver of tasks and task scheduling.
 
+.. attribute:: queue
+
+    The task queue instance. It must have a python Queue API.
+    
 .. attribute:: task_class
 
     The :attr:`TaskQueue.task_class` for producing new :class:`Task`.
+    
+.. attribute:: task_path
 
+    Optional list of paths where to upload :class:`Job` and :class:`PeriodicJob`
+    
+.. attribute:: schedule_periodic
+
+    `True` if the schedulter schedule periodic tasks.
 """
     def __init__(self, queue, task_class, tasks_path=None, logger=None,
                  schedule_periodic=False):
@@ -164,7 +174,7 @@ This class is the main driver of tasks and task scheduling.
         task = self._make_request(jobname, targs, tkwargs, **params)
         if task.needs_queuing():
             task._queued = True
-            self.queue.put(('request', task.serialize_for_queue()))
+            self.queue.put(task.serialize_for_queue())
         else:
             task._queued = False
             self.logger.debug('Task %s already requested, abort.', task)
@@ -185,7 +195,7 @@ value ``now`` can be passed.'''
                     self.queue_task(entry.name)
                 if next_time_to_run:
                     remaining_times.append(next_time_to_run)
-        except:
+        except Exception:
             self.logger.error('Error in task scheduler', exc_info=True)
         self.next_run = now or datetime.now()
         if remaining_times:

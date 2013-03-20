@@ -9,23 +9,25 @@ from multiprocessing import Pipe
 from .base import *
 
 __all__ = ['IOpoll',
+           'Epoll',
            'close_on_exec',
            'Waker',
            'daemonize',
-           'SIGQUIT',
+           'EXIT_SIGNALS',
            'get_uid',
            'get_gid',
            'get_maxfd']
 
 
 import select
-if hasattr(select,'epoll'):
+if hasattr(select, 'epoll'):
     IOpoll = select.epoll
 else:   #pragma    nocover
     IOpoll = IOselect
+    Epoll = IOselect
 
-# The standard signal quit
-SIGQUIT = signal.SIGQUIT
+# standard signal quit
+EXIT_SIGNALS = (signal.SIGINT, signal.SIGTERM, signal.SIGABRT, signal.SIGQUIT)
 # Default maximum for the number of available file descriptors.
 REDIRECT_TO = getattr(os, "devnull", "/dev/null")
 
@@ -40,8 +42,9 @@ def chown(path, uid, gid):
         
         
 def close_on_exec(fd):
-    flags = fcntl.fcntl(fd, fcntl.F_GETFD)
-    fcntl.fcntl(fd, fcntl.F_SETFD, flags | fcntl.FD_CLOEXEC)
+    if fd:
+        flags = fcntl.fcntl(fd, fcntl.F_GETFD)
+        fcntl.fcntl(fd, fcntl.F_SETFD, flags | fcntl.FD_CLOEXEC)
     
 def _set_non_blocking(fd):
     flags = fcntl.fcntl(fd, fcntl.F_GETFL) | os.O_NONBLOCK
@@ -125,3 +128,32 @@ class Waker(object):
                  r.recv()
         except IOError:
             pass
+
+
+if hasattr(select, 'epoll'):
+    
+    class Epoll(EpollInterface):
+        
+        def __init__(self, ep=None):
+            self._epoll = ep or select.epoll()
+        
+        def close(self):
+            self._epoll.close()
+            
+        def fileno(self):
+            return self._epoll.fileno()
+        
+        def fromfd(self, fd):
+            return self._epoll.fromfd(fd)
+        
+        def register(self, fd, events):
+            return self._epoll.register(fd, events)
+        
+        def modify(self, fd, events):
+            return self._epoll.modify(fd, events)
+        
+        def unregister(self, fd):
+            return self._epoll.unregister(fd)
+        
+        def poll(self, timeout=-1):
+            return self._epoll.poll(timeout=timeout)

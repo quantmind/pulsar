@@ -58,7 +58,7 @@ class Platform(object):
         return sys.platform == "darwin"
 
     @property
-    def isWinNT(self):
+    def is_winNT(self):
         """Are we running in Windows NT?"""
         if self.getType() == 'win':
             import _winreg
@@ -73,11 +73,11 @@ class Platform(object):
         return False
 
     @property
-    def isWindows(self):
+    def is_windows(self):
         return self.getType() == 'win'
 
     @property
-    def isVista(self):
+    def is_vista(self):
         """
         Check if current platform is Windows Vista or Windows Server 2008.
 

@@ -2,7 +2,7 @@ import sys
 import copy
 from time import time
 import logging
-from multiprocessing import current_process, Lock
+from multiprocessing import current_process
 
 if sys.version_info < (2,7):    #pragma    nocover
     from .fallbacks._dictconfig import dictConfig
@@ -16,16 +16,9 @@ else:
     
 from .structures import AttributeDictionary
 
-SERVER_NAME = 'Pulsar'
 NOLOG = 100
-SUBDEBUG = 5
-logging.addLevelName(SUBDEBUG, 'SUBDEBUG')
-def log_subdebug(self, message, *args, **kws):
-    self._log(SUBDEBUG, message, args, **kws)
-logging.Logger.subdebug = log_subdebug  
 
-__all__ = ['SERVER_NAME',
-           'dictConfig',
+__all__ = ['dictConfig',
            'NullHandler',
            'process_global',
            'LogginMixin',
@@ -44,6 +37,15 @@ LOG_LEVELS = {
     "debug": logging.DEBUG,
     'none': None
 }
+
+def install_new_log_level(level, name):
+    logging.addLevelName(level, name.upper())
+    new_log = lambda self, msg, *args, **kws: self._log(level, msg, args, **kws)
+    name = name.lower()
+    setattr(logging.Logger, name, new_log)
+    LOG_LEVELS[name] = level
+
+install_new_log_level(5, 'subdebug')
 
 
 LOGGING_CONFIG = {
@@ -124,34 +126,21 @@ def local_method(f):
 
 def local_property(f):
     return property(local_method(f), doc=f.__doc__)
-    
-    
-class SynchronizedMixin(object):
-    '''A mixin to be used with class:`LocalMixin` class.'''
-    @local_property
-    def lock(self):
-        return Lock()
-    
-    @classmethod
-    def make(cls, f):
-        """Synchronization decorator for Synchronized member functions. """
-        def _(self, *args, **kw):
-            lock = self.lock
-            lock.acquire()
-            try:
-                return f(self, *args, **kw)
-            finally:
-                lock.release()
-        _.thread_safe = True
-        _.__doc__ = f.__doc__
-        return _
-    
-    
-class Synchronized(LocalMixin, SynchronizedMixin):
-    pass
 
+def lazymethod(f):
+    name = '_lazy_%s' % f.__name__
+    def _(self):
+        if not hasattr(self, name):
+            setattr(local, name, f(self))
+        return getattr(self, name)
+    _.__doc__ = f.__doc__
+    return _
 
-def process_global(name, val = None, setval = False):
+def lazyproperty(f):
+    return property(local_method(f), doc=f.__doc__)
+    
+    
+def process_global(name, val=None, setval=False):
     '''Access and set global variables for the current process.'''
     p = current_process()
     if not hasattr(p,'_pulsar_globals'):
@@ -167,7 +156,7 @@ class Silence(logging.Handler):
         pass
     
 
-class LogginMixin(Synchronized):
+class LogginMixin(LocalMixin):
     '''A Mixin used throught the library. It provides built in logging object
 and utilities for pickle.'''    
     @property
@@ -180,7 +169,7 @@ and utilities for pickle.'''
         self.configure_logging(**info)
     
     def configure_logging(self, logger=None, config=None, level=None,
-                          handlers=None):
+                            handlers=None):
         '''Configure logging. This function is invoked every time an
 instance of this class is un-serialised (possibly in a different
 process domain).'''

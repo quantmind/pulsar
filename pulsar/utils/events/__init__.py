@@ -3,7 +3,11 @@
 Originally based on pydispatch (BSD) http://pypi.python.org/pypi/PyDispatcher/2.0.1
 See license.txt for original license.
 """
+import logging
 from .dispatcher import Signal
+
+
+LOGGER = logging.getLogger('pulsar.events')
 
 _events = {}
 
@@ -26,3 +30,4 @@ def fire(name, sender, **kwargs):
     '''Fire event *name* from *sender*.'''
     event = create(name)
     event.send(sender, **kwargs)
+    

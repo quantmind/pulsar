@@ -84,7 +84,6 @@ def run_setup(with_cext):
         params['cmdclass']['install_data'] = osx_install_data
     else:
         params['cmdclass']['install_data'] = install_data
-    
     params.update({'name': package_fullname,
                    'version': mod.__version__,
                    'author': mod.__author__,
@@ -119,10 +118,3 @@ def _():
             )
     
         run_setup(False)
-    
-        status_msgs(
-            "WARNING: The C extension could not be compiled, " +
-                "speedups are not enabled.",
-            "Plain-Python build succeeded."
-        )
-    

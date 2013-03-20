@@ -5,7 +5,6 @@ import logging
 from inspect import istraceback
 from copy import deepcopy
 
-from pulsar import HaltServer
 from pulsar.utils.structures import AttributeDictionary
 
 from .utils import TestFunction
@@ -70,7 +69,7 @@ the _post_teardown function.'''
 behaviour in the process domain where the test run.'''
         return test
     
-    def after_test_function_run(self, test, local, result):
+    def after_test_function_run(self, test, local, result, async):
         '''Given a test-function instance return a, possibly, modified test
 instance. This function can be used by plugins to modify the behaviour of test
 cases. By default it returns *test*.'''
@@ -99,7 +98,7 @@ cases. By default it returns *test*.'''
 
     def getDescription(self, test):
         doc_first_line = test.shortDescription()
-        teststr = '{0}.{1}'.format(test.tag,test)
+        teststr = '%s.%s' % (test.tag, test)
         if self.descriptions and doc_first_line:
             return '\n'.join((teststr, doc_first_line))
         else:
@@ -138,37 +137,38 @@ class TestStream(TestResultProxy):
         self.dots = verbosity == 1
 
     def handler(self, name):
-        return self._handlers.get(name,self.stream)
+        return self._handlers.get(name, elf.stream)
 
     def startTest(self, test):
         if self.showAll:
-            v = self.getDescription(test) + ' ... '
-            self.stream.write(v)
-            self.stream.flush()
+            self.head(test, 'Started')
+            
+    def after_test_function_run(self, test, local, result, async):
+        if async:
+            self.startTest(test)
 
     def head(self, test, v):
-        #v = self.getDescription(test) + ' ... ' + v + '\n'
-        v += '\n'
+        v = self.getDescription(test) + ' ... %s\n' % v
         self.stream.write(v)
         self.stream.flush()
 
     def addSuccess(self, test):
         if self.showAll:
-            self.head(test, 'ok')
+            self.head(test, 'OK')
         elif self.dots:
             self.stream.write('.')
             self.stream.flush()
 
     def addError(self, test, err):
         if self.showAll:
-            self.head(test,"ERROR")
+            self.head(test, 'ERROR')
         elif self.dots:
             self.stream.write('E')
             self.stream.flush()
 
     def addFailure(self, test, err):
         if self.showAll:
-            self.head(test,"FAIL")
+            self.head(test, "FAIL")
         elif self.dots:
             self.stream.write('F')
             self.stream.flush()
@@ -182,14 +182,14 @@ class TestStream(TestResultProxy):
 
     def addExpectedFailure(self, test, err):
         if self.showAll:
-            self.head(test,"expected failure")
+            self.head(test, "expected failure")
         elif self.dots:
             self.stream.write("x")
             self.stream.flush()
 
     def addUnexpectedSuccess(self, test):
         if self.showAll:
-            self.head(test,"unexpected success")
+            self.head(test, "unexpected success")
         elif self.dots:
             self.stream.write("u")
             self.stream.flush()
@@ -352,9 +352,7 @@ def testsafe(name, return_val=None):
                 c = getattr(p, name)(*args)
                 if c:
                     return return_val(c)
-            except HaltServer:
-                raise
-            except:
+            except Exception:
                 LOGGER.critical('Unhadled error in %s.%s' % (p, name),
                                 exc_info=True)
     return _                
@@ -420,19 +418,20 @@ class TestRunner(TestResultProxy):
             test = p.before_test_function_run(test, local) or test
         return test
     
-    def after_test_function_run(self, test, result):
+    def after_test_function_run(self, test, result, async):
         '''Called before the test starts.'''
         for p in self.plugins:
             local = test.plugins.get(p.name)
             if local is not None:
-                p.after_test_function_run(test, local, result)
+                p.after_test_function_run(test, local, result, async)
         return result
             
-    def run_test_function(self, test, func):
+    def run_test_function(self, test, func, timeout=None):
         '''Run function *func* which belong to *test*.
     
 :parameter test: test instance or class
 :parameter func: test function belonging to *test*
+:parameter timeout: An optional timeout for asynchronous tests.
 :return: an asynchronous result
 '''
         if func is None:
@@ -440,4 +439,4 @@ class TestRunner(TestResultProxy):
         tfunc = getattr(func, 'testfunction', None)
         if tfunc is None:
             tfunc = TestFunction(func.__name__)
-        return tfunc(test)
+        return tfunc(test, timeout)

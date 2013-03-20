@@ -1,8 +1,9 @@
 {% extends "!layout.html" %}
 
-{% block document %}
+{% block relbar1 %}
+{{ super() }}
 <div class="deck">
-
+<div class="header">
     {% if release_version %}
         <p>
         Documentation for pulsar {{ version }}. For development docs,
@@ -14,10 +15,10 @@
         <a href="http://packages.python.org/pulsar/">release docs here</a>.
         </p>
     {% endif %}
-
 </div>
-{{ super() }}
+</div>
 {% endblock %}
+{% block relbar2 %}{% endblock %}
 
 {% block footer %}
 {{ super() }}

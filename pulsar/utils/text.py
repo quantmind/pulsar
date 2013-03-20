@@ -1,4 +1,4 @@
-from .httpurl import native_str
+from .pep import native_str, to_string, ispy3k
 
 class _lazy:
 
@@ -20,3 +20,39 @@ def lazy_string(f):
         return _lazy(f, args, kwargs)
     return _
     
+def capfirst(x):
+    x = to_string(x).strip()
+    if x:
+        return x[0].upper() + x[1:]
+    else:
+        return x
+    
+def nicename(name):
+    name = to_string(name)
+    return capfirst(' '.join(name.replace('-',' ').replace('_',' ').split()))
+
+if ispy3k:
+
+    class UnicodeMixin(object):
+
+        def __unicode__(self):
+            return '%s object' % self.__class__.__name__
+
+        def __str__(self):
+            return self.__unicode__()
+
+        def __repr__(self):
+            return '%s: %s' % (self.__class__.__name__, self)
+
+else: # Python 2    # pragma nocover
+
+    class UnicodeMixin(object):
+
+        def __unicode__(self):
+            return unicode('%s object' % self.__class__.__name__)
+
+        def __str__(self):
+            return self.__unicode__().encode()
+
+        def __repr__(self):
+            return '%s: %s' % (self.__class__.__name__, self)

@@ -3,7 +3,7 @@ from hashlib import sha1
 import logging
 import inspect
 
-from pulsar.utils.httpurl import iteritems
+from pulsar.utils.pep import iteritems
 from pulsar.utils.security import gen_unique_id
 
 
@@ -251,9 +251,10 @@ You can override this to decide the interval at runtime.
 
 
 
-def anchorDate(hour = 0, minute = 0, second = 0):
+def anchorDate(hour=0, minute=0, second=0):
+    '''Create an anchor date.'''
     td = date.today()
-    return datetime(year = td.year, month = td.month, day = td.day,
-                    hour = hour, minute = minute, second = second)
+    return datetime(year=td.year, month=td.month, day=td.day,
+                    hour=hour, minute=minute, second=second)
 
 

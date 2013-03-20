@@ -1,5 +1,9 @@
-hasextensions = False
-from pulsar.utils.httpurl import HttpParser
+try:
+    from http_parser.parser import HttpParser
+    hasextensions = True
+except ImportError: #pragma    nocover
+    hasextensions = False
+    from pulsar.utils.httpurl import HttpParser
 
 Http_Parser = HttpParser
 

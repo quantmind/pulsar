@@ -1,14 +1,42 @@
-import sys
-import weakref
+'''
+Collection of data structures and function used throughout the library.
+
+MultiValueDict
+~~~~~~~~~~~~~~~~~~~~~~~
+
+.. autoclass:: MultiValueDict
+   :members:
+   :member-order: bysource
+   
+   
+AttributeDictionary
+~~~~~~~~~~~~~~~~~~~~~~~
+
+.. autoclass:: AttributeDictionary
+   :members:
+   :member-order: bysource
+   
+   
+FrozenDict
+~~~~~~~~~~~~~~~~~~~~~~~
+
+.. autoclass:: FrozenDict
+   :members:
+   :member-order: bysource
+'''
 from copy import copy
 from collections import *
 
-ispy3k = sys.version_info >= (3, 0)
-if sys.version_info < (2,7):    #pragma    nocover
+from .pep import ispy26, ispy3k, iteritems
+
+if ispy26:    #pragma    nocover
     from .fallbacks._collections import *
     
-from .httpurl import mapping_iterator
 
+def mapping_iterator(iterable):
+    if isinstance(iterable, Mapping):
+        iterable = iteritems(iterable)
+    return iterable
 
 def isgenerator(value):
     return hasattr(value,'__iter__') and not hasattr(value, '__len__')
@@ -20,35 +48,6 @@ def aslist(value):
         return list(value)
     else:
         return [value]
-
-
-class WeakList(object):
-
-    def __init__(self):
-        self._list = []
-
-    def append(self, obj):
-        if obj:
-            self._list.append(weakref.ref(obj))
-
-    def remove(self, obj):
-        wr = weakref.ref(obj)
-        if wr in self._list:
-            self._list.remove(wr)
-            if wr not in self._list:
-                return obj
-
-    def __iter__(self):
-        if self._list:
-            ol = self._list
-            nl = self._list = []
-            for v in ol:
-                obj = v()
-                if obj:
-                    nl.append(v)
-                    yield obj
-        else:
-            raise StopIteration
 
 
 class MultiValueDict(dict):
@@ -201,6 +200,42 @@ class AttributeDictionary(Mapping):
             return self.__dict__.iteritems()
     
     
+class FrozenDict(dict):
+    '''A dictionary which cannot be changed once initialised.'''
+
+    def __init__(self, *iterable, **kwargs):
+        update = super(FrozenDict, self).update
+        if iterable:
+            if len(iterable) > 1:
+                raise TypeError('%s exceped at most 1 arguments, got %s.' %\
+                                (self.__class__.__name__, len(iterable)))
+            update(iterable[0])
+        if kwargs:
+            update(kwargs)
+
+    def __setitem__(self, key, value):
+        raise TypeError("'%s' object does not support item assignment"\
+                         % self.__class__.__name__)
+        
+    def update(self, iterable):
+        raise TypeError("'%s' object does not support update"\
+                         % self.__class__.__name__)
+        
+    def pop(self, key):
+        raise TypeError("'%s' object does not support pop"\
+                         % self.__class__.__name__)
+
+    def __gt__(self, other):
+        if hasattr(other, '__len__'):
+            return len(self) > len(other)
+        else:
+            return False
+        
+    def __lt__(self, other):
+        if hasattr(other, '__len__'):
+            return len(self) < len(other)
+        else:
+            return False
     
 def merge_prefix(deque, size):
     """Replace the first entries in a deque of bytes with a single

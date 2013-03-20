@@ -48,7 +48,7 @@ except ImportError:
     import sys
     sys.path.append('../../')
     import pulsar
-from pulsar import command, async
+from pulsar import command
     
 ################################################################################
 ##    EXTRA COMMAND LINE PARAMETERS
@@ -67,25 +67,24 @@ class Waiting_Period(pulsar.Setting):
     
 ################################################################################
 ##    PULSAR COMMANDS FOR DINING PHILOSOPHERS
-philosophers_commands = set()
-
-@command(commands_set=philosophers_commands, ack=False)
-def putdown_fork(client, actor, fork):
-    self = actor.app
+@command(ack=False)
+def putdown_fork(request, fork):
+    self = request.actor.app
     try:
         self.not_available_forks.remove(fork)
     except KeyError:
         self.logger.error('Putting down a fork which was already available')    
 
-@command(commands_set=philosophers_commands)
-def pickup_fork(client, actor, fork_right):
-    self = actor.app
+@command()
+def pickup_fork(request, fork_right):
+    self = request.actor.app
     num_philosophers = self.cfg.workers
     fork_left = fork_right - 1
     if fork_left == 0:
         fork_left = num_philosophers 
     for fork in (fork_right, fork_left):
         if fork not in self.not_available_forks:
+            # Fork is available, send it to the philosopher
             self.not_available_forks.add(fork)
             return fork
 
@@ -95,7 +94,6 @@ def pickup_fork(client, actor, fork_right):
 class DiningPhilosophers(pulsar.Application):
     description = 'Dining philosophers sit at a table around a bowl of '\
                   'spaghetti and waits for available forks.'
-    commands_set = philosophers_commands
     cfg = {'workers': 5}
     
     def monitor_start(self, monitor):
@@ -153,14 +151,13 @@ available.'''
         return philosopher.send(philosopher.monitor, 'pickup_fork', right_fork)\
                           .add_callback_args(self._continue, philosopher)
     
-    @async()
     def release_forks(self, philosopher):
         forks = philosopher.params.forks
         philosopher.params.forks = []
         philosopher.params.started_waiting = 0
         for fork in forks:
             philosopher.logger.debug('Putting down fork %s', fork)
-            yield philosopher.send(philosopher.monitor, 'putdown_fork', fork)
+            philosopher.send('monitor', 'putdown_fork', fork)
         # once released all the forks wait for a moment
         time.sleep(self.cfg.waiting_period)
         self._continue(None, philosopher)
@@ -169,14 +166,14 @@ available.'''
         if fork:
             forks = philosopher.params.forks
             if fork in forks:
-                philosopher.logger.error('Got fork %s which I already have', fork)
+                philosopher.logger.error('Got fork %s. I already have it', fork)
             else:
                 philosopher.logger.debug('Got fork %s.', fork)
                 forks.append(fork)
         self.take_action(philosopher)
     
     def actorparams(self, monitor, params):
-        number = len(monitor.managed_actors) + len(monitor.spawning_actors) + 1
+        number = len(monitor.managed_actors) + 1
         name = 'Philosopher %s' % number
         params.update({'name': name,
                        'number': number,

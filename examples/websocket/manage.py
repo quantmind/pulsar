@@ -20,17 +20,15 @@ from pulsar.apps import ws, wsgi
 from pulsar.utils.httpurl import range
 
 
-class handle(ws.WS):
+class Graph(ws.WS):
     
-    def match(self, environ):
-        return environ.get('PATH_INFO') in ('/echo', '/data')
+    def on_message(self, protocol, msg):
+        return json.dumps([(i,random()) for i in range(100)])
     
-    def on_message(self, environ, msg):
-        path = environ.get('PATH_INFO')
-        if path == '/echo':
-            return msg
-        elif path == '/data':
-            return json.dumps([(i,random()) for i in range(100)])
+class Echo(ws.WS):
+    
+    def on_message(self, protocol, msg):
+        return msg
 
 
 def page(environ, start_response):
@@ -45,10 +43,16 @@ def page(environ, start_response):
         return [pulsar.to_bytes(data)]
 
 
+class Site(wsgi.LazyWsgi):
+    
+    def setup(self):
+        return wsgi.WsgiHandler(middleware=(page,
+                                            ws.WebSocket('/data', Graph()),
+                                            ws.WebSocket('/echo', Echo())))
+
 
 def server(**kwargs):
-    app = wsgi.WsgiHandler(middleware=(page, ws.WebSocket(handle())))
-    return wsgi.WSGIServer(callable=app, **kwargs)
+    return wsgi.WSGIServer(callable=Site(), **kwargs)
 
 
 if __name__ == '__main__':  #pragma nocover

@@ -18,9 +18,7 @@ The shell has already ``pulsar``, ``arbiter`` and the :class:`Actor`
 class in the global dictionary::
 
     >> pulsar.__version__
-    0.2.0
-    >> arbiter.is_arbiter()
-    True
+    0.5.0
     >> arbiter.state
     'running'
     >> arbiter.MANAGED_ACTORS
@@ -42,10 +40,10 @@ from functools import partial
 from time import time
 
 import pulsar
-from pulsar.apps import tasks
+from pulsar.utils.pep import ispy3k
 
 
-if pulsar.ispy3k:
+if ispy3k:
     def decode_line(line):
         return line
 else:   #pragma    nocover
@@ -64,16 +62,7 @@ class InteractiveConsole(code.InteractiveConsole):  #pragma    nocover
                     (sys.version, sys.platform, cprt,pulsar.__version__)
      
     def setup(self, banner=None):
-        """Closely emulate the interactive Python console.
-
-        The optional banner argument specify the banner to print
-        before the first interaction; by default it prints a banner
-        similar to the one printed by the real Python interpreter,
-        followed by the current class name in parentheses (so as not
-        to confuse this with the real interpreter -- since it's so
-        close!).
-
-        """
+        """Closely emulate the interactive Python console."""
         try:
             sys.ps1
         except AttributeError:
@@ -102,21 +91,16 @@ class InteractiveConsole(code.InteractiveConsole):  #pragma    nocover
                 self._more = self.push(line)
 
 
-class PulsarShell(tasks.CPUboundServer):
-    can_kill_arbiter = True
-    _app_name = 'pulsarshell'
+class PulsarShell(pulsar.CPUboundApplication):
     console_class = InteractiveConsole
     cfg_apps = ('cpubound',)
-    cfg = {'timeout':5,
-           'workers':1,
-           'loglevel':'none',
-           'concurrency':'thread'}
+    cfg = {'loglevel':'none', 'process_name': 'Pulsar shell'}
     
-    @property
-    def console(self):
-        return self.local.console
-    
-    def handler(self):
+    def monitor_start(self, monitor):
+        monitor.cfg.set('workers', 1)
+        monitor.cfg.set('concurrency', 'thread')
+        
+    def worker_start(self, worker):  #pragma    nocover
         imported_objects = {'pshell': self,
                             'pulsar': pulsar,
                             'get_actor': pulsar.get_actor,
@@ -132,22 +116,12 @@ class PulsarShell(tasks.CPUboundServer):
             readline.set_completer(rlcompleter.Completer(imported_objects).complete)
             readline.parse_and_bind("tab:complete")
         self.local.console = self.console_class(imported_objects)
-        self.console.setup()
-        return self
-
-    def monitor_start(self, monitor):
-        monitor.cfg.set('workers', 1)
-        monitor.cfg.set('concurrency', 'thread')
-        
-    def worker_start(self, worker):
-        worker.requestloop.add_callback(partial(self.worker_task, worker))
-        
-    def worker_task(self, worker):  #pragma    nocover
+        self.local.console.setup()
+        worker.requestloop.call_soon(self.interact, worker)
+                
+    def interact(self, worker):
         try:
-            self.console.interact(0.5*self.cfg.timeout)
-            self.worker_start(worker)
-        except pulsar.EXIT_EXCEPTIONS:
+            self.local.console.interact(self.cfg.timeout)
+            worker.requestloop.call_soon(self.interact, worker)
+        except:
             worker.send('arbiter', 'stop')
-            worker.state = pulsar.ACTOR_STATES.INACTIVE
-            
-

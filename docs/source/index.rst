@@ -14,19 +14,10 @@ in a single code base.
    design
    faq
    advantage
-   api
+   tutorials/index
+   api/index
    changelog
-   http
    settings
-   
-.. Note::
-
-    This documentation is incomplete and with several spelling errors.
-    It will improve with time and, hopefully, with help from the community.
-    In the mean time, a lot of insight can be gained by
-    visiting and running, the :ref:`example applications <examples>`
-    which are located in the ``examples`` module at the top level of
-    pulsar distribution.
 
 .. _apps-framework:
 
@@ -50,10 +41,11 @@ found in the :mod:`pulsar.apps` module:
    :maxdepth: 1
    
    apps/socket
-   apps/wsgi
+   apps/wsgi/index
    apps/rpc
    apps/tasks
    apps/websockets
+   apps/http
    apps/test
    apps/shell
    
@@ -64,3 +56,13 @@ Indices and tables
 * :ref:`genindex`
 * :ref:`modindex`
 * :ref:`search`
+
+
+.. Note::
+
+    This documentation is incomplete and with several spelling errors.
+    It will improve with time and, hopefully, with help from the community.
+    In the mean time, a lot of insight can be gained by
+    visiting and running, the :ref:`example applications <examples>`
+    which are located in the :mod:`examples` module at the top level of
+    pulsar distribution.

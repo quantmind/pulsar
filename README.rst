@@ -7,7 +7,8 @@ activities in different threads and/or processes.
 :Documentation: http://packages.python.org/pulsar/
 :Dowloads: http://pypi.python.org/pypi/pulsar
 :Source: https://github.com/quantmind/pulsar
-:Keywords: server, asynchronous, concurrency, actor, thread, process, socket, task queue
+:Keywords: server, asynchronous, concurrency, actor, thread, process, socket,
+    task queue, wsgi, websocket, json-rpc
 
 
 .. |pulsar-build| image:: https://secure.travis-ci.org/quantmind/pulsar.png?branch=master
@@ -59,7 +60,7 @@ Applications
 ==============
 Pulsar design allows for a host of different applications to be implemented
 in an elegant and efficient way. Out of the box it is shipped with the
-the following
+the following:
 
 * Socket servers.
 * WSGI server.
@@ -82,6 +83,7 @@ pulsar alone. It includes:
 * A simple JSON-RPC Calculator server.
 * A taskqueue application with a JSON-RPC interface.
 * Websocket graph.
+* Websocket Web Chat.
 * The `dining philosophers problem <http://en.wikipedia.org/wiki/Dining_philosophers_problem>`_.
 * Asynchronous shell.
 
@@ -104,9 +106,10 @@ More information about design and philosophy in the documentation.
 
 Add-ons
 =========
-Pulsar checks if some additional libraries are available, either
-during installation or at runtime, and uses them to add new functionalities.
+Pulsar checks if some additional libraries are available at runtime, and
+uses them to add additional functionalities.
 
+* http-parser_: upgrade the HTTP parser to a faster C version.
 * setproctitle_: if installed, pulsar can use it to change the processes names of
   the running application.  
 * psutil_: if installed, a ``system`` key is available in the dictionary returned by
@@ -128,12 +131,21 @@ For full coverage run tests with the following flags::
 
     python runtests.py --concurrency thread --profile --benchmark --http-py-parser --verbosity 2
 
+
+.. _kudos:
+
 Kudos
 ============
-Pulsar project started as a fork of gunicorn_ (from where the arbiter idea) and has been developed using
-ideas from nodejs_ (api design), twisted_ (the deferred implementation), tornado_ web server
-(the event-loop implementation), celery_ (the task queue application) and
+Pulsar project started as a fork of gunicorn_ (from where the arbiter idea)
+and has been developed using ideas from nodejs_ (api design), twisted_
+(the deferred implementation), tornado_ web server (the initial event-loop
+implementation), celery_ (the task queue application) and
 many other open-source efforts.
+In addition it uses several snippets of code from around the open-source community,
+in particular:
+
+* An HTTP Parser originally written by benoitc_.
+* A ``url`` Rule class originally from werkzeug_.
 
 .. _contributing:
 
@@ -156,6 +168,7 @@ This software is licensed under the New BSD_ License. See the LICENSE
 file in the top distribution directory for the full license text.
 
 .. _gunicorn: http://gunicorn.org/
+.. _http-parser: https://github.com/benoitc/http-parser
 .. _nodejs: http://nodejs.org/
 .. _twisted: http://twistedmatrix.com/trac/
 .. _tornado: http://www.tornadoweb.org/
@@ -171,3 +184,5 @@ file in the top distribution directory for the full license text.
 .. _BSD: http://www.opensource.org/licenses/bsd-license.php
 .. _pulsar: https://github.com/quantmind/pulsar
 .. _singleton: http://en.wikipedia.org/wiki/Singleton_pattern
+.. _benoitc: https://github.com/benoitc
+.. _werkzeug: http://werkzeug.pocoo.org/
