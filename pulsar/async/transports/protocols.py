@@ -209,11 +209,12 @@ By default it calls the :meth:`Connection.finished` method of the
         # the high level data_received
         self._data_received_count += 1 
         self._reconnect_retries = 0
+        self.fire_event('data_received', data)
         return self.data_received(data)
         
         
 class Connection(Protocol, TransportProxy):
-    '''A client or server connection with an endpoint. This is not
+    '''A client or server connection with an end-point. This is not
 connected until :meth:`Protocol.connection_made` is called by the
 :class:`Transport`. This class is the bridge between the :class:`Transport`
 and the :class:`ProtocolConsumer`. It has a :class:`Protocol`

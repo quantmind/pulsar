@@ -38,7 +38,7 @@ class Chat(ws.WS):
     
     def on_open(self, request):
         # Add pulsar.connection environ extension to the set of active clients
-        pubsub.subscribe(request.cache['websocket'])
+        pubsub.add_client(request.cache['websocket'])
         
     def on_message(self, request, msg):
         if msg:

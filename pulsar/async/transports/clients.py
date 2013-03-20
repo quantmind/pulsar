@@ -136,7 +136,8 @@ of available connections.
     
     def _release_response(self, response):
         #proxy to release_connection
-        self.release_connection(response.connection, response)
+        if getattr(response, 'release_connection', True):
+            self.release_connection(response.connection, response)
 
     def _remove_self(self, client):
         if not self._available_connections and not self._concurrent_connections:
@@ -305,6 +306,18 @@ whether the *connection* can be reused in the future or it must be disposed.
                 break
         if key:
             self.connection_pools.pop(key)
+            
+    def upgrade(self, connection, protocol_factory):
+        '''Upgrade an existing connection with a new protocol factory.
+Return the upgraded connection only if the :attr:`Connection.current_consumer`
+is available.'''
+        protocol = connection.current_consumer
+        if protocol:
+            protocol.release_connection = False
+            protocol.finished()
+            connection.upgrade(protocol_factory)
+            return connection
+             
         
 class SingleClient(Client):
     '''A :class:`Client` which handle one connection only.'''

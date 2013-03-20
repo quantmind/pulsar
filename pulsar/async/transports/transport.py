@@ -272,10 +272,10 @@ the :class:`EventHandler`.
     
     ############################################################################
     ###    PULSAR TRANSPORT METHODS.
-    def connect(self, address):
+    def connect(self, address, timeout=None):
         '''Connect this :class:`Transport` to a remote server and
 returns ``self``.'''
-        self._connector = c = Connector(self)
+        self._connector = c = Connector(self, timeout=timeout)
         self.add_reader()
         self.add_connector()
         try:
@@ -469,10 +469,10 @@ class Connector(Deferred, TransportProxy):
 a connection operation. Once the connection with end-point is established, the
 connector fires its callbacks.'''
     processed = 0
-    def __init__(self, transport):
+    def __init__(self, transport, timeout=None):
         self._transport = transport
         self._consumer = None
-        super(Connector, self).__init__()
+        super(Connector, self).__init__(timeout=timeout or 5)
         self.add_callback(self._connection_made, self._connection_failure)
     
     def __repr__(self):
