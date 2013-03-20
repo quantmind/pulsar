@@ -138,7 +138,8 @@ an :class:`ActorProxy`.
 
 .. attribute:: params
 
-    Contains parameters which are passed to actors spawned by this actor.
+    A :class:`pulsar.utils.structures.AttributeDictionary` which contains
+    parameters which are passed to actors spawned by this actor.
     
 **METHODS**
 '''

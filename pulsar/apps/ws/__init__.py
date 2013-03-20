@@ -261,7 +261,7 @@ or  nothing. This is a utility method for the transport write method.'''
         if not self.closed:
             log_failure(error)
             self.closed = True
-            self.handler.on_close(self.environ)
+            self.handler.on_close(self.request)
             self.transport.close()
     
     

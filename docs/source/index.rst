@@ -48,6 +48,7 @@ found in the :mod:`pulsar.apps` module:
    apps/http
    apps/test
    apps/shell
+   apps/pubsub
    
 
 Indices and tables

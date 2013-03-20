@@ -25,6 +25,8 @@ Ver. 0.5.0 - DEVELOPMENT
     * New asynchronous :class:`pulsar.apps.http.HttpClient` with websocket support.
     * Support http-parser_ for faster http protocol parsing.
     * Refactoring of asynchronous :mod:`pulsar.apps.test` application.
+    * Added :ref:`Publish/Subscribe application <apps-pubsub>`. The application
+      is used in the :ref:`web chat <tutorials-chat>` example.
 
 * Initial :ref:`twisted integration <tutorials-twisted>`.
    * Added :func:`pulsar.set_async` function which can be used to change
