@@ -1,9 +1,11 @@
 '''Tests asynchronous HttpClient.'''
-from pulsar import send, is_failure
+from pulsar import send, is_failure, NOT_DONE
 from pulsar.apps.test import unittest
 from pulsar.utils import httpurl
+from pulsar.utils.events import Listener
 from pulsar.utils.httpurl import to_bytes, urlencode
-from pulsar.apps.http import HttpClient, TooManyRedirects, HttpResponse
+from pulsar.apps.http import HttpClient, TooManyRedirects, HttpResponse,\
+                                HTTPError
 
 
 class TestHttpClientBase:
@@ -22,7 +24,7 @@ class TestHttpClientBase:
                    name='httpbin-%s' % cls.__name__.lower(),
                    keepalive=30)
         cls.app = yield send('arbiter', 'run', s)
-        cls.uri = 'http://{0}:{1}'.format(*cls.app.address)
+        cls.uri = 'http://%s:%s' % cls.app.address
         if cls.with_proxy:
             s = pserver(bind='127.0.0.1:0', concurrency=concurrency,
                         name='proxyserver-%s' % cls.__name__.lower())
@@ -44,15 +46,17 @@ class TestHttpClientBase:
             kwargs['proxy_info'] = {'http': self.proxy_uri}
         return HttpClient(timeout=timeout, **kwargs)
     
-    def _check_pool(self, http, response, available=1, processed=1, created=1):
-        self.assertEqual(len(http.connection_pools), 1)
-        pool = http.connection_pools[response.current_request.key]
-        #self.assertEqual(pool.concurrent_connections, 0)
-        self.assertEqual(pool.received, created)
-        self.assertEqual(pool.available_connections, available)
-        if available == 1:
-            connection = tuple(pool._available_connections)[0]
-            self.assertEqual(connection.processed, processed)
+    def _check_pool(self, http, response, available=1, processed=1, created=1,
+                    pools=1):
+        self.assertEqual(len(http.connection_pools), pools)
+        if pools:
+            pool = http.connection_pools[response.current_request.key]
+            #self.assertEqual(pool.concurrent_connections, 0)
+            self.assertEqual(pool.received, created)
+            self.assertEqual(pool.available_connections, available)
+            if available == 1:
+                connection = tuple(pool._available_connections)[0]
+                self.assertEqual(connection.processed, processed)
             
     def httpbin(self, *suffix):
         if suffix:
@@ -77,24 +81,39 @@ class TestHttpClient(TestHttpClientBase, unittest.TestCase):
         self.assertEqual(r.current_request, None)
         self.assertEqual(str(r), '<None>')
         
-    def test_400_get(self):
-        import time
-        time.sleep(1)
-        return
+    def test_400_and_get(self):
         '''Bad request 400'''
         http = self.client()
-        response = http.get(self.httpbin('status', '400'))
-        yield response.on_finished
-        #self._check_pool(http, response, 0)
+        listener = Listener('post_request', 'connection_lost')
+        self.assertFalse(listener['post_request'])
+        response = yield http.get(self.httpbin('status', '400')).on_finished
+        N = len(listener['post_request'])
+        self.assertTrue(N)
+        self._check_pool(http, response, available=0)
         self.assertEqual(response.status_code, 400)
         self.assertEqual(response.response, 'Bad Request')
         self.assertTrue(response.content)
-        self.assertRaises(httpurl.HTTPError, response.raise_for_status)
+        self.assertRaises(HTTPError, response.raise_for_status)
         # Make sure we only have one connection after a valid request
-        response = http.get(self.httpbin('get'))
-        yield response.on_finished
+        response = yield http.get(self.httpbin('get')).on_finished
+        self.assertTrue(len(listener['post_request']) > N)
         self.assertEqual(response.status_code, 200)
-        self._check_pool(http, response, created=1)
+        self._check_pool(http, response, created=2)
+        
+    def test_200_get(self):
+        http = self.client()
+        response = yield http.get(self.httpbin()).on_finished
+        self._check_pool(http, response)
+        self.assertEqual(str(response), '200 OK')
+        self.assertEqual(repr(response), 'HttpResponse(200 OK)')
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.response, 'OK')
+        self.assertTrue(response.content)
+        self.assertEqual(response.url, self.httpbin())
+        self._check_pool(http, response)
+        response = yield http.get(self.httpbin('get')).on_finished
+        self.assertEqual(response.status_code, 200)
+        self._check_pool(http, response, processed=2)
         
     def test_large_response(self):
         http = self.client(timeout=60)
@@ -168,7 +187,7 @@ class TestHttpClient(TestHttpClientBase, unittest.TestCase):
         self.assertEqual(response.status_code, 404)
         self.assertEqual(response.response, 'Not Found')
         self.assertTrue(response.content)
-        self.assertRaises(httpurl.HTTPError, response.raise_for_status)
+        self.assertRaises(HTTPError, response.raise_for_status)
         
     def test_post(self):
         data = (('bla', 'foo'), ('unz', 'whatz'),

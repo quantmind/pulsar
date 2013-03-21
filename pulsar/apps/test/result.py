@@ -143,9 +143,9 @@ class TestStream(TestResultProxy):
         if self.showAll:
             self.head(test, 'Started')
             
-    def after_test_function_run(self, test, local, result, async):
-        if async:
-            self.startTest(test)
+    #def after_test_function_run(self, test, local, result, async):
+    #    if async:
+    #        self.startTest(test)
 
     def head(self, test, v):
         v = self.getDescription(test) + ' ... %s\n' % v

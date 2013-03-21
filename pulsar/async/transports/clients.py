@@ -41,6 +41,12 @@ protocols. It maintains a live set of connections.
         self._address = request.address
         self._available_connections = set()
     
+    def __repr__(self):
+        return repr(self.address)
+    
+    def __str__(self):
+        return self.__repr__()
+        
     @property
     def address(self):
         return self._address
@@ -140,6 +146,7 @@ of available connections.
             self.release_connection(response.connection, response)
 
     def _remove_self(self, client):
+        return
         if not self._available_connections and not self._concurrent_connections:
             client.remove_pool(self)
 

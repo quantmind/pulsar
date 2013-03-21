@@ -486,10 +486,10 @@ once the connection is made.'''
         self.add_callback(lambda c: c.set_consumer(consumer),
                           lambda f: consumer.connection_lost(f))
         
-    def finished(self, consumer, exc):
+    def finished(self, consumer, exc=None):
         # Called by the protocol consumer when the connector is still in place
         # of the connection
-        consumer.fire_event('finish')
+        consumer.fire_event('finish', exc)
         # important, return the original result
         return exc
         

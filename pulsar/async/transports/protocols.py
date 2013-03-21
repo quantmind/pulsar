@@ -370,8 +370,8 @@ the *consumer* must be the same as the :attr:`current_consumer` attribute.'''
         if consumer and consumer is self._current_consumer:
             # make sure the current consumer is set to None before callbacks
             self._current_consumer = None
-            self.fire_event('post_request', consumer)
-            consumer.fire_event('finish', result)
+            self.fire_event('post_request', consumer, sender=self)
+            consumer.fire_event('finish', result, sender=self)
             consumer._connection = None
         else:
             raise RuntimeError()
@@ -487,5 +487,6 @@ active connections.'''
         self._concurrent_connections.add(connection)
         
     def _remove_connection(self, connection, exc=None):
+        # Called when the connection is lost
         self._concurrent_connections.discard(connection)
     

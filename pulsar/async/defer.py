@@ -513,13 +513,14 @@ a callable which accept one argument only.'''
         else:
             LOGGER.warn('unknown event "%s" for %s', event, self)
         
-    def fire_event(self, event, event_data=None):
+    def fire_event(self, event, event_data=None, sender=None):
         """Dispatches *event_data* to the *event* listeners.
-        
-* If *event_data* is not provided, this instance will be dispatched.
-* If *event_data* is an error it will be converted to a :class:`Failure`.
 * If *event* is a one-time event, it makes sure that it was not fired before.
-
+        
+:param event_data: if not provided, ``self`` will be dispatched instead, if an
+    error it will be converted to a :class:`Failure`.
+:param sender: optional sender of this event. It is only used for
+    dispatching :ref:`global events <global-events>`.
 :return: boolean indicating if the event was fired or not.
 """
         event_data = self if event_data is None else maybe_failure(event_data)
@@ -537,7 +538,9 @@ a callable which accept one argument only.'''
             fired = False
             LOGGER.warn('unknown event "%s" for %s', event, self)
         if fired:
-            events.fire(event, event_data)
+            if sender is None:
+                sender = getattr(event_data, '__class__', event_data) 
+            events.fire(event, sender, data=event_data)
             log_failure(event_data)
         return fired
         

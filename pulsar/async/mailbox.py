@@ -1,7 +1,7 @@
 '''Actors communicate with each other by sending and receiving messages.
 The :mod:`pulsar.async.mailbox` module implements the message passing layer
-via a bidirectional socket connections between the :class:`Arbiter`
-and actors.'''
+via a bidirectional socket connections between the :class:`pulsar.Arbiter`
+and :class:`pulsar.Actor`.'''
 import sys
 import logging
 import tempfile

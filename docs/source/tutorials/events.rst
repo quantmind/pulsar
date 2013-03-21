@@ -18,3 +18,11 @@ One time event
 
 Many times event
 =====================
+
+
+.. _global-events:
+
+Gloabl Events
+=====================
+
+.. automodule:: pulsar.utils.events

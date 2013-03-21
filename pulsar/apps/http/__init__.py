@@ -6,7 +6,7 @@ from copy import copy
 from base64 import b64encode, b64decode
 
 import pulsar
-from pulsar import create_transport, multi_async
+from pulsar import create_transport, multi_async, is_failure
 from pulsar.utils.pep import native_str, is_string, to_bytes
 from pulsar.utils.structures import mapping_iterator
 from pulsar.utils.websocket import FrameParser, SUPPORTED_VERSIONS
@@ -18,7 +18,8 @@ from pulsar.utils.httpurl import urlparse, urljoin, DEFAULT_CHARSET,\
                                     Headers, urllibr, get_environ_proxies,\
                                     choose_boundary, urlunparse,\
                                     host_and_port, responses, is_succesful,\
-                                    HTTPError, request_host, requote_uri
+                                    HTTPError, URLError, request_host,\
+                                    requote_uri
 
 from .plugins import *
 
@@ -238,6 +239,10 @@ Initialised by a call to the :class:`HttpClient.request` method.
     def is_error(self):
         if self.status_code:
             return not is_succesful(self.status_code)
+        elif self.on_finished.called:
+            return is_failure(self.on_finished.result)
+        else:
+            return False
         
     def content_string(self, charset=None, errors=None):
         '''Decode content as a string.'''
@@ -253,8 +258,11 @@ Initialised by a call to the :class:`HttpClient.request` method.
         """Raises stored :class:`HTTPError` or :class:`URLError`,
  if one occured."""
         if self.is_error:
-            raise HTTPError(self.url, self.status_code,
-                            self.content, self.headers, None)
+            if self.status_code:
+                raise HTTPError(self.url, self.status_code,
+                                self.content, self.headers, None)
+            else:
+                raise URLError(self.on_finished.result.trace[1])
     
     def get_origin_req_host(self):
         response = self.history[-1] if self.history else self
@@ -274,7 +282,6 @@ Initialised by a call to the :class:`HttpClient.request` method.
                     if new_response:
                         had_headers = False
                         return
-                self.fire_event('data_received')
                 if self.parser.is_message_complete():
                     self.finished()
         else:
