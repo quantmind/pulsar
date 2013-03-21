@@ -280,13 +280,9 @@ returns ``self``.'''
         self.add_connector()
         try:
             if self._protocol_connect(address):
-                self.remove_connector()
-                return c.callback(True)
+                self.callback_connector(self)
         except Exception:
-            self.remove_connector()
-            c.callback(sys.exc_info())
-            raise
-        # waiting for a callback
+            self.callback_connector(sys.exc_info())
         return c
         
     def add_listener(self):
@@ -306,14 +302,17 @@ as only attribute.'''
         
     def add_connector(self):
         '''Add writer to the event loop'''
-        self._event_loop.add_connector(self.fileno(), self._ready_connect)
+        self._event_loop.add_connector(self.fileno(), self.callback_connector)
     
     def remove_writer(self):
         self._event_loop.remove_writer(self.fileno())
         
-    def remove_connector(self):
-        self._connector = None
-        self._event_loop.remove_connector(self.fileno())
+    def callback_connector(self, result=None):
+        c = self._connector
+        if c:
+            self._connector = None
+            self._event_loop.remove_connector(self.fileno())
+            return c.callback(result)
         
     def is_stale(self):
         if self._sock:
@@ -349,13 +348,6 @@ as only attribute.'''
                 self._connector.callback(exc)
             else:
                 self._protocol.connection_lost(exc)
-        
-    def _ready_connect(self):
-        # Called when a connection has been made
-        connector = self._connector
-        self.remove_connector()
-        # return so that errors get logged
-        return connector.callback(self)
         
     def _ready_read(self):
         # Read from the socket until we get EWOULDBLOCK or equivalent.
@@ -472,7 +464,7 @@ connector fires its callbacks.'''
     def __init__(self, transport, timeout=None):
         self._transport = transport
         self._consumer = None
-        super(Connector, self).__init__(timeout=timeout or 5)
+        super(Connector, self).__init__(timeout=timeout or 10)
         self.add_callback(self._connection_made, self._connection_failure)
     
     def __repr__(self):
