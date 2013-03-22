@@ -4,15 +4,10 @@ from pulsar import is_failure, is_async
 from pulsar.utils.pep import to_bytes, to_string
 from pulsar.apps.test import unittest, dont_run_with_thread
 
-try:
-    # This import must be done before importing twisted
-    from .manage import mail_client
-    
-except ImportError:
-    mail_client = None
+from .manage import twisted, config
         
     
-@unittest.skipUnless(mail_client, 'Requires twisted')
+@unittest.skipUnless(twisted and config, 'Requires twisted and a config file')
 class TestWebMail(unittest.TestCase):
     concurrency = 'thread'
     server = None

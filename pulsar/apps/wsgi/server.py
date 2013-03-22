@@ -1,3 +1,10 @@
+'''
+
+.. autoclass:: HttpServerResponse
+   :members:
+   :member-order: bysource
+   
+'''
 import sys
 import time
 import os
@@ -112,7 +119,7 @@ If the size is 0, this is the last chunk, and an extra CRLF is appended.
 
 
 class HttpServerResponse(pulsar.ProtocolConsumer):
-    '''Handle an HTTP response for a :class:`HttpConnection`.'''
+    '''Server side HTTP :class:`pulsar.ProtocolConsumer`.'''
     _status = None
     _headers_sent = None
     

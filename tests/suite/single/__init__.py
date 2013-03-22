@@ -1,3 +1,4 @@
+'''Test a single test function on a module with only __init__.py'''
 import time
 
 from pulsar import send, get_actor

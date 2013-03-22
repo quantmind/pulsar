@@ -1,6 +1,7 @@
 '''The :class:`TestSuite` is a testing framework for
-asynchronous applications or for running synchronous tests
-in parallel. It is used for testing pulsar itself but it can be used
+asynchronous/synchronous applications and for running tests in parallel
+on multiple threads or processes.
+It is used for testing pulsar itself but it can be used
 as a test suite for any other library.
 
 Requirements
@@ -13,7 +14,8 @@ Requirements
 Introduction
 ====================
 
-Create a script on the top level directory of your library,
+To get started with pulsar asynchronous test suite is easy. The first thing to
+do is to create a python ``script`` on the top level directory of your library,
 let's call it ``runtests.py``::
 
     from pulsar.apps import TestSuite
@@ -23,13 +25,25 @@ let's call it ``runtests.py``::
                   modules=('regression',
                            ('examples','tests'))).start()
 
-where ``modules`` is an iterable for discovering test cases. Check the
-:class:`TestLoader` for details.
+where ``modules`` is a tuple/list which specifies where to
+:ref:`search for test cases <apps-test-loading>` to run.
 In the above example the test suite will look for all python files
 in the ``regression`` module (in a recursive fashion), and for modules
-called ``tests`` in the ``example`` module.
+called ``tests`` in the ``examples`` module.
 
-Wiring a Test Case
+To run the test suite::
+
+    python runtests.py
+    
+Type::
+
+    python runtests.py --help
+    
+For a list different options/parameters which can be used when running tests.
+
+The next step is to actually write the tests.
+
+Writing a Test Case
 ===========================
 Only subclasses of  ``unittest.TestCase`` are collected by this application.
 When running a test, pulsar looks for two extra method: ``_pre_setup`` and
@@ -52,12 +66,12 @@ An example test case::
         
         def test_async_test(self):
             result = yield maybe_async_function()
-            yield self.assertEqual(result, ...)
+            self.assertEqual(result, ...)
             
         def test_simple_test(self):
             self.assertEqual(1, 1)
 
-Test function can be asynchronous, when they return a generator or
+Test functions can be asynchronous, when they return a generator or
 :class:`pulsar.Deferred`, or synchronous, when they return anything else.
 
 .. _apps-test-loading:
@@ -65,29 +79,109 @@ Test function can be asynchronous, when they return a generator or
 Loading Tests
 =================
 
-Loading test cases is accomplished via the :class:`TestLoader` class. In
+Loading test cases is accomplished via the :class:`loader.TestLoader` class. In
 this context we refer to an ``object`` as a ``module`` (including a
 directory module) or a ``class``.
 
 These are the rules for loading tests:
 
-* Directories that aren't packages are not inspected.
+* Directories that aren't packages are not inspected. This means that if a directory
+  does not have a ``__init__.py`` file it won't be inspected.
 * Any class that is a ``unittest.TestCase`` subclass is collected.
-* if an object starts with ``_`` or ``.`` it won't be collected,
+* If an object starts with ``_`` or ``.`` it won't be collected,
   nor will any objects it contains.
-* If an object defines a ``__test__`` attribute that does not evaluate to True,
-  that object will not be collected, nor will any objects it contains.
+* If an object defines a ``__test__`` attribute that does not evaluate to
+  ``True``, that object will not be collected, nor will any objects it contains.
+  
+The paths which will be inspected are defined by the **modules** initialisation
+parameter for the :class:`TestSuite` class.
+The **modules** parameter is a tuple or list of entries where each single entry
+follow the following rules:
+
+* If the entry is a string, it indicates the **dotted path** relative to the
+  **root** directory (the directory of the script running the tests). For
+  example::
+  
+      modules = ['tests', 'moretests.here']
+  
+* If an entry is two elements tuple, than the first element represents
+  a **dotted path** relative to the **root** directory and the
+  second element a **pattern** which modules (files or directories) must match
+  in order to be included in the search. For example::
+  
+      modules = [...,
+                 ('examples', 'test*')
+                 ]
+  
+  load modules, from inside the ``examples`` module, starting with ``test``.
+  
+* If an entry is a three elements tuple, it is the same as the *two elements
+  tuple* rule with the third element which specifies the top level **tag**
+  for all tests in this entry. For example::
+  
+      modules = [...,
+                  ('bla', '*', 'foo')
+                ]
+
+For example, the following::
+
+    modules = ['test', ('bla', '*', 'foo'), ('examples','test*')]
+
+loads
+    
+* all tests from modules in the ``test`` directory,
+* all tests from the ``bla`` directory with top level tag ``foo``,
+* all tests from modules which starts with *test* from the ``examples`` directory.
+     
+All top level modules will be added to the python ``path``.
+
+Plugins
+==================
+TODO: write docs for plugins
+
+
+
+API
+=========
+
+TestSuite
+~~~~~~~~~~~~~~~~~~~
+
+.. autoclass:: TestSuite
+   :members:
+   :member-order: bysource
+   
+   
+Test Plugin
+~~~~~~~~~~~~~~~~~~~
+
+.. autoclass:: TestPlugin
+   :members:
+   :member-order: bysource
+   
+
+Test Loader
+~~~~~~~~~~~~~~~~~~~
+
+.. automodule:: pulsar.apps.test.loader
+
+
+Test Runner
+~~~~~~~~~~~~~~~~~~~
+
+.. automodule:: pulsar.apps.test.result
 
 .. _unittest2: http://pypi.python.org/pypi/unittest2
 .. _mock: http://pypi.python.org/pypi/mock
 '''
 __test__ = False
 import logging
-import os
-import sys
 import time
 
+import pulsar
+from pulsar.utils import events
 from pulsar.utils.pep import ispy26, ispy33
+from pulsar.utils.log import local_property
 
 if ispy26: # pragma nocover
     try:
@@ -107,9 +201,6 @@ else: # pragma nocover
     except ImportError:
         print('To run tests you need to install the mock package')
         exit(0)
-
-import pulsar
-from pulsar.utils import events
 
 from .result import *
 from .case import *
@@ -228,33 +319,24 @@ is a group of tests specified in a test class.
                          }
            }
     
-    def python_path(self):
-        #Override the python path so that we put the directory where the script
-        #is in the ppython path
-        path = os.getcwd()
-        if path not in sys.path:
-            sys.path.insert(0, path)
-    
     def on_config_init(self, cfg, params):
         self.plugins = params.get('plugins') or ()
         if self.plugins:
             for plugin in self.plugins:
                 cfg.settings.update(plugin.config.settings)
     
-    @property
+    @local_property
     def runner(self):
         '''Instance of :class:`TestRunner` driving the test case
 configuration and plugins.'''
-        if 'runner' not in self.local:
-            result_class = getattr(self, 'result_class', None)
-            r = unittest.TextTestRunner()
-            stream = r.stream
-            runner = TestRunner(self.plugins, stream, result_class)
-            abort_message = runner.configure(self.cfg)
-            if abort_message:
-                raise ExitTest(str(abort_message))
-            self.local.runner = runner
-        return self.local.runner
+        result_class = getattr(self, 'result_class', None)
+        r = unittest.TextTestRunner()
+        stream = r.stream
+        runner = TestRunner(self.plugins, stream, result_class)
+        abort_message = runner.configure(self.cfg)
+        if abort_message:
+            raise ExitTest(str(abort_message))
+        return runner
 
     def on_config(self):
         #When config is available load the tests and check what type of
@@ -268,7 +350,7 @@ configuration and plugins.'''
             modules = ['tests']
         if hasattr(modules, '__call__'):
             modules = modules(self)
-        loader = TestLoader(os.getcwd(), modules, runner, logger=self.logger)
+        loader = TestLoader(self.root_dir, modules, runner, logger=self.logger)
         # Listing labels
         if self.cfg.list_labels:
             tags = self.cfg.labels

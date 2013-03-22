@@ -85,7 +85,7 @@ class TestTestWorker(unittest.TestCase):
         yield pulsar.NOT_DONE
         self.assertEqual(worker.requestloop.num_loops, count+2)
         
-    def testYield(self):
+    def test_yield(self):
         '''Yielding a deferred calling back on separate thread'''
         worker = pulsar.get_actor()
         self.assertEqual(worker.tid, current_thread().ident)

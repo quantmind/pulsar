@@ -1,3 +1,9 @@
+'''
+.. autoclass:: TestRunner
+   :members:
+   :member-order: bysource
+   
+'''
 import sys
 import traceback
 import unittest

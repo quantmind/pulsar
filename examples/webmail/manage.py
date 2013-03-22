@@ -50,14 +50,12 @@ try:
     from twisted.internet import protocol, defer, endpoints, reactor
     from twisted.mail import imap4
 except ImportError: #pragma    nocover
-    pass    # This is for when we build docs
+    twisted = None    # This is for when we build docs
 
 try:
     import config
 except ImportError:
-    print('Create a config.py file with connection_string, username and '
-          'password which will be used to connect to your inbox')
-    exit(0)
+    config = None
 
 ASSET_DIR = os.path.join(os.path.dirname(__file__), 'assets')
 

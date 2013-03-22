@@ -1,12 +1,13 @@
-"""A specialized :class:`pulsar.apps.socket.SocketServer` for
-serving web applications which conforms with the python web server
+"""This is the most important :ref:`pulsar application <application-api>`.
+The server is a specialized :class:`pulsar.apps.socket.SocketServer` class
+for serving web applications conforming with the python web server
 gateway interface (WSGI_).
-The application can be used in conjunction with several web frameworks
+The server can be used in conjunction with several web frameworks
 as well as :ref:`pulsar wsgi application handlers <apps-wsgi-handlers>`,
 the :ref:`pulsar RPC middleware <apps-rpc>` and
 the :ref:`websocket middleware <apps-ws>`.
 
-An example of a web server written with ``pulsar.apps.wsgi`` which responds
+An example of a web server written with :mod:`pulsar.apps.wsgi` which responds
 with "Hello World!" for every request::
 
     from pulsar.apps import wsgi
@@ -31,6 +32,15 @@ For available run options::
 
     python script.py --help
 
+
+WSGI Server
+===================
+
+.. autoclass:: WSGIServer
+   :members:
+   :member-order: bysource
+   
+   
 .. _pep3333: http://www.python.org/dev/peps/pep-3333/
 .. _WSGI: http://www.wsgi.org
 """
@@ -71,8 +81,10 @@ class WSGIServer(SocketServer):
     _app_name = 'wsgi'
 
     def protocol_consumer(self):
-        '''Build a :class:`WsgiHandler` for the WSGI callable provided
-and return an :class:`HttpResponse` factory function.'''
+        '''Build the :class:`pulsar.ProtocolConsumer` factory for this
+WSGI server. It uses the :class:`pulsar.apps.wsgi.server.HttpServerResponse`
+protocol consumer and the wsgi callable provided as parameter during
+initialisation.'''
         callable = self.callable
         if isinstance(callable, WsgiFactory):
             callable = callable()

@@ -27,28 +27,46 @@ Application Framework
 =========================
 
 Pulsar application framework is built on top of :mod:`pulsar` concurrent
-framework. It is designed to facilitate the development of server-side applications
-such as web servers, task queues or any asynchronous and/or parallel 
-idea you may have in mind.
-To write a new application, you subclass :class:`pulsar.Application` or
+framework. It is designed to facilitate the development of both server-side
+applications such as web servers, task queues as well as asynchronous
+clients.
+To write a new server-side application, you subclass :class:`Application` or
 any of the shipped applications listed below, and implement some of
 the callbacks available.
 
 Currently, pulsar is shipped with the following applications which can be
 found in the :mod:`pulsar.apps` module:
+   
+Servers
+-----------
 
 .. toctree::
    :maxdepth: 1
    
    apps/socket
    apps/wsgi/index
-   apps/rpc
    apps/tasks
-   apps/websockets
-   apps/http
    apps/test
    apps/shell
+   
+   
+Middleware
+---------------
+
+.. toctree::
+   :maxdepth: 1
+   
+   apps/rpc
+   apps/websockets
    apps/pubsub
+   
+Clients
+---------
+
+.. toctree::
+   :maxdepth: 1
+   
+   apps/http
    
 
 Indices and tables

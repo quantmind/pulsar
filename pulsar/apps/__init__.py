@@ -1,6 +1,7 @@
 import os
 import sys
 import logging
+from inspect import getfile
 
 import pulsar
 from pulsar import Actor, Monitor, get_actor, EventHandler, QueueServer
@@ -50,13 +51,7 @@ def monitor_stop(self):
 
 
 class Worker(Actor):
-    """\
-An :class:`Actor` for serving a pulsar :class:`Application`.
-
-.. attribute:: app
-
-    Instance of the :class:`Application` served by the worker
-"""
+    '''An :class:`pulsar.Actor` for serving a pulsar :class:`Application`.'''
     def __init__(self, *args, **kwargs):
         super(Worker, self).__init__(*args, **kwargs)
         self.bind_event('start', self.app.worker_start)
@@ -64,9 +59,12 @@ An :class:`Actor` for serving a pulsar :class:`Application`.
         
     @property
     def app(self):
+        '''The :class:`Application` served by this :class:`Worker`.'''
         return self.params.app
     
     def io_poller(self):
+        '''Delegates the :meth:`pulsar.Actor.io_poller` method to the
+:meth:`Application.io_poller` method of the :attr:`app` attribute.'''
         return self.app.io_poller(self)
     
     def info(self):
@@ -75,13 +73,7 @@ An :class:`Actor` for serving a pulsar :class:`Application`.
     
 
 class ApplicationMonitor(Monitor):
-    '''A :class:`Monitor` for managing a pulsar :class:`Application`.
-    
-.. attribute:: app_handler
-
-    The monitor application handler obtained from
-    :meth:`Application.monitor_handler`.
-'''
+    '''A :class:`Monitor` for managing a pulsar :class:`Application`.'''
     actor_class = Worker
     
     def __init__(self, *args, **kwargs):
@@ -91,6 +83,8 @@ class ApplicationMonitor(Monitor):
         
     @property
     def app(self):
+        '''The :class:`Application` served by this
+:class:`ApplicationMonitor`.'''
         return self.params.app
         
     ############################################################################
@@ -147,18 +141,11 @@ These are the most important facts about a pulsar :class:`Application`
     the defaults and the `cfg` attribute. They will be overritten by
     a config file or command line arguments.
 
-.. attribute:: app
-
-    A string indicating the application namespace for configuration parameters.
-
-    Default: ``None``.
-
 .. attribute:: callable
 
-    A callable serving your application. The callable must be pickable,
-    therefore it is either a function
-    or a pickable object. If not provided, the application must
-    implement the :meth:`handler` method.
+    Optional callable serving or configuring your application.
+    If provided, the callable must be pickable, therefore it is either
+    a function or a pickable object.
 
     Default ``None``
 
@@ -214,8 +201,7 @@ These are the most important facts about a pulsar :class:`Application`
         self.epilog = epilog or self.epilog
         self._app_name = self._app_name or self.__class__.__name__.lower()
         self._name = name or self._app_name
-        self.script = script
-        self.python_path()
+        self.script = self.python_path(script)
         params = cfg or {}
         if self.cfg:
             params.update(self.cfg)
@@ -245,6 +231,8 @@ These are the most important facts about a pulsar :class:`Application`
         
     @property
     def app(self):
+        '''Returns ``self``. Implemented so that the :class:`ApplicationMonitor`
+and the :class:`Application` have the same interface.'''
         return self
     
     @property
@@ -255,6 +243,11 @@ These are the most important facts about a pulsar :class:`Application`
     def name(self):
         '''Application name, It is unique and defines the application.'''
         return self._name
+    
+    @property
+    def root_dir(self):
+        if self.script:
+            return os.path.dirname(self.script)
     
     def __repr__(self):
         return self.name
@@ -282,7 +275,9 @@ These are the most important facts about a pulsar :class:`Application`
         return self.local.events.event(name)
 
     def io_poller(self, worker):
-        '''called by :meth:`Actor.io_pooler`.'''
+        '''Called by :meth:`Worker.io_poller` method during the initialization
+of the :class:`Worker` event loop. By default it does nothing so that
+the event loop chooses the most suitable IO poller.'''
         return None
     
     def on_config_init(self, cfg, params):
@@ -297,12 +292,21 @@ unwanted ones. It returns a new :class:`Config` instance or ``None``.'''
  place. If it returns ``False`` the application will abort.'''
         pass
 
-    def python_path(self):
-        #Insert the application directory at the top of the python path.
-        fname = self.script or os.getcwd()
-        path = os.path.split(fname)[0]
+    def python_path(self, script):
+        '''Get the script name if not available and the script directory to the
+python path if not already there. Returns thereal path of the python
+script which runs the application.'''
+        if not script:
+            try:
+                import __main__
+            except ImportError:
+                return
+            script = getfile(__main__)
+        script = os.path.realpath(script)
+        path = os.path.dirname(script)
         if path not in sys.path:
             sys.path.insert(0, path)
+        return script
 
     def add_timeout(self, deadline, callback):
         self.arbiter.ioloop.add_timeout(deadline, callback)
@@ -394,11 +398,6 @@ The parameters overriding order is the following:
             if name in self.cfg.settings:
                 overrides[name] = value
                 return True
-
-    def monitor_handler(self):
-        '''Returns an application handler for the :class:`ApplicationMonitor`.
-By default it returns ``None``.'''
-        return None
     
     # WORKERS CALLBACKS
     def worker_start(self, worker):
