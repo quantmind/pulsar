@@ -12,11 +12,6 @@
                 add_mailboxes(list);
             }
         };
-        $('#publish').click(function () {
-            var msg = message.val();
-            ws.send(msg);
-            message.val('');
-        });
         ws.onopen = function() {
             // Send empty message so that we connect this client
             ws.send('');

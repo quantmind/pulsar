@@ -45,9 +45,12 @@ except ImportError: #pragma nocover
     import pulsar
 from pulsar.utils.pep import zip
 from pulsar.apps import ws, wsgi
-from pulsar.lib.tx import twisted
-from twisted.internet import protocol, defer, endpoints, reactor
-from twisted.mail import imap4
+try:
+    from pulsar.lib.tx import twisted
+    from twisted.internet import protocol, defer, endpoints, reactor
+    from twisted.mail import imap4
+except ImportError: #pragma    nocover
+    pass    # This is for when we build docs
 
 try:
     import config
@@ -56,7 +59,7 @@ except ImportError:
           'password which will be used to connect to your inbox')
     exit(0)
 
-THIS_DIR = os.path.dirname(__file__)
+ASSET_DIR = os.path.join(os.path.dirname(__file__), 'assets')
 
     
 def mail_client(timeout=10):
@@ -75,16 +78,17 @@ def mail_client(timeout=10):
 
 class WsMail(ws.WS):
     ''':ref:`Websocket handler <websocket-handler>` for fetching and
-sending mail via the twisted IMAP4 library.'''    
+sending mail via the twisted IMAP4 library.'''
     def on_open(self, request):
         '''When the websocket starts, it create a new mail client.'''
         client = yield mail_client()
+        #add the mail client to the environ cache
         request.cache['mailclient'] = client
         # retrieve the list of mailboxes
         yield self._send_mailboxes(request)
         
     def on_message(self, request, msg):
-        client = environ.get('mail.client')
+        client = request.cache.get('mailclient')
         if msg and client:
             msg = json.loads(msg)
             if 'mailbox' in msg:
@@ -92,13 +96,13 @@ sending mail via the twisted IMAP4 library.'''
                 future = client.examine(mailbox)
                 yield future
                 result = future.result
-                self.write(environ, json.dumps({'mailbox': result}))
+                self.write(request, json.dumps({'mailbox': result}))
 
-    def _send_mailboxes(self, environ, client):
-        client = request.cache['mail.client']
+    def _send_mailboxes(self, request):
+        client = request.cache['mailclient']
         result = yield client.list("","*")
         result = sorted([e[2] for e in result])
-        self.write(environ, json.dumps({'list': result}))
+        self.write(request, json.dumps({'list': result}))
 
 
 class Web(wsgi.Router):
@@ -107,19 +111,22 @@ class Web(wsgi.Router):
         pass
     
     def get(self, request):
-        """ This resolves to the web page or the websocket depending on the path."""
-        data = open(os.path.join(THIS_DIR, 'mail.html')).read()
+        data = open(os.path.join(ASSET_DIR, 'mail.html')).read()
         request.response.content = data % request.environ
         request.response.content_type = 'text/html'
         return request.response.start()
 
 
+class WebMail(wsgi.LazyWsgi):
+
+    def setup(self):
+        return wsgi.WsgiHandler([ws.WebSocket('/message', WsMail()),
+                                 wsgi.MediaRouter('/media', ASSET_DIR),
+                                 Web('/')])
+    
+    
 def server(**kwargs):
-    mail = ws.WebSocket('/message', WsMail())
-    media = wsgi.MediaRouter('/media', THIS_DIR)
-    web = Web('/')
-    middleware = wsgi.WsgiHandler(middleware=(media, mail, web))
-    return wsgi.WSGIServer(name='webmail', callable=middleware, **kwargs)
+    return wsgi.WSGIServer(name='webmail', callable=WebMail(), **kwargs)
 
 
 if __name__ == '__main__':  #pragma nocover

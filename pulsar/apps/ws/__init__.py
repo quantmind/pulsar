@@ -5,6 +5,29 @@ and server. Pulsar implementation uses the WSGI middleware
 :class:`WebSocket` for the handshake_ and a class derived from
 :class:`WS` handler for the communication part.
 
+Here is an example Web Socket handler that echos back all received messages
+back to the client::
+
+    from pulsar.apps import wsgi, ws
+    
+    class EchoWS(ws.WS):
+    
+        def on_open(self, request):
+            pass
+    
+        def on_message(self, request, message):
+            return message
+    
+        def on_close(self, request):
+            pass
+            
+To create a valid :class:`WebSocket` middleware initialise as follow::
+
+    wm = ws.WebSocket('/bla', EchoWS())
+    app = wsgi.WsgiHandler(middleware=(..., wm))
+    wsgi.WSGIServer(callable=app).start()
+
+
 .. _WSGI: http://www.python.org/dev/peps/pep-3333/
 .. _WebSocket: http://tools.ietf.org/html/rfc6455
 .. _handshake: http://tools.ietf.org/html/rfc6455#section-1.3
@@ -49,7 +72,7 @@ import hashlib
 from functools import partial
 
 import pulsar
-from pulsar import is_async, HttpException, ProtocolError, log_failure
+from pulsar import is_async, maybe_async, HttpException, ProtocolError, log_failure
 from pulsar.utils.httpurl import to_bytes, native_str
 from pulsar.utils.websocket import FrameParser, Frame
 from pulsar.apps import wsgi
@@ -97,21 +120,9 @@ headers to send back to the client.'''
 class WebSocket(GeneralWebSocket):
     """A specialised :ref:`Router <apps-wsgi-router>` middleware for
 handling the websocket handshake at a given route.
-Once the handshake is succesful,
-it upgrades to the websocket protocol served by a custom :class:`WS`
-handler.
-
-To create a valid :class:`WebSocket` middleware initialise as follow::
-
-    from pulsar.apps import wsgi, ws
-    
-    class MyWS(ws.WS):
-        ...
-    
-    wm = ws.WebSocket('/bla', MyWS())
-    app = wsgi.WsgiHandler(middleware=(..., wm))
-    wsgi.WSGIServer(callable=app).start()
-
+Once the handshake is succesful, the protocol consumer
+is upgraded to :class:`WebSocketProtocol` and messages are handled by
+the :attr:`handle` attribute, an instance of :class:`WS`.
 
 See http://tools.ietf.org/html/rfc6455 for the websocket server protocol and
 http://www.w3.org/TR/websockets/ for details on the JavaScript interface.
@@ -186,37 +197,28 @@ an asynchronous fashion. The communication is started by the
 Override :meth:`on_message` to handle incoming messages.
 You can also override :meth:`on_open` and :meth:`on_close` to handle opened
 and closed connections.
-
-Here is an example Web Socket handler that echos back all received messages
-back to the client::
-
-    from pulsar.apps import ws
-    
-    class EchoWS(ws.WS):
-    
-        def on_open(self, environ):
-            print("WebSocket opened")
-    
-        def on_message(self, environ, message):
-            return message
-    
-        def on_close(self, environ):
-            print("WebSocket closed")
-            
+These methods accept as first parameter the
+:class:`pulsar.apps.wsgi.wrappers.WsgiRequest` created during the handshake.
 '''
     def on_open(self, request):
         """Invoked when a new WebSocket is opened."""
         pass
 
     def on_message(self, request, message):
-        """Handle incoming messages on the WebSocket.
-        This method must be overloaded.
-        """
-        raise NotImplementedError()
+        '''Handles incoming messages on the WebSocket.
+This method must be overloaded. Whatever is returned by this method
+is handled by :class:`WebSocketProtocol.write` method.'''
+        raise NotImplementedError
 
     def on_close(self, request):
         """Invoked when the WebSocket is closed."""
         pass
+        
+    def write(self, request, message):
+        '''An utility method for writing a message to the client.
+It uses the :class:`WebSocketProtocol` which is accessible from the *request*
+parameter. It is a proxy for the :class:`WebSocketProtocol.write` method.'''
+        return request.cache['websocket'].write(message)
         
         
 class WebSocketProtocol(pulsar.ProtocolConsumer):
@@ -243,8 +245,15 @@ class WebSocketProtocol(pulsar.ProtocolConsumer):
             frame = parser.decode()
     
     def write(self, frame):
-        '''Write a new *frame* into the wire, frame can be byes, asynchronous
-or  nothing. This is a utility method for the transport write method.'''
+        '''Write a new *frame* into the wire, frame can be:
+        
+* bytes - converted to a byte Frame
+* string - converted to a string Frame
+* a :class:`pulsar.utils.websocket.Frame`
+* A generator or :class:`pulsar.Deferred` - adds a callback to
+  the :class:`pulsar.EventLoop` to invoke this method once the result is ready.
+ '''
+        frame = maybe_async(frame)
         if frame is None:
             return
         elif is_async(frame):

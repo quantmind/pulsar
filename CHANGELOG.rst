@@ -183,8 +183,5 @@ Ver. 0.1.0 - 2011-Aug-24
 
 .. _psutil: http://code.google.com/p/psutil/
 .. _pypy: http://pypy.org/
-<<<<<<< HEAD
-=======
 .. _pep-3156: http://www.python.org/dev/peps/pep-3156/
->>>>>>> handshake
 .. _http-parser: https://github.com/benoitc/http-parser
