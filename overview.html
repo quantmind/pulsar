@@ -6,13 +6,13 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>Overview &mdash; pulsar v0.5b7 documentation</title>
+    <title>Overview &mdash; pulsar v0.5b8 documentation</title>
     <link rel="stylesheet" href="static/pulsar.css" type="text/css" />
     <link rel="stylesheet" href="static/pygments.css" type="text/css" />
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '',
-        VERSION:     '0.5b7',
+        VERSION:     '0.5b8',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -22,7 +22,7 @@
     <script type="text/javascript" src="static/underscore.js"></script>
     <script type="text/javascript" src="static/doctools.js"></script>
     <link rel="shortcut icon" href="static/Game_of_life_pulsar.gif"/>
-    <link rel="top" title="pulsar v0.5b7 documentation" href="index.html" />
+    <link rel="top" title="pulsar v0.5b8 documentation" href="index.html" />
     <link rel="next" title="Design" href="design.html" />
     <link rel="prev" title="Pulsar" href="index.html" /> 
   </head>
@@ -43,7 +43,7 @@
         <li class="right" >
           <a href="index.html" title="Pulsar"
              accesskey="P">previous</a> |</li>
-        <li><a href="index.html">pulsar v0.5b7 documentation</a> &raquo;</li> 
+        <li><a href="index.html">pulsar v0.5b8 documentation</a> &raquo;</li> 
       </ul>
     </div>
 <div class="deck">
@@ -82,7 +82,7 @@ activities in different threads and/or processes.</p>
 <tr class="field"><th class="field-name">Source:</th><td class="field-body"><a class="reference external" href="https://github.com/quantmind/pulsar">https://github.com/quantmind/pulsar</a></td>
 </tr>
 <tr class="field"><th class="field-name">Keywords:</th><td class="field-body">server, asynchronous, concurrency, actor, thread, process, socket,
-task queue, wsgi, websocket</td>
+task queue, wsgi, websocket, json-rpc</td>
 </tr>
 </tbody>
 </table>
@@ -103,7 +103,7 @@ framework which responds with &#8220;Hello World!&#8221; for every request:</p>
 
 
 <span class="k">if</span> <span class="n">__name__</span> <span class="o">==</span> <span class="s">&#39;__main__&#39;</span><span class="p">:</span>
-    <span class="k">return</span> <span class="n">wsgi</span><span class="o">.</span><span class="n">WSGIServer</span><span class="p">(</span><span class="nb">callable</span><span class="o">=</span><span class="n">hello</span><span class="p">)</span><span class="o">.</span><span class="n">start</span><span class="p">()</span>
+    <span class="n">wsgi</span><span class="o">.</span><span class="n">WSGIServer</span><span class="p">(</span><span class="nb">callable</span><span class="o">=</span><span class="n">hello</span><span class="p">)</span><span class="o">.</span><span class="n">start</span><span class="p">()</span>
 </pre></div>
 </div>
 <p>Pulsar&#8217;s goal is to provide an easy way to build scalable network programs.

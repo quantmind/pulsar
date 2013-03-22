@@ -1,4 +1,4 @@
-.. _tutorials-HTTPBIN:
+.. _tutorials-httpbin:
 
 ==================
 Http Bin

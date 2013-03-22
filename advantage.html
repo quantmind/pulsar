@@ -6,13 +6,13 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>Pulsar Advantage &mdash; pulsar v0.5b7 documentation</title>
+    <title>Pulsar Advantage &mdash; pulsar v0.5b8 documentation</title>
     <link rel="stylesheet" href="static/pulsar.css" type="text/css" />
     <link rel="stylesheet" href="static/pygments.css" type="text/css" />
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '',
-        VERSION:     '0.5b7',
+        VERSION:     '0.5b8',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -22,7 +22,7 @@
     <script type="text/javascript" src="static/underscore.js"></script>
     <script type="text/javascript" src="static/doctools.js"></script>
     <link rel="shortcut icon" href="static/Game_of_life_pulsar.gif"/>
-    <link rel="top" title="pulsar v0.5b7 documentation" href="index.html" />
+    <link rel="top" title="pulsar v0.5b8 documentation" href="index.html" />
     <link rel="next" title="Tutorials &amp; Topics" href="tutorials/index.html" />
     <link rel="prev" title="FAQ" href="faq.html" /> 
   </head>
@@ -43,7 +43,7 @@
         <li class="right" >
           <a href="faq.html" title="FAQ"
              accesskey="P">previous</a> |</li>
-        <li><a href="index.html">pulsar v0.5b7 documentation</a> &raquo;</li> 
+        <li><a href="index.html">pulsar v0.5b8 documentation</a> &raquo;</li> 
       </ul>
     </div>
 <div class="deck">
@@ -72,7 +72,7 @@ It is now developed in python 3.3 while keeping backward compatibility.</p>
 </div>
 <div class="section" id="flexibility">
 <h2>Flexibility<a class="headerlink" href="#flexibility" title="Permalink to this headline">¶</a></h2>
-<p>Pulsar&#8217;s codebase is small, at about 14,000 lines of code. The source code is
+<p>Pulsar&#8217;s codebase is relatively small, at about 15,000 lines of code. The source code is
 open and it has a very <a class="reference internal" href="overview.html#license"><em>liberal license</em></a>.
 You can <a class="reference internal" href="overview.html#contributing"><em>fork the code</em></a> add feature you need and send us your patch.</p>
 </div>
@@ -82,6 +82,12 @@ You can <a class="reference internal" href="overview.html#contributing"><em>fork
 components have been designed in a share nothing architecture. Communication between
 workers is obtained via tcp sockets which <a class="reference internal" href="tutorials/messages.html#tutorials-messages"><em>exchange messages</em></a>
 using the websocket protocol. You can also run workers in threading mode.</p>
+</div>
+<div class="section" id="pep-3156-ready">
+<h2>Pep 3156 Ready<a class="headerlink" href="#pep-3156-ready" title="Permalink to this headline">¶</a></h2>
+<p>Pulsar internals are implemented along the lines of the new asynchronous IO
+proposal <a class="reference external" href="http://www.python.org/dev/peps/pep-3156/">pep-3156</a>. This means that once the new asynchronous interface will
+be part of the standard lib, pulsar will be compatible with it from day 1.</p>
 </div>
 </div>
 
@@ -101,6 +107,7 @@ using the websocket protocol. You can also run workers in threading mode.</p>
 <li><a class="reference internal" href="#python-3">Python 3</a></li>
 <li><a class="reference internal" href="#flexibility">Flexibility</a></li>
 <li><a class="reference internal" href="#multiprocessing">Multiprocessing</a></li>
+<li><a class="reference internal" href="#pep-3156-ready">Pep 3156 Ready</a></li>
 </ul>
 </li>
 </ul>

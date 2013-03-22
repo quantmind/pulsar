@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>Events &mdash; pulsar v0.5b8 documentation</title>
+    <title>Chat Server &mdash; pulsar v0.5b8 documentation</title>
     <link rel="stylesheet" href="../static/pulsar.css" type="text/css" />
     <link rel="stylesheet" href="../static/pygments.css" type="text/css" />
     <script type="text/javascript">
@@ -24,8 +24,8 @@
     <link rel="shortcut icon" href="../static/Game_of_life_pulsar.gif"/>
     <link rel="top" title="pulsar v0.5b8 documentation" href="../index.html" />
     <link rel="up" title="Tutorials &amp; Topics" href="index.html" />
-    <link rel="next" title="Signal Handling" href="signal.html" />
-    <link rel="prev" title="Actor messages" href="messages.html" /> 
+    <link rel="next" title="Asynchronous Components" href="coroutine.html" />
+    <link rel="prev" title="JSON-RPC Calculator" href="calculator.html" /> 
   </head>
   <body>
 
@@ -39,10 +39,10 @@
           <a href="../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
         <li class="right" >
-          <a href="signal.html" title="Signal Handling"
+          <a href="coroutine.html" title="Asynchronous Components"
              accesskey="N">next</a> |</li>
         <li class="right" >
-          <a href="messages.html" title="Actor messages"
+          <a href="calculator.html" title="JSON-RPC Calculator"
              accesskey="P">previous</a> |</li>
         <li><a href="../index.html">pulsar v0.5b8 documentation</a> &raquo;</li>
           <li><a href="index.html" accesskey="U">Tutorials &amp; Topics</a> &raquo;</li> 
@@ -65,28 +65,19 @@
         <div class="bodywrapper">
           <div class="body">
             
-  <span class="target" id="module-pulsar"></span><div class="section" id="events">
-<span id="event-handling"></span><h1>Events<a class="headerlink" href="#events" title="Permalink to this headline">¶</a></h1>
-<p>Event handling is implemented via the <a class="reference internal" href="../api/async.html#pulsar.EventHandler" title="pulsar.EventHandler"><tt class="xref py py-class docutils literal"><span class="pre">EventHandler</span></tt></a> mixin.</p>
-<div class="section" id="one-time-event">
-<span id="id1"></span><h2>One time event<a class="headerlink" href="#one-time-event" title="Permalink to this headline">¶</a></h2>
-</div>
-<div class="section" id="many-times-event">
-<span id="id2"></span><h2>Many times event<a class="headerlink" href="#many-times-event" title="Permalink to this headline">¶</a></h2>
-</div>
-<div class="section" id="module-pulsar.utils.events">
-<span id="gloabl-events"></span><span id="global-events"></span><h2>Gloabl Events<a class="headerlink" href="#module-pulsar.utils.events" title="Permalink to this headline">¶</a></h2>
-<p>Multi-consumer multi-producer dispatching mechanism,
-originally based on <a class="reference external" href="http://pypi.python.org/pypi/PyDispatcher/2.0.1">pydispatch</a> (BSD).</p>
-<p>To register a new <em>event</em> use the <tt class="xref py py-func docutils literal"><span class="pre">bind()</span></tt> function:</p>
-<div class="highlight-python"><div class="highlight"><pre><span class="kn">from</span> <span class="nn">pulsar.utils</span> <span class="kn">import</span> <span class="n">events</span>
-
-<span class="k">def</span> <span class="nf">handler</span><span class="p">(</span><span class="n">signal</span><span class="p">,</span> <span class="n">sender</span><span class="p">,</span> <span class="n">data</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="o">**</span><span class="n">params</span><span class="p">):</span>
-    <span class="o">...</span>
-
-<span class="n">events</span><span class="o">.</span><span class="n">bind</span><span class="p">(</span><span class="s">&#39;connection_lost&#39;</span><span class="p">,</span> <span class="n">handler</span><span class="p">)</span>
+  <div class="section" id="chat-server">
+<span id="tutorials-chat"></span><h1>Chat Server<a class="headerlink" href="#chat-server" title="Permalink to this headline">¶</a></h1>
+<p>The code for this example is located in the <a class="reference internal" href="#module-examples.chat.manage" title="examples.chat.manage"><tt class="xref py py-mod docutils literal"><span class="pre">examples.chat.manage</span></tt></a> module.</p>
+<span class="target" id="module-examples.chat.manage"></span><p>Simple chat application.</p>
+<blockquote>
+<div>python manage.py</div></blockquote>
+<p>and open web browsers at <a class="reference external" href="http://localhost:8060">http://localhost:8060</a></p>
+<p>To send messages from the JSON RPC open a python shell and:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">pulsar.apps</span> <span class="kn">import</span> <span class="n">rpc</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">p</span> <span class="o">=</span> <span class="n">rpc</span><span class="o">.</span><span class="n">JsonProxy</span><span class="p">(</span><span class="s">&#39;http://127.0.0.1:8060/rpc&#39;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">p</span><span class="o">.</span><span class="n">message</span><span class="p">(</span><span class="s">&#39;Hi from rpc&#39;</span><span class="p">)</span>
+<span class="go">&#39;OK&#39;</span>
 </pre></div>
-</div>
 </div>
 </div>
 
@@ -100,25 +91,15 @@ originally based on <a class="reference external" href="http://pypi.python.org/p
   <img class="logo" width="200" src="../static/pulsar.png" alt="pulsar" title="Pulsar"/>
 </a>
 </p>
-  <h3><a href="../index.html">Table Of Contents</a></h3>
-  <ul>
-<li><a class="reference internal" href="#">Events</a><ul>
-<li><a class="reference internal" href="#one-time-event">One time event</a></li>
-<li><a class="reference internal" href="#many-times-event">Many times event</a></li>
-<li><a class="reference internal" href="#module-pulsar.utils.events">Gloabl Events</a></li>
-</ul>
-</li>
-</ul>
-
   <h4>Previous topic</h4>
-  <p class="topless"><a href="messages.html"
-                        title="previous chapter">Actor messages</a></p>
+  <p class="topless"><a href="calculator.html"
+                        title="previous chapter">JSON-RPC Calculator</a></p>
   <h4>Next topic</h4>
-  <p class="topless"><a href="signal.html"
-                        title="next chapter">Signal Handling</a></p>
+  <p class="topless"><a href="coroutine.html"
+                        title="next chapter">Asynchronous Components</a></p>
   <h3>This Page</h3>
   <ul class="this-page-menu">
-    <li><a href="../sources/tutorials/events.txt"
+    <li><a href="../sources/tutorials/chat.txt"
            rel="nofollow">Show Source</a></li>
   </ul>
 <div id="searchbox" style="display: none">

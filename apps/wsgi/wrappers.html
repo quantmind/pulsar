@@ -6,13 +6,13 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>WSGI Wrappers &mdash; pulsar v0.5b7 documentation</title>
+    <title>WSGI Wrappers &mdash; pulsar v0.5b8 documentation</title>
     <link rel="stylesheet" href="../../static/pulsar.css" type="text/css" />
     <link rel="stylesheet" href="../../static/pygments.css" type="text/css" />
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../',
-        VERSION:     '0.5b7',
+        VERSION:     '0.5b8',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -22,7 +22,7 @@
     <script type="text/javascript" src="../../static/underscore.js"></script>
     <script type="text/javascript" src="../../static/doctools.js"></script>
     <link rel="shortcut icon" href="../../static/Game_of_life_pulsar.gif"/>
-    <link rel="top" title="pulsar v0.5b7 documentation" href="../../index.html" />
+    <link rel="top" title="pulsar v0.5b8 documentation" href="../../index.html" />
     <link rel="up" title="WSGI" href="index.html" />
     <link rel="next" title="Asynchronous Content" href="content.html" />
     <link rel="prev" title="WSGI application handlers" href="handlers.html" /> 
@@ -44,7 +44,7 @@
         <li class="right" >
           <a href="handlers.html" title="WSGI application handlers"
              accesskey="P">previous</a> |</li>
-        <li><a href="../../index.html">pulsar v0.5b7 documentation</a> &raquo;</li>
+        <li><a href="../../index.html">pulsar v0.5b8 documentation</a> &raquo;</li>
           <li><a href="index.html" accesskey="U">WSGI</a> &raquo;</li> 
       </ul>
     </div>
@@ -156,10 +156,12 @@ data from the <cite>QUERY_STRING</cite> in <a class="reference internal" href="#
 <dl class="class">
 <dt id="pulsar.apps.wsgi.wrappers.WsgiResponse">
 <em class="property">class </em><tt class="descclassname">pulsar.apps.wsgi.wrappers.</tt><tt class="descname">WsgiResponse</tt><big>(</big><em>status=None</em>, <em>content=None</em>, <em>response_headers=None</em>, <em>content_type=None</em>, <em>encoding=None</em>, <em>environ=None</em>, <em>start_response=None</em><big>)</big><a class="reference internal" href="../../modules/pulsar/apps/wsgi/wrappers.html#WsgiResponse"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.wsgi.wrappers.WsgiResponse" title="Permalink to this definition">¶</a></dt>
-<dd><p>A WSGI response wrapper initialized by a WSGI request middleware.
-Instances are callable using the standard WSGI call:</p>
+<dd><p>A WSGI response wrapper initialized by a
+<a class="reference internal" href="handlers.html#apps-wsgi-handlers"><em>pulsar WSGI application handler</em></a>.
+Instances are callable using the standard WSGI call and, importantly, iterable:</p>
 <div class="highlight-python"><div class="highlight"><pre><span class="n">response</span> <span class="o">=</span> <span class="n">WsgiResponse</span><span class="p">(</span><span class="mi">200</span><span class="p">)</span>
-<span class="n">response</span><span class="p">(</span><span class="n">environ</span><span class="p">,</span> <span class="n">start_response</span><span class="p">)</span>
+<span class="k">for</span> <span class="n">data</span> <span class="ow">in</span> <span class="n">response</span><span class="p">(</span><span class="n">environ</span><span class="p">,</span> <span class="n">start_response</span><span class="p">):</span>
+    <span class="o">...</span>
 </pre></div>
 </div>
 <p>A <a class="reference internal" href="#pulsar.apps.wsgi.wrappers.WsgiResponse" title="pulsar.apps.wsgi.wrappers.WsgiResponse"><tt class="xref py py-class docutils literal"><span class="pre">WsgiResponse</span></tt></a> is an iterable over bytes to send back to the requesting
@@ -186,6 +188,14 @@ client.</p>
 <dt id="pulsar.apps.wsgi.wrappers.WsgiResponse.environ">
 <tt class="descname">environ</tt><a class="headerlink" href="#pulsar.apps.wsgi.wrappers.WsgiResponse.environ" title="Permalink to this definition">¶</a></dt>
 <dd><p>The dictionary of WSGI environment if passed to the constructor.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="pulsar.apps.wsgi.wrappers.WsgiResponse.middleware">
+<tt class="descname">middleware</tt><a class="headerlink" href="#pulsar.apps.wsgi.wrappers.WsgiResponse.middleware" title="Permalink to this definition">¶</a></dt>
+<dd><p>A list of <em class="xref std std-ref">response middleware</em> functions which will be invoked
+when this <a class="reference internal" href="#pulsar.apps.wsgi.wrappers.WsgiResponse" title="pulsar.apps.wsgi.wrappers.WsgiResponse"><tt class="xref py py-class docutils literal"><span class="pre">WsgiResponse</span></tt></a> get called (the callable method of the
+instance is invoked).</p>
 </dd></dl>
 
 <dl class="attribute">

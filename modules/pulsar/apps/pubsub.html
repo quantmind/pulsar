@@ -1,0 +1,286 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>pulsar.apps.pubsub &mdash; pulsar v0.5b8 documentation</title>
+    <link rel="stylesheet" href="../../../static/pulsar.css" type="text/css" />
+    <link rel="stylesheet" href="../../../static/pygments.css" type="text/css" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../../',
+        VERSION:     '0.5b8',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../../../static/jquery.js"></script>
+    <script type="text/javascript" src="../../../static/underscore.js"></script>
+    <script type="text/javascript" src="../../../static/doctools.js"></script>
+    <link rel="shortcut icon" href="../../../static/Game_of_life_pulsar.gif"/>
+    <link rel="top" title="pulsar v0.5b8 documentation" href="../../../index.html" />
+    <link rel="up" title="pulsar.apps" href="../apps.html" /> 
+  </head>
+  <body>
+
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li><a href="../../../index.html">pulsar v0.5b8 documentation</a> &raquo;</li>
+          <li><a href="../../index.html" >Module code</a> &raquo;</li>
+          <li><a href="../../pulsar.html" >pulsar</a> &raquo;</li>
+          <li><a href="../apps.html" accesskey="U">pulsar.apps</a> &raquo;</li> 
+      </ul>
+    </div>
+<div class="deck">
+<div class="header">
+    
+        <p class="developmentversion">
+        Documentation for pulsar's DEVELOPMENT version. Get the 
+        <a href="http://packages.python.org/pulsar/">release docs here</a>.
+        </p>
+    
+</div>
+</div>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <h1>Source code for pulsar.apps.pubsub</h1><div class="highlight"><pre>
+<span class="sd">&#39;&#39;&#39;A framework for a Publish/Subscribe pattern.</span>
+
+<span class="sd">.. epigraph::</span>
+
+<span class="sd">    In software architecture, publish/subscribe is a messaging pattern where</span>
+<span class="sd">    senders of messages, called publishers, do not program the messages to</span>
+<span class="sd">    be sent directly to specific receivers, called subscribers.</span>
+<span class="sd">    Instead, published messages are characterized into classes, without</span>
+<span class="sd">    knowledge of what, if any, subscribers there may be. Similarly, subscribers</span>
+<span class="sd">    express interest in one or more classes, and only receive messages that are</span>
+<span class="sd">    of interest, without knowledge of what, if any, publishers there are.</span>
+<span class="sd">    </span>
+<span class="sd">    -- wikipedia_</span>
+
+
+<span class="sd">When using this application, one starts by creating a :class:`PubSub` handler</span>
+<span class="sd">in the actor process domain::</span>
+
+<span class="sd">    from pulsar.apps import pubsub</span>
+<span class="sd">    </span>
+<span class="sd">    pubsub.register_handler(pubsub.PulsarPubSub(monitor_name))</span>
+<span class="sd">    </span>
+
+<span class="sd">The :class:`PulsarPubSub` is an implementation of the :class:`PubSub` interface</span>
+<span class="sd">which uses a :class:`pulsar.Monitor` as the broadcast server.</span>
+<span class="sd">    </span>
+<span class="sd">    </span>
+<span class="sd">API functions</span>
+<span class="sd">~~~~~~~~~~~~~~~~~~~~~~~~~~~~~</span>
+
+<span class="sd">.. autofunction:: register_handler</span>
+
+
+<span class="sd">.. autofunction:: add_client</span>
+
+
+<span class="sd">.. autofunction:: publish</span>
+
+
+<span class="sd">PubSub Interface</span>
+<span class="sd">~~~~~~~~~~~~~~~~~~~~~~~~~~~~~</span>
+
+<span class="sd">.. autoclass:: PubSub</span>
+<span class="sd">   :members:</span>
+<span class="sd">   :member-order: bysource </span>
+<span class="sd">   </span>
+<span class="sd">   </span>
+<span class="sd">Pulsar PubSub</span>
+<span class="sd">~~~~~~~~~~~~~~~~~~~~~~~~~~~~~</span>
+
+<span class="sd">.. autoclass:: PulsarPubSub</span>
+<span class="sd">   :members:</span>
+<span class="sd">   :member-order: bysource </span>
+<span class="sd">   </span>
+<span class="sd">   </span>
+<span class="sd">.. _wikipedia: http://en.wikipedia.org/wiki/Publish%E2%80%93subscribe_pattern&#39;&#39;&#39;</span>
+<span class="kn">import</span> <span class="nn">time</span>
+<span class="kn">import</span> <span class="nn">json</span>
+
+<span class="kn">from</span> <span class="nn">pulsar</span> <span class="kn">import</span> <span class="n">send</span><span class="p">,</span> <span class="n">command</span><span class="p">,</span> <span class="n">get_actor</span>
+<span class="kn">from</span> <span class="nn">pulsar.utils.pep</span> <span class="kn">import</span> <span class="n">to_string</span>
+<span class="kn">from</span> <span class="nn">pulsar.utils.log</span> <span class="kn">import</span> <span class="n">LocalMixin</span><span class="p">,</span> <span class="n">local_property</span>
+
+<span class="c">################################################################################</span>
+<span class="c">##    API methods</span>
+<div class="viewcode-block" id="register_handler"><a class="viewcode-back" href="../../../apps/pubsub.html#pulsar.apps.pubsub.register_handler">[docs]</a><span class="k">def</span> <span class="nf">register_handler</span><span class="p">(</span><span class="n">handler</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39;Register the current :class:`pulsar.Actor` with a :class:`PubSub`</span>
+<span class="sd">*handler*.</span>
+
+<span class="sd">:param handler: a :class:`PubSub` instance.</span>
+<span class="sd">:param name: Optional string used as the key which holds the handler</span>
+<span class="sd">    in the current :attr:`pulsar.Actor.params` attribute dictionary.</span>
+<span class="sd">    Buy default it uses ``&#39;pubsub&#39;``. You can use this parameter to create</span>
+<span class="sd">    several :class:`PubSub` handlers for a given actor.</span>
+<span class="sd">&#39;&#39;&#39;</span>
+    <span class="n">actor</span> <span class="o">=</span> <span class="n">get_actor</span><span class="p">()</span>
+    <span class="n">actor</span><span class="o">.</span><span class="n">params</span><span class="p">[</span><span class="n">name</span> <span class="ow">or</span> <span class="s">&#39;pubsub&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">handler</span> 
+    </div>
+<div class="viewcode-block" id="add_client"><a class="viewcode-back" href="../../../apps/pubsub.html#pulsar.apps.pubsub.add_client">[docs]</a><span class="k">def</span> <span class="nf">add_client</span><span class="p">(</span><span class="n">client</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39;Add a new *client* to the current actor :class:`PubSub` handler</span>
+<span class="sd">at *name*.</span>
+
+<span class="sd">:param client: a client is any instance with a ``write`` method.</span>
+<span class="sd">:param name: Optional string for the :class:`PubSub` to add the client to.</span>
+<span class="sd">    If not provided the default ``&#39;pubsub&#39;`` key is used.</span>
+<span class="sd">&#39;&#39;&#39;</span>
+    <span class="n">get_pubsub</span><span class="p">(</span><span class="n">name</span><span class="p">)</span><span class="o">.</span><span class="n">add_client</span><span class="p">(</span><span class="n">client</span><span class="p">)</span>
+    </div>
+<div class="viewcode-block" id="publish"><a class="viewcode-back" href="../../../apps/pubsub.html#pulsar.apps.pubsub.publish">[docs]</a><span class="k">def</span> <span class="nf">publish</span><span class="p">(</span><span class="n">message</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39;Publish a *message* to the :class:`PubSub` handler at *name*.&#39;&#39;&#39;</span>
+    <span class="n">get_pubsub</span><span class="p">(</span><span class="n">name</span><span class="p">)</span><span class="o">.</span><span class="n">publish</span><span class="p">(</span><span class="n">message</span><span class="p">)</span>
+    </div>
+<span class="k">def</span> <span class="nf">get_pubsub</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+    <span class="n">pubsub</span> <span class="o">=</span> <span class="n">get_actor</span><span class="p">()</span><span class="o">.</span><span class="n">params</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">name</span> <span class="ow">or</span> <span class="s">&#39;pubsub&#39;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">pubsub</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s">&#39;Publish/Subscribe handler not available&#39;</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">pubsub</span>
+    
+<span class="c">################################################################################</span>
+<span class="c">##    PubSub Interface</span>
+<div class="viewcode-block" id="PubSub"><a class="viewcode-back" href="../../../apps/pubsub.html#pulsar.apps.pubsub.PubSub">[docs]</a><span class="k">class</span> <span class="nc">PubSub</span><span class="p">(</span><span class="n">LocalMixin</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39;Interface for Publish/Subscribe paradigm.</span>
+<span class="sd">    </span>
+<span class="sd">.. attribute:: clients</span>
+
+<span class="sd">    Set of all clients for this :class:`PubSub` handler.</span>
+<span class="sd">&#39;&#39;&#39;</span>
+    <span class="nd">@local_property</span>
+<div class="viewcode-block" id="PubSub.clients"><a class="viewcode-back" href="../../../apps/pubsub.html#pulsar.apps.pubsub.PubSub.clients">[docs]</a>    <span class="k">def</span> <span class="nf">clients</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="nb">set</span><span class="p">()</span>
+    </div>
+<div class="viewcode-block" id="PubSub.add_client"><a class="viewcode-back" href="../../../apps/pubsub.html#pulsar.apps.pubsub.PubSub.add_client">[docs]</a>    <span class="k">def</span> <span class="nf">add_client</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">client</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;Add a new *client* to the set of all :attr:`clients`.&#39;&#39;&#39;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">clients</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">client</span><span class="p">)</span>
+        </div>
+<div class="viewcode-block" id="PubSub.publish"><a class="viewcode-back" href="../../../apps/pubsub.html#pulsar.apps.pubsub.PubSub.publish">[docs]</a>    <span class="k">def</span> <span class="nf">publish</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">message</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;Publish a *message*. Must be implemented by subclasses.&#39;&#39;&#39;</span>
+        <span class="k">raise</span> <span class="ne">NotImplementedError</span>
+            </div>
+<div class="viewcode-block" id="PubSub.encode"><a class="viewcode-back" href="../../../apps/pubsub.html#pulsar.apps.pubsub.PubSub.encode">[docs]</a>    <span class="k">def</span> <span class="nf">encode</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">message</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;Encode *message* before publishing it. By default it create a</span>
+<span class="sd">dictionary with a timestamp and the message and serialise it as json.&#39;&#39;&#39;</span>
+        <span class="n">message</span> <span class="o">=</span> <span class="p">{</span><span class="s">&#39;time&#39;</span><span class="p">:</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">(),</span> <span class="s">&#39;message&#39;</span><span class="p">:</span> <span class="n">message</span><span class="p">}</span>
+        <span class="k">return</span> <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">message</span><span class="p">)</span>
+    </div>
+<div class="viewcode-block" id="PubSub.decode"><a class="viewcode-back" href="../../../apps/pubsub.html#pulsar.apps.pubsub.PubSub.decode">[docs]</a>    <span class="k">def</span> <span class="nf">decode</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">message</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;Convert message to a string. The behaviour can be overwritten.&#39;&#39;&#39;</span>
+        <span class="k">return</span> <span class="n">to_string</span><span class="p">(</span><span class="n">message</span><span class="p">)</span>
+    </div>
+    <span class="k">def</span> <span class="nf">broadcast</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">message</span><span class="p">):</span>
+        <span class="n">remove</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
+        <span class="n">message</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">decode</span><span class="p">(</span><span class="n">message</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">client</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">clients</span><span class="p">:</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">client</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">message</span><span class="p">)</span>
+            <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
+                <span class="n">remove</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">client</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">clients</span><span class="o">.</span><span class="n">difference_update</span><span class="p">(</span><span class="n">remove</span><span class="p">)</span>
+
+<span class="c">################################################################################</span>
+<span class="c">##    Pulsar PubSub implementation        </span></div>
+<div class="viewcode-block" id="PulsarPubSub"><a class="viewcode-back" href="../../../apps/pubsub.html#pulsar.apps.pubsub.PulsarPubSub">[docs]</a><span class="k">class</span> <span class="nc">PulsarPubSub</span><span class="p">(</span><span class="n">PubSub</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39;Implements :class:`PubSub` in pulsar.</span>
+<span class="sd">    </span>
+<span class="sd">.. attribute:: monitor</span>
+
+<span class="sd">    The name of :class:`pulsar.Monitor` (application) which broadcast messages</span>
+<span class="sd">    to its workers.</span>
+<span class="sd">&#39;&#39;&#39;</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">monitor</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_monitor</span> <span class="o">=</span> <span class="n">monitor</span>
+            
+<div class="viewcode-block" id="PulsarPubSub.publish"><a class="viewcode-back" href="../../../apps/pubsub.html#pulsar.apps.pubsub.PulsarPubSub.publish">[docs]</a>    <span class="k">def</span> <span class="nf">publish</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">message</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;Implements :meth:`PubSub.publish`. It calls the :meth:`encode`</span>
+<span class="sd">method to encode the message and than send the encoded message to the</span>
+<span class="sd">:class:`pulsar.Monitor` specified in the :attr:`monitor` attribute.&#39;&#39;&#39;</span>
+        <span class="n">message</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="n">message</span><span class="p">)</span>
+        <span class="n">send</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_monitor</span><span class="p">,</span> <span class="s">&#39;publish_message&#39;</span><span class="p">,</span> <span class="n">message</span><span class="p">)</span>
+        
+    </div></div>
+<span class="nd">@command</span><span class="p">(</span><span class="n">ack</span><span class="o">=</span><span class="bp">False</span><span class="p">)</span>
+<span class="k">def</span> <span class="nf">publish_message</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="n">message</span><span class="p">):</span>
+    <span class="n">monitor</span> <span class="o">=</span> <span class="n">request</span><span class="o">.</span><span class="n">actor</span>
+    <span class="k">if</span> <span class="n">monitor</span><span class="o">.</span><span class="n">managed_actors</span><span class="p">:</span>
+        <span class="k">for</span> <span class="n">worker</span> <span class="ow">in</span> <span class="n">monitor</span><span class="o">.</span><span class="n">managed_actors</span><span class="o">.</span><span class="n">values</span><span class="p">():</span>
+            <span class="n">monitor</span><span class="o">.</span><span class="n">send</span><span class="p">(</span><span class="n">worker</span><span class="p">,</span> <span class="s">&#39;broadcast_message&#39;</span><span class="p">,</span> <span class="n">message</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">get_pubsub</span><span class="p">()</span><span class="o">.</span><span class="n">broadcast</span><span class="p">(</span><span class="n">message</span><span class="p">)</span>
+        
+<span class="nd">@command</span><span class="p">(</span><span class="n">ack</span><span class="o">=</span><span class="bp">False</span><span class="p">)</span>
+<span class="k">def</span> <span class="nf">broadcast_message</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="n">message</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39;In the actor domain&#39;&#39;&#39;</span>
+    <span class="n">get_pubsub</span><span class="p">()</span><span class="o">.</span><span class="n">broadcast</span><span class="p">(</span><span class="n">message</span><span class="p">)</span>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper"><p class="logo">
+<a href="../../../index.html">
+  <img class="logo" width="200" src="../../../static/pulsar.png" alt="pulsar" title="Pulsar"/>
+</a>
+</p>
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="../../../search.html" method="get">
+      <input type="text" name="q" size="18" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+
+    <div class="footer">
+        &copy; Copyright 2011, Luca Sbardella.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.0.7.
+    </div>
+<script type="text/javascript">
+
+  var _gaq = _gaq || [];
+  
+  _gaq.push(['_setAccount', 'UA-3900561-8']);
+  
+  _gaq.push(['_trackPageview']);
+
+  (function() {
+    var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+    ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+    var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+  })();
+
+</script>
+
+  </body>
+</html>

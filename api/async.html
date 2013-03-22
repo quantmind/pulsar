@@ -6,13 +6,13 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>Asynchonous API &mdash; pulsar v0.5b7 documentation</title>
+    <title>Asynchonous API &mdash; pulsar v0.5b8 documentation</title>
     <link rel="stylesheet" href="../static/pulsar.css" type="text/css" />
     <link rel="stylesheet" href="../static/pygments.css" type="text/css" />
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../',
-        VERSION:     '0.5b7',
+        VERSION:     '0.5b8',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -22,7 +22,7 @@
     <script type="text/javascript" src="../static/underscore.js"></script>
     <script type="text/javascript" src="../static/doctools.js"></script>
     <link rel="shortcut icon" href="../static/Game_of_life_pulsar.gif"/>
-    <link rel="top" title="pulsar v0.5b7 documentation" href="../index.html" />
+    <link rel="top" title="pulsar v0.5b8 documentation" href="../index.html" />
     <link rel="up" title="API" href="index.html" />
     <link rel="next" title="Actors API" href="actor.html" />
     <link rel="prev" title="API" href="index.html" /> 
@@ -44,7 +44,7 @@
         <li class="right" >
           <a href="index.html" title="API"
              accesskey="P">previous</a> |</li>
-        <li><a href="../index.html">pulsar v0.5b7 documentation</a> &raquo;</li>
+        <li><a href="../index.html">pulsar v0.5b8 documentation</a> &raquo;</li>
           <li><a href="index.html" accesskey="U">API</a> &raquo;</li> 
       </ul>
     </div>
@@ -111,7 +111,6 @@ it is created by <a class="reference internal" href="#pulsar.EventLoop.call_soon
 <em class="property">class </em><tt class="descclassname">pulsar.</tt><tt class="descname">EventLoop</tt><big>(</big><em>io=None</em>, <em>logger=None</em>, <em>poll_timeout=None</em>, <em>timer=None</em>, <em>iothreadloop=True</em><big>)</big><a class="headerlink" href="#pulsar.EventLoop" title="Permalink to this definition">¶</a></dt>
 <dd><p>A pluggable event loop which conforms with the <a class="reference external" href="http://www.python.org/dev/peps/pep-3156/">pep-3156</a> API. The
 event loop is the place where most asynchronous operations are carried out.</p>
-<p><strong>ATTRIBUTES</strong></p>
 <dl class="attribute">
 <dt id="pulsar.EventLoop.io">
 <tt class="descname">io</tt><a class="headerlink" href="#pulsar.EventLoop.io" title="Permalink to this definition">¶</a></dt>
@@ -148,7 +147,13 @@ of time.</p>
 <dd><p>The thread id where the eventloop is running</p>
 </dd></dl>
 
-<p><strong>METHODS</strong></p>
+<dl class="attribute">
+<dt id="pulsar.EventLoop.iothreadloop">
+<tt class="descname">iothreadloop</tt><a class="headerlink" href="#pulsar.EventLoop.iothreadloop" title="Permalink to this definition">¶</a></dt>
+<dd><p><tt class="xref docutils literal"><span class="pre">True</span></tt> if this <a class="reference internal" href="#pulsar.EventLoop" title="pulsar.EventLoop"><tt class="xref py py-class docutils literal"><span class="pre">EventLoop</span></tt></a> install itself as the event
+loop of the thread where it is run.</p>
+</dd></dl>
+
 <dl class="method">
 <dt id="pulsar.EventLoop.run">
 <tt class="descname">run</tt><big>(</big><big>)</big><a class="headerlink" href="#pulsar.EventLoop.run" title="Permalink to this definition">¶</a></dt>
@@ -165,11 +170,10 @@ of time.</p>
 <dl class="method">
 <dt id="pulsar.EventLoop.run_until_complete">
 <tt class="descname">run_until_complete</tt><big>(</big><em>future</em>, <em>timeout=None</em><big>)</big><a class="headerlink" href="#pulsar.EventLoop.run_until_complete" title="Permalink to this definition">¶</a></dt>
-<dd><p>Run the event loop until a Future is done.</p>
-<p>Return the Future&#8217;s result, or raise its exception.</p>
-<p>If timeout is not None, run it for at most that long;
-if the Future is still not done, raise TimeoutError
-(but don&#8217;t cancel the Future).</p>
+<dd><p>Run the event loop until a <a class="reference internal" href="#pulsar.Deferred" title="pulsar.Deferred"><tt class="xref py py-class docutils literal"><span class="pre">Deferred</span></tt></a> <em>future</em> is done.
+Return the future&#8217;s result, or raise its exception. If timeout is not
+<tt class="xref docutils literal"><span class="pre">None</span></tt>, run it for at most that long;  if the future is still not done,
+raise TimeoutError (but don&#8217;t cancel the future).</p>
 </dd></dl>
 
 <dl class="method">
@@ -189,7 +193,7 @@ seconds.  It is always a relative time.</p>
 <p>Each callback will be called exactly once.  If two callbacks
 are scheduled for exactly the same time, it is undefined which
 will be called first.</p>
-<p>Callbacks scheduled in the past are passed on to call_soon(),
+<p>Callbacks scheduled in the past are passed on to <a class="reference internal" href="#pulsar.EventLoop.call_soon" title="pulsar.EventLoop.call_soon"><tt class="xref py py-meth docutils literal"><span class="pre">call_soon()</span></tt></a> method,
 so these will be called in the order in which they were
 registered rather than by time due.  This is so you can&#8217;t
 cheat and insert yourself at the front of the ready queue by
@@ -201,7 +205,7 @@ the callback when it is called.</p>
 <dl class="method">
 <dt id="pulsar.EventLoop.call_soon">
 <tt class="descname">call_soon</tt><big>(</big><em>callback</em>, <em>*args</em><big>)</big><a class="headerlink" href="#pulsar.EventLoop.call_soon" title="Permalink to this definition">¶</a></dt>
-<dd><p>Equivalent to <tt class="docutils literal"><span class="pre">self.call_later(0,</span> <span class="pre">callback,</span> <span class="pre">*args,</span> <span class="pre">**kw)</span></tt>.</p>
+<dd><p>Equivalent to <tt class="docutils literal"><span class="pre">self.call_later(0,</span> <span class="pre">callback,</span> <span class="pre">*args)</span></tt>.</p>
 </dd></dl>
 
 <dl class="method">
@@ -658,18 +662,23 @@ a callable which accept one argument only.</p>
 
 <dl class="method">
 <dt id="pulsar.EventHandler.fire_event">
-<tt class="descname">fire_event</tt><big>(</big><em>event</em>, <em>event_data=None</em><big>)</big><a class="headerlink" href="#pulsar.EventHandler.fire_event" title="Permalink to this definition">¶</a></dt>
-<dd><p>Dispatches <em>event_data</em> to the <em>event</em> listeners.</p>
-<ul class="simple">
-<li>If <em>event_data</em> is not provided, this instance will be dispatched.</li>
-<li>If <em>event_data</em> is an error it will be converted to a <a class="reference internal" href="#pulsar.Failure" title="pulsar.Failure"><tt class="xref py py-class docutils literal"><span class="pre">Failure</span></tt></a>.</li>
-<li>If <em>event</em> is a one-time event, it makes sure that it was not fired before.</li>
-</ul>
+<tt class="descname">fire_event</tt><big>(</big><em>event</em>, <em>event_data=None</em>, <em>sender=None</em><big>)</big><a class="headerlink" href="#pulsar.EventHandler.fire_event" title="Permalink to this definition">¶</a></dt>
+<dd><p>Dispatches <em>event_data</em> to the <em>event</em> listeners.
+* If <em>event</em> is a one-time event, it makes sure that it was not fired before.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
-<tr class="field"><th class="field-name">Returns:</th><td class="field-body">boolean indicating if the event was fired or not.</td>
+<tr class="field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>event_data</strong> &#8211; if not provided, <tt class="docutils literal"><span class="pre">self</span></tt> will be dispatched instead, if an
+error it will be converted to a <a class="reference internal" href="#pulsar.Failure" title="pulsar.Failure"><tt class="xref py py-class docutils literal"><span class="pre">Failure</span></tt></a>.</li>
+<li><strong>sender</strong> &#8211; optional sender of this event. It is only used for
+dispatching <a class="reference internal" href="../tutorials/events.html#global-events"><em>global events</em></a>.</li>
+</ul>
+</td>
+</tr>
+<tr class="field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">boolean indicating if the event was fired or not.</p>
+</td>
 </tr>
 </tbody>
 </table>

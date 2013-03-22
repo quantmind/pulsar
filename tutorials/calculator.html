@@ -6,13 +6,13 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>JSON-RPC Calculator &mdash; pulsar v0.5b7 documentation</title>
+    <title>JSON-RPC Calculator &mdash; pulsar v0.5b8 documentation</title>
     <link rel="stylesheet" href="../static/pulsar.css" type="text/css" />
     <link rel="stylesheet" href="../static/pygments.css" type="text/css" />
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../',
-        VERSION:     '0.5b7',
+        VERSION:     '0.5b8',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -22,9 +22,9 @@
     <script type="text/javascript" src="../static/underscore.js"></script>
     <script type="text/javascript" src="../static/doctools.js"></script>
     <link rel="shortcut icon" href="../static/Game_of_life_pulsar.gif"/>
-    <link rel="top" title="pulsar v0.5b7 documentation" href="../index.html" />
+    <link rel="top" title="pulsar v0.5b8 documentation" href="../index.html" />
     <link rel="up" title="Tutorials &amp; Topics" href="index.html" />
-    <link rel="next" title="Asynchronous Components" href="coroutine.html" />
+    <link rel="next" title="Chat Server" href="chat.html" />
     <link rel="prev" title="Web Mail" href="webmail.html" /> 
   </head>
   <body>
@@ -39,12 +39,12 @@
           <a href="../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
         <li class="right" >
-          <a href="coroutine.html" title="Asynchronous Components"
+          <a href="chat.html" title="Chat Server"
              accesskey="N">next</a> |</li>
         <li class="right" >
           <a href="webmail.html" title="Web Mail"
              accesskey="P">previous</a> |</li>
-        <li><a href="../index.html">pulsar v0.5b7 documentation</a> &raquo;</li>
+        <li><a href="../index.html">pulsar v0.5b8 documentation</a> &raquo;</li>
           <li><a href="index.html" accesskey="U">Tutorials &amp; Topics</a> &raquo;</li> 
       </ul>
     </div>
@@ -75,7 +75,7 @@ To run the server type:</p>
 </div>
 <p>Open a new shell and launch python and type:</p>
 <div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">pulsar.apps</span> <span class="kn">import</span> <span class="n">rpc</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">p</span> <span class="o">=</span> <span class="n">rpc</span><span class="o">.</span><span class="n">JsonProxy</span><span class="p">(</span><span class="s">&#39;http://localhost:8060&#39;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">p</span> <span class="o">=</span> <span class="n">rpc</span><span class="o">.</span><span class="n">JsonProxy</span><span class="p">(</span><span class="s">&#39;http://localhost:8060&#39;</span><span class="p">,</span> <span class="n">force_sync</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">p</span><span class="o">.</span><span class="n">ping</span><span class="p">()</span>
 <span class="go">&#39;pong&#39;</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">p</span><span class="o">.</span><span class="n">functions_list</span><span class="p">()</span>
@@ -84,6 +84,9 @@ To run the server type:</p>
 <span class="go">7.0</span>
 </pre></div>
 </div>
+<p>The <tt class="docutils literal"><span class="pre">force_sync</span></tt> keyword is used here to force the Json RPC client to
+wait for a full response rather than returning a <a class="reference internal" href="../api/async.html#pulsar.Deferred" title="pulsar.Deferred"><tt class="xref py py-class docutils literal"><span class="pre">pulsar.Deferred</span></tt></a>.
+Check the <a class="reference internal" href="sync.html#tutorials-synchronous"><em>creating synchronous clients</em></a> tutorial.</p>
 <div class="section" id="implementation">
 <h2>Implementation<a class="headerlink" href="#implementation" title="Permalink to this headline">¶</a></h2>
 <p>The calculator rpc functions are implemented by the <a class="reference internal" href="#examples.calculator.manage.Calculator" title="examples.calculator.manage.Calculator"><tt class="xref py py-class docutils literal"><span class="pre">Calculator</span></tt></a>
@@ -152,8 +155,8 @@ remote functions.</p>
   <p class="topless"><a href="webmail.html"
                         title="previous chapter">Web Mail</a></p>
   <h4>Next topic</h4>
-  <p class="topless"><a href="coroutine.html"
-                        title="next chapter">Asynchronous Components</a></p>
+  <p class="topless"><a href="chat.html"
+                        title="next chapter">Chat Server</a></p>
   <h3>This Page</h3>
   <ul class="this-page-menu">
     <li><a href="../sources/tutorials/calculator.txt"

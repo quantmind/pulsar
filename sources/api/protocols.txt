@@ -48,6 +48,9 @@ Producer
 Clients
 =================
 
+This section introduces two classes for transport/protocol clients with several
+connections to a remote :class:`Server`. 
+
 Client
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 .. autoclass:: Client

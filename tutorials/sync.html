@@ -6,13 +6,13 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>Game of Life &mdash; pulsar v0.5a2 documentation</title>
-    <link rel="stylesheet" href="../static/celery.css" type="text/css" />
+    <title>Synchronous Clients &mdash; pulsar v0.5b8 documentation</title>
+    <link rel="stylesheet" href="../static/pulsar.css" type="text/css" />
     <link rel="stylesheet" href="../static/pygments.css" type="text/css" />
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../',
-        VERSION:     '0.5a2',
+        VERSION:     '0.5b8',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -21,12 +21,14 @@
     <script type="text/javascript" src="../static/jquery.js"></script>
     <script type="text/javascript" src="../static/underscore.js"></script>
     <script type="text/javascript" src="../static/doctools.js"></script>
-    <link rel="top" title="pulsar v0.5a2 documentation" href="../index.html" />
+    <link rel="shortcut icon" href="../static/Game_of_life_pulsar.gif"/>
+    <link rel="top" title="pulsar v0.5b8 documentation" href="../index.html" />
     <link rel="up" title="Tutorials &amp; Topics" href="index.html" />
-    <link rel="next" title="Actor messages" href="messages.html" />
-    <link rel="prev" title="HTTP Proxy Server" href="proxy.html" /> 
+    <link rel="next" title="API" href="../api/index.html" />
+    <link rel="prev" title="Twisted Integration" href="twisted.html" /> 
   </head>
   <body>
+
     <div class="related">
       <h3>Navigation</h3>
       <ul>
@@ -37,75 +39,59 @@
           <a href="../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
         <li class="right" >
-          <a href="messages.html" title="Actor messages"
+          <a href="../api/index.html" title="API"
              accesskey="N">next</a> |</li>
         <li class="right" >
-          <a href="proxy.html" title="HTTP Proxy Server"
+          <a href="twisted.html" title="Twisted Integration"
              accesskey="P">previous</a> |</li>
-        <li><a href="../index.html">pulsar v0.5a2 documentation</a> &raquo;</li>
+        <li><a href="../index.html">pulsar v0.5b8 documentation</a> &raquo;</li>
           <li><a href="index.html" accesskey="U">Tutorials &amp; Topics</a> &raquo;</li> 
       </ul>
-    </div>  
-
-    <div class="document">
+    </div>
 <div class="deck">
-
+<div class="header">
     
         <p class="developmentversion">
         Documentation for pulsar's DEVELOPMENT version. Get the 
         <a href="http://packages.python.org/pulsar/">release docs here</a>.
         </p>
     
-
 </div>
+</div>
+  
 
+    <div class="document">
       <div class="documentwrapper">
         <div class="bodywrapper">
           <div class="body">
             
-  <div class="section" id="module-examples.life.manage">
-<span id="game-of-life"></span><span id="tutorials-life"></span><h1>Game of Life<a class="headerlink" href="#module-examples.life.manage" title="Permalink to this headline">¶</a></h1>
-<p>To run the example, simply type:</p>
-<div class="highlight-python"><pre>pulsar manage.py</pre>
-</div>
-<div class="section" id="pulsar-application">
-<h2>Pulsar Application<a class="headerlink" href="#pulsar-application" title="Permalink to this headline">¶</a></h2>
-<dl class="class">
-<dt id="examples.life.manage.GameOfLife">
-<em class="property">class </em><tt class="descclassname">examples.life.manage.</tt><tt class="descname">GameOfLife</tt><big>(</big><em>initial</em>, <em>scale=1</em><big>)</big><a class="reference internal" href="../modules/examples/life/manage.html#GameOfLife"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#examples.life.manage.GameOfLife" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-</div>
+  <div class="section" id="synchronous-clients">
+<span id="tutorials-synchronous"></span><h1>Synchronous Clients<a class="headerlink" href="#synchronous-clients" title="Permalink to this headline">¶</a></h1>
+<p>Both <a class="reference internal" href="../api/protocols.html#pulsar.Client" title="pulsar.Client"><tt class="xref py py-class docutils literal"><span class="pre">pulsar.Client</span></tt></a> and <a class="reference internal" href="../api/protocols.html#pulsar.Server" title="pulsar.Server"><tt class="xref py py-class docutils literal"><span class="pre">pulsar.Server</span></tt></a> are asynchronous by design.
+However, sometimes, mainly for testing purposing, can be useful to have
+<a class="reference internal" href="../api/protocols.html#pulsar.Client" title="pulsar.Client"><tt class="xref py py-class docutils literal"><span class="pre">pulsar.Client</span></tt></a> which behave in a synchronous fashion.</p>
+<p>Pulsar achieves this by using the <tt class="docutils literal"><span class="pre">force_sync</span></tt> keyword when building a client.</p>
 </div>
 
 
           </div>
         </div>
       </div>
-
       <div class="sphinxsidebar">
         <div class="sphinxsidebarwrapper"><p class="logo">
 <a href="../index.html">
   <img class="logo" width="200" src="../static/pulsar.png" alt="pulsar" title="Pulsar"/>
 </a>
 </p>
-  <h3><a href="../index.html">Table Of Contents</a></h3>
-  <ul>
-<li><a class="reference internal" href="#">Game of Life</a><ul>
-<li><a class="reference internal" href="#pulsar-application">Pulsar Application</a></li>
-</ul>
-</li>
-</ul>
-
   <h4>Previous topic</h4>
-  <p class="topless"><a href="proxy.html"
-                        title="previous chapter">HTTP Proxy Server</a></p>
+  <p class="topless"><a href="twisted.html"
+                        title="previous chapter">Twisted Integration</a></p>
   <h4>Next topic</h4>
-  <p class="topless"><a href="messages.html"
-                        title="next chapter">Actor messages</a></p>
+  <p class="topless"><a href="../api/index.html"
+                        title="next chapter">API</a></p>
   <h3>This Page</h3>
   <ul class="this-page-menu">
-    <li><a href="../sources/tutorials/life.txt"
+    <li><a href="../sources/tutorials/sync.txt"
            rel="nofollow">Show Source</a></li>
   </ul>
 <div id="searchbox" style="display: none">
@@ -124,25 +110,6 @@
         </div>
       </div>
       <div class="clearer"></div>
-    </div>
-    <div class="related">
-      <h3>Navigation</h3>
-      <ul>
-        <li class="right" style="margin-right: 10px">
-          <a href="../genindex.html" title="General Index"
-             >index</a></li>
-        <li class="right" >
-          <a href="../py-modindex.html" title="Python Module Index"
-             >modules</a> |</li>
-        <li class="right" >
-          <a href="messages.html" title="Actor messages"
-             >next</a> |</li>
-        <li class="right" >
-          <a href="proxy.html" title="HTTP Proxy Server"
-             >previous</a> |</li>
-        <li><a href="../index.html">pulsar v0.5a2 documentation</a> &raquo;</li>
-          <li><a href="index.html" >Tutorials &amp; Topics</a> &raquo;</li> 
-      </ul>
     </div>
 
     <div class="footer">

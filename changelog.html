@@ -6,13 +6,13 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>Changelog &mdash; pulsar v0.5b7 documentation</title>
+    <title>Changelog &mdash; pulsar v0.5b8 documentation</title>
     <link rel="stylesheet" href="static/pulsar.css" type="text/css" />
     <link rel="stylesheet" href="static/pygments.css" type="text/css" />
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '',
-        VERSION:     '0.5b7',
+        VERSION:     '0.5b8',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -22,7 +22,7 @@
     <script type="text/javascript" src="static/underscore.js"></script>
     <script type="text/javascript" src="static/doctools.js"></script>
     <link rel="shortcut icon" href="static/Game_of_life_pulsar.gif"/>
-    <link rel="top" title="pulsar v0.5b7 documentation" href="index.html" />
+    <link rel="top" title="pulsar v0.5b8 documentation" href="index.html" />
     <link rel="next" title="Settings" href="settings.html" />
     <link rel="prev" title="Tools" href="api/utilities.html" /> 
   </head>
@@ -43,7 +43,7 @@
         <li class="right" >
           <a href="api/utilities.html" title="Tools"
              accesskey="P">previous</a> |</li>
-        <li><a href="index.html">pulsar v0.5b7 documentation</a> &raquo;</li> 
+        <li><a href="index.html">pulsar v0.5b8 documentation</a> &raquo;</li> 
       </ul>
     </div>
 <div class="deck">
@@ -71,9 +71,9 @@
 <li><p class="first">This is a major release with considerable ammount of internal refactoring.</p>
 </li>
 <li><dl class="first docutils">
-<dt>Asynchronous Framework:</dt>
+<dt>Asynchronous framework:</dt>
 <dd><ul class="first last simple">
-<li><a class="reference external" href="http://www.python.org/dev/peps/pep-3156/">pep-3156</a> implementation with considerable amount of internal refactoring.</li>
+<li><a class="reference external" href="http://www.python.org/dev/peps/pep-3156/">pep-3156</a> implementation.</li>
 <li><a class="reference internal" href="api/actor.html#pulsar.Actor" title="pulsar.Actor"><tt class="xref py py-class docutils literal"><span class="pre">pulsar.Actor</span></tt></a> internal message passing uses the (unmasked) websocket protocol
 in a bidirectional communication between the <a class="reference internal" href="api/actor.html#pulsar.Arbiter" title="pulsar.Arbiter"><tt class="xref py py-class docutils literal"><span class="pre">pulsar.Arbiter</span></tt></a> and actors.</li>
 <li>Spawning and stopping actors is monitored using a timeout set at 5 seconds.</li>
@@ -101,6 +101,8 @@ further information.</li>
 <li>New asynchronous <a class="reference internal" href="apps/http.html#pulsar.apps.http.HttpClient" title="pulsar.apps.http.HttpClient"><tt class="xref py py-class docutils literal"><span class="pre">pulsar.apps.http.HttpClient</span></tt></a> with websocket support.</li>
 <li>Support <a class="reference external" href="https://github.com/benoitc/http-parser">http-parser</a> for faster http protocol parsing.</li>
 <li>Refactoring of asynchronous <a class="reference internal" href="apps/test.html#module-pulsar.apps.test" title="pulsar.apps.test"><tt class="xref py py-mod docutils literal"><span class="pre">pulsar.apps.test</span></tt></a> application.</li>
+<li>Added <a class="reference internal" href="apps/pubsub.html#apps-pubsub"><em>Publish/Subscribe application</em></a>. The application
+is used in the <a class="reference internal" href="tutorials/chat.html#tutorials-chat"><em>web chat</em></a> example.</li>
 </ul>
 </dd>
 </dl>
@@ -154,6 +156,7 @@ after closing the <a class="reference internal" href="api/actor.html#pulsar.Acto
 <em>result</em> when the it is called and no callbacks are available.
 It avoids several unnecessary calls on deeply nested <a class="reference internal" href="api/async.html#pulsar.Deferred" title="pulsar.Deferred"><tt class="xref py py-class docutils literal"><span class="pre">pulsar.Deferred</span></tt></a>
 (which sometimes caused maximum recursion depth exceeded).</li>
+<li>Fixed calculator example script.</li>
 <li><strong>374 regression tests</strong>, <strong>87% coverage</strong>.</li>
 </ul>
 </div>

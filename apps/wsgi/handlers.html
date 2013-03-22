@@ -6,13 +6,13 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>WSGI application handlers &mdash; pulsar v0.5b7 documentation</title>
+    <title>WSGI application handlers &mdash; pulsar v0.5b8 documentation</title>
     <link rel="stylesheet" href="../../static/pulsar.css" type="text/css" />
     <link rel="stylesheet" href="../../static/pygments.css" type="text/css" />
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../',
-        VERSION:     '0.5b7',
+        VERSION:     '0.5b8',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -22,7 +22,7 @@
     <script type="text/javascript" src="../../static/underscore.js"></script>
     <script type="text/javascript" src="../../static/doctools.js"></script>
     <link rel="shortcut icon" href="../../static/Game_of_life_pulsar.gif"/>
-    <link rel="top" title="pulsar v0.5b7 documentation" href="../../index.html" />
+    <link rel="top" title="pulsar v0.5b8 documentation" href="../../index.html" />
     <link rel="up" title="WSGI" href="index.html" />
     <link rel="next" title="WSGI Wrappers" href="wrappers.html" />
     <link rel="prev" title="WSGI Servers" href="intro.html" /> 
@@ -44,7 +44,7 @@
         <li class="right" >
           <a href="intro.html" title="WSGI Servers"
              accesskey="P">previous</a> |</li>
-        <li><a href="../../index.html">pulsar v0.5b7 documentation</a> &raquo;</li>
+        <li><a href="../../index.html">pulsar v0.5b8 documentation</a> &raquo;</li>
           <li><a href="index.html" accesskey="U">WSGI</a> &raquo;</li> 
       </ul>
     </div>
@@ -291,8 +291,26 @@ well as media files.</p>
 <dl class="class">
 <dt id="pulsar.apps.wsgi.handlers.LazyWsgi">
 <em class="property">class </em><tt class="descclassname">pulsar.apps.wsgi.handlers.</tt><tt class="descname">LazyWsgi</tt><a class="reference internal" href="../../modules/pulsar/apps/wsgi/handlers.html#LazyWsgi"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.wsgi.handlers.LazyWsgi" title="Permalink to this definition">¶</a></dt>
-<dd><p>A <em class="xref std std-ref">wsgi handler</em> which loads its middleware the
-first time it is called. Subclasses must implement the <tt class="xref py py-meth docutils literal"><span class="pre">setup()</span></tt> method.</p>
+<dd><p>A <a class="reference internal" href="#apps-wsgi-handlers"><em>wsgi handler</em></a> which loads its middleware the
+first time it is called. Subclasses must implement the <a class="reference internal" href="#pulsar.apps.wsgi.handlers.LazyWsgi.setup" title="pulsar.apps.wsgi.handlers.LazyWsgi.setup"><tt class="xref py py-meth docutils literal"><span class="pre">setup()</span></tt></a> method.</p>
+<p>This application handler is particularly useful when working in multiprocessing
+mode so that wsgi middleware can be rebuild consistently in ever application
+domain without causing serialization issues.</p>
+<dl class="attribute">
+<dt id="pulsar.apps.wsgi.handlers.LazyWsgi.middleware">
+<tt class="descname">middleware</tt><a class="headerlink" href="#pulsar.apps.wsgi.handlers.LazyWsgi.middleware" title="Permalink to this definition">¶</a></dt>
+<dd><p>The lazy middleware.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="pulsar.apps.wsgi.handlers.LazyWsgi.setup">
+<tt class="descname">setup</tt><big>(</big><big>)</big><a class="reference internal" href="../../modules/pulsar/apps/wsgi/handlers.html#LazyWsgi.setup"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.wsgi.handlers.LazyWsgi.setup" title="Permalink to this definition">¶</a></dt>
+<dd><p>The setup function for this <a class="reference internal" href="#pulsar.apps.wsgi.handlers.LazyWsgi" title="pulsar.apps.wsgi.handlers.LazyWsgi"><tt class="xref py py-class docutils literal"><span class="pre">LazyWsgi</span></tt></a>. Called once only
+the first time this application handler is invoked. This <strong>must</strong> be implemented
+by subclasses and <strong>must</strong> return a
+<a class="reference internal" href="#apps-wsgi-handlers"><em>wsgi application handler</em></a>.</p>
+</dd></dl>
+
 </dd></dl>
 
 </div>
@@ -315,6 +333,13 @@ module in <a class="reference external" href="https://github.com/mitsuhiko/werkz
 <span class="n">Route</span><span class="p">(</span><span class="s">&#39;&lt;int(min=1,max=200):size&gt;&#39;</span><span class="p">)</span>
 </pre></div>
 </div>
+<p>Paths:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="c"># accept any path (including slashes)</span>
+<span class="n">Route</span><span class="p">(</span><span class="s">&#39;&lt;path:pages&gt;&#39;</span><span class="p">)</span>
+<span class="c"># accept an integer between 1 and 200 only</span>
+<span class="n">Route</span><span class="p">(</span><span class="s">&#39;&lt;path:pages&gt;/edit&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
 <div class="section" id="route-decorator">
 <span id="apps-wsgi-route-decorator"></span><h2>Route decorator<a class="headerlink" href="#route-decorator" title="Permalink to this headline">¶</a></h2>
 <dl class="class">
@@ -322,7 +347,7 @@ module in <a class="reference external" href="https://github.com/mitsuhiko/werkz
 <em class="property">class </em><tt class="descclassname">pulsar.apps.wsgi.route.</tt><tt class="descname">route</tt><big>(</big><em>rule=None</em>, <em>method=None</em>, <em>defaults=None</em>, <em>**parameters</em><big>)</big><a class="headerlink" href="#pulsar.apps.wsgi.route.route" title="Permalink to this definition">¶</a></dt>
 <dd><p>Decorator for creating a (<a class="reference internal" href="#pulsar.apps.wsgi.route.Route" title="pulsar.apps.wsgi.route.Route"><tt class="xref py py-class docutils literal"><span class="pre">Route</span></tt></a>, HTTP method, parameters) tuple
 and assign it to the <cite>rule_method</cite> attribute of the functon which
-is decorated. Check the <em class="xref std std-ref">HttpBin example</em>
+is decorated. Check the <a class="reference internal" href="../../tutorials/httpbin.html#tutorials-httpbin"><em>HttpBin example</em></a>
 for a sample usage.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
