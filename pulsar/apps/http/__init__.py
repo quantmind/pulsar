@@ -6,7 +6,7 @@ from copy import copy
 from base64 import b64encode, b64decode
 
 import pulsar
-from pulsar import create_transport, multi_async, is_failure
+from pulsar import create_transport, is_failure
 from pulsar.utils.pep import native_str, is_string, to_bytes
 from pulsar.utils.structures import mapping_iterator
 from pulsar.utils.websocket import FrameParser, SUPPORTED_VERSIONS
@@ -585,8 +585,3 @@ the :class:`HttpRequest` constructor.
 by the :meth:`upgrade` method.'''
         return WebSocketResponse(connection, handshake)
     
-    def timeit(self, times, method, url, **kwargs):
-        '''Send *times* requests asynchronously and evaluate the time
-taken to obtain all responses.'''
-        return multi_async((self.request(method, url).on_finished\
-                                for _ in range(times)))

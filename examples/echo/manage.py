@@ -69,16 +69,24 @@ The only difference between client and server is the implementation of the
     separator = b'\r\n\r\n'
     '''A separator for messages.'''
     
+    def __init__(self, *args, **kwargs):
+        super(EchoProtocol, self).__init__(*args, **kwargs)
+        self.buffer = b''        
+    
     def data_received(self, data):
         '''Implements the :meth:`pulsar.Protocol.data_received` method.
 It simply search for the :attr:`separator` and, if found, it invokes the
 :meth:`response` method with the value of the message.'''
         idx = data.find(self.separator)
-        if idx: # we have a full message
+        if idx >= 0: # we have a full message
             idx += len(self.separator)
             data, rest = data[:idx], data[idx:]
+            data = self.buffer + data
+            self.buffer = b''
             self.finished(self.response(data))
             return rest
+        else:
+            self.buffer += data
     
     def start_request(self):
         self.transport.write(self.current_request.message + self.separator)

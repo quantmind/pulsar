@@ -1,10 +1,11 @@
 import socket
 from functools import partial, reduce
+from threading import Lock
 
 from pulsar import TooManyConnections
-from pulsar.utils.pep import get_event_loop, new_event_loop, itervalues
+from pulsar.utils.pep import get_event_loop, new_event_loop, itervalues, range
 from pulsar.utils.sockets import get_transport_type, create_socket
-from pulsar.async.defer import is_failure
+from pulsar.async.defer import is_failure, multi_async
 
 from .protocols import ProtocolConsumer, EventHandler, Producer
 from .transport import create_transport, LOGGER
@@ -37,6 +38,7 @@ protocols. It maintains a live set of connections.
     '''    
     def __init__(self, request, **params):
         params['timeout'] = request.timeout
+        self.lock = Lock()
         super(ConnectionPool, self).__init__(**params)
         self._address = request.address
         self._available_connections = set()
@@ -64,41 +66,42 @@ of available connections.
 :parameter response: Optional :class:`ProtocolConsumer` which consumed the
     connection.
 '''
-        self._concurrent_connections.discard(connection)
-        if connection.producer.can_reuse_connection(connection, response):
-            self._available_connections.add(connection)
-        self._remove_self(connection.producer)
+        with self.lock:
+            self._concurrent_connections.discard(connection)
+            if connection.producer.can_reuse_connection(connection, response):
+                self._available_connections.add(connection)
         
     def get_or_create_connection(self, client):
         "Get or create a new connection for *client*"
-        try:
-            closed = True
-            while closed:
-                connection = self._available_connections.pop()
-                closed = connection.is_stale()
-                if closed and not connection.closed:
-                    connection.transport.close()
-        except KeyError:
-            connection = None
-        else:
-            # we have a connection, lets added it to the concurrent set
-            self._concurrent_connections.add(connection)
-        if connection is None:
-            # build the new connection
-            connection = self.new_connection(self.address,
-                                             client.consumer_factory,
-                                             producer=client)
-            # Bind the post request event to the release connection function
-            connection.bind_event('post_request', self._release_response)
-            # Bind the connection_lost to connection to handle dangling connections
-            connection.bind_event('connection_lost',
-                                  partial(self._try_reconnect, connection))
-            #IMPORTANT: create client transport an connect to endpoint
-            transport = create_transport(connection, address=connection.address,
-                                         event_loop=client.get_event_loop())
-            return transport.connect(connection.address)
-        else:
-            return connection
+        with self.lock:
+            try:
+                closed = True
+                while closed:
+                    connection = self._available_connections.pop()
+                    closed = connection.is_stale()
+                    if closed and not connection.closed:
+                        connection.transport.close()
+            except KeyError:
+                connection = None
+            else:
+                # we have a connection, lets added it to the concurrent set
+                self._concurrent_connections.add(connection)
+            if connection is None:
+                # build the new connection
+                connection = self.new_connection(self.address,
+                                                 client.consumer_factory,
+                                                 producer=client)
+                # Bind the post request event to the release connection function
+                connection.bind_event('post_request', self._release_response)
+                # Bind the connection_lost to connection to handle dangling connections
+                connection.bind_event('connection_lost',
+                                      partial(self._try_reconnect, connection))
+                #IMPORTANT: create client transport an connect to endpoint
+                transport = create_transport(connection, address=connection.address,
+                                             event_loop=client.get_event_loop())
+                return transport.connect(connection.address)
+            else:
+                return connection
         
     ############################################################################
     ##    INTERNALS
@@ -136,19 +139,14 @@ of available connections.
         consumer.new_request(consumer.current_request)
                 
     def _remove_connection(self, connection, exc=None):
-        super(ConnectionPool, self)._remove_connection(connection, exc)
-        self._available_connections.discard(connection)
-        self._remove_self(connection.producer)
+        with self.lock:
+            super(ConnectionPool, self)._remove_connection(connection, exc)
+            self._available_connections.discard(connection)
     
     def _release_response(self, response):
         #proxy to release_connection
         if getattr(response, 'release_connection', True):
             self.release_connection(response.connection, response)
-
-    def _remove_self(self, client):
-        return
-        if not self._available_connections and not self._concurrent_connections:
-            client.remove_pool(self)
 
 
 class Client(EventHandler):
@@ -191,6 +189,7 @@ will remain as a class attribute, otherwise it will be an instance attribute.'''
                  trust_env=True, consumer_factory=None, max_reconnect=None,
                  force_sync=False, **params):
         super(Client, self).__init__()
+        self.lock = Lock()
         self.trust_env = trust_env
         self.client_version = client_version or self.client_version
         self.timeout = timeout if timeout is not None else self.timeout
@@ -263,13 +262,14 @@ start the response.
     
     def get_connection(self, request):
         '''Get a suitable :class:`Connection` for *request*.'''
-        pool = self.connection_pools.get(request.key)
-        if pool is None:
-            pool = self.connection_pool(
-                                    request,
-                                    max_connections=self.max_connections,
-                                    connection_factory=self.connection_factory)
-            self.connection_pools[request.key] = pool
+        with self.lock:
+            pool = self.connection_pools.get(request.key)
+            if pool is None:
+                pool = self.connection_pool(
+                                request,
+                                max_connections=self.max_connections,
+                                connection_factory=self.connection_factory)
+                self.connection_pools[request.key] = pool
         return pool.get_or_create_connection(self)
         
     def update_parameters(self, parameter_list, params):
@@ -324,6 +324,17 @@ is available.'''
             protocol.finished()
             connection.upgrade(protocol_factory)
             return connection
+    
+    def timeit(self, times, *args, **kwargs):
+        '''Send *times* requests asynchronously and evaluate the time
+taken to obtain all responses.'''
+        results = []
+        for _ in range(times):
+            r = self.request(*args, **kwargs)
+            if hasattr(r, 'on_finished'):
+                r = r.on_finished
+            results.append(r)
+        return multi_async(results)
              
         
 class SingleClient(Client):

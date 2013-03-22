@@ -104,10 +104,7 @@ sending mail via the twisted IMAP4 library.'''
 
 
 class Web(wsgi.Router):
-    '''Main web page'''
-    def post(self, request):
-        pass
-    
+    '''Main web page'''    
     def get(self, request):
         data = open(os.path.join(ASSET_DIR, 'mail.html')).read()
         request.response.content = data % request.environ

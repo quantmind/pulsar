@@ -22,6 +22,7 @@ class TestHelloWorldThread(unittest.TestCase):
                    bind='127.0.0.1:0')
         cls.app = yield send('arbiter', 'run', s)
         cls.uri = 'http://{0}:{1}'.format(*cls.app.address)
+        cls.client = HttpClient()
         
     @classmethod
     def tearDownClass(cls):
@@ -38,7 +39,7 @@ class TestHelloWorldThread(unittest.TestCase):
         self.assertEqual(app.cfg.bind, '127.0.0.1:0')
         
     def testResponse(self):
-        c = HttpClient()
+        c = self.client
         response = yield c.get(self.uri).on_finished
         self.assertEqual(response.status_code, 200)
         content = response.content
@@ -49,15 +50,17 @@ class TestHelloWorldThread(unittest.TestCase):
         self.assertEqual(headers['server'], SERVER_SOFTWARE)
     
     def testTimeIt(self):
-        c = HttpClient()
-        response = c.timeit(20, 'get', self.uri)
+        c = self.client
+        response = c.timeit(40, 'get', self.uri)
+        #cc = list(c.connection_pools.values())[0]._concurrent_connections
+        #self.assertTrue(cc)
         yield response
-        self.assertTrue(response.locked_time > 0)
-        self.assertTrue(response.total_time > response.locked_time)
+        self.assertTrue(response.locked_time >= 0)
+        self.assertTrue(response.total_time >= response.locked_time)
         self.assertEqual(response.num_failures, 0)
         
     def test_getbench(self):
-        c = HttpClient()
+        c = self.client
         yield MultiDeferred((c.get(self.uri) for _ in range(1))).lock()
     test_getbench.__benchmark__ = True
 

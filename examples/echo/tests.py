@@ -2,6 +2,7 @@ from functools import partial
 
 import pulsar
 from pulsar import multi_async
+from pulsar.utils.pep import range
 from pulsar.apps.test import unittest, dont_run_with_thread
 
 from .manage import server, Echo, EchoServerProtocol
@@ -33,6 +34,20 @@ class TestEchoServerThread(unittest.TestCase):
         c = self.client
         result = yield c.request(b'ciao luca')
         self.assertEqual(result, b'ciao luca')
+        
+    def test_large(self):
+        '''Echo a 3MB message'''
+        msg = b''.join((b'a' for x in range(2**13)))
+        result = yield self.client.request(msg)
+        self.assertEqual(result, msg)
+        
+    def testTimeIt(self):
+        msg = b''.join((b'a' for x in range(2**10)))
+        response = self.client.timeit(10, msg)
+        yield response
+        self.assertTrue(response.locked_time >= 0)
+        self.assertTrue(response.total_time >= response.locked_time)
+        self.assertEqual(response.num_failures, 0)
         
     def test_multi(self):
         c = self.client
