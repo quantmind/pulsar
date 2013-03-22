@@ -175,7 +175,11 @@ Users access the arbiter (in the arbiter process domain) by the high level api::
     
     def info(self):
         data = super(Arbiter, self).info()
-        monitors = [p.info() for p in itervalues(self.monitors)]
+        monitors = {}
+        for m in itervalues(self.monitors):
+            info = m.info()
+            actor = info['actor']
+            monitors[actor['name']] = info
         server = data.pop('actor')
         server.update({'version': pulsar.__version__,
                        'name': pulsar.SERVER_NAME,

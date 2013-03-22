@@ -44,7 +44,7 @@ class InvalidParams(InvalidRequest):
     
 @rpc_exception
 class InternalError(InvalidRequest):
-    fault_code = -32602
+    fault_code = -32603
     msg = 'Internal error'
 
 

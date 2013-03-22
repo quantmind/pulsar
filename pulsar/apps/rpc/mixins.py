@@ -33,7 +33,7 @@ this :class:`JSONRPC` handler.'''
         return self.docs()
     
     def rpc_kill_actor(self, request, aid):
-        '''Kill and actor which match the id *aid*.'''
+        '''Kill the actor with id equal to *aid*.'''
         return send('arbiter', 'kill_actor', aid)
         
     def extra_server_info(self, request, info):

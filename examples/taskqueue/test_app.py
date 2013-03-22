@@ -5,7 +5,8 @@ from datetime import datetime, timedelta
 from pulsar import send, get_application, get_actor, NOT_DONE
 from pulsar.apps import tasks, rpc
 from pulsar.utils.timeutils import timedelta_seconds
-from pulsar.apps.test import unittest, run_on_arbiter, dont_run_with_thread
+from pulsar.apps.test import unittest, run_on_arbiter, dont_run_with_thread,\
+                                sequential
 
 from .manage import server
 
@@ -19,28 +20,17 @@ def task_function(N = 10, lag = 0.1):
 def wait_for_task(proxy, result):
     while result['status'] in tasks.UNREADY_STATES:
         result = yield proxy.get_task(id=result['id'])
+    yield result
             
 
-class TestTaskClasses(unittest.TestCase):
-    
-    def testTask(self):
-        self.assertRaises(NotImplementedError, tasks.Task.get_task, None, 1)
-        self.assertRaises(NotImplementedError, tasks.Task.save_task, None, 1)
-        self.assertRaises(NotImplementedError, tasks.Task.delete_tasks, None, 1)
-        task = tasks.Task()
-        self.assertFalse(task.on_received())
-        self.assertFalse(task.on_start())
-        self.assertFalse(task.on_timeout())
-        self.assertFalse(task.on_finish())
-
-        
+@sequential
 class TestTaskQueueOnThread(unittest.TestCase):
     concurrency = 'thread'
     app = None
     
     @classmethod
     def name_tq(cls):
-        return 'testtask_'+cls.concurrency
+        return cls.__name__
     
     @classmethod
     def name_rpc(cls):
@@ -52,7 +42,7 @@ class TestTaskQueueOnThread(unittest.TestCase):
         s = server(cls.name_tq(), bind='127.0.0.1:0',
                    concurrency=cls.concurrency)
         cls.app = yield send('arbiter', 'run', s)
-        cls.proxy = rpc.JsonProxy('http://{0}:{1}'.format(*cls.app.address))
+        cls.proxy = rpc.JsonProxy('http://%s:%s' % cls.app.address)
 
     @classmethod
     def tearDownClass(cls):
@@ -90,8 +80,9 @@ class TestTaskQueueOnThread(unittest.TestCase):
         app = get_application(self.name_rpc())
         self.assertTrue(app)
         self.assertEqual(app.name, self.name_rpc())
-        rpc = app.callable
-        root = rpc.handler
+        router = app.callable.middleware
+        self.assertTrue(router.post)
+        root = router.post
         tq = root.taskqueue
         self.assertEqual(tq, self.name_tq())
 
@@ -157,7 +148,7 @@ class TestTaskQueueOnThread(unittest.TestCase):
         app.scheduler.delete_tasks()
         
     def test_rpc_ping(self):
-        self.async.assertEqual(self.proxy.ping(), 'pong')
+        yield self.async.assertEqual(self.proxy.ping(), 'pong')
         
     def test_rpc_job_list(self):
         jobs = yield self.proxy.job_list()
@@ -184,9 +175,10 @@ class TestTaskQueueOnThread(unittest.TestCase):
         self.assertTrue(next[1] >= 0)
         
     def test_run_new_task_error(self):
-        self.async.assertRaises(rpc.InvalidParams, self.proxy.run_new_task)
-        self.async.assertRaises(rpc.InvalidParams, self.proxy.run_new_task,
-                                jobname='xxxx', bla='foo')
+        yield self.async.assertRaises(rpc.InvalidParams,
+                            self.proxy.run_new_task())
+        yield self.async.assertRaises(rpc.InternalError,
+                            self.proxy.run_new_task(jobname='xxxx', bla='foo'))
         
     def test_run_new_task_RunPyCode(self):
         '''Run a new task from the *runpycode* task factory.'''
@@ -214,7 +206,7 @@ class TestTaskQueueOnThread(unittest.TestCase):
         
     def test_run_new_task_asynchronous(self):
         response = yield self.proxy.run_new_task(jobname='asynchronous',loops=3)
-        r = yield wait_for_task(self.proxy, response)
+        response = yield wait_for_task(self.proxy, response)
         self.assertEqual(response['status'], tasks.SUCCESS)
         result = response['result']
         self.assertEqual(result['loops'], 3)
@@ -239,40 +231,24 @@ class TestTaskQueueOnThread(unittest.TestCase):
         # We check for the tasks created
         stasks = []
         while len(stasks) < sample:
-            ts = self.proxy.get_tasks(from_task=r['id'])
+            ts = yield self.proxy.get_tasks(from_task=r['id'])
             stasks = []
             for t in ts:
                 if t['status'] not in tasks.UNREADY_STATES:
                     stasks.append(t)
                     self.assertEqual(t['status'], tasks.SUCCESS)
-        self.assertEqual(len(stasks), sample)
-        
-
-class b:
-#class TestTaskRpc(unittest.TestCase):
-    '''Test the Rpc and Taskqueue server, including rpc commands
-in the TaskQueueRpcMixin class'''
-    concurrency = 'process'
-    timeout = 3
-
-    def testTaskQueueLink(self):
-        '''Check the task_queue_manager in the rpc handler.'''
-        app = self.app
-        self.assertEqual(app.name,self._name_rpc)
-        callable = app.callable
-        self.assertTrue(callable.handler.task_queue_manager)
-        task_queue_manager = callable.handler.task_queue_manager
-        self.assertEqual(task_queue_manager.name,self._name)
-    def testKillTaskWorker(self):
-        r = self.p.server_info()
-        m = dict(((m['name'],m) for m in r['monitors']))
-        tq = m[self._name]
+        self.assertEqual(len(stasks), sample)
+    def test_kill_task_workers(self):
+        info = yield self.proxy.server_info()
+        tq = info['monitors'][self.name_tq()]
         for worker in tq['workers']:
-            aid = worker['aid']
-            r = self.p.kill_actor(aid)
+            a = worker['actor']
+            aid = a['actor_id']
+            self.assertEqual(a['is_process'], self.concurrency=='process')
+            r = yield self.proxy.kill_actor(aid)
             self.assertTrue(r)
 
 
-#@dont_run_with_thread
-#class TestTaskQueueOnProcess(TestTaskQueueOnThread):
-#    concurrency = 'process'
+@dont_run_with_thread
+class TestTaskQueueOnProcess(TestTaskQueueOnThread):
+    concurrency = 'process'

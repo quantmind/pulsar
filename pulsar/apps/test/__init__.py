@@ -71,8 +71,10 @@ An example test case::
         def test_simple_test(self):
             self.assertEqual(1, 1)
 
-Test functions can be asynchronous, when they return a generator or
-:class:`pulsar.Deferred`, or synchronous, when they return anything else.
+.. note::
+    
+    Test functions are asynchronous, when they return a generator or a
+    :class:`pulsar.Deferred`, synchronous, when they return anything else.
 
 .. _apps-test-loading:
 
@@ -134,6 +136,53 @@ loads
 * all tests from modules which starts with *test* from the ``examples`` directory.
      
 All top level modules will be added to the python ``path``.
+
+Options
+==================
+
+All standard :ref:`settings <settings>` can be applied to the test application.
+In addition, the following options are testsuite-specific:
+
+.. _apps-test-sequential:
+
+sequential
+~~~~~~~~~~~~~~~~~~~
+By default, test functions within a :class:`unittest.TestCase`
+are run in asynchronous fashion. This means that several test functions
+may be executed at once depending on their return values.
+By specifying the ``--sequential`` command line option, the :class:`TestSuite`
+forces tests to be run in a sequential model, one after the other::
+
+    python runtests.py --sequential
+    
+Alternatively, if you need to specify a Testcase which always runs its test functions
+in a sequential way, you can use the :func:`sequential` decorator::
+
+    from pulsar.apps.test import unittest, sequential
+    
+    @sequential
+    class MyTestCase(unittest.TestCase):
+        ...
+        
+        
+list labels
+~~~~~~~~~~~~~~~~~~~
+By passing the ``-l`` or ``--list-labels`` flag to the command line, the
+full list of test labels available is displayed::
+
+    python runtests.py -l
+    
+
+test timeout
+~~~~~~~~~~~~~~~~~~~
+When running asynchronous tests, it can be useful to set a cap on how
+long a test function can wait for results. This is what the
+``--test-timeout`` command line flag does::
+
+    python runtests.py --test-timeout 10
+    
+Set the test timeout to 10 seconds.
+
 
 Plugins
 ==================
@@ -259,7 +308,7 @@ class TestSize(TestOption):
 
 class TestList(TestOption):
     name = "list_labels"
-    flags = ['-l','--list_labels']
+    flags = ['-l','--list-labels']
     action = 'store_true'
     default = False
     validator = pulsar.validate_bool

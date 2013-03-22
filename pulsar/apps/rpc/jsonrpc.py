@@ -215,7 +215,7 @@ usage is simple::
             return self._end_call(raw, resp)
         
     def _end_call(self, raw, resp):
-        content = resp.content.decode('utf-8')
+        content = resp.content_string()
         if resp.is_error:
             if 'error' in content:
                 return self.loads(content)

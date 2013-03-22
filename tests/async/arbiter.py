@@ -4,7 +4,8 @@ import time
 from threading import current_thread
 
 import pulsar
-from pulsar import send, spawn, system, platform, ACTOR_ACTION_TIMEOUT
+from pulsar import send, spawn, system, platform, ACTOR_ACTION_TIMEOUT,\
+                    multi_async
 from pulsar.utils.pep import default_timer
 from pulsar.apps.test import unittest, run_on_arbiter, ActorTestMixin,\
                                 dont_run_with_thread
@@ -54,6 +55,17 @@ class TestArbiterThread(ActorTestMixin, unittest.TestCase):
         self.assertTrue(arbiter.registered)
         self.assertTrue('arbiter' in arbiter.registered)
         self.assertTrue('test' in arbiter.registered)
+    
+    @run_on_arbiter
+    def test_ping_test_worker(self):
+        arbiter = pulsar.get_actor()
+        info = arbiter.info()
+        test = info['monitors']['test']
+        workers = [w['actor']['actor_id'] for w in test['workers']]
+        self.assertTrue(workers)
+        result = yield multi_async((arbiter.send(w, 'ping') for w in workers))
+        self.assertEqual(len(result), len(workers))
+        self.assertEqual(result, len(result)*['pong'])
         
     @run_on_arbiter
     def testSpawning(self):
@@ -68,12 +80,6 @@ class TestArbiterThread(ActorTestMixin, unittest.TestCase):
         self.assertEqual(proxy.name, 'testSpawning')
         self.assertTrue(proxy.aid in arbiter.managed_actors)
         yield send(proxy, 'stop')
-        
-    def test_no_arbiter_in_worker_domain(self):
-        worker = pulsar.get_actor()
-        self.assertEqual(pulsar.arbiter(), None)
-        self.assertTrue(worker.monitor)
-        self.assertNotEqual(worker.monitor.name, 'arbiter')
         
     @run_on_arbiter
     def testBadMonitor(self):
@@ -148,6 +154,11 @@ class TestArbiterThread(ActorTestMixin, unittest.TestCase):
         #TODO this is not valid in multiprocessing!
         #self.assertEqual(arbiter.signal_queue.qsize(), 0)
         
+    def test_no_arbiter_in_worker_domain(self):
+        worker = pulsar.get_actor()
+        self.assertEqual(pulsar.arbiter(), None)
+        self.assertTrue(worker.monitor)
+        self.assertNotEqual(worker.monitor.name, 'arbiter')
 
 @dont_run_with_thread
 class TestArbiterProcess(TestArbiterThread):

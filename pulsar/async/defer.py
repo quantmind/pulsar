@@ -7,7 +7,8 @@ from inspect import isgenerator, isfunction, ismethod, istraceback
 
 from pulsar import AlreadyCalledError, HaltServer
 from pulsar.utils import events
-from pulsar.utils.pep import raise_error_trace, iteritems, default_timer, get_event_loop
+from pulsar.utils.pep import raise_error_trace, iteritems, default_timer,\
+                         get_event_loop
 
 from .access import get_request_loop
 from .consts import *

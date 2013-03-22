@@ -99,11 +99,13 @@ and a :ref:`task queue <apps-tasks>` application installed in the
     
     def rpc_get_tasks(self, request, **params):
         if params:
-            return self._rq(request, 'get_tasks', **params).add_callback(task_to_json)
+            result = yield self._rq(request, 'get_tasks', **params)
+            yield task_to_json(result)
         
     def rpc_wait_for_task(self, request, id=None):
         if id:
-            return self._rq(request, 'wait_for_task', id).add_callback(task_to_json)
+            result = yield self._rq(request, 'wait_for_task', id)
+            yield task_to_json(result)
     
     ############################################################################
     ##    INTERNALS

@@ -229,15 +229,17 @@ logging is configured, the :attr:`Actor.mailbox` is registered and the
         '''Send a message to *target* to perform *action* with given
 parameters *params*.'''
         target = self.monitor if target == 'monitor' else target
+        mailbox = self.mailbox
         if isinstance(target, ActorProxyMonitor):
             mailbox = target.mailbox
         else:
             actor = self.get_actor(target)
             if isinstance(actor, Actor):
-                # this occur when sending a message from arbiter tomonitors or
-                # viceversa. Same signature as mailbox.request
+                # this occur when sending a message from arbiter to monitors or
+                # viceversa.
                 return command_in_context(action, self, actor, args, params)
-            mailbox = self.mailbox
+            elif isinstance(actor, ActorProxyMonitor):
+                mailbox = actor.mailbox
         return mailbox.request(action, self, target, args, params)
     
     def io_poller(self):

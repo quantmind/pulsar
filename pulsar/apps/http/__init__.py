@@ -260,7 +260,7 @@ Initialised by a call to the :class:`HttpClient.request` method.
         if self.is_error:
             if self.status_code:
                 raise HTTPError(self.url, self.status_code,
-                                self.content, self.headers, None)
+                                self.content_string(), self.headers, None)
             else:
                 raise URLError(self.on_finished.result.trace[1])
     
