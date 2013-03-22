@@ -6,13 +6,13 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>Pulsar &mdash; pulsar v0.5b8 documentation</title>
+    <title>Pulsar &mdash; pulsar v0.5b9 documentation</title>
     <link rel="stylesheet" href="static/pulsar.css" type="text/css" />
     <link rel="stylesheet" href="static/pygments.css" type="text/css" />
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '',
-        VERSION:     '0.5b8',
+        VERSION:     '0.5b9',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -22,7 +22,7 @@
     <script type="text/javascript" src="static/underscore.js"></script>
     <script type="text/javascript" src="static/doctools.js"></script>
     <link rel="shortcut icon" href="static/Game_of_life_pulsar.gif"/>
-    <link rel="top" title="pulsar v0.5b8 documentation" href="#" />
+    <link rel="top" title="pulsar v0.5b9 documentation" href="#" />
     <link rel="next" title="Overview" href="overview.html" /> 
   </head>
   <body>
@@ -39,7 +39,7 @@
         <li class="right" >
           <a href="overview.html" title="Overview"
              accesskey="N">next</a> |</li>
-        <li><a href="#">pulsar v0.5b8 documentation</a> &raquo;</li> 
+        <li><a href="#">pulsar v0.5b9 documentation</a> &raquo;</li> 
       </ul>
     </div>
 <div class="deck">
@@ -79,26 +79,43 @@ in a single code base.</p>
 <span class="target" id="module-pulsar.apps"><span id="apps-framework"></span></span><div class="section" id="application-framework">
 <h2>Application Framework<a class="headerlink" href="#application-framework" title="Permalink to this headline">¶</a></h2>
 <p>Pulsar application framework is built on top of <a class="reference internal" href="tutorials/wsgi.html#module-pulsar" title="pulsar"><tt class="xref py py-mod docutils literal"><span class="pre">pulsar</span></tt></a> concurrent
-framework. It is designed to facilitate the development of server-side applications
-such as web servers, task queues or any asynchronous and/or parallel
-idea you may have in mind.
-To write a new application, you subclass <tt class="xref py py-class docutils literal"><span class="pre">pulsar.Application</span></tt> or
+framework. It is designed to facilitate the development of both server-side
+applications such as web servers, task queues as well as asynchronous
+clients.
+To write a new server-side application, you subclass <a class="reference internal" href="api/application.html#pulsar.apps.Application" title="pulsar.apps.Application"><tt class="xref py py-class docutils literal"><span class="pre">Application</span></tt></a> or
 any of the shipped applications listed below, and implement some of
 the callbacks available.</p>
 <p>Currently, pulsar is shipped with the following applications which can be
 found in the <a class="reference internal" href="#module-pulsar.apps" title="pulsar.apps"><tt class="xref py py-mod docutils literal"><span class="pre">pulsar.apps</span></tt></a> module:</p>
+<div class="section" id="servers">
+<h3>Servers<a class="headerlink" href="#servers" title="Permalink to this headline">¶</a></h3>
 <div class="toctree-wrapper compound">
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="apps/socket.html">Socket Servers</a></li>
 <li class="toctree-l1"><a class="reference internal" href="apps/wsgi/index.html">WSGI</a></li>
-<li class="toctree-l1"><a class="reference internal" href="apps/rpc.html">JSON-RPC</a></li>
 <li class="toctree-l1"><a class="reference internal" href="apps/tasks.html">Distributed Task Queues</a></li>
-<li class="toctree-l1"><a class="reference internal" href="apps/websockets.html">WebSockets</a></li>
-<li class="toctree-l1"><a class="reference internal" href="apps/http.html">Asynchornous HTTP client</a></li>
 <li class="toctree-l1"><a class="reference internal" href="apps/test.html">Asynchronous Test Suite</a></li>
 <li class="toctree-l1"><a class="reference internal" href="apps/shell.html">Asynchronous Shell</a></li>
+</ul>
+</div>
+</div>
+<div class="section" id="middleware">
+<h3>Middleware<a class="headerlink" href="#middleware" title="Permalink to this headline">¶</a></h3>
+<div class="toctree-wrapper compound">
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="apps/rpc.html">JSON-RPC</a></li>
+<li class="toctree-l1"><a class="reference internal" href="apps/websockets.html">WebSockets</a></li>
 <li class="toctree-l1"><a class="reference internal" href="apps/pubsub.html">Publish/Subscribe</a></li>
 </ul>
+</div>
+</div>
+<div class="section" id="clients">
+<h3>Clients<a class="headerlink" href="#clients" title="Permalink to this headline">¶</a></h3>
+<div class="toctree-wrapper compound">
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="apps/http.html">Asynchornous HTTP client</a></li>
+</ul>
+</div>
 </div>
 </div>
 <div class="section" id="indices-and-tables">

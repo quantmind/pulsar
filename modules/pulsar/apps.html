@@ -6,13 +6,13 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>pulsar.apps &mdash; pulsar v0.5b8 documentation</title>
+    <title>pulsar.apps &mdash; pulsar v0.5b9 documentation</title>
     <link rel="stylesheet" href="../../static/pulsar.css" type="text/css" />
     <link rel="stylesheet" href="../../static/pygments.css" type="text/css" />
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../',
-        VERSION:     '0.5b8',
+        VERSION:     '0.5b9',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -22,7 +22,7 @@
     <script type="text/javascript" src="../../static/underscore.js"></script>
     <script type="text/javascript" src="../../static/doctools.js"></script>
     <link rel="shortcut icon" href="../../static/Game_of_life_pulsar.gif"/>
-    <link rel="top" title="pulsar v0.5b8 documentation" href="../../index.html" />
+    <link rel="top" title="pulsar v0.5b9 documentation" href="../../index.html" />
     <link rel="up" title="pulsar" href="../pulsar.html" /> 
   </head>
   <body>
@@ -36,7 +36,7 @@
         <li class="right" >
           <a href="../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li><a href="../../index.html">pulsar v0.5b8 documentation</a> &raquo;</li>
+        <li><a href="../../index.html">pulsar v0.5b9 documentation</a> &raquo;</li>
           <li><a href="../index.html" >Module code</a> &raquo;</li>
           <li><a href="../pulsar.html" accesskey="U">pulsar</a> &raquo;</li> 
       </ul>
@@ -110,10 +110,10 @@
 <div class="viewcode-block" id="Worker.app"><a class="viewcode-back" href="../../api/application.html#pulsar.apps.Worker.app">[docs]</a>    <span class="k">def</span> <span class="nf">app</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">params</span><span class="o">.</span><span class="n">app</span>
     </div>
-    <span class="k">def</span> <span class="nf">io_poller</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<div class="viewcode-block" id="Worker.io_poller"><a class="viewcode-back" href="../../api/application.html#pulsar.apps.Worker.io_poller">[docs]</a>    <span class="k">def</span> <span class="nf">io_poller</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">app</span><span class="o">.</span><span class="n">io_poller</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
         
-    <span class="c"># Delegates Callbacks to the application</span>
+    <span class="c"># Delegates Callbacks to the application</span></div>
     <span class="k">def</span> <span class="nf">on_start</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">app_handler</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">app</span><span class="o">.</span><span class="n">handler</span><span class="p">()</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">app</span><span class="o">.</span><span class="n">worker_start</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
@@ -147,11 +147,11 @@
     <span class="n">actor_class</span> <span class="o">=</span> <span class="n">Worker</span>
 
     <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">app</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<div class="viewcode-block" id="ApplicationMonitor.app"><a class="viewcode-back" href="../../api/application.html#pulsar.apps.ApplicationMonitor.app">[docs]</a>    <span class="k">def</span> <span class="nf">app</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">params</span><span class="o">.</span><span class="n">app</span>
         
     <span class="c">############################################################################</span>
-    <span class="c"># Delegates Callbacks to the application</span>
+    <span class="c"># Delegates Callbacks to the application</span></div>
     <span class="k">def</span> <span class="nf">on_start</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="nb">super</span><span class="p">(</span><span class="n">ApplicationMonitor</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">on_start</span><span class="p">()</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">app</span><span class="o">.</span><span class="n">monitor_start</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
@@ -358,13 +358,13 @@
 <span class="sd"> place. If it returns ``False`` the application will abort.&#39;&#39;&#39;</span>
         <span class="k">pass</span>
 </div>
-    <span class="k">def</span> <span class="nf">python_path</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<div class="viewcode-block" id="Application.python_path"><a class="viewcode-back" href="../../api/application.html#pulsar.apps.Application.python_path">[docs]</a>    <span class="k">def</span> <span class="nf">python_path</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="c">#Insert the application directory at the top of the python path.</span>
         <span class="n">fname</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">script</span> <span class="ow">or</span> <span class="n">os</span><span class="o">.</span><span class="n">getcwd</span><span class="p">()</span>
         <span class="n">path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">fname</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
         <span class="k">if</span> <span class="n">path</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">sys</span><span class="o">.</span><span class="n">path</span><span class="p">:</span>
             <span class="n">sys</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">insert</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">path</span><span class="p">)</span>
-
+</div>
     <span class="k">def</span> <span class="nf">add_timeout</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">deadline</span><span class="p">,</span> <span class="n">callback</span><span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">arbiter</span><span class="o">.</span><span class="n">ioloop</span><span class="o">.</span><span class="n">add_timeout</span><span class="p">(</span><span class="n">deadline</span><span class="p">,</span> <span class="n">callback</span><span class="p">)</span>
     

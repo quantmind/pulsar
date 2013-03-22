@@ -6,13 +6,13 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>WSGI Servers &mdash; pulsar v0.5b8 documentation</title>
+    <title>WSGI Servers &mdash; pulsar v0.5b9 documentation</title>
     <link rel="stylesheet" href="../../static/pulsar.css" type="text/css" />
     <link rel="stylesheet" href="../../static/pygments.css" type="text/css" />
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../',
-        VERSION:     '0.5b8',
+        VERSION:     '0.5b9',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -22,7 +22,7 @@
     <script type="text/javascript" src="../../static/underscore.js"></script>
     <script type="text/javascript" src="../../static/doctools.js"></script>
     <link rel="shortcut icon" href="../../static/Game_of_life_pulsar.gif"/>
-    <link rel="top" title="pulsar v0.5b8 documentation" href="../../index.html" />
+    <link rel="top" title="pulsar v0.5b9 documentation" href="../../index.html" />
     <link rel="up" title="WSGI" href="index.html" />
     <link rel="next" title="WSGI application handlers" href="handlers.html" />
     <link rel="prev" title="WSGI" href="index.html" /> 
@@ -44,7 +44,7 @@
         <li class="right" >
           <a href="index.html" title="WSGI"
              accesskey="P">previous</a> |</li>
-        <li><a href="../../index.html">pulsar v0.5b8 documentation</a> &raquo;</li>
+        <li><a href="../../index.html">pulsar v0.5b9 documentation</a> &raquo;</li>
           <li><a href="index.html" accesskey="U">WSGI</a> &raquo;</li> 
       </ul>
     </div>
@@ -67,14 +67,15 @@
             
   <div class="section" id="module-pulsar.apps.wsgi">
 <span id="wsgi-servers"></span><h1>WSGI Servers<a class="headerlink" href="#module-pulsar.apps.wsgi" title="Permalink to this headline">¶</a></h1>
-<p>A specialized <a class="reference internal" href="../socket.html#pulsar.apps.socket.SocketServer" title="pulsar.apps.socket.SocketServer"><tt class="xref py py-class docutils literal"><span class="pre">pulsar.apps.socket.SocketServer</span></tt></a> for
-serving web applications which conforms with the python web server
+<p>This is the most important <a class="reference internal" href="../../api/application.html#application-api"><em>pulsar application</em></a>.
+The server is a specialized <a class="reference internal" href="../socket.html#pulsar.apps.socket.SocketServer" title="pulsar.apps.socket.SocketServer"><tt class="xref py py-class docutils literal"><span class="pre">pulsar.apps.socket.SocketServer</span></tt></a> class
+for serving web applications conforming with the python web server
 gateway interface (<a class="reference external" href="http://www.wsgi.org">WSGI</a>).
-The application can be used in conjunction with several web frameworks
+The server can be used in conjunction with several web frameworks
 as well as <a class="reference internal" href="handlers.html#apps-wsgi-handlers"><em>pulsar wsgi application handlers</em></a>,
 the <a class="reference internal" href="../rpc.html#apps-rpc"><em>pulsar RPC middleware</em></a> and
 the <a class="reference internal" href="../websockets.html#apps-ws"><em>websocket middleware</em></a>.</p>
-<p>An example of a web server written with <tt class="docutils literal"><span class="pre">pulsar.apps.wsgi</span></tt> which responds
+<p>An example of a web server written with <a class="reference internal" href="#module-pulsar.apps.wsgi" title="pulsar.apps.wsgi"><tt class="xref py py-mod docutils literal"><span class="pre">pulsar.apps.wsgi</span></tt></a> which responds
 with &#8220;Hello World!&#8221; for every request:</p>
 <div class="highlight-python"><div class="highlight"><pre><span class="kn">from</span> <span class="nn">pulsar.apps</span> <span class="kn">import</span> <span class="n">wsgi</span>
 
@@ -96,6 +97,102 @@ To run the application:</p>
 <p>For available run options:</p>
 <div class="highlight-python"><pre>python script.py --help</pre>
 </div>
+<div class="section" id="wsgi-server">
+<h2>WSGI Server<a class="headerlink" href="#wsgi-server" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="pulsar.apps.wsgi.WSGIServer">
+<em class="property">class </em><tt class="descclassname">pulsar.apps.wsgi.</tt><tt class="descname">WSGIServer</tt><big>(</big><em>callable=None</em>, <em>description=None</em>, <em>name=None</em>, <em>epilog=None</em>, <em>argv=None</em>, <em>script=None</em>, <em>version=None</em>, <em>parse_console=True</em>, <em>cfg=None</em>, <em>**kwargs</em><big>)</big><a class="reference internal" href="../../modules/pulsar/apps/wsgi.html#WSGIServer"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.wsgi.WSGIServer" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="method">
+<dt id="pulsar.apps.wsgi.WSGIServer.protocol_consumer">
+<tt class="descname">protocol_consumer</tt><big>(</big><big>)</big><a class="headerlink" href="#pulsar.apps.wsgi.WSGIServer.protocol_consumer" title="Permalink to this definition">¶</a></dt>
+<dd><p>Build the <a class="reference internal" href="../../api/protocols.html#pulsar.ProtocolConsumer" title="pulsar.ProtocolConsumer"><tt class="xref py py-class docutils literal"><span class="pre">pulsar.ProtocolConsumer</span></tt></a> factory for this
+WSGI server. It uses the <a class="reference internal" href="#pulsar.apps.wsgi.server.HttpServerResponse" title="pulsar.apps.wsgi.server.HttpServerResponse"><tt class="xref py py-class docutils literal"><span class="pre">pulsar.apps.wsgi.server.HttpServerResponse</span></tt></a>
+protocol consumer and the wsgi callable provided as parameter during
+initialisation.</p>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="module-pulsar.apps.wsgi.server">
+<span id="http-protocol-consumer"></span><h2>HTTP Protocol Consumer<a class="headerlink" href="#module-pulsar.apps.wsgi.server" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="pulsar.apps.wsgi.server.HttpServerResponse">
+<em class="property">class </em><tt class="descclassname">pulsar.apps.wsgi.server.</tt><tt class="descname">HttpServerResponse</tt><big>(</big><em>wsgi_callable</em>, <em>connection</em><big>)</big><a class="reference internal" href="../../modules/pulsar/apps/wsgi/server.html#HttpServerResponse"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.wsgi.server.HttpServerResponse" title="Permalink to this definition">¶</a></dt>
+<dd><p>Server side HTTP <a class="reference internal" href="../../api/protocols.html#pulsar.ProtocolConsumer" title="pulsar.ProtocolConsumer"><tt class="xref py py-class docutils literal"><span class="pre">pulsar.ProtocolConsumer</span></tt></a>.</p>
+<dl class="method">
+<dt id="pulsar.apps.wsgi.server.HttpServerResponse.expect_continue">
+<tt class="descname">expect_continue</tt><big>(</big><big>)</big><a class="reference internal" href="../../modules/pulsar/apps/wsgi/server.html#HttpServerResponse.expect_continue"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.wsgi.server.HttpServerResponse.expect_continue" title="Permalink to this definition">¶</a></dt>
+<dd><p>Handle the expect=100-continue header if available, according to
+the following algorithm:</p>
+<ul class="simple">
+<li>Send the 100 Continue response before waiting for the body.</li>
+<li>Omit the 100 (Continue) response if it has already received some or all of
+the request body for the corresponding request.</li>
+</ul>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="pulsar.apps.wsgi.server.HttpServerResponse.keep_alive">
+<tt class="descname">keep_alive</tt><a class="reference internal" href="../../modules/pulsar/apps/wsgi/server.html#HttpServerResponse.keep_alive"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.wsgi.server.HttpServerResponse.keep_alive" title="Permalink to this definition">¶</a></dt>
+<dd><p>return True if the connection should be kept alive</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="pulsar.apps.wsgi.server.HttpServerResponse.start_response">
+<tt class="descname">start_response</tt><big>(</big><em>status</em>, <em>response_headers</em>, <em>exc_info=None</em><big>)</big><a class="reference internal" href="../../modules/pulsar/apps/wsgi/server.html#HttpServerResponse.start_response"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.wsgi.server.HttpServerResponse.start_response" title="Permalink to this definition">¶</a></dt>
+<dd><p>WSGI compliant <tt class="docutils literal"><span class="pre">start_response</span></tt> callable, see <a class="reference external" href="http://www.python.org/dev/peps/pep-3333/">pep3333</a>.
+The application may call start_response more than once, if and only
+if the exc_info argument is provided.
+More precisely, it is a fatal error to call start_response without the exc_info
+argument if start_response has already been called within the current
+invocation of the application.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>status</strong> &#8211; an HTTP &#8220;status&#8221; string like &#8220;200 OK&#8221; or &#8220;404 Not Found&#8221;.</li>
+<li><strong>response_headers</strong> &#8211; a list of <tt class="docutils literal"><span class="pre">(header_name,</span> <span class="pre">header_value)</span></tt> tuples.
+It must be a Python list. Each header_name must be a valid HTTP header
+field-name (as defined by RFC <a class="reference external" href="http://www.faqs.org/rfcs/rfc2616.html">2616</a>, Section 4.2), without a trailing
+colon or other punctuation.</li>
+<li><strong>exc_info</strong> &#8211; optional python <tt class="docutils literal"><span class="pre">sys.exc_info()</span></tt> tuple. This argument
+should be supplied by the application only if start_response is being
+called by an error handler.</li>
+</ul>
+</td>
+</tr>
+<tr class="field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last">The <tt class="xref py py-meth docutils literal"><span class="pre">HttpResponse.write()</span></tt> callable.</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="pulsar.apps.wsgi.server.HttpServerResponse.write">
+<tt class="descname">write</tt><big>(</big><em>data</em><big>)</big><a class="reference internal" href="../../modules/pulsar/apps/wsgi/server.html#HttpServerResponse.write"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.wsgi.server.HttpServerResponse.write" title="Permalink to this definition">¶</a></dt>
+<dd><p>The write function required by WSGI specification.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="pulsar.apps.wsgi.server.HttpServerResponse.is_chunked">
+<tt class="descname">is_chunked</tt><big>(</big><big>)</big><a class="reference internal" href="../../modules/pulsar/apps/wsgi/server.html#HttpServerResponse.is_chunked"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.wsgi.server.HttpServerResponse.is_chunked" title="Permalink to this definition">¶</a></dt>
+<dd><p>Only use chunked responses when the client is
+speaking HTTP/1.1 or newer and there was no Content-Length header set.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="pulsar.apps.wsgi.server.HttpServerResponse.get_headers">
+<tt class="descname">get_headers</tt><big>(</big><em>force=False</em><big>)</big><a class="reference internal" href="../../modules/pulsar/apps/wsgi/server.html#HttpServerResponse.get_headers"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.wsgi.server.HttpServerResponse.get_headers" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get the headers to send only if <em>force</em> is <tt class="xref docutils literal"><span class="pre">True</span></tt> or this
+is an HTTP upgrade (websockets)</p>
+</dd></dl>
+
+</dd></dl>
+
+</div>
 </div>
 
 
@@ -108,6 +205,15 @@ To run the application:</p>
   <img class="logo" width="200" src="../../static/pulsar.png" alt="pulsar" title="Pulsar"/>
 </a>
 </p>
+  <h3><a href="../../index.html">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">WSGI Servers</a><ul>
+<li><a class="reference internal" href="#wsgi-server">WSGI Server</a></li>
+<li><a class="reference internal" href="#module-pulsar.apps.wsgi.server">HTTP Protocol Consumer</a></li>
+</ul>
+</li>
+</ul>
+
   <h4>Previous topic</h4>
   <p class="topless"><a href="index.html"
                         title="previous chapter">WSGI</a></p>

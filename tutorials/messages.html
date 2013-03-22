@@ -6,13 +6,13 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>Actor messages &mdash; pulsar v0.5b8 documentation</title>
+    <title>Actor messages &mdash; pulsar v0.5b9 documentation</title>
     <link rel="stylesheet" href="../static/pulsar.css" type="text/css" />
     <link rel="stylesheet" href="../static/pygments.css" type="text/css" />
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../',
-        VERSION:     '0.5b8',
+        VERSION:     '0.5b9',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -22,7 +22,7 @@
     <script type="text/javascript" src="../static/underscore.js"></script>
     <script type="text/javascript" src="../static/doctools.js"></script>
     <link rel="shortcut icon" href="../static/Game_of_life_pulsar.gif"/>
-    <link rel="top" title="pulsar v0.5b8 documentation" href="../index.html" />
+    <link rel="top" title="pulsar v0.5b9 documentation" href="../index.html" />
     <link rel="up" title="Tutorials &amp; Topics" href="index.html" />
     <link rel="next" title="Events" href="events.html" />
     <link rel="prev" title="Asynchronous Components" href="coroutine.html" /> 
@@ -44,7 +44,7 @@
         <li class="right" >
           <a href="coroutine.html" title="Asynchronous Components"
              accesskey="P">previous</a> |</li>
-        <li><a href="../index.html">pulsar v0.5b8 documentation</a> &raquo;</li>
+        <li><a href="../index.html">pulsar v0.5b9 documentation</a> &raquo;</li>
           <li><a href="index.html" accesskey="U">Tutorials &amp; Topics</a> &raquo;</li> 
       </ul>
     </div>
@@ -71,36 +71,62 @@
 The <a class="reference internal" href="#module-pulsar.async.mailbox" title="pulsar.async.mailbox"><tt class="xref py py-mod docutils literal"><span class="pre">pulsar.async.mailbox</span></tt></a> module implements the message passing layer
 via a bidirectional socket connections between the <a class="reference internal" href="../api/actor.html#pulsar.Arbiter" title="pulsar.Arbiter"><tt class="xref py py-class docutils literal"><span class="pre">pulsar.Arbiter</span></tt></a>
 and <a class="reference internal" href="../api/actor.html#pulsar.Actor" title="pulsar.Actor"><tt class="xref py py-class docutils literal"><span class="pre">pulsar.Actor</span></tt></a>.</p>
-<span class="target" id="module-pulsar"></span><p>Message sending is asynchronous and safe, the message is guaranteed to
+<p>Message sending is asynchronous and safe, the message is guaranteed to
 eventually reach the recipient, provided that the recipient exists.</p>
 <p>The implementation details are outlined below:</p>
 <ul>
-<li><p class="first">Messages are sent via the <a class="reference internal" href="../api/actor.html#pulsar.send" title="pulsar.send"><tt class="xref py py-func docutils literal"><span class="pre">send()</span></tt></a> function, which is a proxy for
-the <a class="reference internal" href="../api/actor.html#pulsar.Actor.send" title="pulsar.Actor.send"><tt class="xref py py-class docutils literal"><span class="pre">Actor.send</span></tt></a> method. Here is how you ping actor <tt class="docutils literal"><span class="pre">abc</span></tt>:</p>
-<div class="highlight-python"><div class="highlight"><pre><span class="n">send</span><span class="p">(</span><span class="s">&#39;abc&#39;</span><span class="p">,</span> <span class="s">&#39;ping&#39;</span><span class="p">)</span>
+<li><p class="first">Messages are sent via the <tt class="xref py py-func docutils literal"><span class="pre">send()</span></tt> function, which is a proxy for
+the <a class="reference internal" href="../api/actor.html#pulsar.Actor.send" title="pulsar.Actor.send"><tt class="xref py py-class docutils literal"><span class="pre">pulsar.Actor.send</span></tt></a> method. Here is how you ping actor <tt class="docutils literal"><span class="pre">abc</span></tt>:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="kn">from</span> <span class="nn">pulsar</span> <span class="kn">import</span> <span class="n">send</span>
+
+<span class="n">send</span><span class="p">(</span><span class="s">&#39;abc&#39;</span><span class="p">,</span> <span class="s">&#39;ping&#39;</span><span class="p">)</span>
 </pre></div>
 </div>
 </li>
-<li><p class="first">The <a class="reference internal" href="../api/actor.html#pulsar.Arbiter" title="pulsar.Arbiter"><tt class="xref py py-class docutils literal"><span class="pre">Arbiter</span></tt></a> mailbox is a TCP <a class="reference internal" href="../api/protocols.html#pulsar.Server" title="pulsar.Server"><tt class="xref py py-class docutils literal"><span class="pre">Server</span></tt></a> accepting <a class="reference internal" href="../api/protocols.html#pulsar.Connection" title="pulsar.Connection"><tt class="xref py py-class docutils literal"><span class="pre">Connection</span></tt></a>
-from remote actors.</p>
+<li><p class="first">The <a class="reference internal" href="../api/actor.html#pulsar.Arbiter" title="pulsar.Arbiter"><tt class="xref py py-class docutils literal"><span class="pre">pulsar.Arbiter</span></tt></a> mailbox is a TCP <a class="reference internal" href="../api/protocols.html#pulsar.Server" title="pulsar.Server"><tt class="xref py py-class docutils literal"><span class="pre">pulsar.Server</span></tt></a>
+accepting <a class="reference internal" href="../api/protocols.html#pulsar.Connection" title="pulsar.Connection"><tt class="xref py py-class docutils literal"><span class="pre">pulsar.Connection</span></tt></a> from remote actors.</p>
 </li>
-<li><p class="first">The <a class="reference internal" href="../api/actor.html#pulsar.Actor.mailbox" title="pulsar.Actor.mailbox"><tt class="xref py py-attr docutils literal"><span class="pre">Actor.mailbox</span></tt></a> is a client of the arbiter mailbox server.</p>
+<li><p class="first">The <a class="reference internal" href="../api/actor.html#pulsar.Actor.mailbox" title="pulsar.Actor.mailbox"><tt class="xref py py-attr docutils literal"><span class="pre">pulsar.Actor.mailbox</span></tt></a> is a <a class="reference internal" href="../api/protocols.html#pulsar.Client" title="pulsar.Client"><tt class="xref py py-class docutils literal"><span class="pre">pulsar.Client</span></tt></a> of the arbiter
+mailbox server.</p>
 </li>
-<li><p class="first">When an actor sends a message to another actor, the arbiter mailbox behaves like
-a proxy server by routing the message to the targeted actor.</p>
+<li><p class="first">When an actor sends a message to another actor, the arbiter mailbox behaves
+like a proxy server by routing the message to the targeted actor.</p>
 </li>
-<li><p class="first">Communication is bidirectional and there is only one connection between
+<li><p class="first">Communication is bidirectional and there is <strong>only one connection</strong> between
 the arbiter and any given actor.</p>
 </li>
-<li><p class="first">Messages are encoded and decoded using the unmasked websocket protocol implemented
-in <a class="reference internal" href="../api/utilities.html#pulsar.utils.websocket.FrameParser" title="pulsar.utils.websocket.FrameParser"><tt class="xref py py-class docutils literal"><span class="pre">pulsar.utils.websocket.FrameParser</span></tt></a>.</p>
+<li><p class="first">Messages are encoded and decoded using the unmasked websocket protocol
+implemented in <a class="reference internal" href="../api/utilities.html#pulsar.utils.websocket.FrameParser" title="pulsar.utils.websocket.FrameParser"><tt class="xref py py-class docutils literal"><span class="pre">pulsar.utils.websocket.FrameParser</span></tt></a>.</p>
 </li>
-<li><p class="first">The <a class="reference internal" href="../api/actor.html#pulsar.Actor.mailbox" title="pulsar.Actor.mailbox"><tt class="xref py py-attr docutils literal"><span class="pre">Actor.mailbox</span></tt></a> for <a class="reference internal" href="../design.html#cpubound"><em>CPU bound actors</em></a> has its hown
-separate <a class="reference internal" href="../api/async.html#pulsar.EventLoop" title="pulsar.EventLoop"><tt class="xref py py-class docutils literal"><span class="pre">EventLoop</span></tt></a> on a separate thread of execution. In other
+<li><p class="first">If, for some reasons, the commonication between an actor and the arbiter
+get broken, the actor will eventually stop running and garbaged collected.</p>
+</li>
+<li><p class="first">The <tt class="xref py py-attr docutils literal"><span class="pre">Actor.mailbox</span></tt> for <a class="reference internal" href="../design.html#cpubound"><em>CPU bound actors</em></a> has its hown
+separate <tt class="xref py py-class docutils literal"><span class="pre">EventLoop</span></tt> on a separate thread of execution. In other
 words, it does not share it with the actor so that I/O requests
 can be processed even if the actor is performing a long calculation.</p>
 </li>
 </ul>
+<div class="section" id="actor-mailbox-protocol">
+<h2>Actor mailbox protocol<a class="headerlink" href="#actor-mailbox-protocol" title="Permalink to this headline">¶</a></h2>
+<blockquote>
+<div><p>For the curious this is how the internal protocol is implemented</p>
+<dl class="class">
+<dt id="pulsar.async.mailbox.MailboxConsumer">
+<em class="property">class </em><tt class="descclassname">pulsar.async.mailbox.</tt><tt class="descname">MailboxConsumer</tt><big>(</big><em>*args</em>, <em>**kwargs</em><big>)</big><a class="reference internal" href="../modules/pulsar/async/mailbox.html#MailboxConsumer"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.async.mailbox.MailboxConsumer" title="Permalink to this definition">¶</a></dt>
+<dd><p>The <a class="reference internal" href="../api/protocols.html#pulsar.ProtocolConsumer" title="pulsar.ProtocolConsumer"><tt class="xref py py-class docutils literal"><span class="pre">pulsar.ProtocolConsumer</span></tt></a> for internal message passing
+between actors. Encoding and decoding uses the unmasked websocket
+protocol.</p>
+<dl class="method">
+<dt id="pulsar.async.mailbox.MailboxConsumer.request">
+<tt class="descname">request</tt><big>(</big><em>command</em>, <em>sender</em>, <em>target</em>, <em>args</em>, <em>kwargs</em><big>)</big><a class="reference internal" href="../modules/pulsar/async/mailbox.html#MailboxConsumer.request"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.async.mailbox.MailboxConsumer.request" title="Permalink to this definition">¶</a></dt>
+<dd><p>Used by the server to send messages to the client.</p>
+</dd></dl>
+
+</dd></dl>
+
+</div></blockquote>
+</div>
 </div>
 
 
@@ -113,6 +139,14 @@ can be processed even if the actor is performing a long calculation.</p>
   <img class="logo" width="200" src="../static/pulsar.png" alt="pulsar" title="Pulsar"/>
 </a>
 </p>
+  <h3><a href="../index.html">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">Actor messages</a><ul>
+<li><a class="reference internal" href="#actor-mailbox-protocol">Actor mailbox protocol</a></li>
+</ul>
+</li>
+</ul>
+
   <h4>Previous topic</h4>
   <p class="topless"><a href="coroutine.html"
                         title="previous chapter">Asynchronous Components</a></p>
