@@ -147,6 +147,12 @@ class HttpServerResponse(pulsar.ProtocolConsumer):
             raise ProtocolError
     
     def default_headers(self):
+        '''From pep 3333: In general, the server or gateway is responsible for
+ensuring that correct headers are sent to the client: if the application
+omits a header required by HTTP (or other relevant specifications that are
+in effect), the server or gateway must add it. For example,
+the HTTP Date: and Server: headers would normally be supplied by the server
+or gateway.'''
         return Headers([('Server', pulsar.SERVER_SOFTWARE),
                         ('Date', format_date_time(time.time()))])
     

@@ -1,18 +1,43 @@
 {% extends "base.html" %}
 
 {% block content %}
-<form method="post" enctype='multipart/form-data'>
-        {% csrf_token %}
-        <table>
-        {{ form.as_table }}
-        </table>
-        <input type="submit" id="submit" value="submit">
-    </form>
-
-    <h2>Got</h2>
-    {% if subject %}
-        <p><strong>subject:</strong><br>{{ subject}}</p>
-        <p><strong>message:</strong><br>{{ message }}</p>
-        <p><strong>size:</strong><br>{{ size }}</p>
-    {% endif %}
+<div class="navbar navbar-inverse navbar-fixed-top">
+  <div class="navbar-inner">
+  <div class="container">
+    <div class="row">
+    <a class="brand" href="/">Pulsar-Django chat</a>
+    <ul class="nav">
+      <li><a href="/admin/">admin</a></li>
+    </ul>
+  </div>
+ </div>
+ </div>
+</div>
+<div class="main">
+<div class="container">
+   <div class="row">
+    <div class="span8">
+        <div id="messages" class="layout panel"></div>
+		<div id="input" class="layout">
+		  <textarea id="message" rows="3" placeholder='Write your message'></textarea>
+		  <button id="publish" class="btn btn-success">publish</button>
+		</div>
+    </div>
+    <div class="span4">
+        <div id="users" class="layout panel"></div>
+    </div>
+   </div>
+    <footer></footer>
+</div>
+</div>
 {% endblock content %}
+
+{% block script %}
+<script>
+(function($) {
+    $(document).ready(function() {
+        $.wschat(new WebSocket("ws://{{ HOST }}/message"));
+    });
+}(jQuery));
+</script>
+{% endblock %}

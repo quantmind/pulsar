@@ -359,7 +359,7 @@ is a group of tests specified in a test class.
     _app_name = 'test'
     cfg_apps = ('cpubound',)
     cfg = {'loglevel': 'none',
-           'backlog': 1,
+           'backlog': 5,
            'logconfig': {
                 'loggers': {
                     LOGGER.name: {'handlers': ['console_message'],

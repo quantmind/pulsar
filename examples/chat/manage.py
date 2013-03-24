@@ -1,4 +1,12 @@
-'''Simple chat application.
+'''A web-based chat application, it exposes three different
+:ref:`wsgi handlers <apps-wsgi-handlers>`:
+
+* A :class:`pulsar.apps.wsgi.handlers.Router` to render the web page
+* A :class:`pulsar.apps.ws.WebSocket` with the :class:`Chat` handler
+* A :class:`pulsar.apps.wsgi.handlers.Router` with the :class:`Rpc` handler
+  for exposing a :ref:`JSON-RPC <apps-rpc>` api.
+
+To run the server::
 
     python manage.py
     
@@ -7,9 +15,20 @@ and open web browsers at http://localhost:8060
 To send messages from the JSON RPC open a python shell and::
 
     >>> from pulsar.apps import rpc
-    >>> p = rpc.JsonProxy('http://127.0.0.1:8060/rpc')
+    >>> p = rpc.JsonProxy('http://127.0.0.1:8060/rpc', force_sync=True)
     >>> p.message('Hi from rpc')
     'OK'
+    
+Implementation
+===========================
+
+.. autoclass:: Chat
+   :members:
+   :member-order: bysource
+   
+.. autoclass:: Rpc
+   :members:
+   :member-order: bysource
 '''
 import os
 import sys
@@ -24,23 +43,19 @@ except ImportError: #pragma nocover
 from pulsar.apps import ws, wsgi, rpc, pubsub
 
 CHAT_DIR = os.path.dirname(__file__)
-
-##    RPC MIDDLEWARE To publish messages
-class Rpc(rpc.PulsarServerCommands):
-    
-    def rpc_message(self, request, message):
-        pubsub.publish(message)
-        return 'OK'
     
 
 ##    Web Socket Chat handler
 class Chat(ws.WS):
-    
+    '''The websocket handler (:class:`pulsar.apps.ws.WS`) managing the chat
+application.'''
     def on_open(self, request):
-        # Add pulsar.connection environ extension to the set of active clients
+        '''When a new websocket connection is established it add connection
+to the set of clients listening for messages.'''
         pubsub.add_client(request.cache['websocket'])
         
     def on_message(self, request, msg):
+        '''When a new message arrives, it publishes to all listening clients.'''
         if msg:
             lines = []
             for l in msg.split('\n'):
@@ -52,6 +67,15 @@ class Chat(ws.WS):
                 pubsub.publish(msg)
 
 
+##    RPC MIDDLEWARE To publish messages
+class Rpc(rpc.PulsarServerCommands):
+    
+    def rpc_message(self, request, message):
+        '''Publish a message via JSON-RPC'''
+        pubsub.publish(message)
+        return 'OK'
+    
+    
 class WebChat(wsgi.LazyWsgi):
     
     def __init__(self, name):

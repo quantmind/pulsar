@@ -24,6 +24,7 @@ import json
 from functools import partial, reduce
 
 import pulsar
+from pulsar import maybe_async, is_async, is_failure, multi_async
 from pulsar.utils.multipart import parse_form_data, parse_options_header
 from pulsar.utils.structures import MultiValueDict
 from pulsar.utils.html import escape
@@ -59,6 +60,44 @@ def wsgi_encoder(gen, encoding):
         else:
             yield data
 
+
+class ResponseGenerator(object):
+    streaming = True
+    
+    def __init__(self, request, callable):
+        self.request = request
+        self.callable = callable
+        
+    def __iter__(self):
+        request = self.request
+        cache = maybe_async(multi_async(request.cache, raise_on_error=True))
+        while is_async(cache):
+            yield b''
+            cache = maybe_async(cache)
+        if is_failure(cache):
+            cache.raise_all()
+        request.cache.update(cache)
+        for data in self.callable(request):
+            yield data
+            
+    @property
+    def middleware(self):
+        return self.request.response.middleware
+    
+    @property
+    def status_code(self):
+        return self.request.response.status_code
+        
+    def has_header(self, header):
+        return self.request.response.has_header(header)
+    
+    def __setitem__(self, header, value):
+        self.request.response[header] = value
+        
+    def __getitem__(self, header):
+        return self.request.response[header]
+    
+    
 class WsgiResponse(object):
     '''A WSGI response wrapper initialized by a
 :ref:`pulsar WSGI application handler <apps-wsgi-handlers>`.
@@ -240,6 +279,15 @@ This is usually `True` if a generator is passed to the response object."""
         for c in self.cookies.values():
             headers['Set-Cookie'] = c.OutputString()
         return list(headers)
+    
+    def has_header(self, header):
+        return header in self.headers
+    
+    def __setitem__(self, header, value):
+        self.headers[header] = value
+        
+    def __getitem__(self, header):
+        return self.headers[header]
         
     
 class WsgiRequest(object):

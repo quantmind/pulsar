@@ -434,7 +434,7 @@ status and performance.'''
                 else:
                     signame = system.SIG_NAMES.get(sig)
                     if sig in system.EXIT_SIGNALS:
-                        self.logger.warn("Got signal %s. Stopping.", signame)
+                        self.logger.warning("Got signal %s. Stopping.", signame)
                         self.stop()
                         return False
                     else:

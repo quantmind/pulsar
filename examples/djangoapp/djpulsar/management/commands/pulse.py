@@ -1,7 +1,8 @@
 # -*- coding: utf-8 -
 import pulsar
-from pulsar.apps.wsgi import WSGIServer
+from pulsar.apps.wsgi import WSGIServer, WsgiHandler, WsgiRequest
 
+from django.conf import settings
 from django.core.management.base import BaseCommand, CommandError
 from django.core.wsgi import get_wsgi_application
 #from django.core.servers.basehttp import get_internal_wsgi_application
@@ -20,7 +21,7 @@ PULSAR_OPTIONS = pulsar.make_optparse_options(
                             apps=('socket', 'wsgi'),
                             exclude=('pythonpath', 'django_settings'))
 
-
+    
 class Command(BaseCommand):
     option_list = BaseCommand.option_list + PULSAR_OPTIONS
     help = "Starts a fully-functional Web server using pulsar."
@@ -33,6 +34,8 @@ class Command(BaseCommand):
         if args:
             raise CommandError('pulse --help for usage')
         admin_media_path = options.pop('admin_media_path', '')
-        wsgi = get_wsgi_application()
-        WSGIServer(callable=wsgi, cfg=options, parse_console=False).start()
+        c = WsgiHandler((self._wsgi, get_wsgi_application()))
+        WSGIServer(callable=c, cfg=options, parse_console=False).start()
         
+    def _wsgi(self, environ, start_response):
+        WsgiRequest(environ, start_response)

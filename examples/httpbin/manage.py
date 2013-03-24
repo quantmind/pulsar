@@ -1,6 +1,9 @@
 '''Pulsar HTTP test application::
 
     python manage.py
+
+Implementation
+======================
     
 .. autoclass:: HttpBin
    :members:

@@ -1,7 +1,14 @@
-from django.conf.urls.defaults import patterns, url
+from django.conf.urls import patterns, url, include
+from django.contrib import admin
+from django.contrib.staticfiles.urls import staticfiles_urlpatterns
+
+
+admin.autodiscover()
+
 
 urlpatterns = patterns('',
-    url(r'^acsv$', 'djangoapp.views.acsv'),
     url(r'^$', 'djangoapp.views.home'),
-    
+    url(r'^admin/', include(admin.site.urls))
 )
+
+urlpatterns += staticfiles_urlpatterns()

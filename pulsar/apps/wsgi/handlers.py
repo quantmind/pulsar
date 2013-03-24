@@ -91,40 +91,16 @@ from email.utils import parsedate_tz, mktime_tz
 from pulsar.utils.httpurl import http_date, CacheControl, remove_double_slash
 from pulsar.utils.structures import AttributeDictionary
 from pulsar.utils.log import LocalMixin
-from pulsar import Http404, PermissionDenied, HttpException, async,\
-                    multi_async, is_async, maybe_async, is_failure
+from pulsar import Http404, PermissionDenied, HttpException, async
 
 from .route import Route
 from .utils import wsgi_request
 from .content import Html
+from .wrappers import ResponseGenerator
 
 __all__ = ['WsgiHandler', 'LazyWsgi', 'Router',
            'MediaRouter', 'FileRouter', 'MediaMixin']
 
-
-class ResponseGenerator(object):
-    
-    def __init__(self, request, callable):
-        self.request = request
-        self.callable = callable
-        
-    def __iter__(self):
-        request = self.request
-        cache = maybe_async(multi_async(request.cache, raise_on_error=True))
-        while is_async(cache):
-            yield b''
-            cache = maybe_async(cache)
-        if is_failure(cache):
-            cache.raise_all()
-        request.cache.update(cache)
-        for data in self.callable(request):
-            yield data
-            
-    @property
-    def middleware(self):
-        return self.request.response.middleware
-            
-    
 
 class WsgiHandler(object):
     '''An handler for application conforming to python WSGI_.

@@ -1,5 +1,19 @@
 #!/usr/bin/env python
-'''Requires django 1.4 or above.'''
+'''This application requires django 1.4 or above. To run this example type::
+
+    python manage.py pulse
+
+If running for the first time, issue the::
+
+    python manage.py syncdb
+
+command first and create the super user.
+
+djpulsar app
+========================
+
+.. automodule:: examples.djangoapp.djpulsar
+'''
 import os, sys
 try:
     import pulsar
