@@ -96,7 +96,7 @@ from pulsar import Http404, PermissionDenied, HttpException, async
 from .route import Route
 from .utils import wsgi_request
 from .content import Html
-from .wrappers import ResponseGenerator
+from .wrappers import WsgiResponseGenerator
 
 __all__ = ['WsgiHandler', 'LazyWsgi', 'Router',
            'MediaRouter', 'FileRouter', 'MediaMixin']
@@ -264,7 +264,7 @@ request, the ``get(self, request)`` method must be implemented.
             if callable is None:
                 raise HttpException(status=405,
                                     msg='Method "%s" not allowed' % method)
-            return ResponseGenerator(request, callable)
+            return WsgiResponseGenerator(request, callable)
         
     def resolve(self, path, urlargs=None):
         '''Resolve a path and return a ``(handler, urlargs)`` tuple or

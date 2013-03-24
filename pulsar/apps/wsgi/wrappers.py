@@ -41,6 +41,7 @@ from .utils import LOGGER, set_wsgi_request_class, set_cookie, query_dict
 
 __all__ = ['WsgiResponse',
            'WsgiRequest',
+           'PulsarWsgiResponse',
            'wsgi_cache_property']
 
 MAX_BUFFER_SIZE = 2**16
@@ -61,7 +62,11 @@ def wsgi_encoder(gen, encoding):
             yield data
 
 
-class ResponseGenerator(object):
+class PulsarWsgiResponse(object):
+    pass
+
+
+class WsgiResponseGenerator(PulsarWsgiResponse):
     streaming = True
     
     def __init__(self, request, callable):
@@ -98,7 +103,7 @@ class ResponseGenerator(object):
         return self.request.response[header]
     
     
-class WsgiResponse(object):
+class WsgiResponse(PulsarWsgiResponse):
     '''A WSGI response wrapper initialized by a
 :ref:`pulsar WSGI application handler <apps-wsgi-handlers>`.
 Instances are callable using the standard WSGI call and, importantly, iterable::

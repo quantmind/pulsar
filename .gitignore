@@ -16,3 +16,4 @@ MANIFEST
 examples/webmail/config.py
 *~
 .htmlprof
+examples/djangoapp/test.db
