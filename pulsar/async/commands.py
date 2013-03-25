@@ -1,12 +1,9 @@
 from time import time
 
-from pulsar import AuthenticationError
-
 from .defer import is_async
 from .proxy import command, CommandError, ActorProxyMonitor
 from .consts import NOT_DONE
 
-#############################################################  COMMANDS
 
 @command()
 def ping(request):
@@ -74,20 +71,6 @@ def info(request):
     ''' Returns information and statistics about the server as a json string'''
     return request.actor.info()
      
-@command()
-def auth(request, password):
-    '''Request for authentication in a password protected Pulsar server.
-Pulsar can be instructed to require a password before allowing clients to
-execute commands.'''
-    actor = request.actor
-    p = actor.cfg.get('password')
-    if p and p != password:
-        request.connection.authenticated = False
-        raise AuthenticationError
-    else:
-        request.connection.authenticated = True
-        return True
-    
 @command()
 def kill_actor(request, aid):
     '''Kill an actor with id ``aid``. This command can only be executed by the

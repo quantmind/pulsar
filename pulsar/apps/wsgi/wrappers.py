@@ -63,11 +63,16 @@ def wsgi_encoder(gen, encoding):
 
 
 class PulsarWsgiResponse(object):
-    pass
+    streaming = True
+    
+    def has_header(self, header):
+        raise NotImplementedError
+    
+    def __contains__(self, header):
+        return self.has_header(header)
 
 
 class WsgiResponseGenerator(PulsarWsgiResponse):
-    streaming = True
     
     def __init__(self, request, callable):
         self.request = request

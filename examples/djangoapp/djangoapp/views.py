@@ -42,8 +42,9 @@ to the set of clients listening for messages.'''
                 
                 
 class middleware:
-    
+    '''Middleware for serving the Chat websocket'''
     def __init__(self):
+        pubsub.register_handler(pubsub.PulsarPubSub('pulsar_django'))
         self._web_socket = ws.WebSocket('/message', Chat())
         
     def process_request(self, request):

@@ -89,5 +89,6 @@ class Command(BaseCommand):
             raise CommandError('pulse --help for usage')
         admin_media_path = options.pop('admin_media_path', '')
         c = DjangoWSGIHandler()
-        WSGIServer(callable=c, cfg=options, parse_console=False).start()
+        WSGIServer(callable=c, cfg=options, parse_console=False,
+                   name='pulsar_django').start()
         
