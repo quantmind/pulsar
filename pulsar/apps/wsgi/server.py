@@ -122,6 +122,19 @@ class HttpServerResponse(pulsar.ProtocolConsumer):
     '''Server side HTTP :class:`pulsar.ProtocolConsumer`.'''
     _status = None
     _headers_sent = None
+    #
+    HOP_HEADERS = {
+        'CONNECTION',
+        'KEEP-ALIVE',
+        'PROXY-AUTHENTICATE',
+        'PROXY-AUTHORIZATION',
+        'TE',
+        'TRAILERS',
+        'TRANSFER-ENCODING',
+        'UPGRADE',
+        'SERVER',
+        'DATE',
+    }
     
     def __init__(self, wsgi_callable, connection):
         super(HttpServerResponse, self).__init__(connection)
@@ -156,8 +169,12 @@ omits a header required by HTTP (or other relevant specifications that are
 in effect), the server or gateway must add it. For example,
 the HTTP Date: and Server: headers would normally be supplied by the server
 or gateway.'''
-        return Headers([('Server', pulsar.SERVER_SOFTWARE),
-                        ('Date', format_date_time(time.time()))])
+        headers = Headers([('Server', pulsar.SERVER_SOFTWARE),
+                           ('Date', format_date_time(time.time()))])
+        for head, value in self.parser._headers:
+            if head.upper() in self.HOP_HEADERS:
+                headers.add_header(head, value)
+        return headers
     
     @property
     def request_headers(self):
@@ -249,7 +266,10 @@ invocation of the application.
         if type(response_headers) is not list:
             raise TypeError("Headers must be a list of name/value tuples")
         self.headers = self.default_headers()
-        self.headers.update(response_headers)
+        for head, value in response_headers:
+            if head.upper() in self.HOP_HEADERS:
+                continue
+            self.headers.add_header(head, value)
         return self.write
 
     def write(self, data):
