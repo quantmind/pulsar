@@ -132,6 +132,9 @@ class HttpServerResponse(pulsar.ProtocolConsumer):
         self.parser = lib.Http_Parser(kind=0)
         
     def data_received(self, data):
+        '''Implements :class:`pulsar.Protocol.data_received`. Once we have a
+full HTTP message, build the wsgi ``environ`` and write the response
+using the :meth:`pulsar.Transport.writelines` method.'''
         # Got data from the transport, lets parse it
         p = self.parser
         request_headers = self.request_headers
@@ -240,8 +243,8 @@ invocation of the application.
                 # Avoid circular reference
                 exc_info = None
         elif self._status:
-            # Headers already sent. Raise error
-            raise HttpException("Response headers already sent!")
+            # Headers already set. Raise error
+            raise HttpException("Response headers already set!")
         self._status = status
         if type(response_headers) is not list:
             raise TypeError("Headers must be a list of name/value tuples")
@@ -258,10 +261,11 @@ invocation of the application.
             self.transport.write(data)
 
     def generate(self, environ):
+        '''Generator of response bytestrings conforming with the
+:ref:`wsgi asynchronous implementation <wsgi-async>`.'''
         exc_info = None
         keep_alive = self.keep_alive
         # Inject connection into the environment
-        # TODO: is this the best way to do it?
         environ['pulsar.connection'] = self.connection
         exc_info = None
         wsgi_iter = None

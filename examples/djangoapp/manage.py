@@ -1,5 +1,7 @@
 #!/usr/bin/env python
-'''This application requires django 1.4 or above. To run this example type::
+'''This a web chat application which illustrates how to run a django site with
+pulsar and how to include pulsar asynchronous request middlewares into django.
+Requires django 1.4 or above. To run::
 
     python manage.py pulse
 
@@ -7,7 +9,13 @@ If running for the first time, issue the::
 
     python manage.py syncdb
 
-command first and create the super user.
+command first and create the super user. The example defines two django applications:
+
+* :ref:`djpulsar <djpulsar>` which implements the ``pulse`` django command.
+* ``djangoapp`` which runs the actual example. 
+
+
+.. _djpulsar:
 
 djpulsar app
 ========================

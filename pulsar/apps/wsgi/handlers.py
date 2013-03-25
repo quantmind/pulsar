@@ -5,7 +5,9 @@ development of server-side python web applications.
 
     A **WSGI application handler** is always a callable, either a function
     or a callable instance, which accepts two positional arguments:
-    *environ* and *start_response*.
+    *environ* and *start_response*. When called by the server,
+    the application object must return an iterable yielding zero or more bytes. 
+
 
 WsgiHandler
 ======================

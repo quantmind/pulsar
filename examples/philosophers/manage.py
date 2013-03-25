@@ -136,7 +136,7 @@ class DiningPhilosophers(pulsar.Application):
         else:
             thinking = params.thinking or 0
             if not thinking:
-                philosopher.logger.warn('%s thinking...', philosopher.name)
+                philosopher.logger.warning('%s thinking...', philosopher.name)
             params.thinking = thinking + 1
         # Take action
         if pick_up_fork:

@@ -162,14 +162,14 @@ the timeout. Stop the arbiter.'''
                 if not actor.mailbox:
                     self.logger.info('Terminating %s. No mailbox.', actor)
                 else:
-                    self.logger.warn('Terminating %s. Timeout.', actor)
+                    self.logger.warning('Terminating %s. Timeout.', actor)
                 actor.terminate()
                 self.terminated_actors.append(actor)
                 self._remove_actor(actor)
                 return 0
             elif not started_stopping:
                 if timeout:
-                    self.logger.warn('Stopping %s. Timeout', actor)
+                    self.logger.warning('Stopping %s. Timeout', actor)
                 else:
                     self.logger.info('Stopping %s.', actor)
                 self.send(actor, 'stop')

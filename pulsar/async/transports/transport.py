@@ -100,7 +100,6 @@ If *list_of_data* is a **generator**, and during iteration an empty byte is
 yielded, the function will postpone writing the remaining of the generator
 at the next loop in the :attr:`eventloop`."""
         if isgenerator(list_of_data):
-            #self.pause()    #pause delivery of data until done with generator
             self._write_lines_async(list_of_data)
         else:
             for data in list_of_data:

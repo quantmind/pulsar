@@ -222,14 +222,14 @@ class FileDescriptor(IObase):
             if self.handle_read:
                 log_failure(self.handle_read())
             else:
-                LOGGER.warn('Read callback without handler for file'
-                            ' descriptor %s.', self.fd)
+                LOGGER.warning('Read callback without handler for file'
+                               ' descriptor %s.', self.fd)
         if events & self.WRITE:
             if self.handle_write:
                 log_failure(self.handle_write())
             else:
-                LOGGER.warn('Write callback without handler for file'
-                            ' descriptor %s.', self.fd)
+                LOGGER.warning('Write callback without handler for file'
+                               ' descriptor %s.', self.fd)
             
     def modify_state(self, current_state, state):
         if current_state != state:

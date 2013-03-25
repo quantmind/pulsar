@@ -57,7 +57,7 @@ Pulsar PubSub
 import time
 import json
 
-from pulsar import send, command, get_actor
+from pulsar import send, command, get_actor, arbiter
 from pulsar.utils.pep import to_string
 from pulsar.utils.log import LocalMixin, local_property
 
@@ -73,7 +73,7 @@ def register_handler(handler, name=None):
     Buy default it uses ``'pubsub'``. You can use this parameter to create
     several :class:`PubSub` handlers for a given actor.
 '''
-    actor = get_actor()
+    actor = get_actor() or arbiter()
     actor.params[name or 'pubsub'] = handler 
     
 def add_client(client, name=None):
@@ -120,7 +120,9 @@ class PubSub(LocalMixin):
     def encode(self, message):
         '''Encode *message* before publishing it. By default it create a
 dictionary with a timestamp and the message and serialise it as json.'''
-        message = {'time': time.time(), 'message': message}
+        if not isinstance(message, dict):
+            message = {'message': message}
+        message['time'] = time.time()
         return json.dumps(message)
     
     def decode(self, message):

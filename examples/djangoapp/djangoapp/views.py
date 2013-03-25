@@ -1,15 +1,9 @@
-# Create your views here.
-
-import csv
-import os
-import tempfile
-
 from django.conf import settings
-from django.http import HttpResponse
 from django.shortcuts import render_to_response
 from django.template import RequestContext
 
-from pulsar.apps import ws, pubsub
+from pulsar.apps import wsgi, ws, pubsub
+from pulsar.utils.structures import AttributeDictionary
 
 
 def home(request):
@@ -38,15 +32,24 @@ to the set of clients listening for messages.'''
                     lines.append(l)
             msg = ' '.join(lines)
             if msg:
+                user = request.get('django.cache').user
+                if user.is_authenticated():
+                    user = user.username
+                else:
+                    user = 'anonymous'
+                msg = {'message': msg, 'user': user}
                 pubsub.publish(msg)
                 
                 
-class middleware:
+class middleware(object):
     '''Middleware for serving the Chat websocket'''
     def __init__(self):
         pubsub.register_handler(pubsub.PulsarPubSub('pulsar_django'))
         self._web_socket = ws.WebSocket('/message', Chat())
         
     def process_request(self, request):
-        return self._web_socket(request.environ, None)
+        data = AttributeDictionary(request.__dict__)
+        environ = data.pop('environ')
+        environ['django.cache'] = data
+        return self._web_socket(environ, None)
     

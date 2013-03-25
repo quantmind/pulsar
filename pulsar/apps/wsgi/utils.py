@@ -167,7 +167,7 @@ def handle_wsgi_error(environ, trace=None, content_type=None,
         LOGGER.critical('Unhandled exception during WSGI response %s.%s',
                         path, e, exc_info=trace)
     else:
-        LOGGER.warn('WSGI %s status code %s.', response.status_code, path)
+        LOGGER.warning('WSGI %s status code %s.', response.status_code, path)
         LOGGER.debug('%s', e, exc_info=trace)
     if has_empty_content(response.status_code) or\
             response.status_code in REDIRECT_CODES:

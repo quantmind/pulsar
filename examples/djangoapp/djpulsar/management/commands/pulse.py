@@ -58,12 +58,12 @@ class DjangoWSGIHandler(WSGIHandler):
             response = http.HttpResponseBadRequest()
         else:
             response = self.get_response(request)
-
-        response._handler_class = self.__class__
         
+        # Pulsar response return it
         if isinstance(response, PulsarWsgiResponse):
             return response
         
+        response._handler_class = self.__class__
         try:
             status_text = STATUS_CODE_TEXT[response.status_code]
         except KeyError:
