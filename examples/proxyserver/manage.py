@@ -18,9 +18,9 @@ To run with different headers middleware create a new script and do::
 Implemenation
 ===========================
 
-.. autoclass:: HttpBin
+.. autoclass:: ProxyServerWsgiHandler
    :members:
-   :member-order: ProxyServerWsgiHandler
+   :member-order:
    
 '''
 import io
