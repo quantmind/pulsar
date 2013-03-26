@@ -601,6 +601,9 @@ default signal handler ``signal.SIG_DFL``.'''
         except Exception as e:
             if self._raise_loop_error(e):
                 raise
+        except KeyboardInterrupt as e:
+            LOGGER.warning('%s stop event loop', e.__class__.__name__)
+            raise StopEventLoop
         else:
             for fd, events in event_pairs:
                 if fd in self._handlers:

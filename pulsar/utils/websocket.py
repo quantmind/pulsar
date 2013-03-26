@@ -185,7 +185,7 @@ attribute set.'''
         data = array('B', data)
         for i in range(len(data)):
             data[i] ^= key[i % mask_size]
-        return data.tostring()
+        return data.tobytes()
     unmask = mask
 
     

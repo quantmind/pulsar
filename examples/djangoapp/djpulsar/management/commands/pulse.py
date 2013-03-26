@@ -18,21 +18,18 @@ PULSAR_OPTIONS = pulsar.make_optparse_options(
 
 class DjangoWSGIHandler(WSGIHandler):
 
+    def __init__(self):
+        super(WSGIHandler, self).__init__()
+        with self.initLock:
+            try:
+                self.load_middleware()
+            except:
+                # Unload whatever middleware we got
+                self._request_middleware = None
+                raise
+                
     def __call__(self, environ, start_response):
-        # Set up middleware if needed. We couldn't do this earlier, because
-        # settings weren't available.
         r = WsgiRequest(environ, start_response)
-        if self._request_middleware is None:
-            with self.initLock:
-                try:
-                    # Check that middleware is still uninitialised.
-                    if self._request_middleware is None:
-                        self.load_middleware()
-                except:
-                    # Unload whatever middleware we got
-                    self._request_middleware = None
-                    raise
-
         set_script_prefix(base.get_script_name(environ))
         signals.request_started.send(sender=self.__class__)
         try:
@@ -70,7 +67,7 @@ class Wsgi(LazyWsgi):
     def setup(self):
         from django.conf import settings
         return DjangoWSGIHandler()
-    
+        
     
 class Command(BaseCommand):
     option_list = BaseCommand.option_list + PULSAR_OPTIONS
@@ -83,6 +80,8 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
         if args:
             raise CommandError('pulse --help for usage')
-        WSGIServer(callable=Wsgi(), cfg=options, parse_console=False,
+        callable = Wsgi()
+        callable.setup()
+        WSGIServer(callable=callable, cfg=options, parse_console=False,
                    name='pulsar_django').start()
         
