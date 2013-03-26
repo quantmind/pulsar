@@ -1,8 +1,7 @@
 # -*- coding: utf-8 -
 import pulsar
-from pulsar.apps.wsgi import WSGIServer, WsgiHandler, WsgiRequest, PulsarWsgiResponse
+from pulsar.apps.wsgi import WSGIServer, LazyWsgi, WsgiRequest, PulsarWsgiResponse
 
-from django.conf import settings
 from django import http
 from django.core import signals
 from django.core.management.base import BaseCommand, CommandError
@@ -11,16 +10,6 @@ from django.core.handlers import base
 from django.utils.encoding import force_str
 from django.core.handlers.wsgi import logger, set_script_prefix, STATUS_CODE_TEXT
 #from django.core.servers.basehttp import get_internal_wsgi_application
-
-
-class AdminMedia(pulsar.Setting):
-    name = "admin_media_path"
-    app = 'wsgi'
-    section = "WSGI Servers"
-    flags = ["--adminmedia"]
-    default = ''
-    desc = '''Specifies the directory from which to serve admin media.'''
-    
 
 PULSAR_OPTIONS = pulsar.make_optparse_options(
                             apps=('socket', 'wsgi'),
@@ -76,6 +65,13 @@ class DjangoWSGIHandler(WSGIHandler):
         return response
 
 
+class Wsgi(LazyWsgi):
+    
+    def setup(self):
+        from django.conf import settings
+        return DjangoWSGIHandler()
+    
+    
 class Command(BaseCommand):
     option_list = BaseCommand.option_list + PULSAR_OPTIONS
     help = "Starts a fully-functional Web server using pulsar."
@@ -87,8 +83,6 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
         if args:
             raise CommandError('pulse --help for usage')
-        admin_media_path = options.pop('admin_media_path', '')
-        c = DjangoWSGIHandler()
-        WSGIServer(callable=c, cfg=options, parse_console=False,
+        WSGIServer(callable=Wsgi(), cfg=options, parse_console=False,
                    name='pulsar_django').start()
         

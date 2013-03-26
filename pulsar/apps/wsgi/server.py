@@ -171,7 +171,7 @@ the HTTP Date: and Server: headers would normally be supplied by the server
 or gateway.'''
         headers = Headers([('Server', pulsar.SERVER_SOFTWARE),
                            ('Date', format_date_time(time.time()))])
-        for head, value in self.parser._headers:
+        for head, value in mapping_iterator(self.parser.get_headers()):
             if head.upper() in self.HOP_HEADERS:
                 headers.add_header(head, value)
         return headers
