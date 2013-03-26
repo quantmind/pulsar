@@ -6,13 +6,13 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>WSGI Servers &mdash; pulsar v0.5b9 documentation</title>
+    <title>WSGI Servers &mdash; pulsar v0.5b10 documentation</title>
     <link rel="stylesheet" href="../../static/pulsar.css" type="text/css" />
     <link rel="stylesheet" href="../../static/pygments.css" type="text/css" />
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../',
-        VERSION:     '0.5b9',
+        VERSION:     '0.5b10',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -22,7 +22,7 @@
     <script type="text/javascript" src="../../static/underscore.js"></script>
     <script type="text/javascript" src="../../static/doctools.js"></script>
     <link rel="shortcut icon" href="../../static/Game_of_life_pulsar.gif"/>
-    <link rel="top" title="pulsar v0.5b9 documentation" href="../../index.html" />
+    <link rel="top" title="pulsar v0.5b10 documentation" href="../../index.html" />
     <link rel="up" title="WSGI" href="index.html" />
     <link rel="next" title="WSGI application handlers" href="handlers.html" />
     <link rel="prev" title="WSGI" href="index.html" /> 
@@ -44,7 +44,7 @@
         <li class="right" >
           <a href="index.html" title="WSGI"
              accesskey="P">previous</a> |</li>
-        <li><a href="../../index.html">pulsar v0.5b9 documentation</a> &raquo;</li>
+        <li><a href="../../index.html">pulsar v0.5b10 documentation</a> &raquo;</li>
           <li><a href="index.html" accesskey="U">WSGI</a> &raquo;</li> 
       </ul>
     </div>
@@ -97,6 +97,75 @@ To run the application:</p>
 <p>For available run options:</p>
 <div class="highlight-python"><pre>python script.py --help</pre>
 </div>
+<div class="section" id="wsgi-asynchronous-implementation">
+<span id="wsgi-async"></span><h2>WSGI asynchronous implementation<a class="headerlink" href="#wsgi-asynchronous-implementation" title="Permalink to this headline">¶</a></h2>
+<p>When dealing with asynchronous <a class="reference internal" href="handlers.html#apps-wsgi-handlers"><em>application handlers</em></a>,
+the <a class="reference external" href="http://www.wsgi.org">WSGI</a> specification has one main issue: it requires the application
+to invoke the <tt class="docutils literal"><span class="pre">start_response</span></tt> callable before the iterable it returns
+yields its first body bytestring.
+This is the case even if the bytestring it yields is empty.</p>
+<p>If an application handler returns an asynchronous object
+(a <a class="reference internal" href="../../api/async.html#pulsar.Deferred" title="pulsar.Deferred"><tt class="xref py py-class docutils literal"><span class="pre">pulsar.Deferred</span></tt></a> instance), the response headers are not yet known,
+therefore calling <tt class="docutils literal"><span class="pre">start_response</span></tt> is not an option (<tt class="docutils literal"><span class="pre">start_response</span></tt> can be
+called once only, unless is communicating an exception).</p>
+<p>Lets consider the following example:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="kn">from</span> <span class="nn">pulsar</span> <span class="kn">import</span> <span class="n">is_async</span>
+
+<span class="k">def</span> <span class="nf">async_middleware</span><span class="p">(</span><span class="n">middleware</span><span class="p">):</span>
+    <span class="c"># A decorator for asynchronous middlewares</span>
+    <span class="k">def</span> <span class="nf">_</span><span class="p">(</span><span class="n">environ</span><span class="p">,</span> <span class="n">start_response</span><span class="p">):</span>
+        <span class="n">response</span> <span class="o">=</span> <span class="n">middleware</span><span class="p">(</span><span class="n">environ</span><span class="p">,</span> <span class="n">start_response</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">is_async</span><span class="p">(</span><span class="n">response</span><span class="p">):</span>
+            <span class="n">response</span> <span class="o">=</span> <span class="n">response</span><span class="o">.</span><span class="n">result</span> <span class="k">if</span> <span class="n">response</span><span class="o">.</span><span class="n">called</span> <span class="k">else</span> <span class="n">response</span>
+            <span class="k">while</span> <span class="n">is_async</span><span class="p">(</span><span class="n">response</span><span class="p">):</span>
+                <span class="c"># the response is not yet ready!</span>
+                <span class="c"># yield and empty bytestring</span>
+                <span class="k">yield</span> <span class="n">b</span><span class="s">&#39;&#39;</span>
+                <span class="n">response</span> <span class="o">=</span> <span class="n">response</span><span class="o">.</span><span class="n">result</span> <span class="k">if</span> <span class="n">response</span><span class="o">.</span><span class="n">called</span> <span class="k">else</span> <span class="n">response</span>
+            <span class="k">if</span> <span class="n">is_failure</span><span class="p">(</span><span class="n">response</span><span class="p">):</span>
+                <span class="n">response</span><span class="o">.</span><span class="n">raise_all</span><span class="p">()</span>
+        <span class="c"># the response is ready!</span>
+        <span class="n">start_response</span><span class="p">(</span><span class="n">environ</span><span class="p">,</span> <span class="n">response</span><span class="o">.</span><span class="n">headers</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">data</span> <span class="ow">in</span> <span class="n">response</span><span class="p">:</span>
+            <span class="k">yield</span> <span class="n">data</span>
+    <span class="k">return</span> <span class="n">_</span>
+    
+<span class="nd">@async_middleware</span>
+<span class="k">def</span> <span class="nf">create_response</span><span class="p">(</span><span class="n">environ</span><span class="p">,</span> <span class="n">start_response</span><span class="p">):</span>
+    <span class="c">#Return an iterable over bytestrings</span>
+    <span class="o">...</span>
+</pre></div>
+</div>
+<p>If the response is asynchronous, the above middleware does not, fully,
+conform with WSGI. If, on the other hand, the response is synchronous than
+the <tt class="docutils literal"><span class="pre">start_response</span></tt> method is called before any bytestring is yielded
+and WSGI is fully satisfied.</p>
+<p>Therefore the <tt class="docutils literal"><span class="pre">async_middleware</span></tt> decorator fully conforms with WSGI when using
+standard synchronous handlers, and switches to a non-conforming version when
+the application handler returns asynchronous responses.
+This is the WSGI specification pulsar uses and it
+implements in the <a class="reference internal" href="#pulsar.apps.wsgi.server.HttpServerResponse" title="pulsar.apps.wsgi.server.HttpServerResponse"><tt class="xref py py-class docutils literal"><span class="pre">server.HttpServerResponse</span></tt></a> protocol.</p>
+<p><strong>Yielding empty bytes</strong></p>
+<p>When the application middleware yields an empty byte, pulsar wsgi server pauses
+to consume the generator and add a callback to the <a class="reference internal" href="../../api/async.html#pulsar.EventLoop" title="pulsar.EventLoop"><tt class="xref py py-class docutils literal"><span class="pre">pulsar.EventLoop</span></tt></a>
+running the current <a class="reference internal" href="../../api/actor.html#pulsar.Actor" title="pulsar.Actor"><tt class="xref py py-class docutils literal"><span class="pre">pulsar.Actor</span></tt></a> to resume the iteration at the
+next <a class="reference internal" href="../../api/async.html#pulsar.EventLoop" title="pulsar.EventLoop"><tt class="xref py py-class docutils literal"><span class="pre">pulsar.EventLoop</span></tt></a> loop.
+This is implemented in the <a class="reference internal" href="../../api/protocols.html#pulsar.Transport.writelines" title="pulsar.Transport.writelines"><tt class="xref py py-meth docutils literal"><span class="pre">pulsar.Transport.writelines()</span></tt></a> method when
+called with a generator as parameter:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="k">def</span> <span class="nf">_write_lines_async</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">lines</span><span class="p">):</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">result</span> <span class="o">=</span> <span class="nb">next</span><span class="p">(</span><span class="n">lines</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">result</span> <span class="o">==</span> <span class="n">b</span><span class="s">&#39;&#39;</span><span class="p">:</span>
+            <span class="c"># stop writing and resume at next loop</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_event_loop</span><span class="o">.</span><span class="n">call_soon</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_write_lines_async</span><span class="p">,</span> <span class="n">lines</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">result</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_write_lines_async</span><span class="p">(</span><span class="n">lines</span><span class="p">)</span>
+    <span class="k">except</span> <span class="ne">StopIteration</span><span class="p">:</span>
+        <span class="k">pass</span>
+</pre></div>
+</div>
+</div>
 <div class="section" id="wsgi-server">
 <h2>WSGI Server<a class="headerlink" href="#wsgi-server" title="Permalink to this headline">¶</a></h2>
 <dl class="class">
@@ -120,6 +189,25 @@ initialisation.</p>
 <dt id="pulsar.apps.wsgi.server.HttpServerResponse">
 <em class="property">class </em><tt class="descclassname">pulsar.apps.wsgi.server.</tt><tt class="descname">HttpServerResponse</tt><big>(</big><em>wsgi_callable</em>, <em>connection</em><big>)</big><a class="reference internal" href="../../modules/pulsar/apps/wsgi/server.html#HttpServerResponse"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.wsgi.server.HttpServerResponse" title="Permalink to this definition">¶</a></dt>
 <dd><p>Server side HTTP <a class="reference internal" href="../../api/protocols.html#pulsar.ProtocolConsumer" title="pulsar.ProtocolConsumer"><tt class="xref py py-class docutils literal"><span class="pre">pulsar.ProtocolConsumer</span></tt></a>.</p>
+<dl class="method">
+<dt id="pulsar.apps.wsgi.server.HttpServerResponse.data_received">
+<tt class="descname">data_received</tt><big>(</big><em>data</em><big>)</big><a class="reference internal" href="../../modules/pulsar/apps/wsgi/server.html#HttpServerResponse.data_received"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.wsgi.server.HttpServerResponse.data_received" title="Permalink to this definition">¶</a></dt>
+<dd><p>Implements <a class="reference internal" href="../../api/protocols.html#pulsar.Protocol.data_received" title="pulsar.Protocol.data_received"><tt class="xref py py-class docutils literal"><span class="pre">pulsar.Protocol.data_received</span></tt></a>. Once we have a
+full HTTP message, build the wsgi <tt class="docutils literal"><span class="pre">environ</span></tt> and write the response
+using the <a class="reference internal" href="../../api/protocols.html#pulsar.Transport.writelines" title="pulsar.Transport.writelines"><tt class="xref py py-meth docutils literal"><span class="pre">pulsar.Transport.writelines()</span></tt></a> method.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="pulsar.apps.wsgi.server.HttpServerResponse.default_headers">
+<tt class="descname">default_headers</tt><big>(</big><big>)</big><a class="reference internal" href="../../modules/pulsar/apps/wsgi/server.html#HttpServerResponse.default_headers"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.wsgi.server.HttpServerResponse.default_headers" title="Permalink to this definition">¶</a></dt>
+<dd><p>From pep 3333: In general, the server or gateway is responsible for
+ensuring that correct headers are sent to the client: if the application
+omits a header required by HTTP (or other relevant specifications that are
+in effect), the server or gateway must add it. For example,
+the HTTP Date: and Server: headers would normally be supplied by the server
+or gateway.</p>
+</dd></dl>
+
 <dl class="method">
 <dt id="pulsar.apps.wsgi.server.HttpServerResponse.expect_continue">
 <tt class="descname">expect_continue</tt><big>(</big><big>)</big><a class="reference internal" href="../../modules/pulsar/apps/wsgi/server.html#HttpServerResponse.expect_continue"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.wsgi.server.HttpServerResponse.expect_continue" title="Permalink to this definition">¶</a></dt>
@@ -177,6 +265,13 @@ called by an error handler.</li>
 </dd></dl>
 
 <dl class="method">
+<dt id="pulsar.apps.wsgi.server.HttpServerResponse.generate">
+<tt class="descname">generate</tt><big>(</big><em>environ</em><big>)</big><a class="reference internal" href="../../modules/pulsar/apps/wsgi/server.html#HttpServerResponse.generate"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.wsgi.server.HttpServerResponse.generate" title="Permalink to this definition">¶</a></dt>
+<dd><p>Generator of response bytestrings conforming with the
+<a class="reference internal" href="#wsgi-async"><em>wsgi asynchronous implementation</em></a>.</p>
+</dd></dl>
+
+<dl class="method">
 <dt id="pulsar.apps.wsgi.server.HttpServerResponse.is_chunked">
 <tt class="descname">is_chunked</tt><big>(</big><big>)</big><a class="reference internal" href="../../modules/pulsar/apps/wsgi/server.html#HttpServerResponse.is_chunked"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.wsgi.server.HttpServerResponse.is_chunked" title="Permalink to this definition">¶</a></dt>
 <dd><p>Only use chunked responses when the client is
@@ -208,6 +303,7 @@ is an HTTP upgrade (websockets)</p>
   <h3><a href="../../index.html">Table Of Contents</a></h3>
   <ul>
 <li><a class="reference internal" href="#">WSGI Servers</a><ul>
+<li><a class="reference internal" href="#wsgi-asynchronous-implementation">WSGI asynchronous implementation</a></li>
 <li><a class="reference internal" href="#wsgi-server">WSGI Server</a></li>
 <li><a class="reference internal" href="#module-pulsar.apps.wsgi.server">HTTP Protocol Consumer</a></li>
 </ul>

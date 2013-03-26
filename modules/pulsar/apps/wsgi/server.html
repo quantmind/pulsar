@@ -6,13 +6,13 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>pulsar.apps.wsgi.server &mdash; pulsar v0.5b9 documentation</title>
+    <title>pulsar.apps.wsgi.server &mdash; pulsar v0.5b10 documentation</title>
     <link rel="stylesheet" href="../../../../static/pulsar.css" type="text/css" />
     <link rel="stylesheet" href="../../../../static/pygments.css" type="text/css" />
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../../../',
-        VERSION:     '0.5b9',
+        VERSION:     '0.5b10',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -22,7 +22,7 @@
     <script type="text/javascript" src="../../../../static/underscore.js"></script>
     <script type="text/javascript" src="../../../../static/doctools.js"></script>
     <link rel="shortcut icon" href="../../../../static/Game_of_life_pulsar.gif"/>
-    <link rel="top" title="pulsar v0.5b9 documentation" href="../../../../index.html" />
+    <link rel="top" title="pulsar v0.5b10 documentation" href="../../../../index.html" />
     <link rel="up" title="pulsar.apps.wsgi" href="../wsgi.html" /> 
   </head>
   <body>
@@ -36,7 +36,7 @@
         <li class="right" >
           <a href="../../../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li><a href="../../../../index.html">pulsar v0.5b9 documentation</a> &raquo;</li>
+        <li><a href="../../../../index.html">pulsar v0.5b10 documentation</a> &raquo;</li>
           <li><a href="../../../index.html" >Module code</a> &raquo;</li>
           <li><a href="../../../pulsar.html" >pulsar</a> &raquo;</li>
           <li><a href="../../apps.html" >pulsar.apps</a> &raquo;</li>
@@ -194,7 +194,7 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">server_port</span> <span class="o">=</span> <span class="n">port</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">parser</span> <span class="o">=</span> <span class="n">lib</span><span class="o">.</span><span class="n">Http_Parser</span><span class="p">(</span><span class="n">kind</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
         
-    <span class="k">def</span> <span class="nf">data_received</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">):</span>
+<div class="viewcode-block" id="HttpServerResponse.data_received"><a class="viewcode-back" href="../../../../apps/wsgi/intro.html#pulsar.apps.wsgi.server.HttpServerResponse.data_received">[docs]</a>    <span class="k">def</span> <span class="nf">data_received</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">):</span>
         <span class="c"># Got data from the transport, lets parse it</span>
         <span class="n">p</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">parser</span>
         <span class="n">request_headers</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">request_headers</span>
@@ -208,11 +208,11 @@
             <span class="c"># This is a parsing error, the client must have sent</span>
             <span class="c"># bogus data</span>
             <span class="k">raise</span> <span class="n">ProtocolError</span>
-    
-    <span class="k">def</span> <span class="nf">default_headers</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    </div>
+<div class="viewcode-block" id="HttpServerResponse.default_headers"><a class="viewcode-back" href="../../../../apps/wsgi/intro.html#pulsar.apps.wsgi.server.HttpServerResponse.default_headers">[docs]</a>    <span class="k">def</span> <span class="nf">default_headers</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">return</span> <span class="n">Headers</span><span class="p">([(</span><span class="s">&#39;Server&#39;</span><span class="p">,</span> <span class="n">pulsar</span><span class="o">.</span><span class="n">SERVER_SOFTWARE</span><span class="p">),</span>
                         <span class="p">(</span><span class="s">&#39;Date&#39;</span><span class="p">,</span> <span class="n">format_date_time</span><span class="p">(</span><span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()))])</span>
-    
+    </div>
     <span class="nd">@property</span>
     <span class="k">def</span> <span class="nf">request_headers</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">parser</span><span class="o">.</span><span class="n">is_headers_complete</span><span class="p">():</span>
@@ -314,7 +314,7 @@
         <span class="k">if</span> <span class="n">data</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">transport</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
 </div>
-    <span class="k">def</span> <span class="nf">generate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">environ</span><span class="p">):</span>
+<div class="viewcode-block" id="HttpServerResponse.generate"><a class="viewcode-back" href="../../../../apps/wsgi/intro.html#pulsar.apps.wsgi.server.HttpServerResponse.generate">[docs]</a>    <span class="k">def</span> <span class="nf">generate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">environ</span><span class="p">):</span>
         <span class="n">exc_info</span> <span class="o">=</span> <span class="bp">None</span>
         <span class="n">keep_alive</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">keep_alive</span>
         <span class="c"># Inject connection into the environment</span>
@@ -379,7 +379,7 @@
         <span class="k">if</span> <span class="ow">not</span> <span class="n">keep_alive</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">connection</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">finished</span><span class="p">()</span>
-
+</div>
 <div class="viewcode-block" id="HttpServerResponse.is_chunked"><a class="viewcode-back" href="../../../../apps/wsgi/intro.html#pulsar.apps.wsgi.server.HttpServerResponse.is_chunked">[docs]</a>    <span class="k">def</span> <span class="nf">is_chunked</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="sd">&#39;&#39;&#39;Only use chunked responses when the client is</span>
 <span class="sd">speaking HTTP/1.1 or newer and there was no Content-Length header set.&#39;&#39;&#39;</span>

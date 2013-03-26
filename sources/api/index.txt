@@ -38,7 +38,7 @@ directly on top of :ref:`pulsar primitives <pulsar_primitives>`. These
 **framework** classes are:
 
 * :class:`Arbiter` manages the execution of pulsar-powered applications.
-* :class:`Application` is the base class for all higher level pulsar usage.
+* :class:`apps.Application` is the base class for all higher level pulsar usage.
 
 
 Contents

@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>Asynchronous Components &mdash; pulsar v0.5b10 documentation</title>
+    <title>Run a Django site with Pulsar &mdash; pulsar v0.5b10 documentation</title>
     <link rel="stylesheet" href="../static/pulsar.css" type="text/css" />
     <link rel="stylesheet" href="../static/pygments.css" type="text/css" />
     <script type="text/javascript">
@@ -24,8 +24,8 @@
     <link rel="shortcut icon" href="../static/Game_of_life_pulsar.gif"/>
     <link rel="top" title="pulsar v0.5b10 documentation" href="../index.html" />
     <link rel="up" title="Tutorials &amp; Topics" href="index.html" />
-    <link rel="next" title="Actor messages" href="messages.html" />
-    <link rel="prev" title="Run a Django site with Pulsar" href="django.html" /> 
+    <link rel="next" title="Asynchronous Components" href="coroutine.html" />
+    <link rel="prev" title="A Task Queue with a JSON-RPC Api" href="taskqueue.html" /> 
   </head>
   <body>
 
@@ -39,10 +39,10 @@
           <a href="../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
         <li class="right" >
-          <a href="messages.html" title="Actor messages"
+          <a href="coroutine.html" title="Asynchronous Components"
              accesskey="N">next</a> |</li>
         <li class="right" >
-          <a href="django.html" title="Run a Django site with Pulsar"
+          <a href="taskqueue.html" title="A Task Queue with a JSON-RPC Api"
              accesskey="P">previous</a> |</li>
         <li><a href="../index.html">pulsar v0.5b10 documentation</a> &raquo;</li>
           <li><a href="index.html" accesskey="U">Tutorials &amp; Topics</a> &raquo;</li> 
@@ -65,32 +65,34 @@
         <div class="bodywrapper">
           <div class="body">
             
-  <span class="target" id="module-pulsar"></span><div class="section" id="asynchronous-components">
-<span id="tutorials-coroutine"></span><h1>Asynchronous Components<a class="headerlink" href="#asynchronous-components" title="Permalink to this headline">¶</a></h1>
-<div class="section" id="coroutines">
-<h2>Coroutines<a class="headerlink" href="#coroutines" title="Permalink to this headline">¶</a></h2>
-<p>The following:</p>
-<div class="highlight-python"><div class="highlight"><pre><span class="k">def</span> <span class="nf">my_async_generator</span><span class="p">(</span><span class="o">...</span><span class="p">):</span>
-    <span class="k">yield</span> <span class="n">something_but_dont_care_what_it_returns</span><span class="p">()</span>
-    <span class="o">...</span>
-    <span class="n">bla</span> <span class="o">=</span> <span class="k">yield</span> <span class="n">something_and_care_what_it_returns</span><span class="p">()</span>
-    <span class="k">yield</span> <span class="n">do_something</span><span class="p">(</span><span class="n">bla</span><span class="p">)</span>
-
-<span class="n">result</span> <span class="o">=</span> <span class="n">maybe_async</span><span class="p">(</span><span class="n">my_async_generator</span><span class="p">())</span>
-</pre></div>
+  <div class="section" id="run-a-django-site-with-pulsar">
+<span id="tutorials-django"></span><h1>Run a Django site with Pulsar<a class="headerlink" href="#run-a-django-site-with-pulsar" title="Permalink to this headline">¶</a></h1>
+<p>The code for this example is located in the <a class="reference internal" href="#module-examples.djangoapp.manage" title="examples.djangoapp.manage"><tt class="xref py py-mod docutils literal"><span class="pre">examples.djangoapp.manage</span></tt></a>
+module.</p>
+<span class="target" id="module-examples.djangoapp.manage"></span><p>This a web chat application which illustrates how to run a django site with
+pulsar and how to include pulsar asynchronous request middlewares into django.
+Requires django 1.4 or above. To run:</p>
+<div class="highlight-python"><pre>python manage.py pulse</pre>
 </div>
-<p>Under the hood, a generator is transformed into a <a class="reference internal" href="../api/async.html#pulsar.DeferredCoroutine" title="pulsar.DeferredCoroutine"><tt class="xref py py-class docutils literal"><span class="pre">DeferredCoroutine</span></tt></a>
-via the <a class="reference internal" href="../api/async.html#pulsar.maybe_async" title="pulsar.maybe_async"><tt class="xref py py-func docutils literal"><span class="pre">maybe_async()</span></tt></a> function. The <a class="reference internal" href="../api/async.html#pulsar.DeferredCoroutine" title="pulsar.DeferredCoroutine"><tt class="xref py py-class docutils literal"><span class="pre">DeferredCoroutine</span></tt></a>
-allows one to write inlines asynchronous function in just one line:</p>
-<div class="highlight-python"><div class="highlight"><pre><span class="n">result</span> <span class="o">=</span> <span class="k">yield</span> <span class="n">possibly_async_result</span><span class="p">()</span>
-</pre></div>
+<p>If running for the first time, issue the:</p>
+<div class="highlight-python"><pre>python manage.py syncdb</pre>
 </div>
-<p>Previously, pulsar used a generator approach, which required three lines
-of code to obtain the same result:</p>
-<div class="highlight-python"><div class="highlight"><pre><span class="n">future</span> <span class="o">=</span> <span class="n">make_async</span><span class="p">(</span><span class="n">possibly_async_result</span><span class="p">())</span>
-<span class="k">yield</span> <span class="n">future</span>
-<span class="n">result</span> <span class="o">=</span> <span class="n">future</span><span class="o">.</span><span class="n">result</span>
-</pre></div>
+<p>command first and create the super user. The example defines two django applications:</p>
+<ul class="simple">
+<li><a class="reference internal" href="#djpulsar"><em>djpulsar</em></a> which implements the <tt class="docutils literal"><span class="pre">pulse</span></tt> django command.</li>
+<li><tt class="docutils literal"><span class="pre">djangoapp</span></tt> which runs the actual example.</li>
+</ul>
+<div class="section" id="module-examples.djangoapp.djpulsar">
+<span id="djpulsar-app"></span><span id="djpulsar"></span><h2>djpulsar app<a class="headerlink" href="#module-examples.djangoapp.djpulsar" title="Permalink to this headline">¶</a></h2>
+<p>Django application for running a django web site with <a class="reference external" href="https://pypi.python.org/pypi/pulsar">pulsar</a>. Add it
+to the list of your <tt class="docutils literal"><span class="pre">INSTALLED_APPS</span></tt>:</p>
+<div class="highlight-python"><pre>INSTALLED_APPS = (
+    ...,
+    'djpulsar'
+)</pre>
+</div>
+<p>and run pulsar via the <tt class="docutils literal"><span class="pre">pulse</span></tt> command:</p>
+<div class="highlight-python"><pre>python manage.py pulse</pre>
 </div>
 </div>
 </div>
@@ -107,21 +109,21 @@ of code to obtain the same result:</p>
 </p>
   <h3><a href="../index.html">Table Of Contents</a></h3>
   <ul>
-<li><a class="reference internal" href="#">Asynchronous Components</a><ul>
-<li><a class="reference internal" href="#coroutines">Coroutines</a></li>
+<li><a class="reference internal" href="#">Run a Django site with Pulsar</a><ul>
+<li><a class="reference internal" href="#module-examples.djangoapp.djpulsar">djpulsar app</a></li>
 </ul>
 </li>
 </ul>
 
   <h4>Previous topic</h4>
-  <p class="topless"><a href="django.html"
-                        title="previous chapter">Run a Django site with Pulsar</a></p>
+  <p class="topless"><a href="taskqueue.html"
+                        title="previous chapter">A Task Queue with a JSON-RPC Api</a></p>
   <h4>Next topic</h4>
-  <p class="topless"><a href="messages.html"
-                        title="next chapter">Actor messages</a></p>
+  <p class="topless"><a href="coroutine.html"
+                        title="next chapter">Asynchronous Components</a></p>
   <h3>This Page</h3>
   <ul class="this-page-menu">
-    <li><a href="../sources/tutorials/coroutine.txt"
+    <li><a href="../sources/tutorials/django.txt"
            rel="nofollow">Show Source</a></li>
   </ul>
 <div id="searchbox" style="display: none">

@@ -13,7 +13,7 @@ of parallel and asynchronous applications.
   the :class:`Actor` class for parallel execution and the the :class:`Deferred`
   class for handling asynchronous events via an actor's :class:`EventLoop`.
 * The second layer, built on top of the first one, is based on the
-  :class:`Application` class.
+  :class:`apps.Application` class.
    
 
 Server State
@@ -32,9 +32,11 @@ which control the life all :class:`Actor` and :class:`Monitor`.
 
 Arbiter
 ~~~~~~~~~~~~~~~~~~~~~~~~
-To access the arbiter, from the main process, one can use::
+To access the :class:`Arbiter`, from the main process, one can use::
 
-    arbiter = pulsar.arbiter()
+    >>> arbiter = pulsar.arbiter()
+    >>> arbiter.running()
+    False
     
 The Arbiter can be stopped and restarted.
 
@@ -157,8 +159,7 @@ The :meth:`Actor.on_start` method is called, **once only**, just before the acto
 starts its :ref:`event loop <eventloop>`. This function can be used to setup
 the application and register event handlers. For example, the
 :ref:`socket server application <apps-socket>` creates the server and register
-its file descriptor with the :attr:`Actor.requestloop` via the
-:meth:`IOLoop.add_handler` method.
+its file descriptor with the :attr:`Actor.requestloop`.
 
  
 **on_stop**

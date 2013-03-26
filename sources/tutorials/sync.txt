@@ -6,6 +6,12 @@ Synchronous Clients
 
 Both :class:`pulsar.Client` and :class:`pulsar.Server` are asynchronous by design.
 However, sometimes, mainly for testing purposing, can be useful to have
-:class:`pulsar.Client` which behave in a synchronous fashion.
+:class:`pulsar.Client` which behaves in a synchronous fashion.
 
 Pulsar achieves this by using the ``force_sync`` keyword when building a client.
+For example, this statement creates a synchronous :class:`pulsar.apps.http.HttpClient`::
+
+    >>> from pulsar.apps import http
+    >>> client = http.HttpClient(force_sync=True)
+
+    
