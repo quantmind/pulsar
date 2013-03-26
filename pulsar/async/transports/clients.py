@@ -73,6 +73,7 @@ of available connections.
         
     def get_or_create_connection(self, client):
         "Get or create a new connection for *client*"
+        stale_connections = []
         with self.lock:
             try:
                 closed = True
@@ -80,28 +81,30 @@ of available connections.
                     connection = self._available_connections.pop()
                     closed = connection.is_stale()
                     if closed and not connection.closed:
-                        connection.transport.close()
+                        stale_connections.append(connection)
             except KeyError:
                 connection = None
             else:
                 # we have a connection, lets added it to the concurrent set
                 self._concurrent_connections.add(connection)
-            if connection is None:
-                # build the new connection
-                connection = self.new_connection(self.address,
-                                                 client.consumer_factory,
-                                                 producer=client)
-                # Bind the post request event to the release connection function
-                connection.bind_event('post_request', self._release_response)
-                # Bind the connection_lost to connection to handle dangling connections
-                connection.bind_event('connection_lost',
-                                      partial(self._try_reconnect, connection))
-                #IMPORTANT: create client transport an connect to endpoint
-                transport = create_transport(connection, address=connection.address,
-                                             event_loop=client.get_event_loop())
-                return transport.connect(connection.address)
-            else:
-                return connection
+        for connection in stale_connections:
+            connection.transport.close()
+        if connection is None:
+            # build the new connection
+            connection = self.new_connection(self.address,
+                                             client.consumer_factory,
+                                             producer=client)
+            # Bind the post request event to the release connection function
+            connection.bind_event('post_request', self._release_response)
+            # Bind the connection_lost to connection to handle dangling connections
+            connection.bind_event('connection_lost',
+                                  partial(self._try_reconnect, connection))
+            #IMPORTANT: create client transport an connect to endpoint
+            transport = create_transport(connection, address=connection.address,
+                                         event_loop=client.get_event_loop())
+            return transport.connect(connection.address)
+        else:
+            return connection
         
     ############################################################################
     ##    INTERNALS

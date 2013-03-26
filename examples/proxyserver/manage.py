@@ -15,6 +15,13 @@ To run with different headers middleware create a new script and do::
     if __name__ == '__main__':
         server(headers_middleware=[...]).start()
         
+Implemenation
+===========================
+
+.. autoclass:: HttpBin
+   :members:
+   :member-order: ProxyServerWsgiHandler
+   
 '''
 import io
 import sys
@@ -37,45 +44,57 @@ def x_forwarded_for(environ, headers):
     headers.add_header('x-forwarded-for', environ['REMOTE_ADDR'])
     
 class user_agent:
+    '''Override user-agent header'''
     def __init__(self, agent):
         self.agent = agent
         
-    def __call__(environ, headers):
+    def __call__(self, environ, headers):
         headers['user-agent'] = self.agent
 
     
-class ProxyMiddleware(LocalMixin):
+class ProxyServerWsgiHandler(LocalMixin):
     '''WSGI middleware for an asynchronous proxy server. To perform
 processing on headers you can pass a list of ``headers_middleware``.
 An headers middleware is a callable which accepts two parameters, the wsgi
 *environ* dictionary and the *headers* container.'''
-    def __init__(self, user_agent=None, headers_middleware=None):
-        self.headers = headers = Headers(kind='client')
+    def __init__(self, headers_middleware=None):
         self.headers_middleware = headers_middleware or []
     
     @local_property
     def http_client(self):
-        return http.HttpClient(decompress=False, store_cookies=False,
-                               timeout=0)
+        return http.HttpClient(decompress=False, store_cookies=False)
         
     def __call__(self, environ, start_response):
         # The WSGI thing
         uri = environ['RAW_URI']
         if not uri or uri.startswith('/'):  # No proper uri, raise 404
             raise HttpException(status=404)
-        wsgi_response = wsgi.WsgiResponse(environ=environ,
-                                          start_response=start_response)
-        headers = self.request_headers(environ)
+        request_headers = self.request_headers(environ)
         method = environ['REQUEST_METHOD']
         stream = environ.get('wsgi.input') or io.BytesIO()
         response = self.http_client.request(method, uri,
                                             data=stream.getvalue(),
-                                            headers=headers,
+                                            headers=request_headers,
                                             version=environ['SERVER_PROTOCOL'])
-        return self.response_generator(wsgi_response, response)
+        for data in self.generate(environ, start_response, response):
+            response.on_finished.raise_all()
+            yield data
+        
+    def generate(self, environ, start_response, response):
+        '''Generate response asynchronously'''
+        while response.parser is None or not response.parser.is_headers_complete():
+            yield b''   # response headers not yet available
+        headers = Headers(self.remove_hop_headers(response.headers), kind='server')
+        start_response(response.status, list(headers))
+        while not response.parser.is_message_complete():
+            yield response.recv_body()
+        body = response.recv_body()
+        if body:
+            yield body
     
     def request_headers(self, environ):
-        '''Modify request headers via the list of :attr:`headers_middleware`.
+        '''Fill request headers from the environ dictionary and
+modify the headers via the list of :attr:`headers_middleware`.
 The returned headers will be sent to the target uri.'''
         headers = Headers(kind='client')
         for k in environ:
@@ -91,34 +110,18 @@ The returned headers will be sent to the target uri.'''
             middleware(environ, headers)
         return headers
         
-    def response_generator(self, wsgi_response, response):
-        parser = response.parser
-        while response.parser is None:
-            yield b''
-        parser = response.parser
-        while not parser.is_headers_complete():
-            yield b''
-        wsgi_response.status_code = response.status_code
-        wsgi_response.headers.update(response.headers)
-        wsgi_response.start()
-        while not parser.is_message_complete():
-            body = parser.recv_body()
-            yield body
-        body = parser.recv_body()
-        if body:
-            yield body
-            
+    def remove_hop_headers(self, headers):
+        for header, value in headers:
+            if header.lower() not in wsgi.HOP_HEADERS:
+                yield header, value
+                    
 
-def server(description=None, name='proxy-server',
-           headers_middleware=None, **kwargs):
-    description = description or 'Pulsar Proxy Server'
+def server(name='proxy-server', headers_middleware=None, **kwargs):
     if headers_middleware is None:
         headers_middleware = [user_agent(USER_AGENT), x_forwarded_for]
-    wsgi_proxy = ProxyMiddleware(user_agent=USER_AGENT,
-                                 headers_middleware=headers_middleware)
-    app = wsgi.WsgiHandler(middleware=[wsgi_proxy])
-    return wsgi.WSGIServer(app, name=name, description=description, **kwargs)
+    wsgi_proxy = ProxyServerWsgiHandler(headers_middleware)
+    return wsgi.WSGIServer(wsgi_proxy, name=name, **kwargs)
 
 
 if __name__ == '__main__':
-    server(headers_middleware=[]).start()
+    server().start()

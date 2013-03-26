@@ -3,6 +3,7 @@ import os
 import platform
 import json
 from copy import copy
+from collections import namedtuple
 from base64 import b64encode, b64decode
 
 import pulsar
@@ -19,10 +20,12 @@ from pulsar.utils.httpurl import urlparse, urljoin, DEFAULT_CHARSET,\
                                     choose_boundary, urlunparse,\
                                     host_and_port, responses, is_succesful,\
                                     HTTPError, URLError, request_host,\
-                                    requote_uri
+                                    requote_uri, get_hostport
 
 from .plugins import *
 
+
+scheme_host = namedtuple('scheme_host', 'scheme netloc')
 
 class TooManyRedirects(Exception):
     pass
@@ -31,8 +34,8 @@ class TooManyRedirects(Exception):
 class HttpRequest(pulsar.Request):
     '''A client request for an HTTP resource.'''
     parser_class = HttpParser
-    _tunnel_host = None
-    _has_proxy = False
+    full_url = None
+    _proxy = None
     def __init__(self, client, url, method, data=None, files=None,
                   charset=None, encode_multipart=True, multipart_boundary=None,
                   timeout=None, hooks=None, history=None, source_address=None,
@@ -40,12 +43,10 @@ class HttpRequest(pulsar.Request):
                   version=None, wait_continue=False, websocket_handler=None,
                   **ignored):
         self.client = client
-        self.type, self.full_host, self.path, self.params,\
+        self.timeout = timeout
+        self._scheme, self._netloc, self.path, self.params,\
         self.query, self.fragment = urlparse(url)
-        self.full_url = self._get_full_url()
-        self._set_hostport(*host_and_port(self.full_host))
-        super(HttpRequest, self).__init__((self.host, self.port), timeout)
-        #self.bind_event(hooks)
+        self.host_only, self.port = get_hostport(self._scheme, self._netloc)
         self.history = history or []
         self.wait_continue = wait_continue
         self.max_redirects = max_redirects
@@ -61,11 +62,29 @@ class HttpRequest(pulsar.Request):
         self.files = files
         self.source_address = source_address
         self.new_parser()
-        
+    
+    @property
+    def address(self):
+        return (self.host_only, int(self.port))
+    
     @property
     def key(self):
-        return (self.type, self.address, self.timeout)
+        return (self.scheme, self.address, self.timeout)
     
+    @property
+    def scheme(self):
+        if self._proxy:
+            return max(self._scheme, self._proxy.scheme)
+        else:
+            return self._scheme
+        
+    @property
+    def netloc(self):
+        if self._proxy:
+            return self._proxy.netloc
+        else:
+            return self._netloc
+        
     def __repr__(self):
         return self.first_line()
     
@@ -73,44 +92,15 @@ class HttpRequest(pulsar.Request):
         return self.__repr__()
     
     def first_line(self):
+        self.full_url = self.get_full_url()
         return '%s %s %s' % (self.method, self.full_url, self.version)
     
     def new_parser(self):
         self.parser = self.parser_class(kind=1, decompress=self.decompress)
         
-    def set_proxy(self, host, type):
-        if self.type == 'https' and not self._tunnel_host:
-            self._tunnel_host = self.host
-        else:
-            self.type = type
-            self._has_proxy = True
-        self.host = host
-        
-    @property
-    def default_port(self):
-        return httpclient.HTTPS_PORT if self.type == 'https' else\
-                 httpclient.HTTP_PORT
-                  
-    def _set_hostport(self, host, port):
-        if port is None:
-            i = host.rfind(':')
-            j = host.rfind(']')         # ipv6 addresses have [...]
-            if i > j:
-                try:
-                    port = int(host[i+1:])
-                except ValueError:
-                    if host[i+1:] == "": # http://foo.com:/ == http://foo.com/
-                        port = self.default_port
-                    else:
-                        raise httpclient.InvalidURL("nonnumeric port: '%s'"
-                                                     % host[i+1:])
-                host = host[:i]
-            else:
-                port = self.default_port
-            if host and host[0] == '[' and host[-1] == ']':
-                host = host[1:-1]
-        self.host = host
-        self.port = port
+    def set_proxy(self, scheme, host):
+        self.host_only, self.port = get_hostport(scheme, host)
+        self._proxy = scheme_host(scheme, host)
     
     def encode(self):
         buffer = []
@@ -176,11 +166,14 @@ class HttpRequest(pulsar.Request):
             self.data = query
             query = urlencode(query)
         self.query = query
-        self.full_url = self._get_full_url()
 
-    def _get_full_url(self):
-        return urlunparse((self.type, self.full_host, self.path,
-                                   self.params, self.query, ''))
+    def get_full_url(self):
+        if not self._proxy:
+            return urlunparse(('', '', self.path or '/', self.params,
+                               self.query, self.fragment))
+        else:
+            return urlunparse((self._scheme, self._netloc, self.path,
+                               self.params, self.query, self.fragment))
         
         
 class HttpResponse(pulsar.ProtocolConsumer):
@@ -189,21 +182,26 @@ Initialised by a call to the :class:`HttpClient.request` method.
 '''
     _tunnel_host = None
     _has_proxy = False
+    _content = None
     
     @property
     def parser(self):
         if self.current_request:
             return self.current_request.parser
     
-    @property
-    def content(self):
+    def recv_body(self):
+        '''Flush the response body and return it.'''
         return self.parser.recv_body()
     
+    def get_content(self):
+        '''Retrive the body without flushing'''
+        b = self.parser.recv_body()
+        if b:
+            self._content = self._content + b if self._content else b
+        return self._content
+    
     def __str__(self):
-        if self.status_code:
-            return '%s %s' % (self.status_code, self.response)
-        else:
-            return '<None>'
+        return self.status or '<None>'
 
     def __repr__(self):
         return '%s(%s)' % (self.__class__.__name__, self)
@@ -217,6 +215,12 @@ Initialised by a call to the :class:`HttpClient.request` method.
     def response(self):
         if self.status_code:
             return responses.get(self.status_code)
+        
+    @property
+    def status(self):
+        status_code = self.status_code
+        if status_code:
+            return '%s %s' % (status_code, responses.get(status_code))
         
     @property
     def url(self):
@@ -243,10 +247,10 @@ Initialised by a call to the :class:`HttpClient.request` method.
             return is_failure(self.on_finished.result)
         else:
             return False
-        
+    
     def content_string(self, charset=None, errors=None):
         '''Decode content as a string.'''
-        data = self.content
+        data = self.get_content()
         if data is not None:
             return data.decode(charset or 'utf-8', errors or 'strict')
 
@@ -516,6 +520,7 @@ the :class:`HttpRequest` constructor.
             params = self.update_parameters(self.request_parameters, params)
         request = HttpRequest(self, url, method, **params)
         request.headers = self.get_headers(request, headers)
+        self.set_proxy(request)
         if self.cookies:
             self.cookies.add_cookie_header(request)
         if cookies:
@@ -541,7 +546,7 @@ the :class:`HttpRequest` constructor.
     def get_headers(self, request, headers):
         '''Returns a :class:`Header` obtained from combining
 :attr:`headers` with *headers*. It handles websocket requests.'''
-        if request.type in ('ws','wss'):
+        if request.scheme in ('ws','wss'):
             d = Headers((('Connection', 'Upgrade'),
                          ('Upgrade', 'websocket'),
                          ('Sec-WebSocket-Version', str(max(SUPPORTED_VERSIONS))),
@@ -555,12 +560,12 @@ the :class:`HttpRequest` constructor.
         return d
     
     def set_proxy(self, request):
-        if request.type in self.proxy_info:
-            hostonly, _ = splitport(request.host)
+        if request.scheme in self.proxy_info:
+            hostonly = request.host_only
             no_proxy = [n for n in self.proxy_info.get('no','').split(',') if n]
             if not any(map(hostonly.endswith, no_proxy)):
-                p = urlparse(self.proxy_info[request.type])
-                request.set_proxy(p.netloc, p.scheme)
+                p = urlparse(self.proxy_info[request.scheme])
+                request.set_proxy(p.scheme, p.netloc)
                 
     def build_protocol(self, address, timeout):
         type, address = address[0], address[1:] 

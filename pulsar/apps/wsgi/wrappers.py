@@ -153,7 +153,7 @@ client.
         self.status_code = status or self.DEFAULT_STATUS_CODE
         self.encoding = encoding
         self.cookies = SimpleCookie()
-        self.headers = Headers(response_headers, kind='server')
+        self.headers = Headers(response_headers, kind='server') 
         self.content = content
         if content_type is not None:
             self.content_type = content_type

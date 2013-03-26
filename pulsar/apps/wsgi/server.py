@@ -20,91 +20,14 @@ from pulsar.utils.httpurl import Headers, unquote, has_empty_content,\
                                     Headers, REDIRECT_CODES
 from pulsar.utils import events
 
-from .utils import handle_wsgi_error, LOGGER
+from .utils import handle_wsgi_error, LOGGER, HOP_HEADERS
 from .wrappers import WsgiResponse
 
 
-__all__ = ['wsgi_environ', 'HttpServerResponse', 'MAX_CHUNK_SIZE']
+__all__ = ['HttpServerResponse', 'MAX_CHUNK_SIZE']
 
 MAX_CHUNK_SIZE = 65536
 
-
-def wsgi_environ(response, parser):
-    """return a :ref:`WSGI <apps-wsgi>` compatible environ dictionary
-based on the current request. If the reqi=uest headers are not ready it returns
-nothing."""
-    version = parser.get_version()
-    input = BytesIO(parser.recv_body())
-    prot = "HTTP/%s" % ".".join(('%s' % v for v in version))
-    environ = {
-        "wsgi.input": input,
-        "wsgi.errors": sys.stderr,
-        "wsgi.version": version,
-        "wsgi.run_once": True,
-        "wsgi.url_scheme": prot,
-        'wsgi.multithread': False,
-        'wsgi.multiprocess':False,
-        "SERVER_SOFTWARE": pulsar.SERVER_SOFTWARE,
-        "REQUEST_METHOD": native_str(parser.get_method()),
-        "QUERY_STRING": parser.get_query_string(),
-        "RAW_URI": parser.get_url(),
-        "SERVER_PROTOCOL": prot,
-        'CONTENT_TYPE': '',
-        'SERVER_NAME': response.server_name,
-        'SERVER_PORT': str(response.server_port)
-    }
-    # REMOTE_HOST and REMOTE_ADDR may not qualify the remote addr:
-    # http://www.ietf.org/rfc/rfc3875
-    url_scheme = "http"
-    forward = response.address
-    server = None
-    url_scheme = "http"
-    script_name = os.environ.get("SCRIPT_NAME", "")
-    headers = mapping_iterator(parser.get_headers())
-    for header, value in headers:
-        header = header.lower()
-        if header == 'x-forwarded-for':
-            forward = value
-        elif header == "x-forwarded-protocol" and value == "ssl":
-            url_scheme = "https"
-        elif header == "x-forwarded-ssl" and value == "on":
-            url_scheme = "https"
-        elif header == "host":
-            server = value
-        elif header == "script_name":
-            script_name = value
-        elif header == "content-type":
-            environ['CONTENT_TYPE'] = value
-            continue
-        elif header == "content-length":
-            environ['CONTENT_LENGTH'] = value
-            continue
-        key = 'HTTP_' + header.upper().replace('-', '_')
-        environ[key] = value
-    environ['wsgi.url_scheme'] = url_scheme
-    if is_string(forward):
-        # we only took the last one
-        # http://en.wikipedia.org/wiki/X-Forwarded-For
-        if forward.find(",") >= 0:
-            forward = forward.rsplit(",", 1)[1].strip()
-        remote = forward.split(":")
-        if len(remote) < 2:
-            remote.append('80')
-    else:
-        remote = forward
-    environ['REMOTE_ADDR'] = remote[0]
-    environ['REMOTE_PORT'] = str(remote[1])
-    if server is not None:
-        server =  host_and_port_default(url_scheme, server)
-        environ['SERVER_NAME'] = server[0]
-        environ['SERVER_PORT'] = server[1]
-    path_info = parser.get_path()
-    if path_info is not None:
-        if script_name:
-            path_info = path_info.split(script_name, 1)[1]
-        environ['PATH_INFO'] = unquote(path_info)
-    environ['SCRIPT_NAME'] = script_name
-    return environ
 
 def chunk_encoding(chunk):
     '''Write a chunk::
@@ -117,32 +40,28 @@ If the size is 0, this is the last chunk, and an extra CRLF is appended.
     head = ("%X\r\n" % len(chunk)).encode('utf-8')
     return head + chunk + b'\r\n'
 
+def keep_alive(environ, version):
+        """ return True if the connection should be kept alive"""
+        conn = environ.get('HTTP_CONNECTION', '').lower()
+        if conn == "close":
+            return False
+        elif conn == "keep-alive":
+            return True
+        return version == (1, 1)
 
 class HttpServerResponse(pulsar.ProtocolConsumer):
     '''Server side HTTP :class:`pulsar.ProtocolConsumer`.'''
     _status = None
     _headers_sent = None
-    #
-    HOP_HEADERS = {
-        'CONNECTION',
-        'KEEP-ALIVE',
-        'PROXY-AUTHENTICATE',
-        'PROXY-AUTHORIZATION',
-        'TE',
-        'TRAILERS',
-        'TRANSFER-ENCODING',
-        'UPGRADE',
-        'SERVER',
-        'DATE',
-    }
+    _request_headers = None
+    SERVER_SOFTWARE = pulsar.SERVER_SOFTWARE
     
     def __init__(self, wsgi_callable, connection):
         super(HttpServerResponse, self).__init__(connection)
         self.wsgi_callable = wsgi_callable
-        host, port = self.transport.address
-        self.server_name = socket.getfqdn(host)
-        self.server_port = port
         self.parser = lib.Http_Parser(kind=0)
+        self.headers = Headers()
+        self.keep_alive = False
         
     def data_received(self, data):
         '''Implements :class:`pulsar.Protocol.data_received`. Once we have a
@@ -150,37 +69,21 @@ full HTTP message, build the wsgi ``environ`` and write the response
 using the :meth:`pulsar.Transport.writelines` method.'''
         # Got data from the transport, lets parse it
         p = self.parser
-        request_headers = self.request_headers
+        request_headers = self._request_headers
         if p.execute(bytes(data), len(data)) == len(data):
-            if request_headers is None:
-                self.expect_continue()
-            if p.is_message_complete(): # message is done
-                self.environ = wsgi_environ(self, p)
-                self.transport.writelines(self.generate(self.environ))
+            done = p.is_message_complete()
+            if request_headers is None and p.is_headers_complete():
+                self._request_headers = p.get_headers()
+                if not done:
+                    self.expect_continue()
+            if done: # message is done
+                environ = self.wsgi_environ()
+                self.transport.writelines(self.generate(environ))
         else:
             # This is a parsing error, the client must have sent
             # bogus data
             raise ProtocolError
     
-    def default_headers(self):
-        '''From pep 3333: In general, the server or gateway is responsible for
-ensuring that correct headers are sent to the client: if the application
-omits a header required by HTTP (or other relevant specifications that are
-in effect), the server or gateway must add it. For example,
-the HTTP Date: and Server: headers would normally be supplied by the server
-or gateway.'''
-        headers = Headers([('Server', pulsar.SERVER_SOFTWARE),
-                           ('Date', format_date_time(time.time()))])
-        for head, value in mapping_iterator(self.parser.get_headers()):
-            if head.upper() in self.HOP_HEADERS:
-                headers.add_header(head, value)
-        return headers
-    
-    @property
-    def request_headers(self):
-        if self.parser.is_headers_complete():
-            return self.parser.get_headers()
-        
     def expect_continue(self):
         '''Handle the expect=100-continue header if available, according to
 the following algorithm:
@@ -189,10 +92,8 @@ the following algorithm:
 * Omit the 100 (Continue) response if it has already received some or all of
   the request body for the corresponding request.
     '''
-        headers = self.request_headers
-        if headers is not None and headers.get('Expect') == '100-continue':
-            if not self.parser.is_message_complete():
-                self.transport.write(b'HTTP/1.1 100 Continue\r\n\r\n')
+        if self._request_headers.get('Expect') == '100-continue':
+            self.transport.write(b'HTTP/1.1 100 Continue\r\n\r\n')
     
     @property
     def status(self):
@@ -200,8 +101,7 @@ the following algorithm:
 
     @property
     def upgrade(self):
-        if self.request_headers:
-            return self.request_headers.get('Upgrade')
+        return self.headers.get('Upgrade')
 
     @property
     def chunked(self):
@@ -215,17 +115,7 @@ the following algorithm:
 
     @property
     def version(self):
-        return self.environ.get('wsgi.version')
-
-    @property
-    def keep_alive(self):
-        """ return True if the connection should be kept alive"""
-        conn = self.environ.get('HTTP_CONNECTION','').lower()
-        if conn == "close":
-            return False
-        elif conn == "keep-alive":
-            return True
-        return self.version == (1, 1)
+        return self.parser.get_version()
 
     def start_response(self, status, response_headers, exc_info=None):
         '''WSGI compliant ``start_response`` callable, see pep3333_.
@@ -265,11 +155,16 @@ invocation of the application.
         self._status = status
         if type(response_headers) is not list:
             raise TypeError("Headers must be a list of name/value tuples")
-        self.headers = self.default_headers()
-        for head, value in response_headers:
-            if head.upper() in self.HOP_HEADERS:
+        for header, value in response_headers:
+            if header.lower() in HOP_HEADERS:
+                # These features are the exclusive province of this class,
+                # this should be considered a fatal error for an application
+                # to attempt sending them, but we don't raise an error,
+                # just log a warning
+                LOGGER.warning('Application handler passing hop header "%s"',
+                               header)
                 continue
-            self.headers.add_header(head, value)
+            self.headers.add_header(header, value)
         return self.write
 
     def write(self, data):
@@ -283,10 +178,6 @@ invocation of the application.
     def generate(self, environ):
         '''Generator of response bytestrings conforming with the
 :ref:`wsgi asynchronous implementation <wsgi-async>`.'''
-        exc_info = None
-        keep_alive = self.keep_alive
-        # Inject connection into the environment
-        environ['pulsar.connection'] = self.connection
         exc_info = None
         wsgi_iter = None
         while True:
@@ -311,18 +202,15 @@ invocation of the application.
                         yield b''
             except Exception as e:
                 if exc_info or self._headers_sent:
-                    keep_alive = False
+                    self.keep_alive = False
                     LOGGER.critical('Could not send valid response',
                                     exc_info=True)
                     break
                 else:
                     exc_info = sys.exc_info()
                     response = handle_wsgi_error(environ, exc_info)
-                    if keep_alive and response.status_code in REDIRECT_CODES:
-                        response.headers['connection'] = 'keep-alive'
-                    else:
-                        keep_alive = False
-                        response.headers['connection'] = 'close'
+                    if response.status_code not in REDIRECT_CODES:
+                        self.keep_alive = False
                     iterable = response(environ, self.start_response, exc_info)
             else:
                 head = self.send_headers(force=True)
@@ -343,14 +231,14 @@ invocation of the application.
         # iterables with close() methods.)
         if hasattr(wsgi_iter, 'close'):
             wsgi_iter.close()
-        if not keep_alive:
+        if not self.keep_alive:
             self.connection.close()
         self.finished()
 
     def is_chunked(self):
         '''Only use chunked responses when the client is
 speaking HTTP/1.1 or newer and there was no Content-Length header set.'''
-        if self.environ['wsgi.version'] <= (1,0):
+        if self.version <= (1, 0):
             return False
         elif has_empty_content(int(self.status[:3])):
             # Do not use chunked responses when the response
@@ -375,9 +263,7 @@ is an HTTP upgrade (websockets)'''
                 headers.pop('content-length', None)
             else:
                 headers.pop('Transfer-Encoding', None)
-            if 'connection' not in headers:
-                connection = "keep-alive" if self.keep_alive else "close"
-                headers['Connection'] = connection
+            headers['connection'] = "keep-alive" if self.keep_alive else "close"
             return headers
 
     def send_headers(self, force=False):
@@ -387,3 +273,76 @@ is an HTTP upgrade (websockets)'''
                 events.fire('http-headers', self, headers=tosend)
                 self._headers_sent = tosend.flat(self.version, self.status)
                 return self._headers_sent
+
+    def wsgi_environ(self):
+        #return a the WSGI environ dictionary
+        p = self.parser
+        input = BytesIO(p.recv_body())
+        protocol = "HTTP/%s" % ".".join(('%s' % v for v in p.get_version()))
+        environ = {
+            "wsgi.input": input,
+            "wsgi.errors": sys.stderr,
+            "wsgi.version": (1, 0),
+            "wsgi.run_once": False,
+            'wsgi.multithread': False,
+            'wsgi.multiprocess': False,
+            "SERVER_SOFTWARE": pulsar.SERVER_SOFTWARE,
+            "REQUEST_METHOD": native_str(p.get_method()),
+            "QUERY_STRING": p.get_query_string(),
+            "RAW_URI": p.get_url(),
+            "SERVER_PROTOCOL": protocol,
+            'CONTENT_TYPE': '',
+            'pulsar.connection': self.connection
+        }
+        url_scheme = "http"
+        forward = self.address
+        server = '%s:%s' % self.transport.address
+        script_name = os.environ.get("SCRIPT_NAME", "")
+        for header, value in mapping_iterator(self._request_headers):
+            header = header.lower()
+            if header in HOP_HEADERS:
+                self.headers.add_header(header, value)
+            if header == 'x-forwarded-for':
+                forward = value
+            elif header == "x-forwarded-protocol" and value == "ssl":
+                url_scheme = "https"
+            elif header == "x-forwarded-ssl" and value == "on":
+                url_scheme = "https"
+            elif header == "host":
+                server = value
+            elif header == "script_name":
+                script_name = value
+            elif header == "content-type":
+                environ['CONTENT_TYPE'] = value
+                continue
+            elif header == "content-length":
+                environ['CONTENT_LENGTH'] = value
+                continue
+            key = 'HTTP_' + header.upper().replace('-', '_')
+            environ[key] = value
+        environ['wsgi.url_scheme'] = url_scheme
+        if is_string(forward):
+            # we only took the last one
+            # http://en.wikipedia.org/wiki/X-Forwarded-For
+            if forward.find(",") >= 0:
+                forward = forward.rsplit(",", 1)[1].strip()
+            remote = forward.split(":")
+            if len(remote) < 2:
+                remote.append('80')
+        else:
+            remote = forward
+        environ['REMOTE_ADDR'] = remote[0]
+        environ['REMOTE_PORT'] = str(remote[1])
+        server =  host_and_port_default(url_scheme, server)
+        environ['SERVER_NAME'] = socket.getfqdn(server[0])
+        environ['SERVER_PORT'] = server[1]
+        path_info = p.get_path()
+        if path_info is not None:
+            if script_name:
+                path_info = path_info.split(script_name, 1)[1]
+            environ['PATH_INFO'] = unquote(path_info)
+        environ['SCRIPT_NAME'] = script_name
+        self.keep_alive = keep_alive(environ, p.get_version())
+        self.headers.update([('Server', self.SERVER_SOFTWARE),
+                             ('Date', format_date_time(time.time()))])
+        return environ

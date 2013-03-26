@@ -11,7 +11,7 @@ If running for the first time, issue the::
 
 command first and create the super user. The example defines two django applications:
 
-* :ref:`djpulsar <djpulsar>` which implements the ``pulse`` django command.
+* :ref:`djpulsar <djpulsar>` which implements the django ``pulse`` command.
 * ``djangoapp`` which runs the actual example. 
 
 

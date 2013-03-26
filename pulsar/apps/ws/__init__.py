@@ -167,11 +167,7 @@ http://www.w3.org/TR/websockets/ for details on the JavaScript interface.
                                        extensions=ws_extensions)
         except ProtocolError as e:
             raise HttpException(str(e), status=400)
-        headers = [
-            ('Upgrade', 'websocket'),
-            ('Connection', 'Upgrade'),
-            ('Sec-WebSocket-Accept', self.challenge_response(key))
-        ]
+        headers = [('Sec-WebSocket-Accept', self.challenge_response(key))]
         if parser.protocols:
             headers.append(('Sec-WebSocket-Protocol',
                             ', '.join(parser.protocols)))

@@ -425,6 +425,12 @@ directly the :attr:`result` attribute.'''
             return self.result
         else:
             return self
+        
+    def raise_all(self):
+        '''raise an exception only if :attr:`called` is ``True`` and
+the result is a :class:`Failure`'''
+        if self.called and is_failure(self.result):
+            self.result.raise_all()
 
     ##################################################    INTERNAL METHODS
     def _run_callbacks(self):

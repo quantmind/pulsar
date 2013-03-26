@@ -25,7 +25,21 @@ __all__ = ['handle_wsgi_error',
            'render_error_debug',
            'async_wsgi',
            'wsgi_request',
-           'set_wsgi_request_class']
+           'set_wsgi_request_class',
+           'HOP_HEADERS']
+
+HOP_HEADERS = frozenset((
+        'connection',
+        'keep-alive',
+        'proxy-authenticate',
+        'proxy-authorization',
+        'te',
+        'trailers',
+        'transfer-encoding',
+        'upgrade',
+        'server',
+        'date',
+    ))
 
 LOGGER = logging.getLogger('pulsar.wsgi')
 

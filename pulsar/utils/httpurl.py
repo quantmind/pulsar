@@ -273,13 +273,37 @@ def host_and_port(host):
     host, port = splitport(host)
     return host, int(port) if port else None
 
+def default_port(scheme):
+    if scheme == "http":
+        return '80'
+    elif scheme == "https":
+        return '443'
+    
 def host_and_port_default(scheme, host):
     host, port = splitport(host)
     if not port:
-        if scheme == "http":
-            port = '80'
-        elif scheme == "https":
-            port = '443'
+        port = default_port(scheme)
+    return host, port
+
+def get_hostport(scheme, full_host):
+    host, port = host_and_port(full_host)
+    if port is None:
+        i = host.rfind(':')
+        j = host.rfind(']')         # ipv6 addresses have [...]
+        if i > j:
+            try:
+                port = int(host[i+1:])
+            except ValueError:
+                if host[i+1:] == "": # http://foo.com:/ == http://foo.com/
+                    port = default_port(scheme)
+                else:
+                    raise httpclient.InvalidURL("nonnumeric port: '%s'"
+                                                 % host[i+1:])
+            host = host[:i]
+        else:
+            port = default_port(scheme)
+        if host and host[0] == '[' and host[-1] == ']':
+            host = host[1:-1]
     return host, port
 
 def remove_double_slash(route):
