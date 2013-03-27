@@ -356,8 +356,8 @@ is a group of tests specified in a test class.
     it used the standard ``unittest.TextTestResult``.
 :parameter plugins: Optional list of :class:`TestPlugin` instances.
 '''
-    _app_name = 'test'
-    cfg_apps = ('cpubound',)
+    name = 'test'
+    cfg_apps = ('cpubound', 'test')
     cfg = {'loglevel': 'none',
            'backlog': 5,
            'logconfig': {

@@ -42,7 +42,7 @@ class TestHelloWorldThread(unittest.TestCase):
         c = self.client
         response = yield c.get(self.uri).on_finished
         self.assertEqual(response.status_code, 200)
-        content = response.content
+        content = response.get_content()
         self.assertEqual(content, b'Hello World!\n')
         headers = response.headers
         self.assertTrue(headers)
@@ -51,7 +51,7 @@ class TestHelloWorldThread(unittest.TestCase):
     
     def testTimeIt(self):
         c = self.client
-        response = c.timeit(40, 'get', self.uri)
+        response = c.timeit(5, 'get', self.uri)
         #cc = list(c.connection_pools.values())[0]._concurrent_connections
         #self.assertTrue(cc)
         yield response

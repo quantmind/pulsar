@@ -1,10 +1,26 @@
-'''Configuration utilities. originally from gunicorn_,
-adapted and modified for pulsar.
+'''Configuration utilities. Originally from gunicorn_ (2011),
+adapted and modified for use in pulsar.
 
-Original Gunicorn Licence
+.. epigraph::
 
-This file is part of gunicorn released under the MIT license.
-See the NOTICE for more information.
+    This file is part of gunicorn released under the MIT license.
+    See the NOTICE for more information.
+
+    -- Original Gunicorn Licence
+
+Config
+~~~~~~~~~~
+
+.. autoclass:: Config
+   :members:
+   :member-order: bysource
+   
+Setting
+~~~~~~~~~~
+
+.. autoclass:: Setting
+   :members:
+   :member-order: bysource
 
 .. _gunicorn: http://gunicorn.org/
 '''
@@ -67,7 +83,8 @@ def ordered_settings():
     for name in KNOWN_SETTINGS_ORDER:
         yield KNOWN_SETTINGS[name]
 
-def make_settings(apps=None, include=None, exclude=None):
+def make_settings(apps=None, include=None, exclude=None, prefix=None,
+                  dont_prefix=None):
     '''Creates a dictionary of available settings for given
 applications *apps*.
 
@@ -78,6 +95,7 @@ applications *apps*.
     settings = {}
     include = set(include or ())
     exclude = set(exclude or ())
+    dont_prefix = set(dont_prefix or ())
     apps = set(apps or ())
     for s in ordered_settings():
         setting = s()
@@ -86,7 +104,11 @@ applications *apps*.
                 continue    # setting name in exclude set
             if setting.app and setting.app not in apps:
                 continue    # the setting is for an app not in the apps set
-        settings[setting.name] = setting.copy()
+        setting = setting.copy()
+        setting.orig_name = setting.name
+        if prefix and setting.can_prefix and prefix not in dont_prefix:
+            setting.name = '%s%s' % (prefix, setting.name)
+        settings[setting.name] = setting
     return settings
 
 
@@ -104,10 +126,14 @@ attribute by exposing the :attr:`Setting.name` as attribute.
     
     def __init__(self, description=None, epilog=None,
                  version=None, app=None, include=None,
-                 exclude=None, settings=None):
+                 exclude=None, settings=None, prefix=None,
+                 dont_prefix=None):
         if settings is None:
-            settings = make_settings(app, include, exclude)
+            settings = make_settings(app, include, exclude, prefix=prefix,
+                                     dont_prefix=dont_prefix)
         self.settings = settings
+        self._orig_name_map = dict(((s.orig_name, s.name)\
+                                          for s in settings.values()))
         self.description = description or 'Pulsar server'
         self.epilog = epilog or 'Have fun!'
         self.version = version or __version__
@@ -117,6 +143,10 @@ attribute by exposing the :attr:`Setting.name` as attribute.
     
     def __len__(self):
         return len(self.settings)
+    
+    def __contains__(self, name):
+        name = self._orig_name_map.get(name, name)
+        return name in self.settings
     
     def items(self):
         for k, setting in iteritems(self.settings):
@@ -147,10 +177,14 @@ attribute by exposing the :attr:`Setting.name` as attribute.
             raise AttributeError("No configuration setting for: %s" % name)
         return self.settings[name].get()
 
-    def set(self, name, value):
+    def set(self, name, value, default=False):
+        '''Set the configuration :class:`Setting` at *name* with a new
+*value*. If the *name* is not in this container, an :class:`AttributeError`
+is raised.'''
+        name = self._orig_name_map.get(name, name)
         if name not in self.settings:
             raise AttributeError("No configuration setting for: %s" % name)
-        self.settings[name].set(value)
+        self.settings[name].set(value, default=default)
 
     def parser(self):
         '''Create the argparser_ for this configuration by adding all
@@ -303,15 +337,19 @@ class SettingBase(object):
 accepting one positional argument, the value to validate.'''
     value = None
     '''The actual value for this setting.'''
+    default = None
     def __str__(self):
         return '{0} ({1})'.format(self.name, self.value)
     __repr__ = __str__
 
-    def set(self, val):
-        '''Set *val* as the value in this :class:`Setting`.'''
+    def set(self, val, default=False):
+        '''Set *val* as the value in this :class:`Setting`.
+If *default* is ``True`` set also the :attr:`default` value.'''
         if hasattr(self.validator, '__call__'):
             val = self.validator(val)
         self.value = val
+        if default:
+            self.default = val
 
     def get(self):
         return self.value
@@ -337,23 +375,36 @@ on the command line or on a config file.'''
     virtual = True
     '''If set to ``True`` the settings won't be loaded and it can be only used
 as base class for other settings.'''
+    name = None
+    '''The unique name used to access this setting in the :class:`Config`
+    container.'''
     nargs = None
-    '''For positional arguments. Same usage as argparse.'''
+    '''For positional arguments. Same usage as python :mod:`argparse` module.'''
     app = None
     '''Setting for a specific :class:`Application`.'''
     section = None
-    '''Setting section, used for creating documentation.'''
+    '''Setting section, used for creating the
+    :ref:`settings documentation <settings>`.'''
     flags = None
     '''List of options strings, e.g. ``[-f, --foo]``.'''
     choices = None
     '''Restrict the argument to the choices provided.'''
     type = None
     meta = None
+    '''Same usage as ``metavar`` in the python :mod:`argparse` module. It is
+    the name for the argument in usage message.'''
     action = None
     default = None
-    '''Default value'''
+    '''Default value.'''
     short = None
     desc = None
+    can_prefix = False
+    '''Flag used by pulsar :ref:`application framework <apps-framework>`
+    when multiple application are used in a running server. If ``True``
+    additional settings will be added to the :class:`Config` container.
+    These settings are clones of this :class:`Setting` with
+    name given by each application name and underacsore ``_``
+    prefixing this :attr:`name`.'''
 
     def __init__(self, name=None, flags=None, action=None, type=None,
                  default=None, nargs=None, desc=None, validator=None):
@@ -380,7 +431,9 @@ as base class for other settings.'''
         return self.__dict__.copy()
 
     def add_argument(self, parser):
-        '''Add itself to the argparser.'''
+        '''Add this :class:`Setting` to the *parser*, an instance of
+python :class:`argparse.ArgumentParser`, only if :attr:`flags` or
+:attr:`nargs` and :attr:`name` are defined.'''
         kwargs = {'nargs':self.nargs}
         if self.type and self.type != 'string':
             kwargs["type"] = self.type
@@ -503,11 +556,11 @@ class Workers(Setting):
     validator = validate_pos_int
     type = int
     default = 1
+    can_prefix = True
     desc = """\
         The number of workers for handling requests.
-
-If you are using a multi-process concurrency, a number in the
-the 2-4 x $(NUM_CORES) range should be good. If you are using threads this
+If using a multi-process concurrency, a number in the
+the ``2-4 x NUM_CORES`` range should be good. If you are using threads this
 number can be higher."""
 
 
@@ -516,6 +569,7 @@ class Concurrency(Setting):
     section = "Worker Processes"
     flags = ["--concurrency"]
     default = "process"
+    can_prefix = True
     desc = """\
         The type of concurrency to use: ``process`` or ``thread``.
         """
@@ -529,10 +583,11 @@ class MaxRequests(Setting):
     validator = validate_pos_int
     type = int
     default = 0
+    can_prefix = True
     desc = """\
         The maximum number of requests a worker will process before restarting.
 
-        Any value greater than zero will limit the number of requests a work
+        Any value greater than zero will limit the number of requests a worker
         will process before automatically restarting. This is a simple method
         to help limit the damage of memory leaks.
 
@@ -548,14 +603,15 @@ class Backlog(Setting):
     validator = validate_pos_int
     type = int
     default = 2048
+    can_prefix = True
     desc = """\
         The maximum number of concurrent requests.
         This refers to the number of clients that can be waiting to be served.
         Exceeding this number results in the client getting an error when
         attempting to connect. It should only affect servers under significant
         load.
-
-        Must be a positive integer. Generally set in the 64-2048 range.
+        Must be a positive integer. Generally set in the 64-2048 range for
+        socket servers, 5-10 for task-queue servers.
         """
 
 
@@ -567,6 +623,7 @@ class Timeout(Setting):
     validator = validate_pos_int
     type = int
     default = 30
+    can_prefix = True
     desc = """\
         Workers silent for more than this many seconds are
         killed and restarted."""

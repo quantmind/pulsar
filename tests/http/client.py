@@ -22,7 +22,7 @@ class TestHttpClientBase:
         concurrency = cls.cfg.concurrency
         s = server(bind='127.0.0.1:0', concurrency=concurrency,
                    name='httpbin-%s' % cls.__name__.lower(),
-                   keepalive=30)
+                   keep_alive=30)
         cls.app = yield send('arbiter', 'run', s)
         cls.uri = 'http://%s:%s' % cls.app.address
         if cls.with_proxy:
@@ -63,10 +63,33 @@ class TestHttpClientBase:
             return self.uri + '/' + '/'.join(suffix)
         else:
             return self.uri
+        
+    def available_on_error(self):
+        return 1 if self.proxy_app else 0
     
     
 class TestHttpClient(TestHttpClientBase, unittest.TestCase):
-    
+
+    def test_http10(self):
+        '''By default HTTP/1.0 close the connection if no keep-alive header
+was passedby the client.'''
+        http = self.client(version='HTTP/1.0')
+        http.headers.clear()
+        self.assertEqual(http.version, 'HTTP/1.0')
+        response = yield http.get(self.httpbin()).on_finished
+        self.assertEqual(response.headers['connection'], 'close')
+        self._check_pool(http, response, available=0)
+        
+    def test_http11(self):
+        '''By default HTTP/1.1 keep alive the connection if no keep-alive header
+was passed by the client.'''
+        http = self.client()
+        http.headers.clear()
+        self.assertEqual(http.version, 'HTTP/1.1')
+        response = yield http.get(self.httpbin()).on_finished
+        self.assertEqual(response.headers['connection'], 'keep-alive')
+        self._check_pool(http, response)
+        
     def testClient(self):
         http = self.client(max_redirects=5, timeout=33)
         self.assertTrue('accept-encoding' in http.headers)
@@ -93,7 +116,9 @@ class TestHttpClient(TestHttpClientBase, unittest.TestCase):
         
     def test_http10(self):
         http = self.client(version='HTTP/1.0')
-        self.assertEqual(http.version, 'HTTP/1.0')       
+        self.assertEqual(http.version, 'HTTP/1.0')
+        response = yield http.get(self.httpbin()).on_finished
+        self._check_pool(http, response)
         
     def test_HttpResponse(self):
         r = HttpResponse(None)
@@ -108,7 +133,7 @@ class TestHttpClient(TestHttpClientBase, unittest.TestCase):
         response = yield http.get(self.httpbin('status', '400')).on_finished
         N = len(listener['post_request'])
         self.assertTrue(N)
-        self._check_pool(http, response, available=0)
+        self._check_pool(http, response, available=self.available_on_error())
         self.assertEqual(response.status_code, 400)
         self.assertEqual(response.response, 'Bad Request')
         self.assertTrue(response.get_content())
@@ -117,7 +142,10 @@ class TestHttpClient(TestHttpClientBase, unittest.TestCase):
         response = yield http.get(self.httpbin('get')).on_finished
         self.assertTrue(len(listener['post_request']) > N)
         self.assertEqual(response.status_code, 200)
-        self._check_pool(http, response, created=2)
+        if self.proxy_app:
+            self._check_pool(http, response, created=1, processed=2)
+        else:
+            self._check_pool(http, response, created=2)
         
     def test_large_response(self):
         http = self.client(timeout=60)

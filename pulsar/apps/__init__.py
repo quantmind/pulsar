@@ -1,3 +1,43 @@
+'''
+Application
+===============================
+   
+.. autoclass:: Application
+   :members:
+   :member-order: bysource
+   
+
+CPU bound Application
+===============================
+      
+.. autoclass:: CPUboundApplication
+   :members:
+   :member-order: bysource
+
+
+Application Worker
+===============================
+   
+.. autoclass:: Worker
+   :members:
+   :member-order: bysource
+
+
+Application Monitor
+===============================
+   
+.. autoclass:: ApplicationMonitor
+   :members:
+   :member-order: bysource
+
+Multi App
+===============================
+      
+.. autoclass:: MultiApp
+   :members:
+   :member-order: bysource
+   
+'''
 import os
 import sys
 import logging
@@ -135,11 +175,11 @@ These are the most important facts about a pulsar :class:`Application`
     It will be displayed on the command line.
 :parameter epilog: Epilog string you will see when interacting with the command
     line.
-:parameter name: Application name. If not provided the class name in lower
-    case is used
+:parameter name: Application name. Override the :attr:`name` class attribute.
 :parameter params: a dictionary of configuration parameters which overrides
-    the defaults and the `cfg` attribute. They will be overritten by
-    a config file or command line arguments.
+    the defaults and the :attr:`cfg` class attribute. They will be overritten
+    by a :ref:`config file <setting-config>` or command line
+    arguments.
 
 .. attribute:: callable
 
@@ -151,16 +191,18 @@ These are the most important facts about a pulsar :class:`Application`
 
 .. attribute:: cfg
 
-    dictionary of default configuration parameters.
+    dictionary of default configuration parameters. It will be replaced by
+    a :class:`pulsar.utils.config.Config` container during initialization.
 
     Default: ``{}``.
 
 .. attribute:: cfg_apps
 
-    Optional tuple containing names of configuration namespaces to
-    be included in the application config dictionary.
+    Optional tuple\set containing names of
+    :ref:`configuration namespaces <settings>` to be included in the
+    application config dictionary.
 
-    Default: ``None``
+    Default: Empty ``frozenset``.
     
 .. attribute:: script
 
@@ -168,10 +210,9 @@ These are the most important facts about a pulsar :class:`Application`
     If supplied it is used to setup the python path
 """
     cfg = {}
-    _app_name = None
     description = None
     epilog = None
-    cfg_apps = None
+    cfg_apps = frozenset()
     config_options_include = None
     config_options_exclude = None
 
@@ -199,15 +240,14 @@ These are the most important facts about a pulsar :class:`Application`
         self.local.events = AppEvents()
         self.description = description or self.description
         self.epilog = epilog or self.epilog
-        self._app_name = self._app_name or self.__class__.__name__.lower()
-        self._name = name or self._app_name
+        self._name = self.__class__.name or self.__class__.__name__.lower()
         self.script = self.python_path(script)
         params = cfg or {}
         if self.cfg:
             params.update(self.cfg)
         params.update(kwargs)
         self.callable = callable
-        self.load_config(argv, version, parse_console, params)
+        self.load_config(argv, version, parse_console, **params)
         self()
 
     def __call__(self, actor=None):
@@ -235,10 +275,6 @@ These are the most important facts about a pulsar :class:`Application`
 and the :class:`Application` have the same interface.'''
         return self
     
-    @property
-    def app_name(self):
-        return self._app_name
-
     @property
     def name(self):
         '''Application name, It is unique and defines the application.'''
@@ -311,7 +347,8 @@ script which runs the application.'''
     def add_timeout(self, deadline, callback):
         self.arbiter.ioloop.add_timeout(deadline, callback)
     
-    def load_config(self, argv, version, parse_console, params):
+    def load_config(self, argv, version, parse_console,
+                    cfg_apps=None, settings=None, **params):
         '''Load the application configuration from a file and/or
 from the command line. Called during application initialization.
 
@@ -327,15 +364,16 @@ The parameters overriding order is the following:
  * the parameters in the optional configuration file
  * the parameters passed in the command line.
 '''
-        cfg_apps = set(self.cfg_apps or ())
-        cfg_apps.add(self.app_name)
-        self.cfg_apps = cfg_apps
+        cfg_apps = set(cfg_apps or ())
+        cfg_apps.update(self.cfg_apps)
+        self.cfg_apps = frozenset(cfg_apps)
         cfg = pulsar.Config(self.description,
                             self.epilog,
                             version,
                             self.cfg_apps,
                             self.config_options_include,
-                            self.config_options_exclude)
+                            self.config_options_exclude,
+                            settings=settings)
         self.cfg = self.on_config_init(cfg, params)
         if not isinstance(self.cfg, pulsar.Config):
             self.cfg = cfg
@@ -441,6 +479,17 @@ The application is now in the arbiter but has not yet started.'''
         if arbiter and self.name in arbiter.registered:
             arbiter.start()
         return self
+    
+    @classmethod
+    def create_config(cls, params, prefix=None, dont_prefix=None):
+        kwargs = cls.cfg.copy()
+        kwargs.update(params)
+        cfg = pulsar.Config(app=cls.cfg_apps, prefix=prefix,
+                            dont_prefix=dont_prefix)
+        for name in params:
+            if name in cfg:
+                cfg.set(name, params[name], default=True)
+        return cfg
 
 
 class CPUboundApplication(Application):
@@ -448,7 +497,7 @@ class CPUboundApplication(Application):
 handles events with a task to complete and the time complete the task is
 determined principally by the speed of the CPU.
 This type of application is served by :ref:`CPU bound workers <cpubound>`.'''
-    _app_name = 'cpubound'
+    cfg_apps = frozenset(('cpubound',))
     
     def __init__(self, *args, **kwargs):
         self.received = 0
@@ -498,25 +547,76 @@ request has been obtained from the :attr:`ioqueue`.'''
         return params
 
 
-class MultiApp:
+class MultiApp(object):
+    '''A :class:`MultiApp` is a tool for creating several :class:`Application`
+and starting them at once. It makes sure all :ref:`settings` for the
+applications created are available in the command line.
+The :meth:`build` is the only method which must be implemented by subclasses.
+Check the :class:`examples.taskqueue.manage.server` class in the
+:ref:`taskqueue example <tutorials-taskqueue>` for an example.
+
+.. attribute:: name
+
+    Optional name which can be used in the :meth:`build` method.
+    
+.. attribute:: cfg
+
+    Same as :attr:`Application.cfg` attribute.
+'''
+    cfg = {}
+    version = None
+    description = None
+    epilog = None
     
     def __init__(self, name='multi', **params):
         self.name = name
-        self.params = params
-        self.apps = []
-        
-    def add(self, app):
-        if isinstance(app, Application):
-            self.apps.append(app)
+        self.cfg = self.cfg.copy()
+        self.cfg.update(params)
+        self._apps = None
+        self._settings = {}
+    
+    def apps(self):
+        '''List of :class:`Application` for this :class:`MultiApp`.
+The lists is lazily loaded from the :meth:`build` method.'''
+        if self._apps is None:
+            self._apps =  []
+            app_name_callables = list(self.build())
+            params = {'description': self.description,
+                      'epilog': self.epilog,
+                      'settings': self._settings,
+                      'version': self.version}
+            for App, name, callable in app_name_callables:
+                app = App(callable, name=name, **params)
+                self._apps.append(app)
+        return self._apps
+    
+    def new_app(self, App, name=None, prefix=None, dont_prefix=None,
+                callable=None, **kwargs):
+        '''Create an instance of :class:`Application` *App*.'''
+        params = self.cfg.copy()
+        params.update(kwargs)
+        if name is None:
+            name = self.name
+            cfg = App.create_config(params)
+        else:
+            cfg = App.create_config(params, prefix='%s_' % name,
+                                    dont_prefix=dont_prefix)
+            name = '%s_%s' % (self.name, name)
+        self._settings.update(cfg.settings)
+        return (App, name, callable)
             
     def __call__(self, actor=None):
-        self.build()
-        if self.apps:
-            return self.apps[-1](actor)
-        
+        return pulsar.multi_async((app(actor) for app in self.apps()))
+    
     def build(self):
-        raise NotImplementedError()
+        '''Virtual method, must be implemented by subclasses and return an
+iterable of :class:`Application`.'''
+        raise NotImplementedError
         
     def start(self):
-        for app in self.apps:
-            app.start()
+        '''Use this method to start all applications at once.'''
+        apps = self.apps()
+        arbiter = pulsar.arbiter()
+        if arbiter:
+            arbiter.start()
+        

@@ -1,4 +1,12 @@
-'''HTTP protocol for asynchronous clients.'''
+'''An :class:`HttpClient` for asynchronous HTTP requests. It can also be used
+in synchronous mode by passing ``force_sync`` during initialization::
+
+    >>> from pulsar.apps import http
+    >>> client = http.HttpClient()
+    >>> response = http.get('http://www.bbc.co.uk')
+    
+.. _`uri scheme`: http://en.wikipedia.org/wiki/URI_scheme
+'''
 import os
 import platform
 import json
@@ -32,7 +40,16 @@ class TooManyRedirects(Exception):
 
 
 class HttpRequest(pulsar.Request):
-    '''A client request for an HTTP resource.'''
+    '''An :class:`HttpClient` request for an HTTP resource.
+    
+.. attribute:: method
+
+    The request method
+    
+.. attribute:: version
+
+    HTTP version for this request, usually ``HTTP/1.1``
+'''
     parser_class = HttpParser
     full_url = None
     _proxy = None
@@ -65,6 +82,7 @@ class HttpRequest(pulsar.Request):
     
     @property
     def address(self):
+        '''``(host, port)`` tuple of the HTTP resource'''
         return (self.host_only, int(self.port))
     
     @property
@@ -73,6 +91,7 @@ class HttpRequest(pulsar.Request):
     
     @property
     def scheme(self):
+        '''The `uri scheme`_ of the HTTP resource.'''
         if self._proxy:
             return max(self._scheme, self._proxy.scheme)
         else:
@@ -92,8 +111,8 @@ class HttpRequest(pulsar.Request):
         return self.__repr__()
     
     def first_line(self):
-        self.full_url = self.get_full_url()
-        return '%s %s %s' % (self.method, self.full_url, self.version)
+        url = self._get_url()
+        return '%s %s %s' % (self.method, url, self.version)
     
     def new_parser(self):
         self.parser = self.parser_class(kind=1, decompress=self.decompress)
@@ -103,6 +122,9 @@ class HttpRequest(pulsar.Request):
         self._proxy = scheme_host(scheme, host)
     
     def encode(self):
+        '''Called by :class:`HttpResponse` when it needs to encode this
+:class:`HttpRequest` before sending it to the HTTP resourse.
+It returns ``bytes``.'''
         buffer = []
         self.body = body = self.encode_body()
         if body:
@@ -119,7 +141,8 @@ class HttpRequest(pulsar.Request):
         return b''.join(buffer)
         
     def encode_body(self):
-        '''Encode body or url if the method does not have body'''
+        '''Encode body or url if the :attr:`method` does not have body.
+Called by :meth:`encode`.'''
         body = None
         if self.method in ENCODE_URL_METHODS:
             self.files = None
@@ -167,13 +190,14 @@ class HttpRequest(pulsar.Request):
             query = urlencode(query)
         self.query = query
 
-    def get_full_url(self):
+    def _get_url(self):
+        self.full_url = urlunparse((self._scheme, self._netloc, self.path,
+                                    self.params, self.query, self.fragment))
         if not self._proxy:
             return urlunparse(('', '', self.path or '/', self.params,
                                self.query, self.fragment))
         else:
-            return urlunparse((self._scheme, self._netloc, self.path,
-                               self.params, self.query, self.fragment))
+            return self.full_url
         
         
 class HttpResponse(pulsar.ProtocolConsumer):
@@ -337,7 +361,7 @@ Initialised by a call to the :class:`HttpClient.request` method.
     
 
 class HttpClient(pulsar.Client):
-    '''A :class:`pulsar.Client` for an HTTP/HTTPS servers which handles
+    '''A :class:`pulsar.Client` for HTTP/HTTPS servers which handles
 a pool of asynchronous :class:`pulsar.Connection`.
 
 .. attribute:: headers
@@ -360,24 +384,17 @@ a pool of asynchronous :class:`pulsar.Connection`.
 .. attribute:: encode_multipart
 
     Flag indicating if body data is encoded using the ``multipart/form-data``
-    encoding by default.
+    encoding by default. It can be overwritten during a :meth:`request`.
 
     Default: ``True``
-
-.. attribute:: DEFAULT_HTTP_HEADERS
-
-    Default headers for this :class:`HttpClient`
 
 .. attribute:: proxy_info
 
     Dictionary of proxy servers for this client.
     
-.. attribute:: version
+.. attribute:: DEFAULT_HTTP_HEADERS
 
-    Default HTTP request version for this :class:`HttpClient`. It can be
-    overwritten during a :meth:`request`.
-    
-    Default: ``HTTP/1.1``
+    Default headers for this :class:`HttpClient`
     
 '''
     consumer_factory = HttpResponse
@@ -385,6 +402,8 @@ a pool of asynchronous :class:`pulsar.Connection`.
     max_redirects = 10
     client_version = 'Python-httpurl'
     version = 'HTTP/1.1' 
+    '''Default HTTP request version for this :class:`HttpClient`. It can be
+    overwritten during a :meth:`request`.'''
     DEFAULT_HTTP_HEADERS = Headers([
             ('Connection', 'Keep-Alive'),
             ('Accept-Encoding', 'identity'),
@@ -403,11 +422,13 @@ a pool of asynchronous :class:`pulsar.Connection`.
               encode_multipart=True, multipart_boundary=None,
               key_file=None, cert_file=None, cert_reqs='CERT_NONE',
               ca_certs=None, cookies=None, store_cookies=True,
-              max_redirects=10, decompress=True, websocket_handler=None):
+              max_redirects=10, decompress=True, version=None,
+              websocket_handler=None):
         self.store_cookies = store_cookies
         self.max_redirects = max_redirects
         self.cookies = cookies
         self.decompress = decompress
+        self.version = version or self.version
         dheaders = self.DEFAULT_HTTP_HEADERS.copy()
         dheaders['user-agent'] = self.client_version
         if headers:

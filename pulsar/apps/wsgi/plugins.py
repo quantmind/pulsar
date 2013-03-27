@@ -1,3 +1,35 @@
+'''Utility classes for managing Header Authentication, used both by
+servers and clients.
+
+header parser
+~~~~~~~~~~~~~~~~~~~~~~
+
+.. autofunction:: parse_authorization_header
+
+
+Auth
+~~~~~~~~~~~~~~~~~
+
+.. autoclass:: Auth
+   :members:
+   :member-order: bysource
+   
+   
+HTTPBasicAuth
+~~~~~~~~~~~~~~~~~
+
+.. autoclass:: HTTPBasicAuth
+   :members:
+   :member-order: bysource
+   
+HTTPDigestAuth
+~~~~~~~~~~~~~~~~~
+
+.. autoclass:: HTTPDigestAuth
+   :members:
+   :member-order: bysource
+   
+'''
 from base64 import b64encode, b64decode
 
 import pulsar
@@ -12,7 +44,7 @@ __all__ = ['Auth',
         
 
 class Auth(object):
-    """Base class that all auth implementations derive from"""
+    """Base class for managing HTTP header authentication"""
     type = None
     def __call__(self, r):
         raise NotImplementedError('Auth hooks must be callable.')

@@ -1,6 +1,11 @@
 '''\
-An asynchronous task-queue built on top :class:`pulsar.Application` framework.
-By creating :class:`Job` classes in a similar way you can do for celery_,
+An asynchronous task-queue built on top
+:ref:`pulsar application framework <apps-framework>`. Task queues are used
+as a mechanism to distribute work across threads/processes or machines.
+Pulsar :class:`TaskQueue` is highly customizable, it can run in multi-threading
+or multiprocessing (default) mode and can share :class:`Task` across
+several machines.
+By creating :class:`Job` classes in a similar way you do for celery_,
 this application gives you all you need for running them with very
 little setup effort::
 
@@ -8,6 +13,79 @@ little setup effort::
 
     tq = tasks.TaskQueue(tasks_path='path.to.tasks.*')
     tq.start()
+    
+Getting Started
+========================
+Using the :class:`TaskQueue` application follows the following lines:
+
+* Create the script which runs your application, in the
+  :ref:`taskqueue tutorial <tutorials-taskqueue>` the script is called
+  ``manage.py``.
+* Create the modules where :ref:`jobs <app-taskqueue-job>` are implemented.
+
+.. _app-taskqueue-job:
+
+Configuration
+~~~~~~~~~~~~~~~~
+A :class:`TaskQueue` accepts several configuration parameters on top of the
+standard :ref:`application settings <settings>`:
+
+* ``tasks_path``, a list of python paths where to collect :class:`Job` classes::
+  
+      tasks_path = ['myjobs','another.moduledir.*']
+      
+  The ``*`` at the end of the second module indicates to collect :class:`Job`
+  from all submodules of ``another.moduledir``.
+  
+* ``schedule_periodic`` a flag indicating if the :class:`TaskQueue` can schedule
+  periodic tasks. Usually, only one running application is responsable for
+  scheduling tasks while all the other, simply consume tasks.
+  This parameter can also be specified in the command line via the
+  ``--schedule-periodic`` flag. Default: ``True``.
+  
+* ``task_queue_factory`` is the dotted path to the factory function which
+  creates the :attr:`TaskQueue.queue` instance. This parameter can also
+  be specified on the command line via the ``--task-queue`` flag.
+
+.. _app-taskqueue-job:
+
+Jobs
+~~~~~~~~~~~~~~~~
+
+An application implements several :class:`Job`
+classes which specify the way each :class:`Task` is run.
+Each job class is a task-factory, therefore, a task is always associated
+with one job, which can be of two types:
+
+* standard (:class:`Job`)
+* periodic (:class:`PeriodicJob`), a generator of scheduled tasks.
+
+.. _job-callable:
+
+To define a job is simple, subclass from :class:`Job` and implement the
+**job callable method**::
+
+    from pulsar.apps import tasks
+
+    class Addition(tasks.Job):
+
+        def __call__(self, consumer, a, b):
+            "Add two numbers"
+            return a+b
+            
+    class Sampler(tasks.Job):
+
+        def __call__(self, consumer, sample, size=10):
+            ...
+
+The *consumer*, instance of :class:`TaskConsumer`, is passed by the
+:class:`TaskQueue` and should always be the first positional argument in the
+callable function.
+The remaining positional arguments and/or key-valued parameters are needed by
+your job implementation.
+
+
+
 
 .. _tasks-actions:
 
@@ -44,41 +122,6 @@ The :class:`Taskqueue` application adds the following
   
     send(taskqueue, 'get_tasks', **filters)
   
-    
-Jobs
-~~~~~~~~~~~~~~~~
-
-An application implements several :class:`Job`
-classes which specify the way each :class:`Task` is run.
-Each job class is a task-factory, therefore, a task is always associated
-with one job, which can be of two types:
-
-* standard (:class:`Job`)
-* periodic (:class:`PeriodicJob`)
-
-.. _job-callable:
-
-To define a job is simple, subclass from :class:`Job` and implement the
-**job callable method**::
-
-    from pulsar.apps import tasks
-
-    class Addition(tasks.Job):
-
-        def __call__(self, consumer, a, b):
-            "Add two numbers"
-            return a+b
-            
-    class Sampler(tasks.Job):
-
-        def __call__(self, consumer, sample, size=10):
-            ...
-
-The *consumer*, instance of :class:`TaskConsumer`, is passed by the
-:class:`TaskQueue` and should always be the first positional argument in the
-callable function.
-The remaining positional arguments and/or key-valued parameters are needed by
-your job implementation.
 
 Task Class
 ~~~~~~~~~~~~~~~~~
@@ -259,9 +302,9 @@ tasks and managing scheduling of tasks.
     Instance of a :class:`JobRegistry` containing all
     registered :class:`Job` instances.
 '''
-    _app_name = 'tasks'
-    cfg_apps = ('cpubound',)
-    cfg = {'timeout': '3600', 'backlog': 1}
+    name = 'tasks'
+    cfg_apps = ('cpubound', 'tasks')
+    cfg = {'timeout': 600, 'backlog': 5}
     task_class = TaskInMemory
     '''The :class:`Task` class for storing information about task execution.
 

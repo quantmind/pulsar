@@ -9,7 +9,9 @@ If running for the first time, issue the::
 
     python manage.py syncdb
 
-command first and create the super user. The example defines two django applications:
+command first and create the super user.
+
+The example defines two django applications:
 
 * :ref:`djpulsar <djpulsar>` which implements the django ``pulse`` command.
 * ``djangoapp`` which runs the actual example. 

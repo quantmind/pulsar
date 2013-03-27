@@ -332,14 +332,15 @@ The implementation is similar to the ``twisted.defer.Deferred`` class.
     _runningCallbacks = False
     _timeout = None
 
-    def __init__(self, description=None, timeout=None):
+    def __init__(self, description=None, timeout=None, event_loop=None):
         self._description = description
         self._callbacks = deque()
         if timeout and timeout > 0:
-            loop = get_event_loop()
+            loop = event_loop or get_event_loop()
             # create the timeout. We don't cancel the timeout after
             # a callback is received since the result may be still asynchronous
-            self._timeout = loop.call_later(timeout, self.cancel, 'timeout')
+            self._timeout = loop.call_later(timeout, self.cancel,
+                                            'timeout (%s seconds)' % timeout)
 
     def __repr__(self):
         v = self._description or self.__class__.__name__

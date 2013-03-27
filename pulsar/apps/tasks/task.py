@@ -18,9 +18,7 @@ __all__ = ['Task', 'TaskInMemory', 'TaskConsumer', 'nice_task_message']
 
 
 class TaskConsumer(object):
-    '''A context manager for consuming tasks. This is used by the
-:class:`Scheduler` in a ``with`` block to correctly handle exceptions
-and optional logging.
+    '''A context manager for consuming tasks.
 
 .. attribute:: task
 
@@ -33,6 +31,10 @@ and optional logging.
 .. attribute:: worker
 
     the :class:`pulsar.apps.Worker` running the process.
+    
+.. attribute:: scheduler
+
+    give access to the :class:`Scheduler`.
 '''
     def __init__(self, task, job):
         self.worker = get_actor()
@@ -43,7 +45,6 @@ and optional logging.
     def scheduler(self):
         return self.worker.app.scheduler
     
-
 
 class Task(object):
     '''Interface for tasks which are produced by :class:`Job`.

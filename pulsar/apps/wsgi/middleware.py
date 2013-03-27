@@ -1,4 +1,41 @@
-'''Response middleware
+'''This module implements several WSGI middleware which does not
+serve request but instead perform initialization and sanity checks.
+It also introduces the **Response middlewares** implemented as a subclass of 
+:class:`ResponseMiddleware`. Response middlewares are used by the
+:class:`pulsar.apps.wsgi.wrappers.WsgiResponse` to modify/add headers and
+manipulate content.
+
+WSGI Middlewares
+============================
+
+clean path
+~~~~~~~~~~~~~~~~~~
+.. autofunction:: clean_path_middleware
+
+cookie
+~~~~~~~~~~~~~~~~~~
+.. autofunction:: cookies_middleware
+
+authorization
+~~~~~~~~~~~~~~~~~~
+.. autofunction:: authorization_middleware
+
+Response Middlewares
+=============================
+
+Interface
+~~~~~~~~~~~~~~~~~~
+
+.. autoclass:: ResponseMiddleware
+   :members:
+   :member-order: bysource
+   
+GZip Middleware
+~~~~~~~~~~~~~~~~~~~~~~
+.. autoclass:: GZipMiddleware
+   :members:
+   :member-order: bysource
+   
 '''
 import re
 from gzip import GzipFile
@@ -27,7 +64,7 @@ def is_streamed(content):
     return False
 
 def clean_path_middleware(environ, start_response):
-    '''Clean url and redirect if needed'''
+    '''Clean url from double slashes and redirect if needed.'''
     path = environ['PATH_INFO']
     if '//' in path:
         url = re.sub("/+" , '/', path)
@@ -39,8 +76,9 @@ def clean_path_middleware(environ, start_response):
         raise pulsar.HttpRedirect(url)
 
 def cookies_middleware(environ, start_response):
-    '''Parse the ``HTTP_COOKIE`` key in the *environ*. The ``HTTP_COOKIE``
-string is replaced with a dictionary.'''
+    '''Parse the ``HTTP_COOKIE`` key in the ``environ`` and set
+the new ``http.environ`` key in ``environ`` with a dictionary of cookies
+obtained via the :func:`pulsar.utils.httpurl.parse_cookie` function.'''
     c = environ.get('http.cookie')
     if not isinstance(c, dict):
         c = environ.get('HTTP_COOKIE', '')
@@ -53,18 +91,32 @@ string is replaced with a dictionary.'''
         environ['http.cookie'] = c
 
 def authorization_middleware(environ, start_response):
-    """An `Authorization` middleware."""
-    code = 'HTTP_AUTHORIZATION'
-    if code in environ:
-        environ[code] = parse_authorization_header(environ[code])
+    """Parse the ``HTTP_AUTHORIZATION`` key in the ``environ`` if available
+and set the ``http.authorization`` key in ``environ`` with the result
+obtained from :func:`pulsar.apps.wsgi.plugins.parse_authorization_header`
+function."""
+    key = 'http.authorization'
+    c = environ.get(key)
+    if c is None:
+        code = 'HTTP_AUTHORIZATION'
+        if code in environ:
+            environ[key] = parse_authorization_header(environ[code])
 
 #####################################################    RESPONSE MIDDLEWARE
 class ResponseMiddleware(object):
-
+    '''Bas class for :class:`pulsar.apps.wsgi.wrappers.WsgiResponse`
+middlewares. The focus of this class is the :meth:`execute` method where
+the middleware logic is implemented.'''
     def version(self, environ):
         return environ.get('wsgi.version')
 
     def available(self, environ, response):
+        '''Check if this :class:`ResponseMiddleware` can be applied to
+the *response* object.
+
+:param environ: a WSGI environ dictionary.
+:param response: a :class:`pulsar.apps.wsgi.wrappers.WsgiResponse`
+:return: ``True`` or ``False``.'''
         return True
 
     def __call__(self, environ, response):
@@ -73,6 +125,8 @@ class ResponseMiddleware(object):
         return self.execute(environ, response)
 
     def execute(self, environ, response):
+        '''Manipulate *response*, called only if the :meth:`available`
+method returns ``True``.'''
         pass
 
 
@@ -93,9 +147,11 @@ response header.'''
 
 
 class GZipMiddleware(ResponseMiddleware):
-    """Response middleware for compressing content if the browser allows
-gzip compression. It sets the Vary header accordingly, so that caches will
-base their storage on the Accept-Encoding header.
+    """A :class:`ResponseMiddleware` for compressing content if the request
+allows gzip compression. It sets the Vary header accordingly.
+
+The compression implementation is from
+http://jython.xhaus.com/http-compression-in-python-and-jython
     """
     def __init__(self, min_length=200):
         self.min_length = min_length
@@ -126,7 +182,6 @@ base their storage on the Accept-Encoding header.
         response.content = (self.compress_string(content),)
         response.headers['Content-Encoding'] = 'gzip'
 
-    # From http://www.xhaus.com/alan/python/httpcomp.html#gzip
     def compress_string(self, s):
         zbuf = BytesIO()
         zfile = GzipFile(mode='wb', compresslevel=6, fileobj=zbuf)

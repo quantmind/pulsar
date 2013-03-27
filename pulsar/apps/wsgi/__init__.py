@@ -155,8 +155,8 @@ class WsgiFactory(object):
 
 
 class WSGIServer(SocketServer):
-    cfg_apps = ('socket',)
-    _app_name = 'wsgi'
+    cfg_apps = ('socket', 'wsgi')
+    name = 'wsgi'
 
     def protocol_consumer(self):
         '''Build the :class:`pulsar.ProtocolConsumer` factory for this

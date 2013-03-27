@@ -9,24 +9,6 @@ HTTP
 
 .. automodule:: pulsar.utils.httpurl
 
-.. _tools-http-headers:
-
-HTTP Headers
-~~~~~~~~~~~~~~~~~
-
-.. autoclass:: Headers
-   :members:
-   :member-order: bysource
-   
-   
-.. _tools-http-parser:
-
-HTTP Parser
-~~~~~~~~~~~~~~~~~
-
-.. autoclass:: HttpParser
-   :members:
-   :member-order: bysource
    
 
 .. _tools-ws-parser:
@@ -54,25 +36,11 @@ Frame Parser
    
 .. _api-config:
 
-
 Configuration
 ==================
 
 .. automodule:: pulsar.utils.config
 
-Config
-~~~~~~~~~~
-
-.. autoclass:: Config
-   :members:
-   :member-order: bysource
-   
-Setting
-~~~~~~~~~~
-
-.. autoclass:: Setting
-   :members:
-   :member-order: bysource
 
      
 .. _internals:

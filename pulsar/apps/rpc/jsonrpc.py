@@ -150,7 +150,7 @@ Lets say your RPC server is running at ``http://domain.name.com/``::
     separator  = '.'
     rawprefix  = 'raw'
     default_version = '2.0'
-    default_timeout = 3
+    default_timeout = 30
     _json = JsonToolkit
 
     def __init__(self, url, version=None, data=None, full_response=False, **kw):
@@ -210,7 +210,8 @@ usage is simple::
         if self._full_response:
             return resp
         elif hasattr(resp, 'on_finished'):
-            return resp.on_finished.add_callback(partial(self._end_call, raw))
+            res = resp.on_finished.add_callback(partial(self._end_call, raw))
+            return res.result if self.http.force_sync else res
         else:
             return self._end_call(raw, resp)
         

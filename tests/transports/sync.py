@@ -1,3 +1,5 @@
+import threading
+
 import pulsar
 from pulsar import is_failure, get_actor
 from pulsar.utils.pep import to_bytes, to_string

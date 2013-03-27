@@ -1,4 +1,11 @@
-'''WSGI utilities and wrappers.
+'''This section introduces two classes used by pulsar
+:ref:`wsgi application <apps-wsgi>` to pass a request/response state
+during an HTTP request.
+The :class:`WsgiRequest` is a thin wrapper around a WSGI ``environ`` dictionary.
+It contains only the ``environ`` as its private data.
+The :class:`WsgiResponse`, which is available in the
+:class:`WsgiRequest.response` attribute, is an iterable over bytestring with
+several utility methods for manipulating headers and asynchronous content.
 
 .. _app-wsgi-request:
 
@@ -135,12 +142,17 @@ client.
 .. attribute:: environ
 
     The dictionary of WSGI environment if passed to the constructor.
+    
+.. attribute:: start_response
+
+    The WSGI ``start_response`` callable.
 
 .. attribute:: middleware
 
-    A list of :ref:`response middleware` functions which will be invoked
-    when this :class:`WsgiResponse` get called (the callable method of the
-    instance is invoked).
+    A list of :ref:`response middleware <apps-wsgi-middleware>` callables
+    which will be invoked  when this :class:`WsgiResponse`
+    get called (the ``__call__`` or the :meth:`start` method of this
+    :class:`WsgiResponse` is invoked).
 '''
     _started = False
     DEFAULT_STATUS_CODE = 200
@@ -219,6 +231,8 @@ client.
         return self
     
     def start(self):
+        '''Starts the response by applying :attr:`middleware` and
+invoking :attr:`start_response`.'''
         return self.__call__(self.environ, self.start_response)
 
     def length(self):

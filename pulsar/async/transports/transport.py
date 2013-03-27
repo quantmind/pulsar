@@ -463,7 +463,8 @@ connector fires its callbacks.'''
     def __init__(self, transport, timeout=None):
         self._transport = transport
         self._consumer = None
-        super(Connector, self).__init__(timeout=timeout or 10)
+        super(Connector, self).__init__(timeout=timeout or 10,
+                                        event_loop=transport.event_loop)
         self.add_callback(self._connection_made, self._connection_failure)
     
     def __repr__(self):

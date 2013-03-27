@@ -1,5 +1,10 @@
-'''An asynchronous multi-process HTTP proxy server with *headers middleware*
-to manipulate the original request headers. To run the server::
+'''An asynchronous multi-process `HTTP proxy server`_ with *headers middleware*
+to manipulate the original request headers. If the header middleware is
+an empty list, the proxy passes requests and responses unmodified.
+This is an implementation for a forward-proxy which can be used
+to retrieve from any type of source from the Internet.
+
+To run the server::
 
     python manage.py
     
@@ -22,6 +27,8 @@ Implemenation
    :members:
    :member-order:
    
+   
+.. _`HTTP proxy server`: http://en.wikipedia.org/wiki/Proxy_server
 '''
 import io
 import sys

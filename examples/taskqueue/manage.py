@@ -24,6 +24,10 @@ Implementation
 
 .. autoclass:: RpcRoot
    :members:
+   :member-order: bysource
+   
+.. autoclass:: server
+   :members:
    :member-order: bysource    
 '''
 try:
@@ -55,15 +59,17 @@ class Rpc(wsgi.LazyWsgi):
     
     
 class server(pulsar.MultiApp):
-    
+    '''Build a taskqueue and an rpc server. This class shows how to
+use :class:`pulsar.apps.MultiApp` utility for starting several
+:ref:`pulsar applications <apps-framework>` at once.'''
+    cfg_apps = frozenset(('cpubound', 'task', 'socket', 'wsgi'))
+    cfg = {'tasks_path': TASK_PATHS}
     def build(self):
-        name = self.name
-        params = self.params
-        self.add(tasks.TaskQueue(name=name, tasks_path=TASK_PATHS,
-                                 script=__file__, **params))
-        self.add(wsgi.WSGIServer(Rpc(self.name), name='%s_rpc' % name, **params))
+        yield self.new_app(tasks.TaskQueue)
+        yield self.new_app(wsgi.WSGIServer, name='rpc',
+                           callable=Rpc(self.name))
     
 
 if __name__ == '__main__':
-    server().start()
+    server('taskqueue').start()
 

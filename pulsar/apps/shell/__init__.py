@@ -93,6 +93,7 @@ class InteractiveConsole(code.InteractiveConsole):  #pragma    nocover
 
 class PulsarShell(pulsar.CPUboundApplication):
     console_class = InteractiveConsole
+    name = 'shell'
     cfg_apps = ('cpubound',)
     cfg = {'loglevel':'none', 'process_name': 'Pulsar shell'}
     

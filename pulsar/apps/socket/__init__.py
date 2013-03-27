@@ -43,10 +43,13 @@ The ``decode`` method must return a **two elements tuple** of the form:
 
 The ``encode`` method must return ``bytes`` which will be sent to the server.
 
-Useful settings
-==================
-All standard :ref:`settings <settings>` can be applied to a
-:class:`SocketServer`. These are some of the most important:
+.. _socket-server-settings:
+
+Socket Server Settings
+==============================
+All standard :ref:`application settings <settings>` can be applied to a
+:class:`SocketServer`. In addition, the following are
+specific to sockets and can be used to fine tune your application:
 
 bind
 ------
@@ -65,13 +68,13 @@ To control the concurrency of the server you can use the
     
 will serve a maximum of 1000 clients per :class:`pulsar.Worker` concurrently.
 
-keepalive
+keep_alive
 ---------------
 To control how long a :class:`pulsar.AsyncConnection` is kept alive after the
 last read from the remote client, one can use the
-:ref:`keepalive <setting-keepalive>` setting.
+:ref:`keepalive <setting-keep_alive>` setting.
 
-    python script.py --keepalive 10
+    python script.py --keep-alive 10
     
 will close a client connection which has been idle for 10 seconds.
  
@@ -108,14 +111,14 @@ class Bind(pulsar.Setting):
     desc = """\
         The socket to bind.
         
-        A string of the form: 'HOST', 'HOST:PORT', 'unix:PATH'. An IP is a valid
-        HOST.
+        A string of the form: ``HOST``, ``HOST:PORT``, ``unix:PATH``.
+        An IP is a valid HOST.
         """
         
-class Keepalive(pulsar.Setting):
+class KeepAlive(pulsar.Setting):
     section = "Socket Servers"
     app = 'socket'
-    name = "keepalive"
+    name = "keep_alive"
     flags = ["--keep-alive"]
     validator = pulsar.validate_pos_int
     type = int
@@ -182,7 +185,7 @@ uses the :meth:`handler` as its response protocol.'''
                                       sock=worker.params.sock,
                                       consumer_factory=self.protocol_consumer(),
                                       max_connections=cfg.max_requests,
-                                      timeout=cfg.keepalive)
+                                      timeout=cfg.keep_alive)
         server.bind_event('connection_made', cfg.connection_made)
         server.bind_event('pre_request', cfg.pre_request)
         server.bind_event('post_request', cfg.post_request)

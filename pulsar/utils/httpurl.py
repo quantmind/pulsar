@@ -11,14 +11,36 @@ Several opensource efforts have been used as source of snippets:
 * urllib3_
 * werkzeug_
 
-This is a long stand-alone module which can be dropped in any library and used
-as it is.
 
+.. _tools-http-headers:
+
+HTTP Headers
+~~~~~~~~~~~~~~~~~
+
+.. autoclass:: Headers
+   :members:
+   :member-order: bysource
+   
+   
+.. _tools-http-parser:
+
+HTTP Parser
+~~~~~~~~~~~~~~~~~
+
+.. autoclass:: HttpParser
+   :members:
+   :member-order: bysource
+
+parse cookie
+~~~~~~~~~~~~~~~~~~~~~
+
+.. autofunction:: parse_cookie
 
 .. _http-parser: https://github.com/benoitc/http-parser
 .. _urllib3: https://github.com/shazow/urllib3
 .. _request: https://github.com/kennethreitz/requests
 .. _werkzeug: https://github.com/mitsuhiko/werkzeug
+.. _`HTTP cookie`: http://en.wikipedia.org/wiki/HTTP_cookie
 '''
 import os
 import sys
@@ -509,8 +531,8 @@ def parse_dict_header(value):
 
 class Headers(object):
     '''Utility for managing HTTP headers for both clients and servers.
-It has a dictionary like interface
-with few extra functions to facilitate the insertion of multiple values.
+It has a dictionary like interface with few extra functions to facilitate
+the insertion of multiple values.
 
 From http://www.w3.org/Protocols/rfc2616/rfc2616.html
 
@@ -596,6 +618,10 @@ and values."""
 
     def copy(self):
         return self.__class__(self, kind=self.kind)
+    
+    def clear(self):
+        '''Same as :meth:`dict.clear`, it removes all headers.'''
+        self._headers.clear()
 
     def getheaders(self, key):
         '''Required by cookielib. If the key is not available,
@@ -1196,6 +1222,8 @@ def cookiejar_from_dict(cookie_dict, cookiejar=None):
     return cookiejar
 
 def parse_cookie(cookie):
+    '''Parse an `HTTP cookie`_ string and return a dictionary of
+cookie name/values.'''
     if cookie == '':
         return {}
     if not isinstance(cookie, BaseCookie):

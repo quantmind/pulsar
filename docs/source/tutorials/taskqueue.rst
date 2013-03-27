@@ -1,4 +1,4 @@
-.. _tutorials-calculator:
+.. _tutorials-taskqueue:
 
 ==================================
 A Task Queue with a JSON-RPC Api

@@ -41,10 +41,11 @@ class PulsarSettings(Directive):
                 yield '.. _setting-{0}:\n\n\
 {0}\n~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n\n'.format(sett.name)
                 if sett.app:
-                    yield 'Setting for :mod:`pulsar.apps.' + sett.app +\
-                                '` application.\n'
+                    yield '*Application namespace*: ``%s``\n' % sett.app
                 if sett.flags:
-                    yield '*Command line*: ' + ','.join(sett.flags) + '\n'
+                    yield '*Command line*: %s\n' %\
+                                ', '.join('``%s``' % f for f in sett.flags)
+                yield '*Default*: ``%s``\n' % sett.default
                 yield desc + '\n'
             
     def run(self):

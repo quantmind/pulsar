@@ -26,7 +26,7 @@ def wait_for_task(proxy, result):
 @sequential
 class TestTaskQueueOnThread(unittest.TestCase):
     concurrency = 'thread'
-    app = None
+    apps = None
     
     @classmethod
     def name_tq(cls):
@@ -41,12 +41,12 @@ class TestTaskQueueOnThread(unittest.TestCase):
         # The name of the task queue application
         s = server(cls.name_tq(), bind='127.0.0.1:0',
                    concurrency=cls.concurrency)
-        cls.app = yield send('arbiter', 'run', s)
-        cls.proxy = rpc.JsonProxy('http://%s:%s' % cls.app.address)
+        cls.apps = yield send('arbiter', 'run', s)
+        cls.proxy = rpc.JsonProxy('http://%s:%s' % cls.apps[1].address)
 
     @classmethod
     def tearDownClass(cls):
-        if cls.app:
+        if cls.apps:
             yield send('arbiter', 'kill_actor', cls.name_tq())
             yield send('arbiter', 'kill_actor', cls.name_rpc())
 

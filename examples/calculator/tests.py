@@ -8,7 +8,6 @@ from .manage import server
 
 class TestRpcOnThread(unittest.TestCase):
     app = None
-    client_timeout = 10
     concurrency = 'thread'
     
     @classmethod
@@ -17,7 +16,8 @@ class TestRpcOnThread(unittest.TestCase):
         s = server(bind='127.0.0.1:0', name=name, concurrency=cls.concurrency)
         cls.app = yield send('arbiter', 'run', s)
         cls.uri = 'http://{0}:{1}'.format(*cls.app.address)
-        cls.p = rpc.JsonProxy(cls.uri, timeout=cls.client_timeout)
+        cls.p = rpc.JsonProxy(cls.uri)
+        cls.sync = rpc.JsonProxy(cls.uri, force_sync=True)
         
     @classmethod
     def tearDownClass(cls):
@@ -119,6 +119,8 @@ class TestRpcOnThread(unittest.TestCase):
                                                  mu=1, sigma=2)
         self.assertTrue(response)
         
+    def test_sync_ping(self):
+        self.assertEqual(self.sync.ping(), 'pong')
 
 @dont_run_with_thread
 class TestRpcOnProcess(TestRpcOnThread):

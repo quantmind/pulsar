@@ -81,6 +81,8 @@ class Command(BaseCommand):
         if args:
             raise CommandError('pulse --help for usage')
         callable = Wsgi()
+        if options.pop('dryrun', False) == True:
+            return callable
         callable.setup()
         WSGIServer(callable=callable, cfg=options, parse_console=False,
                    name='pulsar_django').start()

@@ -209,6 +209,7 @@ will remain as a class attribute, otherwise it will be an instance attribute.'''
     
     def setup(self, **params):
         '''Setup the client. By default it does nothing.'''
+        pass
     
     def __str__(self):
         return self.__repr__()
