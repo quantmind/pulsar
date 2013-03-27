@@ -372,6 +372,13 @@ a pool of asynchronous :class:`pulsar.Connection`.
 
     Dictionary of proxy servers for this client.
     
+.. attribute:: version
+
+    Default HTTP request version for this :class:`HttpClient`. It can be
+    overwritten during a :meth:`request`.
+    
+    Default: ``HTTP/1.1``
+    
 '''
     consumer_factory = HttpResponse
     allow_redirects = False

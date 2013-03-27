@@ -91,6 +91,10 @@ class TestHttpClient(TestHttpClientBase, unittest.TestCase):
         self.assertEqual(response.status_code, 200)
         self._check_pool(http, response, processed=2)
         
+    def test_http10(self):
+        http = self.client(version='HTTP/1.0')
+        self.assertEqual(http.version, 'HTTP/1.0')       
+        
     def test_HttpResponse(self):
         r = HttpResponse(None)
         self.assertEqual(r.current_request, None)
