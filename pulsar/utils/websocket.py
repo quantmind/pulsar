@@ -170,7 +170,7 @@ specification supporting protocol version 13::
             header.write(self.masking_key)
             header.write(self.mask(message))
         return header.getvalue()
-                
+       
     def mask(self, data):
         '''Performs the masking or un-masking operation on data using the
 simple masking algorithm::
@@ -185,7 +185,7 @@ attribute set.'''
         data = array('B', data)
         for i in range(len(data)):
             data[i] ^= key[i % mask_size]
-        return data.tobytes()
+        return data.tobytes() if ispy3k else data.tostring()
     unmask = mask
 
     

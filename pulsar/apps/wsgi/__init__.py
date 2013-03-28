@@ -155,8 +155,8 @@ class WsgiFactory(object):
 
 
 class WSGIServer(SocketServer):
-    cfg_apps = ('socket', 'wsgi')
     name = 'wsgi'
+    cfg = pulsar.Config(apps=['socket', 'wsgi'])
 
     def protocol_consumer(self):
         '''Build the :class:`pulsar.ProtocolConsumer` factory for this
@@ -166,4 +166,4 @@ initialisation.'''
         callable = self.callable
         if isinstance(callable, WsgiFactory):
             callable = callable()
-        return partial(HttpServerResponse, callable)
+        return partial(HttpServerResponse, callable, self.cfg)

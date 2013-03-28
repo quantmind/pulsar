@@ -1,12 +1,6 @@
-'''Configuration utilities. Originally from gunicorn_ (2011),
-adapted and modified for use in pulsar.
-
-.. epigraph::
-
-    This file is part of gunicorn released under the MIT license.
-    See the NOTICE for more information.
-
-    -- Original Gunicorn Licence
+'''Configuration utilities which provides pulsar with configuration parameters
+which can be parsed from the command line. Parsing is implemented using
+the python argparser_ standard library module.
 
 Config
 ~~~~~~~~~~
@@ -14,7 +8,14 @@ Config
 .. autoclass:: Config
    :members:
    :member-order: bysource
-   
+
+SettingBase
+~~~~~~~~~~~~~~
+
+.. autoclass:: SettingBase
+   :members:
+   :member-order: bysource
+      
 Setting
 ~~~~~~~~~~
 
@@ -28,7 +29,7 @@ make settings
 .. autofunction:: make_settings
 
 
-.. _gunicorn: http://gunicorn.org/
+.. _argparser: http://docs.python.org/dev/library/argparse.html
 '''
 import copy
 import inspect
@@ -93,7 +94,7 @@ def ordered_settings():
         yield KNOWN_SETTINGS[name]
 
 def make_settings(apps=None, include=None, exclude=None, prefix=None,
-                   dont_prefix=None):
+                  dont_prefix=None, name=None):
     '''Creates a dictionary of available settings for given
 applications *apps*. The *prefix* and *don_prefix* parameters are used
 in the context of :class:`pulsar.apps.MultiApp`.
@@ -105,6 +106,7 @@ in the context of :class:`pulsar.apps.MultiApp`.
     :class:`Setting.can_prefix` set to ``True``.
 :parameter dont_prefix: Optional list/tuple of :class:`Setting` names to
     not prefix.
+:parameter name: Optional name.
 :rtype: dictionary of :class:`pulsar.Setting` instances.'''
     settings = {}
     include = set(include or ())
@@ -118,45 +120,56 @@ in the context of :class:`pulsar.apps.MultiApp`.
                 continue    # setting name in exclude set
             if setting.app and setting.app not in apps:
                 continue    # the setting is for an app not in the apps set
-        setting = setting.copy()
-        setting.orig_name = setting.name
-        if prefix and setting.can_prefix and prefix not in dont_prefix:
-            flags = setting.flags
-            if flags and flags[-1].startswith('--'):
-                # Prefixing a setting
-                setting.name = '%s_%s' % (prefix, setting.name)
-                setting.flags = ['--%s-%s' % (prefix, flags[-1][2:])]
-            else:
-                LOGGER.warning('Could not prefix %s setting', setting.name)
+        setting = setting.copy(name=name, prefix=prefix,
+                               dont_prefix=dont_prefix)
         settings[setting.name] = setting
     return settings
 
 
 class Config(object):
-    '''Dictionary containing :class:`Setting` parameters for
+    '''A dictionary-like container of :class:`Setting` parameters for
 fine tuning pulsar servers. It provides easy access to :attr:`Setting.value`
 attribute by exposing the :attr:`Setting.name` as attribute.
 
+:param description: description used when parsing the command line, same usage
+    as in the :class:`argparse.ArgumentParser` class.
+:param epilog: epilog used when parsing the command line, same usage
+    as in the :class:`argparse.ArgumentParser` class.
+:param version: version used when parsing the command line, same usage
+    as in the :class:`argparse.ArgumentParser` class.
+:param apps: list of application namespaces to include in the :attr:`settings`
+    attribute.
+
 .. attribute:: settings
 
-    Dictionary of all :class:`Settings` instances available. The
-    keys are given by the :attr:`Setting.name` attribute.
+    Dictionary of all :class:`Setting` instances available in this
+    :class:`Config` container. Keys are given by the :attr:`Setting.name`
+    attribute.
+    
+.. attribute:: params
+
+    Dictionary of additional parameters which cannot be parsed in the
+    command line.
 '''
     exclude_from_config = set(('config',))
     
     def __init__(self, description=None, epilog=None,
-                 version=None, app=None, include=None,
+                 version=None, apps=None, include=None,
                  exclude=None, settings=None, prefix=None,
-                 dont_prefix=None):
+                 dont_prefix=None, name=None, **params):
         if settings is None:
-            settings = make_settings(app, include, exclude, prefix=prefix,
-                                     dont_prefix=dont_prefix)
+            settings = make_settings(apps, include, exclude, prefix,
+                                     dont_prefix, name)
         self.settings = settings
-        self._orig_name_map = dict(((s.orig_name, s.name)\
-                                          for s in settings.values()))
+        self.params = params
         self.description = description or 'Pulsar server'
         self.epilog = epilog or 'Have fun!'
         self.version = version or __version__
+        for setting in self.settings.values():
+            if setting.name in params:
+                setting.set(params.pop(setting.name), True)
+            elif setting.orig_name in params:
+                setting.set(params.pop(setting.orig_name), True)
         
     def __iter__(self):
         return iter(self.settings)
@@ -165,7 +178,6 @@ attribute by exposing the :attr:`Setting.name` as attribute.
         return len(self.settings)
     
     def __contains__(self, name):
-        name = self._orig_name_map.get(name, name)
         return name in self.settings
     
     def items(self):
@@ -190,33 +202,47 @@ attribute by exposing the :attr:`Setting.name` as attribute.
             raise AttributeError("Invalid access!")
         super(Config, self).__setattr__(name, value)
 
+    def update(self, data, strict=False):
+        '''Update the :attr:`settings` with ``data`` which is either an
+instance of Mapping or :class:`Config`.'''
+        for name, value in data.items():
+            try:
+                self.set(name, value)
+            except AttributeError:
+                if strict:
+                    raise
+            
     def get(self, name, default=None):
-        '''Get the configuration :class:`Setting` value at *name*.
-If the *name* is not in this container and it is not a known :class:`Setting`,
-an :class:`AttributeError` is raised.'''
-        name = self._orig_name_map.get(name, name)
+        '''Get the value at ``name`` for this :class:`Config` container
+following this algorithm:
+
+* check ``name`` in the :attr:`settings` dictionary.
+* if ``name`` is a known setting parameter return ``default``
+* check ``name`` in the :attr:`params` dictionary
+* raise :class:`AttributeError`.
+'''
         if name not in self.settings:
             if name in KNOWN_SETTINGS:
                 return default
+            if name in self.params:
+                return self.params[name]
             raise AttributeError("No configuration setting for: %s" % name)
         return self.settings[name].get()
 
     def set(self, name, value, default=False):
         '''Set the configuration :class:`Setting` at *name* with a new
 *value*. If the *name* is not in this container, an :class:`AttributeError`
-is raised.'''
-        name = self._orig_name_map.get(name, name)
+is raised. If ``default`` is ``True``, the :attr:`Setting.default` is
+also set.'''
         if name not in self.settings:
             raise AttributeError("No configuration setting for: %s" % name)
         self.settings[name].set(value, default=default)
 
     def parser(self):
         '''Create the argparser_ for this configuration by adding all
-settings via the :meth:`Setting.add_argument`.
+settings via the :meth:`Setting.add_argument` method.
 
 :rtype: an instance of :class:`argparse.ArgumentParser`.
-
-.. _argparser: http://docs.python.org/dev/library/argparse.html
 '''
         kwargs = {
             "description": self.description,
@@ -297,13 +323,20 @@ settings via the :meth:`Setting.add_argument`.
             if pn:
                 return pn.get()
         
-    def copy(self):
+    def copy(self, name=None, prefix=None, dont_prefix=None):
+        '''A deep copy of this :class:`Config` container.'''
         cls = self.__class__
         me = cls.__new__(cls)
-        for name, value in iteritems(self.__dict__):
-            if name == 'settings':
-                value = copy.deepcopy(value)
-            me.__dict__[name] = value
+        for key, value in iteritems(self.__dict__):
+            if key == 'settings':
+                new_value = {}
+                for setting in value.values():
+                    setting = setting.copy(name, prefix, dont_prefix)
+                    new_value[setting.name] = setting
+                value = new_value
+            elif key == 'params':
+                value = value.copy()
+            me.__dict__[key] = value
         return me        
     
     def __copy__(self):
@@ -348,26 +381,33 @@ in the global ``KNOWN_SETTINGS`` list.'''
     def fmt_desc(cls, desc):
         desc = textwrap.dedent(desc).strip()
         setattr(cls, "desc", desc)
-        lines = desc.splitlines()
+        lines = desc.split('\n\n')
         setattr(cls, "short", '' if not lines else lines[0])
 
 
 class SettingBase(object):
+    '''This is the base class of :class:`Settings` and :class:`SimpleSetting`.
+It defines attributes for a given setting parameter.'''
     inherit = True
+    '''Flag indicating if the :attr:`value` can be used by setting obtained
+as a clone of this :class:`SettingBase`. If ``False``, when a clone of this
+setting is created, its :attr:`value` is set to :attr:`default` value.'''
     name = None
-    '''The unique name used to access this setting.'''
+    '''The unique name used to access this setting in the :class:`Config`
+    container.'''
     validator = None
-    '''Validator for this setting. It provided it must be a fucntion
-accepting one positional argument, the value to validate.'''
+    '''A validating function for this setting. It provided it must be a
+function accepting one positional argument, the value to validate.'''
     value = None
     '''The actual value for this setting.'''
     default = None
+    '''The default value for this setting.'''
     def __str__(self):
         return '{0} ({1})'.format(self.name, self.value)
     __repr__ = __str__
 
     def set(self, val, default=False):
-        '''Set *val* as the value in this :class:`Setting`.
+        '''Set *val* as the :attr:`value` for this :class:`SettingBase`.
 If *default* is ``True`` set also the :attr:`default` value.'''
         if hasattr(self.validator, '__call__'):
             val = self.validator(val)
@@ -376,19 +416,38 @@ If *default* is ``True`` set also the :attr:`default` value.'''
             self.default = val
 
     def get(self):
+        '''Returns :attr:`value`'''
         return self.value
 
     def on_start(self):
         '''Called when pulsar server starts. It can be used to perform
 custom initialization for this :class:`Setting`.'''
         pass
-
+    
+    def copy(self, name=None, prefix=None, dont_prefix=None):
+        '''Copy this :class:`SettingBase`'''
+        setting = copy.copy(self)
+        dont_prefix = dont_prefix or set()
+        if prefix and setting.can_prefix and prefix not in dont_prefix:
+            flags = setting.flags
+            if flags and flags[-1].startswith('--'):
+                # Prefixi a setting
+                setting.orig_name = setting.name 
+                setting.name = '%s_%s' % (prefix, setting.name)
+                setting.flags = ['--%s-%s' % (prefix, flags[-1][2:])]
+            else:
+                LOGGER.warning('Could not prefix %s setting', setting.name)
+        if name and setting.can_prefix:
+            setting.short = '%s application. %s' % (name , setting.short)
+        return setting
+    
 
 class SimpleSetting(SettingBase):
 
     def __init__(self, name, value):
         self.name = name
         self.value = value
+        self.orig_name = self.name
 
 
 # This works for Python 2 and Python 3
@@ -399,9 +458,6 @@ on the command line or on a config file.'''
     virtual = True
     '''If set to ``True`` the settings won't be loaded and it can be only used
 as base class for other settings.'''
-    name = None
-    '''The unique name used to access this setting in the :class:`Config`
-    container.'''
     nargs = None
     '''For positional arguments. Same usage as python :mod:`argparse` module.'''
     app = None
@@ -418,10 +474,11 @@ as base class for other settings.'''
     '''Same usage as ``metavar`` in the python :mod:`argparse` module. It is
     the name for the argument in usage message.'''
     action = None
-    default = None
-    '''Default value.'''
+    '''Same usage as ``action`` in the python
+    :mod:`argparse.ArgumentParser.add_argument` method.'''
     short = None
     desc = None
+    '''Description string'''
     can_prefix = False
     '''Flag used by pulsar :ref:`application framework <apps-framework>`
     when multiple application are used in a running server. If ``True``
@@ -429,6 +486,7 @@ as base class for other settings.'''
     These settings are clones of this :class:`Setting` with
     name given by each application name and underacsore ``_``
     prefixing this :attr:`name`.'''
+    orig_name = None
 
     def __init__(self, name=None, flags=None, action=None, type=None,
                  default=None, nargs=None, desc=None, validator=None):
@@ -478,9 +536,6 @@ python :class:`argparse.ArgumentParser`, only if :attr:`flags` or
             # Not added to argparser
             return
         parser.add_argument(*args, **kwargs)
-
-    def copy(self):
-        return copy.copy(self)
         
 
 def validate_bool(val):
@@ -583,6 +638,7 @@ class Workers(Setting):
     can_prefix = True
     desc = """\
         The number of workers for handling requests.
+        
 If using a multi-process concurrency, a number in the
 the ``2-4 x NUM_CORES`` range should be good. If you are using threads this
 number can be higher."""
@@ -630,6 +686,7 @@ class Backlog(Setting):
     can_prefix = True
     desc = """\
         The maximum number of concurrent requests.
+        
         This refers to the number of clients that can be waiting to be served.
         Exceeding this number results in the client getting an error when
         attempting to connect. It should only affect servers under significant

@@ -24,6 +24,7 @@ class Graph(ws.WS):
     
     def on_message(self, request, msg):
         return json.dumps([(i,random()) for i in range(100)])
+
     
 class Echo(ws.WS):
     
@@ -31,24 +32,20 @@ class Echo(ws.WS):
         return msg
 
 
-def page(environ, start_response):
-    """ This resolves to the web page or the websocket depending on the path."""
-    path = environ.get('PATH_INFO')
-    if not path or path == '/':
-        data = open(os.path.join(os.path.dirname(__file__), 
-                     'websocket.html')).read()
-        data = data % environ
-        start_response('200 OK', [('Content-Type', 'text/html'),
-                                  ('Content-Length', str(len(data)))])
-        return [pulsar.to_bytes(data)]
-
-
 class Site(wsgi.LazyWsgi):
     
     def setup(self):
-        return wsgi.WsgiHandler(middleware=(page,
-                                            ws.WebSocket('/data', Graph()),
-                                            ws.WebSocket('/echo', Echo())))
+        return wsgi.WsgiHandler([wsgi.Router('/', get=self.home),
+                                 ws.WebSocket('/data', Graph()),
+                                 ws.WebSocket('/echo', Echo())])
+    
+    def home(self, request):
+        data = open(os.path.join(os.path.dirname(__file__), 
+                     'websocket.html')).read()
+        data = data % request.environ
+        request.response.content_type = 'text/html'
+        request.response.content = data
+        return request.response.start()
 
 
 def server(**kwargs):

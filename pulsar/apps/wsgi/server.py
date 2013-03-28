@@ -40,14 +40,21 @@ If the size is 0, this is the last chunk, and an extra CRLF is appended.
     head = ("%X\r\n" % len(chunk)).encode('utf-8')
     return head + chunk + b'\r\n'
 
-def keep_alive(environ, version):
+def keep_alive(headers, version):
         """ return True if the connection should be kept alive"""
-        conn = environ.get('HTTP_CONNECTION', '').lower()
-        if conn == "close":
+        conn = set((v.lower() for v in headers.get_all('connection')))
+        if "close" in conn:
             return False
-        elif conn == "keep-alive":
+        elif 'upgrade' in conn:
+            headers['connection'] = 'Upgrade'
             return True
-        return version == (1, 1)
+        elif "keep-alive" in conn:
+            return True
+        elif version == (1, 1):
+            headers['connection'] = 'keep-alive'
+            return True
+        else:
+            return False
 
 class HttpServerResponse(pulsar.ProtocolConsumer):
     '''Server side HTTP :class:`pulsar.ProtocolConsumer`.'''
@@ -56,9 +63,10 @@ class HttpServerResponse(pulsar.ProtocolConsumer):
     _request_headers = None
     SERVER_SOFTWARE = pulsar.SERVER_SOFTWARE
     
-    def __init__(self, wsgi_callable, connection):
+    def __init__(self, wsgi_callable, cfg, connection):
         super(HttpServerResponse, self).__init__(connection)
         self.wsgi_callable = wsgi_callable
+        self.cfg = cfg
         self.parser = lib.Http_Parser(kind=0)
         self.headers = Headers()
         self.keep_alive = False
@@ -263,7 +271,8 @@ is an HTTP upgrade (websockets)'''
                 headers.pop('content-length', None)
             else:
                 headers.pop('Transfer-Encoding', None)
-            headers['connection'] = "keep-alive" if self.keep_alive else "close"
+            if not self.keep_alive:
+                headers['connection'] = 'close'
             return headers
 
     def send_headers(self, force=False):
@@ -292,7 +301,8 @@ is an HTTP upgrade (websockets)'''
             "RAW_URI": p.get_url(),
             "SERVER_PROTOCOL": protocol,
             'CONTENT_TYPE': '',
-            'pulsar.connection': self.connection
+            'pulsar.connection': self.connection,
+            'pulsar.cfg': self.cfg
         }
         url_scheme = "http"
         forward = self.address
@@ -301,7 +311,7 @@ is an HTTP upgrade (websockets)'''
         for header, value in mapping_iterator(self._request_headers):
             header = header.lower()
             if header in HOP_HEADERS:
-                self.headers.add_header(header, value)
+                self.headers[header] = value
             if header == 'x-forwarded-for':
                 forward = value
             elif header == "x-forwarded-protocol" and value == "ssl":
@@ -342,7 +352,7 @@ is an HTTP upgrade (websockets)'''
                 path_info = path_info.split(script_name, 1)[1]
             environ['PATH_INFO'] = unquote(path_info)
         environ['SCRIPT_NAME'] = script_name
-        self.keep_alive = keep_alive(environ, p.get_version())
+        self.keep_alive = keep_alive(self.headers, p.get_version())
         self.headers.update([('Server', self.SERVER_SOFTWARE),
                              ('Date', format_date_time(time.time()))])
         return environ

@@ -1,4 +1,20 @@
 '''
+This module implements the main classes for pulsar application framework. The
+framework is built on top of pulsar asynchronous engine and allows to
+implement servers with very little effort. The main classes here are:
+:class:`Application` and :class:`MultiApp` which, has the name suggests, is
+a factory of several :class:`Application` running on a single server.
+The :class:`Configurator` is a mixin used as base class for both 
+:class:`Application` and :class:`MultiApp`.
+
+Configurator
+===============================
+   
+.. autoclass:: Configurator
+   :members:
+   :member-order: bysource
+   
+   
 Application
 ===============================
    
@@ -7,6 +23,14 @@ Application
    :member-order: bysource
    
 
+Multi App
+===============================
+      
+.. autoclass:: MultiApp
+   :members:
+   :member-order: bysource
+   
+   
 CPU bound Application
 ===============================
       
@@ -29,14 +53,6 @@ Application Monitor
 .. autoclass:: ApplicationMonitor
    :members:
    :member-order: bysource
-
-Multi App
-===============================
-      
-.. autoclass:: MultiApp
-   :members:
-   :member-order: bysource
-   
 '''
 import os
 import sys
@@ -46,6 +62,7 @@ from inspect import getfile
 import pulsar
 from pulsar import Actor, Monitor, get_actor, EventHandler, QueueServer
 from pulsar.utils.importer import module_attribute
+from pulsar.utils.structures import OrderedDict
 from pulsar.utils.pep import pickle
 
 __all__ = ['Application',
@@ -155,19 +172,116 @@ class AppEvents(EventHandler):
     
 
 class Configurator(object):
-    cfg = {}
-    description = None
-    epilog = None
-    version = None
-    cfg_apps = frozenset()
-    config_options_include = None
-    config_options_exclude = None
+    '''A mixin for configuring and loading the various necessities for any
+given server running on :mod:`pulsar` concurrent framework.
+
+:parameter name: to override the class :attr:`name` attribute.
+:parameter description: to override the class :attr:`cfg.description` attribute.
+:parameter epilog: to override the class :attr:`cfg.epilog` attribute.
+:parameter argv: Optional list of command line parameters to parse, if
+    not supplied the :attr:`sys.argv` list will be used. The parameter is
+    only relevant if **parse_console** is ``True``.
+:parameter version: Optional version of this application, it overrides the
+    class :attr:`cfg.version` attribute.
+:parameter parse_console: ``True`` (default) if the console parameters needs
+    parsing.
+:parameter params: a dictionary of configuration parameters which overrides
+    the defaults and the :attr:`cfg` class attribute. They will be overritten
+    by a :ref:`config file <setting-config>` or command line
+    arguments.   
+
+.. attribute:: name
     
-    def on_config_init(self, cfg, params):
-        '''Callback when configuration is initialised but not yet loaded.
-This is a chance to add extra :ref:`config parameters <settings>` or remove
-unwanted ones. It returns a new :class:`Config` instance or ``None``.'''
-        pass
+    The name is unique if this is an :class:`Application`. In this
+    case it defines the application monitor name as well and can be access in
+    the arbiter domain via the :func:`get_application` function.
+    
+.. attribute:: cfg
+
+    The :class:`pulsar.utility.config.Config` for this :class:`Configurator`.
+    If set as class attribute it will be replaced during initialisation.
+
+    Default: ``None``.
+
+.. attribute:: cfg_apps
+
+    Tuple\set containing names of :ref:`configuration namespaces <settings>`
+    to be included in the application config dictionary.
+
+    Default: Empty ``frozenset``.
+    
+.. attribute:: parsed_console
+
+    ``True`` if this application parsed the console before starting.
+    
+.. attribute:: script
+
+    full path of the script which starts the application or ``None``.
+    If not supplied it is evaluated from the ``__main__`` import.
+    It is also used to setup the python path via the :meth:`python_path`
+    method.
+'''
+    name = None
+    cfg = None
+    
+    def __init__(self,
+                 name=None,
+                 description=None,
+                 epilog=None,
+                 version=None,
+                 argv=None,
+                 parse_console=True,
+                 script=None,
+                 cfg=None,
+                 load_config=True,
+                 **kwargs):
+        cls = self.__class__
+        self.name = name or cls.name or cls.__name__.lower()
+        if load_config or not isinstance(cfg, pulsar.Config):
+            cfg = cfg or {}
+            cfg.update(kwargs)
+            cfg = cls.create_config(cfg)
+        self.cfg = cfg
+        self.cfg.description = description or self.cfg.description
+        self.cfg.epilog = epilog or self.cfg.epilog
+        self.cfg.version = version or self.cfg.version
+        self.argv = argv
+        self.parsed_console = parse_console
+        self.script = self.python_path(script)
+    
+    @property
+    def version(self):
+        '''Version of this :class:`Application`'''
+        return self.cfg.version
+    
+    @property
+    def root_dir(self):
+        '''Root directory of this :class:`Configurator`. Evaluated from the
+:attr:`script` attribute.'''
+        if self.script:
+            return os.path.dirname(self.script)
+    
+    def __repr__(self):
+        return self.name
+
+    def __str__(self):
+        return self.__repr__()
+    
+    def python_path(self, script):
+        '''Get the script name if not available and the script directory to the
+python path if not already there. Returns thereal path of the python
+script which runs the application.'''
+        if not script:
+            try:
+                import __main__
+            except ImportError:
+                return
+            script = getfile(__main__)
+        script = os.path.realpath(script)
+        path = os.path.dirname(script)
+        if path not in sys.path:
+            sys.path.insert(0, path)
+        return script
     
     def on_config(self):
         '''Callback when configuration is loaded. This is a chance to do
@@ -175,16 +289,9 @@ unwanted ones. It returns a new :class:`Config` instance or ``None``.'''
  place. If it returns ``False`` the application will abort.'''
         pass
     
-    def load_config(self, argv, version, parse_console,
-                    cfg_apps=None, settings=None, **params):
+    def load_config(self):
         '''Load the application configuration from a file and/or
 from the command line. Called during application initialization.
-
-:parameter argv: list of command line parameters to parse.
-:parameter version: The version of this application.
-:parameter parse_console: True if the console parameters need parsing.
-:parameter params: dictionary of parameters passed during construction.
-
 The parameters overriding order is the following:
 
  * default parameters.
@@ -192,29 +299,13 @@ The parameters overriding order is the following:
  * the parameters in the optional configuration file
  * the parameters passed in the command line.
 '''
-        cfg_apps = set(cfg_apps or ())
-        cfg_apps.update(self.cfg_apps)
-        self.cfg_apps = frozenset(cfg_apps)
-        cfg = pulsar.Config(self.description,
-                            self.epilog,
-                            version or self.version,
-                            self.cfg_apps,
-                            self.config_options_include,
-                            self.config_options_exclude,
-                            settings=settings)
-        self.cfg = self.on_config_init(cfg, params)
-        if not isinstance(self.cfg, pulsar.Config):
-            self.cfg = cfg
-        self.version = self.cfg.version
-        overrides = {}
-        specials = set()
         # get the actor if available and override default cfg values with those
         # from the actor
         actor = get_actor()
         if actor and actor.running:
             # actor available and running. unless argv is set, skip parsing
-            if argv is None:
-                parse_console = False
+            if self.argv is None:
+                self.parsed_console = False
             for k, v in actor.cfg.items():
                 if v is not None:
                     k = k.lower()
@@ -223,19 +314,10 @@ The parameters overriding order is the following:
                         self.cfg.settings[k].default = v
                     except AttributeError:
                         pass
-        # modify defaults and values of cfg with params
-        for k, v in params.items():
-            if v is not None:
-                k = k.lower()
-                try:
-                    self.cfg.set(k, v, default=True)
-                except AttributeError:
-                    if not self.add_to_overrides(k, v, overrides):
-                        setattr(self, k, v)
-        # parse console args
-        if parse_console:
+        # parse console args 
+        if self.parsed_console:
             parser = self.cfg.parser()
-            opts = parser.parse_args(argv)
+            opts = parser.parse_args(self.argv)
             config = getattr(opts, 'config', None)
             # set the config only if config is part of the settings
             if config is not None and self.cfg.config:
@@ -244,8 +326,7 @@ The parameters overriding order is the following:
             parser, opts = None, None
         #
         # Load up the config file if its found.
-        for k, v in self.cfg.import_from_module():
-            self.add_to_overrides(k, v, overrides)
+        self.cfg.params.update(self.cfg.import_from_module())
         #
         # Update the configuration with any command line settings.
         if opts:
@@ -253,21 +334,26 @@ The parameters overriding order is the following:
                 if v is None:
                     continue
                 self.cfg.set(k.lower(), v)
-        # Lastly, update the configuration with overrides
-        for k,v in overrides.items():
-            self.cfg.set(k, v)
-
-    def add_to_overrides(self, name, value, overrides):
-        names = name.split('__')
-        if len(names) == 2 and names[0] == self.name:
-            name = names[1].lower()
-            if name in self.cfg.settings:
-                overrides[name] = value
-                return True
+    
+    @classmethod
+    def create_config(cls, params, prefix=None, dont_prefix=None, name=None):
+        '''Create a new :class:`pulsar.utils.config.Config` container by
+overriding default values with *params*.'''
+        if cls.cfg:
+            cfg = cls.cfg.copy(name=name, prefix=prefix,
+                               dont_prefix=dont_prefix)
+        else:
+            cfg = pulsar.Config(name=name, prefix=prefix,
+                                dont_prefix=dont_prefix)
+        for name, value in params.items():
+            if name in cfg:
+                cfg.set(name, value, default=True)
+            else:
+                cfg.params[name] = value
+        return cfg
     
     
-    
-class Application(pulsar.Pulsar, Configurator):
+class Application(Configurator, pulsar.Pulsar):
     """An application interface for configuring and loading
 the various necessities for any given server or distributed application running
 on :mod:`pulsar` concurrent framework.
@@ -276,6 +362,8 @@ several battery included examples in the :mod:`pulsar.apps` framework module.
 
 These are the most important facts about a pulsar :class:`Application`
 
+* It derives from :class:`Configurator` so that it has all the functionalities
+  to parse command line arguments and setup the :attr:`Configurator.cfg`.
 * Instances must be pickable. If non-pickable data needs to be add on an
   :class:`Application` instance, it must be stored on the
   :attr:`Application.local` dictionary.
@@ -284,15 +372,9 @@ These are the most important facts about a pulsar :class:`Application`
   :class:`Arbiter`, ready to perform its duties.
 
 :parameter callable: Initialise the :attr:`Application.callable` attribute.
-:parameter description: A string describing the application.
-    It will be displayed on the command line.
-:parameter epilog: Epilog string you will see when interacting with the command
-    line.
-:parameter name: Application name. Override the :attr:`name` class attribute.
-:parameter params: a dictionary of configuration parameters which overrides
-    the defaults and the :attr:`cfg` class attribute. They will be overritten
-    by a :ref:`config file <setting-config>` or command line
-    arguments.
+:parameter load_config: If ``False`` the :meth:`Configurator.load_config`
+    is not invoked. Default ``True``.
+:parameter params: Passed to the :class:`Configurator` initialiser.
 
 .. attribute:: callable
 
@@ -301,38 +383,8 @@ These are the most important facts about a pulsar :class:`Application`
     a function or a pickable object.
 
     Default ``None``
-
-.. attribute:: cfg
-
-    dictionary of default configuration parameters. It will be replaced by
-    a :class:`pulsar.utils.config.Config` container during initialization.
-
-    Default: ``{}``.
-
-.. attribute:: cfg_apps
-
-    Optional tuple\set containing names of
-    :ref:`configuration namespaces <settings>` to be included in the
-    application config dictionary.
-
-    Default: Empty ``frozenset``.
-    
-.. attribute:: script
-
-    full path of the script which starts the application or ``None``.
-    If supplied it is used to setup the python path
 """
-    def __init__(self,
-                 callable=None,
-                 description=None,
-                 name=None,
-                 epilog=None,
-                 argv=None,
-                 script=None,
-                 version=None,
-                 parse_console=True,
-                 cfg=None,
-                 **kwargs):
+    def __init__(self, callable=None, load_config=True, **params):
         '''Initialize a new :class:`Application` and add its
 :class:`ApplicationMonitor` to the class:`pulsar.Arbiter`.
 
@@ -343,19 +395,13 @@ These are the most important facts about a pulsar :class:`Application`
 :parameter parse_console: flag for parsing console inputs. By default it parse
     only if the arbiter has not yet started.
 '''
+        super(Application, self).__init__(load_config=load_config, **params)
         self.local.events = AppEvents()
-        self.description = description or self.description
-        self.epilog = epilog or self.epilog
-        self._name = self.__class__.name or self.__class__.__name__.lower()
-        self.script = self.python_path(script)
-        params = cfg or {}
-        if self.cfg:
-            params.update(self.cfg)
-        params.update(kwargs)
         self.callable = callable
-        self.load_config(argv, version, parse_console, **params)
+        if load_config:
+            self.load_config()
         self()
-
+        
     def __call__(self, actor=None):
         if actor is None:
             actor = get_actor()
@@ -380,22 +426,6 @@ These are the most important facts about a pulsar :class:`Application`
         '''Returns ``self``. Implemented so that the :class:`ApplicationMonitor`
 and the :class:`Application` have the same interface.'''
         return self
-    
-    @property
-    def name(self):
-        '''Application name, It is unique and defines the application.'''
-        return self._name
-    
-    @property
-    def root_dir(self):
-        if self.script:
-            return os.path.dirname(self.script)
-    
-    def __repr__(self):
-        return self.name
-
-    def __str__(self):
-        return self.__repr__()
 
     @property
     def monitor(self):
@@ -421,22 +451,6 @@ and the :class:`Application` have the same interface.'''
 of the :class:`Worker` event loop. By default it does nothing so that
 the event loop chooses the most suitable IO poller.'''
         return None
-
-    def python_path(self, script):
-        '''Get the script name if not available and the script directory to the
-python path if not already there. Returns thereal path of the python
-script which runs the application.'''
-        if not script:
-            try:
-                import __main__
-            except ImportError:
-                return
-            script = getfile(__main__)
-        script = os.path.realpath(script)
-        path = os.path.dirname(script)
-        if path not in sys.path:
-            sys.path.insert(0, path)
-        return script
 
     def add_timeout(self, deadline, callback):
         self.arbiter.ioloop.add_timeout(deadline, callback)
@@ -483,17 +497,6 @@ The application is now in the arbiter but has not yet started.'''
         if arbiter and self.name in arbiter.registered:
             arbiter.start()
         return self
-    
-    @classmethod
-    def create_config(cls, params, prefix=None, dont_prefix=None):
-        kwargs = cls.cfg.copy()
-        kwargs.update(params)
-        cfg = pulsar.Config(app=cls.cfg_apps, prefix=prefix,
-                            dont_prefix=dont_prefix)
-        for name in params:
-            if name in cfg:
-                cfg.set(name, params[name], default=True)
-        return cfg
 
 
 class CPUboundApplication(Application):
@@ -501,8 +504,6 @@ class CPUboundApplication(Application):
 handles events with a task to complete and the time complete the task is
 determined principally by the speed of the CPU.
 This type of application is served by :ref:`CPU bound workers <cpubound>`.'''
-    cfg_apps = frozenset(('cpubound',))
-    
     def __init__(self, *args, **kwargs):
         self.received = 0
         self.concurrent_requests = set()
@@ -558,56 +559,72 @@ applications created are available in the command line.
 The :meth:`build` is the only method which must be implemented by subclasses.
 Check the :class:`examples.taskqueue.manage.server` class in the
 :ref:`taskqueue example <tutorials-taskqueue>` for an example.
+The :class:`MultiApp` derives from :class:`Configurator` and therefore
+supports all its configuration utilities.
 
-.. attribute:: name
+A minimal example usage::
 
-    Optional name which can be used in the :meth:`build` method.
-'''    
-    def __init__(self, name='multi', **params):
-        self.name = name
-        self.cfg = self.cfg.copy()
-        self.cfg.update(params)
-        self._apps = None
-        self._settings = {}
+    import pulsar
+    
+    class Server(pulsar.MultiApp):
+        def build(self):
+            yield self.new_app(TaskQueue)
+            yield self.new_app(WSGIserver, prefix=rpc, callable=...)
+            yield self.new_app(WSGIserver, prefix=web, callable=...)
+'''
+    _apps = None
+    
+    def build(self):
+        '''Virtual method, must be implemented by subclasses and return an
+iterable over results obtained from calls to the :meth:`new_app` method.'''
+        raise NotImplementedError
     
     def apps(self):
         '''List of :class:`Application` for this :class:`MultiApp`.
 The lists is lazily loaded from the :meth:`build` method.'''
         if self._apps is None:
+            self.cfg.params = dict(((s.name, s.value) for s in\
+                       self.cfg.settings.values() if s.value != s.default))
+            self.cfg.settings = {}
             self._apps =  []
-            app_name_callables = list(self.build())
-            params = {'description': self.description,
-                      'epilog': self.epilog,
-                      'settings': self._settings,
-                      'version': self.version}
-            for App, name, callable in app_name_callables:
-                app = App(callable, name=name, **params)
-                self._apps.append(app)
+            apps = OrderedDict(list(self.build()))
+            if not apps:
+                return self._apps
+            self.load_config()
+            kwargs = self._get_app_params()
+            for App, name, callable, cfg in self._iter_app(apps):
+                settings = self.cfg.settings
+                new_settings = {}
+                for key in cfg:
+                    setting = settings[key].copy()
+                    if setting.orig_name and setting.orig_name != setting.name:
+                        setting.name = setting.orig_name
+                    new_settings[setting.name] = setting
+                cfg.settings = new_settings
+                kwargs.update({'name': name, 'cfg': cfg, 'callable': callable})
+                self._apps.append(App(**kwargs))
         return self._apps
     
     def new_app(self, App, prefix=None, dont_prefix=None,
                 callable=None, **kwargs):
-        '''Create an instance of :class:`Application` *App*.'''
-        params = self.cfg.copy()
+        '''Invoke this method in the :meth:`build` method as many times
+as the number of :class:`Application` required by this :class:`MultiApp`.'''
+        params = self.cfg.params.copy()
         params.update(kwargs)
         name = params.pop('name', None)
-        if prefix is None:
+        prefix = prefix or ''
+        if not prefix:
             name = self.name
-            cfg = App.create_config(params)
+            cfg = App.create_config(params, name=name)
         else:
-            cfg = App.create_config(params, prefix=prefix,
-                                    dont_prefix=dont_prefix)
             name = '%s_%s' % (self.name, prefix)
-        self._settings.update(cfg.settings)
-        return (App, name, callable)
+            cfg = App.create_config(params, prefix=prefix,
+                                    dont_prefix=dont_prefix, name=name)
+        self.cfg.settings.update(cfg.settings)
+        return prefix, (App, name, callable, cfg)
             
     def __call__(self, actor=None):
         return pulsar.multi_async((app(actor) for app in self.apps()))
-    
-    def build(self):
-        '''Virtual method, must be implemented by subclasses and return an
-iterable of :class:`Application`.'''
-        raise NotImplementedError
         
     def start(self):
         '''Use this method to start all applications at once.'''
@@ -615,4 +632,22 @@ iterable of :class:`Application`.'''
         arbiter = pulsar.arbiter()
         if arbiter:
             arbiter.start()
-        
+    
+    ##    INTERNALS
+    def _iter_app(self, app_name_callables):
+        main = app_name_callables.pop('', None)
+        if not main:
+            raise pulsar.ImproperlyConfigured('No main application in MultiApp')
+        yield main
+        for app in app_name_callables.values():
+            yield app
+    
+    def _get_app_params(self):
+        params = {'load_config': False}
+        for key, value in self.__dict__.items():
+            if key.startswith('_'):
+                continue
+            elif key == 'parsed_console':
+                key = 'parse_console'
+            params[key] = value
+        return params

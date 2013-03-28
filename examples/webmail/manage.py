@@ -10,10 +10,10 @@ To run the server you need to create a :mod:`config.py` file in the
 the :mod:`examples.webmail` directory containing::
 
     # the adress of your mail server
-    incoming_mail='ssl:host=imap.gmail.com:port=993'
-    # username & password
-    username=
-    password=
+    mail_incoming ='ssl:host=imap.gmail.com:port=993'
+    # mail_username & mail_password
+    mail_username=
+    mail_password=
 
 And type::
 
@@ -52,22 +52,17 @@ try:
 except ImportError: #pragma    nocover
     twisted = None    # This is for when we build docs
 
-try:
-    import config
-except ImportError:
-    config = None
-
 ASSET_DIR = os.path.join(os.path.dirname(__file__), 'assets')
 
     
-def mail_client(timeout=10):
+def mail_client(cfg, timeout=10):
     '''Create a new mail client using twisted IMAP4 library.'''
-    endpoint = endpoints.clientFromString(reactor, config.incoming_mail)
+    endpoint = endpoints.clientFromString(reactor, cfg.mail_incoming)
     endpoint._timeout = timeout
     factory = protocol.Factory()
     factory.protocol = imap4.IMAP4Client
     client = yield endpoint.connect(factory)
-    yield client.login(config.username, config.password)
+    yield client.login(cfg.mail_username, cfg.mail_password)
     yield client.select('INBOX')
     yield client
     #info = yield client.fetchEnvelope(imap4.MessageSet(1))
@@ -79,10 +74,10 @@ class WsMail(ws.WS):
 sending mail via the twisted IMAP4 library.'''
     def on_open(self, request):
         '''When the websocket starts, it create a new mail client.'''
-        client = yield mail_client()
+        client = yield mail_client(request.cache.cfg)
         #add the mail client to the environ cache
-        request.cache['mailclient'] = client
-        # retrieve the list of mailboxes
+        request.cache.mailclient = client
+        # retrieve the list of mailboxes and them to the client
         yield self._send_mailboxes(request)
         
     def on_message(self, request, msg):
@@ -97,19 +92,9 @@ sending mail via the twisted IMAP4 library.'''
                 self.write(request, json.dumps({'mailbox': result}))
 
     def _send_mailboxes(self, request):
-        client = request.cache['mailclient']
-        result = yield client.list("","*")
+        result = yield request.cache.mailclient.list("","*")
         result = sorted([e[2] for e in result])
         self.write(request, json.dumps({'list': result}))
-
-
-class Web(wsgi.Router):
-    '''Main web page'''    
-    def get(self, request):
-        data = open(os.path.join(ASSET_DIR, 'mail.html')).read()
-        request.response.content = data % request.environ
-        request.response.content_type = 'text/html'
-        return request.response.start()
 
 
 class WebMail(wsgi.LazyWsgi):
@@ -117,11 +102,17 @@ class WebMail(wsgi.LazyWsgi):
     def setup(self):
         return wsgi.WsgiHandler([ws.WebSocket('/message', WsMail()),
                                  wsgi.MediaRouter('/media', ASSET_DIR),
-                                 Web('/')])
+                                 wsgi.Router('/', get=self.home)])
+
+    def home(self, request):
+        data = open(os.path.join(ASSET_DIR, 'mail.html')).read()
+        request.response.content = data % request.environ
+        request.response.content_type = 'text/html'
+        return request.response.start()
     
     
-def server(**kwargs):
-    return wsgi.WSGIServer(name='webmail', callable=WebMail(), **kwargs)
+def server(name='webmail', callable=None, **kwargs):
+    return wsgi.WSGIServer(name=name, callable=WebMail(), **kwargs)
 
 
 if __name__ == '__main__':  #pragma nocover

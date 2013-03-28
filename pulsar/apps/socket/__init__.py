@@ -108,6 +108,7 @@ class Bind(pulsar.Setting):
     flags = ["-b", "--bind"]
     meta = "ADDRESS"
     default = "127.0.0.1:{0}".format(pulsar.DEFAULT_PORT)
+    can_prefix = True
     desc = """\
         The socket to bind.
         
@@ -123,6 +124,7 @@ class KeepAlive(pulsar.Setting):
     validator = pulsar.validate_pos_int
     type = int
     default = 15
+    can_prefix = True
     desc = """\
         The number of seconds to keep an idle client connection
         open."""
@@ -137,8 +139,9 @@ requests. The request handler is constructued from the
 
     The socket address, available once the application has started.
     '''
-    _app_name = 'socket'
+    name = 'socket'
     address = None
+    cfg = pulsar.Config(apps=['socket'])
     
     def protocol_consumer(self):
         '''Returns the callable application handler which is stored in

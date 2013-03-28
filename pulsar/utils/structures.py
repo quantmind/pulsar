@@ -145,7 +145,7 @@ where value is the last item in the list associated with the key.
 
 
 class AttributeDictionary(Mapping):
-    
+    '''A :class:`Mapping` structures which exposes keys as attributes.'''
     def __init__(self, *iterable, **kwargs):
         if iterable:
             if len(iterable) > 1:
@@ -183,8 +183,8 @@ class AttributeDictionary(Mapping):
     def all(self):
         return self.__dict__
     
-    def pop(self, name):
-        return self.__dict__.pop(name, None)
+    def pop(self, name, default=None):
+        return self.__dict__.pop(name, default)
     
     def values(self):
         return self.__dict__.values()

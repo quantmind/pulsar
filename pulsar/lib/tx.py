@@ -36,8 +36,6 @@ from pulsar.utils.pep import get_event_loop
     
 def _maybe_async(obj, **params):
     if isinstance(obj, Deferred):
-        if obj.called:
-            return _maybe_async(obj.result, **params)
         d = pulsar.Deferred()
         d._twisted_deferred = obj
         obj.addBoth(d.callback)

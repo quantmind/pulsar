@@ -63,9 +63,9 @@ class server(pulsar.MultiApp):
 This class shows how to
 use :class:`pulsar.apps.MultiApp` utility for starting several
 :ref:`pulsar applications <apps-framework>` at once.'''
-    cfg = {'tasks_path': TASK_PATHS}
+    cfg = pulsar.Config('Taskqueue with JSON-RPC API example')
     def build(self):
-        yield self.new_app(tasks.TaskQueue)
+        yield self.new_app(tasks.TaskQueue, tasks_path=TASK_PATHS)
         yield self.new_app(wsgi.WSGIServer, prefix='rpc',
                            callable=Rpc(self.name))
     

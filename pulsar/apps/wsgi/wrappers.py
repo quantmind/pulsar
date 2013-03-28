@@ -33,7 +33,7 @@ from functools import partial, reduce
 import pulsar
 from pulsar import maybe_async, is_async, is_failure, multi_async
 from pulsar.utils.multipart import parse_form_data, parse_options_header
-from pulsar.utils.structures import MultiValueDict
+from pulsar.utils.structures import MultiValueDict, AttributeDictionary
 from pulsar.utils.html import escape
 from pulsar.utils.httpurl import Headers, SimpleCookie, responses,\
                                  has_empty_content, string_type, ispy3k,\
@@ -330,13 +330,14 @@ other attribute is stored in the :attr:`environ` itself at the
                  urlargs=None):
         self.environ = environ
         if 'pulsar.cache' not in environ:
-            environ['pulsar.cache'] = {}
-            self.cache['response'] = WsgiResponse(environ=environ,
-                                                  start_response=start_response)
+            environ['pulsar.cache'] = AttributeDictionary()
+            self.cache.cfg = environ.get('pulsar.cfg', {})
+            self.cache.response = WsgiResponse(environ=environ,
+                                               start_response=start_response)
         if start_response:
             self.response.start_response = start_response
-            self.cache['app_handler'] = app_handler
-            self.cache['urlargs'] = urlargs
+            self.cache.app_handler = app_handler
+            self.cache.urlargs = urlargs
     
     def __repr__(self):
         return self.path
@@ -353,7 +354,7 @@ at the wsgi-extension key ``pulsar.cache``.'''
     @property
     def response(self):
         '''The :class:`WsgiResponse` for this request.'''
-        return self.cache['response']
+        return self.cache.response
     
     @property
     def app_handler(self):

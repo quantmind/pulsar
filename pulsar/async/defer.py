@@ -97,17 +97,19 @@ def default_maybe_failure(value, msg=None):
     else:
         return value
 
-def default_maybe_async(val, description=None, max_errors=1, timeout=None):
+def default_maybe_async(val, description=None, max_errors=1, timeout=None,
+                        get_result=True):
     if isgenerator(val):
         val = DeferredCoroutine(val, max_errors=max_errors,
                                 description=description,
                                 timeout=timeout)
     if is_async(val):
-        return val.result_or_self()
+        return val.result_or_self() if get_result else val
     else:
         return maybe_failure(val)
     
-def maybe_async(value, description=None, max_errors=1, timeout=None):
+def maybe_async(value, description=None, max_errors=1, timeout=None,
+                get_result=True):
     '''Return an asynchronous instance only if *value* is
 a generator or already an asynchronous instance. If *value* is asynchronous
 it checks if it has been called. In this case it returns the *result*.
@@ -119,11 +121,14 @@ it checks if it has been called. In this case it returns the *result*.
     stopping the generator and raise exceptions. By default it is 1.
 :parameter timeout: optional timeout after which any asynchronous element get
     a cancellation.
+:parameter get_result: optional flag indicating if to get the result in case
+    the return values is a :class:`Deferred` already called. Default: ``True``.
 :return: a :class:`Deferred` or  a :class:`Failure` or a **synchronous value**.
 '''
     global _maybe_async
     return _maybe_async(value, description=description,
-                        max_errors=max_errors, timeout=timeout)
+                        max_errors=max_errors, timeout=timeout,
+                        get_result=get_result)
     
 def maybe_failure(value, msg=None):
     '''Convert *value* into a :class:`Failure` if it is a stack trace or an
@@ -160,10 +165,12 @@ Typical usage::
     def myfunction(...):
         ...
 '''
-    def __init__(self, max_errors=None, description=None, timeout=0):
+    def __init__(self, max_errors=None, description=None, timeout=0,
+                 get_result=True):
          self.max_errors = max_errors
          self.description = description or 'async decorator for '
          self.timeout = timeout
+         self.get_result = get_result
 
     def __call__(self, func):
         description = '%s%s' % (self.description, func.__name__)
@@ -173,7 +180,8 @@ Typical usage::
             except Exception:
                 result = sys.exc_info()
             return maybe_async(result, description=description,
-                               max_errors=self.max_errors, timeout=self.timeout)
+                               max_errors=self.max_errors, timeout=self.timeout,
+                               get_result=self.get_result)
         _.__name__ = func.__name__
         _.__doc__ = func.__doc__
         return _
@@ -652,7 +660,7 @@ which may be :class:`Deferred`.
     _time_finished = None
 
     def __init__(self, data=None, type=None, raise_on_error=False,
-                 handle_value=None, log_failure=False):
+                 handle_value=None, log_failure=False, **kwargs):
         self._deferred = {}
         self._failures = Failure()
         self.log_failure = log_failure
@@ -660,10 +668,10 @@ which may be :class:`Deferred`.
         self.handle_value = handle_value
         if not type:
             type = data.__class__ if data is not None else list
-        if not issubclass(type, (list, dict)):
+        if not issubclass(type, (list, Mapping)):
             type = list
         self._stream = type()
-        super(MultiDeferred, self).__init__()
+        super(MultiDeferred, self).__init__(**kwargs)
         self._time_start = default_timer()
         if data:
             self.update(data)
@@ -725,7 +733,7 @@ both ``list`` and ``dict`` types.'''
         if is_generalised_generator(value):
             value = list(value)
         value = maybe_async(value)
-        if isinstance(value, (dict, list, tuple, set, frozenset)):
+        if isinstance(value, (Mapping, list, tuple, set, frozenset)):
             value = self._make(value)    
         if not is_async(value) and self.handle_value:
             try:

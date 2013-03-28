@@ -357,23 +357,15 @@ is a group of tests specified in a test class.
 :parameter plugins: Optional list of :class:`TestPlugin` instances.
 '''
     name = 'test'
-    cfg_apps = ('cpubound', 'test')
-    cfg = {'loglevel': 'none',
-           'backlog': 5,
-           'logconfig': {
-                'loggers': {
-                    LOGGER.name: {'handlers': ['console_message'],
-                                  'level': logging.INFO}
-                            }
-                         }
-           }
-    
-    def on_config_init(self, cfg, params):
-        self.plugins = params.get('plugins') or ()
-        if self.plugins:
-            for plugin in self.plugins:
-                cfg.settings.update(plugin.config.settings)
-    
+    cfg = pulsar.Config(apps=('cpubound', 'test'),
+                        loglevel='none',
+                        backlog=5,
+                        logconfig={
+                                   'loggers': {
+                                LOGGER.name: {'handlers': ['console_message'],
+                                              'level': logging.INFO}
+                                               }
+                                   })
     @local_property
     def runner(self):
         '''Instance of :class:`TestRunner` driving the test case
@@ -469,3 +461,10 @@ configuration and plugins.'''
                 exit_code = 0 
             return monitor.arbiter.stop(exit_code)
 
+    @classmethod
+    def create_config(cls, *args, **kwargs):
+        cfg = super(TestSuite, cls).create_config(cls, *args, **kwargs)
+        plugins = cfg.params.get('plugins') or ()
+        for plugin in self.plugins:
+            cfg.settings.update(plugin.config.settings)
+        return cfg

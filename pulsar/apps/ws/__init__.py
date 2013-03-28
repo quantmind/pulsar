@@ -72,7 +72,7 @@ import hashlib
 from functools import partial
 
 import pulsar
-from pulsar import is_async, maybe_async, HttpException, ProtocolError, log_failure
+from pulsar import async, HttpException, ProtocolError, log_failure
 from pulsar.utils.httpurl import to_bytes, native_str
 from pulsar.utils.websocket import FrameParser, Frame
 from pulsar.apps import wsgi
@@ -224,43 +224,27 @@ class WebSocketProtocol(pulsar.ProtocolConsumer):
     closed = False
     
     def data_received(self, data):
-        request = self.request
-        parser = self.parser
-        frame = parser.decode(data)
+        frame = self.parser.decode(data)
         while frame:
-            self.write(parser.replay_to(frame))
-            if not self.started:
-                # call on_start (first message received)
-                self.started = True
-                self.write(self.handler.on_open(request))
+            self.write(self.parser.replay_to(frame))
             if frame.is_close:
-                # Close the connection
-                self.close()
-            elif frame.is_data:
-                self.write(self.handler.on_message(request, frame.body))
-            frame = parser.decode()
+                return self.close()
+            if not self.started:
+                self.started = True
+                self.write(self.handler.on_open(self.request))
+            if frame.is_data:
+                self.write(self.handler.on_message(self.request, frame.body))
+            frame = self.parser.decode()
     
-    def write(self, frame):
+    def write(self, value):
         '''Write a new *frame* into the wire, frame can be:
-        
+
+* ``None`` does nothing
 * bytes - converted to a byte Frame
 * string - converted to a string Frame
 * a :class:`pulsar.utils.websocket.Frame`
-* A generator or :class:`pulsar.Deferred` - adds a callback to
-  the :class:`pulsar.EventLoop` to invoke this method once the result is ready.
  '''
-        frame = maybe_async(frame)
-        if frame is None:
-            return
-        elif is_async(frame):
-            return frame.add_callback(self.write, self.close)
-        elif not isinstance(frame, Frame):
-            frame = self.parser.encode(frame)
-            self.transport.write(frame.msg)
-        else:
-            self.transport.write(frame.msg)
-        if frame.is_close:
-            self.close()
+        self._async_write(value).add_errback(self.close)
             
     def close(self, error=None):
         if not self.closed:
@@ -269,6 +253,19 @@ class WebSocketProtocol(pulsar.ProtocolConsumer):
             self.handler.on_close(self.request)
             self.transport.close()
     
+    # INTERNAL 
+    @async(get_result=False)
+    def _async_write(self, value):
+        frame = yield value
+        if frame is None:
+            return
+        elif not isinstance(frame, Frame):
+            frame = self.parser.encode(frame)
+            self.transport.write(frame.msg)
+        else:
+            self.transport.write(frame.msg)
+        if frame.is_close:
+            self.close()
     
 class WebSocketServerProtocol(WebSocketProtocol):
     '''Created after a successful websocket handshake. Tjis is a

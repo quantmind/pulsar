@@ -303,8 +303,8 @@ tasks and managing scheduling of tasks.
     registered :class:`Job` instances.
 '''
     name = 'tasks'
-    cfg_apps = ('cpubound', 'tasks')
-    cfg = {'timeout': 600, 'backlog': 5}
+    cfg = pulsar.Config(apps=('cpubound', 'tasks'),
+                        timeout=600, backlog=5)
     task_class = TaskInMemory
     '''The :class:`Task` class for storing information about task execution.
 

@@ -1,4 +1,4 @@
-'''This is a substantial module which imports several classes and functions
+'''This is a substantial module which imporfts several classes and functions
 from the standard library in a python 2.6 to python 3.3 compatible fashion.
 On top of that, it implements the :class:`HttpClient` for handling synchronous
 and asynchronous HTTP requests in a pythonic way.
@@ -532,7 +532,15 @@ def parse_dict_header(value):
 class Headers(object):
     '''Utility for managing HTTP headers for both clients and servers.
 It has a dictionary like interface with few extra functions to facilitate
-the insertion of multiple values.
+the insertion of multiple header values. Header fields are case insensitive,
+therefore doing::
+
+    >>> h = Headers()
+    >>> h['Content-Length'] = '1050'
+    
+is equivalent to
+
+    >>> h['content-length'] = '1050'
 
 From http://www.w3.org/Protocols/rfc2616/rfc2616.html
 
@@ -601,7 +609,7 @@ and values."""
         key = header_field(key, self.all_headers, self.strict)
         if key and value is not None:
             if not isinstance(value, list):
-                value = [value]
+                value = self.get_values(value)
             self._headers[key] = value
 
     def get(self, key, default=None):
@@ -637,9 +645,31 @@ append the value to the list.'''
         key = header_field(key, self.all_headers, self.strict)
         if key and value:
             values = self._headers.get(key, [])
-            if value not in values:
-                values.append(value)
+            lower_values = [v.lower() for v in values]
+            for value in self.get_values(value):
+                lower_value = value.lower() 
+                if lower_value not in lower_values:
+                    lower_values.append(lower_value)
+                    values.append(value)
+            self._headers[key] = values
+                
+    def remove_header(self, key, value=None):
+        '''Remove the header at ``key``, If ``value`` is provided, it removes
+only that value if found.'''
+        key = header_field(key, self.all_headers, self.strict)
+        if key:
+            if value:
+                value = value.lower()
+                values = self._headers.get(key, [])
+                removed = None
+                for v in values:
+                    if v.lower() == value:
+                        removed = v
+                        values.remove(v)
                 self._headers[key] = values
+                return removed
+            else:
+                return self._headers.pop(key, None)
 
     def flat(self, version, status):
     	'''Full headers bytes representation'''
@@ -660,6 +690,10 @@ append the value to the list.'''
                 yield "%s: %s" % (k, ', '.join(headers[k]))
         yield ''
         yield ''
+        
+    ##    INTERNALS
+    def get_values(self, value):
+        return [v for v in (v.strip() for v in value.split(',')) if v]
 
 
 ###############################################################################
@@ -729,8 +763,9 @@ OTHER DEALINGS IN THE SOFTWARE.'''
         self._url = None
         self._path = None
         self._query_string = None
+        self._kind = kind
         self._fragment= None
-        self._headers = Headers(kind=kind)
+        self._headers = {}
         self._chunked = False
         self._body = []
         self._trailers = None
@@ -746,7 +781,7 @@ OTHER DEALINGS IN THE SOFTWARE.'''
 
     @property
     def kind(self):
-        return self._headers.kind_number
+        return self._kind
 
     def get_version(self):
         return self._version
