@@ -59,14 +59,14 @@ class Rpc(wsgi.LazyWsgi):
     
     
 class server(pulsar.MultiApp):
-    '''Build a taskqueue and an rpc server. This class shows how to
+    '''Build a multi-app consisting on a taskqueue and a JSON-RPC server.
+This class shows how to
 use :class:`pulsar.apps.MultiApp` utility for starting several
 :ref:`pulsar applications <apps-framework>` at once.'''
-    cfg_apps = frozenset(('cpubound', 'task', 'socket', 'wsgi'))
     cfg = {'tasks_path': TASK_PATHS}
     def build(self):
         yield self.new_app(tasks.TaskQueue)
-        yield self.new_app(wsgi.WSGIServer, name='rpc',
+        yield self.new_app(wsgi.WSGIServer, prefix='rpc',
                            callable=Rpc(self.name))
     
 

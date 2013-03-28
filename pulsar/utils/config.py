@@ -21,6 +21,12 @@ Setting
 .. autoclass:: Setting
    :members:
    :member-order: bysource
+   
+make settings
+~~~~~~~~~~~~~~~~~~~~
+
+.. autofunction:: make_settings
+
 
 .. _gunicorn: http://gunicorn.org/
 '''
@@ -30,6 +36,7 @@ import argparse
 import os
 import textwrap
 import types
+import logging
 
 from pulsar import __version__, SERVER_NAME, parse_address
 from . import system
@@ -51,6 +58,8 @@ __all__ = ['Config',
            'validate_pos_float',
            'make_settings',
            'make_optparse_options']
+
+LOGGER = logging.getLogger('pulsar.config')
 
 class DefaultSettings:
 
@@ -84,13 +93,18 @@ def ordered_settings():
         yield KNOWN_SETTINGS[name]
 
 def make_settings(apps=None, include=None, exclude=None, prefix=None,
-                  dont_prefix=None):
+                   dont_prefix=None):
     '''Creates a dictionary of available settings for given
-applications *apps*.
+applications *apps*. The *prefix* and *don_prefix* parameters are used
+in the context of :class:`pulsar.apps.MultiApp`.
 
 :parameter apps: Optional list of application names.
 :parameter include: Optional list of settings to include.
 :parameter exclude: Optional list of settings to exclude.
+:parameter prefix: Optional prefix to prepend to all :class:`Setting` with
+    :class:`Setting.can_prefix` set to ``True``.
+:parameter dont_prefix: Optional list/tuple of :class:`Setting` names to
+    not prefix.
 :rtype: dictionary of :class:`pulsar.Setting` instances.'''
     settings = {}
     include = set(include or ())
@@ -107,7 +121,13 @@ applications *apps*.
         setting = setting.copy()
         setting.orig_name = setting.name
         if prefix and setting.can_prefix and prefix not in dont_prefix:
-            setting.name = '%s%s' % (prefix, setting.name)
+            flags = setting.flags
+            if flags and flags[-1].startswith('--'):
+                # Prefixing a setting
+                setting.name = '%s_%s' % (prefix, setting.name)
+                setting.flags = ['--%s-%s' % (prefix, flags[-1][2:])]
+            else:
+                LOGGER.warning('Could not prefix %s setting', setting.name)
         settings[setting.name] = setting
     return settings
 
@@ -171,6 +191,10 @@ attribute by exposing the :attr:`Setting.name` as attribute.
         super(Config, self).__setattr__(name, value)
 
     def get(self, name, default=None):
+        '''Get the configuration :class:`Setting` value at *name*.
+If the *name* is not in this container and it is not a known :class:`Setting`,
+an :class:`AttributeError` is raised.'''
+        name = self._orig_name_map.get(name, name)
         if name not in self.settings:
             if name in KNOWN_SETTINGS:
                 return default

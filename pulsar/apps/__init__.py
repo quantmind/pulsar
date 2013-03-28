@@ -153,8 +153,121 @@ class ApplicationMonitor(Monitor):
 class AppEvents(EventHandler):
     ONE_TIME_EVENTS = ('ready', 'start', 'stop')
     
+
+class Configurator(object):
+    cfg = {}
+    description = None
+    epilog = None
+    version = None
+    cfg_apps = frozenset()
+    config_options_include = None
+    config_options_exclude = None
     
-class Application(pulsar.Pulsar):
+    def on_config_init(self, cfg, params):
+        '''Callback when configuration is initialised but not yet loaded.
+This is a chance to add extra :ref:`config parameters <settings>` or remove
+unwanted ones. It returns a new :class:`Config` instance or ``None``.'''
+        pass
+    
+    def on_config(self):
+        '''Callback when configuration is loaded. This is a chance to do
+ an application specific check before the concurrent machinery is put into
+ place. If it returns ``False`` the application will abort.'''
+        pass
+    
+    def load_config(self, argv, version, parse_console,
+                    cfg_apps=None, settings=None, **params):
+        '''Load the application configuration from a file and/or
+from the command line. Called during application initialization.
+
+:parameter argv: list of command line parameters to parse.
+:parameter version: The version of this application.
+:parameter parse_console: True if the console parameters need parsing.
+:parameter params: dictionary of parameters passed during construction.
+
+The parameters overriding order is the following:
+
+ * default parameters.
+ * the *params* passed in the initialization.
+ * the parameters in the optional configuration file
+ * the parameters passed in the command line.
+'''
+        cfg_apps = set(cfg_apps or ())
+        cfg_apps.update(self.cfg_apps)
+        self.cfg_apps = frozenset(cfg_apps)
+        cfg = pulsar.Config(self.description,
+                            self.epilog,
+                            version or self.version,
+                            self.cfg_apps,
+                            self.config_options_include,
+                            self.config_options_exclude,
+                            settings=settings)
+        self.cfg = self.on_config_init(cfg, params)
+        if not isinstance(self.cfg, pulsar.Config):
+            self.cfg = cfg
+        self.version = self.cfg.version
+        overrides = {}
+        specials = set()
+        # get the actor if available and override default cfg values with those
+        # from the actor
+        actor = get_actor()
+        if actor and actor.running:
+            # actor available and running. unless argv is set, skip parsing
+            if argv is None:
+                parse_console = False
+            for k, v in actor.cfg.items():
+                if v is not None:
+                    k = k.lower()
+                    try:
+                        self.cfg.set(k, v)
+                        self.cfg.settings[k].default = v
+                    except AttributeError:
+                        pass
+        # modify defaults and values of cfg with params
+        for k, v in params.items():
+            if v is not None:
+                k = k.lower()
+                try:
+                    self.cfg.set(k, v, default=True)
+                except AttributeError:
+                    if not self.add_to_overrides(k, v, overrides):
+                        setattr(self, k, v)
+        # parse console args
+        if parse_console:
+            parser = self.cfg.parser()
+            opts = parser.parse_args(argv)
+            config = getattr(opts, 'config', None)
+            # set the config only if config is part of the settings
+            if config is not None and self.cfg.config:
+                self.cfg.config = config
+        else:
+            parser, opts = None, None
+        #
+        # Load up the config file if its found.
+        for k, v in self.cfg.import_from_module():
+            self.add_to_overrides(k, v, overrides)
+        #
+        # Update the configuration with any command line settings.
+        if opts:
+            for k, v in opts.__dict__.items():
+                if v is None:
+                    continue
+                self.cfg.set(k.lower(), v)
+        # Lastly, update the configuration with overrides
+        for k,v in overrides.items():
+            self.cfg.set(k, v)
+
+    def add_to_overrides(self, name, value, overrides):
+        names = name.split('__')
+        if len(names) == 2 and names[0] == self.name:
+            name = names[1].lower()
+            if name in self.cfg.settings:
+                overrides[name] = value
+                return True
+    
+    
+    
+class Application(pulsar.Pulsar, Configurator):
     """An application interface for configuring and loading
 the various necessities for any given server or distributed application running
 on :mod:`pulsar` concurrent framework.
@@ -209,13 +322,6 @@ These are the most important facts about a pulsar :class:`Application`
     full path of the script which starts the application or ``None``.
     If supplied it is used to setup the python path
 """
-    cfg = {}
-    description = None
-    epilog = None
-    cfg_apps = frozenset()
-    config_options_include = None
-    config_options_exclude = None
-
     def __init__(self,
                  callable=None,
                  description=None,
@@ -315,18 +421,6 @@ and the :class:`Application` have the same interface.'''
 of the :class:`Worker` event loop. By default it does nothing so that
 the event loop chooses the most suitable IO poller.'''
         return None
-    
-    def on_config_init(self, cfg, params):
-        '''Callback when configuration is initialised but not yet loaded.
-This is a chance to add extra :ref:`config parameters <settings>` or remove
-unwanted ones. It returns a new :class:`Config` instance or ``None``.'''
-        pass
-    
-    def on_config(self):
-        '''Callback when configuration is loaded. This is a chance to do
- an application specific check before the concurrent machinery is put into
- place. If it returns ``False`` the application will abort.'''
-        pass
 
     def python_path(self, script):
         '''Get the script name if not available and the script directory to the
@@ -346,96 +440,6 @@ script which runs the application.'''
 
     def add_timeout(self, deadline, callback):
         self.arbiter.ioloop.add_timeout(deadline, callback)
-    
-    def load_config(self, argv, version, parse_console,
-                    cfg_apps=None, settings=None, **params):
-        '''Load the application configuration from a file and/or
-from the command line. Called during application initialization.
-
-:parameter argv: list of command line parameters to parse.
-:parameter version: The version of this application.
-:parameter parse_console: True if the console parameters need parsing.
-:parameter params: dictionary of parameters passed during construction.
-
-The parameters overriding order is the following:
-
- * default parameters.
- * the *params* passed in the initialization.
- * the parameters in the optional configuration file
- * the parameters passed in the command line.
-'''
-        cfg_apps = set(cfg_apps or ())
-        cfg_apps.update(self.cfg_apps)
-        self.cfg_apps = frozenset(cfg_apps)
-        cfg = pulsar.Config(self.description,
-                            self.epilog,
-                            version,
-                            self.cfg_apps,
-                            self.config_options_include,
-                            self.config_options_exclude,
-                            settings=settings)
-        self.cfg = self.on_config_init(cfg, params)
-        if not isinstance(self.cfg, pulsar.Config):
-            self.cfg = cfg
-        overrides = {}
-        specials = set()
-        # get the actor if available and override default cfg values with those
-        # from the actor
-        actor = get_actor()
-        if actor and actor.running:
-            # actor available and running. unless argv is set, skip parsing
-            if argv is None:
-                parse_console = False
-            for k, v in actor.cfg.items():
-                if v is not None:
-                    k = k.lower()
-                    try:
-                        self.cfg.set(k, v)
-                        self.cfg.settings[k].default = v
-                    except AttributeError:
-                        pass
-        # modify defaults and values of cfg with params
-        for k, v in params.items():
-            if v is not None:
-                k = k.lower()
-                try:
-                    self.cfg.set(k, v)
-                    self.cfg.settings[k].default = v
-                except AttributeError:
-                    if not self.add_to_overrides(k, v, overrides):
-                        setattr(self, k, v)
-        # parse console args
-        if parse_console:
-            parser = self.cfg.parser()
-            opts = parser.parse_args(argv)
-            config = getattr(opts, 'config', None)
-            # set the config only if config is part of the settings
-            if config is not None and self.cfg.config:
-                self.cfg.config = config
-        else:
-            parser, opts = None, None
-        #
-        # Load up the config file if its found.
-        for k, v in self.cfg.import_from_module():
-            self.add_to_overrides(k, v, overrides)
-        #
-        # Update the configuration with any command line settings.
-        if opts:
-            for k, v in opts.__dict__.items():
-                if v is None:
-                    continue
-                self.cfg.set(k.lower(), v)
-        # Lastly, update the configuration with overrides
-        for k,v in overrides.items():
-            self.cfg.set(k, v)
-
-    def add_to_overrides(self, name, value, overrides):
-        names = name.split('__')
-        if len(names) == 2 and names[0] == self.name:
-            name = names[1].lower()
-            if name in self.cfg.settings:
-                overrides[name] = value
-                return True
     
     # WORKERS CALLBACKS
     def worker_start(self, worker):
@@ -547,7 +551,7 @@ request has been obtained from the :attr:`ioqueue`.'''
         return params
 
 
-class MultiApp(object):
+class MultiApp(Configurator):
     '''A :class:`MultiApp` is a tool for creating several :class:`Application`
 and starting them at once. It makes sure all :ref:`settings` for the
 applications created are available in the command line.
@@ -558,16 +562,7 @@ Check the :class:`examples.taskqueue.manage.server` class in the
 .. attribute:: name
 
     Optional name which can be used in the :meth:`build` method.
-    
-.. attribute:: cfg
-
-    Same as :attr:`Application.cfg` attribute.
-'''
-    cfg = {}
-    version = None
-    description = None
-    epilog = None
-    
+'''    
     def __init__(self, name='multi', **params):
         self.name = name
         self.cfg = self.cfg.copy()
@@ -590,18 +585,19 @@ The lists is lazily loaded from the :meth:`build` method.'''
                 self._apps.append(app)
         return self._apps
     
-    def new_app(self, App, name=None, prefix=None, dont_prefix=None,
+    def new_app(self, App, prefix=None, dont_prefix=None,
                 callable=None, **kwargs):
         '''Create an instance of :class:`Application` *App*.'''
         params = self.cfg.copy()
         params.update(kwargs)
-        if name is None:
+        name = params.pop('name', None)
+        if prefix is None:
             name = self.name
             cfg = App.create_config(params)
         else:
-            cfg = App.create_config(params, prefix='%s_' % name,
+            cfg = App.create_config(params, prefix=prefix,
                                     dont_prefix=dont_prefix)
-            name = '%s_%s' % (self.name, name)
+            name = '%s_%s' % (self.name, prefix)
         self._settings.update(cfg.settings)
         return (App, name, callable)
             
