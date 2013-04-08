@@ -36,7 +36,7 @@ from collections import Mapping
 from functools import partial
 
 from pulsar import Deferred, multi_async, is_async, maybe_async, is_failure
-from pulsar.utils.pep import iteritems, is_string
+from pulsar.utils.pep import iteritems, is_string, ispy3k
 from pulsar.utils.structures import AttributeDictionary
 from pulsar.utils.html import slugify, INLINE_TAGS, tag_attributes, attr_iter,\
                                 csslink, dump_data_value, child_tag
@@ -64,17 +64,27 @@ Users should always call the content method before.'''
         else:
             return value
     
-    
-def stream_to_string(stream):
-    for value in stream:
-        if value is None:
-            continue
-        elif isinstance(value, bytes):
-            yield value.decode('utf-8')
-        elif isinstance(value, str):
-            yield value
-        else:
-            yield str(value)
+if ispy3k:
+    def stream_to_string(stream):
+        for value in stream:
+            if value is None:
+                continue
+            elif isinstance(value, bytes):
+                yield value.decode('utf-8')
+            elif isinstance(value, str):
+                yield value
+            else:
+                yield str(value)
+
+else: #pragma nocover
+    def stream_to_string(stream):
+        for value in stream:
+            if value is None:
+                continue
+            elif isinstance(value, unicode):
+                yield value
+            else:
+                yield str(value)
     
 
 class AsyncString(object):
@@ -161,9 +171,10 @@ This is useful during testing.'''
     
     def to_string(self, stream):
         '''Once the stream is ready (no more asynchronous elements) this
-functions get called to transform the stream into a string.
+functions get called to transform the stream into a string. This method
+can be overwritten by derived classes.
 
-:param stream: a collections containg data used to build the string.
+:param stream: a collections containing data used to build the string.
 :return: a string or bytes
 '''
         return ''.join(stream_to_string(stream))

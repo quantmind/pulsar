@@ -63,7 +63,7 @@ import zlib
 from collections import deque
 from copy import copy
 
-from .structures import mapping_iterator
+from .structures import mapping_iterator, OrderedDict
 from .pep import ispy3k, ispy26
 
 create_connection = socket.create_connection
@@ -794,7 +794,7 @@ OTHER DEALINGS IN THE SOFTWARE.'''
         self._query_string = None
         self._kind = kind
         self._fragment= None
-        self._headers = {}
+        self._headers = OrderedDict()
         self._chunked = False
         self._body = []
         self._trailers = None
@@ -1006,7 +1006,7 @@ OTHER DEALINGS IN THE SOFTWARE.'''
             name = name.rstrip(" \t").upper()
             if HEADER_RE.search(name):
                 raise InvalidHeader("invalid header name %s" % name)
-            name, value = name.strip(), [value.lstrip()]
+            name, value = name.strip().lower(), [value.lstrip()]
             # Consume value continuation lines
             while len(lines) and lines[0].startswith((" ", "\t")):
                 value.append(lines.popleft())

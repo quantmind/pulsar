@@ -218,7 +218,7 @@ Initialised by a call to the :class:`HttpClient.request` method.
         return self.parser.recv_body()
     
     def get_content(self):
-        '''Retrive the body without flushing'''
+        '''Retrieve the body without flushing'''
         b = self.parser.recv_body()
         if b:
             self._content = self._content + b if self._content else b
@@ -600,10 +600,12 @@ the :class:`HttpRequest` constructor.
         return create_connection(address, timeout)
     
     def can_reuse_connection(self, connection, response):
+        # Reuse connection only if the headers has Connection keep-alive
         if response and response.headers:
-            return response.headers.get('connection') == 'keep-alive'
-        else:
-            return False
+            for c in response.headers.get_all('connection', ()):
+                if c.lower() == 'keep-alive':
+                    return True
+        return False
     
     def upgrade(self, protocol):
         '''Upgrade the protocol to another one'''

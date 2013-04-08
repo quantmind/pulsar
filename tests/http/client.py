@@ -69,7 +69,18 @@ class TestHttpClientBase:
     
     
 class TestHttpClient(TestHttpClientBase, unittest.TestCase):
-
+    
+    def test_http10(self):
+        '''By default HTTP/1.0 close the connection if no keep-alive header
+was passedby the client.'''
+        http = self.client(version='HTTP/1.0')
+        http.headers.clear()
+        self.assertEqual(http.version, 'HTTP/1.0')
+        response = yield http.get(self.httpbin()).on_finished
+        self.assertEqual(response.headers['connection'], 'close')
+        self.assertEqual(str(response), '200 OK')
+        self._check_pool(http, response, available=0)
+    
     def test_http11(self):
         '''By default HTTP/1.1 keep alive the connection if no keep-alive header
 was passed by the client.'''
@@ -79,17 +90,7 @@ was passed by the client.'''
         response = yield http.get(self.httpbin()).on_finished
         self.assertEqual(response.headers['connection'], 'keep-alive')
         self._check_pool(http, response)
-       
-    def test_http10(self):
-        '''By default HTTP/1.0 close the connection if no keep-alive header
-was passedby the client.'''
-        http = self.client(version='HTTP/1.0')
-        http.headers.clear()
-        self.assertEqual(http.version, 'HTTP/1.0')
-        response = yield http.get(self.httpbin()).on_finished
-        self.assertEqual(response.headers['connection'], 'close')
-        self._check_pool(http, response, available=0)
-      
+  
     def testClient(self):
         http = self.client(max_redirects=5, timeout=33)
         self.assertTrue('accept-encoding' in http.headers)
@@ -98,7 +99,7 @@ was passedby the client.'''
         self.assertEqual(http.max_redirects, 5)
         if self.with_proxy:
             self.assertEqual(http.proxy_info, {'http': self.proxy_uri})
-    
+  
     def test_200_get(self):
         http = self.client()
         response = yield http.get(self.httpbin()).on_finished
@@ -113,12 +114,6 @@ was passedby the client.'''
         response = yield http.get(self.httpbin('get')).on_finished
         self.assertEqual(response.status_code, 200)
         self._check_pool(http, response, processed=2)
-        
-    def test_http10(self):
-        http = self.client(version='HTTP/1.0')
-        self.assertEqual(http.version, 'HTTP/1.0')
-        response = yield http.get(self.httpbin()).on_finished
-        self._check_pool(http, response)
         
     def test_HttpResponse(self):
         r = HttpResponse(None)

@@ -50,6 +50,15 @@ class TestTaskQueueOnThread(unittest.TestCase):
             yield send('arbiter', 'kill_actor', cls.name_tq())
             yield send('arbiter', 'kill_actor', cls.name_rpc())
 
+    def test_rpc_job_list(self):
+        jobs = yield self.proxy.job_list()
+        self.assertTrue(jobs)
+        self.assertTrue(isinstance(jobs, list))
+        d = dict(jobs)
+        pycode = d['runpycode']
+        self.assertEqual(pycode['type'], 'regular')
+        
+class a:
     @run_on_arbiter
     def test_meta(self):
         '''Tests meta attributes of taskqueue'''
