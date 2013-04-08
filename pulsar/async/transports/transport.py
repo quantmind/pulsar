@@ -342,8 +342,8 @@ as only attribute.'''
                 if not exc:
                     try:
                         raise RuntimeError('Could not connect. Closing.')
-                    except RuntimeError as e:
-                        exc = e
+                    except RuntimeError:
+                        exc = sys.exc_info()
                 self._connector.callback(exc)
             else:
                 self._protocol.connection_lost(exc)
@@ -362,8 +362,8 @@ as only attribute.'''
                     # We got empty data. Close the socket
                     self.close()
                 passes += 1
-            except Exception as e:
-                self.abort(exc=e)
+            except Exception:
+                self.abort(exc=sys.exc_info())
                 raise
                 
     def _ready_write(self):
@@ -382,8 +382,8 @@ as only attribute.'''
         if self.writing:
             try:
                 self._protocol_write()
-            except socket.error as e:
-                self.abort(exc=e)
+            except socket.error:
+                self.abort(exc=sys.exc_info())
                 raise
         if self.writing:
             self.add_writer()

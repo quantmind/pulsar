@@ -165,11 +165,9 @@ attribute by exposing the :attr:`Setting.name` as attribute.
         self.description = description or 'Pulsar server'
         self.epilog = epilog or 'Have fun!'
         self.version = version or __version__
-        for setting in self.settings.values():
-            if setting.name in params:
-                setting.set(params.pop(setting.name), True)
-            elif setting.orig_name in params:
-                setting.set(params.pop(setting.orig_name), True)
+        for name in list(params):
+            if name in self.settings:
+                self.set(name, params.pop(name), True)
         
     def __iter__(self):
         return iter(self.settings)

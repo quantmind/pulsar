@@ -70,16 +70,6 @@ class TestHttpClientBase:
     
 class TestHttpClient(TestHttpClientBase, unittest.TestCase):
 
-    def test_http10(self):
-        '''By default HTTP/1.0 close the connection if no keep-alive header
-was passedby the client.'''
-        http = self.client(version='HTTP/1.0')
-        http.headers.clear()
-        self.assertEqual(http.version, 'HTTP/1.0')
-        response = yield http.get(self.httpbin()).on_finished
-        self.assertEqual(response.headers['connection'], 'close')
-        self._check_pool(http, response, available=0)
-        
     def test_http11(self):
         '''By default HTTP/1.1 keep alive the connection if no keep-alive header
 was passed by the client.'''
@@ -89,6 +79,17 @@ was passed by the client.'''
         response = yield http.get(self.httpbin()).on_finished
         self.assertEqual(response.headers['connection'], 'keep-alive')
         self._check_pool(http, response)
+    
+class a:    
+    def test_http10(self):
+        '''By default HTTP/1.0 close the connection if no keep-alive header
+was passedby the client.'''
+        http = self.client(version='HTTP/1.0')
+        http.headers.clear()
+        self.assertEqual(http.version, 'HTTP/1.0')
+        response = yield http.get(self.httpbin()).on_finished
+        self.assertEqual(response.headers['connection'], 'close')
+        self._check_pool(http, response, available=0)
         
     def testClient(self):
         http = self.client(max_redirects=5, timeout=33)

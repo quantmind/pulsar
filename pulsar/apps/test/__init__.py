@@ -463,8 +463,8 @@ configuration and plugins.'''
 
     @classmethod
     def create_config(cls, *args, **kwargs):
-        cfg = super(TestSuite, cls).create_config(cls, *args, **kwargs)
+        cfg = super(TestSuite, cls).create_config(*args, **kwargs)
         plugins = cfg.params.get('plugins') or ()
-        for plugin in self.plugins:
+        for plugin in plugins:
             cfg.settings.update(plugin.config.settings)
         return cfg
