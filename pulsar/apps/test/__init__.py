@@ -382,7 +382,7 @@ configuration and plugins.'''
     def on_config(self):
         #When config is available load the tests and check what type of
         #action is required.
-        modules = getattr(self, 'modules', None)
+        modules = self.cfg.get('modules')
         if not hasattr(self, 'plugins'):
             self.plugins = ()
         # Create a runner and configure it

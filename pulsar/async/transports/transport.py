@@ -59,7 +59,7 @@ the :meth:`write` and :meth:`writelines` methods. The latter method is a
 performance optimisation, to allow software to take advantage of specific
 capabilities in some transport mechanisms.
 
-.. attribute:: eventloop
+.. attribute:: event_loop
 
     The :class:`EventLoop` for this :class:`Transport`.
     
@@ -143,9 +143,10 @@ passed to the :meth:`Protocol.data_received` method."""
         try:
             result = next(lines)
             if result == b'':
-                # stop writing and resume at next loop
+                # resume at next loop and switch task
                 self._event_loop.call_soon(self._write_lines_async, lines)
             else:
+                # write bytes and continue to iterate
                 self.write(result)
                 self._write_lines_async(lines)
         except StopIteration:

@@ -8,7 +8,9 @@ Protocols API
 
 This part of the :ref:`pulsar API <api>` is about classes responsible for
 implementing the Protocol/Transport paradigm as well as :class:`Server` and
-:class:`Client`.
+:class:`Client` base classes. :class:`Transport`
+and :class:`Protocol` are designed to
+comply with pep-3156_ specification
 
 Transport
 ==========================

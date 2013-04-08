@@ -79,8 +79,7 @@ was passed by the client.'''
         response = yield http.get(self.httpbin()).on_finished
         self.assertEqual(response.headers['connection'], 'keep-alive')
         self._check_pool(http, response)
-    
-class a:    
+       
     def test_http10(self):
         '''By default HTTP/1.0 close the connection if no keep-alive header
 was passedby the client.'''
@@ -90,7 +89,7 @@ was passedby the client.'''
         response = yield http.get(self.httpbin()).on_finished
         self.assertEqual(response.headers['connection'], 'close')
         self._check_pool(http, response, available=0)
-        
+      
     def testClient(self):
         http = self.client(max_redirects=5, timeout=33)
         self.assertTrue('accept-encoding' in http.headers)

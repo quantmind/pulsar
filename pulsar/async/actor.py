@@ -13,7 +13,7 @@ except ImportError: #pragma nocover
     import Queue as queue
 ThreadQueue = queue.Queue
 
-from pulsar import AlreadyCalledError, AlreadyRegistered, HaltServer,\
+from pulsar import AlreadyRegistered, HaltServer,\
                    ActorAlreadyStarted, system, Config, platform
 from pulsar.utils.pep import pickle, set_event_loop_policy, itervalues
 from pulsar.utils.log import LogginMixin

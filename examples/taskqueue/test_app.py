@@ -39,8 +39,8 @@ class TestTaskQueueOnThread(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         # The name of the task queue application
-        s = server(cls.name_tq(), bind='127.0.0.1:0',
-                   concurrency=cls.concurrency)
+        s = server(name=cls.name_tq(), bind='127.0.0.1:0',
+                   concurrency=cls.concurrency, script=__file__)
         cls.apps = yield send('arbiter', 'run', s)
         cls.proxy = rpc.JsonProxy('http://%s:%s' % cls.apps[1].address)
 

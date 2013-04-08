@@ -206,7 +206,8 @@ By default it calls the :meth:`Connection.finished` method of the
         
     def _data_received(self, data):
         # Called by Connection, it updates the counters and invoke
-        # the high level data_received
+        # the high level data_received method which must be implemented
+        # by subclasses
         self._data_received_count += 1 
         self._reconnect_retries = 0
         self.fire_event('data_received', data)

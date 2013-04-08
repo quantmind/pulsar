@@ -42,7 +42,7 @@ If the size is 0, this is the last chunk, and an extra CRLF is appended.
 
 def keep_alive(headers, version):
         """ return True if the connection should be kept alive"""
-        conn = set((v.lower() for v in headers.get_all('connection')))
+        conn = set((v.lower() for v in headers.get_all('connection', ())))
         if "close" in conn:
             return False
         elif 'upgrade' in conn:
@@ -75,7 +75,6 @@ class HttpServerResponse(pulsar.ProtocolConsumer):
         '''Implements :class:`pulsar.Protocol.data_received`. Once we have a
 full HTTP message, build the wsgi ``environ`` and write the response
 using the :meth:`pulsar.Transport.writelines` method.'''
-        # Got data from the transport, lets parse it
         p = self.parser
         request_headers = self._request_headers
         if p.execute(bytes(data), len(data)) == len(data):

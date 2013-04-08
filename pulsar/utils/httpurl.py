@@ -613,12 +613,41 @@ and values."""
             self._headers[key] = value
 
     def get(self, key, default=None):
+        '''Get the value at header field ``key`` as a comma separated
+string of values. For example::
+
+    >>> from pulsar.utils.httpurl import Headers
+    >>> h = Headers(kind='client')
+    >>> h.add_header('accept-encoding', 'gzip')
+    >>> h.add_header('accept-encoding', 'deflate')
+    >>> h.get('accept-encoding')
+    
+results in::
+
+    'gzip, deflate'
+
+ 
+'''
         if key in self:
             return self.__getitem__(key)
         else:
             return default
 
     def get_all(self, key, default=None):
+        '''Get the values at header field ``key`` as a list rather than a
+string separated by comma (which is returned by the :meth:`get` method).
+For example::
+
+    >>> from pulsar.utils.httpurl import Headers
+    >>> h = Headers(kind='client')
+    >>> h.add_header('accept-encoding', 'gzip')
+    >>> h.add_header('accept-encoding', 'deflate')
+    >>> h.get_all('accept-encoding')
+    
+results in::
+
+    ['gzip', 'deflate']
+'''
         return self._headers.get(header_field(key), default)
 
     def pop(self, key, *args):

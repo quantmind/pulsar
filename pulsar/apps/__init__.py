@@ -178,13 +178,14 @@ given server running on :mod:`pulsar` concurrent framework.
 :parameter name: to override the class :attr:`name` attribute.
 :parameter description: to override the class :attr:`cfg.description` attribute.
 :parameter epilog: to override the class :attr:`cfg.epilog` attribute.
+:parameter version: Optional version of this application, it overrides the
+    class :attr:`cfg.version` attribute.
 :parameter argv: Optional list of command line parameters to parse, if
     not supplied the :attr:`sys.argv` list will be used. The parameter is
     only relevant if **parse_console** is ``True``.
-:parameter version: Optional version of this application, it overrides the
-    class :attr:`cfg.version` attribute.
 :parameter parse_console: ``True`` (default) if the console parameters needs
     parsing.
+:parameter script: Optional string which set the :attr:`script` attribute.
 :parameter params: a dictionary of configuration parameters which overrides
     the defaults and the :attr:`cfg` class attribute. They will be overritten
     by a :ref:`config file <setting-config>` or command line
@@ -196,6 +197,11 @@ given server running on :mod:`pulsar` concurrent framework.
     case it defines the application monitor name as well and can be access in
     the arbiter domain via the :func:`get_application` function.
     
+.. attribute:: argv
+
+    Optional list of command line parameters. If not available the
+    :attr:`sys.argv` list will be used when parsing the console.
+    
 .. attribute:: cfg
 
     The :class:`pulsar.utility.config.Config` for this :class:`Configurator`.
@@ -203,23 +209,14 @@ given server running on :mod:`pulsar` concurrent framework.
 
     Default: ``None``.
 
-.. attribute:: cfg_apps
-
-    Tuple\set containing names of :ref:`configuration namespaces <settings>`
-    to be included in the application config dictionary.
-
-    Default: Empty ``frozenset``.
-    
 .. attribute:: parsed_console
 
     ``True`` if this application parsed the console before starting.
     
 .. attribute:: script
 
-    full path of the script which starts the application or ``None``.
-    If not supplied it is evaluated from the ``__main__`` import.
-    It is also used to setup the python path via the :meth:`python_path`
-    method.
+    Full path of the script which starts the application or ``None``.
+    Evaluated during initialization via the :meth:`python_path` method.
 '''
     name = None
     cfg = None
@@ -268,8 +265,11 @@ given server running on :mod:`pulsar` concurrent framework.
         return self.__repr__()
     
     def python_path(self, script):
-        '''Get the script name if not available and the script directory to the
-python path if not already there. Returns thereal path of the python
+        '''Called during initialization to obtain the ``script`` name and
+to add the :attr:`script` directory to the python path if not in the
+path already.
+If ``script`` does not evalueate to ``True`` it is evaluated from
+the ``__main__`` import. Returns the real path of the python
 script which runs the application.'''
         if not script:
             try:

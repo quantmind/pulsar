@@ -41,7 +41,7 @@ class TestEventLoop(unittest.TestCase):
         timeout1 = ioloop.call_later(0.1,
                             lambda: d.callback(current_thread().ident))
         yield d
-        self.assertTrue(d.called)
+        self.assertTrue(d.done())
         self.assertEqual(d.result, ioloop.tid)
         self.assertFalse(ioloop.has_callback(timeout1))
         
@@ -102,7 +102,7 @@ class TestEventLoop(unittest.TestCase):
         d = pulsar.Deferred()
         event_loop.call_later(2, d.callback, 'OK')
         event_loop.run_until_complete(d)
-        self.assertTrue(d.called)
+        self.assertTrue(d.done())
         self.assertEqual(d.result, 'OK')
         self.assertFalse(event_loop.running)
         
@@ -114,7 +114,7 @@ class TestEventLoop(unittest.TestCase):
         event_loop.call_later(10, d.callback, 'OK')
         self.assertRaises(pulsar.TimeoutError, 
                           event_loop.run_until_complete, d, timeout=2)
-        self.assertFalse(d.called)
+        self.assertFalse(d.done())
         self.assertFalse(event_loop.running)
         
         

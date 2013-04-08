@@ -5,10 +5,9 @@ from collections import deque, namedtuple, Mapping
 from itertools import chain
 from inspect import isgenerator, isfunction, ismethod, istraceback
 
-from pulsar import AlreadyCalledError, HaltServer
 from pulsar.utils import events
 from pulsar.utils.pep import raise_error_trace, iteritems, default_timer,\
-                         get_event_loop
+                             get_event_loop, ispy3k
 
 from .access import get_request_loop
 from .consts import *
@@ -18,7 +17,10 @@ __all__ = ['Deferred',
            'EventHandler',
            'MultiDeferred',
            'DeferredCoroutine',
+           'Error',
            'CancelledError',
+           'TimeoutError',
+           'InvalidStateError',
            'Failure',
            'maybe_failure',
            'is_failure',
@@ -29,12 +31,27 @@ __all__ = ['Deferred',
            'async',
            'multi_async']
 
-class DeferredFailure(Exception):
-    '''Raised when no other information is available on a Failure'''
+if ispy3k:
+    from concurrent.futures._base import Error, CancelledError, TimeoutError
 
-class CancelledError(DeferredFailure):
-    pass
+else:
+    class Error(Exception):
+        '''Raised when no other information is available on a Failure'''
+    
+    class CancelledError(Error):
+        pass
+    
+    class TimeoutError(Error):
+        pass
 
+class InvalidStateError(Error):
+    """The operation is not allowed in this state."""
+    
+# States of Deferred
+_PENDING = 'PENDING'
+_CANCELLED = 'CANCELLED'
+_FINISHED = 'FINISHED'
+    
 LOGGER = logging.getLogger('pulsar.defer')
 
 remote_stacktrace = namedtuple('remote_stacktrace', 'error_class error trace')
@@ -112,7 +129,7 @@ def maybe_async(value, description=None, max_errors=1, timeout=None,
                 get_result=True):
     '''Return an asynchronous instance only if *value* is
 a generator or already an asynchronous instance. If *value* is asynchronous
-it checks if it has been called. In this case it returns the *result*.
+it checks if it done. In this case it returns the *result*.
 
 :parameter value: the value to convert to an asynchronous instance
     if it needs to.
@@ -122,7 +139,7 @@ it checks if it has been called. In this case it returns the *result*.
 :parameter timeout: optional timeout after which any asynchronous element get
     a cancellation.
 :parameter get_result: optional flag indicating if to get the result in case
-    the return values is a :class:`Deferred` already called. Default: ``True``.
+    the return values is a :class:`Deferred` already done. Default: ``True``.
 :return: a :class:`Deferred` or  a :class:`Failure` or a **synchronous value**.
 '''
     global _maybe_async
@@ -302,86 +319,110 @@ class Failure(object):
 ############################################################### Deferred
 class Deferred(object):
     """The main class of pulsar asynchronous engine. It is a callback
-which will be put off until later.
-The implementation is similar to the ``twisted.defer.Deferred`` class.
+which will be put off until later. It conforms with the
+``tulip.Future`` interface with an implementation similar to the
+``twisted.defer.Deferred`` class.
 
-:params description: optional description which set the :attr:`description`
+:param description: optional description which set the :attr:`description`
     attribute.
-:params timeout: optional timeout. If greater than zero the deferred will be
+:param timeout: optional timeout. If greater than zero the deferred will be
     cancelled after *timeout* seconds if no result is available.
+:param event_loop: If supplied, it is the :class:`EventLoop` associated
+    with this :class:`Deferred`. If not supplied, the default event loop
+    is used. The event loop associated with this :class:`Deferred` is accessed
+    via the :attr:`event_loop` attribute.
 
 .. attribute:: description
 
-    A description of the :class:`Deferred`.
-    
-.. attribute:: called
+    An optional description of the :class:`Deferred` (for debugging and
+    representation purposes).
 
-    ``True`` if the deferred was called. In this case the asynchronous result
-    is ready and available in the :attr:`result`.
-
-.. attribute:: running
-
-    ``True`` if the deferred is running callbacks.
-    
 .. attribute:: paused
 
     Integer indicating the number of times this :class:`Deferred` has been
-    paused because the result of a callback was another :class::`Deferred`.
+    paused because the result of a callback was another :class:`Deferred`.
 
 .. attribute:: result
 
-    This is available once the :class:`Deferred` has been called back. Note,
+    This is available once the :class:`Deferred` is done. Note,
     this can be anything, including another :class:`Deferred`. Trying to access
-    this attribute when :attr:`called` is ``False`` will result in an
+    this attribute when :meth:`done` is ``False`` will result in an
     ``AttributeError`` exception.
 """
     paused = 0
-    _called = False
+    _state = _PENDING
     _runningCallbacks = False
     _timeout = None
 
     def __init__(self, description=None, timeout=None, event_loop=None):
         self._description = description
         self._callbacks = deque()
+        self._event_loop = event_loop
         if timeout and timeout > 0:
-            loop = event_loop or get_event_loop()
             # create the timeout. We don't cancel the timeout after
             # a callback is received since the result may be still asynchronous
-            self._timeout = loop.call_later(timeout, self.cancel,
+            self._timeout = self.event_loop.call_later(timeout, self.cancel,
                                             'timeout (%s seconds)' % timeout)
 
     def __repr__(self):
         v = self._description or self.__class__.__name__
-        if self.called:
-            v += ' (called)'
+        if self.cancelled():
+            v += ' (cancelled)'
+        elif self.done():
+            v += ' (done)'
         return v
 
     def __str__(self):
         return self. __repr__()
 
     @property
-    def called(self):
-        return self._called
-
-    @property
-    def running(self):
-        return self._runningCallbacks
-
+    def event_loop(self):
+        '''The :class:`EventLoop` associated with this :class:`Deferred`. It
+can be set during initialisation.'''
+        return self._event_loop or get_event_loop()
+    
+    def cancelled(self):
+        '''pep-3156_ API method, it returns ``True`` if the :class:`Deferred`
+was cancelled.'''
+        return self._state == _CANCELLED
+    
     def done(self):
-        '''Returns ``True`` if the :class:`Deferred` has been called done.
-Note that a cancelled :class:`Deferred` is considered done too.'''
-        return self.called
+        '''pep-3156_ API method, it returns ``True`` if the :class:`Deferred` is
+done, that is it was called or cancelled.'''
+        return self._state != _PENDING
     
     def cancel(self, msg=''):
-        '''Cancel the deferred and schedule callbacks.
+        '''pep-3156_ API method, it cancel the deferred and schedule callbacks.
 If the deferred is waiting for another :class:`Deferred`, forward the
 cancellation to that one. If the :class:`Deferred` is already :meth:`done`,
-it does nothing.'''
-        if not self.called:
+it does nothing.
+
+:param msg: Optional message to pass to the when the :class:`CancelledError`
+    is initialised.'''
+        if not self.done():
             return self.callback(CancelledError(msg))
         elif is_async(self.result):
             return self.result.cancel(msg)
     
+    def running(self):
+        '''pep-3156_ API method, always returns ``False``.'''
+        return False
+        
+    def add_done_callback(self, fn):
+        '''pep-3156_ API method, Add a callback to be run when the
+:class:`Deferred` becomes done. The callback is called with a single argument,
+the :class:`Deferred` object.'''
+        callback = lambda r: fn(self)
+        return self.add_callback(callback, callback)
+    
+    def set_result(self, result):
+        '''pep-3156_ API method, same as :meth:`callback`'''
+        return self.callback(result)
+        
+    def set_exception(self, exc):
+        '''pep-3156_ API method, same as :meth:`callback`'''
+        return self.callback(exc)
+        
     def add_callback(self, callback, errback=None, continuation=None):
         """Add a callback as a callable function.
 The function takes at most one argument, the result passed to the
@@ -407,10 +448,10 @@ be called when an exception occurs."""
         return self.add_callback(\
                 lambda result : callback(result, *args, **kwargs))
 
-    def callback(self, result=None):
+    def callback(self, result=None, state=None):
         '''Run registered callbacks with the given *result*.
 This can only be run once. Later calls to this will raise
-:class:`AlreadyCalledError`. If further callbacks are added after
+:class:`InvalidStateError`. If further callbacks are added after
 this point, :meth:`add_callback` will run the *callbacks* immediately.
 
 :return: the *result* input parameter
@@ -418,10 +459,10 @@ this point, :meth:`add_callback` will run the *callbacks* immediately.
         if isinstance(result, Deferred):
             raise RuntimeError('Received a deferred instance from '
                                'callback function')
-        elif self._called:
-            raise AlreadyCalledError('Deferred %s already called' % self)
+        elif self.done():
+            raise InvalidStateError('Deferred %s already done' % self)
         self.result = maybe_failure(result)
-        self._called = True
+        self._state = state or _FINISHED
         self._run_callbacks()
         return self.result
 
@@ -430,20 +471,20 @@ this point, :meth:`add_callback` will run the *callbacks* immediately.
 callbacks have been consumed, otherwise it returns this :class:`Deferred`.
 Users should use this method to obtain the result, rather than accessing
 directly the :attr:`result` attribute.'''
-        if self._called and not self._callbacks:
+        if self.done() and not self._callbacks:
             return self.result
         else:
             return self
         
     def raise_all(self):
-        '''raise an exception only if :attr:`called` is ``True`` and
+        '''raise an exception only if :meth:`done` is ``True`` and
 the result is a :class:`Failure`'''
-        if self.called and is_failure(self.result):
+        if self.done() and is_failure(self.result):
             self.result.raise_all()
 
     ##################################################    INTERNAL METHODS
     def _run_callbacks(self):
-        if not self._called or self._runningCallbacks or self.paused:
+        if not self.done() or self._runningCallbacks or self.paused:
             return
         while self._callbacks:
             callbacks = self._callbacks.popleft()
@@ -542,7 +583,7 @@ a callable which accept one argument only.'''
         event_data = self if event_data is None else maybe_failure(event_data)
         fired = True
         if event in self.ONE_TIME_EVENTS:
-            fired = not self.ONE_TIME_EVENTS[event].called
+            fired = not self.ONE_TIME_EVENTS[event].done()
             if fired:
                 self.ONE_TIME_EVENTS[event].callback(event_data)
             else:
@@ -594,13 +635,12 @@ The callback will occur once the coroutine has stopped
 has occurred. Instances of :class:`DeferredCoroutine` are never
 initialised directly, they are created by the :func:`maybe_async`
 function when a generator is passed as argument.'''
-    def __init__(self, gen, max_errors=1, **kwargs):
+    def __init__(self, gen, max_errors=1, event_loop=None, **kwargs):
         self.gen = gen
         self.max_errors = max(1, max_errors) if max_errors else 0
         self.errors = None
-        super(DeferredCoroutine, self).__init__(**kwargs)
-        # the loop in the current thread... with preference to the request loop
-        self.loop = get_request_loop()
+        event_loop = event_loop or get_request_loop()
+        super(DeferredCoroutine, self).__init__(event_loop=event_loop, **kwargs)
         self._consume(None)
     
     def _consume(self, last_result):
@@ -625,13 +665,13 @@ function when a generator is passed as argument.'''
         if is_async(result):
             result.add_both(self._restart)
         elif result == NOT_DONE:
-            self.loop.call_soon(self._consume, None)
+            self.event_loop.call_soon(self._consume, None)
         else:
             self._consume(result)
 
     def _restart(self, result):
         #restart the coroutine
-        self.loop.call_soon_threadsafe(self._consume, result)
+        self.event_loop.call_soon_threadsafe(self._consume, result)
         # Important, this is a callback of a deferred, therefore we return
         # the passed result (which is not asynchronous).
         return result
@@ -760,7 +800,7 @@ both ``list`` and ``dict`` types.'''
     def _deferred_done(self, key, result):
         self._deferred.pop(key, None)
         self._setitem(key, result)
-        if self._locked and not self._deferred and not self.called:
+        if self._locked and not self._deferred and not self.done():
             self._finish()
         return result
 

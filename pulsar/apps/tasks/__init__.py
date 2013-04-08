@@ -16,12 +16,15 @@ little setup effort::
     
 Getting Started
 ========================
-Using the :class:`TaskQueue` application follows the following lines:
+To get started, follow the these points:
 
 * Create the script which runs your application, in the
   :ref:`taskqueue tutorial <tutorials-taskqueue>` the script is called
   ``manage.py``.
-* Create the modules where :ref:`jobs <app-taskqueue-job>` are implemented.
+* Create the modules where :ref:`jobs <app-taskqueue-job>` are implemented. It
+  can be a directory containing several submodules as explained in the
+  :ref:`task paths parameter <app-tasks_path>`.
+  
 
 .. _app-taskqueue-job:
 
@@ -29,6 +32,8 @@ Configuration
 ~~~~~~~~~~~~~~~~
 A :class:`TaskQueue` accepts several configuration parameters on top of the
 standard :ref:`application settings <settings>`:
+
+.. _app-tasks_path:
 
 * ``tasks_path``, a list of python paths where to collect :class:`Job` classes::
   
@@ -295,7 +300,7 @@ def wait_for_task(request, id, timeout=3600):
 
 class TaskQueue(pulsar.CPUboundApplication):
     '''A :class:`pulsar.CPUboundServer` for consuming
-tasks and managing scheduling of tasks.
+tasks and managing scheduling of tasks via the :class:`Scheduler` class.
 
 .. attribute:: registry
 
@@ -314,8 +319,8 @@ Default: :class:`TaskInMemory`
 
     @property
     def scheduler(self):
-        '''A :class:`Scheduler` which send task to the task queue and
-produces of periodic tasks according to their schedule of execution.
+        '''A :class:`Scheduler` which sends tasks to the task queue and
+produces periodic tasks according to their schedule of execution.
 
 At every event loop, the :class:`pulsar.ApplicationMonitor` running
 the :class:`TaskQueue` application, invokes the :meth:`Scheduler.tick`

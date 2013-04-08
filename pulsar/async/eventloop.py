@@ -21,10 +21,10 @@ from pulsar.utils.pep import default_timer, set_event_loop_policy,\
 from pulsar.utils.sockets import SOCKET_INTERRUPT_ERRORS
 
 from .access import thread_local_data
-from .defer import log_failure, is_failure, Deferred
+from .defer import log_failure, is_failure, Deferred, TimeoutError
 from .transports import create_server
 
-__all__ = ['EventLoop', 'TimedCall', 'TimeoutError']
+__all__ = ['EventLoop', 'TimedCall']
 
 LOGGER = logging.getLogger('pulsar.eventloop')
 
@@ -45,9 +45,7 @@ def setid(self):
 class StopEventLoop(BaseException):
     """Raised to stop the event loop."""
     
-class TimeoutError(Exception):
-    pass
-
+    
 class EventLoopPolicy(BaseEventLoopPolicy):
     
     def get_event_loop(self):
@@ -375,7 +373,7 @@ raise TimeoutError (but don't cancel the future).'''
             handler = self.call_later(timeout, self._raise_stop_event_loop)
         self.run()
         if handler:
-            if future.called:
+            if future.done():
                 handler.cancel()
             else:
                 raise TimeoutError

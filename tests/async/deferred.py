@@ -2,7 +2,7 @@
 import sys
 from functools import reduce
 
-from pulsar import AlreadyCalledError, Deferred, is_async, NOT_DONE,\
+from pulsar import InvalidStateError, Deferred, is_async, NOT_DONE,\
                      is_failure, MultiDeferred, maybe_async, CancelledError
 from pulsar.apps.test import unittest
 
@@ -40,14 +40,14 @@ class TestDeferred(unittest.TestCase):
     
     def testSimple(self):
         d = Deferred()
-        self.assertFalse(d.called)
-        self.assertFalse(d.running)
+        self.assertFalse(d.done())
+        self.assertFalse(d.running())
         self.assertEqual(str(d), 'Deferred')
         d.callback('ciao')
-        self.assertTrue(d.called)
-        self.assertTrue(' (called)' in str(d))
+        self.assertTrue(d.done())
+        self.assertTrue(' (done)' in str(d))
         self.assertEqual(d.result, 'ciao')
-        self.assertRaises(AlreadyCalledError, d.callback, 'bla')
+        self.assertRaises(InvalidStateError, d.callback, 'bla')
         
     def testBadCallback(self):
         d = Deferred()
@@ -60,35 +60,35 @@ class TestDeferred(unittest.TestCase):
 
     def testCallbacks(self):
         d, cbk = async_pair()
-        self.assertFalse(d.called)
+        self.assertFalse(d.done())
         d.callback('ciao')
-        self.assertTrue(d.called)
+        self.assertTrue(d.done())
         self.assertEqual(cbk.result, 'ciao')
         
     def testError(self):
         d, cbk = async_pair()
-        self.assertFalse(d.called)
+        self.assertFalse(d.done())
         try:
             raise Exception('blabla exception')
         except Exception as e:
             trace = sys.exc_info()
             d.callback(e)
-        self.assertTrue(d.called)
-        self.assertTrue(cbk.called)
+        self.assertTrue(d.done())
+        self.assertTrue(cbk.done())
         self.assertEqual(cbk.result[-1],trace)
         
     def testDeferredCallback(self):
         d = Deferred()
         d.add_callback(lambda r : Cbk(r))
-        self.assertFalse(d.called)
+        self.assertFalse(d.done())
         result = d.callback('ciao')
-        self.assertTrue(d.called)
+        self.assertTrue(d.done())
         self.assertEqual(d.paused,1)
         self.assertTrue(is_async(result))
         self.assertEqual(len(result._callbacks),1)
-        self.assertFalse(result.called)
+        self.assertFalse(result.done())
         result.set_result('luca')
-        self.assertTrue(result.called)
+        self.assertTrue(result.done())
         self.assertEqual(result.result,('ciao','luca'))
         self.assertEqual(d.paused,0)
         
@@ -102,19 +102,19 @@ class TestDeferred(unittest.TestCase):
             yield d
         a = maybe_async(_gen())
         result = d.callback('ciao')
-        self.assertTrue(d.called)
+        self.assertTrue(d.done())
         self.assertEqual(d.paused, 1)
         self.assertEqual(len(d._callbacks), 2)
         self.assertEqual(len(rd._callbacks), 1)
         #
         self.assertEqual(rd.r, ('ciao',))
-        self.assertFalse(a.called)
+        self.assertFalse(a.done())
         #
         # set callback
         rd.set_result('luca')
         # release the loop
         yield a
-        self.assertTrue(a.called)
+        self.assertTrue(a.done())
         self.assertFalse(d.paused)
         self.assertEqual(d.result,('ciao','luca','second'))
         
@@ -128,27 +128,27 @@ class TestDeferred(unittest.TestCase):
             yield d
         a = maybe_async(_gen()).add_errback(lambda failure: [failure])
         result = d.callback('ciao') # first callback
-        self.assertTrue(d.called)
+        self.assertTrue(d.done())
         self.assertEqual(d.paused, 1)
         # The generator has added its consume callback
         self.assertEqual(len(d._callbacks), 2)
         self.assertEqual(len(rd._callbacks), 1)
         #
         self.assertEqual(rd.r, ('ciao',))
-        self.assertFalse(a.called)
+        self.assertFalse(a.done())
         #
         # set Error back
         rd.set_error()
         self.assertFalse(d.paused)
         self.assertTrue(is_failure(d.result))
         yield a
-        self.assertTrue(a.called)
+        self.assertTrue(a.done())
         self.assertTrue(is_failure(a.result[0]))
         
     def testCancel(self):
         d = Deferred()
         d.cancel('timeout')
-        self.assertTrue(d.called)
+        self.assertTrue(d.done())
         self.assertTrue(is_failure(d.result))
         
     def testTimeout(self):
@@ -176,16 +176,16 @@ class TestMultiDeferred(unittest.TestCase):
     
     def testSimple(self):
         d = MultiDeferred()
-        self.assertFalse(d.called)
+        self.assertFalse(d.done())
         self.assertFalse(d._locked)
         self.assertFalse(d._deferred)
         self.assertFalse(d._stream)
         d.lock()
-        self.assertTrue(d.called)
+        self.assertTrue(d.done())
         self.assertTrue(d._locked)
         self.assertEqual(d.result,[])
         self.assertRaises(RuntimeError, d.lock)
-        self.assertRaises(AlreadyCalledError, d._finish)
+        self.assertRaises(InvalidStateError, d._finish)
         
     def testMulti(self):
         d = MultiDeferred()
@@ -199,11 +199,11 @@ class TestMultiDeferred(unittest.TestCase):
         self.assertRaises(RuntimeError, d._finish)
         self.assertRaises(RuntimeError, d.lock)
         self.assertRaises(RuntimeError, d.append, d1)
-        self.assertFalse(d.called)
+        self.assertFalse(d.done())
         d2.callback('first')
-        self.assertFalse(d.called)
+        self.assertFalse(d.done())
         d1.callback('second')
-        self.assertTrue(d.called)
+        self.assertTrue(d.done())
         self.assertEqual(d.result,['second', 'first', 'bla'])
         
     def testUpdate(self):
@@ -213,7 +213,7 @@ class TestMultiDeferred(unittest.TestCase):
         d.update((d1,d2)).lock()
         d1.callback('first')
         d2.callback('second')
-        self.assertTrue(d.called)
+        self.assertTrue(d.done())
         self.assertEqual(d.result,['first','second'])
         
     def testNested(self):
