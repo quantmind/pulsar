@@ -16,8 +16,7 @@ import pulsar
 from pulsar import lib, HttpException, ProtocolError
 from pulsar.utils.pep import is_string, to_bytes, native_str
 from pulsar.utils.httpurl import Headers, unquote, has_empty_content,\
-                                    host_and_port_default, mapping_iterator,\
-                                    Headers, REDIRECT_CODES
+                                 host_and_port_default, Headers, REDIRECT_CODES
 from pulsar.utils import events
 
 from .utils import handle_wsgi_error, LOGGER, HOP_HEADERS
@@ -80,7 +79,7 @@ using the :meth:`pulsar.Transport.writelines` method.'''
         if p.execute(bytes(data), len(data)) == len(data):
             done = p.is_message_complete()
             if request_headers is None and p.is_headers_complete():
-                self._request_headers = p.get_headers()
+                self._request_headers = Headers(p.get_headers(), kind='client')
                 if not done:
                     self.expect_continue()
             if done: # message is done
@@ -99,7 +98,7 @@ the following algorithm:
 * Omit the 100 (Continue) response if it has already received some or all of
   the request body for the corresponding request.
     '''
-        if self._request_headers.get('Expect') == '100-continue':
+        if self._request_headers.has('expect', '100-continue'):
             self.transport.write(b'HTTP/1.1 100 Continue\r\n\r\n')
     
     @property
@@ -307,7 +306,7 @@ is an HTTP upgrade (websockets)'''
         forward = self.address
         server = '%s:%s' % self.transport.address
         script_name = os.environ.get("SCRIPT_NAME", "")
-        for header, value in mapping_iterator(self._request_headers):
+        for header, value in self._request_headers:
             header = header.lower()
             if header in HOP_HEADERS:
                 self.headers[header] = value

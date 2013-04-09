@@ -49,6 +49,12 @@ class HttpRequest(pulsar.Request):
 .. attribute:: version
 
     HTTP version for this request, usually ``HTTP/1.1``
+
+.. attribute:: wait_continue
+
+    if ``True``, the :class:`HttpRequest` includes the
+    ``Expect: 100-Continue`` header.
+    
 '''
     parser_class = HttpParser
     full_url = None
@@ -527,7 +533,7 @@ It returns an :class:`HttpResponse` object.
 :param method: request method for the :class:`HttpRequest`.
 :param url: URL for the :class:`HttpRequest`.
 :param params: a dictionary which specify all the optional parameters for
-the :class:`HttpRequest` constructor.
+    the :class:`HttpRequest` constructor.
 
 :rtype: a :class:`HttpResponse` object.
 '''
@@ -602,9 +608,7 @@ the :class:`HttpRequest` constructor.
     def can_reuse_connection(self, connection, response):
         # Reuse connection only if the headers has Connection keep-alive
         if response and response.headers:
-            for c in response.headers.get_all('connection', ()):
-                if c.lower() == 'keep-alive':
-                    return True
+            return response.headers.has('connection', 'keep-alive')
         return False
     
     def upgrade(self, protocol):

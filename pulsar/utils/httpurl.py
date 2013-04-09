@@ -529,6 +529,7 @@ def parse_dict_header(value):
         result[name] = value
     return result
 
+
 class Headers(object):
     '''Utility for managing HTTP headers for both clients and servers.
 It has a dictionary like interface with few extra functions to facilitate
@@ -541,6 +542,10 @@ therefore doing::
 is equivalent to
 
     >>> h['content-length'] = '1050'
+
+:param headers: optional iterable over header field/value pairs.
+:param kind: optional headers type, one of ``server``, ``client`` or ``both``.
+:param strict: if ``True`` only valid headers field will be included.
 
 From http://www.w3.org/Protocols/rfc2616/rfc2616.html
 
@@ -574,17 +579,11 @@ the entity-header fields.'''
         return str(self).encode('latin-1')
 
     def __iter__(self):
-        headers = self._headers
-        for k, values in iteritems(headers):
-            for value in values:
-                yield k, value
+        for k, values in iteritems(self._headers):
+            yield k, ', '.join(values)
 
     def __len__(self):
-        return reduce(lambda x, y: x + len(y), itervalues(self._headers), 0)
-
-    def as_dict(self):
-        '''Convert this :class:`Headers` into a dictionary.'''
-        return dict(((k, ', '.join(v)) for k, v in iteritems(self._headers)))
+        return len(self._headers)
 
     @property
     def kind_number(self):
@@ -650,6 +649,14 @@ results in::
 '''
         return self._headers.get(header_field(key), default)
 
+    def has(self, field, value):
+        '''Check if ``value`` is avialble in header ``field``.'''
+        value = value.lower()
+        for c in self.get_all(field, ()):
+            if c.lower() == value:
+                return True
+        return False
+    
     def pop(self, key, *args):
         return self._headers.pop(header_field(key), *args)
 

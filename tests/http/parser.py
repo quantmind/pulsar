@@ -106,7 +106,7 @@ class TestHttpParser(unittest.TestCase):
         self.assertTrue(p.is_message_complete())
         headers = p.get_headers()
         self.assertEqual(len(headers), 1)
-        self.assertEqual(headers.get('Accept'), '*/*, jpeg')
+        self.assertEqual(headers.get('accept'), '*/*, jpeg')
         
         
 @unittest.skipUnless(hasextensions, 'Requires C extensions')
