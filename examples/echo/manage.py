@@ -101,8 +101,11 @@ message value, while servers sends the message back to the client.'''
 class EchoServerProtocol(EchoProtocol):
     
     def response(self, data):
-        # write it back
+        # write it back.
         self.transport.write(data)
+        # If we get a QUIT message, close the transport. Used by the test suite.
+        if data[:-len(self.separator)] == b'QUIT':
+            self.transport.close()
     
     
 class Echo(pulsar.Client):

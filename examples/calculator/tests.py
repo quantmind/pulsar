@@ -119,7 +119,9 @@ class TestRpcOnThread(unittest.TestCase):
                                                  mu=1, sigma=2)
         self.assertTrue(response)
         
+    # Synchronous client
     def test_sync_ping(self):
+        self.assertEqual(self.sync.ping(), 'pong')
         self.assertEqual(self.sync.ping(), 'pong')
 
 @dont_run_with_thread

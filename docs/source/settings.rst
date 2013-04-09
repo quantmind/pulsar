@@ -11,3 +11,8 @@ configuring your pulsar server or application.
 
 
 .. pulsar_settings::
+
+Utilities
+================
+
+.. autofunction:: pass_through

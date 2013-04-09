@@ -533,7 +533,7 @@ def parse_dict_header(value):
 class Headers(object):
     '''Utility for managing HTTP headers for both clients and servers.
 It has a dictionary like interface with few extra functions to facilitate
-the insertion of multiple header values. Header fields are case insensitive,
+the insertion of multiple header values. Header fields are **case insensitive**,
 therefore doing::
 
     >>> h = Headers()
@@ -547,13 +547,21 @@ is equivalent to
 :param kind: optional headers type, one of ``server``, ``client`` or ``both``.
 :param strict: if ``True`` only valid headers field will be included.
 
-From http://www.w3.org/Protocols/rfc2616/rfc2616.html
+This :class:`Headers` container maintains an ordering as suggested by
+http://www.w3.org/Protocols/rfc2616/rfc2616.html:
 
-Section 4.2
-The order in which header fields with differing field names are received is not
-significant. However, it is "good practice" to send general-header fields first,
-followed by request-header or response-header fields, and ending with
-the entity-header fields.'''
+.. epigraph::
+
+    The order in which header fields with differing field names are received is not
+    significant. However, it is "good practice" to send general-header fields first,
+    followed by request-header or response-header fields, and ending with
+    the entity-header fields.
+    
+    -- rfc2616 section 4.2
+    
+The strict parameter is rarely used and it forces the omission on non-standard
+header fields.
+'''
     def __init__(self, headers=None, kind='server', strict=False):
         if isinstance(kind, int):
             kind = header_type.get(kind, 'both')
@@ -624,8 +632,6 @@ string of values. For example::
 results in::
 
     'gzip, deflate'
-
- 
 '''
         if key in self:
             return self.__getitem__(key)
@@ -721,6 +727,8 @@ only that value if found.'''
                 if key in hf[name]:
                     group.append(key)
                     break
+            if key not in group:    # non-standard header
+                group.append(key)
         for _, group in order:
             for k in group:
                 yield "%s: %s" % (k, ', '.join(headers[k]))

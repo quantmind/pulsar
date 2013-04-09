@@ -29,7 +29,8 @@ __all__ = ['Deferred',
            'set_async',
            'maybe_async',
            'async',
-           'multi_async']
+           'multi_async',
+           'async_sleep']
 
 if ispy3k:
     from concurrent.futures._base import Error, CancelledError, TimeoutError
@@ -169,6 +170,15 @@ with pulsar :class:`Deferred` and :class:`Failure`.'''
     global _maybe_async, _maybe_failure
     _maybe_async = maybe_async_callable
     _maybe_failure = maybe_failure_callable
+    
+
+def async_sleep(timeout):
+    def _(err):
+        if isinstance(err.trace[1], CancelledError):
+            return timeout
+        else:
+            return err
+    return Deferred(timeout=timeout).add_errback(_)
     
 ############################################################### DECORATORS
 class async:

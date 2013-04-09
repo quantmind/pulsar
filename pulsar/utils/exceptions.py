@@ -54,11 +54,16 @@ class HttpException(Exception):
     def __init__(self, msg='', status=None, handler=None, strict=False,
                  headers=None, content_type=None):
         self.status = status or self.status
+        self.code = self.status # for compatibility with HTTPError
         self.handler = handler
         self.strict = strict
         self.headers = headers
         self.content_type = content_type
         super(HttpException, self).__init__(msg)
+        
+    @property
+    def hdrs(self):
+        return self.headers
 
 
 class HttpRedirect(HttpException):

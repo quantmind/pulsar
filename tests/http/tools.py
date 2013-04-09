@@ -3,7 +3,7 @@ import os
 import time
 
 from pulsar.apps.test import unittest
-from pulsar.utils.httpurl import urlencode, Headers, accept_content_type,\
+from pulsar.utils.httpurl import urlencode, Headers,\
                                  WWWAuthenticate, hexmd5, CacheControl,\
                                  urlquote, unquote_unreserved, requote_uri,\
                                  remove_double_slash, appendslash, capfirst,\
@@ -12,45 +12,6 @@ from pulsar.utils.httpurl import urlencode, Headers, accept_content_type,\
 from pulsar.utils.pep import to_bytes, native_str, force_native_str
 from pulsar.apps.wsgi import Auth, HTTPBasicAuth, HTTPDigestAuth,\
                                 parse_authorization_header, basic_auth_str
-
-
-class TestHeaders(unittest.TestCase):
-    
-    def testServerHeader(self):
-        h = Headers()
-        self.assertEqual(h.kind, 'server')
-        self.assertEqual(len(h), 0)
-        h['content-type'] = 'text/html'
-        self.assertEqual(len(h), 1)
-        
-    def testHeaderBytes(self):
-        h = Headers(kind=None)
-        h['content-type'] = 'text/html'
-        h['server'] = 'bla'
-        self.assertTrue(repr(h).startswith('both '))
-        self.assertEqual(bytes(h), b'Server: bla\r\n'
-                                   b'Content-Type: text/html\r\n\r\n')
-        
-    def testClientHeader(self):
-        h = Headers(kind='client')
-        self.assertEqual(h.kind, 'client')
-        self.assertEqual(len(h), 0)
-        h['content-type'] = 'text/html'
-        self.assertEqual(h.get_all('content-type'), ['text/html'])
-        self.assertEqual(len(h), 1)
-        h['server'] = 'bla'
-        self.assertEqual(len(h), 1)
-        del h['content-type']
-        self.assertEqual(len(h), 0)
-        self.assertEqual(h.get_all('content-type', []), [])
-        
-    def test_accept_content_type(self):
-        accept = accept_content_type()
-        self.assertTrue('text/html' in accept)
-        accept = accept_content_type(
-                        'text/*, text/html, text/html;level=1, */*')
-        self.assertTrue('text/html' in accept)
-        self.assertTrue('text/plain' in accept)
         
         
 class TestAuth(unittest.TestCase):

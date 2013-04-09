@@ -67,15 +67,19 @@ class HttpRequest(pulsar.Request):
                   **ignored):
         self.client = client
         self.timeout = timeout
+        self.method = method.upper()
         self._scheme, self._netloc, self.path, self.params,\
         self.query, self.fragment = urlparse(url)
+        if not self._netloc:
+            if self.method == 'CONNECT':
+                self._netloc = self.path
+                self.path = ''
         self.host_only, self.port = get_hostport(self._scheme, self._netloc)
         self.history = history or []
         self.wait_continue = wait_continue
         self.max_redirects = max_redirects
         self.allow_redirects = allow_redirects
         self.charset = charset or 'utf-8'
-        self.method = method.upper()
         self.version = version
         self.decompress = decompress
         self.encode_multipart = encode_multipart 

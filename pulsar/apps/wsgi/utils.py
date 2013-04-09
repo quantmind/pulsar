@@ -15,7 +15,7 @@ from pulsar.utils.html import escape
 from pulsar.utils.pep import to_string
 from pulsar.utils.httpurl import responses, has_empty_content, ispy3k,\
                                  REDIRECT_CODES, iteritems, ENCODE_URL_METHODS,\
-                                 parse_qsl
+                                 parse_qsl, HTTPError
                                  
                                  
 from .content import Html
@@ -173,8 +173,11 @@ def handle_wsgi_error(environ, trace=None, content_type=None,
     if content_type:
         response.content_type = content_type
     content = None
-    response.status_code = getattr(error, 'status', 500)
-    response.headers.update(getattr(error, 'headers', None) or ())
+    if isinstance(error, HTTPError):
+        response.status_code = error.code or 500
+    else:
+        response.status_code = getattr(error, 'status', 500)
+        response.headers.update(getattr(error, 'headers', None) or ())
     path = ' @ path "%s"' % environ.get('PATH_INFO','/')
     e = dump_environ(environ)
     if response.status_code == 500:

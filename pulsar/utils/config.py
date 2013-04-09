@@ -77,11 +77,14 @@ class DefaultSettings:
         self.message_timeout = 3
 
 defaults = DefaultSettings()
+section_docs = {}
 KNOWN_SETTINGS = {}
 KNOWN_SETTINGS_ORDER = []
 
 
 def pass_through(arg):
+    '''A dummy function accepting on parameter only. It does nothing. It is
+used as default by :ref:`Server hooks <setting-section-server-hooks>`.'''
     pass
 
 def wrap_method(func):
@@ -624,7 +627,15 @@ class ConfigFile(Setting):
         paramaters can be specified.
         """
 
+################################################################################
+##    Worker Processes
 
+section_docs['Worker Processes'] = '''
+This group of configuration parameters control the number of actors performing
+for a given :class:`pulsar.Monitor`, the type of concurreny of the server and
+other actor-specific parameters.
+'''
+    
 class Workers(Setting):
     inherit = False     # not ineritable by the arbiter
     name = "workers"
@@ -899,7 +910,18 @@ class DefaultProcName(Setting):
         Internal setting that is adjusted for each type of application.
         """
 
+################################################################################
+##    SERVER HOOKS
 
+section_docs['Server Hooks'] = '''
+Server hooks are functions which can be specified in a
+:ref:`config <setting-config>` file to perform custom tasks in a pulsar server.
+These tasks can be scheduled when events occurs or at every event loop of
+the various components of a pulsar application.
+
+All server hooks are functions which accept one parameter only, the actor
+invoking the function.'''
+    
 class Postfork(Setting):
     name = "post_fork"
     section = "Server Hooks"
@@ -909,8 +931,21 @@ class Postfork(Setting):
     desc = """\
         Called just after a worker has been forked.
 
-        The callable needs to accept two instance variables for the Arbiter and
-        new Worker.
+        The event loop is not yet available.
+        """
+        
+
+class WhenReady(Setting):
+    name = "when_ready"
+    section = "Server Hooks"
+    validator = validate_callable(1)
+    type = "callable"
+    default = staticmethod(pass_through)
+    desc = """\
+        Called just before a worker starts its event loop.
+        
+        This is a chance to setup :class:`pulsar.EventLoop` callbacks which
+        can run periodically, at every loop or when some defined events occur.
         """
 
 

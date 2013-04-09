@@ -1,7 +1,8 @@
 import threading
+import time
 
 import pulsar
-from pulsar import is_failure, get_actor
+from pulsar import is_failure, get_actor, async_sleep
 from pulsar.utils.pep import to_bytes, to_string
 from pulsar.apps.test import unittest, run_on_arbiter, dont_run_with_thread
 
@@ -27,5 +28,12 @@ class TestSyncClient(unittest.TestCase):
     
     def test_echo(self):
         self.assertEqual(self.client.request(b'ciao!'), b'ciao!')
+        self.assertEqual(self.client.request(b'fooooooooooooo!'),
+                         b'fooooooooooooo!')
     
-    
+    def test_close(self):
+        client = Echo(self.server.address, force_sync=True)
+        self.assertEqual(client.request(b'ciao!'), b'ciao!')
+        self.assertEqual(client.request(b'QUIT'), b'QUIT')
+        yield async_sleep(1)
+        self.assertEqual(client.request(b'ciao!'), b'ciao!')

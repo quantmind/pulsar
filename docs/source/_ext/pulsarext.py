@@ -1,12 +1,14 @@
 '''Sphinx extension for displaying Setting information
 '''
-from pulsar.utils.config import ordered_settings
-import pulsar.apps.wsgi
-import pulsar.apps.tasks
-import pulsar.apps.test
+from inspect import isfunction
 
 from sphinx.util.compat import Directive
 from docutils import nodes, statemachine
+
+from pulsar.utils.config import ordered_settings, section_docs
+import pulsar.apps.wsgi
+import pulsar.apps.tasks
+import pulsar.apps.test
 
 targetid = "pulsar_settings"
 
@@ -30,12 +32,17 @@ class PulsarSettings(Directive):
             else:
                 sec[s].append(sett)
         for s in sections:
-            yield s,sec[s]
+            yield s, sec[s]
             
     def text(self):
-        for s, settings in self.sections():
+        for section, settings in self.sections():
+            s = section.lower().replace(' ', '-')
             yield '.. _setting-section-{0}:\n\n\
-{0}\n=====================================\n\n'.format(s)
+{1}\n=====================================\n\n'.format(s, section)
+            section_doc = section_docs.get(section)
+            if section_doc:
+                yield section_doc
+                yield '\n'
             for sett in settings:
                 desc = sett.desc.strip() 
                 yield '.. _setting-{0}:\n\n\
@@ -45,7 +52,11 @@ class PulsarSettings(Directive):
                 if sett.flags:
                     yield '*Command line*: %s\n' %\
                                 ', '.join('``%s``' % f for f in sett.flags)
-                yield '*Default*: ``%s``\n' % sett.default
+                if isfunction(sett.default):
+                    default = ':func:`%s`' % sett.default.__name__
+                else:
+                    default = '``%s``' % sett.default
+                yield '*Default*: %s\n' % default
                 yield desc + '\n'
             
     def run(self):

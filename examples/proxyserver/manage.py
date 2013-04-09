@@ -84,8 +84,12 @@ An headers middleware is a callable which accepts two parameters, the wsgi
                                             headers=request_headers,
                                             version=environ['SERVER_PROTOCOL'])
         for data in self.generate(environ, start_response, response):
-            response.on_finished.raise_all()
-            yield data
+            try:
+                response.on_finished.raise_all()
+            except Exception as e:
+                raise HttpException(e, 504)
+            else:
+                yield data
         
     def generate(self, environ, start_response, response):
         '''Generate response asynchronously'''
