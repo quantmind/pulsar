@@ -87,8 +87,8 @@ of available connections.
             else:
                 # we have a connection, lets added it to the concurrent set
                 self._concurrent_connections.add(connection)
-        for connection in stale_connections:
-            connection.transport.close()
+        for sc in stale_connections:
+            sc.transport.close()
         if connection is None:
             # build the new connection
             connection = self.new_connection(self.address,
