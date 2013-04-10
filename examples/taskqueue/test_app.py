@@ -2,7 +2,7 @@
 from time import time, sleep
 from datetime import datetime, timedelta
 
-from pulsar import send, get_application, get_actor, NOT_DONE
+from pulsar import send, get_application, get_actor, multi_async
 from pulsar.apps import tasks, rpc
 from pulsar.utils.timeutils import timedelta_seconds
 from pulsar.apps.test import unittest, run_on_arbiter, dont_run_with_thread,\
@@ -26,29 +26,20 @@ def wait_for_task(proxy, result):
 @sequential
 class TestTaskQueueOnThread(unittest.TestCase):
     concurrency = 'thread'
-    apps = None
-    
-    @classmethod
-    def name_tq(cls):
-        return cls.__name__
-    
-    @classmethod
-    def name_rpc(cls):
-        return cls.name_tq() + '_rpc'
+    apps = ()
     
     @classmethod
     def setUpClass(cls):
         # The name of the task queue application
-        s = server(name=cls.name_tq(), bind='127.0.0.1:0',
+        s = server(name=cls.__name__, bind='127.0.0.1:0',
                    concurrency=cls.concurrency, script=__file__)
         cls.apps = yield send('arbiter', 'run', s)
         cls.proxy = rpc.JsonProxy('http://%s:%s' % cls.apps[1].address)
 
     @classmethod
     def tearDownClass(cls):
-        if cls.apps:
-            yield send('arbiter', 'kill_actor', cls.name_tq())
-            yield send('arbiter', 'kill_actor', cls.name_rpc())
+        cmnds = [send('arbiter', 'kill_actor', a.name) for a in cls.apps]
+        yield multi_async(cmnds)
 
     def test_rpc_job_list(self):
         jobs = yield self.proxy.job_list()

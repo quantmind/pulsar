@@ -310,8 +310,7 @@ The parameters overriding order is the following:
                 if v is not None:
                     k = k.lower()
                     try:
-                        self.cfg.set(k, v)
-                        self.cfg.settings[k].default = v
+                        self.cfg.set(k, v, default=True)
                     except AttributeError:
                         pass
         # parse console args 
@@ -581,15 +580,17 @@ iterable over results obtained from calls to the :meth:`new_app` method.'''
     
     def apps(self):
         '''List of :class:`Application` for this :class:`MultiApp`.
-The lists is lazily loaded from the :meth:`build` method.'''
+The list is lazily loaded from the :meth:`build` method.'''
         if self._apps is None:
-            self.cfg.params = dict(((s.name, s.value) for s in\
+            # Add non-default settings values to the list of cfg params
+            self.cfg.params.update(((s.name, s.value) for s in\
                        self.cfg.settings.values() if s.value != s.default))
             self.cfg.settings = {}
             self._apps =  []
-            apps = OrderedDict(list(self.build()))
+            apps = OrderedDict(self.build())
             if not apps:
                 return self._apps
+            # Load the configuration file
             self.load_config()
             kwargs = self._get_app_params()
             for App, name, callable, cfg in self._iter_app(apps):
@@ -643,11 +644,12 @@ as the number of :class:`Application` required by this :class:`MultiApp`.'''
             yield app
     
     def _get_app_params(self):
-        params = {'load_config': False}
+        params = self.cfg.params.copy()
         for key, value in self.__dict__.items():
             if key.startswith('_'):
                 continue
             elif key == 'parsed_console':
                 key = 'parse_console'
             params[key] = value
+        params['load_config'] = False
         return params
