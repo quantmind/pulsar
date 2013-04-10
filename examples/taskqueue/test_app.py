@@ -23,16 +23,16 @@ def wait_for_task(proxy, result):
     yield result
             
 
-@sequential
-class TestTaskQueueOnThread(unittest.TestCase):
+class TaskQueueBase(object):
     concurrency = 'thread'
     apps = ()
     
     @classmethod
     def setUpClass(cls):
         # The name of the task queue application
-        s = server(name=cls.__name__, bind='127.0.0.1:0',
-                   concurrency=cls.concurrency, script=__file__)
+        s = server(name=cls.__name__, rpc_bind='127.0.0.1:0',
+                   concurrency=cls.concurrency, script=__file__,
+                   schedule_periodic=True)
         cls.apps = yield send('arbiter', 'run', s)
         cls.proxy = rpc.JsonProxy('http://%s:%s' % cls.apps[1].address)
 
@@ -40,80 +40,49 @@ class TestTaskQueueOnThread(unittest.TestCase):
     def tearDownClass(cls):
         cmnds = [send('arbiter', 'kill_actor', a.name) for a in cls.apps]
         yield multi_async(cmnds)
-
-    def test_rpc_job_list(self):
-        jobs = yield self.proxy.job_list()
-        self.assertTrue(jobs)
-        self.assertTrue(isinstance(jobs, list))
-        d = dict(jobs)
-        pycode = d['runpycode']
-        self.assertEqual(pycode['type'], 'regular')
         
-class a:
-    @run_on_arbiter
+        
+class TestTaskQueueMeta(TaskQueueBase, unittest.TestCase):
+    
     def test_meta(self):
         '''Tests meta attributes of taskqueue'''
-        app = get_application(self.name_tq())
+        app = yield get_application(self.apps[0].name)
         self.assertTrue(app)
-        self.assertEqual(app.name, self.name_tq())
+        self.assertEqual(app.name, self.apps[0].name)
+        self.assertFalse(app.cfg.address)
         self.assertTrue(app.registry)
         scheduler = app.scheduler
         self.assertTrue(scheduler.entries)
         job = app.registry['runpycode']
-        self.assertEqual(job.type,'regular')
+        self.assertEqual(job.type, 'regular')
         self.assertTrue(job.can_overlap)
         id = job.make_task_id((),{})
         self.assertTrue(id)
         self.assertNotEqual(id,job.make_task_id((),{}))
         
-    @run_on_arbiter
+    def test_rpc_meta(self):
+        app = yield get_application(self.apps[1].name)
+        self.assertTrue(app)
+        self.assertEqual(app.name, self.apps[1].name)
+        self.assertEqual(app.cfg.address, ('127.0.0.1', 0))
+        self.assertNotEqual(app.cfg.address, app.address)
+        router = app.callable.middleware
+        self.assertTrue(router.post)
+        root = router.post
+        tq = root.taskqueue
+        self.assertEqual(tq, self.apps[0].name)
+        
     def test_registry(self):
-        app = get_application(self.name_tq())
+        app = yield get_application(self.apps[0].name)
         self.assertTrue(isinstance(app.registry, dict))
         regular = app.registry.regular()
         periodic = app.registry.periodic()
         self.assertTrue(regular)
         self.assertTrue(periodic)
         
-    @run_on_arbiter
-    def test_rpc_meta(self):
-        app = get_application(self.name_rpc())
-        self.assertTrue(app)
-        self.assertEqual(app.name, self.name_rpc())
-        router = app.callable.middleware
-        self.assertTrue(router.post)
-        root = router.post
-        tq = root.taskqueue
-        self.assertEqual(tq, self.name_tq())
-
-    @run_on_arbiter
-    def test_check_next_run(self):
-        app = get_application(self.name_tq())
-        scheduler = app.scheduler
-        scheduler.tick()
-        self.assertTrue(scheduler.next_run > datetime.now())
-        
-    @run_on_arbiter
-    def test_not_overlap(self):
-        app = get_application(self.name_tq())
-        self.assertTrue('notoverlap' in app.registry)
-        r1 = app.scheduler.run('notoverlap', 1)
-        self.assertEqual(str(r1), 'notoverlap(%s)' % r1.id)
-        self.assertTrue(r1._queued)
-        r2 = app.scheduler.run('notoverlap', 1)
-        self.assertFalse(r2._queued)
-        id = r1.id
-        self.assertEqual(id, r2.id)
-        # We need to make sure the first task is completed
-        get_task = app.scheduler.get_task
-        while get_task(id).status in tasks.UNREADY_STATES:
-            yield NOT_DONE
-        self.assertEqual(get_task(id).status, tasks.SUCCESS)
-    
-    @run_on_arbiter    
     def test_id_not_overlap(self):
         '''Check `make_task_id` when `can_overlap` attribute is set to False.'''
-        app = get_application(self.name_tq())
+        app = yield get_application(self.apps[0].name)
         job = app.registry['notoverlap']
         self.assertEqual(job.type, 'regular')
         self.assertFalse(job.can_overlap)
@@ -131,6 +100,42 @@ class a:
         self.assertEqual(id,job.make_task_id((),{'p':45,'c':'bla'}))
         self.assertNotEqual(id,job.make_task_id((),{'p':45,'d':'bla'}))
         self.assertNotEqual(id,job.make_task_id((),{'p':45,'c':'blas'}))
+        
+        
+@sequential
+class TestTaskQueueOnThread(TaskQueueBase, unittest.TestCase):        
+
+    def test_rpc_job_list(self):
+        jobs = yield self.proxy.job_list()
+        self.assertTrue(jobs)
+        self.assertTrue(isinstance(jobs, list))
+        d = dict(jobs)
+        pycode = d['runpycode']
+        self.assertEqual(pycode['type'], 'regular')
+
+    @run_on_arbiter
+    def test_check_next_run(self):
+        app = yield get_application(self.apps[0].name)
+        scheduler = app.scheduler
+        scheduler.tick()
+        self.assertTrue(scheduler.next_run > datetime.now())
+        
+    @run_on_arbiter
+    def test_not_overlap(self):
+        app = yield get_application(self.apps[0].name)
+        self.assertTrue('notoverlap' in app.registry)
+        r1 = app.scheduler.run('notoverlap', 1)
+        self.assertEqual(str(r1), 'notoverlap(%s)' % r1.id)
+        self.assertTrue(r1._queued)
+        r2 = app.scheduler.run('notoverlap', 1)
+        self.assertFalse(r2._queued)
+        id = r1.id
+        self.assertEqual(id, r2.id)
+        # We need to make sure the first task is completed
+        get_task = app.scheduler.get_task
+        while get_task(id).status in tasks.UNREADY_STATES:
+            yield NOT_DONE
+        self.assertEqual(get_task(id).status, tasks.SUCCESS)
         
     @run_on_arbiter
     def test_delete_task(self):

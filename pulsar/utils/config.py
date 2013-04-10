@@ -296,7 +296,10 @@ settings via the :meth:`Setting.add_argument` method.
 
     @property
     def address(self):
-        bind = self.settings['bind']
+        '''An address to bind to, only available if a
+:ref:`bind <setting-bind>` setting has been added to this :class:`Config`
+container.'''
+        bind = self.settings.get('bind')
         if bind:
             return parse_address(to_bytes(bind.get()))
 
@@ -719,9 +722,19 @@ class Timeout(Setting):
         killed and restarted."""
 
 
+################################################################################
+##    Global Server Settings
+
+section_docs['Global Server Settings'] = '''
+These settings are shared by the arbiter as well as all pulsar workers. They
+set global settings the debug mode,
+the proxy server to use when making HTTP requests, and server specific
+configuration parameters.
+'''
+    
 class HttpProxyServer(Setting):
     name = "http_proxy"
-    section = "Http"
+    section = "Global Server Settings"
     flags = ["--http-proxy"]
     default = ''
     desc = """\
@@ -735,7 +748,7 @@ class HttpProxyServer(Setting):
 
 class HttpParser(Setting):
     name = "http_py_parser"
-    section = "Http"
+    section = "Global Server Settings"
     flags = ["--http-py-parser"]
     action = "store_true"
     default = False
@@ -751,7 +764,7 @@ class HttpParser(Setting):
 
 class Debug(Setting):
     name = "debug"
-    section = "Debugging"
+    section = "Global Server Settings"
     flags = ["--debug"]
     validator = validate_bool
     action = "store_true"
@@ -766,7 +779,7 @@ class Debug(Setting):
 
 class Daemon(Setting):
     name = "daemon"
-    section = "Server Mechanics"
+    section = "Global Server Settings"
     flags = ["-D", "--daemon"]
     validator = validate_bool
     action = "store_true"
@@ -781,7 +794,7 @@ class Daemon(Setting):
 
 class Pidfile(Setting):
     name = "pidfile"
-    section = "Server Mechanics"
+    section = "Global Server Settings"
     flags = ["-p", "--pid"]
     meta = "FILE"
     validator = validate_string
@@ -795,7 +808,7 @@ class Pidfile(Setting):
 
 class Password(Setting):
     name = "password"
-    section = "Server Mechanics"
+    section = "Global Server Settings"
     flags = ["--password"]
     validator = validate_string
     default = None
@@ -804,7 +817,7 @@ class Password(Setting):
 
 class User(Setting):
     name = "user"
-    section = "Server Mechanics"
+    section = "Global Server Settings"
     flags = ["-u", "--user"]
     meta = "USER"
     validator = validate_string
@@ -820,7 +833,7 @@ class User(Setting):
 
 class Group(Setting):
     name = "group"
-    section = "Server Mechanics"
+    section = "Global Server Settings"
     flags = ["-g", "--group"]
     meta = "GROUP"
     validator = validate_string
@@ -836,7 +849,7 @@ class Group(Setting):
 
 class Loglevel(Setting):
     name = "loglevel"
-    section = "Logging"
+    section = "Global Server Settings"
     flags = ["--log-level"]
     meta = "LEVEL"
     validator = validate_string
@@ -854,7 +867,7 @@ class Loglevel(Setting):
 
 class LogHandlers(Setting):
     name = "loghandlers"
-    section = "Logging"
+    section = "Global Server Settings"
     flags = ["--log-handlers"]
     default = ['console']
     validator = validate_list
@@ -863,7 +876,7 @@ class LogHandlers(Setting):
     
 class LogEvery(Setting):
     name = "logevery"
-    section = "Logging"
+    section = "Global Server Settings"
     flags = ["--log-every"]
     validator = validate_pos_int
     default = 0
@@ -872,7 +885,7 @@ class LogEvery(Setting):
 
 class LogConfig(Setting):
     name = "logconfig"
-    section = "Logging"
+    section = "Global Server Settings"
     default = {}
     validator = validate_dict
     desc = '''
@@ -884,7 +897,7 @@ class LogConfig(Setting):
 
 class Procname(Setting):
     name = "process_name"
-    section = "Process Naming"
+    section = "Global Server Settings"
     flags = ["-n", "--name"]
     meta = "STRING"
     validator = validate_string
@@ -903,7 +916,7 @@ class Procname(Setting):
 
 class DefaultProcName(Setting):
     name = "default_process_name"
-    section = "Process Naming"
+    section = "Global Server Settings"
     validator = validate_string
     default = SERVER_NAME
     desc = """\

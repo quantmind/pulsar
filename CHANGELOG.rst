@@ -13,11 +13,12 @@ Ver. 0.5.0 - DEVELOPMENT
    * :class:`pulsar.Deferred` accepts a *timeout* as initialization parameter. If
      a value greater than 0 is given, the deferred will add a timeout to the
      eventloop to cancel itself in *timeout* seconds.
-   * :class:`pulsar.DeferredCoroutine` stops after the first error by default.
+   * :class:`pulsar.Task` stops after the first error by default.
      This class replace the old DeferredGenerator and provides a cleaner
      API with inline syntax. Check the
      :ref:`asynchronous components <tutorials-coroutine>` tutorial for
      further information.
+   * Added :func:`pulsar.async_sleep` function.
    
 * Applications:
     * :class:`CPUboundApplication` created as base class for CPU bound applications.
@@ -27,6 +28,8 @@ Ver. 0.5.0 - DEVELOPMENT
     * Refactoring of asynchronous :mod:`pulsar.apps.test` application.
     * Added :ref:`Publish/Subscribe application <apps-pubsub>`. The application
       is used in the :ref:`web chat <tutorials-chat>` example.
+    * :func:`pulsar.apps.get_application` returns a :ref:`coroutine <coroutine>`
+      so that it can be used in any process domain.
 
 * Initial :ref:`twisted integration <tutorials-twisted>`.
    * Added :func:`pulsar.set_async` function which can be used to change

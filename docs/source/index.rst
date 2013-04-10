@@ -21,8 +21,6 @@ in a single code base.
 
 .. _apps-framework:
 
-.. module:: pulsar.apps
-
 Application Framework
 =========================
 
@@ -30,7 +28,7 @@ Pulsar application framework is built on top of :mod:`pulsar` concurrent
 framework. It is designed to facilitate the development of both server-side
 applications such as web servers, task queues as well as asynchronous
 clients.
-To write a new server-side application, you subclass :class:`Application` or
+To write a new server-side application, you subclass :class:`pulsar.apps.Application` or
 any of the shipped applications listed below, and implement some of
 the callbacks available.
 
@@ -45,7 +43,7 @@ Servers
    
    apps/socket
    apps/wsgi/index
-   apps/tasks
+   apps/tasks/index
    apps/test
    apps/shell
    

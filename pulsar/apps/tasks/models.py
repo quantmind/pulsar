@@ -1,3 +1,76 @@
+'''
+An application implements several :class:`Job`
+classes which specify the way each :class:`pulsar.apps.tasks.task.Task` is run.
+Each :class:`Job` class is a task-factory, therefore,
+a :ref:`task <apps-taskqueue-task>` is always associated
+with one :class:`Job`, which can be of two types:
+
+* standard (:class:`Job`)
+* periodic (:class:`PeriodicJob`), a generator of scheduled tasks.
+
+.. _job-callable:
+
+Implementing jobs
+~~~~~~~~~~~~~~~~~~~~~~~
+
+To define a job is simple, subclass from :class:`Job` and implement the
+**job callable method**::
+
+    from pulsar.apps import tasks
+
+    class Addition(tasks.Job):
+
+        def __call__(self, consumer, a, b):
+            "Add two numbers"
+            return a+b
+
+The *consumer*, instance of :class:`pulsar.apps.tasks.task.TaskConsumer`,
+is passed by the :ref:`Scheduler <apps-taskqueue-scheduler>` and should
+always be the first positional argument in the callable function.
+The remaining positional arguments and/or key-valued parameters are needed by
+your job implementation.
+
+A :ref:`job callable <job-callable>` can also return a
+:ref:`coroutine <coroutine>` if it needs to perform asynchronous IO during its
+execution::
+
+    class Crawler(tasks.Job):
+
+        def __call__(self, consumer, sample, size=10):
+            response = yield http.request(...)
+            content = response.content
+            ...
+
+Job class
+~~~~~~~~~~~~~~~~~~~~~~
+
+.. autoclass:: Job
+   :members:
+   :member-order: bysource
+
+Periodic job
+~~~~~~~~~~~~~~~~~~~~~~
+
+.. autoclass:: PeriodicJob
+   :members:
+   :member-order: bysource
+
+Job registry
+~~~~~~~~~~~~~~~~~~~~~~
+
+.. autoclass:: JobRegistry
+   :members:
+   :member-order: bysource
+
+Job metaclass
+~~~~~~~~~~~~~~~~~~~~~~
+
+.. autoclass:: JobMetaClass
+   :members:
+   :member-order: bysource
+
+
+'''
 from datetime import datetime, date, timedelta
 from hashlib import sha1
 import logging
@@ -50,16 +123,16 @@ registry = JobRegistry()
 
 
 class JobMetaClass(type):
-    """Metaclass for Jobs. It performs a little ammount of magic
-by:
+    """Metaclass for :class:`Job`. It performs a this little amount of magic
+when a new :class:`Job` class is created:
 
 * Automatic registration of :class:`Job` instances to the
   global :class:`JobRegistry`, unless
   the :attr:`Job.abstract` attribute is set to ``True``.
-* If no :attr:`Job.name`` attribute is provided,
-  it is automatically set to the class name in lower case.
-* Add a logger instance with name given by 'job.name` where name is the
-  same as above.
+* If no :attr:`Job.name` attribute is provided,
+  it is automatically set to the :attr:`Job` class name in lower case.
+* Add the :attr:`Job.logger` attribute with name given by :attr:`Job.name`
+  attribute.
 """
 
     def __new__(cls, name, bases, attrs):

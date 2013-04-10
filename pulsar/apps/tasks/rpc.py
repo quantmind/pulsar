@@ -1,3 +1,15 @@
+'''
+The :ref:`task queue application <app-taskqueue-app>` does not expose
+an external API to run new tasks or retrieve task information.
+The :class:`TaskQueueRpcMixin` class can be used to achieve just that.
+
+TaskQueue Rpc Mixin
+~~~~~~~~~~~~~~~~~~~~~
+
+.. autoclass:: TaskQueueRpcMixin
+   :members:
+   :member-order: bysource
+'''
 from collections import Mapping
 
 import pulsar

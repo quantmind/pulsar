@@ -20,23 +20,32 @@ __all__ = ['QueueServer',
     
     
 class MessageQueue(transport.Transport):
-    ''':class:`Transport` class for message queues.'''
+    '''An abstract :class:`Transport` class for message queues. Instances
+of this class must be pickable so that they can be passed to the
+:func:`spawn` function without any side effects.'''
     event_loop = None
     def put(self, message):
+        '''Put a new message into the :class:`MessageQueue`. Must be
+implemented by subclasses.'''
         raise NotImplementedError
     
     def get(self, timeout=1):
+        '''Get a message from the :class:`MessageQueue` blocking for
+*timeout* seconds. Must be implemented by subclasses.'''
+        raise NotImplementedError
+    
+    def size(self):
+        '''Approximate size of the message queue. Must be
+implemented by subclasses.'''
         raise NotImplementedError
     
     def poller(self, server):
         pass
     
     def write(self, data):
+        '''Implementation of the :meth:`Transport.write` method, it invokes
+the :meth:`put` method.'''
         self.put(data)
-        
-    def size(self):
-        '''Approximate size of the message queue.'''
-        raise NotImplementedError
         
     def __repr__(self):
         return self.__class__.__name__
@@ -69,14 +78,14 @@ class Task(protocols.ProtocolConsumer):
     
     
 class QueueServer(servers.Server):
-    '''A server'''
+    '''A :class:`MessageQueue` :class:`Server`'''
     def __init__(self, backlog=1, **kwargs):
         self.backlog = backlog
         super(QueueServer, self).__init__(**kwargs)
     
     def can_poll(self):
         '''The poller can pool only when the transport is available and
-the total number of concurrent connections is les then the maximum'''
+the total number of concurrent connections is less then the maximum'''
         return self.transport and\
                      self.concurrent_connections < self.backlog
         
@@ -100,8 +109,8 @@ class PythonMessageQueue(MessageQueue, LocalMixin):
 This queue is not socket based therefore it requires a specialised IO poller,
 the file descriptor is a dummy number and the waker is `self`.
 The waker, when invoked via the :meth:`wake`, reduces the poll timeout to 0
-so that the :meth:`get` method returns as soon possible.'''
-    def __init__(self):
+so that the :meth:`MessageQueue.get` method returns as soon possible.'''
+    def __init__(self, cfg):
         self._wakeup = 0
         self._queue = Queue()
     
@@ -109,7 +118,6 @@ so that the :meth:`get` method returns as soon possible.'''
         return IOQueue(self, server)
     
     def get(self, timeout=0.5):
-        '''Get an item from the queue.'''
         block = True
         with self.lock:
             if self._wakeup:

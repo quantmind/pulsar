@@ -73,6 +73,10 @@ Multi Async
 ~~~~~~~~~~~~~~~~~~~~~~~~
 .. autofunction:: multi_async
 
+Async Sleep
+~~~~~~~~~~~~~~~~~~~~~~~~
+.. autofunction:: async_sleep
+
 
 Asynchronous Classes
 ==========================
@@ -95,10 +99,10 @@ Multi Deferred
    :members:
    :member-order: bysource
    
-Deferred Coroutine
+Task
 ~~~~~~~~~~~~~~~~~~~~~~
 
-.. autoclass:: DeferredCoroutine
+.. autoclass:: Task
    :members:
    :member-order: bysource
    

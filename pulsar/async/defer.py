@@ -16,7 +16,7 @@ from .consts import *
 __all__ = ['Deferred',
            'EventHandler',
            'MultiDeferred',
-           'DeferredCoroutine',
+           'Task',
            'Error',
            'CancelledError',
            'TimeoutError',
@@ -115,13 +115,11 @@ def default_maybe_failure(value, msg=None):
     else:
         return value
 
-def default_maybe_async(val, description=None, max_errors=1, timeout=None,
-                        get_result=True):
+def default_maybe_async(val, get_result=True, **kwargs):
     if isgenerator(val):
-        val = DeferredCoroutine(val, max_errors=max_errors,
-                                description=description,
-                                timeout=timeout)
-    if is_async(val):
+        val = Task(val, **kwargs)
+        return val.result_or_self() if get_result else val
+    elif is_async(val):
         return val.result_or_self() if get_result else val
     else:
         return maybe_failure(val)
@@ -173,6 +171,14 @@ with pulsar :class:`Deferred` and :class:`Failure`.'''
     
 
 def async_sleep(timeout):
+    '''The asynchronous equivalent of ``time.sleep(timeout)``. Use this
+function within a :ref:`coroutine <coroutine>` when you need to resume
+the coroutine after *timeout* seconds. For example::
+
+    ...
+    yield async_sleep(2)
+    ...
+'''
     def _(err):
         if isinstance(err.trace[1], CancelledError):
             return timeout
@@ -637,12 +643,12 @@ a callable which accept one argument only.'''
         return _
             
                     
-class DeferredCoroutine(Deferred):
+class Task(Deferred):
     '''A :class:`Deferred` coroutine is a consumer of, possibly,
 asynchronous objects.
 The callback will occur once the coroutine has stopped
 (when it raises StopIteration), or a preset maximum number of errors (default 1)
-has occurred. Instances of :class:`DeferredCoroutine` are never
+has occurred. Instances of :class:`Task` are never
 initialised directly, they are created by the :func:`maybe_async`
 function when a generator is passed as argument.'''
     def __init__(self, gen, max_errors=1, event_loop=None, **kwargs):
@@ -650,7 +656,7 @@ function when a generator is passed as argument.'''
         self.max_errors = max(1, max_errors) if max_errors else 0
         self.errors = None
         event_loop = event_loop or get_request_loop()
-        super(DeferredCoroutine, self).__init__(event_loop=event_loop, **kwargs)
+        super(Task, self).__init__(event_loop=event_loop, **kwargs)
         self._consume(None)
     
     def _consume(self, last_result):

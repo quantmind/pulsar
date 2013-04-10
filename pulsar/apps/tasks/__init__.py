@@ -14,8 +14,6 @@ little setup effort::
     tq = tasks.TaskQueue(tasks_path='path.to.tasks.*')
     tq.start()
     
-Getting Started
-========================
 To get started, follow the these points:
 
 * Create the script which runs your application, in the
@@ -35,73 +33,44 @@ standard :ref:`application settings <settings>`:
 
 .. _app-tasks_path:
 
-* ``tasks_path``, a list of python paths where to collect :class:`Job` classes::
+* The :ref:`task_paths <setting-task_paths>` parameter specify
+  a list of python paths where to collect :class:`Job` classes::
   
-      tasks_path = ['myjobs','another.moduledir.*']
+      task_paths = ['myjobs','another.moduledir.*']
       
   The ``*`` at the end of the second module indicates to collect :class:`Job`
   from all submodules of ``another.moduledir``.
   
-* ``schedule_periodic`` a flag indicating if the :class:`TaskQueue` can schedule
-  periodic tasks. Usually, only one running application is responsable for
+* The :ref:`schedule_periodic <setting-schedule_periodic>` flag indicates
+  if the :class:`TaskQueue` can schedule :class:`PeriodicJob`. Usually,
+  only one running application is responsible for
   scheduling tasks while all the other, simply consume tasks.
   This parameter can also be specified in the command line via the
-  ``--schedule-periodic`` flag. Default: ``True``.
+  ``--schedule-periodic`` flag. Default: ``False``.
   
-* ``task_queue_factory`` is the dotted path to the factory function which
-  creates the :attr:`TaskQueue.queue` instance. This parameter can also
-  be specified on the command line via the ``--task-queue`` flag.
-
-.. _app-taskqueue-job:
-
-Jobs
-~~~~~~~~~~~~~~~~
-
-An application implements several :class:`Job`
-classes which specify the way each :class:`Task` is run.
-Each job class is a task-factory, therefore, a task is always associated
-with one job, which can be of two types:
-
-* standard (:class:`Job`)
-* periodic (:class:`PeriodicJob`), a generator of scheduled tasks.
-
-.. _job-callable:
-
-To define a job is simple, subclass from :class:`Job` and implement the
-**job callable method**::
-
-    from pulsar.apps import tasks
-
-    class Addition(tasks.Job):
-
-        def __call__(self, consumer, a, b):
-            "Add two numbers"
-            return a+b
-            
-    class Sampler(tasks.Job):
-
-        def __call__(self, consumer, sample, size=10):
-            ...
-
-The *consumer*, instance of :class:`TaskConsumer`, is passed by the
-:class:`TaskQueue` and should always be the first positional argument in the
-callable function.
-The remaining positional arguments and/or key-valued parameters are needed by
-your job implementation.
+* The :ref:`task_queue_factory <setting-task_queue_factory>` parameter
+  is a dotted path to the callable which creates the
+  :attr:`pulsar.apps.CPUboundApplication.queue` instance.
 
 
+.. _app-taskqueue-app:
 
+Task queue application
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
+.. autoclass:: TaskQueue
+   :members:
+   :member-order: bysource
+   
+   
 .. _tasks-actions:
 
-Tutorial
-==============
+Task queue commands
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Actions
-~~~~~~~~~~~~~~~
-
-The :class:`Taskqueue` application adds the following
-:ref:`remote actions <api-remote_commands>` to its workers:
+The :class:`TaskQueue` application adds the following
+:ref:`internal commands <actor_commands>` which can be used to communicate
+with the :class:`TaskQueue` monitor:
 
 * **addtask** to add a new task to the task queue::
 
@@ -126,98 +95,6 @@ The :class:`Taskqueue` application adds the following
   The implementation is left to the :meth:`Task.get_tasks` method::
   
     send(taskqueue, 'get_tasks', **filters)
-  
-
-Task Class
-~~~~~~~~~~~~~~~~~
-
-By default, tasks are constructed using an in-memory implementation of
-:class:`Task`. To use a different implementation, for example one that
-saves tasks on a database, subclass :class:`Task` and pass the new class
-to the :class:`TaskQueue` constructor::
-
-    from pulsar.apps import tasks
-
-    class TaskDatabase(tasks.Task):
-
-        def on_created(self):
-            return save2db(self)
-
-        def on_received(self):
-            return save2db(self)
-
-        def on_start(self):
-            return save2db(self)
-
-        def on_finish(self):
-            return save2db(self)
-
-        @classmethod
-        def get_task(cls, id, remove = False):
-            return taskfromdb(id)
-
-
-    tq = tasks.TaskQueue(task_class=TaskDatabase, tasks_path='path.to.tasks.*')
-    tq.start()
-
-
-.. _tasks-callbacks:
-
-Task callbacks
-~~~~~~~~~~~~~~~~~~~
-
-When creating your own :class:`Task` class all you need to override are the four
-task callbacks:
-
-* :meth:`Task.on_created` called by the taskqueue when it creates a new task
-  instance.
-* :meth:`Task.on_received` called by a worker when it receives the task.
-* :meth:`Task.on_start` called by a worker when it starts the task.
-* :meth:`Task.on_finish` called by a worker when it ends the task.
-
-
-and :meth:`Task.get_task` classmethod for retrieving tasks instances.
-
-.. _task-state:
-
-Task states
-~~~~~~~~~~~~~
-
-A :class:`Task` can have one of the following :attr:`Task.status` string:
-
-* ``PENDING`` A task waiting for execution and unknown.
-* ``RETRY`` A task is retrying calculation.
-* ``RECEIVED`` when the task is received by the task queue.
-* ``STARTED`` task execution has started.
-* ``REVOKED`` the task execution has been revoked. One possible reason could be
-  the task has timed out.
-* ``UNKNOWN`` task execution is unknown.
-* ``FAILURE`` task execution has finished with failure.
-* ``SUCCESS`` task execution has finished with success.
-
-
-.. attribute:: FULL_RUN_STATES
-
-    The set of states for which a :class:`Task` has run:
-    ``FAILURE`` and ``SUCCESS``
-
-.. attribute:: READY_STATES
-
-    The set of states for which a :class:`Task` has finished:
-    ``REVOKED``, ``FAILURE`` and ``SUCCESS``
-
-
-Queue
-~~~~~~~~~~~~~~
-
-By default the queue is implemented using the multiprocessing.Queue
-from the standard python library. To specify a different queue you can
-use the ``task-queue`` flag from the command line::
-
-    python myserverscript.py --task-queue dotted.path.to.callable
-
-or by setting the ``task_queue_factory`` parameter in the config file
-or in the :class:`TaskQueue` constructor.
 
 
 .. _celery: http://celeryproject.org/
@@ -227,6 +104,7 @@ from datetime import datetime
 
 import pulsar
 from pulsar import to_string
+from pulsar.utils.log import local_property
 
 from .exceptions import *
 from .task import *
@@ -241,16 +119,106 @@ class TaskSetting(pulsar.Setting):
     app = 'tasks'
 
 
-class TaskPath(TaskSetting):
-    name = "tasks_path"
+class TaskPaths(TaskSetting):
+    name = "task_paths"
     section = "Task Consumer"
-    meta = "STRING"
     validator = pulsar.validate_list
-    cli = ["--tasks-path"]
     default = ['pulsar.apps.tasks.testing']
     desc = """\
         List of python dotted paths where tasks are located.
+        
+        This parameter can only be specified during initialization or in a
+        :ref:`config file <setting-config>`.
         """
+        
+class SchedulePeriodic(TaskSetting):
+    name = 'schedule_periodic'
+    section = "Task Consumer"
+    flags = ["--schedule-periodic"]
+    validator = pulsar.validate_bool
+    action = "store_true"
+    default = False
+    desc = '''\
+        Enable scheduling of periodic tasks.
+        
+        If enabled, :class:`pulsar.apps.tasks.PeriodicJob` will produce
+        tasks according to their schedule.
+        '''
+
+
+class TaskQueue(pulsar.CPUboundApplication):
+    '''A :class:`pulsar.CPUboundServer` for consuming
+tasks and managing scheduling of tasks via the :class:`Scheduler` class.
+
+.. attribute:: registry
+
+    Instance of a :class:`JobRegistry` containing all
+    registered :class:`Job` instances.
+'''
+    name = 'tasks'
+    cfg = pulsar.Config(apps=('cpubound', 'tasks'),
+                        timeout=600, backlog=5)
+    task_class = TaskInMemory
+    '''The :class:`Task` class for storing information about task execution.
+
+Default: :class:`TaskInMemory`
+'''
+    '''The scheduler class. Default: :class:`Scheduler`.'''
+
+    @local_property
+    def scheduler(self):
+        '''A :class:`Scheduler` which sends tasks to the task queue and
+produces periodic tasks according to their schedule of execution.
+
+At every event loop, the :class:`pulsar.ApplicationMonitor` running
+the :class:`TaskQueue` application, invokes the :meth:`Scheduler.tick`
+which check for tasks to be scheduled.
+
+Check the :meth:`TaskQueue.monitor_task` callback
+for implementation.'''
+        if self.callable:
+            self.callable() 
+        return Scheduler(self.queue,
+                         self.task_class,
+                         self.cfg.tasks_path,
+                         logger=self.logger,
+                         schedule_periodic=self.cfg.schedule_periodic)
+
+    def request_instance(self, request):
+        return self.scheduler.get_task(request)
+    
+    def monitor_task(self, monitor):
+        '''Override the :meth:`pulsar.Application.monitor_task` callback
+to check if the scheduler needs to perform a new run.'''
+        super(TaskQueue, self).monitor_task(monitor)
+        s = self.scheduler
+        if s:
+            if s.next_run <= datetime.now():
+                s.tick()
+
+    def job_list(self, jobnames=None):
+        return self.scheduler.job_list(jobnames=jobnames)
+
+    @property
+    def registry(self):
+        global registry
+        return registry
+
+    def actorparams(self, monitor, params):
+        # Make sure we invoke super function so that we get the distributed
+        # task queue
+        params = super(TaskQueue, self).actorparams(monitor, params)
+        # workers do not schedule periodic tasks
+        params['app'].cfg.set('schedule_periodic', False)
+        return params
+     
+    ############################################################################
+    ##    INTERNALS        
+    def _addtask(self, monitor, caller, jobname, task_extra, ack, args, kwargs):
+        task = self.scheduler.queue_task(jobname, args, kwargs, **task_extra)
+        if ack:
+            return task
+
 
 #################################################    TASKQUEUE COMMANDS
 @pulsar.command()
@@ -296,81 +264,3 @@ def wait_for_task(request, id, timeout=3600):
     # wait for a task to finish for at most timeout seconds
     scheduler = request.actor.app.scheduler
     return scheduler.task_class.wait_for_task(scheduler, id, timeout)
-
-
-class TaskQueue(pulsar.CPUboundApplication):
-    '''A :class:`pulsar.CPUboundServer` for consuming
-tasks and managing scheduling of tasks via the :class:`Scheduler` class.
-
-.. attribute:: registry
-
-    Instance of a :class:`JobRegistry` containing all
-    registered :class:`Job` instances.
-'''
-    name = 'tasks'
-    cfg = pulsar.Config(apps=('cpubound', 'tasks'),
-                        timeout=600, backlog=5)
-    task_class = TaskInMemory
-    '''The :class:`Task` class for storing information about task execution.
-
-Default: :class:`TaskInMemory`
-'''
-    '''The scheduler class. Default: :class:`Scheduler`.'''
-
-    @property
-    def scheduler(self):
-        '''A :class:`Scheduler` which sends tasks to the task queue and
-produces periodic tasks according to their schedule of execution.
-
-At every event loop, the :class:`pulsar.ApplicationMonitor` running
-the :class:`TaskQueue` application, invokes the :meth:`Scheduler.tick`
-which check for tasks to be scheduled.
-
-Check the :meth:`TaskQueue.monitor_task` callback
-for implementation.'''
-        return self.local.scheduler
-
-    def request_instance(self, request):
-        return self.scheduler.get_task(request)
-
-    def monitor_start(self, monitor):
-        super(TaskQueue, self).monitor_start(monitor)
-        self._create_scheduler()
-        
-    def worker_start(self, worker):
-        super(TaskQueue, self).worker_start(worker)
-        self._create_scheduler(False)
-    
-    def monitor_task(self, monitor):
-        '''Override the :meth:`pulsar.Application.monitor_task` callback
-to check if the scheduler needs to perform a new run.'''
-        super(TaskQueue, self).monitor_task(monitor)
-        s = self.scheduler
-        if s:
-            if s.next_run <= datetime.now():
-                s.tick()
-
-    def job_list(self, jobnames=None):
-        return self.scheduler.job_list(jobnames=jobnames)
-
-    @property
-    def registry(self):
-        global registry
-        return registry
-
-    ############################################################################
-    ##    INTERNALS
-    def _create_scheduler(self, schedule_periodic=True):
-        # Load the application callable, the task consumer
-        if self.callable:
-            self.callable()
-        self.local.scheduler = Scheduler(self.queue,
-                                         self.task_class,
-                                         self.cfg.tasks_path,
-                                         logger=self.logger,
-                                         schedule_periodic=schedule_periodic)
-        
-    def _addtask(self, monitor, caller, jobname, task_extra, ack, args, kwargs):
-        task = self.scheduler.queue_task(jobname, args, kwargs, **task_extra)
-        if ack:
-            return task

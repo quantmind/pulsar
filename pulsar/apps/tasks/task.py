@@ -1,5 +1,92 @@
 '''\
-A task scheduler application with HTTP-RPC hooks
+By default, tasks are constructed using an in-memory implementation of
+:class:`Task`. To use a different implementation, for example one that
+saves tasks on a database, subclass :class:`Task` and pass the new class
+to the :class:`TaskQueue` constructor::
+
+    from pulsar.apps import tasks
+
+    class TaskDatabase(tasks.Task):
+
+        def on_created(self):
+            return save2db(self)
+
+        def on_received(self):
+            return save2db(self)
+
+        def on_start(self):
+            return save2db(self)
+
+        def on_finish(self):
+            return save2db(self)
+
+        @classmethod
+        def get_task(cls, id, remove = False):
+            return taskfromdb(id)
+
+
+    tq = tasks.TaskQueue(task_class=TaskDatabase, tasks_path='path.to.tasks.*')
+    tq.start()
+    
+.. _tasks-callbacks:
+
+Task callbacks
+~~~~~~~~~~~~~~~~~~~
+
+When creating your own :class:`Task` class all you need to override are the four
+task callbacks:
+
+* :meth:`Task.on_created` called by the taskqueue when it creates a new task
+  instance.
+* :meth:`Task.on_received` called by a worker when it receives the task.
+* :meth:`Task.on_start` called by a worker when it starts the task.
+* :meth:`Task.on_finish` called by a worker when it ends the task.
+
+
+and :meth:`Task.get_task` classmethod for retrieving tasks instances.
+
+.. _task-state:
+
+Task states
+~~~~~~~~~~~~~
+
+A :class:`Task` can have one of the following :attr:`Task.status` string:
+
+* ``PENDING`` A task waiting for execution and unknown.
+* ``RETRY`` A task is retrying calculation.
+* ``RECEIVED`` when the task is received by the task queue.
+* ``STARTED`` task execution has started.
+* ``REVOKED`` the task execution has been revoked. One possible reason could be
+  the task has timed out.
+* ``UNKNOWN`` task execution is unknown.
+* ``FAILURE`` task execution has finished with failure.
+* ``SUCCESS`` task execution has finished with success.
+
+
+.. attribute:: FULL_RUN_STATES
+
+    The set of states for which a :class:`Task` has run:
+    ``FAILURE`` and ``SUCCESS``
+
+.. attribute:: READY_STATES
+
+    The set of states for which a :class:`Task` has finished:
+    ``REVOKED``, ``FAILURE`` and ``SUCCESS``
+
+
+Task Interface
+~~~~~~~~~~~~~~~~~~~~~~
+
+.. autoclass:: Task
+   :members:
+   :member-order: bysource
+   
+TaskConsumer
+~~~~~~~~~~~~~~~~~~~~~~
+
+.. autoclass:: TaskConsumer
+   :members:
+   :member-order: bysource
 '''
 from datetime import datetime
 import logging

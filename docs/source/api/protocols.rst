@@ -75,5 +75,31 @@ Server
    :member-order: bysource
 
 
+Message Queues
+==================
+
+Message Queue Interface
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. autoclass:: MessageQueue
+   :members:
+   :member-order: bysource
+
+
+Python Message Queue
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. autoclass:: PythonMessageQueue
+   :members:
+   :member-order: bysource
+   
+   
+Queue Server
+~~~~~~~~~~~~~~~~~~~~
+
+.. autoclass:: QueueServer
+   :members:
+   :member-order: bysource
+   
 .. _pep-3153: http://www.python.org/dev/peps/pep-3153/
 .. _pep-3156: http://www.python.org/dev/peps/pep-3156/

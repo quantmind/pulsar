@@ -1,3 +1,18 @@
+'''
+Scheduler
+~~~~~~~~~~~~~
+
+.. autoclass:: Scheduler
+   :members:
+   :member-order: bysource
+   
+Scheduler Entry
+~~~~~~~~~~~~~~~~~~~
+
+.. autoclass:: SchedulerEntry
+   :members:
+   :member-order: bysource
+'''
 import time
 import logging
 from datetime import timedelta, datetime
@@ -54,8 +69,7 @@ class Schedule(object):
 
 
 class SchedulerEntry(object):
-    """A class which can be used as a schedule entry in a
-:class:`Scheduler` instance."""
+    """A class used as a schedule entry in by a :class:`Scheduler`."""
     name = None
     '''Task name'''
     schedule = None
@@ -78,7 +92,8 @@ class SchedulerEntry(object):
 
     @property
     def scheduled_last_run_at(self):
-        '''The scheduled last run datetime. This is different from :attr:`last_run_at` only when :attr:`anchor` is set.'''
+        '''The scheduled last run datetime. This is different from
+:attr:`last_run_at` only when :attr:`anchor` is set.'''
         last_run_at = self.last_run_at
         anchor = self.anchor
         if last_run_at and anchor:
@@ -125,7 +140,7 @@ This class is the main driver of tasks and task scheduling.
 
 .. attribute:: queue
 
-    The task queue instance. It must have a python Queue API.
+    The distributed :class:`pulsar.MessageQueue` where to send tasks.
     
 .. attribute:: task_class
 
@@ -137,14 +152,14 @@ This class is the main driver of tasks and task scheduling.
     
 .. attribute:: schedule_periodic
 
-    `True` if the schedulter schedule periodic tasks.
+    `True` if this :class:`Scheduler` can schedule periodic tasks.
 """
     def __init__(self, queue, task_class, tasks_path=None, logger=None,
                  schedule_periodic=False):
         if tasks_path:
             import_modules(tasks_path)
         self.schedule_periodic = schedule_periodic
-        self._entries = self.setup_schedule()
+        self._entries = self._setup_schedule()
         self.next_run = datetime.now()
         self.task_class = task_class
         self.queue = queue
@@ -152,6 +167,8 @@ This class is the main driver of tasks and task scheduling.
 
     @property
     def entries(self):
+        '''Dictionary of :class:`SchedulerEntry`, available only if
+:attr:`schedule_periodic` is ``True``.'''
         return self._entries
 
     def run(self, jobname, *args, **kwargs):
@@ -159,7 +176,8 @@ This class is the main driver of tasks and task scheduling.
         return self.queue_task(jobname, args, kwargs)
     
     def queue_task(self, jobname, targs=None, tkwargs=None, **params):
-        '''Create a new :class:`Task` which may or may not queued.
+        '''Create a new :class:`Task` which may or may not be queued. This
+method returns a :ref:`coroutine <coroutine>`.
 
 :parameter jobname: the name of a :class:`Job` registered
     with the :class:`TaskQueue` application.
@@ -181,8 +199,10 @@ This class is the main driver of tasks and task scheduling.
         return task
 
     def tick(self, now=None):
-        '''Run a tick, that is one iteration of the scheduler.
-Executes all due tasks calculate the time in seconds to wait before
+        '''Run a tick, that is one iteration of the scheduler. This
+method only works when :attr:`schedule_periodic` is ``True``.
+
+Executes all due tasks and calculate the time in seconds to wait before
 running a new :meth:`tick`. For testing purposes a :class:`datetime.datetime`
 value ``now`` can be passed.'''
         if not self.schedule_periodic:
@@ -217,15 +237,6 @@ value ``now`` can be passed.'''
         if not isinstance(s, timedelta):
             raise ValueError('Schedule %s is not a timedelta' % s)
         return Schedule(s, anchor)
-
-    def setup_schedule(self):
-        if not self.schedule_periodic:
-            return
-        entries = {}
-        for name, task in registry.filter_types('periodic'):
-            schedule = self.maybe_schedule(task.run_every, task.anchor)
-            entries[name] = SchedulerEntry(name, schedule)
-        return entries
 
     def job_list(self, jobnames = None):
         jobnames = jobnames or registry
@@ -298,6 +309,15 @@ value ``now`` can be passed.'''
     ##    PRIVATE METHODS
     ############################################################################
 
+    def _setup_schedule(self):
+        if not self.schedule_periodic:
+            return
+        entries = {}
+        for name, task in registry.filter_types('periodic'):
+            schedule = self.maybe_schedule(task.run_every, task.anchor)
+            entries[name] = SchedulerEntry(name, schedule)
+        return entries
+    
     def _make_request(self, jobname, targs=None, tkwargs=None, expiry=None,
                       **params):
         if jobname in registry:
