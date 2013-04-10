@@ -3,7 +3,6 @@ FAILURE = "FAILURE"
 UNKNOWN = "UNKNOWN"
 REVOKED = "REVOKED"
 STARTED = "STARTED"
-RECEIVED = "RECEIVED"
 RETRY = "RETRY"
 PENDING = "PENDING"
 #: Lower index means higher precedence.
@@ -13,19 +12,17 @@ PRECEDENCE = (
               (UNKNOWN, 3),
               (REVOKED, 4),
               (STARTED, 5),
-              (RECEIVED, 6),
-              (RETRY, 7),
-              (PENDING, 8)
+              (RETRY, 6),
+              (PENDING, 7)
               )
 
 PRECEDENCE_MAPPING = dict(PRECEDENCE)
 UNKNOWN_STATE = PRECEDENCE_MAPPING[UNKNOWN]
 FULL_RUN_STATES = frozenset([SUCCESS, FAILURE])
 READY_STATES = frozenset([SUCCESS, FAILURE, REVOKED])
-NOT_STARTED_STATES = frozenset([PENDING, RECEIVED, RETRY])
-UNREADY_STATES = frozenset([PENDING, RECEIVED, STARTED, RETRY])
+NOT_STARTED_STATES = frozenset([PENDING, RETRY])
+UNREADY_STATES = frozenset([PENDING, STARTED, RETRY])
 EXCEPTION_STATES = frozenset([RETRY, FAILURE, REVOKED])
 PROPAGATE_STATES = frozenset([FAILURE, REVOKED])
-ALL_STATES = frozenset([PENDING, RECEIVED, STARTED,
-                        SUCCESS, FAILURE, RETRY, REVOKED])
+ALL_STATES = frozenset([PENDING, STARTED, SUCCESS, FAILURE, RETRY, REVOKED])
 status_code = lambda code: PRECEDENCE_MAPPING.get(code)

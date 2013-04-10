@@ -1,4 +1,4 @@
-.. _app-taskqueue-task:
+.. _apps-taskqueue-task:
 
 ====================
 Tasks

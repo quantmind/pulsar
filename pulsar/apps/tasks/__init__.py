@@ -1,17 +1,17 @@
 '''\
-An asynchronous task-queue built on top
+Pulsar ships with an asynchronous :class:`TaskQueue` built on top
 :ref:`pulsar application framework <apps-framework>`. Task queues are used
 as a mechanism to distribute work across threads/processes or machines.
 Pulsar :class:`TaskQueue` is highly customizable, it can run in multi-threading
-or multiprocessing (default) mode and can share :class:`Task` across
+or multiprocessing (default) mode and can share :class:`task.Task` across
 several machines.
-By creating :class:`Job` classes in a similar way you do for celery_,
+By creating :class:`models.Job` classes in a similar way you do for celery_,
 this application gives you all you need for running them with very
 little setup effort::
 
     from pulsar.apps import tasks
 
-    tq = tasks.TaskQueue(tasks_path='path.to.tasks.*')
+    tq = tasks.TaskQueue(tasks_path=['path.to.tasks.*'])
     tq.start()
     
 To get started, follow the these points:
@@ -34,16 +34,16 @@ standard :ref:`application settings <settings>`:
 .. _app-tasks_path:
 
 * The :ref:`task_paths <setting-task_paths>` parameter specify
-  a list of python paths where to collect :class:`Job` classes::
+  a list of python paths where to collect :class:`models.Job` classes::
   
       task_paths = ['myjobs','another.moduledir.*']
       
-  The ``*`` at the end of the second module indicates to collect :class:`Job`
-  from all submodules of ``another.moduledir``.
+  The ``*`` at the end of the second module indicates to collect
+  :class:`models.Job` from all submodules of ``another.moduledir``.
   
 * The :ref:`schedule_periodic <setting-schedule_periodic>` flag indicates
-  if the :class:`TaskQueue` can schedule :class:`PeriodicJob`. Usually,
-  only one running application is responsible for
+  if the :class:`TaskQueue` can schedule :class:`models.PeriodicJob`. Usually,
+  only one running :class:`TaskQueue` application is responsible for
   scheduling tasks while all the other, simply consume tasks.
   This parameter can also be specified in the command line via the
   ``--schedule-periodic`` flag. Default: ``False``.
@@ -51,6 +51,8 @@ standard :ref:`application settings <settings>`:
 * The :ref:`task_queue_factory <setting-task_queue_factory>` parameter
   is a dotted path to the callable which creates the
   :attr:`pulsar.apps.CPUboundApplication.queue` instance.
+  By default, pulsar uses the :class:`pulsar.PythonMessageQueue` class
+  which is a wrapper around the python :class:`multiprocessing.Queue` class.
 
 
 .. _app-taskqueue-app:
@@ -131,6 +133,7 @@ class TaskPaths(TaskSetting):
         :ref:`config file <setting-config>`.
         """
         
+        
 class SchedulePeriodic(TaskSetting):
     name = 'schedule_periodic'
     section = "Task Consumer"
@@ -147,13 +150,14 @@ class SchedulePeriodic(TaskSetting):
 
 
 class TaskQueue(pulsar.CPUboundApplication):
-    '''A :class:`pulsar.CPUboundServer` for consuming
-tasks and managing scheduling of tasks via the :class:`Scheduler` class.
+    '''A :class:`pulsar.apps.CPUboundApplication` for consuming
+task.Tasks and managing scheduling of tasks via a
+:class:`scheduler.Scheduler`.
 
 .. attribute:: registry
 
-    Instance of a :class:`JobRegistry` containing all
-    registered :class:`Job` instances.
+    Instance of a :class:`models.JobRegistry` containing all
+    registered :class:`models.Job` instances.
 '''
     name = 'tasks'
     cfg = pulsar.Config(apps=('cpubound', 'tasks'),
@@ -167,18 +171,19 @@ Default: :class:`TaskInMemory`
 
     @local_property
     def scheduler(self):
-        '''A :class:`Scheduler` which sends tasks to the task queue and
-produces periodic tasks according to their schedule of execution.
+        '''A :class:`scheduler.Scheduler` which sends tasks to the task queue
+and produces periodic tasks according to their schedule of execution.
 
-At every event loop, the :class:`pulsar.ApplicationMonitor` running
-the :class:`TaskQueue` application, invokes the :meth:`Scheduler.tick`
-which check for tasks to be scheduled.
+At every event loop, the :class:`pulsar.apps.ApplicationMonitor` running
+the :class:`TaskQueue` application, invokes the :meth:`scheduler.Scheduler.tick`
+method which check for tasks to be scheduled.
 
 Check the :meth:`TaskQueue.monitor_task` callback
 for implementation.'''
         if self.callable:
             self.callable() 
-        return Scheduler(self.queue,
+        return Scheduler(self.name,
+                         self.queue,
                          self.task_class,
                          self.cfg.tasks_path,
                          logger=self.logger,
@@ -188,8 +193,8 @@ for implementation.'''
         return self.scheduler.get_task(request)
     
     def monitor_task(self, monitor):
-        '''Override the :meth:`pulsar.Application.monitor_task` callback
-to check if the scheduler needs to perform a new run.'''
+        '''Override the :meth:`pulsar.apps.Application.monitor_task` callback
+to check if the :attr:`scheduler` needs to perform a new run.'''
         super(TaskQueue, self).monitor_task(monitor)
         s = self.scheduler
         if s:
@@ -218,49 +223,3 @@ to check if the scheduler needs to perform a new run.'''
         task = self.scheduler.queue_task(jobname, args, kwargs, **task_extra)
         if ack:
             return task
-
-
-#################################################    TASKQUEUE COMMANDS
-@pulsar.command()
-def addtask(request, jobname, task_extra, *args, **kwargs):
-    actor = request.actor
-    kwargs.pop('ack', None)
-    return actor.app._addtask(actor, request.caller, jobname, task_extra, True,
-                              args, kwargs)
-
-@pulsar.command()
-def addtask_noack(request, jobname, task_extra, *args, **kwargs):
-    actor = request.actor
-    kwargs.pop('ack', None)
-    return actor.app._addtask(actor, request.caller, jobname, task_extra, False,
-                              args, kwargs)
-
-@pulsar.command()
-def save_task(request, task):
-    return request.actor.app.scheduler.save_task(task)
-
-@pulsar.command()
-def delete_tasks(request, ids):
-    return request.actor.app.scheduler.delete_tasks(ids)
-
-@pulsar.command()
-def get_task(request, id):
-    return request.actor.app.scheduler.get_task(id)
-
-@pulsar.command()
-def get_tasks(request, **parameters):
-    return request.actor.app.scheduler.get_tasks(**parameters)
-
-@pulsar.command()
-def job_list(request, jobnames=None):
-    return list(request.actor.app.job_list(jobnames=jobnames))
-
-@pulsar.command()
-def next_scheduled(request, jobnames=None):
-    return request.actor.app.scheduler.next_scheduled(jobnames=jobnames)
-
-@pulsar.command()
-def wait_for_task(request, id, timeout=3600):
-    # wait for a task to finish for at most timeout seconds
-    scheduler = request.actor.app.scheduler
-    return scheduler.task_class.wait_for_task(scheduler, id, timeout)

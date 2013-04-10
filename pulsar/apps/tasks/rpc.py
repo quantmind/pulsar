@@ -41,7 +41,7 @@ class TaskQueueRpcMixin(rpc.JSONRPC):
     '''A :class:`pulsar.apps.rpc.JSONRPC` mixin for communicating with
 a :class:`TaskQueue`.
 To use it, you need to have an :ref:`RPC application <apps-rpc>`
-and a :ref:`task queue <apps-tasks>` application installed in the
+and a :ref:`task queue <apps-taskqueue>` application installed in the
 :class:`pulsar.Arbiter`.
 
 :parameter taskqueue: instance or name of the

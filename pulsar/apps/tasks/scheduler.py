@@ -1,4 +1,9 @@
 '''
+The :class:`Scheduler` is at the hart of the
+:ref:`task queue application <apps-taskqueue>`. It exposes
+all the functionalities for running new tasks, scheduling periodic tasks
+and retrieving task information.
+
 Scheduler
 ~~~~~~~~~~~~~
 
@@ -18,7 +23,7 @@ import logging
 from datetime import timedelta, datetime
 
 
-from pulsar import EMPTY_TUPLE, EMPTY_DICT
+from pulsar import EMPTY_TUPLE, EMPTY_DICT, NOT_DONE, get_actor, async
 from pulsar.utils.httpurl import itervalues, iteritems
 from pulsar.utils.importer import import_modules
 from pulsar.utils.timeutils import remaining, timedelta_seconds,\
@@ -28,7 +33,7 @@ from pulsar import Empty
 
 from .models import registry
 from .exceptions import SchedulingError, TaskNotAvailable
-from .states import PENDING
+from .states import PENDING, READY_STATES
 
 
 __all__ = ['Scheduler', 'LOGGER']
@@ -144,18 +149,20 @@ This class is the main driver of tasks and task scheduling.
     
 .. attribute:: task_class
 
-    The :attr:`TaskQueue.task_class` for producing new :class:`Task`.
+    The :ref:`task class <tasks-interface>` for producing new tasks.
     
 .. attribute:: task_path
 
-    Optional list of paths where to upload :class:`Job` and :class:`PeriodicJob`
+    List of paths where to upload :ref:`jobs <app-taskqueue-job>` which
+    are factory of tasks.
     
 .. attribute:: schedule_periodic
 
     `True` if this :class:`Scheduler` can schedule periodic tasks.
 """
-    def __init__(self, queue, task_class, tasks_path=None, logger=None,
+    def __init__(self, name, queue, task_class, tasks_path=None, logger=None,
                  schedule_periodic=False):
+        self.name = name
         if tasks_path:
             import_modules(tasks_path)
         self.schedule_periodic = schedule_periodic
@@ -175,9 +182,12 @@ This class is the main driver of tasks and task scheduling.
         '''A shortcut for :meth:`queue_task`.'''
         return self.queue_task(jobname, args, kwargs)
     
+    @async()
     def queue_task(self, jobname, targs=None, tkwargs=None, **params):
         '''Create a new :class:`Task` which may or may not be queued. This
-method returns a :ref:`coroutine <coroutine>`.
+method returns a :ref:`coroutine <coroutine>`. If *jobname* is not a valid
+:attr:`pulsar.apps.tasks.models.Job.name`, an ``TaskNotAvailable`` exception
+occurs.
 
 :parameter jobname: the name of a :class:`Job` registered
     with the :class:`TaskQueue` application.
@@ -187,25 +197,25 @@ method returns a :ref:`coroutine <coroutine>`.
     in the task callable.
 :parameter params: Additional parameters to be passed to the :class:`Task`
     constructor (not its callable function).
-
-:rtype: an instance of :class:`Task`'''
-        task = self._make_request(jobname, targs, tkwargs, **params)
-        if task.needs_queuing():
+:return: a :ref:`task <apps-taskqueue-task>`.'''
+        task, put = yield self._make_request(jobname, targs, tkwargs, **params)
+        if put:
             task._queued = True
-            self.queue.put(task.serialize_for_queue())
+            self.queue.put(task.id)
         else:
             task._queued = False
             self.logger.debug('Task %s already requested, abort.', task)
-        return task
+        yield task
 
     def tick(self, now=None):
         '''Run a tick, that is one iteration of the scheduler. This
-method only works when :attr:`schedule_periodic` is ``True``.
+method only works when :attr:`schedule_periodic` is ``True`` and
+the arbiter context.
 
 Executes all due tasks and calculate the time in seconds to wait before
 running a new :meth:`tick`. For testing purposes a :class:`datetime.datetime`
 value ``now`` can be passed.'''
-        if not self.schedule_periodic:
+        if not self.schedule_periodic or not get_actor().is_arbiter(): 
             return
         remaining_times = []
         try:
@@ -228,17 +238,10 @@ value ``now`` can be passed.'''
                 task = self.queue.get(timeout=0.5)
         except Empty:
             pass
-        
-    def maybe_schedule(self, s, anchor):
-        if not self.schedule_periodic:
-            return
-        if isinstance(s, int):
-            s = timedelta(seconds=s)
-        if not isinstance(s, timedelta):
-            raise ValueError('Schedule %s is not a timedelta' % s)
-        return Schedule(s, anchor)
 
-    def job_list(self, jobnames = None):
+    def job_list(self, jobnames=None):
+        '''A generator of two-elements tuples with the first element given by
+a job name and the second a dictionary of job information.'''
         jobnames = jobnames or registry
         for name in jobnames:
             if name not in registry:
@@ -258,7 +261,7 @@ value ``now`` can be passed.'''
                 d.update({'next_run':next_time_to_run,
                           'run_every':run_every,
                           'runs_count':entry.total_run_count})
-            yield (name,d)
+            yield (name, d)
 
     def next_scheduled(self, jobnames=None):
         if not self.schedule_periodic:
@@ -287,14 +290,16 @@ value ``now`` can be passed.'''
             return (jobnames, None)
 
     def get_task(self, id, remove=False):
+        '''Retrieve a :ref:`task <tasks-interface>` given its id. If *id*
+is a task, simply return it.'''
         if isinstance(id, self.task_class):
             task = id
         else:
-            task = self.task_class.get_task(self, id)
+            task = yield self.task_class.get_task(id)
         if task and task.done() and remove:
             self.delete_tasks([task.id])
         else:
-            return task
+            yield task
         
     def get_tasks(self, **parameters):
         return self.task_class.get_tasks(self, **parameters)
@@ -304,7 +309,16 @@ value ``now`` can be passed.'''
     
     def delete_tasks(self, ids=None):
         return self.task_class.delete_tasks(self, ids)
-    
+
+    def wait_for_task(self, task):
+        '''Return a :ref:`coroutine <coroutine>` which will be ready once
+the *task* is in a :ref:`ready state <task-state-ready>`.'''            
+        while task['status'] not in READY_STATES:
+            yield NOT_DONE
+            task = yield self.get_task(result['id'])
+        yield task
+        
+            
     ############################################################################
     ##    PRIVATE METHODS
     ############################################################################
@@ -314,9 +328,18 @@ value ``now`` can be passed.'''
             return
         entries = {}
         for name, task in registry.filter_types('periodic'):
-            schedule = self.maybe_schedule(task.run_every, task.anchor)
+            schedule = self._maybe_schedule(task.run_every, task.anchor)
             entries[name] = SchedulerEntry(name, schedule)
         return entries
+    
+    def _maybe_schedule(self, s, anchor):
+        if not self.schedule_periodic:
+            return
+        if isinstance(s, int):
+            s = timedelta(seconds=s)
+        if not isinstance(s, timedelta):
+            raise ValueError('Schedule %s is not a timedelta' % s)
+        return Schedule(s, anchor)
     
     def _make_request(self, jobname, targs=None, tkwargs=None, expiry=None,
                       **params):
@@ -326,9 +349,9 @@ value ``now`` can be passed.'''
             targs = targs or EMPTY_TUPLE
             tkwargs = tkwargs or EMPTY_DICT
             id = job.make_task_id(targs, tkwargs)
-            task = self.get_task(id, remove=True)
+            task = yield self.get_task(id, remove=True)
             if task:
-                return task.to_queue(self)
+                yield task, False
             else:
                 if self.entries and job.name in self.entries:
                     self.entries[job.name].next()
@@ -337,11 +360,11 @@ value ``now`` can be passed.'''
                     expiry = get_datetime(expiry, time_executed)
                 elif job.timeout:
                     expiry = get_datetime(job.timeout, time_executed)
-                task = task_class(id=id, name=job.name,
-                                  time_executed=time_executed, expiry=expiry,
-                                  args=targs, kwargs=tkwargs, status=PENDING,
-                                  **params)
-                task.on_created(self)
-                return task.to_queue(self)
+                task = yield task_class(id=id, name=job.name,
+                                        time_executed=time_executed,
+                                        expiry=expiry, args=targs,
+                                        kwargs=tkwargs, status=PENDING,
+                                        **params).save()
+                yield task, True
         else:
             raise TaskNotAvailable(jobname)

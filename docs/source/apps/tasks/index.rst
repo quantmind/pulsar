@@ -1,4 +1,4 @@
-.. _apps-tasks:
+.. _apps-taskqueue:
 
 =============================
 Distributed Task Queues

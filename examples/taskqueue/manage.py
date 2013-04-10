@@ -1,6 +1,6 @@
 '''This example creates two :ref:`pulsar applications <apps-framework>`
 performing different duties. The first application is a distributed
-a :ref:`task queue <apps-tasks>` for processing tasks implemented
+a :ref:`task queue <apps-taskqueue>` for processing tasks implemented
 in the :mod:`examples.taskqueue.simpletasks` module.
 The second application is a :ref:`WSGI server <apps-wsgi>` which
 exposes the task queue functionalities via a :ref:`JSON-RPC api <apps-rpc>`.

@@ -85,7 +85,7 @@ __all__ = ['Application',
 
 section_docs['Task Consumer'] = '''
 This section covers configuration parameters used by CPU bound type applications
-such as the :ref:`distributed task queue <apps-tasks>` and the
+such as the :ref:`distributed task queue <apps-taskqueue>` and the
 :ref:`test suite <apps-test>`, or in general, application which derive from
 :class:`pulsar.apps.CPUboundApplication`.
 '''
@@ -105,7 +105,7 @@ class TaskQueueFactory(pulsar.Setting):
         :class:`pulsar.MessageQueue`. The only parameter passed to the
         task queue factory is a :class:`pulsar.utils.config.Config` instance.
         This parameters is used by :class:`pulsar.apps.CPUboundApplication`
-        such as the :ref:`distributed task queue <apps-tasks>` and the
+        such as the :ref:`distributed task queue <apps-taskqueue>` and the
         :ref:`test suite <apps-test>`.
         The default value is the :class:`pulsar.PythonMessageQueue`.'''
 

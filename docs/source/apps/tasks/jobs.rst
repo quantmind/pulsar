@@ -1,4 +1,4 @@
-.. _app-taskqueue-job:
+.. _apps-taskqueue-job:
 
 ====================
 Jobs

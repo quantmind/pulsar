@@ -103,8 +103,30 @@ class TestTaskQueueMeta(TaskQueueBase, unittest.TestCase):
         
         
 @sequential
-class TestTaskQueueOnThread(TaskQueueBase, unittest.TestCase):        
+class TestTaskQueueOnThread(TaskQueueBase, unittest.TestCase):
 
+    def _test_not_overlap(self):
+        app = yield get_application(self.apps[0].name)
+        self.assertTrue('notoverlap' in app.registry)
+        r1 = yield app.scheduler.run('notoverlap', 1)
+        self.assertEqual(str(r1), 'notoverlap(%s)' % r1.id)
+        self.assertTrue(r1._queued)
+        r2 = app.scheduler.run('notoverlap', 1)
+        self.assertFalse(r2._queued)
+        self.assertEqual(r1.id, r2.id)
+        # We need to make sure the first task is completed
+        r1 = yield app.scheduler.wait_for_task(r1)
+        self.assertEqual(get_task(id).status, tasks.SUCCESS)
+        
+    def test_not_overlap(self):
+        return self._test_not_overlap()
+    
+class b:
+        
+    @run_on_arbiter
+    def test_not_overlap_on_arbiter(self):
+        return self._test_not_overlap()
+    
     def test_rpc_job_list(self):
         jobs = yield self.proxy.job_list()
         self.assertTrue(jobs)
@@ -121,26 +143,10 @@ class TestTaskQueueOnThread(TaskQueueBase, unittest.TestCase):
         self.assertTrue(scheduler.next_run > datetime.now())
         
     @run_on_arbiter
-    def test_not_overlap(self):
-        app = yield get_application(self.apps[0].name)
-        self.assertTrue('notoverlap' in app.registry)
-        r1 = app.scheduler.run('notoverlap', 1)
-        self.assertEqual(str(r1), 'notoverlap(%s)' % r1.id)
-        self.assertTrue(r1._queued)
-        r2 = app.scheduler.run('notoverlap', 1)
-        self.assertFalse(r2._queued)
-        id = r1.id
-        self.assertEqual(id, r2.id)
-        # We need to make sure the first task is completed
-        get_task = app.scheduler.get_task
-        while get_task(id).status in tasks.UNREADY_STATES:
-            yield NOT_DONE
-        self.assertEqual(get_task(id).status, tasks.SUCCESS)
-        
-    @run_on_arbiter
     def test_delete_task(self):
-        app = get_application(self.name_tq())
-        r1 = app.scheduler.run('addition', 1, 4)
+        app = yield get_application(self.apps[0].name)
+        r1 = yield app.scheduler.run('addition', 1, 4)
+        r1 = yield app.acheduler.wait_for_task(r1)
         id = r1.id
         get_task = app.scheduler.get_task
         while get_task(id).status in tasks.UNREADY_STATES:
@@ -245,7 +251,7 @@ class TestTaskQueueOnThread(TaskQueueBase, unittest.TestCase):
         self.assertEqual(len(stasks), sample)
     def test_kill_task_workers(self):
         info = yield self.proxy.server_info()
-        tq = info['monitors'][self.name_tq()]
+        tq = info['monitors'][self.apps[0].name]
         for worker in tq['workers']:
             a = worker['actor']
             aid = a['actor_id']

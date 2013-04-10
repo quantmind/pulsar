@@ -96,8 +96,8 @@ during its life time.
             self.state = ACTOR_STATES.RUN
             self.fire_event('start')
             self.periodic_task()
-        except Exception as e:
-            self.stop(e)
+        except Exception:
+            self.stop(sys.exc_info())
     
     def get_actor(self, aid):
         if aid == self.aid:
