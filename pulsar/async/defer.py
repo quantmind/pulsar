@@ -124,8 +124,8 @@ def default_maybe_async(val, get_result=True, **kwargs):
     else:
         return maybe_failure(val)
     
-def maybe_async(value, description=None, max_errors=1, timeout=None,
-                get_result=True):
+def maybe_async(value, description=None, event_loop=None, max_errors=1,
+                timeout=None, get_result=True):
     '''Return an asynchronous instance only if *value* is
 a generator or already an asynchronous instance. If *value* is asynchronous
 it checks if it done. In this case it returns the *result*.
@@ -133,6 +133,7 @@ it checks if it done. In this case it returns the *result*.
 :parameter value: the value to convert to an asynchronous instance
     if it needs to.
 :parameter description: optional description, rarely used.
+:parameter event_loop: optional :class:`EventLoop`.
 :parameter max_errors: The maximum number of exceptions allowed before
     stopping the generator and raise exceptions. By default it is 1.
 :parameter timeout: optional timeout after which any asynchronous element get
@@ -143,8 +144,8 @@ it checks if it done. In this case it returns the *result*.
 '''
     global _maybe_async
     return _maybe_async(value, description=description,
-                        max_errors=max_errors, timeout=timeout,
-                        get_result=get_result)
+                        event_loop=event_loop, max_errors=max_errors,
+                        timeout=timeout, get_result=get_result)
     
 def maybe_failure(value, msg=None):
     '''Convert *value* into a :class:`Failure` if it is a stack trace or an
@@ -198,23 +199,16 @@ Typical usage::
     def myfunction(...):
         ...
 '''
-    def __init__(self, max_errors=None, description=None, timeout=0,
-                 get_result=True):
-         self.max_errors = max_errors
-         self.description = description or 'async decorator for '
-         self.timeout = timeout
-         self.get_result = get_result
+    def __init__(self, **params):
+         self.params = params
 
     def __call__(self, func):
-        description = '%s%s' % (self.description, func.__name__)
         def _(*args, **kwargs):
             try:
                 result = func(*args, **kwargs)
             except Exception:
                 result = sys.exc_info()
-            return maybe_async(result, description=description,
-                               max_errors=self.max_errors, timeout=self.timeout,
-                               get_result=self.get_result)
+            return maybe_async(result, **self.params)
         _.__name__ = func.__name__
         _.__doc__ = func.__doc__
         return _

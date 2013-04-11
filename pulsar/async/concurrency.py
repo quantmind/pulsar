@@ -1,5 +1,6 @@
 import time
 from multiprocessing import Process, current_process
+from multiprocessing.dummy import DummyProcess
 from threading import Thread, current_thread
 
 from pulsar import system, platform
@@ -102,7 +103,7 @@ class ActorProcess(ActorConcurrency, Process):
     pass
 
 
-class ActorThread(ActorConcurrency, Thread):
+class ActorThread(ActorConcurrency, DummyProcess):
     '''Actor on a thread'''
     def terminate(self):
         '''Called by the main thread to force termination.'''

@@ -21,7 +21,7 @@ from pulsar.utils.pep import default_timer, set_event_loop_policy,\
 from pulsar.utils.sockets import SOCKET_INTERRUPT_ERRORS
 
 from .access import thread_local_data
-from .defer import log_failure, is_failure, Deferred, TimeoutError
+from .defer import log_failure, is_failure, Deferred, TimeoutError, is_async
 from .transports import create_server
 
 __all__ = ['EventLoop', 'TimedCall']
@@ -443,10 +443,19 @@ to transfer control from other threads to the EventLoop's thread.'''
             return self.call_every(callback, *args)
     
     def call_every(self, callback, *args):
-        """Call a *callback* at every loop."""
+        """Call a *callback* at every loop. If the return value form the
+callback is asynchronous, resume the callback once the result is done.
+If an error occur in the *callback*, the chain is broken and the *callback*
+won't be called anymore."""
         def wrapper():
-            callback(*args)  # If this fails, the chain is broken.
-            self._callbacks.append(handler)
+            result = callback(*args)  # If this fails, the chain is broken.
+            if is_async(result):
+                result.add_callback(lambda r: self._callbacks.append(handler),
+                                    log_failure)
+            elif is_failure(result):
+                log_failure(result)
+            else:
+                self._callbacks.append(handler)
         handler = self.call_soon(wrapper)
         return handler
         

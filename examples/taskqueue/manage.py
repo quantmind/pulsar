@@ -65,7 +65,7 @@ use :class:`pulsar.apps.MultiApp` utility for starting several
 :ref:`pulsar applications <apps-framework>` at once.'''
     cfg = pulsar.Config('Taskqueue with JSON-RPC API example')
     def build(self):
-        yield self.new_app(tasks.TaskQueue, tasks_path=TASK_PATHS)
+        yield self.new_app(tasks.TaskQueue, task_paths=TASK_PATHS)
         yield self.new_app(wsgi.WSGIServer, prefix='rpc',
                            callable=Rpc(self.name))
     

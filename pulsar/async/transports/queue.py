@@ -110,7 +110,7 @@ This queue is not socket based therefore it requires a specialised IO poller,
 the file descriptor is a dummy number and the waker is `self`.
 The waker, when invoked via the :meth:`wake`, reduces the poll timeout to 0
 so that the :meth:`MessageQueue.get` method returns as soon possible.'''
-    def __init__(self, cfg):
+    def __init__(self):
         self._wakeup = 0
         self._queue = Queue()
     

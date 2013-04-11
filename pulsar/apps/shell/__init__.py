@@ -100,6 +100,7 @@ class PulsarShell(pulsar.CPUboundApplication):
     def monitor_start(self, monitor):
         monitor.cfg.set('workers', 1)
         monitor.cfg.set('concurrency', 'thread')
+        super(PulsarShell, self).monitor_start(monitor)
         
     def worker_start(self, worker):  #pragma    nocover
         imported_objects = {'pshell': self,

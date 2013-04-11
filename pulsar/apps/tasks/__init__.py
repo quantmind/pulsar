@@ -109,23 +109,40 @@ from pulsar import to_string, command
 from pulsar.utils.log import local_property
 
 from .exceptions import *
-from .task import *
 from .models import *
-from .scheduler import Scheduler
 from .states import *
+from .backends import *
 from .rpc import *
 
 
 class TaskSetting(pulsar.Setting):
     virtual = True
     app = 'tasks'
+    section = "Task Consumer"
 
 
+class TaskBackend(TaskSetting):
+    name = "task_backend"
+    flags = ["--task-backend"]
+    default = "local://"
+    desc = '''\
+        Task backend.
+
+        A task backend is string which connect to the backend storing Tasks)
+        which accepts one parameter only and returns an instance of a
+        distributed queue which has the same API as
+        :class:`pulsar.MessageQueue`. The only parameter passed to the
+        task queue factory is a :class:`pulsar.utils.config.Config` instance.
+        This parameters is used by :class:`pulsar.apps.CPUboundApplication`
+        such as the :ref:`distributed task queue <apps-taskqueue>` and the
+        :ref:`test suite <apps-test>`.
+        The default value is the :class:`pulsar.PythonMessageQueue`.'''
+
+    
 class TaskPaths(TaskSetting):
     name = "task_paths"
-    section = "Task Consumer"
     validator = pulsar.validate_list
-    default = ['pulsar.apps.tasks.testing']
+    default = []
     desc = """\
         List of python dotted paths where tasks are located.
         
@@ -136,7 +153,6 @@ class TaskPaths(TaskSetting):
         
 class SchedulePeriodic(TaskSetting):
     name = 'schedule_periodic'
-    section = "Task Consumer"
     flags = ["--schedule-periodic"]
     validator = pulsar.validate_bool
     action = "store_true"
@@ -149,66 +165,40 @@ class SchedulePeriodic(TaskSetting):
         '''
 
 
-class TaskQueue(pulsar.CPUboundApplication):
+class TaskQueue(pulsar.Application):
     '''A :class:`pulsar.apps.CPUboundApplication` for consuming
 task.Tasks and managing scheduling of tasks via a
-:class:`scheduler.Scheduler`.
-
-.. attribute:: registry
-
-    Instance of a :class:`models.JobRegistry` containing all
-    registered :class:`models.Job` instances.
-'''
+:class:`scheduler.Scheduler`.'''
+    backend = None
     name = 'tasks'
-    cfg = pulsar.Config(apps=('cpubound', 'tasks'),
-                        timeout=600, backlog=5)
-    task_class = TaskInMemory
-    '''The :class:`Task` class for storing information about task execution.
-
-Default: :class:`TaskInMemory`
-'''
-    '''The scheduler class. Default: :class:`Scheduler`.'''
-
-    @local_property
-    def scheduler(self):
-        '''A :class:`scheduler.Scheduler` which sends tasks to the task queue
-and produces periodic tasks according to their schedule of execution.
-
-At every event loop, the :class:`pulsar.apps.ApplicationMonitor` running
-the :class:`TaskQueue` application, invokes the :meth:`scheduler.Scheduler.tick`
-method which check for tasks to be scheduled.
-
-Check the :meth:`TaskQueue.monitor_task` callback
-for implementation.'''
-        if self.callable:
-            self.callable() 
-        return Scheduler(self.name,
-                         self.queue,
-                         self.task_class,
-                         self.cfg.tasks_path,
-                         logger=self.logger,
-                         schedule_periodic=self.cfg.schedule_periodic)
+    cfg = pulsar.Config(apps=('tasks',), timeout=600, backlog=5)
 
     def request_instance(self, request):
         return self.scheduler.get_task(request)
     
+    def monitor_start(self, monitor):
+        '''When the monitor starts create the :class:`backends.TaskBackend`.'''
+        if self.callable:
+            self.callable()
+        self.backend = getbe(self.cfg.task_backend,
+                             name=self.name,
+                             task_paths=self.cfg.task_paths,
+                             schedule_periodic=self.cfg.schedule_periodic,
+                             backlog=self.cfg.backlog)
+        
     def monitor_task(self, monitor):
         '''Override the :meth:`pulsar.apps.Application.monitor_task` callback
 to check if the :attr:`scheduler` needs to perform a new run.'''
         super(TaskQueue, self).monitor_task(monitor)
-        s = self.scheduler
-        if s:
-            if s.next_run <= datetime.now():
-                s.tick()
+        if self.backend:
+            if self.backend.next_run <= datetime.now():
+                self.backend.tick()
 
-    def job_list(self, jobnames=None):
-        return self.scheduler.job_list(jobnames=jobnames)
-
-    @property
-    def registry(self):
-        global registry
-        return registry
-
+    def worker_start(self, worker):
+        '''When the worker start, register the callback'''
+        worker.create_thread_pool()
+        worker.ioloop.call_every(self.backend.may_pool_task)
+        
     def actorparams(self, monitor, params):
         # Make sure we invoke super function so that we get the distributed
         # task queue

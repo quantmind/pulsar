@@ -5,13 +5,6 @@ import logging
 from time import time
 import random
 from functools import partial
-from multiprocessing.queues import Empty
-
-try:    #pragma nocover
-    import queue
-except ImportError: #pragma nocover
-    import Queue as queue
-ThreadQueue = queue.Queue
 
 from pulsar import AlreadyRegistered, HaltServer,\
                    ActorAlreadyStarted, system, Config, platform
@@ -19,6 +12,7 @@ from pulsar.utils.pep import pickle, set_event_loop_policy, itervalues
 from pulsar.utils.log import LogginMixin
 
 from .eventloop import EventLoop, setid, signal
+from .threadpool import Empty, ThreadQueue, ThreadPool
 from .defer import Deferred, EventHandler, log_failure
 from .proxy import ActorProxy, get_proxy, ActorProxyMonitor, ActorIdentity
 from .mailbox import MailboxClient, command_in_context
@@ -151,6 +145,7 @@ an :class:`ActorProxy`.
     def __init__(self, impl):
         super(Actor, self).__init__()
         self.state = ACTOR_STATES.INITIAL
+        self._thread_pool = None
         self.__impl = impl
         for name in self.all_events():
             hook = impl.params.pop(name, None)
@@ -204,6 +199,10 @@ an :class:`ActorProxy`.
     @property
     def cpubound(self):
         return getattr(self.requestloop, 'cpubound', False)
+    
+    @property
+    def thread_pool(self):
+        return self._thread_pool
 
     @property
     def info_state(self):
@@ -273,6 +272,13 @@ properly this actor will go out of scope.'''
             self.fire_event('stop')
         return self.event('stop')
     
+    def create_thread_pool(self, workers=1):
+        '''Create a thread pool for this :class:`Actor`
+if not already present.'''
+        if self._thread_pool is None:
+            self._thread_pool = ThreadPool(processes=workers)
+        return self._thread_pool
+            
     ###############################################################  STATES
     def running(self):
         '''``True`` if actor is running.'''
@@ -461,3 +467,6 @@ status and performance.'''
         client = MailboxClient(self.monitor.address, self)
         client.event_loop.call_soon_threadsafe(self.hand_shake)
         return client
+    
+    def _init_thread(self):
+        pass
