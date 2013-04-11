@@ -105,7 +105,7 @@ import os
 from datetime import datetime
 
 import pulsar
-from pulsar import to_string
+from pulsar import to_string, command
 from pulsar.utils.log import local_property
 
 from .exceptions import *
@@ -217,9 +217,12 @@ to check if the :attr:`scheduler` needs to perform a new run.'''
         params['app'].cfg.set('schedule_periodic', False)
         return params
      
-    ############################################################################
-    ##    INTERNALS        
-    def _addtask(self, monitor, caller, jobname, task_extra, ack, args, kwargs):
-        task = self.scheduler.queue_task(jobname, args, kwargs, **task_extra)
-        if ack:
-            return task
+
+@command()
+def put_task(request, task):
+    request.actor.app.queue.put(task)
+    
+@command()
+def next_scheduled(request, jobnames=None):
+    actor = request.actor
+    return actor.app.scheduler.next_scheduled(jobnames)

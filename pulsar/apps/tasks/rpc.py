@@ -86,6 +86,7 @@ and a :ref:`task queue <apps-taskqueue>` application installed in the
 
     Wait for a task to have finished.
 '''
+    _scheduler = None
     def __init__(self, taskqueue, **kwargs):
         if not isinstance(taskqueue, str):
             taskqueue = taskqueue.name
@@ -95,7 +96,8 @@ and a :ref:`task queue <apps-taskqueue>` application installed in the
     ############################################################################
     ##    REMOTES
     def rpc_job_list(self, request, jobnames=None):
-        return self._rq(request, 'job_list', jobnames=jobnames)
+        scheduler = yield self.scheduler()
+        yield scheduler.job_list(jobnames=jobnames)
     
     def rpc_next_scheduled_tasks(self, request, jobnames=None):
         return self._rq(request, 'next_scheduled', jobnames=jobnames)
@@ -106,30 +108,39 @@ and a :ref:`task queue <apps-taskqueue>` application installed in the
         
     def rpc_get_task(self, request, id=None):
         if id:
-            result = yield self._rq(request, 'get_task', id)
+            scheduler = yield self.scheduler()
+            result = yield scheduler.get_task(id)
             yield task_to_json(result)
     
     def rpc_get_tasks(self, request, **params):
         if params:
-            result = yield self._rq(request, 'get_tasks', **params)
+            scheduler = yield self.scheduler()
+            result = yield scheduler.get_tasks(**params)
             yield task_to_json(result)
         
     def rpc_wait_for_task(self, request, id=None):
         if id:
-            result = yield self._rq(request, 'wait_for_task', id)
+            scheduler = yield self.scheduler()
+            result = yield scheduler.wait_for_task(id)
             yield task_to_json(result)
     
     ############################################################################
     ##    INTERNALS
+    def scheduler(self):
+        if not self._scheduler:
+            app = yield get_application(self.taskqueue)
+            self._scheduler = app.scheduler
+        yield self._scheduler
+        
     def run_new_task(self, request, jobname, args=None,
                      ack=True, meta_data=None, **kw):
         if not jobname:
             raise rpc.InvalidParams('"jobname" is not specified!')
-        funcname = 'addtask' if ack else 'addtask_noack'
         meta_data = meta_data or {}
         meta_data.update(self.task_request_parameters(request))
         args = args or ()
-        return self._rq(request, funcname, jobname, meta_data, *args, **kw)
+        scheduler = yield self.scheduler()
+        yield scheduler.queue_task(jobname, args, kw, **meta_data)
     
     def task_request_parameters(self, request):
         '''**Internal function** which returns a dictionary of parameters

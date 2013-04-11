@@ -1,7 +1,7 @@
 .. _apps-taskqueue:
 
 =============================
-Distributed Task Queues
+Distributed Task Queue
 =============================
 
 .. toctree::

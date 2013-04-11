@@ -397,20 +397,6 @@ class TaskInMemory(Task):
 
 #################################################    TASKQUEUE COMMANDS
 @command()
-def addtask(request, jobname, task_extra, *args, **kwargs):
-    actor = request.actor
-    kwargs.pop('ack', None)
-    return actor.app._addtask(actor, request.caller, jobname, task_extra, True,
-                              args, kwargs)
-
-@command()
-def addtask_noack(request, jobname, task_extra, *args, **kwargs):
-    actor = request.actor
-    kwargs.pop('ack', None)
-    return actor.app._addtask(actor, request.caller, jobname, task_extra, False,
-                              args, kwargs)
-
-@command()
 def save_task(request, task):
     TASKS = _get_tasks(request.actor)
     if task.id in TASKS:

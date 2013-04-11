@@ -31,7 +31,9 @@ class TaskQueueBase(object):
     def setUpClass(cls):
         # The name of the task queue application
         s = server(name=cls.__name__, rpc_bind='127.0.0.1:0',
-                   concurrency=cls.concurrency, script=__file__,
+                   concurrency=cls.concurrency, 
+                   rpc_concurrency=cls.concurrency,
+                   script=__file__,
                    schedule_periodic=True)
         cls.apps = yield send('arbiter', 'run', s)
         cls.proxy = rpc.JsonProxy('http://%s:%s' % cls.apps[1].address)
@@ -118,10 +120,10 @@ class TestTaskQueueOnThread(TaskQueueBase, unittest.TestCase):
         r1 = yield app.scheduler.wait_for_task(r1)
         self.assertEqual(get_task(id).status, tasks.SUCCESS)
         
+class b:
+        
     def test_not_overlap(self):
         return self._test_not_overlap()
-    
-class b:
         
     @run_on_arbiter
     def test_not_overlap_on_arbiter(self):

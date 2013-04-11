@@ -23,7 +23,7 @@ import logging
 from datetime import timedelta, datetime
 
 
-from pulsar import EMPTY_TUPLE, EMPTY_DICT, NOT_DONE, get_actor, async
+from pulsar import EMPTY_TUPLE, EMPTY_DICT, NOT_DONE, get_actor, async, send
 from pulsar.utils.httpurl import itervalues, iteritems
 from pulsar.utils.importer import import_modules
 from pulsar.utils.timeutils import remaining, timedelta_seconds,\
@@ -82,7 +82,8 @@ class SchedulerEntry(object):
     last_run_at = None
     '''The time and date of when this task was last run.'''
     total_run_count = None
-    '''Total number of times this periodic task has been executed.'''
+    '''Total number of times this periodic task has been executed by the
+    :class:`Scheduler`.'''
 
     def __init__(self, name, schedule, args=(), kwargs={},
                  last_run_at = None, total_run_count=None):
@@ -169,7 +170,7 @@ This class is the main driver of tasks and task scheduling.
         self._entries = self._setup_schedule()
         self.next_run = datetime.now()
         self.task_class = task_class
-        self.queue = queue
+        self.queue = queue or QueueProxy(name)
         self.logger = logger or LOGGER
 
     @property
@@ -368,3 +369,17 @@ the *task* is in a :ref:`ready state <task-state-ready>`.'''
                 yield task, True
         else:
             raise TaskNotAvailable(jobname)
+
+
+class QueueProxy(object):
+    '''A proxy for a :class:`pulsar.MessageQueue`'''
+    def __init__(self, name):
+        self.name = name
+        
+    def put(self, task):
+        send(self.name, 'put_task', task)
+    
+    def get(self, timeout=0.5):
+        raise NotImplementedError('Cannot get tasks')
+
+    
