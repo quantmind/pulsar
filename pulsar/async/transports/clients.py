@@ -156,6 +156,14 @@ class Client(EventHandler):
     '''A client for a remote server which handles one or more
 :class:`ConnectionPool` of asynchronous connections.
 
+:param max_connections: Optional maximum number of connections.
+:param force_sync: set the :attr:`force_sync` attribute.
+:param event_loop: Optional :class:`EventLoop` which set the :attr:`event_loop`.
+
+.. attribute:: event_loop
+
+    The :class:`EventLoop` for this :class:`Client`. Can be ``None``.
+    
 .. attribute:: force_sync
 
     Force a synchronous client, that is a client which has it
@@ -190,7 +198,7 @@ will remain as a class attribute, otherwise it will be an instance attribute.'''
     
     def __init__(self, max_connections=None, timeout=None, client_version=None,
                  trust_env=True, consumer_factory=None, max_reconnect=None,
-                 force_sync=False, **params):
+                 force_sync=False, event_loop=None, **params):
         super(Client, self).__init__()
         self.lock = Lock()
         self.trust_env = trust_env
@@ -204,7 +212,7 @@ will remain as a class attribute, otherwise it will be an instance attribute.'''
         if max_reconnect:
             self.max_reconnect = max_reconnect
         self.force_sync = force_sync
-        self._event_loop = None
+        self.event_loop = event_loop
         self.setup(**params)
     
     def setup(self, **params):
@@ -228,11 +236,14 @@ will remain as a class attribute, otherwise it will be an instance attribute.'''
                                           itervalues(self.connection_pools)), 0)
         
     def get_event_loop(self):
-        if self._event_loop:
-            return self._event_loop
+        '''Return the :class:`EventLoop` used by this :class:`Client`.
+The event loop can be set during initialisation. If :attr:`force_sync`
+is ``True`` a specialised event loop is created.'''
+        if self.event_loop:
+            return self.event_loop
         elif self.force_sync:
-            self._event_loop = new_event_loop(iothreadloop=False)
-            return self._event_loop
+            self.event_loop = new_event_loop(iothreadloop=False)
+            return self.event_loop
         else:
             return get_event_loop()
     

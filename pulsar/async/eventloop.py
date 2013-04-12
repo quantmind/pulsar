@@ -47,7 +47,7 @@ class StopEventLoop(BaseException):
     
     
 class EventLoopPolicy(BaseEventLoopPolicy):
-    
+    '''Pulsar event loop policy'''
     def get_event_loop(self):
         return thread_local_data('_event_loop')
     
@@ -60,7 +60,7 @@ class EventLoopPolicy(BaseEventLoopPolicy):
     def set_event_loop(self, event_loop):
         """Set the event loop."""
         assert event_loop is None or isinstance(event_loop, BaseEventLoop)
-        if event_loop.cpubound:
+        if getattr(event_loop, 'cpubound', False):
             thread_local_data('_request_loop', event_loop)
         else:
             thread_local_data('_event_loop', event_loop)
@@ -543,8 +543,9 @@ default signal handler ``signal.SIG_DFL``.'''
         
     def create_server(self, **kwargs):
         '''Create a new :class:`Server`.'''
-        kwargs['eventloop'] = self
-        return create_server(**kwargs)
+        if self.cpubound:
+            raise RuntimeError('Cannot create server from a cpubound eventloop')
+        return create_server(self, **kwargs)
     
     def wake(self):
         '''Wake up the eventloop.'''

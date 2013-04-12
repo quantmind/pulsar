@@ -220,14 +220,12 @@ Users access the arbiter (in the arbiter process domain) by the high level api::
                 self.cfg.arbiter_task(self)
             except Exception:
                 pass
-        # requestloop and ioloop are the same. Use requestloop because ioloop
-        # is not available at startup
-        self.requestloop.call_soon(self.periodic_task)
+        self.event_loop.call_soon(self.periodic_task)
 
     def _stop(self):
         '''Stop the pools the message queue and remaining actors.'''
-        self.requestloop.call_soon_threadsafe(self._exit)
-        self.requestloop.run()
+        self.event_loop.call_soon_threadsafe(self._exit)
+        self.event_loop.run()
         
     def _exit(self, res=None):
         if res:
@@ -244,16 +242,16 @@ Users access the arbiter (in the arbiter process domain) by the high level api::
                 system.daemonize()
             return Actor.start(self)
         
-    def _mailbox(self):
+    def _mailbox(self, event_loop):
         #if platform.type == 'posix':
         #    address = 'unix:%s.pulsar' % actor.aid
         #else:   #pragma    nocover
         #    address = ('127.0.0.1', 0)
         address = ('127.0.0.1', 0)
-        mailbox = self.requestloop.create_server(address=address,
-                                        name='Mailbox for %s' % self,
-                                        consumer_factory=MailboxConsumer,
-                                        timeout=0,
-                                        close_event_loop=True)
-        mailbox.event_loop.call_soon_threadsafe(self.hand_shake)
+        mailbox = event_loop.create_server(address=address,
+                                           name='Mailbox for %s' % self,
+                                           consumer_factory=MailboxConsumer,
+                                           timeout=0,
+                                           close_event_loop=True)
+        event_loop.call_soon_threadsafe(self.hand_shake)
         return mailbox

@@ -4,9 +4,7 @@ from functools import partial
 
 from pulsar import create_socket, ProtocolError
 from pulsar.utils.sockets import create_socket, get_transport_type, wrap_socket
-from pulsar.utils.pep import get_event_loop, set_event_loop, new_event_loop
 from pulsar.async.defer import EventHandler
-from pulsar.async.access import PulsarThread, NOTHING
 
 from .protocols import Connection, Producer
 from .transport import TransportProxy, create_transport, LOGGER
@@ -83,30 +81,14 @@ It is a producer of :class:`Transport` for server protocols.
         self.fire_event('finish')
         
     @classmethod
-    def create(cls, eventloop=None, sock=None, address=None, backlog=1024,
+    def create(cls, event_loop, sock=None, address=None, backlog=1024,
                name=None, close_event_loop=None, **kw):
         '''Create a new server!'''
         sock = create_socket(sock=sock, address=address, bindto=True,
                              backlog=backlog)
         transport_type = get_transport_type(sock.TYPE).transport
-        eventloop = loop = eventloop or get_event_loop()
         server = cls(**kw)
-        transport = None
-        # The eventloop is cpubound
-        if getattr(eventloop, 'cpubound', False):
-            loop = get_event_loop()
-            if loop is None:
-                # No event loop available in the current thread.
-                # Create one and set it as the event loop
-                loop = new_event_loop()
-                set_event_loop(loop)
-                transport = transport_type(loop, sock, server)
-                # Shutdown eventloop when server closes
-                close_event_loop = True
-                # start the server on a different thread
-                eventloop.call_soon_threadsafe(_start_on_thread, name, server)
-        if transport is None:
-            transport = transport_type(loop, sock, server)
+        transport = transport_type(event_loop, sock, server)
         server.connection_made(transport)
         if close_event_loop:
             server.bind_event('finish',
@@ -114,11 +96,3 @@ It is a producer of :class:`Transport` for server protocols.
         return server
 
 create_server = Server.create
-
-################################################################################
-##    INTERNALS
-def _start_on_thread(name, server):
-    # we are on the actor request loop thread, therefore the event loop
-    # should be already available if the tne actor is not CPU bound.
-    PulsarThread(name=name, target=server.event_loop.run).start()
-    

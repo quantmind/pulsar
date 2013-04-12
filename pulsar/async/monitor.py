@@ -271,7 +271,7 @@ Users shouldn't need to override this method, but use
             self.spawn_actors()
             self.stop_actors()
             self.monitor_task()
-        self.ioloop.call_soon(self.periodic_task)
+        self.event_loop.call_soon(self.periodic_task)
 
     # HOOKS
     @async(max_errors=0)
@@ -315,7 +315,7 @@ Users shouldn't need to override this method, but use
         return a
 
     # OVERRIDES INTERNALS        
-    def _setup_ioloop(self):
+    def _setup_event_loop(self):
         self.mailbox = self._mailbox()
         
     def _run(self):

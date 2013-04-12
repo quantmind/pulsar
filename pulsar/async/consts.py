@@ -1,3 +1,6 @@
+'''
+Constats used throughout pulsar.
+'''
 from pulsar.utils.structures import AttributeDictionary, FrozenDict
 
 # LOW LEVEL CONSTANTS - NO NEED TO CHANGE THOSE ###########################

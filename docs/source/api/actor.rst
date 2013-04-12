@@ -103,6 +103,14 @@ Concurrency
    :member-order: bysource
 
 
+ThreadPool
+~~~~~~~~~~~~~~~~~~~~~
+
+.. autoclass:: ThreadPool
+   :members:
+   :member-order: bysource
+
+
 .. _api-remote_commands:
 
 Messages

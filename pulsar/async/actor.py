@@ -12,8 +12,8 @@ from pulsar.utils.pep import pickle, set_event_loop_policy, itervalues
 from pulsar.utils.log import LogginMixin
 
 from .eventloop import EventLoop, setid, signal
-from .threadpool import Empty, ThreadQueue, ThreadPool
 from .defer import Deferred, EventHandler, log_failure
+from .threads import Empty, ThreadQueue, ThreadPool
 from .proxy import ActorProxy, get_proxy, ActorProxyMonitor, ActorIdentity
 from .mailbox import MailboxClient, command_in_context
 from .access import set_actor, is_mainthread, get_actor, remove_actor
@@ -103,25 +103,17 @@ an :class:`ActorProxy`.
 .. attribute:: aid
 
     Unique ID for this :class:`Actor`.
-
-.. attribute:: cpubound
-
-    Indicates if the :class:`Actor` is a :ref:`CPU-bound worker <cpubound>`
-    or a I/O-bound one.
-
-.. attribute:: requestloop
-
-    The :class:`EventLoop` to listen for requests.
     
-.. attribute:: ioloop
+.. attribute:: event_loop
 
     An instance of :class:`EventLoop` which listen for input/output events
-    on a socket.  This is different from the :attr:`requestloop` only
-    for :ref:`CPU-bound actors <cpubound>`.
+    on sockets or socket-like :class:`Transport`. It is the driver of the
+    :class:`Actor`. If the :attr:event_loop` stps, the :class:`Actor` stop
+    running and goes out of scope.
 
 .. attribute:: mailbox
 
-    Used to send and receive :ref:`actor messages <api-remote_commands>`.
+    Used to send and receive :ref:`actor messages <tutorials-messages>`.
     
 .. attribute:: proxy
 
@@ -193,12 +185,8 @@ an :class:`ActorProxy`.
         return self.mailbox.address
 
     @property
-    def ioloop(self):
+    def event_loop(self):
         return self.mailbox.event_loop
-
-    @property
-    def cpubound(self):
-        return getattr(self.requestloop, 'cpubound', False)
     
     @property
     def thread_pool(self):
@@ -216,11 +204,11 @@ an :class:`ActorProxy`.
     def start(self):
         '''Called after forking to start the actor's life. This is where
 logging is configured, the :attr:`Actor.mailbox` is registered and the
-:attr:`Actor.ioloop` is initialised and started.'''
+:attr:`Actor.event_loop` is initialised and started.'''
         if self.state == ACTOR_STATES.INITIAL:
             self._started = time() 
             self.configure_logging()
-            self._setup_ioloop()
+            self._setup_event_loop()
             self.state = ACTOR_STATES.STARTING
             self._run()
 
@@ -250,7 +238,7 @@ nothing so that the best handler for the system is chosen.'''
         raise RuntimeError('Cannot spawn an actor from an actor.')
     
     def stop(self, exc=None):
-        '''Stop the actor by stopping its :attr:`Actor.ioloop`
+        '''Stop the actor by stopping its :attr:`Actor.event_loop`
 and closing its :attr:`Actor.mailbox`. Once everything is closed
 properly this actor will go out of scope.'''
         log_failure(exc)
@@ -260,13 +248,7 @@ properly this actor will go out of scope.'''
             self.state = ACTOR_STATES.STOPPING
             self.fire_event('stopping')
             self.close_thread_pool()
-            # if CPU bound and the requestloop is still running, stop it
-            if self.cpubound and self.ioloop.running:
-                # shuts down the mailbox first
-                self.ioloop.call_soon_threadsafe(self._stop)
-                self.mailbox.close()
-            else:
-                self._stop()
+            self._stop()
         elif self.stopped():
             # The actor has finished the stopping process.
             #Remove itself from the actors dictionary
@@ -275,13 +257,14 @@ properly this actor will go out of scope.'''
         return self.event('stop')
     
     def create_thread_pool(self, workers=1):
-        '''Create a thread pool for this :class:`Actor`
+        '''Create a :class:`ThreadPool` for this :class:`Actor`
 if not already present.'''
         if self._thread_pool is None:
             self._thread_pool = ThreadPool(processes=workers)
         return self._thread_pool
     
     def close_thread_pool(self):
+        '''Close the :attr:`thread_pool`.'''
         if self._thread_pool:
             self._thread_pool.close()
     ###############################################################  STATES
@@ -292,7 +275,7 @@ is equal to :ref:`ACTOR_STATES.RUN <actor-states>`.'''
     
     def active(self):
         '''``True`` if actor is active by being both running and having
-the :attr:`ioloop` running.'''
+the :attr:`event_loop` running.'''
         return self.running()
     
     def started(self):
@@ -331,10 +314,7 @@ mean it is running.'''
         '''Exit from the :class:`Actor` domain.'''
         self.bind_event('stop', self._bye)
         self.state = ACTOR_STATES.CLOSE
-        if self.cpubound:   # we need to stop the requestloop
-            self.requestloop.stop()
-        else:
-            self.mailbox.close()
+        self.mailbox.close()
     
     def _bye(self, r):
         self.logger.debug('Bye from "%s"', self)
@@ -353,11 +333,10 @@ mean it is running.'''
                 else:
                     secs = max(ACTOR_TIMEOUT_TOLE*self.cfg.timeout, MIN_NOTIFY)
                     next = min(secs, MAX_NOTIFY)
-                    self.ioloop.call_later(next, self.periodic_task)
+                    self.event_loop.call_later(next, self.periodic_task)
                     return r
             else:
-                # The actor is not yet active, come back at the next requestloop
-                self.requestloop.call_soon_threadsafe(self.periodic_task)
+                self.event_loop.call_soon_threadsafe(self.periodic_task)
         
     @stop_on_error
     def _got_notified(self, result):
@@ -389,7 +368,6 @@ status and performance.'''
         if not self.started():
             return
         isp = self.is_process()
-        requestloop  = self.requestloop
         actor = {'name': self.name,
                  'state': self.info_state,
                  'actor_id': self.aid,
@@ -398,23 +376,21 @@ status and performance.'''
                  'process_id': self.pid,
                  'is_process': isp,
                  'age': self.impl.age}
-        events = {'callbacks': len(self.ioloop._callbacks),
-                  'io_loops': self.ioloop.num_loops}
-        if self.cpubound:
-            events['request_loops'] = requestloop.num_loops
+        events = {'callbacks': len(self.event_loop._callbacks),
+                  'io_loops': self.event_loop.num_loops}
         data = {'actor': actor, 'events': events}
         if isp:
             data['system'] = system.system_info(self.pid)
         return data
 
-    def _setup_ioloop(self):
+    def _setup_event_loop(self):
         # Internal function called at the start of the actor. It builds the
         # event loop which will consume events on file descriptors
         # Build the mailbox first so that when the mailbox closes, it shut
         # down the eventloop.
-        self.requestloop = EventLoop(io=self.io_poller(), logger=self.logger,
-                                     poll_timeout=self.params.poll_timeout)
-        self.mailbox = self._mailbox()
+        event_loop = EventLoop(io=self.io_poller(), logger=self.logger,
+                               poll_timeout=self.params.poll_timeout)
+        self.mailbox = self._mailbox(event_loop)
         # Inject self as the actor of this thread
         set_actor(self)
         if self.is_process():
@@ -430,7 +406,7 @@ status and performance.'''
                     sig = getattr(signal, 'SIG%s' % name)
                     try:
                         handler = partial(self.signal_queue.put, sig)
-                        self.requestloop.add_signal_handler(sig, handler)
+                        self.event_loop.add_signal_handler(sig, handler)
                     except ValueError:
                         break
         
@@ -460,19 +436,16 @@ status and performance.'''
             pass
         exc = None
         try:
-            self.requestloop.run()
+            self.event_loop.run()
         except Exception as e:
-            self.logger.exception('Unhandled exception in %s', self.requestloop)
+            self.logger.exception('Unhandled exception in %s', self.event_loop)
             exc = e
         except HaltServer as e:
             self.logger.error('Halting server. %s', e)
         finally:
             self.stop(exc)
         
-    def _mailbox(self):
-        client = MailboxClient(self.monitor.address, self)
+    def _mailbox(self, event_loop):
+        client = MailboxClient(self.monitor.address, self, event_loop)
         client.event_loop.call_soon_threadsafe(self.hand_shake)
         return client
-    
-    def _init_thread(self):
-        pass

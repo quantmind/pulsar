@@ -491,7 +491,7 @@ the event loop chooses the most suitable IO poller.'''
         return None
 
     def add_timeout(self, deadline, callback):
-        self.arbiter.ioloop.add_timeout(deadline, callback)
+        self.arbiter.event_loop.add_timeout(deadline, callback)
     
     # WORKERS CALLBACKS
     def worker_start(self, worker):

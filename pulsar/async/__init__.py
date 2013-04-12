@@ -4,6 +4,7 @@ from .defer import *
 from .proxy import *
 from .transports import *
 from .eventloop import *
+from .threads import *
 from .actor import *
 from .arbiter import *
 from .monitor import *

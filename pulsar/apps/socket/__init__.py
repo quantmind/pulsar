@@ -184,7 +184,7 @@ By default it returns the :attr:`Application.callable`.'''
         '''Create the Server Protocol which will listen for requests. It
 uses the :meth:`handler` as its response protocol.'''
         cfg = self.cfg
-        server = pulsar.create_server(eventloop=worker.requestloop,
+        server = worker.event_loop.create_server(
                                       sock=worker.params.sock,
                                       consumer_factory=self.protocol_consumer(),
                                       max_connections=cfg.max_requests,

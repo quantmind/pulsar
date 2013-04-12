@@ -67,9 +67,9 @@ def get_datetime(expiry, start):
 class TaskConsumer(object):
     '''A context manager for consuming tasks.
 
-.. attribute:: task
+.. attribute:: task_id
 
-    the :class:`Task` being consumed.
+    the :attr:`Task.id` being consumed.
 
 .. attribute:: job
 
@@ -83,11 +83,11 @@ class TaskConsumer(object):
 
     give access to the :class:`TaskBackend`.
 '''
-    def __init__(self, backend, task, job):
+    def __init__(self, backend, worker, task_id, job):
         self.backend = backend
-        self.worker = get_actor()
+        self.worker = worker
         self.job = job
-        self.task = task
+        self.task_id = task_id
     
     
 class Task(object):
@@ -148,6 +148,10 @@ class Task(object):
         self.status = status
         self.params = params
 
+    def __repr__(self):
+        return '%s (%s)' % (self.name, self.id)
+    __str__ = __repr__
+    
     @property
     def status_code(self):
         '''Integer indicating :attr:`status` precedence.
@@ -241,8 +245,8 @@ This class is the main driver of tasks and task scheduling.
         '''Start this :class:`TaskBackend`. Invoked by the worker which
 is ready to consumer tasks.'''
         worker.create_thread_pool()
-        self.local.task_poller = worker.ioloop.call_every(self.may_pool_task,
-                                                          worker)
+        self.local.task_poller = worker.event_loop.call_every(
+                                    self.may_pool_task, worker)
         LOGGER.debug('%s started polling tasks', worker)
         
     def close(self, worker):
@@ -336,28 +340,30 @@ CPU-bound thread.'''
                 task = yield self.get_task()
                 if task:
                     self.local.concurrent_requests += 1
-                    thread_pool.apply(self.execute_task, (task,))
+                    thread_pool.apply_async(self.execute_task, (worker, task))
             
     @async(max_errors=0)
-    def execute_task(self, task):
-        '''Asynchronous execution of a task'''
+    def execute_task(self, worker, task):
+        '''Asynchronous execution of a :class:`Task`. This method is called
+on a separate thread of execution from the worker evnet loop thread.'''
+        task_id = task.id
         job = self.registry[task.name]
         timeout = datetime.now()
         result = None
         if task.status_code > states.PRECEDENCE_MAPPING[states.STARTED]:
             if task.expiry and timeout > task.expiry:
-                #
                 # TIMEOUT
-                task = yield self.save_task(task.id, status=states.REVOKED,
-                                            time_ended=timeout)
-                yield self.on_timeout_task(task)
+                LOGGER.debug('timing-out task %s', task)
+                yield self.save_task(task_id, status=states.REVOKED,
+                                     time_ended=timeout)
+                yield self.on_timeout_task(task_id)
             else:
-                #
                 # START
-                task = yield self.save_task(task.id, status=states.STARTED,
-                                            time_started=timeout)
-                yield self.on_start_task(task)
-                consumer = TaskConsumer(self, task, job)
+                LOGGER.debug('starting task %s', task)
+                yield self.save_task(task_id, status=states.STARTED,
+                                     time_started=timeout)
+                yield self.on_start_task(task_id)
+                consumer = TaskConsumer(self, worker, task_id, job)
                 try:
                     result = yield job(consumer, *task.args, **task.kwargs)
                 except:
@@ -369,13 +375,13 @@ CPU-bound thread.'''
                     status = states.FAILURE
                     result = str(result)
                     # If the status is STARTED this is a succesful task
-                elif task.status == STARTED:
+                else:
                     status = states.SUCCESS
-                task = yield self.save(task.id, status=status,
-                                       time_ended=time_ended, result=result)
-            yield self.on_finish_task(task)
-        self.local.concurrent_requests -= 1
-        yield task
+                yield self.save_task(task_id, time_ended=time_ended,
+                                     status=status, result=result)
+            yield self.on_finish_task(task_id)
+        worker.event_loop.call_soon_threadsafe(self._done_task, task_id)
+        yield task_id
     
     def tick(self, now=None):
         '''Run a tick, that is one iteration of the scheduler. This
@@ -404,13 +410,18 @@ value ``now`` can be passed.'''
     ############################################################################
     ##    HOOKS
     ############################################################################
-    def on_start_task(self, task):
+    def on_start_task(self, task_id):
+        '''Called once a :class:`Task` with *task_id* has started its
+execution in the thread pool.'''
         pass
     
-    def on_timeout_task(self, task):
+    def on_timeout_task(self, task_id):
+        '''Called once a :class:`Task` with *task_id* has received a timeout.'''
         pass
     
-    def on_finish_task(self, task):
+    def on_finish_task(self, task_id):
+        '''Called once a :class:`Task` with *task_id* has finished its
+execution in the thread pool.'''
         pass
     
     ############################################################################
@@ -435,7 +446,9 @@ by subclasses.'''
     ############################################################################
     ##    PRIVATE METHODS
     ############################################################################
-
+    def _done_task(self, task_id):
+        self.local.concurrent_requests -= 1
+        
     def _setup_schedule(self):
         if not self.local.schedule_periodic:
             return

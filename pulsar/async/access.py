@@ -8,7 +8,6 @@ from pulsar.utils.pep import get_event_loop_policy
 __all__ = ['get_request_loop',
            'get_actor',
            'is_mainthread',
-           'PulsarThread',
            'process_local_data',
            'thread_local_data',
            'NOTHING']
@@ -60,7 +59,7 @@ is None, it will get the value otherwise it will set the value.'''
 get_actor = lambda: thread_local_data('actor')
 
 def set_actor(actor):
-    '''Returns the actor running the current thread.'''
+    '''Set and returns the actor running the current thread.'''
     actor = thread_local_data('actor', value=actor)
     if actor.impl.kind == 'thread':
         process_local_data('thread_actors')[actor.aid] = actor
@@ -77,17 +76,6 @@ actors with thread concurrency ince they live in the arbiter process domain.'''
     actors = process_local_data('thread_actors')
     if actors:
         return actors.get(aid)
-    
-    
-class PulsarThread(DummyProcess):
-    
-    def __init__(self, *args, **kwargs):
-        self.actor = get_actor()
-        super(PulsarThread, self).__init__(*args, **kwargs)
-        
-    def run(self):
-        set_actor(self.actor)
-        super(PulsarThread, self).run()
         
         
 class plocal(object):

@@ -54,7 +54,7 @@ from pulsar.utils.sockets import nice_address
 from pulsar.utils.websocket import FrameParser
 from pulsar.utils.security import gen_unique_id
 
-from .access import get_actor, set_actor, PulsarThread
+from .access import get_actor, set_actor
 from .defer import async, maybe_failure, log_failure, Deferred
 from .transports import ProtocolConsumer, SingleClient, Request
 from .proxy import actorid, get_proxy, get_command, CommandError, ActorProxy
@@ -224,35 +224,20 @@ class MailboxClient(SingleClient):
     consumer_factory = MailboxConsumer
     max_reconnect = 0
      
-    def __init__(self, address, actor):
-        super(MailboxClient, self).__init__(address)
+    def __init__(self, address, actor, event_loop):
+        super(MailboxClient, self).__init__(address, event_loop=event_loop)
         self.name = 'Mailbox for %s' % actor
-        eventloop = actor.requestloop
-        # The eventloop is cpubound
-        if actor.cpubound:
-            eventloop = new_event_loop()
-            set_event_loop(eventloop)
-            # starts in a new thread
-            actor.requestloop.call_soon_threadsafe(self._start_on_thread)
         # when the mailbox shutdown, the event loop must stop.
         self.bind_event('finish', lambda s: s.event_loop.stop())
-        self._event_loop = eventloop
     
     def __repr__(self):
         return '%s %s' % (self.__class__.__name__, nice_address(self.address))
-    
-    @property
-    def event_loop(self):
-        return self._event_loop
     
     def request(self, command, sender, target, args, kwargs):
         # the request method
         req = Message.command(command, sender, target, args, kwargs,
                               self.address, self.timeout)
         # we make sure responses are run on the event loop thread
-        self._event_loop.call_now_threadsafe(self.response, req)
+        self.event_loop.call_now_threadsafe(self.response, req)
         return req.future
-        
-    def _start_on_thread(self):
-        PulsarThread(name=self.name, target=self._event_loop.run).start()
         
