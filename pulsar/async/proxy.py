@@ -63,10 +63,8 @@ class command:
     
     def __call__(self, f):
         self.name = f.__name__.lower()
-        
         def command_function(request, args, kwargs):
             return f(request, *args, **kwargs)
-        
         command_function.ack = self.ack
         command_function.__name__ = self.name
         command_function.__doc__ = f.__doc__

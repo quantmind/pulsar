@@ -32,8 +32,9 @@ class ActorAlreadyStarted(PulsarException):
 
 class HaltServer(BaseException):
 
-    def __init__(self, reason='Halt', signal=None):
+    def __init__(self, reason='Halt', signal=None, exit_code=1):
         super(HaltServer,self).__init__(reason)
+        self.exit_code = exit_code
         self.signal = signal
 
 

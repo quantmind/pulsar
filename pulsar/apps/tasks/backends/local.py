@@ -1,6 +1,7 @@
 from collections import namedtuple, deque
 
 from pulsar import send, command
+from pulsar.utils.pep import itervalues
 from pulsar.apps.tasks import backends, states
 
 
@@ -13,7 +14,7 @@ class TaskBackend(backends.TaskBackend):
         return send('arbiter', 'get_task', task_id)
     
     def get_tasks(self, **filters):
-        return send('arbiter', 'get_task', **filters)
+        return send('arbiter', 'get_tasks', **filters)
         
     def save_task(self, task_id, **params):
         return send('arbiter', 'save_task', task_id, **params)
@@ -62,15 +63,20 @@ def get_tasks(request, **filters):
     tasks = []
     if filters:
         fs = []
-        for name, value in iteritems(filters):
-            if not isinstance(value, (list, tuple)):
+        for name, value in filters.items():
+            if not isinstance(value, (list, tuple, set, frozenset)):
                 value = (value,)
             fs.append((name, value))
-        for t in itervalues(TASKS):
+        # Loop over tasks
+        for t in itervalues(TASKS.map):
+            select = True
             for name, values in fs:
                 value = getattr(t, name, None)
-                if value in values:
-                    tasks.append(t)
+                if value not in values:
+                    select = False
+                    break
+            if select:
+                tasks.append(t)
     return tasks
 
 @command()

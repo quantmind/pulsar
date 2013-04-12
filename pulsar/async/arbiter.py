@@ -226,12 +226,12 @@ Users access the arbiter (in the arbiter process domain) by the high level api::
     def _stop(self):
         '''Stop the pools the message queue and remaining actors.'''
         self.event_loop.call_soon_threadsafe(self._exit)
-        self.event_loop.run()
+        self._run(False)
         
     def _exit(self, res=None):
         if res:
             self.state = ACTOR_STATES.CLOSE
-            self.mailbox.abort()
+            self.mailbox.close()
         else:
             active = multi_async((self.close_monitors(), self.close_actors()),
                                  log_failure=True)
@@ -244,10 +244,6 @@ Users access the arbiter (in the arbiter process domain) by the high level api::
             return Actor.start(self)
         
     def _mailbox(self, event_loop):
-        #if platform.type == 'posix':
-        #    address = 'unix:%s.pulsar' % actor.aid
-        #else:   #pragma    nocover
-        #    address = ('127.0.0.1', 0)
         address = ('127.0.0.1', 0)
         mailbox = event_loop.create_server(address=address,
                                            name='Mailbox for %s' % self,

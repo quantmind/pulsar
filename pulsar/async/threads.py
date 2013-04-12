@@ -184,9 +184,10 @@ initialised on a new pulsar :class:`Thread`.'''
     def _handle_request(self, task):
         job, i, func, args, kwds = task
         try:
-            result = maybe_async(func(*args, **kwds))
+            result = func(*args, **kwds)
         except Exception:
-            result = maybe_failure(sys.exc_info())
+            result = sys.exc_info()
+        result = maybe_async(result)
         if is_async(result):
             result.add_both(partial(self._handle_result, job, i))
         else:

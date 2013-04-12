@@ -87,12 +87,12 @@ def multi_async(iterable, **kwargs):
 :class:`MultiDeferred` element.'''
     return MultiDeferred(iterable, **kwargs).lock()
 
-def log_failure(failure):
+def log_failure(failure, msg=None, level=None):
     '''Log the *failure* if *failure* is a :class:`Failure` or a
 :class:`Deferred` with a called failure.'''
     failure = maybe_async(failure)
     if is_failure(failure):
-        failure.log()
+        failure.log(msg=msg, level=level)
     return failure
 
 def is_async(obj):
@@ -104,7 +104,7 @@ def is_failure(obj):
     return isinstance(obj, Failure)
 
 def default_maybe_failure(value, msg=None):
-    if isinstance(value, Exception):
+    if isinstance(value, BaseException):
         exc_info = sys.exc_info()
         if value == exc_info[1]:
             return Failure(exc_info, msg)
@@ -318,12 +318,16 @@ class Failure(object):
         else:
             return (None,None,None)
 
-    def log(self, log=None):
+    def log(self, log=None, msg=None, level=None):
         if not self.logged:
             self.logged = True
             log = log or LOGGER
+            msg=  msg or self.msg
             for e in self:
-                log.critical(self.msg, exc_info=e)
+                if level:
+                    getattr(log, level)(msg)
+                else:
+                    log.error(msg, exc_info=e)
 
 
 ############################################################### Deferred

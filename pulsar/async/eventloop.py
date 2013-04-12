@@ -641,9 +641,9 @@ default signal handler ``signal.SIG_DFL``.'''
             log_failure(callback(*args))
         except socket.error as e:
             if self._raise_loop_error(e):
-                log_failure(e).log('Exception in event loop callback.')
+                log_failure(e, msg='Exception in event loop callback.')
         except Exception as e:
-            log_failure(e).log('Exception in event loop callback.')
+            log_failure(e, msg='Exception in event loop callback.')
 
     def _raise_loop_error(self, e):
         # Depending on python version and EventLoop implementation,

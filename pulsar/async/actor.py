@@ -261,7 +261,7 @@ properly this actor will go out of scope.'''
         log_failure(exc)
         if self.state <= ACTOR_STATES.RUN:
             # The actor has not started the stopping process. Starts it now.
-            self.exit_code = 1 if exc else 0
+            self.exit_code = getattr(exc, 'exit_code', 1) if exc else 0
             self.state = ACTOR_STATES.STOPPING
             self.fire_event('stopping')
             self.close_thread_pool()
@@ -446,19 +446,23 @@ status and performance.'''
                         self.logger.debug('No handler for signal %s.', signame)
         return True
     
-    def _run(self):
-        try:
-            self.cfg.when_ready(self)
-        except Exception:
-            pass
+    def _run(self, initial=True):
+        if initial:
+            try:
+                self.cfg.when_ready(self)
+            except Exception:
+                pass
         exc = None
         try:
             self.event_loop.run()
         except Exception as e:
-            self.logger.exception('Unhandled exception in %s', self.event_loop)
             exc = e
         except HaltServer as e:
-            self.logger.error('Halting server. %s', e)
+            exc = e
+            if e.exit_code:
+                log_failure(e, msg=str(e), level='critical')
+            else:
+                log_failure(e, msg='Exiting server.', level='info')
         finally:
             self.stop(exc)
         

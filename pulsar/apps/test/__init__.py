@@ -352,7 +352,7 @@ is a group of tests specified in a test class.
 '''
     name = 'test'
     cfg = pulsar.Config(apps=('tasks', 'test'),
-                        loglevel='none',
+                        loglevel='critical',
                         backlog=5,
                         task_paths=['pulsar.apps.test.case'],
                         logconfig={
@@ -424,6 +424,7 @@ configuration and plugins.'''
                 self._time_start = time.time()
                 for tag, testcls in self.local.tests:
                     self.backend.run('test', testcls, tag)
+                monitor.event_loop.call_every(self._check_queue)
             else:
                 raise ExitTest('Could not find any tests.')
         except ExitTest as e:
@@ -433,25 +434,6 @@ configuration and plugins.'''
             LOGGER.critical('Error occurred before starting tests',
                             exc_info=True)
             monitor.arbiter.stop()
-            
-    def monitor_task(self, monitor):
-        super(TestSuite, self).monitor_task(monitor)
-        
-
-    def add_result(self, monitor, result):
-        #Check if we got all results
-        runner = self.runner
-        runner.add(result)
-        if runner.count >= len(self.local.tests):
-            time_taken = time.time() - self._time_start
-            runner.on_end()
-            runner.printSummary(time_taken)
-            # Shut down the arbiter
-            if runner.result.errors or runner.result.failures:
-                exit_code = 1
-            else:
-                exit_code = 0 
-            return monitor.arbiter.stop(exit_code)
 
     @classmethod
     def create_config(cls, *args, **kwargs):
@@ -460,3 +442,21 @@ configuration and plugins.'''
         for plugin in plugins:
             cfg.settings.update(plugin.config.settings)
         return cfg
+    
+    @pulsar.async()
+    def _check_queue(self):
+        runner=  self.runner
+        tests = yield self.backend.get_tasks(run_id=self.backend.id,
+                                             status=tasks.READY_STATES)
+        if len(tests) == len(self.local.tests):
+            time_taken = time.time() - self._time_start
+            for task in tests:
+                runner.add(task.result)
+            runner.on_end()
+            runner.printSummary(time_taken)
+            # Shut down the arbiter
+            if runner.result.errors or runner.result.failures:
+                exit_code = 1
+            else:
+                exit_code = 0
+            raise pulsar.HaltServer(exit_code=exit_code)

@@ -83,12 +83,6 @@ following algorithm:
                                               cfg.test_timeout)
             self.add_failure(test_cls, runner, outcome)
         yield runner.result
-    
-    def close(self, runner, testcls, result=None):
-        # send runner result to monitor
-        LOGGER.debug('Sending %s results back to monitor', self)
-        send('monitor', 'test_result', testcls.tag,
-             testcls.__name__, runner.result)
        
     def run_test(self, test, runner, cfg):
         '''\

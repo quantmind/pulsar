@@ -1,8 +1,5 @@
 '''\
 An asynchronous shell for experimenting with pulsar on the command line.
-The shell is available for posix operative systems only. Windows support
-to come at some point.
-
 To use write a little script, lets call it ``pshell.py``::
 
     from pulsar.apps.shell import PulsarShell 
@@ -36,7 +33,6 @@ class in the global dictionary::
 import os
 import sys
 import code
-from functools import partial
 from time import time
 
 import pulsar
@@ -94,15 +90,17 @@ class InteractiveConsole(code.InteractiveConsole):  #pragma    nocover
 class PulsarShell(pulsar.Application):
     console_class = InteractiveConsole
     name = 'shell'
-    cfg_apps = ('cpubound',)
-    cfg = {'loglevel':'none', 'process_name': 'Pulsar shell'}
+    cfg = pulsar.Config(loglevel='none', process_name='Pulsar shell')
     
     def monitor_start(self, monitor):
         monitor.cfg.set('workers', 1)
         monitor.cfg.set('concurrency', 'thread')
-        super(PulsarShell, self).monitor_start(monitor)
         
     def worker_start(self, worker):  #pragma    nocover
+        worker.create_thread_pool()
+        worker.thread_pool.apply_async(self.start_shell, (worker,))
+        
+    def start_shell(self, worker):
         imported_objects = {'pshell': self,
                             'pulsar': pulsar,
                             'get_actor': pulsar.get_actor,
@@ -119,11 +117,11 @@ class PulsarShell(pulsar.Application):
             readline.parse_and_bind("tab:complete")
         self.local.console = self.console_class(imported_objects)
         self.local.console.setup()
-        worker.requestloop.call_soon(self.interact, worker)
+        worker.thread_pool.apply_async(self.interact, (worker,))
                 
     def interact(self, worker):
         try:
             self.local.console.interact(self.cfg.timeout)
-            worker.requestloop.call_soon(self.interact, worker)
+            worker.thread_pool.apply_async(self.interact, (worker,))
         except:
             worker.send('arbiter', 'stop')
