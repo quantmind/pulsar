@@ -1,3 +1,6 @@
+'''
+An implementation of a :class:`TaskBackend` which uses redis as data server.
+'''
 from stdnet import odm
 
 from pulsar.apps.tasks import backends, states

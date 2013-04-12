@@ -228,6 +228,7 @@ import logging
 import time
 
 import pulsar
+from pulsar.apps import tasks
 from pulsar.utils import events
 from pulsar.utils.pep import ispy26, ispy33
 from pulsar.utils.log import local_property
@@ -324,14 +325,7 @@ class TestSequential(TestOption):
     desc = """Run test functions sequentially. Don't run them asynchronously."""
     
 
-@pulsar.command(ack=False)
-def test_result(request, tag, clsname, result):
-    '''Command for sending test results from test workers to the test monitor.'''
-    request.actor.logger.debug('Got test results from %s.%s', tag, clsname)
-    request.actor.app.add_result(request.actor, result)
-
-
-class TestSuite(pulsar.CPUboundApplication):
+class TestSuite(tasks.TaskQueue):
     '''An asynchronous test suite which works like a task queue where each task
 is a group of tests specified in a test class.
 
@@ -357,9 +351,10 @@ is a group of tests specified in a test class.
 :parameter plugins: Optional list of :class:`TestPlugin` instances.
 '''
     name = 'test'
-    cfg = pulsar.Config(apps=('cpubound', 'test'),
+    cfg = pulsar.Config(apps=('tasks', 'test'),
                         loglevel='none',
                         backlog=5,
+                        task_paths=['pulsar.apps.test.case'],
                         logconfig={
                                    'loggers': {
                                 LOGGER.name: {'handlers': ['console_message'],
@@ -414,8 +409,7 @@ configuration and plugins.'''
         self.local.loader = loader
 
     def monitor_start(self, monitor):
-        # When the monitor starts load all :class:`TestRequest` into the
-        # in the :attr:`pulsar.Actor.ioqueue`.
+        '''When the monitor starts load all test classes into the queue'''
         super(TestSuite, self).monitor_start(monitor)
         loader = self.local.loader
         tags = self.cfg.labels
@@ -427,6 +421,9 @@ configuration and plugins.'''
                 self.runner.on_start()
                 events.fire('tests', self, tests=tests)
                 monitor.cfg.set('workers', min(self.cfg.workers, len(tests)))
+                self._time_start = time.time()
+                for tag, testcls in self.local.tests:
+                    self.backend.run('test', testcls, tag)
             else:
                 raise ExitTest('Could not find any tests.')
         except ExitTest as e:
@@ -436,15 +433,6 @@ configuration and plugins.'''
             LOGGER.critical('Error occurred before starting tests',
                             exc_info=True)
             monitor.arbiter.stop()
-
-    def monitor_task(self, monitor):
-        super(TestSuite, self).monitor_task(monitor)
-        if self._time_start is None and self.local.tests:
-            self.logger.info('sending %s test classes to the task queue',
-                          len(self.local.tests))
-            self._time_start = time.time()
-            for tag, testcls in self.local.tests:
-                self.put(TestRequest(testcls, tag))
 
     def add_result(self, monitor, result):
         #Check if we got all results

@@ -1,3 +1,43 @@
+'''
+The :class:`TaskBackend` is at the hart of the
+:ref:`task queue application <apps-taskqueue>`. It exposes
+all the functionalities for running new tasks, scheduling periodic tasks
+and retrieving task information. Pulsar ships with two backends, one which uses
+pulsar internals and store tasks in the arbiter domein and onther with store
+tasks in redis.
+
+
+get backend
+~~~~~~~~~~~~~~~~~~
+A :class:`TaskBackend` is never initialised directly, instead it is created using
+the :func:`getbe` function
+
+.. autofunction:: getbe
+
+Task
+~~~~~~~~~~~~~
+
+.. autoclass:: Task
+   :members:
+   :member-order: bysource
+   
+   
+   
+TaskBackend
+~~~~~~~~~~~~~
+
+.. autoclass:: TaskBackend
+   :members:
+   :member-order: bysource
+   
+   
+Scheduler Entry
+~~~~~~~~~~~~~~~~~~~
+
+.. autoclass:: SchedulerEntry
+   :members:
+   :member-order: bysource
+'''
 import sys
 import logging
 from collections import deque
@@ -5,7 +45,7 @@ from datetime import datetime, timedelta
 from functools import partial
 
 from pulsar import async, EMPTY_TUPLE, EMPTY_DICT, get_actor, log_failure,\
-                    maybe_failure, is_failure
+                    maybe_failure, is_failure, PulsarException
 from pulsar.utils.importer import import_module, import_modules
 from pulsar.utils.pep import itervalues, iteritems
 from pulsar.apps.tasks.models import registry
@@ -14,7 +54,7 @@ from pulsar.utils.httpurl import parse_qs, urlsplit
 from pulsar.utils.timeutils import remaining, timedelta_seconds
 from pulsar.utils.log import LocalMixin, local_property 
 
-__all__ = ['Task', 'TaskBackend', 'getbe']
+__all__ = ['Task', 'TaskBackend', 'getbe', 'TaskNotAvailable']
 
 
 LOGGER = logging.getLogger('pulsar.tasks')
@@ -62,6 +102,13 @@ def get_datetime(expiry, start):
         return start + expiry
     else:
         return datetime.fromtimestamp(expiry)
+
+
+class TaskNotAvailable(PulsarException):
+    MESSAGE = 'Task {0} is not registered. Check your settings.'
+    def __init__(self, task_name):
+        self.task_name = task_name
+        super(TaskNotAvailable,self).__init__(self.MESSAGE.format(task_name))
 
 
 class TaskConsumer(object):

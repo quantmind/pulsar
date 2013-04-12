@@ -104,6 +104,10 @@ an :class:`ActorProxy`.
 
     Unique ID for this :class:`Actor`.
     
+.. attribute:: impl
+
+    The :class:`Concurrency` implementation for this :class:`Actor`.
+    
 .. attribute:: event_loop
 
     An instance of :class:`EventLoop` which listen for input/output events
@@ -115,6 +119,10 @@ an :class:`ActorProxy`.
 
     Used to send and receive :ref:`actor messages <tutorials-messages>`.
     
+.. attribute:: address
+
+    The socket address for this :attr:`Actor.mailbox`.
+    
 .. attribute:: proxy
 
     Instance of a :class:`ActorProxy` holding a reference
@@ -122,11 +130,22 @@ an :class:`ActorProxy`.
     of the actor which can be shared across different processes
     (i.e. it is pickable).
 
+.. attribute:: thread_pool
+
+    A :class:`ThreadPool` associated with this :class:`Actor`. This attribute
+    is ``None`` unless one is created via the :meth:`create_thread_pool`
+    method.
+
 .. attribute:: params
 
     A :class:`pulsar.utils.structures.AttributeDictionary` which contains
     parameters which are passed to actors spawned by this actor.
     
+.. attribute:: info_state
+
+    Current state description string. One of ``initial``, ``running``,
+    ``stopping``, ``closed`` and ``terminated``.
+ 
 **METHODS**
 '''
     ONE_TIME_EVENTS = ('start', 'stopping', 'stop')
@@ -161,20 +180,20 @@ an :class:`ActorProxy`.
     
     ############################################################### PROPERTIES
     @property
-    def impl(self):
-        return self.__impl
-    
+    def name(self):
+        return self.__impl.name
+
     @property
     def aid(self):
         return self.__impl.aid
     
     @property
-    def cfg(self):
-        return self.__impl.cfg
+    def impl(self):
+        return self.__impl
     
     @property
-    def name(self):
-        return self.__impl.name
+    def cfg(self):
+        return self.__impl.cfg
     
     @property
     def proxy(self):
@@ -194,8 +213,6 @@ an :class:`ActorProxy`.
 
     @property
     def info_state(self):
-        '''Current state description. One of ``initial``, ``running``,
- ``stopping``, ``closed`` and ``terminated``.'''
         return ACTOR_STATES.DESCRIPTION[self.state]
 
     ############################################################################

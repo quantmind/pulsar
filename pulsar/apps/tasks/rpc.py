@@ -16,8 +16,7 @@ import pulsar
 from pulsar.apps import wsgi
 from pulsar.apps import rpc
 
-from .exceptions import TaskNotAvailable
-from .backends import Task
+from .backends import Task, TaskNotAvailable
 
 
 __all__ = ['TaskQueueRpcMixin']

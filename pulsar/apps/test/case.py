@@ -7,9 +7,10 @@ from functools import partial
 from pulsar import is_failure, multi_async, get_actor, maybe_async,\
                      is_async, maybe_failure, send
 from pulsar.utils.pep import pickle
+from pulsar.apps import tasks
 
 
-__all__ = ['TestRequest', 'sequential']
+__all__ = ['sequential']
 
 
 LOGGER = logging.getLogger('pulsar.test')
@@ -27,44 +28,24 @@ def test_method(cls, method):
     except ValueError:
         return None
 
-
-class TestRequest(object):
-    '''A class which wraps a test case class and runs all its test functions
-
-.. attribute:: testcls
-
-    A :class:`unittest.TestCase` class to be run on this request.
-
-.. attribute:: tag
-
-    A string indicating the tag associated with :attr:`testcls`.
-'''
-    def __init__(self, testcls, tag):
-        self.testcls = testcls
-        self.tag = tag
-
-    def __repr__(self):
-        return self.testcls.__name__
-    __str__ = __repr__
-
-    def start(self):
-        worker = get_actor()
-        worker.app.local.pop('runner')
-        runner = worker.app.runner
-        testcls = self.testcls
+    
+class Test(tasks.Job):
+    
+    def __call__(self, consumer, testcls, tag):
+        consumer.worker.app.local.pop('runner')
+        runner = consumer.worker.app.runner
         if not isinstance(testcls, type):
             testcls = testcls()
-        testcls.tag = self.tag
-        testcls.cfg = worker.cfg
-        LOGGER.debug('Testing %s', self)
+        testcls.tag = tag
+        testcls.cfg = consumer.worker.cfg
+        LOGGER.debug('Testing %s', testcls.__name__)
         all_tests = runner.loadTestsFromTestCase(testcls)
         num = all_tests.countTestCases()
         if num:
-            result = self.run(runner, testcls, all_tests, worker.cfg)
-            result = maybe_async(result, max_errors=0)
-            if is_async(result):
-                return result.add_both(partial(self.close, runner, testcls))
-        return self.close(runner, testcls)
+            result = self.run(runner, testcls, all_tests, consumer.worker.cfg)
+            return maybe_async(result, max_errors=0)
+        else:
+            return runner.result
         
     def run(self, runner, testcls, all_tests, cfg):
         '''Run all test functions from the :attr:`testcls` using the
@@ -101,6 +82,7 @@ following algorithm:
                                               getattr(testcls,'tearDownClass'),
                                               cfg.test_timeout)
             self.add_failure(test_cls, runner, outcome)
+        yield runner.result
     
     def close(self, runner, testcls, result=None):
         # send runner result to monitor

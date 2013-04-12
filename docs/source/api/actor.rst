@@ -31,6 +31,12 @@ get_actor
 
     Return the :class:`Actor` controlling the current thread.
 
+arbiter
+~~~~~~~~~~~~~~
+
+.. autofunction:: arbiter
+
+
 .. _api-actors:
 
 Actors

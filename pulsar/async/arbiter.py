@@ -23,7 +23,8 @@ __all__ = ['arbiter', 'spawn', 'Arbiter']
 
 
 def arbiter(commands_set=None, **params):
-    '''Obtain the arbiter instance.'''
+    '''Obtain the :class:`Arbiter` instance if we are on the arbiter
+context domain, otherwise it returns ``None``.'''
     arbiter = get_actor()
     if arbiter is None:
         # Create the arbiter

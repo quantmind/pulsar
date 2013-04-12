@@ -9,6 +9,5 @@ Distributed Task Queue
    
    intro
    jobs
-   scheduler
-   tasks
+   backend
    rpc
