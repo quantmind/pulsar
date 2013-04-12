@@ -150,6 +150,7 @@ class Worker(Actor):
     def __init__(self, *args, **kwargs):
         super(Worker, self).__init__(*args, **kwargs)
         self.bind_event('start', self.app.worker_start)
+        self.bind_event('stopping', self.app.worker_stopping)
         self.bind_event('stop', self.app.worker_stop)
         
     @property
@@ -500,6 +501,10 @@ the event loop chooses the most suitable IO poller.'''
 
     def worker_info(self, worker, data):
         return data
+    
+    def worker_stopping(self, worker):
+        '''Invoked when the *worker* fires the *stopping* event.'''
+        pass
     
     def worker_stop(self, worker):
         '''Called by the :class:`Worker` :meth:`pulsar.Actor.on_stop`

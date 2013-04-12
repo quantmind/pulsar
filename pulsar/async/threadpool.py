@@ -14,6 +14,8 @@ from pulsar.utils.system import EpollInterface
 from pulsar.utils.log import LocalMixin, local_property
 
 from .eventloop import StopEventLoop, EventLoop
+from .defer import maybe_async, is_async, log_failure
+from .access import PulsarThread
 
 
 class TaskFactory:
@@ -118,7 +120,8 @@ The interface is the same as the python epoll_ implementation.
 
 
 class PoolWorker(object):
-    
+    '''A pool worker which handles asynchronous results form
+functions send to the task queue.'''
     def __init__(self, inqueue, outqueue, initializer=None, initargs=(),
                  maxtasks=None):
         if hasattr(inqueue, '_writer'):
@@ -134,7 +137,6 @@ class PoolWorker(object):
         
     def _handle_request(self, task):
         job, i, func, args, kwds = task
-        result = maybe_async()
         try:
             result = maybe_async(func(*args, **kwds),
                                  event_loop=self.event_loop)
@@ -146,12 +148,13 @@ class PoolWorker(object):
             self._handle_result(job, i, result)
             
     def _handle_result(self, job, i, result):
-        success = not is_failure(result)
-        self.outqueue.put((job, i, (success, result)))
+        log_failure(result)
+        self.outqueue.put((job, i, (True, result)))
         self.event_loop.io.completed += 1
 
 
 class ThreadPool(pool.ThreadPool):
+    Process = PulsarThread
     
     def _repopulate_pool(self):
         """Bring the number of pool processes up to the specified number,

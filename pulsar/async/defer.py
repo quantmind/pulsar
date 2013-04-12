@@ -671,7 +671,7 @@ function when a generator is passed as argument.'''
             return self._conclude(last_result)
         except Exception:
             result = sys.exc_info()
-        result = maybe_async(result)
+        result = maybe_async(result, event_loop=self.event_loop)
         if is_async(result):
             result.add_both(self._restart)
         elif result == NOT_DONE:

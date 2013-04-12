@@ -190,14 +190,15 @@ task.Tasks and managing scheduling of tasks via a
         '''Override the :meth:`pulsar.apps.Application.monitor_task` callback
 to check if the :attr:`scheduler` needs to perform a new run.'''
         super(TaskQueue, self).monitor_task(monitor)
-        if self.backend:
+        if self.backend and monitor.running:
             if self.backend.next_run <= datetime.now():
                 self.backend.tick()
 
     def worker_start(self, worker):
-        '''When the worker start, register the callback'''
-        worker.create_thread_pool()
-        worker.ioloop.call_every(self.backend.may_pool_task)
+        self.backend.start(worker)
+        
+    def worker_stopping(self, worker):
+        self.backend.close(worker)
         
     def actorparams(self, monitor, params):
         # Make sure we invoke super function so that we get the distributed

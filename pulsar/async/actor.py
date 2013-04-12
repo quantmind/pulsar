@@ -137,7 +137,7 @@ an :class:`ActorProxy`.
     
 **METHODS**
 '''
-    ONE_TIME_EVENTS = ('stop', 'start')
+    ONE_TIME_EVENTS = ('start', 'stopping', 'stop')
     exit_code = None
     mailbox = None
     signal_queue = None
@@ -250,7 +250,7 @@ nothing so that the best handler for the system is chosen.'''
         raise RuntimeError('Cannot spawn an actor from an actor.')
     
     def stop(self, exc=None):
-        '''Stop the actor by stopping its :attr:`Actor.requestloop`
+        '''Stop the actor by stopping its :attr:`Actor.ioloop`
 and closing its :attr:`Actor.mailbox`. Once everything is closed
 properly this actor will go out of scope.'''
         log_failure(exc)
@@ -258,6 +258,8 @@ properly this actor will go out of scope.'''
             # The actor has not started the stopping process. Starts it now.
             self.exit_code = 1 if exc else 0
             self.state = ACTOR_STATES.STOPPING
+            self.fire_event('stopping')
+            self.close_thread_pool()
             # if CPU bound and the requestloop is still running, stop it
             if self.cpubound and self.ioloop.running:
                 # shuts down the mailbox first
@@ -278,10 +280,14 @@ if not already present.'''
         if self._thread_pool is None:
             self._thread_pool = ThreadPool(processes=workers)
         return self._thread_pool
-            
+    
+    def close_thread_pool(self):
+        if self._thread_pool:
+            self._thread_pool.close()
     ###############################################################  STATES
     def running(self):
-        '''``True`` if actor is running.'''
+        '''``True`` if actor is running, that is when the :attr:`state`
+is equal to :ref:`ACTOR_STATES.RUN <actor-states>`.'''
         return self.state == ACTOR_STATES.RUN
     
     def active(self):

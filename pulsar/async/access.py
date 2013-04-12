@@ -1,6 +1,7 @@
 import threading
-from threading import Thread, current_thread
+from threading import current_thread
 from multiprocessing import current_process
+from multiprocessing.dummy import DummyProcess
 
 from pulsar.utils.pep import get_event_loop_policy
 
@@ -78,7 +79,7 @@ actors with thread concurrency ince they live in the arbiter process domain.'''
         return actors.get(aid)
     
     
-class PulsarThread(Thread):
+class PulsarThread(DummyProcess):
     
     def __init__(self, *args, **kwargs):
         self.actor = get_actor()

@@ -182,10 +182,9 @@ Lower number higher precedence.'''
     
     
 class TaskBackend(LocalMixin):
-    '''Base class for :class:`Task` backends.
-The backend is responsible for creating tasks and put them into
-the distributed :attr:`queue`. It also schedule the run of periodic tasks if
-enabled to do so.
+    '''Base class for :class:`Task` backends. A :class:`TaskBackend` is
+responsible for creating tasks and put them into the distributed :attr:`queue`.
+It also schedule the run of periodic tasks if enabled to do so.
 This class is the main driver of tasks and task scheduling.
 
 .. attribute:: name
@@ -202,7 +201,7 @@ This class is the main driver of tasks and task scheduling.
     `True` if this :class:`Scheduler` can schedule periodic tasks.
 '''
     def __init__(self, scheme, host, name=None, task_paths=None,
-                 schedule_periodic=False, backlog=1, **params):
+                  schedule_periodic=False, backlog=1, **params):
         self.scheme = scheme
         self.host = host
         self.params = params
@@ -238,6 +237,21 @@ This class is the main driver of tasks and task scheduling.
             import_modules(self.task_paths)
         return registry
     
+    def start(self, worker):
+        '''Start this :class:`TaskBackend`. Invoked by the worker which
+is ready to consumer tasks.'''
+        worker.create_thread_pool()
+        self.local.task_poller = worker.ioloop.call_every(self.may_pool_task,
+                                                          worker)
+        LOGGER.debug('%s started polling tasks', worker)
+        
+    def close(self, worker):
+        '''Close this :class:`TaskBackend`. Invoked by the worker which
+is stopping.'''
+        if self.local.task_poller:
+            self.local.task_poller.cancel()
+            LOGGER.debug('%s stopped polling tasks', worker)
+        
     def run(self, jobname, *args, **kwargs):
         '''A shortcut for :meth:`run_job` without task meta parameters'''
         return self.run_job(jobname, args, kwargs)
@@ -310,18 +324,19 @@ and key-valued arguments *kwargs*.'''
             raise TaskNotAvailable(jobname)
     
     @async()
-    def may_pool_task(self):
+    def may_pool_task(self, worker):
         '''Called at every loop in the worker IO loop, it pool a new task
 if possible and add it to the queue of tasks consumed by the worker
 CPU-bound thread.'''
-        thread_pool = get_actor().thread_pool
-        if not thread_pool:
-            LOGGER.warning('No thread pool, cannot poll tasks.')
-        elif self.concurrent_requests < self.backlog:
-            task = yield self.get_task()
-            if task:
-                self.local.concurrent_requests += 1
-                thread_pool.apply(self.execute_task, (task,))
+        if worker.running:
+            thread_pool = worker.thread_pool
+            if not thread_pool:
+                LOGGER.warning('No thread pool, cannot poll tasks.')
+            elif self.concurrent_requests < self.backlog:
+                task = yield self.get_task()
+                if task:
+                    self.local.concurrent_requests += 1
+                    thread_pool.apply(self.execute_task, (task,))
             
     @async(max_errors=0)
     def execute_task(self, task):

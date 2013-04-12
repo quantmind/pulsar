@@ -346,6 +346,19 @@ loop of the thread where it is run.'''
                         break
             finally:
                 self._after_run()
+    
+    def run_forever(self):
+        '''Run the event loop forever.'''
+        if not self.running:
+            self._before_run()
+            try:
+                while True:
+                    try:
+                        self._run_once()
+                    except StopEventLoop:
+                        break
+            finally:
+                self._after_run()
 
     def run_once(self, timeout=None):
         """Run through all callbacks and all I/O polls once.
