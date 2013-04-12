@@ -4,4 +4,3 @@ from .tcp import *
 from .udp import *
 from .servers import *
 from .clients import *
-from .queue import *

@@ -85,7 +85,7 @@ and a :ref:`task queue <apps-taskqueue>` application installed in the
 
     Wait for a task to have finished.
 '''
-    _scheduler = None
+    _task_backend = None
     def __init__(self, taskqueue, **kwargs):
         if not isinstance(taskqueue, str):
             taskqueue = taskqueue.name
@@ -95,8 +95,8 @@ and a :ref:`task queue <apps-taskqueue>` application installed in the
     ############################################################################
     ##    REMOTES
     def rpc_job_list(self, request, jobnames=None):
-        scheduler = yield self.scheduler()
-        yield scheduler.job_list(jobnames=jobnames)
+        task_backend = yield self.task_backend()
+        yield task_backend.job_list(jobnames=jobnames)
     
     def rpc_next_scheduled_tasks(self, request, jobnames=None):
         return self._rq(request, 'next_scheduled', jobnames=jobnames)
@@ -107,29 +107,29 @@ and a :ref:`task queue <apps-taskqueue>` application installed in the
         
     def rpc_get_task(self, request, id=None):
         if id:
-            scheduler = yield self.scheduler()
-            result = yield scheduler.get_task(id)
+            task_backend = yield self.task_backend()
+            result = yield task_backend.get_task(id)
             yield task_to_json(result)
     
     def rpc_get_tasks(self, request, **params):
         if params:
-            scheduler = yield self.scheduler()
-            result = yield scheduler.get_tasks(**params)
+            task_backend = yield self.task_backend()
+            result = yield task_backend.get_tasks(**params)
             yield task_to_json(result)
         
     def rpc_wait_for_task(self, request, id=None):
         if id:
-            scheduler = yield self.scheduler()
-            result = yield scheduler.wait_for_task(id)
+            task_backend = yield self.task_backend()
+            result = yield task_backend.wait_for_task(id)
             yield task_to_json(result)
     
     ############################################################################
     ##    INTERNALS
-    def scheduler(self):
-        if not self._scheduler:
+    def task_backend(self):
+        if not self._task_backend:
             app = yield get_application(self.taskqueue)
-            self._scheduler = app.scheduler
-        yield self._scheduler
+            self._task_backend = app.backend
+        yield self._task_backend
         
     def run_new_task(self, request, jobname, args=None,
                      ack=True, meta_data=None, **kw):
@@ -138,8 +138,8 @@ and a :ref:`task queue <apps-taskqueue>` application installed in the
         meta_data = meta_data or {}
         meta_data.update(self.task_request_parameters(request))
         args = args or ()
-        scheduler = yield self.scheduler()
-        yield scheduler.queue_task(jobname, args, kw, **meta_data)
+        task_backend = yield self.task_backend()
+        yield task_backend.queue_task(jobname, args, kw, **meta_data)
     
     def task_request_parameters(self, request):
         '''**Internal function** which returns a dictionary of parameters
