@@ -11,24 +11,28 @@ And run it::
 
     python pshell.py
     
-The shell has already ``pulsar``, ``arbiter`` and the :class:`Actor`
-class in the global dictionary::
+.. module:: pulsar
 
-    >> pulsar.__version__
+The shell has already ``pulsar``, :func:`get_actor`, :func:`spawn`,
+:func:`send` and the :class:`Actor` class in the global dictionary::
+
+    >>> pulsar.__version__
     0.5.0
-    >> arbiter.state
+    >>> actor = get_actor()
+    >>> actor.info_state
     'running'
-    >> arbiter.MANAGED_ACTORS
-    {}
-    >> a = arbiter.spawn(Actor)
-    >> a.is_alive()
+    >>> a = spawn()
+    >>> a.done()
     True
-    >> arbiter.MANAGED_ACTORS
-    {'3a67a186': 3a67a186}
-    >> arbiter.close_actors()
-    >> a.is_alive()
-    False
-    
+    >>> proxy = a.result
+
+
+Implementation
+~~~~~~~~~~~~~~~~~~~~
+
+.. autoclass:: pulsar.apps.shell.PulsarShell
+   :members:
+   :member-order: bysource
 '''
 import os
 import sys
@@ -97,6 +101,8 @@ class PulsarShell(pulsar.Application):
         monitor.cfg.set('concurrency', 'thread')
         
     def worker_start(self, worker):  #pragma    nocover
+        '''When the worker starts, create the :attr:`Actor.thread_pool`
+with one thread only and send the :meth:`interact` method to it.'''
         worker.create_thread_pool()
         worker.thread_pool.apply_async(self.start_shell, (worker,))
         
@@ -120,6 +126,7 @@ class PulsarShell(pulsar.Application):
         worker.thread_pool.apply_async(self.interact, (worker,))
                 
     def interact(self, worker):
+        '''Handled by the :attr:`Actor.thread_pool`'''
         try:
             self.local.console.interact(self.cfg.timeout)
             worker.thread_pool.apply_async(self.interact, (worker,))
