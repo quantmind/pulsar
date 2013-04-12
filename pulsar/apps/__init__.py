@@ -40,13 +40,6 @@ Get application
 
 .. autofunction:: get_application
 
-CPU bound Application
-===============================
-      
-.. autoclass:: CPUboundApplication
-   :members:
-   :member-order: bysource
-
 
 Application Worker
 ===============================
@@ -69,48 +62,15 @@ import logging
 from inspect import getfile
 
 import pulsar
-from pulsar import Actor, Monitor, get_actor, EventHandler, QueueServer
-from pulsar.utils.importer import module_attribute
+from pulsar import Actor, Monitor, get_actor, EventHandler
 from pulsar.utils.structures import OrderedDict
-from pulsar.utils.config import section_docs
 from pulsar.utils.pep import pickle
 
 __all__ = ['Application',
-           'CPUboundApplication',
            'MultiApp',
            'Worker',
            'ApplicationMonitor',
            'get_application']
-
-
-section_docs['Task Consumer'] = '''
-This section covers configuration parameters used by CPU bound type applications
-such as the :ref:`distributed task queue <apps-taskqueue>` and the
-:ref:`test suite <apps-test>`, or in general, application which derive from
-:class:`pulsar.apps.CPUboundApplication`.
-'''
-
-class TaskQueueFactory(pulsar.Setting):
-    app = 'cpubound'
-    name = "task_queue_factory"
-    section = "Task Consumer"
-    flags = ["-q", "--task-queue-factory"]
-    default = "pulsar.PythonMessageQueue"
-    desc = '''\
-        Dotted path to the task queue factory to use.
-
-        A task queue factory is callable (either a function or a class)
-        which accepts one parameter only and returns an instance of a
-        distributed queue which has the same API as
-        :class:`pulsar.MessageQueue`. The only parameter passed to the
-        task queue factory is a :class:`pulsar.utils.config.Config` instance.
-        This parameters is used by :class:`pulsar.apps.CPUboundApplication`
-        such as the :ref:`distributed task queue <apps-taskqueue>` and the
-        :ref:`test suite <apps-test>`.
-        The default value is the :class:`pulsar.PythonMessageQueue`.'''
-
-    def get(self):
-        return module_attribute(self.value)
     
     
 def get_application(name):
@@ -540,63 +500,6 @@ The application is now in the arbiter but has not yet started.'''
         if arbiter and self.name in arbiter.registered:
             arbiter.start()
         return self
-
-
-class CPUboundApplication(Application):
-    '''A CPU-bound :class:`Application` is an application which
-handles events with a task to complete and the time complete the task is
-determined principally by the speed of the CPU.
-This type of application is served by :ref:`CPU bound workers <cpubound>`.'''
-    def __init__(self, *args, **kwargs):
-        self.received = 0
-        self.concurrent_requests = set()
-        super(CPUboundApplication, self).__init__(*args, **kwargs)
-        
-    def io_poller(self, worker):
-        '''Create the queue server and the IO poller for the *worker*
-:class:`pulsar.EventLoop`.'''
-        # Get the task queue from the params container
-        self.local.queue = worker.params.queue
-        # Build the Queue server
-        server = QueueServer(consumer_factory=self.request_instance,
-                             backlog=self.cfg.backlog)
-        worker.servers[self.name] = server
-        return self.queue.poller(server)
-    
-    @property
-    def queue(self):
-        '''Distributed :class:`pulsar.MessageQueue`.'''
-        return self.local.queue
-    
-    def put(self, request):
-        '''Put a *request* into the :attr:`transport` if available.'''
-        self.queue.put(request)
-
-    def request_instance(self, request):
-        '''Build a request instance from a *request*. By default it returns the
-*request*. This method is called by the :class:`pulsar.QueueServer`
-once a new request has been obtained from the distributed :attr:`queue`.'''
-        return request
-
-    def monitor_start(self, monitor):
-        '''Create the :attr:`queue` from the
-:ref:`task-queue-factory setting <setting-task_queue_factory>`.'''
-        self.local.queue = self.cfg.task_queue_factory(self.cfg)
-        
-    def worker_start(self, worker):
-        #once the worker starts we set the queue event loop
-        self.queue.event_loop = worker.requestloop
-        worker.servers[self.name].connection_made(self.queue)
-    
-    def monitor_info(self, worker, data):
-        tq = self.queue
-        if tq is not None:
-            data['queue'] = {'ioqueue': str(tq), 'ioqueue_size': tq.size()}
-        return data
-    
-    def actorparams(self, monitor, params):
-        params['queue'] = self.local.queue
-        return params
 
 
 class MultiApp(Configurator):

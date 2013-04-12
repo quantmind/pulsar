@@ -21,7 +21,6 @@ Ver. 0.5.0 - DEVELOPMENT
    * Added :func:`pulsar.async_sleep` function.
    
 * Applications:
-    * :class:`CPUboundApplication` created as base class for CPU bound applications.
     * Added ability to add Websocket sub-protocols and extensions.
     * New asynchronous :class:`pulsar.apps.http.HttpClient` with websocket support.
     * Support http-parser_ for faster http protocol parsing.

@@ -3,8 +3,25 @@ The :class:`TaskBackend` is at the hart of the
 :ref:`task queue application <apps-taskqueue>`. It exposes
 all the functionalities for running new tasks, scheduling periodic tasks
 and retrieving task information. Pulsar ships with two backends, one which uses
-pulsar internals and store tasks in the arbiter domein and onther with store
+pulsar internals and store tasks in the arbiter domain and onther which stores
 tasks in redis.
+
+
+Implementing a Task Backend
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+When creating a new :class:`TaskBackend` there are five methods which must
+be implemented:
+
+* The :meth:`TaskBackend.put_task` method, invoked when putting a new
+  :class:`Task.id` into the distributed task queue, whatever that is.
+* The :meth:`TaskBackend.get_task` method, invoked when retrieving
+  a :class:`Task` from the backend server.
+* The :meth:`TaskBackend.get_tasks` method, invoked when retrieving
+  a group of :class:`Task` from the backend server.
+* The :meth:`TaskBackend.save_task` method, invoked when creating
+  or updating a :class:`Task`.
+* The :meth:`TaskBackend.delete_tasks` method, invoked when deleting
+  a bunch of :class:`Task`.
 
 
 Get backend
@@ -12,15 +29,18 @@ Get backend
 A :class:`TaskBackend` is never initialised directly, instead it is created using
 the :func:`getbe` function::
 
+    from pulsar.apps.tasks import getbe
+    
     backend = getbe('local://', **params)
     
-get the pulsar *local* backend.
+get the pulsar *local* backend::
 
-    backend = getbe('redis://localhost:6379&db=1', **params)
+    backend = getbe('redis://localhost:6379?db=1', **params)
     
 get a redis backend.
 
 .. autofunction:: getbe
+
 
 Task
 ~~~~~~~~~~~~~
@@ -28,8 +48,7 @@ Task
 .. autoclass:: Task
    :members:
    :member-order: bysource
-   
-   
+      
    
 TaskBackend
 ~~~~~~~~~~~~~
@@ -37,6 +56,36 @@ TaskBackend
 .. autoclass:: TaskBackend
    :members:
    :member-order: bysource
+
+
+.. _task-state:
+
+Task states
+~~~~~~~~~~~~~
+
+A :class:`Task` can have one of the following :attr:`Task.status` string:
+
+* ``PENDING`` A task waiting to be queued for execution.
+* ``QUEUED`` A task queued but not yet executed.
+* ``RETRY`` A task is retrying calculation.
+* ``STARTED`` task where execution has started.
+* ``REVOKED`` the task execution has been revoked. One possible reason could be
+  the task has timed out.
+* ``UNKNOWN`` task execution is unknown.
+* ``FAILURE`` task execution has finished with failure.
+* ``SUCCESS`` task execution has finished with success.
+
+
+**FULL_RUN_STATES**
+
+The set of states for which a :class:`Task` has run:
+``FAILURE`` and ``SUCCESS``
+
+
+**READY_STATES**
+
+The set of states for which a :class:`Task` has finished:
+``REVOKED``, ``FAILURE`` and ``SUCCESS``
    
    
 Scheduler Entry
@@ -60,7 +109,8 @@ from pulsar.apps.tasks.models import registry
 from pulsar.apps.tasks import states
 from pulsar.utils.httpurl import parse_qs, urlsplit
 from pulsar.utils.timeutils import remaining, timedelta_seconds
-from pulsar.utils.log import LocalMixin, local_property 
+from pulsar.utils.log import LocalMixin, local_property
+from pulsar.utils.security import gen_unique_id 
 
 __all__ = ['Task', 'TaskBackend', 'getbe', 'TaskNotAvailable']
 
@@ -190,8 +240,10 @@ class Task(object):
     stack_trace = None
     def __init__(self, id, name=None, time_executed=None,
                  expiry=None, args=None, kwargs=None, 
-                 status=None, from_task=None, **params):
+                 status=None, from_task=None, run_id=None,
+                 **params):
         self.id = id
+        self.run_id = run_id
         self.name = name
         self.time_executed = time_executed
         self.from_task = from_task
@@ -262,6 +314,7 @@ This class is the main driver of tasks and task scheduling.
     def __init__(self, scheme, host, name=None, task_paths=None,
                   schedule_periodic=False, backlog=1, **params):
         self.scheme = scheme
+        self.id = gen_unique_id()
         self.host = host
         self.params = params
         self.name = name
@@ -329,7 +382,8 @@ a ``TaskNotAvailable`` exception occurs.
     in the task callable.
 :parameter meta_params: Additional parameters to be passed to the :class:`Task`
     constructor (not its callable function).
-:return: a :ref:`task <apps-taskqueue-task>`.'''
+:return: a :ref:`coroutine <coroutine>` resulting in a :attr:`Task.id`
+    on success.'''
         return self._run_job(jobname, targs, tkwargs, meta_params)\
                    .add_errback(log_failure)
         
@@ -341,18 +395,21 @@ a ``TaskNotAvailable`` exception occurs.
         self.put_task(id)
         
     def create_task_id(self, job, *args, **kwargs):
-        '''Create a :class:`Task` id from *job*, positional arguments *args*
+        '''Create a :attr:`Task.id` from *job*, positional arguments *args*
 and key-valued arguments *kwargs*.'''
         return job.make_task_id(args, kwargs)
         
     def create_task(self, jobname, targs=None, tkwargs=None, expiry=None,
                     **params):
-        '''Create a new :ref:`task <apps-taskqueue-task>`
+        '''Create a new :class:`Task` from *jobname*, positional arguments
+*targs*, key-valued arguments *tkwargs* and :class:`Task` meta parameters
+*params*. 
         
 :param jobname: the name of job which create the task.
 :param targs: task positional arguments (a ``tuple`` or ``None``).
 :param tkwargs: task key-valued arguments (a ``dict`` or ``None``).
-:return: The :attr:`Task.id` or ``None`` if no task was created.
+:return: a :ref:`coroutine <coroutine>` resulting in a :attr:`Task.id`
+    or ``None`` if no task was created.
 '''
         if jobname in self.registry:
             job = self.registry[jobname]
@@ -378,7 +435,8 @@ and key-valued arguments *kwargs*.'''
                 yield self.save_task(task_id, name=job.name,
                                      time_executed=time_executed,
                                      expiry=expiry, args=targs, kwargs=tkwargs,
-                                     status=states.PENDING, **params)
+                                     run_id=self.id, status=states.PENDING,
+                                     **params)
         else:
             raise TaskNotAvailable(jobname)
     
@@ -483,19 +541,26 @@ execution in the thread pool.'''
     ##    ABSTRACT METHODS
     ############################################################################
     def put_task(self, task_id):
-        '''Put the *task_id* into the queue.'''
-        raise NotImplementedError
-    
-    def get_task(self, task_id=None):
-        '''retrieve a :class:`Task` from a task id. Must be implemented
+        '''Put the *task_id* into the queue. Must be implemented
 by subclasses.'''
         raise NotImplementedError
     
+    def get_task(self, task_id=None):
+        '''Retrieve a :class:`Task` from a task id. Must be implemented
+by subclasses.'''
+        raise NotImplementedError
+    
+    def get_tasks(self, **filters):
+        '''Retrieve a group of :class:`Task` from the backend.'''
+        raise NotImplementedError
+    
     def save_task(self, task_id, **params):
+        '''create or update a :class:`Task` with *task_id* and key-valued
+parameters *params*. Must be implemented by subclasses.'''
         raise NotImplementedError
     
     def delete_tasks(self, task_ids=None):
-        '''Delete a group of task'''
+        '''Delete a group of task. Must be implemented by subclasses.'''
         raise NotImplementedError
     
     ############################################################################

@@ -11,6 +11,9 @@ class TaskBackend(backends.TaskBackend):
     
     def get_task(self, task_id=None):
         return send('arbiter', 'get_task', task_id)
+    
+    def get_tasks(self, **filters):
+        return send('arbiter', 'get_task', **filters)
         
     def save_task(self, task_id, **params):
         return send('arbiter', 'save_task', task_id, **params)

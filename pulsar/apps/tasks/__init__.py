@@ -48,11 +48,9 @@ standard :ref:`application settings <settings>`:
   This parameter can also be specified in the command line via the
   ``--schedule-periodic`` flag. Default: ``False``.
   
-* The :ref:`task_queue_factory <setting-task_queue_factory>` parameter
-  is a dotted path to the callable which creates the
-  :attr:`pulsar.apps.CPUboundApplication.queue` instance.
-  By default, pulsar uses the :class:`pulsar.PythonMessageQueue` class
-  which is a wrapper around the python :class:`multiprocessing.Queue` class.
+* The :ref:`task_backend <setting-task_backend>` parameter is a url
+  type string which specifies the :class:`backends.TaskBackend`
+  to use.
 
 
 .. _app-taskqueue-app:
@@ -64,40 +62,6 @@ Task queue application
    :members:
    :member-order: bysource
    
-   
-.. _tasks-actions:
-
-Task queue commands
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-The :class:`TaskQueue` application adds the following
-:ref:`internal commands <actor_commands>` which can be used to communicate
-with the :class:`TaskQueue` monitor:
-
-* **addtask** to add a new task to the task queue::
-
-    send(taskqueue, 'addtask', jobname, task_extra, *args, **kwargs)
-
- * *jobname*: the name of the :class:`Job` to run.
- * *task_extra*: dictionary of extra parameters to pass to the :class:`Task`
-   constructor. Usually a empty dictionary.
- * *args*: positional arguments for the :ref:`job callable <job-callable>`.
- * *kwargs*: key-valued arguments for the :ref:`job callable <job-callable>`.
-
-* **addtask_noack** same as **addtask** but without acknowleding the sender::
-
-    send(taskqueue, 'addtask_noack', jobname, task_extra, *args, **kwargs)
-    
-* **get_task** retrieve task information. This can be already executed or not.
-  The implementation is left to the :meth:`Task.get_task` method::
-  
-    send(taskqueue, 'get_task', id)
-    
-* **get_tasks** retrieve information for tasks which satisfy the filtering.
-  The implementation is left to the :meth:`Task.get_tasks` method::
-  
-    send(taskqueue, 'get_tasks', **filters)
-
 
 .. _celery: http://celeryproject.org/
 '''
@@ -107,11 +71,18 @@ from datetime import datetime
 import pulsar
 from pulsar import to_string, command
 from pulsar.utils.log import local_property
+from pulsar.utils.config import section_docs
 
 from .models import *
 from .states import *
 from .backends import *
 from .rpc import *
+
+
+section_docs['Task Consumer'] = '''
+This section covers configuration parameters used by CPU bound type applications
+such as the :ref:`distributed task queue <apps-taskqueue>` and the
+:ref:`test suite <apps-test>`.'''
 
 
 class TaskSetting(pulsar.Setting):
@@ -132,10 +103,8 @@ class TaskBackend(TaskSetting):
         distributed queue which has the same API as
         :class:`pulsar.MessageQueue`. The only parameter passed to the
         task queue factory is a :class:`pulsar.utils.config.Config` instance.
-        This parameters is used by :class:`pulsar.apps.CPUboundApplication`
-        such as the :ref:`distributed task queue <apps-taskqueue>` and the
-        :ref:`test suite <apps-test>`.
-        The default value is the :class:`pulsar.PythonMessageQueue`.'''
+        This parameters is used by :class:`pulsar.apps.tasks.TaskQueue`
+        application.'''
 
     
 class TaskPaths(TaskSetting):
@@ -165,7 +134,7 @@ class SchedulePeriodic(TaskSetting):
 
 
 class TaskQueue(pulsar.Application):
-    '''A :class:`pulsar.apps.CPUboundApplication` for consuming
+    '''A :class:`pulsar.apps.Application` for consuming
 task.Tasks and managing scheduling of tasks via a
 :class:`scheduler.Scheduler`.'''
     backend = None
@@ -207,12 +176,8 @@ to check if the :attr:`scheduler` needs to perform a new run.'''
         params['app'].cfg.set('schedule_periodic', False)
         return params
      
-
-@command()
-def put_task(request, task):
-    request.actor.app.queue.put(task)
     
 @command()
 def next_scheduled(request, jobnames=None):
     actor = request.actor
-    return actor.app.scheduler.next_scheduled(jobnames)
+    return actor.app.backend.next_scheduled(jobnames)

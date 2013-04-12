@@ -433,6 +433,10 @@ configuration and plugins.'''
             LOGGER.critical('Error occurred before starting tests',
                             exc_info=True)
             monitor.arbiter.stop()
+            
+    def monitor_task(self, monitor):
+        super(TestSuite, self).monitor_task(monitor)
+        
 
     def add_result(self, monitor, result):
         #Check if we got all results

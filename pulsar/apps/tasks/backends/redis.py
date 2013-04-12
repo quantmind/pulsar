@@ -9,6 +9,7 @@ from pulsar.apps.tasks import backends, states
 class TaskData(odm.Task):
     id = odm.SymbolField(primary_key=True)
     name = odm.SymbolField()
+    run_id = odm.SymbolField()
     status = odm.SymbolField()
     meta = odm.JSONField()
     queue = odm.ListField(class_field=True)

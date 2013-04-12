@@ -91,7 +91,7 @@ class InteractiveConsole(code.InteractiveConsole):  #pragma    nocover
                 self._more = self.push(line)
 
 
-class PulsarShell(pulsar.CPUboundApplication):
+class PulsarShell(pulsar.Application):
     console_class = InteractiveConsole
     name = 'shell'
     cfg_apps = ('cpubound',)
