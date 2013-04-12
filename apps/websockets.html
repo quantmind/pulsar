@@ -6,13 +6,13 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>WebSockets &mdash; pulsar v0.5b10 documentation</title>
+    <title>WebSockets &mdash; pulsar v0.5b11 documentation</title>
     <link rel="stylesheet" href="../static/pulsar.css" type="text/css" />
     <link rel="stylesheet" href="../static/pygments.css" type="text/css" />
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../',
-        VERSION:     '0.5b10',
+        VERSION:     '0.5b11',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -22,7 +22,7 @@
     <script type="text/javascript" src="../static/underscore.js"></script>
     <script type="text/javascript" src="../static/doctools.js"></script>
     <link rel="shortcut icon" href="../static/Game_of_life_pulsar.gif"/>
-    <link rel="top" title="pulsar v0.5b10 documentation" href="../index.html" />
+    <link rel="top" title="pulsar v0.5b11 documentation" href="../index.html" />
     <link rel="next" title="Publish/Subscribe" href="pubsub.html" />
     <link rel="prev" title="JSON-RPC" href="rpc.html" /> 
   </head>
@@ -43,7 +43,7 @@
         <li class="right" >
           <a href="rpc.html" title="JSON-RPC"
              accesskey="P">previous</a> |</li>
-        <li><a href="../index.html">pulsar v0.5b10 documentation</a> &raquo;</li> 
+        <li><a href="../index.html">pulsar v0.5b11 documentation</a> &raquo;</li> 
       </ul>
     </div>
 <div class="deck">
@@ -163,14 +163,13 @@ parameter. It is a proxy for the <a class="reference internal" href="#pulsar.app
 <dd><p>Websocket protocol for servers and clients.</p>
 <dl class="method">
 <dt id="pulsar.apps.ws.WebSocketProtocol.write">
-<tt class="descname">write</tt><big>(</big><em>frame</em><big>)</big><a class="headerlink" href="#pulsar.apps.ws.WebSocketProtocol.write" title="Permalink to this definition">¶</a></dt>
+<tt class="descname">write</tt><big>(</big><em>value</em><big>)</big><a class="headerlink" href="#pulsar.apps.ws.WebSocketProtocol.write" title="Permalink to this definition">¶</a></dt>
 <dd><p>Write a new <em>frame</em> into the wire, frame can be:</p>
 <ul class="simple">
+<li><tt class="xref docutils literal"><span class="pre">None</span></tt> does nothing</li>
 <li>bytes - converted to a byte Frame</li>
 <li>string - converted to a string Frame</li>
 <li>a <a class="reference internal" href="../api/utilities.html#pulsar.utils.websocket.Frame" title="pulsar.utils.websocket.Frame"><tt class="xref py py-class docutils literal"><span class="pre">pulsar.utils.websocket.Frame</span></tt></a></li>
-<li>A generator or <a class="reference internal" href="../api/async.html#pulsar.Deferred" title="pulsar.Deferred"><tt class="xref py py-class docutils literal"><span class="pre">pulsar.Deferred</span></tt></a> - adds a callback to
-the <a class="reference internal" href="../api/async.html#pulsar.EventLoop" title="pulsar.EventLoop"><tt class="xref py py-class docutils literal"><span class="pre">pulsar.EventLoop</span></tt></a> to invoke this method once the result is ready.</li>
 </ul>
 </dd></dl>
 
@@ -233,7 +232,7 @@ the <a class="reference internal" href="../api/async.html#pulsar.EventLoop" titl
     </div>
 
     <div class="footer">
-        &copy; Copyright 2011, Luca Sbardella.
+        &copy; Copyright 2011-2013, Luca Sbardella.
       Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.0.7.
     </div>
 <script type="text/javascript">

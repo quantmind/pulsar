@@ -6,13 +6,13 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>WSGI Servers &mdash; pulsar v0.5b10 documentation</title>
+    <title>WSGI Servers &mdash; pulsar v0.5b11 documentation</title>
     <link rel="stylesheet" href="../../static/pulsar.css" type="text/css" />
     <link rel="stylesheet" href="../../static/pygments.css" type="text/css" />
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../',
-        VERSION:     '0.5b10',
+        VERSION:     '0.5b11',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -22,7 +22,7 @@
     <script type="text/javascript" src="../../static/underscore.js"></script>
     <script type="text/javascript" src="../../static/doctools.js"></script>
     <link rel="shortcut icon" href="../../static/Game_of_life_pulsar.gif"/>
-    <link rel="top" title="pulsar v0.5b10 documentation" href="../../index.html" />
+    <link rel="top" title="pulsar v0.5b11 documentation" href="../../index.html" />
     <link rel="up" title="WSGI" href="index.html" />
     <link rel="next" title="WSGI application handlers" href="handlers.html" />
     <link rel="prev" title="WSGI" href="index.html" /> 
@@ -44,7 +44,7 @@
         <li class="right" >
           <a href="index.html" title="WSGI"
              accesskey="P">previous</a> |</li>
-        <li><a href="../../index.html">pulsar v0.5b10 documentation</a> &raquo;</li>
+        <li><a href="../../index.html">pulsar v0.5b11 documentation</a> &raquo;</li>
           <li><a href="index.html" accesskey="U">WSGI</a> &raquo;</li> 
       </ul>
     </div>
@@ -170,7 +170,7 @@ called with a generator as parameter:</p>
 <h2>WSGI Server<a class="headerlink" href="#wsgi-server" title="Permalink to this headline">¶</a></h2>
 <dl class="class">
 <dt id="pulsar.apps.wsgi.WSGIServer">
-<em class="property">class </em><tt class="descclassname">pulsar.apps.wsgi.</tt><tt class="descname">WSGIServer</tt><big>(</big><em>callable=None</em>, <em>description=None</em>, <em>name=None</em>, <em>epilog=None</em>, <em>argv=None</em>, <em>script=None</em>, <em>version=None</em>, <em>parse_console=True</em>, <em>cfg=None</em>, <em>**kwargs</em><big>)</big><a class="reference internal" href="../../modules/pulsar/apps/wsgi.html#WSGIServer"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.wsgi.WSGIServer" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><tt class="descclassname">pulsar.apps.wsgi.</tt><tt class="descname">WSGIServer</tt><big>(</big><em>callable=None</em>, <em>load_config=True</em>, <em>**params</em><big>)</big><a class="reference internal" href="../../modules/pulsar/apps/wsgi.html#WSGIServer"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.wsgi.WSGIServer" title="Permalink to this definition">¶</a></dt>
 <dd><dl class="method">
 <dt id="pulsar.apps.wsgi.WSGIServer.protocol_consumer">
 <tt class="descname">protocol_consumer</tt><big>(</big><big>)</big><a class="headerlink" href="#pulsar.apps.wsgi.WSGIServer.protocol_consumer" title="Permalink to this definition">¶</a></dt>
@@ -187,7 +187,7 @@ initialisation.</p>
 <span id="http-protocol-consumer"></span><h2>HTTP Protocol Consumer<a class="headerlink" href="#module-pulsar.apps.wsgi.server" title="Permalink to this headline">¶</a></h2>
 <dl class="class">
 <dt id="pulsar.apps.wsgi.server.HttpServerResponse">
-<em class="property">class </em><tt class="descclassname">pulsar.apps.wsgi.server.</tt><tt class="descname">HttpServerResponse</tt><big>(</big><em>wsgi_callable</em>, <em>connection</em><big>)</big><a class="reference internal" href="../../modules/pulsar/apps/wsgi/server.html#HttpServerResponse"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.wsgi.server.HttpServerResponse" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><tt class="descclassname">pulsar.apps.wsgi.server.</tt><tt class="descname">HttpServerResponse</tt><big>(</big><em>wsgi_callable</em>, <em>cfg</em>, <em>connection</em><big>)</big><a class="reference internal" href="../../modules/pulsar/apps/wsgi/server.html#HttpServerResponse"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.wsgi.server.HttpServerResponse" title="Permalink to this definition">¶</a></dt>
 <dd><p>Server side HTTP <a class="reference internal" href="../../api/protocols.html#pulsar.ProtocolConsumer" title="pulsar.ProtocolConsumer"><tt class="xref py py-class docutils literal"><span class="pre">pulsar.ProtocolConsumer</span></tt></a>.</p>
 <dl class="method">
 <dt id="pulsar.apps.wsgi.server.HttpServerResponse.data_received">
@@ -195,17 +195,6 @@ initialisation.</p>
 <dd><p>Implements <a class="reference internal" href="../../api/protocols.html#pulsar.Protocol.data_received" title="pulsar.Protocol.data_received"><tt class="xref py py-class docutils literal"><span class="pre">pulsar.Protocol.data_received</span></tt></a>. Once we have a
 full HTTP message, build the wsgi <tt class="docutils literal"><span class="pre">environ</span></tt> and write the response
 using the <a class="reference internal" href="../../api/protocols.html#pulsar.Transport.writelines" title="pulsar.Transport.writelines"><tt class="xref py py-meth docutils literal"><span class="pre">pulsar.Transport.writelines()</span></tt></a> method.</p>
-</dd></dl>
-
-<dl class="method">
-<dt id="pulsar.apps.wsgi.server.HttpServerResponse.default_headers">
-<tt class="descname">default_headers</tt><big>(</big><big>)</big><a class="reference internal" href="../../modules/pulsar/apps/wsgi/server.html#HttpServerResponse.default_headers"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.wsgi.server.HttpServerResponse.default_headers" title="Permalink to this definition">¶</a></dt>
-<dd><p>From pep 3333: In general, the server or gateway is responsible for
-ensuring that correct headers are sent to the client: if the application
-omits a header required by HTTP (or other relevant specifications that are
-in effect), the server or gateway must add it. For example,
-the HTTP Date: and Server: headers would normally be supplied by the server
-or gateway.</p>
 </dd></dl>
 
 <dl class="method">
@@ -218,12 +207,6 @@ the following algorithm:</p>
 <li>Omit the 100 (Continue) response if it has already received some or all of
 the request body for the corresponding request.</li>
 </ul>
-</dd></dl>
-
-<dl class="attribute">
-<dt id="pulsar.apps.wsgi.server.HttpServerResponse.keep_alive">
-<tt class="descname">keep_alive</tt><a class="reference internal" href="../../modules/pulsar/apps/wsgi/server.html#HttpServerResponse.keep_alive"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.wsgi.server.HttpServerResponse.keep_alive" title="Permalink to this definition">¶</a></dt>
-<dd><p>return True if the connection should be kept alive</p>
 </dd></dl>
 
 <dl class="method">
@@ -340,7 +323,7 @@ is an HTTP upgrade (websockets)</p>
     </div>
 
     <div class="footer">
-        &copy; Copyright 2011, Luca Sbardella.
+        &copy; Copyright 2011-2013, Luca Sbardella.
       Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.0.7.
     </div>
 <script type="text/javascript">

@@ -6,13 +6,13 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>Asynchronous Test Suite &mdash; pulsar v0.5b10 documentation</title>
+    <title>Asynchronous Test Suite &mdash; pulsar v0.5b11 documentation</title>
     <link rel="stylesheet" href="../static/pulsar.css" type="text/css" />
     <link rel="stylesheet" href="../static/pygments.css" type="text/css" />
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../',
-        VERSION:     '0.5b10',
+        VERSION:     '0.5b11',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -22,9 +22,9 @@
     <script type="text/javascript" src="../static/underscore.js"></script>
     <script type="text/javascript" src="../static/doctools.js"></script>
     <link rel="shortcut icon" href="../static/Game_of_life_pulsar.gif"/>
-    <link rel="top" title="pulsar v0.5b10 documentation" href="../index.html" />
+    <link rel="top" title="pulsar v0.5b11 documentation" href="../index.html" />
     <link rel="next" title="Asynchronous Shell" href="shell.html" />
-    <link rel="prev" title="Distributed Task Queues" href="tasks.html" /> 
+    <link rel="prev" title="RPC" href="tasks/rpc.html" /> 
   </head>
   <body>
 
@@ -41,9 +41,9 @@
           <a href="shell.html" title="Asynchronous Shell"
              accesskey="N">next</a> |</li>
         <li class="right" >
-          <a href="tasks.html" title="Distributed Task Queues"
+          <a href="tasks/rpc.html" title="RPC"
              accesskey="P">previous</a> |</li>
-        <li><a href="../index.html">pulsar v0.5b10 documentation</a> &raquo;</li> 
+        <li><a href="../index.html">pulsar v0.5b11 documentation</a> &raquo;</li> 
       </ul>
     </div>
 <div class="deck">
@@ -247,7 +247,7 @@ long a test function can wait for results. This is what the
 <h3>TestSuite<a class="headerlink" href="#testsuite" title="Permalink to this headline">¶</a></h3>
 <dl class="class">
 <dt id="pulsar.apps.test.TestSuite">
-<em class="property">class </em><tt class="descclassname">pulsar.apps.test.</tt><tt class="descname">TestSuite</tt><big>(</big><em>*args</em>, <em>**kwargs</em><big>)</big><a class="reference internal" href="../modules/pulsar/apps/test.html#TestSuite"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.test.TestSuite" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><tt class="descclassname">pulsar.apps.test.</tt><tt class="descname">TestSuite</tt><big>(</big><em>callable=None</em>, <em>load_config=True</em>, <em>**params</em><big>)</big><a class="reference internal" href="../modules/pulsar/apps/test.html#TestSuite"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.test.TestSuite" title="Permalink to this definition">¶</a></dt>
 <dd><p>An asynchronous test suite which works like a task queue where each task
 is a group of tests specified in a test class.</p>
 <table class="docutils field-list" frame="void" rules="none">
@@ -285,6 +285,12 @@ it used the standard <tt class="docutils literal"><span class="pre">unittest.Tex
 <tt class="descname">runner</tt><a class="reference internal" href="../modules/pulsar/apps/test.html#TestSuite.runner"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.test.TestSuite.runner" title="Permalink to this definition">¶</a></dt>
 <dd><p>Instance of <tt class="xref py py-class docutils literal"><span class="pre">TestRunner</span></tt> driving the test case
 configuration and plugins.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="pulsar.apps.test.TestSuite.monitor_start">
+<tt class="descname">monitor_start</tt><big>(</big><em>monitor</em><big>)</big><a class="reference internal" href="../modules/pulsar/apps/test.html#TestSuite.monitor_start"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.test.TestSuite.monitor_start" title="Permalink to this definition">¶</a></dt>
+<dd><p>When the monitor starts load all test classes into the queue</p>
 </dd></dl>
 
 </dd></dl>
@@ -450,8 +456,8 @@ is passed by this function recursively.</li>
 </ul>
 
   <h4>Previous topic</h4>
-  <p class="topless"><a href="tasks.html"
-                        title="previous chapter">Distributed Task Queues</a></p>
+  <p class="topless"><a href="tasks/rpc.html"
+                        title="previous chapter">RPC</a></p>
   <h4>Next topic</h4>
   <p class="topless"><a href="shell.html"
                         title="next chapter">Asynchronous Shell</a></p>
@@ -479,7 +485,7 @@ is passed by this function recursively.</li>
     </div>
 
     <div class="footer">
-        &copy; Copyright 2011, Luca Sbardella.
+        &copy; Copyright 2011-2013, Luca Sbardella.
       Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.0.7.
     </div>
 <script type="text/javascript">

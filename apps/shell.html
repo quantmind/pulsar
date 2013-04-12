@@ -6,13 +6,13 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>Asynchronous Shell &mdash; pulsar v0.5b10 documentation</title>
+    <title>Asynchronous Shell &mdash; pulsar v0.5b11 documentation</title>
     <link rel="stylesheet" href="../static/pulsar.css" type="text/css" />
     <link rel="stylesheet" href="../static/pygments.css" type="text/css" />
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../',
-        VERSION:     '0.5b10',
+        VERSION:     '0.5b11',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -22,7 +22,7 @@
     <script type="text/javascript" src="../static/underscore.js"></script>
     <script type="text/javascript" src="../static/doctools.js"></script>
     <link rel="shortcut icon" href="../static/Game_of_life_pulsar.gif"/>
-    <link rel="top" title="pulsar v0.5b10 documentation" href="../index.html" />
+    <link rel="top" title="pulsar v0.5b11 documentation" href="../index.html" />
     <link rel="next" title="JSON-RPC" href="rpc.html" />
     <link rel="prev" title="Asynchronous Test Suite" href="test.html" /> 
   </head>
@@ -43,7 +43,7 @@
         <li class="right" >
           <a href="test.html" title="Asynchronous Test Suite"
              accesskey="P">previous</a> |</li>
-        <li><a href="../index.html">pulsar v0.5b10 documentation</a> &raquo;</li> 
+        <li><a href="../index.html">pulsar v0.5b11 documentation</a> &raquo;</li> 
       </ul>
     </div>
 <div class="deck">
@@ -66,9 +66,7 @@
   <div class="section" id="module-pulsar.apps.shell">
 <span id="asynchronous-shell"></span><span id="apps-shell"></span><h1>Asynchronous Shell<a class="headerlink" href="#module-pulsar.apps.shell" title="Permalink to this headline">¶</a></h1>
 <p>An asynchronous shell for experimenting with pulsar on the command line.
-The shell is available for posix operative systems only. Windows support
-to come at some point.</p>
-<p>To use write a little script, lets call it <tt class="docutils literal"><span class="pre">pshell.py</span></tt>:</p>
+To use write a little script, lets call it <tt class="docutils literal"><span class="pre">pshell.py</span></tt>:</p>
 <div class="highlight-python"><div class="highlight"><pre><span class="kn">from</span> <span class="nn">pulsar.apps.shell</span> <span class="kn">import</span> <span class="n">PulsarShell</span> 
 
 <span class="k">if</span> <span class="n">__name__</span> <span class="o">==</span> <span class="s">&#39;__main__&#39;</span><span class="p">:</span>
@@ -78,22 +76,39 @@ to come at some point.</p>
 <p>And run it:</p>
 <div class="highlight-python"><pre>python pshell.py</pre>
 </div>
-<p>The shell has already <tt class="docutils literal"><span class="pre">pulsar</span></tt>, <tt class="docutils literal"><span class="pre">arbiter</span></tt> and the <tt class="xref py py-class docutils literal"><span class="pre">Actor</span></tt>
-class in the global dictionary:</p>
-<div class="highlight-python"><pre>&gt;&gt; pulsar.__version__
-0.5.0
-&gt;&gt; arbiter.state
-'running'
-&gt;&gt; arbiter.MANAGED_ACTORS
-{}
-&gt;&gt; a = arbiter.spawn(Actor)
-&gt;&gt; a.is_alive()
-True
-&gt;&gt; arbiter.MANAGED_ACTORS
-{'3a67a186': 3a67a186}
-&gt;&gt; arbiter.close_actors()
-&gt;&gt; a.is_alive()
-False</pre>
+<span class="target" id="module-pulsar"></span><p>The shell has already <tt class="docutils literal"><span class="pre">pulsar</span></tt>, <a class="reference internal" href="../api/actor.html#pulsar.get_actor" title="pulsar.get_actor"><tt class="xref py py-func docutils literal"><span class="pre">get_actor()</span></tt></a>, <a class="reference internal" href="../api/actor.html#pulsar.spawn" title="pulsar.spawn"><tt class="xref py py-func docutils literal"><span class="pre">spawn()</span></tt></a>,
+<a class="reference internal" href="../api/actor.html#pulsar.send" title="pulsar.send"><tt class="xref py py-func docutils literal"><span class="pre">send()</span></tt></a> and the <a class="reference internal" href="../api/actor.html#pulsar.Actor" title="pulsar.Actor"><tt class="xref py py-class docutils literal"><span class="pre">Actor</span></tt></a> class in the global dictionary:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">pulsar</span><span class="o">.</span><span class="n">__version__</span>
+<span class="go">0.5.0</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">actor</span> <span class="o">=</span> <span class="n">get_actor</span><span class="p">()</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">actor</span><span class="o">.</span><span class="n">info_state</span>
+<span class="go">&#39;running&#39;</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">a</span> <span class="o">=</span> <span class="n">spawn</span><span class="p">()</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">a</span><span class="o">.</span><span class="n">done</span><span class="p">()</span>
+<span class="go">True</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">proxy</span> <span class="o">=</span> <span class="n">a</span><span class="o">.</span><span class="n">result</span>
+</pre></div>
+</div>
+<div class="section" id="implementation">
+<h2>Implementation<a class="headerlink" href="#implementation" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="pulsar.apps.shell.PulsarShell">
+<em class="property">class </em><tt class="descclassname">pulsar.apps.shell.</tt><tt class="descname">PulsarShell</tt><big>(</big><em>callable=None</em>, <em>load_config=True</em>, <em>**params</em><big>)</big><a class="reference internal" href="../modules/pulsar/apps/shell.html#PulsarShell"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.shell.PulsarShell" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="method">
+<dt id="pulsar.apps.shell.PulsarShell.worker_start">
+<tt class="descname">worker_start</tt><big>(</big><em>worker</em><big>)</big><a class="reference internal" href="../modules/pulsar/apps/shell.html#PulsarShell.worker_start"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.shell.PulsarShell.worker_start" title="Permalink to this definition">¶</a></dt>
+<dd><p>When the worker starts, create the <a class="reference internal" href="../api/actor.html#pulsar.Actor.thread_pool" title="pulsar.Actor.thread_pool"><tt class="xref py py-attr docutils literal"><span class="pre">Actor.thread_pool</span></tt></a>
+with one thread only and send the <tt class="xref py py-meth docutils literal"><span class="pre">interact()</span></tt> method to it.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="pulsar.apps.shell.PulsarShell.interact">
+<tt class="descname">interact</tt><big>(</big><em>worker</em><big>)</big><a class="reference internal" href="../modules/pulsar/apps/shell.html#PulsarShell.interact"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.shell.PulsarShell.interact" title="Permalink to this definition">¶</a></dt>
+<dd><p>Handled by the <a class="reference internal" href="../api/actor.html#pulsar.Actor.thread_pool" title="pulsar.Actor.thread_pool"><tt class="xref py py-attr docutils literal"><span class="pre">Actor.thread_pool</span></tt></a></p>
+</dd></dl>
+
+</dd></dl>
+
 </div>
 </div>
 
@@ -107,6 +122,14 @@ False</pre>
   <img class="logo" width="200" src="../static/pulsar.png" alt="pulsar" title="Pulsar"/>
 </a>
 </p>
+  <h3><a href="../index.html">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">Asynchronous Shell</a><ul>
+<li><a class="reference internal" href="#implementation">Implementation</a></li>
+</ul>
+</li>
+</ul>
+
   <h4>Previous topic</h4>
   <p class="topless"><a href="test.html"
                         title="previous chapter">Asynchronous Test Suite</a></p>
@@ -137,7 +160,7 @@ False</pre>
     </div>
 
     <div class="footer">
-        &copy; Copyright 2011, Luca Sbardella.
+        &copy; Copyright 2011-2013, Luca Sbardella.
       Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.0.7.
     </div>
 <script type="text/javascript">

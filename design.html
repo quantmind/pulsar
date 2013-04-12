@@ -6,13 +6,13 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>Design &mdash; pulsar v0.5b10 documentation</title>
+    <title>Design &mdash; pulsar v0.5b11 documentation</title>
     <link rel="stylesheet" href="static/pulsar.css" type="text/css" />
     <link rel="stylesheet" href="static/pygments.css" type="text/css" />
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '',
-        VERSION:     '0.5b10',
+        VERSION:     '0.5b11',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -22,7 +22,7 @@
     <script type="text/javascript" src="static/underscore.js"></script>
     <script type="text/javascript" src="static/doctools.js"></script>
     <link rel="shortcut icon" href="static/Game_of_life_pulsar.gif"/>
-    <link rel="top" title="pulsar v0.5b10 documentation" href="index.html" />
+    <link rel="top" title="pulsar v0.5b11 documentation" href="index.html" />
     <link rel="next" title="FAQ" href="faq.html" />
     <link rel="prev" title="Overview" href="overview.html" /> 
   </head>
@@ -43,7 +43,7 @@
         <li class="right" >
           <a href="overview.html" title="Overview"
              accesskey="P">previous</a> |</li>
-        <li><a href="index.html">pulsar v0.5b10 documentation</a> &raquo;</li> 
+        <li><a href="index.html">pulsar v0.5b11 documentation</a> &raquo;</li> 
       </ul>
     </div>
 <div class="deck">
@@ -82,17 +82,19 @@ when using <a class="reference internal" href="#design-application"><em>pulsar a
 you need to use pulsar in <strong>server state</strong>, that is to say, there
 will be a centralised <a class="reference internal" href="api/actor.html#pulsar.Arbiter" title="pulsar.Arbiter"><tt class="xref py py-class docutils literal"><span class="pre">Arbiter</span></tt></a> controlling the main
 <a class="reference internal" href="api/async.html#pulsar.EventLoop" title="pulsar.EventLoop"><tt class="xref py py-class docutils literal"><span class="pre">EventLoop</span></tt></a> in the <strong>main thread</strong> of the <strong>master process</strong>.
-The arbiter is a specialised <a class="reference internal" href="#iobound"><em>IO actor</em></a>
+The arbiter is a specialised <a class="reference internal" href="api/actor.html#pulsar.Actor" title="pulsar.Actor"><tt class="xref py py-class docutils literal"><span class="pre">Actor</span></tt></a>
 which control the life all <a class="reference internal" href="api/actor.html#pulsar.Actor" title="pulsar.Actor"><tt class="xref py py-class docutils literal"><span class="pre">Actor</span></tt></a> and <a class="reference internal" href="api/actor.html#pulsar.Monitor" title="pulsar.Monitor"><tt class="xref py py-class docutils literal"><span class="pre">Monitor</span></tt></a>.</p>
 <div class="section" id="arbiter">
 <span id="design-arbiter"></span><h3>Arbiter<a class="headerlink" href="#arbiter" title="Permalink to this headline">¶</a></h3>
-<p>To access the <a class="reference internal" href="api/actor.html#pulsar.Arbiter" title="pulsar.Arbiter"><tt class="xref py py-class docutils literal"><span class="pre">Arbiter</span></tt></a>, from the main process, one can use:</p>
+<p>To access the <a class="reference internal" href="api/actor.html#pulsar.Arbiter" title="pulsar.Arbiter"><tt class="xref py py-class docutils literal"><span class="pre">Arbiter</span></tt></a>, from the main process, one can use the
+<a class="reference internal" href="api/actor.html#pulsar.arbiter" title="pulsar.arbiter"><tt class="xref py py-func docutils literal"><span class="pre">arbiter()</span></tt></a> high level function:</p>
 <div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">arbiter</span> <span class="o">=</span> <span class="n">pulsar</span><span class="o">.</span><span class="n">arbiter</span><span class="p">()</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">arbiter</span><span class="o">.</span><span class="n">running</span><span class="p">()</span>
 <span class="go">False</span>
 </pre></div>
 </div>
-<p>The Arbiter can be stopped and restarted.</p>
+<p>The <a class="reference internal" href="api/actor.html#pulsar.Arbiter" title="pulsar.Arbiter"><tt class="xref py py-class docutils literal"><span class="pre">Arbiter</span></tt></a> is also psecial because it can be stopped and restarted
+while standard <a class="reference internal" href="api/actor.html#pulsar.Actor" title="pulsar.Actor"><tt class="xref py py-class docutils literal"><span class="pre">Actor</span></tt></a>, once stopped, they are gone.</p>
 </div>
 </div>
 <div class="section" id="actors">
@@ -113,18 +115,19 @@ the following will spawn a thread-based actor:</p>
 </div>
 <div class="section" id="event-loop">
 <span id="eventloop"></span><h3>Event loop<a class="headerlink" href="#event-loop" title="Permalink to this headline">¶</a></h3>
-<p>Each actor has its own <a class="reference internal" href="api/actor.html#pulsar.Actor.requestloop" title="pulsar.Actor.requestloop"><tt class="xref py py-attr docutils literal"><span class="pre">Actor.requestloop</span></tt></a>, an instance of <a class="reference internal" href="api/async.html#pulsar.EventLoop" title="pulsar.EventLoop"><tt class="xref py py-class docutils literal"><span class="pre">EventLoop</span></tt></a>,
+<p>Each actor has its own <tt class="xref py py-attr docutils literal"><span class="pre">Actor.requestloop</span></tt>, an instance of <a class="reference internal" href="api/async.html#pulsar.EventLoop" title="pulsar.EventLoop"><tt class="xref py py-class docutils literal"><span class="pre">EventLoop</span></tt></a>,
 which can be used to register handlers on file descriptors.
-The <a class="reference internal" href="api/actor.html#pulsar.Actor.requestloop" title="pulsar.Actor.requestloop"><tt class="xref py py-attr docutils literal"><span class="pre">Actor.requestloop</span></tt></a> is initiated just after forking (or after the
+The <tt class="xref py py-attr docutils literal"><span class="pre">Actor.requestloop</span></tt> is initiated just after forking (or after the
 actor&#8217;s thread starts for thread-based actors).
 Pulsar <a class="reference internal" href="api/async.html#pulsar.EventLoop" title="pulsar.EventLoop"><tt class="xref py py-class docutils literal"><span class="pre">EventLoop</span></tt></a> will be following <a class="reference external" href="http://www.python.org/dev/peps/pep-3156/">pep-3156</a> guidelines.
-In addition to the <a class="reference internal" href="api/actor.html#pulsar.Actor.requestloop" title="pulsar.Actor.requestloop"><tt class="xref py py-attr docutils literal"><span class="pre">Actor.requestloop</span></tt></a>, <a class="reference internal" href="#cpubound"><em>cpu bound</em></a>
+In addition to the <tt class="xref py py-attr docutils literal"><span class="pre">Actor.requestloop</span></tt>, <a class="reference internal" href="#cpubound"><em>cpu bound</em></a>
 actors have another <a class="reference internal" href="api/async.html#pulsar.EventLoop" title="pulsar.EventLoop"><tt class="xref py py-class docutils literal"><span class="pre">EventLoop</span></tt></a>, on a different thread, for
 handling IO requests on their mailbox.</p>
 </div>
 <div class="section" id="io-bound">
 <span id="iobound"></span><h3>IO-bound<a class="headerlink" href="#io-bound" title="Permalink to this headline">¶</a></h3>
-<p>The most common <a class="reference internal" href="api/actor.html#pulsar.Actor" title="pulsar.Actor"><tt class="xref py py-class docutils literal"><span class="pre">Actor</span></tt></a> has a <a class="reference internal" href="api/actor.html#pulsar.Actor.requestloop" title="pulsar.Actor.requestloop"><tt class="xref py py-meth docutils literal"><span class="pre">Actor.requestloop()</span></tt></a> which tells
+<p>The most common usage for an <a class="reference internal" href="api/actor.html#pulsar.Actor" title="pulsar.Actor"><tt class="xref py py-class docutils literal"><span class="pre">Actor</span></tt></a> is to handle Input/Output
+events on file descriptors. An <a class="reference internal" href="api/actor.html#pulsar.Actor.event_loop" title="pulsar.Actor.event_loop"><tt class="xref py py-attr docutils literal"><span class="pre">Actor.event_loop</span></tt></a> tells
 the operating system (through <cite>epoll</cite> or <cite>select</cite>) that it should be notified
 when a new connection is made, and then it goes to sleep.
 Serving the new request should occur as fast as possible so that other
@@ -132,16 +135,15 @@ connections can be served simultaneously.</p>
 </div>
 <div class="section" id="cpu-bound">
 <span id="cpubound"></span><h3>CPU-bound<a class="headerlink" href="#cpu-bound" title="Permalink to this headline">¶</a></h3>
-<p>The second type of <a class="reference internal" href="api/actor.html#pulsar.Actor" title="pulsar.Actor"><tt class="xref py py-class docutils literal"><span class="pre">Actor</span></tt></a> can be used to perform CPU intensive
-operations, such as calculations, data manipulation or whatever you need
-them to do. CPU-bound <tt class="xref py py-class docutils literal"><span class="pre">Actors</span></tt> have the following properties:</p>
+<p>Another way for an actor to function is to use its of <a class="reference internal" href="api/actor.html#pulsar.Actor.thread_pool" title="pulsar.Actor.thread_pool"><tt class="xref py py-attr docutils literal"><span class="pre">Actor.thread_pool</span></tt></a>
+to perform CPU intensive operations, such as calculations, data manipulation
+or whatever you need them to do.
+CPU-bound <tt class="xref py py-class docutils literal"><span class="pre">Actors</span></tt> have the following properties:</p>
 <ul class="simple">
-<li>Their <a class="reference internal" href="api/actor.html#pulsar.Actor.requestloop" title="pulsar.Actor.requestloop"><tt class="xref py py-attr docutils literal"><span class="pre">Actor.requestloop</span></tt></a> listen for requests on distributed queue
-rather than from a socket.</li>
-<li>Once they receive a new requests, they can block their request loop
-for a long time.</li>
-<li>In addition to their request loop, they have an I/O event loop running on a
-separate thread. It is accessed via the <a class="reference internal" href="api/actor.html#pulsar.Actor.ioloop" title="pulsar.Actor.ioloop"><tt class="xref py py-meth docutils literal"><span class="pre">Actor.ioloop()</span></tt></a> attribute.</li>
+<li>Their <a class="reference internal" href="api/actor.html#pulsar.Actor.event_loop" title="pulsar.Actor.event_loop"><tt class="xref py py-attr docutils literal"><span class="pre">Actor.event_loop</span></tt></a> listen for requests on file descriptors
+as usual.</li>
+<li>The threads in the <a class="reference internal" href="api/actor.html#pulsar.Actor.thread_pool" title="pulsar.Actor.thread_pool"><tt class="xref py py-attr docutils literal"><span class="pre">Actor.thread_pool</span></tt></a> use a specialised <a class="reference internal" href="api/async.html#pulsar.EventLoop" title="pulsar.EventLoop"><tt class="xref py py-class docutils literal"><span class="pre">EventLoop</span></tt></a>
+which listen for events on a message queue.</li>
 </ul>
 </div>
 <div class="section" id="mailbox">
@@ -184,21 +186,19 @@ actor will eventually stop.</p>
 </div>
 <div class="section" id="hooks">
 <span id="actor-callbacks"></span><h3>Hooks<a class="headerlink" href="#hooks" title="Permalink to this headline">¶</a></h3>
-<p>An <a class="reference internal" href="api/actor.html#pulsar.Actor" title="pulsar.Actor"><tt class="xref py py-class docutils literal"><span class="pre">Actor</span></tt></a> exposes three functions which can be
-used to customise its behaviour. These functions do nothing in the
+<p>An <a class="reference internal" href="api/actor.html#pulsar.Actor" title="pulsar.Actor"><tt class="xref py py-class docutils literal"><span class="pre">Actor</span></tt></a> exposes three <a class="reference internal" href="tutorials/events.html#one-time-event"><em>one time events</em></a>
+which can be used to customise its behaviour. These functions do nothing in the
 standard <a class="reference internal" href="api/actor.html#pulsar.Actor" title="pulsar.Actor"><tt class="xref py py-class docutils literal"><span class="pre">Actor</span></tt></a> implementation.</p>
-<p><strong>on_start</strong></p>
-<p>The <tt class="xref py py-meth docutils literal"><span class="pre">Actor.on_start()</span></tt> method is called, <strong>once only</strong>, just before the actor
-starts its <a class="reference internal" href="#eventloop"><em>event loop</em></a>. This function can be used to setup
+<p><strong>start</strong></p>
+<p>Fired just before the actor starts its <a class="reference internal" href="#eventloop"><em>event loop</em></a>.
+This function can be used to setup
 the application and register event handlers. For example, the
 <a class="reference internal" href="apps/socket.html#apps-socket"><em>socket server application</em></a> creates the server and register
-its file descriptor with the <a class="reference internal" href="api/actor.html#pulsar.Actor.requestloop" title="pulsar.Actor.requestloop"><tt class="xref py py-attr docutils literal"><span class="pre">Actor.requestloop</span></tt></a>.</p>
-<p><strong>on_stop</strong></p>
-<p>The <tt class="xref py py-meth docutils literal"><span class="pre">Actor.on_stop()</span></tt> method is called, <strong>once only</strong>, just before the
-actor is garbage collected.</p>
-<p><strong>on_info</strong></p>
-<p>The <tt class="xref py py-meth docutils literal"><span class="pre">Actor.on_info()</span></tt> method is called to provide information about
-the actor.</p>
+its file descriptor with the <a class="reference internal" href="api/actor.html#pulsar.Actor.event_loop" title="pulsar.Actor.event_loop"><tt class="xref py py-attr docutils literal"><span class="pre">Actor.event_loop</span></tt></a>.</p>
+<p><strong>stopping</strong></p>
+<p>Fired when the <a class="reference internal" href="api/actor.html#pulsar.Actor" title="pulsar.Actor"><tt class="xref py py-class docutils literal"><span class="pre">Actor</span></tt></a> starts stopping.</p>
+<p><strong>stop</strong></p>
+<p>Fired just before the <a class="reference internal" href="api/actor.html#pulsar.Actor" title="pulsar.Actor"><tt class="xref py py-class docutils literal"><span class="pre">Actor</span></tt></a> is garbage collected</p>
 </div>
 <div class="section" id="commands">
 <span id="actor-commands"></span><h3>Commands<a class="headerlink" href="#commands" title="Permalink to this headline">¶</a></h3>
@@ -301,7 +301,7 @@ framework, the library ships with the <tt class="xref py py-class docutils liter
     </div>
 
     <div class="footer">
-        &copy; Copyright 2011, Luca Sbardella.
+        &copy; Copyright 2011-2013, Luca Sbardella.
       Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.0.7.
     </div>
 <script type="text/javascript">

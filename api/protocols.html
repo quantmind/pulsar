@@ -6,13 +6,13 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>Protocols API &mdash; pulsar v0.5b10 documentation</title>
+    <title>Protocols API &mdash; pulsar v0.5b11 documentation</title>
     <link rel="stylesheet" href="../static/pulsar.css" type="text/css" />
     <link rel="stylesheet" href="../static/pygments.css" type="text/css" />
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../',
-        VERSION:     '0.5b10',
+        VERSION:     '0.5b11',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -22,7 +22,7 @@
     <script type="text/javascript" src="../static/underscore.js"></script>
     <script type="text/javascript" src="../static/doctools.js"></script>
     <link rel="shortcut icon" href="../static/Game_of_life_pulsar.gif"/>
-    <link rel="top" title="pulsar v0.5b10 documentation" href="../index.html" />
+    <link rel="top" title="pulsar v0.5b11 documentation" href="../index.html" />
     <link rel="up" title="API" href="index.html" />
     <link rel="next" title="Applications API" href="application.html" />
     <link rel="prev" title="Actors API" href="actor.html" /> 
@@ -44,7 +44,7 @@
         <li class="right" >
           <a href="actor.html" title="Actors API"
              accesskey="P">previous</a> |</li>
-        <li><a href="../index.html">pulsar v0.5b10 documentation</a> &raquo;</li>
+        <li><a href="../index.html">pulsar v0.5b11 documentation</a> &raquo;</li>
           <li><a href="index.html" accesskey="U">API</a> &raquo;</li> 
       </ul>
     </div>
@@ -69,7 +69,9 @@
 <span id="protocol-api"></span><h1>Protocols API<a class="headerlink" href="#protocols-api" title="Permalink to this headline">¶</a></h1>
 <p>This part of the <a class="reference internal" href="index.html#api"><em>pulsar API</em></a> is about classes responsible for
 implementing the Protocol/Transport paradigm as well as <a class="reference internal" href="#pulsar.Server" title="pulsar.Server"><tt class="xref py py-class docutils literal"><span class="pre">Server</span></tt></a> and
-<a class="reference internal" href="#pulsar.Client" title="pulsar.Client"><tt class="xref py py-class docutils literal"><span class="pre">Client</span></tt></a>.</p>
+<a class="reference internal" href="#pulsar.Client" title="pulsar.Client"><tt class="xref py py-class docutils literal"><span class="pre">Client</span></tt></a> base classes. <a class="reference internal" href="#pulsar.Transport" title="pulsar.Transport"><tt class="xref py py-class docutils literal"><span class="pre">Transport</span></tt></a>
+and <a class="reference internal" href="#pulsar.Protocol" title="pulsar.Protocol"><tt class="xref py py-class docutils literal"><span class="pre">Protocol</span></tt></a> are designed to
+comply with <a class="reference external" href="http://www.python.org/dev/peps/pep-3156/">pep-3156</a> specification</p>
 <div class="section" id="transport">
 <h2>Transport<a class="headerlink" href="#transport" title="Permalink to this headline">¶</a></h2>
 <dl class="class">
@@ -91,8 +93,8 @@ the <a class="reference internal" href="#pulsar.Transport.write" title="pulsar.T
 performance optimisation, to allow software to take advantage of specific
 capabilities in some transport mechanisms.</p>
 <dl class="attribute">
-<dt id="pulsar.Transport.eventloop">
-<tt class="descname">eventloop</tt><a class="headerlink" href="#pulsar.Transport.eventloop" title="Permalink to this definition">¶</a></dt>
+<dt id="pulsar.Transport.event_loop">
+<tt class="descname">event_loop</tt><a class="headerlink" href="#pulsar.Transport.event_loop" title="Permalink to this definition">¶</a></dt>
 <dd><p>The <a class="reference internal" href="async.html#pulsar.EventLoop" title="pulsar.EventLoop"><tt class="xref py py-class docutils literal"><span class="pre">EventLoop</span></tt></a> for this <a class="reference internal" href="#pulsar.Transport" title="pulsar.Transport"><tt class="xref py py-class docutils literal"><span class="pre">Transport</span></tt></a>.</p>
 </dd></dl>
 
@@ -146,7 +148,7 @@ to be sent out asynchronously.</p>
 <dd><p>Write a list (or any iterable) of data bytes to the transport.
 If <em>list_of_data</em> is a <strong>generator</strong>, and during iteration an empty byte is
 yielded, the function will postpone writing the remaining of the generator
-at the next loop in the <a class="reference internal" href="#pulsar.Transport.eventloop" title="pulsar.Transport.eventloop"><tt class="xref py py-attr docutils literal"><span class="pre">eventloop</span></tt></a>.</p>
+at the next loop in the <tt class="xref py py-attr docutils literal"><span class="pre">eventloop</span></tt>.</p>
 </dd></dl>
 
 <dl class="method">
@@ -496,9 +498,28 @@ connections to a remote <a class="reference internal" href="#pulsar.Server" titl
 <h3>Client<a class="headerlink" href="#client" title="Permalink to this headline">¶</a></h3>
 <dl class="class">
 <dt id="pulsar.Client">
-<em class="property">class </em><tt class="descclassname">pulsar.</tt><tt class="descname">Client</tt><big>(</big><em>max_connections=None</em>, <em>timeout=None</em>, <em>client_version=None</em>, <em>trust_env=True</em>, <em>consumer_factory=None</em>, <em>max_reconnect=None</em>, <em>force_sync=False</em>, <em>**params</em><big>)</big><a class="headerlink" href="#pulsar.Client" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><tt class="descclassname">pulsar.</tt><tt class="descname">Client</tt><big>(</big><em>max_connections=None</em>, <em>timeout=None</em>, <em>client_version=None</em>, <em>trust_env=True</em>, <em>consumer_factory=None</em>, <em>max_reconnect=None</em>, <em>force_sync=False</em>, <em>event_loop=None</em>, <em>**params</em><big>)</big><a class="headerlink" href="#pulsar.Client" title="Permalink to this definition">¶</a></dt>
 <dd><p>A client for a remote server which handles one or more
 <a class="reference internal" href="#pulsar.ConnectionPool" title="pulsar.ConnectionPool"><tt class="xref py py-class docutils literal"><span class="pre">ConnectionPool</span></tt></a> of asynchronous connections.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>max_connections</strong> &#8211; Optional maximum number of connections.</li>
+<li><strong>force_sync</strong> &#8211; set the <a class="reference internal" href="#pulsar.Client.force_sync" title="pulsar.Client.force_sync"><tt class="xref py py-attr docutils literal"><span class="pre">force_sync</span></tt></a> attribute.</li>
+<li><strong>event_loop</strong> &#8211; Optional <a class="reference internal" href="async.html#pulsar.EventLoop" title="pulsar.EventLoop"><tt class="xref py py-class docutils literal"><span class="pre">EventLoop</span></tt></a> which set the <a class="reference internal" href="#pulsar.Client.event_loop" title="pulsar.Client.event_loop"><tt class="xref py py-attr docutils literal"><span class="pre">event_loop</span></tt></a>.</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+<dl class="attribute">
+<dt id="pulsar.Client.event_loop">
+<tt class="descname">event_loop</tt><a class="headerlink" href="#pulsar.Client.event_loop" title="Permalink to this definition">¶</a></dt>
+<dd><p>The <a class="reference internal" href="async.html#pulsar.EventLoop" title="pulsar.EventLoop"><tt class="xref py py-class docutils literal"><span class="pre">EventLoop</span></tt></a> for this <a class="reference internal" href="#pulsar.Client" title="pulsar.Client"><tt class="xref py py-class docutils literal"><span class="pre">Client</span></tt></a>. Can be <tt class="xref docutils literal"><span class="pre">None</span></tt>.</p>
+</dd></dl>
+
 <dl class="attribute">
 <dt id="pulsar.Client.force_sync">
 <tt class="descname">force_sync</tt><a class="headerlink" href="#pulsar.Client.force_sync" title="Permalink to this definition">¶</a></dt>
@@ -566,6 +587,14 @@ will remain as a class attribute, otherwise it will be an instance attribute.</p
 <dt id="pulsar.Client.setup">
 <tt class="descname">setup</tt><big>(</big><em>**params</em><big>)</big><a class="headerlink" href="#pulsar.Client.setup" title="Permalink to this definition">¶</a></dt>
 <dd><p>Setup the client. By default it does nothing.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="pulsar.Client.get_event_loop">
+<tt class="descname">get_event_loop</tt><big>(</big><big>)</big><a class="headerlink" href="#pulsar.Client.get_event_loop" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return the <a class="reference internal" href="async.html#pulsar.EventLoop" title="pulsar.EventLoop"><tt class="xref py py-class docutils literal"><span class="pre">EventLoop</span></tt></a> used by this <a class="reference internal" href="#pulsar.Client" title="pulsar.Client"><tt class="xref py py-class docutils literal"><span class="pre">Client</span></tt></a>.
+The event loop can be set during initialisation. If <a class="reference internal" href="#pulsar.Client.force_sync" title="pulsar.Client.force_sync"><tt class="xref py py-attr docutils literal"><span class="pre">force_sync</span></tt></a>
+is <tt class="xref docutils literal"><span class="pre">True</span></tt> a specialised event loop is created.</p>
 </dd></dl>
 
 <dl class="method">
@@ -740,7 +769,7 @@ sending of data.</p>
 
 <dl class="classmethod">
 <dt id="pulsar.Server.create">
-<em class="property">classmethod </em><tt class="descname">create</tt><big>(</big><em>eventloop=None</em>, <em>sock=None</em>, <em>address=None</em>, <em>backlog=1024</em>, <em>name=None</em>, <em>close_event_loop=None</em>, <em>**kw</em><big>)</big><a class="headerlink" href="#pulsar.Server.create" title="Permalink to this definition">¶</a></dt>
+<em class="property">classmethod </em><tt class="descname">create</tt><big>(</big><em>event_loop</em>, <em>sock=None</em>, <em>address=None</em>, <em>backlog=1024</em>, <em>name=None</em>, <em>close_event_loop=None</em>, <em>**kw</em><big>)</big><a class="headerlink" href="#pulsar.Server.create" title="Permalink to this definition">¶</a></dt>
 <dd><p>Create a new server!</p>
 </dd></dl>
 
@@ -807,7 +836,7 @@ sending of data.</p>
     </div>
 
     <div class="footer">
-        &copy; Copyright 2011, Luca Sbardella.
+        &copy; Copyright 2011-2013, Luca Sbardella.
       Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.0.7.
     </div>
 <script type="text/javascript">

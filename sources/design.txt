@@ -25,20 +25,22 @@ when using :ref:`pulsar application framework <design-application>`,
 you need to use pulsar in **server state**, that is to say, there
 will be a centralised :class:`Arbiter` controlling the main
 :class:`EventLoop` in the **main thread** of the **master process**.
-The arbiter is a specialised :ref:`IO actor <iobound>`
+The arbiter is a specialised :class:`Actor`
 which control the life all :class:`Actor` and :class:`Monitor`.
 
 .. _design-arbiter:
 
 Arbiter
 ~~~~~~~~~~~~~~~~~~~~~~~~
-To access the :class:`Arbiter`, from the main process, one can use::
+To access the :class:`Arbiter`, from the main process, one can use the
+:func:`arbiter` high level function::
 
     >>> arbiter = pulsar.arbiter()
     >>> arbiter.running()
     False
     
-The Arbiter can be stopped and restarted.
+The :class:`Arbiter` is also psecial because it can be stopped and restarted
+while standard :class:`Actor`, once stopped, they are gone.
 
 .. _design-actor:
 
@@ -77,7 +79,8 @@ handling IO requests on their mailbox.
 
 IO-bound
 ~~~~~~~~~~~~~~~
-The most common :class:`Actor` has a :meth:`Actor.requestloop` which tells
+The most common usage for an :class:`Actor` is to handle Input/Output
+events on file descriptors. An :attr:`Actor.event_loop` tells
 the operating system (through `epoll` or `select`) that it should be notified
 when a new connection is made, and then it goes to sleep.
 Serving the new request should occur as fast as possible so that other
@@ -87,16 +90,15 @@ connections can be served simultaneously.
 
 CPU-bound
 ~~~~~~~~~~~~~~~
-The second type of :class:`Actor` can be used to perform CPU intensive
-operations, such as calculations, data manipulation or whatever you need
-them to do. CPU-bound :class:`Actors` have the following properties:
+Another way for an actor to function is to use its of :attr:`Actor.thread_pool`
+to perform CPU intensive operations, such as calculations, data manipulation
+or whatever you need them to do.
+CPU-bound :class:`Actors` have the following properties:
 
-* Their :attr:`Actor.requestloop` listen for requests on distributed queue
-  rather than from a socket.
-* Once they receive a new requests, they can block their request loop
-  for a long time. 
-* In addition to their request loop, they have an I/O event loop running on a
-  separate thread. It is accessed via the :meth:`Actor.ioloop` attribute.
+* Their :attr:`Actor.event_loop` listen for requests on file descriptors
+  as usual.
+* The threads in the :attr:`Actor.thread_pool` use a specialised :class:`EventLoop`
+  which listen for events on a message queue.
 
 
 .. _design-mailbox:
@@ -149,28 +151,27 @@ actor will eventually stop.
 Hooks
 ~~~~~~~~~~~~~~~~~~~
 
-An :class:`Actor` exposes three functions which can be
-used to customise its behaviour. These functions do nothing in the
+An :class:`Actor` exposes three :ref:`one time events <one-time-event>`
+which can be used to customise its behaviour. These functions do nothing in the
 standard :class:`Actor` implementation. 
 
-**on_start**
+**start**
 
-The :meth:`Actor.on_start` method is called, **once only**, just before the actor
-starts its :ref:`event loop <eventloop>`. This function can be used to setup
+Fired just before the actor starts its :ref:`event loop <eventloop>`.
+This function can be used to setup
 the application and register event handlers. For example, the
 :ref:`socket server application <apps-socket>` creates the server and register
-its file descriptor with the :attr:`Actor.requestloop`.
+its file descriptor with the :attr:`Actor.event_loop`.
 
  
-**on_stop**
+**stopping**
 
-The :meth:`Actor.on_stop` method is called, **once only**, just before the
-actor is garbage collected.
+Fired when the :class:`Actor` starts stopping.
+
+**stop**
+
+Fired just before the :class:`Actor` is garbage collected
  
-**on_info**
-
-The :meth:`Actor.on_info` method is called to provide information about
-the actor.
 
 
 .. _actor_commands:

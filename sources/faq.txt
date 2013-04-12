@@ -19,7 +19,6 @@ What is pulsar?
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Check the :ref:`overview <intro-overview>`.
 
-
 Why should I use pulsar?
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Check the :ref:`pulsar advantage <pulsar-advantage>`.
@@ -27,6 +26,10 @@ Check the :ref:`pulsar advantage <pulsar-advantage>`.
 What is an actor?
 ~~~~~~~~~~~~~~~~~~~~~~
 Check the :ref:`actor design documentation <design-actor>`.
+
+How pulsar handle asynchronous data?
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Check the :ref:`asynchronous components documentation <tutorials-coroutine>`.
 
 Is pulsar another twisted?
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -68,3 +71,14 @@ How is inter-actor message passing implemented?
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Check the :ref:`actor messages documentation <tutorials-messages>`.
+
+
+Tips
+-------------
+
+Pause execution asynchronously
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Within a :ref:`coroutine <coroutine>` you can pause execution by using
+the :func:`pulsar.async_sleep` function. The function switches task and resumes
+the coroutine after *timeout* seconds.

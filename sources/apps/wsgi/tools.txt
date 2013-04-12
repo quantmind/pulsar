@@ -1,4 +1,6 @@
-
+=====================
+Utilities
+=====================
 
 HTTP Parsers
 ================
@@ -14,6 +16,11 @@ to be the one provided by the :mod:`http_parser.paser` module.
 To check if the C parser is the default parser::
 
     from pulsar.lib import hasextensions
+
+Authentication
+=================
+
+.. automodule:: pulsar.apps.wsgi.plugins
 
    
 .. _http-parser: https://github.com/benoitc/http-parser

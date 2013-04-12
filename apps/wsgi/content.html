@@ -6,13 +6,13 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>Asynchronous Content &mdash; pulsar v0.5b10 documentation</title>
+    <title>Asynchronous Content &mdash; pulsar v0.5b11 documentation</title>
     <link rel="stylesheet" href="../../static/pulsar.css" type="text/css" />
     <link rel="stylesheet" href="../../static/pygments.css" type="text/css" />
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../',
-        VERSION:     '0.5b10',
+        VERSION:     '0.5b11',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -22,9 +22,9 @@
     <script type="text/javascript" src="../../static/underscore.js"></script>
     <script type="text/javascript" src="../../static/doctools.js"></script>
     <link rel="shortcut icon" href="../../static/Game_of_life_pulsar.gif"/>
-    <link rel="top" title="pulsar v0.5b10 documentation" href="../../index.html" />
+    <link rel="top" title="pulsar v0.5b11 documentation" href="../../index.html" />
     <link rel="up" title="WSGI" href="index.html" />
-    <link rel="next" title="HTTP Parsers" href="tools.html" />
+    <link rel="next" title="Middleware" href="middleware.html" />
     <link rel="prev" title="WSGI Wrappers" href="wrappers.html" /> 
   </head>
   <body>
@@ -39,12 +39,12 @@
           <a href="../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
         <li class="right" >
-          <a href="tools.html" title="HTTP Parsers"
+          <a href="middleware.html" title="Middleware"
              accesskey="N">next</a> |</li>
         <li class="right" >
           <a href="wrappers.html" title="WSGI Wrappers"
              accesskey="P">previous</a> |</li>
-        <li><a href="../../index.html">pulsar v0.5b10 documentation</a> &raquo;</li>
+        <li><a href="../../index.html">pulsar v0.5b11 documentation</a> &raquo;</li>
           <li><a href="index.html" accesskey="U">WSGI</a> &raquo;</li> 
       </ul>
     </div>
@@ -121,12 +121,13 @@ This is useful during testing.</p>
 <dt id="pulsar.apps.wsgi.content.AsyncString.to_string">
 <tt class="descname">to_string</tt><big>(</big><em>stream</em><big>)</big><a class="headerlink" href="#pulsar.apps.wsgi.content.AsyncString.to_string" title="Permalink to this definition">¶</a></dt>
 <dd><p>Once the stream is ready (no more asynchronous elements) this
-functions get called to transform the stream into a string.</p>
+functions get called to transform the stream into a string. This method
+can be overwritten by derived classes.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
-<tr class="field"><th class="field-name">Parameters:</th><td class="field-body"><strong>stream</strong> &#8211; a collections containg data used to build the string.</td>
+<tr class="field"><th class="field-name">Parameters:</th><td class="field-body"><strong>stream</strong> &#8211; a collections containing data used to build the string.</td>
 </tr>
 <tr class="field"><th class="field-name">Returns:</th><td class="field-body">a string or bytes</td>
 </tr>
@@ -263,8 +264,8 @@ via the <a class="reference internal" href="wrappers.html#pulsar.apps.wsgi.wrapp
   <p class="topless"><a href="wrappers.html"
                         title="previous chapter">WSGI Wrappers</a></p>
   <h4>Next topic</h4>
-  <p class="topless"><a href="tools.html"
-                        title="next chapter">HTTP Parsers</a></p>
+  <p class="topless"><a href="middleware.html"
+                        title="next chapter">Middleware</a></p>
   <h3>This Page</h3>
   <ul class="this-page-menu">
     <li><a href="../../sources/apps/wsgi/content.txt"
@@ -289,7 +290,7 @@ via the <a class="reference internal" href="wrappers.html#pulsar.apps.wsgi.wrapp
     </div>
 
     <div class="footer">
-        &copy; Copyright 2011, Luca Sbardella.
+        &copy; Copyright 2011-2013, Luca Sbardella.
       Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.0.7.
     </div>
 <script type="text/javascript">

@@ -1,0 +1,304 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>pulsar.apps.wsgi.middleware &mdash; pulsar v0.5b11 documentation</title>
+    <link rel="stylesheet" href="../../../../static/pulsar.css" type="text/css" />
+    <link rel="stylesheet" href="../../../../static/pygments.css" type="text/css" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../../../',
+        VERSION:     '0.5b11',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../../../../static/jquery.js"></script>
+    <script type="text/javascript" src="../../../../static/underscore.js"></script>
+    <script type="text/javascript" src="../../../../static/doctools.js"></script>
+    <link rel="shortcut icon" href="../../../../static/Game_of_life_pulsar.gif"/>
+    <link rel="top" title="pulsar v0.5b11 documentation" href="../../../../index.html" />
+    <link rel="up" title="pulsar.apps.wsgi" href="../wsgi.html" /> 
+  </head>
+  <body>
+
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li><a href="../../../../index.html">pulsar v0.5b11 documentation</a> &raquo;</li>
+          <li><a href="../../../index.html" >Module code</a> &raquo;</li>
+          <li><a href="../../../pulsar.html" >pulsar</a> &raquo;</li>
+          <li><a href="../../apps.html" >pulsar.apps</a> &raquo;</li>
+          <li><a href="../wsgi.html" accesskey="U">pulsar.apps.wsgi</a> &raquo;</li> 
+      </ul>
+    </div>
+<div class="deck">
+<div class="header">
+    
+        <p class="developmentversion">
+        Documentation for pulsar's DEVELOPMENT version. Get the 
+        <a href="http://packages.python.org/pulsar/">release docs here</a>.
+        </p>
+    
+</div>
+</div>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <h1>Source code for pulsar.apps.wsgi.middleware</h1><div class="highlight"><pre>
+<span class="sd">&#39;&#39;&#39;This module implements several WSGI middleware which does not</span>
+<span class="sd">serve request but instead perform initialization and sanity checks.</span>
+<span class="sd">It also introduces the **Response middlewares** implemented as a subclass of </span>
+<span class="sd">:class:`ResponseMiddleware`. Response middlewares are used by the</span>
+<span class="sd">:class:`pulsar.apps.wsgi.wrappers.WsgiResponse` to modify/add headers and</span>
+<span class="sd">manipulate content.</span>
+
+<span class="sd">WSGI Middlewares</span>
+<span class="sd">============================</span>
+
+<span class="sd">clean path</span>
+<span class="sd">~~~~~~~~~~~~~~~~~~</span>
+<span class="sd">.. autofunction:: clean_path_middleware</span>
+
+<span class="sd">cookie</span>
+<span class="sd">~~~~~~~~~~~~~~~~~~</span>
+<span class="sd">.. autofunction:: cookies_middleware</span>
+
+<span class="sd">authorization</span>
+<span class="sd">~~~~~~~~~~~~~~~~~~</span>
+<span class="sd">.. autofunction:: authorization_middleware</span>
+
+<span class="sd">Response Middlewares</span>
+<span class="sd">=============================</span>
+
+<span class="sd">Interface</span>
+<span class="sd">~~~~~~~~~~~~~~~~~~</span>
+
+<span class="sd">.. autoclass:: ResponseMiddleware</span>
+<span class="sd">   :members:</span>
+<span class="sd">   :member-order: bysource</span>
+<span class="sd">   </span>
+<span class="sd">GZip Middleware</span>
+<span class="sd">~~~~~~~~~~~~~~~~~~~~~~</span>
+<span class="sd">.. autoclass:: GZipMiddleware</span>
+<span class="sd">   :members:</span>
+<span class="sd">   :member-order: bysource</span>
+<span class="sd">   </span>
+<span class="sd">&#39;&#39;&#39;</span>
+<span class="kn">import</span> <span class="nn">re</span>
+<span class="kn">from</span> <span class="nn">gzip</span> <span class="kn">import</span> <span class="n">GzipFile</span>
+
+<span class="kn">import</span> <span class="nn">pulsar</span>
+<span class="kn">from</span> <span class="nn">pulsar.utils.httpurl</span> <span class="kn">import</span> <span class="n">BytesIO</span><span class="p">,</span> <span class="n">parse_cookie</span>
+
+<span class="kn">from</span> <span class="nn">.plugins</span> <span class="kn">import</span> <span class="n">parse_authorization_header</span>
+
+<span class="n">re_accepts_gzip</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="s">r&#39;\bgzip\b&#39;</span><span class="p">)</span>
+
+
+<span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span><span class="s">&#39;clean_path_middleware&#39;</span><span class="p">,</span>
+           <span class="s">&#39;AccessControl&#39;</span><span class="p">,</span>
+           <span class="s">&#39;GZipMiddleware&#39;</span><span class="p">,</span>
+           <span class="s">&#39;cookies_middleware&#39;</span><span class="p">,</span>
+           <span class="s">&#39;authorization_middleware&#39;</span><span class="p">,</span>
+           <span class="s">&#39;is_streamed&#39;</span><span class="p">]</span>
+
+
+<span class="k">def</span> <span class="nf">is_streamed</span><span class="p">(</span><span class="n">content</span><span class="p">):</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="nb">len</span><span class="p">(</span><span class="n">content</span><span class="p">)</span>
+    <span class="k">except</span> <span class="ne">TypeError</span><span class="p">:</span>
+        <span class="k">return</span> <span class="bp">True</span>
+    <span class="k">return</span> <span class="bp">False</span>
+
+<div class="viewcode-block" id="clean_path_middleware"><a class="viewcode-back" href="../../../../apps/wsgi/middleware.html#pulsar.apps.wsgi.middleware.clean_path_middleware">[docs]</a><span class="k">def</span> <span class="nf">clean_path_middleware</span><span class="p">(</span><span class="n">environ</span><span class="p">,</span> <span class="n">start_response</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39;Clean url from double slashes and redirect if needed.&#39;&#39;&#39;</span>
+    <span class="n">path</span> <span class="o">=</span> <span class="n">environ</span><span class="p">[</span><span class="s">&#39;PATH_INFO&#39;</span><span class="p">]</span>
+    <span class="k">if</span> <span class="s">&#39;//&#39;</span> <span class="ow">in</span> <span class="n">path</span><span class="p">:</span>
+        <span class="n">url</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">sub</span><span class="p">(</span><span class="s">&quot;/+&quot;</span> <span class="p">,</span> <span class="s">&#39;/&#39;</span><span class="p">,</span> <span class="n">path</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">url</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s">&#39;/&#39;</span><span class="p">):</span>
+            <span class="n">url</span> <span class="o">=</span> <span class="s">&#39;/</span><span class="si">%s</span><span class="s">&#39;</span> <span class="o">%</span> <span class="n">url</span>
+        <span class="n">qs</span> <span class="o">=</span> <span class="n">environ</span><span class="p">[</span><span class="s">&#39;QUERY_STRING&#39;</span><span class="p">]</span>
+        <span class="k">if</span> <span class="n">qs</span><span class="p">:</span>
+            <span class="n">url</span> <span class="o">=</span> <span class="s">&#39;</span><span class="si">%s</span><span class="s">?</span><span class="si">%s</span><span class="s">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">url</span><span class="p">,</span> <span class="n">qs</span><span class="p">)</span>
+        <span class="k">raise</span> <span class="n">pulsar</span><span class="o">.</span><span class="n">HttpRedirect</span><span class="p">(</span><span class="n">url</span><span class="p">)</span>
+</div>
+<div class="viewcode-block" id="cookies_middleware"><a class="viewcode-back" href="../../../../apps/wsgi/middleware.html#pulsar.apps.wsgi.middleware.cookies_middleware">[docs]</a><span class="k">def</span> <span class="nf">cookies_middleware</span><span class="p">(</span><span class="n">environ</span><span class="p">,</span> <span class="n">start_response</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39;Parse the ``HTTP_COOKIE`` key in the ``environ`` and set</span>
+<span class="sd">the new ``http.environ`` key in ``environ`` with a dictionary of cookies</span>
+<span class="sd">obtained via the :func:`pulsar.utils.httpurl.parse_cookie` function.&#39;&#39;&#39;</span>
+    <span class="n">c</span> <span class="o">=</span> <span class="n">environ</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s">&#39;http.cookie&#39;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">c</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
+        <span class="n">c</span> <span class="o">=</span> <span class="n">environ</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s">&#39;HTTP_COOKIE&#39;</span><span class="p">,</span> <span class="s">&#39;&#39;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">c</span><span class="p">:</span>
+            <span class="n">c</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">c</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+                <span class="n">c</span> <span class="o">=</span> <span class="n">c</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="s">&#39;utf-8&#39;</span><span class="p">)</span>
+            <span class="n">c</span> <span class="o">=</span> <span class="n">parse_cookie</span><span class="p">(</span><span class="n">c</span><span class="p">)</span>
+        <span class="n">environ</span><span class="p">[</span><span class="s">&#39;http.cookie&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">c</span>
+</div>
+<div class="viewcode-block" id="authorization_middleware"><a class="viewcode-back" href="../../../../apps/wsgi/middleware.html#pulsar.apps.wsgi.middleware.authorization_middleware">[docs]</a><span class="k">def</span> <span class="nf">authorization_middleware</span><span class="p">(</span><span class="n">environ</span><span class="p">,</span> <span class="n">start_response</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Parse the ``HTTP_AUTHORIZATION`` key in the ``environ`` if available</span>
+<span class="sd">and set the ``http.authorization`` key in ``environ`` with the result</span>
+<span class="sd">obtained from :func:`pulsar.apps.wsgi.plugins.parse_authorization_header`</span>
+<span class="sd">function.&quot;&quot;&quot;</span>
+    <span class="n">key</span> <span class="o">=</span> <span class="s">&#39;http.authorization&#39;</span>
+    <span class="n">c</span> <span class="o">=</span> <span class="n">environ</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">c</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+        <span class="n">code</span> <span class="o">=</span> <span class="s">&#39;HTTP_AUTHORIZATION&#39;</span>
+        <span class="k">if</span> <span class="n">code</span> <span class="ow">in</span> <span class="n">environ</span><span class="p">:</span>
+            <span class="n">environ</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">parse_authorization_header</span><span class="p">(</span><span class="n">environ</span><span class="p">[</span><span class="n">code</span><span class="p">])</span>
+
+<span class="c">#####################################################    RESPONSE MIDDLEWARE</span></div>
+<div class="viewcode-block" id="ResponseMiddleware"><a class="viewcode-back" href="../../../../apps/wsgi/middleware.html#pulsar.apps.wsgi.middleware.ResponseMiddleware">[docs]</a><span class="k">class</span> <span class="nc">ResponseMiddleware</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39;Bas class for :class:`pulsar.apps.wsgi.wrappers.WsgiResponse`</span>
+<span class="sd">middlewares. The focus of this class is the :meth:`execute` method where</span>
+<span class="sd">the middleware logic is implemented.&#39;&#39;&#39;</span>
+    <span class="k">def</span> <span class="nf">version</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">environ</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">environ</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s">&#39;wsgi.version&#39;</span><span class="p">)</span>
+
+<div class="viewcode-block" id="ResponseMiddleware.available"><a class="viewcode-back" href="../../../../apps/wsgi/middleware.html#pulsar.apps.wsgi.middleware.ResponseMiddleware.available">[docs]</a>    <span class="k">def</span> <span class="nf">available</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">environ</span><span class="p">,</span> <span class="n">response</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;Check if this :class:`ResponseMiddleware` can be applied to</span>
+<span class="sd">the *response* object.</span>
+
+<span class="sd">:param environ: a WSGI environ dictionary.</span>
+<span class="sd">:param response: a :class:`pulsar.apps.wsgi.wrappers.WsgiResponse`</span>
+<span class="sd">:return: ``True`` or ``False``.&#39;&#39;&#39;</span>
+        <span class="k">return</span> <span class="bp">True</span>
+</div>
+    <span class="k">def</span> <span class="nf">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">environ</span><span class="p">,</span> <span class="n">response</span><span class="p">):</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">available</span><span class="p">(</span><span class="n">environ</span><span class="p">,</span> <span class="n">response</span><span class="p">):</span>
+            <span class="k">return</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="n">environ</span><span class="p">,</span> <span class="n">response</span><span class="p">)</span>
+
+<div class="viewcode-block" id="ResponseMiddleware.execute"><a class="viewcode-back" href="../../../../apps/wsgi/middleware.html#pulsar.apps.wsgi.middleware.ResponseMiddleware.execute">[docs]</a>    <span class="k">def</span> <span class="nf">execute</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">environ</span><span class="p">,</span> <span class="n">response</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;Manipulate *response*, called only if the :meth:`available`</span>
+<span class="sd">method returns ``True``.&#39;&#39;&#39;</span>
+        <span class="k">pass</span>
+
+</div></div>
+<span class="k">class</span> <span class="nc">AccessControl</span><span class="p">(</span><span class="n">ResponseMiddleware</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39;A response middleware which add the ``Access-Control-Allow-Origin``</span>
+<span class="sd">response header.&#39;&#39;&#39;</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">origin</span><span class="o">=</span><span class="s">&#39;*&#39;</span><span class="p">,</span> <span class="n">methods</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">origin</span> <span class="o">=</span> <span class="n">origin</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">methods</span> <span class="o">=</span> <span class="n">methods</span>
+
+    <span class="k">def</span> <span class="nf">available</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">environ</span><span class="p">,</span> <span class="n">response</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">response</span><span class="o">.</span><span class="n">status_code</span> <span class="o">==</span> <span class="mi">200</span>
+
+    <span class="k">def</span> <span class="nf">execute</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">environ</span><span class="p">,</span> <span class="n">response</span><span class="p">):</span>
+        <span class="n">response</span><span class="o">.</span><span class="n">headers</span><span class="p">[</span><span class="s">&#39;Access-Control-Allow-Origin&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">origin</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">methods</span><span class="p">:</span>
+            <span class="n">response</span><span class="o">.</span><span class="n">headers</span><span class="p">[</span><span class="s">&#39;Access-Control-Allow-Methods&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">methods</span>
+
+
+<div class="viewcode-block" id="GZipMiddleware"><a class="viewcode-back" href="../../../../apps/wsgi/middleware.html#pulsar.apps.wsgi.middleware.GZipMiddleware">[docs]</a><span class="k">class</span> <span class="nc">GZipMiddleware</span><span class="p">(</span><span class="n">ResponseMiddleware</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;A :class:`ResponseMiddleware` for compressing content if the request</span>
+<span class="sd">allows gzip compression. It sets the Vary header accordingly.</span>
+
+<span class="sd">The compression implementation is from</span>
+<span class="sd">http://jython.xhaus.com/http-compression-in-python-and-jython</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">min_length</span><span class="o">=</span><span class="mi">200</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">min_length</span> <span class="o">=</span> <span class="n">min_length</span>
+
+    <span class="k">def</span> <span class="nf">available</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">environ</span><span class="p">,</span> <span class="n">response</span><span class="p">):</span>
+        <span class="c"># It&#39;s not worth compressing non-OK or really short responses</span>
+        <span class="k">if</span> <span class="n">response</span><span class="o">.</span><span class="n">status_code</span> <span class="o">==</span> <span class="mi">200</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">response</span><span class="o">.</span><span class="n">is_streamed</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">response</span><span class="o">.</span><span class="n">length</span><span class="p">()</span> <span class="o">&lt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">min_length</span><span class="p">:</span>
+                <span class="k">return</span> <span class="bp">False</span>
+            <span class="n">headers</span> <span class="o">=</span> <span class="n">response</span><span class="o">.</span><span class="n">headers</span>
+            <span class="c"># Avoid gzipping if we&#39;ve already got a content-encoding.</span>
+            <span class="k">if</span> <span class="s">&#39;Content-Encoding&#39;</span> <span class="ow">in</span> <span class="n">headers</span><span class="p">:</span>
+                <span class="k">return</span> <span class="bp">False</span>
+            <span class="c"># MSIE have issues with gzipped response of various content types.</span>
+            <span class="k">if</span> <span class="s">&quot;msie&quot;</span> <span class="ow">in</span> <span class="n">environ</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s">&#39;HTTP_USER_AGENT&#39;</span><span class="p">,</span> <span class="s">&#39;&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">lower</span><span class="p">():</span>
+                <span class="n">ctype</span> <span class="o">=</span> <span class="n">headers</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s">&#39;Content-Type&#39;</span><span class="p">,</span> <span class="s">&#39;&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span>
+                <span class="k">if</span> <span class="ow">not</span> <span class="n">ctype</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s">&quot;text/&quot;</span><span class="p">)</span> <span class="ow">or</span> <span class="s">&quot;javascript&quot;</span> <span class="ow">in</span> <span class="n">ctype</span><span class="p">:</span>
+                    <span class="k">return</span> <span class="bp">False</span>
+            <span class="n">ae</span> <span class="o">=</span> <span class="n">environ</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s">&#39;HTTP_ACCEPT_ENCODING&#39;</span><span class="p">,</span> <span class="s">&#39;&#39;</span><span class="p">)</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">re_accepts_gzip</span><span class="o">.</span><span class="n">search</span><span class="p">(</span><span class="n">ae</span><span class="p">):</span>
+                <span class="k">return</span> <span class="bp">False</span>
+            <span class="k">return</span> <span class="bp">True</span>
+
+    <span class="k">def</span> <span class="nf">execute</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">environ</span><span class="p">,</span> <span class="n">response</span><span class="p">):</span>
+        <span class="n">headers</span> <span class="o">=</span> <span class="n">response</span><span class="o">.</span><span class="n">headers</span>
+        <span class="n">headers</span><span class="o">.</span><span class="n">add_header</span><span class="p">(</span><span class="s">&#39;Vary&#39;</span><span class="p">,</span> <span class="s">&#39;Accept-Encoding&#39;</span><span class="p">)</span>
+        <span class="n">content</span> <span class="o">=</span> <span class="n">b</span><span class="s">&#39;&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">response</span><span class="o">.</span><span class="n">content</span><span class="p">)</span>
+        <span class="n">response</span><span class="o">.</span><span class="n">content</span> <span class="o">=</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">compress_string</span><span class="p">(</span><span class="n">content</span><span class="p">),)</span>
+        <span class="n">response</span><span class="o">.</span><span class="n">headers</span><span class="p">[</span><span class="s">&#39;Content-Encoding&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s">&#39;gzip&#39;</span>
+
+    <span class="k">def</span> <span class="nf">compress_string</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">s</span><span class="p">):</span>
+        <span class="n">zbuf</span> <span class="o">=</span> <span class="n">BytesIO</span><span class="p">()</span>
+        <span class="n">zfile</span> <span class="o">=</span> <span class="n">GzipFile</span><span class="p">(</span><span class="n">mode</span><span class="o">=</span><span class="s">&#39;wb&#39;</span><span class="p">,</span> <span class="n">compresslevel</span><span class="o">=</span><span class="mi">6</span><span class="p">,</span> <span class="n">fileobj</span><span class="o">=</span><span class="n">zbuf</span><span class="p">)</span>
+        <span class="n">zfile</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">s</span><span class="p">)</span>
+        <span class="n">zfile</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+        <span class="k">return</span> <span class="n">zbuf</span><span class="o">.</span><span class="n">getvalue</span><span class="p">()</span></div>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper"><p class="logo">
+<a href="../../../../index.html">
+  <img class="logo" width="200" src="../../../../static/pulsar.png" alt="pulsar" title="Pulsar"/>
+</a>
+</p>
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="../../../../search.html" method="get">
+      <input type="text" name="q" size="18" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+
+    <div class="footer">
+        &copy; Copyright 2011-2013, Luca Sbardella.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.0.7.
+    </div>
+<script type="text/javascript">
+
+  var _gaq = _gaq || [];
+  
+  _gaq.push(['_setAccount', 'UA-3900561-8']);
+  
+  _gaq.push(['_trackPageview']);
+
+  (function() {
+    var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+    ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+    var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+  })();
+
+</script>
+
+  </body>
+</html>

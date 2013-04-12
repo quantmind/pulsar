@@ -14,4 +14,11 @@ For example, this statement creates a synchronous :class:`pulsar.apps.http.HttpC
     >>> from pulsar.apps import http
     >>> client = http.HttpClient(force_sync=True)
 
+Under the hood, pulsar treats a synchronous clients exactly in the same way as
+an asynchronous one with the only difference in the :class:`pulsar.EventLoop`
+used.
+
+Synchronous clients create their own event loop and invoke the
+:meth:`pulsar.EventLoop.run_until_complete` to wait for the response to
+be available.
     

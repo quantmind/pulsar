@@ -1,0 +1,346 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>pulsar.apps.wsgi.plugins &mdash; pulsar v0.5b11 documentation</title>
+    <link rel="stylesheet" href="../../../../static/pulsar.css" type="text/css" />
+    <link rel="stylesheet" href="../../../../static/pygments.css" type="text/css" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../../../',
+        VERSION:     '0.5b11',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../../../../static/jquery.js"></script>
+    <script type="text/javascript" src="../../../../static/underscore.js"></script>
+    <script type="text/javascript" src="../../../../static/doctools.js"></script>
+    <link rel="shortcut icon" href="../../../../static/Game_of_life_pulsar.gif"/>
+    <link rel="top" title="pulsar v0.5b11 documentation" href="../../../../index.html" />
+    <link rel="up" title="pulsar.apps.wsgi" href="../wsgi.html" /> 
+  </head>
+  <body>
+
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li><a href="../../../../index.html">pulsar v0.5b11 documentation</a> &raquo;</li>
+          <li><a href="../../../index.html" >Module code</a> &raquo;</li>
+          <li><a href="../../../pulsar.html" >pulsar</a> &raquo;</li>
+          <li><a href="../../apps.html" >pulsar.apps</a> &raquo;</li>
+          <li><a href="../wsgi.html" accesskey="U">pulsar.apps.wsgi</a> &raquo;</li> 
+      </ul>
+    </div>
+<div class="deck">
+<div class="header">
+    
+        <p class="developmentversion">
+        Documentation for pulsar's DEVELOPMENT version. Get the 
+        <a href="http://packages.python.org/pulsar/">release docs here</a>.
+        </p>
+    
+</div>
+</div>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <h1>Source code for pulsar.apps.wsgi.plugins</h1><div class="highlight"><pre>
+<span class="sd">&#39;&#39;&#39;Utility classes for managing Header Authentication, used both by</span>
+<span class="sd">servers and clients.</span>
+
+<span class="sd">header parser</span>
+<span class="sd">~~~~~~~~~~~~~~~~~~~~~~</span>
+
+<span class="sd">.. autofunction:: parse_authorization_header</span>
+
+
+<span class="sd">Auth</span>
+<span class="sd">~~~~~~~~~~~~~~~~~</span>
+
+<span class="sd">.. autoclass:: Auth</span>
+<span class="sd">   :members:</span>
+<span class="sd">   :member-order: bysource</span>
+<span class="sd">   </span>
+<span class="sd">   </span>
+<span class="sd">HTTPBasicAuth</span>
+<span class="sd">~~~~~~~~~~~~~~~~~</span>
+
+<span class="sd">.. autoclass:: HTTPBasicAuth</span>
+<span class="sd">   :members:</span>
+<span class="sd">   :member-order: bysource</span>
+<span class="sd">   </span>
+<span class="sd">HTTPDigestAuth</span>
+<span class="sd">~~~~~~~~~~~~~~~~~</span>
+
+<span class="sd">.. autoclass:: HTTPDigestAuth</span>
+<span class="sd">   :members:</span>
+<span class="sd">   :member-order: bysource</span>
+<span class="sd">   </span>
+<span class="sd">&#39;&#39;&#39;</span>
+<span class="kn">from</span> <span class="nn">base64</span> <span class="kn">import</span> <span class="n">b64encode</span><span class="p">,</span> <span class="n">b64decode</span>
+
+<span class="kn">import</span> <span class="nn">pulsar</span>
+<span class="kn">from</span> <span class="nn">pulsar.utils.httpurl</span> <span class="kn">import</span> <span class="n">parse_dict_header</span>
+<span class="kn">from</span> <span class="nn">pulsar.utils.pep</span> <span class="kn">import</span> <span class="n">native_str</span>
+
+<span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span><span class="s">&#39;Auth&#39;</span><span class="p">,</span> 
+           <span class="s">&#39;HTTPBasicAuth&#39;</span><span class="p">,</span>
+           <span class="s">&#39;HTTPDigestAuth&#39;</span><span class="p">,</span>
+           <span class="s">&#39;basic_auth_str&#39;</span><span class="p">,</span>
+           <span class="s">&#39;parse_authorization_header&#39;</span><span class="p">]</span>
+        
+
+<div class="viewcode-block" id="Auth"><a class="viewcode-back" href="../../../../apps/wsgi/tools.html#pulsar.apps.wsgi.plugins.Auth">[docs]</a><span class="k">class</span> <span class="nc">Auth</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Base class for managing HTTP header authentication&quot;&quot;&quot;</span>
+    <span class="nb">type</span> <span class="o">=</span> <span class="bp">None</span>
+    <span class="k">def</span> <span class="nf">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">r</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span><span class="s">&#39;Auth hooks must be callable.&#39;</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">authenticated</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">False</span>
+
+    <span class="k">def</span> <span class="nf">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">__repr__</span><span class="p">()</span>
+
+</div>
+<div class="viewcode-block" id="HTTPBasicAuth"><a class="viewcode-back" href="../../../../apps/wsgi/tools.html#pulsar.apps.wsgi.plugins.HTTPBasicAuth">[docs]</a><span class="k">class</span> <span class="nc">HTTPBasicAuth</span><span class="p">(</span><span class="n">Auth</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Attaches HTTP Basic Authentication to the given Request object.&quot;&quot;&quot;</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">username</span><span class="p">,</span> <span class="n">password</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">username</span> <span class="o">=</span> <span class="n">username</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">password</span> <span class="o">=</span> <span class="n">password</span>
+        
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">type</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="s">&#39;basic&#39;</span>
+
+    <span class="k">def</span> <span class="nf">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">request</span><span class="p">):</span>
+        <span class="n">request</span><span class="o">.</span><span class="n">headers</span><span class="p">[</span><span class="s">&#39;Authorization&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">basic_auth_str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">username</span><span class="p">,</span>
+                                                          <span class="bp">self</span><span class="o">.</span><span class="n">password</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">authenticated</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">environ</span><span class="p">,</span> <span class="n">username</span><span class="p">,</span> <span class="n">password</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">username</span><span class="o">==</span><span class="bp">self</span><span class="o">.</span><span class="n">username</span> <span class="ow">and</span> <span class="n">password</span><span class="o">==</span><span class="bp">self</span><span class="o">.</span><span class="n">password</span>
+
+    <span class="k">def</span> <span class="nf">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="s">&#39;Basic: </span><span class="si">%s</span><span class="s">&#39;</span> <span class="o">%</span> <span class="bp">self</span><span class="o">.</span><span class="n">username</span>
+
+</div>
+<div class="viewcode-block" id="HTTPDigestAuth"><a class="viewcode-back" href="../../../../apps/wsgi/tools.html#pulsar.apps.wsgi.plugins.HTTPDigestAuth">[docs]</a><span class="k">class</span> <span class="nc">HTTPDigestAuth</span><span class="p">(</span><span class="n">Auth</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Attaches HTTP Digest Authentication to the given Request object.&quot;&quot;&quot;</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">username</span><span class="p">,</span> <span class="n">password</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">options</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">username</span> <span class="o">=</span> <span class="n">username</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">password</span> <span class="o">=</span> <span class="n">password</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">last_nonce</span> <span class="o">=</span> <span class="bp">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">options</span> <span class="o">=</span> <span class="n">options</span> <span class="ow">or</span> <span class="p">{}</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">algorithm</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s">&#39;algorithm&#39;</span><span class="p">,</span> <span class="s">&#39;MD5&#39;</span><span class="p">)</span>
+    
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">type</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="s">&#39;digest&#39;</span>
+    
+    <span class="k">def</span> <span class="nf">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">request</span><span class="p">):</span>
+        <span class="c"># If we have a saved nonce, skip the 401</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">last_nonce</span><span class="p">:</span>
+            <span class="n">request</span><span class="o">.</span><span class="n">headers</span><span class="p">[</span><span class="s">&#39;Authorization&#39;</span><span class="p">]</span> <span class="o">=</span>\
+                <span class="bp">self</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="n">request</span><span class="o">.</span><span class="n">method</span><span class="p">,</span> <span class="n">request</span><span class="o">.</span><span class="n">full_url</span><span class="p">)</span>
+        <span class="n">request</span><span class="o">.</span><span class="n">register_hook</span><span class="p">(</span><span class="s">&#39;post_request&#39;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">handle_401</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">request</span>
+
+    <span class="k">def</span> <span class="nf">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="s">&#39;Digest: </span><span class="si">%s</span><span class="s">&#39;</span> <span class="o">%</span> <span class="bp">self</span><span class="o">.</span><span class="n">username</span>
+
+<div class="viewcode-block" id="HTTPDigestAuth.authenticated"><a class="viewcode-back" href="../../../../apps/wsgi/tools.html#pulsar.apps.wsgi.plugins.HTTPDigestAuth.authenticated">[docs]</a>    <span class="k">def</span> <span class="nf">authenticated</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">environ</span><span class="p">,</span> <span class="n">username</span><span class="p">,</span> <span class="n">password</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;Called by the server to check if client is authenticated.&#39;&#39;&#39;</span>
+        <span class="k">if</span> <span class="n">username</span> <span class="o">!=</span> <span class="bp">self</span><span class="o">.</span><span class="n">username</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">False</span>
+        <span class="n">o</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">options</span>
+        <span class="n">qop</span> <span class="o">=</span> <span class="n">o</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s">&#39;qop&#39;</span><span class="p">)</span>
+        <span class="n">method</span> <span class="o">=</span> <span class="n">environ</span><span class="p">[</span><span class="s">&#39;REQUEST_METHOD&#39;</span><span class="p">]</span>
+        <span class="n">uri</span> <span class="o">=</span> <span class="n">environ</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s">&#39;PATH_INFO&#39;</span><span class="p">,</span><span class="s">&#39;&#39;</span><span class="p">)</span>
+        <span class="n">ha1</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">ha1</span><span class="p">(</span><span class="n">o</span><span class="p">[</span><span class="s">&#39;realm&#39;</span><span class="p">],</span> <span class="n">password</span><span class="p">)</span>
+        <span class="n">ha2</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">ha2</span><span class="p">(</span><span class="n">qop</span><span class="p">,</span> <span class="n">method</span><span class="p">,</span> <span class="n">uri</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">qop</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="n">response</span> <span class="o">=</span> <span class="n">hexmd5</span><span class="p">(</span><span class="s">&quot;:&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">((</span><span class="n">ha1</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">nonce</span><span class="p">,</span> <span class="n">ha2</span><span class="p">)))</span>
+        <span class="k">elif</span> <span class="n">qop</span> <span class="o">==</span> <span class="s">&#39;auth&#39;</span> <span class="ow">or</span> <span class="n">qop</span> <span class="o">==</span> <span class="s">&#39;auth-int&#39;</span><span class="p">:</span>
+            <span class="n">response</span> <span class="o">=</span> <span class="n">hexmd5</span><span class="p">(</span><span class="s">&quot;:&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">((</span><span class="n">ha1</span><span class="p">,</span> <span class="n">o</span><span class="p">[</span><span class="s">&#39;nonce&#39;</span><span class="p">],</span> <span class="n">o</span><span class="p">[</span><span class="s">&#39;nc&#39;</span><span class="p">],</span>
+                                        <span class="n">o</span><span class="p">[</span><span class="s">&#39;cnonce&#39;</span><span class="p">],</span> <span class="n">qop</span><span class="p">,</span> <span class="n">ha2</span><span class="p">)))</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s">&quot;qop value are wrong&quot;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">o</span><span class="p">[</span><span class="s">&#39;response&#39;</span><span class="p">]</span> <span class="o">==</span> <span class="n">response</span>
+</div>
+<div class="viewcode-block" id="HTTPDigestAuth.encode"><a class="viewcode-back" href="../../../../apps/wsgi/tools.html#pulsar.apps.wsgi.plugins.HTTPDigestAuth.encode">[docs]</a>    <span class="k">def</span> <span class="nf">encode</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">method</span><span class="p">,</span> <span class="n">uri</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;Called by the client to encode Authentication header.&#39;&#39;&#39;</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">username</span> <span class="ow">or</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">password</span><span class="p">:</span>
+            <span class="k">return</span>
+        <span class="n">o</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">options</span>
+        <span class="n">qop</span> <span class="o">=</span> <span class="n">o</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s">&#39;qop&#39;</span><span class="p">)</span>
+        <span class="n">realm</span> <span class="o">=</span> <span class="n">o</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s">&#39;realm&#39;</span><span class="p">)</span>
+        <span class="n">nonce</span> <span class="o">=</span> <span class="n">o</span><span class="p">[</span><span class="s">&#39;nonce&#39;</span><span class="p">]</span>
+        <span class="n">entdig</span> <span class="o">=</span> <span class="bp">None</span>
+        <span class="n">p_parsed</span> <span class="o">=</span> <span class="n">urlparse</span><span class="p">(</span><span class="n">uri</span><span class="p">)</span>
+        <span class="n">path</span> <span class="o">=</span> <span class="n">p_parsed</span><span class="o">.</span><span class="n">path</span>
+        <span class="k">if</span> <span class="n">p_parsed</span><span class="o">.</span><span class="n">query</span><span class="p">:</span>
+            <span class="n">path</span> <span class="o">+=</span> <span class="s">&#39;?&#39;</span> <span class="o">+</span> <span class="n">p_parsed</span><span class="o">.</span><span class="n">query</span>
+        <span class="n">KD</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">s</span><span class="p">,</span> <span class="n">d</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">hex</span><span class="p">(</span><span class="s">&quot;</span><span class="si">%s</span><span class="s">:</span><span class="si">%s</span><span class="s">&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">s</span><span class="p">,</span> <span class="n">d</span><span class="p">))</span>
+        <span class="n">ha1</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">ha1</span><span class="p">(</span><span class="n">realm</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">password</span><span class="p">)</span>
+        <span class="n">ha2</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">ha2</span><span class="p">(</span><span class="n">qop</span><span class="p">,</span> <span class="n">method</span><span class="p">,</span> <span class="n">path</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">qop</span> <span class="o">==</span> <span class="s">&#39;auth&#39;</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">nonce</span> <span class="o">==</span> <span class="bp">self</span><span class="o">.</span><span class="n">last_nonce</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">nonce_count</span> <span class="o">+=</span> <span class="mi">1</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">nonce_count</span> <span class="o">=</span> <span class="mi">1</span>
+            <span class="n">ncvalue</span> <span class="o">=</span> <span class="s">&#39;</span><span class="si">%08x</span><span class="s">&#39;</span> <span class="o">%</span> <span class="bp">self</span><span class="o">.</span><span class="n">nonce_count</span>
+            <span class="n">s</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">nonce_count</span><span class="p">)</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="s">&#39;utf-8&#39;</span><span class="p">)</span>
+            <span class="n">s</span> <span class="o">+=</span> <span class="n">nonce</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="s">&#39;utf-8&#39;</span><span class="p">)</span>
+            <span class="n">s</span> <span class="o">+=</span> <span class="n">time</span><span class="o">.</span><span class="n">ctime</span><span class="p">()</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="s">&#39;utf-8&#39;</span><span class="p">)</span>
+            <span class="n">s</span> <span class="o">+=</span> <span class="n">os</span><span class="o">.</span><span class="n">urandom</span><span class="p">(</span><span class="mi">8</span><span class="p">)</span>
+            <span class="n">cnonce</span> <span class="o">=</span> <span class="n">sha1</span><span class="p">(</span><span class="n">s</span><span class="p">)</span><span class="o">.</span><span class="n">hexdigest</span><span class="p">()[:</span><span class="mi">16</span><span class="p">]</span>
+            <span class="n">noncebit</span> <span class="o">=</span> <span class="s">&quot;</span><span class="si">%s</span><span class="s">:</span><span class="si">%s</span><span class="s">:</span><span class="si">%s</span><span class="s">:</span><span class="si">%s</span><span class="s">:</span><span class="si">%s</span><span class="s">&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">nonce</span><span class="p">,</span> <span class="n">ncvalue</span><span class="p">,</span> <span class="n">cnonce</span><span class="p">,</span> <span class="n">qop</span><span class="p">,</span> <span class="n">ha2</span><span class="p">)</span>
+            <span class="n">respdig</span> <span class="o">=</span> <span class="n">KD</span><span class="p">(</span><span class="n">ha1</span><span class="p">,</span> <span class="n">noncebit</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="n">qop</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="n">respdig</span> <span class="o">=</span> <span class="n">KD</span><span class="p">(</span><span class="n">ha1</span><span class="p">,</span> <span class="s">&quot;</span><span class="si">%s</span><span class="s">:</span><span class="si">%s</span><span class="s">&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">nonce</span><span class="p">,</span> <span class="n">ha2</span><span class="p">))</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="c"># XXX handle auth-int.</span>
+            <span class="k">return</span>
+        <span class="n">base</span> <span class="o">=</span> <span class="s">&#39;username=&quot;</span><span class="si">%s</span><span class="s">&quot;, realm=&quot;</span><span class="si">%s</span><span class="s">&quot;, nonce=&quot;</span><span class="si">%s</span><span class="s">&quot;, uri=&quot;</span><span class="si">%s</span><span class="s">&quot;, &#39;</span> \
+               <span class="s">&#39;response=&quot;</span><span class="si">%s</span><span class="s">&quot;&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">username</span><span class="p">,</span> <span class="n">realm</span><span class="p">,</span> <span class="n">nonce</span><span class="p">,</span> <span class="n">path</span><span class="p">,</span> <span class="n">respdig</span><span class="p">)</span>
+        <span class="n">opaque</span> <span class="o">=</span> <span class="n">o</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s">&#39;opaque&#39;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">opaque</span><span class="p">:</span>
+            <span class="n">base</span> <span class="o">+=</span> <span class="s">&#39;, opaque=&quot;</span><span class="si">%s</span><span class="s">&quot;&#39;</span> <span class="o">%</span> <span class="n">opaque</span>
+        <span class="k">if</span> <span class="n">entdig</span><span class="p">:</span>
+            <span class="n">base</span> <span class="o">+=</span> <span class="s">&#39;, digest=&quot;</span><span class="si">%s</span><span class="s">&quot;&#39;</span> <span class="o">%</span> <span class="n">entdig</span>
+            <span class="n">base</span> <span class="o">+=</span> <span class="s">&#39;, algorithm=&quot;</span><span class="si">%s</span><span class="s">&quot;&#39;</span> <span class="o">%</span> <span class="bp">self</span><span class="o">.</span><span class="n">algorithm</span>
+        <span class="k">if</span> <span class="n">qop</span><span class="p">:</span>
+            <span class="n">base</span> <span class="o">+=</span> <span class="s">&#39;, qop=</span><span class="si">%s</span><span class="s">, nc=</span><span class="si">%s</span><span class="s">, cnonce=&quot;</span><span class="si">%s</span><span class="s">&quot;&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">qop</span><span class="p">,</span> <span class="n">ncvalue</span><span class="p">,</span> <span class="n">cnonce</span><span class="p">)</span>
+        <span class="k">return</span> <span class="s">&#39;Digest </span><span class="si">%s</span><span class="s">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">base</span><span class="p">)</span>
+        </div>
+<div class="viewcode-block" id="HTTPDigestAuth.handle_401"><a class="viewcode-back" href="../../../../apps/wsgi/tools.html#pulsar.apps.wsgi.plugins.HTTPDigestAuth.handle_401">[docs]</a>    <span class="k">def</span> <span class="nf">handle_401</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">response</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Takes the given response and tries digest-auth, if needed.&quot;&quot;&quot;</span>
+        <span class="n">request</span> <span class="o">=</span> <span class="n">response</span><span class="o">.</span><span class="n">request</span>
+        <span class="n">num_401_calls</span> <span class="o">=</span> <span class="n">request</span><span class="o">.</span><span class="n">hooks</span><span class="p">[</span><span class="s">&#39;response&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">count</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">handle_401</span><span class="p">)</span>
+        <span class="n">s_auth</span> <span class="o">=</span> <span class="n">response</span><span class="o">.</span><span class="n">headers</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s">&#39;www-authenticate&#39;</span><span class="p">,</span> <span class="s">&#39;&#39;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="s">&#39;digest&#39;</span> <span class="ow">in</span> <span class="n">s_auth</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="ow">and</span> <span class="n">num_401_calls</span> <span class="o">&lt;</span> <span class="mi">2</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">options</span> <span class="o">=</span> <span class="n">parse_dict_header</span><span class="p">(</span><span class="n">s_auth</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s">&#39;Digest &#39;</span><span class="p">,</span> <span class="s">&#39;&#39;</span><span class="p">))</span>
+            <span class="n">request</span><span class="o">.</span><span class="n">headers</span><span class="p">[</span><span class="s">&#39;Authorization&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="n">request</span><span class="o">.</span><span class="n">method</span><span class="p">,</span>
+                                                           <span class="n">request</span><span class="o">.</span><span class="n">full_url</span><span class="p">)</span>
+            <span class="n">response</span><span class="o">.</span><span class="n">again</span> <span class="o">=</span> <span class="bp">True</span>
+        <span class="k">return</span> <span class="n">response</span>
+    </div>
+    <span class="k">def</span> <span class="nf">hex</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">):</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">algorithm</span> <span class="o">==</span> <span class="s">&#39;MD5&#39;</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">hexmd5</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">algorithm</span> <span class="o">==</span> <span class="s">&#39;SHA1&#39;</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">hexsha1</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">valueError</span><span class="p">(</span><span class="s">&#39;Unknown algorithm </span><span class="si">%s</span><span class="s">&#39;</span> <span class="o">%</span> <span class="bp">self</span><span class="o">.</span><span class="n">algorithm</span><span class="p">)</span>
+        
+    <span class="k">def</span> <span class="nf">ha1</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">realm</span><span class="p">,</span> <span class="n">password</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">hex</span><span class="p">(</span><span class="s">&#39;</span><span class="si">%s</span><span class="s">:</span><span class="si">%s</span><span class="s">:</span><span class="si">%s</span><span class="s">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">username</span><span class="p">,</span> <span class="n">realm</span><span class="p">,</span> <span class="n">password</span><span class="p">))</span>
+    
+    <span class="k">def</span> <span class="nf">ha2</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">qop</span><span class="p">,</span> <span class="n">method</span><span class="p">,</span> <span class="n">uri</span><span class="p">,</span> <span class="n">body</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">qop</span> <span class="o">==</span> <span class="s">&quot;auth&quot;</span> <span class="ow">or</span> <span class="n">qop</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">hex</span><span class="p">(</span><span class="s">&quot;</span><span class="si">%s</span><span class="s">:</span><span class="si">%s</span><span class="s">&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">method</span><span class="p">,</span> <span class="n">uri</span><span class="p">))</span>
+        <span class="k">elif</span> <span class="n">qop</span> <span class="o">==</span> <span class="s">&quot;auth-int&quot;</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">hex</span><span class="p">(</span><span class="s">&quot;</span><span class="si">%s</span><span class="s">:</span><span class="si">%s</span><span class="s">:</span><span class="si">%s</span><span class="s">&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">method</span><span class="p">,</span> <span class="n">uri</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">hex</span><span class="p">(</span><span class="n">body</span><span class="p">)))</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">()</span>
+
+</div>
+<span class="k">def</span> <span class="nf">basic_auth_str</span><span class="p">(</span><span class="n">username</span><span class="p">,</span> <span class="n">password</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Returns a Basic Auth string.&quot;&quot;&quot;</span>
+    <span class="n">b64</span> <span class="o">=</span> <span class="n">b64encode</span><span class="p">((</span><span class="s">&#39;</span><span class="si">%s</span><span class="s">:</span><span class="si">%s</span><span class="s">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">username</span><span class="p">,</span> <span class="n">password</span><span class="p">))</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="s">&#39;latin1&#39;</span><span class="p">))</span>
+    <span class="k">return</span> <span class="s">&#39;Basic </span><span class="si">%s</span><span class="s">&#39;</span> <span class="o">%</span> <span class="n">native_str</span><span class="p">(</span><span class="n">b64</span><span class="o">.</span><span class="n">strip</span><span class="p">(),</span> <span class="s">&#39;latin1&#39;</span><span class="p">)</span>
+
+<span class="n">digest_parameters</span><span class="o">=</span><span class="nb">frozenset</span><span class="p">((</span><span class="s">&#39;username&#39;</span><span class="p">,</span> <span class="s">&#39;realm&#39;</span><span class="p">,</span> <span class="s">&#39;nonce&#39;</span><span class="p">,</span> <span class="s">&#39;uri&#39;</span><span class="p">,</span> <span class="s">&#39;nc&#39;</span><span class="p">,</span>
+                             <span class="s">&#39;cnonce&#39;</span><span class="p">,</span>  <span class="s">&#39;response&#39;</span><span class="p">))</span>
+<div class="viewcode-block" id="parse_authorization_header"><a class="viewcode-back" href="../../../../apps/wsgi/tools.html#pulsar.apps.wsgi.plugins.parse_authorization_header">[docs]</a><span class="k">def</span> <span class="nf">parse_authorization_header</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="n">charset</span><span class="o">=</span><span class="s">&#39;utf-8&#39;</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Parse an HTTP basic/digest authorization header transmitted by the web</span>
+<span class="sd">browser.  The return value is either `None` if the header was invalid or</span>
+<span class="sd">not given, otherwise an :class:`Auth` object.</span>
+
+<span class="sd">:param value: the authorization header to parse.</span>
+<span class="sd">:return: a :class:`Auth` or `None`.&quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">value</span><span class="p">:</span>
+        <span class="k">return</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">auth_type</span><span class="p">,</span> <span class="n">auth_info</span> <span class="o">=</span> <span class="n">value</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="bp">None</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+        <span class="n">auth_type</span> <span class="o">=</span> <span class="n">auth_type</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span>
+    <span class="k">except</span> <span class="ne">ValueError</span><span class="p">:</span>
+        <span class="k">return</span>
+    <span class="k">if</span> <span class="n">auth_type</span> <span class="o">==</span> <span class="s">&#39;basic&#39;</span><span class="p">:</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">up</span> <span class="o">=</span> <span class="n">b64decode</span><span class="p">(</span><span class="n">auth_info</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="s">&#39;latin-1&#39;</span><span class="p">))</span><span class="o">.</span><span class="n">decode</span><span class="p">(</span><span class="n">charset</span><span class="p">)</span>
+            <span class="n">username</span><span class="p">,</span> <span class="n">password</span> <span class="o">=</span> <span class="n">up</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s">&#39;:&#39;</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+        <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+            <span class="k">return</span>
+        <span class="k">return</span> <span class="n">HTTPBasicAuth</span><span class="p">(</span><span class="n">username</span><span class="p">,</span> <span class="n">password</span><span class="p">)</span>
+    <span class="k">elif</span> <span class="n">auth_type</span> <span class="o">==</span> <span class="s">&#39;digest&#39;</span><span class="p">:</span>
+        <span class="n">auth_map</span> <span class="o">=</span> <span class="n">parse_dict_header</span><span class="p">(</span><span class="n">auth_info</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">digest_parameters</span><span class="o">.</span><span class="n">difference</span><span class="p">(</span><span class="n">auth_map</span><span class="p">):</span>
+            <span class="k">return</span> <span class="n">HTTPDigestAuth</span><span class="p">(</span><span class="n">auth_map</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s">&#39;username&#39;</span><span class="p">),</span>
+                                  <span class="n">options</span><span class="o">=</span><span class="n">auth_map</span><span class="p">)</span></div>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper"><p class="logo">
+<a href="../../../../index.html">
+  <img class="logo" width="200" src="../../../../static/pulsar.png" alt="pulsar" title="Pulsar"/>
+</a>
+</p>
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="../../../../search.html" method="get">
+      <input type="text" name="q" size="18" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+
+    <div class="footer">
+        &copy; Copyright 2011-2013, Luca Sbardella.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.0.7.
+    </div>
+<script type="text/javascript">
+
+  var _gaq = _gaq || [];
+  
+  _gaq.push(['_setAccount', 'UA-3900561-8']);
+  
+  _gaq.push(['_trackPageview']);
+
+  (function() {
+    var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+    ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+    var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+  })();
+
+</script>
+
+  </body>
+</html>

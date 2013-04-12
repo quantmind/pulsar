@@ -1,0 +1,215 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>Getting Started &mdash; pulsar v0.5b11 documentation</title>
+    <link rel="stylesheet" href="../../static/pulsar.css" type="text/css" />
+    <link rel="stylesheet" href="../../static/pygments.css" type="text/css" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../',
+        VERSION:     '0.5b11',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../../static/jquery.js"></script>
+    <script type="text/javascript" src="../../static/underscore.js"></script>
+    <script type="text/javascript" src="../../static/doctools.js"></script>
+    <link rel="shortcut icon" href="../../static/Game_of_life_pulsar.gif"/>
+    <link rel="top" title="pulsar v0.5b11 documentation" href="../../index.html" />
+    <link rel="up" title="Distributed Task Queue" href="index.html" />
+    <link rel="next" title="Jobs" href="jobs.html" />
+    <link rel="prev" title="Distributed Task Queue" href="index.html" /> 
+  </head>
+  <body>
+
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="jobs.html" title="Jobs"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="index.html" title="Distributed Task Queue"
+             accesskey="P">previous</a> |</li>
+        <li><a href="../../index.html">pulsar v0.5b11 documentation</a> &raquo;</li>
+          <li><a href="index.html" accesskey="U">Distributed Task Queue</a> &raquo;</li> 
+      </ul>
+    </div>
+<div class="deck">
+<div class="header">
+    
+        <p class="developmentversion">
+        Documentation for pulsar's DEVELOPMENT version. Get the 
+        <a href="http://packages.python.org/pulsar/">release docs here</a>.
+        </p>
+    
+</div>
+</div>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="module-pulsar.apps.tasks">
+<span id="getting-started"></span><h1>Getting Started<a class="headerlink" href="#module-pulsar.apps.tasks" title="Permalink to this headline">¶</a></h1>
+<p>Pulsar ships with an asynchronous <a class="reference internal" href="#pulsar.apps.tasks.TaskQueue" title="pulsar.apps.tasks.TaskQueue"><tt class="xref py py-class docutils literal"><span class="pre">TaskQueue</span></tt></a> built on top
+<a class="reference internal" href="../../index.html#apps-framework"><em>pulsar application framework</em></a>. Task queues are used
+as a mechanism to distribute work across threads/processes or machines.
+Pulsar <a class="reference internal" href="#pulsar.apps.tasks.TaskQueue" title="pulsar.apps.tasks.TaskQueue"><tt class="xref py py-class docutils literal"><span class="pre">TaskQueue</span></tt></a> is highly customizable, it can run in multi-threading
+or multiprocessing (default) mode and can share <tt class="xref py py-class docutils literal"><span class="pre">task.Task</span></tt> across
+several machines.
+By creating <a class="reference internal" href="jobs.html#pulsar.apps.tasks.models.Job" title="pulsar.apps.tasks.models.Job"><tt class="xref py py-class docutils literal"><span class="pre">models.Job</span></tt></a> classes in a similar way you do for <a class="reference external" href="http://celeryproject.org/">celery</a>,
+this application gives you all you need for running them with very
+little setup effort:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="kn">from</span> <span class="nn">pulsar.apps</span> <span class="kn">import</span> <span class="n">tasks</span>
+
+<span class="n">tq</span> <span class="o">=</span> <span class="n">tasks</span><span class="o">.</span><span class="n">TaskQueue</span><span class="p">(</span><span class="n">tasks_path</span><span class="o">=</span><span class="p">[</span><span class="s">&#39;path.to.tasks.*&#39;</span><span class="p">])</span>
+<span class="n">tq</span><span class="o">.</span><span class="n">start</span><span class="p">()</span>
+</pre></div>
+</div>
+<p>To get started, follow the these points:</p>
+<ul class="simple">
+<li>Create the script which runs your application, in the
+<a class="reference internal" href="../../tutorials/taskqueue.html#tutorials-taskqueue"><em>taskqueue tutorial</em></a> the script is called
+<tt class="docutils literal"><span class="pre">manage.py</span></tt>.</li>
+<li>Create the modules where <a class="reference internal" href="#app-taskqueue-job"><em>jobs</em></a> are implemented. It
+can be a directory containing several submodules as explained in the
+<a class="reference internal" href="#app-tasks-path"><em>task paths parameter</em></a>.</li>
+</ul>
+<div class="section" id="configuration">
+<span id="app-taskqueue-job"></span><h2>Configuration<a class="headerlink" href="#configuration" title="Permalink to this headline">¶</a></h2>
+<p>A <a class="reference internal" href="#pulsar.apps.tasks.TaskQueue" title="pulsar.apps.tasks.TaskQueue"><tt class="xref py py-class docutils literal"><span class="pre">TaskQueue</span></tt></a> accepts several configuration parameters on top of the
+standard <a class="reference internal" href="../../settings.html#settings"><em>application settings</em></a>:</p>
+<ul id="app-tasks-path">
+<li><p class="first">The <a class="reference internal" href="../../settings.html#setting-task-paths"><em>task_paths</em></a> parameter specify
+a list of python paths where to collect <a class="reference internal" href="jobs.html#pulsar.apps.tasks.models.Job" title="pulsar.apps.tasks.models.Job"><tt class="xref py py-class docutils literal"><span class="pre">models.Job</span></tt></a> classes:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">task_paths</span> <span class="o">=</span> <span class="p">[</span><span class="s">&#39;myjobs&#39;</span><span class="p">,</span><span class="s">&#39;another.moduledir.*&#39;</span><span class="p">]</span>
+</pre></div>
+</div>
+<p>The <tt class="docutils literal"><span class="pre">*</span></tt> at the end of the second module indicates to collect
+<a class="reference internal" href="jobs.html#pulsar.apps.tasks.models.Job" title="pulsar.apps.tasks.models.Job"><tt class="xref py py-class docutils literal"><span class="pre">models.Job</span></tt></a> from all submodules of <tt class="docutils literal"><span class="pre">another.moduledir</span></tt>.</p>
+</li>
+<li><p class="first">The <a class="reference internal" href="../../settings.html#setting-schedule-periodic"><em>schedule_periodic</em></a> flag indicates
+if the <a class="reference internal" href="#pulsar.apps.tasks.TaskQueue" title="pulsar.apps.tasks.TaskQueue"><tt class="xref py py-class docutils literal"><span class="pre">TaskQueue</span></tt></a> can schedule <a class="reference internal" href="jobs.html#pulsar.apps.tasks.models.PeriodicJob" title="pulsar.apps.tasks.models.PeriodicJob"><tt class="xref py py-class docutils literal"><span class="pre">models.PeriodicJob</span></tt></a>. Usually,
+only one running <a class="reference internal" href="#pulsar.apps.tasks.TaskQueue" title="pulsar.apps.tasks.TaskQueue"><tt class="xref py py-class docutils literal"><span class="pre">TaskQueue</span></tt></a> application is responsible for
+scheduling tasks while all the other, simply consume tasks.
+This parameter can also be specified in the command line via the
+<tt class="docutils literal"><span class="pre">--schedule-periodic</span></tt> flag. Default: <tt class="xref docutils literal"><span class="pre">False</span></tt>.</p>
+</li>
+<li><p class="first">The <a class="reference internal" href="../../settings.html#setting-task-backend"><em>task_backend</em></a> parameter is a url
+type string which specifies the <a class="reference internal" href="backend.html#pulsar.apps.tasks.backends.TaskBackend" title="pulsar.apps.tasks.backends.TaskBackend"><tt class="xref py py-class docutils literal"><span class="pre">backends.TaskBackend</span></tt></a>
+to use.</p>
+</li>
+</ul>
+</div>
+<div class="section" id="task-queue-application">
+<span id="app-taskqueue-app"></span><h2>Task queue application<a class="headerlink" href="#task-queue-application" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="pulsar.apps.tasks.TaskQueue">
+<em class="property">class </em><tt class="descclassname">pulsar.apps.tasks.</tt><tt class="descname">TaskQueue</tt><big>(</big><em>callable=None</em>, <em>load_config=True</em>, <em>**params</em><big>)</big><a class="reference internal" href="../../modules/pulsar/apps/tasks.html#TaskQueue"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.tasks.TaskQueue" title="Permalink to this definition">¶</a></dt>
+<dd><p>A <a class="reference internal" href="../../api/application.html#pulsar.apps.Application" title="pulsar.apps.Application"><tt class="xref py py-class docutils literal"><span class="pre">pulsar.apps.Application</span></tt></a> for consuming
+task.Tasks and managing scheduling of tasks via a
+<tt class="xref py py-class docutils literal"><span class="pre">scheduler.Scheduler</span></tt>.</p>
+<dl class="method">
+<dt id="pulsar.apps.tasks.TaskQueue.monitor_start">
+<tt class="descname">monitor_start</tt><big>(</big><em>monitor</em><big>)</big><a class="headerlink" href="#pulsar.apps.tasks.TaskQueue.monitor_start" title="Permalink to this definition">¶</a></dt>
+<dd><p>When the monitor starts create the <a class="reference internal" href="backend.html#pulsar.apps.tasks.backends.TaskBackend" title="pulsar.apps.tasks.backends.TaskBackend"><tt class="xref py py-class docutils literal"><span class="pre">backends.TaskBackend</span></tt></a>.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="pulsar.apps.tasks.TaskQueue.monitor_task">
+<tt class="descname">monitor_task</tt><big>(</big><em>monitor</em><big>)</big><a class="reference internal" href="../../modules/pulsar/apps/tasks.html#TaskQueue.monitor_task"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.tasks.TaskQueue.monitor_task" title="Permalink to this definition">¶</a></dt>
+<dd><p>Override the <a class="reference internal" href="../../api/application.html#pulsar.apps.Application.monitor_task" title="pulsar.apps.Application.monitor_task"><tt class="xref py py-meth docutils literal"><span class="pre">pulsar.apps.Application.monitor_task()</span></tt></a> callback
+to check if the <tt class="xref py py-attr docutils literal"><span class="pre">scheduler</span></tt> needs to perform a new run.</p>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper"><p class="logo">
+<a href="../../index.html">
+  <img class="logo" width="200" src="../../static/pulsar.png" alt="pulsar" title="Pulsar"/>
+</a>
+</p>
+  <h3><a href="../../index.html">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">Getting Started</a><ul>
+<li><a class="reference internal" href="#configuration">Configuration</a></li>
+<li><a class="reference internal" href="#task-queue-application">Task queue application</a></li>
+</ul>
+</li>
+</ul>
+
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="index.html"
+                        title="previous chapter">Distributed Task Queue</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="jobs.html"
+                        title="next chapter">Jobs</a></p>
+  <h3>This Page</h3>
+  <ul class="this-page-menu">
+    <li><a href="../../sources/apps/tasks/intro.txt"
+           rel="nofollow">Show Source</a></li>
+  </ul>
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" size="18" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+
+    <div class="footer">
+        &copy; Copyright 2011-2013, Luca Sbardella.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.0.7.
+    </div>
+<script type="text/javascript">
+
+  var _gaq = _gaq || [];
+  
+  _gaq.push(['_setAccount', 'UA-3900561-8']);
+  
+  _gaq.push(['_trackPageview']);
+
+  (function() {
+    var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+    ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+    var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+  })();
+
+</script>
+
+  </body>
+</html>

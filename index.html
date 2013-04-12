@@ -6,13 +6,13 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>Pulsar &mdash; pulsar v0.5b10 documentation</title>
+    <title>Pulsar &mdash; pulsar v0.5b11 documentation</title>
     <link rel="stylesheet" href="static/pulsar.css" type="text/css" />
     <link rel="stylesheet" href="static/pygments.css" type="text/css" />
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '',
-        VERSION:     '0.5b10',
+        VERSION:     '0.5b11',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -22,7 +22,7 @@
     <script type="text/javascript" src="static/underscore.js"></script>
     <script type="text/javascript" src="static/doctools.js"></script>
     <link rel="shortcut icon" href="static/Game_of_life_pulsar.gif"/>
-    <link rel="top" title="pulsar v0.5b10 documentation" href="#" />
+    <link rel="top" title="pulsar v0.5b11 documentation" href="#" />
     <link rel="next" title="Overview" href="overview.html" /> 
   </head>
   <body>
@@ -39,7 +39,7 @@
         <li class="right" >
           <a href="overview.html" title="Overview"
              accesskey="N">next</a> |</li>
-        <li><a href="#">pulsar v0.5b10 documentation</a> &raquo;</li> 
+        <li><a href="#">pulsar v0.5b11 documentation</a> &raquo;</li> 
       </ul>
     </div>
 <div class="deck">
@@ -76,24 +76,24 @@ in a single code base.</p>
 <li class="toctree-l1"><a class="reference internal" href="settings.html">Settings</a></li>
 </ul>
 </div>
-<span class="target" id="module-pulsar.apps"><span id="apps-framework"></span></span><div class="section" id="application-framework">
-<h2>Application Framework<a class="headerlink" href="#application-framework" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="application-framework">
+<span id="apps-framework"></span><h2>Application Framework<a class="headerlink" href="#application-framework" title="Permalink to this headline">¶</a></h2>
 <p>Pulsar application framework is built on top of <a class="reference internal" href="tutorials/wsgi.html#module-pulsar" title="pulsar"><tt class="xref py py-mod docutils literal"><span class="pre">pulsar</span></tt></a> concurrent
 framework. It is designed to facilitate the development of both server-side
 applications such as web servers, task queues as well as asynchronous
 clients.
-To write a new server-side application, you subclass <a class="reference internal" href="api/application.html#pulsar.apps.Application" title="pulsar.apps.Application"><tt class="xref py py-class docutils literal"><span class="pre">Application</span></tt></a> or
+To write a new server-side application, you subclass <a class="reference internal" href="api/application.html#pulsar.apps.Application" title="pulsar.apps.Application"><tt class="xref py py-class docutils literal"><span class="pre">pulsar.apps.Application</span></tt></a> or
 any of the shipped applications listed below, and implement some of
 the callbacks available.</p>
 <p>Currently, pulsar is shipped with the following applications which can be
-found in the <a class="reference internal" href="#module-pulsar.apps" title="pulsar.apps"><tt class="xref py py-mod docutils literal"><span class="pre">pulsar.apps</span></tt></a> module:</p>
+found in the <a class="reference internal" href="api/application.html#module-pulsar.apps" title="pulsar.apps"><tt class="xref py py-mod docutils literal"><span class="pre">pulsar.apps</span></tt></a> module:</p>
 <div class="section" id="servers">
 <h3>Servers<a class="headerlink" href="#servers" title="Permalink to this headline">¶</a></h3>
 <div class="toctree-wrapper compound">
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="apps/socket.html">Socket Servers</a></li>
 <li class="toctree-l1"><a class="reference internal" href="apps/wsgi/index.html">WSGI</a></li>
-<li class="toctree-l1"><a class="reference internal" href="apps/tasks.html">Distributed Task Queues</a></li>
+<li class="toctree-l1"><a class="reference internal" href="apps/tasks/index.html">Distributed Task Queue</a></li>
 <li class="toctree-l1"><a class="reference internal" href="apps/test.html">Asynchronous Test Suite</a></li>
 <li class="toctree-l1"><a class="reference internal" href="apps/shell.html">Asynchronous Shell</a></li>
 </ul>
@@ -125,15 +125,6 @@ found in the <a class="reference internal" href="#module-pulsar.apps" title="pul
 <li><a class="reference internal" href="py-modindex.html"><em>Module Index</em></a></li>
 <li><a class="reference internal" href="search.html"><em>Search Page</em></a></li>
 </ul>
-<div class="admonition note">
-<p class="first admonition-title">Note</p>
-<p class="last">This documentation is incomplete and with several spelling errors.
-It will improve with time and, hopefully, with help from the community.
-In the mean time, a lot of insight can be gained by
-visiting and running, the <a class="reference internal" href="overview.html#examples"><em>example applications</em></a>
-which are located in the <a class="reference internal" href="tutorials/index.html#module-examples" title="examples"><tt class="xref py py-mod docutils literal"><span class="pre">examples</span></tt></a> module at the top level of
-pulsar distribution.</p>
-</div>
 </div>
 </div>
 
@@ -196,7 +187,7 @@ pulsar distribution.</p>
     </div>
 
     <div class="footer">
-        &copy; Copyright 2011, Luca Sbardella.
+        &copy; Copyright 2011-2013, Luca Sbardella.
       Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.0.7.
     </div>
 <script type="text/javascript">

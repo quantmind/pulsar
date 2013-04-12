@@ -6,13 +6,13 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>Web Mail &mdash; pulsar v0.5b10 documentation</title>
+    <title>Web Mail &mdash; pulsar v0.5b11 documentation</title>
     <link rel="stylesheet" href="../static/pulsar.css" type="text/css" />
     <link rel="stylesheet" href="../static/pygments.css" type="text/css" />
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../',
-        VERSION:     '0.5b10',
+        VERSION:     '0.5b11',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -22,7 +22,7 @@
     <script type="text/javascript" src="../static/underscore.js"></script>
     <script type="text/javascript" src="../static/doctools.js"></script>
     <link rel="shortcut icon" href="../static/Game_of_life_pulsar.gif"/>
-    <link rel="top" title="pulsar v0.5b10 documentation" href="../index.html" />
+    <link rel="top" title="pulsar v0.5b11 documentation" href="../index.html" />
     <link rel="up" title="Tutorials &amp; Topics" href="index.html" />
     <link rel="next" title="JSON-RPC Calculator" href="calculator.html" />
     <link rel="prev" title="HTTP Proxy Server" href="proxy.html" /> 
@@ -44,7 +44,7 @@
         <li class="right" >
           <a href="proxy.html" title="HTTP Proxy Server"
              accesskey="P">previous</a> |</li>
-        <li><a href="../index.html">pulsar v0.5b10 documentation</a> &raquo;</li>
+        <li><a href="../index.html">pulsar v0.5b11 documentation</a> &raquo;</li>
           <li><a href="index.html" accesskey="U">Tutorials &amp; Topics</a> &raquo;</li> 
       </ul>
     </div>
@@ -77,10 +77,10 @@ twisted 12.3 or later. The example uses
 <p>To run the server you need to create a <tt class="xref py py-mod docutils literal"><span class="pre">config.py</span></tt> file in the
 the <tt class="xref py py-mod docutils literal"><span class="pre">examples.webmail</span></tt> directory containing:</p>
 <div class="highlight-python"><pre># the adress of your mail server
-incoming_mail='ssl:host=imap.gmail.com:port=993'
-# username &amp; password
-username=
-password=</pre>
+mail_incoming ='ssl:host=imap.gmail.com:port=993'
+# mail_username &amp; mail_password
+mail_username=
+mail_password=</pre>
 </div>
 <p>And type:</p>
 <div class="highlight-python"><pre>python manage.py</pre>
@@ -154,7 +154,7 @@ sending mail via the twisted IMAP4 library.</p>
     </div>
 
     <div class="footer">
-        &copy; Copyright 2011, Luca Sbardella.
+        &copy; Copyright 2011-2013, Luca Sbardella.
       Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.0.7.
     </div>
 <script type="text/javascript">

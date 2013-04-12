@@ -1,0 +1,246 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>Middleware &mdash; pulsar v0.5b11 documentation</title>
+    <link rel="stylesheet" href="../../static/pulsar.css" type="text/css" />
+    <link rel="stylesheet" href="../../static/pygments.css" type="text/css" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../',
+        VERSION:     '0.5b11',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../../static/jquery.js"></script>
+    <script type="text/javascript" src="../../static/underscore.js"></script>
+    <script type="text/javascript" src="../../static/doctools.js"></script>
+    <link rel="shortcut icon" href="../../static/Game_of_life_pulsar.gif"/>
+    <link rel="top" title="pulsar v0.5b11 documentation" href="../../index.html" />
+    <link rel="up" title="WSGI" href="index.html" />
+    <link rel="next" title="Utilities" href="tools.html" />
+    <link rel="prev" title="Asynchronous Content" href="content.html" /> 
+  </head>
+  <body>
+
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="tools.html" title="Utilities"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="content.html" title="Asynchronous Content"
+             accesskey="P">previous</a> |</li>
+        <li><a href="../../index.html">pulsar v0.5b11 documentation</a> &raquo;</li>
+          <li><a href="index.html" accesskey="U">WSGI</a> &raquo;</li> 
+      </ul>
+    </div>
+<div class="deck">
+<div class="header">
+    
+        <p class="developmentversion">
+        Documentation for pulsar's DEVELOPMENT version. Get the 
+        <a href="http://packages.python.org/pulsar/">release docs here</a>.
+        </p>
+    
+</div>
+</div>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="module-pulsar.apps.wsgi.middleware">
+<span id="middleware"></span><span id="apps-wsgi-middleware"></span><h1>Middleware<a class="headerlink" href="#module-pulsar.apps.wsgi.middleware" title="Permalink to this headline">¶</a></h1>
+<p>This module implements several WSGI middleware which does not
+serve request but instead perform initialization and sanity checks.
+It also introduces the <strong>Response middlewares</strong> implemented as a subclass of 
+<a class="reference internal" href="#pulsar.apps.wsgi.middleware.ResponseMiddleware" title="pulsar.apps.wsgi.middleware.ResponseMiddleware"><tt class="xref py py-class docutils literal"><span class="pre">ResponseMiddleware</span></tt></a>. Response middlewares are used by the
+<a class="reference internal" href="wrappers.html#pulsar.apps.wsgi.wrappers.WsgiResponse" title="pulsar.apps.wsgi.wrappers.WsgiResponse"><tt class="xref py py-class docutils literal"><span class="pre">pulsar.apps.wsgi.wrappers.WsgiResponse</span></tt></a> to modify/add headers and
+manipulate content.</p>
+<div class="section" id="wsgi-middlewares">
+<h2>WSGI Middlewares<a class="headerlink" href="#wsgi-middlewares" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="clean-path">
+<h3>clean path<a class="headerlink" href="#clean-path" title="Permalink to this headline">¶</a></h3>
+<dl class="function">
+<dt id="pulsar.apps.wsgi.middleware.clean_path_middleware">
+<tt class="descclassname">pulsar.apps.wsgi.middleware.</tt><tt class="descname">clean_path_middleware</tt><big>(</big><em>environ</em>, <em>start_response</em><big>)</big><a class="reference internal" href="../../modules/pulsar/apps/wsgi/middleware.html#clean_path_middleware"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.wsgi.middleware.clean_path_middleware" title="Permalink to this definition">¶</a></dt>
+<dd><p>Clean url from double slashes and redirect if needed.</p>
+</dd></dl>
+
+</div>
+<div class="section" id="cookie">
+<h3>cookie<a class="headerlink" href="#cookie" title="Permalink to this headline">¶</a></h3>
+<dl class="function">
+<dt id="pulsar.apps.wsgi.middleware.cookies_middleware">
+<tt class="descclassname">pulsar.apps.wsgi.middleware.</tt><tt class="descname">cookies_middleware</tt><big>(</big><em>environ</em>, <em>start_response</em><big>)</big><a class="reference internal" href="../../modules/pulsar/apps/wsgi/middleware.html#cookies_middleware"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.wsgi.middleware.cookies_middleware" title="Permalink to this definition">¶</a></dt>
+<dd><p>Parse the <tt class="docutils literal"><span class="pre">HTTP_COOKIE</span></tt> key in the <tt class="docutils literal"><span class="pre">environ</span></tt> and set
+the new <tt class="docutils literal"><span class="pre">http.environ</span></tt> key in <tt class="docutils literal"><span class="pre">environ</span></tt> with a dictionary of cookies
+obtained via the <a class="reference internal" href="../../api/utilities.html#pulsar.utils.httpurl.parse_cookie" title="pulsar.utils.httpurl.parse_cookie"><tt class="xref py py-func docutils literal"><span class="pre">pulsar.utils.httpurl.parse_cookie()</span></tt></a> function.</p>
+</dd></dl>
+
+</div>
+<div class="section" id="authorization">
+<h3>authorization<a class="headerlink" href="#authorization" title="Permalink to this headline">¶</a></h3>
+<dl class="function">
+<dt id="pulsar.apps.wsgi.middleware.authorization_middleware">
+<tt class="descclassname">pulsar.apps.wsgi.middleware.</tt><tt class="descname">authorization_middleware</tt><big>(</big><em>environ</em>, <em>start_response</em><big>)</big><a class="reference internal" href="../../modules/pulsar/apps/wsgi/middleware.html#authorization_middleware"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.wsgi.middleware.authorization_middleware" title="Permalink to this definition">¶</a></dt>
+<dd><p>Parse the <tt class="docutils literal"><span class="pre">HTTP_AUTHORIZATION</span></tt> key in the <tt class="docutils literal"><span class="pre">environ</span></tt> if available
+and set the <tt class="docutils literal"><span class="pre">http.authorization</span></tt> key in <tt class="docutils literal"><span class="pre">environ</span></tt> with the result
+obtained from <a class="reference internal" href="tools.html#pulsar.apps.wsgi.plugins.parse_authorization_header" title="pulsar.apps.wsgi.plugins.parse_authorization_header"><tt class="xref py py-func docutils literal"><span class="pre">pulsar.apps.wsgi.plugins.parse_authorization_header()</span></tt></a>
+function.</p>
+</dd></dl>
+
+</div>
+</div>
+<div class="section" id="response-middlewares">
+<h2>Response Middlewares<a class="headerlink" href="#response-middlewares" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="interface">
+<h3>Interface<a class="headerlink" href="#interface" title="Permalink to this headline">¶</a></h3>
+<dl class="class">
+<dt id="pulsar.apps.wsgi.middleware.ResponseMiddleware">
+<em class="property">class </em><tt class="descclassname">pulsar.apps.wsgi.middleware.</tt><tt class="descname">ResponseMiddleware</tt><a class="reference internal" href="../../modules/pulsar/apps/wsgi/middleware.html#ResponseMiddleware"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.wsgi.middleware.ResponseMiddleware" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bas class for <a class="reference internal" href="wrappers.html#pulsar.apps.wsgi.wrappers.WsgiResponse" title="pulsar.apps.wsgi.wrappers.WsgiResponse"><tt class="xref py py-class docutils literal"><span class="pre">pulsar.apps.wsgi.wrappers.WsgiResponse</span></tt></a>
+middlewares. The focus of this class is the <a class="reference internal" href="#pulsar.apps.wsgi.middleware.ResponseMiddleware.execute" title="pulsar.apps.wsgi.middleware.ResponseMiddleware.execute"><tt class="xref py py-meth docutils literal"><span class="pre">execute()</span></tt></a> method where
+the middleware logic is implemented.</p>
+<dl class="method">
+<dt id="pulsar.apps.wsgi.middleware.ResponseMiddleware.available">
+<tt class="descname">available</tt><big>(</big><em>environ</em>, <em>response</em><big>)</big><a class="reference internal" href="../../modules/pulsar/apps/wsgi/middleware.html#ResponseMiddleware.available"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.wsgi.middleware.ResponseMiddleware.available" title="Permalink to this definition">¶</a></dt>
+<dd><p>Check if this <a class="reference internal" href="#pulsar.apps.wsgi.middleware.ResponseMiddleware" title="pulsar.apps.wsgi.middleware.ResponseMiddleware"><tt class="xref py py-class docutils literal"><span class="pre">ResponseMiddleware</span></tt></a> can be applied to
+the <em>response</em> object.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>environ</strong> &#8211; a WSGI environ dictionary.</li>
+<li><strong>response</strong> &#8211; a <a class="reference internal" href="wrappers.html#pulsar.apps.wsgi.wrappers.WsgiResponse" title="pulsar.apps.wsgi.wrappers.WsgiResponse"><tt class="xref py py-class docutils literal"><span class="pre">pulsar.apps.wsgi.wrappers.WsgiResponse</span></tt></a></li>
+</ul>
+</td>
+</tr>
+<tr class="field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last"><tt class="xref docutils literal"><span class="pre">True</span></tt> or <tt class="xref docutils literal"><span class="pre">False</span></tt>.</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="pulsar.apps.wsgi.middleware.ResponseMiddleware.execute">
+<tt class="descname">execute</tt><big>(</big><em>environ</em>, <em>response</em><big>)</big><a class="reference internal" href="../../modules/pulsar/apps/wsgi/middleware.html#ResponseMiddleware.execute"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.wsgi.middleware.ResponseMiddleware.execute" title="Permalink to this definition">¶</a></dt>
+<dd><p>Manipulate <em>response</em>, called only if the <a class="reference internal" href="#pulsar.apps.wsgi.middleware.ResponseMiddleware.available" title="pulsar.apps.wsgi.middleware.ResponseMiddleware.available"><tt class="xref py py-meth docutils literal"><span class="pre">available()</span></tt></a>
+method returns <tt class="xref docutils literal"><span class="pre">True</span></tt>.</p>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="gzip-middleware">
+<h3>GZip Middleware<a class="headerlink" href="#gzip-middleware" title="Permalink to this headline">¶</a></h3>
+<dl class="class">
+<dt id="pulsar.apps.wsgi.middleware.GZipMiddleware">
+<em class="property">class </em><tt class="descclassname">pulsar.apps.wsgi.middleware.</tt><tt class="descname">GZipMiddleware</tt><big>(</big><em>min_length=200</em><big>)</big><a class="reference internal" href="../../modules/pulsar/apps/wsgi/middleware.html#GZipMiddleware"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.wsgi.middleware.GZipMiddleware" title="Permalink to this definition">¶</a></dt>
+<dd><p>A <a class="reference internal" href="#pulsar.apps.wsgi.middleware.ResponseMiddleware" title="pulsar.apps.wsgi.middleware.ResponseMiddleware"><tt class="xref py py-class docutils literal"><span class="pre">ResponseMiddleware</span></tt></a> for compressing content if the request
+allows gzip compression. It sets the Vary header accordingly.</p>
+<p>The compression implementation is from
+<a class="reference external" href="http://jython.xhaus.com/http-compression-in-python-and-jython">http://jython.xhaus.com/http-compression-in-python-and-jython</a></p>
+</dd></dl>
+
+</div>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper"><p class="logo">
+<a href="../../index.html">
+  <img class="logo" width="200" src="../../static/pulsar.png" alt="pulsar" title="Pulsar"/>
+</a>
+</p>
+  <h3><a href="../../index.html">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">Middleware</a><ul>
+<li><a class="reference internal" href="#wsgi-middlewares">WSGI Middlewares</a><ul>
+<li><a class="reference internal" href="#clean-path">clean path</a></li>
+<li><a class="reference internal" href="#cookie">cookie</a></li>
+<li><a class="reference internal" href="#authorization">authorization</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#response-middlewares">Response Middlewares</a><ul>
+<li><a class="reference internal" href="#interface">Interface</a></li>
+<li><a class="reference internal" href="#gzip-middleware">GZip Middleware</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="content.html"
+                        title="previous chapter">Asynchronous Content</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="tools.html"
+                        title="next chapter">Utilities</a></p>
+  <h3>This Page</h3>
+  <ul class="this-page-menu">
+    <li><a href="../../sources/apps/wsgi/middleware.txt"
+           rel="nofollow">Show Source</a></li>
+  </ul>
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" size="18" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+
+    <div class="footer">
+        &copy; Copyright 2011-2013, Luca Sbardella.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.0.7.
+    </div>
+<script type="text/javascript">
+
+  var _gaq = _gaq || [];
+  
+  _gaq.push(['_setAccount', 'UA-3900561-8']);
+  
+  _gaq.push(['_trackPageview']);
+
+  (function() {
+    var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+    ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+    var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+  })();
+
+</script>
+
+  </body>
+</html>

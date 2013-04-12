@@ -6,13 +6,13 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>Run a Django site with Pulsar &mdash; pulsar v0.5b10 documentation</title>
+    <title>Run a Django site with Pulsar &mdash; pulsar v0.5b11 documentation</title>
     <link rel="stylesheet" href="../static/pulsar.css" type="text/css" />
     <link rel="stylesheet" href="../static/pygments.css" type="text/css" />
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../',
-        VERSION:     '0.5b10',
+        VERSION:     '0.5b11',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -22,7 +22,7 @@
     <script type="text/javascript" src="../static/underscore.js"></script>
     <script type="text/javascript" src="../static/doctools.js"></script>
     <link rel="shortcut icon" href="../static/Game_of_life_pulsar.gif"/>
-    <link rel="top" title="pulsar v0.5b10 documentation" href="../index.html" />
+    <link rel="top" title="pulsar v0.5b11 documentation" href="../index.html" />
     <link rel="up" title="Tutorials &amp; Topics" href="index.html" />
     <link rel="next" title="Asynchronous Components" href="coroutine.html" />
     <link rel="prev" title="A Task Queue with a JSON-RPC Api" href="taskqueue.html" /> 
@@ -44,7 +44,7 @@
         <li class="right" >
           <a href="taskqueue.html" title="A Task Queue with a JSON-RPC Api"
              accesskey="P">previous</a> |</li>
-        <li><a href="../index.html">pulsar v0.5b10 documentation</a> &raquo;</li>
+        <li><a href="../index.html">pulsar v0.5b11 documentation</a> &raquo;</li>
           <li><a href="index.html" accesskey="U">Tutorials &amp; Topics</a> &raquo;</li> 
       </ul>
     </div>
@@ -77,9 +77,10 @@ Requires django 1.4 or above. To run:</p>
 <p>If running for the first time, issue the:</p>
 <div class="highlight-python"><pre>python manage.py syncdb</pre>
 </div>
-<p>command first and create the super user. The example defines two django applications:</p>
+<p>command first and create the super user.</p>
+<p>The example defines two django applications:</p>
 <ul class="simple">
-<li><a class="reference internal" href="#djpulsar"><em>djpulsar</em></a> which implements the <tt class="docutils literal"><span class="pre">pulse</span></tt> django command.</li>
+<li><a class="reference internal" href="#djpulsar"><em>djpulsar</em></a> which implements the django <tt class="docutils literal"><span class="pre">pulse</span></tt> command.</li>
 <li><tt class="docutils literal"><span class="pre">djangoapp</span></tt> which runs the actual example.</li>
 </ul>
 <div class="section" id="module-examples.djangoapp.djpulsar">
@@ -145,7 +146,7 @@ to the list of your <tt class="docutils literal"><span class="pre">INSTALLED_APP
     </div>
 
     <div class="footer">
-        &copy; Copyright 2011, Luca Sbardella.
+        &copy; Copyright 2011-2013, Luca Sbardella.
       Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.0.7.
     </div>
 <script type="text/javascript">

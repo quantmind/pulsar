@@ -6,13 +6,13 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>Asynchronous Components &mdash; pulsar v0.5b10 documentation</title>
+    <title>Asynchronous Components &mdash; pulsar v0.5b11 documentation</title>
     <link rel="stylesheet" href="../static/pulsar.css" type="text/css" />
     <link rel="stylesheet" href="../static/pygments.css" type="text/css" />
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../',
-        VERSION:     '0.5b10',
+        VERSION:     '0.5b11',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -22,7 +22,7 @@
     <script type="text/javascript" src="../static/underscore.js"></script>
     <script type="text/javascript" src="../static/doctools.js"></script>
     <link rel="shortcut icon" href="../static/Game_of_life_pulsar.gif"/>
-    <link rel="top" title="pulsar v0.5b10 documentation" href="../index.html" />
+    <link rel="top" title="pulsar v0.5b11 documentation" href="../index.html" />
     <link rel="up" title="Tutorials &amp; Topics" href="index.html" />
     <link rel="next" title="Actor messages" href="messages.html" />
     <link rel="prev" title="Run a Django site with Pulsar" href="django.html" /> 
@@ -44,7 +44,7 @@
         <li class="right" >
           <a href="django.html" title="Run a Django site with Pulsar"
              accesskey="P">previous</a> |</li>
-        <li><a href="../index.html">pulsar v0.5b10 documentation</a> &raquo;</li>
+        <li><a href="../index.html">pulsar v0.5b11 documentation</a> &raquo;</li>
           <li><a href="index.html" accesskey="U">Tutorials &amp; Topics</a> &raquo;</li> 
       </ul>
     </div>
@@ -67,31 +67,73 @@
             
   <span class="target" id="module-pulsar"></span><div class="section" id="asynchronous-components">
 <span id="tutorials-coroutine"></span><h1>Asynchronous Components<a class="headerlink" href="#asynchronous-components" title="Permalink to this headline">¶</a></h1>
-<div class="section" id="coroutines">
-<h2>Coroutines<a class="headerlink" href="#coroutines" title="Permalink to this headline">¶</a></h2>
-<p>The following:</p>
+<p>First things first, what do we mean with the term <strong>asynchronous components</strong>?
+There are three, closely related, ways to create asynchronous components:</p>
+<ul>
+<li><p class="first">Create an instance of <a class="reference internal" href="../api/async.html#pulsar.Deferred" title="pulsar.Deferred"><tt class="xref py py-class docutils literal"><span class="pre">Deferred</span></tt></a>:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="kn">import</span> <span class="nn">pulsar</span>
+
+<span class="n">o</span> <span class="o">=</span> <span class="n">pulsar</span><span class="o">.</span><span class="n">Deferred</span><span class="p">()</span>
+</pre></div>
+</div>
+</li>
+<li><p class="first">A <strong>generator</strong>, or better a <a class="reference internal" href="#coroutine"><em>coroutine</em></a>. For example:</p>
 <div class="highlight-python"><div class="highlight"><pre><span class="k">def</span> <span class="nf">my_async_generator</span><span class="p">(</span><span class="o">...</span><span class="p">):</span>
     <span class="k">yield</span> <span class="n">something_but_dont_care_what_it_returns</span><span class="p">()</span>
     <span class="o">...</span>
     <span class="n">bla</span> <span class="o">=</span> <span class="k">yield</span> <span class="n">something_and_care_what_it_returns</span><span class="p">()</span>
     <span class="k">yield</span> <span class="n">do_something</span><span class="p">(</span><span class="n">bla</span><span class="p">)</span>
-
-<span class="n">result</span> <span class="o">=</span> <span class="n">maybe_async</span><span class="p">(</span><span class="n">my_async_generator</span><span class="p">())</span>
 </pre></div>
 </div>
-<p>Under the hood, a generator is transformed into a <a class="reference internal" href="../api/async.html#pulsar.DeferredCoroutine" title="pulsar.DeferredCoroutine"><tt class="xref py py-class docutils literal"><span class="pre">DeferredCoroutine</span></tt></a>
-via the <a class="reference internal" href="../api/async.html#pulsar.maybe_async" title="pulsar.maybe_async"><tt class="xref py py-func docutils literal"><span class="pre">maybe_async()</span></tt></a> function. The <a class="reference internal" href="../api/async.html#pulsar.DeferredCoroutine" title="pulsar.DeferredCoroutine"><tt class="xref py py-class docutils literal"><span class="pre">DeferredCoroutine</span></tt></a>
+<p>Then an asynchronous component is obtained by calling the generator function:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">o</span> <span class="o">=</span> <span class="n">my_async_generator</span><span class="p">()</span>
+</pre></div>
+</div>
+<p>Not that <em>o</em> is coroutine (a generator which consume values) which has not yet
+started.</p>
+</li>
+<li><p class="first">A <a class="reference internal" href="../api/async.html#pulsar.Task" title="pulsar.Task"><tt class="xref py py-class docutils literal"><span class="pre">Task</span></tt></a>, is a component which has been added to pulsar asynchronous
+engine. It is created via the <a class="reference internal" href="../api/async.html#pulsar.async" title="pulsar.async"><tt class="xref py py-class docutils literal"><span class="pre">async</span></tt></a> decorator:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="kn">from</span> <span class="nn">pulsar</span> <span class="kn">import</span> <span class="n">async</span>
+
+<span class="nd">@async</span><span class="p">()</span>
+<span class="k">def</span> <span class="nf">my_async_generator</span><span class="p">(</span><span class="o">...</span><span class="p">):</span>
+    <span class="k">yield</span> <span class="n">something_but_dont_care_what_it_returns</span><span class="p">()</span>
+    <span class="o">...</span>
+    <span class="n">bla</span> <span class="o">=</span> <span class="k">yield</span> <span class="n">something_and_care_what_it_returns</span><span class="p">()</span>
+    <span class="k">yield</span> <span class="n">do_something</span><span class="p">(</span><span class="n">bla</span><span class="p">)</span>
+
+<span class="n">task</span> <span class="o">=</span> <span class="n">my_async_generator</span><span class="p">()</span>
+</pre></div>
+</div>
+<p>A <a class="reference internal" href="../api/async.html#pulsar.Task" title="pulsar.Task"><tt class="xref py py-class docutils literal"><span class="pre">Task</span></tt></a> is a subclass of <a class="reference internal" href="../api/async.html#pulsar.Deferred" title="pulsar.Deferred"><tt class="xref py py-class docutils literal"><span class="pre">Deferred</span></tt></a> and therefore it has
+the same API, for example, you can add callbacks to a task:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">task</span><span class="o">.</span><span class="n">add_callback</span><span class="p">(</span><span class="o">...</span><span class="p">)</span>
+</pre></div>
+</div>
+</li>
+</ul>
+<div class="section" id="coroutines">
+<span id="coroutine"></span><h2>Coroutines<a class="headerlink" href="#coroutines" title="Permalink to this headline">¶</a></h2>
+<p>The generator returned by the generator function above is treated by pulsar
+asynchronous machinery as <strong>coroutine</strong>.
+A coroutine is a generator that uses the <strong>yield</strong> to do more than just
+generate values. Coroutines <strong>consume</strong> values by using
+yield as an expression, on the right-hand-side of an assignment.</p>
+<p>Under the hood, a generator is transformed into a <a class="reference internal" href="../api/async.html#pulsar.Task" title="pulsar.Task"><tt class="xref py py-class docutils literal"><span class="pre">Task</span></tt></a>
+via the <a class="reference internal" href="../api/async.html#pulsar.maybe_async" title="pulsar.maybe_async"><tt class="xref py py-func docutils literal"><span class="pre">maybe_async()</span></tt></a> function. The <a class="reference internal" href="../api/async.html#pulsar.Task" title="pulsar.Task"><tt class="xref py py-class docutils literal"><span class="pre">Task</span></tt></a>
 allows one to write inlines asynchronous function in just one line:</p>
 <div class="highlight-python"><div class="highlight"><pre><span class="n">result</span> <span class="o">=</span> <span class="k">yield</span> <span class="n">possibly_async_result</span><span class="p">()</span>
 </pre></div>
 </div>
-<p>Previously, pulsar used a generator approach, which required three lines
-of code to obtain the same result:</p>
-<div class="highlight-python"><div class="highlight"><pre><span class="n">future</span> <span class="o">=</span> <span class="n">make_async</span><span class="p">(</span><span class="n">possibly_async_result</span><span class="p">())</span>
-<span class="k">yield</span> <span class="n">future</span>
-<span class="n">result</span> <span class="o">=</span> <span class="n">future</span><span class="o">.</span><span class="n">result</span>
-</pre></div>
 </div>
+<div class="section" id="collections">
+<h2>Collections<a class="headerlink" href="#collections" title="Permalink to this headline">¶</a></h2>
+<p>When dealing with several asynchronous components in a collection such as
+a list, tuple, set or even a dictionary (values only, keys must be synchronous
+python types), one can use the <a class="reference internal" href="../api/async.html#pulsar.multi_async" title="pulsar.multi_async"><tt class="xref py py-func docutils literal"><span class="pre">multi_async()</span></tt></a> function to create
+an asynchronous component which will be ready once all the components
+are ready.</p>
 </div>
 </div>
 
@@ -109,6 +151,7 @@ of code to obtain the same result:</p>
   <ul>
 <li><a class="reference internal" href="#">Asynchronous Components</a><ul>
 <li><a class="reference internal" href="#coroutines">Coroutines</a></li>
+<li><a class="reference internal" href="#collections">Collections</a></li>
 </ul>
 </li>
 </ul>
@@ -143,7 +186,7 @@ of code to obtain the same result:</p>
     </div>
 
     <div class="footer">
-        &copy; Copyright 2011, Luca Sbardella.
+        &copy; Copyright 2011-2013, Luca Sbardella.
       Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.0.7.
     </div>
 <script type="text/javascript">

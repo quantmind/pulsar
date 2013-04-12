@@ -6,13 +6,13 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>HTTP Parsers &mdash; pulsar v0.5b10 documentation</title>
+    <title>Utilities &mdash; pulsar v0.5b11 documentation</title>
     <link rel="stylesheet" href="../../static/pulsar.css" type="text/css" />
     <link rel="stylesheet" href="../../static/pygments.css" type="text/css" />
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../',
-        VERSION:     '0.5b10',
+        VERSION:     '0.5b11',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -22,10 +22,10 @@
     <script type="text/javascript" src="../../static/underscore.js"></script>
     <script type="text/javascript" src="../../static/doctools.js"></script>
     <link rel="shortcut icon" href="../../static/Game_of_life_pulsar.gif"/>
-    <link rel="top" title="pulsar v0.5b10 documentation" href="../../index.html" />
+    <link rel="top" title="pulsar v0.5b11 documentation" href="../../index.html" />
     <link rel="up" title="WSGI" href="index.html" />
-    <link rel="next" title="Distributed Task Queues" href="../tasks.html" />
-    <link rel="prev" title="Asynchronous Content" href="content.html" /> 
+    <link rel="next" title="Distributed Task Queue" href="../tasks/index.html" />
+    <link rel="prev" title="Middleware" href="middleware.html" /> 
   </head>
   <body>
 
@@ -39,12 +39,12 @@
           <a href="../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
         <li class="right" >
-          <a href="../tasks.html" title="Distributed Task Queues"
+          <a href="../tasks/index.html" title="Distributed Task Queue"
              accesskey="N">next</a> |</li>
         <li class="right" >
-          <a href="content.html" title="Asynchronous Content"
+          <a href="middleware.html" title="Middleware"
              accesskey="P">previous</a> |</li>
-        <li><a href="../../index.html">pulsar v0.5b10 documentation</a> &raquo;</li>
+        <li><a href="../../index.html">pulsar v0.5b11 documentation</a> &raquo;</li>
           <li><a href="index.html" accesskey="U">WSGI</a> &raquo;</li> 
       </ul>
     </div>
@@ -65,8 +65,10 @@
         <div class="bodywrapper">
           <div class="body">
             
-  <div class="section" id="http-parsers">
-<h1>HTTP Parsers<a class="headerlink" href="#http-parsers" title="Permalink to this headline">¶</a></h1>
+  <div class="section" id="utilities">
+<h1>Utilities<a class="headerlink" href="#utilities" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="http-parsers">
+<h2>HTTP Parsers<a class="headerlink" href="#http-parsers" title="Permalink to this headline">¶</a></h2>
 <p>Pulsar ships with its own <a class="reference internal" href="../../api/utilities.html#tools-http-parser"><em>HTTP parser</em></a> used by
 both server and the <a class="reference internal" href="../http.html#apps-http"><em>HTTP client</em></a>. Headers are collected using
 the <a class="reference internal" href="../../api/utilities.html#tools-http-headers"><em>Headers data structure</em></a> which exposes a
@@ -77,6 +79,78 @@ to be the one provided by the <tt class="xref py py-mod docutils literal"><span 
 To check if the C parser is the default parser:</p>
 <div class="highlight-python"><div class="highlight"><pre><span class="kn">from</span> <span class="nn">pulsar.lib</span> <span class="kn">import</span> <span class="n">hasextensions</span>
 </pre></div>
+</div>
+</div>
+<div class="section" id="module-pulsar.apps.wsgi.plugins">
+<span id="authentication"></span><h2>Authentication<a class="headerlink" href="#module-pulsar.apps.wsgi.plugins" title="Permalink to this headline">¶</a></h2>
+<p>Utility classes for managing Header Authentication, used both by
+servers and clients.</p>
+<div class="section" id="header-parser">
+<h3>header parser<a class="headerlink" href="#header-parser" title="Permalink to this headline">¶</a></h3>
+<dl class="function">
+<dt id="pulsar.apps.wsgi.plugins.parse_authorization_header">
+<tt class="descclassname">pulsar.apps.wsgi.plugins.</tt><tt class="descname">parse_authorization_header</tt><big>(</big><em>value</em>, <em>charset='utf-8'</em><big>)</big><a class="reference internal" href="../../modules/pulsar/apps/wsgi/plugins.html#parse_authorization_header"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.wsgi.plugins.parse_authorization_header" title="Permalink to this definition">¶</a></dt>
+<dd><p>Parse an HTTP basic/digest authorization header transmitted by the web
+browser.  The return value is either <cite>None</cite> if the header was invalid or
+not given, otherwise an <a class="reference internal" href="#pulsar.apps.wsgi.plugins.Auth" title="pulsar.apps.wsgi.plugins.Auth"><tt class="xref py py-class docutils literal"><span class="pre">Auth</span></tt></a> object.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field"><th class="field-name">Parameters:</th><td class="field-body"><strong>value</strong> &#8211; the authorization header to parse.</td>
+</tr>
+<tr class="field"><th class="field-name">Returns:</th><td class="field-body">a <a class="reference internal" href="#pulsar.apps.wsgi.plugins.Auth" title="pulsar.apps.wsgi.plugins.Auth"><tt class="xref py py-class docutils literal"><span class="pre">Auth</span></tt></a> or <cite>None</cite>.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</div>
+<div class="section" id="auth">
+<h3>Auth<a class="headerlink" href="#auth" title="Permalink to this headline">¶</a></h3>
+<dl class="class">
+<dt id="pulsar.apps.wsgi.plugins.Auth">
+<em class="property">class </em><tt class="descclassname">pulsar.apps.wsgi.plugins.</tt><tt class="descname">Auth</tt><a class="reference internal" href="../../modules/pulsar/apps/wsgi/plugins.html#Auth"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.wsgi.plugins.Auth" title="Permalink to this definition">¶</a></dt>
+<dd><p>Base class for managing HTTP header authentication</p>
+</dd></dl>
+
+</div>
+<div class="section" id="httpbasicauth">
+<h3>HTTPBasicAuth<a class="headerlink" href="#httpbasicauth" title="Permalink to this headline">¶</a></h3>
+<dl class="class">
+<dt id="pulsar.apps.wsgi.plugins.HTTPBasicAuth">
+<em class="property">class </em><tt class="descclassname">pulsar.apps.wsgi.plugins.</tt><tt class="descname">HTTPBasicAuth</tt><big>(</big><em>username</em>, <em>password</em><big>)</big><a class="reference internal" href="../../modules/pulsar/apps/wsgi/plugins.html#HTTPBasicAuth"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.wsgi.plugins.HTTPBasicAuth" title="Permalink to this definition">¶</a></dt>
+<dd><p>Attaches HTTP Basic Authentication to the given Request object.</p>
+</dd></dl>
+
+</div>
+<div class="section" id="httpdigestauth">
+<h3>HTTPDigestAuth<a class="headerlink" href="#httpdigestauth" title="Permalink to this headline">¶</a></h3>
+<dl class="class">
+<dt id="pulsar.apps.wsgi.plugins.HTTPDigestAuth">
+<em class="property">class </em><tt class="descclassname">pulsar.apps.wsgi.plugins.</tt><tt class="descname">HTTPDigestAuth</tt><big>(</big><em>username</em>, <em>password=None</em>, <em>options=None</em><big>)</big><a class="reference internal" href="../../modules/pulsar/apps/wsgi/plugins.html#HTTPDigestAuth"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.wsgi.plugins.HTTPDigestAuth" title="Permalink to this definition">¶</a></dt>
+<dd><p>Attaches HTTP Digest Authentication to the given Request object.</p>
+<dl class="method">
+<dt id="pulsar.apps.wsgi.plugins.HTTPDigestAuth.authenticated">
+<tt class="descname">authenticated</tt><big>(</big><em>environ</em>, <em>username</em>, <em>password</em><big>)</big><a class="reference internal" href="../../modules/pulsar/apps/wsgi/plugins.html#HTTPDigestAuth.authenticated"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.wsgi.plugins.HTTPDigestAuth.authenticated" title="Permalink to this definition">¶</a></dt>
+<dd><p>Called by the server to check if client is authenticated.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="pulsar.apps.wsgi.plugins.HTTPDigestAuth.encode">
+<tt class="descname">encode</tt><big>(</big><em>method</em>, <em>uri</em><big>)</big><a class="reference internal" href="../../modules/pulsar/apps/wsgi/plugins.html#HTTPDigestAuth.encode"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.wsgi.plugins.HTTPDigestAuth.encode" title="Permalink to this definition">¶</a></dt>
+<dd><p>Called by the client to encode Authentication header.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="pulsar.apps.wsgi.plugins.HTTPDigestAuth.handle_401">
+<tt class="descname">handle_401</tt><big>(</big><em>response</em><big>)</big><a class="reference internal" href="../../modules/pulsar/apps/wsgi/plugins.html#HTTPDigestAuth.handle_401"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.wsgi.plugins.HTTPDigestAuth.handle_401" title="Permalink to this definition">¶</a></dt>
+<dd><p>Takes the given response and tries digest-auth, if needed.</p>
+</dd></dl>
+
+</dd></dl>
+
+</div>
 </div>
 </div>
 
@@ -90,12 +164,27 @@ To check if the C parser is the default parser:</p>
   <img class="logo" width="200" src="../../static/pulsar.png" alt="pulsar" title="Pulsar"/>
 </a>
 </p>
+  <h3><a href="../../index.html">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">Utilities</a><ul>
+<li><a class="reference internal" href="#http-parsers">HTTP Parsers</a></li>
+<li><a class="reference internal" href="#module-pulsar.apps.wsgi.plugins">Authentication</a><ul>
+<li><a class="reference internal" href="#header-parser">header parser</a></li>
+<li><a class="reference internal" href="#auth">Auth</a></li>
+<li><a class="reference internal" href="#httpbasicauth">HTTPBasicAuth</a></li>
+<li><a class="reference internal" href="#httpdigestauth">HTTPDigestAuth</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
   <h4>Previous topic</h4>
-  <p class="topless"><a href="content.html"
-                        title="previous chapter">Asynchronous Content</a></p>
+  <p class="topless"><a href="middleware.html"
+                        title="previous chapter">Middleware</a></p>
   <h4>Next topic</h4>
-  <p class="topless"><a href="../tasks.html"
-                        title="next chapter">Distributed Task Queues</a></p>
+  <p class="topless"><a href="../tasks/index.html"
+                        title="next chapter">Distributed Task Queue</a></p>
   <h3>This Page</h3>
   <ul class="this-page-menu">
     <li><a href="../../sources/apps/wsgi/tools.txt"
@@ -120,7 +209,7 @@ To check if the C parser is the default parser:</p>
     </div>
 
     <div class="footer">
-        &copy; Copyright 2011, Luca Sbardella.
+        &copy; Copyright 2011-2013, Luca Sbardella.
       Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.0.7.
     </div>
 <script type="text/javascript">

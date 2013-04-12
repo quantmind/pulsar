@@ -6,13 +6,13 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>Settings &mdash; pulsar v0.5b10 documentation</title>
+    <title>Settings &mdash; pulsar v0.5b11 documentation</title>
     <link rel="stylesheet" href="static/pulsar.css" type="text/css" />
     <link rel="stylesheet" href="static/pygments.css" type="text/css" />
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '',
-        VERSION:     '0.5b10',
+        VERSION:     '0.5b11',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -22,7 +22,7 @@
     <script type="text/javascript" src="static/underscore.js"></script>
     <script type="text/javascript" src="static/doctools.js"></script>
     <link rel="shortcut icon" href="static/Game_of_life_pulsar.gif"/>
-    <link rel="top" title="pulsar v0.5b10 documentation" href="index.html" />
+    <link rel="top" title="pulsar v0.5b11 documentation" href="index.html" />
     <link rel="next" title="Socket Servers" href="apps/socket.html" />
     <link rel="prev" title="Changelog" href="changelog.html" /> 
   </head>
@@ -43,7 +43,7 @@
         <li class="right" >
           <a href="changelog.html" title="Changelog"
              accesskey="P">previous</a> |</li>
-        <li><a href="index.html">pulsar v0.5b10 documentation</a> &raquo;</li> 
+        <li><a href="index.html">pulsar v0.5b11 documentation</a> &raquo;</li> 
       </ul>
     </div>
 <div class="deck">
@@ -65,37 +65,44 @@
             
   <span class="target" id="module-pulsar.utils.config"><span id="settings"></span></span><div class="section" id="id1">
 <h1>Settings<a class="headerlink" href="#id1" title="Permalink to this headline">¶</a></h1>
-<p>This is the full list of <tt class="xref py py-class docutils literal"><span class="pre">pulsar.Setting</span></tt> available for configuring
-your pulsar server or application.</p>
+<p>This is the full list of <a class="reference internal" href="api/utilities.html#api-config"><em>pulsar settings</em></a> available for
+configuring your pulsar server or application.</p>
 <div class="section" id="config-file">
 <span id="setting-section-config-file"></span><h2>Config File<a class="headerlink" href="#config-file" title="Permalink to this headline">¶</a></h2>
 <div class="section" id="config">
 <span id="setting-config"></span><h3>config<a class="headerlink" href="#config" title="Permalink to this headline">¶</a></h3>
-<p><em>Command line</em>: -c,&#8211;config</p>
+<p><em>Command line</em>: <tt class="docutils literal"><span class="pre">-c</span></tt>, <tt class="docutils literal"><span class="pre">--config</span></tt></p>
+<p><em>Default</em>: <tt class="docutils literal"><span class="pre">config.py</span></tt></p>
 <p>The path to a Pulsar config file, where default Settings
 paramaters can be specified.</p>
 </div>
 </div>
 <div class="section" id="worker-processes">
 <span id="setting-section-worker-processes"></span><h2>Worker Processes<a class="headerlink" href="#worker-processes" title="Permalink to this headline">¶</a></h2>
+<p>This group of configuration parameters control the number of actors performing
+for a given <a class="reference internal" href="api/actor.html#pulsar.Monitor" title="pulsar.Monitor"><tt class="xref py py-class docutils literal"><span class="pre">pulsar.Monitor</span></tt></a>, the type of concurreny of the server and
+other actor-specific parameters.</p>
 <div class="section" id="workers">
 <span id="setting-workers"></span><h3>workers<a class="headerlink" href="#workers" title="Permalink to this headline">¶</a></h3>
-<p><em>Command line</em>: -w,&#8211;workers</p>
+<p><em>Command line</em>: <tt class="docutils literal"><span class="pre">-w</span></tt>, <tt class="docutils literal"><span class="pre">--workers</span></tt></p>
+<p><em>Default</em>: <tt class="docutils literal"><span class="pre">1</span></tt></p>
 <p>The number of workers for handling requests.</p>
-<p>If you are using a multi-process concurrency, a number in the
-the 2-4 x $(NUM_CORES) range should be good. If you are using threads this
+<p>If using a multi-process concurrency, a number in the
+the <tt class="docutils literal"><span class="pre">2-4</span> <span class="pre">x</span> <span class="pre">NUM_CORES</span></tt> range should be good. If you are using threads this
 number can be higher.</p>
 </div>
 <div class="section" id="concurrency">
 <span id="setting-concurrency"></span><h3>concurrency<a class="headerlink" href="#concurrency" title="Permalink to this headline">¶</a></h3>
-<p><em>Command line</em>: &#8211;concurrency</p>
+<p><em>Command line</em>: <tt class="docutils literal"><span class="pre">--concurrency</span></tt></p>
+<p><em>Default</em>: <tt class="docutils literal"><span class="pre">process</span></tt></p>
 <p>The type of concurrency to use: <tt class="docutils literal"><span class="pre">process</span></tt> or <tt class="docutils literal"><span class="pre">thread</span></tt>.</p>
 </div>
 <div class="section" id="max-requests">
 <span id="setting-max-requests"></span><h3>max_requests<a class="headerlink" href="#max-requests" title="Permalink to this headline">¶</a></h3>
-<p><em>Command line</em>: &#8211;max-requests</p>
+<p><em>Command line</em>: <tt class="docutils literal"><span class="pre">--max-requests</span></tt></p>
+<p><em>Default</em>: <tt class="docutils literal"><span class="pre">0</span></tt></p>
 <p>The maximum number of requests a worker will process before restarting.</p>
-<p>Any value greater than zero will limit the number of requests a work
+<p>Any value greater than zero will limit the number of requests a worker
 will process before automatically restarting. This is a simple method
 to help limit the damage of memory leaks.</p>
 <p>If this is set to zero (the default) then the automatic worker
@@ -103,67 +110,75 @@ restarts are disabled.</p>
 </div>
 <div class="section" id="backlog">
 <span id="setting-backlog"></span><h3>backlog<a class="headerlink" href="#backlog" title="Permalink to this headline">¶</a></h3>
-<p><em>Command line</em>: &#8211;backlog</p>
-<p>The maximum number of concurrent requests.
-This refers to the number of clients that can be waiting to be served.
+<p><em>Command line</em>: <tt class="docutils literal"><span class="pre">--backlog</span></tt></p>
+<p><em>Default</em>: <tt class="docutils literal"><span class="pre">2048</span></tt></p>
+<p>The maximum number of concurrent requests.</p>
+<p>This refers to the number of clients that can be waiting to be served.
 Exceeding this number results in the client getting an error when
 attempting to connect. It should only affect servers under significant
-load.</p>
-<p>Must be a positive integer. Generally set in the 64-2048 range.</p>
+load.
+Must be a positive integer. Generally set in the 64-2048 range for
+socket servers, 5-10 for task-queue servers.</p>
 </div>
 <div class="section" id="timeout">
 <span id="setting-timeout"></span><h3>timeout<a class="headerlink" href="#timeout" title="Permalink to this headline">¶</a></h3>
-<p><em>Command line</em>: -t,&#8211;timeout</p>
+<p><em>Command line</em>: <tt class="docutils literal"><span class="pre">-t</span></tt>, <tt class="docutils literal"><span class="pre">--timeout</span></tt></p>
+<p><em>Default</em>: <tt class="docutils literal"><span class="pre">30</span></tt></p>
 <p>Workers silent for more than this many seconds are
 killed and restarted.</p>
 </div>
 </div>
-<div class="section" id="http">
-<span id="setting-section-http"></span><h2>Http<a class="headerlink" href="#http" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="global-server-settings">
+<span id="setting-section-global-server-settings"></span><h2>Global Server Settings<a class="headerlink" href="#global-server-settings" title="Permalink to this headline">¶</a></h2>
+<p>These settings are shared by the arbiter as well as all pulsar workers. They
+set global settings the debug mode,
+the proxy server to use when making HTTP requests, and server specific
+configuration parameters.</p>
 <div class="section" id="http-proxy">
 <span id="setting-http-proxy"></span><h3>http_proxy<a class="headerlink" href="#http-proxy" title="Permalink to this headline">¶</a></h3>
-<p><em>Command line</em>: &#8211;http-proxy</p>
+<p><em>Command line</em>: <tt class="docutils literal"><span class="pre">--http-proxy</span></tt></p>
+<p><em>Default</em>: <a href="#id2"><span class="problematic" id="id3">``</span></a><a href="#id4"><span class="problematic" id="id5">``</span></a></p>
 <p>The HTTP proxy server to use with HttpClient.</p>
 </div>
 <div class="section" id="http-py-parser">
 <span id="setting-http-py-parser"></span><h3>http_py_parser<a class="headerlink" href="#http-py-parser" title="Permalink to this headline">¶</a></h3>
-<p><em>Command line</em>: &#8211;http-py-parser</p>
+<p><em>Command line</em>: <tt class="docutils literal"><span class="pre">--http-py-parser</span></tt></p>
+<p><em>Default</em>: <tt class="xref docutils literal"><span class="pre">False</span></tt></p>
 <p>Set the python parser as default HTTP parser.</p>
 </div>
-</div>
-<div class="section" id="debugging">
-<span id="setting-section-debugging"></span><h2>Debugging<a class="headerlink" href="#debugging" title="Permalink to this headline">¶</a></h2>
 <div class="section" id="debug">
 <span id="setting-debug"></span><h3>debug<a class="headerlink" href="#debug" title="Permalink to this headline">¶</a></h3>
-<p><em>Command line</em>: &#8211;debug</p>
+<p><em>Command line</em>: <tt class="docutils literal"><span class="pre">--debug</span></tt></p>
+<p><em>Default</em>: <tt class="xref docutils literal"><span class="pre">False</span></tt></p>
 <p>Turn on debugging in the server.</p>
 <p>This limits the number of worker processes to 1 and changes some error
 handling that&#8217;s sent to clients.</p>
 </div>
-</div>
-<div class="section" id="server-mechanics">
-<span id="setting-section-server-mechanics"></span><h2>Server Mechanics<a class="headerlink" href="#server-mechanics" title="Permalink to this headline">¶</a></h2>
 <div class="section" id="daemon">
 <span id="setting-daemon"></span><h3>daemon<a class="headerlink" href="#daemon" title="Permalink to this headline">¶</a></h3>
-<p><em>Command line</em>: -D,&#8211;daemon</p>
+<p><em>Command line</em>: <tt class="docutils literal"><span class="pre">-D</span></tt>, <tt class="docutils literal"><span class="pre">--daemon</span></tt></p>
+<p><em>Default</em>: <tt class="xref docutils literal"><span class="pre">False</span></tt></p>
 <p>Daemonize the Pulsar process (posix only).</p>
 <p>Detaches the server from the controlling terminal and enters the
 background.</p>
 </div>
 <div class="section" id="pidfile">
 <span id="setting-pidfile"></span><h3>pidfile<a class="headerlink" href="#pidfile" title="Permalink to this headline">¶</a></h3>
-<p><em>Command line</em>: -p,&#8211;pid</p>
+<p><em>Command line</em>: <tt class="docutils literal"><span class="pre">-p</span></tt>, <tt class="docutils literal"><span class="pre">--pid</span></tt></p>
+<p><em>Default</em>: <tt class="xref docutils literal"><span class="pre">None</span></tt></p>
 <p>A filename to use for the PID file.</p>
 <p>If not set, no PID file will be written.</p>
 </div>
 <div class="section" id="password">
 <span id="setting-password"></span><h3>password<a class="headerlink" href="#password" title="Permalink to this headline">¶</a></h3>
-<p><em>Command line</em>: &#8211;password</p>
+<p><em>Command line</em>: <tt class="docutils literal"><span class="pre">--password</span></tt></p>
+<p><em>Default</em>: <tt class="xref docutils literal"><span class="pre">None</span></tt></p>
 <p>Set a password for the server</p>
 </div>
 <div class="section" id="user">
 <span id="setting-user"></span><h3>user<a class="headerlink" href="#user" title="Permalink to this headline">¶</a></h3>
-<p><em>Command line</em>: -u,&#8211;user</p>
+<p><em>Command line</em>: <tt class="docutils literal"><span class="pre">-u</span></tt>, <tt class="docutils literal"><span class="pre">--user</span></tt></p>
+<p><em>Default</em>: <tt class="xref docutils literal"><span class="pre">None</span></tt></p>
 <p>Switch worker processes to run as this user.</p>
 <p>A valid user id (as an integer) or the name of a user that can be
 retrieved with a call to pwd.getpwnam(value) or None to not change
@@ -171,18 +186,17 @@ the worker process user.</p>
 </div>
 <div class="section" id="group">
 <span id="setting-group"></span><h3>group<a class="headerlink" href="#group" title="Permalink to this headline">¶</a></h3>
-<p><em>Command line</em>: -g,&#8211;group</p>
+<p><em>Command line</em>: <tt class="docutils literal"><span class="pre">-g</span></tt>, <tt class="docutils literal"><span class="pre">--group</span></tt></p>
+<p><em>Default</em>: <tt class="xref docutils literal"><span class="pre">None</span></tt></p>
 <p>Switch worker process to run as this group.</p>
 <p>A valid group id (as an integer) or the name of a user that can be
 retrieved with a call to pwd.getgrnam(value) or None to not change
 the worker processes group.</p>
 </div>
-</div>
-<div class="section" id="logging">
-<span id="setting-section-logging"></span><h2>Logging<a class="headerlink" href="#logging" title="Permalink to this headline">¶</a></h2>
 <div class="section" id="loglevel">
 <span id="setting-loglevel"></span><h3>loglevel<a class="headerlink" href="#loglevel" title="Permalink to this headline">¶</a></h3>
-<p><em>Command line</em>: &#8211;log-level</p>
+<p><em>Command line</em>: <tt class="docutils literal"><span class="pre">--log-level</span></tt></p>
+<p><em>Default</em>: <tt class="docutils literal"><span class="pre">info</span></tt></p>
 <p>The granularity of log outputs.</p>
 <blockquote>
 <div><p>Valid level names are:</p>
@@ -199,25 +213,26 @@ the worker processes group.</p>
 </div>
 <div class="section" id="loghandlers">
 <span id="setting-loghandlers"></span><h3>loghandlers<a class="headerlink" href="#loghandlers" title="Permalink to this headline">¶</a></h3>
-<p><em>Command line</em>: &#8211;log-handlers</p>
+<p><em>Command line</em>: <tt class="docutils literal"><span class="pre">--log-handlers</span></tt></p>
+<p><em>Default</em>: <tt class="docutils literal"><span class="pre">['console']</span></tt></p>
 <p>log handlers for pulsar server</p>
 </div>
 <div class="section" id="logevery">
 <span id="setting-logevery"></span><h3>logevery<a class="headerlink" href="#logevery" title="Permalink to this headline">¶</a></h3>
-<p><em>Command line</em>: &#8211;log-every</p>
+<p><em>Command line</em>: <tt class="docutils literal"><span class="pre">--log-every</span></tt></p>
+<p><em>Default</em>: <tt class="docutils literal"><span class="pre">0</span></tt></p>
 <p>Log information every n seconds</p>
 </div>
 <div class="section" id="logconfig">
 <span id="setting-logconfig"></span><h3>logconfig<a class="headerlink" href="#logconfig" title="Permalink to this headline">¶</a></h3>
+<p><em>Default</em>: <tt class="docutils literal"><span class="pre">{}</span></tt></p>
 <p>The logging configuration dictionary.</p>
 <p>This settings can only be specified on a config file</p>
 </div>
-</div>
-<div class="section" id="process-naming">
-<span id="setting-section-process-naming"></span><h2>Process Naming<a class="headerlink" href="#process-naming" title="Permalink to this headline">¶</a></h2>
 <div class="section" id="process-name">
 <span id="setting-process-name"></span><h3>process_name<a class="headerlink" href="#process-name" title="Permalink to this headline">¶</a></h3>
-<p><em>Command line</em>: -n,&#8211;name</p>
+<p><em>Command line</em>: <tt class="docutils literal"><span class="pre">-n</span></tt>, <tt class="docutils literal"><span class="pre">--name</span></tt></p>
+<p><em>Default</em>: <tt class="xref docutils literal"><span class="pre">None</span></tt></p>
 <p>A base to use with setproctitle for process naming.</p>
 <p>This affects things like <tt class="docutils literal"><span class="pre">ps</span></tt> and <tt class="docutils literal"><span class="pre">top</span></tt>. If you&#8217;re going to be
 running more than one instance of Pulsar you&#8217;ll probably want to set a
@@ -227,70 +242,76 @@ module.</p>
 </div>
 <div class="section" id="default-process-name">
 <span id="setting-default-process-name"></span><h3>default_process_name<a class="headerlink" href="#default-process-name" title="Permalink to this headline">¶</a></h3>
+<p><em>Default</em>: <tt class="docutils literal"><span class="pre">Pulsar</span></tt></p>
 <p>Internal setting that is adjusted for each type of application.</p>
 </div>
 </div>
 <div class="section" id="server-hooks">
 <span id="setting-section-server-hooks"></span><h2>Server Hooks<a class="headerlink" href="#server-hooks" title="Permalink to this headline">¶</a></h2>
+<p>Server hooks are functions which can be specified in a
+<a class="reference internal" href="#setting-config"><em>config</em></a> file to perform custom tasks in a pulsar server.
+These tasks can be scheduled when events occurs or at every event loop of
+the various components of a pulsar application.</p>
+<p>All server hooks are functions which accept one parameter only, the actor
+invoking the function.</p>
 <div class="section" id="post-fork">
 <span id="setting-post-fork"></span><h3>post_fork<a class="headerlink" href="#post-fork" title="Permalink to this headline">¶</a></h3>
+<p><em>Default</em>: <a class="reference internal" href="#pulsar.utils.config.pass_through" title="pulsar.utils.config.pass_through"><tt class="xref py py-func docutils literal"><span class="pre">pass_through()</span></tt></a></p>
 <p>Called just after a worker has been forked.</p>
-<p>The callable needs to accept two instance variables for the Arbiter and
-new Worker.</p>
+<p>The event loop is not yet available.</p>
+</div>
+<div class="section" id="when-ready">
+<span id="setting-when-ready"></span><h3>when_ready<a class="headerlink" href="#when-ready" title="Permalink to this headline">¶</a></h3>
+<p><em>Default</em>: <a class="reference internal" href="#pulsar.utils.config.pass_through" title="pulsar.utils.config.pass_through"><tt class="xref py py-func docutils literal"><span class="pre">pass_through()</span></tt></a></p>
+<p>Called just before a worker starts its event loop.</p>
+<p>This is a chance to setup <a class="reference internal" href="api/async.html#pulsar.EventLoop" title="pulsar.EventLoop"><tt class="xref py py-class docutils literal"><span class="pre">pulsar.EventLoop</span></tt></a> callbacks which
+can run periodically, at every loop or when some defined events occur.</p>
 </div>
 <div class="section" id="connection-made">
 <span id="setting-connection-made"></span><h3>connection_made<a class="headerlink" href="#connection-made" title="Permalink to this headline">¶</a></h3>
+<p><em>Default</em>: <a class="reference internal" href="#pulsar.utils.config.pass_through" title="pulsar.utils.config.pass_through"><tt class="xref py py-func docutils literal"><span class="pre">pass_through()</span></tt></a></p>
 <p>Called after a new connection is made.</p>
 <p>The callable needs to accept one instance variables for the
 connection instance.</p>
 </div>
 <div class="section" id="connection-lost">
 <span id="setting-connection-lost"></span><h3>connection_lost<a class="headerlink" href="#connection-lost" title="Permalink to this headline">¶</a></h3>
+<p><em>Default</em>: <a class="reference internal" href="#pulsar.utils.config.pass_through" title="pulsar.utils.config.pass_through"><tt class="xref py py-func docutils literal"><span class="pre">pass_through()</span></tt></a></p>
 <p>Called after a connection is lost.</p>
 <p>The callable needs to accept one instance variables for the
 connection instance.</p>
 </div>
 <div class="section" id="pre-request">
 <span id="setting-pre-request"></span><h3>pre_request<a class="headerlink" href="#pre-request" title="Permalink to this headline">¶</a></h3>
+<p><em>Default</em>: <a class="reference internal" href="#pulsar.utils.config.pass_through" title="pulsar.utils.config.pass_through"><tt class="xref py py-func docutils literal"><span class="pre">pass_through()</span></tt></a></p>
 <p>Called just before a worker processes the request.</p>
 <p>The callable needs to accept two instance variables for the Worker and
 the Request.</p>
 </div>
 <div class="section" id="post-request">
 <span id="setting-post-request"></span><h3>post_request<a class="headerlink" href="#post-request" title="Permalink to this headline">¶</a></h3>
+<p><em>Default</em>: <a class="reference internal" href="#pulsar.utils.config.pass_through" title="pulsar.utils.config.pass_through"><tt class="xref py py-func docutils literal"><span class="pre">pass_through()</span></tt></a></p>
 <p>Called after a worker processes the request.</p>
 <p>The callable needs to accept two instance variables for the Worker and
 the Request.</p>
-</div>
-</div>
-<div class="section" id="task-consumer">
-<span id="setting-section-task-consumer"></span><h2>Task Consumer<a class="headerlink" href="#task-consumer" title="Permalink to this headline">¶</a></h2>
-<div class="section" id="task-queue-factory">
-<span id="setting-task-queue-factory"></span><h3>task_queue_factory<a class="headerlink" href="#task-queue-factory" title="Permalink to this headline">¶</a></h3>
-<p>Setting for <tt class="xref py py-mod docutils literal"><span class="pre">pulsar.apps.cpubound</span></tt> application.</p>
-<p><em>Command line</em>: -q,&#8211;task-queue</p>
-<p>The task queue factory to use.</p>
-</div>
-<div class="section" id="tasks-path">
-<span id="setting-tasks-path"></span><h3>tasks_path<a class="headerlink" href="#tasks-path" title="Permalink to this headline">¶</a></h3>
-<p>Setting for <a class="reference internal" href="apps/tasks.html#module-pulsar.apps.tasks" title="pulsar.apps.tasks"><tt class="xref py py-mod docutils literal"><span class="pre">pulsar.apps.tasks</span></tt></a> application.</p>
-<p>List of python dotted paths where tasks are located.</p>
 </div>
 </div>
 <div class="section" id="socket-servers">
 <span id="setting-section-socket-servers"></span><h2>Socket Servers<a class="headerlink" href="#socket-servers" title="Permalink to this headline">¶</a></h2>
 <div class="section" id="bind">
 <span id="setting-bind"></span><h3>bind<a class="headerlink" href="#bind" title="Permalink to this headline">¶</a></h3>
-<p>Setting for <a class="reference internal" href="apps/socket.html#module-pulsar.apps.socket" title="pulsar.apps.socket"><tt class="xref py py-mod docutils literal"><span class="pre">pulsar.apps.socket</span></tt></a> application.</p>
-<p><em>Command line</em>: -b,&#8211;bind</p>
+<p><em>Application namespace</em>: <tt class="docutils literal"><span class="pre">socket</span></tt></p>
+<p><em>Command line</em>: <tt class="docutils literal"><span class="pre">-b</span></tt>, <tt class="docutils literal"><span class="pre">--bind</span></tt></p>
+<p><em>Default</em>: <tt class="docutils literal"><span class="pre">127.0.0.1:8060</span></tt></p>
 <p>The socket to bind.</p>
-<p>A string of the form: &#8216;HOST&#8217;, &#8216;HOST:PORT&#8217;, &#8216;unix:PATH&#8217;. An IP is a valid
-HOST.</p>
+<p>A string of the form: <tt class="docutils literal"><span class="pre">HOST</span></tt>, <tt class="docutils literal"><span class="pre">HOST:PORT</span></tt>, <tt class="docutils literal"><span class="pre">unix:PATH</span></tt>.
+An IP is a valid HOST.</p>
 </div>
-<div class="section" id="keepalive">
-<span id="setting-keepalive"></span><h3>keepalive<a class="headerlink" href="#keepalive" title="Permalink to this headline">¶</a></h3>
-<p>Setting for <a class="reference internal" href="apps/socket.html#module-pulsar.apps.socket" title="pulsar.apps.socket"><tt class="xref py py-mod docutils literal"><span class="pre">pulsar.apps.socket</span></tt></a> application.</p>
-<p><em>Command line</em>: &#8211;keep-alive</p>
+<div class="section" id="keep-alive">
+<span id="setting-keep-alive"></span><h3>keep_alive<a class="headerlink" href="#keep-alive" title="Permalink to this headline">¶</a></h3>
+<p><em>Application namespace</em>: <tt class="docutils literal"><span class="pre">socket</span></tt></p>
+<p><em>Command line</em>: <tt class="docutils literal"><span class="pre">--keep-alive</span></tt></p>
+<p><em>Default</em>: <tt class="docutils literal"><span class="pre">15</span></tt></p>
 <p>The number of seconds to keep an idle client connection
 open.</p>
 </div>
@@ -299,51 +320,105 @@ open.</p>
 <span id="setting-section-wsgi-servers"></span><h2>WSGI Servers<a class="headerlink" href="#wsgi-servers" title="Permalink to this headline">¶</a></h2>
 <div class="section" id="http-parser">
 <span id="setting-http-parser"></span><h3>http_parser<a class="headerlink" href="#http-parser" title="Permalink to this headline">¶</a></h3>
-<p>Setting for <a class="reference internal" href="apps/wsgi/intro.html#module-pulsar.apps.wsgi" title="pulsar.apps.wsgi"><tt class="xref py py-mod docutils literal"><span class="pre">pulsar.apps.wsgi</span></tt></a> application.</p>
-<p><em>Command line</em>: &#8211;http-parser</p>
+<p><em>Application namespace</em>: <tt class="docutils literal"><span class="pre">wsgi</span></tt></p>
+<p><em>Command line</em>: <tt class="docutils literal"><span class="pre">--http-parser</span></tt></p>
+<p><em>Default</em>: <tt class="xref docutils literal"><span class="pre">None</span></tt></p>
 <p>The HTTP Parser to use. By default it uses the fastest possible.</p>
 <p>Specify <cite>python</cite> if you wich to use the pure python implementation</p>
+</div>
+</div>
+<div class="section" id="task-consumer">
+<span id="setting-section-task-consumer"></span><h2>Task Consumer<a class="headerlink" href="#task-consumer" title="Permalink to this headline">¶</a></h2>
+<p>This section covers configuration parameters used by CPU bound type applications
+such as the <a class="reference internal" href="apps/tasks/index.html#apps-taskqueue"><em>distributed task queue</em></a> and the
+<a class="reference internal" href="apps/test.html#apps-test"><em>test suite</em></a>.</p>
+<div class="section" id="task-backend">
+<span id="setting-task-backend"></span><h3>task_backend<a class="headerlink" href="#task-backend" title="Permalink to this headline">¶</a></h3>
+<p><em>Application namespace</em>: <tt class="docutils literal"><span class="pre">tasks</span></tt></p>
+<p><em>Command line</em>: <tt class="docutils literal"><span class="pre">--task-backend</span></tt></p>
+<p><em>Default</em>: <tt class="docutils literal"><span class="pre">local://</span></tt></p>
+<p>Task backend.</p>
+<p>A task backend is string which connect to the backend storing Tasks)
+which accepts one parameter only and returns an instance of a
+distributed queue which has the same API as
+<tt class="xref py py-class docutils literal"><span class="pre">pulsar.MessageQueue</span></tt>. The only parameter passed to the
+task queue factory is a <a class="reference internal" href="api/utilities.html#pulsar.utils.config.Config" title="pulsar.utils.config.Config"><tt class="xref py py-class docutils literal"><span class="pre">pulsar.utils.config.Config</span></tt></a> instance.
+This parameters is used by <a class="reference internal" href="apps/tasks/intro.html#pulsar.apps.tasks.TaskQueue" title="pulsar.apps.tasks.TaskQueue"><tt class="xref py py-class docutils literal"><span class="pre">pulsar.apps.tasks.TaskQueue</span></tt></a>
+application.</p>
+</div>
+<div class="section" id="task-paths">
+<span id="setting-task-paths"></span><h3>task_paths<a class="headerlink" href="#task-paths" title="Permalink to this headline">¶</a></h3>
+<p><em>Application namespace</em>: <tt class="docutils literal"><span class="pre">tasks</span></tt></p>
+<p><em>Default</em>: <tt class="docutils literal"><span class="pre">[]</span></tt></p>
+<p>List of python dotted paths where tasks are located.</p>
+<p>This parameter can only be specified during initialization or in a
+<a class="reference internal" href="#setting-config"><em>config file</em></a>.</p>
+</div>
+<div class="section" id="schedule-periodic">
+<span id="setting-schedule-periodic"></span><h3>schedule_periodic<a class="headerlink" href="#schedule-periodic" title="Permalink to this headline">¶</a></h3>
+<p><em>Application namespace</em>: <tt class="docutils literal"><span class="pre">tasks</span></tt></p>
+<p><em>Command line</em>: <tt class="docutils literal"><span class="pre">--schedule-periodic</span></tt></p>
+<p><em>Default</em>: <tt class="xref docutils literal"><span class="pre">False</span></tt></p>
+<p>Enable scheduling of periodic tasks.</p>
+<p>If enabled, <tt class="xref py py-class docutils literal"><span class="pre">pulsar.apps.tasks.PeriodicJob</span></tt> will produce
+tasks according to their schedule.</p>
 </div>
 </div>
 <div class="section" id="test">
 <span id="setting-section-test"></span><h2>Test<a class="headerlink" href="#test" title="Permalink to this headline">¶</a></h2>
 <div class="section" id="verbosity">
 <span id="setting-verbosity"></span><h3>verbosity<a class="headerlink" href="#verbosity" title="Permalink to this headline">¶</a></h3>
-<p>Setting for <a class="reference internal" href="apps/test.html#module-pulsar.apps.test" title="pulsar.apps.test"><tt class="xref py py-mod docutils literal"><span class="pre">pulsar.apps.test</span></tt></a> application.</p>
-<p><em>Command line</em>: &#8211;verbosity</p>
+<p><em>Application namespace</em>: <tt class="docutils literal"><span class="pre">test</span></tt></p>
+<p><em>Command line</em>: <tt class="docutils literal"><span class="pre">--verbosity</span></tt></p>
+<p><em>Default</em>: <tt class="docutils literal"><span class="pre">1</span></tt></p>
 <p>Test verbosity, 0, 1, 2, 3</p>
 </div>
 <div class="section" id="test-timeout">
 <span id="setting-test-timeout"></span><h3>test_timeout<a class="headerlink" href="#test-timeout" title="Permalink to this headline">¶</a></h3>
-<p>Setting for <a class="reference internal" href="apps/test.html#module-pulsar.apps.test" title="pulsar.apps.test"><tt class="xref py py-mod docutils literal"><span class="pre">pulsar.apps.test</span></tt></a> application.</p>
-<p><em>Command line</em>: &#8211;test-timeout</p>
+<p><em>Application namespace</em>: <tt class="docutils literal"><span class="pre">test</span></tt></p>
+<p><em>Command line</em>: <tt class="docutils literal"><span class="pre">--test-timeout</span></tt></p>
+<p><em>Default</em>: <tt class="docutils literal"><span class="pre">30</span></tt></p>
 <p>Tests which take longer than this many seconds are timed-out
 and failed.</p>
 </div>
 <div class="section" id="labels">
 <span id="setting-labels"></span><h3>labels<a class="headerlink" href="#labels" title="Permalink to this headline">¶</a></h3>
-<p>Setting for <a class="reference internal" href="apps/test.html#module-pulsar.apps.test" title="pulsar.apps.test"><tt class="xref py py-mod docutils literal"><span class="pre">pulsar.apps.test</span></tt></a> application.</p>
+<p><em>Application namespace</em>: <tt class="docutils literal"><span class="pre">test</span></tt></p>
+<p><em>Default</em>: <tt class="xref docutils literal"><span class="pre">None</span></tt></p>
 <p>Optional test labels to run. If not provided all tests are run.</p>
 <p>To see available labels use the -l option.</p>
 </div>
 <div class="section" id="size">
 <span id="setting-size"></span><h3>size<a class="headerlink" href="#size" title="Permalink to this headline">¶</a></h3>
-<p>Setting for <a class="reference internal" href="apps/test.html#module-pulsar.apps.test" title="pulsar.apps.test"><tt class="xref py py-mod docutils literal"><span class="pre">pulsar.apps.test</span></tt></a> application.</p>
-<p><em>Command line</em>: &#8211;size</p>
+<p><em>Application namespace</em>: <tt class="docutils literal"><span class="pre">test</span></tt></p>
+<p><em>Command line</em>: <tt class="docutils literal"><span class="pre">--size</span></tt></p>
+<p><em>Default</em>: <tt class="docutils literal"><span class="pre">normal</span></tt></p>
 <p>Optional test size.</p>
 </div>
 <div class="section" id="list-labels">
 <span id="setting-list-labels"></span><h3>list_labels<a class="headerlink" href="#list-labels" title="Permalink to this headline">¶</a></h3>
-<p>Setting for <a class="reference internal" href="apps/test.html#module-pulsar.apps.test" title="pulsar.apps.test"><tt class="xref py py-mod docutils literal"><span class="pre">pulsar.apps.test</span></tt></a> application.</p>
-<p><em>Command line</em>: -l,&#8211;list-labels</p>
+<p><em>Application namespace</em>: <tt class="docutils literal"><span class="pre">test</span></tt></p>
+<p><em>Command line</em>: <tt class="docutils literal"><span class="pre">-l</span></tt>, <tt class="docutils literal"><span class="pre">--list-labels</span></tt></p>
+<p><em>Default</em>: <tt class="xref docutils literal"><span class="pre">False</span></tt></p>
 <p>List all test labels without performing tests.</p>
 </div>
 <div class="section" id="sequential">
 <span id="setting-sequential"></span><h3>sequential<a class="headerlink" href="#sequential" title="Permalink to this headline">¶</a></h3>
-<p>Setting for <a class="reference internal" href="apps/test.html#module-pulsar.apps.test" title="pulsar.apps.test"><tt class="xref py py-mod docutils literal"><span class="pre">pulsar.apps.test</span></tt></a> application.</p>
-<p><em>Command line</em>: &#8211;sequential</p>
+<p><em>Application namespace</em>: <tt class="docutils literal"><span class="pre">test</span></tt></p>
+<p><em>Command line</em>: <tt class="docutils literal"><span class="pre">--sequential</span></tt></p>
+<p><em>Default</em>: <tt class="xref docutils literal"><span class="pre">False</span></tt></p>
 <p>Run test functions sequentially. Don&#8217;t run them asynchronously.</p>
 </div>
+</div>
+<div class="section" id="utilities">
+<h2>Utilities<a class="headerlink" href="#utilities" title="Permalink to this headline">¶</a></h2>
+<dl class="function">
+<dt id="pulsar.utils.config.pass_through">
+<tt class="descclassname">pulsar.utils.config.</tt><tt class="descname">pass_through</tt><big>(</big><em>arg</em><big>)</big><a class="headerlink" href="#pulsar.utils.config.pass_through" title="Permalink to this definition">¶</a></dt>
+<dd><p>A dummy function accepting on parameter only. It does nothing. It is
+used as default by <a class="reference internal" href="#setting-section-server-hooks"><em>Server hooks</em></a>.</p>
+</dd></dl>
+
 </div>
 </div>
 
@@ -372,55 +447,45 @@ and failed.</p>
 <li><a class="reference internal" href="#timeout">timeout</a></li>
 </ul>
 </li>
-<li><a class="reference internal" href="#http">Http</a><ul>
+<li><a class="reference internal" href="#global-server-settings">Global Server Settings</a><ul>
 <li><a class="reference internal" href="#http-proxy">http_proxy</a></li>
 <li><a class="reference internal" href="#http-py-parser">http_py_parser</a></li>
-</ul>
-</li>
-<li><a class="reference internal" href="#debugging">Debugging</a><ul>
 <li><a class="reference internal" href="#debug">debug</a></li>
-</ul>
-</li>
-<li><a class="reference internal" href="#server-mechanics">Server Mechanics</a><ul>
 <li><a class="reference internal" href="#daemon">daemon</a></li>
 <li><a class="reference internal" href="#pidfile">pidfile</a></li>
 <li><a class="reference internal" href="#password">password</a></li>
 <li><a class="reference internal" href="#user">user</a></li>
 <li><a class="reference internal" href="#group">group</a></li>
-</ul>
-</li>
-<li><a class="reference internal" href="#logging">Logging</a><ul>
 <li><a class="reference internal" href="#loglevel">loglevel</a></li>
 <li><a class="reference internal" href="#loghandlers">loghandlers</a></li>
 <li><a class="reference internal" href="#logevery">logevery</a></li>
 <li><a class="reference internal" href="#logconfig">logconfig</a></li>
-</ul>
-</li>
-<li><a class="reference internal" href="#process-naming">Process Naming</a><ul>
 <li><a class="reference internal" href="#process-name">process_name</a></li>
 <li><a class="reference internal" href="#default-process-name">default_process_name</a></li>
 </ul>
 </li>
 <li><a class="reference internal" href="#server-hooks">Server Hooks</a><ul>
 <li><a class="reference internal" href="#post-fork">post_fork</a></li>
+<li><a class="reference internal" href="#when-ready">when_ready</a></li>
 <li><a class="reference internal" href="#connection-made">connection_made</a></li>
 <li><a class="reference internal" href="#connection-lost">connection_lost</a></li>
 <li><a class="reference internal" href="#pre-request">pre_request</a></li>
 <li><a class="reference internal" href="#post-request">post_request</a></li>
 </ul>
 </li>
-<li><a class="reference internal" href="#task-consumer">Task Consumer</a><ul>
-<li><a class="reference internal" href="#task-queue-factory">task_queue_factory</a></li>
-<li><a class="reference internal" href="#tasks-path">tasks_path</a></li>
-</ul>
-</li>
 <li><a class="reference internal" href="#socket-servers">Socket Servers</a><ul>
 <li><a class="reference internal" href="#bind">bind</a></li>
-<li><a class="reference internal" href="#keepalive">keepalive</a></li>
+<li><a class="reference internal" href="#keep-alive">keep_alive</a></li>
 </ul>
 </li>
 <li><a class="reference internal" href="#wsgi-servers">WSGI Servers</a><ul>
 <li><a class="reference internal" href="#http-parser">http_parser</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#task-consumer">Task Consumer</a><ul>
+<li><a class="reference internal" href="#task-backend">task_backend</a></li>
+<li><a class="reference internal" href="#task-paths">task_paths</a></li>
+<li><a class="reference internal" href="#schedule-periodic">schedule_periodic</a></li>
 </ul>
 </li>
 <li><a class="reference internal" href="#test">Test</a><ul>
@@ -432,6 +497,7 @@ and failed.</p>
 <li><a class="reference internal" href="#sequential">sequential</a></li>
 </ul>
 </li>
+<li><a class="reference internal" href="#utilities">Utilities</a></li>
 </ul>
 </li>
 </ul>
@@ -466,7 +532,7 @@ and failed.</p>
     </div>
 
     <div class="footer">
-        &copy; Copyright 2011, Luca Sbardella.
+        &copy; Copyright 2011-2013, Luca Sbardella.
       Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.0.7.
     </div>
 <script type="text/javascript">

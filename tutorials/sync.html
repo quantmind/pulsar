@@ -6,13 +6,13 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>Synchronous Clients &mdash; pulsar v0.5b10 documentation</title>
+    <title>Synchronous Clients &mdash; pulsar v0.5b11 documentation</title>
     <link rel="stylesheet" href="../static/pulsar.css" type="text/css" />
     <link rel="stylesheet" href="../static/pygments.css" type="text/css" />
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../',
-        VERSION:     '0.5b10',
+        VERSION:     '0.5b11',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -22,7 +22,7 @@
     <script type="text/javascript" src="../static/underscore.js"></script>
     <script type="text/javascript" src="../static/doctools.js"></script>
     <link rel="shortcut icon" href="../static/Game_of_life_pulsar.gif"/>
-    <link rel="top" title="pulsar v0.5b10 documentation" href="../index.html" />
+    <link rel="top" title="pulsar v0.5b11 documentation" href="../index.html" />
     <link rel="up" title="Tutorials &amp; Topics" href="index.html" />
     <link rel="next" title="API" href="../api/index.html" />
     <link rel="prev" title="Twisted Integration" href="twisted.html" /> 
@@ -44,7 +44,7 @@
         <li class="right" >
           <a href="twisted.html" title="Twisted Integration"
              accesskey="P">previous</a> |</li>
-        <li><a href="../index.html">pulsar v0.5b10 documentation</a> &raquo;</li>
+        <li><a href="../index.html">pulsar v0.5b11 documentation</a> &raquo;</li>
           <li><a href="index.html" accesskey="U">Tutorials &amp; Topics</a> &raquo;</li> 
       </ul>
     </div>
@@ -76,6 +76,12 @@ For example, this statement creates a synchronous <a class="reference internal" 
 <span class="gp">&gt;&gt;&gt; </span><span class="n">client</span> <span class="o">=</span> <span class="n">http</span><span class="o">.</span><span class="n">HttpClient</span><span class="p">(</span><span class="n">force_sync</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
 </pre></div>
 </div>
+<p>Under the hood, pulsar treats a synchronous clients exactly in the same way as
+an asynchronous one with the only difference in the <a class="reference internal" href="../api/async.html#pulsar.EventLoop" title="pulsar.EventLoop"><tt class="xref py py-class docutils literal"><span class="pre">pulsar.EventLoop</span></tt></a>
+used.</p>
+<p>Synchronous clients create their own event loop and invoke the
+<a class="reference internal" href="../api/async.html#pulsar.EventLoop.run_until_complete" title="pulsar.EventLoop.run_until_complete"><tt class="xref py py-meth docutils literal"><span class="pre">pulsar.EventLoop.run_until_complete()</span></tt></a> to wait for the response to
+be available.</p>
 </div>
 
 
@@ -118,7 +124,7 @@ For example, this statement creates a synchronous <a class="reference internal" 
     </div>
 
     <div class="footer">
-        &copy; Copyright 2011, Luca Sbardella.
+        &copy; Copyright 2011-2013, Luca Sbardella.
       Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.0.7.
     </div>
 <script type="text/javascript">

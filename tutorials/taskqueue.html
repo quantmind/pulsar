@@ -6,13 +6,13 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>A Task Queue with a JSON-RPC Api &mdash; pulsar v0.5b10 documentation</title>
+    <title>A Task Queue with a JSON-RPC Api &mdash; pulsar v0.5b11 documentation</title>
     <link rel="stylesheet" href="../static/pulsar.css" type="text/css" />
     <link rel="stylesheet" href="../static/pygments.css" type="text/css" />
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../',
-        VERSION:     '0.5b10',
+        VERSION:     '0.5b11',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -22,7 +22,7 @@
     <script type="text/javascript" src="../static/underscore.js"></script>
     <script type="text/javascript" src="../static/doctools.js"></script>
     <link rel="shortcut icon" href="../static/Game_of_life_pulsar.gif"/>
-    <link rel="top" title="pulsar v0.5b10 documentation" href="../index.html" />
+    <link rel="top" title="pulsar v0.5b11 documentation" href="../index.html" />
     <link rel="up" title="Tutorials &amp; Topics" href="index.html" />
     <link rel="next" title="Run a Django site with Pulsar" href="django.html" />
     <link rel="prev" title="Websocket Chat Server" href="chat.html" /> 
@@ -44,7 +44,7 @@
         <li class="right" >
           <a href="chat.html" title="Websocket Chat Server"
              accesskey="P">previous</a> |</li>
-        <li><a href="../index.html">pulsar v0.5b10 documentation</a> &raquo;</li>
+        <li><a href="../index.html">pulsar v0.5b11 documentation</a> &raquo;</li>
           <li><a href="index.html" accesskey="U">Tutorials &amp; Topics</a> &raquo;</li> 
       </ul>
     </div>
@@ -66,12 +66,12 @@
           <div class="body">
             
   <div class="section" id="a-task-queue-with-a-json-rpc-api">
-<span id="tutorials-calculator"></span><h1>A Task Queue with a JSON-RPC Api<a class="headerlink" href="#a-task-queue-with-a-json-rpc-api" title="Permalink to this headline">¶</a></h1>
+<span id="tutorials-taskqueue"></span><h1>A Task Queue with a JSON-RPC Api<a class="headerlink" href="#a-task-queue-with-a-json-rpc-api" title="Permalink to this headline">¶</a></h1>
 <p>The code for this example is located in the <a class="reference internal" href="#module-examples.taskqueue.manage" title="examples.taskqueue.manage"><tt class="xref py py-mod docutils literal"><span class="pre">examples.taskqueue.manage</span></tt></a>
 module.</p>
 <span class="target" id="module-examples.taskqueue.manage"></span><p>This example creates two <a class="reference internal" href="../index.html#apps-framework"><em>pulsar applications</em></a>
 performing different duties. The first application is a distributed
-a <a class="reference internal" href="../apps/tasks.html#apps-tasks"><em>task queue</em></a> for processing tasks implemented
+a <a class="reference internal" href="../apps/tasks/index.html#apps-taskqueue"><em>task queue</em></a> for processing tasks implemented
 in the <tt class="xref py py-mod docutils literal"><span class="pre">examples.taskqueue.simpletasks</span></tt> module.
 The second application is a <a class="reference internal" href="../apps/wsgi/index.html#apps-wsgi"><em>WSGI server</em></a> which
 exposes the task queue functionalities via a <a class="reference internal" href="../apps/rpc.html#apps-rpc"><em>JSON-RPC api</em></a>.</p>
@@ -95,6 +95,15 @@ exposes the task queue functionalities via a <a class="reference internal" href=
 <em class="property">class </em><tt class="descclassname">examples.taskqueue.manage.</tt><tt class="descname">RpcRoot</tt><big>(</big><em>taskqueue</em>, <em>**kwargs</em><big>)</big><a class="reference internal" href="../modules/examples/taskqueue/manage.html#RpcRoot"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#examples.taskqueue.manage.RpcRoot" title="Permalink to this definition">¶</a></dt>
 <dd><p>The <a class="reference internal" href="../apps/rpc.html#pulsar.apps.rpc.JSONRPC" title="pulsar.apps.rpc.JSONRPC"><tt class="xref py py-class docutils literal"><span class="pre">pulsar.apps.rpc.JSONRPC</span></tt></a> handler which communicates
 with the task queue.</p>
+</dd></dl>
+
+<dl class="class">
+<dt id="examples.taskqueue.manage.server">
+<em class="property">class </em><tt class="descclassname">examples.taskqueue.manage.</tt><tt class="descname">server</tt><big>(</big><em>name=None</em>, <em>description=None</em>, <em>epilog=None</em>, <em>version=None</em>, <em>argv=None</em>, <em>parse_console=True</em>, <em>script=None</em>, <em>cfg=None</em>, <em>load_config=True</em>, <em>**kwargs</em><big>)</big><a class="reference internal" href="../modules/examples/taskqueue/manage.html#server"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#examples.taskqueue.manage.server" title="Permalink to this definition">¶</a></dt>
+<dd><p>Build a multi-app consisting on a taskqueue and a JSON-RPC server.
+This class shows how to
+use <a class="reference internal" href="../api/application.html#pulsar.apps.MultiApp" title="pulsar.apps.MultiApp"><tt class="xref py py-class docutils literal"><span class="pre">pulsar.apps.MultiApp</span></tt></a> utility for starting several
+<a class="reference internal" href="../index.html#apps-framework"><em>pulsar applications</em></a> at once.</p>
 </dd></dl>
 
 </div>
@@ -148,7 +157,7 @@ with the task queue.</p>
     </div>
 
     <div class="footer">
-        &copy; Copyright 2011, Luca Sbardella.
+        &copy; Copyright 2011-2013, Luca Sbardella.
       Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.0.7.
     </div>
 <script type="text/javascript">

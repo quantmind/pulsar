@@ -6,13 +6,13 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>HTTP Proxy Server &mdash; pulsar v0.5b10 documentation</title>
+    <title>HTTP Proxy Server &mdash; pulsar v0.5b11 documentation</title>
     <link rel="stylesheet" href="../static/pulsar.css" type="text/css" />
     <link rel="stylesheet" href="../static/pygments.css" type="text/css" />
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../',
-        VERSION:     '0.5b10',
+        VERSION:     '0.5b11',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -22,7 +22,7 @@
     <script type="text/javascript" src="../static/underscore.js"></script>
     <script type="text/javascript" src="../static/doctools.js"></script>
     <link rel="shortcut icon" href="../static/Game_of_life_pulsar.gif"/>
-    <link rel="top" title="pulsar v0.5b10 documentation" href="../index.html" />
+    <link rel="top" title="pulsar v0.5b11 documentation" href="../index.html" />
     <link rel="up" title="Tutorials &amp; Topics" href="index.html" />
     <link rel="next" title="Web Mail" href="webmail.html" />
     <link rel="prev" title="Http Bin" href="httpbin.html" /> 
@@ -44,7 +44,7 @@
         <li class="right" >
           <a href="httpbin.html" title="Http Bin"
              accesskey="P">previous</a> |</li>
-        <li><a href="../index.html">pulsar v0.5b10 documentation</a> &raquo;</li>
+        <li><a href="../index.html">pulsar v0.5b11 documentation</a> &raquo;</li>
           <li><a href="index.html" accesskey="U">Tutorials &amp; Topics</a> &raquo;</li> 
       </ul>
     </div>
@@ -69,8 +69,12 @@
 <span id="tutorials-proxy-server"></span><h1>HTTP Proxy Server<a class="headerlink" href="#http-proxy-server" title="Permalink to this headline">¶</a></h1>
 <p>The code for this example is located in the <a class="reference internal" href="#module-examples.proxyserver.manage" title="examples.proxyserver.manage"><tt class="xref py py-mod docutils literal"><span class="pre">examples.proxyserver.manage</span></tt></a>
 module.</p>
-<span class="target" id="module-examples.proxyserver.manage"></span><p>An asynchronous multi-process HTTP proxy server with <em>headers middleware</em>
-to manipulate the original request headers. To run the server:</p>
+<span class="target" id="module-examples.proxyserver.manage"></span><p>An asynchronous multi-process <a class="reference external" href="http://en.wikipedia.org/wiki/Proxy_server">HTTP proxy server</a> with <em>headers middleware</em>
+to manipulate the original request headers. If the header middleware is
+an empty list, the proxy passes requests and responses unmodified.
+This is an implementation for a forward-proxy which can be used
+to retrieve from any type of source from the Internet.</p>
+<p>To run the server:</p>
 <div class="highlight-python"><pre>python manage.py</pre>
 </div>
 <p>An header middleware is a callable which receives the wsgi <em>environ</em> and
@@ -88,6 +92,32 @@ the list of request <em>headers</em>. By default the example uses:</p>
     <span class="n">server</span><span class="p">(</span><span class="n">headers_middleware</span><span class="o">=</span><span class="p">[</span><span class="o">...</span><span class="p">])</span><span class="o">.</span><span class="n">start</span><span class="p">()</span>
 </pre></div>
 </div>
+<div class="section" id="implemenation">
+<h2>Implemenation<a class="headerlink" href="#implemenation" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="examples.proxyserver.manage.ProxyServerWsgiHandler">
+<em class="property">class </em><tt class="descclassname">examples.proxyserver.manage.</tt><tt class="descname">ProxyServerWsgiHandler</tt><big>(</big><em>headers_middleware=None</em><big>)</big><a class="headerlink" href="#examples.proxyserver.manage.ProxyServerWsgiHandler" title="Permalink to this definition">¶</a></dt>
+<dd><p>WSGI middleware for an asynchronous proxy server. To perform
+processing on headers you can pass a list of <tt class="docutils literal"><span class="pre">headers_middleware</span></tt>.
+An headers middleware is a callable which accepts two parameters, the wsgi
+<em>environ</em> dictionary and the <em>headers</em> container.</p>
+<dl class="method">
+<dt id="examples.proxyserver.manage.ProxyServerWsgiHandler.generate">
+<tt class="descname">generate</tt><big>(</big><em>environ</em>, <em>start_response</em>, <em>response</em><big>)</big><a class="headerlink" href="#examples.proxyserver.manage.ProxyServerWsgiHandler.generate" title="Permalink to this definition">¶</a></dt>
+<dd><p>Generate response asynchronously</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="examples.proxyserver.manage.ProxyServerWsgiHandler.request_headers">
+<tt class="descname">request_headers</tt><big>(</big><em>environ</em><big>)</big><a class="headerlink" href="#examples.proxyserver.manage.ProxyServerWsgiHandler.request_headers" title="Permalink to this definition">¶</a></dt>
+<dd><p>Fill request headers from the environ dictionary and
+modify the headers via the list of <tt class="xref py py-attr docutils literal"><span class="pre">headers_middleware</span></tt>.
+The returned headers will be sent to the target uri.</p>
+</dd></dl>
+
+</dd></dl>
+
+</div>
 </div>
 
 
@@ -100,6 +130,14 @@ the list of request <em>headers</em>. By default the example uses:</p>
   <img class="logo" width="200" src="../static/pulsar.png" alt="pulsar" title="Pulsar"/>
 </a>
 </p>
+  <h3><a href="../index.html">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">HTTP Proxy Server</a><ul>
+<li><a class="reference internal" href="#implemenation">Implemenation</a></li>
+</ul>
+</li>
+</ul>
+
   <h4>Previous topic</h4>
   <p class="topless"><a href="httpbin.html"
                         title="previous chapter">Http Bin</a></p>
@@ -130,7 +168,7 @@ the list of request <em>headers</em>. By default the example uses:</p>
     </div>
 
     <div class="footer">
-        &copy; Copyright 2011, Luca Sbardella.
+        &copy; Copyright 2011-2013, Luca Sbardella.
       Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.0.7.
     </div>
 <script type="text/javascript">

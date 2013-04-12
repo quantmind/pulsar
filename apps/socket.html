@@ -6,13 +6,13 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>Socket Servers &mdash; pulsar v0.5b10 documentation</title>
+    <title>Socket Servers &mdash; pulsar v0.5b11 documentation</title>
     <link rel="stylesheet" href="../static/pulsar.css" type="text/css" />
     <link rel="stylesheet" href="../static/pygments.css" type="text/css" />
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../',
-        VERSION:     '0.5b10',
+        VERSION:     '0.5b11',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -22,7 +22,7 @@
     <script type="text/javascript" src="../static/underscore.js"></script>
     <script type="text/javascript" src="../static/doctools.js"></script>
     <link rel="shortcut icon" href="../static/Game_of_life_pulsar.gif"/>
-    <link rel="top" title="pulsar v0.5b10 documentation" href="../index.html" />
+    <link rel="top" title="pulsar v0.5b11 documentation" href="../index.html" />
     <link rel="next" title="WSGI" href="wsgi/index.html" />
     <link rel="prev" title="Settings" href="../settings.html" /> 
   </head>
@@ -43,7 +43,7 @@
         <li class="right" >
           <a href="../settings.html" title="Settings"
              accesskey="P">previous</a> |</li>
-        <li><a href="../index.html">pulsar v0.5b10 documentation</a> &raquo;</li> 
+        <li><a href="../index.html">pulsar v0.5b11 documentation</a> &raquo;</li> 
       </ul>
     </div>
 <div class="deck">
@@ -105,10 +105,11 @@ and <em>bytesarray</em> contains data for the next message.</li>
 </div></blockquote>
 <p>The <tt class="docutils literal"><span class="pre">encode</span></tt> method must return <tt class="docutils literal"><span class="pre">bytes</span></tt> which will be sent to the server.</p>
 </div>
-<div class="section" id="useful-settings">
-<h2>Useful settings<a class="headerlink" href="#useful-settings" title="Permalink to this headline">¶</a></h2>
-<p>All standard <a class="reference internal" href="../settings.html#settings"><em>settings</em></a> can be applied to a
-<a class="reference internal" href="#pulsar.apps.socket.SocketServer" title="pulsar.apps.socket.SocketServer"><tt class="xref py py-class docutils literal"><span class="pre">SocketServer</span></tt></a>. These are some of the most important:</p>
+<div class="section" id="socket-server-settings">
+<span id="id1"></span><h2>Socket Server Settings<a class="headerlink" href="#socket-server-settings" title="Permalink to this headline">¶</a></h2>
+<p>All standard <a class="reference internal" href="../settings.html#settings"><em>application settings</em></a> can be applied to a
+<a class="reference internal" href="#pulsar.apps.socket.SocketServer" title="pulsar.apps.socket.SocketServer"><tt class="xref py py-class docutils literal"><span class="pre">SocketServer</span></tt></a>. In addition, the following are
+specific to sockets and can be used to fine tune your application:</p>
 <div class="section" id="bind">
 <h3>bind<a class="headerlink" href="#bind" title="Permalink to this headline">¶</a></h3>
 <p>The <a class="reference internal" href="#pulsar.apps.socket.SocketServer" title="pulsar.apps.socket.SocketServer"><tt class="xref py py-class docutils literal"><span class="pre">SocketServer</span></tt></a> application introduces the additional pulsar settings
@@ -125,13 +126,13 @@ to bind the server to:</p>
 </div>
 <p>will serve a maximum of 1000 clients per <tt class="xref py py-class docutils literal"><span class="pre">pulsar.Worker</span></tt> concurrently.</p>
 </div>
-<div class="section" id="keepalive">
-<h3>keepalive<a class="headerlink" href="#keepalive" title="Permalink to this headline">¶</a></h3>
+<div class="section" id="keep-alive">
+<h3>keep_alive<a class="headerlink" href="#keep-alive" title="Permalink to this headline">¶</a></h3>
 <p>To control how long a <tt class="xref py py-class docutils literal"><span class="pre">pulsar.AsyncConnection</span></tt> is kept alive after the
 last read from the remote client, one can use the
-<a class="reference internal" href="../settings.html#setting-keepalive"><em>keepalive</em></a> setting.</p>
+<a class="reference internal" href="../settings.html#setting-keep-alive"><em>keepalive</em></a> setting.</p>
 <blockquote>
-<div>python script.py &#8211;keepalive 10</div></blockquote>
+<div>python script.py &#8211;keep-alive 10</div></blockquote>
 <p>will close a client connection which has been idle for 10 seconds.</p>
 </div>
 </div>
@@ -159,7 +160,7 @@ load servers.</p>
 <h3>Socket Server<a class="headerlink" href="#socket-server" title="Permalink to this headline">¶</a></h3>
 <dl class="class">
 <dt id="pulsar.apps.socket.SocketServer">
-<em class="property">class </em><tt class="descclassname">pulsar.apps.socket.</tt><tt class="descname">SocketServer</tt><big>(</big><em>callable=None</em>, <em>description=None</em>, <em>name=None</em>, <em>epilog=None</em>, <em>argv=None</em>, <em>script=None</em>, <em>version=None</em>, <em>parse_console=True</em>, <em>cfg=None</em>, <em>**kwargs</em><big>)</big><a class="reference internal" href="../modules/pulsar/apps/socket.html#SocketServer"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.socket.SocketServer" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><tt class="descclassname">pulsar.apps.socket.</tt><tt class="descname">SocketServer</tt><big>(</big><em>callable=None</em>, <em>load_config=True</em>, <em>**params</em><big>)</big><a class="reference internal" href="../modules/pulsar/apps/socket.html#SocketServer"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.socket.SocketServer" title="Permalink to this definition">¶</a></dt>
 <dd><p>This application bind a socket to a given address and listen for
 requests. The request handler is constructued from the
 <tt class="xref py py-attr docutils literal"><span class="pre">handler</span></tt> parameter/attribute.</p>
@@ -204,10 +205,10 @@ uses the <tt class="xref py py-meth docutils literal"><span class="pre">handler(
   <ul>
 <li><a class="reference internal" href="#">Socket Servers</a><ul>
 <li><a class="reference internal" href="#protocol">Protocol</a></li>
-<li><a class="reference internal" href="#useful-settings">Useful settings</a><ul>
+<li><a class="reference internal" href="#socket-server-settings">Socket Server Settings</a><ul>
 <li><a class="reference internal" href="#bind">bind</a></li>
 <li><a class="reference internal" href="#backlog">backlog</a></li>
-<li><a class="reference internal" href="#keepalive">keepalive</a></li>
+<li><a class="reference internal" href="#keep-alive">keep_alive</a></li>
 </ul>
 </li>
 <li><a class="reference internal" href="#concurrency">Concurrency</a></li>
@@ -249,7 +250,7 @@ uses the <tt class="xref py py-meth docutils literal"><span class="pre">handler(
     </div>
 
     <div class="footer">
-        &copy; Copyright 2011, Luca Sbardella.
+        &copy; Copyright 2011-2013, Luca Sbardella.
       Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.0.7.
     </div>
 <script type="text/javascript">

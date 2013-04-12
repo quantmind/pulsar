@@ -11,4 +11,5 @@ WSGI
    handlers
    wrappers
    content
+   middleware
    tools
