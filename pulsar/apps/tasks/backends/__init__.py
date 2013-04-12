@@ -7,10 +7,18 @@ pulsar internals and store tasks in the arbiter domein and onther with store
 tasks in redis.
 
 
-get backend
+Get backend
 ~~~~~~~~~~~~~~~~~~
 A :class:`TaskBackend` is never initialised directly, instead it is created using
-the :func:`getbe` function
+the :func:`getbe` function::
+
+    backend = getbe('local://', **params)
+    
+get the pulsar *local* backend.
+
+    backend = getbe('redis://localhost:6379&db=1', **params)
+    
+get a redis backend.
 
 .. autofunction:: getbe
 
