@@ -52,10 +52,10 @@ class TestTaskQueueMeta(TaskQueueBase, unittest.TestCase):
         self.assertTrue(app)
         self.assertEqual(app.name, self.apps[0].name)
         self.assertFalse(app.cfg.address)
-        self.assertTrue(app.registry)
+        self.assertTrue(app.backend.registry)
         scheduler = app.scheduler
         self.assertTrue(scheduler.entries)
-        job = app.registry['runpycode']
+        job = app.backend.registry['runpycode']
         self.assertEqual(job.type, 'regular')
         self.assertTrue(job.can_overlap)
         id = job.make_task_id((),{})
@@ -76,16 +76,16 @@ class TestTaskQueueMeta(TaskQueueBase, unittest.TestCase):
         
     def test_registry(self):
         app = yield get_application(self.apps[0].name)
-        self.assertTrue(isinstance(app.registry, dict))
-        regular = app.registry.regular()
-        periodic = app.registry.periodic()
+        self.assertTrue(isinstance(app.backend.registry, dict))
+        regular = app.backend.registry.regular()
+        periodic = app.backend.registry.periodic()
         self.assertTrue(regular)
         self.assertTrue(periodic)
         
     def test_id_not_overlap(self):
         '''Check `make_task_id` when `can_overlap` attribute is set to False.'''
         app = yield get_application(self.apps[0].name)
-        job = app.registry['notoverlap']
+        job = app.backend.registry['notoverlap']
         self.assertEqual(job.type, 'regular')
         self.assertFalse(job.can_overlap)
         #
@@ -109,7 +109,7 @@ class TestTaskQueueOnThread(TaskQueueBase, unittest.TestCase):
 
     def _test_not_overlap(self):
         app = yield get_application(self.apps[0].name)
-        self.assertTrue('notoverlap' in app.registry)
+        self.assertTrue('notoverlap' in app.backend.registry)
         r1 = yield app.scheduler.run('notoverlap', 1)
         self.assertEqual(str(r1), 'notoverlap(%s)' % r1.id)
         self.assertTrue(r1._queued)
@@ -119,8 +119,6 @@ class TestTaskQueueOnThread(TaskQueueBase, unittest.TestCase):
         # We need to make sure the first task is completed
         r1 = yield app.scheduler.wait_for_task(r1)
         self.assertEqual(get_task(id).status, tasks.SUCCESS)
-        
-class b:
         
     def test_not_overlap(self):
         return self._test_not_overlap()

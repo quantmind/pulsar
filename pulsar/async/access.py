@@ -1,4 +1,5 @@
 import threading
+import logging
 from threading import current_thread
 from multiprocessing import current_process
 from multiprocessing.dummy import DummyProcess
@@ -12,6 +13,7 @@ __all__ = ['get_request_loop',
            'thread_local_data',
            'NOTHING']
 
+LOGGER = logging.getLogger('pulsar')
 NOTHING = object()
 
 def is_mainthread(thread=None):
@@ -36,10 +38,10 @@ dictionary.'''
     else:
         return loc
             
-def thread_local_data(name, value=NOTHING):
+def thread_local_data(name, value=NOTHING, ct=None):
     '''Set or retrieve an attribute *name* from the curren thread. If *value*
 is None, it will get the value otherwise it will set the value.'''
-    ct = current_thread()
+    ct = ct or current_thread()
     if is_mainthread(ct):
         loc = process_local_data()
     elif not hasattr(ct, '_pulsar_local'):
@@ -68,6 +70,7 @@ def set_actor(actor):
 def remove_actor(actor):
     '''Remove actor from threaded_actors dictionary'''
     if actor.impl.kind == 'thread':
+        LOGGER.debug('Removing threaded actor %s' % actor)
         process_local_data('thread_actors').pop(actor.aid, None)
 
 def get_actor_from_id(aid):

@@ -92,9 +92,9 @@ class InteractiveConsole(code.InteractiveConsole):  #pragma    nocover
 
 
 class PulsarShell(pulsar.Application):
-    console_class = InteractiveConsole
     name = 'shell'
-    cfg = pulsar.Config(loglevel='none', process_name='Pulsar shell')
+    cfg = pulsar.Config(loglevel='none', process_name='Pulsar shell',
+                        console_class=InteractiveConsole)
     
     def monitor_start(self, monitor):
         monitor.cfg.set('workers', 1)
@@ -121,7 +121,7 @@ with one thread only and send the :meth:`interact` method to it.'''
             import rlcompleter
             readline.set_completer(rlcompleter.Completer(imported_objects).complete)
             readline.parse_and_bind("tab:complete")
-        self.local.console = self.console_class(imported_objects)
+        self.local.console = self.cfg.console_class(imported_objects)
         self.local.console.setup()
         worker.thread_pool.apply_async(self.interact, (worker,))
                 

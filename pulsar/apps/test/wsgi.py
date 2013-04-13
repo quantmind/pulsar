@@ -12,12 +12,23 @@ __all__ = ['HttpTestClient']
 
 
 class DummyTransport(pulsar.Transport):
+    '''A class simulating a :class:`pulsar.Transport` to a :attr:`connection`
     
+.. attribute:: client
+
+    The :class:`pulsar.Client` using this :class:`DummyTransport`
+    
+.. attribute:: connection
+
+    The *server* connection for this :attr:`client`
+'''
     def __init__(self, client, connnection):
         self.client = client
         self.connection = connnection
         
     def write(self, data):
+        '''Writing data means calling ``data_received`` on the
+server :attr:`connection`.'''
         self.connection.data_received(data)
         
     @property
@@ -26,7 +37,7 @@ class DummyTransport(pulsar.Transport):
     
 
 class DummyConnectionPool(pulsar.ConnectionPool):
-    
+    '''A class for simulating a client connection with a server'''
     def get_or_create_connection(self, producer):
         client = self.connection_factory(self.address, 1, 0,
                                          producer.consumer_factory,
@@ -40,13 +51,20 @@ class DummyConnectionPool(pulsar.ConnectionPool):
         
         
 class HttpTestClient(http.HttpClient):
+    '''Useful :class:`pulsar.apps.http.HttpClient` for wsgi server
+handlers.
+
+.. attribute:: wsgi_handler
+
+    The WSGI server handler to test
+'''
     client_version = 'Pulsar-Http-Test-Client'
     connection_pool = DummyConnectionPool
 
     def __init__(self, test, wsgi_handler, **kwargs):
         self.test = test
         self.wsgi_handler = wsgi_handler
-        self.server_consumer = partial(HttpServerResponse, wsgi_handler)
+        self.server_consumer = partial(HttpServerResponse, wsgi_handler, test.cfg)
         super(HttpTestClient, self).__init__(**kwargs)
         
     def data_received(self, connnection, data):

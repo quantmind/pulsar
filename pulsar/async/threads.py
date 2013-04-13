@@ -1,6 +1,9 @@
 import sys
-from multiprocessing import pool, dummy
-from threading import Lock
+import threading
+import inspect
+import ctypes
+from multiprocessing import pool, dummy, current_process
+from threading import Lock, ThreadError
 from functools import partial
 
 try:
@@ -14,15 +17,64 @@ from pulsar.utils.system import EpollInterface
 from pulsar.utils.log import LocalMixin, local_property
 from pulsar.utils.pep import set_event_loop
 
-from .access import get_actor, set_actor
+from .access import get_actor, set_actor, thread_local_data
 from .eventloop import StopEventLoop, EventLoop
 from .defer import maybe_async, is_async, log_failure
 
 
 __all__ = ['Thread', 'IOQueue', 'ThreadPool', 'ThreadQueue', 'Empty']
 
-
-class Thread(dummy.DummyProcess):
+def _async_raise(tid, exctype):
+    """raises the exception, performs cleanup if needed"""
+    if not inspect.isclass(exctype):
+        raise TypeError("Only types can be raised (not instances)")
+    res = ctypes.pythonapi.PyThreadState_SetAsyncExc(tid, ctypes.py_object(exctype))
+    if res == 0:
+        raise ValueError("invalid thread id")
+    elif res != 1:
+        # """if it returns a number greater than one, you're in trouble, 
+        # and you should call it again with exc=NULL to revert the effect"""
+        ctypes.pythonapi.PyThreadState_SetAsyncExc(tid, 0)
+        raise SystemError("PyThreadState_SetAsyncExc failed")
+    
+    
+class KillableThread(dummy.DummyProcess):
+    '''A killable thread has the :meth:`terminate` method.
+    
+http://tomerfiliba.com/recipes/Thread2/
+'''
+    @property
+    def pid(self):
+        return current_process().pid
+    
+    # Internals
+    def _get_my_tid(self):
+        """determines this (self's) thread id"""
+        if not self.isAlive():
+            raise ThreadError("the thread is not active")
+        # do we have it cached?
+        if hasattr(self, "_thread_id"):
+            return self._thread_id
+        # no, look for it in the _active dict
+        for tid, tobj in threading._active.items():
+            if tobj is self:
+                self._thread_id = tid
+                return tid
+        raise AssertionError("could not determine the thread's id")
+    
+    def terminate(self):
+        '''First check if the thread has an event_loop attribute, if so
+it invoke the stop method. Otherwise it raises SystemExit in the context of
+the given thread, which should cause the thread to exit silently
+(unless caught). Originally from http://tomerfiliba.com/recipes/Thread2/.'''
+        event_loop = getattr(self, 'event_loop', None)
+        if event_loop:
+            self.event_loop.stop()
+        else:
+            _async_raise(self._get_my_tid(), SystemExit)
+    
+    
+class Thread(KillableThread):
     '''This class should be used when creating threads in pulsar. It
 makes sure the class:`Actor` controlling the thread is available.'''
     def __init__(self, *args, **kwargs):
@@ -37,6 +89,10 @@ the running thread.'''
         set_actor(actor)
         set_event_loop(actor.event_loop)
         super(Thread, self).run()
+        
+    @property
+    def event_loop(self):
+        return thread_local_data('_request_loop', ct=self)
 
 
 class _FdFactory:

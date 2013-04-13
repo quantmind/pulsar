@@ -130,6 +130,10 @@ an :class:`ActorProxy`.
     of the actor which can be shared across different processes
     (i.e. it is pickable).
 
+.. attribute:: state
+
+    The actor :ref:`numeric state <actor-states>`.
+    
 .. attribute:: thread_pool
 
     A :class:`ThreadPool` associated with this :class:`Actor`. This attribute
@@ -146,7 +150,7 @@ an :class:`ActorProxy`.
     Current state description string. One of ``initial``, ``running``,
     ``stopping``, ``closed`` and ``terminated``.
  
-**METHODS**
+**PUBLIC METHODS**
 '''
     ONE_TIME_EVENTS = ('start', 'stopping', 'stop')
     exit_code = None
@@ -221,7 +225,8 @@ an :class:`ActorProxy`.
     def start(self):
         '''Called after forking to start the actor's life. This is where
 logging is configured, the :attr:`Actor.mailbox` is registered and the
-:attr:`Actor.event_loop` is initialised and started.'''
+:attr:`Actor.event_loop` is initialised and started. Calling this method
+more than once does nothing.'''
         if self.state == ACTOR_STATES.INITIAL:
             self._started = time() 
             self.configure_logging()
@@ -247,17 +252,21 @@ parameters *params*.'''
         return mailbox.request(action, self, target, args, params)
     
     def io_poller(self):
-        '''Return the :class:`EventLoop.io` handler. By default it return
-nothing so that the best handler for the system is chosen.'''
+        '''Return a IO poller instance which sets the :class:`EventLoop.io`
+handler. By default it return nothing so that the best handler for the
+system is chosen.'''
         return None
     
     def spawn(self, **params):
         raise RuntimeError('Cannot spawn an actor from an actor.')
     
     def stop(self, exc=None):
-        '''Stop the actor by stopping its :attr:`Actor.event_loop`
-and closing its :attr:`Actor.mailbox`. Once everything is closed
-properly this actor will go out of scope.'''
+        '''Stop the actor by closing its :attr:`mailbox` which
+in turns stops the :attr:`event_loop`. Once everything is closed
+properly this actor will go out of scope.
+
+:param exc: optional exception.
+'''
         log_failure(exc)
         if self.state <= ACTOR_STATES.RUN:
             # The actor has not started the stopping process. Starts it now.
@@ -275,7 +284,10 @@ properly this actor will go out of scope.'''
     
     def create_thread_pool(self, workers=1):
         '''Create a :class:`ThreadPool` for this :class:`Actor`
-if not already present.'''
+if not already present.
+
+:param workers: number of threads to use in the :class:`ThreadPool`
+'''
         if self._thread_pool is None:
             self._thread_pool = ThreadPool(processes=workers)
         return self._thread_pool
@@ -297,15 +309,18 @@ the :attr:`event_loop` running.'''
     
     def started(self):
         '''``True`` if actor has started. It does not necessarily
-mean it is running.'''
+mean it is running. Its state is greater or equal
+:ref:`ACTOR_STATES.RUN <actor-states>`.'''
         return self.state >= ACTOR_STATES.RUN
 
     def closed(self):
-        '''``True`` if actor has exited in an clean fashion.'''
+        '''``True`` if actor has exited in an clean fashion. It :attr:`state`
+is equal to :ref:`ACTOR_STATES.CLOSE <actor-states>`.'''
         return self.state == ACTOR_STATES.CLOSE
 
     def stopped(self):
-        '''``True`` if actor has exited.'''
+        '''``True`` if actor has exited so that it :attr:`state` is greater
+or equal to :ref:`ACTOR_STATES.CLOSE <actor-states>`.'''
         return self.state >= ACTOR_STATES.CLOSE
 
     def is_arbiter(self):

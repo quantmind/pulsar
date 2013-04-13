@@ -582,6 +582,7 @@ default signal handler ``signal.SIG_DFL``.'''
             set_event_loop(self)
     
     def _after_run(self):
+        self.logger.debug('Exiting %s', self)
         self._name = None
         self.tid = None
         

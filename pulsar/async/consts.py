@@ -1,5 +1,30 @@
 '''
 Constats used throughout pulsar.
+
+.. _actor-states:
+
+Actor States
+~~~~~~~~~~~~~~
+
+Actor state constants are access via::
+
+    from pulsar import ACTOR_STATES
+    
+They are:  
+
+* ``ACTOR_STATES.INITIAL = 0`` when an actor is just created, before the
+  :class:`pulsar.Actor.start` method is called.
+* ``ACTOR_STATES.STARTING = 2`` when :class:`pulsar.Actor.start` method is called.
+* ``ACTOR_STATES.RUN = 3`` when :class:`pulsar.Actor.event_loop` is up and running.
+* ``ACTOR_STATES.STOPPING = 4`` when :class:`pulsar.Actor.stop` has been called
+  for the first time and the actor is running.
+  
+Constants
+~~~~~~~~~~~~~~~~~~~~~~~~
+
+* ``ACTOR_ACTION_TIMEOUT`` used by :class:`pulsar.Monitor` to kill actors
+  which don't respond to the stop command.
+
 '''
 from pulsar.utils.structures import AttributeDictionary, FrozenDict
 

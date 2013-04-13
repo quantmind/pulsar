@@ -29,6 +29,10 @@ Pulsar internals are implemented along the lines of the new asynchronous IO
 proposal pep-3156_. This means that once the new asynchronous interface will
 be part of the standard lib, pulsar will be compatible with it from day 1.
 
+Documented and Samples
+---------------------------
+Pulsar documentation is continuously updated and extended and there are several
+examples in the :mod:`examples` module of the distribution directory. 
 
 
 .. _pep-3156: http://www.python.org/dev/peps/pep-3156/

@@ -155,8 +155,14 @@ of available connections.
 class Client(EventHandler):
     '''A client for a remote server which handles one or more
 :class:`ConnectionPool` of asynchronous connections.
+It has the ``finish`` :ref:`one time event <one-time-event>` fired when calling
+the :meth:`close` method, four :ref:`many time events <many-times-event>`
+which can be used to add additional information to the request to send
+to the remote server and to postprocess responses. These events are:
+``connection_made``, ``pre_request``, ``post_request``, ``connection_lost``.
 
 :param max_connections: Optional maximum number of connections.
+:param timeout: Optional timeout in seconds for closing idle connections.
 :param force_sync: set the :attr:`force_sync` attribute.
 :param event_loop: Optional :class:`EventLoop` which set the :attr:`event_loop`.
 
@@ -300,6 +306,8 @@ in :attr:`request_parameters` tuple.'''
             p.close_connections(async=async)
             
     def close(self, async=True):
+        '''Close all connections and fire the ``finish``
+:ref:`one time event <one-time-event>`'''
         self.close_connections(async)
         self.fire_event('finish')
         

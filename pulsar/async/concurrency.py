@@ -1,6 +1,5 @@
 import time
 from multiprocessing import Process, current_process
-from multiprocessing.dummy import DummyProcess
 from threading import Thread, current_thread
 
 from pulsar import system, platform
@@ -8,6 +7,7 @@ from pulsar.utils.security import gen_unique_id
 
 from .proxy import ActorProxyMonitor, get_proxy
 from .access import get_actor, get_actor_from_id
+from .threads import KillableThread
 
 
 __all__ = ['Concurrency', 'concurrency']
@@ -100,18 +100,17 @@ the **start** method.'''
 
 class ActorProcess(ActorConcurrency, Process):
     '''Actor on a process'''
-    pass
 
 
-class ActorThread(ActorConcurrency, DummyProcess):
+class ActorThread(ActorConcurrency, KillableThread):
     '''Actor on a thread'''
-    def terminate(self):
-        '''Called by the main thread to force termination.'''
-        actor = get_actor_from_id(self.aid)
-        if actor is not None:
-            actor.stop(1)
 
-    @property
-    def pid(self):
-        return current_process().pid
-
+    def terminate(self, kill=False):
+        if self.is_alive():
+            actor = get_actor_from_id(self.aid)
+            me = get_actor()
+            if not kill and actor and actor != me:
+                actor.stop(1)
+                me.event_loop.call_later(1, self.terminate, True)
+            else:
+                KillableThread.terminate(self)

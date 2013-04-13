@@ -172,7 +172,7 @@ protocol.'''
     def _responde(self, message):
         actor = get_actor()
         command = message.get('command')
-        LOGGER.debug('%s handling message "%s"', actor, command)
+        #LOGGER.debug('%s handling message "%s"', actor, command)
         if command == 'callback':   #this is a callback
             self._callback(message.get('ack'), message.get('result'))
         else:

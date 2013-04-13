@@ -16,6 +16,8 @@ class rpcTest(unittest.TestCase):
         self.assertTrue(len(http.headers))
         self.assertEqual(http.headers['user-agent'], 'Pulsar-Http-Test-Client')
         self.assertEqual(http.test, self)
+        self.assertTrue(http.server_consumer)
+        self.assertTrue(http.wsgi_handler)
 
     def test_invalid_function(self):
         p = self.proxy()

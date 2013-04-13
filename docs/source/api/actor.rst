@@ -144,3 +144,9 @@ pulsar command
 ~~~~~~~~~~~~~~~~~~~~
 
 .. autoclass:: command
+
+
+Pulsar constants
+=========================
+
+.. automodule:: pulsar.async.consts
