@@ -1,3 +1,12 @@
+'''
+Collection of utilities for sockets and address parsing.
+
+Parse a connection string
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. autofunction:: parse_connection_string
+
+'''
 import os
 import sys
 import socket
@@ -267,23 +276,37 @@ def parse_address(netloc, default_port=8000):
     return (host, port)
     
 def parse_connection_string(netloc, default_port=8000):
-    """Converts the "netloc" into the database connection parameters.
-It returns a (scheme, host, params) tuple."""
+    """Converts the ``netloc`` into a three elements tuple
+``(scheme, host, params)`` where ``scheme`` is a string, ``host`` could
+be a string or a two elements tuple (for a tcp address) and ``params`` a
+dictionary of parameters. For example::
+
+    parse_connection_string('http://127.0.0.1:9080')
+    
+returns::
+
+    ('http', ('127.0.0.1', 9080), {})
+    
+and this example::
+
+    parse_connection_string('redis://127.0.0.1:6379?db=3&password=bla')
+    
+returns::
+
+    ('redis', ('127.0.0.1', 6379), {'db': '3', 'password': 'bla'})
+"""
     if '://' not in netloc:
         netloc = 'dummy://%s' % netloc
     scheme, host, path, query, fragment = urlsplit(netloc)
     if not scheme and not host:
         host, path = path, ''
-    elif scheme not in ('https', 'http'):
-        query = path
-        path = ''
+    elif path and not query:
+        query, path = path, ''
         if query:
             if query.find('?'):
                 path = query
             else:
                 query = query[1:]
-    else:
-        path, query = r.path, r.query
     if path:
         raise ValueError("Address must not have a path. Found '%s'" % path)
     if query:

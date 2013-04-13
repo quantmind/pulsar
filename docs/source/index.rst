@@ -74,12 +74,3 @@ Indices and tables
 * :ref:`modindex`
 * :ref:`search`
 
-
-.. Note::
-
-    This documentation is incomplete and with several spelling errors.
-    It will improve with time and, hopefully, with help from the community.
-    In the mean time, a lot of insight can be gained by
-    visiting and running, the :ref:`example applications <examples>`
-    which are located in the :mod:`examples` module at the top level of
-    pulsar distribution.

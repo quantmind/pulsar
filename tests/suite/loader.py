@@ -14,13 +14,13 @@ class TestTestLoader(unittest.TestCase):
         self.assertTrue(app.script)
         self.assertEqual(os.path.basename(app.script), 'runtests.py')
         self.assertEqual(os.path.dirname(app.script), app.root_dir)
-        self.assertEqual(app.modules, ('tests',
-                                       ('examples', 'tests'),
-                                       ('examples', 'test_*')))
+        self.assertEqual(app.cfg.modules, ('tests',
+                                          ('examples', 'tests'),
+                                          ('examples', 'test_*')))
         
     def test_load_pulsar_tests(self):
         app = pulsar.get_actor().app
-        loader = TestLoader(app.root_dir, app.modules, app.runner)
+        loader = TestLoader(app.root_dir, app.cfg.modules, app.runner)
         self.assertEqual(loader.modules, [('tests', None, None),
                                           ('examples', 'tests', None),
                                           ('examples', 'test_*', None)])
@@ -36,7 +36,7 @@ class TestTestLoader(unittest.TestCase):
         
     def test_sorted_tags(self):
         app = pulsar.get_actor().app
-        loader = TestLoader(app.root_dir, app.modules, app.runner)
+        loader = TestLoader(app.root_dir, app.cfg.modules, app.runner)
         modules = list(loader.testmodules())
         self.assertTrue(modules)
         tags = [m[0] for m in modules]
@@ -44,12 +44,12 @@ class TestTestLoader(unittest.TestCase):
 
     def test_load_tags1(self):
         app = pulsar.get_actor().app
-        loader = TestLoader(app.root_dir, app.modules, app.runner)
+        loader = TestLoader(app.root_dir, app.cfg.modules, app.runner)
         modules = dict(loader.testmodules(('suite',)))
         self.assertEqual(len(modules), 6)
                 
     def test_load_tags2(self):
         app = pulsar.get_actor().app
-        loader = TestLoader(app.root_dir, app.modules, app.runner)
+        loader = TestLoader(app.root_dir, app.cfg.modules, app.runner)
         modules = dict(loader.testmodules(('djangoapp',)))
         self.assertEqual(len(modules), 3)

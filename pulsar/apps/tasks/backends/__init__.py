@@ -108,6 +108,7 @@ from pulsar.utils.pep import itervalues, iteritems
 from pulsar.apps.tasks.models import registry
 from pulsar.apps.tasks import states
 from pulsar.utils.httpurl import parse_qs, urlsplit
+from pulsar.utils.sockets import parse_connection_string
 from pulsar.utils.timeutils import remaining, timedelta_seconds
 from pulsar.utils.log import LocalMixin, local_property
 from pulsar.utils.security import gen_unique_id 
@@ -116,23 +117,6 @@ __all__ = ['Task', 'TaskBackend', 'getbe', 'TaskNotAvailable']
 
 
 LOGGER = logging.getLogger('pulsar.tasks')
-
-
-def parse_backend(backend):
-    """Converts the "backend" into the database connection parameters.
-It returns a (scheme, host, params) tuple."""
-    r = urlsplit(backend)
-    scheme, host = r.scheme, r.netloc
-    path, query = r.path, r.query
-    if path and not query:
-        query, path = path, ''
-        if query:
-            if query.find('?'):
-                path = query
-            else:
-                query = query[1:]
-    params = parse_qs(query) if query else {}
-    return scheme, host, params
 
 
 def _getdb(scheme, host, params):
@@ -147,7 +131,7 @@ def getbe(backend=None, **kwargs):
     if isinstance(backend, TaskBackend):
         return backend
     backend = backend or 'local://'
-    scheme, address, params = parse_backend(backend)
+    scheme, address, params = parse_connection_string(backend)
     params.update(kwargs)
     if 'timeout' in params:
         params['timeout'] = int(params['timeout'])

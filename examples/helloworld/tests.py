@@ -31,7 +31,7 @@ class TestHelloWorldThread(unittest.TestCase):
     
     @run_on_arbiter
     def testMeta(self):
-        app = get_application(self.name())
+        app = yield get_application(self.name())
         self.assertEqual(app.name, self.name())
         self.assertTrue(app.monitor.running())
         self.assertEqual(app, app.app)

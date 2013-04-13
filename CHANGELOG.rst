@@ -3,16 +3,12 @@ Ver. 0.5.0 - DEVELOPMENT
 * This is a major release with considerable ammount of internal refactoring.
 * Asynchronous framework:
    * pep-3156_ implementation.
-   * :class:`pulsar.Actor` internal message passing uses the (unmasked) websocket protocol
-     in a bidirectional communication between the :class:`pulsar.Arbiter` and actors.
-   * Spawning and stopping actors is monitored using a timeout set at 5 seconds.
-   * Added :mod:`pulsar.async.const` module for low level actor constants.
    * New pep-3156_ compatible :class:`pulsar.EventLoop`.
    * Added the :meth:`pulsar.Deferred.cancel` method to cancel asynchronous
      callbacks.
-   * :class:`pulsar.Deferred` accepts a *timeout* as initialization parameter. If
+   * :class:`pulsar.Deferred` accepts a *timeout* as initialisation parameter. If
      a value greater than 0 is given, the deferred will add a timeout to the
-     eventloop to cancel itself in *timeout* seconds.
+     event loop to cancel itself in *timeout* seconds.
    * :class:`pulsar.Task` stops after the first error by default.
      This class replace the old DeferredGenerator and provides a cleaner
      API with inline syntax. Check the
@@ -20,6 +16,15 @@ Ver. 0.5.0 - DEVELOPMENT
      further information.
    * Added :func:`pulsar.async_sleep` function.
    
+* Actors:
+   * :class:`pulsar.Actor` internal message passing uses the (unmasked) websocket protocol
+     in a bidirectional communication between the :class:`pulsar.Arbiter` and actors.
+   * Spawning and stopping actors is monitored using a timeout set at 5 seconds.
+   * Added :mod:`pulsar.async.const` module for low level actor constants.
+   * Removed the requestloop attribute, the actor event loop is now accessed
+     via the :attr:`pulsar.Actor.event_loop` attribute or via the pep-3156_
+     function ``get_event_loop``.
+     
 * Applications:
     * Added ability to add Websocket sub-protocols and extensions.
     * New asynchronous :class:`pulsar.apps.http.HttpClient` with websocket support.

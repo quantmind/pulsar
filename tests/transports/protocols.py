@@ -42,8 +42,10 @@ class TestPulsarStreams(unittest.TestCase):
         
     @run_on_arbiter
     def testServer(self):
-        app = pulsar.get_application(self.__class__.__name__.lower())
+        app = yield pulsar.get_application(self.__class__.__name__.lower())
         self.assertTrue(app.address)
+        self.assertTrue(app.cfg.address)
+        self.assertNotEqual(app.address, app.cfg.address)
         
         
 @dont_run_with_thread

@@ -155,6 +155,12 @@ class AttributeDictionary(Mapping):
         if kwargs:
             self.update(kwargs)
             
+    def __repr__(self):
+        return repr(self.__dict__)
+    
+    def __str__(self):
+        return str(self.__dict__)
+    
     def __contains__(self, name):
         return name in self.__dict__
     

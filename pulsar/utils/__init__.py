@@ -42,7 +42,12 @@ Configuration
 
 
      
-.. _internals:
+.. _socket_address:
+
+Socket and addresses
+=======================
+
+.. automodule:: pulsar.utils.sockets
 
 
 Internals

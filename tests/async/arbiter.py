@@ -39,8 +39,6 @@ class TestArbiterThread(ActorTestMixin, unittest.TestCase):
         self.assertTrue(arbiter.is_arbiter())
         self.assertEqual(arbiter.impl.kind, 'monitor')
         self.assertTrue(arbiter.monitors)
-        self.assertEqual(arbiter.ioloop, arbiter.requestloop)
-        self.assertFalse(arbiter.cpubound)
         self.assertEqual(arbiter.exit_code, None)
         info = arbiter.info()
         self.assertTrue('server' in info)
