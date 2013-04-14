@@ -94,7 +94,7 @@ def pickup_fork(request, fork_right):
 class DiningPhilosophers(pulsar.Application):
     description = 'Dining philosophers sit at a table around a bowl of '\
                   'spaghetti and waits for available forks.'
-    cfg = {'workers': 5}
+    cfg = pulsar.Config(workers=5)
     
     def monitor_start(self, monitor):
         self.not_available_forks = set()
