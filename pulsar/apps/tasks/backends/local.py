@@ -1,6 +1,6 @@
 from collections import namedtuple, deque
 
-from pulsar import send, command
+from pulsar import send, command, Deferred
 from pulsar.utils.pep import itervalues
 from pulsar.apps.tasks import backends, states
 
@@ -10,8 +10,8 @@ class TaskBackend(backends.TaskBackend):
     def put_task(self, task_id):
         return send('arbiter', 'put_task', task_id)
     
-    def get_task(self, task_id=None):
-        return send('arbiter', 'get_task', task_id)
+    def get_task(self, task_id=None, when_done=False):
+        return send('arbiter', 'get_task', task_id, when_done)
     
     def get_tasks(self, **filters):
         return send('arbiter', 'get_tasks', **filters)
@@ -28,34 +28,44 @@ class TaskBackend(backends.TaskBackend):
 def save_task(request, task_id, **params):
     TASKS = _get_tasks(request.actor)
     if task_id in TASKS.map:
-        task = TASKS.map[task_id]
+        task, when_done = TASKS.map[task_id]
         for field, value in params.items():
             setattr(task, field, value)
     else:
         task = backends.Task(task_id, **params)
-        TASKS.map[task.id] = task
+        when_done = Deferred()
+        TASKS.map[task.id] = (task, Deferred())
+    if task.done() and not when_done.done():
+        when_done.callback(task)
     return task.id
 
 @command()
 def delete_tasks(request, ids):
     TASKS = _get_tasks(request.actor)
-    if ids:
-        for id in ids:
-            TASKS.map.pop(id, None)
-    else:
-        TASKS.map.clear()
+    ids = ids or list(TASKS.map)
+    deleted = 0
+    for id in ids:
+        if id not in TASKS.map:
+            continue
+        deleted += 1
+        task, when_done = TASKS.map.pop(id)
+        if not when_done.done():
+            if not task.done():
+                task.status = states.REVOKED
+            when_done.callback(task)
+    return deleted
 
 @command()
-def get_task(request, task_id=None):
+def get_task(request, task_id=None, when_done=False):
     TASKS = _get_tasks(request.actor)
-    if task_id:
-        return TASKS.map.get(task_id)
-    else:
+    if not task_id:
         try:
             task_id = TASKS.queue.popleft()
-            return TASKS.map.get(task_id)
         except IndexError:
             return None
+    if task_id in TASKS.map:
+        task, when_done_event = TASKS.map[task_id]
+        return when_done_event if when_done else task
 
 @command()
 def get_tasks(request, **filters):
@@ -68,7 +78,7 @@ def get_tasks(request, **filters):
                 value = (value,)
             fs.append((name, value))
         # Loop over tasks
-        for t in itervalues(TASKS.map):
+        for t, _ in itervalues(TASKS.map):
             select = True
             for name, values in fs:
                 value = getattr(t, name, None)
@@ -82,8 +92,8 @@ def get_tasks(request, **filters):
 @command()
 def put_task(request, task_id):
     TASKS = _get_tasks(request.actor)
-    task = TASKS.map.get(task_id)
-    if task:
+    if task_id in TASKS.map:
+        task, _ = TASKS.map[task_id]
         task.status = states.QUEUED 
         TASKS.queue.append(task.id)
         return task.id

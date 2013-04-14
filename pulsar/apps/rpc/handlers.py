@@ -188,7 +188,8 @@ is the root handler.'''
     def listFunctions(self, prefix=''):
         for name in sorted(self.rpc_methods):
             method = getattr(self, '%s_%s' % (self.serve_as, name))
-            doc = {'doc': method.__doc__ or 'No docs', 'section': prefix}
+            docs = method.__doc__ or 'No docs'
+            doc = {'doc': ' '.join(docs.split('\n')), 'section': prefix}
             yield '%s%s' % (prefix, name), doc
         for name, handler in self.subHandlers.items():
             pfx = '%s%s%s' % (prefix, name, self.separator)

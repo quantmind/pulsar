@@ -16,7 +16,7 @@ from functools import partial
 from timeit import default_timer
 
 import pulsar
-from pulsar import maybe_async, maybe_failure, is_failure, multi_async
+from pulsar import maybe_async, is_failure, multi_async, log_failure
 from pulsar.utils.structures import AttributeDictionary
 from pulsar.utils.security import gen_unique_id
 from pulsar.utils.pep import to_string, range
@@ -73,12 +73,14 @@ Design to comply with the `JSON-RPC 2.0`_ Specification.
             else:
                 args, kwargs = tuple(params or ()), {}
             callable = self.get_handler(data.get('method'))
-            result = yield callable(request, *args, **kwargs)
+            result = callable(request, *args, **kwargs)
         except Exception:
-            result = maybe_failure(sys.exc_info())
+            result = sys.exc_info()
+        result = yield maybe_async(result)
         id = data.get('id')
         res = {'id': id, "jsonrpc": self.version}
         if is_failure(result):
+            log_failure(result)
             msg = None
             error = result.trace[1]
             if isinstance(error, TypeError):

@@ -39,7 +39,7 @@ class StandardDeviation(TestPeriodicJob):
         if inputs is None:
             for n in range(sample):
                 inputs = [random() for i in range(size)]
-                self.send_to_queue(consumer, self.name, inputs=inputs)
+                consumer.backend.run(self.name, inputs=inputs)
             return 'produced %s new tasks' % sample
         else:
             time.sleep(0.1)

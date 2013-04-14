@@ -91,7 +91,7 @@ class TaskSetting(pulsar.Setting):
     section = "Task Consumer"
 
 
-class TaskBackend(TaskSetting):
+class TaskBackendConnection(TaskSetting):
     name = "task_backend"
     flags = ["--task-backend"]
     default = "local://"

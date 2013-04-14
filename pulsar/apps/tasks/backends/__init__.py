@@ -3,8 +3,8 @@ The :class:`TaskBackend` is at the hart of the
 :ref:`task queue application <apps-taskqueue>`. It exposes
 all the functionalities for running new tasks, scheduling periodic tasks
 and retrieving task information. Pulsar ships with two backends, one which uses
-pulsar internals and store tasks in the arbiter domain and onther which stores
-tasks in redis.
+pulsar internals and store tasks in the arbiter domain and another which stores
+tasks in redis_.
 
 
 Implementing a Task Backend
@@ -94,6 +94,8 @@ Scheduler Entry
 .. autoclass:: SchedulerEntry
    :members:
    :member-order: bysource
+   
+.. _redis: http://redis.io/
 '''
 import sys
 import logging
@@ -113,7 +115,8 @@ from pulsar.utils.timeutils import remaining, timedelta_seconds
 from pulsar.utils.log import LocalMixin, local_property
 from pulsar.utils.security import gen_unique_id 
 
-__all__ = ['Task', 'TaskBackend', 'getbe', 'TaskNotAvailable']
+__all__ = ['Task', 'TaskBackend', 'getbe', 'TaskNotAvailable',
+           'nice_task_message']
 
 
 LOGGER = logging.getLogger('pulsar.tasks')
@@ -128,6 +131,23 @@ def _getdb(scheme, host, params):
     
     
 def getbe(backend=None, **kwargs):
+    '''Create a new :class:`TaskBackend` from a *backend* connection string
+which is of the form::
+
+    scheme:://host?params
+
+For example, the local backend is::
+
+    local://
+    
+A redis backend could be::
+
+    redis://127.0.0.1:6379?db=1&password=bla
+    
+:param backend: the connection string
+:param kwargs: additional key-valued parameters used by the :class:`TaskBackend`
+    during initialisation.
+'''
     if isinstance(backend, TaskBackend):
         return backend
     backend = backend or 'local://'
@@ -144,6 +164,18 @@ def get_datetime(expiry, start):
         return start + expiry
     else:
         return datetime.fromtimestamp(expiry)
+
+def format_time(dt):
+    return dt.isoformat() if dt else '?'
+
+def nice_task_message(req, smart_time=None):
+    smart_time = smart_time or format_time
+    status = req['status'].lower()
+    user = req.get('user')
+    ti = req.get('time_start', req.get('time_executed'))
+    name = '%s (%s) ' % (req['name'], req['id'][:8])
+    msg = '%s %s at %s' % (name, status, smart_time(ti))
+    return '%s by %s' % (msg, user) if user else msg
 
 
 class TaskNotAvailable(PulsarException):
@@ -252,7 +284,7 @@ Lower number higher precedence.'''
     def done(self):
         '''Return ``True`` if the :class:`Task` has finshed
 (its status is one of :ref:`READY_STATES <task-state>`).'''
-        return self.status in READY_STATES
+        return self.status in states.READY_STATES
 
     def execute2start(self):
         if self.time_start:
@@ -278,22 +310,35 @@ Lower number higher precedence.'''
     
 class TaskBackend(LocalMixin):
     '''Base class for :class:`Task` backends. A :class:`TaskBackend` is
-responsible for creating tasks and put them into the distributed :attr:`queue`.
-It also schedule the run of periodic tasks if enabled to do so.
-This class is the main driver of tasks and task scheduling.
+responsible for creating tasks and put them into the distributed queue.
+It also schedules the run of periodic tasks if enabled to do so.
 
 .. attribute:: name
 
     The name of the task queue application served by this :class:`TaskBackend`.
     
-.. attribute:: task_path
+.. attribute:: task_paths
 
     List of paths where to upload :ref:`jobs <app-taskqueue-job>` which
-    are factory of tasks.
+    are factory of tasks. Passed by the task-queue application
+    :ref:`task paths setting <setting-task_paths>`.
     
 .. attribute:: schedule_periodic
 
-    `True` if this :class:`Scheduler` can schedule periodic tasks.
+    `True` if this :class:`TaskBackend` can schedule periodic tasks. Passed
+    by the task-queue application
+    :ref:`schedule-periodic setting <setting-schedule_periodic>`.
+    
+.. attribute:: backlog
+
+    The maximum number of concurrent tasks running on a task-queue
+    :class:`pulsar.apps.Worker`. A number in the order of 5 to 10 is normally
+    used. Passed by the task-queue application
+    :ref:`backlog setting <setting-backlog>`.
+    
+.. attribute:: params
+
+    Dictionary of additional parameters passed during initialisation.
 '''
     def __init__(self, scheme, host, name=None, task_paths=None,
                   schedule_periodic=False, backlog=1, **params):
@@ -334,16 +379,16 @@ This class is the main driver of tasks and task scheduling.
         return registry
     
     def start(self, worker):
-        '''Start this :class:`TaskBackend`. Invoked by the worker which
-is ready to consumer tasks.'''
+        '''Start this :class:`TaskBackend`. Invoked by the
+:class:`pulsar.apps.Worker` which is ready to consume tasks.'''
         worker.create_thread_pool()
         self.local.task_poller = worker.event_loop.call_every(
                                     self.may_pool_task, worker)
         LOGGER.debug('%s started polling tasks', worker)
         
     def close(self, worker):
-        '''Close this :class:`TaskBackend`. Invoked by the worker which
-is stopping.'''
+        '''Close this :class:`TaskBackend`. Invoked by the
+:class:`pulsar.apps.Worker` when is stopping.'''
         if self.local.task_poller:
             self.local.task_poller.cancel()
             LOGGER.debug('%s stopped polling tasks', worker)
@@ -371,14 +416,16 @@ a ``TaskNotAvailable`` exception occurs.
         return self._run_job(jobname, targs, tkwargs, meta_params)\
                    .add_errback(log_failure)
         
-    @async()
     def queue_task(self, task_id_or_task):
+        '''Actually put a *task_id_or_task* into the distributed task queue.
+It invokes the :meth:`put_task` which is implemented by subclasses.'''
         id = task_id_or_task
         if isinstance(task_id_or_task, Task):
             id = task_id_or_task.id
         self.put_task(id)
+        return id
         
-    def create_task_id(self, job, *args, **kwargs):
+    def create_task_id(self, job, args, kwargs):
         '''Create a :attr:`Task.id` from *job*, positional arguments *args*
 and key-valued arguments *kwargs*.'''
         return job.make_task_id(args, kwargs)
@@ -404,7 +451,7 @@ and key-valued arguments *kwargs*.'''
             if task:
                 # the task with id is already available
                 if task.done():
-                    task = self.handle_task_done(task)
+                    task = yield self.handle_task_done(task)
             if task:
                 LOGGER.debug('Task %s already requested, abort.', task)
                 yield None
@@ -424,6 +471,69 @@ and key-valued arguments *kwargs*.'''
         else:
             raise TaskNotAvailable(jobname)
     
+    def job_list(self, jobnames=None):
+        registry = self.registry
+        jobnames = jobnames or registry
+        all = []
+        for name in jobnames:
+            if name not in registry:
+                continue
+            job = registry[name]
+            can_overlap = job.can_overlap
+            if hasattr(can_overlap, '__call__'):
+                can_overlap = 'maybe'
+            d = {'doc':job.__doc__,
+                 'doc_syntax':job.doc_syntax,
+                 'type':job.type,
+                 'can_overlap': can_overlap}
+            if name in self.entries:
+                entry = self.entries[name]
+                _,next_time_to_run = self.next_scheduled((name,))
+                run_every = 86400*job.run_every.days + job.run_every.seconds
+                d.update({'next_run':next_time_to_run,
+                          'run_every':run_every,
+                          'runs_count':entry.total_run_count})
+            all.append((name,d))
+        return all
+            
+    def next_scheduled(self, jobnames=None):
+        if not self.schedule_periodic:
+            return
+        if jobnames:
+            entries = (self.entries.get(name, None) for name in jobnames)
+        else:
+            entries = itervalues(self.entries)
+        next_entry = None
+        next_time = None
+        for entry in entries:
+            if entry is None:
+                continue
+            is_due, next_time_to_run = entry.is_due()
+            if is_due:
+                next_time = 0
+                next_entry = entry
+                break
+            elif next_time_to_run is not None:
+                if next_time is None or next_time_to_run < next_time:
+                    next_time = next_time_to_run
+                    next_entry = entry
+        if next_entry:
+            return (next_entry.name, max(next_time, 0))
+        else:
+            return (jobnames, None)
+    
+    def handle_task_done(self, task):
+        new_id = gen_unique_id()[:8]
+        data = task.tojson()
+        data.pop('id')
+        yield self.delete_tasks([task.id])
+        yield self.save_task(new_id, **data)
+        yield None
+        
+    def wait_for_task(self, task_id):
+        '''Asynchronously wait for a task to have finish its execution.'''
+        return self.get_task(task_id, when_done=True)
+        
     @async()
     def may_pool_task(self, worker):
         '''Called at every loop in the worker IO loop, it pool a new task
@@ -529,7 +639,7 @@ execution in the thread pool.'''
 by subclasses.'''
         raise NotImplementedError
     
-    def get_task(self, task_id=None):
+    def get_task(self, task_id=None, when_done=False):
         '''Retrieve a :class:`Task` from a task id. Must be implemented
 by subclasses.'''
         raise NotImplementedError

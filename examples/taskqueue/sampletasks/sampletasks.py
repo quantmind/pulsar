@@ -1,7 +1,7 @@
 import time
 from datetime import timedelta
 
-from pulsar import get_request_loop, NOT_DONE
+from pulsar import get_request_loop, NOT_DONE, async_sleep
 from pulsar.apps import tasks
 
 
@@ -41,5 +41,6 @@ class NotOverLap(tasks.Job):
     can_overlap = False
     
     def __call__(self, consumer, lag):
-        time.sleep(lag)
-        return 'OK'
+        start = time.time()
+        yield async_sleep(lag)
+        yield time.time() - start

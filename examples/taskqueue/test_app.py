@@ -16,11 +16,7 @@ import time
 def task_function(N = 10, lag = 0.1):
     time.sleep(lag)
     return N*N
-'''        
-def wait_for_task(proxy, result):
-    while result['status'] in tasks.UNREADY_STATES:
-        result = yield proxy.get_task(id=result['id'])
-    yield result
+'''
             
 
 class TaskQueueBase(object):
@@ -31,6 +27,7 @@ class TaskQueueBase(object):
     def setUpClass(cls):
         # The name of the task queue application
         s = server(name=cls.__name__, rpc_bind='127.0.0.1:0',
+                   backlog=4,
                    concurrency=cls.concurrency, 
                    rpc_concurrency=cls.concurrency,
                    script=__file__,
@@ -52,9 +49,11 @@ class TestTaskQueueMeta(TaskQueueBase, unittest.TestCase):
         self.assertTrue(app)
         self.assertEqual(app.name, self.apps[0].name)
         self.assertFalse(app.cfg.address)
+        self.assertEqual(app.cfg.backlog, 4)
+        self.assertEqual(app.backend.backlog, 4)
         self.assertTrue(app.backend.registry)
-        scheduler = app.scheduler
-        self.assertTrue(scheduler.entries)
+        backend = app.backend
+        self.assertFalse(backend.entries)
         job = app.backend.registry['runpycode']
         self.assertEqual(job.type, 'regular')
         self.assertTrue(job.can_overlap)
@@ -110,15 +109,14 @@ class TestTaskQueueOnThread(TaskQueueBase, unittest.TestCase):
     def _test_not_overlap(self):
         app = yield get_application(self.apps[0].name)
         self.assertTrue('notoverlap' in app.backend.registry)
-        r1 = yield app.scheduler.run('notoverlap', 1)
-        self.assertEqual(str(r1), 'notoverlap(%s)' % r1.id)
-        self.assertTrue(r1._queued)
-        r2 = app.scheduler.run('notoverlap', 1)
-        self.assertFalse(r2._queued)
-        self.assertEqual(r1.id, r2.id)
+        r1 = yield app.backend.run('notoverlap', 3)
+        self.assertTrue(r1)
+        r2 = yield app.backend.run('notoverlap', 3)
+        self.assertFalse(r2)
         # We need to make sure the first task is completed
-        r1 = yield app.scheduler.wait_for_task(r1)
-        self.assertEqual(get_task(id).status, tasks.SUCCESS)
+        r1 = yield app.backend.wait_for_task(r1)
+        self.assertEqual(r1.status, tasks.SUCCESS)
+        self.assertTrue(r1.result > 3)
         
     def test_not_overlap(self):
         return self._test_not_overlap()
@@ -138,25 +136,20 @@ class TestTaskQueueOnThread(TaskQueueBase, unittest.TestCase):
     @run_on_arbiter
     def test_check_next_run(self):
         app = yield get_application(self.apps[0].name)
-        scheduler = app.scheduler
-        scheduler.tick()
-        self.assertTrue(scheduler.next_run > datetime.now())
+        backend = app.backend
+        backend.tick()
+        self.assertTrue(backend.next_run > datetime.now())
         
     @run_on_arbiter
     def test_delete_task(self):
         app = yield get_application(self.apps[0].name)
-        r1 = yield app.scheduler.run('addition', 1, 4)
-        r1 = yield app.acheduler.wait_for_task(r1)
-        id = r1.id
-        get_task = app.scheduler.get_task
-        while get_task(id).status in tasks.UNREADY_STATES:
-            yield NOT_DONE
-        r2 = get_task(id)
-        self.assertEqual(r1.id, r2.id)
-        r2 = get_task(id, remove=True)
-        self.assertEqual(get_task(id), None)
-        self.assertEqual(get_task(r1), r1)
-        app.scheduler.delete_tasks()
+        id = yield app.backend.run('addition', 1, 4)
+        r1 = yield app.backend.wait_for_task(id)
+        self.assertEqual(r1.result, 5)
+        deleted = yield app.backend.delete_tasks([r1.id, 'kjhbkjb'])
+        self.assertEqual(deleted, 1)
+        r1 = yield app.backend.get_task(r1.id)
+        self.assertFalse(r1)
         
     def test_rpc_ping(self):
         yield self.async.assertEqual(self.proxy.ping(), 'pong')
@@ -195,31 +188,28 @@ class TestTaskQueueOnThread(TaskQueueBase, unittest.TestCase):
         '''Run a new task from the *runpycode* task factory.'''
         r = yield self.proxy.run_new_task(jobname='runpycode', code=CODE_TEST, N=3)
         self.assertTrue(r)
-        self.assertTrue(r['id'])
-        self.assertTrue(r['time_executed'])
-        r = yield wait_for_task(self.proxy, r)
+        r = yield self.proxy.wait_for_task(r)
         self.assertEqual(r['status'], tasks.SUCCESS)
         self.assertEqual(r['result'], 9)
         
     def test_run_new_task_addition(self):
         r = yield self.proxy.run_new_task(jobname='addition', a=40, b=50)
         self.assertTrue(r)
-        self.assertTrue(r['time_executed'])
-        r = yield wait_for_task(self.proxy, r)
+        r = yield self.proxy.wait_for_task(r)
         self.assertEqual(r['status'], tasks.SUCCESS)
         self.assertEqual(r['result'], 90)
         
     def test_run_new_task_periodicerror(self):
         r = yield self.proxy.run_new_task(jobname='testperiodicerror')
-        r = yield wait_for_task(self.proxy, r)
+        r = yield self.proxy.wait_for_task(r)
         self.assertEqual(r['status'], tasks.FAILURE)
         self.assertTrue('kaputt' in r['result'])
         
     def test_run_new_task_asynchronous(self):
-        response = yield self.proxy.run_new_task(jobname='asynchronous',loops=3)
-        response = yield wait_for_task(self.proxy, response)
-        self.assertEqual(response['status'], tasks.SUCCESS)
-        result = response['result']
+        r = yield self.proxy.run_new_task(jobname='asynchronous',loops=3)
+        r = yield self.proxy.wait_for_task(r)
+        self.assertEqual(r['status'], tasks.SUCCESS)
+        result = r['result']
         self.assertEqual(result['loops'], 3)
         self.assertEqual(result['end']-result['start'], 3)
         
@@ -227,16 +217,16 @@ class TestTaskQueueOnThread(TaskQueueBase, unittest.TestCase):
         r = yield self.proxy.run_new_task(jobname='addition', a=40, b=50,
                                           meta_data={'expiry': time()})
         self.assertTrue(r)
-        r = yield wait_for_task(self.proxy, r)
+        r = yield self.proxy.wait_for_task(r)
         self.assertEqual(r['status'], tasks.REVOKED)
         
-    def test_run_producerconsumer(self):
+    def __test_run_producerconsumer(self):
         '''A task which produce other tasks'''
         sample = 10
         r = yield self.proxy.run_new_task(jobname='standarddeviation',
                                           sample=sample, size=100)
         self.assertTrue(r)
-        r = yield wait_for_task(self.proxy, r)
+        r = yield self.proxy.wait_for_task(r)
         self.assertEqual(r['status'], tasks.SUCCESS)
         self.assertTrue(tasks.nice_task_message(r))
         # We check for the tasks created
