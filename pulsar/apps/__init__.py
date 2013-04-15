@@ -312,7 +312,7 @@ The parameters overriding order is the following:
                         self.cfg.set(k, v, default=True)
                     except AttributeError:
                         pass
-        # parse console args 
+        # parse console args
         if self.parsed_console:
             parser = self.cfg.parser()
             opts = parser.parse_args(self.argv)
@@ -345,7 +345,8 @@ overriding default values with *params*.'''
                                 dont_prefix=dont_prefix)
         for name, value in params.items():
             if name in cfg:
-                cfg.set(name, value, default=True)
+                #cfg.set(name, value, default=True)
+                cfg.set(name, value)
             else:
                 cfg.params[name] = value
         return cfg

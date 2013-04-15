@@ -101,7 +101,7 @@ ActiveState recipe at http://code.activestate.com/recipes/278731/"""
 class Waker(object):
     
     def __init__(self):
-        r, w = Pipe(duplex = False)
+        r, w = Pipe(duplex=False)
         _set_non_blocking(r.fileno())
         _set_non_blocking(w.fileno())
         close_on_exec(r.fileno())
@@ -110,7 +110,7 @@ class Waker(object):
         self._reader = r
         
     def __str__(self):
-        return 'Pipe waker {0}'.format(self.fileno())
+        return 'Pipe waker %s' % self.fileno()
         
     def fileno(self):
         return self._reader.fileno()
@@ -126,7 +126,7 @@ class Waker(object):
         try:
              while r.poll():
                  r.recv()
-        except IOError:
+        except (IOError, EOFError):
             pass
 
 
