@@ -7,9 +7,11 @@ a factory of several :class:`Application` running on a single server.
 The :class:`Configurator` is a mixin used as base class for both 
 :class:`Application` and :class:`MultiApp`.
 
-An instance of an :class:`Application` is pickable and therefore can be sent
-from actor to actor using the
-:ref:`actor message passing api <tutorials-messages>`.
+.. note::
+
+    An instance of an :class:`Application` is pickable and therefore can be sent
+    from actor to actor using the
+    :ref:`actor message passing api <tutorials-messages>`.
 
 Configurator
 ===============================
@@ -75,11 +77,13 @@ __all__ = ['Application',
     
 def get_application(name):
     '''Fetch the :class:`Application` associated with *name* if available. This
-function return a generator and therefore it must be handled by the
-coroutine::
+function returns a :ref:`coroutine <coroutine>` and therefore it
+must be used as an asynchronous component::
 
-    app = yield = pulsar.get_application('taskqueue')
-    
+    ...
+    app = yield pulsar.get_application('taskqueue')
+    ...
+
 '''
     actor = get_actor()
     if actor:
@@ -104,6 +108,15 @@ def monitor_stop(self):
         self.app.worker_stop(self)
     self.app.monitor_stop(self)
 
+def arbiter_config(cfg):
+    cfg = cfg.copy()
+    for setting in list(cfg.settings.values()):
+        if setting.app: # Don't include application specific settings
+            cfg.settings.pop(setting.name)
+        elif not setting.is_global:
+            if not getattr(setting, 'inherit', False):
+                setting.set(setting.default)
+    return cfg 
 
 class Worker(Actor):
     '''An :class:`pulsar.Actor` for serving a pulsar :class:`Application`.'''
@@ -305,13 +318,13 @@ The parameters overriding order is the following:
             # actor available and running. unless argv is set, skip parsing
             if self.argv is None:
                 self.parsed_console = False
-            for k, v in actor.cfg.items():
-                if v is not None:
-                    k = k.lower()
-                    try:
-                        self.cfg.set(k, v, default=True)
-                    except AttributeError:
-                        pass
+            # copy global settings
+            for setting in actor.cfg.settings.values():
+                if setting.is_global:
+                    self.cfg.set(setting.name, setting.get())
+        for name in list(self.cfg.params):
+            if name in self.cfg.settings:
+                self.cfg.params.pop(name)
         # parse console args
         if self.parsed_console:
             parser = self.cfg.parser()
@@ -334,15 +347,13 @@ The parameters overriding order is the following:
                 self.cfg.set(k.lower(), v)
     
     @classmethod
-    def create_config(cls, params, prefix=None, dont_prefix=None, name=None):
+    def create_config(cls, params, prefix=None, name=None):
         '''Create a new :class:`pulsar.utils.config.Config` container by
 overriding default values with *params*.'''
         if cls.cfg:
-            cfg = cls.cfg.copy(name=name, prefix=prefix,
-                               dont_prefix=dont_prefix)
+            cfg = cls.cfg.copy(name=name, prefix=prefix)
         else:
-            cfg = pulsar.Config(name=name, prefix=prefix,
-                                dont_prefix=dont_prefix)
+            cfg = pulsar.Config(name=name, prefix=prefix)
         for name, value in params.items():
             if name in cfg:
                 #cfg.set(name, value, default=True)
@@ -411,7 +422,7 @@ These are the most important facts about a pulsar :class:`Application`
             self.cfg.on_start()
             self.configure_logging()
             self.fire_event('ready')
-            arbiter = pulsar.arbiter(cfg=self.cfg.new_config())
+            arbiter = pulsar.arbiter(cfg=arbiter_config(self.cfg))
             if self.on_config() is not False:
                 monitor = arbiter.add_monitor(ApplicationMonitor,
                                               self.name,
@@ -520,8 +531,8 @@ A minimal example usage::
     class Server(pulsar.MultiApp):
         def build(self):
             yield self.new_app(TaskQueue)
-            yield self.new_app(WSGIserver, prefix=rpc, callable=...)
-            yield self.new_app(WSGIserver, prefix=web, callable=...)
+            yield self.new_app(WSGIserver, prefix="rpc", callable=..., ...)
+            yield self.new_app(WSGIserver, prefix="web", callable=..., ...)
 '''
     _apps = None
     
@@ -558,22 +569,33 @@ The list is lazily loaded from the :meth:`build` method.'''
                 self._apps.append(App(**kwargs))
         return self._apps
     
-    def new_app(self, App, prefix=None, dont_prefix=None,
-                callable=None, **kwargs):
+    def new_app(self, App, prefix=None, callable=None, **params):
         '''Invoke this method in the :meth:`build` method as many times
-as the number of :class:`Application` required by this :class:`MultiApp`.'''
-        params = self.cfg.params.copy()
-        params.update(kwargs)
-        name = params.pop('name', None)
+as the number of :class:`Application` required by this :class:`MultiApp`.
+
+:param App: an :class:`Application` class.
+:param prefix: The prefix to use for the application, the prefix is appended to
+    the application :ref:`config parameters <settings>` and to the
+    application name. Each call to this methjod must use a different value
+    of for this parameter. It can be ``None``.
+:param callable: optional callable (function of object) used during
+    initialisation of *App* (the :class:`Application.callable`).
+:param params: additional key-valued parameters used when creating
+    an instance of *App*.
+:return: a tuple used by the :meth:`apps` method.
+'''
+        params.update(self.cfg.params.copy())
+        params.pop('name', None)
         prefix = prefix or ''
         if not prefix:
             name = self.name
             cfg = App.create_config(params, name=name)
         else:
-            name = '%s_%s' % (self.name, prefix)
-            cfg = App.create_config(params, prefix=prefix,
-                                    dont_prefix=dont_prefix, name=name)
-        self.cfg.settings.update(cfg.settings)
+            name = '%s_%s' % (prefix, self.name)
+            cfg = App.create_config(params, prefix=prefix, name=name)
+        for k in cfg.settings:
+            if k not in self.cfg.settings:
+                self.cfg.settings[k] = cfg.settings[k]
         return prefix, (App, name, callable, cfg)
             
     def __call__(self, actor=None):

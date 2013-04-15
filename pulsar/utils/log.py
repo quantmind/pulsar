@@ -25,8 +25,7 @@ __all__ = ['dictConfig',
            'Synchronized',
            'local_method',
            'local_property',
-           'LocalMixin',
-           'LogInformation']
+           'LocalMixin']
 
 
 LOG_LEVELS = {
@@ -221,19 +220,4 @@ process domain).'''
                           'level': level,
                           'handlers': handlers,
                           'config': config}
-        self.local.logger = logging.getLogger(logger)
-        
-
-class LogInformation(object):
-    
-    def __init__(self, logevery):
-        self.logevery = logevery
-        self.last = time()
-        
-    def log(self):
-        if self.logevery:
-            t = time()
-            if t - self.last > self.logevery:
-                self.last = t
-                return t
-        
+        self.local.logger = logging.getLogger(logger)        

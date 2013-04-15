@@ -80,6 +80,7 @@ makes sure the class:`Actor` controlling the thread is available.'''
     def __init__(self, *args, **kwargs):
         self.actor = get_actor()
         super(Thread, self).__init__(*args, **kwargs)
+        self.name = '%s-%s' % (self.actor, self.name)
         
     def run(self):
         '''Modified run method which set the actor and the event_loop for
@@ -261,19 +262,20 @@ class ThreadPool(pool.ThreadPool):
 on a task queue. An actor can create a new :class:`ThreadPool` via
 the :meth:`Actor.create_thread_pool` method.'''
     Process = Thread
+    created = 0
     
     def _repopulate_pool(self):
         """Bring the number of pool processes up to the specified number,
         for use after reaping workers which have exited.
         """
         for i in range(self._processes - len(self._pool)):
+            self.created = self.created + 1
             w = self.Process(target=PoolWorker,
                              args=(self._inqueue, self._outqueue,
                                    self._initializer,
-                                   self._initargs, self._maxtasksperchild)
-                            )
+                                   self._initargs, self._maxtasksperchild),
+                             name='PoolThread%s' % self.created)
             self._pool.append(w)
-            w.name = w.name.replace('Process', 'PoolWorker')
             w.daemon = True
             w.start()
     

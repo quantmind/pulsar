@@ -84,7 +84,7 @@ KNOWN_SETTINGS_ORDER = []
 
 def pass_through(arg):
     '''A dummy function accepting on parameter only. It does nothing. It is
-used as default by :ref:`Server hooks <setting-section-server-hooks>`.'''
+used as default by :ref:`Application Hooks <setting-section-application-hooks>`.'''
     pass
 
 def wrap_method(func):
@@ -106,7 +106,8 @@ in the context of :class:`pulsar.apps.MultiApp`.
 :parameter include: Optional list of settings to include.
 :parameter exclude: Optional list of settings to exclude.
 :parameter prefix: Optional prefix to prepend to all :class:`Setting` with
-    :class:`Setting.can_prefix` set to ``True``.
+    which are not
+    :ref:`global server settings <setting-section-global-server-settings>`.
 :parameter dont_prefix: Optional list/tuple of :class:`Setting` names to
     not prefix.
 :parameter name: Optional name.
@@ -146,7 +147,7 @@ attribute by exposing the :attr:`Setting.name` as attribute.
 .. attribute:: settings
 
     Dictionary of all :class:`Setting` instances available in this
-    :class:`Config` container. Keys are given by the :attr:`Setting.name`
+    :class:`Config` container. Keys are given by the :attr:`SettingBase.name`
     attribute.
     
 .. attribute:: params
@@ -170,7 +171,7 @@ attribute by exposing the :attr:`Setting.name` as attribute.
         self.version = version or __version__
         for name in list(params):
             if name in self.settings:
-                self.set(name, params.pop(name), True)
+                self.set(name, params.pop(name))
         
     def __iter__(self):
         return iter(self.settings)
@@ -328,7 +329,9 @@ container.'''
                 return pn.get()
         
     def copy(self, name=None, prefix=None, dont_prefix=None):
-        '''A deep copy of this :class:`Config` container.'''
+        '''A deep copy of this :class:`Config` container. If *prefix*
+is given, it prefixes all non
+:ref:`global settings <setting-section-global-server-settings>` with it.'''
         cls = self.__class__
         me = cls.__new__(cls)
         for key, value in iteritems(self.__dict__):
@@ -341,20 +344,13 @@ container.'''
             elif key == 'params':
                 value = value.copy()
             me.__dict__[key] = value
-        return me        
+        return me
     
     def __copy__(self):
         return self.copy()
     
     def __deepcopy__(self, memo):
         return self.__copy__()
-    
-    def new_config(self):
-        cfg = self.__class__()
-        for key, sett in iteritems(self.settings):
-            if key in cfg.settings and sett.inherit:
-                cfg.set(key, sett.value)
-        return cfg
             
 
 class SettingMeta(type):
@@ -392,10 +388,6 @@ in the global ``KNOWN_SETTINGS`` list.'''
 class SettingBase(object):
     '''This is the base class of :class:`Settings` and :class:`SimpleSetting`.
 It defines attributes for a given setting parameter.'''
-    inherit = True
-    '''Flag indicating if the :attr:`value` can be used by setting obtained
-as a clone of this :class:`SettingBase`. If ``False``, when a clone of this
-setting is created, its :attr:`value` is set to :attr:`default` value.'''
     name = None
     '''The unique name used to access this setting in the :class:`Config`
     container.'''
@@ -432,7 +424,7 @@ custom initialization for this :class:`Setting`.'''
         '''Copy this :class:`SettingBase`'''
         setting = copy.copy(self)
         dont_prefix = dont_prefix or set()
-        if prefix and setting.can_prefix and prefix not in dont_prefix:
+        if prefix and not setting.is_global and prefix not in dont_prefix:
             flags = setting.flags
             if flags and flags[-1].startswith('--'):
                 # Prefixi a setting
@@ -441,7 +433,7 @@ custom initialization for this :class:`Setting`.'''
                 setting.flags = ['--%s-%s' % (prefix, flags[-1][2:])]
             else:
                 LOGGER.warning('Could not prefix %s setting', setting.name)
-        if name and setting.can_prefix:
+        if name and not setting.is_global:
             setting.short = '%s application. %s' % (name , setting.short)
         return setting
     
@@ -483,9 +475,9 @@ as base class for other settings.'''
     short = None
     desc = None
     '''Description string'''
-    can_prefix = False
+    is_global = False
     '''Flag used by pulsar :ref:`application framework <apps-framework>`
-    when multiple application are used in a running server. If ``True``
+    when multiple application are used in a running server. If ``False``
     additional settings will be added to the :class:`Config` container.
     These settings are clones of this :class:`Setting` with
     name given by each application name and underacsore ``_``
@@ -618,110 +610,6 @@ def make_optparse_options(apps=None, exclude=None, include=None): # pragma nocov
     return tuple(parser)
     
 
-class ConfigFile(Setting):
-    name = "config"
-    section = "Config File"
-    flags = ["-c", "--config"]
-    meta = "FILE"
-    validator = validate_string
-    default = 'config.py'
-    desc = """\
-        The path to a Pulsar config file, where default Settings
-        paramaters can be specified.
-        """
-
-################################################################################
-##    Worker Processes
-
-section_docs['Worker Processes'] = '''
-This group of configuration parameters control the number of actors performing
-for a given :class:`pulsar.Monitor`, the type of concurreny of the server and
-other actor-specific parameters.
-'''
-    
-class Workers(Setting):
-    inherit = False     # not ineritable by the arbiter
-    name = "workers"
-    section = "Worker Processes"
-    flags = ["-w", "--workers"]
-    validator = validate_pos_int
-    type = int
-    default = 1
-    can_prefix = True
-    desc = """\
-        The number of workers for handling requests.
-        
-If using a multi-process concurrency, a number in the
-the ``2-4 x NUM_CORES`` range should be good. If you are using threads this
-number can be higher."""
-
-
-class Concurrency(Setting):
-    name = "concurrency"
-    section = "Worker Processes"
-    flags = ["--concurrency"]
-    default = "process"
-    can_prefix = True
-    desc = """\
-        The type of concurrency to use: ``process`` or ``thread``.
-        """
-
-
-class MaxRequests(Setting):
-    inherit = False     # not ineritable by the arbiter
-    name = "max_requests"
-    section = "Worker Processes"
-    flags = ["--max-requests"]
-    validator = validate_pos_int
-    type = int
-    default = 0
-    can_prefix = True
-    desc = """\
-        The maximum number of requests a worker will process before restarting.
-
-        Any value greater than zero will limit the number of requests a worker
-        will process before automatically restarting. This is a simple method
-        to help limit the damage of memory leaks.
-
-        If this is set to zero (the default) then the automatic worker
-        restarts are disabled.
-        """
-
-class Backlog(Setting):
-    inherit = False     # not ineritable by the arbiter
-    name = "backlog"
-    section = "Worker Processes"
-    flags = ["--backlog"]
-    validator = validate_pos_int
-    type = int
-    default = 2048
-    can_prefix = True
-    desc = """\
-        The maximum number of concurrent requests.
-        
-        This refers to the number of clients that can be waiting to be served.
-        Exceeding this number results in the client getting an error when
-        attempting to connect. It should only affect servers under significant
-        load.
-        Must be a positive integer. Generally set in the 64-2048 range for
-        socket servers, 5-10 for task-queue servers.
-        """
-
-
-class Timeout(Setting):
-    inherit = False     # not inheritable by the arbiter
-    name = "timeout"
-    section = "Worker Processes"
-    flags = ["-t", "--timeout"]
-    validator = validate_pos_int
-    type = int
-    default = 30
-    can_prefix = True
-    desc = """\
-        Workers silent for more than this many seconds are
-        killed and restarted."""
-
-
 ################################################################################
 ##    Global Server Settings
 
@@ -731,10 +619,26 @@ set global settings the debug mode,
 the proxy server to use when making HTTP requests, and server specific
 configuration parameters.
 '''
-    
-class HttpProxyServer(Setting):
-    name = "http_proxy"
+class Global(Setting):
+    virtual = True
     section = "Global Server Settings"
+    is_global = True
+
+
+class ConfigFile(Global):
+    name = "config"
+    flags = ["-c", "--config"]
+    meta = "FILE"
+    validator = validate_string
+    default = 'config.py'
+    desc = """\
+        The path to a Pulsar config file, where default Settings
+        paramaters can be specified.
+        """
+
+    
+class HttpProxyServer(Global):
+    name = "http_proxy"
     flags = ["--http-proxy"]
     default = ''
     desc = """\
@@ -746,9 +650,8 @@ class HttpProxyServer(Setting):
             os.environ['https_proxy'] = self.value
 
 
-class HttpParser(Setting):
+class HttpParser(Global):
     name = "http_py_parser"
-    section = "Global Server Settings"
     flags = ["--http-py-parser"]
     action = "store_true"
     default = False
@@ -762,9 +665,8 @@ class HttpParser(Setting):
             setDefaultHttpParser(PyHttpParser)
 
 
-class Debug(Setting):
+class Debug(Global):
     name = "debug"
-    section = "Global Server Settings"
     flags = ["--debug"]
     validator = validate_bool
     action = "store_true"
@@ -777,9 +679,8 @@ class Debug(Setting):
         """
 
 
-class Daemon(Setting):
+class Daemon(Global):
     name = "daemon"
-    section = "Global Server Settings"
     flags = ["-D", "--daemon"]
     validator = validate_bool
     action = "store_true"
@@ -792,9 +693,8 @@ class Daemon(Setting):
         """
 
 
-class Pidfile(Setting):
+class Pidfile(Global):
     name = "pidfile"
-    section = "Global Server Settings"
     flags = ["-p", "--pid"]
     meta = "FILE"
     validator = validate_string
@@ -806,18 +706,16 @@ class Pidfile(Setting):
         """
 
 
-class Password(Setting):
+class Password(Global):
     name = "password"
-    section = "Global Server Settings"
     flags = ["--password"]
     validator = validate_string
     default = None
     desc = """Set a password for the server"""
 
 
-class User(Setting):
+class User(Global):
     name = "user"
-    section = "Global Server Settings"
     flags = ["-u", "--user"]
     meta = "USER"
     validator = validate_string
@@ -831,9 +729,8 @@ class User(Setting):
         """
 
 
-class Group(Setting):
+class Group(Global):
     name = "group"
-    section = "Global Server Settings"
     flags = ["-g", "--group"]
     meta = "GROUP"
     validator = validate_string
@@ -847,9 +744,8 @@ class Group(Setting):
         """
 
 
-class Loglevel(Setting):
+class Loglevel(Global):
     name = "loglevel"
-    section = "Global Server Settings"
     flags = ["--log-level"]
     meta = "LEVEL"
     validator = validate_string
@@ -865,27 +761,16 @@ class Loglevel(Setting):
              * critical
              """
 
-class LogHandlers(Setting):
+class LogHandlers(Global):
     name = "loghandlers"
-    section = "Global Server Settings"
     flags = ["--log-handlers"]
     default = ['console']
     validator = validate_list
     desc = """log handlers for pulsar server"""
-    
-    
-class LogEvery(Setting):
-    name = "logevery"
-    section = "Global Server Settings"
-    flags = ["--log-every"]
-    validator = validate_pos_int
-    default = 0
-    desc = """Log information every n seconds"""
 
 
-class LogConfig(Setting):
+class LogConfig(Global):
     name = "logconfig"
-    section = "Global Server Settings"
     default = {}
     validator = validate_dict
     desc = '''
@@ -895,9 +780,8 @@ class LogConfig(Setting):
     '''
 
 
-class Procname(Setting):
+class Procname(Global):
     name = "process_name"
-    section = "Global Server Settings"
     flags = ["-n", "--name"]
     meta = "STRING"
     validator = validate_string
@@ -914,9 +798,8 @@ class Procname(Setting):
         """
 
 
-class DefaultProcName(Setting):
+class DefaultProcName(Global):
     name = "default_process_name"
-    section = "Global Server Settings"
     validator = validate_string
     default = SERVER_NAME
     desc = """\
@@ -924,20 +807,104 @@ class DefaultProcName(Setting):
         """
 
 ################################################################################
-##    SERVER HOOKS
+##    Worker Processes
 
-section_docs['Server Hooks'] = '''
-Server hooks are functions which can be specified in a
+section_docs['Worker Processes'] = '''
+This group of configuration parameters control the number of actors performing
+for a given :class:`pulsar.Monitor`, the type of concurreny of the server and
+other actor-specific parameters.
+'''
+    
+class Workers(Setting):
+    name = "workers"
+    section = "Worker Processes"
+    flags = ["-w", "--workers"]
+    validator = validate_pos_int
+    type = int
+    default = 1
+    desc = """\
+        The number of workers for handling requests.
+        
+If using a multi-process concurrency, a number in the
+the ``2-4 x NUM_CORES`` range should be good. If you are using threads this
+number can be higher."""
+
+
+class Concurrency(Setting):
+    inherit = True # Inherited by the arbiter if an application is first created
+    name = "concurrency"
+    section = "Worker Processes"
+    flags = ["--concurrency"]
+    default = "process"
+    desc = """\
+        The type of concurrency to use: ``process`` or ``thread``.
+        """
+
+
+class MaxRequests(Setting):
+    name = "max_requests"
+    section = "Worker Processes"
+    flags = ["--max-requests"]
+    validator = validate_pos_int
+    type = int
+    default = 0
+    desc = """\
+        The maximum number of requests a worker will process before restarting.
+
+        Any value greater than zero will limit the number of requests a worker
+        will process before automatically restarting. This is a simple method
+        to help limit the damage of memory leaks.
+
+        If this is set to zero (the default) then the automatic worker
+        restarts are disabled.
+        """
+
+class Backlog(Setting):
+    name = "backlog"
+    section = "Worker Processes"
+    flags = ["--backlog"]
+    validator = validate_pos_int
+    type = int
+    default = 2048
+    desc = """\
+        The maximum number of concurrent requests.
+        
+        This refers to the number of clients that can be waiting to be served.
+        Exceeding this number results in the client getting an error when
+        attempting to connect. It should only affect servers under significant
+        load.
+        Must be a positive integer. Generally set in the 64-2048 range for
+        socket servers, 5-10 for task-queue servers.
+        """
+
+
+class Timeout(Setting):
+    name = "timeout"
+    section = "Worker Processes"
+    flags = ["-t", "--timeout"]
+    validator = validate_pos_int
+    type = int
+    default = 30
+    desc = """\
+        Workers silent for more than this many seconds are
+        killed and restarted."""
+
+
+################################################################################
+##    APPLICATION HOOKS
+
+section_docs['Application Hooks'] = '''
+Application hooks are functions which can be specified in a
 :ref:`config <setting-config>` file to perform custom tasks in a pulsar server.
 These tasks can be scheduled when events occurs or at every event loop of
 the various components of a pulsar application.
 
-All server hooks are functions which accept one parameter only, the actor
+All application hooks are functions which accept one parameter only, the actor
 invoking the function.'''
     
 class Postfork(Setting):
     name = "post_fork"
-    section = "Server Hooks"
+    section = "Application Hooks"
     validator = validate_callable(1)
     type = "callable"
     default = staticmethod(pass_through)
@@ -950,7 +917,7 @@ class Postfork(Setting):
 
 class WhenReady(Setting):
     name = "when_ready"
-    section = "Server Hooks"
+    section = "Application Hooks"
     validator = validate_callable(1)
     type = "callable"
     default = staticmethod(pass_through)
@@ -964,7 +931,7 @@ class WhenReady(Setting):
 
 class ConnectionMade(Setting):
     name = "connection_made"
-    section = "Server Hooks"
+    section = "Application Hooks"
     validator = validate_callable(1)
     type = "callable"
     default = staticmethod(pass_through)
@@ -978,7 +945,7 @@ class ConnectionMade(Setting):
 
 class ConnectionLost(Setting):
     name = "connection_lost"
-    section = "Server Hooks"
+    section = "Application Hooks"
     validator = validate_callable(1)
     type = "callable"
     default = staticmethod(pass_through)
@@ -992,7 +959,7 @@ class ConnectionLost(Setting):
 
 class PreRequest(Setting):
     name = "pre_request"
-    section = "Server Hooks"
+    section = "Application Hooks"
     validator = validate_callable(1)
     type = "callable"
     default = staticmethod(pass_through)
@@ -1006,7 +973,7 @@ class PreRequest(Setting):
 
 class PostRequest(Setting):
     name = "post_request"
-    section = "Server Hooks"
+    section = "Application Hooks"
     validator = validate_callable(1)
     type = "callable"
     default = staticmethod(pass_through)

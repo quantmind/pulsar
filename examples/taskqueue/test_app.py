@@ -1,5 +1,6 @@
 '''Tests the "taskqueue" example.'''
-from time import time, sleep
+from random import random
+from time import time
 from datetime import datetime, timedelta
 
 from pulsar import send, get_application, get_actor, multi_async
@@ -24,11 +25,20 @@ class TaskQueueBase(object):
     apps = ()
     
     @classmethod
+    def name(cls):
+        return cls.__name__.lower()
+    
+    @classmethod
+    def rpc_name(cls):
+        return 'rpc_%s' % cls.name()
+    
+    @classmethod
     def setUpClass(cls):
         # The name of the task queue application
-        s = server(name=cls.__name__, rpc_bind='127.0.0.1:0',
+        s = server(name=cls.name(),
+                   rpc_bind='127.0.0.1:0',
                    backlog=4,
-                   concurrency=cls.concurrency, 
+                   concurrency=cls.concurrency,
                    rpc_concurrency=cls.concurrency,
                    script=__file__,
                    schedule_periodic=True)
@@ -42,7 +52,9 @@ class TaskQueueBase(object):
         
         
 class TestTaskQueueMeta(TaskQueueBase, unittest.TestCase):
-    
+    pass
+
+class b:
     def test_meta(self):
         '''Tests meta attributes of taskqueue'''
         app = yield get_application(self.apps[0].name)
@@ -52,6 +64,7 @@ class TestTaskQueueMeta(TaskQueueBase, unittest.TestCase):
         self.assertEqual(app.cfg.backlog, 4)
         self.assertEqual(app.backend.backlog, 4)
         self.assertTrue(app.backend.registry)
+        self.assertEqual(app.cfg.concurrency, self.concurrency)
         backend = app.backend
         self.assertFalse(backend.entries)
         job = app.backend.registry['runpycode']
@@ -67,6 +80,7 @@ class TestTaskQueueMeta(TaskQueueBase, unittest.TestCase):
         self.assertEqual(app.name, self.apps[1].name)
         self.assertEqual(app.cfg.address, ('127.0.0.1', 0))
         self.assertNotEqual(app.cfg.address, app.address)
+        self.assertEqual(app.cfg.concurrency, self.concurrency)
         router = app.callable.middleware
         self.assertTrue(router.post)
         root = router.post
@@ -103,20 +117,20 @@ class TestTaskQueueMeta(TaskQueueBase, unittest.TestCase):
         self.assertNotEqual(id,job.make_task_id((),{'p':45,'c':'blas'}))
         
         
-@sequential
 class TestTaskQueueOnThread(TaskQueueBase, unittest.TestCase):
 
     def _test_not_overlap(self):
-        app = yield get_application(self.apps[0].name)
+        sec = 2 + random()
+        app = yield get_application(self.name())
         self.assertTrue('notoverlap' in app.backend.registry)
-        r1 = yield app.backend.run('notoverlap', 3)
+        r1 = yield app.backend.run('notoverlap', sec)
         self.assertTrue(r1)
-        r2 = yield app.backend.run('notoverlap', 3)
+        r2 = yield app.backend.run('notoverlap', sec)
         self.assertFalse(r2)
         # We need to make sure the first task is completed
         r1 = yield app.backend.wait_for_task(r1)
         self.assertEqual(r1.status, tasks.SUCCESS)
-        self.assertTrue(r1.result > 3)
+        self.assertTrue(r1.result > sec)
         
     def test_not_overlap(self):
         return self._test_not_overlap()
@@ -124,7 +138,7 @@ class TestTaskQueueOnThread(TaskQueueBase, unittest.TestCase):
     @run_on_arbiter
     def test_not_overlap_on_arbiter(self):
         return self._test_not_overlap()
-    
+      
     def test_rpc_job_list(self):
         jobs = yield self.proxy.job_list()
         self.assertTrue(jobs)
@@ -133,13 +147,14 @@ class TestTaskQueueOnThread(TaskQueueBase, unittest.TestCase):
         pycode = d['runpycode']
         self.assertEqual(pycode['type'], 'regular')
 
+class a:
     @run_on_arbiter
     def test_check_next_run(self):
-        app = yield get_application(self.apps[0].name)
+        app = yield get_application(self.name())
         backend = app.backend
         backend.tick()
         self.assertTrue(backend.next_run > datetime.now())
-        
+      
     @run_on_arbiter
     def test_delete_task(self):
         app = yield get_application(self.apps[0].name)
@@ -167,7 +182,7 @@ class TestTaskQueueOnThread(TaskQueueBase, unittest.TestCase):
         self.assertEqual(len(jobs), 1)
         jobs = yield self.proxy.job_list(jobnames=['xxxxxx'])
         self.assertEqual(len(jobs), 0)
-        
+       
     def test_rpc_next_scheduled_tasks(self):
         next = yield self.proxy.next_scheduled_tasks()
         self.assertTrue(next)

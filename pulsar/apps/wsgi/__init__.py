@@ -137,17 +137,6 @@ from .handlers import *
 from .plugins import *
 
 
-class HttpParser(pulsar.Setting):
-    app = 'wsgi'
-    section = "WSGI Servers"
-    name = "http_parser"
-    flags = ["--http-parser"]
-    desc = """\
-        The HTTP Parser to use. By default it uses the fastest possible.
-
-        Specify `python` if you wich to use the pure python implementation
-        """
-
 class WsgiFactory(object):
     
     def __call__(self):

@@ -414,7 +414,7 @@ it does nothing.
 :param msg: Optional message to pass to the when the :class:`CancelledError`
     is initialised.'''
         if not self.done():
-            return self.callback(CancelledError(msg))
+            return self._cancel(msg)
         elif is_async(self.result):
             return self.result.cancel(msg)
     
@@ -540,6 +540,8 @@ the result is a :class:`Failure`'''
         else:
             self.result.append(e)
     
+    def _cancel(self, msg):
+        return self.callback(CancelledError(msg))
     
 class EventHandler(object):
     '''A Mixin for handling one time events and events that occur several
@@ -692,9 +694,13 @@ function when a generator is passed as argument.'''
     
     def _conclude(self, last_result):
         # Conclude the generator and callback the listeners
+        self.gen.close()
         del self.gen
         del self.errors
         return self.callback(last_result)
+    
+    def _cancel(self, msg):
+        return self._conclude(CancelledError(msg))
         
 ############################################################### MultiDeferred
 class MultiDeferred(Deferred):

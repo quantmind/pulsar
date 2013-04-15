@@ -17,7 +17,16 @@ class TaskBackend(backends.TaskBackend):
         return send('arbiter', 'get_tasks', **filters)
         
     def save_task(self, task_id, **params):
-        return send('arbiter', 'save_task', task_id, **params)
+        from pulsar import get_actor
+        if not get_actor():
+            from threading import current_thread
+            print('##############################################################')
+            print('##############################################################')
+            print('THREAD %s SAVING TASK' % current_thread().name)
+            print('##############################################################')
+            return task_id
+        else:
+            return send('arbiter', 'save_task', task_id, **params)
     
     def delete_tasks(self, ids=None):
         return send('arbiter', 'delete_tasks', ids)
@@ -56,7 +65,7 @@ def delete_tasks(request, ids):
     return deleted
 
 @command()
-def get_task(request, task_id=None, when_done=False):
+def get_task(request, task_id=None, when_done=False, timeout=1):
     TASKS = _get_tasks(request.actor)
     if not task_id:
         try:

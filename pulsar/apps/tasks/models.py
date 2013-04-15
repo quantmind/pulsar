@@ -258,19 +258,6 @@ Called by the :attr:`TaskQueue.scheduler` when creating a new task.
             name = '%s%s' % (self.name, suffix)
             return sha1(name.encode('utf-8')).hexdigest()[:8]
 
-    def on_same_id(self, task):
-        '''Callback invocked when a task has an id equal to a task already
-submitted to the task queue. By default return None and the
-task is aborted.'''
-        return None
-
-    def ack(self, args, kwargs):
-        '''Return ``True`` if a Job task will acknowledge the task queue
- once the result is ready or an error has occured.
- By default it returns ``True`` but it can be overridden so that its
- behaviour can change at runtime.'''
-        return self._ack
-
     def send_to_queue(self, consumer, jobname, *args, **kwargs):
         '''Send a new task request to the :class:`TaskQueue`
 from within another :class:`Task`.
