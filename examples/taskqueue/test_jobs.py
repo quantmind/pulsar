@@ -11,5 +11,4 @@ class TestTaskClasses(unittest.TestCase):
         self.assertRaises(NotImplementedError, b.save_task, 1)
         self.assertRaises(NotImplementedError, b.delete_tasks, [])
         self.assertFalse(b.on_start_task(1))
-        self.assertFalse(b.on_timeout_task(1))
         self.assertFalse(b.on_finish_task(1))

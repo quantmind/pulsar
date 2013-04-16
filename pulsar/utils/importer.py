@@ -22,6 +22,7 @@ def expand_star(mod_name):
 def import_modules(modules):
     '''Safely import a list of *modules*
     '''
+    all = []
     for mname in modules:
         if mname.endswith('.*'):
             to_load = expand_star(mname)
@@ -29,9 +30,10 @@ def import_modules(modules):
             to_load = [mname]
         for module in to_load:
             try:
-                __import__(module)
+                all.append(import_module(module))
             except ImportError as e:
                 pass
+    return all
             
 def module_attribute(dotpath, default=None, safe=False):
     '''Load an attribute from a module. If the module or the attribute

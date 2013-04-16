@@ -107,7 +107,7 @@ from pulsar import async, EMPTY_TUPLE, EMPTY_DICT, get_actor, log_failure,\
                     maybe_failure, is_failure, PulsarException
 from pulsar.utils.importer import import_module, import_modules
 from pulsar.utils.pep import itervalues, iteritems
-from pulsar.apps.tasks.models import registry
+from pulsar.apps.tasks.models import JobRegistry
 from pulsar.apps.tasks import states, create_task_id
 from pulsar.utils.httpurl import parse_qs, urlsplit
 from pulsar.utils.sockets import parse_connection_string
@@ -182,6 +182,7 @@ class TaskNotAvailable(PulsarException):
     def __init__(self, task_name):
         self.task_name = task_name
         super(TaskNotAvailable,self).__init__(self.MESSAGE.format(task_name))
+        
         
 class TaskTimeout(PulsarException):
     pass
@@ -294,20 +295,17 @@ Lower number higher precedence.'''
 
     def execute2end(self):
         if self.time_end:
-            return self.time_end - self.time_executed
+            return self.time_ended - self.time_executed
 
     def duration(self):
         '''The :class:`Task` duration. Only available if the task status is in
 :attr:`FULL_RUN_STATES`.'''
-        if self.time_end and self.time_start:
-            return self.time_end - self.time_start
+        if self.time_end and self.time_started:
+            return self.time_ended - self.time_started
 
     def tojson(self):
         '''Convert the task instance into a JSON-serializable dictionary.'''
         return self.__dict__.copy()
-
-    def ack(self):
-        return self
     
     
 class TaskBackend(LocalMixin):
@@ -376,9 +374,7 @@ It also schedules the run of periodic tasks if enabled to do so.
     
     @local_property
     def registry(self):
-        if self.task_paths:
-            import_modules(self.task_paths)
-        return registry
+        return JobRegistry.load(self.task_paths)
     
     def start(self, worker):
         '''Start this :class:`TaskBackend`. Invoked by the
@@ -563,7 +559,7 @@ on a separate thread of execution from the worker evnet loop thread.'''
         try:
             if task.name not in self.registry:
                 calculated = True
-                raise RuntimeError('Task %s not in registry %s' %
+                raise RuntimeError('Task "%s" not in registry %s' %
                                    (task.name, self.registry))
             job = self.registry[task.name]
             if task.status_code > states.PRECEDENCE_MAPPING[states.STARTED]:

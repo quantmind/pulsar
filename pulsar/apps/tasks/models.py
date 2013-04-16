@@ -77,12 +77,12 @@ import logging
 import inspect
 
 from pulsar.utils.pep import iteritems
+from pulsar.utils.importer import import_modules
 from pulsar.utils.security import gen_unique_id
 
 
-__all__ = ['JobMetaClass','Job','PeriodicJob',
-           'anchorDate','JobRegistry','registry',
-           'create_task_id']
+__all__ = ['JobMetaClass', 'Job', 'PeriodicJob',
+           'anchorDate', 'JobRegistry', 'create_task_id']
 
 
 def create_task_id():
@@ -107,19 +107,23 @@ class JobRegistry(dict):
         instance.
 
         """
-        job = inspect.isclass(job) and job() or job
-        name = job.name
-        self[name] = job
+        if isinstance(job, JobMetaClass) and job.can_register:
+            name = job.name
+            self[name] = job()
 
     def filter_types(self, type):
         """Return a generator of all tasks of a specific type."""
         return ((job_name, job)
                     for job_name, job in iteritems(self)
                             if job.type == type)
-
-
-registry = JobRegistry()
-
+        
+    @classmethod
+    def load(cls, paths):
+        self = cls()
+        for mod in import_modules(paths):
+            for name in dir(mod):
+                self.register(getattr(mod, name))
+        return self
 
 
 class JobMetaClass(type):
@@ -136,34 +140,17 @@ when a new :class:`Job` class is created:
 """
 
     def __new__(cls, name, bases, attrs):
-        super_new = super(JobMetaClass, cls).__new__
-        job_module = attrs.get("__module__",None)
-
-        # Abstract class, remove the abstract attribute so
-        # any class inheriting from this won't be abstract by default.
-        if attrs.pop("abstract", None) or not attrs.get("autoregister", True)\
-                                       or not job_module:
-            return super_new(cls, name, bases, attrs)
-        # Automatically generate missing name.
-        job_name = attrs.get("name",name).lower()
+        attrs['can_register'] = not attrs.pop('abstract', False)
+        job_name = attrs.get("name", name).lower()
         log_prefix = attrs.get("log_prefix") or "pulsar"
-        # Because of the way import happens (recursively)
-        # we may or may not be the first time the Job tries to register
-        # with the framework. There should only be one class for each Job
-        # name, so we always return the registered version.
-        if job_name not in registry:
-            attrs["name"] = job_name
-            logname = '%s.job.%s' % (log_prefix, name)
-            attrs['logger'] = logging.getLogger(logname)
-            job_cls = super_new(cls, name, bases, attrs)
-            registry.register(job_cls)
-        return registry[job_name].__class__
+        attrs["name"] = job_name
+        logname = '%s.job.%s' % (log_prefix, name)
+        attrs['logger'] = logging.getLogger(logname)
+        return super(JobMetaClass, cls).__new__(cls, name, bases, attrs)
 
 
-JobBase = JobMetaClass('JobBase',(object,),{'abstract':True})
 
-
-class Job(JobBase):
+class Job(JobMetaClass('JobBase', (object,), {'abstract': True})):
     '''The Job class which is used in a distributed task queue.
 
 .. attribute:: name
@@ -175,11 +162,6 @@ class Job(JobBase):
 
     If set to ``True`` (default is ``False``), the Job won't be registered
     with the :class:`JobRegistry`.
-
-.. attribute:: autoregister
-
-    If ``False`` (default is ``True``), the Job need to be registered
-    manually with the Job registry.
 
 .. attribute:: type
 
@@ -214,10 +196,9 @@ class Job(JobBase):
 
 .. attribute:: logger
 
-    an instance of a logger.
+    an instance of a logger. Created during runtime.
 '''
     abstract = True
-    autoregister = True
     type = "regular"
     timeout = None
     expires = None
