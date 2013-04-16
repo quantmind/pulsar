@@ -104,57 +104,19 @@ from datetime import datetime, timedelta
 from functools import partial
 
 from pulsar import async, EMPTY_TUPLE, EMPTY_DICT, get_actor, log_failure,\
-                    maybe_failure, is_failure, PulsarException
-from pulsar.utils.importer import import_module, import_modules
+                    maybe_failure, is_failure, PulsarException, Backend
 from pulsar.utils.pep import itervalues, iteritems
 from pulsar.apps.tasks.models import JobRegistry
 from pulsar.apps.tasks import states, create_task_id
-from pulsar.utils.httpurl import parse_qs, urlsplit
-from pulsar.utils.sockets import parse_connection_string
 from pulsar.utils.timeutils import remaining, timedelta_seconds
-from pulsar.utils.log import LocalMixin, local_property
+from pulsar.utils.log import local_property
 
-__all__ = ['Task', 'TaskBackend', 'getbe', 'TaskNotAvailable',
+__all__ = ['Task', 'Backend', 'TaskBackend', 'TaskNotAvailable',
            'nice_task_message']
 
 
 LOGGER = logging.getLogger('pulsar.tasks')
 
-
-def _getdb(scheme, host, params):
-    try:
-        module = import_module('pulsar.apps.tasks.backends.%s' % scheme)
-    except ImportError:
-        module = import_module(scheme)
-    return getattr(module, 'TaskBackend')(scheme, host, **params)
-    
-    
-def getbe(backend=None, **kwargs):
-    '''Create a new :class:`TaskBackend` from a *backend* connection string
-which is of the form::
-
-    scheme:://host?params
-
-For example, the local backend is::
-
-    local://
-    
-A redis backend could be::
-
-    redis://127.0.0.1:6379?db=1&password=bla
-    
-:param backend: the connection string
-:param kwargs: additional key-valued parameters used by the :class:`TaskBackend`
-    during initialisation.
-'''
-    if isinstance(backend, TaskBackend):
-        return backend
-    backend = backend or 'local://'
-    scheme, address, params = parse_connection_string(backend)
-    params.update(kwargs)
-    if 'timeout' in params:
-        params['timeout'] = int(params['timeout'])
-    return _getdb(scheme, address, params)
 
 def get_datetime(expiry, start):
     if isinstance(expiry, datetime):
@@ -259,10 +221,8 @@ class Task(object):
     stack_trace = None
     def __init__(self, id, name=None, time_executed=None,
                  expiry=None, args=None, kwargs=None, 
-                 status=None, from_task=None, run_id=None,
-                 **params):
+                 status=None, from_task=None, **params):
         self.id = id
-        self.run_id = run_id
         self.name = name
         self.time_executed = time_executed
         self.from_task = from_task
@@ -308,14 +268,15 @@ Lower number higher precedence.'''
         return self.__dict__.copy()
     
     
-class TaskBackend(LocalMixin):
+class TaskBackend(Backend):
     '''Base class for :class:`Task` backends. A :class:`TaskBackend` is
 responsible for creating tasks and put them into the distributed queue.
 It also schedules the run of periodic tasks if enabled to do so.
 
 .. attribute:: name
 
-    The name of the task queue application served by this :class:`TaskBackend`.
+    The name of the :class:`pulsar.apps.task.TaskQueue` application served
+    by this :class:`TaskBackend`.
     
 .. attribute:: task_paths
 
@@ -340,17 +301,15 @@ It also schedules the run of periodic tasks if enabled to do so.
 
     Dictionary of additional parameters passed during initialisation.
 '''
-    def __init__(self, scheme, host, name=None, task_paths=None,
-                  schedule_periodic=False, backlog=1, **params):
-        self.scheme = scheme
-        self.id = create_task_id()
-        self.host = host
-        self.params = params
-        self.name = name
+    default_path = 'pulsar.apps.tasks.backends.%s'
+    
+    def setup(self, task_paths=None, schedule_periodic=False, backlog=1,
+              **params):
         self.task_paths = task_paths
         self.backlog = backlog
         self.local.schedule_periodic = schedule_periodic
         self.next_run = datetime.now()
+        return params
         
     @property
     def schedule_periodic(self):
@@ -464,8 +423,7 @@ and key-valued arguments *kwargs*.'''
                 yield self.save_task(task_id, name=job.name,
                                      time_executed=time_executed,
                                      expiry=expiry, args=targs, kwargs=tkwargs,
-                                     run_id=self.id, status=states.PENDING,
-                                     **params)
+                                     status=states.PENDING, **params)
         else:
             raise TaskNotAvailable(jobname)
     
@@ -564,7 +522,7 @@ on a separate thread of execution from the worker evnet loop thread.'''
             job = self.registry[task.name]
             if task.status_code > states.PRECEDENCE_MAPPING[states.STARTED]:
                 calculated = True
-                if task.expiry and timeout > task.expiry:
+                if task.expiry and time_ended > task.expiry:
                     raise TaskTimeout
                 else:
                     LOGGER.debug('starting task %s', task)

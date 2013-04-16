@@ -22,11 +22,6 @@ Setting
 .. autoclass:: Setting
    :members:
    :member-order: bysource
-   
-make settings
-~~~~~~~~~~~~~~~~~~~~
-
-.. autofunction:: make_settings
 
 
 .. _argparser: http://docs.python.org/dev/library/argparse.html
@@ -57,7 +52,6 @@ __all__ = ['Config',
            'validate_list',
            'validate_pos_int',
            'validate_pos_float',
-           'make_settings',
            'make_optparse_options']
 
 LOGGER = logging.getLogger('pulsar.config')
@@ -96,39 +90,6 @@ def ordered_settings():
     for name in KNOWN_SETTINGS_ORDER:
         yield KNOWN_SETTINGS[name]
 
-def make_settings(apps=None, include=None, exclude=None, prefix=None,
-                  dont_prefix=None, name=None):
-    '''Creates a dictionary of available settings for given
-applications *apps*. The *prefix* and *don_prefix* parameters are used
-in the context of :class:`pulsar.apps.MultiApp`.
-
-:parameter apps: Optional list of application names.
-:parameter include: Optional list of settings to include.
-:parameter exclude: Optional list of settings to exclude.
-:parameter prefix: Optional prefix to prepend to all :class:`Setting` with
-    which are not
-    :ref:`global server settings <setting-section-global-server-settings>`.
-:parameter dont_prefix: Optional list/tuple of :class:`Setting` names to
-    not prefix.
-:parameter name: Optional name.
-:rtype: dictionary of :class:`pulsar.Setting` instances.'''
-    settings = {}
-    include = set(include or ())
-    exclude = set(exclude or ())
-    dont_prefix = set(dont_prefix or ())
-    apps = set(apps or ())
-    for s in ordered_settings():
-        setting = s()
-        if setting.name not in include:
-            if setting.name in exclude:
-                continue    # setting name in exclude set
-            if setting.app and setting.app not in apps:
-                continue    # the setting is for an app not in the apps set
-        setting = setting.copy(name=name, prefix=prefix,
-                               dont_prefix=dont_prefix)
-        settings[setting.name] = setting
-    return settings
-
 
 class Config(object):
     '''A dictionary-like container of :class:`Setting` parameters for
@@ -160,11 +121,18 @@ attribute by exposing the :attr:`Setting.name` as attribute.
     def __init__(self, description=None, epilog=None,
                  version=None, apps=None, include=None,
                  exclude=None, settings=None, prefix=None,
-                 dont_prefix=None, name=None, **params):
+                 name=None, **params):
         if settings is None:
-            settings = make_settings(apps, include, exclude, prefix,
-                                     dont_prefix, name)
-        self.settings = settings
+            self.settings = {}
+        else:
+            self.settings = settings
+        self.name = name
+        self.prefix = prefix
+        self.include = set(include or ())
+        self.exclude = set(exclude or ())
+        self.apps = set(apps or ())
+        if settings is None:
+            self.update_settings()
         self.params = params
         self.description = description or 'Pulsar server'
         self.epilog = epilog or 'Have fun!'
@@ -351,6 +319,22 @@ is given, it prefixes all non
     
     def __deepcopy__(self, memo):
         return self.__copy__()
+    
+    ############################################################################
+    ##    INTERNALS
+    def update_settings(self):
+        for s in ordered_settings():
+            setting = s()
+            if setting.name in self.settings:  
+                continue
+            if setting.name not in self.include:
+                if setting.name in self.exclude:
+                    continue    # setting name in exclude set
+                if setting.app and setting.app not in self.apps:
+                    continue    # the setting is for an app not in the apps set
+            setting = setting.copy(name=self.name, prefix=self.prefix)
+            self.settings[setting.name] = setting
+    
             
 
 class SettingMeta(type):
@@ -603,8 +587,7 @@ def make_optparse_options(apps=None, exclude=None, include=None): # pragma nocov
     class AddOptParser(list):
         def add_argument(self, *args, **kwargs):
             self.append(make_option(*args, **kwargs))
-    settings = make_settings(apps=apps, exclude=exclude, include=include)
-    config = Config(settings=settings)
+    config = Config(apps=apps, exclude=None, include=None)
     parser = AddOptParser()
     config.add_to_parser(parser)
     return tuple(parser)

@@ -13,42 +13,20 @@
     -- wikipedia_
 
 
-When using this application, one starts by creating a :class:`PubSub` handler
-in the actor process domain::
+When using this application, one starts by creating a :class:`PubSub` handler::
 
-    from pulsar.apps import pubsub
+    from pulsar.apps.pubsub import PubSub
     
-    pubsub.register_handler(pubsub.PulsarPubSub(monitor_name))
+    pubsub = PubSub.make(connection_string=None, ...)
     
-
-The :class:`PulsarPubSub` is an implementation of the :class:`PubSub` interface
-which uses a :class:`pulsar.Monitor` as the broadcast server.
-    
-    
-API functions
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-.. autofunction:: register_handler
+The ``connection_string`` parameter is needed in order to select the backend
+to used. If not supplied, the default ``local://`` backend is used.
 
 
-.. autofunction:: add_client
-
-
-.. autofunction:: publish
-
-
-PubSub Interface
+PubSub Backend Interface
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. autoclass:: PubSub
-   :members:
-   :member-order: bysource 
-   
-   
-Pulsar PubSub
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-.. autoclass:: PulsarPubSub
    :members:
    :member-order: bysource 
    
@@ -57,64 +35,54 @@ Pulsar PubSub
 import time
 import json
 
-from pulsar import send, command, get_actor, arbiter
+import pulsar
 from pulsar.utils.pep import to_string
-from pulsar.utils.log import LocalMixin, local_property
-
-################################################################################
-##    API methods
-def register_handler(handler, name=None):
-    '''Register the current :class:`pulsar.Actor` with a :class:`PubSub`
-*handler*.
-
-:param handler: a :class:`PubSub` instance.
-:param name: Optional string used as the key which holds the handler
-    in the current :attr:`pulsar.Actor.params` attribute dictionary.
-    Buy default it uses ``'pubsub'``. You can use this parameter to create
-    several :class:`PubSub` handlers for a given actor.
-'''
-    actor = get_actor() or arbiter()
-    actor.params[name or 'pubsub'] = handler 
-    
-def add_client(client, name=None):
-    '''Add a new *client* to the current actor :class:`PubSub` handler
-at *name*.
-
-:param client: a client is any instance with a ``write`` method.
-:param name: Optional string for the :class:`PubSub` to add the client to.
-    If not provided the default ``'pubsub'`` key is used.
-'''
-    get_pubsub(name).add_client(client)
-    
-def publish(message, name=None):
-    '''Publish a *message* to the :class:`PubSub` handler at *name*.'''
-    get_pubsub(name).publish(message)
-    
-def get_pubsub(name=None):
-    pubsub = get_actor().params.get(name or 'pubsub')
-    if pubsub is None:
-        raise RuntimeError('Publish/Subscribe handler not available')
-    return pubsub
+from pulsar.utils.log import local_property
     
 ################################################################################
 ##    PubSub Interface
-class PubSub(LocalMixin):
-    '''Interface for Publish/Subscribe paradigm.
+class PubSub(pulsar.Backend):
+    '''Interface for Publish/Subscribe paradigm Backend.
+    
+.. attribute:: channel
+
+    The Channel name for this :class:`PubSub` handler. If not supplied the
+    :attr:`pulsar.apps.Backend.name` attribute is used.
     
 .. attribute:: clients
 
     Set of all clients for this :class:`PubSub` handler.
 '''
+    default_path = 'pulsar.apps.pubsub.%s'
+        
     @local_property
     def clients(self):
+        '''The set of clients for this :class:`PubSub` handler.'''
         return set()
     
+    def close(self):
+        '''Close connections'''
+        pass
+    
     def add_client(self, client):
-        '''Add a new *client* to the set of all :attr:`clients`.'''
+        '''Add a new *client* to the set of all :attr:`clients`. Clients
+must have the ``write`` method available. When a new message is received
+from the publisher, the :meth:`broadcast` method will notify all
+:attr:`clients` via the ``write`` method.'''
         self.clients.add(client)
         
-    def publish(self, message):
+    def publish(self, channel, message):
         '''Publish a *message*. Must be implemented by subclasses.'''
+        raise NotImplementedError
+    
+    def subscribe(self, *channels):
+        '''Subscribe to the server which publish messages. Must be
+implemented by subclasses.'''
+        raise NotImplementedError
+    
+    def unsubscribe(self, *channels):
+        '''Un-subscribe to the server which publish messages. Must be
+implemented by subclasses.'''
         raise NotImplementedError
             
     def encode(self, message):
@@ -129,7 +97,8 @@ dictionary with a timestamp and the message and serialise it as json.'''
         '''Convert message to a string. The behaviour can be overwritten.'''
         return to_string(message)
     
-    def broadcast(self, message):
+    def broadcast(self, channels, message):
+        '''Broadcast ``message`` to all :attr:`clients`.'''
         remove = set()
         message = self.decode(message)
         for client in self.clients:
@@ -138,38 +107,3 @@ dictionary with a timestamp and the message and serialise it as json.'''
             except Exception:
                 remove.add(client)
         self.clients.difference_update(remove)
-
-################################################################################
-##    Pulsar PubSub implementation        
-class PulsarPubSub(PubSub):
-    '''Implements :class:`PubSub` in pulsar.
-    
-.. attribute:: monitor
-
-    The name of :class:`pulsar.Monitor` (application) which broadcast messages
-    to its workers.
-'''
-    def __init__(self, monitor):
-        self._monitor = monitor
-            
-    def publish(self, message):
-        '''Implements :meth:`PubSub.publish`. It calls the :meth:`encode`
-method to encode the message and than send the encoded message to the
-:class:`pulsar.Monitor` specified in the :attr:`monitor` attribute.'''
-        message = self.encode(message)
-        send(self._monitor, 'publish_message', message)
-        
-    
-@command(ack=False)
-def publish_message(request, message):
-    monitor = request.actor
-    if monitor.managed_actors:
-        for worker in monitor.managed_actors.values():
-            monitor.send(worker, 'broadcast_message', message)
-    else:
-        get_pubsub().broadcast(message)
-        
-@command(ack=False)
-def broadcast_message(request, message):
-    '''In the actor domain'''
-    get_pubsub().broadcast(message)

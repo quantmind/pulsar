@@ -8,13 +8,13 @@ from pulsar.apps.tasks import backends, states
 class TaskBackend(backends.TaskBackend):
         
     def put_task(self, task_id):
-        return send('arbiter', 'put_task', task_id)
+        return send(self.name, 'put_task', task_id)
     
-    def get_task(self, task_id=None, when_done=False):
-        return send('arbiter', 'get_task', task_id, when_done)
+    def get_task(self, task_id=None, when_done=False, timeout=1):
+        return send(self.name, 'get_task', task_id, when_done, timeout)
     
     def get_tasks(self, **filters):
-        return send('arbiter', 'get_tasks', **filters)
+        return send(self.name, 'get_tasks', **filters)
         
     def save_task(self, task_id, **params):
         from pulsar import get_actor
@@ -26,10 +26,10 @@ class TaskBackend(backends.TaskBackend):
             print('##############################################################')
             return task_id
         else:
-            return send('arbiter', 'save_task', task_id, **params)
+            return send(self.name, 'save_task', task_id, **params)
     
     def delete_tasks(self, ids=None):
-        return send('arbiter', 'delete_tasks', ids)
+        return send(self.name, 'delete_tasks', ids)
     
         
 #################################################    TASKQUEUE COMMANDS

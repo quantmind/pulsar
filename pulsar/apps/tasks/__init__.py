@@ -148,11 +148,12 @@ task.Tasks and managing scheduling of tasks via a
         '''When the monitor starts create the :class:`backends.TaskBackend`.'''
         if self.callable:
             self.callable()
-        self.backend = getbe(self.cfg.task_backend,
-                             name=self.name,
-                             task_paths=self.cfg.task_paths,
-                             schedule_periodic=self.cfg.schedule_periodic,
-                             backlog=self.cfg.backlog)
+        self.backend = TaskBackend.make(
+                                self.cfg.task_backend,
+                                name=self.name,
+                                task_paths=self.cfg.task_paths,
+                                schedule_periodic=self.cfg.schedule_periodic,
+                                backlog=self.cfg.backlog)
         
     def monitor_task(self, monitor):
         '''Override the :meth:`pulsar.apps.Application.monitor_task` callback

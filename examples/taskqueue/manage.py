@@ -36,7 +36,11 @@ except ImportError:
     import sys
     sys.path.append('../../')
     import pulsar
+from pulsar.utils.path import Path
 from pulsar.apps import rpc, tasks, wsgi
+
+Path(pulsar.__file__).add2python('stdnet', up=2, down=['python-stdnet'],
+                                 must_exist=False)
 
 TASK_PATHS = ['sampletasks.*']
 

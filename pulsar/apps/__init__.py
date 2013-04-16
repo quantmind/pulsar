@@ -57,6 +57,14 @@ Application Monitor
 .. autoclass:: ApplicationMonitor
    :members:
    :member-order: bysource
+   
+
+Backend
+~~~~~~~~~~~~~~~~~~~
+
+.. autoclass:: Backend
+   :members:
+   :member-order: bysource
 '''
 import os
 import sys
@@ -67,9 +75,14 @@ import pulsar
 from pulsar import Actor, Monitor, get_actor, EventHandler
 from pulsar.utils.structures import OrderedDict
 from pulsar.utils.pep import pickle
+from pulsar.utils.sockets import parse_connection_string, get_connection_string
+from pulsar.utils.log import LocalMixin
+from pulsar.utils.importer import import_module
+from pulsar.utils.security import gen_unique_id
 
 __all__ = ['Application',
            'MultiApp',
+           'Backend',
            'Worker',
            'ApplicationMonitor',
            'get_application']
@@ -352,6 +365,8 @@ The parameters overriding order is the following:
 overriding default values with *params*.'''
         if cls.cfg:
             cfg = cls.cfg.copy(name=name, prefix=prefix)
+            # update with latest settings
+            cfg.update_settings()
         else:
             cfg = pulsar.Config(name=name, prefix=prefix)
         for name, value in params.items():
@@ -627,3 +642,61 @@ as the number of :class:`Application` required by this :class:`MultiApp`.
             params[key] = value
         params['load_config'] = False
         return params
+    
+    
+class Backend(LocalMixin):
+    '''Base class for backends.
+
+.. attribute:: name
+
+    The name of the :class:`pulsar.apps.Application` which uses this
+    :class:`Backend`.
+    
+'''
+    default_path = '%s'
+    
+    def __init__(self, scheme, host, name=None, connection_string=None,
+                 **params):
+        self.id = gen_unique_id()
+        self.scheme = scheme
+        self.host = host
+        self.connection_string = connection_string
+        self.name = name
+        self.params = dict(self.setup(**params) or {})
+        
+    def setup(self, **params):
+        return params
+        
+    @classmethod
+    def make(cls, backend=None, **kwargs):
+        '''Create a new :class:`Backend` from a *backend* connection string
+which is of the form::
+
+    scheme:://host?params
+
+For example, the local backend is::
+
+    local://
+    
+A redis backend could be::
+
+    redis://127.0.0.1:6379?db=1&password=bla
+    
+:param backend: the connection string
+:param kwargs: additional key-valued parameters used by the :class:`TaskBackend`
+    during initialisation.
+    '''
+        if isinstance(backend, cls):
+            return backend
+        backend = backend or 'local://'
+        scheme, address, params = parse_connection_string(backend)
+        connection_string = get_connection_string(scheme, address, params)
+        params.update(kwargs)
+        params['connection_string'] = connection_string
+        if 'timeout' in params:
+            params['timeout'] = int(params['timeout'])
+        try:
+            module = import_module(cls.default_path % scheme)
+        except ImportError:
+            module = import_module(scheme)
+        return getattr(module, cls.__name__)(scheme, address, **params)

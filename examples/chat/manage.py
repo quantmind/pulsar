@@ -40,7 +40,8 @@ try:
 except ImportError: #pragma nocover
     sys.path.append('../../')
     import pulsar
-from pulsar.apps import ws, wsgi, rpc, pubsub
+from pulsar.apps.pubsub import PubSub
+from pulsar.apps import ws, wsgi, rpc
 
 CHAT_DIR = os.path.dirname(__file__)
     
@@ -49,10 +50,13 @@ CHAT_DIR = os.path.dirname(__file__)
 class Chat(ws.WS):
     '''The websocket handler (:class:`pulsar.apps.ws.WS`) managing the chat
 application.'''
+    def __init__(self, pubsub):
+        self.pubsub = pubsub
+        
     def on_open(self, request):
         '''When a new websocket connection is established it add connection
 to the set of clients listening for messages.'''
-        pubsub.add_client(request.cache['websocket'])
+        self.pubsub.add_client(request.cache['websocket'])
         
     def on_message(self, request, msg):
         '''When a new message arrives, it publishes to all listening clients.'''
@@ -64,15 +68,19 @@ to the set of clients listening for messages.'''
                     lines.append(l)
             msg = ' '.join(lines)
             if msg:
-                pubsub.publish(msg)
+                self.pubsub.publish(msg)
 
 
 ##    RPC MIDDLEWARE To publish messages
 class Rpc(rpc.PulsarServerCommands):
     
+    def __init__(self, pubsub, **kwargs):
+        self.pubsub = pubsub
+        super(Rpc, self).__init__(**kwargs)
+        
     def rpc_message(self, request, message):
         '''Publish a message via JSON-RPC'''
-        pubsub.publish(message)
+        self.pubsub.publish(message)
         return 'OK'
     
     
@@ -82,11 +90,11 @@ class WebChat(wsgi.LazyWsgi):
         self.name = name
         
     def setup(self):
-        # Register a pubsub handler
-        pubsub.register_handler(pubsub.PulsarPubSub(self.name))
+        # Create a pubsub handler
+        pubsub = PubSub.make(name=self.name)
         return wsgi.WsgiHandler([wsgi.Router('/', get=self.home_page),
-                                 ws.WebSocket('/message', Chat()),
-                                 wsgi.Router('/rpc', post=Rpc())])
+                                 ws.WebSocket('/message', Chat(pubsub)),
+                                 wsgi.Router('/rpc', post=Rpc(pubsub))])
         
     def home_page(self, request):
         data = open(os.path.join(CHAT_DIR, 'chat.html')).read()

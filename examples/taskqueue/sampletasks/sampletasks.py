@@ -1,7 +1,7 @@
 import time
 from datetime import timedelta
 
-from pulsar import get_request_loop, NOT_DONE, async_sleep
+from pulsar import get_request_loop, async_sleep
 from pulsar.apps import tasks
 
 
@@ -20,21 +20,18 @@ function defined which accept key-valued parameters only.'''
 class Addition(tasks.Job):
     timeout = timedelta(seconds=60)
     def __call__(self, consumer, a, b):
-        return a+b
+        return a + b
     
     
 class Asynchronous(tasks.Job):
     
-    def __call__(self, consumer, loops=1):
-        loop = 0
+    def __call__(self, consumer, lag=1):
         rl = get_request_loop()
-        start = rl.num_loops
-        while loop < loops:
-            yield NOT_DONE
-            loop += 1
-        yield {'start': start,
-               'end': rl.num_loops,
-               'loops': loop}
+        start = time.time()
+        loop = rl.num_loops
+        yield async_sleep(lag)
+        yield {'time': time.time() - start,
+               'loops': rl.num_loops - loop}
     
     
 class NotOverLap(tasks.Job):

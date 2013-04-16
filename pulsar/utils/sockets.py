@@ -22,7 +22,7 @@ except ImportError: #pragma    nocover
         
 from .system import platform
 from .pep import native_str
-from .httpurl import urlsplit, parse_qsl 
+from .httpurl import urlsplit, parse_qsl, urlencode
 
 
 WRITE_BUFFER_MAX_SIZE = 128 * 1024  # 128 kb
@@ -316,6 +316,12 @@ returns::
     if scheme == 'dummy':
         scheme = ''
     return scheme, parse_address(host, default_port), params
+
+def get_connection_string(scheme, address, params):
+    address = ':'.join((str(b) for b in address))
+    if params:
+        address += '?' + urlencode(params)
+    return scheme + '://' + address
     
 def create_socket(address=None, sock=None, bindto=False, backlog=1024):
     if isinstance(sock, Socket):
@@ -390,3 +396,4 @@ def is_closed(sock):    #pragma nocover
                 return True
     except Exception:
         return True
+

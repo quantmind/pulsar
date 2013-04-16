@@ -22,11 +22,16 @@ def task_function(N = 10, lag = 0.1):
 
 class TaskQueueBase(object):
     concurrency = 'thread'
+    task_backend = None
     apps = ()
     
     @classmethod
     def name(cls):
         return cls.__name__.lower()
+    
+    @classmethod
+    def task_backend(cls):
+        return None
     
     @classmethod
     def rpc_name(cls):
@@ -40,6 +45,7 @@ class TaskQueueBase(object):
                    backlog=4,
                    concurrency=cls.concurrency,
                    rpc_concurrency=cls.concurrency,
+                   task_backend=cls.task_backend(),
                    script=__file__,
                    schedule_periodic=True)
         cls.apps = yield send('arbiter', 'run', s)
@@ -52,14 +58,12 @@ class TaskQueueBase(object):
         
         
 class TestTaskQueueMeta(TaskQueueBase, unittest.TestCase):
-    pass
 
-class b:
     def test_meta(self):
         '''Tests meta attributes of taskqueue'''
-        app = yield get_application(self.apps[0].name)
+        app = yield get_application(self.name())
         self.assertTrue(app)
-        self.assertEqual(app.name, self.apps[0].name)
+        self.assertEqual(app.name, self.name())
         self.assertFalse(app.cfg.address)
         self.assertEqual(app.cfg.backlog, 4)
         self.assertEqual(app.backend.backlog, 4)
@@ -75,9 +79,9 @@ class b:
         self.assertNotEqual(id,job.make_task_id((),{}))
         
     def test_rpc_meta(self):
-        app = yield get_application(self.apps[1].name)
+        app = yield get_application(self.rpc_name())
         self.assertTrue(app)
-        self.assertEqual(app.name, self.apps[1].name)
+        self.assertEqual(app.name, self.rpc_name())
         self.assertEqual(app.cfg.address, ('127.0.0.1', 0))
         self.assertNotEqual(app.cfg.address, app.address)
         self.assertEqual(app.cfg.concurrency, self.concurrency)
@@ -85,10 +89,10 @@ class b:
         self.assertTrue(router.post)
         root = router.post
         tq = root.taskqueue
-        self.assertEqual(tq, self.apps[0].name)
+        self.assertEqual(tq, self.name())
         
     def test_registry(self):
-        app = yield get_application(self.apps[0].name)
+        app = yield get_application(self.name())
         self.assertTrue(isinstance(app.backend.registry, dict))
         regular = app.backend.registry.regular()
         periodic = app.backend.registry.periodic()
@@ -97,7 +101,7 @@ class b:
         
     def test_id_not_overlap(self):
         '''Check `make_task_id` when `can_overlap` attribute is set to False.'''
-        app = yield get_application(self.apps[0].name)
+        app = yield get_application(self.name())
         job = app.backend.registry['notoverlap']
         self.assertEqual(job.type, 'regular')
         self.assertFalse(job.can_overlap)
@@ -147,7 +151,6 @@ class TestTaskQueueOnThread(TaskQueueBase, unittest.TestCase):
         pycode = d['runpycode']
         self.assertEqual(pycode['type'], 'regular')
 
-class a:
     @run_on_arbiter
     def test_check_next_run(self):
         app = yield get_application(self.name())
@@ -157,7 +160,7 @@ class a:
       
     @run_on_arbiter
     def test_delete_task(self):
-        app = yield get_application(self.apps[0].name)
+        app = yield get_application(self.name())
         id = yield app.backend.run('addition', 1, 4)
         r1 = yield app.backend.wait_for_task(id)
         self.assertEqual(r1.result, 5)
@@ -221,12 +224,12 @@ class a:
         self.assertTrue('kaputt' in r['result'])
         
     def test_run_new_task_asynchronous(self):
-        r = yield self.proxy.run_new_task(jobname='asynchronous',loops=3)
+        r = yield self.proxy.run_new_task(jobname='asynchronous', lag=3)
         r = yield self.proxy.wait_for_task(r)
         self.assertEqual(r['status'], tasks.SUCCESS)
         result = r['result']
-        self.assertEqual(result['loops'], 3)
-        self.assertEqual(result['end']-result['start'], 3)
+        self.assertTrue(result['loops'])
+        self.assertTrue(result['time'] > 3)
         
     def test_run_new_task_expiry(self):
         r = yield self.proxy.run_new_task(jobname='addition', a=40, b=50,
@@ -256,7 +259,7 @@ class a:
         self.assertEqual(len(stasks), sample)
     def test_kill_task_workers(self):
         info = yield self.proxy.server_info()
-        tq = info['monitors'][self.apps[0].name]
+        tq = info['monitors'][self.name()]
         for worker in tq['workers']:
             a = worker['actor']
             aid = a['actor_id']

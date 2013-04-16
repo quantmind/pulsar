@@ -11,9 +11,7 @@ from django.utils.encoding import force_str
 from django.core.handlers.wsgi import logger, set_script_prefix, STATUS_CODE_TEXT
 #from django.core.servers.basehttp import get_internal_wsgi_application
 
-PULSAR_OPTIONS = pulsar.make_optparse_options(
-                            apps=('socket', 'wsgi'),
-                            exclude=('pythonpath', 'django_settings'))
+PULSAR_OPTIONS = pulsar.make_optparse_options(apps=['socket'])
 
 
 class DjangoWSGIHandler(WSGIHandler):

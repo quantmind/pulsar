@@ -62,14 +62,6 @@ Job registry
    :members:
    :member-order: bysource
 
-Job metaclass
-~~~~~~~~~~~~~~~~~~~~~~
-
-.. autoclass:: JobMetaClass
-   :members:
-   :member-order: bysource
-
-
 '''
 from datetime import datetime, date, timedelta
 from hashlib import sha1
@@ -127,17 +119,6 @@ class JobRegistry(dict):
 
 
 class JobMetaClass(type):
-    """Metaclass for :class:`Job`. It performs a this little amount of magic
-when a new :class:`Job` class is created:
-
-* Automatic registration of :class:`Job` instances to the
-  global :class:`JobRegistry`, unless
-  the :attr:`Job.abstract` attribute is set to ``True``.
-* If no :attr:`Job.name` attribute is provided,
-  it is automatically set to the :attr:`Job` class name in lower case.
-* Add the :attr:`Job.logger` attribute with name given by :attr:`Job.name`
-  attribute.
-"""
 
     def __new__(cls, name, bases, attrs):
         attrs['can_register'] = not attrs.pop('abstract', False)
@@ -188,25 +169,16 @@ class Job(JobMetaClass('JobBase', (object,), {'abstract': True})):
 
     Default: ``markdown``
 
-.. attribute:: loglevel
-
-    Level of task logging
-
-    Default: ``None``
-
 .. attribute:: logger
 
-    an instance of a logger. Created during runtime.
+    an instance of a logger. Created at runtime.
 '''
     abstract = True
     type = "regular"
     timeout = None
     expires = None
-    loglevel = None
-    logformatter = None
     doc_syntax = 'markdown'
     can_overlap = True
-    _ack = True
 
     def __call__(self, consumer, *args, **kwargs):
         '''The Jobs' task executed by the consumer. This function needs to be
@@ -239,7 +211,7 @@ Called by the :attr:`TaskQueue.scheduler` when creating a new task.
             name = '%s%s' % (self.name, suffix)
             return sha1(name.encode('utf-8')).hexdigest()[:8]
 
-    def send_to_queue(self, consumer, jobname, *args, **kwargs):
+    def run_job(self, consumer, jobname, *args, **kwargs):
         '''Send a new task request to the :class:`TaskQueue`
 from within another :class:`Task`.
 This allows tasks to act as tasks factories.
@@ -252,12 +224,9 @@ This allows tasks to act as tasks factories.
 :rtype: A :class:`pulsar.ActorMessage` if **ack=True** was passed in the
     key-valued parameters, otherwise nothing.
 '''
-        worker = consumer.worker
         ack = kwargs.pop('ack', False)
-        oper = "addtask" if ack else "addtask_noack"
-        res = worker.send(worker.monitor, oper, jobname,
-                          {'from_task': consumer.task.id},
-                           *args, **kwargs)
+        kwargs['from_task'] = consumer.task_id
+        res = consumer.backend.run_job(jobname, args, kwargs)
         return res if ack else None
 
 

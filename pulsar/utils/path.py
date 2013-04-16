@@ -2,11 +2,9 @@
 import os
 import sys
 
-if sys.version_info > (3,0):
-    string_type = str
-else:   #pragma    nocover
-    string_type = unicode
-    range = xrange
+from .importer import import_module
+from .pep import range, string_type
+
 
 __all__ = ['Path']
 
@@ -16,7 +14,7 @@ class Path(string_type):
     def __new__(cls, path=None):
         path = path or ''
         abspath = os.path.abspath(path)
-        return super(Path,cls).__new__(cls, abspath)
+        return super(Path, cls).__new__(cls, abspath)
 
     @classmethod
     def cwd(cls):
@@ -74,28 +72,25 @@ class Path(string_type):
 :parameter must_exist: Boolean indicating if the module must exists.'''
         if module:
             try:
-                __import__(module)
-                return module
+                return import_module(module)
             except ImportError:
                 pass
-        
         dir = self.dir().ancestor(up)
         if down:
             dir = dir.join(*down)
-        added = False
         if dir.isdir():
             if dir not in sys.path:
                 if front:
                     sys.path.insert(0, dir)
                 else:
                     sys.path.append(dir)
-                added = True
+        elif must_exist:
+            raise ImportError('Directory {0} not available'.format(dir))
         else:
-            raise ValueError('Directory {0} not available'.format(dir))
+            return None
         if module:
             try:
-                __import__(module)
-                return module
+                return import_module(module)
             except ImportError:
                 if must_exist:
                     raise

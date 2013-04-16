@@ -6,8 +6,19 @@
 #
 import os
 import sys
-from pulsar.apps.test import TestSuite
+
+from pulsar.utils.path import Path
+from pulsar.apps.test import TestSuite, TestOption
 from pulsar.apps.test.plugins import bench, profile
+
+path = Path()
+if path.add2python('stdnet', 1, down=['python-stdnet'], must_exist=False):
+    # stdnet available, we can test the taskqueue redis backend
+    class TaskQueueRedis(TestOption):
+        name = 'redis_server'
+        flags = ['--redis-server']
+        default = 'redis://127.0.0.1:6379?db=0&timeout=0'
+        desc = 'Connection string to redis server for testing task queue'
 
 
 if __name__ == '__main__':

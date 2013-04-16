@@ -9,11 +9,12 @@ from pulsar.apps.test import unittest, run_on_arbiter, TestSuite, sequential
 from pulsar.utils.pep import get_event_loop
 
 def simple_function(actor):
-    return 'success'
+    return actor.name
 
 def wait(actor, period=0.5):
-    time.sleep(period)
-    return period
+    start = time.time()
+    yield pulsr.async_sleep(period)
+    yield time.time() - start
 
 
 class TestTestWorker(unittest.TestCase):
@@ -113,11 +114,10 @@ class TestTestWorker(unittest.TestCase):
         future = yield send('monitor', 'ping')
         self.assertEqual(future, 'pong')
         
-    def __test_run_on_arbiter(self):
+    def test_run_on_arbiter(self):
         actor = pulsar.get_actor()
-        response = actor.send('arbiter', 'run', simple_function)
-        yield response.when_ready
-        self.assertEqual(response.result, 'success')
+        response = yield actor.send('arbiter', 'run', simple_function)
+        self.assertEqual(response, 'arbiter')
         
     def test_unknown_send_target(self):
         # The target does not exists
@@ -126,17 +126,25 @@ class TestTestWorker(unittest.TestCase):
         self.assertTrue(is_failure(future.result[0]))
         
     def test_multiple_execute(self):
-        result1 = send('arbiter', 'run', wait, 0.2)
+        result1 = send('arbiter', 'run', wait, 1.2)
         result2 = send('arbiter', 'ping')
         result3 = send('arbiter', 'echo', 'ciao!')
-        result4 = send('arbiter', 'run', wait, 0.1)
+        result4 = send('arbiter', 'run', wait, 2.1)
         result5 = send('arbiter', 'echo', 'ciao again!')
         yield multi_async((result1, result2, result3, result4, result5))
-        self.assertEqual(result1.result, 0.2)
+        self.assertTrue(result1.result > 1.2)
         self.assertEqual(result2.result, 'pong')
         self.assertEqual(result3.result, 'ciao!')
-        self.assertEqual(result4.result, 0.1)
+        self.assertTrue(result4.result > 2.1)
         self.assertEqual(result5.result, 'ciao again!')
+        
+    def test_tasks(self):
+        worker = pulsar.get_actor()
+        backend = worker.app.backend
+        self.assertTrue(worker.app.backend)
+        self.assertEqual(backend.name, worker.app.name)
+        self.assertEqual(len(backend.registry), 1)
+        self.assertTrue('test' in backend.registry)
         
         
 class TestPulsar(unittest.TestCase):

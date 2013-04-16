@@ -449,8 +449,7 @@ configuration and plugins.'''
     @pulsar.async()
     def _check_queue(self):
         runner=  self.runner
-        tests = yield self.backend.get_tasks(run_id=self.backend.id,
-                                             status=tasks.READY_STATES)
+        tests = yield self.backend.get_tasks(status=tasks.READY_STATES)
         if len(tests) == len(self.local.tests):
             time_taken = time.time() - self._time_start
             for task in tests:
