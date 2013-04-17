@@ -1,4 +1,4 @@
-'''Tests the "taskqueue" example.'''
+'''Tests the taskqueue local backend.'''
 from random import random
 from time import time
 from datetime import datetime, timedelta

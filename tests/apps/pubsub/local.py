@@ -1,4 +1,4 @@
-'''Tests the pubsub middleware and utilities.'''
+'''pubsub local backend.'''
 import json
 
 from pulsar import Deferred

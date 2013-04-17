@@ -21,5 +21,10 @@ class TestPath(unittest.TestCase):
     def testAdd2Python(self):
         p = Path('/sdjc/scdskjcdnsd/dhjdhjdjksdjksdksd')
         module = p.add2python('pulsar')
-        self.assertEqual(module, 'pulsar')
+        self.assertEqual(module.__name__, 'pulsar')
         self.assertRaises(ValueError, p.add2python, 'kaputttt')
+        
+    def testAdd2Python_failure(self):
+        p = Path()
+        self.assertRaises(ImportError, p.add2python, 'kaputttt')
+        self.assertFalse(p.add2python('vdfvdavfdv', must_exist=False))

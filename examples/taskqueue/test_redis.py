@@ -1,3 +1,4 @@
+'''Tests the taskqueue redis backend.'''
 try:
     import stdnet
 except ImportError:
@@ -5,11 +6,11 @@ except ImportError:
     
 from pulsar.apps.test import unittest
  
-from . import test_app
+from . import test_local
 
 
 unittest.skipUnless(stdnet, 'Requires python-stdnet')
-class TestRedisTaskQueueOnThread(test_app.TestTaskQueueOnThread):
+class TestRedisTaskQueueOnThread(test_local.TestTaskQueueOnThread):
     
     @classmethod
     def task_backend(cls):
