@@ -1,3 +1,6 @@
+'''
+A test plugin for benchmarking test cases.
+'''
 import sys
 import time
 import math
@@ -57,7 +60,8 @@ class BenchMark(test.TestPlugin):
     '''Benchmarking addon for pulsar test suite.'''
     desc = '''Run benchmarks function flagged with __benchmark__ attribute'''
     
-    repeat = pulsar.Setting(type=int,
+    repeat = pulsar.Setting(flags=['--repeat'],
+                            type=int,
                             default=1,
                             validator=pulsar.validate_pos_int,
                             desc='Default number of repetition '\

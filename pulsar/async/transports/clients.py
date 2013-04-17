@@ -337,14 +337,14 @@ whether the *connection* can be reused in the future or it must be disposed.
         if key:
             self.connection_pools.pop(key)
             
-    def upgrade(self, connection, protocol_factory):
+    def upgrade(self, connection, protocol_factory, result=None):
         '''Upgrade an existing connection with a new protocol factory.
 Return the upgraded connection only if the :attr:`Connection.current_consumer`
 is available.'''
         protocol = connection.current_consumer
         if protocol:
             protocol.release_connection = False
-            protocol.finished()
+            protocol.finished(result)
             connection.upgrade(protocol_factory)
             return connection
     

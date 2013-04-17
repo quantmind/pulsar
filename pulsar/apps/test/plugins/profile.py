@@ -1,3 +1,12 @@
+'''
+A test plugin for profiling test cases and generating Html reports. It uses
+the ``cProfiler`` from the standard libraries.
+
+.. autoclass:: Profile
+   :members:
+   :member-order: bysource
+   
+'''
 import os
 import re
 import time
@@ -98,9 +107,11 @@ def copy_file(filename, target, context=None):
 
 
 class Profile(test.TestPlugin):
-    ''':class:`pulsar.apps.test.Plugin` for profiling test cases.'''
+    ''':class:`pulsar.apps.test.TestPlugin` for profiling test cases.'''
     desc = '''Profile tests using the cProfile'''
-    profile_stats_path = pulsar.Setting(default='htmlprof',
+    profile_stats_path = pulsar.Setting(
+                                flags=['--profile-stats-path'],
+                                default='htmlprof',
                                 desc='''location of profile directory''',
                                 validator=absolute_file)
 

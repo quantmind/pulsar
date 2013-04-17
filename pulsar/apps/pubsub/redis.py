@@ -3,20 +3,22 @@ from functools import partial
 from stdnet import getdb
 from stdnet.lib.redis.async import RedisProtocol
 
-from pulsar import async
+from pulsar import async, Deferred
 from pulsar.apps import pubsub
+from pulsar.utils.log import local_property
 
 
-class PubSub(pubsub.PubSub):
+class PubSubBackend(pubsub.PubSubBackend):
     '''Implements :class:`PubSub` using a redis backend.'''
+    @local_property
+    def redis(self):
+        return getdb(self.connection_string, timeout=0).client
     
-    def setup(self, **params):
-        self.redis = getdb(self.connection_string, timeout=0).client
-        self.consumer = None
-        super(PubSub, self).setup(**params)
+    @property
+    def consumer(self):
+        return self.local.consumer
     
     def publish(self, channel, message):
-        message = self.encode(message)
         return self.redis.publish(channel, message)
        
     @async()
@@ -25,34 +27,28 @@ class PubSub(pubsub.PubSub):
         # publish command too.
         channels, patterns = self._channel_patterns(channels)        
         if channels:
-            yield self.redis.execute_command('subscribe', *channels,
-                                             on_finished=self._subscribe,
-                                             consumer=self.consumer)
+            yield self._execute('subscribe', *channels)
         if patterns:
-            yield self.redis.execute_command('psubscribe', *patterns,
-                                             on_finished=self._subscribe,
-                                             consumer=self.consumer)
-            
+            yield self._execute('psubscribe', *patterns)
+    
+    @async()
     def unsubscribe(self, *channels):
         channels, patterns = self._channel_patterns(channels)
         if not channels and not patterns:
-            yield self.redis.execute_command('unsubscribe',
-                                             consumer=self.consumer)
-            yield self.redis.execute_command('punsubscribe',
-                                             consumer=self.consumer)
+            yield self._execute('unsubscribe')
+            yield self._execute('punsubscribe')
         else:
             if channels:
-                yield self.redis.execute_command('unsubscribe', *channels,
-                                                 consumer=self.consumer)
+                yield self._execute('unsubscribe', *channels)
             if patterns:
-                yield self.redis.execute_command('punsubscribe', *patterns,
-                                                 consumer=self.consumer)
+                yield self._execute('punsubscribe', *patterns)
             
     @async()
     def close(self):
-        result = yield self.unsubscribe()
+        result = yield super(PubSubBackend, self).close()
         if self.consumer:
             self.consumer.connection.close()
+            self.local.consumer = None
         yield result
      
     def _channel_patterns(self, channels):
@@ -66,31 +62,30 @@ class PubSub(pubsub.PubSub):
                 simples.append(c)
         return simples, patterns
     
-    def _subscribe(self, protocol, response):
-        if not self.consumer:
-            reader = protocol.current_request.reader
-            connection = self.redis.connection_pool.upgrade(
-                                            protocol.connection,
-                                            partial(Subscriber, reader, self))
-            self.consumer = connection.consumer_factory(connection)
+    def _execute(self, command, *args):
+        cbk = Deferred().add_callback(self._request_finished)
+        return self.redis.execute_command(command, *args,
+                                          consumer=self.consumer,
+                                          on_finished=cbk)
         
-        
-class Subscriber(RedisProtocol):
+    def _request_finished(self, consumer_response):
+        consumer, response = consumer_response
+        if self.local.consumer != consumer:
+            self.local.consumer = consumer
+            consumer.bind_event('on_message', self.on_message)
+        return self.on_message(response)
     
-    def __init__(self, reader, pubsub, connection=None):
-        self.reader = reader
-        self.pubsub = pubsub
-        super(Subscriber, self).__init__(connection=connection)
-        
-    def data_received(self, data):
-        self.reader.feed(data)
-        response = self.reader.gets()
-        if response is not False:
-            self.on_response(response)
-    
-    def on_response(self, response):
-        "Parse the response from a publish/subscribe command"
-        command = response[0].decode('utf-8')
-        channel = response[1]
-        if command in ('message', 'pmessage'):
-            self.pubsub.broadcast(channel, response[2])
+    def on_message(self, response):
+        command = response[0]
+        if command == b'message':
+            response = response[1:3]
+            self.broadcast(*response)
+        elif command == b'pmessage':
+            response = response[2:4]
+            self.broadcast(*response)
+        elif command == b'subscribe' or command == b'psubscribe':
+            response = response[2]
+        elif command == b'unsubscribe' or command == b'punsubscribe':
+            response = response[2]
+        return response
+            

@@ -6,6 +6,7 @@ from threading import current_thread
 import pulsar
 from pulsar import send, is_async, multi_async, is_async, is_failure
 from pulsar.apps.test import unittest, run_on_arbiter, TestSuite, sequential
+from pulsar.apps.test.plugins import bench, profile
 from pulsar.utils.pep import get_event_loop
 
 def simple_function(actor):
@@ -145,6 +146,20 @@ class TestTestWorker(unittest.TestCase):
         self.assertEqual(backend.name, worker.app.name)
         self.assertEqual(len(backend.registry), 1)
         self.assertTrue('test' in backend.registry)
+        
+        
+class TestTestSuite(unittest.TestCase):
+    
+    def test_no_plugins(self):
+        suite = TestSuite()
+        self.assertFalse(suite.cfg.plugins)
+        self.assertFalse('profile' in suite.cfg.settings)
+        
+    def test_profile_plugins(self):
+        suite = TestSuite(plugins=[profile.Profile()])
+        self.assertTrue(suite.cfg.plugins)
+        self.assertTrue('profile' in suite.cfg.settings)
+        self.assertTrue('profile_stats_path' in suite.cfg.settings)
         
         
 class TestPulsar(unittest.TestCase):

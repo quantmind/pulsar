@@ -14,7 +14,8 @@ __all__ = ['Protocol', 'ProtocolConsumer', 'Connection', 'Producer']
 
 class Protocol(EventHandler):
     '''Abstract class implemented in :class:`Connection`
-and :class:`ProtocolConsumer`'''
+and :class:`ProtocolConsumer`. It derives from :class:`EventHandler`
+and therefore several events can be attached to subclasses.'''
     def connection_made(self, transport):
         '''Indicates that the :class:`Transport` is ready and connected
 to the entity at the other end. The protocol should probably save the
@@ -53,14 +54,17 @@ be :meth:`Protocol.data_received`.
 
 It has one :ref:`one time events <one-time-event>`:
 
-* *finish* fired when this :class:`ProtocolConsumer` has finished consuming
-  data and a response/exception is available.
+* ``finish`` fired when this :class:`ProtocolConsumer` has finished consuming
+  data and a response/exception is available. The :attr:`on_finished`
+  is the :class:`Deferred` called back when this event occurs.
 
 and three :ref:`many times events <many-times-event>`:
 
-* *data_received* fired each time new data is consumed by
+* ``data_received`` fired each time new data is consumed by
   this :class:`ProtocolConsumer`.
-  
+* ``on_message`` fired once a new, complete, message is available. This event
+  must be fired during the :math:`Protocol.data_received` method by
+  subclasses of the :class:`ProtocolConsumer`
 
 .. attribute:: connection
 
@@ -83,7 +87,7 @@ and three :ref:`many times events <many-times-event>`:
 
 '''
     ONE_TIME_EVENTS = ('finish',)
-    MANY_TIMES_EVENTS = ('data_received',)
+    MANY_TIMES_EVENTS = ('data_received', 'on_message')
     def __init__(self, connection=None):
         super(ProtocolConsumer, self).__init__()
         self._connection = None

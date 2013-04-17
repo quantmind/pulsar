@@ -1,7 +1,19 @@
 '''
+Plugin
+~~~~~~~~~~~~~~~~~~~
+
+.. autoclass:: Plugin
+   :members:
+   :member-order: bysource
+   
+
+Test Runner
+~~~~~~~~~~~~~~~~~~~
+
 .. autoclass:: TestRunner
    :members:
    :member-order: bysource
+
    
 '''
 import sys
@@ -31,17 +43,17 @@ STDERR_LINE = '\nStderr:\n%s'
 class Plugin(object):
     '''Interface for all classes which are part of of the :class:`TestRunner`,
 including :class:`TestRunner` itself, :class:`TestResult`
-and :class:`Plugin`.'''
+and :class:`TestPlugin`.'''
     descriptions = None
 
     def configure(self, cfg):
-        '''Configure the *instance*. This method is called once just after
-construction of a :class:`TestRunner` and can be used to configure the
-plugin. If it returns something other than ``None``
-(for example an abort message)
+        '''Called once just after construction of
+a :class:`TestRunner` and can be used to configure the :class:`Plugin`.
+If it returns something other than ``None`` (for example an abort message)
 it will stop the configuration of all subsequent plugins and quit the test.
 
-:parameter cfg: instance of :class:`pulsar.Config`.
+:parameter cfg: a :class:`pulsar.utils.config.Config`.
+:return: ``None`` unless the tests runner must be stopped.
 '''
         pass
     
@@ -255,7 +267,7 @@ class TestStream(TestResultProxy):
 
 
 class TestResult(Plugin):
-
+    '''A result of a test run.'''
     def __init__(self, descriptions=True):
         self.descriptions = descriptions
         self.testsRun = 0

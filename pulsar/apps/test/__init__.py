@@ -186,21 +186,46 @@ Set the test timeout to 10 seconds.
 
 Plugins
 ==================
-TODO: write docs for plugins
+:class:`TestPlugins` is a way to extend the test suite.
+There are two basic rules for plugins:
+
+* Plugin classes should subclass :class:`TestPlugin`.
+* Plugins may implement any of the methods described in the class
+  :class:`result.Plugin` interface.
+
+Pulsar ships with two plugins:
+
+.. _bench-plugin:
+
+Benchmark
+~~~~~~~~~~~~~
+
+.. automodule:: pulsar.apps.test.plugins.bench
 
 
+.. _profile-plugin:
+
+Profile
+~~~~~~~~~~~~~
+
+.. automodule:: pulsar.apps.test.plugins.profile
+
+
+.. module:: pulsar.apps.test
 
 API
 =========
 
-TestSuite
-~~~~~~~~~~~~~~~~~~~
-
 .. autoclass:: TestSuite
    :members:
    :member-order: bysource
-   
-   
+
+.. automodule:: pulsar.apps.test.loader
+
+.. automodule:: pulsar.apps.test.result
+
+.. module:: pulsar.apps.test
+
 Test Plugin
 ~~~~~~~~~~~~~~~~~~~
 
@@ -208,18 +233,6 @@ Test Plugin
    :members:
    :member-order: bysource
    
-
-Test Loader
-~~~~~~~~~~~~~~~~~~~
-
-.. automodule:: pulsar.apps.test.loader
-
-
-Test Runner
-~~~~~~~~~~~~~~~~~~~
-
-.. automodule:: pulsar.apps.test.result
-
 .. _unittest2: http://pypi.python.org/pypi/unittest2
 .. _mock: http://pypi.python.org/pypi/mock
 '''
@@ -358,6 +371,7 @@ is a group of tests specified in a test class.
                         loglevel='critical',
                         backlog=5,
                         task_paths=['pulsar.apps.test.case'],
+                        plugins=(),
                         logconfig={
                                    'loggers': {
                                 LOGGER.name: {'handlers': ['console_message'],
@@ -371,7 +385,7 @@ configuration and plugins.'''
         result_class = getattr(self, 'result_class', None)
         r = unittest.TextTestRunner()
         stream = r.stream
-        runner = TestRunner(self.plugins, stream, result_class)
+        runner = TestRunner(self.cfg.plugins, stream, result_class)
         abort_message = runner.configure(self.cfg)
         if abort_message:
             raise ExitTest(str(abort_message))
@@ -381,8 +395,6 @@ configuration and plugins.'''
         #When config is available load the tests and check what type of
         #action is required.
         modules = self.cfg.get('modules')
-        if not hasattr(self, 'plugins'):
-            self.plugins = ()
         # Create a runner and configure it
         runner = self.runner
         if not modules:
@@ -441,8 +453,9 @@ configuration and plugins.'''
     @classmethod
     def create_config(cls, *args, **kwargs):
         cfg = super(TestSuite, cls).create_config(*args, **kwargs)
-        plugins = cfg.params.get('plugins') or ()
-        for plugin in plugins:
+        if cfg.params.get('plugins') is None:
+            cfg.params['plugins'] = ()
+        for plugin in cfg.params['plugins']:
             cfg.settings.update(plugin.config.settings)
         return cfg
     

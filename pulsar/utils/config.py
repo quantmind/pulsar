@@ -469,7 +469,8 @@ as base class for other settings.'''
     orig_name = None
 
     def __init__(self, name=None, flags=None, action=None, type=None,
-                 default=None, nargs=None, desc=None, validator=None):
+                 default=None, nargs=None, desc=None, validator=None,
+                 app=None):
         self.default = default if default is not None else self.default
         if self.default is not None:
             self.set(self.default)
@@ -479,6 +480,7 @@ as base class for other settings.'''
         self.nargs = nargs or self.nargs
         self.type = type or self.type
         self.desc = desc or self.desc
+        self.app = app or self.app
         self.short = self.short or self.desc
         self.desc = self.desc or self.short
         if self.app and not self.section:
