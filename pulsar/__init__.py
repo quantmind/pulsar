@@ -49,3 +49,10 @@ platform = system.platform
 from .utils.config import *
 from .async import *
 from .apps import *
+#
+# Import pubsub local backend for commands
+from .apps.pubsub import local
+del local
+# Import tasks local backend for commands
+from .apps.tasks.backends import local
+del local

@@ -60,6 +60,7 @@ class HttpServerResponse(pulsar.ProtocolConsumer):
     _status = None
     _headers_sent = None
     _request_headers = None
+    max_empty_consecutive = 20
     SERVER_SOFTWARE = pulsar.SERVER_SOFTWARE
     
     def __init__(self, wsgi_callable, cfg, connection):
@@ -186,6 +187,7 @@ invocation of the application.
 :ref:`wsgi asynchronous implementation <wsgi-async>`.'''
         exc_info = None
         wsgi_iter = None
+        consecutive_empty = 0
         while True:
             try:
                 if exc_info is None:
@@ -196,6 +198,7 @@ invocation of the application.
                     if head is not None:
                         yield head
                     if b:
+                        consecutive_empty = 0
                         if self.chunked:
                             while len(b) >= MAX_CHUNK_SIZE:
                                 chunk, b = b[:MAX_CHUNK_SIZE], b[MAX_CHUNK_SIZE:]
@@ -205,7 +208,9 @@ invocation of the application.
                         else:
                             yield b
                     else:
-                        yield b''
+                        consecutive_empty += 1
+                        if consecutive_empty <= self.max_empty_consecutive:
+                            yield b''
             except Exception as e:
                 if exc_info or self._headers_sent:
                     self.keep_alive = False

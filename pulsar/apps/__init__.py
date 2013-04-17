@@ -370,11 +370,12 @@ overriding default values with *params*.'''
         else:
             cfg = pulsar.Config(name=name, prefix=prefix)
         for name, value in params.items():
-            if name in cfg:
-                #cfg.set(name, value, default=True)
-                cfg.set(name, value)
-            else:
-                cfg.params[name] = value
+            if value is not None:
+                if name in cfg:
+                    #cfg.set(name, value, default=True)
+                    cfg.set(name, value)
+                else:
+                    cfg.params[name] = value
         return cfg
     
     

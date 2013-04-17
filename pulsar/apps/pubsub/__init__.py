@@ -110,7 +110,7 @@ dictionary with a timestamp and the message and serialise it as json.'''
     
     def __setstate__(self, state):
         super(PubSub, self).__setstate(state)
-        self.backend = _pubsub_backend(self.backend.id, backend=self.backend)
+        self.backend = PubSubBackend.get(self.backend.id, backend=self.backend)
 
 
 class PubSubBackend(pulsar.Backend):
@@ -175,6 +175,8 @@ implemented by subclasses.'''
     @classmethod
     def get(cls, id, actor=None, backend=None):
         actor = actor or get_actor()
+        if not actor:
+            raise RuntimeError('Cannot initialise pubsub when no actor.')
         if 'pubsub' not in actor.params:
             actor.params.pubsub = {}
         be = actor.params.pubsub.get(id)
@@ -182,3 +184,4 @@ implemented by subclasses.'''
             be = backend
             actor.params.pubsub[id] = be
         return be
+    

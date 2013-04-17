@@ -16,7 +16,7 @@ class PubSubBackend(pubsub.PubSubBackend):
 
     The name of :class:`pulsar.Monitor` (application) which broadcast messages
     to its workers.
-''' 
+'''
     def publish(self, channel, message):
         return send(self.name, 'pubsub_publish', self.id, channel, message)
         
@@ -26,7 +26,7 @@ class PubSubBackend(pubsub.PubSubBackend):
     def unsubscribe(self, *channels):
         return send(self.name, 'pubsub_unsubscribe', self.id, *channels)
 
-    
+
 @command()
 def pubsub_publish(request, id, channel, message):
     monitor = request.actor
@@ -107,4 +107,3 @@ def _channels_for_client(monitor, client):
         if client in group:
             c += 1
     return c
-        

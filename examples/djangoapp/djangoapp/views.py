@@ -17,10 +17,19 @@ def home(request):
 class Chat(ws.WS):
     '''The websocket handler (:class:`pulsar.apps.ws.WS`) managing the chat
 application.'''
+    _pubsub = None
+    
+    @property
+    def pubsub(self):
+        if not self._pubsub:
+            self._pubsub = pubsub.PubSub()
+            self._pubsub.subscribe('webchat')
+        return self._pubsub
+            
     def on_open(self, request):
         '''When a new websocket connection is established it add connection
 to the set of clients listening for messages.'''
-        pubsub.add_client(request.cache['websocket'])
+        self.pubsub.add_client(request.cache['websocket'])
         
     def on_message(self, request, msg):
         '''When a new message arrives, it publishes to all listening clients.'''
@@ -38,13 +47,12 @@ to the set of clients listening for messages.'''
                 else:
                     user = 'anonymous'
                 msg = {'message': msg, 'user': user}
-                pubsub.publish(msg)
+                self.pubsub.publish('webchat', msg)
                 
                 
 class middleware(object):
     '''Middleware for serving the Chat websocket'''
     def __init__(self):
-        pubsub.register_handler(pubsub.PulsarPubSub('pulsar_django'))
         self._web_socket = ws.WebSocket('/message', Chat())
         
     def process_request(self, request):
