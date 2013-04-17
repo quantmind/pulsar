@@ -647,26 +647,33 @@ as the number of :class:`Application` required by this :class:`MultiApp`.
 class Backend(LocalMixin):
     '''Base class for backends.
 
-.. attribute:: name
+.. attribute:: scheme
 
-    The name of the :class:`pulsar.apps.Application` which uses this
-    :class:`Backend`.
+    The scheme for this backend (``local``, ``redis``, ``http``, ...).
+    
+.. attribute:: id
+
+    Uniquely define this backend. If not provided a random
+    id is created.
     
 '''
     default_path = '%s'
     
     def __init__(self, scheme, host, name=None, connection_string=None,
-                 **params):
-        self.id = gen_unique_id()
+                  **params):
         self.scheme = scheme
         self.host = host
+        self.name = name or 'arbiter'
         self.connection_string = connection_string
-        self.name = name
         self.params = dict(self.setup(**params) or {})
         
     def setup(self, **params):
         return params
-        
+    
+    @property
+    def id(self):
+        return hash('%s:%s' % (self.__class__.__name__, self.connection_string))
+    
     @classmethod
     def make(cls, backend=None, **kwargs):
         '''Create a new :class:`Backend` from a *backend* connection string
@@ -700,3 +707,4 @@ A redis backend could be::
         except ImportError:
             module = import_module(scheme)
         return getattr(module, cls.__name__)(scheme, address, **params)
+        

@@ -86,15 +86,15 @@ class Rpc(rpc.PulsarServerCommands):
     
 class WebChat(wsgi.LazyWsgi):
     
-    def __init__(self, name):
-        self.name = name
+    def __init__(self):
+        # Create a pubsub handler
+        self.pubsub = PubSub.make()
         
     def setup(self):
         # Create a pubsub handler
-        pubsub = PubSub.make(name=self.name)
         return wsgi.WsgiHandler([wsgi.Router('/', get=self.home_page),
-                                 ws.WebSocket('/message', Chat(pubsub)),
-                                 wsgi.Router('/rpc', post=Rpc(pubsub))])
+                                 ws.WebSocket('/message', Chat(self.pubsub)),
+                                 wsgi.Router('/rpc', post=Rpc(self.pubsub))])
         
     def home_page(self, request):
         data = open(os.path.join(CHAT_DIR, 'chat.html')).read()
@@ -103,10 +103,8 @@ class WebChat(wsgi.LazyWsgi):
         return request.response.start()
 
 
-def server(callable=None, name=None, **kwargs):
-    name = name or 'webchat'
-    chat = WebChat(name)
-    return wsgi.WSGIServer(name=name, callable=chat, **kwargs)
+def server(callable=None, **kwargs):
+    return wsgi.WSGIServer(callable=WebChat(), **kwargs)
 
 
 if __name__ == '__main__':  #pragma nocover

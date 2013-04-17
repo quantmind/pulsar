@@ -16,12 +16,12 @@ class DummyClient:
 class pubsubTest(unittest.TestCase):
     
     @classmethod
-    def backend(cls):
-        return None
+    def backend(cls, id='test'):
+        return 'local://?id=%s' % id
     
-    def pubsub(self):
+    def pubsub(self, id='test'):
         if not hasattr(self, '_pubsub'):
-            self._pubsub = PubSub.make(self.backend())
+            self._pubsub = PubSub.make(self.backend(id))
         return self._pubsub
     
     def tearDown(self):

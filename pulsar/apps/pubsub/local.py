@@ -19,22 +19,19 @@ class PubSub(pubsub.PubSub):
 '''
     def setup(self, **params):
         super(PubSub, self).setup(**params)
-        self.actor = get_actor()
-        pubsub = _get_pubsub(self.actor)
-        if self.id not in pubsub:
-            pubsub[self.id] = self
+        self._set_in_actor()
             
     def publish(self, channel, message):
         message = self.encode(message)
-        return self.actor.send('arbiter', 'publish_message', self.id, channel,
+        return self.actor.send(self.name, 'pubsub_publish', self.id, channel,
                                message)
         
     def subscribe(self, channel, *channels):
-        return self.actor.send('arbiter', 'pubsub_subscribe', self.id, channel,
+        return self.actor.send(self.name, 'pubsub_subscribe', self.id, channel,
                                *channels)
         
     def unsubscribe(self, *channels):
-        return self.actor.send('arbiter', 'pubsub_unsubscribe', self.id,
+        return self.actor.send(self.name, 'pubsub_unsubscribe', self.id,
                                *channels)
         
     def close(self):
@@ -43,9 +40,20 @@ class PubSub(pubsub.PubSub):
         self.actor = None
         return result
 
+    def _set_in_actor(self):
+        self.actor = get_actor()
+        pubsub = _get_pubsub(self.actor)
+        if self.id not in pubsub:
+            pubsub[self.id] = self
+        else:
+            self.local.clients = pubsub[self.id].clients
+    
+    def __setstate__(self, state):
+        super(PubSub, self).__setstate(state)
+        self._set_in_actor()
     
 @command()
-def publish_message(request, id, channel, message):
+def pubsub_publish(request, id, channel, message):
     arbiter = request.actor
     clients = {}
     if not channel or channel == '*':
@@ -61,7 +69,7 @@ def publish_message(request, id, channel, message):
                     clients[aid] = []
                 clients[aid].append(channel)
     for aid, channels in iteritems(clients):
-        arbiter.send(aid, 'broadcast_message', id, channels, message)
+        arbiter.send(aid, 'pubsub_broadcast', id, channels, message)
     return len(clients)
         
 @command()
@@ -87,7 +95,7 @@ def pubsub_unsubscribe(request, id, *channels):
     return u
     
 @command(ack=False)
-def broadcast_message(request, id, channels, message):
+def pubsub_broadcast(request, id, channels, message):
     '''In the actor domain'''
     pubsub = _get_pubsub(request.actor)
     handler = pubsub.get(id)
