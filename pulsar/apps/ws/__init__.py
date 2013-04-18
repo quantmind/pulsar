@@ -102,7 +102,10 @@ class GeneralWebSocket(wsgi.Router):
         return self.handle(self)
     
     def get(self, request):
-        headers, parser = self.handle_handshake(request.environ)
+        headers_parser = self.handle_handshake(request.environ)
+        if not headers_parser:
+            raise HttpException(status=404)
+        headers, parser = headers_parser
         request.response.status_code = 101
         request.response.content = b''
         request.response.headers.update(headers)

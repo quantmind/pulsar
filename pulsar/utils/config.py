@@ -133,13 +133,11 @@ attribute by exposing the :attr:`Setting.name` as attribute.
         self.apps = set(apps or ())
         if settings is None:
             self.update_settings()
-        self.params = params
+        self.params = {}
         self.description = description or 'Pulsar server'
         self.epilog = epilog or 'Have fun!'
         self.version = version or __version__
-        for name in list(params):
-            if name in self.settings:
-                self.set(name, params.pop(name))
+        self.update(params)
         
     def __iter__(self):
         return iter(self.settings)
@@ -172,15 +170,12 @@ attribute by exposing the :attr:`Setting.name` as attribute.
             raise AttributeError("Invalid access!")
         super(Config, self).__setattr__(name, value)
 
-    def update(self, data, strict=False):
-        '''Update the :attr:`settings` with ``data`` which is either an
+    def update(self, data):
+        '''Update this :attr:`Config` with ``data`` which is either an
 instance of Mapping or :class:`Config`.'''
         for name, value in data.items():
-            try:
+            if value is not None:
                 self.set(name, value)
-            except AttributeError:
-                if strict:
-                    raise
             
     def get(self, name, default=None):
         '''Get the value at ``name`` for this :class:`Config` container
@@ -205,8 +200,13 @@ following this algorithm:
 is raised. If ``default`` is ``True``, the :attr:`Setting.default` is
 also set.'''
         if name not in self.settings:
-            raise AttributeError("No configuration setting for: %s" % name)
-        self.settings[name].set(value, default=default)
+            if self.prefix:
+                prefix_name = '%s_%s' % (self.prefix, name)
+                if prefix_name in self.settings:
+                    return # dont set this value
+            self.params[name] = value
+        else:
+            self.settings[name].set(value, default=default)
 
     def parser(self):
         '''Create the argparser_ for this configuration by adding all
@@ -296,22 +296,22 @@ container.'''
             if pn:
                 return pn.get()
         
-    def copy(self, name=None, prefix=None, dont_prefix=None):
+    def copy(self, name=None, prefix=None):
         '''A deep copy of this :class:`Config` container. If *prefix*
 is given, it prefixes all non
 :ref:`global settings <setting-section-global-server-settings>` with it.'''
         cls = self.__class__
         me = cls.__new__(cls)
-        for key, value in iteritems(self.__dict__):
-            if key == 'settings':
-                new_value = {}
-                for setting in value.values():
-                    setting = setting.copy(name, prefix, dont_prefix)
-                    new_value[setting.name] = setting
-                value = new_value
-            elif key == 'params':
-                value = value.copy()
-            me.__dict__[key] = value
+        me.__dict__.update(self.__dict__)
+        if prefix:
+            me.prefix = prefix
+        prefix = me.prefix
+        settings = me.settings
+        me.settings = {}
+        for setting in settings.values():
+            setting = setting.copy(name, prefix)
+            me.settings[setting.name] = setting
+        me.params = me.params.copy()
         return me
     
     def __copy__(self):
@@ -324,7 +324,7 @@ is given, it prefixes all non
     ##    INTERNALS
     def update_settings(self):
         for s in ordered_settings():
-            setting = s()
+            setting = s().copy(name=self.name, prefix=self.prefix)
             if setting.name in self.settings:  
                 continue
             if setting.name not in self.include:
@@ -332,7 +332,6 @@ is given, it prefixes all non
                     continue    # setting name in exclude set
                 if setting.app and setting.app not in self.apps:
                     continue    # the setting is for an app not in the apps set
-            setting = setting.copy(name=self.name, prefix=self.prefix)
             self.settings[setting.name] = setting
     
             
@@ -404,11 +403,10 @@ If *default* is ``True`` set also the :attr:`default` value.'''
 custom initialization for this :class:`Setting`.'''
         pass
     
-    def copy(self, name=None, prefix=None, dont_prefix=None):
+    def copy(self, name=None, prefix=None):
         '''Copy this :class:`SettingBase`'''
         setting = copy.copy(self)
-        dont_prefix = dont_prefix or set()
-        if prefix and not setting.is_global and prefix not in dont_prefix:
+        if prefix and not setting.is_global:
             flags = setting.flags
             if flags and flags[-1].startswith('--'):
                 # Prefixi a setting

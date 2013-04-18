@@ -1,4 +1,4 @@
-'''Tests the rpc middleware and utilities. It uses the calculator example.'''
+'''Tests the pulse Command.'''
 try:
     from examples.djangoapp.djpulsar.management.commands.pulse import Command
 except ImportError:

@@ -83,5 +83,13 @@ class Command(BaseCommand):
             return callable
         callable.setup()
         WSGIServer(callable=callable, cfg=options, parse_console=False,
-                   name='pulsar_django').start()
+                   name=self.app_name()).start()
+                   
+    def app_name(self):
+        '''Used by the test suite to run several applications.'''
+        actor = pulsar.get_actor()
+        name = None
+        if actor:
+            name = actor.params.django_pulsar_name
+        return name or 'pulsar_django'
         

@@ -31,7 +31,11 @@ except ImportError: #pragma nocover
     import sys
     sys.path.append('../../')
     
-if __name__ == "__main__":
+def execute(argv=None):
     os.environ["DJANGO_SETTINGS_MODULE"] = "djangoapp.settings"
     from django.core.management import execute_from_command_line
-    execute_from_command_line(sys.argv)
+    execute_from_command_line(argv or sys.argv)
+    
+    
+if __name__ == "__main__":
+    execute()

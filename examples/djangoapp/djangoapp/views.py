@@ -8,7 +8,7 @@ from pulsar.utils.structures import AttributeDictionary
 
 def home(request):
     return render_to_response('home.html', {
-        'HOST': request.environ['HTTP_HOST']
+        'HOST': request.get_host()
         }, RequestContext(request))
 
 

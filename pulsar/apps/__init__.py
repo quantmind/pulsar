@@ -131,6 +131,7 @@ def arbiter_config(cfg):
                 setting.set(setting.default)
     return cfg 
 
+
 class Worker(Actor):
     '''An :class:`pulsar.Actor` for serving a pulsar :class:`Application`.'''
     def __init__(self, *args, **kwargs):
@@ -367,15 +368,9 @@ overriding default values with *params*.'''
             cfg = cls.cfg.copy(name=name, prefix=prefix)
             # update with latest settings
             cfg.update_settings()
+            cfg.update(params)
         else:
-            cfg = pulsar.Config(name=name, prefix=prefix)
-        for name, value in params.items():
-            if value is not None:
-                if name in cfg:
-                    #cfg.set(name, value, default=True)
-                    cfg.set(name, value)
-                else:
-                    cfg.params[name] = value
+            cfg = pulsar.Config(name=name, prefix=prefix, **params)
         return cfg
     
     
