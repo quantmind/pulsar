@@ -14,7 +14,7 @@ def simple_function(actor):
 
 def wait(actor, period=0.5):
     start = time.time()
-    yield pulsr.async_sleep(period)
+    yield pulsar.async_sleep(period)
     yield time.time() - start
 
 
@@ -127,17 +127,16 @@ class TestTestWorker(unittest.TestCase):
         self.assertTrue(is_failure(future.result[0]))
         
     def test_multiple_execute(self):
-        result1 = send('arbiter', 'run', wait, 1.2)
-        result2 = send('arbiter', 'ping')
-        result3 = send('arbiter', 'echo', 'ciao!')
-        result4 = send('arbiter', 'run', wait, 2.1)
-        result5 = send('arbiter', 'echo', 'ciao again!')
-        yield multi_async((result1, result2, result3, result4, result5))
-        self.assertTrue(result1.result > 1.2)
-        self.assertEqual(result2.result, 'pong')
-        self.assertEqual(result3.result, 'ciao!')
-        self.assertTrue(result4.result > 2.1)
-        self.assertEqual(result5.result, 'ciao again!')
+        m = yield multi_async((send('arbiter', 'run', wait, 1.2),
+                               send('arbiter', 'ping'),
+                               send('arbiter', 'echo', 'ciao!'),
+                               send('arbiter', 'run', wait, 2.1),
+                               send('arbiter', 'echo', 'ciao again!')))
+        self.assertTrue(m[0] > 1.2)
+        self.assertEqual(m[1], 'pong')
+        self.assertEqual(m[2], 'ciao!')
+        self.assertTrue(m[3] > 2.1)
+        self.assertEqual(m[4], 'ciao again!')
         
     def test_tasks(self):
         worker = pulsar.get_actor()

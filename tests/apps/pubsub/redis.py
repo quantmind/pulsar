@@ -23,7 +23,7 @@ class pubsubTest(local.pubsubTest):
         else:
             return cls.cfg.redis_server
         
-    def test_internal_subscribe(self):
+    def __test_internal_subscribe(self):
         p = self.pubsub()
         self.assertFalse(p.backend.consumer)
         result = yield p.subscribe('messages')

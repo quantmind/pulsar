@@ -34,14 +34,20 @@ class PubSubBackend(pubsub.PubSubBackend):
     @async()
     def unsubscribe(self, *channels):
         channels, patterns = self._channel_patterns(channels)
+        c1 = c2 = 0
         if not channels and not patterns:
-            yield self._execute('unsubscribe')
-            yield self._execute('punsubscribe')
+            self._execute('unsubscribe')
+            self._execute('punsubscribe')
+            c1 = yield self._execute('unsubscribe', 'x')
+            c2 = yield self._execute('punsubscribe', 'x')
         else:
             if channels:
-                yield self._execute('unsubscribe', *channels)
+                self._execute('unsubscribe', *channels)
+                c1 = yield self._execute('unsubscribe', channels[0])
             if patterns:
-                yield self._execute('punsubscribe', *patterns)
+                self._execute('punsubscribe', *patterns)
+                c2 = yield self._execute('unsubscribe', patterns[0])
+        yield c1 + c2
             
     @async()
     def close(self):
@@ -86,6 +92,7 @@ class PubSubBackend(pubsub.PubSubBackend):
         elif command == b'subscribe' or command == b'psubscribe':
             response = response[2]
         elif command == b'unsubscribe' or command == b'punsubscribe':
+            print('%s: %s' % (command, response))
             response = response[2]
         return response
             
