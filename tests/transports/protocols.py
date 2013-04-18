@@ -33,7 +33,9 @@ class TestPulsarStreams(unittest.TestCase):
         s = server(name=cls.__name__.lower(), bind='127.0.0.1:0',
                    concurrency=cls.concurrency)
         cls.server = yield pulsar.send('arbiter', 'run', s)
-        cls.client = Echo(cls.server.address, force_sync=True)
+        
+    def client(self, **params):
+        return Echo(self.server.address, **params)
         
     @classmethod
     def tearDownClass(cls):
@@ -46,6 +48,24 @@ class TestPulsarStreams(unittest.TestCase):
         self.assertTrue(app.address)
         self.assertTrue(app.cfg.address)
         self.assertNotEqual(app.address, app.cfg.address)
+        
+    def test_client_first_request(self):
+        client = self.client(full_response=True)
+        self.assertFalse(client.concurrent_connections)
+        self.assertFalse(client.available_connections)
+        response = client.request(b'Test First request')
+        result = yield response.on_finished
+        self.assertEqual(result, b'Test First request')
+        self.assertTrue(response.current_request)
+        self.assertFalse(response.connection)
+        self.assertFalse(client.concurrent_connections)
+        self.assertEqual(client.available_connections, 1)
+        self.assertEqual(response.request_processed, 1)
+        connection = client.get_connection(response.current_request)
+        self.assertEqual(client.concurrent_connections, 1)
+        self.assertFalse(client.available_connections)
+        self.assertEqual(connection.session, 1)
+        self.assertEqual(connection.processed, 1)
         
         
 @dont_run_with_thread

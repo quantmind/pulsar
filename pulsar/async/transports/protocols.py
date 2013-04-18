@@ -58,13 +58,10 @@ It has one :ref:`one time events <one-time-event>`:
   data and a response/exception is available. The :attr:`on_finished`
   is the :class:`Deferred` called back when this event occurs.
 
-and three :ref:`many times events <many-times-event>`:
+and one :ref:`many times events <many-times-event>`:
 
 * ``data_received`` fired each time new data is consumed by
   this :class:`ProtocolConsumer`.
-* ``on_message`` fired once a new, complete, message is available. This event
-  must be fired during the :math:`Protocol.data_received` method by
-  subclasses of the :class:`ProtocolConsumer`
 
 .. attribute:: connection
 
@@ -74,9 +71,17 @@ and three :ref:`many times events <many-times-event>`:
 
     The :class:`Transport` of this consumer
     
-.. attribute:: request
+.. attribute:: current_request
 
-    Optional :class:`Request` instance (used for clients).
+    Current request instance (used for clients only).
+    
+.. attribute:: connecting
+
+    ``True`` if connecting to endpoint (for servers this is always false).
+    
+.. attribute:: producer
+
+    The :class:`Producer` of this consumer.
     
 .. attribute:: on_finished
 
@@ -136,6 +141,11 @@ and three :ref:`many times events <many-times-event>`:
     def producer(self):
         if self._connection:
             return self._connection.producer
+    
+    @property
+    def request_processed(self):
+        '''The number of requests processed by this consumer.'''
+        return self._request_processed
     
     @property
     def on_finished(self):
@@ -258,7 +268,7 @@ and three :ref:`many times events <many-times-event>`:
     
 .. attribute:: processed
 
-    Number of separate requests processed by this connection.
+    Number of separate :class:`ProtocolConsumer` processed by this connection.
     
 .. attribute:: current_consumer
 

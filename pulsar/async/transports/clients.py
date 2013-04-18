@@ -233,11 +233,13 @@ will remain as a class attribute, otherwise it will be an instance attribute.'''
     
     @property
     def concurrent_connections(self):
+        '''Total number of concurrent connections.'''
         return reduce(lambda x,y: x + y, (p.concurrent_connections for p in\
                                           itervalues(self.connection_pools)), 0)
     
     @property
     def available_connections(self):
+        '''Total number of available connections.'''
         return reduce(lambda x,y: x + y, (p.available_connections for p in\
                                           itervalues(self.connection_pools)), 0)
         

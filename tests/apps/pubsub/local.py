@@ -31,7 +31,7 @@ class pubsubTest(unittest.TestCase):
     def tearDown(self):
         for p in self._pubsub:
             p.close()
-
+        
     def test_unsubscribe_all(self):
         p = self.pubsub()
         channels = yield p.subscribe('blaaa.*', 'fooo', 'hhhhhh')
@@ -39,7 +39,6 @@ class pubsubTest(unittest.TestCase):
         channels = yield p.unsubscribe()
         self.assertEqual(channels, 0)
         
-class a:
     def test_unsubscribe(self):
         p = self.pubsub()
         p2 = self.pubsub()

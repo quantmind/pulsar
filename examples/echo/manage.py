@@ -112,8 +112,9 @@ class Echo(pulsar.Client):
     '''Echo client'''
     consumer_factory = EchoProtocol
 
-    def __init__(self, address, **params):
+    def __init__(self, address, full_response=False, **params):
         super(Echo, self).__init__(**params)
+        self.full_response = full_response
         self.address = address
 
     def request(self, message):
@@ -121,7 +122,11 @@ class Echo(pulsar.Client):
 which will be called once the server has sent back its response.'''
         request = pulsar.Request(self.address, self.timeout)
         request.message = message
-        return self.response(request).on_finished.result_or_self()
+        response = self.response(request)
+        if self.full_response:
+            return response
+        else:
+            return response.on_finished.result_or_self()
         
 
 def server(description=None, **kwargs):
