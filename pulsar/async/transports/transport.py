@@ -139,17 +139,21 @@ passed to the :meth:`Protocol.data_received` method."""
     
     ############################################################################
     ###    INTERNALS
-    def _write_lines_async(self, lines):
+    def _write_lines_async(self, lines, empty_consecutive=0):
         try:
             result = next(lines)
             if result == b'':
                 # resume at next loop and switch task
-                self._event_loop.call_soon(self._write_lines_async, lines)
+                empty_consecutive += 1
+                print('empty bytes %s' % empty_consecutive)
+                self._event_loop.call_soon(self._write_lines_async, lines,
+                                           empty_consecutive)
             else:
                 # write bytes and continue to iterate
                 self.write(result)
                 self._write_lines_async(lines)
         except StopIteration:
+            print('Finished')
             pass
         
     
