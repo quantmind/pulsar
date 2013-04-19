@@ -155,7 +155,7 @@ class TestStream(TestResultProxy):
         self.dots = verbosity == 1
 
     def handler(self, name):
-        return self._handlers.get(name, elf.stream)
+        return self._handlers.get(name, self.stream)
 
     def startTest(self, test):
         if self.showAll:

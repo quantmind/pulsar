@@ -18,11 +18,8 @@ except ImportError: #pragma nocover
     import sys
     sys.path.append('../../')
     
-def execute(argv=None):
-    os.environ["DJANGO_SETTINGS_MODULE"] = "chat.settings"
-    from django.core.management import execute_from_command_line
-    execute_from_command_line(argv or sys.argv)
-    
+os.environ["DJANGO_SETTINGS_MODULE"] = "chat.settings"
+from django.core.management import execute_from_command_line
     
 if __name__ == "__main__":
-    execute()
+    execute_from_command_line()

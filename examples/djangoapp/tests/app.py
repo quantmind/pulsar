@@ -13,7 +13,7 @@ except ImportError:
 def start_server(actor, name, argv):
     # we need to make sure djangoapp is in the python path
     actor.params.django_pulsar_name = name
-    manage.execute(argv)
+    manage.execute_from_command_line(argv)
     app = yield get_application(name)
     yield app.event('start')
 
