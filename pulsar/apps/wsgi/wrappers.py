@@ -46,10 +46,7 @@ from .content import HtmlDocument
 from .utils import LOGGER, set_wsgi_request_class, set_cookie, query_dict
 
 
-__all__ = ['WsgiResponse',
-           'WsgiRequest',
-           'PulsarWsgiResponse',
-           'wsgi_cache_property']
+__all__ = ['WsgiResponse', 'WsgiRequest', 'wsgi_cache_property']
 
 MAX_BUFFER_SIZE = 2**16
 
@@ -68,54 +65,8 @@ def wsgi_encoder(gen, encoding):
         else:
             yield data
 
-
-class PulsarWsgiResponse(object):
-    streaming = True
     
-    def has_header(self, header):
-        raise NotImplementedError
-    
-    def __contains__(self, header):
-        return self.has_header(header)
-
-
-class WsgiResponseGenerator(PulsarWsgiResponse):
-    
-    def __init__(self, request, callable):
-        self.request = request
-        self.callable = callable
-        
-    def __iter__(self):
-        request = self.request
-        cache = maybe_async(multi_async(request.cache, raise_on_error=True))
-        while is_async(cache):
-            yield b''
-            cache = maybe_async(cache)
-        if is_failure(cache):
-            cache.raise_all()
-        request.cache.update(cache)
-        for data in self.callable(request):
-            yield data
-            
-    @property
-    def middleware(self):
-        return self.request.response.middleware
-    
-    @property
-    def status_code(self):
-        return self.request.response.status_code
-        
-    def has_header(self, header):
-        return self.request.response.has_header(header)
-    
-    def __setitem__(self, header, value):
-        self.request.response[header] = value
-        
-    def __getitem__(self, header):
-        return self.request.response[header]
-    
-    
-class WsgiResponse(PulsarWsgiResponse):
+class WsgiResponse(object):
     '''A WSGI response wrapper initialized by a
 :ref:`pulsar WSGI application handler <apps-wsgi-handlers>`.
 Instances are callable using the standard WSGI call and, importantly, iterable::
@@ -252,6 +203,9 @@ invoking :attr:`start_response`.'''
 
     def __repr__(self):
         return '%s(%s)' % (self.__class__.__name__, self)
+    
+    def __contains__(self, header):
+        return self.has_header(header)
 
     @property
     def is_streamed(self):

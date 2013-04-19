@@ -60,7 +60,9 @@ It has one :ref:`one time events <one-time-event>`:
 
 and one :ref:`many times events <many-times-event>`:
 
-* ``data_received`` fired each time new data is consumed by
+* ``data_received`` fired each time new data is received by this
+  :class:`ProtocolConsumer` but not yet processed.
+* ``data_processed`` fired each time new data is consumed by
   this :class:`ProtocolConsumer`.
 
 .. attribute:: connection
@@ -92,7 +94,7 @@ and one :ref:`many times events <many-times-event>`:
 
 '''
     ONE_TIME_EVENTS = ('finish',)
-    MANY_TIMES_EVENTS = ('data_received', 'on_message')
+    MANY_TIMES_EVENTS = ('data_received', 'data_processed')
     def __init__(self, connection=None):
         super(ProtocolConsumer, self).__init__()
         self._connection = None
@@ -225,7 +227,9 @@ By default it calls the :meth:`Connection.finished` method of the
         self._data_received_count += 1 
         self._reconnect_retries = 0
         self.fire_event('data_received', data)
-        return self.data_received(data)
+        result = self.data_received(data)
+        self.fire_event('data_processed')
+        return result
         
         
 class Connection(Protocol, TransportProxy):

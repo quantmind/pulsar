@@ -99,11 +99,8 @@ capabilities in some transport mechanisms.
 If *list_of_data* is a **generator**, and during iteration an empty byte is
 yielded, the function will postpone writing the remaining of the generator
 at the next loop in the :attr:`eventloop`."""
-        if isgenerator(list_of_data):
-            self._write_lines_async(list_of_data)
-        else:
-            for data in list_of_data:
-                self.write(data)
+        for data in list_of_data:
+            self.write(data)
     
     def pause(self):
         """A :class:`Transport` can be paused and resumed. Invoking this
@@ -136,25 +133,6 @@ passed to the :meth:`Protocol.data_received` method."""
         called with None as its argument.
         """
         self.close(async=False, exc=exc)
-    
-    ############################################################################
-    ###    INTERNALS
-    def _write_lines_async(self, lines, empty_consecutive=0):
-        try:
-            result = next(lines)
-            if result == b'':
-                # resume at next loop and switch task
-                empty_consecutive += 1
-                print('empty bytes %s' % empty_consecutive)
-                self._event_loop.call_soon(self._write_lines_async, lines,
-                                           empty_consecutive)
-            else:
-                # write bytes and continue to iterate
-                self.write(result)
-                self._write_lines_async(lines)
-        except StopIteration:
-            print('Finished')
-            pass
         
     
 class SocketTransport(Transport):

@@ -7,7 +7,7 @@ admin.autodiscover()
 
 
 urlpatterns = patterns('',
-    url(r'^$', 'djangoapp.views.home'),
+    url(r'^$', 'chat.views.home'),
     url(r'^admin/', include(admin.site.urls))
 )
 

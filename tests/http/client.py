@@ -193,13 +193,18 @@ was passed by the client.'''
         content = response.content_json()
         self.assertTrue(content['gzipped'])
         self.assertTrue(response.headers['content-encoding'], 'gzip')
-        
+
     def test_404_get(self):
         '''Not Found 404'''
         http = self.client()
         response = yield http.get(self.httpbin('status', '404')).on_finished
         self.assertEqual(response.status_code, 404)
         self.assertEqual(response.response, 'Not Found')
+        if self.proxy_app:
+            self.assertTrue(response.headers.has('connection', 'keep-alive'))
+        else:
+            self.assertTrue(response.headers.has('connection', 'close'))
+        self.assertTrue('content-type' in response.headers)
         self.assertTrue(response.get_content())
         self.assertRaises(HTTPError, response.raise_for_status)
         

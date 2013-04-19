@@ -32,6 +32,8 @@ Ver. 0.5.0 - DEVELOPMENT
     * Refactoring of asynchronous :mod:`pulsar.apps.test` application.
     * Added :ref:`Publish/Subscribe application <apps-pubsub>`. The application
       is used in the :ref:`web chat <tutorials-chat>` example.
+    * Added :ref:`django application <apps-pulse>` for running a django_
+      site using pulsar.
     * :func:`pulsar.apps.get_application` returns a :ref:`coroutine <coroutine>`
       so that it can be used in any process domain.
 
@@ -192,3 +194,4 @@ Ver. 0.1.0 - 2011-Aug-24
 .. _pypy: http://pypy.org/
 .. _pep-3156: http://www.python.org/dev/peps/pep-3156/
 .. _http-parser: https://github.com/benoitc/http-parser
+.. _django: https://www.djangoproject.com/

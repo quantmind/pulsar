@@ -1,6 +1,6 @@
 '''Tests the pulse Command.'''
 try:
-    from examples.djangoapp.djpulsar.management.commands.pulse import Command
+    from pulsar.apps.pulse.management.commands.pulse import Command
 except ImportError:
     Command = None
 from pulsar.apps import wsgi

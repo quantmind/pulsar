@@ -9,11 +9,12 @@ import sys
 import time
 import os
 import socket
+from functools import partial
 from wsgiref.handlers import format_date_time
 from io import BytesIO
 
 import pulsar
-from pulsar import lib, HttpException, ProtocolError
+from pulsar import lib, HttpException, ProtocolError, maybe_async, is_async
 from pulsar.utils.pep import is_string, to_bytes, native_str
 from pulsar.utils.httpurl import Headers, unquote, has_empty_content,\
                                  host_and_port_default, Headers, REDIRECT_CODES
@@ -84,8 +85,7 @@ using the :meth:`pulsar.Transport.writelines` method.'''
                 if not done:
                     self.expect_continue()
             if done: # message is done
-                environ = self.wsgi_environ()
-                self.transport.writelines(self.generate(environ))
+                self.generate(self.wsgi_environ())
         else:
             # This is a parsing error, the client must have sent
             # bogus data
@@ -174,78 +174,77 @@ invocation of the application.
             self.headers.add_header(header, value)
         return self.write
 
-    def write(self, data):
+    def write(self, data, force=False):
         '''The write function required by WSGI specification.'''
-        head = self.send_headers(force=data)
-        if head:
-            self.transport.write(head)
+        if not self._headers_sent:
+            tosend = self.get_headers()
+            events.fire('http-headers', self, headers=tosend)
+            self._headers_sent = tosend.flat(self.version, self.status)
+            self.transport.write(self._headers_sent)
         if data:
-            self.transport.write(data)
-
-    def generate(self, environ):
-        '''Generator of response bytestrings conforming with the
-:ref:`wsgi asynchronous implementation <wsgi-async>`.'''
-        exc_info = None
-        wsgi_iter = None
-        consecutive_empty = 0
-        while True:
-            try:
-                if exc_info is None:
-                    wsgi_iter = self.wsgi_callable(environ, self.start_response)
-                    iterable = wsgi_iter
-                for b in iterable:
-                    head = self.send_headers(force=b)
-                    if head is not None:
-                        yield head
-                    if b:
-                        consecutive_empty = 0
-                        if self.chunked:
-                            while len(b) >= MAX_CHUNK_SIZE:
-                                chunk, b = b[:MAX_CHUNK_SIZE], b[MAX_CHUNK_SIZE:]
-                                yield chunk_encoding(chunk)
-                            if b:
-                                yield chunk_encoding(b)
-                        else:
-                            yield b
-                    else:
-                        consecutive_empty += 1
-                        if consecutive_empty <= self.max_empty_consecutive:
-                            yield b''
-            except Exception as e:
-                if exc_info or self._headers_sent:
-                    self.keep_alive = False
-                    LOGGER.critical('Could not send valid response',
-                                    exc_info=True)
-                    break
-                else:
-                    exc_info = sys.exc_info()
-                    response = handle_wsgi_error(environ, exc_info)
-                    if response.status_code not in REDIRECT_CODES:
-                        self.keep_alive = False
-                    iterable = response(environ, self.start_response, exc_info)
+            if self.chunked:
+                while len(data) >= MAX_CHUNK_SIZE:
+                    chunk, data = data[:MAX_CHUNK_SIZE], data[MAX_CHUNK_SIZE:]
+                    self.transport.write(chunk_encoding(chunk))
+                if data:
+                    self.transport.write(chunk_encoding(data))
             else:
-                head = self.send_headers(force=True)
-                if head is not None:
-                    yield head
-                if self.chunked:
-                    # Last chunk
-                    yield chunk_encoding(b'')
-                break
-        # close transport if required
-        # If the iterable returned by the application has a close() method,
-        # the server or gateway must call that method upon completion of the
-        # current request, whether the request was completed normally, or
-        # terminated early due to an application error during iteration or
-        # an early disconnect of the browser. (The close() method requirement
-        # is to support resource release by the application. This protocol is
-        # intended to complement PEP 342's generator support, and other common
-        # iterables with close() methods.)
-        if hasattr(wsgi_iter, 'close'):
-            wsgi_iter.close()
+                self.transport.write(data)
+        elif force and self.chunked:
+            self.transport.write(chunk_encoding(data))
+
+    def generate(self, environ, failure=None):
+        try:
+            if failure:
+                # A failure has occurred, try to handle it with the default
+                # wsgi error handler
+                wsgi_iter = self.handle_wsgi_error(environ, failure)
+            else:
+                wsgi_iter = self.wsgi_callable(environ, self.start_response)
+        except Exception:
+            result = sys.exc_info()
+        else:
+            result = self.async_wsgi(wsgi_iter)
+        result = maybe_async(result, get_result=False)
+        err_handler = self.catastrofic_failure if failure else self.generate
+        result.add_errback(partial(err_handler, environ))
+        
+    def async_wsgi(self, wsgi_iter):
+        '''Asynchronous WSGI server handler. Fully conforms with `WSGI 1.0.1`_
+when the ``wsgi_iter`` yields bytes only.'''
+        if is_async(wsgi_iter):
+            wsgi_iter = yield wsgi_iter 
+        try:
+            for b in wsgi_iter:
+                chunk = yield b # handle asynchronous components
+                self.write(chunk)
+            # make sure we write headers
+            self.write(b'', True)
+        finally:
+            if hasattr(wsgi_iter, 'close'):
+                try:
+                    wsgi_iter.close()
+                except Exception:
+                    LOGGER.exception('Error while closing wsgi iterator')
+        self.finish_wsgi()
+        
+    def handle_wsgi_error(self, environ, failure):
+        response = handle_wsgi_error(environ, failure.trace)
+        if response.status_code not in REDIRECT_CODES:
+            self.keep_alive = False
+        return response(environ, self.start_response, failure.trace)
+        
+    def catastrofic_failure(self, environ, failure):
+        self.keep_alive = False
+        self.start_response(500, [], failure.trace)
+        self.write(b'', True)
+        self.finish_wsgi()
+        
+    def finish_wsgi(self):
         if not self.keep_alive:
             self.connection.close()
         self.finished()
-
+            
     def is_chunked(self):
         '''Only use chunked responses when the client is
 speaking HTTP/1.1 or newer and there was no Content-Length header set.'''
@@ -260,31 +259,22 @@ speaking HTTP/1.1 or newer and there was no Content-Length header set.'''
         else:
             return self.content_length is None
 
-    def get_headers(self, force=False):
+    def get_headers(self):
         '''Get the headers to send only if *force* is ``True`` or this
 is an HTTP upgrade (websockets)'''
-        if self.upgrade or force:
-            if not self._status:
-                # we are sending headers but the start_response was not called
-                raise HttpException('Headers not set.')
-            headers = self.headers
-            # Set chunked header if needed
-            if self.is_chunked():
-                headers['Transfer-Encoding'] = 'chunked'
-                headers.pop('content-length', None)
-            else:
-                headers.pop('Transfer-Encoding', None)
-            if not self.keep_alive:
-                headers['connection'] = 'close'
-            return headers
-
-    def send_headers(self, force=False):
-        if not self._headers_sent:
-            tosend = self.get_headers(force)
-            if tosend:
-                events.fire('http-headers', self, headers=tosend)
-                self._headers_sent = tosend.flat(self.version, self.status)
-                return self._headers_sent
+        if not self._status:
+            # we are sending headers but the start_response was not called
+            raise HttpException('Headers not set.')
+        headers = self.headers
+        # Set chunked header if needed
+        if self.is_chunked():
+            headers['Transfer-Encoding'] = 'chunked'
+            headers.pop('content-length', None)
+        else:
+            headers.pop('Transfer-Encoding', None)
+        if not self.keep_alive:
+            headers['connection'] = 'close'
+        return headers
 
     def wsgi_environ(self):
         #return a the WSGI environ dictionary

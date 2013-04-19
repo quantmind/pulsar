@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -
 import pulsar
-from pulsar.apps.wsgi import WSGIServer, LazyWsgi, WsgiRequest, PulsarWsgiResponse
+from pulsar.apps.wsgi import WSGIServer, LazyWsgi, WsgiRequest, WsgiResponse
 
 from django import http
 from django.core import signals
@@ -27,7 +27,7 @@ class DjangoWSGIHandler(WSGIHandler):
                 raise
                 
     def __call__(self, environ, start_response):
-        r = WsgiRequest(environ, start_response)
+        WsgiRequest(environ, start_response)
         set_script_prefix(base.get_script_name(environ))
         signals.request_started.send(sender=self.__class__)
         try:
@@ -44,7 +44,7 @@ class DjangoWSGIHandler(WSGIHandler):
             response = self.get_response(request)
         
         # Pulsar response return it
-        if isinstance(response, PulsarWsgiResponse):
+        if isinstance(response, WsgiResponse):
             return response
         
         response._handler_class = self.__class__

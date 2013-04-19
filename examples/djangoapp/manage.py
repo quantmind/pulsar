@@ -10,19 +10,6 @@ If running for the first time, issue the::
     python manage.py syncdb
 
 command first and create the super user.
-
-The example defines two django applications:
-
-* :ref:`djpulsar <djpulsar>` which implements the django ``pulse`` command.
-* ``djangoapp`` which runs the actual example. 
-
-
-.. _djpulsar:
-
-djpulsar app
-========================
-
-.. automodule:: examples.djangoapp.djpulsar
 '''
 import os, sys
 try:
@@ -32,7 +19,7 @@ except ImportError: #pragma nocover
     sys.path.append('../../')
     
 def execute(argv=None):
-    os.environ["DJANGO_SETTINGS_MODULE"] = "djangoapp.settings"
+    os.environ["DJANGO_SETTINGS_MODULE"] = "chat.settings"
     from django.core.management import execute_from_command_line
     execute_from_command_line(argv or sys.argv)
     

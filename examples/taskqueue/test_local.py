@@ -268,6 +268,6 @@ class TestTaskQueueOnThread(TaskQueueBase, unittest.TestCase):
             self.assertTrue(r)
 
 
-@dont_run_with_thread
-class TestTaskQueueOnProcess(TestTaskQueueOnThread):
-    concurrency = 'process'
+#@dont_run_with_thread
+#class TestTaskQueueOnProcess(TestTaskQueueOnThread):
+#    concurrency = 'process'

@@ -32,12 +32,14 @@ Implemenation
 '''
 import io
 import sys
+from collections import deque
+
 try:
     import pulsar
 except ImportError:
     sys.path.append('../../')
 
-from pulsar import HttpException
+from pulsar import Deferred, HttpException
 from pulsar.apps import wsgi, http
 from pulsar.utils.httpurl import Headers
 from pulsar.utils.log import LocalMixin, local_property
@@ -79,29 +81,13 @@ An headers middleware is a callable which accepts two parameters, the wsgi
         request_headers = self.request_headers(environ)
         method = environ['REQUEST_METHOD']
         stream = environ.get('wsgi.input') or io.BytesIO()
+        wsgi_response = ProxyResponse(start_response)
         response = self.http_client.request(method, uri,
                                             data=stream.getvalue(),
                                             headers=request_headers,
                                             version=environ['SERVER_PROTOCOL'])
-        for data in self.generate(environ, start_response, response):
-            try:
-                response.on_finished.raise_all()
-            except Exception as e:
-                raise HttpException(e, 504)
-            else:
-                yield data
-        
-    def generate(self, environ, start_response, response):
-        '''Generate response asynchronously'''
-        while response.parser is None or not response.parser.is_headers_complete():
-            yield b''   # response headers not yet available
-        headers = Headers(self.remove_hop_headers(response.headers), kind='server')
-        start_response(response.status, list(headers))
-        while not response.parser.is_message_complete():
-            yield response.recv_body()
-        body = response.recv_body()
-        if body:
-            yield body
+        response.bind_event('data_processed', wsgi_response)
+        return wsgi_response
     
     def request_headers(self, environ):
         '''Fill request headers from the environ dictionary and
@@ -120,12 +106,73 @@ The returned headers will be sent to the target uri.'''
         for middleware in self.headers_middleware:
             middleware(environ, headers)
         return headers
+
+
+class Queue:
+    
+    def __init__(self):
+        self._futures_in = deque()
+        self._futures_out = deque()
         
+    def size(self):
+        return len(self._futures_out)
+    
+    def put(self, result):
+        '''Put a result in the queue.'''
+        future = self._futures_in.popleft()
+        future.callback(result)
+        
+    def get(self):
+        '''get a future from the queue.'''
+        return self._futures_out.popleft()
+        
+    def add(self):
+        '''Add a future to the queue'''
+        future = Deferred()
+        self._futures_in.append(future)
+        self._futures_out.append(future)
+        
+    
+class ProxyResponse(object):
+    '''Asynchronous wsgi response.'''
+    def __init__(self, start_response):
+        self.start_response = start_response
+        self.headers = None
+        self.futures = Queue()
+        self.futures.add()
+        
+    def __iter__(self):
+        while self.futures.size():
+            yield self.futures.get()
+            
+    def __call__(self, response):
+        try:
+            result = self._body(response)
+        except Exception:
+            result = sys.exc_info()
+        if result is not None:
+            if not response.parser.is_message_complete():
+                self.futures.add()
+            self.futures.put(result)
+        
+    def _body(self, response):
+        try:
+            response.on_finished.raise_all()
+        except Exception as e:
+            raise HttpException(e, 504)
+        if response.parser.is_headers_complete():
+            if self.headers is None:
+                headers = self.remove_hop_headers(response.headers)
+                self.headers = Headers(headers, kind='server')
+                # start the response
+                self.start_response(response.status, list(self.headers))
+            return response.recv_body()
+    
     def remove_hop_headers(self, headers):
         for header, value in headers:
             if header.lower() not in wsgi.HOP_HEADERS:
                 yield header, value
-                    
+                
 
 def server(name='proxy-server', headers_middleware=None, **kwargs):
     if headers_middleware is None:

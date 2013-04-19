@@ -121,8 +121,12 @@ def default_maybe_async(val, get_result=True, **kwargs):
         return val.result_or_self() if get_result else val
     elif is_async(val):
         return val.result_or_self() if get_result else val
-    else:
+    elif get_result:
         return maybe_failure(val)
+    else:
+        d = Deferred()
+        d.callback(val)
+        return d
     
 def maybe_async(value, description=None, event_loop=None, max_errors=1,
                 timeout=None, get_result=True):
@@ -543,6 +547,7 @@ the result is a :class:`Failure`'''
     def _cancel(self, msg):
         return self.callback(CancelledError(msg))
     
+    
 class EventHandler(object):
     '''A Mixin for handling one time events and events that occur several
 times. This mixin is used in :class:`Protocol` and :class:`Producer`
@@ -659,31 +664,26 @@ function when a generator is passed as argument.'''
         super(Task, self).__init__(event_loop=event_loop, **kwargs)
         self._consume(None)
     
-    def _consume(self, last_result):
-        if self.done():
-            # if the deferred has received a callback (a cancellation) stop
-            # consuming data
-            return
-        if is_failure(last_result):
-            if not self.errors:
-                self.errors = last_result
-            elif last_result is not self.errors:
-                self.errors.append(last_result)
-            if self.max_errors and len(self.errors) >= self.max_errors:
-                return self._conclude(last_result)
-        try:
-            result = self.gen.send(last_result)
-        except StopIteration:
-            return self._conclude(last_result)
-        except Exception:
-            result = sys.exc_info()
-        result = maybe_async(result, event_loop=self.event_loop)
-        if is_async(result):
-            result.add_both(self._restart)
-        elif result == NOT_DONE:
-            self.event_loop.call_soon(self._consume, None)
-        else:
-            self._consume(result)
+    def _consume(self, result):
+        while not self.done():
+            if is_failure(result):
+                if not self.errors:
+                    self.errors = result
+                elif result is not self.errors:
+                    self.errors.append(result)
+                if self.max_errors and len(self.errors) >= self.max_errors:
+                    return self._conclude(result)
+            try:
+                result = self.gen.send(result)
+            except StopIteration:
+                return self._conclude(result)
+            except Exception:
+                result = sys.exc_info()
+            result = maybe_async(result, event_loop=self.event_loop)
+            if is_async(result):
+                return result.add_both(self._restart)
+            elif result == NOT_DONE:
+                return self.event_loop.call_soon(self._consume, None)
 
     def _restart(self, result):
         #restart the coroutine
@@ -692,12 +692,12 @@ function when a generator is passed as argument.'''
         # the passed result (which is not asynchronous).
         return result
     
-    def _conclude(self, last_result):
+    def _conclude(self, result):
         # Conclude the generator and callback the listeners
         self.gen.close()
         del self.gen
         del self.errors
-        return self.callback(last_result)
+        return self.callback(result)
     
     def _cancel(self, msg):
         return self._conclude(CancelledError(msg))

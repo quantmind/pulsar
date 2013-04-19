@@ -279,7 +279,7 @@ start the response.
         # start the request
         consumer.new_request(request)
         event_loop = self.get_event_loop()
-        if self.force_sync:
+        if self.force_sync: # synchronous response
             event_loop.run_until_complete(consumer.on_finished)
         return consumer
     

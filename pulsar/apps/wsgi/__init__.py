@@ -1,7 +1,7 @@
 """This is the most important :ref:`pulsar application <application-api>`.
 The server is a specialized :class:`pulsar.apps.socket.SocketServer` class
 for serving web applications conforming with the python web server
-gateway interface (WSGI_).
+gateway interface (`WSGI 1.0.1`_).
 The server can be used in conjunction with several web frameworks
 as well as :ref:`pulsar wsgi application handlers <apps-wsgi-handlers>`,
 the :ref:`pulsar RPC middleware <apps-rpc>` and
@@ -35,81 +35,19 @@ For available run options::
 
 .. _wsgi-async:
 
-WSGI asynchronous implementation
+Asynchronous handlers
 =======================================
-When dealing with asynchronous :ref:`application handlers <apps-wsgi-handlers>`,
-the WSGI_ specification has one main issue: it requires the application
-to invoke the ``start_response`` callable before the iterable it returns
-yields its first body bytestring.
-This is the case even if the bytestring it yields is empty.
+Asynchronous :ref:`application handlers <apps-wsgi-handlers>` must conform
+with the standard WSGI specification with only one exception: the
+iterable they return can yield :class:`pulsar.Deferred` which result in
+bytes. The server handle them using a :class:`pulsar.Task`::
 
-If an application handler returns an asynchronous object
-(a :class:`pulsar.Deferred` instance), the response headers are not yet known,
-therefore calling ``start_response`` is not an option (``start_response`` can be
-called once only, unless is communicating an exception).
-
-
-Lets consider the following example::
-
-    from pulsar import is_async
+    for data in wsgi_iterable:
+        data = yield data    # handle a possible asynchronous data
+        write(data)        # at this point data must be bytes
     
-    def async_middleware(middleware):
-        # A decorator for asynchronous middlewares
-        def _(environ, start_response):
-            response = middleware(environ, start_response)
-            if is_async(response):
-                response = response.result if response.called else response
-                while is_async(response):
-                    # the response is not yet ready!
-                    # yield and empty bytestring
-                    yield b''
-                    response = response.result if response.called else response
-                if is_failure(response):
-                    response.raise_all()
-            # the response is ready!
-            start_response(environ, response.headers)
-            for data in response:
-                yield data
-        return _
-        
-    @async_middleware
-    def create_response(environ, start_response):
-        #Return an iterable over bytestrings
-        ...
-        
-If the response is asynchronous, the above middleware does not, fully,
-conform with WSGI. If, on the other hand, the response is synchronous than
-the ``start_response`` method is called before any bytestring is yielded
-and WSGI is fully satisfied.
-
-Therefore the ``async_middleware`` decorator fully conforms with WSGI when using
-standard synchronous handlers, and switches to a non-conforming version when
-the application handler returns asynchronous responses.
-This is the WSGI specification pulsar uses and it
-implements in the :class:`server.HttpServerResponse` protocol.
-
-**Yielding empty bytes**
-
-When the application middleware yields an empty byte, pulsar wsgi server pauses
-to consume the generator and add a callback to the :class:`pulsar.EventLoop`
-running the current :class:`pulsar.Actor` to resume the iteration at the
-next :class:`pulsar.EventLoop` loop.
-This is implemented in the :meth:`pulsar.Transport.writelines` method when
-called with a generator as parameter::
-
-    def _write_lines_async(self, lines):
-        try:
-            result = next(lines)
-            if result == b'':
-                # stop writing and resume at next loop
-                self._event_loop.call_soon(self._write_lines_async, lines)
-            else:
-                self.write(result)
-                self._write_lines_async(lines)
-        except StopIteration:
-            pass
-
-
+If the iterable returns strictly synchronous data, the above pseudo-code
+is full compliant with `WSGI 1.0.1`_.
 
 WSGI Server
 ===================
@@ -119,8 +57,7 @@ WSGI Server
    :member-order: bysource
    
    
-.. _pep3333: http://www.python.org/dev/peps/pep-3333/
-.. _WSGI: http://www.wsgi.org
+.. _`WSGI 1.0.1`: http://www.python.org/dev/peps/pep-3333/
 """
 from functools import partial
 

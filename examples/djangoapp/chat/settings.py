@@ -60,7 +60,7 @@ MIDDLEWARE_CLASSES = (
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
-    'djangoapp.views.middleware'
+    'chat.views.middleware'
 )
 
 TEMPLATE_CONTEXT_PROCESSORS = (
@@ -76,7 +76,7 @@ FILE_UPLOAD_HANDLERS = (
         "django.core.files.uploadhandler.TemporaryFileUploadHandler",
 )
 
-ROOT_URLCONF = 'djangoapp.urls'
+ROOT_URLCONF = 'chat.urls'
 
 TEMPLATE_DIRS = ()
 
@@ -88,8 +88,8 @@ INSTALLED_APPS = (
     'django.contrib.sites',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'djangoapp',
-    'djpulsar'
+    'pulsar.apps.pulse',
+    'chat',
 )
 
 LOGGING = {

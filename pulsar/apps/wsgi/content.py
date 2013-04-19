@@ -127,7 +127,11 @@ otherwise a RuntimeError occurs.'''
 :class:`AsyncString` has its result ready. Once ready it sets its value as the
 content of a :class:`WsgiResponse`'''
         body = self.content(request)
-        return self._generate_response(body, request.response)
+        body = maybe_async(body)
+        if is_async(body):
+            return body.add_callback(partial(self._http_response, request))
+        else:
+            return self._http_response(request, body)
     
     def append(self, child):
         # make sure that child is not in child
@@ -146,17 +150,12 @@ content of a :class:`WsgiResponse`'''
         except ValueError:
             pass
     
-    def _generate_response(self, body, response):
-        body = maybe_async(body)
-        while is_async(body):
-            yield b''
-            body = maybe_async(body)
-        if is_failure(body):
-            body.raise_all()
+    def _http_response(self, request, body):
+        response = request.response
         response.content_type = self.content_type
         response.content = body
-        for data in response.start():
-            yield data
+        response.start()
+        return response
     
     def render(self, request=None):
         '''A shortcut function for synchronously rendering a Content.
