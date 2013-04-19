@@ -487,7 +487,8 @@ and key-valued arguments *kwargs*.'''
         yield None
         
     def wait_for_task(self, task_id):
-        '''Asynchronously wait for a task to have finish its execution.'''
+        '''Asynchronously wait for a task to have finish its execution. It
+returns an `asynchronous component <tutorials-coroutine>`_'''
         return self.get_task(task_id, when_done=True)
         
     @async()

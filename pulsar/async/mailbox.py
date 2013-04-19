@@ -179,7 +179,8 @@ protocol.'''
             try:
                 target = actor.get_actor(message['target'])
                 if target is None:
-                    raise CommandError('unknown actor %s' % message['target'])
+                    raise CommandError('Cannot execute "%s" in %s. Unknown '
+                            'actor %s' % (command, actor, message['target']))
                 caller = get_proxy(actor.get_actor(message['sender']), safe=True)
                 if isinstance(target, ActorProxy):
                     # route the message to the actor proxy

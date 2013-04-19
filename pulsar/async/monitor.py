@@ -100,6 +100,7 @@ during its life time.
             self.stop(sys.exc_info())
     
     def get_actor(self, aid):
+        aid = getattr(aid, 'aid', aid)
         if aid == self.aid:
             return self
         elif aid in self.managed_actors:

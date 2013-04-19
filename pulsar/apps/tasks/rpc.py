@@ -108,8 +108,7 @@ available tasks call the "job_list" function. It returns the task id.'''
             self._task_backend = app.backend
         yield self._task_backend
         
-    def run_new_task(self, request, jobname, args=None,
-                     ack=True, meta_data=None, **kw):
+    def run_new_task(self, request, jobname, args=None, meta_data=None, **kw):
         if not jobname:
             raise rpc.InvalidParams('"jobname" is not specified!')
         meta_data = meta_data or {}

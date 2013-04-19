@@ -89,29 +89,25 @@ class TestActorThread(ActorTestMixin, unittest.TestCase):
         self.assertTrue('actor' in info)
         ainfo = info['actor']
         self.assertEqual(ainfo['is_process'], self.concurrency=='process')
-      
-        
-class a:
 
     @run_on_arbiter
     def testSimpleSpawn(self):
         '''Test start and stop for a standard actor on the arbiter domain.'''
-        yield self.spawn()
-        proxy = self.a
+        proxy = yield self.spawn()
         arbiter = pulsar.get_actor()
         proxy_monitor = arbiter.get_actor(proxy.aid)
-        self.assertEqual(proxy_monitor.aid, proxy.aid)
-        self.assertEqual(proxy_monitor.address, proxy.address)
+        self.assertEqual(proxy_monitor, proxy)
         yield self.async.assertEqual(send(proxy, 'ping'), 'pong')
-        yield self.async.assertEqual(send(proxy, 'echo', 'Hello!'), 'Hello!')
+        yield self.async.assertEqual(send(proxy.proxy, 'echo', 'Hello!'), 'Hello!')
         # We call the ActorTestMixin.stop_actors method here, since the
         # ActorTestMixin.tearDown method is invoked on the test-worker domain
         # (here we are in the arbiter domain)
-        yield self.stop_actors(self.a)
+        yield self.stop_actors(proxy)
         # lets join the
         proxy_monitor.join(0.5)
         self.assertFalse(proxy_monitor.is_alive())
         
+class a:
     @run_on_arbiter
     def testDodgyActor(self):
         queue = Queue()
@@ -143,7 +139,7 @@ class a:
         self.assertFalse(proxy.is_alive())
         
 
-#@dont_run_with_thread
-#class TestActorProcess(TestActorThread):
-#    impl = 'process'        
+@dont_run_with_thread
+class TestActorProcess(TestActorThread):
+    concurrency = 'process'        
 

@@ -58,7 +58,9 @@ class TaskQueueBase(object):
         
         
 class TestTaskQueueMeta(TaskQueueBase, unittest.TestCase):
+    pass
 
+class a:
     def test_meta(self):
         '''Tests meta attributes of taskqueue'''
         app = yield get_application(self.name())
@@ -126,6 +128,9 @@ class TestTaskQueueOnThread(TaskQueueBase, unittest.TestCase):
     def _test_not_overlap(self):
         sec = 2 + random()
         app = yield get_application(self.name())
+        self.assertEqual(app.name, app.backend.name)
+        app = yield get_application(self.name())
+        self.assertEqual(app.name, app.backend.name)
         self.assertTrue('notoverlap' in app.backend.registry)
         r1 = yield app.backend.run('notoverlap', sec)
         self.assertTrue(r1)
@@ -135,14 +140,14 @@ class TestTaskQueueOnThread(TaskQueueBase, unittest.TestCase):
         r1 = yield app.backend.wait_for_task(r1)
         self.assertEqual(r1.status, tasks.SUCCESS)
         self.assertTrue(r1.result > sec)
-        
+    
     def test_not_overlap(self):
         return self._test_not_overlap()
-        
+
     @run_on_arbiter
     def test_not_overlap_on_arbiter(self):
         return self._test_not_overlap()
-      
+          
     def test_rpc_job_list(self):
         jobs = yield self.proxy.job_list()
         self.assertTrue(jobs)

@@ -185,6 +185,21 @@ class Job(JobMetaClass('JobBase', (object,), {'abstract': True})):
 implemented by subclasses.'''
         raise NotImplementedError("Jobs must define the run method.")
 
+    def run_job(self, consumer, jobname, *args, **kwargs):
+        '''Send a new task request to the task queue from within another
+:class:`Task`. This allows tasks to act as tasks factories.
+
+:parameter consumer: The :class:`TaskConsumer` handling the :class:`Task`.
+:parameter jobname: The name of the :class:`Job` to run.
+:parameter args: positional argument for the :ref:`job callable <job-callable>`.
+:parameter kwargs: key-valued parameters for the
+    :ref:`job callable <job-callable>`.
+:rtype: A :class:`pulsar.ActorMessage` if **ack=True** was passed in the
+    key-valued parameters, otherwise nothing.
+'''
+        kwargs['from_task'] = consumer.task_id
+        return consumer.backend.run_job(jobname, args, kwargs)
+
     def make_task_id(self, args, kwargs):
         '''Get the task unique identifier.
 This can be overridden by Job implementation.
@@ -210,25 +225,7 @@ Called by the :attr:`TaskQueue.scheduler` when creating a new task.
                             for k in sorted(kwargs)))
             name = '%s%s' % (self.name, suffix)
             return sha1(name.encode('utf-8')).hexdigest()[:8]
-
-    def run_job(self, consumer, jobname, *args, **kwargs):
-        '''Send a new task request to the :class:`TaskQueue`
-from within another :class:`Task`.
-This allows tasks to act as tasks factories.
-
-:parameter consumer: The :class:`TaskConsumer` handling the :class:`Task`.
-:parameter jobname: The name of the :class:`Job` to run.
-:parameter args: positional argument for the :ref:`job callable <job-callable>`.
-:parameter kwargs: key-valued parameters for the
-    :ref:`job callable <job-callable>`.
-:rtype: A :class:`pulsar.ActorMessage` if **ack=True** was passed in the
-    key-valued parameters, otherwise nothing.
-'''
-        ack = kwargs.pop('ack', False)
-        kwargs['from_task'] = consumer.task_id
-        res = consumer.backend.run_job(jobname, args, kwargs)
-        return res if ack else None
-
+        
 
 class PeriodicJob(Job):
     '''A periodic :class:`Job` implementation.'''
