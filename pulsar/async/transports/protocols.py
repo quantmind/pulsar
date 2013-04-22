@@ -4,7 +4,7 @@ from functools import partial
 
 from pulsar import ProtocolError
 from pulsar.utils.sockets import nice_address
-from pulsar.async.defer import EventHandler
+from pulsar.async.defer import EventHandler, NOTHING
 
 from .transport import TransportProxy, Connector, LOGGER
 
@@ -192,7 +192,7 @@ by client consumers only.'''
             clone.finished()
             return clone
         
-    def finished(self, result=None):
+    def finished(self, result=NOTHING):
         '''Call this method when done with this :class:`ProtocolConsumer`.
 By default it calls the :meth:`Connection.finished` method of the
 :attr:`connection` attribute.'''
@@ -383,7 +383,7 @@ specification changes during a response (an example is a WebSocket
 response).'''
         self._consumer_factory = consumer_factory
         
-    def finished(self, consumer, result=None):
+    def finished(self, consumer, result=NOTHING):
         '''Call this method to finish with the the current *consumer*.
 the *consumer* must be the same as the :attr:`current_consumer` attribute.'''
         if consumer and consumer is self._current_consumer:

@@ -420,6 +420,7 @@ and key-valued arguments *kwargs*.'''
                     expiry = get_datetime(expiry, time_executed)
                 elif job.timeout:
                     expiry = get_datetime(job.timeout, time_executed)
+                LOGGER.debug('Queue new task %s (%s).', job.name, task_id)
                 yield self.save_task(task_id, name=job.name,
                                      time_executed=time_executed,
                                      expiry=expiry, args=targs, kwargs=tkwargs,

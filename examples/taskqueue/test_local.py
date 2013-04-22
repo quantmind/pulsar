@@ -145,7 +145,7 @@ class TestTaskQueueOnThread(TaskQueueBase, unittest.TestCase):
         return self._test_not_overlap()
 
     @run_on_arbiter
-    def test_not_overlap_on_arbiter(self):
+    def __test_not_overlap_on_arbiter(self):
         return self._test_not_overlap()
           
     def test_rpc_job_list(self):
