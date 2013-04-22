@@ -23,11 +23,11 @@ class pubsubTest(local.pubsubTest):
         else:
             return cls.cfg.redis_server
         
-    def __test_internal_subscribe(self):
+    def test_internal_subscribe(self):
         p = self.pubsub()
-        self.assertFalse(p.backend.consumer)
+        self.assertFalse(p.backend.redis.consumer)
         result = yield p.subscribe('messages')
-        self.assertTrue(p.backend.consumer)
+        self.assertTrue(p.backend.redis.consumer)
         result = yield p.subscribe('foo')
         clients = yield p.publish('messages', 'Hello world!')
         self.assertTrue(clients)

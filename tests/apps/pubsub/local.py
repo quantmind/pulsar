@@ -32,33 +32,6 @@ class pubsubTest(unittest.TestCase):
         for p in self._pubsub:
             p.close()
         
-    def test_unsubscribe_all(self):
-        p = self.pubsub()
-        channels = yield p.subscribe('blaaa.*', 'fooo', 'hhhhhh')
-        self.assertEqual(channels, 3)
-        channels = yield p.unsubscribe()
-        self.assertEqual(channels, 0)
-        
-    def test_unsubscribe(self):
-        p = self.pubsub()
-        p2 = self.pubsub()
-        channels = yield p.subscribe('blaaa.*', 'fooo', 'hhhhhh')
-        self.assertEqual(channels, 3)
-        channels = yield p2.subscribe('hhhhhh')
-        self.assertEqual(channels, 1)
-        #
-        # Now unsubscribe
-        channels = yield p.unsubscribe('blaaa.*')
-        self.assertEqual(channels, 2)
-        channels = yield p.unsubscribe('blaaa.*')
-        self.assertEqual(channels, 2)
-        channels = yield p.unsubscribe()
-        self.assertEqual(channels, 0)
-        channels = yield p2.unsubscribe('blaaanskjnk')
-        self.assertEqual(channels, 1)
-        channels = yield p2.unsubscribe('hhhhhh')
-        self.assertEqual(channels, 0)
-
     def test_backend(self):
         p = self.pubsub()
         self.assertEqual(p.backend.name, 'arbiter')
@@ -112,6 +85,13 @@ class pubsubTest(unittest.TestCase):
         message = yield d
         self.assertEqual(message['message'], 'Hello world again!')
         
+    def test_unsubscribe_all(self):
+        p = self.pubsub()
+        channels = yield p.subscribe('blaaa.*', 'fooo', 'hhhhhh')
+        self.assertEqual(channels, 3)
+        channels = yield p.unsubscribe()
+        self.assertEqual(channels, 0)
+        
     def test_unsubscribe_0(self):
         p = self.pubsub()
         channels = yield p.subscribe('blaaa.*', 'fooo', 'hhhhhh')
@@ -140,4 +120,3 @@ class pubsubTest(unittest.TestCase):
         self.assertEqual(channels, 1)
         channels = yield p2.unsubscribe('hhhhhh')
         self.assertEqual(channels, 0)
-        
