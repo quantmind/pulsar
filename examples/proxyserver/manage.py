@@ -33,6 +33,7 @@ Implemenation
 import io
 import sys
 from collections import deque
+from functools import partial
 
 try:
     import pulsar
@@ -86,6 +87,7 @@ An headers middleware is a callable which accepts two parameters, the wsgi
                                             data=stream.getvalue(),
                                             headers=request_headers,
                                             version=environ['SERVER_PROTOCOL'])
+        response.on_finished.add_errback(partial(wsgi_response.error, uri))
         response.bind_event('data_processed', wsgi_response)
         return wsgi_response
     
@@ -155,11 +157,19 @@ class ProxyResponse(object):
                 self.futures.add()
             self.futures.put(result)
         
+    def error(self, uri, failure):
+        '''Handle a failure.'''
+        failure.log()
+        msg = 'Oops! Could not find %s' % uri
+        html = wsgi.HtmlDocument(title=msg)
+        html.body.append('<h1>%s</h1>' % msg)
+        data = html.render()
+        response = wsgi.WsgiResponse(504, data, content_type='text/html',
+                                environ={}, start_response=self.start_response)
+        response.start()
+        self.futures.put(response.content[0])
+        
     def _body(self, response):
-        try:
-            response.on_finished.raise_all()
-        except Exception as e:
-            raise HttpException(e, 504)
         if response.parser.is_headers_complete():
             if self.headers is None:
                 headers = self.remove_hop_headers(response.headers)

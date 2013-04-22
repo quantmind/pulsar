@@ -112,7 +112,15 @@ class AsyncAssertTest(object):
     def __getattr__(self, name):
         return self.__class__(self.a, self.test, name=name)
     
-    def __call__(self, *args):
+    def __call__(self, *args, **kwargs):
+        if self.name == 'assertRaises':
+            error, value, args = args[0], args[1], args[2:]
+            if hasattr(value, '__call__'):
+                try:
+                    value = value(*args, **kwargs)
+                except Exception:
+                    value = maybe_async(sys.exc_info())
+            args = [error, value]
         d = pulsar.MultiDeferred(args, type=list).lock()
         return d.add_callback(self._check_result)
     
@@ -130,11 +138,14 @@ class AsyncAssert(object):
     def __get__(self, instance, instance_type=None):
         return AsyncAssertTest(self, instance)
     
-    def assertRaises(self, test, excClass, value):
+    def assertRaises(self, test, exc_type, value):
+        #if is_failure(value):
+        #    if not issubclass(exc_type, self.expected):
+        #        return False
         def _():
             if is_failure(value):
                 value.raise_all()
-        test.assertRaises(excClass, _)
+        test.assertRaises(exc_type, _)
         
 
 class ActorTestMixin(object):
