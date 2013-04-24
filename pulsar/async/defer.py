@@ -790,9 +790,9 @@ both ``list`` and ``dict`` types.'''
         if self._locked:
             raise RuntimeError(self.__class__.__name__ +\
                                ' cannot add a dependent once locked.')
+        value = maybe_async(value)
         if is_generalised_generator(value):
             value = list(value)
-        value = maybe_async(value)
         if isinstance(value, (Mapping, list, tuple, set, frozenset)):
             value = self._make(value)    
         if not is_async(value) and self.handle_value:
