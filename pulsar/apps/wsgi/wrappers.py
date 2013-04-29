@@ -148,7 +148,8 @@ client.
                 content = ()
             elif ispy3k: #what a pain
                 if isinstance(content, str):
-                    content = content.encode(self.encoding or 'utf-8')
+                    self.encoding = self.encoding or 'utf-8'
+                    content = content.encode(self.encoding)
             else: #pragma    nocover
                 if isinstance(content, unicode):
                     content = content.encode(self.encoding or 'utf-8')
@@ -395,6 +396,9 @@ data from the `QUERY_STRING` in :attr:`environ`.'''
     def get(self, key, default=None):
         '''Shortcut to the :attr:`environ` get method.'''
         return self.environ.get(key, default)
+    
+    def full_url(self, **args):
+        return
     
 
 set_wsgi_request_class(WsgiRequest)

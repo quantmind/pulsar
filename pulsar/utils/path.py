@@ -31,7 +31,7 @@ class Path(string_type):
     
     def split(self):
         d,f = os.path.split(self)
-        return self.__class__(d),f
+        return self.__class__(d), f
     
     def dir(self):
         if self.isfile():
@@ -40,10 +40,21 @@ class Path(string_type):
             return self
         else:
             raise ValueError('%s not a valid directory' % self)
-        
+    
+    @property
+    def basename(self):
+        return os.path.basename(self) 
+    
     @property
     def parent(self):
         return self.__class__(os.path.dirname(self))
+        
+    def module_name(self):
+        name = os.path.basename(self)
+        if name.endswith('.py'):
+            return name[:-3]
+        else:
+            raise ValueError('%s not a valid python module' % self)
         
     def ancestor(self, n):
         p = self

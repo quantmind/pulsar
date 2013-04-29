@@ -56,8 +56,8 @@ sub-routers for handling additional urls::
 The ``middleware`` constructed can be used to serve ``get`` and ``post`` methods
 at ``/bla``.
 The :class:`Router` introduces a new element into pulsar WSGI handlers, the
-:class:`WsgiRequest` instance ``request``, which is a light-weight
-wrapper of the WSGI environ.
+:ref:`wsgi request <app-wsgi-request>`, a light-weight wrapper of the
+WSGI environ.
 
 .. autoclass:: Router
    :members:
@@ -93,7 +93,7 @@ from email.utils import parsedate_tz, mktime_tz
 from pulsar.utils.httpurl import http_date, CacheControl, remove_double_slash
 from pulsar.utils.structures import AttributeDictionary
 from pulsar.utils.log import LocalMixin
-from pulsar import Http404, PermissionDenied, HttpException, async
+from pulsar import Http404, PermissionDenied, HttpException, async, is_async
 
 from .route import Route
 from .utils import wsgi_request
@@ -139,6 +139,12 @@ class WsgiHandler(object):
                 break
         if response is None:
             raise Http404(environ.get('PATH_INFO','/'))
+        if is_async(response):
+            return response.add_callback(self._add_middleware)
+        else:
+            return self._add_middleware(response)
+    
+    def _add_middleware(self, response):
         if hasattr(response, 'middleware'):
             response.middleware.extend(self.response_middleware)
         return response
@@ -176,6 +182,12 @@ class Router(object):
 :ref:`routes <apps-wsgi-route>`. user must implement the HTTP method
 required by her application. For example if the route needs to serve a ``GET``
 request, the ``get(self, request)`` method must be implemented.
+
+:param rule: String used for creating the :attr:`route` of this :class:`Router`.
+:param routes: Optionals :class:`Router` instances which are added to the
+    children :attr:`routes` of this router.
+:param parameters: Optional parameters for this router. They are stored in the
+    :attr:`parameters` attribute.
     
 .. attribute:: route
 

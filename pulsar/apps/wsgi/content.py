@@ -35,7 +35,7 @@ import json
 from collections import Mapping
 from functools import partial
 
-from pulsar import Deferred, multi_async, is_async, maybe_async, is_failure
+from pulsar import Deferred, multi_async, is_async, maybe_async, is_failure, async
 from pulsar.utils.pep import iteritems, is_string, ispy3k
 from pulsar.utils.structures import AttributeDictionary
 from pulsar.utils.html import slugify, INLINE_TAGS, tag_attributes, attr_iter,\
@@ -122,16 +122,17 @@ otherwise a RuntimeError occurs.'''
         self._streamed = True
         return self._stream(request)
     
+    @async()
     def http_response(self, request):
         '''Return the WSGI iterable. The iterable yields empty bytes untill the
 :class:`AsyncString` has its result ready. Once ready it sets its value as the
 content of a :class:`WsgiResponse`'''
-        body = self.content(request)
-        body = maybe_async(body)
-        if is_async(body):
-            return body.add_callback(partial(self._http_response, request))
-        else:
-            return self._http_response(request, body)
+        body = yield self.content(request)
+        response = request.response
+        response.content_type = self.content_type
+        response.content = body
+        response.start()
+        yield response
     
     def append(self, child):
         # make sure that child is not in child
@@ -149,13 +150,6 @@ content of a :class:`WsgiResponse`'''
             child._parent = None
         except ValueError:
             pass
-    
-    def _http_response(self, request, body):
-        response = request.response
-        response.content_type = self.content_type
-        response.content = body
-        response.start()
-        return response
     
     def render(self, request=None):
         '''A shortcut function for synchronously rendering a Content.
@@ -541,9 +535,10 @@ via the :attr:`pulsar.apps.wsgi.wrappers.WsgiRequest.html_document` attribute.
     The Body part of this :class:`HtmlDocument`
     
 '''
-    def __init__(self, title=None, media_path='/media/', **params):
+    def __init__(self, title=None, media_path='/media/', charset=None,
+                 **params):
         super(HtmlDocument, self).__init__(None, **params)
-        self.head = Head(title=title, media_path=media_path)
+        self.head = Head(title=title, media_path=media_path, charset=charset)
         self.body = Body()
     
     def __call__(self, title=None, body=None, media_path=None):
