@@ -30,6 +30,11 @@ StreamRenderer
    :members:
    :member-order: bysource
    
+Html Factory
+=================
+
+.. autofunction:: html_factory
+
 '''
 import json
 from collections import Mapping
@@ -204,12 +209,17 @@ class Json(AsyncString):
         
 
 def html_factory(tag, **defaults):
-    '''Returns an :class:`Html` factory function for *tag* and a given
-dictionary of *defaults* parameters.'''
-    def html_input(**params):
+    '''Returns an :class:`Html` factory function for ``tag`` and a given
+dictionary of ``defaults`` parameters. For example::
+
+    >>> input_factory = html_factory('input', type='text')
+    >>> html = input_factory(value='bla')
+    
+    '''
+    def html_input(*children, **params):
         p = defaults.copy()
         p.update(params)
-        return Html(tag, **p)
+        return Html(tag, *children, **p)
     return html_input
 
 
@@ -269,7 +279,7 @@ The :attr:`AsyncString.content_type` attribute is set to `text/html`.
         self.attr(attr)
         self.css(css)
         attributes = self.available_attributes
-        if type and type in attrbutes:
+        if type and 'type' in attributes:
             self.attr('type', type)
             attributes = self.available_attributes
         for name, value in iteritems(params):

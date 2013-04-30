@@ -1,4 +1,11 @@
-'''HTML utilities'''
+'''Utilities for HTML and text manipulation.
+
+.. autofunction:: escape
+
+.. autofunction:: slugify
+
+.. autofunction:: tag_attributes
+'''
 import re
 import json
 from unicodedata import normalize
@@ -23,6 +30,8 @@ HTML_ATTRIBUTES['meta'] = e('name', 'charset', 'content')
 HTML_ATTRIBUTES['th'] = e('colspan', 'headers', 'rowspan', 'scope')
 HTML_ATTRIBUTES['select'] = e('autofocus', 'disabled', 'form', 'multiple',
                               'name', 'required', 'size')
+HTML_ATTRIBUTES['form'] = e('accept-charset', 'action', 'autocomplete',
+                            'enctype', 'method', 'name', 'novalidate', 'target')
 HTML_ATTRIBUTES['input'] = input_attr()
 HTML_ATTRIBUTES['input[type="checkbox"]'] = input_attr('checked')
 HTML_ATTRIBUTES['input[type="file"]'] = input_attr('accept')
@@ -40,7 +49,9 @@ HTML_CHILDREN_TAG['select'] = 'option'
 csslink = namedtuple('cssentry', 'link condition')
 
 def tag_attributes(tag, type=None):
-    '''Return a tuple of valid attributes for *tag* and optional *type*.'''
+    '''Return a tuple of valid attributes for the HTML ``tag`` and optional
+``type``. If the ``tag`` is not found in the global ``HTML_ATTRIBUTES``
+dictionary, the ``DEFAULT_HTML_ATTRIBUTES`` set is returned.'''
     if type:
         ntag = '%s[type="%s"]' % (tag, type)
         if ntag in HTML_ATTRIBUTES:
@@ -52,7 +63,7 @@ def child_tag(tag):
 
 def slugify(value, rtx='_'):
     '''Normalizes string, removes non-alpha characters,
-and converts spaces to hyphens *rtx* character'''
+and converts spaces to ``rtx`` character (hyphens or underscore).'''
     value = normalize('NFKD', to_string(value)).encode('ascii', 'ignore')
     value = to_string(re.sub('[^\w\s-]', rtx, value.decode()).strip())
     return re.sub('[-\s]+', rtx, value)

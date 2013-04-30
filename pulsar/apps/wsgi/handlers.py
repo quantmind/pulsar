@@ -91,7 +91,7 @@ import mimetypes
 from email.utils import parsedate_tz, mktime_tz
 
 from pulsar.utils.httpurl import http_date, CacheControl, remove_double_slash
-from pulsar.utils.structures import AttributeDictionary
+from pulsar.utils.structures import AttributeDictionary, OrderedDict
 from pulsar.utils.log import LocalMixin
 from pulsar import Http404, PermissionDenied, HttpException, async, is_async
 
@@ -176,10 +176,28 @@ by subclasses and **must** return a
         raise NotImplementedError
     
     
+class RouterType(type):
     
-class Router(object):
+    def __new__(cls, name, bases, attrs):
+        rule_methods = []
+        for name, callable in attrs.items():
+            rule_method = getattr(callable, 'rule_method', None)
+            if isinstance(rule_method, tuple):
+                rule_method = list(rule_method)
+                rule_method.append(name)
+                rule_methods.append(rule_method)
+        rule_methods = sorted(rule_methods, key=lambda x: x[3])
+        for base in bases[::-1]:
+            if hasattr(base, 'rule_methods'):
+                rule_methods = base.rule_methods + rule_methods
+        rule_methods = OrderedDict(((r[4], r) for r in rule_methods))
+        attrs['rule_methods'] = list(rule_methods.values())
+        return super(RouterType, cls).__new__(cls, name, bases, attrs)
+    
+    
+class Router(RouterType('RouterBase', (object,), {})):
     '''A WSGI application which handle multiple
-:ref:`routes <apps-wsgi-route>`. user must implement the HTTP method
+:ref:`routes <apps-wsgi-route>`. A user must implement the HTTP method
 required by her application. For example if the route needs to serve a ``GET``
 request, the ``get(self, request)`` method must be implemented.
 
@@ -210,6 +228,7 @@ request, the ``get(self, request)`` method must be implemented.
 .. attribute:: parameters
 
     A :class:`pulsar.utils.structures.AttributeDictionary` of parameters.
+
 '''
     creation_count = 0
     default_content_type=None
@@ -224,15 +243,7 @@ request, the ``get(self, request)`` method must be implemented.
         for router in routes:
             self.add_child(router)
         self.parameters = AttributeDictionary()
-        rule_methods = []
-        for name, callable in self.__class__.__dict__.items():
-            rule_method = getattr(callable, 'rule_method', None)
-            if isinstance(rule_method, tuple):
-                rule_method = list(rule_method)
-                rule_method.append(name)
-                rule_methods.append(rule_method)
-        # Create the method handler
-        for rule_method in sorted(rule_methods, key=lambda r: r[3]):
+        for rule_method in self.rule_methods:
             rule, method, params, count, name = rule_method
             rparameters = params.copy()
             handler = getattr(self, name)
@@ -303,7 +314,7 @@ request, the ``get(self, request)`` method must be implemented.
         assert router is not self, 'cannot add self to children'
         for r in self.routes:
             if r.route == router.route:
-                r.paramaters.update(router.parameters)
+                r.parameters.update(router.parameters)
                 return r
         if router.parent:
             router.parent.remove_child(router)

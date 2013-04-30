@@ -75,4 +75,10 @@ Structures
 ==================
 
 .. automodule:: pulsar.utils.structures
+
+
+HTML & Text
+==================
+
+.. automodule:: pulsar.utils.html
 '''
