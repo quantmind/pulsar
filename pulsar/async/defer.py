@@ -215,6 +215,7 @@ Typical usage::
             return maybe_async(result, **self.params)
         _.__name__ = func.__name__
         _.__doc__ = func.__doc__
+        _.async = True
         return _
 
         

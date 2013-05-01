@@ -34,18 +34,23 @@ class Signal(object):
             { receriverkey (id) : weakref(receiver) }
     """
 
-    def __init__(self, providing_args=None):
+    def __init__(self, providing_args=None, name=None):
         """
         Create a new signal.
 
         providing_args
             A list of the arguments this signal can pass along in a send() call.
         """
+        self.name = name or self.__class__.__name__
         self.receivers = []
         if providing_args is None:
             providing_args = []
         self.providing_args = set(providing_args)
         self.lock = threading.Lock()
+        
+    def __repr__(self):
+        return self.name
+    __str__ = __repr__
 
     def connect(self, receiver, sender=None, weak=True, dispatch_uid=None):
         """

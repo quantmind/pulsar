@@ -2,7 +2,13 @@
 
 .. autofunction:: escape
 
+.. autofunction:: mark_safe
+
 .. autofunction:: slugify
+
+.. autofunction:: capfirst
+
+.. autofunction:: nicename
 
 .. autofunction:: tag_attributes
 '''
@@ -11,7 +17,7 @@ import json
 from unicodedata import normalize
 from collections import namedtuple
 
-from .pep import to_string, iteritems, is_string, string_type
+from .pep import ispy3k, native_str, to_string, iteritems, is_string, string_type
 
 NOTHING = ('', b'', None)
 INLINE_TAGS = set(('input', 'meta', 'hr'))
@@ -69,6 +75,8 @@ and converts spaces to ``rtx`` character (hyphens or underscore).'''
     return re.sub('[-\s]+', rtx, value)
 
 def mark_safe(v):
+    '''Mar a string ``v`` as safe. A safe string won't be escaped by the
+:func:`escape` function.'''
     return SafeString(v)
 
 def escape(html, force=False):
@@ -95,5 +103,64 @@ def dump_data_value(v):
             v = json.dumps(v)
     return mark_safe(v)
 
+def lazy_string(f):
+    def _(*args, **kwargs):
+        return _lazy(f, args, kwargs)
+    return _
+    
+def capfirst(x):
+    '''Capitalise the first letter of ``x``.'''
+    x = to_string(x).strip()
+    if x:
+        return x[0].upper() + x[1:]
+    else:
+        return x
+    
+def nicename(name):
+    '''Make ``name`` a more user friendly string.'''
+    name = to_string(name)
+    return capfirst(' '.join(name.replace('-',' ').replace('_',' ').split()))
+
+
 class SafeString(string_type):
     __html__ = True
+    
+class _lazy:
+
+    def __init__(self, f, args, kwargs):
+        self._value = None
+        self._f = f
+        self.args = args
+        self.kwargs = kwargs
+    
+    def __str__(self):
+        if self._value is None:
+            self._value = native_str(self._f(*self.args, **self.kwargs) or '')
+        return self._value
+    __repr__ = __str__
+
+if ispy3k:
+
+    class UnicodeMixin(object):
+        
+        def __unicode__(self):
+            return '%s object' % self.__class__.__name__
+
+        def __str__(self):
+            return self.__unicode__()
+
+        def __repr__(self):
+            return '%s: %s' % (self.__class__.__name__, self)
+
+else: # Python 2    # pragma nocover
+
+    class UnicodeMixin(object):
+
+        def __unicode__(self):
+            return unicode('%s object' % self.__class__.__name__)
+
+        def __str__(self):
+            return self.__unicode__().encode()
+
+        def __repr__(self):
+            return '%s: %s' % (self.__class__.__name__, self)

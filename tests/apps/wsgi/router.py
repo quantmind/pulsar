@@ -3,6 +3,21 @@ import pulsar
 from pulsar.apps.wsgi import Router, route
 from pulsar.apps.test import unittest
 
+from examples.httpbin.manage import HttpBin
+
+class HttpBin2(HttpBin):
+    
+    def gzip(self):
+        pass    # switch off gzip handler
+    
+    @route('async', async=True)
+    def teast_async_route(self, request):
+        yield  'Hello'
+        
+    @route('async', async=True, method='post')
+    def teast_async_route_post(self, request):
+        yield  'Hello'
+
 
 class TestRouter(unittest.TestCase):
     
@@ -38,3 +53,21 @@ class TestRouter(unittest.TestCase):
         handler, urlargs = router.resolve('bla')
         self.assertNotEqual(handler, router)
         self.assertEqual(urlargs, {})
+        
+    def test_derived(self):
+        self.assertTrue('gzip' in HttpBin.rule_methods)
+        self.assertFalse('gzip' in HttpBin2.rule_methods)
+        
+    def test_async_route(self):
+        self.assertTrue('teast_async_route' in HttpBin2.rule_methods)
+        method = HttpBin2.rule_methods['teast_async_route']
+        self.assertEqual(method[2].get('async'), True)
+        app = HttpBin2('/')
+        router, args = app.resolve('async')
+        self.assertFalse(args)
+        get = router.get
+        post = router.post
+        self.assertTrue(get.async)
+        self.assertTrue(post.async)
+        
+    

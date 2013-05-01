@@ -46,11 +46,11 @@ from .content import HtmlDocument
 from .utils import LOGGER, set_wsgi_request_class, set_cookie, query_dict
 
 
-__all__ = ['WsgiResponse', 'WsgiRequest', 'wsgi_cache_property']
+__all__ = ['EnvironMixin', 'WsgiResponse', 'WsgiRequest', 'cached_property']
 
 MAX_BUFFER_SIZE = 2**16
 
-def wsgi_cache_property(f):
+def cached_property(f):
     name = f.__name__
     def _(self):
         if name not in self.cache:
@@ -269,8 +269,8 @@ This is usually `True` if a generator is passed to the response object."""
         return self.headers[header]
         
     
-class WsgiRequest(object):
-    '''A thin wrapper around a WSGI_ environ. Instances of this class
+class EnvironMixin(object):
+    '''A wrapper around a WSGI_ environ. Instances of this class
 have the :attr:`environ` attribute as their only private data. Every
 other attribute is stored in the :attr:`environ` itself at the
 ``pulsar.cache`` wsgi-extension key.
@@ -281,14 +281,34 @@ other attribute is stored in the :attr:`environ` itself at the
 '''
     slots = ('environ',)
     
-    def __init__(self, environ, start_response=None, app_handler=None,
-                 urlargs=None):
+    def __init__(self, environ, name=None):
         self.environ = environ
         if 'pulsar.cache' not in environ:
             environ['pulsar.cache'] = AttributeDictionary()
-            self.cache.cfg = environ.get('pulsar.cfg', {})
-            self.cache.response = WsgiResponse(environ=environ,
-                                               start_response=start_response)
+            self.cache.mixins = {}
+        if name:
+            self.cache.mixins[name] = self
+            
+    @property
+    def cache(self):
+        '''dictionary of pulsar-specific data stored in the :attr:`environ`
+at the wsgi-extension key ``pulsar.cache``.'''
+        return self.environ['pulsar.cache']
+    
+    def __getattr__(self, name):
+        mixin = self.cache.mixins.get(name)
+        if mixin is None:
+            raise AttributeError("'%s' object has no attribute '%s'" %
+                                 (self.__class__.__name__, name))
+        return mixin
+    
+    
+class WsgiRequest(EnvironMixin):
+    '''An :class:`EnvironMixin` for wsgi requests.'''    
+    def __init__(self, environ, start_response=None, app_handler=None,
+                 urlargs=None):
+        super(WsgiRequest, self).__init__(environ)
+        self.cache.cfg = environ.get('pulsar.cfg', {})
         if start_response:
             self.response.start_response = start_response
             self.cache.app_handler = app_handler
@@ -301,26 +321,19 @@ other attribute is stored in the :attr:`environ` itself at the
         return self.__repr__()
     
     @property
-    def cache(self):
-        '''dictionary of pulsar-specific data stored in the :attr:`environ`
-at the wsgi-extension key ``pulsar.cache``.'''
-        return self.environ['pulsar.cache']
-    
-    @property
-    def response(self):
-        '''The :class:`WsgiResponse` for this request.'''
-        return self.cache.response
-    
-    @property
     def app_handler(self):
         '''The WSGI application handling this request.'''
-        return self.cache['app_handler']
+        return self.cache.app_handler
     
     @property
     def urlargs(self):
         '''Dictionary of url parameters obtained when matching a
 :ref:`router <apps-wsgi-router>` with this request :attr:`path`.'''
-        return self.cache['urlargs']
+        return self.cache.urlargs
+    
+    @cached_property
+    def response(self):
+        return WsgiResponse(environ=self.environ)
     
     ############################################################################
     #    environ shortcuts
@@ -343,15 +356,15 @@ at the wsgi-extension key ``pulsar.cache``.'''
         '''The request method (uppercase).'''
         return self.environ['REQUEST_METHOD']      
 
-    @wsgi_cache_property
+    @cached_property
     def encoding(self):
         return self.content_type_options[1].get('charset', 'utf-8')
     
-    @wsgi_cache_property
+    @cached_property
     def content_type(self):
         return self.content_type_options[0]
     
-    @wsgi_cache_property
+    @cached_property
     def content_type_options(self):
         content_type = self.environ.get('CONTENT_TYPE')
         if content_type:
@@ -359,14 +372,14 @@ at the wsgi-extension key ``pulsar.cache``.'''
         else:
             return None, {}
     
-    @wsgi_cache_property
+    @cached_property
     def data_and_files(self):
         if self.method not in ENCODE_URL_METHODS:
             return parse_form_data(self.environ)
         else:
             return MultiValueDict(), None
     
-    @wsgi_cache_property
+    @cached_property
     def json_data(self):
         if self.method not in ENCODE_URL_METHODS:
             if self.content_type in JSON_CONTENT_TYPES:
@@ -380,14 +393,14 @@ data from the request body.'''
         data, files = self.data_and_files
         return data
     
-    @wsgi_cache_property
+    @cached_property
     def url_data(self):
         '''A :class:`pulsar.utils.structures.MultiValueDict` containing
 data from the `QUERY_STRING` in :attr:`environ`.'''
         return query_dict(self.environ.get('QUERY_STRING', ''),
                           encoding=self.encoding)
     
-    @wsgi_cache_property
+    @cached_property
     def html_document(self):
         '''Return a cached instance of an
 :ref:`Html document <app-wsgi-html-document>`.'''

@@ -180,21 +180,24 @@ class RouterType(type):
     
     def __new__(cls, name, bases, attrs):
         rule_methods = []
-        for name, callable in attrs.items():
+        no_rule = set(attrs)
+        for code, callable in attrs.items():
+            if code.startswith('__') or not hasattr(callable, '__call__'):
+                continue
             rule_method = getattr(callable, 'rule_method', None)
             if isinstance(rule_method, tuple):
-                rule_method = list(rule_method)
-                rule_method.append(name)
-                rule_methods.append(rule_method)
-        rule_methods = sorted(rule_methods, key=lambda x: x[3])
+                no_rule.remove(code)
+                rule_methods.append((code, rule_method))
+        rule_methods = sorted(rule_methods, key=lambda x: x[1][3])
         for base in bases[::-1]:
             if hasattr(base, 'rule_methods'):
-                rule_methods = base.rule_methods + rule_methods
-        rule_methods = OrderedDict(((r[4], r) for r in rule_methods))
-        attrs['rule_methods'] = list(rule_methods.values())
+                items = base.rule_methods.items()
+                base_rules = [pair for pair in items if pair[0] not in no_rule]
+                rule_methods = base_rules + rule_methods
+        attrs['rule_methods'] = OrderedDict(rule_methods)
         return super(RouterType, cls).__new__(cls, name, bases, attrs)
     
-    
+
 class Router(RouterType('RouterBase', (object,), {})):
     '''A WSGI application which handle multiple
 :ref:`routes <apps-wsgi-route>`. A user must implement the HTTP method
@@ -228,11 +231,11 @@ request, the ``get(self, request)`` method must be implemented.
 .. attribute:: parameters
 
     A :class:`pulsar.utils.structures.AttributeDictionary` of parameters.
-
 '''
     creation_count = 0
     default_content_type=None
     _parent = None
+    
     def __init__(self, rule, *routes, **parameters):
         self.__class__.creation_count += 1
         self.creation_count = self.__class__.creation_count
@@ -243,14 +246,15 @@ request, the ``get(self, request)`` method must be implemented.
         for router in routes:
             self.add_child(router)
         self.parameters = AttributeDictionary()
-        for rule_method in self.rule_methods:
-            rule, method, params, count, name = rule_method
+        for name, rule_method in self.rule_methods.items():
+            rule, method, params, count = rule_method
             rparameters = params.copy()
             handler = getattr(self, name)
             if rparameters.pop('async', False): # asynchronous method
-                handler = async(handler)
+                handler = async()(handler)
+                handler.rule_method = rule_method
             router = self.add_child(Router(rule, **rparameters))
-            setattr(router, method, getattr(self, name))
+            setattr(router, method, handler)
         self.setup(**parameters)
         
     def setup(self, content_type=None, **parameters):
@@ -263,6 +267,7 @@ request, the ``get(self, request)`` method must be implemented.
     
     @property
     def root(self):
+        '''The root :class:`Router` for this :class:`Router`.'''
         if self.parent:
             return self.parent.root
         else:
