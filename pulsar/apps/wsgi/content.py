@@ -28,7 +28,24 @@ Asynchronous Html
 Html Document
 ==================
 
+Document
+~~~~~~~~~~
+
 .. autoclass:: HtmlDocument
+   :members:
+   :member-order: bysource
+   
+Head
+~~~~~~~~~~
+
+.. autoclass:: Head
+   :members:
+   :member-order: bysource
+   
+Body
+~~~~~~~~~~
+
+.. autoclass:: Body
    :members:
    :member-order: bysource
    
@@ -48,6 +65,7 @@ Html Factory
 import json
 from collections import Mapping
 from functools import partial
+from copy import copy
 
 from pulsar import Deferred, multi_async, is_async, maybe_async, is_failure, async
 from pulsar.utils.pep import iteritems, is_string, ispy3k
@@ -104,11 +122,6 @@ else: #pragma nocover
 class AsyncString(object):
     '''Class for asynchronous strings which can be used with
 pulsar WSGI servers.
-
-.. attribute:: children
-
-    List of children of this :class:`AsyncString`. Children can be other
-    :class:`AsyncString` or string or bytes, depending on implementation.
 '''
     content_type = None
     '''Content type for this :class:`AsyncString`'''
@@ -128,6 +141,14 @@ pulsar WSGI servers.
 :class:`AsyncString`.'''
         return self._parent
     
+    @property
+    def children(self):
+        '''A copy of all children of this :class:`AsyncString`. Children can
+be other :class:`AsyncString` or string or bytes, depending on implementation.
+:attr:`children` are added and removed via the :meth:`append` and
+:meth:`remove` methods.'''
+        return copy(self._children)
+    
     def __repr__(self):
         return self.__class__.__name__()
     
@@ -138,7 +159,11 @@ pulsar WSGI servers.
         '''Return the :class:`StreamRenderer` for this instance.
 This method can be called once only since it invokes the :meth:`stream`
 method.'''
-        return StreamRenderer(self.stream(request), self.to_string)
+        res = self.stream(request)
+        if is_async(res):
+            return res.add_callback(lambda r: StreamRenderer(r, self.to_string))
+        else:
+            return StreamRenderer(res, self.to_string)
     
     def stream(self, request):
         '''This is the most important method of an :class:`AsyncString`.
@@ -151,16 +176,16 @@ This method can be called once only, otherwise a
         if self._streamed:
             raise RuntimeError('%s already streamed' % self)
         self._streamed = True
-        return self._stream(request)
+        return self.do_stream(request)
     
     @async()
     def http_response(self, request):
         '''Return a, possibly, :ref:`asynchronous WSGI iterable <wsgi-async>`.
 This method asynchronously wait for :meth:`content` and subsequently
 starts the wsgi response.'''
-        body = yield self.content(request)
         response = request.response
         response.content_type = self.content_type
+        body = yield self.content(request)
         response.content = body
         response.start()
         yield response
@@ -177,8 +202,14 @@ starts the wsgi response.'''
         # make sure that child is not in child
         if child is not None:
             if isinstance(child, AsyncString):
-                if child._parent:
-                    child._parent.remove(child)
+                child_parent = child._parent
+                if self._parent is child:
+                    # the parent is the child we are appending, set the parent
+                    # to be the parent of child
+                    self._parent = child_parent
+                if child_parent:
+                    # remove child from the child parent
+                    child_parent.remove(child)
                 child._parent = self
             self._children.append(child)
         
@@ -190,6 +221,11 @@ starts the wsgi response.'''
         except ValueError:
             pass
     
+    def append_to(self, parent):
+        '''Append itself to ``parent``. Return ``self``.'''
+        parent.append(self)
+        return self
+        
     def render(self, request=None):
         '''A shortcut function for synchronously rendering a Content.
 This is useful during testing. It is the synchronous equivalent of
@@ -202,6 +238,16 @@ This is useful during testing. It is the synchronous equivalent of
         else:
             return value
     
+    def do_stream(self, request):
+        '''Perform the actual streaming of this :class:`AsyncString`.
+This method can be re-implemented by subclasses.'''
+        for child in self._children:
+            if isinstance(child, AsyncString):
+                for bit in child.stream(request):
+                    yield bit
+            else:
+                yield child
+                
     def to_string(self, stream):
         '''Once the :class:`StreamRenderer`, returned by :meth:`content`
 method, is ready, meaning it has no more
@@ -213,15 +259,6 @@ content string. This method can be overwritten by derived classes.
 :return: a string or bytes
 '''
         return ''.join(stream_to_string(stream))
-    
-    def _stream(self, request):
-        '''This method can be re-implemented by subclasses'''
-        for child in self._children:
-            if isinstance(child, AsyncString):
-                for bit in child.stream(request):
-                    yield bit
-            else:
-                yield child
             
 
 class Json(AsyncString):
@@ -268,12 +305,22 @@ dictionary of ``defaults`` parameters. For example::
 class Html(AsyncString):
     '''An :class:`AsyncString` for html elements.
 The :attr:`AsyncString.content_type` attribute is set to ``text/html``.
-    
-.. attribute:: tag
-    
-    The tag for this HTML element, ``div``, ``a``, ``table`` and so forth.
-    It can be ``None``.
-    
+
+:param tag: Set the :attr:`tag` attribute. Must be given and can be ``None``.
+:param children: Optional children which will be added via the
+    :meth:`AsyncString.append` method.
+:param params: Optional keyed-value parameters.
+
+Special (optional) parameters:
+
+* ``cn`` class name or list of class names.
+* ``attr`` dictionary of attributes to add.
+* ``data`` dictionary of data to add (rendered as HTML data).
+* ``type`` type of element, only supported for tags which accept the ``type``
+    attribute (for example the ``input`` tag).
+
+Any other keyed-value parameter will be added as attribute, if in the set of
+:attr:`available_attributes` or as :meth:`data`.
 '''
     def __init__(self, tag, *children, **params):
         self._tag = tag
@@ -290,6 +337,8 @@ The :attr:`AsyncString.content_type` attribute is set to ``text/html``.
     
     @property
     def tag(self):
+        '''The tag for this HTML element, ``div``, ``a``, ``table`` and so
+forth. It can be ``None``.'''
         return self._tag
     
     @property
@@ -314,7 +363,7 @@ The :attr:`AsyncString.content_type` attribute is set to ``text/html``.
                         child = Html(tag, child)
                 elif child.startswith('<%s' % tag):
                     child = Html(tag, child)
-        return super(Html, self).append(child)
+        super(Html, self).append(child)
              
     def _setup(self, cn=None, attr=None, css=None, data=None, type=None,
                **params):
@@ -338,6 +387,7 @@ with key ``name`` and value ``value`` and return ``self``.'''
         return self._attrdata(self._attr, name, val)
     
     def data(self, name=None, val=None):
+        '''Add or retrieve data values for this :class:`Html`.'''
         return self._attrdata(self._data, name, val)
     
     def addClass(self, cn):
@@ -406,7 +456,7 @@ By default it does nothing.
 '''
         pass
     
-    def _stream(self, request):
+    def do_stream(self, request):
         if self._tag and self._tag in INLINE_TAGS:
             yield '<%s%s>' % (self._tag, self.flatatt())
         else:
@@ -476,7 +526,7 @@ class Css(AsyncString, Media):
                         m.append(value)
                 self._children[media] = m
 
-    def _stream(self, request):
+    def do_stream(self, request):
         for medium in sorted(self._children):
             paths = self._children[medium]
             medium = '' if medium == 'all' else " media='%s'" % medium
@@ -533,10 +583,10 @@ class Head(Html):
     def scripts(self):
         return self._children[2]
     
-    def _stream(self, request):
+    def do_stream(self, request):
         if self.title:
             self._children.insert(0, '<title>%s</title>' % self.title)
-        return super(Head, self)._stream(request)
+        return super(Head, self).do_stream(request)
         
     def body(self, request):
         return self.js_body.content(request)
@@ -566,14 +616,14 @@ class Body(Html):
         super(Body, self).__init__('body')
         self.scripts = Js()
     
-    def _stream(self, request):
+    def do_stream(self, request):
         '''Render the widget. It accept two optional parameters, a http
 request object and a dictionary for rendering children with a key.
 
 :parameter request: Optional request object.
 '''
         self.append(self.scripts)
-        return super(Body, self)._stream(request)
+        return super(Body, self).do_stream(request)
                 
                 
 class HtmlDocument(Html):
@@ -582,11 +632,11 @@ via the :attr:`pulsar.apps.wsgi.wrappers.WsgiRequest.html_document` attribute.
     
 .. attribute:: head
 
-    The Head part of this :class:`HtmlDocument`
+    The :class:`Head` part of this :class:`HtmlDocument`
 
 .. attribute:: body
 
-    The Body part of this :class:`HtmlDocument`
+    The :class:`Body` part of this :class:`HtmlDocument`
     
 '''
     def __init__(self, title=None, media_path='/media/', charset=None,
@@ -604,21 +654,10 @@ via the :attr:`pulsar.apps.wsgi.wrappers.WsgiRequest.html_document` attribute.
             self.body.scripts.media_path = media_path
         self.body.append(body)
         return self
-    
-    def _stream(self, request):
-        raise NotImplementedError
-    
-    def content(self, request):
-        r = super(HtmlDocument, self).content(request)
-        return r.add_callback(partial(self._finish, request))
         
-    def _stream(self, request):
-        for b in self.body.stream(request):
-            yield b
-    
-    def _finish(self, request, body):
-        return ''.join(('<!DOCTYPE html>',
-                        '<html%s>' % self.flatatt(),
-                        self.head.render(request),
-                        body,
-                        '</html>'))
+    @async()
+    def do_stream(self, request):
+        body = yield self.body.content(request)
+        head = yield self.head.content(request)
+        yield  ('<!DOCTYPE html>', '<html%s>' % self.flatatt(),
+                head, body, '</html>')
