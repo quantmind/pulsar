@@ -6,6 +6,15 @@ Asynchronous String
 .. autoclass:: AsyncString
    :members:
    :member-order: bysource
+
+Asynchronous Json
+=====================
+
+.. autoclass:: Json
+   :members:
+   :member-order: bysource
+   
+.. _app-wsgi-html-document:
    
 Asynchronous Html
 =====================
@@ -94,7 +103,13 @@ else: #pragma nocover
 
 class AsyncString(object):
     '''Class for asynchronous strings which can be used with
-pulsar WSGI servers.'''
+pulsar WSGI servers.
+
+.. attribute:: children
+
+    List of children of this :class:`AsyncString`. Children can be other
+    :class:`AsyncString` or string or bytes, depending on implementation.
+'''
     content_type = None
     '''Content type for this :class:`AsyncString`'''
     encoding = None
@@ -107,6 +122,12 @@ pulsar WSGI servers.'''
         for child in children:
             self.append(child)
     
+    @property
+    def parent(self):
+        '''The :class:`AsyncString` element which contains this
+:class:`AsyncString`.'''
+        return self._parent
+    
     def __repr__(self):
         return self.__class__.__name__()
     
@@ -115,13 +136,18 @@ pulsar WSGI servers.'''
     
     def content(self, request=None):
         '''Return the :class:`StreamRenderer` for this instance.
-This method can be called once only.'''
+This method can be called once only since it invokes the :meth:`stream`
+method.'''
         return StreamRenderer(self.stream(request), self.to_string)
     
     def stream(self, request):
-        '''Return an iterable over strings, that means unicode/str
-for python 2, and str for python 3. This method can be called once only
-otherwise a RuntimeError occurs.'''
+        '''This is the most important method of an :class:`AsyncString`.
+It is called by :meth:`content` or by the :attr:`parent` of this
+:class:`AsyncString`. It returns an iterable over
+strings, that means ``unicode/str`` for python 2, and ``str`` for python 3 or
+:ref:`asynchronous elements <tutorials-coroutine>` which result in strings.
+This method can be called once only, otherwise a
+:class:`RuntimeError` occurs.'''
         if self._streamed:
             raise RuntimeError('%s already streamed' % self)
         self._streamed = True
@@ -129,9 +155,9 @@ otherwise a RuntimeError occurs.'''
     
     @async()
     def http_response(self, request):
-        '''Return the WSGI iterable. The iterable yields empty bytes untill the
-:class:`AsyncString` has its result ready. Once ready it sets its value as the
-content of a :class:`WsgiResponse`'''
+        '''Return a, possibly, :ref:`asynchronous WSGI iterable <wsgi-async>`.
+This method asynchronously wait for :meth:`content` and subsequently
+starts the wsgi response.'''
         body = yield self.content(request)
         response = request.response
         response.content_type = self.content_type
@@ -140,6 +166,14 @@ content of a :class:`WsgiResponse`'''
         yield response
     
     def append(self, child):
+        '''Append ``child`` to the list of :attr:`children` of this
+:class:`AsyncString`.
+
+:param child: String, bytes or another :class:`AsyncString`. If it is an
+    :class:`AsyncString`, this instance will be set as its :attr:`parent`.
+    If ``child`` is ``None``, this method does nothing.
+    
+'''
         # make sure that child is not in child
         if child is not None:
             if isinstance(child, AsyncString):
@@ -147,9 +181,9 @@ content of a :class:`WsgiResponse`'''
                     child._parent.remove(child)
                 child._parent = self
             self._children.append(child)
-            return self
         
     def remove(self, child):
+        '''Remove a ``child`` from the list of :attr:``children``.'''
         try:
             self._children.remove(child)
             child._parent = None
@@ -158,7 +192,8 @@ content of a :class:`WsgiResponse`'''
     
     def render(self, request=None):
         '''A shortcut function for synchronously rendering a Content.
-This is useful during testing.'''
+This is useful during testing. It is the synchronous equivalent of
+:meth:`content`.'''
         value = maybe_async(self.content(request))
         if is_failure(value):
             value.raise_all()
@@ -168,11 +203,13 @@ This is useful during testing.'''
             return value
     
     def to_string(self, stream):
-        '''Once the stream is ready (no more asynchronous elements) this
-functions get called to transform the stream into a string. This method
-can be overwritten by derived classes.
+        '''Once the :class:`StreamRenderer`, returned by :meth:`content`
+method, is ready, meaning it has no more
+asynchronous elements, this method get called to transform the stream into the
+content string. This method can be overwritten by derived classes.
 
-:param stream: a collections containing data used to build the string.
+:param stream: a collections containing ``strings/bytes`` used to build the
+    final ``string/bytes``.
 :return: a string or bytes
 '''
         return ''.join(stream_to_string(stream))
@@ -188,13 +225,18 @@ can be overwritten by derived classes.
             
 
 class Json(AsyncString):
-    '''An :class:`AsyncString` which renders into a json string.'''
+    '''An :class:`AsyncString` which renders into a json string.
+The :attr:`AsyncString.content_type` attribute is set to
+``application/json``.'''
     def __init__(self, *children, **params):
         super(Json, self).__init__(*children)
         self.parameters = AttributeDictionary(params)
         
     @property
     def json(self):
+        '''The ``json`` encoder/decoder handler. If a ``json`` entry is not
+provided during initialisation, the standard python ``json`` module
+is used.'''
         return self.parameters.json or json
         
     @property
@@ -225,11 +267,12 @@ dictionary of ``defaults`` parameters. For example::
 
 class Html(AsyncString):
     '''An :class:`AsyncString` for html elements.
-The :attr:`AsyncString.content_type` attribute is set to `text/html`.
+The :attr:`AsyncString.content_type` attribute is set to ``text/html``.
     
 .. attribute:: tag
     
-    The tag for this HTML element
+    The tag for this HTML element, ``div``, ``a``, ``table`` and so forth.
+    It can be ``None``.
     
 '''
     def __init__(self, tag, *children, **params):
@@ -251,6 +294,7 @@ The :attr:`AsyncString.content_type` attribute is set to `text/html`.
     
     @property
     def available_attributes(self):
+        '''The list of valid HTML attributes for this :attr:`tag`.'''
         return tag_attributes(self._tag, self._attr.get('type'))
     
     def __repr__(self):

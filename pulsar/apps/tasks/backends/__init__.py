@@ -24,24 +24,6 @@ be implemented:
   a bunch of :class:`Task`.
 
 
-Get backend
-~~~~~~~~~~~~~~~~~~
-A :class:`TaskBackend` is never initialised directly, instead it is created using
-the :func:`getbe` function::
-
-    from pulsar.apps.tasks import getbe
-    
-    backend = getbe('local://', **params)
-    
-get the pulsar *local* backend::
-
-    backend = getbe('redis://localhost:6379?db=1', **params)
-    
-get a redis backend.
-
-.. autofunction:: getbe
-
-
 Task
 ~~~~~~~~~~~~~
 
@@ -269,14 +251,10 @@ Lower number higher precedence.'''
     
     
 class TaskBackend(Backend):
-    '''Base class for :class:`Task` backends. A :class:`TaskBackend` is
-responsible for creating tasks and put them into the distributed queue.
+    '''A :class:`pulsar.apps.Backend` class for :class:`Task`.
+A :class:`TaskBackend` is responsible for creating tasks and put them
+into the distributed queue.
 It also schedules the run of periodic tasks if enabled to do so.
-
-.. attribute:: name
-
-    The name of the :class:`pulsar.apps.task.TaskQueue` application served
-    by this :class:`TaskBackend`.
     
 .. attribute:: task_paths
 
@@ -296,10 +274,6 @@ It also schedules the run of periodic tasks if enabled to do so.
     :class:`pulsar.apps.Worker`. A number in the order of 5 to 10 is normally
     used. Passed by the task-queue application
     :ref:`backlog setting <setting-backlog>`.
-    
-.. attribute:: params
-
-    Dictionary of additional parameters passed during initialisation.
 '''
     default_path = 'pulsar.apps.tasks.backends.%s'
     

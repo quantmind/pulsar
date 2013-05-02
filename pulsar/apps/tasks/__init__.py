@@ -3,7 +3,7 @@ Pulsar ships with an asynchronous :class:`TaskQueue` built on top
 :ref:`pulsar application framework <apps-framework>`. Task queues are used
 as a mechanism to distribute work across threads/processes or machines.
 Pulsar :class:`TaskQueue` is highly customizable, it can run in multi-threading
-or multiprocessing (default) mode and can share :class:`task.Task` across
+or multiprocessing (default) mode and can share :class:`backends.Task` across
 several machines.
 By creating :class:`models.Job` classes in a similar way you do for celery_,
 this application gives you all you need for running them with very

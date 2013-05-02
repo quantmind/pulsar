@@ -33,22 +33,6 @@ For available run options::
     python script.py --help
 
 
-.. _wsgi-async:
-
-Asynchronous handlers
-=======================================
-Asynchronous :ref:`application handlers <apps-wsgi-handlers>` must conform
-with the standard WSGI specification with only one exception: the
-iterable they return can yield :class:`pulsar.Deferred` which result in
-bytes. The server handle them using a :class:`pulsar.Task`::
-
-    for data in wsgi_iterable:
-        data = yield data    # handle a possible asynchronous data
-        write(data)        # at this point data must be bytes
-    
-If the iterable returns strictly synchronous data, the above pseudo-code
-is full compliant with `WSGI 1.0.1`_.
-
 WSGI Server
 ===================
 

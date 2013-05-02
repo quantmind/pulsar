@@ -60,7 +60,7 @@ Application Monitor
    
 
 Backend
-~~~~~~~~~~~~~~~~~~~
+===================
 
 .. autoclass:: Backend
    :members:
@@ -641,21 +641,29 @@ as the number of :class:`Application` required by this :class:`MultiApp`.
     
     
 class Backend(LocalMixin):
-    '''Base class for backends.
+    '''Base class for backends. A backend is never initialised directly.
+Use the :meth:`Backend.make` classmethod instead.
 
 .. attribute:: scheme
 
     The scheme for this backend (``local``, ``redis``, ``http``, ...).
     
-.. attribute:: id
+.. attribute:: host
 
-    Uniquely define this backend. If not provided a random
-    id is created.
+    Optional host if this backend is not a the local backend.
     
+.. attribute:: name
+
+    Optional name of the :class:`Application` which created this
+    :class:`Backend`.
+    
+.. attribute:: params
+
+    Dictionary of additional parameters passed during initialisation.
 '''
     default_path = '%s'
     
-    def __init__(self, scheme, host, name=None, connection_string=None,
+    def __init__(self, scheme, host=None, name=None, connection_string=None,
                   **params):
         self.scheme = scheme
         self.host = host
@@ -686,7 +694,7 @@ A redis backend could be::
     redis://127.0.0.1:6379?db=1&password=bla
     
 :param backend: the connection string
-:param kwargs: additional key-valued parameters used by the :class:`TaskBackend`
+:param kwargs: additional key-valued parameters used by the :class:`Backend`
     during initialisation.
     '''
         if isinstance(backend, cls):
