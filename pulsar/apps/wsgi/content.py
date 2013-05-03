@@ -336,6 +336,11 @@ Any other keyed-value parameter will be added as attribute, if in the set of
         return 'text/html'
     
     @property
+    def classes(self):
+        '''Set of classes for this :class:`Html` element.'''
+        return self._classes
+    
+    @property
     def tag(self):
         '''The tag for this HTML element, ``div``, ``a``, ``table`` and so
 forth. It can be ``None``.'''
@@ -443,6 +448,16 @@ with key ``name`` and value ``value`` and return ``self``.'''
             return self
         else:
             return self._css.get(mapping)
+    
+    def hide(self):
+        '''Same as jQuery hide method.'''
+        self._css.update({'display': 'none'})
+        return self
+    
+    def show(self):
+        '''Same as jQuery show method.'''
+        self._css.pop('display', None)
+        return self
     
     def add_to_html(self, request):
         '''The request holds a reference to the Html document being rendered.
