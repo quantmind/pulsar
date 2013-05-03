@@ -61,6 +61,7 @@ Html Factory
 
 .. autofunction:: html_factory
 
+
 '''
 import json
 from collections import Mapping
@@ -69,7 +70,7 @@ from copy import copy
 
 from pulsar import Deferred, multi_async, is_async, maybe_async, is_failure, async
 from pulsar.utils.pep import iteritems, is_string, ispy3k
-from pulsar.utils.structures import AttributeDictionary
+from pulsar.utils.structures import AttributeDictionary, recursive_update
 from pulsar.utils.html import slugify, INLINE_TAGS, tag_attributes, attr_iter,\
                                 csslink, dump_data_value, child_tag
 from pulsar.utils.httpurl import remove_double_slash, urljoin
@@ -155,41 +156,6 @@ be other :class:`AsyncString` or string or bytes, depending on implementation.
     def __str__(self):
         return self.__repr__()
     
-    def content(self, request=None):
-        '''Return the :class:`StreamRenderer` for this instance.
-This method can be called once only since it invokes the :meth:`stream`
-method.'''
-        res = self.stream(request)
-        if is_async(res):
-            return res.add_callback(lambda r: StreamRenderer(r, self.to_string))
-        else:
-            return StreamRenderer(res, self.to_string)
-    
-    def stream(self, request):
-        '''This is the most important method of an :class:`AsyncString`.
-It is called by :meth:`content` or by the :attr:`parent` of this
-:class:`AsyncString`. It returns an iterable over
-strings, that means ``unicode/str`` for python 2, and ``str`` for python 3 or
-:ref:`asynchronous elements <tutorials-coroutine>` which result in strings.
-This method can be called once only, otherwise a
-:class:`RuntimeError` occurs.'''
-        if self._streamed:
-            raise RuntimeError('%s already streamed' % self)
-        self._streamed = True
-        return self.do_stream(request)
-    
-    @async()
-    def http_response(self, request):
-        '''Return a, possibly, :ref:`asynchronous WSGI iterable <wsgi-async>`.
-This method asynchronously wait for :meth:`content` and subsequently
-starts the wsgi response.'''
-        response = request.response
-        response.content_type = self.content_type
-        body = yield self.content(request)
-        response.content = body
-        response.start()
-        yield response
-    
     def append(self, child):
         '''Append ``child`` to the list of :attr:`children` of this
 :class:`AsyncString`.
@@ -225,19 +191,49 @@ starts the wsgi response.'''
         '''Append itself to ``parent``. Return ``self``.'''
         parent.append(self)
         return self
-        
-    def render(self, request=None):
-        '''A shortcut function for synchronously rendering a Content.
-This is useful during testing. It is the synchronous equivalent of
-:meth:`content`.'''
-        value = maybe_async(self.content(request))
-        if is_failure(value):
-            value.raise_all()
-        elif is_async(value):
-            raise ValueError('Could not render. Asynchronous value')
-        else:
-            return value
     
+    def content(self, request=None):
+        '''Return the :class:`StreamRenderer` for this instance.
+This method can be called once only since it invokes the :meth:`stream`
+method.'''
+        res = self.stream(request)
+        if is_async(res):
+            return res.add_callback(lambda r: StreamRenderer(r, self.to_string))
+        else:
+            return StreamRenderer(res, self.to_string)
+    
+    def stream(self, request):
+        '''This is the most important method of an :class:`AsyncString`.
+It is called by :meth:`content` or by the :attr:`parent` of this
+:class:`AsyncString`. It returns an iterable (list, tuple, generator) over
+strings, that means ``unicode/str`` for python 2, and ``str`` for python 3 or
+:ref:`asynchronous elements <tutorials-coroutine>` which result in strings.
+This method can be called once only, otherwise a
+:class:`RuntimeError` occurs.'''
+        if self._streamed:
+            raise RuntimeError('%s already streamed' % self)
+        if request:
+            self.stream_started(request)
+        self._streamed = True
+        return self.do_stream(request)
+    
+    def stream_started(self, request):
+        '''Hook called if ``request`` is available, just before the
+:meth:`do_stream` is executed.'''
+        pass
+    
+    @async()
+    def http_response(self, request):
+        '''Return a, possibly, :ref:`asynchronous WSGI iterable <wsgi-async>`.
+This method asynchronously wait for :meth:`content` and subsequently
+starts the wsgi response.'''
+        response = request.response
+        response.content_type = self.content_type
+        body = yield self.content(request)
+        response.content = body
+        response.start()
+        yield response
+        
     def do_stream(self, request):
         '''Perform the actual streaming of this :class:`AsyncString`.
 This method can be re-implemented by subclasses.'''
@@ -259,6 +255,18 @@ content string. This method can be overwritten by derived classes.
 :return: a string or bytes
 '''
         return ''.join(stream_to_string(stream))
+    
+    def render(self, request=None):
+        '''A shortcut function for synchronously rendering a Content.
+This is useful during testing. It is the synchronous equivalent of
+:meth:`content`.'''
+        value = maybe_async(self.content(request))
+        if is_failure(value):
+            value.raise_all()
+        elif is_async(value):
+            raise ValueError('Could not render. Asynchronous value')
+        else:
+            return value
             
 
 class Json(AsyncString):
@@ -389,11 +397,25 @@ forth. It can be ``None``.'''
     def attr(self, name=None, val=None):
         '''Add the specific attribute to the attribute dictionary
 with key ``name`` and value ``value`` and return ``self``.'''
-        return self._attrdata(self._attr, name, val)
+        result = self._attrdata(self._attr, name, val)
+        if isinstance(result, Mapping):
+            available_attributes = self.available_attributes
+            for name, value in iteritems(result):
+                if value is not None:
+                    if name in available_attributes:
+                        self._attr[name] = value
+                    elif name is 'value':
+                        self.append(value)
+            result = self
+        return result
     
     def data(self, name=None, val=None):
         '''Add or retrieve data values for this :class:`Html`.'''
-        return self._attrdata(self._data, name, val)
+        result = self._attrdata(self._data, name, val)
+        if isinstance(result, Mapping):
+            recursive_update(self._data, result)
+            result = self
+        return result
     
     def addClass(self, cn):
         '''Add the specific class names to the class set and return ``self``.'''
@@ -459,18 +481,6 @@ with key ``name`` and value ``value`` and return ``self``.'''
         self._css.pop('display', None)
         return self
     
-    def add_to_html(self, request):
-        '''The request holds a reference to the Html document being rendered.
-This function can be used to add media files or response headers.
-For example::
-
-    request.html_documnet.head.scripts.append('http://...')
-    request.response.headers['ETag'] = ...
-    
-By default it does nothing.
-'''
-        pass
-    
     def do_stream(self, request):
         if self._tag and self._tag in INLINE_TAGS:
             yield '<%s%s>' % (self._tag, self.flatatt())
@@ -485,26 +495,18 @@ By default it does nothing.
                     yield child
             if self._tag:
                 yield '</%s>' % self._tag
-        if request:
-            self.add_to_html(request)
     
     def _attrdata(self, cont, name, val):
-        if name is not None:
+        if isinstance(name, Mapping):
             if val is not None:
-                if name in cont and isinstance(val, Mapping):
-                    cval = cont[name]
-                    if isinstance(cval, Mapping):
-                        cval.update(val)
-                        val = cval
-                cont[name] = val
-            elif isinstance(name, Mapping):
-                cont.update(name)
+                raise TypeError('Cannot set a value to %s' % name)
+            return name
+        elif name:
+            if val is not None:
+                return {name: val}
             else:
                 return cont.get(name)
-            return self
-        else:
-            return cont
-
+            
 
 class Media(object):
     
@@ -565,7 +567,8 @@ class Js(AsyncString, Media):
         
         
 class Head(Html):
-    '''Html head tag.
+    ''':class:`Html` head tag. It contains :class:`Html` handlers for the
+various part of an HTML Head element.
     
 .. attribute:: title
 
@@ -573,7 +576,22 @@ class Head(Html):
     
 .. attribute:: meta
 
-    Container of meta tags
+    A container of :class:`Html` meta tags. To add new meta tags use the
+    :meth:`add_meta` method rather than accessing the :attr:`meta`
+    attribute directly.
+    
+.. attribute:: scripts
+
+    A container of Javascript files to render at the end of the body tag.
+    To add new javascript files simply use the append method on
+    this attribute. You can add relative paths::
+    
+        html.head.scripts.append('/media/js/scripts.js')
+    
+    as well as absolute paths::
+    
+        html.head.scripts.append('https://ajax.googleapis.com/ajax/libs/jquery/1.7.2/jquery.min.js')
+
 '''
     def __init__(self, media_path=None, title=None, js=None,
                  css=None, meta=None, charset=None):
@@ -607,6 +625,7 @@ class Head(Html):
         return self.js_body.content(request)
     
     def add_meta(self, **kwargs):
+        '''Add a new :class:`Html` meta tag to the :attr:`meta` collection.'''
         meta = Html('meta', **kwargs)
         self.meta.append(meta)
             
@@ -626,7 +645,13 @@ class Head(Html):
         
         
 class Body(Html):
+    ''':class:`Html` body tag.
     
+.. attribute:: scripts
+
+    A container of Javascript files to render at the end of the body tag.
+    The usage is the same as :attr:`Head.scripts`.    
+'''
     def __init__(self):
         super(Body, self).__init__('body')
         self.scripts = Js()

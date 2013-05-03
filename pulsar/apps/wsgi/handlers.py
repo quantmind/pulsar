@@ -176,24 +176,31 @@ by subclasses and **must** return a
         raise NotImplementedError
     
     
+def get_roule_methods(attrs):
+    rule_methods = []
+    for code, callable in attrs:
+        if code.startswith('__') or not hasattr(callable, '__call__'):
+            continue
+        rule_method = getattr(callable, 'rule_method', None)
+        if isinstance(rule_method, tuple):
+            rule_methods.append((code, rule_method))
+    return sorted(rule_methods, key=lambda x: x[1][3])
+    
+    
 class RouterType(type):
     
     def __new__(cls, name, bases, attrs):
-        rule_methods = []
-        no_rule = set(attrs)
-        for code, callable in attrs.items():
-            if code.startswith('__') or not hasattr(callable, '__call__'):
-                continue
-            rule_method = getattr(callable, 'rule_method', None)
-            if isinstance(rule_method, tuple):
-                no_rule.remove(code)
-                rule_methods.append((code, rule_method))
-        rule_methods = sorted(rule_methods, key=lambda x: x[1][3])
+        rule_methods = get_roule_methods(attrs.items())
+        no_rule = set(attrs) - set((x[0] for x in rule_methods))
         for base in bases[::-1]:
             if hasattr(base, 'rule_methods'):
                 items = base.rule_methods.items()
-                base_rules = [pair for pair in items if pair[0] not in no_rule]
-                rule_methods = base_rules + rule_methods
+            else:
+                g = ((name, getattr(base, name)) for name in dir(base))
+                items = get_roule_methods(g)
+            base_rules = [pair for pair in items if pair[0] not in no_rule]
+            rule_methods = base_rules + rule_methods
+        #                
         attrs['rule_methods'] = OrderedDict(rule_methods)
         return super(RouterType, cls).__new__(cls, name, bases, attrs)
     
@@ -303,8 +310,9 @@ request, the ``get(self, request)`` method must be implemented.
         if match is None:
             return
         if '__remaining__' in match:
+            remaining_path = match['__remaining__']
             for handler in self.routes:
-                view_args = handler.resolve(path, urlargs)
+                view_args = handler.resolve(remaining_path, urlargs)
                 if view_args is None:
                     continue
                 #remaining_path = match.pop('__remaining__','')
@@ -314,9 +322,12 @@ request, the ``get(self, request)`` method must be implemented.
             return self, match
     
     def add_child(self, router):
-        '''Add a new :class:`Router` to the :attr:`routes` list.'''
+        '''Add a new :class:`Router` to the :attr:`routes` list. If this
+:class:`Router` is a leaf route, add a slash to the url.'''
         assert isinstance(router, Router), 'Not a valid Router'
         assert router is not self, 'cannot add self to children'
+        if self.route.is_leaf:
+            self.route = Route('%s/' % self.route.rule)
         for r in self.routes:
             if r.route == router.route:
                 r.parameters.update(router.parameters)

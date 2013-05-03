@@ -31,11 +31,9 @@ input_attr = lambda *t: e('type', 'autocomplete', 'autofocus', 'disabled', 'form
                           'multiple', 'name', 'pattern', 'placeholder',
                           'required', 'size', 'step', 'value', *t)
 
+## HTML TAG ATTRIBUTES
+################################################################################
 HTML_ATTRIBUTES['a'] = e('href', 'name', 'target')
-HTML_ATTRIBUTES['meta'] = e('name', 'charset', 'content')
-HTML_ATTRIBUTES['th'] = e('colspan', 'headers', 'rowspan', 'scope')
-HTML_ATTRIBUTES['select'] = e('autofocus', 'disabled', 'form', 'multiple',
-                              'name', 'required', 'size')
 HTML_ATTRIBUTES['form'] = e('accept-charset', 'action', 'autocomplete',
                             'enctype', 'method', 'name', 'novalidate', 'target')
 HTML_ATTRIBUTES['input'] = input_attr()
@@ -47,7 +45,16 @@ HTML_ATTRIBUTES['input[type="image"]'] = input_attr('alt', 'formaction',
 HTML_ATTRIBUTES['input[type="radio"]'] = input_attr('checked')
 HTML_ATTRIBUTES['input[type="submit"]'] = input_attr('formaction',
                                     'formenctype', 'formmethod', 'formtarget')
+HTML_ATTRIBUTES['meta'] = e('name', 'charset', 'content')
+HTML_ATTRIBUTES['select'] = e('autofocus', 'disabled', 'form', 'multiple',
+                              'name', 'required', 'size')
+HTML_ATTRIBUTES['textarea'] = e('autofocus', 'cols', 'disabled', 'maxlength',
+                                'name', 'placeholder', 'readonly', 'required',
+                                'rows', 'wrap')
+HTML_ATTRIBUTES['th'] = e('colspan', 'headers', 'rowspan', 'scope')
 
+## DEFAULT HTML TAG CHILDREN
+################################################################################
 HTML_CHILDREN_TAG['ul'] = 'li'
 HTML_CHILDREN_TAG['ol'] = 'li'
 HTML_CHILDREN_TAG['select'] = 'option'

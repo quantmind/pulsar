@@ -261,3 +261,16 @@ string of up to *size* bytes."""
         deque.appendleft(b''.join(prefix))
     elif not deque:
         deque.appendleft(b'')
+        
+def recursive_update(target, mapping):
+    for key, value in iteritems(mapping):
+        if value is not None:
+            if key in target:
+                cont = target[key]
+                if isinstance(value, Mapping) and isinstance(cont, Mapping):
+                    recursive_update(cont, value)
+                else:
+                    target[key] = value
+            else:
+                target[key] = value
+                        
