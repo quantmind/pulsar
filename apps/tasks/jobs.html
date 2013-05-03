@@ -6,13 +6,13 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>Jobs &mdash; pulsar v0.5b11 documentation</title>
+    <title>Jobs &mdash; pulsar v0.5.0-beta.12 documentation</title>
     <link rel="stylesheet" href="../../static/pulsar.css" type="text/css" />
     <link rel="stylesheet" href="../../static/pygments.css" type="text/css" />
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../',
-        VERSION:     '0.5b11',
+        VERSION:     '0.5.0-beta.12',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -22,7 +22,7 @@
     <script type="text/javascript" src="../../static/underscore.js"></script>
     <script type="text/javascript" src="../../static/doctools.js"></script>
     <link rel="shortcut icon" href="../../static/Game_of_life_pulsar.gif"/>
-    <link rel="top" title="pulsar v0.5b11 documentation" href="../../index.html" />
+    <link rel="top" title="pulsar v0.5.0-beta.12 documentation" href="../../index.html" />
     <link rel="up" title="Distributed Task Queue" href="index.html" />
     <link rel="next" title="Task Backend" href="backend.html" />
     <link rel="prev" title="Getting Started" href="intro.html" /> 
@@ -44,7 +44,7 @@
         <li class="right" >
           <a href="intro.html" title="Getting Started"
              accesskey="P">previous</a> |</li>
-        <li><a href="../../index.html">pulsar v0.5b11 documentation</a> &raquo;</li>
+        <li><a href="../../index.html">pulsar v0.5.0-beta.12 documentation</a> &raquo;</li>
           <li><a href="index.html" accesskey="U">Distributed Task Queue</a> &raquo;</li> 
       </ul>
     </div>
@@ -127,13 +127,6 @@ with the <a class="reference internal" href="#pulsar.apps.tasks.models.JobRegist
 </dd></dl>
 
 <dl class="attribute">
-<dt id="pulsar.apps.tasks.models.Job.autoregister">
-<tt class="descname">autoregister</tt><a class="headerlink" href="#pulsar.apps.tasks.models.Job.autoregister" title="Permalink to this definition">¶</a></dt>
-<dd><p>If <tt class="xref docutils literal"><span class="pre">False</span></tt> (default is <tt class="xref docutils literal"><span class="pre">True</span></tt>), the Job need to be registered
-manually with the Job registry.</p>
-</dd></dl>
-
-<dl class="attribute">
 <dt id="pulsar.apps.tasks.models.Job.type">
 <tt class="descname">type</tt><a class="headerlink" href="#pulsar.apps.tasks.models.Job.type" title="Permalink to this definition">¶</a></dt>
 <dd><p>Type of Job, one of <tt class="docutils literal"><span class="pre">regular</span></tt> and <tt class="docutils literal"><span class="pre">periodic</span></tt>.</p>
@@ -164,16 +157,35 @@ callable function.</p>
 </dd></dl>
 
 <dl class="attribute">
-<dt id="pulsar.apps.tasks.models.Job.loglevel">
-<tt class="descname">loglevel</tt><a class="headerlink" href="#pulsar.apps.tasks.models.Job.loglevel" title="Permalink to this definition">¶</a></dt>
-<dd><p>Level of task logging</p>
-<p>Default: <tt class="xref docutils literal"><span class="pre">None</span></tt></p>
-</dd></dl>
-
-<dl class="attribute">
 <dt id="pulsar.apps.tasks.models.Job.logger">
 <tt class="descname">logger</tt><a class="headerlink" href="#pulsar.apps.tasks.models.Job.logger" title="Permalink to this definition">¶</a></dt>
-<dd><p>an instance of a logger.</p>
+<dd><p>an instance of a logger. Created at runtime.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="pulsar.apps.tasks.models.Job.run_job">
+<tt class="descname">run_job</tt><big>(</big><em>consumer</em>, <em>jobname</em>, <em>*args</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#pulsar.apps.tasks.models.Job.run_job" title="Permalink to this definition">¶</a></dt>
+<dd><p>Send a new task request to the task queue from within another
+<tt class="xref py py-class docutils literal"><span class="pre">Task</span></tt>. This allows tasks to act as tasks factories.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>consumer</strong> &#8211; The <tt class="xref py py-class docutils literal"><span class="pre">TaskConsumer</span></tt> handling the <tt class="xref py py-class docutils literal"><span class="pre">Task</span></tt>.</li>
+<li><strong>jobname</strong> &#8211; The name of the <a class="reference internal" href="#pulsar.apps.tasks.models.Job" title="pulsar.apps.tasks.models.Job"><tt class="xref py py-class docutils literal"><span class="pre">Job</span></tt></a> to run.</li>
+<li><strong>args</strong> &#8211; positional argument for the <a class="reference internal" href="#job-callable"><em>job callable</em></a>.</li>
+<li><strong>kwargs</strong> &#8211; key-valued parameters for the
+<a class="reference internal" href="#job-callable"><em>job callable</em></a>.</li>
+</ul>
+</td>
+</tr>
+<tr class="field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last">A <tt class="xref py py-class docutils literal"><span class="pre">pulsar.ActorMessage</span></tt> if <strong>ack=True</strong> was passed in the
+key-valued parameters, otherwise nothing.</p>
+</td>
+</tr>
+</tbody>
+</table>
 </dd></dl>
 
 <dl class="method">
@@ -198,50 +210,6 @@ the job callable.</li>
 </tbody>
 </table>
 <p>Called by the <tt class="xref py py-attr docutils literal"><span class="pre">TaskQueue.scheduler</span></tt> when creating a new task.</p>
-</dd></dl>
-
-<dl class="method">
-<dt id="pulsar.apps.tasks.models.Job.on_same_id">
-<tt class="descname">on_same_id</tt><big>(</big><em>task</em><big>)</big><a class="reference internal" href="../../modules/pulsar/apps/tasks/models.html#Job.on_same_id"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.tasks.models.Job.on_same_id" title="Permalink to this definition">¶</a></dt>
-<dd><p>Callback invocked when a task has an id equal to a task already
-submitted to the task queue. By default return None and the
-task is aborted.</p>
-</dd></dl>
-
-<dl class="method">
-<dt id="pulsar.apps.tasks.models.Job.ack">
-<tt class="descname">ack</tt><big>(</big><em>args</em>, <em>kwargs</em><big>)</big><a class="reference internal" href="../../modules/pulsar/apps/tasks/models.html#Job.ack"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.tasks.models.Job.ack" title="Permalink to this definition">¶</a></dt>
-<dd><p>Return <tt class="xref docutils literal"><span class="pre">True</span></tt> if a Job task will acknowledge the task queue
-once the result is ready or an error has occured.
-By default it returns <tt class="xref docutils literal"><span class="pre">True</span></tt> but it can be overridden so that its
-behaviour can change at runtime.</p>
-</dd></dl>
-
-<dl class="method">
-<dt id="pulsar.apps.tasks.models.Job.send_to_queue">
-<tt class="descname">send_to_queue</tt><big>(</big><em>consumer</em>, <em>jobname</em>, <em>*args</em>, <em>**kwargs</em><big>)</big><a class="reference internal" href="../../modules/pulsar/apps/tasks/models.html#Job.send_to_queue"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.tasks.models.Job.send_to_queue" title="Permalink to this definition">¶</a></dt>
-<dd><p>Send a new task request to the <tt class="xref py py-class docutils literal"><span class="pre">TaskQueue</span></tt>
-from within another <tt class="xref py py-class docutils literal"><span class="pre">Task</span></tt>.
-This allows tasks to act as tasks factories.</p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
-<li><strong>consumer</strong> &#8211; The <tt class="xref py py-class docutils literal"><span class="pre">TaskConsumer</span></tt> handling the <tt class="xref py py-class docutils literal"><span class="pre">Task</span></tt>.</li>
-<li><strong>jobname</strong> &#8211; The name of the <a class="reference internal" href="#pulsar.apps.tasks.models.Job" title="pulsar.apps.tasks.models.Job"><tt class="xref py py-class docutils literal"><span class="pre">Job</span></tt></a> to run.</li>
-<li><strong>args</strong> &#8211; positional argument for the <a class="reference internal" href="#job-callable"><em>job callable</em></a>.</li>
-<li><strong>kwargs</strong> &#8211; key-valued parameters for the
-<a class="reference internal" href="#job-callable"><em>job callable</em></a>.</li>
-</ul>
-</td>
-</tr>
-<tr class="field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last">A <tt class="xref py py-class docutils literal"><span class="pre">pulsar.ActorMessage</span></tt> if <strong>ack=True</strong> was passed in the
-key-valued parameters, otherwise nothing.</p>
-</td>
-</tr>
-</tbody>
-</table>
 </dd></dl>
 
 </dd></dl>
@@ -322,25 +290,6 @@ instance.</p>
 </dd></dl>
 
 </div>
-<div class="section" id="job-metaclass">
-<h2>Job metaclass<a class="headerlink" href="#job-metaclass" title="Permalink to this headline">¶</a></h2>
-<dl class="class">
-<dt id="pulsar.apps.tasks.models.JobMetaClass">
-<em class="property">class </em><tt class="descclassname">pulsar.apps.tasks.models.</tt><tt class="descname">JobMetaClass</tt><a class="reference internal" href="../../modules/pulsar/apps/tasks/models.html#JobMetaClass"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.tasks.models.JobMetaClass" title="Permalink to this definition">¶</a></dt>
-<dd><p>Metaclass for <a class="reference internal" href="#pulsar.apps.tasks.models.Job" title="pulsar.apps.tasks.models.Job"><tt class="xref py py-class docutils literal"><span class="pre">Job</span></tt></a>. It performs a this little amount of magic
-when a new <a class="reference internal" href="#pulsar.apps.tasks.models.Job" title="pulsar.apps.tasks.models.Job"><tt class="xref py py-class docutils literal"><span class="pre">Job</span></tt></a> class is created:</p>
-<ul class="simple">
-<li>Automatic registration of <a class="reference internal" href="#pulsar.apps.tasks.models.Job" title="pulsar.apps.tasks.models.Job"><tt class="xref py py-class docutils literal"><span class="pre">Job</span></tt></a> instances to the
-global <a class="reference internal" href="#pulsar.apps.tasks.models.JobRegistry" title="pulsar.apps.tasks.models.JobRegistry"><tt class="xref py py-class docutils literal"><span class="pre">JobRegistry</span></tt></a>, unless
-the <a class="reference internal" href="#pulsar.apps.tasks.models.Job.abstract" title="pulsar.apps.tasks.models.Job.abstract"><tt class="xref py py-attr docutils literal"><span class="pre">Job.abstract</span></tt></a> attribute is set to <tt class="xref docutils literal"><span class="pre">True</span></tt>.</li>
-<li>If no <a class="reference internal" href="#pulsar.apps.tasks.models.Job.name" title="pulsar.apps.tasks.models.Job.name"><tt class="xref py py-attr docutils literal"><span class="pre">Job.name</span></tt></a> attribute is provided,
-it is automatically set to the <a class="reference internal" href="#pulsar.apps.tasks.models.Job" title="pulsar.apps.tasks.models.Job"><tt class="xref py py-attr docutils literal"><span class="pre">Job</span></tt></a> class name in lower case.</li>
-<li>Add the <a class="reference internal" href="#pulsar.apps.tasks.models.Job.logger" title="pulsar.apps.tasks.models.Job.logger"><tt class="xref py py-attr docutils literal"><span class="pre">Job.logger</span></tt></a> attribute with name given by <a class="reference internal" href="#pulsar.apps.tasks.models.Job.name" title="pulsar.apps.tasks.models.Job.name"><tt class="xref py py-attr docutils literal"><span class="pre">Job.name</span></tt></a>
-attribute.</li>
-</ul>
-</dd></dl>
-
-</div>
 </div>
 
 
@@ -360,7 +309,6 @@ attribute.</li>
 <li><a class="reference internal" href="#job-class">Job class</a></li>
 <li><a class="reference internal" href="#periodic-job">Periodic job</a></li>
 <li><a class="reference internal" href="#job-registry">Job registry</a></li>
-<li><a class="reference internal" href="#job-metaclass">Job metaclass</a></li>
 </ul>
 </li>
 </ul>

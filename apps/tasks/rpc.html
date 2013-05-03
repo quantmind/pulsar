@@ -6,13 +6,13 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>RPC &mdash; pulsar v0.5b11 documentation</title>
+    <title>RPC &mdash; pulsar v0.5.0-beta.12 documentation</title>
     <link rel="stylesheet" href="../../static/pulsar.css" type="text/css" />
     <link rel="stylesheet" href="../../static/pygments.css" type="text/css" />
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../',
-        VERSION:     '0.5b11',
+        VERSION:     '0.5.0-beta.12',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -22,7 +22,7 @@
     <script type="text/javascript" src="../../static/underscore.js"></script>
     <script type="text/javascript" src="../../static/doctools.js"></script>
     <link rel="shortcut icon" href="../../static/Game_of_life_pulsar.gif"/>
-    <link rel="top" title="pulsar v0.5b11 documentation" href="../../index.html" />
+    <link rel="top" title="pulsar v0.5.0-beta.12 documentation" href="../../index.html" />
     <link rel="up" title="Distributed Task Queue" href="index.html" />
     <link rel="next" title="Asynchronous Test Suite" href="../test.html" />
     <link rel="prev" title="Task Backend" href="backend.html" /> 
@@ -44,7 +44,7 @@
         <li class="right" >
           <a href="backend.html" title="Task Backend"
              accesskey="P">previous</a> |</li>
-        <li><a href="../../index.html">pulsar v0.5b11 documentation</a> &raquo;</li>
+        <li><a href="../../index.html">pulsar v0.5.0-beta.12 documentation</a> &raquo;</li>
           <li><a href="index.html" accesskey="U">Distributed Task Queue</a> &raquo;</li> 
       </ul>
     </div>
@@ -69,7 +69,11 @@
 <span id="rpc"></span><span id="app-taskqueue-rpc"></span><h1>RPC<a class="headerlink" href="#module-pulsar.apps.tasks.rpc" title="Permalink to this headline">¶</a></h1>
 <p>The <a class="reference internal" href="intro.html#app-taskqueue-app"><em>task queue application</em></a> does not expose
 an external API to run new tasks or retrieve task information.
-The <a class="reference internal" href="#pulsar.apps.tasks.rpc.TaskQueueRpcMixin" title="pulsar.apps.tasks.rpc.TaskQueueRpcMixin"><tt class="xref py py-class docutils literal"><span class="pre">TaskQueueRpcMixin</span></tt></a> class can be used to achieve just that.</p>
+The <a class="reference internal" href="#pulsar.apps.tasks.rpc.TaskQueueRpcMixin" title="pulsar.apps.tasks.rpc.TaskQueueRpcMixin"><tt class="xref py py-class docutils literal"><span class="pre">TaskQueueRpcMixin</span></tt></a> class can be used to achieve just that. It is
+a <a class="reference internal" href="../rpc.html#pulsar.apps.rpc.JSONRPC" title="pulsar.apps.rpc.JSONRPC"><tt class="xref py py-class docutils literal"><span class="pre">pulsar.apps.rpc.JSONRPC</span></tt></a> handler which exposes six functions
+for executing tasks and retrieving task information.</p>
+<p>The <a class="reference internal" href="../../tutorials/taskqueue.html#tutorials-taskqueue"><em>task-queue example</em></a> shows how to use this class
+in the context of a WSGI server running along side the task-queue application.</p>
 <div class="section" id="taskqueue-rpc-mixin">
 <h2>TaskQueue Rpc Mixin<a class="headerlink" href="#taskqueue-rpc-mixin" title="Permalink to this headline">¶</a></h2>
 <dl class="class">
@@ -90,62 +94,37 @@ calls.</td>
 </tr>
 </tbody>
 </table>
-<p><strong>Remote Procedure Calls</strong></p>
 <dl class="method">
-<dt id="pulsar.apps.tasks.rpc.TaskQueueRpcMixin.job_list">
-<tt class="descname">job_list</tt><big>(</big><span class="optional">[</span><em>jobnames=None</em><span class="optional">]</span><big>)</big><a class="headerlink" href="#pulsar.apps.tasks.rpc.TaskQueueRpcMixin.job_list" title="Permalink to this definition">¶</a></dt>
-<dd><p>Return the list of <tt class="xref py py-class docutils literal"><span class="pre">Job</span></tt> registered with task queue with meta
+<dt id="pulsar.apps.tasks.rpc.TaskQueueRpcMixin.rpc_job_list">
+<tt class="descname">rpc_job_list</tt><big>(</big><em>request</em>, <em>jobnames=None</em><big>)</big><a class="reference internal" href="../../modules/pulsar/apps/tasks/rpc.html#TaskQueueRpcMixin.rpc_job_list"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.tasks.rpc.TaskQueueRpcMixin.rpc_job_list" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return the list of Jobs registered with task queue with meta
 information. If a list of jobnames is given, it returns only jobs
 included in the list.</p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field"><th class="field-name">Return type:</th><td class="field-body">A list of dictionaries</td>
-</tr>
-</tbody>
-</table>
 </dd></dl>
 
 <dl class="method">
-<dt id="pulsar.apps.tasks.rpc.TaskQueueRpcMixin.run_new_task">
-<tt class="descname">run_new_task</tt><big>(</big><em>jobname</em><span class="optional">[</span>, <em>**kwargs</em><span class="optional">]</span><big>)</big><a class="reference internal" href="../../modules/pulsar/apps/tasks/rpc.html#TaskQueueRpcMixin.run_new_task"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.tasks.rpc.TaskQueueRpcMixin.run_new_task" title="Permalink to this definition">¶</a></dt>
-<dd><p>Run a new <tt class="xref py py-class docutils literal"><span class="pre">Task</span></tt> in the task queue. The task can be of any type
-as long as it is registered in the <tt class="xref py py-class docutils literal"><span class="pre">Job</span></tt> registry.</p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
-<li><strong>jobname</strong> &#8211; the name of the <tt class="xref py py-class docutils literal"><span class="pre">Job</span></tt> to run.</li>
-<li><strong>kwargs</strong> &#8211; optional key-valued job parameters.</li>
-</ul>
-</td>
-</tr>
-<tr class="field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last">a dictionary containing information about the
-<tt class="xref py py-class docutils literal"><span class="pre">Task</span></tt> submitted</p>
-</td>
-</tr>
-</tbody>
-</table>
+<dt id="pulsar.apps.tasks.rpc.TaskQueueRpcMixin.rpc_run_new_task">
+<tt class="descname">rpc_run_new_task</tt><big>(</big><em>request</em>, <em>jobname=None</em>, <em>**kw</em><big>)</big><a class="reference internal" href="../../modules/pulsar/apps/tasks/rpc.html#TaskQueueRpcMixin.rpc_run_new_task"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.tasks.rpc.TaskQueueRpcMixin.rpc_run_new_task" title="Permalink to this definition">¶</a></dt>
+<dd><p>Run a new task in the task queue. The task can be of any type
+as long as it is registered in the task queue registry. To check the
+available tasks call the &#8220;job_list&#8221; function. It returns the task id.</p>
 </dd></dl>
 
 <dl class="method">
-<dt id="pulsar.apps.tasks.rpc.TaskQueueRpcMixin.get_task">
-<tt class="descname">get_task</tt><big>(</big><em>id=task_id</em><big>)</big><a class="headerlink" href="#pulsar.apps.tasks.rpc.TaskQueueRpcMixin.get_task" title="Permalink to this definition">¶</a></dt>
-<dd><p>Retrieve a task from its <tt class="docutils literal"><span class="pre">id</span></tt>.
-Returns <tt class="xref docutils literal"><span class="pre">None</span></tt> if the task is not available.</p>
+<dt id="pulsar.apps.tasks.rpc.TaskQueueRpcMixin.rpc_get_task">
+<tt class="descname">rpc_get_task</tt><big>(</big><em>request</em>, <em>id=None</em><big>)</big><a class="reference internal" href="../../modules/pulsar/apps/tasks/rpc.html#TaskQueueRpcMixin.rpc_get_task"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.tasks.rpc.TaskQueueRpcMixin.rpc_get_task" title="Permalink to this definition">¶</a></dt>
+<dd><p>Retrieve a task from its id</p>
 </dd></dl>
 
 <dl class="method">
-<dt id="pulsar.apps.tasks.rpc.TaskQueueRpcMixin.get_tasks">
-<tt class="descname">get_tasks</tt><big>(</big><em>**filters</em><big>)</big><a class="headerlink" href="#pulsar.apps.tasks.rpc.TaskQueueRpcMixin.get_tasks" title="Permalink to this definition">¶</a></dt>
-<dd><p>Retrieve a list of tasks which satisfy <em>filters</em>.</p>
+<dt id="pulsar.apps.tasks.rpc.TaskQueueRpcMixin.rpc_get_tasks">
+<tt class="descname">rpc_get_tasks</tt><big>(</big><em>request</em>, <em>**filters</em><big>)</big><a class="reference internal" href="../../modules/pulsar/apps/tasks/rpc.html#TaskQueueRpcMixin.rpc_get_tasks"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.tasks.rpc.TaskQueueRpcMixin.rpc_get_tasks" title="Permalink to this definition">¶</a></dt>
+<dd><p>Retrieve a list of tasks which satisfy key-valued filters</p>
 </dd></dl>
 
 <dl class="method">
-<dt id="pulsar.apps.tasks.rpc.TaskQueueRpcMixin.wait_for_task">
-<tt class="descname">wait_for_task</tt><big>(</big><em>id=task_id</em><big>)</big><a class="headerlink" href="#pulsar.apps.tasks.rpc.TaskQueueRpcMixin.wait_for_task" title="Permalink to this definition">¶</a></dt>
+<dt id="pulsar.apps.tasks.rpc.TaskQueueRpcMixin.rpc_wait_for_task">
+<tt class="descname">rpc_wait_for_task</tt><big>(</big><em>request</em>, <em>id=None</em><big>)</big><a class="reference internal" href="../../modules/pulsar/apps/tasks/rpc.html#TaskQueueRpcMixin.rpc_wait_for_task"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.tasks.rpc.TaskQueueRpcMixin.rpc_wait_for_task" title="Permalink to this definition">¶</a></dt>
 <dd><p>Wait for a task to have finished.</p>
 </dd></dl>
 

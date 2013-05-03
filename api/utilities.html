@@ -6,13 +6,13 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>Tools &mdash; pulsar v0.5b11 documentation</title>
+    <title>Tools &mdash; pulsar v0.5.0-beta.12 documentation</title>
     <link rel="stylesheet" href="../static/pulsar.css" type="text/css" />
     <link rel="stylesheet" href="../static/pygments.css" type="text/css" />
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../',
-        VERSION:     '0.5b11',
+        VERSION:     '0.5.0-beta.12',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -22,7 +22,7 @@
     <script type="text/javascript" src="../static/underscore.js"></script>
     <script type="text/javascript" src="../static/doctools.js"></script>
     <link rel="shortcut icon" href="../static/Game_of_life_pulsar.gif"/>
-    <link rel="top" title="pulsar v0.5b11 documentation" href="../index.html" />
+    <link rel="top" title="pulsar v0.5.0-beta.12 documentation" href="../index.html" />
     <link rel="up" title="API" href="index.html" />
     <link rel="next" title="Changelog" href="../changelog.html" />
     <link rel="prev" title="Applications API" href="application.html" /> 
@@ -44,7 +44,7 @@
         <li class="right" >
           <a href="application.html" title="Applications API"
              accesskey="P">previous</a> |</li>
-        <li><a href="../index.html">pulsar v0.5b11 documentation</a> &raquo;</li>
+        <li><a href="../index.html">pulsar v0.5.0-beta.12 documentation</a> &raquo;</li>
           <li><a href="index.html" accesskey="U">API</a> &raquo;</li> 
       </ul>
     </div>
@@ -439,7 +439,7 @@ the python <a class="reference external" href="http://docs.python.org/dev/librar
 <h3>Config<a class="headerlink" href="#config" title="Permalink to this headline">¶</a></h3>
 <dl class="class">
 <dt id="pulsar.utils.config.Config">
-<em class="property">class </em><tt class="descclassname">pulsar.utils.config.</tt><tt class="descname">Config</tt><big>(</big><em>description=None</em>, <em>epilog=None</em>, <em>version=None</em>, <em>apps=None</em>, <em>include=None</em>, <em>exclude=None</em>, <em>settings=None</em>, <em>prefix=None</em>, <em>dont_prefix=None</em>, <em>name=None</em>, <em>**params</em><big>)</big><a class="reference internal" href="../modules/pulsar/utils/config.html#Config"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.utils.config.Config" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><tt class="descclassname">pulsar.utils.config.</tt><tt class="descname">Config</tt><big>(</big><em>description=None</em>, <em>epilog=None</em>, <em>version=None</em>, <em>apps=None</em>, <em>include=None</em>, <em>exclude=None</em>, <em>settings=None</em>, <em>prefix=None</em>, <em>name=None</em>, <em>**params</em><big>)</big><a class="reference internal" href="../modules/pulsar/utils/config.html#Config"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.utils.config.Config" title="Permalink to this definition">¶</a></dt>
 <dd><p>A dictionary-like container of <a class="reference internal" href="#pulsar.utils.config.Setting" title="pulsar.utils.config.Setting"><tt class="xref py py-class docutils literal"><span class="pre">Setting</span></tt></a> parameters for
 fine tuning pulsar servers. It provides easy access to <tt class="xref py py-attr docutils literal"><span class="pre">Setting.value</span></tt>
 attribute by exposing the <tt class="xref py py-attr docutils literal"><span class="pre">Setting.name</span></tt> as attribute.</p>
@@ -465,7 +465,7 @@ attribute.</li>
 <dt id="pulsar.utils.config.Config.settings">
 <tt class="descname">settings</tt><a class="headerlink" href="#pulsar.utils.config.Config.settings" title="Permalink to this definition">¶</a></dt>
 <dd><p>Dictionary of all <a class="reference internal" href="#pulsar.utils.config.Setting" title="pulsar.utils.config.Setting"><tt class="xref py py-class docutils literal"><span class="pre">Setting</span></tt></a> instances available in this
-<a class="reference internal" href="#pulsar.utils.config.Config" title="pulsar.utils.config.Config"><tt class="xref py py-class docutils literal"><span class="pre">Config</span></tt></a> container. Keys are given by the <tt class="xref py py-attr docutils literal"><span class="pre">Setting.name</span></tt>
+<a class="reference internal" href="#pulsar.utils.config.Config" title="pulsar.utils.config.Config"><tt class="xref py py-class docutils literal"><span class="pre">Config</span></tt></a> container. Keys are given by the <a class="reference internal" href="#pulsar.utils.config.SettingBase.name" title="pulsar.utils.config.SettingBase.name"><tt class="xref py py-attr docutils literal"><span class="pre">SettingBase.name</span></tt></a>
 attribute.</p>
 </dd></dl>
 
@@ -478,8 +478,8 @@ command line.</p>
 
 <dl class="method">
 <dt id="pulsar.utils.config.Config.update">
-<tt class="descname">update</tt><big>(</big><em>data</em>, <em>strict=False</em><big>)</big><a class="headerlink" href="#pulsar.utils.config.Config.update" title="Permalink to this definition">¶</a></dt>
-<dd><p>Update the <a class="reference internal" href="#pulsar.utils.config.Config.settings" title="pulsar.utils.config.Config.settings"><tt class="xref py py-attr docutils literal"><span class="pre">settings</span></tt></a> with <tt class="docutils literal"><span class="pre">data</span></tt> which is either an
+<tt class="descname">update</tt><big>(</big><em>data</em><big>)</big><a class="headerlink" href="#pulsar.utils.config.Config.update" title="Permalink to this definition">¶</a></dt>
+<dd><p>Update this <a class="reference internal" href="#pulsar.utils.config.Config" title="pulsar.utils.config.Config"><tt class="xref py py-attr docutils literal"><span class="pre">Config</span></tt></a> with <tt class="docutils literal"><span class="pre">data</span></tt> which is either an
 instance of Mapping or <a class="reference internal" href="#pulsar.utils.config.Config" title="pulsar.utils.config.Config"><tt class="xref py py-class docutils literal"><span class="pre">Config</span></tt></a>.</p>
 </dd></dl>
 
@@ -536,8 +536,10 @@ container.</p>
 
 <dl class="method">
 <dt id="pulsar.utils.config.Config.copy">
-<tt class="descname">copy</tt><big>(</big><em>name=None</em>, <em>prefix=None</em>, <em>dont_prefix=None</em><big>)</big><a class="reference internal" href="../modules/pulsar/utils/config.html#Config.copy"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.utils.config.Config.copy" title="Permalink to this definition">¶</a></dt>
-<dd><p>A deep copy of this <a class="reference internal" href="#pulsar.utils.config.Config" title="pulsar.utils.config.Config"><tt class="xref py py-class docutils literal"><span class="pre">Config</span></tt></a> container.</p>
+<tt class="descname">copy</tt><big>(</big><em>name=None</em>, <em>prefix=None</em><big>)</big><a class="reference internal" href="../modules/pulsar/utils/config.html#Config.copy"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.utils.config.Config.copy" title="Permalink to this definition">¶</a></dt>
+<dd><p>A deep copy of this <a class="reference internal" href="#pulsar.utils.config.Config" title="pulsar.utils.config.Config"><tt class="xref py py-class docutils literal"><span class="pre">Config</span></tt></a> container. If <em>prefix</em>
+is given, it prefixes all non
+<a class="reference internal" href="../settings.html#setting-section-global-server-settings"><em>global settings</em></a> with it.</p>
 </dd></dl>
 
 </dd></dl>
@@ -550,14 +552,6 @@ container.</p>
 <em class="property">class </em><tt class="descclassname">pulsar.utils.config.</tt><tt class="descname">SettingBase</tt><a class="reference internal" href="../modules/pulsar/utils/config.html#SettingBase"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.utils.config.SettingBase" title="Permalink to this definition">¶</a></dt>
 <dd><p>This is the base class of <tt class="xref py py-class docutils literal"><span class="pre">Settings</span></tt> and <tt class="xref py py-class docutils literal"><span class="pre">SimpleSetting</span></tt>.
 It defines attributes for a given setting parameter.</p>
-<dl class="attribute">
-<dt id="pulsar.utils.config.SettingBase.inherit">
-<tt class="descname">inherit</tt><a class="headerlink" href="#pulsar.utils.config.SettingBase.inherit" title="Permalink to this definition">¶</a></dt>
-<dd><p>Flag indicating if the <a class="reference internal" href="#pulsar.utils.config.SettingBase.value" title="pulsar.utils.config.SettingBase.value"><tt class="xref py py-attr docutils literal"><span class="pre">value</span></tt></a> can be used by setting obtained
-as a clone of this <a class="reference internal" href="#pulsar.utils.config.SettingBase" title="pulsar.utils.config.SettingBase"><tt class="xref py py-class docutils literal"><span class="pre">SettingBase</span></tt></a>. If <tt class="xref docutils literal"><span class="pre">False</span></tt>, when a clone of this
-setting is created, its <a class="reference internal" href="#pulsar.utils.config.SettingBase.value" title="pulsar.utils.config.SettingBase.value"><tt class="xref py py-attr docutils literal"><span class="pre">value</span></tt></a> is set to <a class="reference internal" href="#pulsar.utils.config.SettingBase.default" title="pulsar.utils.config.SettingBase.default"><tt class="xref py py-attr docutils literal"><span class="pre">default</span></tt></a> value.</p>
-</dd></dl>
-
 <dl class="attribute">
 <dt id="pulsar.utils.config.SettingBase.name">
 <tt class="descname">name</tt><a class="headerlink" href="#pulsar.utils.config.SettingBase.name" title="Permalink to this definition">¶</a></dt>
@@ -606,7 +600,7 @@ custom initialization for this <a class="reference internal" href="#pulsar.utils
 
 <dl class="method">
 <dt id="pulsar.utils.config.SettingBase.copy">
-<tt class="descname">copy</tt><big>(</big><em>name=None</em>, <em>prefix=None</em>, <em>dont_prefix=None</em><big>)</big><a class="headerlink" href="#pulsar.utils.config.SettingBase.copy" title="Permalink to this definition">¶</a></dt>
+<tt class="descname">copy</tt><big>(</big><em>name=None</em>, <em>prefix=None</em><big>)</big><a class="headerlink" href="#pulsar.utils.config.SettingBase.copy" title="Permalink to this definition">¶</a></dt>
 <dd><p>Copy this <a class="reference internal" href="#pulsar.utils.config.SettingBase" title="pulsar.utils.config.SettingBase"><tt class="xref py py-class docutils literal"><span class="pre">SettingBase</span></tt></a></p>
 </dd></dl>
 
@@ -617,7 +611,7 @@ custom initialization for this <a class="reference internal" href="#pulsar.utils
 <h3>Setting<a class="headerlink" href="#setting" title="Permalink to this headline">¶</a></h3>
 <dl class="class">
 <dt id="pulsar.utils.config.Setting">
-<em class="property">class </em><tt class="descclassname">pulsar.utils.config.</tt><tt class="descname">Setting</tt><big>(</big><em>name=None</em>, <em>flags=None</em>, <em>action=None</em>, <em>type=None</em>, <em>default=None</em>, <em>nargs=None</em>, <em>desc=None</em>, <em>validator=None</em><big>)</big><a class="reference internal" href="../modules/pulsar/utils/config.html#Setting"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.utils.config.Setting" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><tt class="descclassname">pulsar.utils.config.</tt><tt class="descname">Setting</tt><big>(</big><em>name=None</em>, <em>flags=None</em>, <em>action=None</em>, <em>type=None</em>, <em>default=None</em>, <em>nargs=None</em>, <em>desc=None</em>, <em>validator=None</em>, <em>app=None</em><big>)</big><a class="reference internal" href="../modules/pulsar/utils/config.html#Setting"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.utils.config.Setting" title="Permalink to this definition">¶</a></dt>
 <dd><p>A configuration parameter for pulsar. Parameters can be specified
 on the command line or on a config file.</p>
 <dl class="attribute">
@@ -625,12 +619,6 @@ on the command line or on a config file.</p>
 <tt class="descname">virtual</tt><a class="headerlink" href="#pulsar.utils.config.Setting.virtual" title="Permalink to this definition">¶</a></dt>
 <dd><p>If set to <tt class="xref docutils literal"><span class="pre">True</span></tt> the settings won&#8217;t be loaded and it can be only used
 as base class for other settings.</p>
-</dd></dl>
-
-<dl class="attribute">
-<dt id="pulsar.utils.config.Setting.app">
-<tt class="descname">app</tt><a class="headerlink" href="#pulsar.utils.config.Setting.app" title="Permalink to this definition">¶</a></dt>
-<dd><p>Setting for a specific <tt class="xref py py-class docutils literal"><span class="pre">Application</span></tt>.</p>
 </dd></dl>
 
 <dl class="attribute">
@@ -647,10 +635,10 @@ the name for the argument in usage message.</p>
 </dd></dl>
 
 <dl class="attribute">
-<dt id="pulsar.utils.config.Setting.can_prefix">
-<tt class="descname">can_prefix</tt><a class="headerlink" href="#pulsar.utils.config.Setting.can_prefix" title="Permalink to this definition">¶</a></dt>
+<dt id="pulsar.utils.config.Setting.is_global">
+<tt class="descname">is_global</tt><a class="headerlink" href="#pulsar.utils.config.Setting.is_global" title="Permalink to this definition">¶</a></dt>
 <dd><p>Flag used by pulsar <a class="reference internal" href="../index.html#apps-framework"><em>application framework</em></a>
-when multiple application are used in a running server. If <tt class="xref docutils literal"><span class="pre">True</span></tt>
+when multiple application are used in a running server. If <tt class="xref docutils literal"><span class="pre">False</span></tt>
 additional settings will be added to the <a class="reference internal" href="#pulsar.utils.config.Config" title="pulsar.utils.config.Config"><tt class="xref py py-class docutils literal"><span class="pre">Config</span></tt></a> container.
 These settings are clones of this <a class="reference internal" href="#pulsar.utils.config.Setting" title="pulsar.utils.config.Setting"><tt class="xref py py-class docutils literal"><span class="pre">Setting</span></tt></a> with
 name given by each application name and underacsore <tt class="docutils literal"><span class="pre">_</span></tt>
@@ -677,6 +665,12 @@ prefixing this <tt class="xref py py-attr docutils literal"><span class="pre">na
 </dd></dl>
 
 <dl class="attribute">
+<dt id="pulsar.utils.config.Setting.app">
+<tt class="descname">app</tt><a class="headerlink" href="#pulsar.utils.config.Setting.app" title="Permalink to this definition">¶</a></dt>
+<dd><p>Setting for a specific <tt class="xref py py-class docutils literal"><span class="pre">Application</span></tt>.</p>
+</dd></dl>
+
+<dl class="attribute">
 <dt id="pulsar.utils.config.Setting.desc">
 <tt class="descname">desc</tt><a class="headerlink" href="#pulsar.utils.config.Setting.desc" title="Permalink to this definition">¶</a></dt>
 <dd><p>Description string</p>
@@ -700,42 +694,41 @@ python <tt class="xref py py-class docutils literal"><span class="pre">argparse.
 </dd></dl>
 
 </div>
-<div class="section" id="make-settings">
-<h3>make settings<a class="headerlink" href="#make-settings" title="Permalink to this headline">¶</a></h3>
+</div>
+<div class="section" id="module-pulsar.utils.sockets">
+<span id="socket-and-addresses"></span><span id="socket-address"></span><h2>Socket and addresses<a class="headerlink" href="#module-pulsar.utils.sockets" title="Permalink to this headline">¶</a></h2>
+<p>Collection of utilities for sockets and address parsing.</p>
+<div class="section" id="parse-a-connection-string">
+<h3>Parse a connection string<a class="headerlink" href="#parse-a-connection-string" title="Permalink to this headline">¶</a></h3>
 <dl class="function">
-<dt id="pulsar.utils.config.make_settings">
-<tt class="descclassname">pulsar.utils.config.</tt><tt class="descname">make_settings</tt><big>(</big><em>apps=None</em>, <em>include=None</em>, <em>exclude=None</em>, <em>prefix=None</em>, <em>dont_prefix=None</em>, <em>name=None</em><big>)</big><a class="reference internal" href="../modules/pulsar/utils/config.html#make_settings"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.utils.config.make_settings" title="Permalink to this definition">¶</a></dt>
-<dd><p>Creates a dictionary of available settings for given
-applications <em>apps</em>. The <em>prefix</em> and <em>don_prefix</em> parameters are used
-in the context of <a class="reference internal" href="application.html#pulsar.apps.MultiApp" title="pulsar.apps.MultiApp"><tt class="xref py py-class docutils literal"><span class="pre">pulsar.apps.MultiApp</span></tt></a>.</p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
-<li><strong>apps</strong> &#8211; Optional list of application names.</li>
-<li><strong>include</strong> &#8211; Optional list of settings to include.</li>
-<li><strong>exclude</strong> &#8211; Optional list of settings to exclude.</li>
-<li><strong>prefix</strong> &#8211; Optional prefix to prepend to all <a class="reference internal" href="#pulsar.utils.config.Setting" title="pulsar.utils.config.Setting"><tt class="xref py py-class docutils literal"><span class="pre">Setting</span></tt></a> with
-<a class="reference internal" href="#pulsar.utils.config.Setting.can_prefix" title="pulsar.utils.config.Setting.can_prefix"><tt class="xref py py-class docutils literal"><span class="pre">Setting.can_prefix</span></tt></a> set to <tt class="xref docutils literal"><span class="pre">True</span></tt>.</li>
-<li><strong>dont_prefix</strong> &#8211; Optional list/tuple of <a class="reference internal" href="#pulsar.utils.config.Setting" title="pulsar.utils.config.Setting"><tt class="xref py py-class docutils literal"><span class="pre">Setting</span></tt></a> names to
-not prefix.</li>
-<li><strong>name</strong> &#8211; Optional name.</li>
-</ul>
-</td>
-</tr>
-<tr class="field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last">dictionary of <tt class="xref py py-class docutils literal"><span class="pre">pulsar.Setting</span></tt> instances.</p>
-</td>
-</tr>
-</tbody>
-</table>
+<dt id="pulsar.utils.sockets.parse_connection_string">
+<tt class="descclassname">pulsar.utils.sockets.</tt><tt class="descname">parse_connection_string</tt><big>(</big><em>netloc</em>, <em>default_port=8000</em><big>)</big><a class="reference internal" href="../modules/pulsar/utils/sockets.html#parse_connection_string"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.utils.sockets.parse_connection_string" title="Permalink to this definition">¶</a></dt>
+<dd><p>Converts the <tt class="docutils literal"><span class="pre">netloc</span></tt> into a three elements tuple
+<tt class="docutils literal"><span class="pre">(scheme,</span> <span class="pre">host,</span> <span class="pre">params)</span></tt> where <tt class="docutils literal"><span class="pre">scheme</span></tt> is a string, <tt class="docutils literal"><span class="pre">host</span></tt> could
+be a string or a two elements tuple (for a tcp address) and <tt class="docutils literal"><span class="pre">params</span></tt> a
+dictionary of parameters. For example:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">parse_connection_string</span><span class="p">(</span><span class="s">&#39;http://127.0.0.1:9080&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>returns:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="p">(</span><span class="s">&#39;http&#39;</span><span class="p">,</span> <span class="p">(</span><span class="s">&#39;127.0.0.1&#39;</span><span class="p">,</span> <span class="mi">9080</span><span class="p">),</span> <span class="p">{})</span>
+</pre></div>
+</div>
+<p>and this example:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">parse_connection_string</span><span class="p">(</span><span class="s">&#39;redis://127.0.0.1:6379?db=3&amp;password=bla&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>returns:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="p">(</span><span class="s">&#39;redis&#39;</span><span class="p">,</span> <span class="p">(</span><span class="s">&#39;127.0.0.1&#39;</span><span class="p">,</span> <span class="mi">6379</span><span class="p">),</span> <span class="p">{</span><span class="s">&#39;db&#39;</span><span class="p">:</span> <span class="s">&#39;3&#39;</span><span class="p">,</span> <span class="s">&#39;password&#39;</span><span class="p">:</span> <span class="s">&#39;bla&#39;</span><span class="p">})</span>
+</pre></div>
+</div>
 </dd></dl>
 
 </div>
 </div>
-<div class="section" id="internals">
-<span id="id4"></span><h2>Internals<a class="headerlink" href="#internals" title="Permalink to this headline">¶</a></h2>
-<span class="target" id="module-pulsar.utils.system"></span><div class="section" id="system-info">
+<div class="section" id="module-pulsar.utils.system">
+<span id="internals"></span><h2>Internals<a class="headerlink" href="#module-pulsar.utils.system" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="system-info">
 <h3>System info<a class="headerlink" href="#system-info" title="Permalink to this headline">¶</a></h3>
 <dl class="function">
 <dt id="pulsar.utils.system.system_info">
@@ -835,6 +828,51 @@ where value is the last item in the list associated with the key.</p>
 
 </div>
 </div>
+<div class="section" id="module-pulsar.utils.html">
+<span id="html-text"></span><h2>HTML &amp; Text<a class="headerlink" href="#module-pulsar.utils.html" title="Permalink to this headline">¶</a></h2>
+<p>Utilities for HTML and text manipulation.</p>
+<dl class="function">
+<dt id="pulsar.utils.html.escape">
+<tt class="descclassname">pulsar.utils.html.</tt><tt class="descname">escape</tt><big>(</big><em>html</em>, <em>force=False</em><big>)</big><a class="reference internal" href="../modules/pulsar/utils/html.html#escape"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.utils.html.escape" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the given HTML with ampersands,
+quotes and angle brackets encoded.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="pulsar.utils.html.mark_safe">
+<tt class="descclassname">pulsar.utils.html.</tt><tt class="descname">mark_safe</tt><big>(</big><em>v</em><big>)</big><a class="reference internal" href="../modules/pulsar/utils/html.html#mark_safe"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.utils.html.mark_safe" title="Permalink to this definition">¶</a></dt>
+<dd><p>Mar a string <tt class="docutils literal"><span class="pre">v</span></tt> as safe. A safe string won&#8217;t be escaped by the
+<a class="reference internal" href="#pulsar.utils.html.escape" title="pulsar.utils.html.escape"><tt class="xref py py-func docutils literal"><span class="pre">escape()</span></tt></a> function.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="pulsar.utils.html.slugify">
+<tt class="descclassname">pulsar.utils.html.</tt><tt class="descname">slugify</tt><big>(</big><em>value</em>, <em>rtx='_'</em><big>)</big><a class="reference internal" href="../modules/pulsar/utils/html.html#slugify"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.utils.html.slugify" title="Permalink to this definition">¶</a></dt>
+<dd><p>Normalizes string, removes non-alpha characters,
+and converts spaces to <tt class="docutils literal"><span class="pre">rtx</span></tt> character (hyphens or underscore).</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="pulsar.utils.html.capfirst">
+<tt class="descclassname">pulsar.utils.html.</tt><tt class="descname">capfirst</tt><big>(</big><em>x</em><big>)</big><a class="reference internal" href="../modules/pulsar/utils/html.html#capfirst"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.utils.html.capfirst" title="Permalink to this definition">¶</a></dt>
+<dd><p>Capitalise the first letter of <tt class="docutils literal"><span class="pre">x</span></tt>.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="pulsar.utils.html.nicename">
+<tt class="descclassname">pulsar.utils.html.</tt><tt class="descname">nicename</tt><big>(</big><em>name</em><big>)</big><a class="reference internal" href="../modules/pulsar/utils/html.html#nicename"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.utils.html.nicename" title="Permalink to this definition">¶</a></dt>
+<dd><p>Make <tt class="docutils literal"><span class="pre">name</span></tt> a more user friendly string.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="pulsar.utils.html.tag_attributes">
+<tt class="descclassname">pulsar.utils.html.</tt><tt class="descname">tag_attributes</tt><big>(</big><em>tag</em>, <em>type=None</em><big>)</big><a class="reference internal" href="../modules/pulsar/utils/html.html#tag_attributes"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.utils.html.tag_attributes" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return a tuple of valid attributes for the HTML <tt class="docutils literal"><span class="pre">tag</span></tt> and optional
+<tt class="docutils literal"><span class="pre">type</span></tt>. If the <tt class="docutils literal"><span class="pre">tag</span></tt> is not found in the global <tt class="docutils literal"><span class="pre">HTML_ATTRIBUTES</span></tt>
+dictionary, the <tt class="docutils literal"><span class="pre">DEFAULT_HTML_ATTRIBUTES</span></tt> set is returned.</p>
+</dd></dl>
+
+</div>
 </div>
 
 
@@ -865,10 +903,13 @@ where value is the last item in the list associated with the key.</p>
 <li><a class="reference internal" href="#config">Config</a></li>
 <li><a class="reference internal" href="#settingbase">SettingBase</a></li>
 <li><a class="reference internal" href="#setting">Setting</a></li>
-<li><a class="reference internal" href="#make-settings">make settings</a></li>
 </ul>
 </li>
-<li><a class="reference internal" href="#internals">Internals</a><ul>
+<li><a class="reference internal" href="#module-pulsar.utils.sockets">Socket and addresses</a><ul>
+<li><a class="reference internal" href="#parse-a-connection-string">Parse a connection string</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#module-pulsar.utils.system">Internals</a><ul>
 <li><a class="reference internal" href="#system-info">System info</a></li>
 <li><a class="reference internal" href="#checkarity">checkarity</a></li>
 </ul>
@@ -879,6 +920,7 @@ where value is the last item in the list associated with the key.</p>
 <li><a class="reference internal" href="#frozendict">FrozenDict</a></li>
 </ul>
 </li>
+<li><a class="reference internal" href="#module-pulsar.utils.html">HTML &amp; Text</a></li>
 </ul>
 </li>
 </ul>

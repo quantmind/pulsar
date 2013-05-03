@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>Signal Handling &mdash; pulsar v0.5.0-beta.12 documentation</title>
+    <title>Django Application &mdash; pulsar v0.5.0-beta.12 documentation</title>
     <link rel="stylesheet" href="../static/pulsar.css" type="text/css" />
     <link rel="stylesheet" href="../static/pygments.css" type="text/css" />
     <script type="text/javascript">
@@ -23,9 +23,8 @@
     <script type="text/javascript" src="../static/doctools.js"></script>
     <link rel="shortcut icon" href="../static/Game_of_life_pulsar.gif"/>
     <link rel="top" title="pulsar v0.5.0-beta.12 documentation" href="../index.html" />
-    <link rel="up" title="Tutorials &amp; Topics" href="index.html" />
-    <link rel="next" title="Twisted Integration" href="twisted.html" />
-    <link rel="prev" title="Events" href="events.html" /> 
+    <link rel="next" title="Asynchornous HTTP client" href="http.html" />
+    <link rel="prev" title="Publish/Subscribe" href="pubsub.html" /> 
   </head>
   <body>
 
@@ -39,13 +38,12 @@
           <a href="../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
         <li class="right" >
-          <a href="twisted.html" title="Twisted Integration"
+          <a href="http.html" title="Asynchornous HTTP client"
              accesskey="N">next</a> |</li>
         <li class="right" >
-          <a href="events.html" title="Events"
+          <a href="pubsub.html" title="Publish/Subscribe"
              accesskey="P">previous</a> |</li>
-        <li><a href="../index.html">pulsar v0.5.0-beta.12 documentation</a> &raquo;</li>
-          <li><a href="index.html" accesskey="U">Tutorials &amp; Topics</a> &raquo;</li> 
+        <li><a href="../index.html">pulsar v0.5.0-beta.12 documentation</a> &raquo;</li> 
       </ul>
     </div>
 <div class="deck">
@@ -65,14 +63,18 @@
         <div class="bodywrapper">
           <div class="body">
             
-  <div class="section" id="signal-handling">
-<span id="tutorials-signal"></span><h1>Signal Handling<a class="headerlink" href="#signal-handling" title="Permalink to this headline">¶</a></h1>
-<div class="section" id="handling-of-sigterm">
-<h2>Handling of SIGTERM<a class="headerlink" href="#handling-of-sigterm" title="Permalink to this headline">¶</a></h2>
-<p>The SIGTERM signals tells pulsar to shutdown gracefully. When this signal is
-received, the arbiter schedules a shutdown very similar to the one performed
-when the <a class="reference internal" href="../design.html#actor-stop-command"><em>stop command</em></a> is called.
-The scheduled shutdown starts ASAP,</p>
+  <div class="section" id="module-pulsar.apps.pulse">
+<span id="django-application"></span><span id="apps-pulse"></span><h1>Django Application<a class="headerlink" href="#module-pulsar.apps.pulse" title="Permalink to this headline">¶</a></h1>
+<p>The <a class="reference internal" href="#module-pulsar.apps.pulse" title="pulsar.apps.pulse"><tt class="xref py py-mod docutils literal"><span class="pre">pulsar.apps.pulse</span></tt></a> module is a django application for running
+a django web site with pulsar. Add it to the list of your <tt class="docutils literal"><span class="pre">INSTALLED_APPS</span></tt>:</p>
+<div class="highlight-python"><pre>INSTALLED_APPS = (
+    ...,
+    'pulsar.apps.pulse',
+    ...
+)</pre>
+</div>
+<p>and run the site via the <tt class="docutils literal"><span class="pre">pulse</span></tt> command:</p>
+<div class="highlight-python"><pre>python manage.py pulse</pre>
 </div>
 </div>
 
@@ -86,23 +88,15 @@ The scheduled shutdown starts ASAP,</p>
   <img class="logo" width="200" src="../static/pulsar.png" alt="pulsar" title="Pulsar"/>
 </a>
 </p>
-  <h3><a href="../index.html">Table Of Contents</a></h3>
-  <ul>
-<li><a class="reference internal" href="#">Signal Handling</a><ul>
-<li><a class="reference internal" href="#handling-of-sigterm">Handling of SIGTERM</a></li>
-</ul>
-</li>
-</ul>
-
   <h4>Previous topic</h4>
-  <p class="topless"><a href="events.html"
-                        title="previous chapter">Events</a></p>
+  <p class="topless"><a href="pubsub.html"
+                        title="previous chapter">Publish/Subscribe</a></p>
   <h4>Next topic</h4>
-  <p class="topless"><a href="twisted.html"
-                        title="next chapter">Twisted Integration</a></p>
+  <p class="topless"><a href="http.html"
+                        title="next chapter">Asynchornous HTTP client</a></p>
   <h3>This Page</h3>
   <ul class="this-page-menu">
-    <li><a href="../sources/tutorials/signal.txt"
+    <li><a href="../sources/apps/pulse.txt"
            rel="nofollow">Show Source</a></li>
   </ul>
 <div id="searchbox" style="display: none">

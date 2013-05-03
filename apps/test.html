@@ -6,13 +6,13 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>Asynchronous Test Suite &mdash; pulsar v0.5b11 documentation</title>
+    <title>Asynchronous Test Suite &mdash; pulsar v0.5.0-beta.12 documentation</title>
     <link rel="stylesheet" href="../static/pulsar.css" type="text/css" />
     <link rel="stylesheet" href="../static/pygments.css" type="text/css" />
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../',
-        VERSION:     '0.5b11',
+        VERSION:     '0.5.0-beta.12',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -22,7 +22,7 @@
     <script type="text/javascript" src="../static/underscore.js"></script>
     <script type="text/javascript" src="../static/doctools.js"></script>
     <link rel="shortcut icon" href="../static/Game_of_life_pulsar.gif"/>
-    <link rel="top" title="pulsar v0.5b11 documentation" href="../index.html" />
+    <link rel="top" title="pulsar v0.5.0-beta.12 documentation" href="../index.html" />
     <link rel="next" title="Asynchronous Shell" href="shell.html" />
     <link rel="prev" title="RPC" href="tasks/rpc.html" /> 
   </head>
@@ -43,7 +43,7 @@
         <li class="right" >
           <a href="tasks/rpc.html" title="RPC"
              accesskey="P">previous</a> |</li>
-        <li><a href="../index.html">pulsar v0.5b11 documentation</a> &raquo;</li> 
+        <li><a href="../index.html">pulsar v0.5.0-beta.12 documentation</a> &raquo;</li> 
       </ul>
     </div>
 <div class="deck">
@@ -239,12 +239,32 @@ long a test function can wait for results. This is what the
 </div>
 <div class="section" id="plugins">
 <h2>Plugins<a class="headerlink" href="#plugins" title="Permalink to this headline">¶</a></h2>
-<p>TODO: write docs for plugins</p>
+<p><tt class="xref py py-class docutils literal"><span class="pre">TestPlugins</span></tt> is a way to extend the test suite.
+There are two basic rules for plugins:</p>
+<ul class="simple">
+<li>Plugin classes should subclass <a class="reference internal" href="#pulsar.apps.test.TestPlugin" title="pulsar.apps.test.TestPlugin"><tt class="xref py py-class docutils literal"><span class="pre">TestPlugin</span></tt></a>.</li>
+<li>Plugins may implement any of the methods described in the class
+<a class="reference internal" href="#pulsar.apps.test.result.Plugin" title="pulsar.apps.test.result.Plugin"><tt class="xref py py-class docutils literal"><span class="pre">result.Plugin</span></tt></a> interface.</li>
+</ul>
+<p>Pulsar ships with two plugins:</p>
+<div class="section" id="module-pulsar.apps.test.plugins.bench">
+<span id="benchmark"></span><span id="bench-plugin"></span><h3>Benchmark<a class="headerlink" href="#module-pulsar.apps.test.plugins.bench" title="Permalink to this headline">¶</a></h3>
+<p>A test plugin for benchmarking test cases.</p>
+</div>
+<div class="section" id="module-pulsar.apps.test.plugins.profile">
+<span id="profile"></span><span id="profile-plugin"></span><h3>Profile<a class="headerlink" href="#module-pulsar.apps.test.plugins.profile" title="Permalink to this headline">¶</a></h3>
+<p>A test plugin for profiling test cases and generating Html reports. It uses
+the <tt class="docutils literal"><span class="pre">cProfiler</span></tt> from the standard libraries.</p>
+<dl class="class">
+<dt id="pulsar.apps.test.plugins.profile.Profile">
+<em class="property">class </em><tt class="descclassname">pulsar.apps.test.plugins.profile.</tt><tt class="descname">Profile</tt><a class="reference internal" href="../modules/pulsar/apps/test/plugins/profile.html#Profile"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.test.plugins.profile.Profile" title="Permalink to this definition">¶</a></dt>
+<dd><p><a class="reference internal" href="#pulsar.apps.test.TestPlugin" title="pulsar.apps.test.TestPlugin"><tt class="xref py py-class docutils literal"><span class="pre">pulsar.apps.test.TestPlugin</span></tt></a> for profiling test cases.</p>
+</dd></dl>
+
+<span class="target" id="module-pulsar.apps.test"></span></div>
 </div>
 <div class="section" id="api">
 <h2>API<a class="headerlink" href="#api" title="Permalink to this headline">¶</a></h2>
-<div class="section" id="testsuite">
-<h3>TestSuite<a class="headerlink" href="#testsuite" title="Permalink to this headline">¶</a></h3>
 <dl class="class">
 <dt id="pulsar.apps.test.TestSuite">
 <em class="property">class </em><tt class="descclassname">pulsar.apps.test.</tt><tt class="descname">TestSuite</tt><big>(</big><em>callable=None</em>, <em>load_config=True</em>, <em>**params</em><big>)</big><a class="reference internal" href="../modules/pulsar/apps/test.html#TestSuite"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.test.TestSuite" title="Permalink to this definition">¶</a></dt>
@@ -295,22 +315,8 @@ configuration and plugins.</p>
 
 </dd></dl>
 
-</div>
-<div class="section" id="test-plugin">
-<h3>Test Plugin<a class="headerlink" href="#test-plugin" title="Permalink to this headline">¶</a></h3>
-<dl class="class">
-<dt id="pulsar.apps.test.TestPlugin">
-<em class="property">class </em><tt class="descclassname">pulsar.apps.test.</tt><tt class="descname">TestPlugin</tt><a class="headerlink" href="#pulsar.apps.test.TestPlugin" title="Permalink to this definition">¶</a></dt>
-<dd><p>Base class for plugins which can be added to a <a class="reference internal" href="#pulsar.apps.test.TestSuite" title="pulsar.apps.test.TestSuite"><tt class="xref py py-class docutils literal"><span class="pre">TestSuite</span></tt></a>
-to extend its functionalities. <tt class="xref py py-class docutils literal"><span class="pre">pulsar.Setting</span></tt> are specified as
-class attributes and collected into the <tt class="xref py py-attr docutils literal"><span class="pre">config</span></tt> attribute.</p>
-<p>If the <tt class="xref py py-attr docutils literal"><span class="pre">name</span></tt> is not specified or its value validate as True,
-an additional settings is added to the configuration.</p>
-</dd></dl>
-
-</div>
-<div class="section" id="module-pulsar.apps.test.loader">
-<span id="test-loader"></span><h3>Test Loader<a class="headerlink" href="#module-pulsar.apps.test.loader" title="Permalink to this headline">¶</a></h3>
+<span class="target" id="module-pulsar.apps.test.loader"></span><div class="section" id="test-loader">
+<h3>Test Loader<a class="headerlink" href="#test-loader" title="Permalink to this headline">¶</a></h3>
 <dl class="class">
 <dt id="pulsar.apps.test.loader.TestLoader">
 <em class="property">class </em><tt class="descclassname">pulsar.apps.test.loader.</tt><tt class="descname">TestLoader</tt><big>(</big><em>root</em>, <em>modules</em>, <em>runner</em>, <em>logger=None</em><big>)</big><a class="reference internal" href="../modules/pulsar/apps/test/loader.html#TestLoader"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.test.loader.TestLoader" title="Permalink to this definition">¶</a></dt>
@@ -368,8 +374,79 @@ is passed by this function recursively.</li>
 </dd></dl>
 
 </div>
-<div class="section" id="module-pulsar.apps.test.result">
-<span id="test-runner"></span><h3>Test Runner<a class="headerlink" href="#module-pulsar.apps.test.result" title="Permalink to this headline">¶</a></h3>
+<span class="target" id="module-pulsar.apps.test.result"></span><div class="section" id="plugin">
+<h3>Plugin<a class="headerlink" href="#plugin" title="Permalink to this headline">¶</a></h3>
+<dl class="class">
+<dt id="pulsar.apps.test.result.Plugin">
+<em class="property">class </em><tt class="descclassname">pulsar.apps.test.result.</tt><tt class="descname">Plugin</tt><a class="reference internal" href="../modules/pulsar/apps/test/result.html#Plugin"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.test.result.Plugin" title="Permalink to this definition">¶</a></dt>
+<dd><p>Interface for all classes which are part of of the <a class="reference internal" href="#pulsar.apps.test.result.TestRunner" title="pulsar.apps.test.result.TestRunner"><tt class="xref py py-class docutils literal"><span class="pre">TestRunner</span></tt></a>,
+including <a class="reference internal" href="#pulsar.apps.test.result.TestRunner" title="pulsar.apps.test.result.TestRunner"><tt class="xref py py-class docutils literal"><span class="pre">TestRunner</span></tt></a> itself, <tt class="xref py py-class docutils literal"><span class="pre">TestResult</span></tt>
+and <tt class="xref py py-class docutils literal"><span class="pre">TestPlugin</span></tt>.</p>
+<dl class="method">
+<dt id="pulsar.apps.test.result.Plugin.configure">
+<tt class="descname">configure</tt><big>(</big><em>cfg</em><big>)</big><a class="reference internal" href="../modules/pulsar/apps/test/result.html#Plugin.configure"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.test.result.Plugin.configure" title="Permalink to this definition">¶</a></dt>
+<dd><p>Called once just after construction of
+a <a class="reference internal" href="#pulsar.apps.test.result.TestRunner" title="pulsar.apps.test.result.TestRunner"><tt class="xref py py-class docutils literal"><span class="pre">TestRunner</span></tt></a> and can be used to configure the <a class="reference internal" href="#pulsar.apps.test.result.Plugin" title="pulsar.apps.test.result.Plugin"><tt class="xref py py-class docutils literal"><span class="pre">Plugin</span></tt></a>.
+If it returns something other than <tt class="xref docutils literal"><span class="pre">None</span></tt> (for example an abort message)
+it will stop the configuration of all subsequent plugins and quit the test.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field"><th class="field-name">Parameters:</th><td class="field-body"><strong>cfg</strong> &#8211; a <a class="reference internal" href="../api/utilities.html#pulsar.utils.config.Config" title="pulsar.utils.config.Config"><tt class="xref py py-class docutils literal"><span class="pre">pulsar.utils.config.Config</span></tt></a>.</td>
+</tr>
+<tr class="field"><th class="field-name">Returns:</th><td class="field-body"><tt class="xref docutils literal"><span class="pre">None</span></tt> unless the tests runner must be stopped.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="pulsar.apps.test.result.Plugin.on_start">
+<tt class="descname">on_start</tt><big>(</big><big>)</big><a class="reference internal" href="../modules/pulsar/apps/test/result.html#Plugin.on_start"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.test.result.Plugin.on_start" title="Permalink to this definition">¶</a></dt>
+<dd><p>Called once by <tt class="xref py py-class docutils literal"><span class="pre">TestSuite</span></tt> just before it starts running tests.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="pulsar.apps.test.result.Plugin.on_end">
+<tt class="descname">on_end</tt><big>(</big><big>)</big><a class="reference internal" href="../modules/pulsar/apps/test/result.html#Plugin.on_end"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.test.result.Plugin.on_end" title="Permalink to this definition">¶</a></dt>
+<dd><p>Called once by <tt class="xref py py-class docutils literal"><span class="pre">TestSuite</span></tt> just before it stops.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="pulsar.apps.test.result.Plugin.startTest">
+<tt class="descname">startTest</tt><big>(</big><em>test</em><big>)</big><a class="reference internal" href="../modules/pulsar/apps/test/result.html#Plugin.startTest"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.test.result.Plugin.startTest" title="Permalink to this definition">¶</a></dt>
+<dd><p>Called just before a <em>test</em> is executed. This is run
+just before _pre_setup function.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="pulsar.apps.test.result.Plugin.stopTest">
+<tt class="descname">stopTest</tt><big>(</big><em>test</em><big>)</big><a class="reference internal" href="../modules/pulsar/apps/test/result.html#Plugin.stopTest"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.test.result.Plugin.stopTest" title="Permalink to this definition">¶</a></dt>
+<dd><p>Called just after a <em>test</em> has finished. This is run just after
+the _post_teardown function.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="pulsar.apps.test.result.Plugin.before_test_function_run">
+<tt class="descname">before_test_function_run</tt><big>(</big><em>test</em>, <em>local</em><big>)</big><a class="reference internal" href="../modules/pulsar/apps/test/result.html#Plugin.before_test_function_run"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.test.result.Plugin.before_test_function_run" title="Permalink to this definition">¶</a></dt>
+<dd><p>This function can be used by plugins to manipulate the <em>test</em>
+behaviour in the process domain where the test run.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="pulsar.apps.test.result.Plugin.after_test_function_run">
+<tt class="descname">after_test_function_run</tt><big>(</big><em>test</em>, <em>local</em>, <em>result</em>, <em>async</em><big>)</big><a class="reference internal" href="../modules/pulsar/apps/test/result.html#Plugin.after_test_function_run"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.test.result.Plugin.after_test_function_run" title="Permalink to this definition">¶</a></dt>
+<dd><p>Given a test-function instance return a, possibly, modified test
+instance. This function can be used by plugins to modify the behaviour of test
+cases. By default it returns <em>test</em>.</p>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="test-runner">
+<h3>Test Runner<a class="headerlink" href="#test-runner" title="Permalink to this headline">¶</a></h3>
 <dl class="class">
 <dt id="pulsar.apps.test.result.TestRunner">
 <em class="property">class </em><tt class="descclassname">pulsar.apps.test.result.</tt><tt class="descname">TestRunner</tt><big>(</big><em>plugins</em>, <em>stream</em>, <em>writercls=None</em>, <em>descriptions=True</em>, <em>logger=None</em><big>)</big><a class="reference internal" href="../modules/pulsar/apps/test/result.html#TestRunner"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.test.result.TestRunner" title="Permalink to this definition">¶</a></dt>
@@ -417,6 +494,63 @@ is passed by this function recursively.</li>
 </dd></dl>
 
 </div>
+<span class="target" id="module-pulsar.apps.test"></span><div class="section" id="test-plugin">
+<h3>Test Plugin<a class="headerlink" href="#test-plugin" title="Permalink to this headline">¶</a></h3>
+<dl class="class">
+<dt id="pulsar.apps.test.TestPlugin">
+<em class="property">class </em><tt class="descclassname">pulsar.apps.test.</tt><tt class="descname">TestPlugin</tt><a class="headerlink" href="#pulsar.apps.test.TestPlugin" title="Permalink to this definition">¶</a></dt>
+<dd><p>Base class for <a class="reference internal" href="#pulsar.apps.test.result.Plugin" title="pulsar.apps.test.result.Plugin"><tt class="xref py py-class docutils literal"><span class="pre">result.Plugin</span></tt></a> which can be added to a
+<a class="reference internal" href="#pulsar.apps.test.TestSuite" title="pulsar.apps.test.TestSuite"><tt class="xref py py-class docutils literal"><span class="pre">TestSuite</span></tt></a> to extend its functionalities. <a class="reference internal" href="../settings.html#settings"><em>Settings</em></a>
+can be specified as class attributes and collected into the
+<a class="reference internal" href="#pulsar.apps.test.TestPlugin.config" title="pulsar.apps.test.TestPlugin.config"><tt class="xref py py-attr docutils literal"><span class="pre">config</span></tt></a> attribute.</p>
+<p>If the class attribute <a class="reference internal" href="#pulsar.apps.test.TestPlugin.name" title="pulsar.apps.test.TestPlugin.name"><tt class="xref py py-attr docutils literal"><span class="pre">name</span></tt></a> is not specified or its value validate as
+<tt class="xref docutils literal"><span class="pre">True</span></tt>, an additional <a class="reference internal" href="../settings.html#settings"><em>setting</em></a> is added to the configuration.
+In addition, a <a class="reference internal" href="#pulsar.apps.test.TestPlugin" title="pulsar.apps.test.TestPlugin"><tt class="xref py py-class docutils literal"><span class="pre">TestPlugin</span></tt></a> can specify several additional
+<a class="reference internal" href="../settings.html#settings"><em>settings</em></a> as class attributes. For example, the
+<a class="reference internal" href="#bench-plugin"><em>benchmark plugin</em></a> has an additional setting
+for controlling the number of repetitions:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="k">class</span> <span class="nc">Bench</span><span class="p">(</span><span class="n">TestPlugin</span><span class="p">):</span>
+    <span class="n">desc</span> <span class="o">=</span> <span class="s">&quot;Run benchmarks function flagged with __benchmark__ attribute&quot;</span>
+    <span class="n">repeat</span> <span class="o">=</span> <span class="n">pulsar</span><span class="o">.</span><span class="n">Setting</span><span class="p">(</span><span class="nb">type</span><span class="o">=</span><span class="nb">int</span><span class="p">,</span>
+                        <span class="n">default</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
+                        <span class="n">validator</span><span class="o">=</span><span class="n">pulsar</span><span class="o">.</span><span class="n">validate_pos_int</span><span class="p">,</span>
+                        <span class="n">desc</span><span class="o">=</span><span class="s">&quot;Default number of repetition&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+<dl class="attribute">
+<dt id="pulsar.apps.test.TestPlugin.name">
+<tt class="descname">name</tt><a class="headerlink" href="#pulsar.apps.test.TestPlugin.name" title="Permalink to this definition">¶</a></dt>
+<dd><p>Class attribute used for adding the default plugin <a class="reference internal" href="../settings.html#settings"><em>setting</em></a>
+to the configuration container of the test suite application.
+If the attribute is not set, the class name in lower case is used.
+If set and validate as not <tt class="xref docutils literal"><span class="pre">True</span></tt>, no new <a class="reference internal" href="../settings.html#settings"><em>setting</em></a>
+is added to the test suite configuration parameters. For example:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="k">class</span> <span class="nc">MyPlugin</span><span class="p">(</span><span class="n">TestPlugin</span><span class="p">):</span>
+    <span class="n">name</span> <span class="o">=</span> <span class="bp">None</span>
+</pre></div>
+</div>
+<p>won&#8217;t add the default plugin <a class="reference internal" href="../settings.html#settings"><em>setting</em></a>.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="pulsar.apps.test.TestPlugin.desc">
+<tt class="descname">desc</tt><a class="headerlink" href="#pulsar.apps.test.TestPlugin.desc" title="Permalink to this definition">¶</a></dt>
+<dd><p>Class attribute used as the description of the <a class="reference internal" href="../settings.html#settings"><em>setting</em></a>.
+If <a class="reference internal" href="#pulsar.apps.test.TestPlugin.name" title="pulsar.apps.test.TestPlugin.name"><tt class="xref py py-attr docutils literal"><span class="pre">name</span></tt></a> is disabled, this attribute is not relevant.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="pulsar.apps.test.TestPlugin.config">
+<tt class="descname">config</tt><a class="headerlink" href="#pulsar.apps.test.TestPlugin.config" title="Permalink to this definition">¶</a></dt>
+<dd><p>A <a class="reference internal" href="../api/utilities.html#pulsar.utils.config.Config" title="pulsar.utils.config.Config"><tt class="xref py py-class docutils literal"><span class="pre">pulsar.utils.config.Config</span></tt></a> container created by th
+<a class="reference internal" href="#pulsar.apps.test.TestPlugin" title="pulsar.apps.test.TestPlugin"><tt class="xref py py-class docutils literal"><span class="pre">TestPlugin</span></tt></a> metaclass. It collects the default setting, if
+available, and any additional <em class="xref std std-ref">settings</em> specified
+as class attributes.</p>
+</dd></dl>
+
+</dd></dl>
+
+</div>
 </div>
 </div>
 
@@ -443,12 +577,16 @@ is passed by this function recursively.</li>
 <li><a class="reference internal" href="#test-timeout">test timeout</a></li>
 </ul>
 </li>
-<li><a class="reference internal" href="#plugins">Plugins</a></li>
+<li><a class="reference internal" href="#plugins">Plugins</a><ul>
+<li><a class="reference internal" href="#module-pulsar.apps.test.plugins.bench">Benchmark</a></li>
+<li><a class="reference internal" href="#module-pulsar.apps.test.plugins.profile">Profile</a></li>
+</ul>
+</li>
 <li><a class="reference internal" href="#api">API</a><ul>
-<li><a class="reference internal" href="#testsuite">TestSuite</a></li>
+<li><a class="reference internal" href="#test-loader">Test Loader</a></li>
+<li><a class="reference internal" href="#plugin">Plugin</a></li>
+<li><a class="reference internal" href="#test-runner">Test Runner</a></li>
 <li><a class="reference internal" href="#test-plugin">Test Plugin</a></li>
-<li><a class="reference internal" href="#module-pulsar.apps.test.loader">Test Loader</a></li>
-<li><a class="reference internal" href="#module-pulsar.apps.test.result">Test Runner</a></li>
 </ul>
 </li>
 </ul>

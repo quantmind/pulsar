@@ -6,13 +6,13 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>Getting Started &mdash; pulsar v0.5b11 documentation</title>
+    <title>Getting Started &mdash; pulsar v0.5.0-beta.12 documentation</title>
     <link rel="stylesheet" href="../../static/pulsar.css" type="text/css" />
     <link rel="stylesheet" href="../../static/pygments.css" type="text/css" />
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../',
-        VERSION:     '0.5b11',
+        VERSION:     '0.5.0-beta.12',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -22,7 +22,7 @@
     <script type="text/javascript" src="../../static/underscore.js"></script>
     <script type="text/javascript" src="../../static/doctools.js"></script>
     <link rel="shortcut icon" href="../../static/Game_of_life_pulsar.gif"/>
-    <link rel="top" title="pulsar v0.5b11 documentation" href="../../index.html" />
+    <link rel="top" title="pulsar v0.5.0-beta.12 documentation" href="../../index.html" />
     <link rel="up" title="Distributed Task Queue" href="index.html" />
     <link rel="next" title="Jobs" href="jobs.html" />
     <link rel="prev" title="Distributed Task Queue" href="index.html" /> 
@@ -44,7 +44,7 @@
         <li class="right" >
           <a href="index.html" title="Distributed Task Queue"
              accesskey="P">previous</a> |</li>
-        <li><a href="../../index.html">pulsar v0.5b11 documentation</a> &raquo;</li>
+        <li><a href="../../index.html">pulsar v0.5.0-beta.12 documentation</a> &raquo;</li>
           <li><a href="index.html" accesskey="U">Distributed Task Queue</a> &raquo;</li> 
       </ul>
     </div>
@@ -71,7 +71,7 @@
 <a class="reference internal" href="../../index.html#apps-framework"><em>pulsar application framework</em></a>. Task queues are used
 as a mechanism to distribute work across threads/processes or machines.
 Pulsar <a class="reference internal" href="#pulsar.apps.tasks.TaskQueue" title="pulsar.apps.tasks.TaskQueue"><tt class="xref py py-class docutils literal"><span class="pre">TaskQueue</span></tt></a> is highly customizable, it can run in multi-threading
-or multiprocessing (default) mode and can share <tt class="xref py py-class docutils literal"><span class="pre">task.Task</span></tt> across
+or multiprocessing (default) mode and can share <a class="reference internal" href="backend.html#pulsar.apps.tasks.backends.Task" title="pulsar.apps.tasks.backends.Task"><tt class="xref py py-class docutils literal"><span class="pre">backends.Task</span></tt></a> across
 several machines.
 By creating <a class="reference internal" href="jobs.html#pulsar.apps.tasks.models.Job" title="pulsar.apps.tasks.models.Job"><tt class="xref py py-class docutils literal"><span class="pre">models.Job</span></tt></a> classes in a similar way you do for <a class="reference external" href="http://celeryproject.org/">celery</a>,
 this application gives you all you need for running them with very

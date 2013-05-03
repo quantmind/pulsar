@@ -6,13 +6,13 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>pulsar.apps.test.result &mdash; pulsar v0.5b11 documentation</title>
+    <title>pulsar.apps.test.result &mdash; pulsar v0.5.0-beta.12 documentation</title>
     <link rel="stylesheet" href="../../../../static/pulsar.css" type="text/css" />
     <link rel="stylesheet" href="../../../../static/pygments.css" type="text/css" />
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../../../',
-        VERSION:     '0.5b11',
+        VERSION:     '0.5.0-beta.12',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -22,7 +22,7 @@
     <script type="text/javascript" src="../../../../static/underscore.js"></script>
     <script type="text/javascript" src="../../../../static/doctools.js"></script>
     <link rel="shortcut icon" href="../../../../static/Game_of_life_pulsar.gif"/>
-    <link rel="top" title="pulsar v0.5b11 documentation" href="../../../../index.html" />
+    <link rel="top" title="pulsar v0.5.0-beta.12 documentation" href="../../../../index.html" />
     <link rel="up" title="pulsar.apps.test" href="../test.html" /> 
   </head>
   <body>
@@ -36,7 +36,7 @@
         <li class="right" >
           <a href="../../../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li><a href="../../../../index.html">pulsar v0.5b11 documentation</a> &raquo;</li>
+        <li><a href="../../../../index.html">pulsar v0.5.0-beta.12 documentation</a> &raquo;</li>
           <li><a href="../../../index.html" >Module code</a> &raquo;</li>
           <li><a href="../../../pulsar.html" >pulsar</a> &raquo;</li>
           <li><a href="../../apps.html" >pulsar.apps</a> &raquo;</li>
@@ -91,13 +91,13 @@
 <span class="n">STDERR_LINE</span> <span class="o">=</span> <span class="s">&#39;</span><span class="se">\n</span><span class="s">Stderr:</span><span class="se">\n</span><span class="si">%s</span><span class="s">&#39;</span>
 
 
-<span class="k">class</span> <span class="nc">Plugin</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+<div class="viewcode-block" id="Plugin"><a class="viewcode-back" href="../../../../apps/test.html#pulsar.apps.test.result.Plugin">[docs]</a><span class="k">class</span> <span class="nc">Plugin</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
     <span class="sd">&#39;&#39;&#39;Interface for all classes which are part of of the :class:`TestRunner`,</span>
 <span class="sd">including :class:`TestRunner` itself, :class:`TestResult`</span>
 <span class="sd">and :class:`Plugin`.&#39;&#39;&#39;</span>
     <span class="n">descriptions</span> <span class="o">=</span> <span class="bp">None</span>
 
-    <span class="k">def</span> <span class="nf">configure</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">cfg</span><span class="p">):</span>
+<div class="viewcode-block" id="Plugin.configure"><a class="viewcode-back" href="../../../../apps/test.html#pulsar.apps.test.result.Plugin.configure">[docs]</a>    <span class="k">def</span> <span class="nf">configure</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">cfg</span><span class="p">):</span>
         <span class="sd">&#39;&#39;&#39;Configure the *instance*. This method is called once just after</span>
 <span class="sd">construction of a :class:`TestRunner` and can be used to configure the</span>
 <span class="sd">plugin. If it returns something other than ``None``</span>
@@ -107,7 +107,7 @@
 <span class="sd">:parameter cfg: instance of :class:`pulsar.Config`.</span>
 <span class="sd">&#39;&#39;&#39;</span>
         <span class="k">pass</span>
-    
+    </div>
     <span class="nd">@property</span>
     <span class="k">def</span> <span class="nf">name</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">__class__</span><span class="o">.</span><span class="n">__name__</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span>
@@ -115,35 +115,35 @@
     <span class="k">def</span> <span class="nf">loadTestsFromTestCase</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">cls</span><span class="p">):</span>
         <span class="k">pass</span>
 
-    <span class="k">def</span> <span class="nf">on_start</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<div class="viewcode-block" id="Plugin.on_start"><a class="viewcode-back" href="../../../../apps/test.html#pulsar.apps.test.result.Plugin.on_start">[docs]</a>    <span class="k">def</span> <span class="nf">on_start</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="sd">&#39;&#39;&#39;Called once by :class:`TestSuite` just before it starts running tests.&#39;&#39;&#39;</span>
         <span class="k">pass</span>
-
-    <span class="k">def</span> <span class="nf">on_end</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+</div>
+<div class="viewcode-block" id="Plugin.on_end"><a class="viewcode-back" href="../../../../apps/test.html#pulsar.apps.test.result.Plugin.on_end">[docs]</a>    <span class="k">def</span> <span class="nf">on_end</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="sd">&#39;&#39;&#39;Called once by :class:`TestSuite` just before it stops.&#39;&#39;&#39;</span>
         <span class="k">pass</span>
-
-    <span class="k">def</span> <span class="nf">startTest</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">test</span><span class="p">):</span>
+</div>
+<div class="viewcode-block" id="Plugin.startTest"><a class="viewcode-back" href="../../../../apps/test.html#pulsar.apps.test.result.Plugin.startTest">[docs]</a>    <span class="k">def</span> <span class="nf">startTest</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">test</span><span class="p">):</span>
         <span class="sd">&#39;&#39;&#39;Called just before a *test* is executed. This is run</span>
 <span class="sd">just before _pre_setup function.&#39;&#39;&#39;</span>
         <span class="k">pass</span>
-
-    <span class="k">def</span> <span class="nf">stopTest</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">test</span><span class="p">):</span>
+</div>
+<div class="viewcode-block" id="Plugin.stopTest"><a class="viewcode-back" href="../../../../apps/test.html#pulsar.apps.test.result.Plugin.stopTest">[docs]</a>    <span class="k">def</span> <span class="nf">stopTest</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">test</span><span class="p">):</span>
         <span class="sd">&#39;&#39;&#39;Called just after a *test* has finished. This is run just after</span>
 <span class="sd">the _post_teardown function.&#39;&#39;&#39;</span>
         <span class="k">pass</span>
-    
-    <span class="k">def</span> <span class="nf">before_test_function_run</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">test</span><span class="p">,</span> <span class="n">local</span><span class="p">):</span>
+    </div>
+<div class="viewcode-block" id="Plugin.before_test_function_run"><a class="viewcode-back" href="../../../../apps/test.html#pulsar.apps.test.result.Plugin.before_test_function_run">[docs]</a>    <span class="k">def</span> <span class="nf">before_test_function_run</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">test</span><span class="p">,</span> <span class="n">local</span><span class="p">):</span>
         <span class="sd">&#39;&#39;&#39;This function can be used by plugins to manipulate the *test*</span>
 <span class="sd">behaviour in the process domain where the test run.&#39;&#39;&#39;</span>
         <span class="k">return</span> <span class="n">test</span>
-    
-    <span class="k">def</span> <span class="nf">after_test_function_run</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">test</span><span class="p">,</span> <span class="n">local</span><span class="p">,</span> <span class="n">result</span><span class="p">,</span> <span class="n">async</span><span class="p">):</span>
+    </div>
+<div class="viewcode-block" id="Plugin.after_test_function_run"><a class="viewcode-back" href="../../../../apps/test.html#pulsar.apps.test.result.Plugin.after_test_function_run">[docs]</a>    <span class="k">def</span> <span class="nf">after_test_function_run</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">test</span><span class="p">,</span> <span class="n">local</span><span class="p">,</span> <span class="n">result</span><span class="p">,</span> <span class="n">async</span><span class="p">):</span>
         <span class="sd">&#39;&#39;&#39;Given a test-function instance return a, possibly, modified test</span>
 <span class="sd">instance. This function can be used by plugins to modify the behaviour of test</span>
 <span class="sd">cases. By default it returns *test*.&#39;&#39;&#39;</span>
         <span class="k">pass</span>
-
+</div>
     <span class="k">def</span> <span class="nf">addSuccess</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">test</span><span class="p">):</span>
         <span class="k">pass</span>
 
@@ -173,7 +173,7 @@
         <span class="k">else</span><span class="p">:</span>
             <span class="k">return</span> <span class="n">teststr</span>
 
-
+</div>
 <span class="k">class</span> <span class="nc">TestResultProxy</span><span class="p">(</span><span class="n">Plugin</span><span class="p">):</span>
     <span class="n">result</span> <span class="o">=</span> <span class="bp">None</span>
     <span class="n">stream</span> <span class="o">=</span> <span class="bp">None</span>

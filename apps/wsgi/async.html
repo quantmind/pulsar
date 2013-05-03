@@ -1,0 +1,177 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>Asynchronous WSGI &mdash; pulsar v0.5.0-beta.12 documentation</title>
+    <link rel="stylesheet" href="../../static/pulsar.css" type="text/css" />
+    <link rel="stylesheet" href="../../static/pygments.css" type="text/css" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../',
+        VERSION:     '0.5.0-beta.12',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../../static/jquery.js"></script>
+    <script type="text/javascript" src="../../static/underscore.js"></script>
+    <script type="text/javascript" src="../../static/doctools.js"></script>
+    <link rel="shortcut icon" href="../../static/Game_of_life_pulsar.gif"/>
+    <link rel="top" title="pulsar v0.5.0-beta.12 documentation" href="../../index.html" />
+    <link rel="up" title="WSGI" href="index.html" />
+    <link rel="next" title="WSGI application handlers" href="handlers.html" />
+    <link rel="prev" title="WSGI Server" href="intro.html" /> 
+  </head>
+  <body>
+
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="handlers.html" title="WSGI application handlers"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="intro.html" title="WSGI Server"
+             accesskey="P">previous</a> |</li>
+        <li><a href="../../index.html">pulsar v0.5.0-beta.12 documentation</a> &raquo;</li>
+          <li><a href="index.html" accesskey="U">WSGI</a> &raquo;</li> 
+      </ul>
+    </div>
+<div class="deck">
+<div class="header">
+    
+        <p class="developmentversion">
+        Documentation for pulsar's DEVELOPMENT version. Get the 
+        <a href="http://packages.python.org/pulsar/">release docs here</a>.
+        </p>
+    
+</div>
+</div>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="asynchronous-wsgi">
+<span id="wsgi-async"></span><h1>Asynchronous WSGI<a class="headerlink" href="#asynchronous-wsgi" title="Permalink to this headline">¶</a></h1>
+<p>This section describes the asynchronous WSGI specification used by pulsar
+<a class="reference internal" href="intro.html#wsgi-server"><em>WSGI server</em></a> and <a class="reference internal" href="handlers.html#apps-wsgi-handlers"><em>application handlers</em></a>.
+It is a superset of the the <a class="reference external" href="http://www.python.org/dev/peps/pep-3333/">WSGI 1.0.1</a> specification for synchronous
+server/middleware.
+If an application handler is synchronous, this specification is exactly equivalent
+<a class="reference external" href="http://www.python.org/dev/peps/pep-3333/">WSGI 1.0.1</a>. The changes with respect <a class="reference external" href="http://www.python.org/dev/peps/pep-3333/">WSGI 1.0.1</a> only concerns asynchrnous
+responses and nothing else.</p>
+<div class="section" id="introduction">
+<h2>Introduction<a class="headerlink" href="#introduction" title="Permalink to this headline">¶</a></h2>
+</div>
+<div class="section" id="handlers">
+<h2>Handlers<a class="headerlink" href="#handlers" title="Permalink to this headline">¶</a></h2>
+<p>An asynchronous <a class="reference internal" href="handlers.html#apps-wsgi-handlers"><em>application handlers</em></a> must conform
+with the standard <a class="reference external" href="http://www.python.org/dev/peps/pep-3333/">WSGI 1.0.1</a> specification with the following exceptions:</p>
+<ul class="simple">
+<li>It can return a <a class="reference internal" href="../../api/async.html#pulsar.Deferred" title="pulsar.Deferred"><tt class="xref py py-class docutils literal"><span class="pre">pulsar.Deferred</span></tt></a>.</li>
+<li>If it returns a <a class="reference internal" href="../../api/async.html#pulsar.Deferred" title="pulsar.Deferred"><tt class="xref py py-class docutils literal"><span class="pre">pulsar.Deferred</span></tt></a>, the deferred, when called, i.e.
+the deferred get its <a class="reference internal" href="../../api/async.html#pulsar.Deferred.callback" title="pulsar.Deferred.callback"><tt class="xref py py-meth docutils literal"><span class="pre">pulsar.Deferred.callback()</span></tt></a> method invoked,
+the result must be an <a class="reference internal" href="#wsgi-async-iter"><em>asynchronous iterable</em></a>.</li>
+</ul>
+</div>
+<div class="section" id="iterable">
+<span id="wsgi-async-iter"></span><h2>Iterable<a class="headerlink" href="#iterable" title="Permalink to this headline">¶</a></h2>
+<p>An asynchronous iterable is an iterable over a combination of <tt class="docutils literal"><span class="pre">bytes</span></tt> or
+<a class="reference internal" href="../../api/async.html#pulsar.Deferred" title="pulsar.Deferred"><tt class="xref py py-class docutils literal"><span class="pre">pulsar.Deferred</span></tt></a> which result in <tt class="docutils literal"><span class="pre">bytes</span></tt>.
+For eaxample this could be an asynchronous iterable:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="k">def</span> <span class="nf">simple_async</span><span class="p">():</span>
+    <span class="k">yield</span> <span class="n">b</span><span class="s">&#39;hello&#39;</span>
+    <span class="n">c</span> <span class="o">=</span> <span class="n">pulsar</span><span class="o">.</span><span class="n">Deferred</span><span class="p">()</span>
+    <span class="n">c</span><span class="o">.</span><span class="n">callback</span><span class="p">(</span><span class="n">b</span><span class="s">&#39; &#39;</span><span class="p">)</span>
+    <span class="k">yield</span> <span class="n">c</span>
+    <span class="k">yield</span> <span class="n">b</span><span class="s">&#39;World!&#39;</span>
+</pre></div>
+</div>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper"><p class="logo">
+<a href="../../index.html">
+  <img class="logo" width="200" src="../../static/pulsar.png" alt="pulsar" title="Pulsar"/>
+</a>
+</p>
+  <h3><a href="../../index.html">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">Asynchronous WSGI</a><ul>
+<li><a class="reference internal" href="#introduction">Introduction</a></li>
+<li><a class="reference internal" href="#handlers">Handlers</a></li>
+<li><a class="reference internal" href="#iterable">Iterable</a></li>
+</ul>
+</li>
+</ul>
+
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="intro.html"
+                        title="previous chapter">WSGI Server</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="handlers.html"
+                        title="next chapter">WSGI application handlers</a></p>
+  <h3>This Page</h3>
+  <ul class="this-page-menu">
+    <li><a href="../../sources/apps/wsgi/async.txt"
+           rel="nofollow">Show Source</a></li>
+  </ul>
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" size="18" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+
+    <div class="footer">
+        &copy; Copyright 2011-2013, Luca Sbardella.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.0.7.
+    </div>
+<script type="text/javascript">
+
+  var _gaq = _gaq || [];
+  
+  _gaq.push(['_setAccount', 'UA-3900561-8']);
+  
+  _gaq.push(['_trackPageview']);
+
+  (function() {
+    var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+    ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+    var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+  })();
+
+</script>
+
+  </body>
+</html>

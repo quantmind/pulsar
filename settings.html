@@ -6,13 +6,13 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>Settings &mdash; pulsar v0.5b11 documentation</title>
+    <title>Settings &mdash; pulsar v0.5.0-beta.12 documentation</title>
     <link rel="stylesheet" href="static/pulsar.css" type="text/css" />
     <link rel="stylesheet" href="static/pygments.css" type="text/css" />
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '',
-        VERSION:     '0.5b11',
+        VERSION:     '0.5.0-beta.12',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -22,7 +22,7 @@
     <script type="text/javascript" src="static/underscore.js"></script>
     <script type="text/javascript" src="static/doctools.js"></script>
     <link rel="shortcut icon" href="static/Game_of_life_pulsar.gif"/>
-    <link rel="top" title="pulsar v0.5b11 documentation" href="index.html" />
+    <link rel="top" title="pulsar v0.5.0-beta.12 documentation" href="index.html" />
     <link rel="next" title="Socket Servers" href="apps/socket.html" />
     <link rel="prev" title="Changelog" href="changelog.html" /> 
   </head>
@@ -43,7 +43,7 @@
         <li class="right" >
           <a href="changelog.html" title="Changelog"
              accesskey="P">previous</a> |</li>
-        <li><a href="index.html">pulsar v0.5b11 documentation</a> &raquo;</li> 
+        <li><a href="index.html">pulsar v0.5.0-beta.12 documentation</a> &raquo;</li> 
       </ul>
     </div>
 <div class="deck">
@@ -66,9 +66,17 @@
   <span class="target" id="module-pulsar.utils.config"><span id="settings"></span></span><div class="section" id="id1">
 <h1>Settings<a class="headerlink" href="#id1" title="Permalink to this headline">¶</a></h1>
 <p>This is the full list of <a class="reference internal" href="api/utilities.html#api-config"><em>pulsar settings</em></a> available for
-configuring your pulsar server or application.</p>
-<div class="section" id="config-file">
-<span id="setting-section-config-file"></span><h2>Config File<a class="headerlink" href="#config-file" title="Permalink to this headline">¶</a></h2>
+configuring your pulsar server or applications. Pulsar can
+run several <a class="reference internal" href="api/application.html#pulsar.apps.Application" title="pulsar.apps.Application"><tt class="xref py py-class docutils literal"><span class="pre">pulsar.apps.Application</span></tt></a> in one server, via the
+<a class="reference internal" href="api/application.html#pulsar.apps.MultiApp" title="pulsar.apps.MultiApp"><tt class="xref py py-class docutils literal"><span class="pre">pulsar.apps.MultiApp</span></tt></a> class. Each application has its own set
+of configuration parameters with the only exception of the
+<a class="reference internal" href="#setting-section-global-server-settings"><em>global server settings</em></a>.</p>
+<div class="section" id="global-server-settings">
+<span id="setting-section-global-server-settings"></span><h2>Global Server Settings<a class="headerlink" href="#global-server-settings" title="Permalink to this headline">¶</a></h2>
+<p>These settings are shared by the arbiter as well as all pulsar workers. They
+set global settings the debug mode,
+the proxy server to use when making HTTP requests, and server specific
+configuration parameters.</p>
 <div class="section" id="config">
 <span id="setting-config"></span><h3>config<a class="headerlink" href="#config" title="Permalink to this headline">¶</a></h3>
 <p><em>Command line</em>: <tt class="docutils literal"><span class="pre">-c</span></tt>, <tt class="docutils literal"><span class="pre">--config</span></tt></p>
@@ -76,64 +84,6 @@ configuring your pulsar server or application.</p>
 <p>The path to a Pulsar config file, where default Settings
 paramaters can be specified.</p>
 </div>
-</div>
-<div class="section" id="worker-processes">
-<span id="setting-section-worker-processes"></span><h2>Worker Processes<a class="headerlink" href="#worker-processes" title="Permalink to this headline">¶</a></h2>
-<p>This group of configuration parameters control the number of actors performing
-for a given <a class="reference internal" href="api/actor.html#pulsar.Monitor" title="pulsar.Monitor"><tt class="xref py py-class docutils literal"><span class="pre">pulsar.Monitor</span></tt></a>, the type of concurreny of the server and
-other actor-specific parameters.</p>
-<div class="section" id="workers">
-<span id="setting-workers"></span><h3>workers<a class="headerlink" href="#workers" title="Permalink to this headline">¶</a></h3>
-<p><em>Command line</em>: <tt class="docutils literal"><span class="pre">-w</span></tt>, <tt class="docutils literal"><span class="pre">--workers</span></tt></p>
-<p><em>Default</em>: <tt class="docutils literal"><span class="pre">1</span></tt></p>
-<p>The number of workers for handling requests.</p>
-<p>If using a multi-process concurrency, a number in the
-the <tt class="docutils literal"><span class="pre">2-4</span> <span class="pre">x</span> <span class="pre">NUM_CORES</span></tt> range should be good. If you are using threads this
-number can be higher.</p>
-</div>
-<div class="section" id="concurrency">
-<span id="setting-concurrency"></span><h3>concurrency<a class="headerlink" href="#concurrency" title="Permalink to this headline">¶</a></h3>
-<p><em>Command line</em>: <tt class="docutils literal"><span class="pre">--concurrency</span></tt></p>
-<p><em>Default</em>: <tt class="docutils literal"><span class="pre">process</span></tt></p>
-<p>The type of concurrency to use: <tt class="docutils literal"><span class="pre">process</span></tt> or <tt class="docutils literal"><span class="pre">thread</span></tt>.</p>
-</div>
-<div class="section" id="max-requests">
-<span id="setting-max-requests"></span><h3>max_requests<a class="headerlink" href="#max-requests" title="Permalink to this headline">¶</a></h3>
-<p><em>Command line</em>: <tt class="docutils literal"><span class="pre">--max-requests</span></tt></p>
-<p><em>Default</em>: <tt class="docutils literal"><span class="pre">0</span></tt></p>
-<p>The maximum number of requests a worker will process before restarting.</p>
-<p>Any value greater than zero will limit the number of requests a worker
-will process before automatically restarting. This is a simple method
-to help limit the damage of memory leaks.</p>
-<p>If this is set to zero (the default) then the automatic worker
-restarts are disabled.</p>
-</div>
-<div class="section" id="backlog">
-<span id="setting-backlog"></span><h3>backlog<a class="headerlink" href="#backlog" title="Permalink to this headline">¶</a></h3>
-<p><em>Command line</em>: <tt class="docutils literal"><span class="pre">--backlog</span></tt></p>
-<p><em>Default</em>: <tt class="docutils literal"><span class="pre">2048</span></tt></p>
-<p>The maximum number of concurrent requests.</p>
-<p>This refers to the number of clients that can be waiting to be served.
-Exceeding this number results in the client getting an error when
-attempting to connect. It should only affect servers under significant
-load.
-Must be a positive integer. Generally set in the 64-2048 range for
-socket servers, 5-10 for task-queue servers.</p>
-</div>
-<div class="section" id="timeout">
-<span id="setting-timeout"></span><h3>timeout<a class="headerlink" href="#timeout" title="Permalink to this headline">¶</a></h3>
-<p><em>Command line</em>: <tt class="docutils literal"><span class="pre">-t</span></tt>, <tt class="docutils literal"><span class="pre">--timeout</span></tt></p>
-<p><em>Default</em>: <tt class="docutils literal"><span class="pre">30</span></tt></p>
-<p>Workers silent for more than this many seconds are
-killed and restarted.</p>
-</div>
-</div>
-<div class="section" id="global-server-settings">
-<span id="setting-section-global-server-settings"></span><h2>Global Server Settings<a class="headerlink" href="#global-server-settings" title="Permalink to this headline">¶</a></h2>
-<p>These settings are shared by the arbiter as well as all pulsar workers. They
-set global settings the debug mode,
-the proxy server to use when making HTTP requests, and server specific
-configuration parameters.</p>
 <div class="section" id="http-proxy">
 <span id="setting-http-proxy"></span><h3>http_proxy<a class="headerlink" href="#http-proxy" title="Permalink to this headline">¶</a></h3>
 <p><em>Command line</em>: <tt class="docutils literal"><span class="pre">--http-proxy</span></tt></p>
@@ -217,12 +167,6 @@ the worker processes group.</p>
 <p><em>Default</em>: <tt class="docutils literal"><span class="pre">['console']</span></tt></p>
 <p>log handlers for pulsar server</p>
 </div>
-<div class="section" id="logevery">
-<span id="setting-logevery"></span><h3>logevery<a class="headerlink" href="#logevery" title="Permalink to this headline">¶</a></h3>
-<p><em>Command line</em>: <tt class="docutils literal"><span class="pre">--log-every</span></tt></p>
-<p><em>Default</em>: <tt class="docutils literal"><span class="pre">0</span></tt></p>
-<p>Log information every n seconds</p>
-</div>
 <div class="section" id="logconfig">
 <span id="setting-logconfig"></span><h3>logconfig<a class="headerlink" href="#logconfig" title="Permalink to this headline">¶</a></h3>
 <p><em>Default</em>: <tt class="docutils literal"><span class="pre">{}</span></tt></p>
@@ -246,13 +190,64 @@ module.</p>
 <p>Internal setting that is adjusted for each type of application.</p>
 </div>
 </div>
-<div class="section" id="server-hooks">
-<span id="setting-section-server-hooks"></span><h2>Server Hooks<a class="headerlink" href="#server-hooks" title="Permalink to this headline">¶</a></h2>
-<p>Server hooks are functions which can be specified in a
+<div class="section" id="worker-processes">
+<span id="setting-section-worker-processes"></span><h2>Worker Processes<a class="headerlink" href="#worker-processes" title="Permalink to this headline">¶</a></h2>
+<p>This group of configuration parameters control the number of actors performing
+for a given <a class="reference internal" href="api/actor.html#pulsar.Monitor" title="pulsar.Monitor"><tt class="xref py py-class docutils literal"><span class="pre">pulsar.Monitor</span></tt></a>, the type of concurreny of the server and
+other actor-specific parameters.</p>
+<div class="section" id="workers">
+<span id="setting-workers"></span><h3>workers<a class="headerlink" href="#workers" title="Permalink to this headline">¶</a></h3>
+<p><em>Command line</em>: <tt class="docutils literal"><span class="pre">-w</span></tt>, <tt class="docutils literal"><span class="pre">--workers</span></tt></p>
+<p><em>Default</em>: <tt class="docutils literal"><span class="pre">1</span></tt></p>
+<p>The number of workers for handling requests.</p>
+<p>If using a multi-process concurrency, a number in the
+the <tt class="docutils literal"><span class="pre">2-4</span> <span class="pre">x</span> <span class="pre">NUM_CORES</span></tt> range should be good. If you are using threads this
+number can be higher.</p>
+</div>
+<div class="section" id="concurrency">
+<span id="setting-concurrency"></span><h3>concurrency<a class="headerlink" href="#concurrency" title="Permalink to this headline">¶</a></h3>
+<p><em>Command line</em>: <tt class="docutils literal"><span class="pre">--concurrency</span></tt></p>
+<p><em>Default</em>: <tt class="docutils literal"><span class="pre">process</span></tt></p>
+<p>The type of concurrency to use: <tt class="docutils literal"><span class="pre">process</span></tt> or <tt class="docutils literal"><span class="pre">thread</span></tt>.</p>
+</div>
+<div class="section" id="max-requests">
+<span id="setting-max-requests"></span><h3>max_requests<a class="headerlink" href="#max-requests" title="Permalink to this headline">¶</a></h3>
+<p><em>Command line</em>: <tt class="docutils literal"><span class="pre">--max-requests</span></tt></p>
+<p><em>Default</em>: <tt class="docutils literal"><span class="pre">0</span></tt></p>
+<p>The maximum number of requests a worker will process before restarting.</p>
+<p>Any value greater than zero will limit the number of requests a worker
+will process before automatically restarting. This is a simple method
+to help limit the damage of memory leaks.</p>
+<p>If this is set to zero (the default) then the automatic worker
+restarts are disabled.</p>
+</div>
+<div class="section" id="backlog">
+<span id="setting-backlog"></span><h3>backlog<a class="headerlink" href="#backlog" title="Permalink to this headline">¶</a></h3>
+<p><em>Command line</em>: <tt class="docutils literal"><span class="pre">--backlog</span></tt></p>
+<p><em>Default</em>: <tt class="docutils literal"><span class="pre">2048</span></tt></p>
+<p>The maximum number of concurrent requests.</p>
+<p>This refers to the number of clients that can be waiting to be served.
+Exceeding this number results in the client getting an error when
+attempting to connect. It should only affect servers under significant
+load.
+Must be a positive integer. Generally set in the 64-2048 range for
+socket servers, 5-10 for task-queue servers.</p>
+</div>
+<div class="section" id="timeout">
+<span id="setting-timeout"></span><h3>timeout<a class="headerlink" href="#timeout" title="Permalink to this headline">¶</a></h3>
+<p><em>Command line</em>: <tt class="docutils literal"><span class="pre">-t</span></tt>, <tt class="docutils literal"><span class="pre">--timeout</span></tt></p>
+<p><em>Default</em>: <tt class="docutils literal"><span class="pre">30</span></tt></p>
+<p>Workers silent for more than this many seconds are
+killed and restarted.</p>
+</div>
+</div>
+<div class="section" id="application-hooks">
+<span id="setting-section-application-hooks"></span><h2>Application Hooks<a class="headerlink" href="#application-hooks" title="Permalink to this headline">¶</a></h2>
+<p>Application hooks are functions which can be specified in a
 <a class="reference internal" href="#setting-config"><em>config</em></a> file to perform custom tasks in a pulsar server.
 These tasks can be scheduled when events occurs or at every event loop of
 the various components of a pulsar application.</p>
-<p>All server hooks are functions which accept one parameter only, the actor
+<p>All application hooks are functions which accept one parameter only, the actor
 invoking the function.</p>
 <div class="section" id="post-fork">
 <span id="setting-post-fork"></span><h3>post_fork<a class="headerlink" href="#post-fork" title="Permalink to this headline">¶</a></h3>
@@ -314,17 +309,6 @@ An IP is a valid HOST.</p>
 <p><em>Default</em>: <tt class="docutils literal"><span class="pre">15</span></tt></p>
 <p>The number of seconds to keep an idle client connection
 open.</p>
-</div>
-</div>
-<div class="section" id="wsgi-servers">
-<span id="setting-section-wsgi-servers"></span><h2>WSGI Servers<a class="headerlink" href="#wsgi-servers" title="Permalink to this headline">¶</a></h2>
-<div class="section" id="http-parser">
-<span id="setting-http-parser"></span><h3>http_parser<a class="headerlink" href="#http-parser" title="Permalink to this headline">¶</a></h3>
-<p><em>Application namespace</em>: <tt class="docutils literal"><span class="pre">wsgi</span></tt></p>
-<p><em>Command line</em>: <tt class="docutils literal"><span class="pre">--http-parser</span></tt></p>
-<p><em>Default</em>: <tt class="xref docutils literal"><span class="pre">None</span></tt></p>
-<p>The HTTP Parser to use. By default it uses the fastest possible.</p>
-<p>Specify <cite>python</cite> if you wich to use the pure python implementation</p>
 </div>
 </div>
 <div class="section" id="task-consumer">
@@ -416,7 +400,7 @@ and failed.</p>
 <dt id="pulsar.utils.config.pass_through">
 <tt class="descclassname">pulsar.utils.config.</tt><tt class="descname">pass_through</tt><big>(</big><em>arg</em><big>)</big><a class="headerlink" href="#pulsar.utils.config.pass_through" title="Permalink to this definition">¶</a></dt>
 <dd><p>A dummy function accepting on parameter only. It does nothing. It is
-used as default by <a class="reference internal" href="#setting-section-server-hooks"><em>Server hooks</em></a>.</p>
+used as default by <a class="reference internal" href="#setting-section-application-hooks"><em>Application Hooks</em></a>.</p>
 </dd></dl>
 
 </div>
@@ -435,19 +419,8 @@ used as default by <a class="reference internal" href="#setting-section-server-h
   <h3><a href="index.html">Table Of Contents</a></h3>
   <ul>
 <li><a class="reference internal" href="#">Settings</a><ul>
-<li><a class="reference internal" href="#config-file">Config File</a><ul>
-<li><a class="reference internal" href="#config">config</a></li>
-</ul>
-</li>
-<li><a class="reference internal" href="#worker-processes">Worker Processes</a><ul>
-<li><a class="reference internal" href="#workers">workers</a></li>
-<li><a class="reference internal" href="#concurrency">concurrency</a></li>
-<li><a class="reference internal" href="#max-requests">max_requests</a></li>
-<li><a class="reference internal" href="#backlog">backlog</a></li>
-<li><a class="reference internal" href="#timeout">timeout</a></li>
-</ul>
-</li>
 <li><a class="reference internal" href="#global-server-settings">Global Server Settings</a><ul>
+<li><a class="reference internal" href="#config">config</a></li>
 <li><a class="reference internal" href="#http-proxy">http_proxy</a></li>
 <li><a class="reference internal" href="#http-py-parser">http_py_parser</a></li>
 <li><a class="reference internal" href="#debug">debug</a></li>
@@ -458,13 +431,20 @@ used as default by <a class="reference internal" href="#setting-section-server-h
 <li><a class="reference internal" href="#group">group</a></li>
 <li><a class="reference internal" href="#loglevel">loglevel</a></li>
 <li><a class="reference internal" href="#loghandlers">loghandlers</a></li>
-<li><a class="reference internal" href="#logevery">logevery</a></li>
 <li><a class="reference internal" href="#logconfig">logconfig</a></li>
 <li><a class="reference internal" href="#process-name">process_name</a></li>
 <li><a class="reference internal" href="#default-process-name">default_process_name</a></li>
 </ul>
 </li>
-<li><a class="reference internal" href="#server-hooks">Server Hooks</a><ul>
+<li><a class="reference internal" href="#worker-processes">Worker Processes</a><ul>
+<li><a class="reference internal" href="#workers">workers</a></li>
+<li><a class="reference internal" href="#concurrency">concurrency</a></li>
+<li><a class="reference internal" href="#max-requests">max_requests</a></li>
+<li><a class="reference internal" href="#backlog">backlog</a></li>
+<li><a class="reference internal" href="#timeout">timeout</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#application-hooks">Application Hooks</a><ul>
 <li><a class="reference internal" href="#post-fork">post_fork</a></li>
 <li><a class="reference internal" href="#when-ready">when_ready</a></li>
 <li><a class="reference internal" href="#connection-made">connection_made</a></li>
@@ -476,10 +456,6 @@ used as default by <a class="reference internal" href="#setting-section-server-h
 <li><a class="reference internal" href="#socket-servers">Socket Servers</a><ul>
 <li><a class="reference internal" href="#bind">bind</a></li>
 <li><a class="reference internal" href="#keep-alive">keep_alive</a></li>
-</ul>
-</li>
-<li><a class="reference internal" href="#wsgi-servers">WSGI Servers</a><ul>
-<li><a class="reference internal" href="#http-parser">http_parser</a></li>
 </ul>
 </li>
 <li><a class="reference internal" href="#task-consumer">Task Consumer</a><ul>

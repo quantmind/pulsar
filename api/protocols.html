@@ -6,13 +6,13 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>Protocols API &mdash; pulsar v0.5b11 documentation</title>
+    <title>Protocols API &mdash; pulsar v0.5.0-beta.12 documentation</title>
     <link rel="stylesheet" href="../static/pulsar.css" type="text/css" />
     <link rel="stylesheet" href="../static/pygments.css" type="text/css" />
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../',
-        VERSION:     '0.5b11',
+        VERSION:     '0.5.0-beta.12',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -22,7 +22,7 @@
     <script type="text/javascript" src="../static/underscore.js"></script>
     <script type="text/javascript" src="../static/doctools.js"></script>
     <link rel="shortcut icon" href="../static/Game_of_life_pulsar.gif"/>
-    <link rel="top" title="pulsar v0.5b11 documentation" href="../index.html" />
+    <link rel="top" title="pulsar v0.5.0-beta.12 documentation" href="../index.html" />
     <link rel="up" title="API" href="index.html" />
     <link rel="next" title="Applications API" href="application.html" />
     <link rel="prev" title="Actors API" href="actor.html" /> 
@@ -44,7 +44,7 @@
         <li class="right" >
           <a href="actor.html" title="Actors API"
              accesskey="P">previous</a> |</li>
-        <li><a href="../index.html">pulsar v0.5b11 documentation</a> &raquo;</li>
+        <li><a href="../index.html">pulsar v0.5.0-beta.12 documentation</a> &raquo;</li>
           <li><a href="index.html" accesskey="U">API</a> &raquo;</li> 
       </ul>
     </div>
@@ -195,7 +195,8 @@ called with None as its argument.</p>
 <dt id="pulsar.Protocol">
 <em class="property">class </em><tt class="descclassname">pulsar.</tt><tt class="descname">Protocol</tt><a class="headerlink" href="#pulsar.Protocol" title="Permalink to this definition">¶</a></dt>
 <dd><p>Abstract class implemented in <a class="reference internal" href="#pulsar.Connection" title="pulsar.Connection"><tt class="xref py py-class docutils literal"><span class="pre">Connection</span></tt></a>
-and <a class="reference internal" href="#pulsar.ProtocolConsumer" title="pulsar.ProtocolConsumer"><tt class="xref py py-class docutils literal"><span class="pre">ProtocolConsumer</span></tt></a></p>
+and <a class="reference internal" href="#pulsar.ProtocolConsumer" title="pulsar.ProtocolConsumer"><tt class="xref py py-class docutils literal"><span class="pre">ProtocolConsumer</span></tt></a>. It derives from <a class="reference internal" href="async.html#pulsar.EventHandler" title="pulsar.EventHandler"><tt class="xref py py-class docutils literal"><span class="pre">EventHandler</span></tt></a>
+and therefore several events can be attached to subclasses.</p>
 <dl class="method">
 <dt id="pulsar.Protocol.connection_made">
 <tt class="descname">connection_made</tt><big>(</big><em>transport</em><big>)</big><a class="headerlink" href="#pulsar.Protocol.connection_made" title="Permalink to this definition">¶</a></dt>
@@ -285,7 +286,7 @@ or a client <a class="reference internal" href="#pulsar.Client" title="pulsar.Cl
 <dl class="attribute">
 <dt id="pulsar.Connection.processed">
 <tt class="descname">processed</tt><a class="headerlink" href="#pulsar.Connection.processed" title="Permalink to this definition">¶</a></dt>
-<dd><p>Number of separate requests processed by this connection.</p>
+<dd><p>Number of separate <a class="reference internal" href="#pulsar.ProtocolConsumer" title="pulsar.ProtocolConsumer"><tt class="xref py py-class docutils literal"><span class="pre">ProtocolConsumer</span></tt></a> processed by this connection.</p>
 </dd></dl>
 
 <dl class="attribute">
@@ -325,7 +326,7 @@ response).</p>
 
 <dl class="method">
 <dt id="pulsar.Connection.finished">
-<tt class="descname">finished</tt><big>(</big><em>consumer</em>, <em>result=None</em><big>)</big><a class="headerlink" href="#pulsar.Connection.finished" title="Permalink to this definition">¶</a></dt>
+<tt class="descname">finished</tt><big>(</big><em>consumer</em>, <em>result=&lt;object object at 0x40494770&gt;</em><big>)</big><a class="headerlink" href="#pulsar.Connection.finished" title="Permalink to this definition">¶</a></dt>
 <dd><p>Call this method to finish with the the current <em>consumer</em>.
 the <em>consumer</em> must be the same as the <a class="reference internal" href="#pulsar.Connection.current_consumer" title="pulsar.Connection.current_consumer"><tt class="xref py py-attr docutils literal"><span class="pre">current_consumer</span></tt></a> attribute.</p>
 </dd></dl>
@@ -347,12 +348,15 @@ the <a class="reference internal" href="#pulsar.ProtocolConsumer.transport" titl
 be <a class="reference internal" href="#pulsar.Protocol.data_received" title="pulsar.Protocol.data_received"><tt class="xref py py-meth docutils literal"><span class="pre">Protocol.data_received()</span></tt></a>.</p>
 <p>It has one <a class="reference internal" href="../tutorials/events.html#one-time-event"><em>one time events</em></a>:</p>
 <ul class="simple">
-<li><em>finish</em> fired when this <a class="reference internal" href="#pulsar.ProtocolConsumer" title="pulsar.ProtocolConsumer"><tt class="xref py py-class docutils literal"><span class="pre">ProtocolConsumer</span></tt></a> has finished consuming
-data and a response/exception is available.</li>
+<li><tt class="docutils literal"><span class="pre">finish</span></tt> fired when this <a class="reference internal" href="#pulsar.ProtocolConsumer" title="pulsar.ProtocolConsumer"><tt class="xref py py-class docutils literal"><span class="pre">ProtocolConsumer</span></tt></a> has finished consuming
+data and a response/exception is available. The <a class="reference internal" href="#pulsar.ProtocolConsumer.on_finished" title="pulsar.ProtocolConsumer.on_finished"><tt class="xref py py-attr docutils literal"><span class="pre">on_finished</span></tt></a>
+is the <a class="reference internal" href="async.html#pulsar.Deferred" title="pulsar.Deferred"><tt class="xref py py-class docutils literal"><span class="pre">Deferred</span></tt></a> called back when this event occurs.</li>
 </ul>
-<p>and three <a class="reference internal" href="../tutorials/events.html#many-times-event"><em>many times events</em></a>:</p>
+<p>and one <a class="reference internal" href="../tutorials/events.html#many-times-event"><em>many times events</em></a>:</p>
 <ul class="simple">
-<li><em>data_received</em> fired each time new data is consumed by
+<li><tt class="docutils literal"><span class="pre">data_received</span></tt> fired each time new data is received by this
+<a class="reference internal" href="#pulsar.ProtocolConsumer" title="pulsar.ProtocolConsumer"><tt class="xref py py-class docutils literal"><span class="pre">ProtocolConsumer</span></tt></a> but not yet processed.</li>
+<li><tt class="docutils literal"><span class="pre">data_processed</span></tt> fired each time new data is consumed by
 this <a class="reference internal" href="#pulsar.ProtocolConsumer" title="pulsar.ProtocolConsumer"><tt class="xref py py-class docutils literal"><span class="pre">ProtocolConsumer</span></tt></a>.</li>
 </ul>
 <dl class="attribute">
@@ -368,9 +372,21 @@ this <a class="reference internal" href="#pulsar.ProtocolConsumer" title="pulsar
 </dd></dl>
 
 <dl class="attribute">
-<dt id="pulsar.ProtocolConsumer.request">
-<tt class="descname">request</tt><a class="headerlink" href="#pulsar.ProtocolConsumer.request" title="Permalink to this definition">¶</a></dt>
-<dd><p>Optional <tt class="xref py py-class docutils literal"><span class="pre">Request</span></tt> instance (used for clients).</p>
+<dt id="pulsar.ProtocolConsumer.current_request">
+<tt class="descname">current_request</tt><a class="headerlink" href="#pulsar.ProtocolConsumer.current_request" title="Permalink to this definition">¶</a></dt>
+<dd><p>Current request instance (used for clients only).</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="pulsar.ProtocolConsumer.connecting">
+<tt class="descname">connecting</tt><a class="headerlink" href="#pulsar.ProtocolConsumer.connecting" title="Permalink to this definition">¶</a></dt>
+<dd><p><tt class="xref docutils literal"><span class="pre">True</span></tt> if connecting to endpoint (for servers this is always false).</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="pulsar.ProtocolConsumer.producer">
+<tt class="descname">producer</tt><a class="headerlink" href="#pulsar.ProtocolConsumer.producer" title="Permalink to this definition">¶</a></dt>
+<dd><p>The <a class="reference internal" href="#pulsar.Producer" title="pulsar.Producer"><tt class="xref py py-class docutils literal"><span class="pre">Producer</span></tt></a> of this consumer.</p>
 </dd></dl>
 
 <dl class="attribute">
@@ -380,6 +396,12 @@ this <a class="reference internal" href="#pulsar.ProtocolConsumer" title="pulsar
 finished consuming protocol. It is called by the
 <a class="reference internal" href="#pulsar.ProtocolConsumer.connection" title="pulsar.ProtocolConsumer.connection"><tt class="xref py py-attr docutils literal"><span class="pre">connection</span></tt></a> before disposing of this consumer. It is
 a proxy of <tt class="docutils literal"><span class="pre">self.event('finish')</span></tt>.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="pulsar.ProtocolConsumer.request_processed">
+<tt class="descname">request_processed</tt><a class="headerlink" href="#pulsar.ProtocolConsumer.request_processed" title="Permalink to this definition">¶</a></dt>
+<dd><p>The number of requests processed by this consumer.</p>
 </dd></dl>
 
 <dl class="method">
@@ -411,7 +433,7 @@ by client consumers only.</p>
 
 <dl class="method">
 <dt id="pulsar.ProtocolConsumer.finished">
-<tt class="descname">finished</tt><big>(</big><em>result=None</em><big>)</big><a class="headerlink" href="#pulsar.ProtocolConsumer.finished" title="Permalink to this definition">¶</a></dt>
+<tt class="descname">finished</tt><big>(</big><em>result=&lt;object object at 0x40494770&gt;</em><big>)</big><a class="headerlink" href="#pulsar.ProtocolConsumer.finished" title="Permalink to this definition">¶</a></dt>
 <dd><p>Call this method when done with this <a class="reference internal" href="#pulsar.ProtocolConsumer" title="pulsar.ProtocolConsumer"><tt class="xref py py-class docutils literal"><span class="pre">ProtocolConsumer</span></tt></a>.
 By default it calls the <a class="reference internal" href="#pulsar.Connection.finished" title="pulsar.Connection.finished"><tt class="xref py py-meth docutils literal"><span class="pre">Connection.finished()</span></tt></a> method of the
 <a class="reference internal" href="#pulsar.ProtocolConsumer.connection" title="pulsar.ProtocolConsumer.connection"><tt class="xref py py-attr docutils literal"><span class="pre">connection</span></tt></a> attribute.</p>
@@ -500,13 +522,19 @@ connections to a remote <a class="reference internal" href="#pulsar.Server" titl
 <dt id="pulsar.Client">
 <em class="property">class </em><tt class="descclassname">pulsar.</tt><tt class="descname">Client</tt><big>(</big><em>max_connections=None</em>, <em>timeout=None</em>, <em>client_version=None</em>, <em>trust_env=True</em>, <em>consumer_factory=None</em>, <em>max_reconnect=None</em>, <em>force_sync=False</em>, <em>event_loop=None</em>, <em>**params</em><big>)</big><a class="headerlink" href="#pulsar.Client" title="Permalink to this definition">¶</a></dt>
 <dd><p>A client for a remote server which handles one or more
-<a class="reference internal" href="#pulsar.ConnectionPool" title="pulsar.ConnectionPool"><tt class="xref py py-class docutils literal"><span class="pre">ConnectionPool</span></tt></a> of asynchronous connections.</p>
+<a class="reference internal" href="#pulsar.ConnectionPool" title="pulsar.ConnectionPool"><tt class="xref py py-class docutils literal"><span class="pre">ConnectionPool</span></tt></a> of asynchronous connections.
+It has the <tt class="docutils literal"><span class="pre">finish</span></tt> <a class="reference internal" href="../tutorials/events.html#one-time-event"><em>one time event</em></a> fired when calling
+the <a class="reference internal" href="#pulsar.Client.close" title="pulsar.Client.close"><tt class="xref py py-meth docutils literal"><span class="pre">close()</span></tt></a> method, four <a class="reference internal" href="../tutorials/events.html#many-times-event"><em>many time events</em></a>
+which can be used to add additional information to the request to send
+to the remote server and to postprocess responses. These events are:
+<tt class="docutils literal"><span class="pre">connection_made</span></tt>, <tt class="docutils literal"><span class="pre">pre_request</span></tt>, <tt class="docutils literal"><span class="pre">post_request</span></tt>, <tt class="docutils literal"><span class="pre">connection_lost</span></tt>.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
 <li><strong>max_connections</strong> &#8211; Optional maximum number of connections.</li>
+<li><strong>timeout</strong> &#8211; Optional timeout in seconds for closing idle connections.</li>
 <li><strong>force_sync</strong> &#8211; set the <a class="reference internal" href="#pulsar.Client.force_sync" title="pulsar.Client.force_sync"><tt class="xref py py-attr docutils literal"><span class="pre">force_sync</span></tt></a> attribute.</li>
 <li><strong>event_loop</strong> &#8211; Optional <a class="reference internal" href="async.html#pulsar.EventLoop" title="pulsar.EventLoop"><tt class="xref py py-class docutils literal"><span class="pre">EventLoop</span></tt></a> which set the <a class="reference internal" href="#pulsar.Client.event_loop" title="pulsar.Client.event_loop"><tt class="xref py py-attr docutils literal"><span class="pre">event_loop</span></tt></a>.</li>
 </ul>
@@ -589,6 +617,18 @@ will remain as a class attribute, otherwise it will be an instance attribute.</p
 <dd><p>Setup the client. By default it does nothing.</p>
 </dd></dl>
 
+<dl class="attribute">
+<dt id="pulsar.Client.concurrent_connections">
+<tt class="descname">concurrent_connections</tt><a class="headerlink" href="#pulsar.Client.concurrent_connections" title="Permalink to this definition">¶</a></dt>
+<dd><p>Total number of concurrent connections.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="pulsar.Client.available_connections">
+<tt class="descname">available_connections</tt><a class="headerlink" href="#pulsar.Client.available_connections" title="Permalink to this definition">¶</a></dt>
+<dd><p>Total number of available connections.</p>
+</dd></dl>
+
 <dl class="method">
 <dt id="pulsar.Client.get_event_loop">
 <tt class="descname">get_event_loop</tt><big>(</big><big>)</big><a class="headerlink" href="#pulsar.Client.get_event_loop" title="Permalink to this definition">¶</a></dt>
@@ -638,6 +678,13 @@ in <tt class="xref py py-attr docutils literal"><span class="pre">request_parame
 </dd></dl>
 
 <dl class="method">
+<dt id="pulsar.Client.close">
+<tt class="descname">close</tt><big>(</big><em>async=True</em><big>)</big><a class="headerlink" href="#pulsar.Client.close" title="Permalink to this definition">¶</a></dt>
+<dd><p>Close all connections and fire the <tt class="docutils literal"><span class="pre">finish</span></tt>
+<a class="reference internal" href="../tutorials/events.html#one-time-event"><em>one time event</em></a></p>
+</dd></dl>
+
+<dl class="method">
 <dt id="pulsar.Client.can_reuse_connection">
 <tt class="descname">can_reuse_connection</tt><big>(</big><em>connection</em>, <em>response</em><big>)</big><a class="headerlink" href="#pulsar.Client.can_reuse_connection" title="Permalink to this definition">¶</a></dt>
 <dd><p>Invoked by the <a class="reference internal" href="#pulsar.ConnectionPool.release_connection" title="pulsar.ConnectionPool.release_connection"><tt class="xref py py-meth docutils literal"><span class="pre">ConnectionPool.release_connection()</span></tt></a>, it checks
@@ -662,7 +709,7 @@ data from the connection (it can be <tt class="xref docutils literal"><span clas
 
 <dl class="method">
 <dt id="pulsar.Client.upgrade">
-<tt class="descname">upgrade</tt><big>(</big><em>connection</em>, <em>protocol_factory</em><big>)</big><a class="headerlink" href="#pulsar.Client.upgrade" title="Permalink to this definition">¶</a></dt>
+<tt class="descname">upgrade</tt><big>(</big><em>connection</em>, <em>protocol_factory</em>, <em>result=None</em><big>)</big><a class="headerlink" href="#pulsar.Client.upgrade" title="Permalink to this definition">¶</a></dt>
 <dd><p>Upgrade an existing connection with a new protocol factory.
 Return the upgraded connection only if the <a class="reference internal" href="#pulsar.Connection.current_consumer" title="pulsar.Connection.current_consumer"><tt class="xref py py-attr docutils literal"><span class="pre">Connection.current_consumer</span></tt></a>
 is available.</p>
