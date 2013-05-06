@@ -93,7 +93,7 @@ from email.utils import parsedate_tz, mktime_tz
 from pulsar.utils.httpurl import http_date, CacheControl, remove_double_slash
 from pulsar.utils.structures import AttributeDictionary, OrderedDict
 from pulsar.utils.log import LocalMixin
-from pulsar import Http404, PermissionDenied, HttpException, async, is_async
+from pulsar import Http404, PermissionDenied, HttpException, HttpRedirect, async, is_async
 
 from .route import Route
 from .utils import wsgi_request
@@ -205,6 +205,16 @@ class RouterType(type):
         return super(RouterType, cls).__new__(cls, name, bases, attrs)
     
 
+class Redirect(object):
+    
+    def __init__(self, path):
+        self.path = path
+        
+    def response(self, environ, start_response, args):
+        request = wsgi_request(environ)
+        raise HttpRedirect(request.full_path(self.path))
+    
+    
 class Router(RouterType('RouterBase', (object,), {})):
     '''A WSGI application which handle multiple
 :ref:`routes <apps-wsgi-route>`. A user must implement the HTTP method
@@ -240,7 +250,7 @@ request, the ``get(self, request)`` method must be implemented.
     A :class:`pulsar.utils.structures.AttributeDictionary` of parameters.
 '''
     creation_count = 0
-    default_content_type=None
+    accept_content_types = None
     _parent = None
     
     def __init__(self, rule, *routes, **parameters):
@@ -262,10 +272,11 @@ request, the ``get(self, request)`` method must be implemented.
                 handler.rule_method = rule_method
             router = self.add_child(Router(rule, **rparameters))
             setattr(router, method, handler)
+        if 'accept_content_types' in parameters:
+            self.accept_content_types = parameters.pop('accept_content_types')
         self.setup(**parameters)
         
     def setup(self, content_type=None, **parameters):
-        self.parameters.content_type = content_type or self.default_content_type
         for name, value in parameters.items():
             if not hasattr(self, name) and hasattr(value, '__call__'):
                 setattr(self, name, value)
@@ -283,6 +294,21 @@ request, the ``get(self, request)`` method must be implemented.
     @property
     def parent(self):
         return self._parent
+    
+    def parent_property(self, name):
+        value = getattr(self, name, None)
+        if value is None and self._parent:
+            return self._parent.parent_property(name)
+        else:
+            return value
+        
+    def content_type(self, request):
+        '''The content type for this :class:`Router`. The method uses the
+:attr:`accept_content_types` tuple of accepted content types and the
+content types accepted by the client and figure aout the best mach.'''
+        accept = self.parent_property('accept_content_types')
+        if accept:
+            return request.content_types.best_match(accept)
        
     def __repr__(self):
         return self.route.__repr__()
@@ -293,14 +319,7 @@ request, the ``get(self, request)`` method must be implemented.
         router_args = self.resolve(path)
         if router_args:
             router, args = router_args
-            request = wsgi_request(environ, start_response, router, args)
-            request.response.content_type = self.content_type(request)
-            method = request.method.lower()
-            callable = getattr(router, method, None)
-            if callable is None:
-                raise HttpException(status=405,
-                                    msg='Method "%s" not allowed' % method)
-            return callable(request)
+            return router.response(environ, start_response, args)
         
     def resolve(self, path, urlargs=None):
         '''Resolve a path and return a ``(handler, urlargs)`` tuple or
@@ -308,6 +327,16 @@ request, the ``get(self, request)`` method must be implemented.
         urlargs = urlargs if urlargs is not None else {}
         match = self.route.match(path)
         if match is None:
+            if self.route.is_leaf:
+                if path.endswith('/'):
+                    match = self.route.match(path[:-1])
+                    if match is not None and not match:
+                        return Redirect(path[:-1]), None
+            else:
+                if not path.endswith('/'):
+                    match = self.route.match('%s/' % path)
+                    if match is not None:
+                        return Redirect('%s/' % path), None
             return
         if '__remaining__' in match:
             remaining_path = match['__remaining__']
@@ -320,6 +349,20 @@ request, the ``get(self, request)`` method must be implemented.
                 return view_args
         else:
             return self, match
+    
+    def response(self, environ, start_response, args):
+        '''Once the :meth:`resolve` method has matched the correct
+:class:`Router` for serving the request, this matched roter invokes this method
+to actually produce the WSGI response.'''
+        request = wsgi_request(environ, start_response, self, args)
+        # Set the response content type
+        request.response.content_type = self.content_type(request)
+        method = request.method.lower()
+        callable = getattr(self, method, None)
+        if callable is None:
+            raise HttpException(status=405,
+                                msg='Method "%s" not allowed' % method)
+        return callable(request)
     
     def add_child(self, router):
         '''Add a new :class:`Router` to the :attr:`routes` list. If this
@@ -375,12 +418,7 @@ If *root* is ``None`` it starts from this :class:`Router`.
                 root, urlargs = handler_urlargs
             else:
                 return []
-        return list(self.routes)
-    
-    def content_type(self, request):
-        '''The content type of this :class:`Router`. By default it returns
-the :attr:`default_content_type`. Override if you need to.'''
-        return self.parameters.content_type
+        return list(self.routes)    
     
     def encoding(self, request):
         '''The encoding to use for the response. By default it
@@ -389,7 +427,7 @@ returns ``utf-8``.'''
     
 
 class MediaMixin(Router):
-    default_content_type = 'application/octet-stream'
+    accept_content_types = ('application/octet-stream', 'text/css')
     cache_control = CacheControl(maxage=86400)
     
     def serve_file(self, request, fullpath):

@@ -11,7 +11,8 @@ class TestHtmlFactory(unittest.TestCase):
         self.assertEqual(h.attr('value'), 'bla')
         self.assertEqual(h.attr('type'), 'text')
         text = h.render()
-        self.assertEqual(text, "<input type='text' value='bla'>")
+        self.assertTrue(" type='text'" in text)
+        self.assertTrue(" value='bla'" in text)
         
         
 class TestAttributes(unittest.TestCase):
@@ -65,7 +66,9 @@ class TestAttributes(unittest.TestCase):
         random = ['bla', 3, 'foo']
         table = {'name': 'path',
                  'resizable': True}
-        c = wsgi.Html('div').data({'table': table, 'random': random})
+        c = wsgi.Html('div')
+        r = c.data({'table': table, 'random': random})
+        self.assertEqual(r, c)
         self.assertEqual(c.data('table')['name'], 'path')
         self.assertEqual(c.data('table')['resizable'], True)
         self.assertEqual(c.data('random')[0], 'bla')
@@ -77,7 +80,7 @@ class TestAttributes(unittest.TestCase):
         self.assertEqual(c.data('table')['rows'], 40)
 
     def testEmptyAttr(self):
-        c = wsgi.Html('input:text')
+        c = wsgi.Html('input', type='text')
         c.attr('value', None)
         self.assertEqual(c.attr('value'), None)
         self.assertEqual(c.flatatt(), " type='text'")
@@ -88,11 +91,18 @@ class TestAttributes(unittest.TestCase):
         self.assertTrue(" value='0'" in c.flatatt())
         self.assertEqual(c.attr('value'), 0)
 
-    def testEmptyAttribute(self):
+    def test_option_empty_attribute(self):
         opt = wsgi.Html('option', '--------', value='')
         self.assertEqual(opt.attr('value'), '')
         text = opt.render()
         self.assertTrue(" value=''" in text)
+        
+    def test_textarea_value_attribute(self):
+        opt = wsgi.Html('textarea', 'Hello World!')
+        self.assertEqual(opt.attr('value'), None)
+        self.assertEqual(opt.form_value(), 'Hello World!')
+        text = opt.render()
+        self.assertTrue("Hello World!" in text)
         
     def testHide(self):
         c = wsgi.Html('div', 'foo').hide()
@@ -142,12 +152,12 @@ class TestHtmlDocument(unittest.TestCase):
     def testMeta(self):
         html = wsgi.HtmlDocument()
         meta = html.head.meta
-        self.assertEqual(len(meta.children), 0)
-        self.assertEqual(meta.tag, None)
-        meta.append(wsgi.Meta(name='bla'))
         self.assertEqual(len(meta.children), 1)
+        self.assertEqual(meta.tag, None)
+        html.head.add_meta(name='bla')
+        self.assertEqual(len(meta.children), 2)
         text = meta.render()
-        self.assertEqual(text, "<meta name='bla'>")
+        self.assertEqual(text, "<meta charset='utf-8'><meta name='bla'>")
 
 
 class TestMedia(unittest.TestCase):
@@ -163,6 +173,7 @@ class TestMedia(unittest.TestCase):
                                   '<html>',
                                   '<head>',
                                   '<title>test</title>'
+                                  "<meta charset='utf-8'>",
                                   '</head>'
                                   '<body>',
                                   '</body>',
@@ -177,6 +188,7 @@ class TestMedia(unittest.TestCase):
                                   '<html>',
                                   '<head>',
                                   '<title>test</title>'
+                                  "<meta charset='utf-8'>",
                                   '</head>'
                                   '<body>',
                                   '<div>this is a test</div>',

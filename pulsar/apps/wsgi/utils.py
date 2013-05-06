@@ -1,12 +1,14 @@
 import sys
 import json
 import time
+import re
 import textwrap
 import logging
 import traceback
 from datetime import datetime, timedelta
 from inspect import istraceback
 from email.utils import formatdate
+
 
 import pulsar
 from pulsar.utils.structures import MultiValueDict
@@ -17,7 +19,7 @@ from pulsar.utils.httpurl import responses, has_empty_content, ispy3k,\
                                  REDIRECT_CODES, iteritems, ENCODE_URL_METHODS,\
                                  parse_qsl, HTTPError
                                  
-                                 
+from .structures import Accept, MIMEAccept, CharsetAccept, LanguageAccept
 from .content import Html
 
 __all__ = ['handle_wsgi_error',
@@ -115,6 +117,62 @@ def set_cookie(cookies, key, value='', max_age=None, expires=None, path='/',
     if httponly:
         cookies[key]['httponly'] = True
 
+_accept_re = re.compile(r'([^\s;,]+)(?:[^,]*?;\s*q=(\d*(?:\.\d+)?))?')
+
+def parse_accept_header(value, cls=None):
+    """Parses an HTTP Accept-* header.  This does not implement a complete
+    valid algorithm but one that supports at least value and quality
+    extraction.
+
+    Returns a new :class:`Accept` object (basically a list of ``(value, quality)``
+    tuples sorted by the quality with some additional accessor methods).
+
+    The second parameter can be a subclass of :class:`Accept` that is created
+    with the parsed values and returned.
+
+    :param value: the accept header string to be parsed.
+    :param cls: the wrapper class for the return value (can be
+                         :class:`Accept` or a subclass thereof)
+    :return: an instance of `cls`.
+    """
+    if cls is None:
+        cls = Accept
+    if not value:
+        return cls(None)
+    result = []
+    for match in _accept_re.finditer(value):
+        quality = match.group(2)
+        if not quality:
+            quality = 1
+        else:
+            quality = max(min(float(quality), 1), 0)
+        result.append((match.group(1), quality))
+    return cls(result)
+
+def parse_cache_control_header(value, on_update=None, cls=None):
+    """Parse a cache control header.  The RFC differs between response and
+    request cache control, this method does not.  It's your responsibility
+    to not use the wrong control statements.
+
+    .. versionadded:: 0.5
+       The `cls` was added.  If not specified an immutable
+       :class:`~werkzeug.datastructures.RequestCacheControl` is returned.
+
+    :param value: a cache control header to be parsed.
+    :param on_update: an optional callable that is called every time a value
+                      on the :class:`~werkzeug.datastructures.CacheControl`
+                      object is changed.
+    :param cls: the class for the returned object.  By default
+                :class:`~werkzeug.datastructures.RequestCacheControl` is used.
+    :return: a `cls` object.
+    """
+    if cls is None:
+        cls = RequestCacheControl
+    if not value:
+        return cls(None, on_update)
+    return cls(parse_dict_header(value), on_update)
+
+
 def _gen_query(query_string, encoding):
     # keep_blank_values=True
     for key, value in parse_qsl((query_string or ''), True):
@@ -151,8 +209,7 @@ class dump_environ(object):
         return '\n%s\n' % '\n'.join(('%s = %s' % (k, v) for k, v in env))
     
     
-def handle_wsgi_error(environ, trace=None, content_type=None,
-                      encoding=None):
+def handle_wsgi_error(environ, trace):
     '''The default handler for errors while serving an Http requests.
 
 :parameter environ: The WSGI environment.
@@ -162,16 +219,12 @@ def handle_wsgi_error(environ, trace=None, content_type=None,
 :parameter encoding: Optional charset.
 :return: a :class:`WsgiResponse`
 '''
-    content_type = content_type or environ.get('CONTENT_TYPE')
     if not trace:
         trace = sys.exc_info()
     error = trace[1]
-    if not content_type:
-        content_type = getattr(error, 'content_type', content_type)
     request = wsgi_request(environ)
     response = request.response
-    if content_type:
-        response.content_type = content_type
+    content_type = response.content_type
     content = None
     if isinstance(error, HTTPError):
         response.status_code = error.code or 500

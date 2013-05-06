@@ -236,8 +236,7 @@ when the ``wsgi_iter`` yields bytes only.'''
         
     def catastrofic_failure(self, environ, failure):
         self.keep_alive = False
-        self.start_response(500, [], failure.trace)
-        self.write(b'', True)
+        start_response(500, [], failure.trace)(b'', True)
         self.finish_wsgi()
         
     def finish_wsgi(self):

@@ -38,12 +38,15 @@ from pulsar.utils.html import escape
 from pulsar.utils.httpurl import Headers, SimpleCookie, responses,\
                                  has_empty_content, string_type, ispy3k,\
                                  to_bytes, REDIRECT_CODES, iteritems,\
-                                 ENCODE_URL_METHODS, JSON_CONTENT_TYPES
+                                 ENCODE_URL_METHODS, JSON_CONTENT_TYPES,\
+                                 urlencode
 
 from .middleware import is_streamed
 from .route import Route
 from .content import HtmlDocument
-from .utils import LOGGER, set_wsgi_request_class, set_cookie, query_dict
+from .utils import LOGGER, set_wsgi_request_class, set_cookie, query_dict,\
+                    parse_accept_header, parse_cache_control_header
+from .structures import Accept, MIMEAccept, CharsetAccept, LanguageAccept
 
 
 __all__ = ['EnvironMixin', 'WsgiResponse', 'WsgiRequest', 'cached_property']
@@ -302,8 +305,52 @@ at the wsgi-extension key ``pulsar.cache``.'''
                                  (self.__class__.__name__, name))
         return mixin
     
+    def get(self, key, default=None):
+        '''Shortcut to the :attr:`environ` get method.'''
+        return self.environ.get(key, default)
     
-class WsgiRequest(EnvironMixin):
+    
+class Accept(EnvironMixin):
+    """A mixin for classes with an :attr:`~BaseResponse.environ` attribute
+    to get all the HTTP accept headers as
+    :class:`~werkzeug.datastructures.Accept` objects (or subclasses
+    thereof).
+    """
+    @cached_property
+    def content_types(self):
+        """List of content types this client supports."""
+        return parse_accept_header(self.environ.get('HTTP_ACCEPT'), MIMEAccept)
+
+    @cached_property
+    def charsets(self):
+        """List of charsets this client supports as
+        :class:`~werkzeug.datastructures.CharsetAccept` object.
+        """
+        return parse_accept_header(self.environ.get('HTTP_ACCEPT_CHARSET'),
+                                   CharsetAccept)
+
+    @cached_property
+    def encodings(self):
+        """List of encodings this client accepts.  Encodings in a HTTP term
+        are compression encodings such as gzip.  For charsets have a look at
+        :attr:`accept_charset`.
+        """
+        return parse_accept_header(self.environ.get('HTTP_ACCEPT_ENCODING'))
+
+    @cached_property
+    def languages(self):
+        """List of languages this client accepts as
+        :class:`~werkzeug.datastructures.LanguageAccept` object.
+
+        .. versionchanged 0.5
+           In previous versions this was a regular
+           :class:`~werkzeug.datastructures.Accept` object.
+        """
+        return parse_accept_header(self.environ.get('HTTP_ACCEPT_LANGUAGE'),
+                                   LanguageAccept)
+    
+    
+class WsgiRequest(Accept):
     '''An :class:`EnvironMixin` for wsgi requests.'''    
     def __init__(self, environ, start_response=None, app_handler=None,
                  urlargs=None):
@@ -362,7 +409,9 @@ class WsgiRequest(EnvironMixin):
     
     @cached_property
     def content_type(self):
-        return self.content_type_options[0]
+        handler = app_handler
+        if handler:
+            return handler.content_type
     
     @cached_property
     def content_type_options(self):
@@ -406,12 +455,39 @@ data from the `QUERY_STRING` in :attr:`environ`.'''
 :ref:`Html document <app-wsgi-html-document>`.'''
         return HtmlDocument()
     
-    def get(self, key, default=None):
-        '''Shortcut to the :attr:`environ` get method.'''
-        return self.environ.get(key, default)
-    
-    def full_url(self, **args):
-        return
+    def get_host(self, use_x_forwarded=True):
+        """Returns the HTTP host using the environment or request headers."""
+        # We try three options, in order of decreasing preference.
+        if use_x_forwarded and ('HTTP_X_FORWARDED_HOST' in self.environ):
+            host = self.environ['HTTP_X_FORWARDED_HOST']
+        elif 'HTTP_HOST' in self.environ:
+            host = self.environ['HTTP_HOST']
+        else:
+            # Reconstruct the host using the algorithm from PEP 333.
+            host = self.environ['SERVER_NAME']
+            server_port = str(self.environ['SERVER_PORT'])
+            if server_port != ('443' if self.is_secure else '80'):
+                host = '%s:%s' % (host, server_port)
+        return host
+        
+    def full_path(self, *args, **query):
+        if args:
+            if len(args) > 1:
+                raise TypeError("full_url() takes exactly 1 argument "
+                                "(%s given)" % len(args))
+            path = args[0]
+        else:
+            path = self.environ['PATH_INFO']
+        if query:
+            params = sql.url_data
+            params.update(query)
+            query = urlencode(params)
+        else:
+            query = self.environ.get('QUERY_STRING', '')
+        if query:
+            return '%s?%s' % (path, query)
+        else:
+            return path
     
 
 set_wsgi_request_class(WsgiRequest)

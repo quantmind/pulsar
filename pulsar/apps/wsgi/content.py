@@ -1,4 +1,8 @@
-'''Utility classes for Asynchronous Http body strings.
+'''The :mod:`pulsar.apps.wsgi.content` introduces several utility classes
+handling asynchronous content on a WSGI server. The main class of this module
+is the :class:`AsyncString`. Web framework are smart ways of concatenating 
+bytes which need to be displayed on a web page or returned as a response to
+and HTTP client.
 
 Asynchronous String
 =====================
@@ -74,6 +78,8 @@ from pulsar.utils.structures import AttributeDictionary, recursive_update
 from pulsar.utils.html import slugify, INLINE_TAGS, tag_attributes, attr_iter,\
                                 csslink, dump_data_value, child_tag
 from pulsar.utils.httpurl import remove_double_slash, urljoin
+
+from .html import html_visitor
 
 __all__ = ['AsyncString', 'Html', 'Json', 'HtmlDocument', 'html_factory']
 
@@ -183,10 +189,18 @@ be other :class:`AsyncString` or string or bytes, depending on implementation.
         '''Remove a ``child`` from the list of :attr:``children``.'''
         try:
             self._children.remove(child)
-            child._parent = None
+            if isinstance(child, AsyncString):
+                child._parent = None
         except ValueError:
             pass
     
+    def remove_all(self):
+        '''Remove all :attr:`children`.'''
+        for child in self._children:
+            if isinstance(child, AsyncString):
+                child._parent = None
+        self._children = []
+        
     def append_to(self, parent):
         '''Append itself to ``parent``. Return ``self``.'''
         parent.append(self)
@@ -308,8 +322,8 @@ dictionary of ``defaults`` parameters. For example::
         p.update(params)
         return Html(tag, *children, **p)
     return html_input
-
-
+    
+    
 class Html(AsyncString):
     '''An :class:`AsyncString` for html elements.
 The :attr:`AsyncString.content_type` attribute is set to ``text/html``.
@@ -359,6 +373,16 @@ forth. It can be ``None``.'''
         '''The list of valid HTML attributes for this :attr:`tag`.'''
         return tag_attributes(self._tag, self._attr.get('type'))
     
+    def get_form_value(self):
+        '''Return the value of this :class:`Html` element when it is contained
+in a Html form element. For most element it gets the ``value`` attribute.'''
+        return self._visitor.get_form_value(self)
+    
+    def set_form_value(self, value):
+        '''Set the value of this :class:`Html` element when it is contained
+in a Html form element. For most element it sets the ``value`` attribute.'''
+        self._visitor.set_form_value(self, value)
+        
     def __repr__(self):
         if self._tag and self._tag in INLINE_TAGS:
             return '<%s%s/>' % (self._tag, self.flatatt())
@@ -374,12 +398,13 @@ forth. It can be ``None``.'''
                 if isinstance(child, Html):
                     if child.tag != tag:
                         child = Html(tag, child)
-                elif child.startswith('<%s' % tag):
+                elif not child.startswith('<%s' % tag):
                     child = Html(tag, child)
         super(Html, self).append(child)
-             
+    
     def _setup(self, cn=None, attr=None, css=None, data=None, type=None,
                **params):
+        self._visitor = html_visitor(self._tag)
         self.addClass(cn)
         self.data(data)
         self.attr(attr)
@@ -394,11 +419,13 @@ forth. It can be ``None``.'''
             else:
                 self.data(name, value)
         
-    def attr(self, name=None, val=None):
+    def attr(self, *args):
         '''Add the specific attribute to the attribute dictionary
 with key ``name`` and value ``value`` and return ``self``.'''
-        result = self._attrdata(self._attr, name, val)
-        if isinstance(result, Mapping):
+        if not args:
+            return self._attr
+        result, adding = self._attrdata(self._attr, *args)
+        if adding:
             available_attributes = self.available_attributes
             for name, value in iteritems(result):
                 if value is not None:
@@ -409,10 +436,12 @@ with key ``name`` and value ``value`` and return ``self``.'''
             result = self
         return result
     
-    def data(self, name=None, val=None):
+    def data(self, *args):
         '''Add or retrieve data values for this :class:`Html`.'''
-        result = self._attrdata(self._data, name, val)
-        if isinstance(result, Mapping):
+        if not args:
+            return self._data
+        result, adding = self._attrdata(self._data, *args)
+        if adding:
             recursive_update(self._data, result)
             result = self
         return result
@@ -496,16 +525,19 @@ with key ``name`` and value ``value`` and return ``self``.'''
             if self._tag:
                 yield '</%s>' % self._tag
     
-    def _attrdata(self, cont, name, val):
+    def _attrdata(self, cont, name, *val):
         if isinstance(name, Mapping):
-            if val is not None:
+            if val:
                 raise TypeError('Cannot set a value to %s' % name)
-            return name
-        elif name:
-            if val is not None:
-                return {name: val}
+            return name, True
+        else:
+            if val:
+                if len(val) == 1:
+                    return {name: val[0]}, True
+                else:
+                    raise TypeError('Too may arguments')
             else:
-                return cont.get(name)
+                return cont.get(name), False
             
 
 class Media(object):
