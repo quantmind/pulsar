@@ -47,6 +47,7 @@ HTML_ATTRIBUTES['input[type="submit"]'] = input_attr('formaction',
                                     'formenctype', 'formmethod', 'formtarget')
 HTML_ATTRIBUTES['meta'] = e('name', 'charset', 'content')
 HTML_ATTRIBUTES['option'] = e('disabled', 'label', 'selected', 'value')
+HTML_ATTRIBUTES['script'] = e('async', 'charset', 'defer', 'src', 'type')
 HTML_ATTRIBUTES['select'] = e('autofocus', 'disabled', 'form', 'multiple',
                               'name', 'required', 'size')
 HTML_ATTRIBUTES['textarea'] = e('autofocus', 'cols', 'disabled', 'maxlength',

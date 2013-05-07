@@ -74,7 +74,8 @@ from copy import copy
 
 from pulsar import Deferred, multi_async, is_async, maybe_async, is_failure, async
 from pulsar.utils.pep import iteritems, is_string, ispy3k
-from pulsar.utils.structures import AttributeDictionary, recursive_update
+from pulsar.utils.structures import AttributeDictionary, recursive_update,\
+                                    OrderedDict
 from pulsar.utils.html import slugify, INLINE_TAGS, tag_attributes, attr_iter,\
                                 csslink, dump_data_value, child_tag
 from pulsar.utils.httpurl import remove_double_slash, urljoin
@@ -540,10 +541,15 @@ with key ``name`` and value ``value`` and return ``self``.'''
                 return cont.get(name), False
             
 
-class Media(object):
+class Media(AsyncString):
     
     def __init__(self, media_path):
+        super(Media, self).__init__()
         self.media_path = media_path
+        self._children = OrderedDict()
+    
+    def append(self, value):
+        raise NotImplementedError
         
     def absolute_path(self, path):
         if path.startswith('http://') or path.startswith('https://')\
@@ -552,13 +558,7 @@ class Media(object):
         return remove_double_slash(urljoin('/%s/' % self.media_path, path))
 
 
-class Css(AsyncString, Media):
-    
-    def __init__(self, links=None, media_path=None):
-        super(Css, self).__init__()
-        Media.__init__(self, media_path)
-        self._children = {}
-        self.append(links)
+class Css(Media):
         
     def append(self, value):
         if value:
@@ -587,15 +587,20 @@ class Css(AsyncString, Media):
                 yield link
     
     
-class Js(AsyncString, Media):
+class Scripts(Media):
         
     def append(self, child):
         if child and is_string(child) and child not in self._children:
-            self._children.append(child)
+            path = self.absolute_path(child)
+            script = Html('script', src=path, type='text/javascript')
+            self._children[child] = script
+            return script
     
-    def stream(self, request):
-        yield '\n'.join(('<script type="text/javascript" src="%s"></script>'\
-                         % self.absolute_path(js) for js in self._children))
+    def do_stream(self, request):
+        for child in self._children.values():
+            for bit in child.stream(request):
+                yield bit
+            yield '\n'
         
         
 class Head(Html):
@@ -625,15 +630,12 @@ various part of an HTML Head element.
         html.head.scripts.append('https://ajax.googleapis.com/ajax/libs/jquery/1.7.2/jquery.min.js')
 
 '''
-    def __init__(self, media_path=None, title=None, js=None,
-                 css=None, meta=None, charset=None):
+    def __init__(self, media_path=None, title=None, meta=None, charset=None):
         super(Head, self).__init__('head')
         self.title = title
         self.append(Html(None, meta))
-        self.append(Css(css))
-        self.append(Js(js))
-        self.links.media_path = media_path
-        self.scripts.media_path = media_path
+        self.append(Css(media_path))
+        self.append(Scripts(media_path))
         self.add_meta(charset=charset or 'utf-8')
     
     @property
@@ -684,9 +686,9 @@ class Body(Html):
     A container of Javascript files to render at the end of the body tag.
     The usage is the same as :attr:`Head.scripts`.    
 '''
-    def __init__(self):
+    def __init__(self, media_path=None):
         super(Body, self).__init__('body')
-        self.scripts = Js()
+        self.scripts = Scripts(media_path)
     
     def do_stream(self, request):
         '''Render the widget. It accept two optional parameters, a http
@@ -715,7 +717,7 @@ via the :attr:`pulsar.apps.wsgi.wrappers.WsgiRequest.html_document` attribute.
                  **params):
         super(HtmlDocument, self).__init__(None, **params)
         self.head = Head(title=title, media_path=media_path, charset=charset)
-        self.body = Body()
+        self.body = Body(media_path=media_path)
     
     def __call__(self, title=None, body=None, media_path=None):
         if title:
