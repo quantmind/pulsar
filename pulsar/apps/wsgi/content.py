@@ -733,5 +733,5 @@ via the :attr:`pulsar.apps.wsgi.wrappers.WsgiRequest.html_document` attribute.
     def do_stream(self, request):
         body = yield self.body.content(request)
         head = yield self.head.content(request)
-        yield  ('<!DOCTYPE html>', '<html%s>' % self.flatatt(),
-                head, body, '</html>')
+        yield  ('<!DOCTYPE html>\n', '<html%s>\n' % self.flatatt(),
+                head, body, '\n</html>')

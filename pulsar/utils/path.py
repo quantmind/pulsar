@@ -53,6 +53,8 @@ class Path(string_type):
         name = os.path.basename(self)
         if name.endswith('.py'):
             return name[:-3]
+        if name.endswith('.pyc'):
+            return name[:-4]
         else:
             raise ValueError('%s not a valid python module' % self)
         
