@@ -715,6 +715,10 @@ which may be :class:`Deferred`.
 .. attribute:: type
 
     The type of multi-deferred. Either a ``list`` or a ``dict``.
+    
+The :class:`MultiDeferred` is recursive on values which are generators,
+dictionaries, lists and sets. It is not recursive on immutable
+containers such as tuple, and frozenset.
 '''
     _locked = False
     _time_locked = None
@@ -794,7 +798,7 @@ both ``list`` and ``dict`` types.'''
         value = maybe_async(value)
         if is_generalised_generator(value):
             value = list(value)
-        if isinstance(value, (Mapping, list, tuple, set, frozenset)):
+        if isinstance(value, (Mapping, list, set)):
             value = self._make(value)    
         if not is_async(value) and self.handle_value:
             try:
