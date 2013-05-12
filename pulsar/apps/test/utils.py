@@ -4,7 +4,7 @@ from functools import partial
 import threading
 
 import pulsar
-from pulsar import is_failure, maybe_async, is_async, get_actor, send
+from pulsar import is_failure, maybe_async, is_async, get_actor, send, multi_async
 from pulsar.async import commands
 from pulsar.utils.pep import pickle
 
@@ -121,7 +121,7 @@ class AsyncAssertTest(object):
                 except Exception:
                     value = maybe_async(sys.exc_info())
             args = [error, value]
-        d = pulsar.MultiDeferred(args, type=list).lock()
+        d = multi_async(args, type=list, raise_on_error=False)
         return d.add_callback(self._check_result)
     
     def _check_result(self, args):
@@ -179,7 +179,7 @@ the tearDown method is overwritten.'''
         if len(all) == 1:
             return send(all[0], 'stop')
         elif all:
-            return MultiDeferred((send(a, 'stop') for a in all)).lock()
+            return multi_async((send(a, 'stop') for a in all))
             
     def tearDown(self):
         return self.stop_actors()

@@ -716,6 +716,12 @@ which may be :class:`Deferred`.
 
     The type of multi-deferred. Either a ``list`` or a ``dict``.
     
+.. attribute:: raise_on_error
+
+    When ``True`` and at least one value of the result collections is a
+    :class:`Failure`, the callback will receive the failure rather than
+    the collection of results. Default ``True``.
+    
 The :class:`MultiDeferred` is recursive on values which are generators,
 dictionaries, lists and sets. It is not recursive on immutable
 containers such as tuple, and frozenset.
@@ -724,8 +730,8 @@ containers such as tuple, and frozenset.
     _time_locked = None
     _time_finished = None
 
-    def __init__(self, data=None, type=None, raise_on_error=False,
-                 handle_value=None, log_failure=False, **kwargs):
+    def __init__(self, data=None, type=None, raise_on_error=True,
+                  handle_value=None, log_failure=False, **kwargs):
         self._deferred = {}
         self._failures = Failure()
         self.log_failure = log_failure
