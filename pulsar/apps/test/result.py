@@ -43,12 +43,14 @@ STDERR_LINE = '\nStderr:\n%s'
 class Plugin(object):
     '''Interface for all classes which are part of of the :class:`TestRunner`,
 including :class:`TestRunner` itself, :class:`TestResult`
-and :class:`TestPlugin`.'''
+and :class:`pulsar.apps.test.TestPlugin`.'''
     descriptions = None
 
     def configure(self, cfg):
         '''Called once just after construction of
-a :class:`TestRunner` and can be used to configure the :class:`Plugin`.
+a :class:`TestRunner` and therefore **before any test class is loaded**.
+This is a chance to configure the :class:`Plugin` or global variables
+which may affect the way tests are run.
 If it returns something other than ``None`` (for example an abort message)
 it will stop the configuration of all subsequent plugins and quit the test.
 
@@ -61,25 +63,28 @@ it will stop the configuration of all subsequent plugins and quit the test.
     def name(self):
         return self.__class__.__name__.lower()
 
-    def loadTestsFromTestCase(self, cls):
-        pass
-
     def on_start(self):
-        '''Called once by :class:`TestSuite` just before it starts running tests.'''
+        '''Called once by :class:`TestSuite` after all tests are loaded but
+but before it starts running them.'''
         pass
 
     def on_end(self):
         '''Called once by :class:`TestSuite` just before it stops.'''
         pass
 
+    def loadTestsFromTestCase(self, test_class):
+        '''Called just before a ``test_class`` executes all its test
+methods. This is run just before ``setUpClass`` method.'''
+        pass
+    
     def startTest(self, test):
-        '''Called just before a *test* is executed. This is run
-just before _pre_setup function.'''
+        '''Called just before a ``test`` function is executed. This is run
+just before ``_pre_setup`` method.'''
         pass
 
     def stopTest(self, test):
-        '''Called just after a *test* has finished. This is run just after
-the _post_teardown function.'''
+        '''Called just after a ``test`` function has finished. This is run just
+after the ``_post_teardown`` method.'''
         pass
     
     def before_test_function_run(self, test, local):
@@ -409,11 +414,11 @@ class TestRunner(TestResultProxy):
     printErrors = testsafe('printErrors')
     printSummary = testsafe('printSummary')
 
-    def loadTestsFromTestCase(self, cls):
+    def loadTestsFromTestCase(self, test_cls):
         '''Load all *test* functions for the test class *cls*.'''
-        c = testsafe('loadTestsFromTestCase', lambda v: v)(self, cls)
+        c = testsafe('loadTestsFromTestCase', lambda v: v)(self, test_cls)
         if c is None:
-            return self.loader.loadTestsFromTestCase(cls)
+            return self.loader.loadTestsFromTestCase(test_cls)
         else:
             return c
 

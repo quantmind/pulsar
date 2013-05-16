@@ -49,8 +49,8 @@ Only subclasses of  ``unittest.TestCase`` are collected by this application.
 When running a test, pulsar looks for two extra method: ``_pre_setup`` and
 ``_post_teardown``. If the former is available, it is run just before the
 ``setUp`` method while if the latter is available, it is run
-just after the ``tearDown`` method. In addition if the ``setUpClass``
-class methods is available, is run just before
+just after the ``tearDown`` method. In addition, if the ``setUpClass``
+class methods is available, it is run just before
 all tests functions are run and the ``tearDownClass``, if available, is run
 just after all tests functions are run.
 
@@ -137,6 +137,9 @@ loads
      
 All top level modules will be added to the python ``path``.
 
+
+.. _test-suite-options:
+
 Options
 ==================
 
@@ -186,7 +189,9 @@ Set the test timeout to 10 seconds.
 
 Plugins
 ==================
-:class:`TestPlugins` is a way to extend the test suite.
+A :class:`TestPlugin` is a way to extend the test suite with additional
+:ref:`options <test-suite-options>` and behaviours implemented in
+the various plugin's callbacks.
 There are two basic rules for plugins:
 
 * Plugin classes should subclass :class:`TestPlugin`.
