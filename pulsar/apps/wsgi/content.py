@@ -82,7 +82,9 @@ from pulsar.utils.httpurl import remove_double_slash, urljoin
 
 from .html import html_visitor
 
-__all__ = ['AsyncString', 'Html', 'Json', 'HtmlDocument', 'html_factory']
+__all__ = ['AsyncString', 'Html',
+           'Json', 'HtmlDocument',
+           'html_factory', 'Media']
 
 
 class StreamRenderer(Deferred):
@@ -555,7 +557,7 @@ class Media(AsyncString):
         if path.startswith('http://') or path.startswith('https://')\
             or path.startswith('/'):
             return path
-        return remove_double_slash(urljoin('/%s/' % self.media_path, path))
+        return remove_double_slash('/%s/%s' % (self.media_path, path))
 
 
 class Css(Media):
@@ -590,10 +592,10 @@ class Css(Media):
 class Scripts(Media):
         
     def append(self, child):
-        if child and is_string(child) and child not in self._children:
+        if child and is_string(child):
             path = self.absolute_path(child)
             script = Html('script', src=path, type='text/javascript')
-            self._children[child] = script
+            self._children[script] = script
             return script
     
     def do_stream(self, request):
@@ -646,9 +648,11 @@ various part of an HTML Head element.
     def links(self):
         return self._children[1]
     
-    @property
-    def scripts(self):
+    def __get_scripts(self):
         return self._children[2]
+    def __set_scripts(self, scripts):
+        self._children[2] = scripts
+    scripts = property(__get_scripts, __set_scripts)
     
     def do_stream(self, request):
         if self.title:
