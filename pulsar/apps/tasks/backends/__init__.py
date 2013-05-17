@@ -481,7 +481,7 @@ CPU-bound thread.'''
                     self.local.concurrent_requests += 1
                     thread_pool.apply_async(self.execute_task, (worker, task))
             
-    @async(max_errors=0)
+    @async(max_errors=None)
     def execute_task(self, worker, task):
         '''Asynchronous execution of a :class:`Task`. This method is called
 on a separate thread of execution from the worker evnet loop thread.'''

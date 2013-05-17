@@ -16,7 +16,7 @@ from functools import partial
 from timeit import default_timer
 
 import pulsar
-from pulsar import maybe_async, is_failure, multi_async, log_failure
+from pulsar import async, is_failure, multi_async, log_failure
 from pulsar.utils.structures import AttributeDictionary
 from pulsar.utils.security import gen_unique_id
 from pulsar.utils.pep import to_string, range
@@ -24,6 +24,7 @@ from pulsar.utils.jsontools import DefaultJSONEncoder, DefaultJSONHook
 from pulsar.utils.tools import checkarity
 from pulsar.apps.wsgi import Json
 from pulsar.apps.http import HttpClient
+from pulsar.utils.httpurl import JSON_CONTENT_TYPES
 
 from .handlers import RpcHandler, InvalidRequest, exception
 
@@ -52,33 +53,34 @@ Design to comply with the `JSON-RPC 2.0`_ Specification.
     _json = JsonToolkit
 
     def __call__(self, request):
-        result = maybe_async(self._call(request), max_errors=0)
-        return Json(result, json=self._json).http_response(request)
+        return Json(self._call(request), json=self._json).http_response(request)
     
+    @async(max_errors=1)
     def _call(self, request):
+        response = request.response
+        data = {}
         try:
-            if request.content_type != 'application/json':
-                raise InvalidRequest(status=415,
-                            msg='Content-Type header must be application/json')
             try:
                 data = request.json_data
             except ValueError:
                 raise ParseExcetion
+            if response.content_type not in JSON_CONTENT_TYPES:
+                raise InvalidRequest(status=415,
+                                     msg='Content-Type must be application/json')
             if data.get('jsonrpc') != self.version:
                 raise InvalidRequest(
-                    'jsonrpc must be supplied and equal to "%s"' % self.version)
+                        'jsonrpc must be supplied and equal to "%s"' % self.version)
             params = data.get('params')
             if isinstance(params, dict):
                 args, kwargs = (), params
             else:
                 args, kwargs = tuple(params or ()), {}
-            callable = self.get_handler(data.get('method'))
-            result = callable(request, *args, **kwargs)
         except Exception:
-            result = sys.exc_info()
-        result = yield maybe_async(result)
-        id = data.get('id')
-        res = {'id': id, "jsonrpc": self.version}
+            result = yield sys.exc_info()
+        else:
+            callable = self.get_handler(data.get('method'))
+            result = yield callable(request, *args, **kwargs)
+        res = {'id': data.get('id'), "jsonrpc": self.version}
         if is_failure(result):
             log_failure(result)
             msg = None

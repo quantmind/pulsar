@@ -6,7 +6,7 @@ from pulsar.apps.http import HttpClient, URLError
 
 class TestHttpErrors(unittest.TestCase):
     
-    @async(max_errors=2)
+    @async(max_errors=1)
     def test_bad_host(self):
         client = HttpClient()
         response = client.get('http://xxxyyyxxxxyyy/blafoo')

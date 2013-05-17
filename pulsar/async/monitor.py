@@ -275,7 +275,7 @@ Users shouldn't need to override this method, but use
         self.event_loop.call_soon(self.periodic_task)
 
     # HOOKS
-    @async(max_errors=0)
+    @async(max_errors=None)
     def _stop(self):
         yield self.close_actors()
         if not self.terminated_actors:

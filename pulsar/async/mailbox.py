@@ -168,7 +168,7 @@ protocol.'''
     
     ############################################################################
     ##    INTERNALS
-    @async(max_errors=0)
+    @async(max_errors=None)
     def _responde(self, message):
         actor = get_actor()
         command = message.get('command')

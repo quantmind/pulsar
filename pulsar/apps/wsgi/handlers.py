@@ -42,6 +42,9 @@ routing system you can use for that. It works by creating a
 sub-routers for handling additional urls::
 
     class Page(Router):
+        accept_content_types = ('text/html',
+                                'text/plain',
+                                'application/json')
         
         def get(self, request):
             "This method handle request with get-method" 
@@ -239,11 +242,12 @@ request, the ``get(self, request)`` method must be implemented.
 
     The parent :class:`Router` of this :class:`Router`.
         
-.. attribute:: default_content_type
+.. attribute:: accept_content_types
 
-    Class attribute which specify the default content type for
-    this :class:`Router`. Overwritten during initialization by the optional
-    ``content_type`` parameter.
+    Tuple of content type accepted by this :class:`Router`. It can be specified
+    as class attribute or during initialisation. This is an important parameter.
+    It is used to set the content type of the response instance.
+    Default ``None``.
     
 .. attribute:: parameters
 
@@ -303,9 +307,10 @@ request, the ``get(self, request)`` method must be implemented.
             return value
         
     def content_type(self, request):
-        '''The content type for this :class:`Router`. The method uses the
-:attr:`accept_content_types` tuple of accepted content types and the
-content types accepted by the client and figure aout the best mach.'''
+        '''Evaluate the content type for the response to the client ``request``.
+The method uses the :attr:`accept_content_types` tuple of accepted content
+types and the content types accepted by the client and figure out
+the best match.'''
         accept = self.parent_property('accept_content_types')
         if accept:
             return request.content_types.best_match(accept)

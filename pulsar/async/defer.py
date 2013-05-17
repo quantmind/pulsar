@@ -128,7 +128,7 @@ def default_maybe_async(val, get_result=True, **kwargs):
         d.callback(val)
         return d
     
-def maybe_async(value, description=None, event_loop=None, max_errors=1,
+def maybe_async(value, description=None, event_loop=None, max_errors=0,
                 timeout=None, get_result=True):
     '''Return an asynchronous instance only if *value* is
 a generator or already an asynchronous instance. If *value* is asynchronous
@@ -139,7 +139,9 @@ it checks if it done. In this case it returns the *result*.
 :parameter description: optional description, rarely used.
 :parameter event_loop: optional :class:`EventLoop`.
 :parameter max_errors: The maximum number of exceptions allowed before
-    stopping the generator and raise exceptions. By default it is 1.
+    stopping the generator and raise exceptions. By default it is 0.
+    Pass ``None`` to continue the processing of the coroutine regardless of
+    any exception.
 :parameter timeout: optional timeout after which any asynchronous element get
     a cancellation.
 :parameter get_result: optional flag indicating if to get the result in case
@@ -657,9 +659,9 @@ The callback will occur once the coroutine has stopped
 has occurred. Instances of :class:`Task` are never
 initialised directly, they are created by the :func:`maybe_async`
 function when a generator is passed as argument.'''
-    def __init__(self, gen, max_errors=1, event_loop=None, **kwargs):
+    def __init__(self, gen, max_errors=0, event_loop=None, **kwargs):
         self.gen = gen
-        self.max_errors = max(1, max_errors) if max_errors else 0
+        self.max_errors = max(0, max_errors) if max_errors is not None else None
         self.errors = None
         event_loop = event_loop or get_request_loop()
         super(Task, self).__init__(event_loop=event_loop, **kwargs)
@@ -672,7 +674,7 @@ function when a generator is passed as argument.'''
                     self.errors = result
                 elif result is not self.errors:
                     self.errors.append(result)
-                if self.max_errors and len(self.errors) >= self.max_errors:
+                if self.max_errors is not None and len(self.errors) > self.max_errors:
                     return self._conclude(result)
             try:
                 result = self.gen.send(result)

@@ -46,7 +46,7 @@ Ver. 0.5.0 - DEVELOPMENT
    * New :ref:`Webmail example application <tutorials-webmail>` using twisted IMAP4
      protocol implementation.
 * Added :mod:`pulsar.utils.structures.FrozenDict`.
-* **374 regression tests**, **87% coverage**.
+* **410 regression tests**, **87% coverage**.
 
 Ver. 0.4.6 - 2013-Feb-8
 ==============================

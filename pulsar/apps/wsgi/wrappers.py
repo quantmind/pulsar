@@ -408,12 +408,6 @@ class WsgiRequest(Accept):
         return self.content_type_options[1].get('charset', 'utf-8')
     
     @cached_property
-    def content_type(self):
-        handler = app_handler
-        if handler:
-            return handler.content_type
-    
-    @cached_property
     def content_type_options(self):
         content_type = self.environ.get('CONTENT_TYPE')
         if content_type:
@@ -431,9 +425,8 @@ class WsgiRequest(Accept):
     @cached_property
     def json_data(self):
         if self.method not in ENCODE_URL_METHODS:
-            if self.content_type in JSON_CONTENT_TYPES:
-                data = self.environ['wsgi.input'].read(MAX_BUFFER_SIZE)
-                return json.loads(data.decode(self.encoding))
+            data = self.environ['wsgi.input'].read(MAX_BUFFER_SIZE)
+            return json.loads(data.decode(self.encoding))
         
     @property
     def body_data(self):

@@ -43,7 +43,7 @@ class Test(tasks.Job):
         num = all_tests.countTestCases()
         if num:
             result = self.run(runner, testcls, all_tests, consumer.worker.cfg)
-            return maybe_async(result, max_errors=0)
+            return maybe_async(result, max_errors=None)
         else:
             return runner.result
         
@@ -95,7 +95,7 @@ Run a *test* function using the following algorithm
 * Run :meth:`_post_teardown` method if available in :attr:`testcls`.
 '''
         return maybe_async(self._run_test(test, runner, cfg.test_timeout),
-                           max_errors=0)
+                           max_errors=None)
     
     def _run_test(self, test, runner, test_timeout):
         try:

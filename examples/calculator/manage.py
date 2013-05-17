@@ -30,6 +30,10 @@ the :class:`pulsar.apps.rpc.PulsarServerCommands` handler.
    :members:
    :member-order: bysource
    
+.. autoclass:: Site
+   :members:
+   :member-order: bysource
+
 '''
 try:
     import pulsar
@@ -40,7 +44,7 @@ except ImportError: #pragma nocover
 from random import normalvariate
 
 from pulsar.apps import rpc, wsgi
-from pulsar.utils.httpurl import range
+from pulsar.utils.httpurl import range, JSON_CONTENT_TYPES
 
 
 def divide(request, a, b):
@@ -102,10 +106,12 @@ remote functions.'''
 
 
 class Site(wsgi.LazyWsgi):
-    
+    '''WSGI handler for the RPC server'''
     def setup(self):
+        '''Called once to setup the list of wsgi middleware.'''
         json_handler = Root().putSubHandler('calc', Calculator())
-        middleware = wsgi.Router('/', post=json_handler)
+        middleware = wsgi.Router('/', post=json_handler,
+                                 accept_content_types=JSON_CONTENT_TYPES)
         return wsgi.WsgiHandler(middleware=[middleware])
     
 
