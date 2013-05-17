@@ -1,5 +1,5 @@
 '''A web-based chat application, it exposes three different
-:ref:`wsgi handlers <apps-wsgi-handlers>`:
+:ref:`wsgi handlers <wsgi-handlers>`:
 
 * A :class:`pulsar.apps.wsgi.handlers.Router` to render the web page
 * A :class:`pulsar.apps.ws.WebSocket` with the :class:`Chat` handler

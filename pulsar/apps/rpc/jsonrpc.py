@@ -59,17 +59,21 @@ Design to comply with the `JSON-RPC 2.0`_ Specification.
     def _call(self, request):
         response = request.response
         data = {}
+        # No content type - set it equal to application/json
+        if not response.content_type:
+            response.content_type = 'application/json'
         try:
             try:
                 data = request.json_data
             except ValueError:
-                raise ParseExcetion
+                raise InvalidRequest(status=415,
+                                msg='Content-Type must be application/json')
             if response.content_type not in JSON_CONTENT_TYPES:
                 raise InvalidRequest(status=415,
-                                     msg='Content-Type must be application/json')
+                                msg='Content-Type must be application/json')
             if data.get('jsonrpc') != self.version:
                 raise InvalidRequest(
-                        'jsonrpc must be supplied and equal to "%s"' % self.version)
+                    'jsonrpc must be supplied and equal to "%s"' % self.version)
             params = data.get('params')
             if isinstance(params, dict):
                 args, kwargs = (), params
@@ -80,6 +84,7 @@ Design to comply with the `JSON-RPC 2.0`_ Specification.
         else:
             callable = self.get_handler(data.get('method'))
             result = yield callable(request, *args, **kwargs)
+        #
         res = {'id': data.get('id'), "jsonrpc": self.version}
         if is_failure(result):
             log_failure(result)
@@ -178,6 +183,10 @@ Lets say your RPC server is running at ``http://domain.name.com/``::
     @property
     def http(self):
         return self.local.http
+    
+    @property
+    def version(self):
+        return self.__version
 
     def makeid(self):
         '''Can be re-implemented by your own Proxy'''

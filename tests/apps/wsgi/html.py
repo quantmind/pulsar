@@ -100,7 +100,7 @@ class TestAttributes(unittest.TestCase):
     def test_textarea_value_attribute(self):
         opt = wsgi.Html('textarea', 'Hello World!')
         self.assertEqual(opt.attr('value'), None)
-        self.assertEqual(opt.form_value(), 'Hello World!')
+        self.assertEqual(opt.get_form_value(), 'Hello World!')
         text = opt.render()
         self.assertTrue("Hello World!" in text)
         
@@ -163,20 +163,20 @@ class TestHtmlDocument(unittest.TestCase):
 class TestMedia(unittest.TestCase):
     
     def testEmptyHtml(self):
-        m = wsgi.HtmlDocument(title='test')
+        m = wsgi.HtmlDocument(title='test', bla='foo')
         self.assertTrue(m.head)
         self.assertTrue(m.body)
         self.assertEqual(m.head.title, 'test')
         txt = m.render()
         self.assertEqual(txt,
-                         ''.join(['<!DOCTYPE html>',
-                                  '<html>',
+                         ''.join(['<!DOCTYPE html>\n',
+                                  "<html data-bla='foo'>\n",
                                   '<head>',
                                   '<title>test</title>'
                                   "<meta charset='utf-8'>",
-                                  '</head>'
+                                  '</head>\n'
                                   '<body>',
-                                  '</body>',
+                                  '</body>\n',
                                   '</html>']))
 
     def testHtml(self):
@@ -184,13 +184,13 @@ class TestMedia(unittest.TestCase):
         m.body.append(wsgi.Html('div', 'this is a test'))
         txt = m.render()
         self.assertEqual(txt,
-                         ''.join(['<!DOCTYPE html>',
-                                  '<html>',
+                         ''.join(['<!DOCTYPE html>\n',
+                                  '<html>\n',
                                   '<head>',
                                   '<title>test</title>'
                                   "<meta charset='utf-8'>",
-                                  '</head>'
+                                  '</head>\n'
                                   '<body>',
                                   '<div>this is a test</div>',
-                                  '</body>',
+                                  '</body>\n',
                                   '</html>']))

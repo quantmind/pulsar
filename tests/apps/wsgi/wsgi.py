@@ -8,7 +8,7 @@ from pulsar.apps import wsgi
 from pulsar.apps.test import unittest
 
 
-class WsgiResponjseTest(unittest.TestCase):
+class WsgiResponseTests(unittest.TestCase):
     
     def testResponse200(self):
         r = wsgi.WsgiResponse(200)
@@ -102,7 +102,6 @@ class TestWsgiMiddleware(unittest.TestCase):
         try:
             raise ValueError('just a test')
         except ValueError:
-            response = wsgi.handle_wsgi_error(environ, content_type='text/html')
-        self.assertEqual(response.content_type, 'text/html')
+            response = wsgi.handle_wsgi_error(environ)
         self.assertEqual(response.status_code, 500)
             

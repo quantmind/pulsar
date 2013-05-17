@@ -340,7 +340,7 @@ Special (optional) parameters:
 * ``attr`` dictionary of attributes to add.
 * ``data`` dictionary of data to add (rendered as HTML data).
 * ``type`` type of element, only supported for tags which accept the ``type``
-    attribute (for example the ``input`` tag).
+  attribute (for example the ``input`` tag).
 
 Any other keyed-value parameter will be added as attribute, if in the set of
 :attr:`available_attributes` or as :meth:`data`.
@@ -734,4 +734,4 @@ via the :attr:`pulsar.apps.wsgi.wrappers.WsgiRequest.html_document` attribute.
         body = yield self.body.content(request)
         head = yield self.head.content(request)
         yield  ('<!DOCTYPE html>\n', '<html%s>\n' % self.flatatt(),
-                head, body, '\n</html>')
+                head, '\n', body, '\n</html>')

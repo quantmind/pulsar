@@ -4,8 +4,8 @@ development of server-side python web applications.
 .. note::
 
     A **WSGI application handler** is always a callable, either a function
-    or a callable instance, which accepts two positional arguments:
-    *environ* and *start_response*. When called by the server,
+    or a callable object, which accepts two positional arguments:
+    ``environ`` and ``start_response``. When called by the server,
     the application object must return an iterable yielding zero or more bytes. 
 
 
@@ -30,10 +30,27 @@ of :class:`WsgiResponse`.
    :member-order: bysource
    
 
+Lazy Wsgi Handler
+======================
+
+.. autoclass:: LazyWsgi
+   :members:
+   :member-order: bysource
+   
+   
+.. _wsgi-midlleware:
+
+WSGI Middleware
+=====================
+
+Middleware are function or callable objects similar to :ref:`wsgi-handlers`
+with the only difference that they can return ``None``. Middleware is used
+in conjunction with both :class:`WsgiHandler` and :class:`LazyWsgi`.
+
 .. _apps-wsgi-router:
 
 Router
-======================
+~~~~~~~~~~~~~~~~~~
 
 Next up is routing. Routing is the process of match and
 parse the URL to something we can use. Pulsar provides a flexible integrated
@@ -68,7 +85,7 @@ WSGI environ.
 
 
 Media Router
-======================
+~~~~~~~~~~~~~~~~~~~~~~~~
 
 The :class:`MediaRouter` is a spcialised :class:`Router` for serving static
 files such ass ``css``, ``javascript``, images and so forth.
@@ -77,13 +94,6 @@ files such ass ``css``, ``javascript``, images and so forth.
    :members:
    :member-order: bysource
    
-   
-Lazy Wsgi Handler
-======================
-
-.. autoclass:: LazyWsgi
-   :members:
-   :member-order: bysource
    
 .. _WSGI: http://www.wsgi.org
 '''
@@ -154,18 +164,19 @@ class WsgiHandler(object):
     
 
 class LazyWsgi(LocalMixin):
-    '''A :ref:`wsgi handler <apps-wsgi-handlers>` which loads its middleware the
+    '''A :ref:`wsgi handler <wsgi-handlers>` which loads its middleware the
 first time it is called. Subclasses must implement the :meth:`setup` method.
-
-This application handler is particularly useful when working in multiprocessing
-mode so that wsgi middleware can be rebuild consistently in ever application
-domain without causing serialization issues.'''        
+Useful when working in multiprocessing mode and the application
+handler must be a ``pickable`` instance. This handler can rebuld
+its wsgi :attr:`middleware` evry time is pickled and un-pickled without
+causing serialisation issues.'''        
     def __call__(self, environ, start_response):
         return self.middleware(environ, start_response)
     
     @property
     def middleware(self):
-        '''The lazy middleware.'''
+        '''The lazy list of :ref:`wsgi middleware <wsgi-midlleware>` which
+is loaded via the :meth:`setup` method, once only, when first accessed.'''
         m = self.local.middleware
         if m is None:
             self.local.middleware = m = self.setup()
@@ -175,7 +186,7 @@ domain without causing serialization issues.'''
         '''The setup function for this :class:`LazyWsgi`. Called once only
 the first time this application handler is invoked. This **must** be implemented
 by subclasses and **must** return a
-:ref:`wsgi application handler <apps-wsgi-handlers>`.'''
+:ref:`wsgi application handler <wsgi-handlers>`.'''
         raise NotImplementedError
     
     

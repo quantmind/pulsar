@@ -18,10 +18,4 @@ class rpcTest(unittest.TestCase):
         self.assertEqual(http.test, self)
         self.assertTrue(http.server_consumer)
         self.assertTrue(http.wsgi_handler)
-
-    def test_invalid_function(self):
-        p = self.proxy()
-        yield self.async.assertRaises(rpc.NoSuchFunction, p.blabla())
-        yield self.async.assertRaises(rpc.NoSuchFunction, p.blabla.foofoo())
-        yield self.async.assertRaises(rpc.NoSuchFunction, p.blabla.foofoo.sjdcbjcb())
-
+        self.assertEqual(p.version, '2.0')

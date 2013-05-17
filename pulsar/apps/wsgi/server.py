@@ -175,7 +175,12 @@ invocation of the application.
         return self.write
 
     def write(self, data, force=False):
-        '''The write function required by WSGI specification.'''
+        '''The write function which is returned by the :meth:`start_response`
+method as required by the WSGI specification.
+
+:param data: bytes to write
+:param force: Optional flag used internally.
+'''
         if not self._headers_sent:
             tosend = self.get_headers()
             events.fire('http-headers', self, headers=tosend)

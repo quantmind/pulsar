@@ -1,9 +1,9 @@
 """This is the most important :ref:`pulsar application <application-api>`.
-The server is a specialized :class:`pulsar.apps.socket.SocketServer` class
-for serving web applications conforming with the python web server
+The server is a specialized :ref:`socket server <apps-socket>`
+for web applications conforming with the python web server
 gateway interface (`WSGI 1.0.1`_).
 The server can be used in conjunction with several web frameworks
-as well as :ref:`pulsar wsgi application handlers <apps-wsgi-handlers>`,
+as well as :ref:`pulsar wsgi application handlers <wsgi-handlers>`,
 the :ref:`pulsar RPC middleware <apps-rpc>` and
 the :ref:`websocket middleware <apps-ws>`.
 

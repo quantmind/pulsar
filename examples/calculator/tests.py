@@ -103,8 +103,17 @@ class TestRpcOnThread(unittest.TestCase):
         self.async.assertRaises(rpc.InvalidParams, self.p.calc.divide,
                                 50, 25, 67)
         
-    def testInvalidFunction(self):
-        self.async.assertRaises(rpc.NoSuchFunction, self.p.foo, 'ciao')
+    def test_invalid_function(self):
+        p = self.p
+        self.async.assertRaises(rpc.NoSuchFunction, p.foo, 'ciao')
+        yield self.async.assertRaises(rpc.NoSuchFunction,
+                                      p.blabla)
+        yield self.async.assertRaises(rpc.NoSuchFunction,
+                                      p.blabla.foofoo)
+        yield self.async.assertRaises(rpc.NoSuchFunction,
+                                      p.blabla.foofoo.sjdcbjcb)
+
+
         
     def testInternalError(self):
         self.async.assertRaises(rpc.InternalError, self.p.calc.divide,

@@ -71,7 +71,7 @@ def wsgi_encoder(gen, encoding):
     
 class WsgiResponse(object):
     '''A WSGI response wrapper initialized by a
-:ref:`pulsar WSGI application handler <apps-wsgi-handlers>`.
+:ref:`pulsar WSGI application handler <wsgi-handlers>`.
 Instances are callable using the standard WSGI call and, importantly, iterable::
 
     response = WsgiResponse(200)

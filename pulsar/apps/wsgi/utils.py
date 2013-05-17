@@ -209,7 +209,7 @@ class dump_environ(object):
         return '\n%s\n' % '\n'.join(('%s = %s' % (k, v) for k, v in env))
     
     
-def handle_wsgi_error(environ, trace):
+def handle_wsgi_error(environ, trace=None):
     '''The default handler for errors while serving an Http requests.
 
 :parameter environ: The WSGI environment.

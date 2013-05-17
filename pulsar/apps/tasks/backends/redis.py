@@ -25,6 +25,8 @@ class TaskData(odm.StdModel):
     time_ended = odm.DateTimeField(required=False, index=False)
     expiry = odm.DateTimeField(required=False, index=False)
     meta = odm.JSONField()
+    #
+    # List where all TaskData objects are queued
     queue = odm.ListField(class_field=True)
     
     def as_task(self):
@@ -41,32 +43,34 @@ class TaskData(odm.StdModel):
 class TaskBackend(backends.TaskBackend):
     
     @local_method
-    def load(self):
+    def task_manager(self):
         p = PubSub(backend=self.connection_string, name=self.name)
         p.add_client(self)
         p.subscribe('task_done')
         self.local.pubsub = p
         self.local.watched_tasks = {}
-        odm.register(TaskData, self.connection_string)
+        self.models = odm.Router(self.connection_string)
+        self.models.register(TaskData)
+        return self.models.taskdata
     
     def put_task(self, task_id):
-        self.load()
-        tasks = yield TaskData.objects.filter(id=task_id)
+        task_manager = self.task_manager()
+        tasks = yield task_manager.filter(id=task_id)
         if tasks:
             task_data = tasks[0]
             task_data.status = states.PENDING
             task_data = yield task_data.save()
-            TaskData.queue.push_back(task_data.id)
+            task_manager.queue.push_back(task_data.id)
             yield task_data.id
         
     def get_task(self, task_id=None, when_done=False, timeout=1):
-        self.load()
+        task_manager = self.task_manager()
         if not task_id:
-            task_id = yield TaskData.queue.block_pop_front(timeout=timeout)
+            task_id = yield task_manager.queue.block_pop_front(timeout=timeout)
         if task_id:
             if task_id not in self.local.watched_tasks:
                 self.local.watched_tasks[task_id] = Deferred()
-            tasks = yield TaskData.objects.filter(id=task_id).all()
+            tasks = yield task_manager.filter(id=task_id).all()
             if tasks:
                 task_data = tasks[0]
                 task = task_data.as_task()
@@ -85,15 +89,15 @@ class TaskBackend(backends.TaskBackend):
                     yield task
         
     def get_tasks(self, **filters):
-        self.load()
-        tasks = yield TaskData.objects.filter(**filters).all()
+        task_manager = self.task_manager()
+        tasks = yield task_manager.filter(**filters).all()
         yield [t.as_task() for t in tasks]
         
     def save_task(self, task_id, **params):
-        self.load()
+        task_manager = self.task_manager()
         if task_id not in self.local.watched_tasks:
             self.local.watched_tasks[task_id] = Deferred()
-        tasks = yield TaskData.objects.filter(id=task_id).all()
+        tasks = yield task_manager.filter(id=task_id).all()
         if tasks:
             task_data = tasks[0]
             for field, value in params.items():
@@ -101,9 +105,9 @@ class TaskBackend(backends.TaskBackend):
                     setattr(task_data, field, value)
                 else:
                     task_data.meta[field] = value
+            yield task_data.save()
         else:
-            task_data = TaskData(id=task_id, **params)
-        yield task_data.save()
+            task_data = yield task_manager.new(id=task_id, **params)
         task = task_data.as_task()
         if task.done():
             # task is done, publish task_id into the channel
@@ -113,10 +117,10 @@ class TaskBackend(backends.TaskBackend):
     @async()
     def write(self, message):
         '''Got a new message from redis pubsub task_done channel.'''
-        self.load()
+        task_manager = self.task_manager()
         fut = self.local.watched_tasks.pop(message, None)
         if fut:
-            task = yield TaskData.objects.filter(id=task_id)
+            task = yield task_manager.filter(id=task_id)
             task = tasks[0].as_task() if tasks else None
             fut.callback(task)
     
