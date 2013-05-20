@@ -125,6 +125,19 @@ class a:
         
 class TestTaskQueueOnThread(TaskQueueBase, unittest.TestCase):
 
+    @run_on_arbiter
+    def test_delete_task(self):
+        app = yield get_application(self.name())
+        id = yield app.backend.run('addition', 1, 4)
+        print('addition done')
+        r1 = yield app.backend.wait_for_task(id)
+        self.assertEqual(r1.result, 5)
+        deleted = yield app.backend.delete_tasks([r1.id, 'kjhbkjb'])
+        self.assertEqual(deleted, 1)
+        r1 = yield app.backend.get_task(r1.id)
+        self.assertFalse(r1)
+        
+class b:
     def _test_not_overlap(self):
         sec = 2 + random()
         app = yield get_application(self.name())
@@ -162,17 +175,6 @@ class TestTaskQueueOnThread(TaskQueueBase, unittest.TestCase):
         backend = app.backend
         backend.tick()
         self.assertTrue(backend.next_run > datetime.now())
-      
-    @run_on_arbiter
-    def test_delete_task(self):
-        app = yield get_application(self.name())
-        id = yield app.backend.run('addition', 1, 4)
-        r1 = yield app.backend.wait_for_task(id)
-        self.assertEqual(r1.result, 5)
-        deleted = yield app.backend.delete_tasks([r1.id, 'kjhbkjb'])
-        self.assertEqual(deleted, 1)
-        r1 = yield app.backend.get_task(r1.id)
-        self.assertFalse(r1)
         
     def test_rpc_ping(self):
         yield self.async.assertEqual(self.proxy.ping(), 'pong')

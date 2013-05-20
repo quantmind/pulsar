@@ -105,7 +105,7 @@ class TestRpcOnThread(unittest.TestCase):
         
     def test_invalid_function(self):
         p = self.p
-        self.async.assertRaises(rpc.NoSuchFunction, p.foo, 'ciao')
+        yield self.async.assertRaises(rpc.NoSuchFunction, p.foo, 'ciao')
         yield self.async.assertRaises(rpc.NoSuchFunction,
                                       p.blabla)
         yield self.async.assertRaises(rpc.NoSuchFunction,

@@ -2,7 +2,9 @@
 Pulsar concurrent framework and applications can be used with twisted_, an
 event driven network engine for python. Twisted has implementation
 for several protocols which can be used in pulsar by importing the
-:mod:`pulsar.lib.tx` module.
+:mod:`pulsar.apps.tx` module::
+
+    from pulsar.apps.tx import twisted
 
 The implementation replaces the twisted reactor with a proxy for
 :class:`pulsar.EventLoop`.

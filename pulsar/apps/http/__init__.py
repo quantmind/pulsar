@@ -21,7 +21,7 @@ from pulsar.utils.structures import mapping_iterator
 from pulsar.utils.websocket import FrameParser, SUPPORTED_VERSIONS
 from pulsar.apps.wsgi import HTTPBasicAuth, HTTPDigestAuth
 from pulsar.utils.httpurl import urlparse, urljoin, DEFAULT_CHARSET,\
-                                    REDIRECT_CODES, HttpParser, httpclient,\
+                                    REDIRECT_CODES, http_parser, httpclient,\
                                     ENCODE_URL_METHODS, parse_qsl,\
                                     encode_multipart_formdata, urlencode,\
                                     Headers, urllibr, get_environ_proxies,\
@@ -56,7 +56,6 @@ class HttpRequest(pulsar.Request):
     ``Expect: 100-Continue`` header.
     
 '''
-    parser_class = HttpParser
     full_url = None
     _proxy = None
     def __init__(self, client, url, method, data=None, files=None,
@@ -125,7 +124,7 @@ class HttpRequest(pulsar.Request):
         return '%s %s %s' % (self.method, url, self.version)
     
     def new_parser(self):
-        self.parser = self.parser_class(kind=1, decompress=self.decompress)
+        self.parser = http_parser(kind=1, decompress=self.decompress)
         
     def set_proxy(self, scheme, host):
         self.host_only, self.port = get_hostport(scheme, host)

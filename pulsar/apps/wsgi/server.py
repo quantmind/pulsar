@@ -14,10 +14,11 @@ from wsgiref.handlers import format_date_time
 from io import BytesIO
 
 import pulsar
-from pulsar import lib, HttpException, ProtocolError, maybe_async, is_async
+from pulsar import HttpException, ProtocolError, maybe_async, is_async
 from pulsar.utils.pep import is_string, to_bytes, native_str
 from pulsar.utils.httpurl import Headers, unquote, has_empty_content,\
-                                 host_and_port_default, Headers, REDIRECT_CODES
+                                 host_and_port_default, Headers, http_parser,\
+                                 REDIRECT_CODES
 from pulsar.utils import events
 
 from .utils import handle_wsgi_error, LOGGER, HOP_HEADERS
@@ -68,7 +69,7 @@ class HttpServerResponse(pulsar.ProtocolConsumer):
         super(HttpServerResponse, self).__init__(connection)
         self.wsgi_callable = wsgi_callable
         self.cfg = cfg
-        self.parser = lib.Http_Parser(kind=0)
+        self.parser = http_parser(kind=0)
         self.headers = Headers()
         self.keep_alive = False
         

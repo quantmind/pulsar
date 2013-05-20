@@ -63,6 +63,21 @@ import zlib
 from collections import deque
 from copy import copy
 
+try:
+    from http_parser.parser import HttpParser as _Http_Parser
+    hasextensions = True
+except ImportError: #pragma    nocover
+    hasextensions = False
+    _Http_Parser = None
+
+def setDefaultHttpParser(parser):
+    global _Http_Parser
+    _Http_Parser = parser
+    
+def http_parser(**kwargs):
+    global _Http_Parser
+    return _Http_Parser(**kwargs)
+
 from .structures import mapping_iterator, OrderedDict
 from .pep import ispy3k, ispy26
 
@@ -1122,7 +1137,9 @@ OTHER DEALINGS IN THE SOFTWARE.'''
         if data[:2] == b'\r\n':
             self._trailers = self._parse_headers(data[:idx])
 
-
+if not hasextensions:
+    setDefaultHttpParser(HttpParser)
+    
 ################################################################################
 ##    HTTP CLIENT
 ################################################################################

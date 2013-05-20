@@ -46,7 +46,7 @@ except ImportError: #pragma nocover
 from pulsar.utils.pep import zip
 from pulsar.apps import ws, wsgi
 try:
-    from pulsar.lib.tx import twisted
+    from pulsar.apps.tx import twisted
     from twisted.internet import protocol, defer, endpoints, reactor
     from twisted.mail import imap4
 except ImportError: #pragma    nocover
@@ -85,7 +85,7 @@ sending mail via the twisted IMAP4 library.'''
         if msg and client:
             msg = json.loads(msg)
             if 'mailbox' in msg:
-                mailbox = msg[mailbox]
+                mailbox = msg['mailbox']
                 future = client.examine(mailbox)
                 yield future
                 result = future.result

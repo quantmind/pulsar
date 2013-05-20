@@ -57,6 +57,7 @@ Middleware
    apps/rpc
    apps/websockets
    apps/pubsub
+   apps/twisted
    apps/pulse
    
 Clients

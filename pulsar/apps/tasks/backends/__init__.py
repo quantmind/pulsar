@@ -572,7 +572,7 @@ by subclasses.'''
         raise NotImplementedError
     
     def get_task(self, task_id=None, when_done=False, timeout=1):
-        '''Retrieve a :class:`Task` from a task id. Must be implemented
+        '''Retrieve a :class:`Task` from a ``task_id``. Must be implemented
 by subclasses.
 
 :param task_id: the :attr:`Task.id` of the task to retrieve.

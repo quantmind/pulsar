@@ -4,6 +4,7 @@ import logging
 
 from pulsar import HttpException
 from pulsar.apps.wsgi import WsgiRequest
+from pulsar.utils.tools import checkarity
 
 __all__ = ['RpcHandler', 'rpc_method', 'InvalidRequest', 'InvalidParams',
            'NoSuchFunction', 'InternalError']
@@ -60,6 +61,13 @@ def wrap_object_call(fname, namefunc):
     _.__name__ = namefunc
     return _
 
+def rpcerror(func, args, kwargs, discount=0):
+    msg = checkarity(func, args, kwargs, discount=discount)
+    if msg:
+        raise InvalidParams('Invalid Parameters. %s' % msg)
+    else:
+        raise
+    
 def rpc_method(func, doc=None, format='json', request_handler=None):
     '''A decorator which exposes a function ``func`` as an rpc function.
 

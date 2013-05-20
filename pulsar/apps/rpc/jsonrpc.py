@@ -79,11 +79,11 @@ Design to comply with the `JSON-RPC 2.0`_ Specification.
                 args, kwargs = (), params
             else:
                 args, kwargs = tuple(params or ()), {}
-        except Exception:
-            result = yield sys.exc_info()
-        else:
+            #
             callable = self.get_handler(data.get('method'))
             result = yield callable(request, *args, **kwargs)
+        except Exception:
+            result = yield sys.exc_info()
         #
         res = {'id': data.get('id'), "jsonrpc": self.version}
         if is_failure(result):
