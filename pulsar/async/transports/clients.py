@@ -67,6 +67,8 @@ of available connections.
     connection.
 '''
         with self.lock:
+            #LOGGER.debug('release connection: available %s, concurrent %s',
+            #        self.available_connections, self.concurrent_connections)
             self._concurrent_connections.discard(connection)
             if connection.producer.can_reuse_connection(connection, response):
                 self._available_connections.add(connection)
@@ -304,6 +306,7 @@ in :attr:`request_parameters` tuple.'''
         return params
         
     def close_connections(self, async=True):
+        '''Close all connections in each :attr:`connection_pools`.'''
         for p in self.connection_pools.values():
             p.close_connections(async=async)
             

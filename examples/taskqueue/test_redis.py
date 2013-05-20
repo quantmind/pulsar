@@ -11,6 +11,7 @@ from . import test_local
 
 unittest.skipUnless(stdnet, 'Requires python-stdnet')
 class TestRedisTaskQueueOnThread(test_local.TestTaskQueueOnThread):
+    #schedule_periodic = False
     
     @classmethod
     def task_backend(cls):

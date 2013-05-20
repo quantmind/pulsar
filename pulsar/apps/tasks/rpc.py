@@ -99,6 +99,11 @@ available tasks call the "job_list" function. It returns the task id.'''
             task_backend = yield self.task_backend()
             result = yield task_backend.wait_for_task(id)
             yield task_to_json(result)
+            
+    def rpc_num_tasks(self, request):
+        '''Return the approximate number of tasks in the task queue.'''
+        task_backend = yield self.task_backend()
+        yield task_backend.num_tasks()
     
     ############################################################################
     ##    INTERNALS

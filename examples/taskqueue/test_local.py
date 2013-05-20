@@ -23,6 +23,7 @@ def task_function(N = 10, lag = 0.1):
 class TaskQueueBase(object):
     concurrency = 'thread'
     task_backend = None
+    schedule_periodic = True
     apps = ()
     
     @classmethod
@@ -47,7 +48,7 @@ class TaskQueueBase(object):
                    rpc_concurrency=cls.concurrency,
                    task_backend=cls.task_backend(),
                    script=__file__,
-                   schedule_periodic=True)
+                   schedule_periodic=cls.schedule_periodic)
         cls.apps = yield send('arbiter', 'run', s)
         cls.proxy = rpc.JsonProxy('http://%s:%s' % cls.apps[1].address)
 
@@ -124,20 +125,7 @@ class a:
         
         
 class TestTaskQueueOnThread(TaskQueueBase, unittest.TestCase):
-
-    @run_on_arbiter
-    def test_delete_task(self):
-        app = yield get_application(self.name())
-        id = yield app.backend.run('addition', 1, 4)
-        print('addition done')
-        r1 = yield app.backend.wait_for_task(id)
-        self.assertEqual(r1.result, 5)
-        deleted = yield app.backend.delete_tasks([r1.id, 'kjhbkjb'])
-        self.assertEqual(deleted, 1)
-        r1 = yield app.backend.get_task(r1.id)
-        self.assertFalse(r1)
         
-class b:
     def _test_not_overlap(self):
         sec = 2 + random()
         app = yield get_application(self.name())
@@ -157,10 +145,10 @@ class b:
     def test_not_overlap(self):
         return self._test_not_overlap()
 
-    @run_on_arbiter
-    def __test_not_overlap_on_arbiter(self):
-        return self._test_not_overlap()
-          
+    #@run_on_arbiter
+    #def __test_not_overlap_on_arbiter(self):
+    #    return self._test_not_overlap()
+
     def test_rpc_job_list(self):
         jobs = yield self.proxy.job_list()
         self.assertTrue(jobs)
@@ -178,7 +166,7 @@ class b:
         
     def test_rpc_ping(self):
         yield self.async.assertEqual(self.proxy.ping(), 'pong')
-        
+
     def test_rpc_job_list(self):
         jobs = yield self.proxy.job_list()
         self.assertTrue(jobs)
@@ -186,7 +174,7 @@ class b:
         d = dict(jobs)
         pycode = d['runpycode']
         self.assertEqual(pycode['type'], 'regular')
-        
+      
     def test_rpc_job_list_with_names(self):
         jobs = yield self.proxy.job_list(jobnames=['runpycode'])
         self.assertEqual(len(jobs), 1)
@@ -244,6 +232,17 @@ class b:
         self.assertTrue(r)
         r = yield self.proxy.wait_for_task(r)
         self.assertEqual(r['status'], tasks.REVOKED)
+        
+    @run_on_arbiter
+    def test_delete_task(self):
+        app = yield get_application(self.name())
+        id = yield app.backend.run('addition', 1, 4)
+        r1 = yield app.backend.wait_for_task(id)
+        self.assertEqual(r1.result, 5)
+        deleted = yield app.backend.delete_tasks([r1.id, 'kjhbkjb'])
+        self.assertEqual(deleted, 1)
+        r1 = yield app.backend.get_task(r1.id)
+        self.assertFalse(r1)
         
     def __test_run_producerconsumer(self):
         '''A task which produce other tasks'''

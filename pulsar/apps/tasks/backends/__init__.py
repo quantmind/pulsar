@@ -86,7 +86,7 @@ from datetime import datetime, timedelta
 from functools import partial
 
 from pulsar import async, EMPTY_TUPLE, EMPTY_DICT, get_actor, log_failure,\
-                    maybe_failure, is_failure, PulsarException, Backend
+                maybe_failure, is_failure, PulsarException, Backend, Deferred
 from pulsar.utils.pep import itervalues, iteritems
 from pulsar.apps.tasks.models import JobRegistry
 from pulsar.apps.tasks import states, create_task_id
@@ -119,7 +119,6 @@ def nice_task_message(req, smart_time=None):
     name = '%s (%s) ' % (req['name'], req['id'][:8])
     msg = '%s %s at %s' % (name, status, smart_time(ti))
     return '%s by %s' % (msg, user) if user else msg
-
 
 class TaskNotAvailable(PulsarException):
     MESSAGE = 'Task {0} is not registered. Check your settings.'
@@ -203,7 +202,7 @@ class Task(object):
     stack_trace = None
     def __init__(self, id, name=None, time_executed=None,
                  expiry=None, args=None, kwargs=None, 
-                 status=None, from_task=None, **params):
+                 status=None, from_task=None, result=None, **params):
         self.id = id
         self.name = name
         self.time_executed = time_executed
@@ -214,6 +213,7 @@ class Task(object):
         self.args = args
         self.kwargs = kwargs
         self.status = status
+        self.result = result
         self.params = params
 
     def __repr__(self):
@@ -248,6 +248,35 @@ Lower number higher precedence.'''
     def tojson(self):
         '''Convert the task instance into a JSON-serializable dictionary.'''
         return self.__dict__.copy()
+    
+
+class TaskCallbacks(object):
+    '''Calass for handling tasks callbacks'''
+    def __init__(self):
+        self.callbacks = {}
+        
+    def finish(self, task):
+        '''Finish a task by revoking it if not yet done and calling
+back the callback if not already called back.'''
+        if not task.done():
+            task.status = states.REVOKED
+        return self._pop(task)
+
+    def when_done(self, task):
+        if task.done(): # the task is done already
+            return self._pop(task)
+        else:
+            when_done = self.callbacks.get(task.id)
+            if not when_done:
+                self.callbacks[task.id] = when_done = Deferred()
+            return when_done
+    
+    def _pop(self, task):
+        when_done = self.callbacks.pop(task.id, None)
+        if when_done:
+            return when_done.callback(task)
+        else:
+            return task
     
     
 class TaskBackend(Backend):
@@ -289,10 +318,6 @@ It also schedules the run of periodic tasks if enabled to do so.
     def schedule_periodic(self):
         return self.local.schedule_periodic
     
-    @property
-    def concurrent_tasks(self):
-        return len(self.task_queue)
-    
     @local_property
     def concurrent_requests(self):
         return 0
@@ -302,18 +327,15 @@ It also schedules the run of periodic tasks if enabled to do so.
         return self._setup_schedule()
     
     @local_property
-    def task_queue(self):
-        return deque()
-    
-    @local_property
     def registry(self):
+        '''The :class:`pulsar.apps.tasks.models.JobRegistry` for this backend.'''
         return JobRegistry.load(self.task_paths)
     
     def start(self, worker):
         '''Start this :class:`TaskBackend`. Invoked by the
 :class:`pulsar.apps.Worker` which is ready to consume tasks.'''
         worker.create_thread_pool()
-        self.local.task_poller = worker.event_loop.call_every(
+        self.local.task_poller = worker.event_loop.call_soon(
                                     self.may_pool_task, worker)
         LOGGER.debug('%s started polling tasks', worker)
         
@@ -347,15 +369,6 @@ a ``TaskNotAvailable`` exception occurs.
         return self._run_job(jobname, targs, tkwargs, meta_params)\
                    .add_errback(log_failure)
         
-    def queue_task(self, task_id_or_task):
-        '''Actually put a *task_id_or_task* into the distributed task queue.
-It invokes the :meth:`put_task` which is implemented by subclasses.'''
-        id = task_id_or_task
-        if isinstance(task_id_or_task, Task):
-            id = task_id_or_task.id
-        self.put_task(id)
-        return id
-        
     def create_task_id(self, job, args, kwargs):
         '''Create a :attr:`Task.id` from *job*, positional arguments *args*
 and key-valued arguments *kwargs*.'''
@@ -363,9 +376,9 @@ and key-valued arguments *kwargs*.'''
         
     def create_task(self, jobname, targs=None, tkwargs=None, expiry=None,
                     **params):
-        '''Create a new :class:`Task` from *jobname*, positional arguments
-*targs*, key-valued arguments *tkwargs* and :class:`Task` meta parameters
-*params*. 
+        '''Create a new :class:`Task` from ``jobname``, positional arguments
+``targs``, key-valued arguments ``tkwargs`` and :class:`Task` meta parameters
+``params``. 
         
 :param jobname: the name of job which create the task.
 :param targs: task positional arguments (a ``tuple`` or ``None``).
@@ -465,67 +478,7 @@ and key-valued arguments *kwargs*.'''
         '''Asynchronously wait for a task to have finish its execution. It
 returns an `asynchronous component <tutorials-coroutine>`_'''
         return self.get_task(task_id, when_done=True)
-        
-    @async()
-    def may_pool_task(self, worker):
-        '''Called at every loop in the worker IO loop, it pool a new task
-if possible and add it to the queue of tasks consumed by the worker
-CPU-bound thread.'''
-        if worker.running:
-            thread_pool = worker.thread_pool
-            if not thread_pool:
-                LOGGER.warning('No thread pool, cannot poll tasks.')
-            elif self.concurrent_requests < self.backlog:
-                task = yield self.get_task()
-                if task:
-                    self.local.concurrent_requests += 1
-                    thread_pool.apply_async(self.execute_task, (worker, task))
             
-    @async(max_errors=None)
-    def execute_task(self, worker, task):
-        '''Asynchronous execution of a :class:`Task`. This method is called
-on a separate thread of execution from the worker evnet loop thread.'''
-        task_id = task.id
-        result = None
-        status = None
-        calculated = False
-        time_ended = datetime.now()
-        try:
-            if task.name not in self.registry:
-                calculated = True
-                raise RuntimeError('Task "%s" not in registry %s' %
-                                   (task.name, self.registry))
-            job = self.registry[task.name]
-            if task.status_code > states.PRECEDENCE_MAPPING[states.STARTED]:
-                calculated = True
-                if task.expiry and time_ended > task.expiry:
-                    raise TaskTimeout
-                else:
-                    LOGGER.debug('starting task %s', task)
-                    yield self.save_task(task_id, status=states.STARTED,
-                                         time_started=time_ended)
-                    yield self.on_start_task(task_id)
-                    consumer = TaskConsumer(self, worker, task_id, job)
-                    result = yield job(consumer, *task.args, **task.kwargs)
-                    time_ended = datetime.now()
-        except TaskTimeout:
-            LOGGER.debug('Task %s timed-out', task)
-            status = states.REVOKED
-        except:
-            result = maybe_failure(sys.exc_info())
-        if is_failure(result):
-            result.log()
-            status = states.FAILURE
-            result = str(result)
-        elif not status:
-            status = states.SUCCESS
-        if calculated:
-            yield self.save_task(task_id, time_ended=time_ended,
-                                 status=status, result=result)
-            yield self.on_finish_task(task_id)
-        worker.event_loop.call_soon_threadsafe(self._done_task, task_id)
-        yield task_id
-    
     def tick(self, now=None):
         '''Run a tick, that is one iteration of the scheduler. This
 method only works when :attr:`schedule_periodic` is ``True`` and
@@ -553,22 +506,26 @@ value ``now`` can be passed.'''
     ############################################################################
     ##    HOOKS
     ############################################################################
-    def on_start_task(self, task_id):
-        '''Called once a :class:`Task` with *task_id* has started its
-execution in the thread pool.'''
+    def on_start_task(self, consumer):
+        '''Called once a new task has started its execution in the thread
+pool.'''
         pass
     
-    def on_finish_task(self, task_id):
-        '''Called once a :class:`Task` with *task_id* has finished its
-execution in the thread pool.'''
+    def on_finish_task(self, consumer):
+        '''Called once a new task has finished its execution in the thread
+pool.'''
         pass
     
     ############################################################################
     ##    ABSTRACT METHODS
     ############################################################################
     def put_task(self, task_id):
-        '''Put the *task_id* into the queue. Must be implemented
+        '''Put the ``task_id`` into the queue. Must be implemented
 by subclasses.'''
+        raise NotImplementedError
+    
+    def num_tasks(self):
+        '''Retrieve the number of tasks in the task queue.'''
         raise NotImplementedError
     
     def get_task(self, task_id=None, when_done=False, timeout=1):
@@ -587,8 +544,8 @@ by subclasses.
         raise NotImplementedError
     
     def save_task(self, task_id, **params):
-        '''create or update a :class:`Task` with *task_id* and key-valued
-parameters *params*. Must be implemented by subclasses.'''
+        '''Create or update a :class:`Task` with ``task_id`` and key-valued
+parameters ``params``. Must be implemented by subclasses.'''
         raise NotImplementedError
     
     def delete_tasks(self, task_ids=None):
@@ -598,6 +555,72 @@ parameters *params*. Must be implemented by subclasses.'''
     ############################################################################
     ##    PRIVATE METHODS
     ############################################################################
+    @async()
+    def may_pool_task(self, worker):
+        '''Called at every loop in the worker IO loop, it pool a new task
+if possible and add it to the queue of tasks consumed by the worker
+CPU-bound thread.'''
+        while worker.running:
+            thread_pool = worker.thread_pool
+            if not thread_pool:
+                LOGGER.warning('No thread pool, cannot poll tasks.')
+            elif self.concurrent_requests < self.backlog:
+                task = yield self.get_task()
+                if task:
+                    self.local.concurrent_requests += 1
+                    thread_pool.apply_async(self._execute_task, (worker, task))
+            else:
+                LOGGER.info('Cannot poll tasks. %s concurrent requests.',
+                            self.concurrent_requests)
+                break
+        worker.event_loop.call_soon(self.may_pool_task, worker)
+            
+    @async(max_errors=None)
+    def _execute_task(self, worker, task):
+        #Asynchronous execution of a :class:`Task`. This method is called
+        #on a separate thread of execution from the worker event loop thread.
+        task_id = task.id
+        result = None
+        status = None
+        consumer = None
+        time_ended = datetime.now()
+        try:
+            job = self.registry.get(task.name)
+            consumer = TaskConsumer(self, worker, task_id, job)
+            if not consumer.job:
+                raise RuntimeError('Task "%s" not in registry %s' %
+                                   (task.name, self.registry))
+            if task.status_code > states.PRECEDENCE_MAPPING[states.STARTED]:
+                if task.expiry and time_ended > task.expiry:
+                    raise TaskTimeout
+                else:
+                    LOGGER.debug('starting task %s', task)
+                    yield self.save_task(task_id, status=states.STARTED,
+                                         time_started=time_ended)
+                    yield self.on_start_task(consumer)
+                    result = yield job(consumer, *task.args, **task.kwargs)
+                    time_ended = datetime.now()
+            else:
+                consumer = None
+        except TaskTimeout:
+            LOGGER.debug('Task %s timed-out', task)
+            status = states.REVOKED
+        except:
+            result = maybe_failure(sys.exc_info())
+        if is_failure(result):
+            result.log()
+            status = states.FAILURE
+            result = str(result)
+        elif not status:
+            status = states.SUCCESS
+        if consumer:
+            yield self.save_task(task_id, time_ended=time_ended,
+                                 status=status, result=result)
+            LOGGER.debug('Finished task %s', task)
+            yield self.on_finish_task(consumer)
+        worker.event_loop.call_soon_threadsafe(self._done_task, task_id)
+        yield task_id
+        
     def _done_task(self, task_id):
         self.local.concurrent_requests -= 1
         
@@ -621,9 +644,12 @@ parameters *params*. Must be implemented by subclasses.'''
     
     @async(get_result=False)
     def _run_job(self, jobname, targs, tkwargs, meta_params):
-        task = yield self.create_task(jobname, targs, tkwargs, **meta_params)
-        if task:
-            yield self.queue_task(task)
+        # Create a new task and put it in the task queue
+        task_id = yield self.create_task(jobname, targs, tkwargs, **meta_params)
+        if task_id:
+            yield self.put_task(task_id)
+        yield task_id
+    
     
 class Schedule(object):
 

@@ -413,8 +413,6 @@ custom initialization for this :class:`Setting`.'''
                 setting.orig_name = setting.name 
                 setting.name = '%s_%s' % (prefix, setting.name)
                 setting.flags = ['--%s-%s' % (prefix, flags[-1][2:])]
-            else:
-                LOGGER.warning('Could not prefix %s setting', setting.name)
         if name and not setting.is_global:
             setting.short = '%s application. %s' % (name , setting.short)
         return setting

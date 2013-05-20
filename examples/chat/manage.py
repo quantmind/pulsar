@@ -88,7 +88,7 @@ class WebChat(wsgi.LazyWsgi):
     
     def setup(self):
         # Create a pubsub handler
-        self.pubsub = PubSub()
+        self.pubsub = PubSub(encoder=self.encode_message)
         self.pubsub.subscribe('webchat')
         return wsgi.WsgiHandler([wsgi.Router('/', get=self.home_page),
                                  ws.WebSocket('/message', Chat(self.pubsub)),
@@ -99,6 +99,12 @@ class WebChat(wsgi.LazyWsgi):
         request.response.content_type = 'text/html'
         request.response.content = data % request.environ
         return request.response.start()
+    
+    def encode_message(self, message):
+        if not isinstance(message, dict):
+            message = {'message': message}
+        message['time'] = time.time()
+        return json.dumps(message)
 
 
 def server(callable=None, **kwargs):

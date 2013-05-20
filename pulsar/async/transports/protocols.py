@@ -484,6 +484,8 @@ a :class:`RuntimeError` is raised.'''
         producer = producer or self
         conn = self.connection_factory(address, session, self.timeout,
                                        consumer_factory, producer)
+        # When the connection is made, add it to the set of
+        # concurrent connections
         conn.bind_event('connection_made', self._add_connection)
         conn.copy_many_times_events(producer)
         conn.bind_event('connection_lost', partial(self._remove_connection,

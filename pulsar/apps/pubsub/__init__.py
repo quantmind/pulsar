@@ -41,9 +41,6 @@ PubSub backend
    
    
 .. _wikipedia: http://en.wikipedia.org/wiki/Publish%E2%80%93subscribe_pattern'''
-import time
-import json
-
 import pulsar
 from pulsar import get_actor
 from pulsar.utils.pep import to_string
@@ -58,20 +55,25 @@ class PubSub(object):
 
     The :class:`PubSubBackend` for this handler.
         
+.. attribute:: encoder
+
+    Optional callable which encode the messages before they are published.
+    
 .. attribute:: clients
 
     Set of all clients for this :class:`PubSub` handler.
 '''
-    def __init__(self, backend=None, **params):
+    def __init__(self, backend=None, encoder=None, **params):
         be = PubSubBackend.make(backend=backend, **params)
         self.backend = PubSubBackend.get(be.id, backend=be)
+        self.encoder = encoder
     
     @property
     def clients(self):
         return self.backend.clients
     
     def add_client(self, client):
-        '''Add a new *client* to the set of all :attr:`clients`. Clients
+        '''Add a new ``client`` to the set of all :attr:`clients`. Clients
 must have the ``write`` method available. When a new message is received
 from the publisher, the :meth:`broadcast` method will notify all
 :attr:`clients` via the ``write`` method.'''
@@ -82,8 +84,11 @@ from the publisher, the :meth:`broadcast` method will notify all
         self.backend.remove_client(client)
         
     def publish(self, channel, message):
-        '''Publish a *message*. Must be implemented by subclasses.'''
-        message = self.encode(message)
+        '''Publish a ``message`` to ``channel``. It invokes the
+:meth:`PubSubBackend.publish` method after the message has been encoded
+via the :attr:`encoder` callable (if available).'''
+        if self.encoder:
+            message = self.encoder(message)
         return self.backend.publish(channel, message)
     
     def subscribe(self, *channels):
@@ -99,14 +104,6 @@ implemented by subclasses.'''
     def close(self):
         '''Close connections'''
         return self.backend.close()
-    
-    def encode(self, message):
-        '''Encode *message* before publishing it. By default it create a
-dictionary with a timestamp and the message and serialise it as json.'''
-        if not isinstance(message, dict):
-            message = {'message': message}
-        message['time'] = time.time()
-        return json.dumps(message)
     
     def __setstate__(self, state):
         super(PubSub, self).__setstate(state)
@@ -128,7 +125,7 @@ class PubSubBackend(pulsar.Backend):
         return set()
     
     def add_client(self, client):
-        '''Add a new *client* to the set of all :attr:`clients`. Clients
+        '''Add a new ``client`` to the set of all :attr:`clients`. Clients
 must have the ``write`` method available. When a new message is received
 from the publisher, the :meth:`broadcast` method will notify all
 :attr:`clients` via the ``write`` method.'''
@@ -139,7 +136,8 @@ from the publisher, the :meth:`broadcast` method will notify all
         self.clients.discard(client)
         
     def publish(self, channel, message):
-        '''Publish a *message*. Must be implemented by subclasses.'''
+        '''Publish a ``message`` into ``channel`. Must be implemented
+by subclasses.'''
         raise NotImplementedError
     
     def subscribe(self, *channels):
