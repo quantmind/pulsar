@@ -52,19 +52,9 @@ class TaskBackend(backends.TaskBackend):
     
     @local_method
     def task_manager(self):
-        p = PubSub(backend=self.connection_string, name=self.name)
-        p.add_client(self)
-        p.subscribe('task_done')
-        self.local.pubsub = p
         self.local.models = odm.Router(self.connection_string)
         self.local.models.register(TaskData)
         return self.local.models.taskdata
-    
-    @local_property
-    def watched_tasks(self):
-        '''Dictionary of task-id, :class:`pulsar.Deferred` populate
-by the ::class:`TaskBackend.save_task` method.'''
-        return TaskCallbacks()
     
     def num_tasks(self):
         '''Retrieve the number of tasks in the task queue.'''
@@ -72,19 +62,18 @@ by the ::class:`TaskBackend.save_task` method.'''
         return task_manager.queue.size()
     
     def put_task(self, task_id):
-        task_manager = self.task_manager()
         task_data = yield self._get_task(task_id)
         if task_data:
             task_data.status = states.QUEUED
             task_data = yield task_data.save()
-            yield task_manager.queue.push_back(task_data.id)
+            yield self.task_manager().queue.push_back(task_data.id)
             yield task_data.id
     
-    def get_task(self, task_id=None, when_done=False, timeout=1):
+    def get_task(self, task_id=None, timeout=1):
         task_manager = self.task_manager()
         #
-        pool = task_manager.backend.client.connection_pool
         if not task_id:
+            #pool = task_manager.backend.client.connection_pool
             #LOGGER.info('CONNECTIONS: AVAILABLE %s, CONCURRENT %s, TOTAL %s',
             #            pool.available_connections, pool.concurrent_connections,
             #            pool.available_connections+pool.concurrent_connections)
@@ -92,11 +81,7 @@ by the ::class:`TaskBackend.save_task` method.'''
         if task_id:
             task_data = yield self._get_task(task_id)
             if task_data:
-                task = task_data.as_task()
-                if when_done:
-                    yield self.watched_tasks.when_done(task)
-                else:
-                    yield task
+                yield task_data.as_task()
         
     def get_tasks(self, **filters):
         task_manager = self.task_manager()
@@ -118,31 +103,22 @@ by the ::class:`TaskBackend.save_task` method.'''
         else:
             task_data = yield task_manager.new(id=task_id, **params)
         task = task_data.as_task()
-        self.watched_tasks.when_done(task)
         if task.done():
             # task is done, publish task_id into the task_done channel
             self.local.pubsub.publish('task_done', task_id)
         yield task_id
         
     def delete_tasks(self, ids=None):
-        deleted = 0
+        deleted = []
         if ids:
             task_manager = self.task_manager()
-            watched_tasks = self.watched_tasks
             tasks = yield task_manager.filter(id=ids).all()
             yield task_manager.filter(id=ids).delete()
+            callbacks = self.callbacks
             for task_data in tasks:
-                watched_tasks.finish(task_data.as_task())
-                deleted += 1
+                callbacks.finish(task_data.as_task())
+                deleted.append(task_data.id)
         yield deleted
-            
-    @async()
-    def write(self, task_id):
-        '''Got a new message from redis pubsub task_done channel.
-This is the write method required by all pubsub clients.'''
-        task_data = yield self._get_task(task_id)
-        if task_data:
-            self.watched_tasks.finish(task_data.as_task())
         
     ############################################################################
     ##    INTERNALS

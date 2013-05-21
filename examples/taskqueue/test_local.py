@@ -3,11 +3,10 @@ from random import random
 from time import time
 from datetime import datetime, timedelta
 
-from pulsar import send, get_application, get_actor, multi_async
+from pulsar import send, get_application, multi_async
 from pulsar.apps import tasks, rpc
 from pulsar.utils.timeutils import timedelta_seconds
-from pulsar.apps.test import unittest, run_on_arbiter, dont_run_with_thread,\
-                                sequential
+from pulsar.apps.test import unittest, run_on_arbiter, dont_run_with_thread
 
 from .manage import server
 
@@ -125,8 +124,38 @@ class a:
         
         
 class TestTaskQueueOnThread(TaskQueueBase, unittest.TestCase):
+
+    def test_run_new_task_RunPyCode(self):
+        '''Run a new task from the *runpycode* task factory.'''
+        r = yield self.proxy.run_new_task(jobname='runpycode', code=CODE_TEST, N=3)
+        self.assertTrue(r)
+        r = yield self.proxy.wait_for_task(r)
+        self.assertEqual(r['status'], tasks.SUCCESS)
+        self.assertEqual(r['result'], 9)
         
-    def _test_not_overlap(self):
+    def __test_run_new_task_addition(self):
+        r = yield self.proxy.run_new_task(jobname='addition', a=40, b=50)
+        self.assertTrue(r)
+        r = yield self.proxy.wait_for_task(r)
+        self.assertEqual(r['status'], tasks.SUCCESS)
+        self.assertEqual(r['result'], 90)
+        
+    def __test_run_new_task_periodicerror(self):
+        r = yield self.proxy.run_new_task(jobname='testperiodicerror')
+        r = yield self.proxy.wait_for_task(r)
+        self.assertEqual(r['status'], tasks.FAILURE)
+        self.assertTrue('kaputt' in r['result'])
+        
+    def test_run_new_task_asynchronous(self):
+        r = yield self.proxy.run_new_task(jobname='asynchronous', lag=3)
+        r = yield self.proxy.wait_for_task(r)
+        self.assertEqual(r['status'], tasks.SUCCESS)
+        result = r['result']
+        self.assertTrue(result['loops'])
+        self.assertTrue(result['time'] > 3)
+        
+class b:
+    def test_not_overlap(self):
         sec = 2 + random()
         app = yield get_application(self.name())
         self.assertEqual(app.name, app.backend.name)
@@ -141,13 +170,6 @@ class TestTaskQueueOnThread(TaskQueueBase, unittest.TestCase):
         r1 = yield app.backend.wait_for_task(r1)
         self.assertEqual(r1.status, tasks.SUCCESS)
         self.assertTrue(r1.result > sec)
-    
-    def test_not_overlap(self):
-        return self._test_not_overlap()
-
-    #@run_on_arbiter
-    #def __test_not_overlap_on_arbiter(self):
-    #    return self._test_not_overlap()
 
     def test_rpc_job_list(self):
         jobs = yield self.proxy.job_list()
@@ -233,14 +255,13 @@ class TestTaskQueueOnThread(TaskQueueBase, unittest.TestCase):
         r = yield self.proxy.wait_for_task(r)
         self.assertEqual(r['status'], tasks.REVOKED)
         
-    @run_on_arbiter
     def test_delete_task(self):
         app = yield get_application(self.name())
         id = yield app.backend.run('addition', 1, 4)
         r1 = yield app.backend.wait_for_task(id)
         self.assertEqual(r1.result, 5)
         deleted = yield app.backend.delete_tasks([r1.id, 'kjhbkjb'])
-        self.assertEqual(deleted, 1)
+        self.assertEqual(len(deleted), 1)
         r1 = yield app.backend.get_task(r1.id)
         self.assertFalse(r1)
         

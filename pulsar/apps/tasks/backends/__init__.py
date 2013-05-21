@@ -90,6 +90,7 @@ from pulsar import async, EMPTY_TUPLE, EMPTY_DICT, get_actor, log_failure,\
 from pulsar.utils.pep import itervalues, iteritems
 from pulsar.apps.tasks.models import JobRegistry
 from pulsar.apps.tasks import states, create_task_id
+from pulsar.apps.pubsub import PubSub
 from pulsar.utils.timeutils import remaining, timedelta_seconds
 from pulsar.utils.log import local_property
 
@@ -249,35 +250,6 @@ Lower number higher precedence.'''
         '''Convert the task instance into a JSON-serializable dictionary.'''
         return self.__dict__.copy()
     
-
-class TaskCallbacks(object):
-    '''Calass for handling tasks callbacks'''
-    def __init__(self):
-        self.callbacks = {}
-        
-    def finish(self, task):
-        '''Finish a task by revoking it if not yet done and calling
-back the callback if not already called back.'''
-        if not task.done():
-            task.status = states.REVOKED
-        return self._pop(task)
-
-    def when_done(self, task):
-        if task.done(): # the task is done already
-            return self._pop(task)
-        else:
-            when_done = self.callbacks.get(task.id)
-            if not when_done:
-                self.callbacks[task.id] = when_done = Deferred()
-            return when_done
-    
-    def _pop(self, task):
-        when_done = self.callbacks.pop(task.id, None)
-        if when_done:
-            return when_done.callback(task)
-        else:
-            return task
-    
     
 class TaskBackend(Backend):
     '''A :class:`pulsar.apps.Backend` class for :class:`Task`.
@@ -303,6 +275,10 @@ It also schedules the run of periodic tasks if enabled to do so.
     :class:`pulsar.apps.Worker`. A number in the order of 5 to 10 is normally
     used. Passed by the task-queue application
     :ref:`backlog setting <setting-backlog>`.
+    
+.. attribute:: pubsub
+
+    A :class:`pulsar.apps.pubsub.PubSub` handler for tasks signals.
 '''
     default_path = 'pulsar.apps.tasks.backends.%s'
     
@@ -318,6 +294,21 @@ It also schedules the run of periodic tasks if enabled to do so.
     def schedule_periodic(self):
         return self.local.schedule_periodic
     
+    @local_property
+    def callbacks(self):
+        '''Dictionary of :class:`Deferred` called back once the task has
+finished. This dictionary is used by the :meth:`wait_for_task` method.'''
+        return {}
+    
+    @property
+    def pubsub(self):
+        '''A :class:`pulsar.apps.pubsub.PubSub` handler which notify tasks
+execution status.'''
+        p = PubSub(backend=self.connection_string, name=self.name)
+        p.add_client(self)
+        p.subscribe('task_done', 'task_start', 'task_queued')
+        return p
+        
     @local_property
     def concurrent_requests(self):
         return 0
@@ -475,9 +466,22 @@ and key-valued arguments *kwargs*.'''
         yield None
         
     def wait_for_task(self, task_id):
-        '''Asynchronously wait for a task to have finish its execution. It
-returns an `asynchronous component <tutorials-coroutine>`_'''
-        return self.get_task(task_id, when_done=True)
+        '''Asynchronously wait for a task with ``task_id`` to have finished
+its execution. It returns an `asynchronous component <tutorials-coroutine>`_'''
+        task = yield self.get_task(task_id)
+        if task:
+            if task.done():
+                when_done = self.callbacks.pop(task.id, None)
+                yield when_done.callback(task) if when_done else task
+            else:
+                when_done = self.callbacks.get(task.id)
+                if not when_done:
+                    # No deferred, create one and check again
+                    self.callbacks[task.id] = when_done = Deferred()
+                    yield self.wait_for_task(task_id)
+                else:
+                    # deferred already available, return it
+                    yield when_done
             
     def tick(self, now=None):
         '''Run a tick, that is one iteration of the scheduler. This
@@ -545,7 +549,7 @@ by subclasses.
     
     def save_task(self, task_id, **params):
         '''Create or update a :class:`Task` with ``task_id`` and key-valued
-parameters ``params``. Must be implemented by subclasses.'''
+parameters ``params``. Must be implemented by subclasses.'''        
         raise NotImplementedError
     
     def delete_tasks(self, task_ids=None):
@@ -594,7 +598,7 @@ CPU-bound thread.'''
                 if task.expiry and time_ended > task.expiry:
                     raise TaskTimeout
                 else:
-                    LOGGER.debug('starting task %s', task)
+                    LOGGER.critical('starting task %s', task)
                     yield self.save_task(task_id, status=states.STARTED,
                                          time_started=time_ended)
                     yield self.on_start_task(consumer)
@@ -616,8 +620,9 @@ CPU-bound thread.'''
         if consumer:
             yield self.save_task(task_id, time_ended=time_ended,
                                  status=status, result=result)
-            LOGGER.debug('Finished task %s', task)
-            yield self.on_finish_task(consumer)
+            LOGGER.critical('Finished task %s', task)
+            # PUBLISH task_done
+            self.pubsub.publish('task_done', task.id)
         worker.event_loop.call_soon_threadsafe(self._done_task, task_id)
         yield task_id
         
@@ -650,6 +655,16 @@ CPU-bound thread.'''
             yield self.put_task(task_id)
         yield task_id
     
+    @async()
+    def write(self, task_id):
+        '''Got a new message from redis pubsub task_done channel.
+This is the write method required by all pubsub clients.'''
+        task = yield self.get_task(task_id)
+        if task:
+            when_done = self.callbacks.pop(task.id, None)
+            if when_done:
+                when_done.callback(task)
+            
     
 class Schedule(object):
 
