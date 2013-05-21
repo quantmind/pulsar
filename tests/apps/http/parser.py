@@ -113,6 +113,5 @@ class TestHttpParser(unittest.TestCase):
 class TestCHttpParser(TestHttpParser):
     
     def parser(self, **kwargs):
-        from pulsar.lib import HttpParser
-        return HttpParser(**kwargs)
+        return httpurl.CHttpParser(**kwargs)
         

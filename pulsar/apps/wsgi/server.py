@@ -128,7 +128,7 @@ the following algorithm:
     def start_response(self, status, response_headers, exc_info=None):
         '''WSGI compliant ``start_response`` callable, see pep3333_.
 The application may call start_response more than once, if and only
-if the exc_info argument is provided.
+if the ``exc_info`` argument is provided.
 More precisely, it is a fatal error to call start_response without the exc_info
 argument if start_response has already been called within the current
 invocation of the application.
@@ -143,6 +143,8 @@ invocation of the application.
     called by an error handler.
 
 :rtype: The :meth:`HttpResponse.write` callable.
+
+The ``HOP_HEADERS`` are not considered but no error is raised.
 
 .. _pep3333: http://www.python.org/dev/peps/pep-3333/
 .. _2616: http://www.faqs.org/rfcs/rfc2616.html

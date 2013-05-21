@@ -192,7 +192,8 @@ was passed by the client.'''
         self.assertEqual(response.response, 'OK')
         content = response.content_json()
         self.assertTrue(content['gzipped'])
-        self.assertTrue(response.headers['content-encoding'], 'gzip')
+        if 'content-encoding' in response.headers:
+            self.assertTrue(response.headers['content-encoding'], 'gzip')
 
     def test_404_get(self):
         '''Not Found 404'''

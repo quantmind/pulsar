@@ -229,7 +229,7 @@ Initialised by a call to the :class:`HttpClient.request` method.
     def get_content(self):
         '''Retrieve the body without flushing'''
         b = self.parser.recv_body()
-        if b:
+        if b or self._content is None:
             self._content = self._content + b if self._content else b
         return self._content
     

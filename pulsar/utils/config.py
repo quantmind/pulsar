@@ -643,7 +643,7 @@ class HttpParser(Global):
 
     def on_start(self):
         if self.value:
-            from pulsar.lib import setDefaultHttpParser 
+            from pulsar.utils.httpurl import setDefaultHttpParser 
             setDefaultHttpParser(PyHttpParser)
 
 

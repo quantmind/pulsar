@@ -717,8 +717,8 @@ A redis backend could be::
         if scheme == 'local':
             if address[0] == '0.0.0.0':
                 address = ('',)
-        if name:
-            params['name'] = name
+            if name:
+                params['name'] = name
         con_str = get_connection_string(scheme, address, params)
         params.update(kwargs)
         if 'timeout' in params:

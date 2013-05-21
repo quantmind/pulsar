@@ -59,7 +59,7 @@ class HttpBin(wsgi.Router):
         html = request.html_document
         html.head.title = title
         html.head.links.append('/media/httpbin.css')
-        html.head.scripts.append('http://code.jquery.com/jquery.min.js')
+        html.head.scripts.append('//code.jquery.com/jquery.min.js')
         html.head.scripts.append('/media/httpbin.js')
         ul = ul.render(request)
         body = template() % (title, version, ul, pyversion, JAPANESE)
@@ -127,8 +127,8 @@ class HttpBin(wsgi.Router):
     @route('status/<int(min=100,max=505):status>', title='Returns given HTTP Status code',
            defaults={'status': 418})
     def status(self, request):
-        raise HttpException(status=request.urlargs['status'],
-                            content_type='text/html')
+        request.response.content_type = 'text/html'
+        raise HttpException(status=request.urlargs['status'])
 
     @route('response-headers', title='Returns response headers')
     def response_headers(self, request):

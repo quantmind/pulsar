@@ -182,8 +182,7 @@ client.
                 except Exception:
                     LOGGER.error('Exception in response middleware',
                                  exc_info=True)
-        environ['wsgi.writer'] = start_response(self.status, self.get_headers(),
-                                                exc_info)
+        start_response(self.status, self.get_headers(), exc_info)
         return self
     
     def start(self):

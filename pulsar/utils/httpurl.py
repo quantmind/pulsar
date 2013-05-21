@@ -64,8 +64,9 @@ from collections import deque
 from copy import copy
 
 try:
-    from http_parser.parser import HttpParser as _Http_Parser
+    from http_parser.parser import HttpParser as CHttpParser
     hasextensions = True
+    _Http_Parser = CHttpParser
 except ImportError: #pragma    nocover
     hasextensions = False
     _Http_Parser = None

@@ -219,7 +219,7 @@ class TestMultiDeferred(unittest.TestCase):
     def testNested(self):
         d = MultiDeferred()
         # add a generator
-        d.append((a for a in range(1,11)))
+        d.append([a for a in range(1,11)])
         r = maybe_async(d.lock())
         self.assertTrue(d.locked)
         self.assertFalse(is_async(r))
@@ -229,13 +229,13 @@ class TestMultiDeferred(unittest.TestCase):
         handle = lambda value : reduce(lambda x,y: x+y, value)\
                      if isinstance(value, list) else value 
         d = MultiDeferred(handle_value=handle)
-        d.append((a for a in range(1,11)))
+        d.append([a for a in range(1,11)])
         r = maybe_async(d.lock())
         self.assertFalse(is_async(r))
         self.assertEqual(r, [55])
         handle = lambda value: 'c'*value
-        d = MultiDeferred(handle_value=handle)
-        d.append((a for a in range(1,11)))
+        d = MultiDeferred(handle_value=handle, raise_on_error=False)
+        d.append([a for a in range(1,11)])
         r = maybe_async(d.lock())
         self.assertFalse(is_async(r))
         self.assertTrue(is_failure(r[0]))
