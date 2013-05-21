@@ -1,5 +1,6 @@
 '''pubsub local backend.'''
 import json
+import time
 
 from pulsar import Deferred
 from pulsar.apps.pubsub import PubSub
@@ -7,10 +8,22 @@ from pulsar.apps.test import unittest, HttpTestClient
 from pulsar.utils.security import gen_unique_id
 
 
-class DummyClient(Deferred):
+class DummyClient1(Deferred):
     
-    def write(self, message):
+    def __call__(self, channels, message):
+        self.callback(message)
+        
+        
+class DummyClient2(Deferred):
+    
+    def __call__(self, channels, message):
         self.callback(json.loads(message))
+
+
+def json_encoder(message):
+    v =  {'message': message,
+          'time': time.time()}
+    return json.dumps(v)
 
 
 class pubsubTest(unittest.TestCase):
@@ -19,9 +32,9 @@ class pubsubTest(unittest.TestCase):
     def backend(cls, tag):
         return 'local://?tag=%s' % tag
     
-    def pubsub(self, tag=None):
+    def pubsub(self, tag=None, **kwargs):
         tag = tag or gen_unique_id()
-        ps = PubSub(self.backend(tag))
+        ps = PubSub(self.backend(tag), **kwargs)
         self._pubsub.append(ps)
         return ps
     
@@ -31,11 +44,44 @@ class pubsubTest(unittest.TestCase):
     def tearDown(self):
         for p in self._pubsub:
             p.close()
+    
+    def test_subscribe(self):
+        p = self.pubsub()
+        d = DummyClient1()
+        p.add_client(d)
+        self.assertTrue(len(p.clients), 1)
+        yield p.subscribe('messages')
+        clients = yield p.publish('messages', 'Hello world!')
+        self.assertTrue(clients)
+        message = yield d
+        self.assertEqual(message, 'Hello world!')
+        p.remove_client(d)
+        self.assertFalse(p.clients)
+        
+    def test_subscribe_encoder(self):
+        p = self.pubsub(encoder=json_encoder)
+        d = DummyClient2()
+        p.add_client(d)
+        self.assertTrue(len(p.clients), 1)
+        yield p.subscribe('json')
+        clients = yield p.publish('json', 'Hello world!')
+        self.assertTrue(clients)
+        message = yield d
+        self.assertEqual(message['message'], 'Hello world!')
+        p.remove_client(d)
+        self.assertFalse(p.clients)
+
+    def test_same_id(self):
+        p1 = self.pubsub('bla')
+        p2 = self.pubsub('bla')
+        self.assertEqual(p1.id, p2.id)
         
     def test_backend(self):
         p = self.pubsub()
-        self.assertEqual(p.backend.name, 'arbiter')
-        self.assertTrue('tag=' in p.backend.connection_string)
+        backend = p.backend
+        self.assertEqual(backend.name, 'arbiter')
+        self.assertTrue('tag=' in backend.connection_string)
+        self.assertTrue(backend.params['tag'])
         
     def test_same_backends(self):
         p = self.pubsub('test')
@@ -58,32 +104,21 @@ class pubsubTest(unittest.TestCase):
         clients = yield p.publish('messages bla', 'Hello world!')
         self.assertEqual(clients, 0)
         
-    def test_subscribe(self):
-        p = self.pubsub()
-        d = DummyClient()
-        p.add_client(d)
-        yield p.subscribe('messages')
-        clients = yield p.publish('messages', 'Hello world!')
-        self.assertTrue(clients)
-        message = yield d
-        self.assertEqual(message['message'], 'Hello world!')
-        p.remove_client(d)
-        
     def test_pattern_subscribe(self):
         p = self.pubsub()
-        d = DummyClient()
+        d = DummyClient1()
         p.add_client(d)
         result = yield p.subscribe('channel.*')
         clients = yield p.publish('channel.one', 'Hello world!')
         message = yield d
-        self.assertEqual(message['message'], 'Hello world!')
+        self.assertEqual(message, 'Hello world!')
         result = yield p.subscribe('pippo', 'star.*')
         p.remove_client(d)
-        d = DummyClient()
+        d = DummyClient1()
         p.add_client(d)
         clients = yield p.publish('channel.one', 'Hello world again!')
         message = yield d
-        self.assertEqual(message['message'], 'Hello world again!')
+        self.assertEqual(message, 'Hello world again!')
         
     def test_unsubscribe_all(self):
         p = self.pubsub()

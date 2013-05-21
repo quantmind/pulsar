@@ -33,3 +33,11 @@ class TestWebChat(unittest.TestCase):
         result = yield self.rpc.message('Hi!')
         self.assertEqual(result, 'OK')
         
+    def test_handshake(self):
+        ws = yield self.http.get(self.ws).on_finished
+        response = ws.handshake 
+        self.assertEqual(response.status_code, 101)
+        self.assertEqual(response.headers['upgrade'], 'websocket')
+        self.assertEqual(response.connection, None)
+        self.assertTrue(ws.connection)
+        

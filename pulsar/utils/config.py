@@ -297,7 +297,7 @@ container.'''
                 return pn.get()
         
     def copy(self, name=None, prefix=None):
-        '''A deep copy of this :class:`Config` container. If *prefix*
+        '''A deep copy of this :class:`Config` container. If ``prefix``
 is given, it prefixes all non
 :ref:`global settings <setting-section-global-server-settings>` with it.'''
         cls = self.__class__
@@ -305,7 +305,8 @@ is given, it prefixes all non
         me.__dict__.update(self.__dict__)
         if prefix:
             me.prefix = prefix
-        prefix = me.prefix
+        # Important, don't use the prefix from me.prefix!
+        #        prefix = me.prefix
         settings = me.settings
         me.settings = {}
         for setting in settings.values():
@@ -409,7 +410,7 @@ custom initialization for this :class:`Setting`.'''
         if prefix and not setting.is_global:
             flags = setting.flags
             if flags and flags[-1].startswith('--'):
-                # Prefixi a setting
+                # Prefix a setting
                 setting.orig_name = setting.name 
                 setting.name = '%s_%s' % (prefix, setting.name)
                 setting.flags = ['--%s-%s' % (prefix, flags[-1][2:])]

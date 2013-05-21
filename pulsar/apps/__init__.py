@@ -69,6 +69,7 @@ Backend
 import os
 import sys
 import logging
+from hashlib import sha1
 from inspect import getfile
 
 import pulsar
@@ -641,45 +642,56 @@ as the number of :class:`Application` required by this :class:`MultiApp`.
     
     
 class Backend(LocalMixin):
-    '''Base class for backends. A backend is never initialised directly.
-Use the :meth:`Backend.make` classmethod instead.
+    '''Base class for backends. It is the base class for
+:ref:`publish/subscribe backend <apps-pubsub>` and for the
+:ref:`taskqueue backend <apps-taskqueue>`.
+A :class:`Backend` is never initialised directly, the
+:meth:`Backend.make` classmethod is used instead.
 
 .. attribute:: scheme
 
     The scheme for this backend (``local``, ``redis``, ``http``, ...).
     
-.. attribute:: host
-
-    Optional host if this backend is not a the local backend.
-    
 .. attribute:: name
 
     Optional name of the :class:`Application` which created this
-    :class:`Backend`.
+    :class:`Backend`. If not available the ``arbiter`` is used as owner
+    of this :class:`Backend`.
     
 .. attribute:: params
 
     Dictionary of additional parameters passed during initialisation.
-'''
-    default_path = '%s'
     
-    def __init__(self, scheme, host=None, name=None, connection_string=None,
-                  **params):
+.. attribute:: connection_string
+
+    The connection string fro this backend.
+    
+.. attribute:: default_path
+
+    A class attribute which represents the path from where to load backend
+    implementations.
+'''
+    def __init__(self, scheme, connection_string, name=None, **params):
         self.scheme = scheme
-        self.host = host
         self.name = name or 'arbiter'
         self.connection_string = connection_string
         self.params = dict(self.setup(**params) or {})
+        value = '%s\n%s' % (self.__class__.__name__, self.connection_string)
+        self._id = sha1(value.encode('utf-8')).hexdigest()
         
     def setup(self, **params):
         return params
     
     @property
     def id(self):
-        return hash('%s:%s' % (self.__class__.__name__, self.connection_string))
+        '''Identy for this backend, calculated from the class name and the
+:attr:`connection_string`. Therefore if two backend instances from
+the same class have the same connection string, than the :attr:`id`
+is the same.'''
+        return self._id
     
     @classmethod
-    def make(cls, backend=None, **kwargs):
+    def make(cls, backend=None, name=None, **kwargs):
         '''Create a new :class:`Backend` from a *backend* connection string
 which is of the form::
 
@@ -700,15 +712,23 @@ A redis backend could be::
         if isinstance(backend, cls):
             return backend
         backend = backend or 'local://'
-        scheme, address, params = parse_connection_string(backend)
-        connection_string = get_connection_string(scheme, address, params)
+        scheme, address, params = parse_connection_string(backend,
+                                                          default_port=0)
+        if scheme == 'local':
+            if address[0] == '0.0.0.0':
+                address = ('',)
+        if name:
+            params['name'] = name
+        con_str = get_connection_string(scheme, address, params)
         params.update(kwargs)
-        params['connection_string'] = connection_string
         if 'timeout' in params:
             params['timeout'] = int(params['timeout'])
-        try:
-            module = import_module(cls.default_path % scheme)
-        except ImportError:
-            module = import_module(scheme)
-        return getattr(module, cls.__name__)(scheme, address, **params)
-        
+        path = cls.path_from_scheme(scheme)
+        module = import_module(path)
+        return getattr(module, cls.__name__)(scheme, con_str, **params)
+    
+    @classmethod
+    def path_from_scheme(cls, scheme):
+        '''A class method which returns the import dotted path for a given
+``scheme``. Must be implemented by subclasses.'''
+        raise NotImplementedError

@@ -29,6 +29,7 @@ of :class:`WsgiResponse`.
    :members:
    :member-order: bysource
    
+.. _wsgi-lazy-handler:
 
 Lazy Wsgi Handler
 ======================

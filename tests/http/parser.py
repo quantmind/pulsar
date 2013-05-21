@@ -1,4 +1,4 @@
-from pulsar.lib import hasextensions
+from pulsar.utils.httpurl import hasextensions
 from pulsar.apps.test import unittest
 from pulsar.utils import httpurl
 

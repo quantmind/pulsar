@@ -1,7 +1,9 @@
 from time import time
 
+from pulsar import CommandError
+
 from .defer import is_async
-from .proxy import command, CommandError, ActorProxyMonitor
+from .proxy import command, ActorProxyMonitor
 from .consts import NOT_DONE
 
 

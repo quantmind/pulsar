@@ -6,7 +6,7 @@ from time import time
 import random
 from functools import partial
 
-from pulsar import AlreadyRegistered, HaltServer,\
+from pulsar import AlreadyRegistered, HaltServer, CommandError,\
                    ActorAlreadyStarted, system, Config, platform
 from pulsar.utils.pep import pickle, set_event_loop_policy, itervalues
 from pulsar.utils.log import LogginMixin
@@ -249,7 +249,11 @@ parameters *params*.'''
                 return command_in_context(action, self, actor, args, params)
             elif isinstance(actor, ActorProxyMonitor):
                 mailbox = actor.mailbox
-        return mailbox.request(action, self, target, args, params)
+        if hasattr(mailbox, 'request'):
+            return mailbox.request(action, self, target, args, params)
+        else:
+            raise CommandError('Cannot execute "%s" in %s. Unknown actor '
+                               '%s.' % (action, self, target))
     
     def io_poller(self):
         '''Return a IO poller instance which sets the :class:`EventLoop.io`

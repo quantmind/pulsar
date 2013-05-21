@@ -8,7 +8,17 @@ class ImproperlyConfigured(PulsarException):
 configuration.'''
     pass
 
-    
+
+class CommandError(PulsarException):
+    pass
+
+
+class CommandNotFound(CommandError):
+
+    def __init__(self, name):
+        super(CommandNotFound, self).__init__(
+                            'Command "%s" not available' % name)
+        
 class ProtocolError(Exception):
     '''Raised when the protocol encounter unexpected data. It will close
 the socket connection.'''

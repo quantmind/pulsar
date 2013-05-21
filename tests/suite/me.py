@@ -59,6 +59,7 @@ class TestTestWorker(unittest.TestCase):
         worker = pulsar.get_actor()
         mailbox = worker.mailbox
         self.assertTrue(mailbox)
+        self.assertTrue(hasattr(mailbox, 'request'))
         self.assertTrue(mailbox.event_loop)
         self.assertTrue(mailbox.event_loop.running)
         self.assertEqual(worker.event_loop, mailbox.event_loop)

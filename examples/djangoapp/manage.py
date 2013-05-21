@@ -9,7 +9,7 @@ If running for the first time, issue the::
 
     python manage.py syncdb
 
-command first and create the super user.
+command and create the super user.
 '''
 import os, sys
 try:

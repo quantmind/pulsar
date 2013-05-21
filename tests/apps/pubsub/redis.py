@@ -3,7 +3,6 @@ from pulsar.apps.test import unittest
 from pulsar.utils.sockets import parse_connection_string, get_connection_string
 
 from . import local
-from .local import DummyClient
 
 try:
     import stdnet

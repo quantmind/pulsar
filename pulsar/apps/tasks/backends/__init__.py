@@ -90,13 +90,12 @@ from pulsar import async, EMPTY_TUPLE, EMPTY_DICT, get_actor, log_failure,\
 from pulsar.utils.pep import itervalues, iteritems
 from pulsar.apps.tasks.models import JobRegistry
 from pulsar.apps.tasks import states, create_task_id
-from pulsar.apps.pubsub import PubSub
+from pulsar.apps import pubsub
 from pulsar.utils.timeutils import remaining, timedelta_seconds
 from pulsar.utils.log import local_property
 
 __all__ = ['Task', 'Backend', 'TaskBackend', 'TaskNotAvailable',
-           'nice_task_message']
-
+           'nice_task_message', 'LOGGER']
 
 LOGGER = logging.getLogger('pulsar.tasks')
 
@@ -250,7 +249,18 @@ Lower number higher precedence.'''
         '''Convert the task instance into a JSON-serializable dictionary.'''
         return self.__dict__.copy()
     
+
+class PubSubClient(pubsub.Client):
     
+    def __init__(self, be):
+        self._be = be
+        self.task_done = be.channel('task_done')
+        
+    def __call__(self, channel, message):
+        if channel == self.task_done:
+            self._be.task_done_callback(message)
+            
+        
 class TaskBackend(Backend):
     '''A :class:`pulsar.apps.Backend` class for :class:`Task`.
 A :class:`TaskBackend` is responsible for creating tasks and put them
@@ -280,8 +290,6 @@ It also schedules the run of periodic tasks if enabled to do so.
 
     A :class:`pulsar.apps.pubsub.PubSub` handler for tasks signals.
 '''
-    default_path = 'pulsar.apps.tasks.backends.%s'
-    
     def setup(self, task_paths=None, schedule_periodic=False, backlog=1,
               **params):
         self.task_paths = task_paths
@@ -289,6 +297,10 @@ It also schedules the run of periodic tasks if enabled to do so.
         self.local.schedule_periodic = schedule_periodic
         self.next_run = datetime.now()
         return params
+    
+    @classmethod
+    def path_from_scheme(cls, scheme):
+        return 'pulsar.apps.tasks.backends.%s' % scheme
         
     @property
     def schedule_periodic(self):
@@ -296,22 +308,32 @@ It also schedules the run of periodic tasks if enabled to do so.
     
     @local_property
     def callbacks(self):
-        '''Dictionary of :class:`Deferred` called back once the task has
-finished. This dictionary is used by the :meth:`wait_for_task` method.'''
+        '''Dictionary of :class:`pulsar.Deferred` with keys given by
+:attr:`Task.id` which this instance is waiting on. The :class:`pulsar.Deferred`
+are called back once the task has finished. This dictionary is used by
+the :meth:`wait_for_task` method.'''
         return {}
     
-    @property
+    @local_property
     def pubsub(self):
         '''A :class:`pulsar.apps.pubsub.PubSub` handler which notify tasks
 execution status.'''
-        p = PubSub(backend=self.connection_string, name=self.name)
-        p.add_client(self)
-        p.subscribe('task_done', 'task_start', 'task_queued')
+        p = pubsub.PubSub(backend=self.connection_string, name=self.name)
+        p.add_client(PubSubClient(self))
+        c=  self.channel
+        p.subscribe(c('task_created'), c('task_start'), c('task_done'))
         return p
         
     @local_property
-    def concurrent_requests(self):
-        return 0
+    def concurrent_tasks(self):
+        '''The set of tasks which are being concurrently executed by this
+:class:`TaskBackend`.'''
+        return set()
+    
+    @property
+    def num_concurrent_tasks(self):
+        '''The number of :attr:`concurrent_tasks`.'''
+        return len(self.concurrent_tasks)
     
     @local_property
     def entries(self):
@@ -322,21 +344,9 @@ execution status.'''
         '''The :class:`pulsar.apps.tasks.models.JobRegistry` for this backend.'''
         return JobRegistry.load(self.task_paths)
     
-    def start(self, worker):
-        '''Start this :class:`TaskBackend`. Invoked by the
-:class:`pulsar.apps.Worker` which is ready to consume tasks.'''
-        worker.create_thread_pool()
-        self.local.task_poller = worker.event_loop.call_soon(
-                                    self.may_pool_task, worker)
-        LOGGER.debug('%s started polling tasks', worker)
-        
-    def close(self, worker):
-        '''Close this :class:`TaskBackend`. Invoked by the
-:class:`pulsar.apps.Worker` when is stopping.'''
-        if self.local.task_poller:
-            self.local.task_poller.cancel()
-            LOGGER.debug('%s stopped polling tasks', worker)
-        
+    def channel(self, name):
+        return '%s_%s' % (self.name, name)
+    
     def run(self, jobname, *args, **kwargs):
         '''A shortcut for :meth:`run_job` without task meta parameters'''
         return self.run_job(jobname, args, kwargs)
@@ -369,7 +379,7 @@ and key-valued arguments *kwargs*.'''
                     **params):
         '''Create a new :class:`Task` from ``jobname``, positional arguments
 ``targs``, key-valued arguments ``tkwargs`` and :class:`Task` meta parameters
-``params``. 
+``params``. This method can be called by any process domain.
         
 :param jobname: the name of job which create the task.
 :param targs: task positional arguments (a ``tuple`` or ``None``).
@@ -378,6 +388,7 @@ and key-valued arguments *kwargs*.'''
     or ``None`` if no task was created.
 '''
         if jobname in self.registry:
+            pubsub = self.pubsub
             job = self.registry[jobname]
             targs = targs or EMPTY_TUPLE
             tkwargs = tkwargs or EMPTY_DICT
@@ -403,6 +414,7 @@ and key-valued arguments *kwargs*.'''
                                      time_executed=time_executed,
                                      expiry=expiry, args=targs, kwargs=tkwargs,
                                      status=states.PENDING, **params)
+                pubsub.publish(self.channel('task_created'), task_id)
         else:
             raise TaskNotAvailable(jobname)
     
@@ -468,9 +480,11 @@ and key-valued arguments *kwargs*.'''
     def wait_for_task(self, task_id):
         '''Asynchronously wait for a task with ``task_id`` to have finished
 its execution. It returns an `asynchronous component <tutorials-coroutine>`_'''
+        # make sure we are subscribed to the task_done channel
+        self.pubsub
         task = yield self.get_task(task_id)
         if task:
-            if task.done():
+            if task.done(): # task done, simply return it
                 when_done = self.callbacks.pop(task.id, None)
                 yield when_done.callback(task) if when_done else task
             else:
@@ -508,17 +522,22 @@ value ``now`` can be passed.'''
             self.next_run += timedelta(seconds = min(remaining_times))
      
     ############################################################################
-    ##    HOOKS
+    ##    START/CLOSE METHODS FOR TASK WORKERS
     ############################################################################
-    def on_start_task(self, consumer):
-        '''Called once a new task has started its execution in the thread
-pool.'''
-        pass
-    
-    def on_finish_task(self, consumer):
-        '''Called once a new task has finished its execution in the thread
-pool.'''
-        pass
+    def start(self, worker):
+        '''Start this :class:`TaskBackend`. Invoked by the
+:class:`pulsar.apps.Worker` which is ready to consume tasks.'''
+        worker.create_thread_pool()
+        self.local.task_poller = worker.event_loop.call_soon(
+                                    self.may_pool_task, worker)
+        LOGGER.debug('%s started polling tasks', worker)
+        
+    def close(self, worker):
+        '''Close this :class:`TaskBackend`. Invoked by the
+:class:`pulsar.apps.Worker` when is stopping.'''
+        if self.local.task_poller:
+            self.local.task_poller.cancel()
+            LOGGER.debug('%s stopped polling tasks', worker)
     
     ############################################################################
     ##    ABSTRACT METHODS
@@ -568,21 +587,22 @@ CPU-bound thread.'''
             thread_pool = worker.thread_pool
             if not thread_pool:
                 LOGGER.warning('No thread pool, cannot poll tasks.')
-            elif self.concurrent_requests < self.backlog:
+            elif self.num_concurrent_tasks < self.backlog:
                 task = yield self.get_task()
                 if task:
-                    self.local.concurrent_requests += 1
+                    self.concurrent_tasks.add(task.id)
                     thread_pool.apply_async(self._execute_task, (worker, task))
             else:
-                LOGGER.info('Cannot poll tasks. %s concurrent requests.',
-                            self.concurrent_requests)
+                LOGGER.info('%s concurrent requests. Cannot poll.',
+                            self.num_concurrent_tasks)
                 break
         worker.event_loop.call_soon(self.may_pool_task, worker)
             
     @async(max_errors=None)
     def _execute_task(self, worker, task):
-        #Asynchronous execution of a :class:`Task`. This method is called
+        #Asynchronous execution of a Task. This method is called
         #on a separate thread of execution from the worker event loop thread.
+        pubsub = self.pubsub
         task_id = task.id
         result = None
         status = None
@@ -598,10 +618,10 @@ CPU-bound thread.'''
                 if task.expiry and time_ended > task.expiry:
                     raise TaskTimeout
                 else:
-                    LOGGER.critical('starting task %s', task)
+                    LOGGER.debug('starting task %s', task)
                     yield self.save_task(task_id, status=states.STARTED,
                                          time_started=time_ended)
-                    yield self.on_start_task(consumer)
+                    pubsub.publish(self.channel('task_start'), task_id)
                     result = yield job(consumer, *task.args, **task.kwargs)
                     time_ended = datetime.now()
             else:
@@ -620,18 +640,15 @@ CPU-bound thread.'''
         if consumer:
             yield self.save_task(task_id, time_ended=time_ended,
                                  status=status, result=result)
-            LOGGER.critical('Finished task %s', task)
+            LOGGER.debug('Finished task %s', task)
             # PUBLISH task_done
-            self.pubsub.publish('task_done', task.id)
-        worker.event_loop.call_soon_threadsafe(self._done_task, task_id)
+            pubsub.publish(self.channel('task_done'), task.id)
+        self.concurrent_tasks.discard(task.id)
         yield task_id
-        
-    def _done_task(self, task_id):
-        self.local.concurrent_requests -= 1
         
     def _setup_schedule(self):
         if not self.local.schedule_periodic:
-            return
+            return ()
         entries = {}
         for name, task in self.registry.filter_types('periodic'):
             schedule = self._maybe_schedule(task.run_every, task.anchor)
@@ -652,11 +669,11 @@ CPU-bound thread.'''
         # Create a new task and put it in the task queue
         task_id = yield self.create_task(jobname, targs, tkwargs, **meta_params)
         if task_id:
-            yield self.put_task(task_id)
-        yield task_id
+            self.put_task(task_id)
+            yield task_id
     
     @async()
-    def write(self, task_id):
+    def task_done_callback(self, task_id):
         '''Got a new message from redis pubsub task_done channel.
 This is the write method required by all pubsub clients.'''
         task = yield self.get_task(task_id)

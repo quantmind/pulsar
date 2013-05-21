@@ -3,6 +3,7 @@ from django.template import RequestContext
 
 from pulsar.apps import wsgi, ws, pubsub
 from pulsar.utils.structures import AttributeDictionary
+from pulsar.utils.log import lazyproperty
 
 
 def home(request):
@@ -11,24 +12,29 @@ def home(request):
         }, RequestContext(request))
 
 
+class Client(pubsub.Client):
+    
+    def __init__(self, connection):
+        self.connection = connection
+        
+    def __call__(self, channel, message):
+        if channel == 'webchat':
+            self.connection.write(message)
 
-##    Web Socket Chat handler
+
 class Chat(ws.WS):
     '''The websocket handler (:class:`pulsar.apps.ws.WS`) managing the chat
 application.'''
-    _pubsub = None
-    
-    @property
+    @lazyproperty
     def pubsub(self):
-        if not self._pubsub:
-            self._pubsub = pubsub.PubSub()
-            self._pubsub.subscribe('webchat')
-        return self._pubsub
+        p = pubsub.PubSub()
+        p.subscribe('webchat')
+        return p
             
     def on_open(self, request):
         '''When a new websocket connection is established it add connection
 to the set of clients listening for messages.'''
-        self.pubsub.add_client(request.cache['websocket'])
+        self.pubsub.add_client(Client(request.cache['websocket']))
         
     def on_message(self, request, msg):
         '''When a new message arrives, it publishes to all listening clients.'''
@@ -58,5 +64,7 @@ class middleware(object):
         data = AttributeDictionary(request.__dict__)
         environ = data.pop('environ')
         environ['django.cache'] = data
-        return self._web_socket(environ, None)
+        response = self._web_socket(environ, None)
+        if response is not None:
+            return response
     

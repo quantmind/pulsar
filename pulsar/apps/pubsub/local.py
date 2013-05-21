@@ -30,21 +30,18 @@ class PubSubBackend(pubsub.PubSubBackend):
 @command()
 def pubsub_publish(request, id, channel, message):
     monitor = request.actor
-    clients = {}
     if not channel or channel == '*':
         matched = ((c, reg[1]) for c, reg in iteritems(_get_pubsub_channels(monitor)))
     else:
         matched = _channel_groups(monitor, channel)
+    clients = set()
     # loop over matched channels
     for channel, group in matched:
         for aid, pid in group:
             # if the id is matched we have a client
             if pid == id:
-                if aid not in clients:
-                    clients[aid] = []
-                clients[aid].append(channel)
-    for aid, channels in iteritems(clients):
-        monitor.send(aid, 'pubsub_broadcast', id, channels, message)
+                clients.add(aid)
+                monitor.send(aid, 'pubsub_broadcast', id, channel, message)
     return len(clients)
         
 @command()

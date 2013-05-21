@@ -63,7 +63,6 @@ class LocalTaskBackend(object):
             task = self._tasks.pop(id, None)
             if task:
                 deleted.append(id)
-                self.finish(task)
         return deleted
     
     def get_tasks(self, **filters):

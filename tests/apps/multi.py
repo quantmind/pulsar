@@ -2,6 +2,7 @@
 from pulsar import Config, get_actor
 from pulsar.apps import MultiApp
 from pulsar.apps.wsgi import WSGIServer
+from pulsar.apps.tasks import TaskQueue
 from pulsar.apps.test import unittest, run_on_arbiter
 
 
@@ -20,6 +21,7 @@ class MultiWsgi(MultiApp):
 class TestMultiApp(unittest.TestCase):
     
     def create(self, **params):
+        # create the application
         return MultiWsgi(**params)
     
     def testApp(self):
@@ -81,4 +83,14 @@ class TestMultiApp(unittest.TestCase):
         yield monitor1.stop()
         yield monitor2.stop()
         yield None
+        
+    def test_config_copy(self):
+        app = self.create()
+        self.assertTrue(app)
+        apps = app.apps()
+        rpc = apps[1]
+        cfg = rpc.cfg.copy()
+        self.assertEqual(cfg.prefix, rpc.cfg.prefix)
+        for name in cfg:
+            self.assertTrue(name in rpc.cfg)
         

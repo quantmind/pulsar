@@ -41,15 +41,31 @@ PubSub backend
    
    
 .. _wikipedia: http://en.wikipedia.org/wiki/Publish%E2%80%93subscribe_pattern'''
+import logging
+
 import pulsar
 from pulsar import get_actor
 from pulsar.utils.pep import to_string
 from pulsar.utils.log import local_property
-    
-################################################################################
-##    PubSub Interface
+
+
+LOGGER = logging.getLogger('pulsar.pubsub') 
+
+
+class Client(object):
+    '''Interface for a client of :class:`PubSub` handler. Instances of this
+:class:`Client` are callable object and are called once a new message has
+arrived from a subscribed channel. The callable accepts two parameters:
+
+* ``channels`` the channels which originated the message
+* ``message`` the message
+'''
+    def __call__(self, channel, message):
+        raise NotImplementedError
+        
+
 class PubSub(object):
-    '''Interface for Publish/Subscribe paradigm Backend.
+    '''Publish/Subscribe paradigm handler.
 
 .. attribute:: backend
 
@@ -71,6 +87,14 @@ class PubSub(object):
     @property
     def clients(self):
         return self.backend.clients
+    
+    @property
+    def id(self):
+        return self.backend.id
+    
+    @property
+    def name(self):
+        return self.backend.name
     
     def add_client(self, client):
         '''Add a new ``client`` to the set of all :attr:`clients`. Clients
@@ -104,10 +128,6 @@ implemented by subclasses.'''
     def close(self):
         '''Close connections'''
         return self.backend.close()
-    
-    def __setstate__(self, state):
-        super(PubSub, self).__setstate(state)
-        self.backend = PubSubBackend.get(self.backend.id, backend=self.backend)
 
 
 class PubSubBackend(pulsar.Backend):
@@ -117,12 +137,14 @@ class PubSubBackend(pulsar.Backend):
 
     Set of all clients for this :class:`PubSub` handler.
 '''
-    default_path = 'pulsar.apps.pubsub.%s'
-    
     @local_property
     def clients(self):
         '''The set of clients for this :class:`PubSub` handler.'''
         return set()
+    
+    @classmethod
+    def path_from_scheme(cls, scheme):
+        return 'pulsar.apps.pubsub.%s' % scheme
     
     def add_client(self, client):
         '''Add a new ``client`` to the set of all :attr:`clients`. Clients
@@ -136,7 +158,7 @@ from the publisher, the :meth:`broadcast` method will notify all
         self.clients.discard(client)
         
     def publish(self, channel, message):
-        '''Publish a ``message`` into ``channel`. Must be implemented
+        '''Publish a ``message`` into ``channel``. Must be implemented
 by subclasses.'''
         raise NotImplementedError
     
@@ -150,15 +172,19 @@ implemented by subclasses.'''
 implemented by subclasses.'''
         raise NotImplementedError
         
-    def broadcast(self, channels, message):
+    def broadcast(self, channel, message):
         '''Broadcast ``message`` to all :attr:`clients`.'''
         remove = set()
+        channel = to_string(channel)
         message = self.decode(message)
         for client in self.clients:
             try:
-                client.write(message)
-            except Exception:
+                client(channel, message)
+            except Exception as e:
+                LOGGER.exception('Exception while processing pub/sub client. '
+                                 'Removing it.')
                 remove.add(client)
+        self.clients.difference_update(remove)
     
     def close(self):
         '''Close this :class:`PubSubBackend`.'''

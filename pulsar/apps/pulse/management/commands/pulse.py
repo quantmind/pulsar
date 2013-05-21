@@ -1,70 +1,37 @@
 # -*- coding: utf-8 -
+import sys
+
 import pulsar
 from pulsar.apps.wsgi import WSGIServer, LazyWsgi, WsgiRequest, WsgiResponse
 
 from django import http
-from django.core import signals
 from django.core.management.base import BaseCommand, CommandError
-from django.core.wsgi import WSGIHandler
-from django.core.handlers import base
 from django.utils.encoding import force_str
-from django.core.handlers.wsgi import logger, set_script_prefix, STATUS_CODE_TEXT
-#from django.core.servers.basehttp import get_internal_wsgi_application
+from django.core.handlers.base import get_script_name, signals
+from django.core.handlers.wsgi import logger, set_script_prefix,\
+                                       WSGIHandler, STATUS_CODE_TEXT
 
 PULSAR_OPTIONS = pulsar.make_optparse_options(apps=['socket'])
 
 
-class DjangoWSGIHandler(WSGIHandler):
+class SkipResponse(Exception):
+    
+    def __init__(self, response):
+        self.response = response
+        
 
-    def __init__(self):
-        super(WSGIHandler, self).__init__()
-        with self.initLock:
-            try:
-                self.load_middleware()
-            except:
-                # Unload whatever middleware we got
-                self._request_middleware = None
-                raise
-                
+class WSGI(WSGIHandler):
+            
     def __call__(self, environ, start_response):
         WsgiRequest(environ, start_response)
-        set_script_prefix(base.get_script_name(environ))
-        signals.request_started.send(sender=self.__class__)
-        try:
-            request = self.request_class(environ)
-        except UnicodeDecodeError:
-            logger.warning('Bad Request (UnicodeDecodeError)',
-                exc_info=sys.exc_info(),
-                extra={
-                    'status_code': 400,
-                }
-            )
-            response = http.HttpResponseBadRequest()
-        else:
-            response = self.get_response(request)
-        
-        # Pulsar response return it
-        if isinstance(response, WsgiResponse):
-            return response
-        
-        response._handler_class = self.__class__
-        try:
-            status_text = STATUS_CODE_TEXT[response.status_code]
-        except KeyError:
-            status_text = 'UNKNOWN STATUS CODE'
-        status = '%s %s' % (response.status_code, status_text)
-        response_headers = [(str(k), str(v)) for k, v in response.items()]
-        for c in response.cookies.values():
-            response_headers.append((str('Set-Cookie'), str(c.output(header=''))))
-        start_response(force_str(status), response_headers)
-        return response
+        return super(WSGI, self).__call__(environ, start_response)
 
 
-class Wsgi(LazyWsgi):
+class LWsgi(LazyWsgi):
     
     def setup(self):
         from django.conf import settings
-        return DjangoWSGIHandler()
+        return WSGI()
         
     
 class Command(BaseCommand):
@@ -78,7 +45,7 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
         if args:
             raise CommandError('pulse --help for usage')
-        callable = Wsgi()
+        callable = LWsgi()
         if options.pop('dryrun', False) == True:
             return callable
         callable.setup()

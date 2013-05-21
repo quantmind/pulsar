@@ -30,6 +30,7 @@ class TestDjangoChat(unittest.TestCase):
                 '--concurrency', cls.concurrency]
         cls.app = yield send('arbiter', 'run', start_server, name, argv)
         cls.uri = 'http://{0}:{1}'.format(*cls.app.address)
+        cls.ws = 'ws://{0}:{1}/message'.format(*cls.app.address)
         cls.http = http.HttpClient()
         
     @classmethod
@@ -37,6 +38,15 @@ class TestDjangoChat(unittest.TestCase):
         if cls.app:
             return send('arbiter', 'kill_actor', cls.app.name)
     
+    def test_handshake(self):
+        ws = yield self.http.get(self.ws).on_finished
+        response = ws.handshake 
+        self.assertEqual(response.status_code, 101)
+        self.assertEqual(response.headers['upgrade'], 'websocket')
+        self.assertEqual(response.connection, None)
+        self.assertTrue(ws.connection)
+
+class b:
     def test_home(self):
         result = yield self.http.get(self.uri).on_finished
         self.assertEqual(result.status_code, 200)
@@ -44,6 +54,16 @@ class TestDjangoChat(unittest.TestCase):
     def test_404(self):
         result = yield self.http.get('%s/bsjdhcbjsdh' % self.uri).on_finished
         self.assertEqual(result.status_code, 404)
+        
+    def test_handshake(self):
+        ws = yield self.http.get(self.ws).on_finished
+        response = ws.handshake 
+        self.assertEqual(response.status_code, 101)
+        self.assertEqual(response.headers['upgrade'], 'websocket')
+        
+    def test_websocket(self):
+        ws = yield self.http.get(self.ws).on_finished
+        self.assertTrue(ws)
         
         
 @dont_run_with_thread

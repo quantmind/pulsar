@@ -130,13 +130,13 @@ def lazymethod(f):
     name = '_lazy_%s' % f.__name__
     def _(self):
         if not hasattr(self, name):
-            setattr(local, name, f(self))
+            setattr(self, name, f(self))
         return getattr(self, name)
     _.__doc__ = f.__doc__
     return _
 
 def lazyproperty(f):
-    return property(local_method(f), doc=f.__doc__)
+    return property(lazymethod(f), doc=f.__doc__)
     
     
 def process_global(name, val=None, setval=False):

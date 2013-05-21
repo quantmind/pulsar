@@ -4,18 +4,11 @@ Requires python-stdnet_
 
 .. _python-stdnet: https://pypi.python.org/pypi/python-stdnet
 '''
-import logging
-
 from stdnet import odm
 
 from pulsar import async
-from pulsar.apps.tasks import backends, states
-from pulsar.utils.log import local_method, local_property
-from pulsar.apps.pubsub import PubSub
-from pulsar.apps.tasks.backends import TaskCallbacks
-
-
-LOGGER = logging.getLogger('pulsar.tasks')
+from pulsar.apps.tasks import backends, states, LOGGER
+from pulsar.utils.log import local_method
 
 
 class TaskData(odm.StdModel):
@@ -61,6 +54,7 @@ class TaskBackend(backends.TaskBackend):
         task_manager = self.task_manager()
         return task_manager.queue.size()
     
+    @async()
     def put_task(self, task_id):
         task_data = yield self._get_task(task_id)
         if task_data:
@@ -68,6 +62,24 @@ class TaskBackend(backends.TaskBackend):
             task_data = yield task_data.save()
             yield self.task_manager().queue.push_back(task_data.id)
             yield task_data.id
+    
+    @async()    
+    def save_task(self, task_id, **params):
+        # Called by self when the task need to be saved
+        task_manager = self.task_manager()
+        task_data = yield self._get_task(task_id)
+        if task_data:
+            for field, value in params.items():
+                if field in task_data._meta.dfields:
+                    setattr(task_data, field, value)
+                else:
+                    # not a field put value in the meta json field
+                    task_data.meta[field] = value
+            yield task_data.save()
+        else:
+            task_data = yield task_manager.new(id=task_id, **params)
+        task = task_data.as_task()
+        yield task_id
     
     def get_task(self, task_id=None, timeout=1):
         task_manager = self.task_manager()
@@ -88,35 +100,13 @@ class TaskBackend(backends.TaskBackend):
         tasks = yield task_manager.filter(**filters).all()
         yield [t.as_task() for t in tasks]
         
-    def save_task(self, task_id, **params):
-        # Called by self when the task need to be saved
-        task_manager = self.task_manager()
-        task_data = yield self._get_task(task_id)
-        if task_data:
-            for field, value in params.items():
-                if field in task_data._meta.dfields:
-                    setattr(task_data, field, value)
-                else:
-                    # not a field put value in the meta json field
-                    task_data.meta[field] = value
-            yield task_data.save()
-        else:
-            task_data = yield task_manager.new(id=task_id, **params)
-        task = task_data.as_task()
-        if task.done():
-            # task is done, publish task_id into the task_done channel
-            self.local.pubsub.publish('task_done', task_id)
-        yield task_id
-        
     def delete_tasks(self, ids=None):
         deleted = []
         if ids:
             task_manager = self.task_manager()
             tasks = yield task_manager.filter(id=ids).all()
             yield task_manager.filter(id=ids).delete()
-            callbacks = self.callbacks
             for task_data in tasks:
-                callbacks.finish(task_data.as_task())
                 deleted.append(task_data.id)
         yield deleted
         

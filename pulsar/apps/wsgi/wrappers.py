@@ -46,10 +46,11 @@ from .route import Route
 from .content import HtmlDocument
 from .utils import LOGGER, set_wsgi_request_class, set_cookie, query_dict,\
                     parse_accept_header, parse_cache_control_header
-from .structures import Accept, MIMEAccept, CharsetAccept, LanguageAccept
+from .structures import MIMEAccept, CharsetAccept, LanguageAccept
 
 
-__all__ = ['EnvironMixin', 'WsgiResponse', 'WsgiRequest', 'cached_property']
+__all__ = ['EnvironMixin', 'Accept', 'WsgiResponse',
+           'WsgiRequest', 'cached_property']
 
 MAX_BUFFER_SIZE = 2**16
 
@@ -484,5 +485,3 @@ data from the `QUERY_STRING` in :attr:`environ`.'''
     
 
 set_wsgi_request_class(WsgiRequest)
-
-    

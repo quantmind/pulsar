@@ -29,6 +29,10 @@ Implementation
 .. autoclass:: Rpc
    :members:
    :member-order: bysource
+   
+.. autoclass:: WebChat
+   :members:
+   :member-order: bysource
 '''
 import os
 import sys
@@ -40,23 +44,38 @@ try:
 except ImportError: #pragma nocover
     sys.path.append('../../')
     import pulsar
-from pulsar.apps.pubsub import PubSub
-from pulsar.apps import ws, wsgi, rpc
+from pulsar.apps import ws, wsgi, rpc, pubsub
 
 CHAT_DIR = os.path.dirname(__file__)
+
+class PubSubClient(pubsub.Client):
     
+    def __init__(self, connection):
+        self.connection = connection
+        
+    def __call__(self, channel, message):
+        if channel == 'webchat':
+            self.connection.write(message)
+        
 
 ##    Web Socket Chat handler
 class Chat(ws.WS):
     '''The websocket handler (:class:`pulsar.apps.ws.WS`) managing the chat
-application.'''
+application.
+
+.. attribute:: pubsub
+
+    The :ref:`publish/subscribe handler <apps-pubsub>` created by the wsgi
+    application in the :meth:`WebChat.setup` method.
+'''
     def __init__(self, pubsub):
         self.pubsub = pubsub
         
     def on_open(self, request):
-        '''When a new websocket connection is established it add connection
-to the set of clients listening for messages.'''
-        self.pubsub.add_client(request.cache['websocket'])
+        '''When a new websocket connection is established it creates a
+:ref:`publish/subscribe <apps-pubsub>` client and adds it to the set
+of clients of the :attr:`pubsub` handler.'''
+        self.pubsub.add_client(PubSubClient(request.cache['websocket']))
         
     def on_message(self, request, msg):
         '''When a new message arrives, it publishes to all listening clients.'''
@@ -85,10 +104,14 @@ class Rpc(rpc.PulsarServerCommands):
     
     
 class WebChat(wsgi.LazyWsgi):
-    
+    '''This is the :ref:`wsgi application <wsgi-handlers>` for this
+web-chat example.'''
     def setup(self):
-        # Create a pubsub handler
-        self.pubsub = PubSub(encoder=self.encode_message)
+        '''This method is called once only to setup the WSGI application
+handler as described in :ref:`lazy wsgi handler <wsgi-lazy-handler>`
+section. It creates a :ref:`publish/subscribe handler <apps-pubsub>`
+and subscribe it to the ``webchat`` channel.'''
+        self.pubsub = pubsub.PubSub(encoder=self.encode_message)
         self.pubsub.subscribe('webchat')
         return wsgi.WsgiHandler([wsgi.Router('/', get=self.home_page),
                                  ws.WebSocket('/message', Chat(self.pubsub)),

@@ -133,6 +133,7 @@ class TestRpcOnThread(unittest.TestCase):
         self.assertEqual(self.sync.ping(), 'pong')
         self.assertEqual(self.sync.ping(), 'pong')
 
+
 @dont_run_with_thread
 class TestRpcOnProcess(TestRpcOnThread):
     concurrency = 'process'

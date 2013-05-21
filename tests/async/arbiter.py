@@ -51,6 +51,16 @@ class TestArbiterThread(ActorTestMixin, unittest.TestCase):
         self.assertEqual(server['state'], 'running')
         
     @run_on_arbiter
+    def test_arbiter_mailbox(self):
+        arbiter = pulsar.get_actor()
+        mailbox = arbiter.mailbox
+        self.assertFalse(hasattr(mailbox, 'request'))
+        # Same for all monitors mailboxes
+        for monitor in arbiter.monitors.values():
+            mailbox = monitor.mailbox
+            self.assertFalse(hasattr(mailbox, 'request'))
+            
+    @run_on_arbiter
     def test_registered(self):
         '''Test the arbiter in its process domain'''
         arbiter = pulsar.get_actor()

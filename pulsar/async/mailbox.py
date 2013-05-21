@@ -47,7 +47,7 @@ import tempfile
 from functools import partial
 from collections import namedtuple
 
-from pulsar import platform, PulsarException, Config, ProtocolError
+from pulsar import platform, Config, ProtocolError, CommandError
 from pulsar.utils.pep import to_bytes, ispy3k, ispy3k, pickle, set_event_loop,\
                              new_event_loop
 from pulsar.utils.sockets import nice_address
@@ -57,7 +57,7 @@ from pulsar.utils.security import gen_unique_id
 from .access import get_actor, set_actor
 from .defer import async, maybe_failure, log_failure, Deferred
 from .transports import ProtocolConsumer, SingleClient, Request
-from .proxy import actorid, get_proxy, get_command, CommandError, ActorProxy
+from .proxy import actorid, get_proxy, get_command, ActorProxy
 
 
 LOGGER = logging.getLogger('pulsar.mailbox')

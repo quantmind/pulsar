@@ -2,7 +2,7 @@ import sys
 import json
 from collections import deque
 
-from pulsar import AuthenticationError
+from pulsar import AuthenticationError, CommandNotFound
 from pulsar.utils.pep import default_timer
 
 from .defer import Deferred
@@ -11,23 +11,11 @@ from .consts import *
 __all__ = ['ActorProxyDeferred',
            'ActorProxy',
            'ActorProxyMonitor',
-           'CommandError',
-           'CommandNotFound',
            'get_proxy',
            'command',
            'get_command']
 
 global_commands_table = {}
-
-class CommandError(Exception):
-    pass
-
-
-class CommandNotFound(CommandError):
-
-    def __init__(self, name):
-        super(CommandNotFound, self).__init__(
-                            'Command "%s" not available' % name)
         
         
 def get_proxy(obj, safe=False):
