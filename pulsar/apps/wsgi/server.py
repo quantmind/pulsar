@@ -56,6 +56,13 @@ def keep_alive(headers, version):
             return True
         else:
             return False
+        
+def keep_alive_with_status(status, headers):
+    code = int(status.split()[0])
+    if code >= 400:
+        return False
+    return True
+    
 
 class HttpServerResponse(pulsar.ProtocolConsumer):
     '''Server side HTTP :class:`pulsar.ProtocolConsumer`.'''
@@ -279,6 +286,8 @@ is an HTTP upgrade (websockets)'''
             headers.pop('content-length', None)
         else:
             headers.pop('Transfer-Encoding', None)
+        if self.keep_alive:
+            self.keep_alive = keep_alive_with_status(self._status, headers)
         if not self.keep_alive:
             headers['connection'] = 'close'
         return headers

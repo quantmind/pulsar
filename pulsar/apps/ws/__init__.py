@@ -92,15 +92,14 @@ class GeneralWebSocket(wsgi.Router):
     namespace = ''
     frame_parser = FrameParser
     
-    def __init__(self, route, handle, frame_parser=None, **kwargs):
+    def __init__(self, route, handle, frame_parser=None, start_response=False,
+                 **kwargs):
         super(GeneralWebSocket, self).__init__(route, **kwargs)
         self.handle = handle
+        self.start_response = start_response
         if frame_parser:
             self.frame_parser = frame_parser
         
-    def get_client(self):
-        return self.handle(self)
-    
     def get(self, request):
         headers_parser = self.handle_handshake(request.environ)
         if not headers_parser:
@@ -112,7 +111,7 @@ class GeneralWebSocket(wsgi.Router):
         upgrade = request.environ['pulsar.connection'].upgrade
         upgrade(partial(WebSocketServerProtocol, self.handle,
                         request, parser))
-        return request.response.start()
+        return request.response
     
     def handle_handshake(self, environ):
         '''handle the websocket handshake. Must return a list of HTTP

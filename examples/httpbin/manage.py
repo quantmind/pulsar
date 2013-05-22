@@ -106,8 +106,9 @@ class HttpBin(wsgi.Router):
     
     @route('gzip', title='Returns gzip encoded data')
     def gzip(self, request):
-        request.response.middleware.append(wsgi.middleware.GZipMiddleware(10))
-        return self.info_data_response(request, gzipped=True)
+        response = self.info_data_response(request, gzipped=True)
+        wsgi.middleware.GZipMiddleware(10)(request.environ, response)
+        return response
     
     @route('cookies', title='Returns cookie data')
     def cookies(self, request):
@@ -122,7 +123,7 @@ class HttpBin(wsgi.Router):
         request.response.set_cookie(key, value=value)
         request.response.status_code = 302
         request.response.headers['location'] = '/cookies'
-        return request.response.start()
+        return request.response
 
     @route('status/<int(min=100,max=505):status>', title='Returns given HTTP Status code',
            defaults={'status': 418})
@@ -146,7 +147,7 @@ class HttpBin(wsgi.Router):
         events.bind('http-headers', gen)
         request.response.content = gen.generate()
         request.response.content_type = 'application/json'
-        return request.response.start()
+        return request.response
 
     @route('basic-auth/<username>/<password>', title='Challenges HTTPBasic Auth',
            defaults={'username': 'username', 'password': 'password'})
@@ -187,7 +188,7 @@ class HttpBin(wsgi.Router):
         stream = ('Chunk %s\n%s\n\n' % (i+1, ''.join((choice(characters) for\
                     _ in range(m)))) for i in range(n))
         request.response.content = stream
-        return request.response.start()
+        return request.response
     
     ############################################################################
     #    INTERNALS

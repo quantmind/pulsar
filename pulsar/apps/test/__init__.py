@@ -374,7 +374,6 @@ is a group of tests specified in a test class.
     name = 'test'
     cfg = pulsar.Config(apps=('tasks', 'test'),
                         loglevel='none',
-                        backlog=5,
                         task_paths=['pulsar.apps.test.case'],
                         plugins=(),
                         logconfig={

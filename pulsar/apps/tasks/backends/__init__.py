@@ -284,16 +284,28 @@ It also schedules the run of periodic tasks if enabled to do so.
     The maximum number of concurrent tasks running on a task-queue
     :class:`pulsar.apps.Worker`. A number in the order of 5 to 10 is normally
     used. Passed by the task-queue application
-    :ref:`backlog setting <setting-backlog>`.
+    :ref:`concurrent tasks setting <setting-concurrent_tasks>`.
+    
+.. attribute:: max_tasks
+
+    The maximum number of tasks a worker will process before restarting.
+    Passed by the task-queue application
+    :ref:`max requests setting <setting-max_requests>`.
+    
+.. attribute:: processed
+
+    The number of tasks processed by the worker.
     
 .. attribute:: pubsub
 
     A :class:`pulsar.apps.pubsub.PubSub` handler for tasks signals.
 '''
     def setup(self, task_paths=None, schedule_periodic=False, backlog=1,
-              **params):
+              max_tasks=0, **params):
         self.task_paths = task_paths
         self.backlog = backlog
+        self.max_tasks = max_tasks
+        self.processed = 0
         self.local.schedule_periodic = schedule_periodic
         self.next_run = datetime.now()
         return params
@@ -588,10 +600,17 @@ CPU-bound thread.'''
             if not thread_pool:
                 LOGGER.warning('No thread pool, cannot poll tasks.')
             elif self.num_concurrent_tasks < self.backlog:
-                task = yield self.get_task()
-                if task:
-                    self.concurrent_tasks.add(task.id)
-                    thread_pool.apply_async(self._execute_task, (worker, task))
+                if self.max_tasks and self.processed >= self.max_tasks:
+                    if not self.num_concurrent_tasks:
+                        worker.logger.warning('Processed %s tasks. Restarting.')
+                        worker.stop()
+                else:
+                    task = yield self.get_task()
+                    if task:    # Got a new task
+                        self.processed += 1
+                        self.concurrent_tasks.add(task.id)
+                        thread_pool.apply_async(self._execute_task,
+                                                (worker, task))
             else:
                 LOGGER.info('%s concurrent requests. Cannot poll.',
                             self.num_concurrent_tasks)

@@ -674,7 +674,8 @@ function when a generator is passed as argument.'''
                     self.errors = result
                 elif result is not self.errors:
                     self.errors.append(result)
-                if self.max_errors is not None and len(self.errors) > self.max_errors:
+                if self.max_errors is not None and\
+                        len(self.errors) > self.max_errors:
                     return self._conclude(result)
             try:
                 result = self.gen.send(result)
@@ -689,8 +690,8 @@ function when a generator is passed as argument.'''
                 return self.event_loop.call_soon(self._consume, None)
 
     def _restart(self, result):
-        #restart the coroutine
-        self.event_loop.call_soon_threadsafe(self._consume, result)
+        #restart the coroutine in the same event loop it was started
+        self.event_loop.call_now_threadsafe(self._consume, result)
         # Important, this is a callback of a deferred, therefore we return
         # the passed result (which is not asynchronous).
         return result

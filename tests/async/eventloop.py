@@ -1,4 +1,5 @@
 import time
+import sys
 from threading import current_thread
 
 import pulsar
@@ -65,47 +66,68 @@ class TestEventLoop(unittest.TestCase):
         c1 = ioloop.call_at(ioloop.timer()+1, lambda: d1.callback(ioloop.timer()))
         c2 = ioloop.call_later(1, lambda: d2.callback(ioloop.timer()))
         t1, t2 = yield pulsar.multi_async((d1, d2))
-        self.assertTrue(t1 < t2)
+        self.assertTrue(t1 <= t2)
         
     def test_periodic(self):
         ioloop = get_event_loop()
         d = pulsar.Deferred()
+        #
         class p:
-            def __init__(self, loop):
-                self.loop = loop
+            def __init__(self, loops):
+                self.loops = loops
                 self.c = 0
             def __call__(self):
                 self.c += 1
-                print(self.c)
-                if self.c == self.loop:
+                if self.c == self.loops:
                     d.callback(self.c)
                     raise ValueError()
-        track = p(2)
+        #
+        every = 2
+        loops = 2
+        track = p(loops)
         start = time.time()
-        periodic = ioloop.call_repeatedly(1, track)
+        periodic = ioloop.call_repeatedly(every, track)
         loop = yield d
         taken = time.time() - start
-        print(taken)
-        self.assertEqual(loop, 2)
-        self.assertFalse(ioloop.has_callback(periodic))
+        self.assertEqual(loop, loops)
+        self.assertTrue(taken > every*loops)
+        self.assertTrue(taken < every*loops + 2)
+        self.assertTrue(periodic.cancelled)
+        self.assertFalse(ioloop.has_callback(periodic.handler))
         
     def test_call_every(self):
         ioloop = get_event_loop()
+        thread = current_thread()
         d = pulsar.Deferred()
+        test = self
+        #
         class p:
             def __init__(self, loop):
                 self.loop = loop
                 self.c = 0
+                self.prev_loop = 0
             def __call__(self):
-                self.c += 1
-                if self.c == self.loop:
-                    d.callback(self.c)
-                    raise ValueError()
-        track = p(2)
+                try:
+                    test.assertNotEqual(current_thread(), thread)
+                    if self.prev_loop:
+                        test.assertEqual(ioloop.num_loops, self.prev_loop+1)
+                except Exception:
+                    d.callback(sys.exc_info())
+                else:
+                    self.prev_loop = ioloop.num_loops
+                    self.c += 1
+                    if self.c == self.loop:
+                        d.callback(self.c)
+                        raise ValueError()
+        #
+        loops = 5
+        track = p(loops)
+        start = time.time()
         periodic = ioloop.call_every(track)
         loop = yield d
-        self.assertEqual(loop, 2)
-        self.assertFalse(ioloop.has_callback(periodic))
+        self.assertEqual(loop, loops)
+        self.assertTrue(periodic.cancelled)
+        self.assertFalse(ioloop.has_callback(periodic.handler))
         
     def test_run_until_complete(self):
         event_loop = new_event_loop(iothreadloop=False)

@@ -302,7 +302,8 @@ Users shouldn't need to override this method, but use
                           'workers': len(self.managed_actors)}}
         if not self.started():
             return data
-        data['workers'] = [a.info for a in itervalues(self.managed_actors)]
+        data['workers'] = [a.info for a in itervalues(self.managed_actors)\
+                           if a.info]
         return data
 
     def proxy_mailbox(address):

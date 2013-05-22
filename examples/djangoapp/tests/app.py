@@ -1,7 +1,9 @@
 '''Tests django chat application.'''
-from pulsar import send, get_application
+import json
+
+from pulsar import send, get_application, Deferred
 from pulsar.utils.path import Path
-from pulsar.apps import wsgi, http
+from pulsar.apps import wsgi, http, ws
 from pulsar.apps.test import unittest, dont_run_with_thread
 
 try:
@@ -16,6 +18,20 @@ def start_server(actor, name, argv):
     manage.execute_from_command_line(argv)
     app = yield get_application(name)
     yield app.event('start')
+
+
+class MessageHandler(ws.WS):
+    
+    def __init__(self):
+        self.new_future()
+        
+    def new_future(self):
+        self.future = Deferred()
+        
+    def on_message(self, request, message):
+        future = self.future
+        self.new_future()
+        future.callback(message)
 
 
 @unittest.skipUnless(manage, 'Requires django')
@@ -37,16 +53,7 @@ class TestDjangoChat(unittest.TestCase):
     def tearDownClass(cls):
         if cls.app:
             return send('arbiter', 'kill_actor', cls.app.name)
-    
-    def test_handshake(self):
-        ws = yield self.http.get(self.ws).on_finished
-        response = ws.handshake 
-        self.assertEqual(response.status_code, 101)
-        self.assertEqual(response.headers['upgrade'], 'websocket')
-        self.assertEqual(response.connection, None)
-        self.assertTrue(ws.connection)
 
-class b:
     def test_home(self):
         result = yield self.http.get(self.uri).on_finished
         self.assertEqual(result.status_code, 200)
@@ -60,10 +67,17 @@ class b:
         response = ws.handshake 
         self.assertEqual(response.status_code, 101)
         self.assertEqual(response.headers['upgrade'], 'websocket')
+        self.assertEqual(response.connection, None)
+        self.assertTrue(ws.connection)
         
     def test_websocket(self):
         ws = yield self.http.get(self.ws).on_finished
         self.assertTrue(ws)
+        ws.handler = MessageHandler()
+        ws.write('Hello there!')
+        data = yield ws.handler.future
+        data = json.loads(data)
+        self.assertEqual(data['message'], 'Hello there!')
         
         
 @dont_run_with_thread

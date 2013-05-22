@@ -1,4 +1,5 @@
 import time
+from pulsar.apps import tasks
 from pulsar.apps.test import unittest
 
 from .test_local import TaskQueueBase
@@ -7,10 +8,13 @@ from .test_local import TaskQueueBase
 
 class TestTaskQueueRestart(TaskQueueBase, unittest.TestCase):
     
-    def test_kill_task_workers(self):
+    def info(self):
         info = yield self.proxy.server_info()
         # get the task queue
-        tq = info['monitors'][self.name()]
+        return info['monitors'][self.name()]
+        
+    def test_kill_task_workers(self):
+        tq = yield self.info()
         killed = set()
         for worker in tq['workers']:
             a = worker['actor']
@@ -32,3 +36,13 @@ class TestTaskQueueRestart(TaskQueueBase, unittest.TestCase):
         for w in workers:
             a = w['actor']
             self.assertFalse(a['actor_id'] in killed)
+            
+    def test_check_worker(self):
+        r = yield self.proxy.run_new_task(jobname='checkworker')
+        self.assertTrue(r)
+        r = yield self.proxy.wait_for_task(r)
+        self.assertEqual(r['status'], tasks.SUCCESS)
+        result = r['result']
+        concurrent = result['tasks']
+        self.assertTrue(r['id'] in concurrent)
+        

@@ -596,10 +596,8 @@ def make_optparse_options(apps=None, exclude=None, include=None): # pragma nocov
 ##    Global Server Settings
 
 section_docs['Global Server Settings'] = '''
-These settings are shared by the arbiter as well as all pulsar workers. They
-set global settings the debug mode,
-the proxy server to use when making HTTP requests, and server specific
-configuration parameters.
+These settings are global in the sense that they are used by the arbiter
+as well as all pulsar workers. They are server configuration parameters.
 '''
 class Global(Setting):
     virtual = True
@@ -792,7 +790,7 @@ class DefaultProcName(Global):
 ##    Worker Processes
 
 section_docs['Worker Processes'] = '''
-This group of configuration parameters control the number of actors performing
+This group of configuration parameters control the number of actors
 for a given :class:`pulsar.Monitor`, the type of concurreny of the server and
 other actor-specific parameters.
 '''
@@ -849,14 +847,13 @@ class Backlog(Setting):
     type = int
     default = 2048
     desc = """\
-        The maximum number of concurrent requests.
+        The maximum number of queued connections in a socket.
         
         This refers to the number of clients that can be waiting to be served.
         Exceeding this number results in the client getting an error when
         attempting to connect. It should only affect servers under significant
         load.
-        Must be a positive integer. Generally set in the 64-2048 range for
-        socket servers, 5-10 for task-queue servers.
+        Must be a positive integer. Generally set in the 64-2048 range.
         """
 
 

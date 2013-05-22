@@ -41,3 +41,11 @@ class NotOverLap(tasks.Job):
         start = time.time()
         yield async_sleep(lag)
         yield time.time() - start
+        
+        
+class CheckWorker(tasks.Job):
+    
+    def __call__(self, consumer):
+        worker = consumer.worker
+        backend = worker.app.backend
+        return {'tasks': list(backend.concurrent_tasks)}

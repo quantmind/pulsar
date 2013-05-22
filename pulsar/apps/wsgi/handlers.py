@@ -102,6 +102,7 @@ import os
 import re
 import stat
 import mimetypes
+from functools import partial
 from email.utils import parsedate_tz, mktime_tz
 
 from pulsar.utils.httpurl import http_date, CacheControl, remove_double_slash
@@ -112,6 +113,7 @@ from pulsar import Http404, PermissionDenied, HttpException, HttpRedirect, async
 from .route import Route
 from .utils import wsgi_request
 from .content import Html
+from .wrappers import WsgiResponse
 
 __all__ = ['WsgiHandler', 'LazyWsgi', 'Router',
            'MediaRouter', 'FileRouter', 'MediaMixin']
@@ -154,14 +156,17 @@ class WsgiHandler(object):
         if response is None:
             raise Http404(environ.get('PATH_INFO','/'))
         if is_async(response):
-            return response.add_callback(self._add_middleware)
+            return response.add_callback(
+                        partial(self.finish, environ, start_response))
         else:
-            return self._add_middleware(response)
+            return self.finish(environ, start_response, response)
     
-    def _add_middleware(self, response):
-        if hasattr(response, 'middleware'):
-            response.middleware.extend(self.response_middleware)
-        return response
+    def finish(self, environ, start_response, response):
+        if isinstance(response, WsgiResponse):
+            return response(environ, start_response,
+                            middleware=self.response_middleware)
+        else:
+            return response
     
 
 class LazyWsgi(LocalMixin):
@@ -463,7 +468,7 @@ class MediaMixin(Router):
         else:
             response.content = open(fullpath, 'rb').read()
             response.headers["Last-Modified"] = http_date(statobj[stat.ST_MTIME])
-        return response.start()
+        return response
 
     def was_modified_since(self, header=None, mtime=0, size=0):
         '''Check if an item was modified since the user last downloaded it

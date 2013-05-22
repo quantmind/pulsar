@@ -64,9 +64,6 @@ class TestHttpClientBase:
         else:
             return self.uri
         
-    def available_on_error(self):
-        return 1 if self.proxy_app else 0
-    
     
 class TestHttpClient(TestHttpClientBase, unittest.TestCase):
     
@@ -128,7 +125,7 @@ was passed by the client.'''
         response = yield http.get(self.httpbin('status', '400')).on_finished
         N = len(listener['post_request'])
         self.assertTrue(N)
-        self._check_pool(http, response, available=self.available_on_error())
+        self._check_pool(http, response, available=0)
         self.assertEqual(response.status_code, 400)
         self.assertEqual(response.response, 'Bad Request')
         self.assertTrue(response.get_content())
@@ -137,10 +134,7 @@ was passed by the client.'''
         response = yield http.get(self.httpbin('get')).on_finished
         self.assertTrue(len(listener['post_request']) > N)
         self.assertEqual(response.status_code, 200)
-        if self.proxy_app:
-            self._check_pool(http, response, created=1, processed=2)
-        else:
-            self._check_pool(http, response, created=2)
+        self._check_pool(http, response, created=2)
         
     def test_large_response(self):
         http = self.client(timeout=60)
@@ -201,10 +195,7 @@ was passed by the client.'''
         response = yield http.get(self.httpbin('status', '404')).on_finished
         self.assertEqual(response.status_code, 404)
         self.assertEqual(response.response, 'Not Found')
-        if self.proxy_app:
-            self.assertTrue(response.headers.has('connection', 'keep-alive'))
-        else:
-            self.assertTrue(response.headers.has('connection', 'close'))
+        self.assertTrue(response.headers.has('connection', 'close'))
         self.assertTrue('content-type' in response.headers)
         self.assertTrue(response.get_content())
         self.assertRaises(HTTPError, response.raise_for_status)

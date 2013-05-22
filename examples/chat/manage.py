@@ -121,7 +121,7 @@ and subscribe it to the ``webchat`` channel.'''
         data = open(os.path.join(CHAT_DIR, 'chat.html')).read()
         request.response.content_type = 'text/html'
         request.response.content = data % request.environ
-        return request.response.start()
+        return request.response
     
     def encode_message(self, message):
         if not isinstance(message, dict):

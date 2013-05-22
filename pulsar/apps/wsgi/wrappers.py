@@ -94,6 +94,14 @@ client.
 
     String indicating the HTTP status code and response (i.e. '200 OK')
 
+.. attribute:: content_type
+
+    The content type of this response. Can be ``None``.
+    
+.. attribute:: headers
+
+    The :class:`pulsar.utils.httpurl.Headers` container for this response.
+        
 .. attribute:: environ
 
     The dictionary of WSGI environment if passed to the constructor.
@@ -102,12 +110,6 @@ client.
 
     The WSGI ``start_response`` callable.
 
-.. attribute:: middleware
-
-    A list of :ref:`response middleware <apps-wsgi-middleware>` callables
-    which will be invoked  when this :class:`WsgiResponse`
-    get called (the ``__call__`` or the :meth:`start` method of this
-    :class:`WsgiResponse` is invoked).
 '''
     _started = False
     DEFAULT_STATUS_CODE = 200
@@ -116,7 +118,6 @@ client.
                  start_response=None):
         self.environ = environ
         self.start_response = start_response
-        self.middleware = []
         self.status_code = status or self.DEFAULT_STATUS_CODE
         self.encoding = encoding
         self.cookies = SimpleCookie()
@@ -173,23 +174,19 @@ client.
             self.headers.pop('content-type', None)
     content_type = property(_get_content_type, _set_content_type)
 
-    def __call__(self, environ, start_response, exc_info=None):
+    def __call__(self, environ, start_response, exc_info=None, middleware=None):
         '''Make sure the headers are set.'''
         if not exc_info:
-            for rm in self.middleware:
-                try:
-                    rm(environ, self)
-                except Exception:
-                    LOGGER.error('Exception in response middleware',
-                                 exc_info=True)
+            if middleware:
+                for rm in middleware:
+                    try:
+                        rm(environ, self)
+                    except Exception:
+                        LOGGER.error('Exception in response middleware',
+                                     exc_info=True)
         start_response(self.status, self.get_headers(), exc_info)
         return self
     
-    def start(self):
-        '''Starts the response by applying :attr:`middleware` and
-invoking :attr:`start_response`.'''
-        return self.__call__(self.environ, self.start_response)
-
     def length(self):
         if not self.is_streamed:
             return reduce(lambda x,y: x+len(y), self.content, 0)

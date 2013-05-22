@@ -2,36 +2,19 @@
 import sys
 
 import pulsar
-from pulsar.apps.wsgi import WSGIServer, LazyWsgi, WsgiRequest, WsgiResponse
+from pulsar.apps.wsgi import WSGIServer, LazyWsgi
 
-from django import http
 from django.core.management.base import BaseCommand, CommandError
-from django.utils.encoding import force_str
-from django.core.handlers.base import get_script_name, signals
-from django.core.handlers.wsgi import logger, set_script_prefix,\
-                                       WSGIHandler, STATUS_CODE_TEXT
+from django.core.wsgi import get_wsgi_application
 
 PULSAR_OPTIONS = pulsar.make_optparse_options(apps=['socket'])
 
 
-class SkipResponse(Exception):
-    
-    def __init__(self, response):
-        self.response = response
-        
-
-class WSGI(WSGIHandler):
-            
-    def __call__(self, environ, start_response):
-        WsgiRequest(environ, start_response)
-        return super(WSGI, self).__call__(environ, start_response)
-
-
-class LWsgi(LazyWsgi):
+class Wsgi(LazyWsgi):
     
     def setup(self):
         from django.conf import settings
-        return WSGI()
+        return get_wsgi_application()
         
     
 class Command(BaseCommand):
@@ -45,7 +28,7 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
         if args:
             raise CommandError('pulse --help for usage')
-        callable = LWsgi()
+        callable = Wsgi()
         if options.pop('dryrun', False) == True:
             return callable
         callable.setup()

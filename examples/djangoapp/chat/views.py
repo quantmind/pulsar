@@ -1,5 +1,9 @@
+import json
+import time
+
 from django.shortcuts import render_to_response
 from django.template import RequestContext
+from django.http import HttpResponse
 
 from pulsar.apps import wsgi, ws, pubsub
 from pulsar.utils.structures import AttributeDictionary
@@ -51,14 +55,15 @@ to the set of clients listening for messages.'''
                     user = user.username
                 else:
                     user = 'anonymous'
-                msg = {'message': msg, 'user': user}
-                self.pubsub.publish('webchat', msg)
+                msg = {'message': msg, 'user': user, 'time': time.time()}
+                self.pubsub.publish('webchat', json.dumps(msg))
                 
-                
+
 class middleware(object):
     '''Middleware for serving the Chat websocket'''
     def __init__(self):
-        self._web_socket = ws.WebSocket('/message', Chat())
+        self._web_socket = ws.WebSocket('/message', Chat(),
+                                        start_response=False)
         
     def process_request(self, request):
         data = AttributeDictionary(request.__dict__)
@@ -66,5 +71,9 @@ class middleware(object):
         environ['django.cache'] = data
         response = self._web_socket(environ, None)
         if response is not None:
-            return response
-    
+            # Convert to django response
+            resp = HttpResponse(status=response.status_code,
+                                content_type=response.content_type)
+            for header, value in response.headers:
+                resp[header] = value
+            return resp

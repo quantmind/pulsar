@@ -44,7 +44,7 @@ class TaskQueueBase(object):
         # The name of the task queue application
         s = server(name=cls.name(),
                    rpc_bind='127.0.0.1:0',
-                   backlog=4,
+                   concurrent_tasks=4,
                    concurrency=cls.concurrency,
                    rpc_concurrency=cls.concurrency,
                    rpc_keep_alive=cls.rpc_timeout,
@@ -70,7 +70,7 @@ class TestTaskQueueOnThread(TaskQueueBase, unittest.TestCase):
         self.assertTrue(app)
         self.assertEqual(app.name, self.name())
         self.assertFalse(app.cfg.address)
-        self.assertEqual(app.cfg.backlog, 4)
+        self.assertEqual(app.cfg.concurrent_tasks, 4)
         self.assertEqual(app.backend.backlog, 4)
         self.assertTrue(app.backend.registry)
         self.assertEqual(app.cfg.concurrency, self.concurrency)

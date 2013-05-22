@@ -248,7 +248,6 @@ starts the wsgi response.'''
         response.content_type = self.content_type
         body = yield self.content(request)
         response.content = body
-        response.start()
         yield response
         
     def do_stream(self, request):

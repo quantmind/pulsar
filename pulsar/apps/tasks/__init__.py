@@ -91,6 +91,21 @@ class TaskSetting(pulsar.Setting):
     section = "Task Consumer"
 
 
+class ConcurrentTasks(TaskSetting):
+    name = "concurrent_tasks"
+    flags = ["--concurrent-tasks"]
+    validator = pulsar.validate_pos_int
+    type = int
+    default = 5
+    desc = """\
+        The maximum number of concurrent tasks for a worker.
+        
+        When a task worker reach this number it stops polling for more tasks
+        until one or more task finish. It should only affect task queues under
+        significant load.
+        Must be a positive integer. Generally set in the range of 5-10.
+        """
+
 class TaskBackendConnection(TaskSetting):
     name = "task_backend"
     flags = ["--task-backend"]
@@ -139,7 +154,7 @@ task.Tasks and managing scheduling of tasks via a
 :class:`scheduler.Scheduler`.'''
     backend = None
     name = 'tasks'
-    cfg = pulsar.Config(apps=('tasks',), timeout=600, backlog=5)
+    cfg = pulsar.Config(apps=('tasks',), timeout=600)
 
     def request_instance(self, request):
         return self.scheduler.get_task(request)
@@ -153,7 +168,8 @@ task.Tasks and managing scheduling of tasks via a
                                 name=self.name,
                                 task_paths=self.cfg.task_paths,
                                 schedule_periodic=self.cfg.schedule_periodic,
-                                backlog=self.cfg.backlog)
+                                max_tasks=self.cfg.max_requests,
+                                backlog=self.cfg.concurrent_tasks)
         
     def monitor_task(self, monitor):
         '''Override the :meth:`pulsar.apps.Application.monitor_task` callback
@@ -176,6 +192,13 @@ to check if the :attr:`scheduler` needs to perform a new run.'''
         # workers do not schedule periodic tasks
         params['app'].cfg.set('schedule_periodic', False)
         return params
+    
+    def worker_info(self, worker, data):
+        be = self.backend
+        tasks = {'concurrent': list(be.concurrent_tasks),
+                 'processed': be.processed}
+        data['tasks'] = tasks
+        return data
      
     
 @command()

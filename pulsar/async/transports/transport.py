@@ -189,7 +189,7 @@ the :class:`EventHandler`.
     
     @property
     def writing(self):
-        return bool(self._write_buffer)
+        return self._sock is not None and bool(self._write_buffer)
     
     @property
     def closing(self):
@@ -246,11 +246,10 @@ the :class:`EventHandler`.
         if not self.closing:
             self._closing = True
             self._event_loop.remove_reader(self._sock.fileno())
-            if not async:
-                self._write_buffer = deque()
-                self._shutdown(exc)
-            elif not self.writing:
+            if async and not self.writing:
                 self._event_loop.call_soon(self._shutdown, exc)
+        if not async:
+            self._shutdown(exc)
     
     ############################################################################
     ###    PULSAR TRANSPORT METHODS.
@@ -318,6 +317,7 @@ as only attribute.'''
         
     def _shutdown(self, exc=None):
         if self._sock is not None:
+            self._write_buffer = deque()
             self._event_loop.remove_writer(self.fileno())
             self._sock.close()
             self._sock = None
@@ -354,6 +354,7 @@ as only attribute.'''
             try:
                 self._protocol_write()
             except socket.error as e:
+                # error during a write, abort
                 self.abort(exc=e)
                 raise
         if not self.writing:
