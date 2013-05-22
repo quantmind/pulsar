@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>pulsar.lib.tx &mdash; pulsar v0.5.1-beta.1 documentation</title>
+    <title>pulsar.apps.tx &mdash; pulsar v0.5.1-beta.1 documentation</title>
     <link rel="stylesheet" href="../../../static/pulsar.css" type="text/css" />
     <link rel="stylesheet" href="../../../static/pygments.css" type="text/css" />
     <script type="text/javascript">
@@ -23,7 +23,7 @@
     <script type="text/javascript" src="../../../static/doctools.js"></script>
     <link rel="shortcut icon" href="../../../static/Game_of_life_pulsar.gif"/>
     <link rel="top" title="pulsar v0.5.1-beta.1 documentation" href="../../../index.html" />
-    <link rel="up" title="pulsar" href="../../pulsar.html" /> 
+    <link rel="up" title="pulsar.apps" href="../apps.html" /> 
   </head>
   <body>
 
@@ -38,7 +38,8 @@
              >modules</a> |</li>
         <li><a href="../../../index.html">pulsar v0.5.1-beta.1 documentation</a> &raquo;</li>
           <li><a href="../../index.html" >Module code</a> &raquo;</li>
-          <li><a href="../../pulsar.html" accesskey="U">pulsar</a> &raquo;</li> 
+          <li><a href="../../pulsar.html" >pulsar</a> &raquo;</li>
+          <li><a href="../apps.html" accesskey="U">pulsar.apps</a> &raquo;</li> 
       </ul>
     </div>
 <div class="deck">
@@ -46,7 +47,7 @@
     
         <p class="developmentversion">
         Documentation for pulsar's DEVELOPMENT version. Get the 
-        <a href="http://packages.python.org/pulsar/modules/pulsar/lib/tx.html">release docs here</a>.
+        <a href="http://packages.python.org/pulsar/modules/pulsar/apps/tx.html">release docs here</a>.
         </p>
     
 </div>
@@ -58,7 +59,7 @@
         <div class="bodywrapper">
           <div class="body">
             
-  <h1>Source code for pulsar.lib.tx</h1><div class="highlight"><pre>
+  <h1>Source code for pulsar.apps.tx</h1><div class="highlight"><pre>
 <span class="sd">&#39;&#39;&#39;</span>
 <span class="sd">Pulsar concurrent framework and applications can be used with twisted_, an</span>
 <span class="sd">event driven network engine for python. Twisted has implementation</span>
@@ -97,8 +98,6 @@
     
 <span class="k">def</span> <span class="nf">_maybe_async</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="o">**</span><span class="n">params</span><span class="p">):</span>
     <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="n">Deferred</span><span class="p">):</span>
-        <span class="k">if</span> <span class="n">obj</span><span class="o">.</span><span class="n">called</span><span class="p">:</span>
-            <span class="k">return</span> <span class="n">_maybe_async</span><span class="p">(</span><span class="n">obj</span><span class="o">.</span><span class="n">result</span><span class="p">,</span> <span class="o">**</span><span class="n">params</span><span class="p">)</span>
         <span class="n">d</span> <span class="o">=</span> <span class="n">pulsar</span><span class="o">.</span><span class="n">Deferred</span><span class="p">()</span>
         <span class="n">d</span><span class="o">.</span><span class="n">_twisted_deferred</span> <span class="o">=</span> <span class="n">obj</span>
         <span class="n">obj</span><span class="o">.</span><span class="n">addBoth</span><span class="p">(</span><span class="n">d</span><span class="o">.</span><span class="n">callback</span><span class="p">)</span>
@@ -116,7 +115,7 @@
 <span class="n">set_async</span><span class="p">(</span><span class="n">_maybe_async</span><span class="p">,</span> <span class="n">_maybe_failure</span><span class="p">)</span>
 
 
-<div class="viewcode-block" id="PulsarReactor"><a class="viewcode-back" href="../../../tutorials/twisted.html#pulsar.lib.tx.PulsarReactor">[docs]</a><span class="k">class</span> <span class="nc">PulsarReactor</span><span class="p">(</span><span class="n">PosixReactorBase</span><span class="p">):</span>
+<div class="viewcode-block" id="PulsarReactor"><a class="viewcode-back" href="../../../apps/twisted.html#pulsar.apps.tx.PulsarReactor">[docs]</a><span class="k">class</span> <span class="nc">PulsarReactor</span><span class="p">(</span><span class="n">PosixReactorBase</span><span class="p">):</span>
     <span class="sd">&#39;&#39;&#39;A twisted reactor which acts as a proxy to pulsar eventloop.&#39;&#39;&#39;</span>
     <span class="k">def</span> <span class="nf">callLater</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">_seconds</span><span class="p">,</span> <span class="n">f</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kw</span><span class="p">):</span>
         <span class="k">return</span> <span class="n">get_event_loop</span><span class="p">()</span><span class="o">.</span><span class="n">call_later</span><span class="p">(</span><span class="n">_seconds</span><span class="p">,</span> <span class="k">lambda</span> <span class="p">:</span> <span class="n">f</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kw</span><span class="p">))</span>

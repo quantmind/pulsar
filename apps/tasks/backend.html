@@ -6,13 +6,13 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>Task Backend &mdash; pulsar v0.5.0-beta.12 documentation</title>
+    <title>Task Backend &mdash; pulsar v0.5.1-beta.1 documentation</title>
     <link rel="stylesheet" href="../../static/pulsar.css" type="text/css" />
     <link rel="stylesheet" href="../../static/pygments.css" type="text/css" />
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../',
-        VERSION:     '0.5.0-beta.12',
+        VERSION:     '0.5.1-beta.1',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -22,7 +22,7 @@
     <script type="text/javascript" src="../../static/underscore.js"></script>
     <script type="text/javascript" src="../../static/doctools.js"></script>
     <link rel="shortcut icon" href="../../static/Game_of_life_pulsar.gif"/>
-    <link rel="top" title="pulsar v0.5.0-beta.12 documentation" href="../../index.html" />
+    <link rel="top" title="pulsar v0.5.1-beta.1 documentation" href="../../index.html" />
     <link rel="up" title="Distributed Task Queue" href="index.html" />
     <link rel="next" title="RPC" href="rpc.html" />
     <link rel="prev" title="Jobs" href="jobs.html" /> 
@@ -44,7 +44,7 @@
         <li class="right" >
           <a href="jobs.html" title="Jobs"
              accesskey="P">previous</a> |</li>
-        <li><a href="../../index.html">pulsar v0.5.0-beta.12 documentation</a> &raquo;</li>
+        <li><a href="../../index.html">pulsar v0.5.1-beta.1 documentation</a> &raquo;</li>
           <li><a href="index.html" accesskey="U">Distributed Task Queue</a> &raquo;</li> 
       </ul>
     </div>
@@ -53,7 +53,7 @@
     
         <p class="developmentversion">
         Documentation for pulsar's DEVELOPMENT version. Get the 
-        <a href="http://packages.python.org/pulsar/">release docs here</a>.
+        <a href="http://packages.python.org/pulsar/apps/tasks/backend.html">release docs here</a>.
         </p>
     
 </div>
@@ -94,7 +94,7 @@ a bunch of <a class="reference internal" href="#pulsar.apps.tasks.backends.Task"
 <h2>Task<a class="headerlink" href="#task" title="Permalink to this headline">¶</a></h2>
 <dl class="class">
 <dt id="pulsar.apps.tasks.backends.Task">
-<em class="property">class </em><tt class="descclassname">pulsar.apps.tasks.backends.</tt><tt class="descname">Task</tt><big>(</big><em>id</em>, <em>name=None</em>, <em>time_executed=None</em>, <em>expiry=None</em>, <em>args=None</em>, <em>kwargs=None</em>, <em>status=None</em>, <em>from_task=None</em>, <em>**params</em><big>)</big><a class="reference internal" href="../../modules/pulsar/apps/tasks/backends.html#Task"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.tasks.backends.Task" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><tt class="descclassname">pulsar.apps.tasks.backends.</tt><tt class="descname">Task</tt><big>(</big><em>id</em>, <em>name=None</em>, <em>time_executed=None</em>, <em>expiry=None</em>, <em>args=None</em>, <em>kwargs=None</em>, <em>status=None</em>, <em>from_task=None</em>, <em>result=None</em>, <em>**params</em><big>)</big><a class="reference internal" href="../../modules/pulsar/apps/tasks/backends.html#Task"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.tasks.backends.Task" title="Permalink to this definition">¶</a></dt>
 <dd><p>Interface for tasks which are produced by
 <a class="reference internal" href="jobs.html#apps-taskqueue-job"><em>jobs or periodic jobs</em></a>.</p>
 <dl class="attribute">
@@ -187,7 +187,7 @@ Lower number higher precedence.</p>
 <h2>TaskBackend<a class="headerlink" href="#taskbackend" title="Permalink to this headline">¶</a></h2>
 <dl class="class">
 <dt id="pulsar.apps.tasks.backends.TaskBackend">
-<em class="property">class </em><tt class="descclassname">pulsar.apps.tasks.backends.</tt><tt class="descname">TaskBackend</tt><big>(</big><em>scheme</em>, <em>host=None</em>, <em>name=None</em>, <em>connection_string=None</em>, <em>**params</em><big>)</big><a class="reference internal" href="../../modules/pulsar/apps/tasks/backends.html#TaskBackend"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.tasks.backends.TaskBackend" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><tt class="descclassname">pulsar.apps.tasks.backends.</tt><tt class="descname">TaskBackend</tt><big>(</big><em>scheme</em>, <em>connection_string</em>, <em>name=None</em>, <em>**params</em><big>)</big><a class="reference internal" href="../../modules/pulsar/apps/tasks/backends.html#TaskBackend"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.tasks.backends.TaskBackend" title="Permalink to this definition">¶</a></dt>
 <dd><p>A <a class="reference internal" href="../../api/application.html#pulsar.apps.Backend" title="pulsar.apps.Backend"><tt class="xref py py-class docutils literal"><span class="pre">pulsar.apps.Backend</span></tt></a> class for <a class="reference internal" href="#pulsar.apps.tasks.backends.Task" title="pulsar.apps.tasks.backends.Task"><tt class="xref py py-class docutils literal"><span class="pre">Task</span></tt></a>.
 A <a class="reference internal" href="#pulsar.apps.tasks.backends.TaskBackend" title="pulsar.apps.tasks.backends.TaskBackend"><tt class="xref py py-class docutils literal"><span class="pre">TaskBackend</span></tt></a> is responsible for creating tasks and put them
 into the distributed queue.
@@ -214,21 +214,62 @@ by the task-queue application
 <dd><p>The maximum number of concurrent tasks running on a task-queue
 <a class="reference internal" href="../../api/application.html#pulsar.apps.Worker" title="pulsar.apps.Worker"><tt class="xref py py-class docutils literal"><span class="pre">pulsar.apps.Worker</span></tt></a>. A number in the order of 5 to 10 is normally
 used. Passed by the task-queue application
-<a class="reference internal" href="../../settings.html#setting-backlog"><em>backlog setting</em></a>.</p>
+<a class="reference internal" href="../../settings.html#setting-concurrent-tasks"><em>concurrent tasks setting</em></a>.</p>
 </dd></dl>
 
-<dl class="method">
-<dt id="pulsar.apps.tasks.backends.TaskBackend.start">
-<tt class="descname">start</tt><big>(</big><em>worker</em><big>)</big><a class="reference internal" href="../../modules/pulsar/apps/tasks/backends.html#TaskBackend.start"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.tasks.backends.TaskBackend.start" title="Permalink to this definition">¶</a></dt>
-<dd><p>Start this <a class="reference internal" href="#pulsar.apps.tasks.backends.TaskBackend" title="pulsar.apps.tasks.backends.TaskBackend"><tt class="xref py py-class docutils literal"><span class="pre">TaskBackend</span></tt></a>. Invoked by the
-<a class="reference internal" href="../../api/application.html#pulsar.apps.Worker" title="pulsar.apps.Worker"><tt class="xref py py-class docutils literal"><span class="pre">pulsar.apps.Worker</span></tt></a> which is ready to consume tasks.</p>
+<dl class="attribute">
+<dt id="pulsar.apps.tasks.backends.TaskBackend.max_tasks">
+<tt class="descname">max_tasks</tt><a class="headerlink" href="#pulsar.apps.tasks.backends.TaskBackend.max_tasks" title="Permalink to this definition">¶</a></dt>
+<dd><p>The maximum number of tasks a worker will process before restarting.
+Passed by the task-queue application
+<a class="reference internal" href="../../settings.html#setting-max-requests"><em>max requests setting</em></a>.</p>
 </dd></dl>
 
-<dl class="method">
-<dt id="pulsar.apps.tasks.backends.TaskBackend.close">
-<tt class="descname">close</tt><big>(</big><em>worker</em><big>)</big><a class="reference internal" href="../../modules/pulsar/apps/tasks/backends.html#TaskBackend.close"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.tasks.backends.TaskBackend.close" title="Permalink to this definition">¶</a></dt>
-<dd><p>Close this <a class="reference internal" href="#pulsar.apps.tasks.backends.TaskBackend" title="pulsar.apps.tasks.backends.TaskBackend"><tt class="xref py py-class docutils literal"><span class="pre">TaskBackend</span></tt></a>. Invoked by the
-<a class="reference internal" href="../../api/application.html#pulsar.apps.Worker" title="pulsar.apps.Worker"><tt class="xref py py-class docutils literal"><span class="pre">pulsar.apps.Worker</span></tt></a> when is stopping.</p>
+<dl class="attribute">
+<dt id="pulsar.apps.tasks.backends.TaskBackend.processed">
+<tt class="descname">processed</tt><a class="headerlink" href="#pulsar.apps.tasks.backends.TaskBackend.processed" title="Permalink to this definition">¶</a></dt>
+<dd><p>The number of tasks processed by the worker.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="pulsar.apps.tasks.backends.TaskBackend.pubsub">
+<tt class="descname">pubsub</tt><a class="headerlink" href="#pulsar.apps.tasks.backends.TaskBackend.pubsub" title="Permalink to this definition">¶</a></dt>
+<dd><p>A <a class="reference internal" href="../pubsub.html#pulsar.apps.pubsub.PubSub" title="pulsar.apps.pubsub.PubSub"><tt class="xref py py-class docutils literal"><span class="pre">pulsar.apps.pubsub.PubSub</span></tt></a> handler for tasks signals.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="pulsar.apps.tasks.backends.TaskBackend.callbacks">
+<tt class="descname">callbacks</tt><a class="headerlink" href="#pulsar.apps.tasks.backends.TaskBackend.callbacks" title="Permalink to this definition">¶</a></dt>
+<dd><p>Dictionary of <a class="reference internal" href="../../api/async.html#pulsar.Deferred" title="pulsar.Deferred"><tt class="xref py py-class docutils literal"><span class="pre">pulsar.Deferred</span></tt></a> with keys given by
+<a class="reference internal" href="#pulsar.apps.tasks.backends.Task.id" title="pulsar.apps.tasks.backends.Task.id"><tt class="xref py py-attr docutils literal"><span class="pre">Task.id</span></tt></a> which this instance is waiting on. The <a class="reference internal" href="../../api/async.html#pulsar.Deferred" title="pulsar.Deferred"><tt class="xref py py-class docutils literal"><span class="pre">pulsar.Deferred</span></tt></a>
+are called back once the task has finished. This dictionary is used by
+the <a class="reference internal" href="#pulsar.apps.tasks.backends.TaskBackend.wait_for_task" title="pulsar.apps.tasks.backends.TaskBackend.wait_for_task"><tt class="xref py py-meth docutils literal"><span class="pre">wait_for_task()</span></tt></a> method.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt>
+<tt class="descname">pubsub</tt></dt>
+<dd><p>A <a class="reference internal" href="../pubsub.html#pulsar.apps.pubsub.PubSub" title="pulsar.apps.pubsub.PubSub"><tt class="xref py py-class docutils literal"><span class="pre">pulsar.apps.pubsub.PubSub</span></tt></a> handler which notify tasks
+execution status.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="pulsar.apps.tasks.backends.TaskBackend.concurrent_tasks">
+<tt class="descname">concurrent_tasks</tt><a class="reference internal" href="../../modules/pulsar/apps/tasks/backends.html#TaskBackend.concurrent_tasks"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.tasks.backends.TaskBackend.concurrent_tasks" title="Permalink to this definition">¶</a></dt>
+<dd><p>The set of tasks which are being concurrently executed by this
+<a class="reference internal" href="#pulsar.apps.tasks.backends.TaskBackend" title="pulsar.apps.tasks.backends.TaskBackend"><tt class="xref py py-class docutils literal"><span class="pre">TaskBackend</span></tt></a>.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="pulsar.apps.tasks.backends.TaskBackend.num_concurrent_tasks">
+<tt class="descname">num_concurrent_tasks</tt><a class="headerlink" href="#pulsar.apps.tasks.backends.TaskBackend.num_concurrent_tasks" title="Permalink to this definition">¶</a></dt>
+<dd><p>The number of <a class="reference internal" href="#pulsar.apps.tasks.backends.TaskBackend.concurrent_tasks" title="pulsar.apps.tasks.backends.TaskBackend.concurrent_tasks"><tt class="xref py py-attr docutils literal"><span class="pre">concurrent_tasks</span></tt></a>.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="pulsar.apps.tasks.backends.TaskBackend.registry">
+<tt class="descname">registry</tt><a class="reference internal" href="../../modules/pulsar/apps/tasks/backends.html#TaskBackend.registry"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.tasks.backends.TaskBackend.registry" title="Permalink to this definition">¶</a></dt>
+<dd><p>The <a class="reference internal" href="jobs.html#pulsar.apps.tasks.models.JobRegistry" title="pulsar.apps.tasks.models.JobRegistry"><tt class="xref py py-class docutils literal"><span class="pre">pulsar.apps.tasks.models.JobRegistry</span></tt></a> for this backend.</p>
 </dd></dl>
 
 <dl class="method">
@@ -269,13 +310,6 @@ on success.</p>
 </dd></dl>
 
 <dl class="method">
-<dt id="pulsar.apps.tasks.backends.TaskBackend.queue_task">
-<tt class="descname">queue_task</tt><big>(</big><em>task_id_or_task</em><big>)</big><a class="reference internal" href="../../modules/pulsar/apps/tasks/backends.html#TaskBackend.queue_task"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.tasks.backends.TaskBackend.queue_task" title="Permalink to this definition">¶</a></dt>
-<dd><p>Actually put a <em>task_id_or_task</em> into the distributed task queue.
-It invokes the <a class="reference internal" href="#pulsar.apps.tasks.backends.TaskBackend.put_task" title="pulsar.apps.tasks.backends.TaskBackend.put_task"><tt class="xref py py-meth docutils literal"><span class="pre">put_task()</span></tt></a> which is implemented by subclasses.</p>
-</dd></dl>
-
-<dl class="method">
 <dt id="pulsar.apps.tasks.backends.TaskBackend.create_task_id">
 <tt class="descname">create_task_id</tt><big>(</big><em>job</em>, <em>args</em>, <em>kwargs</em><big>)</big><a class="reference internal" href="../../modules/pulsar/apps/tasks/backends.html#TaskBackend.create_task_id"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.tasks.backends.TaskBackend.create_task_id" title="Permalink to this definition">¶</a></dt>
 <dd><p>Create a <a class="reference internal" href="#pulsar.apps.tasks.backends.Task.id" title="pulsar.apps.tasks.backends.Task.id"><tt class="xref py py-attr docutils literal"><span class="pre">Task.id</span></tt></a> from <em>job</em>, positional arguments <em>args</em>
@@ -285,9 +319,9 @@ and key-valued arguments <em>kwargs</em>.</p>
 <dl class="method">
 <dt id="pulsar.apps.tasks.backends.TaskBackend.create_task">
 <tt class="descname">create_task</tt><big>(</big><em>jobname</em>, <em>targs=None</em>, <em>tkwargs=None</em>, <em>expiry=None</em>, <em>**params</em><big>)</big><a class="reference internal" href="../../modules/pulsar/apps/tasks/backends.html#TaskBackend.create_task"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.tasks.backends.TaskBackend.create_task" title="Permalink to this definition">¶</a></dt>
-<dd><p>Create a new <a class="reference internal" href="#pulsar.apps.tasks.backends.Task" title="pulsar.apps.tasks.backends.Task"><tt class="xref py py-class docutils literal"><span class="pre">Task</span></tt></a> from <em>jobname</em>, positional arguments
-<em>targs</em>, key-valued arguments <em>tkwargs</em> and <a class="reference internal" href="#pulsar.apps.tasks.backends.Task" title="pulsar.apps.tasks.backends.Task"><tt class="xref py py-class docutils literal"><span class="pre">Task</span></tt></a> meta parameters
-<em>params</em>.</p>
+<dd><p>Create a new <a class="reference internal" href="#pulsar.apps.tasks.backends.Task" title="pulsar.apps.tasks.backends.Task"><tt class="xref py py-class docutils literal"><span class="pre">Task</span></tt></a> from <tt class="docutils literal"><span class="pre">jobname</span></tt>, positional arguments
+<tt class="docutils literal"><span class="pre">targs</span></tt>, key-valued arguments <tt class="docutils literal"><span class="pre">tkwargs</span></tt> and <a class="reference internal" href="#pulsar.apps.tasks.backends.Task" title="pulsar.apps.tasks.backends.Task"><tt class="xref py py-class docutils literal"><span class="pre">Task</span></tt></a> meta parameters
+<tt class="docutils literal"><span class="pre">params</span></tt>. This method can be called by any process domain.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
@@ -310,23 +344,8 @@ or <tt class="xref docutils literal"><span class="pre">None</span></tt> if no ta
 <dl class="method">
 <dt id="pulsar.apps.tasks.backends.TaskBackend.wait_for_task">
 <tt class="descname">wait_for_task</tt><big>(</big><em>task_id</em><big>)</big><a class="headerlink" href="#pulsar.apps.tasks.backends.TaskBackend.wait_for_task" title="Permalink to this definition">¶</a></dt>
-<dd><p>Asynchronously wait for a task to have finish its execution. It
-returns an <a class="reference external" href="tutorials-coroutine">asynchronous component</a></p>
-</dd></dl>
-
-<dl class="method">
-<dt id="pulsar.apps.tasks.backends.TaskBackend.may_pool_task">
-<tt class="descname">may_pool_task</tt><big>(</big><em>*args</em>, <em>**kwargs</em><big>)</big><a class="reference internal" href="../../modules/pulsar/apps/tasks/backends.html#TaskBackend.may_pool_task"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.tasks.backends.TaskBackend.may_pool_task" title="Permalink to this definition">¶</a></dt>
-<dd><p>Called at every loop in the worker IO loop, it pool a new task
-if possible and add it to the queue of tasks consumed by the worker
-CPU-bound thread.</p>
-</dd></dl>
-
-<dl class="method">
-<dt id="pulsar.apps.tasks.backends.TaskBackend.execute_task">
-<tt class="descname">execute_task</tt><big>(</big><em>*args</em>, <em>**kwargs</em><big>)</big><a class="reference internal" href="../../modules/pulsar/apps/tasks/backends.html#TaskBackend.execute_task"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.tasks.backends.TaskBackend.execute_task" title="Permalink to this definition">¶</a></dt>
-<dd><p>Asynchronous execution of a <a class="reference internal" href="#pulsar.apps.tasks.backends.Task" title="pulsar.apps.tasks.backends.Task"><tt class="xref py py-class docutils literal"><span class="pre">Task</span></tt></a>. This method is called
-on a separate thread of execution from the worker evnet loop thread.</p>
+<dd><p>Asynchronously wait for a task with <tt class="docutils literal"><span class="pre">task_id</span></tt> to have finished
+its execution. It returns an <a class="reference external" href="tutorials-coroutine">asynchronous component</a></p>
 </dd></dl>
 
 <dl class="method">
@@ -341,30 +360,36 @@ value <tt class="docutils literal"><span class="pre">now</span></tt> can be pass
 </dd></dl>
 
 <dl class="method">
-<dt id="pulsar.apps.tasks.backends.TaskBackend.on_start_task">
-<tt class="descname">on_start_task</tt><big>(</big><em>task_id</em><big>)</big><a class="reference internal" href="../../modules/pulsar/apps/tasks/backends.html#TaskBackend.on_start_task"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.tasks.backends.TaskBackend.on_start_task" title="Permalink to this definition">¶</a></dt>
-<dd><p>Called once a <a class="reference internal" href="#pulsar.apps.tasks.backends.Task" title="pulsar.apps.tasks.backends.Task"><tt class="xref py py-class docutils literal"><span class="pre">Task</span></tt></a> with <em>task_id</em> has started its
-execution in the thread pool.</p>
+<dt id="pulsar.apps.tasks.backends.TaskBackend.start">
+<tt class="descname">start</tt><big>(</big><em>worker</em><big>)</big><a class="reference internal" href="../../modules/pulsar/apps/tasks/backends.html#TaskBackend.start"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.tasks.backends.TaskBackend.start" title="Permalink to this definition">¶</a></dt>
+<dd><p>Start this <a class="reference internal" href="#pulsar.apps.tasks.backends.TaskBackend" title="pulsar.apps.tasks.backends.TaskBackend"><tt class="xref py py-class docutils literal"><span class="pre">TaskBackend</span></tt></a>. Invoked by the
+<a class="reference internal" href="../../api/application.html#pulsar.apps.Worker" title="pulsar.apps.Worker"><tt class="xref py py-class docutils literal"><span class="pre">pulsar.apps.Worker</span></tt></a> which is ready to consume tasks.</p>
 </dd></dl>
 
 <dl class="method">
-<dt id="pulsar.apps.tasks.backends.TaskBackend.on_finish_task">
-<tt class="descname">on_finish_task</tt><big>(</big><em>task_id</em><big>)</big><a class="reference internal" href="../../modules/pulsar/apps/tasks/backends.html#TaskBackend.on_finish_task"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.tasks.backends.TaskBackend.on_finish_task" title="Permalink to this definition">¶</a></dt>
-<dd><p>Called once a <a class="reference internal" href="#pulsar.apps.tasks.backends.Task" title="pulsar.apps.tasks.backends.Task"><tt class="xref py py-class docutils literal"><span class="pre">Task</span></tt></a> with <em>task_id</em> has finished its
-execution in the thread pool.</p>
+<dt id="pulsar.apps.tasks.backends.TaskBackend.close">
+<tt class="descname">close</tt><big>(</big><em>worker</em><big>)</big><a class="reference internal" href="../../modules/pulsar/apps/tasks/backends.html#TaskBackend.close"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.tasks.backends.TaskBackend.close" title="Permalink to this definition">¶</a></dt>
+<dd><p>Close this <a class="reference internal" href="#pulsar.apps.tasks.backends.TaskBackend" title="pulsar.apps.tasks.backends.TaskBackend"><tt class="xref py py-class docutils literal"><span class="pre">TaskBackend</span></tt></a>. Invoked by the
+<a class="reference internal" href="../../api/application.html#pulsar.apps.Worker" title="pulsar.apps.Worker"><tt class="xref py py-class docutils literal"><span class="pre">pulsar.apps.Worker</span></tt></a> when is stopping.</p>
 </dd></dl>
 
 <dl class="method">
 <dt id="pulsar.apps.tasks.backends.TaskBackend.put_task">
 <tt class="descname">put_task</tt><big>(</big><em>task_id</em><big>)</big><a class="reference internal" href="../../modules/pulsar/apps/tasks/backends.html#TaskBackend.put_task"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.tasks.backends.TaskBackend.put_task" title="Permalink to this definition">¶</a></dt>
-<dd><p>Put the <em>task_id</em> into the queue. Must be implemented
+<dd><p>Put the <tt class="docutils literal"><span class="pre">task_id</span></tt> into the queue. Must be implemented
 by subclasses.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="pulsar.apps.tasks.backends.TaskBackend.num_tasks">
+<tt class="descname">num_tasks</tt><big>(</big><big>)</big><a class="headerlink" href="#pulsar.apps.tasks.backends.TaskBackend.num_tasks" title="Permalink to this definition">¶</a></dt>
+<dd><p>Retrieve the number of tasks in the task queue.</p>
 </dd></dl>
 
 <dl class="method">
 <dt id="pulsar.apps.tasks.backends.TaskBackend.get_task">
 <tt class="descname">get_task</tt><big>(</big><em>task_id=None</em>, <em>when_done=False</em>, <em>timeout=1</em><big>)</big><a class="reference internal" href="../../modules/pulsar/apps/tasks/backends.html#TaskBackend.get_task"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.tasks.backends.TaskBackend.get_task" title="Permalink to this definition">¶</a></dt>
-<dd><p>Retrieve a <a class="reference internal" href="#pulsar.apps.tasks.backends.Task" title="pulsar.apps.tasks.backends.Task"><tt class="xref py py-class docutils literal"><span class="pre">Task</span></tt></a> from a task id. Must be implemented
+<dd><p>Retrieve a <a class="reference internal" href="#pulsar.apps.tasks.backends.Task" title="pulsar.apps.tasks.backends.Task"><tt class="xref py py-class docutils literal"><span class="pre">Task</span></tt></a> from a <tt class="docutils literal"><span class="pre">task_id</span></tt>. Must be implemented
 by subclasses.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
@@ -393,14 +418,29 @@ by subclasses.</p>
 <dl class="method">
 <dt id="pulsar.apps.tasks.backends.TaskBackend.save_task">
 <tt class="descname">save_task</tt><big>(</big><em>task_id</em>, <em>**params</em><big>)</big><a class="reference internal" href="../../modules/pulsar/apps/tasks/backends.html#TaskBackend.save_task"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.tasks.backends.TaskBackend.save_task" title="Permalink to this definition">¶</a></dt>
-<dd><p>create or update a <a class="reference internal" href="#pulsar.apps.tasks.backends.Task" title="pulsar.apps.tasks.backends.Task"><tt class="xref py py-class docutils literal"><span class="pre">Task</span></tt></a> with <em>task_id</em> and key-valued
-parameters <em>params</em>. Must be implemented by subclasses.</p>
+<dd><p>Create or update a <a class="reference internal" href="#pulsar.apps.tasks.backends.Task" title="pulsar.apps.tasks.backends.Task"><tt class="xref py py-class docutils literal"><span class="pre">Task</span></tt></a> with <tt class="docutils literal"><span class="pre">task_id</span></tt> and key-valued
+parameters <tt class="docutils literal"><span class="pre">params</span></tt>. Must be implemented by subclasses.</p>
 </dd></dl>
 
 <dl class="method">
 <dt id="pulsar.apps.tasks.backends.TaskBackend.delete_tasks">
 <tt class="descname">delete_tasks</tt><big>(</big><em>task_ids=None</em><big>)</big><a class="reference internal" href="../../modules/pulsar/apps/tasks/backends.html#TaskBackend.delete_tasks"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.tasks.backends.TaskBackend.delete_tasks" title="Permalink to this definition">¶</a></dt>
 <dd><p>Delete a group of task. Must be implemented by subclasses.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="pulsar.apps.tasks.backends.TaskBackend.may_pool_task">
+<tt class="descname">may_pool_task</tt><big>(</big><em>*args</em>, <em>**kwargs</em><big>)</big><a class="reference internal" href="../../modules/pulsar/apps/tasks/backends.html#TaskBackend.may_pool_task"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.tasks.backends.TaskBackend.may_pool_task" title="Permalink to this definition">¶</a></dt>
+<dd><p>Called at every loop in the worker IO loop, it pool a new task
+if possible and add it to the queue of tasks consumed by the worker
+CPU-bound thread.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="pulsar.apps.tasks.backends.TaskBackend.task_done_callback">
+<tt class="descname">task_done_callback</tt><big>(</big><em>*args</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#pulsar.apps.tasks.backends.TaskBackend.task_done_callback" title="Permalink to this definition">¶</a></dt>
+<dd><p>Got a new message from redis pubsub task_done channel.
+This is the write method required by all pubsub clients.</p>
 </dd></dl>
 
 </dd></dl>

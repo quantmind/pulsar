@@ -6,13 +6,13 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>WSGI application handlers &mdash; pulsar v0.5.0-beta.12 documentation</title>
+    <title>WSGI application handlers &mdash; pulsar v0.5.1-beta.1 documentation</title>
     <link rel="stylesheet" href="../../static/pulsar.css" type="text/css" />
     <link rel="stylesheet" href="../../static/pygments.css" type="text/css" />
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../',
-        VERSION:     '0.5.0-beta.12',
+        VERSION:     '0.5.1-beta.1',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -22,7 +22,7 @@
     <script type="text/javascript" src="../../static/underscore.js"></script>
     <script type="text/javascript" src="../../static/doctools.js"></script>
     <link rel="shortcut icon" href="../../static/Game_of_life_pulsar.gif"/>
-    <link rel="top" title="pulsar v0.5.0-beta.12 documentation" href="../../index.html" />
+    <link rel="top" title="pulsar v0.5.1-beta.1 documentation" href="../../index.html" />
     <link rel="up" title="WSGI" href="index.html" />
     <link rel="next" title="WSGI Wrappers" href="wrappers.html" />
     <link rel="prev" title="Asynchronous WSGI" href="async.html" /> 
@@ -44,7 +44,7 @@
         <li class="right" >
           <a href="async.html" title="Asynchronous WSGI"
              accesskey="P">previous</a> |</li>
-        <li><a href="../../index.html">pulsar v0.5.0-beta.12 documentation</a> &raquo;</li>
+        <li><a href="../../index.html">pulsar v0.5.1-beta.1 documentation</a> &raquo;</li>
           <li><a href="index.html" accesskey="U">WSGI</a> &raquo;</li> 
       </ul>
     </div>
@@ -53,7 +53,7 @@
     
         <p class="developmentversion">
         Documentation for pulsar's DEVELOPMENT version. Get the 
-        <a href="http://packages.python.org/pulsar/">release docs here</a>.
+        <a href="http://packages.python.org/pulsar/apps/wsgi/handlers.html">release docs here</a>.
         </p>
     
 </div>
@@ -66,29 +66,23 @@
           <div class="body">
             
   <div class="section" id="module-pulsar.apps.wsgi.handlers">
-<span id="wsgi-application-handlers"></span><span id="apps-wsgi-handlers"></span><h1>WSGI application handlers<a class="headerlink" href="#module-pulsar.apps.wsgi.handlers" title="Permalink to this headline">¶</a></h1>
+<span id="wsgi-application-handlers"></span><span id="wsgi-handlers"></span><h1>WSGI application handlers<a class="headerlink" href="#module-pulsar.apps.wsgi.handlers" title="Permalink to this headline">¶</a></h1>
 <p>Pulsar is shipped with four WSGI application handlers which facilitate the
 development of server-side python web applications.</p>
 <div class="admonition note">
 <p class="first admonition-title">Note</p>
 <p class="last">A <strong>WSGI application handler</strong> is always a callable, either a function
-or a callable instance, which accepts two positional arguments:
-<em>environ</em> and <em>start_response</em>. When called by the server,
+or a callable object, which accepts two positional arguments:
+<tt class="docutils literal"><span class="pre">environ</span></tt> and <tt class="docutils literal"><span class="pre">start_response</span></tt>. When called by the server,
 the application object must return an iterable yielding zero or more bytes.</p>
 </div>
 <div class="section" id="wsgihandler">
 <h2>WsgiHandler<a class="headerlink" href="#wsgihandler" title="Permalink to this headline">¶</a></h2>
 <p>The first and most basic application handler is the <a class="reference internal" href="#pulsar.apps.wsgi.handlers.WsgiHandler" title="pulsar.apps.wsgi.handlers.WsgiHandler"><tt class="xref py py-class docutils literal"><span class="pre">WsgiHandler</span></tt></a>
 which is a step above the <a class="reference internal" href="../../tutorials/hello.html#tutorials-hello-world"><em>hello callable</em></a>
-in the tutorial. It accepts two iterables, a list of wsgi middleware
-and an optional list of response middleware.</p>
-<p>Response middleware is a callable of the form:</p>
-<div class="highlight-python"><div class="highlight"><pre><span class="k">def</span> <span class="nf">my_response_middleware</span><span class="p">(</span><span class="n">environ</span><span class="p">,</span> <span class="n">response</span><span class="p">):</span>
-    <span class="o">...</span>
-</pre></div>
-</div>
-<p>where <em>environ</em> is the WSGI environ dictionary and <em>response</em> is an instance
-of <tt class="xref py py-class docutils literal"><span class="pre">WsgiResponse</span></tt>.</p>
+in the tutorial. It accepts two iterables, a list of
+<a class="reference internal" href="#wsgi-middleware"><em>wsgi middleware</em></a> and an optional list of
+<a class="reference internal" href="middleware.html#wsgi-response-middleware"><em>response middleware</em></a>.</p>
 <dl class="class">
 <dt id="pulsar.apps.wsgi.handlers.WsgiHandler">
 <em class="property">class </em><tt class="descclassname">pulsar.apps.wsgi.handlers.</tt><tt class="descname">WsgiHandler</tt><big>(</big><em>middleware=None</em>, <em>response_middleware=None</em>, <em>**kwargs</em><big>)</big><a class="reference internal" href="../../modules/pulsar/apps/wsgi/handlers.html#WsgiHandler"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.wsgi.handlers.WsgiHandler" title="Permalink to this definition">¶</a></dt>
@@ -106,24 +100,67 @@ is the non <tt class="xref docutils literal"><span class="pre">None</span></tt> 
 <dt id="pulsar.apps.wsgi.handlers.WsgiHandler.response_middleware">
 <tt class="descname">response_middleware</tt><a class="headerlink" href="#pulsar.apps.wsgi.handlers.WsgiHandler.response_middleware" title="Permalink to this definition">¶</a></dt>
 <dd><p>List of functions of the form:</p>
-<div class="highlight-python"><pre>def ..(environ, start_response, response):
+<div class="highlight-python"><pre>def ..(environ, response):
     ...</pre>
 </div>
-<p>where <tt class="docutils literal"><span class="pre">response</span></tt> is the first not <tt class="xref docutils literal"><span class="pre">None</span></tt> value returned by
-the middleware.</p>
+<p>where <tt class="docutils literal"><span class="pre">response</span></tt> is a <a class="reference internal" href="wrappers.html#wsgi-response"><em>WsgiResponse</em></a>.
+Pulsar contains some <a class="reference internal" href="middleware.html#wsgi-response-middleware"><em>response middlewares</em></a>.</p>
 </dd></dl>
 
 </dd></dl>
 
 </div>
+<div class="section" id="lazy-wsgi-handler">
+<span id="wsgi-lazy-handler"></span><h2>Lazy Wsgi Handler<a class="headerlink" href="#lazy-wsgi-handler" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="pulsar.apps.wsgi.handlers.LazyWsgi">
+<em class="property">class </em><tt class="descclassname">pulsar.apps.wsgi.handlers.</tt><tt class="descname">LazyWsgi</tt><a class="reference internal" href="../../modules/pulsar/apps/wsgi/handlers.html#LazyWsgi"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.wsgi.handlers.LazyWsgi" title="Permalink to this definition">¶</a></dt>
+<dd><p>A <a class="reference internal" href="#wsgi-handlers"><em>wsgi handler</em></a> which loads the actual
+handler the first time it is called. Subclasses must implement
+the <a class="reference internal" href="#pulsar.apps.wsgi.handlers.LazyWsgi.setup" title="pulsar.apps.wsgi.handlers.LazyWsgi.setup"><tt class="xref py py-meth docutils literal"><span class="pre">setup()</span></tt></a> method.
+Useful when working in multiprocessing mode when the application
+handler must be a <tt class="docutils literal"><span class="pre">pickable</span></tt> instance. This handler can rebuild
+its wsgi <a class="reference internal" href="#pulsar.apps.wsgi.handlers.LazyWsgi.handler" title="pulsar.apps.wsgi.handlers.LazyWsgi.handler"><tt class="xref py py-attr docutils literal"><span class="pre">handler</span></tt></a> every time is pickled and un-pickled without
+causing serialisation issues.</p>
+<dl class="attribute">
+<dt id="pulsar.apps.wsgi.handlers.LazyWsgi.handler">
+<tt class="descname">handler</tt><a class="headerlink" href="#pulsar.apps.wsgi.handlers.LazyWsgi.handler" title="Permalink to this definition">¶</a></dt>
+<dd><p>The <a class="reference internal" href="#wsgi-handlers"><em>wsgi application handler</em></a> which
+is loaded via the <a class="reference internal" href="#pulsar.apps.wsgi.handlers.LazyWsgi.setup" title="pulsar.apps.wsgi.handlers.LazyWsgi.setup"><tt class="xref py py-meth docutils literal"><span class="pre">setup()</span></tt></a> method, once only, when first accessed.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="pulsar.apps.wsgi.handlers.LazyWsgi.setup">
+<tt class="descname">setup</tt><big>(</big><big>)</big><a class="reference internal" href="../../modules/pulsar/apps/wsgi/handlers.html#LazyWsgi.setup"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.wsgi.handlers.LazyWsgi.setup" title="Permalink to this definition">¶</a></dt>
+<dd><p>The setup function for this <a class="reference internal" href="#pulsar.apps.wsgi.handlers.LazyWsgi" title="pulsar.apps.wsgi.handlers.LazyWsgi"><tt class="xref py py-class docutils literal"><span class="pre">LazyWsgi</span></tt></a>. Called once only
+the first time this application handler is invoked. This <strong>must</strong> be implemented
+by subclasses and <strong>must</strong> return a
+<a class="reference internal" href="#wsgi-handlers"><em>wsgi application handler</em></a>.</p>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="wsgi-middleware">
+<span id="id1"></span><h2>WSGI Middleware<a class="headerlink" href="#wsgi-middleware" title="Permalink to this headline">¶</a></h2>
+<p>Middleware are function or callable objects similar to <a class="reference internal" href="#wsgi-handlers"><em>WSGI application handlers</em></a>
+with the only difference that they can return <tt class="xref docutils literal"><span class="pre">None</span></tt>. Middleware is used
+in conjunction with both <a class="reference internal" href="#pulsar.apps.wsgi.handlers.WsgiHandler" title="pulsar.apps.wsgi.handlers.WsgiHandler"><tt class="xref py py-class docutils literal"><span class="pre">WsgiHandler</span></tt></a>.
+Here we introduce the <a class="reference internal" href="#pulsar.apps.wsgi.handlers.Router" title="pulsar.apps.wsgi.handlers.Router"><tt class="xref py py-class docutils literal"><span class="pre">Router</span></tt></a> and <a class="reference internal" href="#pulsar.apps.wsgi.handlers.MediaRouter" title="pulsar.apps.wsgi.handlers.MediaRouter"><tt class="xref py py-class docutils literal"><span class="pre">MediaRouter</span></tt></a> which handle
+requests on given urls. Pulsar is shipped with
+<a class="reference internal" href="middleware.html#wsgi-additional-middleware"><em>additional wsgi middleware</em></a> for manipulating
+the environment before a client response is returned.</p>
 <div class="section" id="router">
-<span id="apps-wsgi-router"></span><h2>Router<a class="headerlink" href="#router" title="Permalink to this headline">¶</a></h2>
+<span id="apps-wsgi-router"></span><h3>Router<a class="headerlink" href="#router" title="Permalink to this headline">¶</a></h3>
 <p>Next up is routing. Routing is the process of match and
 parse the URL to something we can use. Pulsar provides a flexible integrated
 routing system you can use for that. It works by creating a
 <a class="reference internal" href="#pulsar.apps.wsgi.handlers.Router" title="pulsar.apps.wsgi.handlers.Router"><tt class="xref py py-class docutils literal"><span class="pre">Router</span></tt></a> instance with its own <tt class="docutils literal"><span class="pre">rule</span></tt> and, optionally, additional
 sub-routers for handling additional urls:</p>
 <div class="highlight-python"><div class="highlight"><pre><span class="k">class</span> <span class="nc">Page</span><span class="p">(</span><span class="n">Router</span><span class="p">):</span>
+    <span class="n">accept_content_types</span> <span class="o">=</span> <span class="p">(</span><span class="s">&#39;text/html&#39;</span><span class="p">,</span>
+                            <span class="s">&#39;text/plain&#39;</span><span class="p">,</span>
+                            <span class="s">&#39;application/json&#39;</span><span class="p">)</span>
     
     <span class="k">def</span> <span class="nf">get</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">request</span><span class="p">):</span>
         <span class="s">&quot;This method handle request with get-method&quot;</span> 
@@ -182,11 +219,12 @@ children <a class="reference internal" href="#pulsar.apps.wsgi.handlers.Router.r
 </dd></dl>
 
 <dl class="attribute">
-<dt id="pulsar.apps.wsgi.handlers.Router.default_content_type">
-<tt class="descname">default_content_type</tt><a class="headerlink" href="#pulsar.apps.wsgi.handlers.Router.default_content_type" title="Permalink to this definition">¶</a></dt>
-<dd><p>Class attribute which specify the default content type for
-this <a class="reference internal" href="#pulsar.apps.wsgi.handlers.Router" title="pulsar.apps.wsgi.handlers.Router"><tt class="xref py py-class docutils literal"><span class="pre">Router</span></tt></a>. Overwritten during initialization by the optional
-<tt class="docutils literal"><span class="pre">content_type</span></tt> parameter.</p>
+<dt id="pulsar.apps.wsgi.handlers.Router.accept_content_types">
+<tt class="descname">accept_content_types</tt><a class="headerlink" href="#pulsar.apps.wsgi.handlers.Router.accept_content_types" title="Permalink to this definition">¶</a></dt>
+<dd><p>Tuple of content type accepted by this <a class="reference internal" href="#pulsar.apps.wsgi.handlers.Router" title="pulsar.apps.wsgi.handlers.Router"><tt class="xref py py-class docutils literal"><span class="pre">Router</span></tt></a>. It can be specified
+as class attribute or during initialisation. This is an important parameter.
+It is used to set the content type of the response instance.
+Default <tt class="xref docutils literal"><span class="pre">None</span></tt>.</p>
 </dd></dl>
 
 <dl class="attribute">
@@ -202,10 +240,27 @@ this <a class="reference internal" href="#pulsar.apps.wsgi.handlers.Router" titl
 </dd></dl>
 
 <dl class="method">
+<dt id="pulsar.apps.wsgi.handlers.Router.content_type">
+<tt class="descname">content_type</tt><big>(</big><em>request</em><big>)</big><a class="headerlink" href="#pulsar.apps.wsgi.handlers.Router.content_type" title="Permalink to this definition">¶</a></dt>
+<dd><p>Evaluate the content type for the response to the client <tt class="docutils literal"><span class="pre">request</span></tt>.
+The method uses the <a class="reference internal" href="#pulsar.apps.wsgi.handlers.Router.accept_content_types" title="pulsar.apps.wsgi.handlers.Router.accept_content_types"><tt class="xref py py-attr docutils literal"><span class="pre">accept_content_types</span></tt></a> tuple of accepted content
+types and the content types accepted by the client and figure out
+the best match.</p>
+</dd></dl>
+
+<dl class="method">
 <dt id="pulsar.apps.wsgi.handlers.Router.resolve">
 <tt class="descname">resolve</tt><big>(</big><em>path</em>, <em>urlargs=None</em><big>)</big><a class="reference internal" href="../../modules/pulsar/apps/wsgi/handlers.html#Router.resolve"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.wsgi.handlers.Router.resolve" title="Permalink to this definition">¶</a></dt>
 <dd><p>Resolve a path and return a <tt class="docutils literal"><span class="pre">(handler,</span> <span class="pre">urlargs)</span></tt> tuple or
 <tt class="xref docutils literal"><span class="pre">None</span></tt> if the path could not be resolved.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="pulsar.apps.wsgi.handlers.Router.response">
+<tt class="descname">response</tt><big>(</big><em>environ</em>, <em>start_response</em>, <em>args</em><big>)</big><a class="headerlink" href="#pulsar.apps.wsgi.handlers.Router.response" title="Permalink to this definition">¶</a></dt>
+<dd><p>Once the <a class="reference internal" href="#pulsar.apps.wsgi.handlers.Router.resolve" title="pulsar.apps.wsgi.handlers.Router.resolve"><tt class="xref py py-meth docutils literal"><span class="pre">resolve()</span></tt></a> method has matched the correct
+<a class="reference internal" href="#pulsar.apps.wsgi.handlers.Router" title="pulsar.apps.wsgi.handlers.Router"><tt class="xref py py-class docutils literal"><span class="pre">Router</span></tt></a> for serving the request, this matched roter invokes this method
+to actually produce the WSGI response.</p>
 </dd></dl>
 
 <dl class="method">
@@ -254,13 +309,6 @@ start from the root <a class="reference internal" href="#pulsar.apps.wsgi.handle
 </dd></dl>
 
 <dl class="method">
-<dt id="pulsar.apps.wsgi.handlers.Router.content_type">
-<tt class="descname">content_type</tt><big>(</big><em>request</em><big>)</big><a class="headerlink" href="#pulsar.apps.wsgi.handlers.Router.content_type" title="Permalink to this definition">¶</a></dt>
-<dd><p>The content type of this <a class="reference internal" href="#pulsar.apps.wsgi.handlers.Router" title="pulsar.apps.wsgi.handlers.Router"><tt class="xref py py-class docutils literal"><span class="pre">Router</span></tt></a>. By default it returns
-the <a class="reference internal" href="#pulsar.apps.wsgi.handlers.Router.default_content_type" title="pulsar.apps.wsgi.handlers.Router.default_content_type"><tt class="xref py py-attr docutils literal"><span class="pre">default_content_type</span></tt></a>. Override if you need to.</p>
-</dd></dl>
-
-<dl class="method">
 <dt id="pulsar.apps.wsgi.handlers.Router.encoding">
 <tt class="descname">encoding</tt><big>(</big><em>request</em><big>)</big><a class="headerlink" href="#pulsar.apps.wsgi.handlers.Router.encoding" title="Permalink to this definition">¶</a></dt>
 <dd><p>The encoding to use for the response. By default it
@@ -271,7 +319,7 @@ returns <tt class="docutils literal"><span class="pre">utf-8</span></tt>.</p>
 
 </div>
 <div class="section" id="media-router">
-<h2>Media Router<a class="headerlink" href="#media-router" title="Permalink to this headline">¶</a></h2>
+<h3>Media Router<a class="headerlink" href="#media-router" title="Permalink to this headline">¶</a></h3>
 <p>The <a class="reference internal" href="#pulsar.apps.wsgi.handlers.MediaRouter" title="pulsar.apps.wsgi.handlers.MediaRouter"><tt class="xref py py-class docutils literal"><span class="pre">MediaRouter</span></tt></a> is a spcialised <a class="reference internal" href="#pulsar.apps.wsgi.handlers.Router" title="pulsar.apps.wsgi.handlers.Router"><tt class="xref py py-class docutils literal"><span class="pre">Router</span></tt></a> for serving static
 files such ass <tt class="docutils literal"><span class="pre">css</span></tt>, <tt class="docutils literal"><span class="pre">javascript</span></tt>, images and so forth.</p>
 <dl class="class">
@@ -309,37 +357,9 @@ well as media files.</p>
 </dd></dl>
 
 </div>
-<div class="section" id="lazy-wsgi-handler">
-<h2>Lazy Wsgi Handler<a class="headerlink" href="#lazy-wsgi-handler" title="Permalink to this headline">¶</a></h2>
-<dl class="class">
-<dt id="pulsar.apps.wsgi.handlers.LazyWsgi">
-<em class="property">class </em><tt class="descclassname">pulsar.apps.wsgi.handlers.</tt><tt class="descname">LazyWsgi</tt><a class="reference internal" href="../../modules/pulsar/apps/wsgi/handlers.html#LazyWsgi"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.wsgi.handlers.LazyWsgi" title="Permalink to this definition">¶</a></dt>
-<dd><p>A <a class="reference internal" href="#apps-wsgi-handlers"><em>wsgi handler</em></a> which loads its middleware the
-first time it is called. Subclasses must implement the <a class="reference internal" href="#pulsar.apps.wsgi.handlers.LazyWsgi.setup" title="pulsar.apps.wsgi.handlers.LazyWsgi.setup"><tt class="xref py py-meth docutils literal"><span class="pre">setup()</span></tt></a> method.</p>
-<p>This application handler is particularly useful when working in multiprocessing
-mode so that wsgi middleware can be rebuild consistently in ever application
-domain without causing serialization issues.</p>
-<dl class="attribute">
-<dt id="pulsar.apps.wsgi.handlers.LazyWsgi.middleware">
-<tt class="descname">middleware</tt><a class="headerlink" href="#pulsar.apps.wsgi.handlers.LazyWsgi.middleware" title="Permalink to this definition">¶</a></dt>
-<dd><p>The lazy middleware.</p>
-</dd></dl>
-
-<dl class="method">
-<dt id="pulsar.apps.wsgi.handlers.LazyWsgi.setup">
-<tt class="descname">setup</tt><big>(</big><big>)</big><a class="reference internal" href="../../modules/pulsar/apps/wsgi/handlers.html#LazyWsgi.setup"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.wsgi.handlers.LazyWsgi.setup" title="Permalink to this definition">¶</a></dt>
-<dd><p>The setup function for this <a class="reference internal" href="#pulsar.apps.wsgi.handlers.LazyWsgi" title="pulsar.apps.wsgi.handlers.LazyWsgi"><tt class="xref py py-class docutils literal"><span class="pre">LazyWsgi</span></tt></a>. Called once only
-the first time this application handler is invoked. This <strong>must</strong> be implemented
-by subclasses and <strong>must</strong> return a
-<a class="reference internal" href="#apps-wsgi-handlers"><em>wsgi application handler</em></a>.</p>
-</dd></dl>
-
-</dd></dl>
-
-</div>
 </div>
 <div class="section" id="module-pulsar.apps.wsgi.route">
-<span id="route-rules"></span><h1>Route rules<a class="headerlink" href="#module-pulsar.apps.wsgi.route" title="Permalink to this headline">¶</a></h1>
+<span id="route-rules"></span><h2>Route rules<a class="headerlink" href="#module-pulsar.apps.wsgi.route" title="Permalink to this headline">¶</a></h2>
 <p>Routing classes for managing urls.</p>
 <div class="admonition note">
 <p class="first admonition-title">Note</p>
@@ -367,7 +387,7 @@ module in <a class="reference external" href="https://github.com/mitsuhiko/werkz
 </pre></div>
 </div>
 <div class="section" id="route-decorator">
-<span id="apps-wsgi-route-decorator"></span><h2>Route decorator<a class="headerlink" href="#route-decorator" title="Permalink to this headline">¶</a></h2>
+<span id="apps-wsgi-route-decorator"></span><h3>Route decorator<a class="headerlink" href="#route-decorator" title="Permalink to this headline">¶</a></h3>
 <dl class="class">
 <dt id="pulsar.apps.wsgi.route.route">
 <em class="property">class </em><tt class="descclassname">pulsar.apps.wsgi.route.</tt><tt class="descname">route</tt><big>(</big><em>rule=None</em>, <em>method=None</em>, <em>defaults=None</em>, <em>**parameters</em><big>)</big><a class="headerlink" href="#pulsar.apps.wsgi.route.route" title="Permalink to this definition">¶</a></dt>
@@ -414,7 +434,7 @@ component.</li>
 
 </div>
 <div class="section" id="route">
-<span id="apps-wsgi-route"></span><h2>Route<a class="headerlink" href="#route" title="Permalink to this headline">¶</a></h2>
+<span id="apps-wsgi-route"></span><h3>Route<a class="headerlink" href="#route" title="Permalink to this headline">¶</a></h3>
 <dl class="class">
 <dt id="pulsar.apps.wsgi.route.Route">
 <em class="property">class </em><tt class="descclassname">pulsar.apps.wsgi.route.</tt><tt class="descname">Route</tt><big>(</big><em>rule</em>, <em>defaults=None</em><big>)</big><a class="reference internal" href="../../modules/pulsar/apps/wsgi/route.html#Route"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.wsgi.route.Route" title="Permalink to this definition">¶</a></dt>
@@ -484,6 +504,7 @@ the root route and <tt class="xref docutils literal"><span class="pre">None</spa
 
 </div>
 </div>
+</div>
 
 
           </div>
@@ -499,14 +520,17 @@ the root route and <tt class="xref docutils literal"><span class="pre">None</spa
   <ul>
 <li><a class="reference internal" href="#">WSGI application handlers</a><ul>
 <li><a class="reference internal" href="#wsgihandler">WsgiHandler</a></li>
+<li><a class="reference internal" href="#lazy-wsgi-handler">Lazy Wsgi Handler</a></li>
+<li><a class="reference internal" href="#wsgi-middleware">WSGI Middleware</a><ul>
 <li><a class="reference internal" href="#router">Router</a></li>
 <li><a class="reference internal" href="#media-router">Media Router</a></li>
-<li><a class="reference internal" href="#lazy-wsgi-handler">Lazy Wsgi Handler</a></li>
 </ul>
 </li>
 <li><a class="reference internal" href="#module-pulsar.apps.wsgi.route">Route rules</a><ul>
 <li><a class="reference internal" href="#route-decorator">Route decorator</a></li>
 <li><a class="reference internal" href="#route">Route</a></li>
+</ul>
+</li>
 </ul>
 </li>
 </ul>

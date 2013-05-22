@@ -6,13 +6,13 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>Protocols API &mdash; pulsar v0.5.0-beta.12 documentation</title>
+    <title>Protocols API &mdash; pulsar v0.5.1-beta.1 documentation</title>
     <link rel="stylesheet" href="../static/pulsar.css" type="text/css" />
     <link rel="stylesheet" href="../static/pygments.css" type="text/css" />
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../',
-        VERSION:     '0.5.0-beta.12',
+        VERSION:     '0.5.1-beta.1',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -22,7 +22,7 @@
     <script type="text/javascript" src="../static/underscore.js"></script>
     <script type="text/javascript" src="../static/doctools.js"></script>
     <link rel="shortcut icon" href="../static/Game_of_life_pulsar.gif"/>
-    <link rel="top" title="pulsar v0.5.0-beta.12 documentation" href="../index.html" />
+    <link rel="top" title="pulsar v0.5.1-beta.1 documentation" href="../index.html" />
     <link rel="up" title="API" href="index.html" />
     <link rel="next" title="Applications API" href="application.html" />
     <link rel="prev" title="Actors API" href="actor.html" /> 
@@ -44,7 +44,7 @@
         <li class="right" >
           <a href="actor.html" title="Actors API"
              accesskey="P">previous</a> |</li>
-        <li><a href="../index.html">pulsar v0.5.0-beta.12 documentation</a> &raquo;</li>
+        <li><a href="../index.html">pulsar v0.5.1-beta.1 documentation</a> &raquo;</li>
           <li><a href="index.html" accesskey="U">API</a> &raquo;</li> 
       </ul>
     </div>
@@ -53,7 +53,7 @@
     
         <p class="developmentversion">
         Documentation for pulsar's DEVELOPMENT version. Get the 
-        <a href="http://packages.python.org/pulsar/">release docs here</a>.
+        <a href="http://packages.python.org/pulsar/api/protocols.html">release docs here</a>.
         </p>
     
 </div>
@@ -675,6 +675,12 @@ start the response.</p>
 <tt class="descname">update_parameters</tt><big>(</big><em>parameter_list</em>, <em>params</em><big>)</big><a class="headerlink" href="#pulsar.Client.update_parameters" title="Permalink to this definition">¶</a></dt>
 <dd><p>Update <em>param</em> with attributes of this <a class="reference internal" href="#pulsar.Client" title="pulsar.Client"><tt class="xref py py-class docutils literal"><span class="pre">Client</span></tt></a> defined
 in <tt class="xref py py-attr docutils literal"><span class="pre">request_parameters</span></tt> tuple.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="pulsar.Client.close_connections">
+<tt class="descname">close_connections</tt><big>(</big><em>async=True</em><big>)</big><a class="headerlink" href="#pulsar.Client.close_connections" title="Permalink to this definition">¶</a></dt>
+<dd><p>Close all connections in each <a class="reference internal" href="#pulsar.Client.connection_pools" title="pulsar.Client.connection_pools"><tt class="xref py py-attr docutils literal"><span class="pre">connection_pools</span></tt></a>.</p>
 </dd></dl>
 
 <dl class="method">

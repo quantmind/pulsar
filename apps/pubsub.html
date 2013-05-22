@@ -6,13 +6,13 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>Publish/Subscribe &mdash; pulsar v0.5.0-beta.12 documentation</title>
+    <title>Publish/Subscribe &mdash; pulsar v0.5.1-beta.1 documentation</title>
     <link rel="stylesheet" href="../static/pulsar.css" type="text/css" />
     <link rel="stylesheet" href="../static/pygments.css" type="text/css" />
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../',
-        VERSION:     '0.5.0-beta.12',
+        VERSION:     '0.5.1-beta.1',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -22,8 +22,8 @@
     <script type="text/javascript" src="../static/underscore.js"></script>
     <script type="text/javascript" src="../static/doctools.js"></script>
     <link rel="shortcut icon" href="../static/Game_of_life_pulsar.gif"/>
-    <link rel="top" title="pulsar v0.5.0-beta.12 documentation" href="../index.html" />
-    <link rel="next" title="Django Application" href="pulse.html" />
+    <link rel="top" title="pulsar v0.5.1-beta.1 documentation" href="../index.html" />
+    <link rel="next" title="Twisted Integration" href="twisted.html" />
     <link rel="prev" title="WebSockets" href="websockets.html" /> 
   </head>
   <body>
@@ -38,12 +38,12 @@
           <a href="../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
         <li class="right" >
-          <a href="pulse.html" title="Django Application"
+          <a href="twisted.html" title="Twisted Integration"
              accesskey="N">next</a> |</li>
         <li class="right" >
           <a href="websockets.html" title="WebSockets"
              accesskey="P">previous</a> |</li>
-        <li><a href="../index.html">pulsar v0.5.0-beta.12 documentation</a> &raquo;</li> 
+        <li><a href="../index.html">pulsar v0.5.1-beta.1 documentation</a> &raquo;</li> 
       </ul>
     </div>
 <div class="deck">
@@ -51,7 +51,7 @@
     
         <p class="developmentversion">
         Documentation for pulsar's DEVELOPMENT version. Get the 
-        <a href="http://packages.python.org/pulsar/">release docs here</a>.
+        <a href="http://packages.python.org/pulsar/apps/pubsub.html">release docs here</a>.
         </p>
     
 </div>
@@ -89,12 +89,18 @@ to use. If not supplied, the default <tt class="docutils literal"><span class="p
 <h2>PubSub handler<a class="headerlink" href="#pubsub-handler" title="Permalink to this headline">¶</a></h2>
 <dl class="class">
 <dt id="pulsar.apps.pubsub.PubSub">
-<em class="property">class </em><tt class="descclassname">pulsar.apps.pubsub.</tt><tt class="descname">PubSub</tt><big>(</big><em>backend=None</em>, <em>**params</em><big>)</big><a class="reference internal" href="../modules/pulsar/apps/pubsub.html#PubSub"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.pubsub.PubSub" title="Permalink to this definition">¶</a></dt>
-<dd><p>Interface for Publish/Subscribe paradigm Backend.</p>
+<em class="property">class </em><tt class="descclassname">pulsar.apps.pubsub.</tt><tt class="descname">PubSub</tt><big>(</big><em>backend=None</em>, <em>encoder=None</em>, <em>**params</em><big>)</big><a class="reference internal" href="../modules/pulsar/apps/pubsub.html#PubSub"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.pubsub.PubSub" title="Permalink to this definition">¶</a></dt>
+<dd><p>Publish/Subscribe paradigm handler.</p>
 <dl class="attribute">
 <dt id="pulsar.apps.pubsub.PubSub.backend">
 <tt class="descname">backend</tt><a class="headerlink" href="#pulsar.apps.pubsub.PubSub.backend" title="Permalink to this definition">¶</a></dt>
 <dd><p>The <a class="reference internal" href="#pulsar.apps.pubsub.PubSubBackend" title="pulsar.apps.pubsub.PubSubBackend"><tt class="xref py py-class docutils literal"><span class="pre">PubSubBackend</span></tt></a> for this handler.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="pulsar.apps.pubsub.PubSub.encoder">
+<tt class="descname">encoder</tt><a class="headerlink" href="#pulsar.apps.pubsub.PubSub.encoder" title="Permalink to this definition">¶</a></dt>
+<dd><p>Optional callable which encode the messages before they are published.</p>
 </dd></dl>
 
 <dl class="attribute">
@@ -106,7 +112,7 @@ to use. If not supplied, the default <tt class="docutils literal"><span class="p
 <dl class="method">
 <dt id="pulsar.apps.pubsub.PubSub.add_client">
 <tt class="descname">add_client</tt><big>(</big><em>client</em><big>)</big><a class="reference internal" href="../modules/pulsar/apps/pubsub.html#PubSub.add_client"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.pubsub.PubSub.add_client" title="Permalink to this definition">¶</a></dt>
-<dd><p>Add a new <em>client</em> to the set of all <a class="reference internal" href="#pulsar.apps.pubsub.PubSub.clients" title="pulsar.apps.pubsub.PubSub.clients"><tt class="xref py py-attr docutils literal"><span class="pre">clients</span></tt></a>. Clients
+<dd><p>Add a new <tt class="docutils literal"><span class="pre">client</span></tt> to the set of all <a class="reference internal" href="#pulsar.apps.pubsub.PubSub.clients" title="pulsar.apps.pubsub.PubSub.clients"><tt class="xref py py-attr docutils literal"><span class="pre">clients</span></tt></a>. Clients
 must have the <tt class="docutils literal"><span class="pre">write</span></tt> method available. When a new message is received
 from the publisher, the <tt class="xref py py-meth docutils literal"><span class="pre">broadcast()</span></tt> method will notify all
 <a class="reference internal" href="#pulsar.apps.pubsub.PubSub.clients" title="pulsar.apps.pubsub.PubSub.clients"><tt class="xref py py-attr docutils literal"><span class="pre">clients</span></tt></a> via the <tt class="docutils literal"><span class="pre">write</span></tt> method.</p>
@@ -121,7 +127,9 @@ from the publisher, the <tt class="xref py py-meth docutils literal"><span class
 <dl class="method">
 <dt id="pulsar.apps.pubsub.PubSub.publish">
 <tt class="descname">publish</tt><big>(</big><em>channel</em>, <em>message</em><big>)</big><a class="reference internal" href="../modules/pulsar/apps/pubsub.html#PubSub.publish"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.pubsub.PubSub.publish" title="Permalink to this definition">¶</a></dt>
-<dd><p>Publish a <em>message</em>. Must be implemented by subclasses.</p>
+<dd><p>Publish a <tt class="docutils literal"><span class="pre">message</span></tt> to <tt class="docutils literal"><span class="pre">channel</span></tt>. It invokes the
+<a class="reference internal" href="#pulsar.apps.pubsub.PubSubBackend.publish" title="pulsar.apps.pubsub.PubSubBackend.publish"><tt class="xref py py-meth docutils literal"><span class="pre">PubSubBackend.publish()</span></tt></a> method after the message has been encoded
+via the <a class="reference internal" href="#pulsar.apps.pubsub.PubSub.encoder" title="pulsar.apps.pubsub.PubSub.encoder"><tt class="xref py py-attr docutils literal"><span class="pre">encoder</span></tt></a> callable (if available).</p>
 </dd></dl>
 
 <dl class="method">
@@ -144,13 +152,6 @@ implemented by subclasses.</p>
 <dd><p>Close connections</p>
 </dd></dl>
 
-<dl class="method">
-<dt id="pulsar.apps.pubsub.PubSub.encode">
-<tt class="descname">encode</tt><big>(</big><em>message</em><big>)</big><a class="reference internal" href="../modules/pulsar/apps/pubsub.html#PubSub.encode"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.pubsub.PubSub.encode" title="Permalink to this definition">¶</a></dt>
-<dd><p>Encode <em>message</em> before publishing it. By default it create a
-dictionary with a timestamp and the message and serialise it as json.</p>
-</dd></dl>
-
 </dd></dl>
 
 </div>
@@ -158,7 +159,7 @@ dictionary with a timestamp and the message and serialise it as json.</p>
 <h2>PubSub backend<a class="headerlink" href="#pubsub-backend" title="Permalink to this headline">¶</a></h2>
 <dl class="class">
 <dt id="pulsar.apps.pubsub.PubSubBackend">
-<em class="property">class </em><tt class="descclassname">pulsar.apps.pubsub.</tt><tt class="descname">PubSubBackend</tt><big>(</big><em>scheme</em>, <em>host=None</em>, <em>name=None</em>, <em>connection_string=None</em>, <em>**params</em><big>)</big><a class="headerlink" href="#pulsar.apps.pubsub.PubSubBackend" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><tt class="descclassname">pulsar.apps.pubsub.</tt><tt class="descname">PubSubBackend</tt><big>(</big><em>scheme</em>, <em>connection_string</em>, <em>name=None</em>, <em>**params</em><big>)</big><a class="headerlink" href="#pulsar.apps.pubsub.PubSubBackend" title="Permalink to this definition">¶</a></dt>
 <dd><p>Publish/Subscribe Backend interface.</p>
 <dl class="attribute">
 <dt id="pulsar.apps.pubsub.PubSubBackend.clients">
@@ -169,7 +170,7 @@ dictionary with a timestamp and the message and serialise it as json.</p>
 <dl class="method">
 <dt id="pulsar.apps.pubsub.PubSubBackend.add_client">
 <tt class="descname">add_client</tt><big>(</big><em>client</em><big>)</big><a class="headerlink" href="#pulsar.apps.pubsub.PubSubBackend.add_client" title="Permalink to this definition">¶</a></dt>
-<dd><p>Add a new <em>client</em> to the set of all <a class="reference internal" href="#pulsar.apps.pubsub.PubSubBackend.clients" title="pulsar.apps.pubsub.PubSubBackend.clients"><tt class="xref py py-attr docutils literal"><span class="pre">clients</span></tt></a>. Clients
+<dd><p>Add a new <tt class="docutils literal"><span class="pre">client</span></tt> to the set of all <a class="reference internal" href="#pulsar.apps.pubsub.PubSubBackend.clients" title="pulsar.apps.pubsub.PubSubBackend.clients"><tt class="xref py py-attr docutils literal"><span class="pre">clients</span></tt></a>. Clients
 must have the <tt class="docutils literal"><span class="pre">write</span></tt> method available. When a new message is received
 from the publisher, the <a class="reference internal" href="#pulsar.apps.pubsub.PubSubBackend.broadcast" title="pulsar.apps.pubsub.PubSubBackend.broadcast"><tt class="xref py py-meth docutils literal"><span class="pre">broadcast()</span></tt></a> method will notify all
 <a class="reference internal" href="#pulsar.apps.pubsub.PubSubBackend.clients" title="pulsar.apps.pubsub.PubSubBackend.clients"><tt class="xref py py-attr docutils literal"><span class="pre">clients</span></tt></a> via the <tt class="docutils literal"><span class="pre">write</span></tt> method.</p>
@@ -177,7 +178,7 @@ from the publisher, the <a class="reference internal" href="#pulsar.apps.pubsub.
 
 <dl class="method">
 <dt id="pulsar.apps.pubsub.PubSubBackend.broadcast">
-<tt class="descname">broadcast</tt><big>(</big><em>channels</em>, <em>message</em><big>)</big><a class="headerlink" href="#pulsar.apps.pubsub.PubSubBackend.broadcast" title="Permalink to this definition">¶</a></dt>
+<tt class="descname">broadcast</tt><big>(</big><em>channel</em>, <em>message</em><big>)</big><a class="headerlink" href="#pulsar.apps.pubsub.PubSubBackend.broadcast" title="Permalink to this definition">¶</a></dt>
 <dd><p>Broadcast <tt class="docutils literal"><span class="pre">message</span></tt> to all <a class="reference internal" href="#pulsar.apps.pubsub.PubSubBackend.clients" title="pulsar.apps.pubsub.PubSubBackend.clients"><tt class="xref py py-attr docutils literal"><span class="pre">clients</span></tt></a>.</p>
 </dd></dl>
 
@@ -202,7 +203,8 @@ from the publisher, the <a class="reference internal" href="#pulsar.apps.pubsub.
 <dl class="method">
 <dt id="pulsar.apps.pubsub.PubSubBackend.publish">
 <tt class="descname">publish</tt><big>(</big><em>channel</em>, <em>message</em><big>)</big><a class="headerlink" href="#pulsar.apps.pubsub.PubSubBackend.publish" title="Permalink to this definition">¶</a></dt>
-<dd><p>Publish a <em>message</em>. Must be implemented by subclasses.</p>
+<dd><p>Publish a <tt class="docutils literal"><span class="pre">message</span></tt> into <tt class="docutils literal"><span class="pre">channel</span></tt>. Must be implemented
+by subclasses.</p>
 </dd></dl>
 
 <dl class="method">
@@ -253,8 +255,8 @@ implemented by subclasses.</p>
   <p class="topless"><a href="websockets.html"
                         title="previous chapter">WebSockets</a></p>
   <h4>Next topic</h4>
-  <p class="topless"><a href="pulse.html"
-                        title="next chapter">Django Application</a></p>
+  <p class="topless"><a href="twisted.html"
+                        title="next chapter">Twisted Integration</a></p>
   <h3>This Page</h3>
   <ul class="this-page-menu">
     <li><a href="../sources/apps/pubsub.txt"

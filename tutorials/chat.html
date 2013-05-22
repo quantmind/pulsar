@@ -6,13 +6,13 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>Websocket Chat Server &mdash; pulsar v0.5.0-beta.12 documentation</title>
+    <title>Websocket Chat Server &mdash; pulsar v0.5.1-beta.1 documentation</title>
     <link rel="stylesheet" href="../static/pulsar.css" type="text/css" />
     <link rel="stylesheet" href="../static/pygments.css" type="text/css" />
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../',
-        VERSION:     '0.5.0-beta.12',
+        VERSION:     '0.5.1-beta.1',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -22,7 +22,7 @@
     <script type="text/javascript" src="../static/underscore.js"></script>
     <script type="text/javascript" src="../static/doctools.js"></script>
     <link rel="shortcut icon" href="../static/Game_of_life_pulsar.gif"/>
-    <link rel="top" title="pulsar v0.5.0-beta.12 documentation" href="../index.html" />
+    <link rel="top" title="pulsar v0.5.1-beta.1 documentation" href="../index.html" />
     <link rel="up" title="Tutorials &amp; Topics" href="index.html" />
     <link rel="next" title="A Task Queue with a JSON-RPC Api" href="taskqueue.html" />
     <link rel="prev" title="JSON-RPC Calculator" href="calculator.html" /> 
@@ -44,7 +44,7 @@
         <li class="right" >
           <a href="calculator.html" title="JSON-RPC Calculator"
              accesskey="P">previous</a> |</li>
-        <li><a href="../index.html">pulsar v0.5.0-beta.12 documentation</a> &raquo;</li>
+        <li><a href="../index.html">pulsar v0.5.1-beta.1 documentation</a> &raquo;</li>
           <li><a href="index.html" accesskey="U">Tutorials &amp; Topics</a> &raquo;</li> 
       </ul>
     </div>
@@ -53,7 +53,7 @@
     
         <p class="developmentversion">
         Documentation for pulsar's DEVELOPMENT version. Get the 
-        <a href="http://packages.python.org/pulsar/">release docs here</a>.
+        <a href="http://packages.python.org/pulsar/tutorials/chat.html">release docs here</a>.
         </p>
     
 </div>
@@ -69,7 +69,7 @@
 <span id="tutorials-chat"></span><h1>Websocket Chat Server<a class="headerlink" href="#websocket-chat-server" title="Permalink to this headline">¶</a></h1>
 <p>The code for this example is located in the <a class="reference internal" href="#module-examples.chat.manage" title="examples.chat.manage"><tt class="xref py py-mod docutils literal"><span class="pre">examples.chat.manage</span></tt></a> module.</p>
 <span class="target" id="module-examples.chat.manage"></span><p>A web-based chat application, it exposes three different
-<a class="reference internal" href="../apps/wsgi/handlers.html#apps-wsgi-handlers"><em>wsgi handlers</em></a>:</p>
+<a class="reference internal" href="../apps/wsgi/handlers.html#wsgi-handlers"><em>wsgi handlers</em></a>:</p>
 <ul class="simple">
 <li>A <a class="reference internal" href="../apps/wsgi/handlers.html#pulsar.apps.wsgi.handlers.Router" title="pulsar.apps.wsgi.handlers.Router"><tt class="xref py py-class docutils literal"><span class="pre">pulsar.apps.wsgi.handlers.Router</span></tt></a> to render the web page</li>
 <li>A <a class="reference internal" href="../apps/websockets.html#pulsar.apps.ws.WebSocket" title="pulsar.apps.ws.WebSocket"><tt class="xref py py-class docutils literal"><span class="pre">pulsar.apps.ws.WebSocket</span></tt></a> with the <a class="reference internal" href="#examples.chat.manage.Chat" title="examples.chat.manage.Chat"><tt class="xref py py-class docutils literal"><span class="pre">Chat</span></tt></a> handler</li>
@@ -94,11 +94,19 @@ for exposing a <a class="reference internal" href="../apps/rpc.html#apps-rpc"><e
 <em class="property">class </em><tt class="descclassname">examples.chat.manage.</tt><tt class="descname">Chat</tt><big>(</big><em>pubsub</em><big>)</big><a class="reference internal" href="../modules/examples/chat/manage.html#Chat"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#examples.chat.manage.Chat" title="Permalink to this definition">¶</a></dt>
 <dd><p>The websocket handler (<a class="reference internal" href="../apps/websockets.html#pulsar.apps.ws.WS" title="pulsar.apps.ws.WS"><tt class="xref py py-class docutils literal"><span class="pre">pulsar.apps.ws.WS</span></tt></a>) managing the chat
 application.</p>
+<dl class="attribute">
+<dt id="examples.chat.manage.Chat.pubsub">
+<tt class="descname">pubsub</tt><a class="headerlink" href="#examples.chat.manage.Chat.pubsub" title="Permalink to this definition">¶</a></dt>
+<dd><p>The <a class="reference internal" href="../apps/pubsub.html#apps-pubsub"><em>publish/subscribe handler</em></a> created by the wsgi
+application in the <a class="reference internal" href="#examples.chat.manage.WebChat.setup" title="examples.chat.manage.WebChat.setup"><tt class="xref py py-meth docutils literal"><span class="pre">WebChat.setup()</span></tt></a> method.</p>
+</dd></dl>
+
 <dl class="method">
 <dt id="examples.chat.manage.Chat.on_open">
 <tt class="descname">on_open</tt><big>(</big><em>request</em><big>)</big><a class="reference internal" href="../modules/examples/chat/manage.html#Chat.on_open"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#examples.chat.manage.Chat.on_open" title="Permalink to this definition">¶</a></dt>
-<dd><p>When a new websocket connection is established it add connection
-to the set of clients listening for messages.</p>
+<dd><p>When a new websocket connection is established it creates a
+<a class="reference internal" href="../apps/pubsub.html#apps-pubsub"><em>publish/subscribe</em></a> client and adds it to the set
+of clients of the <a class="reference internal" href="#examples.chat.manage.Chat.pubsub" title="examples.chat.manage.Chat.pubsub"><tt class="xref py py-attr docutils literal"><span class="pre">pubsub</span></tt></a> handler.</p>
 </dd></dl>
 
 <dl class="method">
@@ -116,6 +124,22 @@ to the set of clients listening for messages.</p>
 <dt id="examples.chat.manage.Rpc.rpc_message">
 <tt class="descname">rpc_message</tt><big>(</big><em>request</em>, <em>message</em><big>)</big><a class="reference internal" href="../modules/examples/chat/manage.html#Rpc.rpc_message"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#examples.chat.manage.Rpc.rpc_message" title="Permalink to this definition">¶</a></dt>
 <dd><p>Publish a message via JSON-RPC</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="examples.chat.manage.WebChat">
+<em class="property">class </em><tt class="descclassname">examples.chat.manage.</tt><tt class="descname">WebChat</tt><a class="reference internal" href="../modules/examples/chat/manage.html#WebChat"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#examples.chat.manage.WebChat" title="Permalink to this definition">¶</a></dt>
+<dd><p>This is the <a class="reference internal" href="../apps/wsgi/handlers.html#wsgi-handlers"><em>wsgi application</em></a> for this
+web-chat example.</p>
+<dl class="method">
+<dt id="examples.chat.manage.WebChat.setup">
+<tt class="descname">setup</tt><big>(</big><big>)</big><a class="reference internal" href="../modules/examples/chat/manage.html#WebChat.setup"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#examples.chat.manage.WebChat.setup" title="Permalink to this definition">¶</a></dt>
+<dd><p>This method is called once only to setup the WSGI application
+handler as described in <a class="reference internal" href="../apps/wsgi/handlers.html#wsgi-lazy-handler"><em>lazy wsgi handler</em></a>
+section. It creates a <a class="reference internal" href="../apps/pubsub.html#apps-pubsub"><em>publish/subscribe handler</em></a>
+and subscribe it to the <tt class="docutils literal"><span class="pre">webchat</span></tt> channel.</p>
 </dd></dl>
 
 </dd></dl>

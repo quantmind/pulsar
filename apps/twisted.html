@@ -6,13 +6,13 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>Twisted Integration &mdash; pulsar v0.5.0-beta.12 documentation</title>
+    <title>Twisted Integration &mdash; pulsar v0.5.1-beta.1 documentation</title>
     <link rel="stylesheet" href="../static/pulsar.css" type="text/css" />
     <link rel="stylesheet" href="../static/pygments.css" type="text/css" />
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../',
-        VERSION:     '0.5.0-beta.12',
+        VERSION:     '0.5.1-beta.1',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -22,10 +22,9 @@
     <script type="text/javascript" src="../static/underscore.js"></script>
     <script type="text/javascript" src="../static/doctools.js"></script>
     <link rel="shortcut icon" href="../static/Game_of_life_pulsar.gif"/>
-    <link rel="top" title="pulsar v0.5.0-beta.12 documentation" href="../index.html" />
-    <link rel="up" title="Tutorials &amp; Topics" href="index.html" />
-    <link rel="next" title="Synchronous Clients" href="sync.html" />
-    <link rel="prev" title="Signal Handling" href="signal.html" /> 
+    <link rel="top" title="pulsar v0.5.1-beta.1 documentation" href="../index.html" />
+    <link rel="next" title="Django Application" href="pulse.html" />
+    <link rel="prev" title="Publish/Subscribe" href="pubsub.html" /> 
   </head>
   <body>
 
@@ -39,13 +38,12 @@
           <a href="../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
         <li class="right" >
-          <a href="sync.html" title="Synchronous Clients"
+          <a href="pulse.html" title="Django Application"
              accesskey="N">next</a> |</li>
         <li class="right" >
-          <a href="signal.html" title="Signal Handling"
+          <a href="pubsub.html" title="Publish/Subscribe"
              accesskey="P">previous</a> |</li>
-        <li><a href="../index.html">pulsar v0.5.0-beta.12 documentation</a> &raquo;</li>
-          <li><a href="index.html" accesskey="U">Tutorials &amp; Topics</a> &raquo;</li> 
+        <li><a href="../index.html">pulsar v0.5.1-beta.1 documentation</a> &raquo;</li> 
       </ul>
     </div>
 <div class="deck">
@@ -53,7 +51,7 @@
     
         <p class="developmentversion">
         Documentation for pulsar's DEVELOPMENT version. Get the 
-        <a href="http://packages.python.org/pulsar/">release docs here</a>.
+        <a href="http://packages.python.org/pulsar/apps/twisted.html">release docs here</a>.
         </p>
     
 </div>
@@ -65,12 +63,15 @@
         <div class="bodywrapper">
           <div class="body">
             
-  <div class="section" id="module-pulsar.lib.tx">
-<span id="twisted-integration"></span><span id="tutorials-twisted"></span><h1>Twisted Integration<a class="headerlink" href="#module-pulsar.lib.tx" title="Permalink to this headline">¶</a></h1>
+  <div class="section" id="module-pulsar.apps.tx">
+<span id="twisted-integration"></span><span id="tutorials-twisted"></span><h1>Twisted Integration<a class="headerlink" href="#module-pulsar.apps.tx" title="Permalink to this headline">¶</a></h1>
 <p>Pulsar concurrent framework and applications can be used with <a class="reference external" href="http://twistedmatrix.com/">twisted</a>, an
 event driven network engine for python. Twisted has implementation
 for several protocols which can be used in pulsar by importing the
-<a class="reference internal" href="#module-pulsar.lib.tx" title="pulsar.lib.tx"><tt class="xref py py-mod docutils literal"><span class="pre">pulsar.lib.tx</span></tt></a> module.</p>
+<a class="reference internal" href="#module-pulsar.apps.tx" title="pulsar.apps.tx"><tt class="xref py py-mod docutils literal"><span class="pre">pulsar.apps.tx</span></tt></a> module:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="kn">from</span> <span class="nn">pulsar.apps.tx</span> <span class="kn">import</span> <span class="n">twisted</span>
+</pre></div>
+</div>
 <p>The implementation replaces the twisted reactor with a proxy for
 <a class="reference internal" href="../api/async.html#pulsar.EventLoop" title="pulsar.EventLoop"><tt class="xref py py-class docutils literal"><span class="pre">pulsar.EventLoop</span></tt></a>.
 Twisted Deferred and Failures are made compatible with pulsar
@@ -81,8 +82,8 @@ twisted implementation is switched off.</p>
 <div class="section" id="pulsar-reactor">
 <h2>Pulsar Reactor<a class="headerlink" href="#pulsar-reactor" title="Permalink to this headline">¶</a></h2>
 <dl class="class">
-<dt id="pulsar.lib.tx.PulsarReactor">
-<em class="property">class </em><tt class="descclassname">pulsar.lib.tx.</tt><tt class="descname">PulsarReactor</tt><a class="reference internal" href="../modules/pulsar/lib/tx.html#PulsarReactor"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.lib.tx.PulsarReactor" title="Permalink to this definition">¶</a></dt>
+<dt id="pulsar.apps.tx.PulsarReactor">
+<em class="property">class </em><tt class="descclassname">pulsar.apps.tx.</tt><tt class="descname">PulsarReactor</tt><a class="reference internal" href="../modules/pulsar/apps/tx.html#PulsarReactor"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.tx.PulsarReactor" title="Permalink to this definition">¶</a></dt>
 <dd><p>A twisted reactor which acts as a proxy to pulsar eventloop.</p>
 </dd></dl>
 
@@ -108,14 +109,14 @@ twisted implementation is switched off.</p>
 </ul>
 
   <h4>Previous topic</h4>
-  <p class="topless"><a href="signal.html"
-                        title="previous chapter">Signal Handling</a></p>
+  <p class="topless"><a href="pubsub.html"
+                        title="previous chapter">Publish/Subscribe</a></p>
   <h4>Next topic</h4>
-  <p class="topless"><a href="sync.html"
-                        title="next chapter">Synchronous Clients</a></p>
+  <p class="topless"><a href="pulse.html"
+                        title="next chapter">Django Application</a></p>
   <h3>This Page</h3>
   <ul class="this-page-menu">
-    <li><a href="../sources/tutorials/twisted.txt"
+    <li><a href="../sources/apps/twisted.txt"
            rel="nofollow">Show Source</a></li>
   </ul>
 <div id="searchbox" style="display: none">

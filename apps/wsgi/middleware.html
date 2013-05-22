@@ -6,13 +6,13 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>Middleware &mdash; pulsar v0.5.0-beta.12 documentation</title>
+    <title>Middleware &mdash; pulsar v0.5.1-beta.1 documentation</title>
     <link rel="stylesheet" href="../../static/pulsar.css" type="text/css" />
     <link rel="stylesheet" href="../../static/pygments.css" type="text/css" />
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../',
-        VERSION:     '0.5.0-beta.12',
+        VERSION:     '0.5.1-beta.1',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -22,7 +22,7 @@
     <script type="text/javascript" src="../../static/underscore.js"></script>
     <script type="text/javascript" src="../../static/doctools.js"></script>
     <link rel="shortcut icon" href="../../static/Game_of_life_pulsar.gif"/>
-    <link rel="top" title="pulsar v0.5.0-beta.12 documentation" href="../../index.html" />
+    <link rel="top" title="pulsar v0.5.1-beta.1 documentation" href="../../index.html" />
     <link rel="up" title="WSGI" href="index.html" />
     <link rel="next" title="Utilities" href="tools.html" />
     <link rel="prev" title="Asynchronous Content" href="content.html" /> 
@@ -44,7 +44,7 @@
         <li class="right" >
           <a href="content.html" title="Asynchronous Content"
              accesskey="P">previous</a> |</li>
-        <li><a href="../../index.html">pulsar v0.5.0-beta.12 documentation</a> &raquo;</li>
+        <li><a href="../../index.html">pulsar v0.5.1-beta.1 documentation</a> &raquo;</li>
           <li><a href="index.html" accesskey="U">WSGI</a> &raquo;</li> 
       </ul>
     </div>
@@ -53,7 +53,7 @@
     
         <p class="developmentversion">
         Documentation for pulsar's DEVELOPMENT version. Get the 
-        <a href="http://packages.python.org/pulsar/">release docs here</a>.
+        <a href="http://packages.python.org/pulsar/apps/wsgi/middleware.html">release docs here</a>.
         </p>
     
 </div>
@@ -73,8 +73,9 @@ It also introduces the <strong>Response middlewares</strong> implemented as a su
 <a class="reference internal" href="#pulsar.apps.wsgi.middleware.ResponseMiddleware" title="pulsar.apps.wsgi.middleware.ResponseMiddleware"><tt class="xref py py-class docutils literal"><span class="pre">ResponseMiddleware</span></tt></a>. Response middlewares are used by the
 <a class="reference internal" href="wrappers.html#pulsar.apps.wsgi.wrappers.WsgiResponse" title="pulsar.apps.wsgi.wrappers.WsgiResponse"><tt class="xref py py-class docutils literal"><span class="pre">pulsar.apps.wsgi.wrappers.WsgiResponse</span></tt></a> to modify/add headers and
 manipulate content.</p>
-<div class="section" id="wsgi-middlewares">
-<h2>WSGI Middlewares<a class="headerlink" href="#wsgi-middlewares" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="additional-wsgi-middlewares">
+<span id="wsgi-additional-middleware"></span><h2>Additional WSGI Middlewares<a class="headerlink" href="#additional-wsgi-middlewares" title="Permalink to this headline">¶</a></h2>
+<p>Several <a class="reference internal" href="handlers.html#wsgi-middleware"><em>wsgi middleware</em></a> useful in several applications.</p>
 <div class="section" id="clean-path">
 <h3>clean path<a class="headerlink" href="#clean-path" title="Permalink to this headline">¶</a></h3>
 <dl class="function">
@@ -109,7 +110,11 @@ function.</p>
 </div>
 </div>
 <div class="section" id="response-middlewares">
-<h2>Response Middlewares<a class="headerlink" href="#response-middlewares" title="Permalink to this headline">¶</a></h2>
+<span id="wsgi-response-middleware"></span><h2>Response Middlewares<a class="headerlink" href="#response-middlewares" title="Permalink to this headline">¶</a></h2>
+<p>Response middleware are callable objects which can be used in conjunction
+with pulsar <a class="reference internal" href="handlers.html#wsgi-handlers"><em>application handlers</em></a>. They must return
+a <a class="reference internal" href="wrappers.html#wsgi-response"><em>WsgiResponse</em></a> which can be the same as
+the one passed to the callable or a brand new one.</p>
 <div class="section" id="interface">
 <h3>Interface<a class="headerlink" href="#interface" title="Permalink to this headline">¶</a></h3>
 <dl class="class">
@@ -178,7 +183,7 @@ allows gzip compression. It sets the Vary header accordingly.</p>
   <h3><a href="../../index.html">Table Of Contents</a></h3>
   <ul>
 <li><a class="reference internal" href="#">Middleware</a><ul>
-<li><a class="reference internal" href="#wsgi-middlewares">WSGI Middlewares</a><ul>
+<li><a class="reference internal" href="#additional-wsgi-middlewares">Additional WSGI Middlewares</a><ul>
 <li><a class="reference internal" href="#clean-path">clean path</a></li>
 <li><a class="reference internal" href="#cookie">cookie</a></li>
 <li><a class="reference internal" href="#authorization">authorization</a></li>

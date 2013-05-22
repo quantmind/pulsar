@@ -6,13 +6,13 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>Settings &mdash; pulsar v0.5.0-beta.12 documentation</title>
+    <title>Settings &mdash; pulsar v0.5.1-beta.1 documentation</title>
     <link rel="stylesheet" href="static/pulsar.css" type="text/css" />
     <link rel="stylesheet" href="static/pygments.css" type="text/css" />
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '',
-        VERSION:     '0.5.0-beta.12',
+        VERSION:     '0.5.1-beta.1',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -22,7 +22,7 @@
     <script type="text/javascript" src="static/underscore.js"></script>
     <script type="text/javascript" src="static/doctools.js"></script>
     <link rel="shortcut icon" href="static/Game_of_life_pulsar.gif"/>
-    <link rel="top" title="pulsar v0.5.0-beta.12 documentation" href="index.html" />
+    <link rel="top" title="pulsar v0.5.1-beta.1 documentation" href="index.html" />
     <link rel="next" title="Socket Servers" href="apps/socket.html" />
     <link rel="prev" title="Changelog" href="changelog.html" /> 
   </head>
@@ -43,7 +43,7 @@
         <li class="right" >
           <a href="changelog.html" title="Changelog"
              accesskey="P">previous</a> |</li>
-        <li><a href="index.html">pulsar v0.5.0-beta.12 documentation</a> &raquo;</li> 
+        <li><a href="index.html">pulsar v0.5.1-beta.1 documentation</a> &raquo;</li> 
       </ul>
     </div>
 <div class="deck">
@@ -51,7 +51,7 @@
     
         <p class="developmentversion">
         Documentation for pulsar's DEVELOPMENT version. Get the 
-        <a href="http://packages.python.org/pulsar/">release docs here</a>.
+        <a href="http://packages.python.org/pulsar/settings.html">release docs here</a>.
         </p>
     
 </div>
@@ -73,10 +73,8 @@ of configuration parameters with the only exception of the
 <a class="reference internal" href="#setting-section-global-server-settings"><em>global server settings</em></a>.</p>
 <div class="section" id="global-server-settings">
 <span id="setting-section-global-server-settings"></span><h2>Global Server Settings<a class="headerlink" href="#global-server-settings" title="Permalink to this headline">¶</a></h2>
-<p>These settings are shared by the arbiter as well as all pulsar workers. They
-set global settings the debug mode,
-the proxy server to use when making HTTP requests, and server specific
-configuration parameters.</p>
+<p>These settings are global in the sense that they are used by the arbiter
+as well as all pulsar workers. They are server configuration parameters.</p>
 <div class="section" id="config">
 <span id="setting-config"></span><h3>config<a class="headerlink" href="#config" title="Permalink to this headline">¶</a></h3>
 <p><em>Command line</em>: <tt class="docutils literal"><span class="pre">-c</span></tt>, <tt class="docutils literal"><span class="pre">--config</span></tt></p>
@@ -192,7 +190,7 @@ module.</p>
 </div>
 <div class="section" id="worker-processes">
 <span id="setting-section-worker-processes"></span><h2>Worker Processes<a class="headerlink" href="#worker-processes" title="Permalink to this headline">¶</a></h2>
-<p>This group of configuration parameters control the number of actors performing
+<p>This group of configuration parameters control the number of actors
 for a given <a class="reference internal" href="api/actor.html#pulsar.Monitor" title="pulsar.Monitor"><tt class="xref py py-class docutils literal"><span class="pre">pulsar.Monitor</span></tt></a>, the type of concurreny of the server and
 other actor-specific parameters.</p>
 <div class="section" id="workers">
@@ -225,13 +223,12 @@ restarts are disabled.</p>
 <span id="setting-backlog"></span><h3>backlog<a class="headerlink" href="#backlog" title="Permalink to this headline">¶</a></h3>
 <p><em>Command line</em>: <tt class="docutils literal"><span class="pre">--backlog</span></tt></p>
 <p><em>Default</em>: <tt class="docutils literal"><span class="pre">2048</span></tt></p>
-<p>The maximum number of concurrent requests.</p>
+<p>The maximum number of queued connections in a socket.</p>
 <p>This refers to the number of clients that can be waiting to be served.
 Exceeding this number results in the client getting an error when
 attempting to connect. It should only affect servers under significant
 load.
-Must be a positive integer. Generally set in the 64-2048 range for
-socket servers, 5-10 for task-queue servers.</p>
+Must be a positive integer. Generally set in the 64-2048 range.</p>
 </div>
 <div class="section" id="timeout">
 <span id="setting-timeout"></span><h3>timeout<a class="headerlink" href="#timeout" title="Permalink to this headline">¶</a></h3>
@@ -316,6 +313,17 @@ open.</p>
 <p>This section covers configuration parameters used by CPU bound type applications
 such as the <a class="reference internal" href="apps/tasks/index.html#apps-taskqueue"><em>distributed task queue</em></a> and the
 <a class="reference internal" href="apps/test.html#apps-test"><em>test suite</em></a>.</p>
+<div class="section" id="concurrent-tasks">
+<span id="setting-concurrent-tasks"></span><h3>concurrent_tasks<a class="headerlink" href="#concurrent-tasks" title="Permalink to this headline">¶</a></h3>
+<p><em>Application namespace</em>: <tt class="docutils literal"><span class="pre">tasks</span></tt></p>
+<p><em>Command line</em>: <tt class="docutils literal"><span class="pre">--concurrent-tasks</span></tt></p>
+<p><em>Default</em>: <tt class="docutils literal"><span class="pre">5</span></tt></p>
+<p>The maximum number of concurrent tasks for a worker.</p>
+<p>When a task worker reach this number it stops polling for more tasks
+until one or more task finish. It should only affect task queues under
+significant load.
+Must be a positive integer. Generally set in the range of 5-10.</p>
+</div>
 <div class="section" id="task-backend">
 <span id="setting-task-backend"></span><h3>task_backend<a class="headerlink" href="#task-backend" title="Permalink to this headline">¶</a></h3>
 <p><em>Application namespace</em>: <tt class="docutils literal"><span class="pre">tasks</span></tt></p>
@@ -459,6 +467,7 @@ used as default by <a class="reference internal" href="#setting-section-applicat
 </ul>
 </li>
 <li><a class="reference internal" href="#task-consumer">Task Consumer</a><ul>
+<li><a class="reference internal" href="#concurrent-tasks">concurrent_tasks</a></li>
 <li><a class="reference internal" href="#task-backend">task_backend</a></li>
 <li><a class="reference internal" href="#task-paths">task_paths</a></li>
 <li><a class="reference internal" href="#schedule-periodic">schedule_periodic</a></li>

@@ -6,13 +6,13 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>examples.chat.manage &mdash; pulsar v0.5.0-beta.12 documentation</title>
+    <title>examples.chat.manage &mdash; pulsar v0.5.1-beta.1 documentation</title>
     <link rel="stylesheet" href="../../../static/pulsar.css" type="text/css" />
     <link rel="stylesheet" href="../../../static/pygments.css" type="text/css" />
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../../',
-        VERSION:     '0.5.0-beta.12',
+        VERSION:     '0.5.1-beta.1',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -22,7 +22,7 @@
     <script type="text/javascript" src="../../../static/underscore.js"></script>
     <script type="text/javascript" src="../../../static/doctools.js"></script>
     <link rel="shortcut icon" href="../../../static/Game_of_life_pulsar.gif"/>
-    <link rel="top" title="pulsar v0.5.0-beta.12 documentation" href="../../../index.html" />
+    <link rel="top" title="pulsar v0.5.1-beta.1 documentation" href="../../../index.html" />
     <link rel="up" title="Module code" href="../../index.html" /> 
   </head>
   <body>
@@ -36,7 +36,7 @@
         <li class="right" >
           <a href="../../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li><a href="../../../index.html">pulsar v0.5.0-beta.12 documentation</a> &raquo;</li>
+        <li><a href="../../../index.html">pulsar v0.5.1-beta.1 documentation</a> &raquo;</li>
           <li><a href="../../index.html" accesskey="U">Module code</a> &raquo;</li> 
       </ul>
     </div>
@@ -45,7 +45,7 @@
     
         <p class="developmentversion">
         Documentation for pulsar's DEVELOPMENT version. Get the 
-        <a href="http://packages.python.org/pulsar/">release docs here</a>.
+        <a href="http://packages.python.org/pulsar/modules/examples/chat/manage.html">release docs here</a>.
         </p>
     
 </div>
@@ -122,25 +122,25 @@
                 <span class="n">pubsub</span><span class="o">.</span><span class="n">publish</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
 
 </div></div>
-<span class="k">class</span> <span class="nc">WebChat</span><span class="p">(</span><span class="n">wsgi</span><span class="o">.</span><span class="n">LazyWsgi</span><span class="p">):</span>
+<div class="viewcode-block" id="WebChat"><a class="viewcode-back" href="../../../tutorials/chat.html#examples.chat.manage.WebChat">[docs]</a><span class="k">class</span> <span class="nc">WebChat</span><span class="p">(</span><span class="n">wsgi</span><span class="o">.</span><span class="n">LazyWsgi</span><span class="p">):</span>
     
     <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="n">name</span>
         
-    <span class="k">def</span> <span class="nf">setup</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<div class="viewcode-block" id="WebChat.setup"><a class="viewcode-back" href="../../../tutorials/chat.html#examples.chat.manage.WebChat.setup">[docs]</a>    <span class="k">def</span> <span class="nf">setup</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="c"># Register a pubsub handler</span>
         <span class="n">pubsub</span><span class="o">.</span><span class="n">register_handler</span><span class="p">(</span><span class="n">pubsub</span><span class="o">.</span><span class="n">PulsarPubSub</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">))</span>
         <span class="k">return</span> <span class="n">wsgi</span><span class="o">.</span><span class="n">WsgiHandler</span><span class="p">([</span><span class="n">wsgi</span><span class="o">.</span><span class="n">Router</span><span class="p">(</span><span class="s">&#39;/&#39;</span><span class="p">,</span> <span class="n">get</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">home_page</span><span class="p">),</span>
                                  <span class="n">ws</span><span class="o">.</span><span class="n">WebSocket</span><span class="p">(</span><span class="s">&#39;/message&#39;</span><span class="p">,</span> <span class="n">Chat</span><span class="p">()),</span>
                                  <span class="n">wsgi</span><span class="o">.</span><span class="n">Router</span><span class="p">(</span><span class="s">&#39;/rpc&#39;</span><span class="p">,</span> <span class="n">post</span><span class="o">=</span><span class="n">Rpc</span><span class="p">())])</span>
-        
+        </div>
     <span class="k">def</span> <span class="nf">home_page</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">request</span><span class="p">):</span>
         <span class="n">data</span> <span class="o">=</span> <span class="nb">open</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">CHAT_DIR</span><span class="p">,</span> <span class="s">&#39;chat.html&#39;</span><span class="p">))</span><span class="o">.</span><span class="n">read</span><span class="p">()</span>
         <span class="n">request</span><span class="o">.</span><span class="n">response</span><span class="o">.</span><span class="n">content_type</span> <span class="o">=</span> <span class="s">&#39;text/html&#39;</span>
         <span class="n">request</span><span class="o">.</span><span class="n">response</span><span class="o">.</span><span class="n">content</span> <span class="o">=</span> <span class="n">data</span> <span class="o">%</span> <span class="n">request</span><span class="o">.</span><span class="n">environ</span>
         <span class="k">return</span> <span class="n">request</span><span class="o">.</span><span class="n">response</span><span class="o">.</span><span class="n">start</span><span class="p">()</span>
 
-
+</div>
 <span class="k">def</span> <span class="nf">server</span><span class="p">(</span><span class="nb">callable</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
     <span class="n">name</span> <span class="o">=</span> <span class="n">name</span> <span class="ow">or</span> <span class="s">&#39;webchat&#39;</span>
     <span class="n">chat</span> <span class="o">=</span> <span class="n">WebChat</span><span class="p">(</span><span class="n">name</span><span class="p">)</span>

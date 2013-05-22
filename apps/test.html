@@ -6,13 +6,13 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>Asynchronous Test Suite &mdash; pulsar v0.5.0-beta.12 documentation</title>
+    <title>Asynchronous Test Suite &mdash; pulsar v0.5.1-beta.1 documentation</title>
     <link rel="stylesheet" href="../static/pulsar.css" type="text/css" />
     <link rel="stylesheet" href="../static/pygments.css" type="text/css" />
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../',
-        VERSION:     '0.5.0-beta.12',
+        VERSION:     '0.5.1-beta.1',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -22,7 +22,7 @@
     <script type="text/javascript" src="../static/underscore.js"></script>
     <script type="text/javascript" src="../static/doctools.js"></script>
     <link rel="shortcut icon" href="../static/Game_of_life_pulsar.gif"/>
-    <link rel="top" title="pulsar v0.5.0-beta.12 documentation" href="../index.html" />
+    <link rel="top" title="pulsar v0.5.1-beta.1 documentation" href="../index.html" />
     <link rel="next" title="Asynchronous Shell" href="shell.html" />
     <link rel="prev" title="RPC" href="tasks/rpc.html" /> 
   </head>
@@ -43,7 +43,7 @@
         <li class="right" >
           <a href="tasks/rpc.html" title="RPC"
              accesskey="P">previous</a> |</li>
-        <li><a href="../index.html">pulsar v0.5.0-beta.12 documentation</a> &raquo;</li> 
+        <li><a href="../index.html">pulsar v0.5.1-beta.1 documentation</a> &raquo;</li> 
       </ul>
     </div>
 <div class="deck">
@@ -51,7 +51,7 @@
     
         <p class="developmentversion">
         Documentation for pulsar's DEVELOPMENT version. Get the 
-        <a href="http://packages.python.org/pulsar/">release docs here</a>.
+        <a href="http://packages.python.org/pulsar/apps/test.html">release docs here</a>.
         </p>
     
 </div>
@@ -110,8 +110,8 @@ called <tt class="docutils literal"><span class="pre">tests</span></tt> in the <
 When running a test, pulsar looks for two extra method: <tt class="docutils literal"><span class="pre">_pre_setup</span></tt> and
 <tt class="docutils literal"><span class="pre">_post_teardown</span></tt>. If the former is available, it is run just before the
 <tt class="docutils literal"><span class="pre">setUp</span></tt> method while if the latter is available, it is run
-just after the <tt class="docutils literal"><span class="pre">tearDown</span></tt> method. In addition if the <tt class="docutils literal"><span class="pre">setUpClass</span></tt>
-class methods is available, is run just before
+just after the <tt class="docutils literal"><span class="pre">tearDown</span></tt> method. In addition, if the <tt class="docutils literal"><span class="pre">setUpClass</span></tt>
+class methods is available, it is run just before
 all tests functions are run and the <tt class="docutils literal"><span class="pre">tearDownClass</span></tt>, if available, is run
 just after all tests functions are run.</p>
 <p>An example test case:</p>
@@ -198,7 +198,7 @@ for all tests in this entry. For example:</p>
 <p>All top level modules will be added to the python <tt class="docutils literal"><span class="pre">path</span></tt>.</p>
 </div>
 <div class="section" id="options">
-<h2>Options<a class="headerlink" href="#options" title="Permalink to this headline">¶</a></h2>
+<span id="test-suite-options"></span><h2>Options<a class="headerlink" href="#options" title="Permalink to this headline">¶</a></h2>
 <p>All standard <a class="reference internal" href="../settings.html#settings"><em>settings</em></a> can be applied to the test application.
 In addition, the following options are testsuite-specific:</p>
 <div class="section" id="sequential">
@@ -239,7 +239,9 @@ long a test function can wait for results. This is what the
 </div>
 <div class="section" id="plugins">
 <h2>Plugins<a class="headerlink" href="#plugins" title="Permalink to this headline">¶</a></h2>
-<p><tt class="xref py py-class docutils literal"><span class="pre">TestPlugins</span></tt> is a way to extend the test suite.
+<p>A <a class="reference internal" href="#pulsar.apps.test.TestPlugin" title="pulsar.apps.test.TestPlugin"><tt class="xref py py-class docutils literal"><span class="pre">TestPlugin</span></tt></a> is a way to extend the test suite with additional
+<a class="reference internal" href="#test-suite-options"><em>options</em></a> and behaviours implemented in
+the various plugin&#8217;s callbacks.
 There are two basic rules for plugins:</p>
 <ul class="simple">
 <li>Plugin classes should subclass <a class="reference internal" href="#pulsar.apps.test.TestPlugin" title="pulsar.apps.test.TestPlugin"><tt class="xref py py-class docutils literal"><span class="pre">TestPlugin</span></tt></a>.</li>
@@ -381,12 +383,14 @@ is passed by this function recursively.</li>
 <em class="property">class </em><tt class="descclassname">pulsar.apps.test.result.</tt><tt class="descname">Plugin</tt><a class="reference internal" href="../modules/pulsar/apps/test/result.html#Plugin"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.test.result.Plugin" title="Permalink to this definition">¶</a></dt>
 <dd><p>Interface for all classes which are part of of the <a class="reference internal" href="#pulsar.apps.test.result.TestRunner" title="pulsar.apps.test.result.TestRunner"><tt class="xref py py-class docutils literal"><span class="pre">TestRunner</span></tt></a>,
 including <a class="reference internal" href="#pulsar.apps.test.result.TestRunner" title="pulsar.apps.test.result.TestRunner"><tt class="xref py py-class docutils literal"><span class="pre">TestRunner</span></tt></a> itself, <tt class="xref py py-class docutils literal"><span class="pre">TestResult</span></tt>
-and <tt class="xref py py-class docutils literal"><span class="pre">TestPlugin</span></tt>.</p>
+and <a class="reference internal" href="#pulsar.apps.test.TestPlugin" title="pulsar.apps.test.TestPlugin"><tt class="xref py py-class docutils literal"><span class="pre">pulsar.apps.test.TestPlugin</span></tt></a>.</p>
 <dl class="method">
 <dt id="pulsar.apps.test.result.Plugin.configure">
 <tt class="descname">configure</tt><big>(</big><em>cfg</em><big>)</big><a class="reference internal" href="../modules/pulsar/apps/test/result.html#Plugin.configure"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.test.result.Plugin.configure" title="Permalink to this definition">¶</a></dt>
 <dd><p>Called once just after construction of
-a <a class="reference internal" href="#pulsar.apps.test.result.TestRunner" title="pulsar.apps.test.result.TestRunner"><tt class="xref py py-class docutils literal"><span class="pre">TestRunner</span></tt></a> and can be used to configure the <a class="reference internal" href="#pulsar.apps.test.result.Plugin" title="pulsar.apps.test.result.Plugin"><tt class="xref py py-class docutils literal"><span class="pre">Plugin</span></tt></a>.
+a <a class="reference internal" href="#pulsar.apps.test.result.TestRunner" title="pulsar.apps.test.result.TestRunner"><tt class="xref py py-class docutils literal"><span class="pre">TestRunner</span></tt></a> and therefore <strong>before any test class is loaded</strong>.
+This is a chance to configure the <a class="reference internal" href="#pulsar.apps.test.result.Plugin" title="pulsar.apps.test.result.Plugin"><tt class="xref py py-class docutils literal"><span class="pre">Plugin</span></tt></a> or global variables
+which may affect the way tests are run.
 If it returns something other than <tt class="xref docutils literal"><span class="pre">None</span></tt> (for example an abort message)
 it will stop the configuration of all subsequent plugins and quit the test.</p>
 <table class="docutils field-list" frame="void" rules="none">
@@ -404,7 +408,8 @@ it will stop the configuration of all subsequent plugins and quit the test.</p>
 <dl class="method">
 <dt id="pulsar.apps.test.result.Plugin.on_start">
 <tt class="descname">on_start</tt><big>(</big><big>)</big><a class="reference internal" href="../modules/pulsar/apps/test/result.html#Plugin.on_start"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.test.result.Plugin.on_start" title="Permalink to this definition">¶</a></dt>
-<dd><p>Called once by <tt class="xref py py-class docutils literal"><span class="pre">TestSuite</span></tt> just before it starts running tests.</p>
+<dd><p>Called once by <tt class="xref py py-class docutils literal"><span class="pre">TestSuite</span></tt> after all tests are loaded but
+but before it starts running them.</p>
 </dd></dl>
 
 <dl class="method">
@@ -414,17 +419,24 @@ it will stop the configuration of all subsequent plugins and quit the test.</p>
 </dd></dl>
 
 <dl class="method">
+<dt id="pulsar.apps.test.result.Plugin.loadTestsFromTestCase">
+<tt class="descname">loadTestsFromTestCase</tt><big>(</big><em>test_class</em><big>)</big><a class="reference internal" href="../modules/pulsar/apps/test/result.html#Plugin.loadTestsFromTestCase"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.test.result.Plugin.loadTestsFromTestCase" title="Permalink to this definition">¶</a></dt>
+<dd><p>Called just before a <tt class="docutils literal"><span class="pre">test_class</span></tt> executes all its test
+methods. This is run just before <tt class="docutils literal"><span class="pre">setUpClass</span></tt> method.</p>
+</dd></dl>
+
+<dl class="method">
 <dt id="pulsar.apps.test.result.Plugin.startTest">
 <tt class="descname">startTest</tt><big>(</big><em>test</em><big>)</big><a class="reference internal" href="../modules/pulsar/apps/test/result.html#Plugin.startTest"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.test.result.Plugin.startTest" title="Permalink to this definition">¶</a></dt>
-<dd><p>Called just before a <em>test</em> is executed. This is run
-just before _pre_setup function.</p>
+<dd><p>Called just before a <tt class="docutils literal"><span class="pre">test</span></tt> function is executed. This is run
+just before <tt class="docutils literal"><span class="pre">_pre_setup</span></tt> method.</p>
 </dd></dl>
 
 <dl class="method">
 <dt id="pulsar.apps.test.result.Plugin.stopTest">
 <tt class="descname">stopTest</tt><big>(</big><em>test</em><big>)</big><a class="reference internal" href="../modules/pulsar/apps/test/result.html#Plugin.stopTest"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.test.result.Plugin.stopTest" title="Permalink to this definition">¶</a></dt>
-<dd><p>Called just after a <em>test</em> has finished. This is run just after
-the _post_teardown function.</p>
+<dd><p>Called just after a <tt class="docutils literal"><span class="pre">test</span></tt> function has finished. This is run just
+after the <tt class="docutils literal"><span class="pre">_post_teardown</span></tt> method.</p>
 </dd></dl>
 
 <dl class="method">
@@ -453,7 +465,7 @@ cases. By default it returns <em>test</em>.</p>
 <dd><p>An asynchronous test runner</p>
 <dl class="method">
 <dt id="pulsar.apps.test.result.TestRunner.loadTestsFromTestCase">
-<tt class="descname">loadTestsFromTestCase</tt><big>(</big><em>cls</em><big>)</big><a class="reference internal" href="../modules/pulsar/apps/test/result.html#TestRunner.loadTestsFromTestCase"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.test.result.TestRunner.loadTestsFromTestCase" title="Permalink to this definition">¶</a></dt>
+<tt class="descname">loadTestsFromTestCase</tt><big>(</big><em>test_cls</em><big>)</big><a class="reference internal" href="../modules/pulsar/apps/test/result.html#TestRunner.loadTestsFromTestCase"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.test.result.TestRunner.loadTestsFromTestCase" title="Permalink to this definition">¶</a></dt>
 <dd><p>Load all <em>test</em> functions for the test class <em>cls</em>.</p>
 </dd></dl>
 

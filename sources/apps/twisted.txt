@@ -4,4 +4,4 @@
 Twisted Integration
 =======================
 
-.. automodule:: pulsar.lib.tx
+.. automodule:: pulsar.apps.tx

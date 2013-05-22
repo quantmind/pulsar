@@ -6,13 +6,13 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>WSGI Server &mdash; pulsar v0.5.0-beta.12 documentation</title>
+    <title>WSGI Server &mdash; pulsar v0.5.1-beta.1 documentation</title>
     <link rel="stylesheet" href="../../static/pulsar.css" type="text/css" />
     <link rel="stylesheet" href="../../static/pygments.css" type="text/css" />
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../',
-        VERSION:     '0.5.0-beta.12',
+        VERSION:     '0.5.1-beta.1',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -22,7 +22,7 @@
     <script type="text/javascript" src="../../static/underscore.js"></script>
     <script type="text/javascript" src="../../static/doctools.js"></script>
     <link rel="shortcut icon" href="../../static/Game_of_life_pulsar.gif"/>
-    <link rel="top" title="pulsar v0.5.0-beta.12 documentation" href="../../index.html" />
+    <link rel="top" title="pulsar v0.5.1-beta.1 documentation" href="../../index.html" />
     <link rel="up" title="WSGI" href="index.html" />
     <link rel="next" title="Asynchronous WSGI" href="async.html" />
     <link rel="prev" title="WSGI" href="index.html" /> 
@@ -44,7 +44,7 @@
         <li class="right" >
           <a href="index.html" title="WSGI"
              accesskey="P">previous</a> |</li>
-        <li><a href="../../index.html">pulsar v0.5.0-beta.12 documentation</a> &raquo;</li>
+        <li><a href="../../index.html">pulsar v0.5.1-beta.1 documentation</a> &raquo;</li>
           <li><a href="index.html" accesskey="U">WSGI</a> &raquo;</li> 
       </ul>
     </div>
@@ -53,7 +53,7 @@
     
         <p class="developmentversion">
         Documentation for pulsar's DEVELOPMENT version. Get the 
-        <a href="http://packages.python.org/pulsar/">release docs here</a>.
+        <a href="http://packages.python.org/pulsar/apps/wsgi/intro.html">release docs here</a>.
         </p>
     
 </div>
@@ -68,11 +68,11 @@
   <div class="section" id="module-pulsar.apps.wsgi">
 <span id="id1"></span><span id="wsgi-server"></span><h1>WSGI Server<a class="headerlink" href="#module-pulsar.apps.wsgi" title="Permalink to this headline">¶</a></h1>
 <p>This is the most important <a class="reference internal" href="../../api/application.html#application-api"><em>pulsar application</em></a>.
-The server is a specialized <a class="reference internal" href="../socket.html#pulsar.apps.socket.SocketServer" title="pulsar.apps.socket.SocketServer"><tt class="xref py py-class docutils literal"><span class="pre">pulsar.apps.socket.SocketServer</span></tt></a> class
-for serving web applications conforming with the python web server
+The server is a specialized <a class="reference internal" href="../socket.html#apps-socket"><em>socket server</em></a>
+for web applications conforming with the python web server
 gateway interface (<a class="reference external" href="http://www.python.org/dev/peps/pep-3333/">WSGI 1.0.1</a>).
 The server can be used in conjunction with several web frameworks
-as well as <a class="reference internal" href="handlers.html#apps-wsgi-handlers"><em>pulsar wsgi application handlers</em></a>,
+as well as <a class="reference internal" href="handlers.html#wsgi-handlers"><em>pulsar wsgi application handlers</em></a>,
 the <a class="reference internal" href="../rpc.html#apps-rpc"><em>pulsar RPC middleware</em></a> and
 the <a class="reference internal" href="../websockets.html#apps-ws"><em>websocket middleware</em></a>.</p>
 <p>An example of a web server written with <a class="reference internal" href="#module-pulsar.apps.wsgi" title="pulsar.apps.wsgi"><tt class="xref py py-mod docutils literal"><span class="pre">pulsar.apps.wsgi</span></tt></a> which responds
@@ -145,7 +145,7 @@ the request body for the corresponding request.</li>
 <tt class="descname">start_response</tt><big>(</big><em>status</em>, <em>response_headers</em>, <em>exc_info=None</em><big>)</big><a class="reference internal" href="../../modules/pulsar/apps/wsgi/server.html#HttpServerResponse.start_response"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.wsgi.server.HttpServerResponse.start_response" title="Permalink to this definition">¶</a></dt>
 <dd><p>WSGI compliant <tt class="docutils literal"><span class="pre">start_response</span></tt> callable, see <a class="reference external" href="http://www.python.org/dev/peps/pep-3333/">pep3333</a>.
 The application may call start_response more than once, if and only
-if the exc_info argument is provided.
+if the <tt class="docutils literal"><span class="pre">exc_info</span></tt> argument is provided.
 More precisely, it is a fatal error to call start_response without the exc_info
 argument if start_response has already been called within the current
 invocation of the application.</p>
@@ -170,12 +170,26 @@ called by an error handler.</li>
 </tr>
 </tbody>
 </table>
+<p>The <tt class="docutils literal"><span class="pre">HOP_HEADERS</span></tt> are not considered but no error is raised.</p>
 </dd></dl>
 
 <dl class="method">
 <dt id="pulsar.apps.wsgi.server.HttpServerResponse.write">
 <tt class="descname">write</tt><big>(</big><em>data</em>, <em>force=False</em><big>)</big><a class="reference internal" href="../../modules/pulsar/apps/wsgi/server.html#HttpServerResponse.write"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.wsgi.server.HttpServerResponse.write" title="Permalink to this definition">¶</a></dt>
-<dd><p>The write function required by WSGI specification.</p>
+<dd><p>The write function which is returned by the <a class="reference internal" href="#pulsar.apps.wsgi.server.HttpServerResponse.start_response" title="pulsar.apps.wsgi.server.HttpServerResponse.start_response"><tt class="xref py py-meth docutils literal"><span class="pre">start_response()</span></tt></a>
+method as required by the WSGI specification.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>data</strong> &#8211; bytes to write</li>
+<li><strong>force</strong> &#8211; Optional flag used internally.</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
 </dd></dl>
 
 <dl class="method">

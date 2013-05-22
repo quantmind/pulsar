@@ -6,13 +6,13 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>Asynchronous WSGI &mdash; pulsar v0.5.0-beta.12 documentation</title>
+    <title>Asynchronous WSGI &mdash; pulsar v0.5.1-beta.1 documentation</title>
     <link rel="stylesheet" href="../../static/pulsar.css" type="text/css" />
     <link rel="stylesheet" href="../../static/pygments.css" type="text/css" />
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../',
-        VERSION:     '0.5.0-beta.12',
+        VERSION:     '0.5.1-beta.1',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -22,7 +22,7 @@
     <script type="text/javascript" src="../../static/underscore.js"></script>
     <script type="text/javascript" src="../../static/doctools.js"></script>
     <link rel="shortcut icon" href="../../static/Game_of_life_pulsar.gif"/>
-    <link rel="top" title="pulsar v0.5.0-beta.12 documentation" href="../../index.html" />
+    <link rel="top" title="pulsar v0.5.1-beta.1 documentation" href="../../index.html" />
     <link rel="up" title="WSGI" href="index.html" />
     <link rel="next" title="WSGI application handlers" href="handlers.html" />
     <link rel="prev" title="WSGI Server" href="intro.html" /> 
@@ -44,7 +44,7 @@
         <li class="right" >
           <a href="intro.html" title="WSGI Server"
              accesskey="P">previous</a> |</li>
-        <li><a href="../../index.html">pulsar v0.5.0-beta.12 documentation</a> &raquo;</li>
+        <li><a href="../../index.html">pulsar v0.5.1-beta.1 documentation</a> &raquo;</li>
           <li><a href="index.html" accesskey="U">WSGI</a> &raquo;</li> 
       </ul>
     </div>
@@ -53,7 +53,7 @@
     
         <p class="developmentversion">
         Documentation for pulsar's DEVELOPMENT version. Get the 
-        <a href="http://packages.python.org/pulsar/">release docs here</a>.
+        <a href="http://packages.python.org/pulsar/apps/wsgi/async.html">release docs here</a>.
         </p>
     
 </div>
@@ -68,19 +68,24 @@
   <div class="section" id="asynchronous-wsgi">
 <span id="wsgi-async"></span><h1>Asynchronous WSGI<a class="headerlink" href="#asynchronous-wsgi" title="Permalink to this headline">¶</a></h1>
 <p>This section describes the asynchronous WSGI specification used by pulsar
-<a class="reference internal" href="intro.html#wsgi-server"><em>WSGI server</em></a> and <a class="reference internal" href="handlers.html#apps-wsgi-handlers"><em>application handlers</em></a>.
+<a class="reference internal" href="intro.html#wsgi-server"><em>WSGI server</em></a> and <a class="reference internal" href="handlers.html#wsgi-handlers"><em>application handlers</em></a>.
 It is a superset of the the <a class="reference external" href="http://www.python.org/dev/peps/pep-3333/">WSGI 1.0.1</a> specification for synchronous
 server/middleware.
 If an application handler is synchronous, this specification is exactly equivalent
-<a class="reference external" href="http://www.python.org/dev/peps/pep-3333/">WSGI 1.0.1</a>. The changes with respect <a class="reference external" href="http://www.python.org/dev/peps/pep-3333/">WSGI 1.0.1</a> only concerns asynchrnous
-responses and nothing else.</p>
+to <a class="reference external" href="http://www.python.org/dev/peps/pep-3333/">WSGI 1.0.1</a>. The changes with respect <a class="reference external" href="http://www.python.org/dev/peps/pep-3333/">WSGI 1.0.1</a> only concerns
+asynchronous responses and nothing else.</p>
 <div class="section" id="introduction">
 <h2>Introduction<a class="headerlink" href="#introduction" title="Permalink to this headline">¶</a></h2>
+<p>The WSGI interface has two sides: the <tt class="docutils literal"><span class="pre">server</span></tt> or <tt class="docutils literal"><span class="pre">gateway</span></tt> side, and the
+<tt class="docutils literal"><span class="pre">application</span></tt> or <tt class="docutils literal"><span class="pre">framework</span></tt> side. The server side invokes a callable object,
+here referred as <strong>application handler</strong>, that is provided by the
+application side.</p>
 </div>
-<div class="section" id="handlers">
-<h2>Handlers<a class="headerlink" href="#handlers" title="Permalink to this headline">¶</a></h2>
-<p>An asynchronous <a class="reference internal" href="handlers.html#apps-wsgi-handlers"><em>application handlers</em></a> must conform
-with the standard <a class="reference external" href="http://www.python.org/dev/peps/pep-3333/">WSGI 1.0.1</a> specification with the following exceptions:</p>
+<div class="section" id="application-handlers">
+<h2>Application handlers<a class="headerlink" href="#application-handlers" title="Permalink to this headline">¶</a></h2>
+<p>An asynchronous <a class="reference internal" href="handlers.html#wsgi-handlers"><em>application handler</em></a> must conform
+with the standard <a class="reference external" href="http://www.python.org/dev/peps/pep-3333/">WSGI 1.0.1</a> specification with the following two
+exceptions:</p>
 <ul class="simple">
 <li>It can return a <a class="reference internal" href="../../api/async.html#pulsar.Deferred" title="pulsar.Deferred"><tt class="xref py py-class docutils literal"><span class="pre">pulsar.Deferred</span></tt></a>.</li>
 <li>If it returns a <a class="reference internal" href="../../api/async.html#pulsar.Deferred" title="pulsar.Deferred"><tt class="xref py py-class docutils literal"><span class="pre">pulsar.Deferred</span></tt></a>, the deferred, when called, i.e.
@@ -88,8 +93,8 @@ the deferred get its <a class="reference internal" href="../../api/async.html#pu
 the result must be an <a class="reference internal" href="#wsgi-async-iter"><em>asynchronous iterable</em></a>.</li>
 </ul>
 </div>
-<div class="section" id="iterable">
-<span id="wsgi-async-iter"></span><h2>Iterable<a class="headerlink" href="#iterable" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="asynchronous-iterable">
+<span id="wsgi-async-iter"></span><h2>Asynchronous Iterable<a class="headerlink" href="#asynchronous-iterable" title="Permalink to this headline">¶</a></h2>
 <p>An asynchronous iterable is an iterable over a combination of <tt class="docutils literal"><span class="pre">bytes</span></tt> or
 <a class="reference internal" href="../../api/async.html#pulsar.Deferred" title="pulsar.Deferred"><tt class="xref py py-class docutils literal"><span class="pre">pulsar.Deferred</span></tt></a> which result in <tt class="docutils literal"><span class="pre">bytes</span></tt>.
 For eaxample this could be an asynchronous iterable:</p>
@@ -118,8 +123,8 @@ For eaxample this could be an asynchronous iterable:</p>
   <ul>
 <li><a class="reference internal" href="#">Asynchronous WSGI</a><ul>
 <li><a class="reference internal" href="#introduction">Introduction</a></li>
-<li><a class="reference internal" href="#handlers">Handlers</a></li>
-<li><a class="reference internal" href="#iterable">Iterable</a></li>
+<li><a class="reference internal" href="#application-handlers">Application handlers</a></li>
+<li><a class="reference internal" href="#asynchronous-iterable">Asynchronous Iterable</a></li>
 </ul>
 </li>
 </ul>
