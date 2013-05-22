@@ -17,6 +17,8 @@ Wsgi Request
    :member-order: bysource
    
    
+.. _wsgi-response:
+
 Wsgi Response
 =====================
 
@@ -76,8 +78,6 @@ class WsgiResponse(object):
 Instances are callable using the standard WSGI call and, importantly, iterable::
 
     response = WsgiResponse(200)
-    for data in response(environ, start_response):
-        ...
 
 A :class:`WsgiResponse` is an iterable over bytes to send back to the requesting
 client.
@@ -105,19 +105,13 @@ client.
 .. attribute:: environ
 
     The dictionary of WSGI environment if passed to the constructor.
-    
-.. attribute:: start_response
-
-    The WSGI ``start_response`` callable.
 
 '''
     _started = False
     DEFAULT_STATUS_CODE = 200
     def __init__(self, status=None, content=None, response_headers=None,
-                 content_type=None, encoding=None, environ=None,
-                 start_response=None):
+                 content_type=None, encoding=None, environ=None):
         self.environ = environ
-        self.start_response = start_response
         self.status_code = status or self.DEFAULT_STATUS_CODE
         self.encoding = encoding
         self.cookies = SimpleCookie()
@@ -173,19 +167,6 @@ client.
         else:
             self.headers.pop('content-type', None)
     content_type = property(_get_content_type, _set_content_type)
-
-    def __call__(self, environ, start_response, exc_info=None, middleware=None):
-        '''Make sure the headers are set.'''
-        if not exc_info:
-            if middleware:
-                for rm in middleware:
-                    try:
-                        rm(environ, self)
-                    except Exception:
-                        LOGGER.error('Exception in response middleware',
-                                     exc_info=True)
-        start_response(self.status, self.get_headers(), exc_info)
-        return self
     
     def length(self):
         if not self.is_streamed:
@@ -349,12 +330,10 @@ class Accept(EnvironMixin):
     
 class WsgiRequest(Accept):
     '''An :class:`EnvironMixin` for wsgi requests.'''    
-    def __init__(self, environ, start_response=None, app_handler=None,
-                 urlargs=None):
+    def __init__(self, environ, app_handler=None, urlargs=None):
         super(WsgiRequest, self).__init__(environ)
         self.cache.cfg = environ.get('pulsar.cfg', {})
-        if start_response:
-            self.response.start_response = start_response
+        if app_handler:
             self.cache.app_handler = app_handler
             self.cache.urlargs = urlargs
     

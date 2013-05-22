@@ -112,7 +112,9 @@ class Site(wsgi.LazyWsgi):
         json_handler = Root().putSubHandler('calc', Calculator())
         middleware = wsgi.Router('/', post=json_handler,
                                  accept_content_types=JSON_CONTENT_TYPES)
-        return wsgi.WsgiHandler(middleware=[middleware])
+        response = [wsgi.GZipMiddleware(200)]
+        return wsgi.WsgiHandler(middleware=[middleware],
+                                response_middleware=response)
     
 
 def server(callable=None, **params):

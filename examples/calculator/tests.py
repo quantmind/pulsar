@@ -36,7 +36,7 @@ class TestRpcOnThread(unittest.TestCase):
     def test_handler(self):
         s = self.app
         self.assertTrue(s.callable)
-        wsgi_handler = s.callable.middleware
+        wsgi_handler = s.callable.handler
         self.assertEqual(len(wsgi_handler.middleware), 1)
         router = wsgi_handler.middleware[0]
         self.assertEqual(router.route.path, '/')

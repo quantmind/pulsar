@@ -47,10 +47,9 @@ LOGGER = logging.getLogger('pulsar.wsgi')
 
 _RequestClass = None
 
-def wsgi_request(environ, start_response=None, app_handler=None,
-                 urlargs=None):
+def wsgi_request(environ, app_handler=None, urlargs=None):
     global _RequestClass
-    return _RequestClass(environ, start_response, app_handler, urlargs)
+    return _RequestClass(environ, app_handler=app_handler, urlargs=urlargs)
 
 def set_wsgi_request_class(RequestClass):
     global _RequestClass

@@ -5,8 +5,12 @@ It also introduces the **Response middlewares** implemented as a subclass of
 :class:`pulsar.apps.wsgi.wrappers.WsgiResponse` to modify/add headers and
 manipulate content.
 
-WSGI Middlewares
+.. _wsgi-additional-middleware:
+
+Additional WSGI Middlewares
 ============================
+
+Several :ref:`wsgi middleware <wsgi-middleware>` useful in several applications.
 
 clean path
 ~~~~~~~~~~~~~~~~~~
@@ -20,8 +24,16 @@ authorization
 ~~~~~~~~~~~~~~~~~~
 .. autofunction:: authorization_middleware
 
+
+.. _wsgi-response-middleware:
+
 Response Middlewares
 =============================
+
+Response middleware are callable objects which can be used in conjunction
+with pulsar :ref:`application handlers <wsgi-handlers>`. They must return
+a :ref:`WsgiResponse <wsgi-response>` which can be the same as
+the one passed to the callable or a brand new one.
 
 Interface
 ~~~~~~~~~~~~~~~~~~
@@ -121,8 +133,9 @@ the *response* object.
 
     def __call__(self, environ, response):
         if not self.available(environ, response):
-            return
-        return self.execute(environ, response)
+            return response
+        resp = self.execute(environ, response)
+        return resp if resp is not None else response
 
     def execute(self, environ, response):
         '''Manipulate *response*, called only if the :meth:`available`

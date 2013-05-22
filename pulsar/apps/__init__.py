@@ -719,6 +719,8 @@ A redis backend could be::
                 address = ('',)
             if name:
                 params['name'] = name
+        else:
+            kwargs['name'] = name
         con_str = get_connection_string(scheme, address, params)
         params.update(kwargs)
         if 'timeout' in params:

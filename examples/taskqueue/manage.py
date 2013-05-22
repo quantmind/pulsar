@@ -59,7 +59,11 @@ class Rpc(wsgi.LazyWsgi):
         self.tqname = tqname
         
     def setup(self):
-        return wsgi.Router('/', post=RpcRoot(self.tqname))
+        # only post allowed by the JSON RPC handler
+        request = [wsgi.Router('/', post=RpcRoot(self.tqname))]
+        response = [wsgi.GZipMiddleware(200)]
+        return wsgi.WsgiHandler(middleware=request,
+                                response_middleware=response)
     
     
 class server(pulsar.MultiApp):

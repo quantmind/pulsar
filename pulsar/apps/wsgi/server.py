@@ -244,15 +244,15 @@ when the ``wsgi_iter`` yields bytes only.'''
         self.finish_wsgi()
         
     def handle_wsgi_error(self, environ, failure):
-        response = handle_wsgi_error(environ, failure.trace)
-        if response.status_code not in REDIRECT_CODES:
-            self.keep_alive = False
-        return response(environ, self.start_response, failure.trace)
+        exc_info = failure.trace
+        response = handle_wsgi_error(environ, exc_info)
+        self.start_response(response.status, response.get_headers(), exc_info)
+        return response
         
     def catastrofic_failure(self, environ, failure):
-        self.keep_alive = False
-        start_response(500, [], failure.trace)(b'', True)
-        self.finish_wsgi()
+        response = WsgiResponse(500)
+        self.start_response(response.status, response.get_headers(), exc_info)
+        return response
         
     def finish_wsgi(self):
         if not self.keep_alive:

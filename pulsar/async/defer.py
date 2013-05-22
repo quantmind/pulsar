@@ -323,7 +323,7 @@ class Failure(object):
         if self.traces:
             return self.traces[-1]
         else:
-            return (None,None,None)
+            return (None, None, None)
 
     def log(self, log=None, msg=None, level=None):
         if not self.logged:

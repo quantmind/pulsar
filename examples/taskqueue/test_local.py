@@ -82,7 +82,7 @@ class TestTaskQueueOnThread(TaskQueueBase, unittest.TestCase):
         id = job.make_task_id((),{})
         self.assertTrue(id)
         self.assertNotEqual(id, job.make_task_id((),{}))
-        
+
     def test_pubsub(self):
         '''Tests meta attributes of taskqueue'''
         app = yield get_application(self.name())
@@ -102,7 +102,9 @@ class TestTaskQueueOnThread(TaskQueueBase, unittest.TestCase):
         self.assertEqual(app.cfg.address, ('127.0.0.1', 0))
         self.assertNotEqual(app.cfg.address, app.address)
         self.assertEqual(app.cfg.concurrency, self.concurrency)
-        router = app.callable.middleware
+        wsgi_handler = app.callable.handler
+        self.assertEqual(len(wsgi_handler.middleware), 1)
+        router = wsgi_handler.middleware[0] 
         self.assertTrue(router.post)
         root = router.post
         tq = root.taskqueue
