@@ -13,7 +13,7 @@ install:
   - python setup.py install
   - sudo rm -rf pulsar
   - sudo rm -rf /dev/shm && sudo ln -s /run/shm /dev/shm
-script: python -m runtests --profile --benchmark --verbosity 2
+script: python -m runtests --profile --benchmark --verbosity 2 -w 2
 
 branches:
   only:

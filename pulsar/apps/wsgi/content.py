@@ -18,7 +18,7 @@ Asynchronous Json
    :members:
    :member-order: bysource
    
-.. _app-wsgi-html-document:
+.. _wsgi-html:
    
 Asynchronous Html
 =====================
@@ -27,7 +27,7 @@ Asynchronous Html
    :members:
    :member-order: bysource
    
-.. _app-wsgi-html-document:
+.. _wsgi-html-document:
 
 Html Document
 ==================

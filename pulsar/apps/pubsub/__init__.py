@@ -45,7 +45,7 @@ import logging
 
 import pulsar
 from pulsar import get_actor
-from pulsar.utils.pep import to_string, get_event_loop
+from pulsar.utils.pep import to_string
 from pulsar.utils.log import local_property
 
 
@@ -129,7 +129,7 @@ implemented by subclasses.'''
         '''Close connections'''
         return self.backend.close()
 
-            
+
 class PubSubBackend(pulsar.Backend):
     '''Publish/Subscribe Backend interface.
     
@@ -146,10 +146,6 @@ class PubSubBackend(pulsar.Backend):
     def lock(self):
         return Lock()
     
-    @local_property
-    def event_loop(self):
-        return get_event_loop()
-    
     @classmethod
     def path_from_scheme(cls, scheme):
         return 'pulsar.apps.pubsub.%s' % scheme
@@ -159,11 +155,11 @@ class PubSubBackend(pulsar.Backend):
 must have the ``write`` method available. When a new message is received
 from the publisher, the :meth:`broadcast` method will notify all
 :attr:`clients` via the ``write`` method.'''
-        self.event_loop.call_now_threadsafe(self.clients.add, client)
+        self.clients.add(client)
         
     def remove_client(self, client):
         '''Remove *client* from the set of all :attr:`clients`.'''
-        self.event_loop.call_now_threadsafe(self.clients.discard, client)
+        self.clients.discard(client)
         
     def publish(self, channel, message):
         '''Publish a ``message`` into ``channel``. Must be implemented
@@ -182,7 +178,18 @@ implemented by subclasses.'''
         
     def broadcast(self, channel, message):
         '''Broadcast ``message`` to all :attr:`clients`.'''
-        self.event_loop.call_now_threadsafe(self._bc, channel, message)
+        remove = set()
+        channel = to_string(channel)
+        message = self.decode(message)
+        clients = tuple(self.clients)
+        for client in clients:
+            try:
+                client(channel, message)
+            except Exception as e:
+                LOGGER.exception('Exception while processing pub/sub client. '
+                                 'Removing it.')
+                remove.add(client)
+        self.clients.difference_update(remove)
     
     def close(self):
         '''Close this :class:`PubSubBackend`.'''
@@ -207,15 +214,3 @@ implemented by subclasses.'''
             actor.params.pubsub[id] = be
         return be
     
-    def _bc(self, channel, message):
-        remove = set()
-        channel = to_string(channel)
-        message = self.decode(message)
-        for client in self.clients:
-            try:
-                client(channel, message)
-            except Exception as e:
-                LOGGER.exception('Exception while processing pub/sub client. '
-                                 'Removing it.')
-                remove.add(client)
-        self.clients.difference_update(remove)

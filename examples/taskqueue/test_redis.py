@@ -8,6 +8,7 @@ from pulsar.apps.test import unittest
  
 from . import test_local
 
+raise ImportError
 
 unittest.skipUnless(stdnet, 'Requires python-stdnet')
 class TestRedisTaskQueueOnThread(test_local.TestTaskQueueOnThread):

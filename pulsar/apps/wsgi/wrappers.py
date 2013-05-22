@@ -421,7 +421,7 @@ data from the `QUERY_STRING` in :attr:`environ`.'''
     @cached_property
     def html_document(self):
         '''Return a cached instance of an
-:ref:`Html document <app-wsgi-html-document>`.'''
+:ref:`Html document <wsgi-html-document>`.'''
         return HtmlDocument()
     
     def get_host(self, use_x_forwarded=True):
