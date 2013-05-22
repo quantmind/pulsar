@@ -399,6 +399,14 @@ raise TimeoutError (but don't cancel the future).'''
     def stop(self):
         '''Stop the loop after the current event loop iteration is complete'''
         self.call_soon_threadsafe(self._raise_stop_event_loop)
+    
+    def call_at(self, when, callback, *args):
+        if when > self.timer():
+            timeout = TimedCall(when, callback, args)
+            heapq.heappush(self._scheduled, timeout)
+            return timeout
+        else:
+            return self.call_soon(callback, *args)
         
     def call_later(self, seconds, callback, *args):
         """Arrange for a *callback* to be called at a given time in the future.

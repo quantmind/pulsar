@@ -278,9 +278,11 @@ start the response.
         conn = self.get_connection(request)
         # build the protocol consumer
         consumer = self.consumer_factory(conn)
-        # start the request
-        consumer.new_request(request)
+        # get the event loop
         event_loop = self.get_event_loop()
+        # start the request in the event-loop thread
+        event_loop.call_soon_threadsafe(consumer.new_request, request)
+        #consumer.new_request(request)
         if self.force_sync: # synchronous response
             event_loop.run_until_complete(consumer.on_finished)
         return consumer

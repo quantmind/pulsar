@@ -58,6 +58,15 @@ class TestEventLoop(unittest.TestCase):
         yield d2
         self.assertTrue(d1.result < d2.result)
         
+    def test_call_at(self):
+        ioloop = get_event_loop()
+        d1 = pulsar.Deferred()
+        d2 = pulsar.Deferred()
+        c1 = ioloop.call_at(ioloop.timer()+1, lambda: d1.callback(ioloop.timer()))
+        c2 = ioloop.call_later(1, lambda: d2.callback(ioloop.timer()))
+        t1, t2 = yield pulsar.multi_async((d1, d2))
+        self.assertTrue(t1 < t2)
+        
     def test_periodic(self):
         ioloop = get_event_loop()
         d = pulsar.Deferred()
@@ -67,12 +76,16 @@ class TestEventLoop(unittest.TestCase):
                 self.c = 0
             def __call__(self):
                 self.c += 1
+                print(self.c)
                 if self.c == self.loop:
                     d.callback(self.c)
                     raise ValueError()
         track = p(2)
+        start = time.time()
         periodic = ioloop.call_repeatedly(1, track)
         loop = yield d
+        taken = time.time() - start
+        print(taken)
         self.assertEqual(loop, 2)
         self.assertFalse(ioloop.has_callback(periodic))
         
