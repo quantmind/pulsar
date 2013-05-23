@@ -81,6 +81,10 @@ and one :ref:`many times events <many-times-event>`:
 
     ``True`` if connecting to endpoint (for servers this is always false).
     
+.. attribute:: connected
+
+    ``True`` if an end-point connection is available.
+    
 .. attribute:: producer
 
     The :class:`Producer` of this consumer.
@@ -157,16 +161,20 @@ and one :ref:`many times events <many-times-event>`:
         '''Invoked by the :meth:`new_request` method to kick start the
 request with remote server/client. For server :class:`ProtocolConsumer` this
 method is usually not implemented and therefore is simply a pass-through.
-If implemented this is critical method
+**For clients this method should be implemented** and it is critical method
 where errors caused by stale socket connections can arise.
 **This method should not be called directly.** Use :meth:`new_request`
-instead.'''
+instead. Tipically one writes some data from the :attr:`current_request`
+into the transport. Something like this::
+
+    self.transport.write(self.current_request.encode())
+'''
         pass
     
     def new_request(self, request=None):
-        '''Starts a new *request* for this protocol consumer if
-:attr:`connected` is `True`. There is no need to override this method,
-implement :meth:`start_request` instead.'''
+        '''Starts a new ``request`` for this protocol consumer if
+:attr:`connected` or :attr:`connecting` is `True`. There is no need to
+override this method, implement :meth:`start_request` instead.'''
         if self.connected:
             self._request_processed += 1
             self._current_request = request
@@ -332,7 +340,8 @@ and three :ref:`many times events <many-times-event>`:
         self._add_idle_timeout()
         
     def set_consumer(self, consumer):
-        '''Set a new :class:`ProtocolConsumer` for this :class:`Connection`.'''
+        '''Set a new :class:`ProtocolConsumer` for this :class:`Connection`.
+If the :attr:`current_consumer` is not ``None`` an exception occurs'''
         assert self._current_consumer is None, 'Consumer is not None'
         self._current_consumer = consumer
         consumer._connection = self

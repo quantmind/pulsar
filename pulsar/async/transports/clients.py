@@ -171,6 +171,8 @@ to the remote server and to postprocess responses. These events are:
 .. attribute:: event_loop
 
     The :class:`EventLoop` for this :class:`Client`. Can be ``None``.
+    The preferred way to obtain the event loop is via the :meth:`get_event_loop`
+    method rather than accessing this attribute directly.
     
 .. attribute:: force_sync
 
@@ -266,26 +268,29 @@ is ``True`` a specialised event loop is created.'''
 :class:`ProtocolConsumer` via invoking the :meth:`response` method. '''
         raise NotImplementedError
     
-    def response(self, request):
-        '''Once a *request* object has been constructed, the :meth:`request`
-method can invoke this method to build the protocol consumer and
-start the response.
+    def response(self, request, response=None, new_connection=True):
+        '''Once a ``request`` object has been constructed, the :meth:`request`
+method can invoke this method to build the :class:`ProtocolConsumer` and
+start the response. There should not be any reason to override this method.
+This method is run on this client event loop (obtained via the
+:meth:`get_event_loop` method) thread.
 
 :parameter request: A custom :class:`Request` for the :class:`Client`.
+:parameter response: A :class:`ProtocolConsumer` to reuse, otherwise
+    ``None`` (Default).
+:parameter new_connection: ``True`` if a new connection is required via
+    the :meth:`get_connection` method. Default ``True``.
 :rtype: An :class:`ProtocolConsumer` obtained form
     :attr:`consumer_factory`.
 '''
-        conn = self.get_connection(request)
-        # build the protocol consumer
-        consumer = self.consumer_factory(conn)
-        # get the event loop
         event_loop = self.get_event_loop()
-        # start the request in the event-loop thread
-        event_loop.call_soon_threadsafe(consumer.new_request, request)
-        #consumer.new_request(request)
+        if response is None:
+            response = self.consumer_factory()
+        event_loop.call_now_threadsafe(self._response,
+                                       response, request, new_connection)
         if self.force_sync: # synchronous response
-            event_loop.run_until_complete(consumer.on_finished)
-        return consumer
+            event_loop.run_until_complete(response.on_finished)
+        return response
     
     def get_connection(self, request):
         '''Get a suitable :class:`Connection` for *request*.'''
@@ -365,8 +370,14 @@ taken to obtain all responses.'''
                 r = r.on_finished
             results.append(r)
         return multi_async(results)
-             
+    
+    def _response(self, response, request, new_connection):
+        if new_connection or response.connection is None:
+            conn = self.get_connection(request)
+            conn.set_consumer(response)
+        response.new_request(request)
         
+
 class SingleClient(Client):
     '''A :class:`Client` which handle one connection only.'''
     def __init__(self, address, **kwargs):
@@ -375,8 +386,6 @@ class SingleClient(Client):
         self._consumer = None
     
     def response(self, request):
-        if self._consumer is None:
-            self._consumer = super(SingleClient, self).response(request)
-        else:
-            self._consumer.new_request(request)
+        resp = super(SingleClient, self).response
+        self._consumer = resp(request, self._consumer, False)
         return self._consumer

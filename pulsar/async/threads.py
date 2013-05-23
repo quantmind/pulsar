@@ -71,6 +71,10 @@ the given thread, which should cause the thread to exit silently
         if event_loop:
             self.event_loop.stop()
         else:
+            try:
+                tid = self._get_my_tid()
+            except ThreadError:
+                return
             _async_raise(self._get_my_tid(), SystemExit)
     
     

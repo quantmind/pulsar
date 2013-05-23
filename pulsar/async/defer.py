@@ -3,7 +3,7 @@ import logging
 import traceback
 from collections import deque, namedtuple, Mapping
 from itertools import chain
-from inspect import isgenerator, isfunction, ismethod, istraceback
+from inspect import isgenerator, istraceback, isclass
 
 from pulsar.utils import events
 from pulsar.utils.pep import raise_error_trace, iteritems, default_timer,\
@@ -74,12 +74,19 @@ def is_generalised_generator(value):
 inspect.isgenerator function.'''
     return hasattr(value, '__iter__') and not hasattr(value, '__len__')
 
-def is_stack_trace(trace):
-    if isinstance(trace, remote_stacktrace):
+def is_exc_info_error(exc_info):
+    if isinstance(exc_info, remote_stacktrace):
         return True
-    elif isinstance(trace, tuple) and len(trace) == 3:
-        return istraceback(trace[2]) or\
-                 (trace[2] is None and isinstance(trace[1], trace[0]))
+    elif isinstance(exc_info, tuple) and len(exc_info) == 3:
+        trace = exc_info[2]
+        if not istraceback(trace):
+            err_class = exc_info[0]
+            if trace is None and isclass(err_class) and\
+                    issubclass(err_class, BaseException):
+                return isinstance(exc_info[1], err_class)
+            return False
+        else:
+            return True
     return False
     
 def multi_async(iterable, **kwargs):
@@ -110,7 +117,7 @@ def default_maybe_failure(value, msg=None):
             return Failure(exc_info, msg)
         else:
             return Failure((value.__class__, value, None), msg)
-    elif is_stack_trace(value):
+    elif is_exc_info_error(value):
         return Failure(value, msg)
     else:
         return value
@@ -260,7 +267,7 @@ class Failure(object):
                 self.traces.extend(trace.get_traces())
             elif isinstance(trace, Exception):
                 self.traces.append(sys.exc_info())
-            elif is_stack_trace(trace):
+            elif is_exc_info_error(trace):
                 self.traces.append(trace)
         return self
 

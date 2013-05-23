@@ -564,14 +564,7 @@ It returns an :class:`HttpResponse` object.
             if not isinstance(cookies, CookieJar):
                 cookies = cookiejar_from_dict(cookies)
             cookies.add_cookie_header(request)
-        #response already available
-        if response:
-            conn = self.get_connection(request)
-            conn.set_consumer(response)
-            response.new_request(request)
-            return response
-        else:
-            return self.response(request)
+        return self.response(request, response)
     
     def add_basic_authentication(self, username, password):
         '''Add a :class:`HTTPBasicAuth` handler to the *pre_requests* hooks.'''

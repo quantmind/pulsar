@@ -238,7 +238,6 @@ class MailboxClient(SingleClient):
         # the request method
         req = Message.command(command, sender, target, args, kwargs,
                               self.address, self.timeout)
-        # we make sure responses are run on the event loop thread
-        self.event_loop.call_now_threadsafe(self.response, req)
+        self.response(req)
         return req.future
         

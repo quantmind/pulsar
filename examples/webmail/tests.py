@@ -13,5 +13,5 @@ class TestWebMail(unittest.TestCase):
     server = None
     
     def testMailCient(self):
-        client = yield mail_client(timeout=5)
+        client = yield mail_client(self.cfg, timeout=5)
         self.assertTrue(client)

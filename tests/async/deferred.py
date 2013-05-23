@@ -4,6 +4,7 @@ from functools import reduce
 
 from pulsar import InvalidStateError, Deferred, is_async, NOT_DONE,\
                      is_failure, MultiDeferred, maybe_async, CancelledError
+from pulsar.async.defer import is_exc_info_error
 from pulsar.apps.test import unittest
 
 
@@ -240,16 +241,15 @@ class TestMultiDeferred(unittest.TestCase):
         self.assertFalse(is_async(r))
         self.assertTrue(is_failure(r[0]))
     
-        
-        
-        
-        
 
-
-        
-        
-        
-        
-        
-
-
+class TestFunctions(unittest.TestCase):
+    
+    def test_is_exc_info_error(self):
+        self.assertFalse(is_exc_info_error(None))
+        self.assertFalse(is_exc_info_error((1,2)))
+        self.assertFalse(is_exc_info_error((1,2,3)))
+        self.assertFalse(is_exc_info_error((None, None, None)))
+        try:
+            raise ValueError
+        except:
+            self.assertTrue(is_exc_info_error(sys.exc_info()))
