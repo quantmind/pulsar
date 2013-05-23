@@ -67,7 +67,7 @@ if ispy3k: # Python 3
 else:   # pragma : no cover
     from itertools import izip as zip, imap as map
     import cPickle as pickle
-    from ._py2 import *
+    from .fallbacks.py2 import *
     string_type = unicode
     ascii_letters = string.letters
     range = xrange

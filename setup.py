@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 import os
 import sys
-from distutils.core import setup
+from setuptools import setup
 from distutils.command.install_data import install_data
 from distutils.command.install import INSTALL_SCHEMES
 
@@ -75,7 +75,7 @@ if len(sys.argv) > 1 and sys.argv[1] == 'bdist_wininst':
         file_info[0] = '\\PURELIB\\%s' % file_info[0]
 
 
-def run_setup(with_cext):
+def run_setup(with_cext=False, argv=None):
     if with_cext:
         params = libparams
     else:
@@ -84,6 +84,10 @@ def run_setup(with_cext):
         params['cmdclass']['install_data'] = osx_install_data
     else:
         params['cmdclass']['install_data'] = install_data
+    argv = argv if argv is not None else sys.argv
+    if len(argv) > 1:
+        if argv[1] == 'install' and sys.version_info >= (3,0):
+            packages.remove('pulsar.utils.fallbacks.py2')
     params.update({'name': package_fullname,
                    'version': mod.__version__,
                    'author': mod.__author__,
@@ -103,8 +107,9 @@ def status_msgs(*msgs):
         print(msg)
     print('*' * 75)
     
-run_setup(False)
+run_setup()
 
+# NOT USED AT THE MOMENT
 def _():
     try:
         run_setup(True)
