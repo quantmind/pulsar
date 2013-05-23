@@ -84,6 +84,7 @@ pulsar alone. It includes:
 * A taskqueue application with a JSON-RPC interface.
 * Websocket graph.
 * Websocket Web Chat.
+* Django_ web site with a websocket middleware to handle a web chat.
 * The `dining philosophers problem <http://en.wikipedia.org/wiki/Dining_philosophers_problem>`_.
 * Asynchronous shell.
 
@@ -186,3 +187,4 @@ file in the top distribution directory for the full license text.
 .. _singleton: http://en.wikipedia.org/wiki/Singleton_pattern
 .. _benoitc: https://github.com/benoitc
 .. _werkzeug: http://werkzeug.pocoo.org/
+.. _Django: https://www.djangoproject.com/
