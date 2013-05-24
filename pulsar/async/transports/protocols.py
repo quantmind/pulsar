@@ -69,10 +69,6 @@ and one :ref:`many times events <many-times-event>`:
 
     The :class:`Connection` of this consumer
     
-.. attribute:: transport
-
-    The :class:`Transport` of this consumer
-    
 .. attribute:: current_request
 
     Current request instance (used for clients only).
@@ -135,8 +131,15 @@ and one :ref:`many times events <many-times-event>`:
         
     @property
     def transport(self):
+        '''The :class:`Transport` of this consumer'''
         if self._connection:
             return self._connection.transport
+        
+    @property
+    def closed(self):
+        '''The :attr:`transport` is closing or it is already closed.'''
+        transport = self.transport
+        return transport.closing if transport else True
     
     @property
     def address(self):

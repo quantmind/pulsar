@@ -155,7 +155,6 @@ protocol.'''
             msg = self._parser.decode()
     
     def start_request(self):
-        # Always called in thread
         req = self.current_request
         if req.future and 'ack' in req.data:
             self._pending_responses[req.data['ack']] = req.future

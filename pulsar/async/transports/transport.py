@@ -73,19 +73,21 @@ capabilities in some transport mechanisms.
 
 .. attribute:: connecting
 
-    ``True`` if the transport is connecting with remote server.
+    ``True`` if the transport is connecting with an end-point.
     
 .. attribute:: writing
 
-    ``True`` if the transport has data in its writing buffer.
+    The transport has data in the write buffer and it is not :attr:`closed`.
 
 .. attribute:: closing
 
-    ``True`` if the transport is about to close.
+    The transport is about to close. In this state the transport is not
+    listening for ``read`` events but it may still be writing, unless it
+    is :attr:`closed`.
         
 .. attribute:: closed
 
-    ``True`` if the transport is closed.
+    The transport is closed. No read/write operation avaibale.
 '''
     closed = False
     def write(self, data):
@@ -141,16 +143,12 @@ the :class:`EventHandler`.
     
 .. attribute:: connecting
 
-    The transport is connecting, al writes are buffered until connection
+    The transport is connecting, all writes are buffered until connection
     is established.
     
 .. attribute:: writing
 
-    The transport has data in the write buffer
-    
-.. attribute:: closing
-
-    The transport is about to close.
+    The transport has data in the write buffer and it is not :class:`closed`.
     
 **One Time Events**
 

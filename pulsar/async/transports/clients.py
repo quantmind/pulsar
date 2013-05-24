@@ -211,6 +211,7 @@ will remain as a class attribute, otherwise it will be an instance attribute.'''
                  force_sync=False, event_loop=None, **params):
         super(Client, self).__init__()
         self.lock = Lock()
+        self._closed = False
         self.trust_env = trust_env
         self.client_version = client_version or self.client_version
         self.timeout = timeout if timeout is not None else self.timeout
@@ -246,6 +247,12 @@ will remain as a class attribute, otherwise it will be an instance attribute.'''
         '''Total number of available connections.'''
         return reduce(lambda x,y: x + y, (p.available_connections for p in\
                                           itervalues(self.connection_pools)), 0)
+        
+    @property
+    def closed(self):
+        '''``True`` if the :meth:`close` was invoked on this :class:`Client`.
+A closed :class:`Client` cannot send :meth:`request` to remote servers.'''
+        return self._closed
         
     def get_event_loop(self):
         '''Return the :class:`EventLoop` used by this :class:`Client`.
@@ -320,8 +327,10 @@ in :attr:`request_parameters` tuple.'''
     def close(self, async=True):
         '''Close all connections and fire the ``finish``
 :ref:`one time event <one-time-event>`'''
-        self.close_connections(async)
-        self.fire_event('finish')
+        if not self.closed:
+            self._closed = True
+            self.close_connections(async)
+            self.fire_event('finish')
         
     def abort(self):
         self.close(async=False)
