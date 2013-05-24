@@ -135,7 +135,7 @@ for a sample usage.
     component.
     
 The ``callable`` could be an unbound method of a
-:ref:`Router <apps-wsgi-router>` class or a standard python function::
+:ref:`Router <wsgi-router>` class or a standard python function::
 
     from pulsar.apps import wsgi
     

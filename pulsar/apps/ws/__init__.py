@@ -120,7 +120,7 @@ headers to send back to the client.'''
         
     
 class WebSocket(GeneralWebSocket):
-    """A specialised :ref:`Router <apps-wsgi-router>` middleware for
+    """A specialised :ref:`Router <wsgi-router>` middleware for
 handling the websocket handshake at a given route.
 Once the handshake is succesful, the protocol consumer
 is upgraded to :class:`WebSocketProtocol` and messages are handled by

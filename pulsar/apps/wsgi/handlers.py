@@ -45,7 +45,7 @@ requests on given urls. Pulsar is shipped with
 :ref:`additional wsgi middleware <wsgi-additional-middleware>` for manipulating
 the environment before a client response is returned.
 
-.. _apps-wsgi-router:
+.. _wsgi-router:
 
 Router
 ~~~~~~~~~~~~~~~~~~
@@ -102,10 +102,11 @@ import mimetypes
 from functools import partial
 from email.utils import parsedate_tz, mktime_tz
 
-from pulsar.utils.httpurl import http_date, CacheControl, remove_double_slash
+from pulsar.utils.httpurl import http_date, CacheControl
 from pulsar.utils.structures import AttributeDictionary, OrderedDict
 from pulsar.utils.log import LocalMixin, local_property
-from pulsar import Http404, PermissionDenied, HttpException, HttpRedirect, async, is_async
+from pulsar import Http404, PermissionDenied, HttpException, HttpRedirect,\
+                    async, is_async, multi_async
 
 from .route import Route
 from .utils import wsgi_request
@@ -367,9 +368,10 @@ the best match.'''
         else:
             return self, match
     
+    @async()
     def response(self, environ, start_response, args):
         '''Once the :meth:`resolve` method has matched the correct
-:class:`Router` for serving the request, this matched roter invokes this method
+:class:`Router` for serving the request, this matched router invokes this method
 to actually produce the WSGI response.'''
         request = wsgi_request(environ, self, args)
         # Set the response content type
@@ -379,7 +381,9 @@ to actually produce the WSGI response.'''
         if callable is None:
             raise HttpException(status=405,
                                 msg='Method "%s" not allowed' % method)
-        return callable(request)
+        # make sure cache does not contain asynchronous data
+        environ['pulsar.cache'] = yield multi_async(request.cache)
+        yield callable(request)
     
     def add_child(self, router):
         '''Add a new :class:`Router` to the :attr:`routes` list. If this

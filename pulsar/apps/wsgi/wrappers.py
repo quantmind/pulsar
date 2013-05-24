@@ -7,6 +7,15 @@ The :class:`WsgiResponse`, which is available in the
 :class:`WsgiRequest.response` attribute, is an iterable over bytestring with
 several utility methods for manipulating headers and asynchronous content.
 
+
+Environ Mixin
+=====================
+
+.. autoclass:: EnvironMixin
+   :members:
+   :member-order: bysource
+   
+   
 .. _app-wsgi-request:
 
 Wsgi Request
@@ -28,23 +37,17 @@ Wsgi Response
    
 .. _WSGI: http://www.wsgi.org
 '''
-import os
 import json
-from functools import partial, reduce
+from functools import reduce
 
-import pulsar
-from pulsar import maybe_async, is_async, is_failure, multi_async
 from pulsar.utils.multipart import parse_form_data, parse_options_header
 from pulsar.utils.structures import MultiValueDict, AttributeDictionary
-from pulsar.utils.html import escape
 from pulsar.utils.httpurl import Headers, SimpleCookie, responses,\
                                  has_empty_content, string_type, ispy3k,\
-                                 to_bytes, REDIRECT_CODES, iteritems,\
                                  ENCODE_URL_METHODS, JSON_CONTENT_TYPES,\
                                  urlencode
 
 from .middleware import is_streamed
-from .route import Route
 from .content import HtmlDocument
 from .utils import LOGGER, set_wsgi_request_class, set_cookie, query_dict,\
                     parse_accept_header, parse_cache_control_header
@@ -272,8 +275,9 @@ other attribute is stored in the :attr:`environ` itself at the
             
     @property
     def cache(self):
-        '''dictionary of pulsar-specific data stored in the :attr:`environ`
-at the wsgi-extension key ``pulsar.cache``.'''
+        '''An :ref:`attribute dictionary <attribute-dictionary>` of
+pulsar-specific data stored in the :attr:`environ` at the wsgi-extension
+key ``pulsar.cache``.'''
         return self.environ['pulsar.cache']
     
     def __getattr__(self, name):
@@ -351,7 +355,7 @@ class WsgiRequest(Accept):
     @property
     def urlargs(self):
         '''Dictionary of url parameters obtained when matching a
-:ref:`router <apps-wsgi-router>` with this request :attr:`path`.'''
+:ref:`router <wsgi-router>` with this request :attr:`path`.'''
         return self.cache.urlargs
     
     @cached_property

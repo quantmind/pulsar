@@ -1,6 +1,14 @@
+Ver. 0.5.1 - Development
+==============================
+* Improved ``setup.py`` so that it does not log a python 2 module syntax error
+  when installing for python 3.
+* :ref:`Wsgi Router <wsgi-router>` makes sure that the ``pulsar.cache`` key in the
+  ``environ`` does not contain asynchronous data before invoking the callable
+  serving the request.
+
 Ver. 0.5.0 - 2013-May-22
 ==============================
-* This is a major release with considerable ammount of internal refactoring.
+* This is a major release with considerable amount of internal refactoring.
 * Asynchronous framework:
    * pep-3156_ implementation.
    * New pep-3156_ compatible :class:`pulsar.EventLoop`.
