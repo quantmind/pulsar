@@ -75,12 +75,44 @@ It contains only the <tt class="docutils literal"><span class="pre">environ</spa
 The <a class="reference internal" href="#pulsar.apps.wsgi.wrappers.WsgiResponse" title="pulsar.apps.wsgi.wrappers.WsgiResponse"><tt class="xref py py-class docutils literal"><span class="pre">WsgiResponse</span></tt></a>, which is available in the
 <tt class="xref py py-class docutils literal"><span class="pre">WsgiRequest.response</span></tt> attribute, is an iterable over bytestring with
 several utility methods for manipulating headers and asynchronous content.</p>
+<div class="section" id="environ-mixin">
+<h2>Environ Mixin<a class="headerlink" href="#environ-mixin" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="pulsar.apps.wsgi.wrappers.EnvironMixin">
+<em class="property">class </em><tt class="descclassname">pulsar.apps.wsgi.wrappers.</tt><tt class="descname">EnvironMixin</tt><big>(</big><em>environ</em>, <em>name=None</em><big>)</big><a class="headerlink" href="#pulsar.apps.wsgi.wrappers.EnvironMixin" title="Permalink to this definition">¶</a></dt>
+<dd><p>A wrapper around a <a class="reference external" href="http://www.wsgi.org">WSGI</a> environ. Instances of this class
+have the <a class="reference internal" href="#pulsar.apps.wsgi.wrappers.EnvironMixin.environ" title="pulsar.apps.wsgi.wrappers.EnvironMixin.environ"><tt class="xref py py-attr docutils literal"><span class="pre">environ</span></tt></a> attribute as their only private data. Every
+other attribute is stored in the <a class="reference internal" href="#pulsar.apps.wsgi.wrappers.EnvironMixin.environ" title="pulsar.apps.wsgi.wrappers.EnvironMixin.environ"><tt class="xref py py-attr docutils literal"><span class="pre">environ</span></tt></a> itself at the
+<tt class="docutils literal"><span class="pre">pulsar.cache</span></tt> wsgi-extension key.</p>
+<dl class="attribute">
+<dt id="pulsar.apps.wsgi.wrappers.EnvironMixin.environ">
+<tt class="descname">environ</tt><a class="headerlink" href="#pulsar.apps.wsgi.wrappers.EnvironMixin.environ" title="Permalink to this definition">¶</a></dt>
+<dd><p><a class="reference external" href="http://www.wsgi.org">WSGI</a> environ dictionary</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="pulsar.apps.wsgi.wrappers.EnvironMixin.cache">
+<tt class="descname">cache</tt><a class="headerlink" href="#pulsar.apps.wsgi.wrappers.EnvironMixin.cache" title="Permalink to this definition">¶</a></dt>
+<dd><p>An <a class="reference internal" href="../../api/utilities.html#attribute-dictionary"><em>attribute dictionary</em></a> of
+pulsar-specific data stored in the <a class="reference internal" href="#pulsar.apps.wsgi.wrappers.EnvironMixin.environ" title="pulsar.apps.wsgi.wrappers.EnvironMixin.environ"><tt class="xref py py-attr docutils literal"><span class="pre">environ</span></tt></a> at the wsgi-extension
+key <tt class="docutils literal"><span class="pre">pulsar.cache</span></tt>.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="pulsar.apps.wsgi.wrappers.EnvironMixin.get">
+<tt class="descname">get</tt><big>(</big><em>key</em>, <em>default=None</em><big>)</big><a class="headerlink" href="#pulsar.apps.wsgi.wrappers.EnvironMixin.get" title="Permalink to this definition">¶</a></dt>
+<dd><p>Shortcut to the <a class="reference internal" href="#pulsar.apps.wsgi.wrappers.EnvironMixin.environ" title="pulsar.apps.wsgi.wrappers.EnvironMixin.environ"><tt class="xref py py-attr docutils literal"><span class="pre">environ</span></tt></a> get method.</p>
+</dd></dl>
+
+</dd></dl>
+
+</div>
 <div class="section" id="wsgi-request">
 <span id="app-wsgi-request"></span><h2>Wsgi Request<a class="headerlink" href="#wsgi-request" title="Permalink to this headline">¶</a></h2>
 <dl class="class">
 <dt id="pulsar.apps.wsgi.wrappers.WsgiRequest">
 <em class="property">class </em><tt class="descclassname">pulsar.apps.wsgi.wrappers.</tt><tt class="descname">WsgiRequest</tt><big>(</big><em>environ</em>, <em>app_handler=None</em>, <em>urlargs=None</em><big>)</big><a class="reference internal" href="../../modules/pulsar/apps/wsgi/wrappers.html#WsgiRequest"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.wsgi.wrappers.WsgiRequest" title="Permalink to this definition">¶</a></dt>
-<dd><p>An <tt class="xref py py-class docutils literal"><span class="pre">EnvironMixin</span></tt> for wsgi requests.</p>
+<dd><p>An <a class="reference internal" href="#pulsar.apps.wsgi.wrappers.EnvironMixin" title="pulsar.apps.wsgi.wrappers.EnvironMixin"><tt class="xref py py-class docutils literal"><span class="pre">EnvironMixin</span></tt></a> for wsgi requests.</p>
 <dl class="attribute">
 <dt id="pulsar.apps.wsgi.wrappers.WsgiRequest.app_handler">
 <tt class="descname">app_handler</tt><a class="headerlink" href="#pulsar.apps.wsgi.wrappers.WsgiRequest.app_handler" title="Permalink to this definition">¶</a></dt>
@@ -91,7 +123,7 @@ several utility methods for manipulating headers and asynchronous content.</p>
 <dt id="pulsar.apps.wsgi.wrappers.WsgiRequest.urlargs">
 <tt class="descname">urlargs</tt><a class="reference internal" href="../../modules/pulsar/apps/wsgi/wrappers.html#WsgiRequest.urlargs"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.wsgi.wrappers.WsgiRequest.urlargs" title="Permalink to this definition">¶</a></dt>
 <dd><p>Dictionary of url parameters obtained when matching a
-<a class="reference internal" href="handlers.html#apps-wsgi-router"><em>router</em></a> with this request <a class="reference internal" href="#pulsar.apps.wsgi.wrappers.WsgiRequest.path" title="pulsar.apps.wsgi.wrappers.WsgiRequest.path"><tt class="xref py py-attr docutils literal"><span class="pre">path</span></tt></a>.</p>
+<a class="reference internal" href="handlers.html#wsgi-router"><em>router</em></a> with this request <a class="reference internal" href="#pulsar.apps.wsgi.wrappers.WsgiRequest.path" title="pulsar.apps.wsgi.wrappers.WsgiRequest.path"><tt class="xref py py-attr docutils literal"><span class="pre">path</span></tt></a>.</p>
 </dd></dl>
 
 <dl class="attribute">
@@ -221,6 +253,7 @@ object then <tt class="docutils literal"><span class="pre">max_age</span></tt> w
   <h3><a href="../../index.html">Table Of Contents</a></h3>
   <ul>
 <li><a class="reference internal" href="#">WSGI Wrappers</a><ul>
+<li><a class="reference internal" href="#environ-mixin">Environ Mixin</a></li>
 <li><a class="reference internal" href="#wsgi-request">Wsgi Request</a></li>
 <li><a class="reference internal" href="#wsgi-response">Wsgi Response</a></li>
 </ul>

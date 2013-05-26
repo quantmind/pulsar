@@ -30,8 +30,6 @@ which control the life all :class:`Actor` and :class:`Monitor`.
 
 .. _design-arbiter:
 
-Arbiter
-~~~~~~~~~~~~~~~~~~~~~~~~
 To access the :class:`Arbiter`, from the main process, one can use the
 :func:`arbiter` high level function::
 
@@ -39,8 +37,6 @@ To access the :class:`Arbiter`, from the main process, one can use the
     >>> arbiter.running()
     False
     
-The :class:`Arbiter` is also psecial because it can be stopped and restarted
-while standard :class:`Actor`, once stopped, they are gone.
 
 .. _design-actor:
 
@@ -66,14 +62,11 @@ the following will spawn a thread-based actor::
 
 Event loop
 ~~~~~~~~~~~~~~~
-Each actor has its own :attr:`Actor.requestloop`, an instance of :class:`EventLoop`,
+Each actor has its own :attr:`Actor.event_loop`, an instance of :class:`EventLoop`,
 which can be used to register handlers on file descriptors.
-The :attr:`Actor.requestloop` is initiated just after forking (or after the
+The :attr:`Actor.event_loop` is initiated just after forking (or after the
 actor's thread starts for thread-based actors).
 Pulsar :class:`EventLoop` will be following pep-3156_ guidelines.
-In addition to the :attr:`Actor.requestloop`, :ref:`cpu bound <cpubound>`
-actors have another :class:`EventLoop`, on a different thread, for
-handling IO requests on their mailbox.
 
 .. _iobound:
 
@@ -219,6 +212,23 @@ Tell the remote actor ``abc`` to gracefully shutdown::
     send('abc', 'stop')
     
     
+Asynchronous Components
+===============================
+
+Exceptions
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+There are two categories of exceptions in Python: those that derive from the
+:class:`Exception` class and those that derive from :class:`BaseException`.
+Exceptions deriving from Exception will generally be caught and handled
+appropriately; for example, they will be passed through by :class:`Deferred`,
+and they will be logged and ignored when they occur in a callback.
+
+However, exceptions deriving only from BaseException are never caught,
+and will usually cause the program to terminate with a traceback.
+(Examples of this category include KeyboardInterrupt and SystemExit;
+it is usually unwise to treat these the same as most other exceptions.)
+
 
 .. _design-application:
 

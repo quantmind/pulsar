@@ -65,10 +65,20 @@
             
   <div class="section" id="changelog">
 <span id="id1"></span><h1>Changelog<a class="headerlink" href="#changelog" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="ver-0-5-1-development">
+<h2>Ver. 0.5.1 - Development<a class="headerlink" href="#ver-0-5-1-development" title="Permalink to this headline">¶</a></h2>
+<ul class="simple">
+<li>Improved <tt class="docutils literal"><span class="pre">setup.py</span></tt> so that it does not log a python 2 module syntax error
+when installing for python 3.</li>
+<li><a class="reference internal" href="apps/wsgi/handlers.html#wsgi-router"><em>Wsgi Router</em></a> makes sure that the <tt class="docutils literal"><span class="pre">pulsar.cache</span></tt> key in the
+<tt class="docutils literal"><span class="pre">environ</span></tt> does not contain asynchronous data before invoking the callable
+serving the request.</li>
+</ul>
+</div>
 <div class="section" id="ver-0-5-0-2013-may-22">
 <h2>Ver. 0.5.0 - 2013-May-22<a class="headerlink" href="#ver-0-5-0-2013-may-22" title="Permalink to this headline">¶</a></h2>
 <ul>
-<li><p class="first">This is a major release with considerable ammount of internal refactoring.</p>
+<li><p class="first">This is a major release with considerable amount of internal refactoring.</p>
 </li>
 <li><dl class="first docutils">
 <dt>Asynchronous framework:</dt>
@@ -319,6 +329,7 @@ asynchronous test suite and asynchronous shell.</li>
   <h3><a href="index.html">Table Of Contents</a></h3>
   <ul>
 <li><a class="reference internal" href="#">Changelog</a><ul>
+<li><a class="reference internal" href="#ver-0-5-1-development">Ver. 0.5.1 - Development</a></li>
 <li><a class="reference internal" href="#ver-0-5-0-2013-may-22">Ver. 0.5.0 - 2013-May-22</a></li>
 <li><a class="reference internal" href="#ver-0-4-6-2013-feb-8">Ver. 0.4.6 - 2013-Feb-8</a></li>
 <li><a class="reference internal" href="#ver-0-4-5-2013-jan-27">Ver. 0.4.5 - 2013-Jan-27</a></li>

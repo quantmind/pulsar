@@ -144,14 +144,15 @@ by subclasses and <strong>must</strong> return a
 <div class="section" id="wsgi-middleware">
 <span id="id1"></span><h2>WSGI Middleware<a class="headerlink" href="#wsgi-middleware" title="Permalink to this headline">¶</a></h2>
 <p>Middleware are function or callable objects similar to <a class="reference internal" href="#wsgi-handlers"><em>WSGI application handlers</em></a>
-with the only difference that they can return <tt class="xref docutils literal"><span class="pre">None</span></tt>. Middleware is used
-in conjunction with both <a class="reference internal" href="#pulsar.apps.wsgi.handlers.WsgiHandler" title="pulsar.apps.wsgi.handlers.WsgiHandler"><tt class="xref py py-class docutils literal"><span class="pre">WsgiHandler</span></tt></a>.
+with the only difference that they can return <tt class="xref docutils literal"><span class="pre">None</span></tt>. Middleware can be used
+in conjunction with <a class="reference internal" href="#pulsar.apps.wsgi.handlers.WsgiHandler" title="pulsar.apps.wsgi.handlers.WsgiHandler"><tt class="xref py py-class docutils literal"><span class="pre">WsgiHandler</span></tt></a> or any other handler which iterate
+through middleware in a similar way (for example django wsgi handler).
 Here we introduce the <a class="reference internal" href="#pulsar.apps.wsgi.handlers.Router" title="pulsar.apps.wsgi.handlers.Router"><tt class="xref py py-class docutils literal"><span class="pre">Router</span></tt></a> and <a class="reference internal" href="#pulsar.apps.wsgi.handlers.MediaRouter" title="pulsar.apps.wsgi.handlers.MediaRouter"><tt class="xref py py-class docutils literal"><span class="pre">MediaRouter</span></tt></a> which handle
 requests on given urls. Pulsar is shipped with
 <a class="reference internal" href="middleware.html#wsgi-additional-middleware"><em>additional wsgi middleware</em></a> for manipulating
 the environment before a client response is returned.</p>
 <div class="section" id="router">
-<span id="apps-wsgi-router"></span><h3>Router<a class="headerlink" href="#router" title="Permalink to this headline">¶</a></h3>
+<span id="wsgi-router"></span><h3>Router<a class="headerlink" href="#router" title="Permalink to this headline">¶</a></h3>
 <p>Next up is routing. Routing is the process of match and
 parse the URL to something we can use. Pulsar provides a flexible integrated
 routing system you can use for that. It works by creating a
@@ -181,8 +182,8 @@ WSGI environ.</p>
 <dl class="class">
 <dt id="pulsar.apps.wsgi.handlers.Router">
 <em class="property">class </em><tt class="descclassname">pulsar.apps.wsgi.handlers.</tt><tt class="descname">Router</tt><big>(</big><em>rule</em>, <em>*routes</em>, <em>**parameters</em><big>)</big><a class="reference internal" href="../../modules/pulsar/apps/wsgi/handlers.html#Router"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.wsgi.handlers.Router" title="Permalink to this definition">¶</a></dt>
-<dd><p>A WSGI application which handle multiple
-<a class="reference internal" href="#apps-wsgi-route"><em>routes</em></a>. A user must implement the HTTP method
+<dd><p>A WSGI middleware to handle client requests on multiple
+<a class="reference internal" href="#apps-wsgi-route"><em>routes</em></a>. The user must implement the HTTP methods
 required by her application. For example if the route needs to serve a <tt class="docutils literal"><span class="pre">GET</span></tt>
 request, the <tt class="docutils literal"><span class="pre">get(self,</span> <span class="pre">request)</span></tt> method must be implemented.</p>
 <table class="docutils field-list" frame="void" rules="none">
@@ -257,9 +258,9 @@ the best match.</p>
 
 <dl class="method">
 <dt id="pulsar.apps.wsgi.handlers.Router.response">
-<tt class="descname">response</tt><big>(</big><em>environ</em>, <em>start_response</em>, <em>args</em><big>)</big><a class="headerlink" href="#pulsar.apps.wsgi.handlers.Router.response" title="Permalink to this definition">¶</a></dt>
+<tt class="descname">response</tt><big>(</big><em>*args</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#pulsar.apps.wsgi.handlers.Router.response" title="Permalink to this definition">¶</a></dt>
 <dd><p>Once the <a class="reference internal" href="#pulsar.apps.wsgi.handlers.Router.resolve" title="pulsar.apps.wsgi.handlers.Router.resolve"><tt class="xref py py-meth docutils literal"><span class="pre">resolve()</span></tt></a> method has matched the correct
-<a class="reference internal" href="#pulsar.apps.wsgi.handlers.Router" title="pulsar.apps.wsgi.handlers.Router"><tt class="xref py py-class docutils literal"><span class="pre">Router</span></tt></a> for serving the request, this matched roter invokes this method
+<a class="reference internal" href="#pulsar.apps.wsgi.handlers.Router" title="pulsar.apps.wsgi.handlers.Router"><tt class="xref py py-class docutils literal"><span class="pre">Router</span></tt></a> for serving the request, this matched router invokes this method
 to actually produce the WSGI response.</p>
 </dd></dl>
 
@@ -415,7 +416,7 @@ component.</li>
 </tbody>
 </table>
 <p>The <tt class="docutils literal"><span class="pre">callable</span></tt> could be an unbound method of a
-<a class="reference internal" href="#apps-wsgi-router"><em>Router</em></a> class or a standard python function:</p>
+<a class="reference internal" href="#wsgi-router"><em>Router</em></a> class or a standard python function:</p>
 <div class="highlight-python"><div class="highlight"><pre><span class="kn">from</span> <span class="nn">pulsar.apps</span> <span class="kn">import</span> <span class="n">wsgi</span>
 
 <span class="k">class</span> <span class="nc">View</span><span class="p">(</span><span class="n">wsgi</span><span class="o">.</span><span class="n">Router</span><span class="p">):</span>

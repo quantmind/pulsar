@@ -84,17 +84,12 @@ will be a centralised <a class="reference internal" href="api/actor.html#pulsar.
 <a class="reference internal" href="api/async.html#pulsar.EventLoop" title="pulsar.EventLoop"><tt class="xref py py-class docutils literal"><span class="pre">EventLoop</span></tt></a> in the <strong>main thread</strong> of the <strong>master process</strong>.
 The arbiter is a specialised <a class="reference internal" href="api/actor.html#pulsar.Actor" title="pulsar.Actor"><tt class="xref py py-class docutils literal"><span class="pre">Actor</span></tt></a>
 which control the life all <a class="reference internal" href="api/actor.html#pulsar.Actor" title="pulsar.Actor"><tt class="xref py py-class docutils literal"><span class="pre">Actor</span></tt></a> and <a class="reference internal" href="api/actor.html#pulsar.Monitor" title="pulsar.Monitor"><tt class="xref py py-class docutils literal"><span class="pre">Monitor</span></tt></a>.</p>
-<div class="section" id="arbiter">
-<span id="design-arbiter"></span><h3>Arbiter<a class="headerlink" href="#arbiter" title="Permalink to this headline">¶</a></h3>
-<p>To access the <a class="reference internal" href="api/actor.html#pulsar.Arbiter" title="pulsar.Arbiter"><tt class="xref py py-class docutils literal"><span class="pre">Arbiter</span></tt></a>, from the main process, one can use the
+<p id="design-arbiter">To access the <a class="reference internal" href="api/actor.html#pulsar.Arbiter" title="pulsar.Arbiter"><tt class="xref py py-class docutils literal"><span class="pre">Arbiter</span></tt></a>, from the main process, one can use the
 <a class="reference internal" href="api/actor.html#pulsar.arbiter" title="pulsar.arbiter"><tt class="xref py py-func docutils literal"><span class="pre">arbiter()</span></tt></a> high level function:</p>
 <div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">arbiter</span> <span class="o">=</span> <span class="n">pulsar</span><span class="o">.</span><span class="n">arbiter</span><span class="p">()</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">arbiter</span><span class="o">.</span><span class="n">running</span><span class="p">()</span>
 <span class="go">False</span>
 </pre></div>
-</div>
-<p>The <a class="reference internal" href="api/actor.html#pulsar.Arbiter" title="pulsar.Arbiter"><tt class="xref py py-class docutils literal"><span class="pre">Arbiter</span></tt></a> is also psecial because it can be stopped and restarted
-while standard <a class="reference internal" href="api/actor.html#pulsar.Actor" title="pulsar.Actor"><tt class="xref py py-class docutils literal"><span class="pre">Actor</span></tt></a>, once stopped, they are gone.</p>
 </div>
 </div>
 <div class="section" id="actors">
@@ -115,14 +110,11 @@ the following will spawn a thread-based actor:</p>
 </div>
 <div class="section" id="event-loop">
 <span id="eventloop"></span><h3>Event loop<a class="headerlink" href="#event-loop" title="Permalink to this headline">¶</a></h3>
-<p>Each actor has its own <tt class="xref py py-attr docutils literal"><span class="pre">Actor.requestloop</span></tt>, an instance of <a class="reference internal" href="api/async.html#pulsar.EventLoop" title="pulsar.EventLoop"><tt class="xref py py-class docutils literal"><span class="pre">EventLoop</span></tt></a>,
+<p>Each actor has its own <a class="reference internal" href="api/actor.html#pulsar.Actor.event_loop" title="pulsar.Actor.event_loop"><tt class="xref py py-attr docutils literal"><span class="pre">Actor.event_loop</span></tt></a>, an instance of <a class="reference internal" href="api/async.html#pulsar.EventLoop" title="pulsar.EventLoop"><tt class="xref py py-class docutils literal"><span class="pre">EventLoop</span></tt></a>,
 which can be used to register handlers on file descriptors.
-The <tt class="xref py py-attr docutils literal"><span class="pre">Actor.requestloop</span></tt> is initiated just after forking (or after the
+The <a class="reference internal" href="api/actor.html#pulsar.Actor.event_loop" title="pulsar.Actor.event_loop"><tt class="xref py py-attr docutils literal"><span class="pre">Actor.event_loop</span></tt></a> is initiated just after forking (or after the
 actor&#8217;s thread starts for thread-based actors).
-Pulsar <a class="reference internal" href="api/async.html#pulsar.EventLoop" title="pulsar.EventLoop"><tt class="xref py py-class docutils literal"><span class="pre">EventLoop</span></tt></a> will be following <a class="reference external" href="http://www.python.org/dev/peps/pep-3156/">pep-3156</a> guidelines.
-In addition to the <tt class="xref py py-attr docutils literal"><span class="pre">Actor.requestloop</span></tt>, <a class="reference internal" href="#cpubound"><em>cpu bound</em></a>
-actors have another <a class="reference internal" href="api/async.html#pulsar.EventLoop" title="pulsar.EventLoop"><tt class="xref py py-class docutils literal"><span class="pre">EventLoop</span></tt></a>, on a different thread, for
-handling IO requests on their mailbox.</p>
+Pulsar <a class="reference internal" href="api/async.html#pulsar.EventLoop" title="pulsar.EventLoop"><tt class="xref py py-class docutils literal"><span class="pre">EventLoop</span></tt></a> will be following <a class="reference external" href="http://www.python.org/dev/peps/pep-3156/">pep-3156</a> guidelines.</p>
 </div>
 <div class="section" id="io-bound">
 <span id="iobound"></span><h3>IO-bound<a class="headerlink" href="#io-bound" title="Permalink to this headline">¶</a></h3>
@@ -232,6 +224,21 @@ commands via the <a class="reference internal" href="api/actor.html#pulsar.comma
 </div>
 </div>
 </div>
+<div class="section" id="asynchronous-components">
+<h2>Asynchronous Components<a class="headerlink" href="#asynchronous-components" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="exceptions">
+<h3>Exceptions<a class="headerlink" href="#exceptions" title="Permalink to this headline">¶</a></h3>
+<p>There are two categories of exceptions in Python: those that derive from the
+<tt class="xref py py-class docutils literal"><span class="pre">Exception</span></tt> class and those that derive from <tt class="xref py py-class docutils literal"><span class="pre">BaseException</span></tt>.
+Exceptions deriving from Exception will generally be caught and handled
+appropriately; for example, they will be passed through by <a class="reference internal" href="api/async.html#pulsar.Deferred" title="pulsar.Deferred"><tt class="xref py py-class docutils literal"><span class="pre">Deferred</span></tt></a>,
+and they will be logged and ignored when they occur in a callback.</p>
+<p>However, exceptions deriving only from BaseException are never caught,
+and will usually cause the program to terminate with a traceback.
+(Examples of this category include KeyboardInterrupt and SystemExit;
+it is usually unwise to treat these the same as most other exceptions.)</p>
+</div>
+</div>
 <div class="section" id="application-framework">
 <span id="design-application"></span><h2>Application Framework<a class="headerlink" href="#application-framework" title="Permalink to this headline">¶</a></h2>
 <p>To aid the development of applications running on top of pulsar concurrent
@@ -252,10 +259,7 @@ framework, the library ships with the <tt class="xref py py-class docutils liter
   <h3><a href="index.html">Table Of Contents</a></h3>
   <ul>
 <li><a class="reference internal" href="#">Design</a><ul>
-<li><a class="reference internal" href="#server-state">Server State</a><ul>
-<li><a class="reference internal" href="#arbiter">Arbiter</a></li>
-</ul>
-</li>
+<li><a class="reference internal" href="#server-state">Server State</a></li>
 <li><a class="reference internal" href="#actors">Actors</a><ul>
 <li><a class="reference internal" href="#event-loop">Event loop</a></li>
 <li><a class="reference internal" href="#io-bound">IO-bound</a></li>
@@ -264,6 +268,10 @@ framework, the library ships with the <tt class="xref py py-class docutils liter
 <li><a class="reference internal" href="#spawning">Spawning</a></li>
 <li><a class="reference internal" href="#hooks">Hooks</a></li>
 <li><a class="reference internal" href="#commands">Commands</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#asynchronous-components">Asynchronous Components</a><ul>
+<li><a class="reference internal" href="#exceptions">Exceptions</a></li>
 </ul>
 </li>
 <li><a class="reference internal" href="#application-framework">Application Framework</a></li>
