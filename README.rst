@@ -12,9 +12,9 @@ activities in different threads and/or processes.
     task queue, wsgi, websocket, json-rpc
 
 
-.. |master-build| image:: https://secure.travis-ci.org/quantmind/pulsar.png?branch=master
+.. |master-build| image:: https://api.travis-ci.org/quantmind/pulsar.png?branch=master
 .. _master-build: http://travis-ci.org/quantmind/pulsar
-.. |dev-build| image:: https://secure.travis-ci.org/quantmind/pulsar.png?branch=dev
+.. |dev-build| image:: https://api.travis-ci.org/quantmind/pulsar.png?branch=dev
 .. _dev-build: http://travis-ci.org/quantmind/pulsar
 
 An example of a web server written with ``pulsar`` application
