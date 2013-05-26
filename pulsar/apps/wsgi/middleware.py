@@ -89,7 +89,7 @@ def clean_path_middleware(environ, start_response):
 
 def cookies_middleware(environ, start_response):
     '''Parse the ``HTTP_COOKIE`` key in the ``environ`` and set
-the new ``http.environ`` key in ``environ`` with a dictionary of cookies
+the new ``http.cookie`` key in ``environ`` with a dictionary of cookies
 obtained via the :func:`pulsar.utils.httpurl.parse_cookie` function.'''
     c = environ.get('http.cookie')
     if not isinstance(c, dict):

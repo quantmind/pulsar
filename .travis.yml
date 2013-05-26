@@ -18,3 +18,4 @@ script: python -m runtests --profile --benchmark --verbosity 2 -w 2
 branches:
   only:
     - master
+    - dev

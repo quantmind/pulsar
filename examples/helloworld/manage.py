@@ -1,5 +1,5 @@
 '''This example is a simple WSGI_ script which displays
-the "Hello World!" message. To run the script simply type::
+the "Hello World!" message. To run the script type::
 
     python manage.py
     

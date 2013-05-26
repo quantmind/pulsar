@@ -4,6 +4,7 @@ for web applications conforming with the python web server
 gateway interface (`WSGI 1.0.1`_).
 The server can be used in conjunction with several web frameworks
 as well as :ref:`pulsar wsgi application handlers <wsgi-handlers>`,
+:ref:`pulsar router <wsgi-middleware>`,
 the :ref:`pulsar RPC middleware <apps-rpc>` and
 the :ref:`websocket middleware <apps-ws>`.
 

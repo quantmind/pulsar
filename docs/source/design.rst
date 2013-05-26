@@ -219,6 +219,23 @@ Tell the remote actor ``abc`` to gracefully shutdown::
     send('abc', 'stop')
     
     
+Asynchronous Components
+===============================
+
+Exceptions
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+There are two categories of exceptions in Python: those that derive from the
+:class:`Exception` class and those that derive from :class:`BaseException`.
+Exceptions deriving from Exception will generally be caught and handled
+appropriately; for example, they will be passed through by :class:`Deferred`,
+and they will be logged and ignored when they occur in a callback.
+
+However, exceptions deriving only from BaseException are never caught,
+and will usually cause the program to terminate with a traceback.
+(Examples of this category include KeyboardInterrupt and SystemExit;
+it is usually unwise to treat these the same as most other exceptions.)
+
 
 .. _design-application:
 

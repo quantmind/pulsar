@@ -219,12 +219,12 @@ class HttpBin(wsgi.Router):
 class Site(wsgi.LazyWsgi):
     
     def setup(self):
-        app = wsgi.WsgiHandler([wsgi.clean_path_middleware,
-                                wsgi.cookies_middleware,
-                                wsgi.authorization_middleware,
-                                wsgi.MediaRouter('media', ASSET_DIR),
-                                HttpBin('/')])
-        return validator(app)
+        return wsgi.WsgiHandler([wsgi.clean_path_middleware,
+                                 wsgi.cookies_middleware,
+                                 wsgi.authorization_middleware,
+                                 wsgi.MediaRouter('media', ASSET_DIR),
+                                 HttpBin('/')])
+        #return validator(app)
     
     
 def server(description=None, **kwargs):

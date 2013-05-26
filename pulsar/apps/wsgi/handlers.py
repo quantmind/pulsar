@@ -38,8 +38,9 @@ WSGI Middleware
 =====================
 
 Middleware are function or callable objects similar to :ref:`wsgi-handlers`
-with the only difference that they can return ``None``. Middleware is used
-in conjunction with both :class:`WsgiHandler`.
+with the only difference that they can return ``None``. Middleware can be used
+in conjunction with :class:`WsgiHandler` or any other handler which iterate
+through middleware in a similar way (for example django wsgi handler).
 Here we introduce the :class:`Router` and :class:`MediaRouter` which handle
 requests on given urls. Pulsar is shipped with
 :ref:`additional wsgi middleware <wsgi-additional-middleware>` for manipulating
@@ -232,8 +233,8 @@ class Redirect(object):
     
     
 class Router(RouterType('RouterBase', (object,), {})):
-    '''A WSGI application which handle multiple
-:ref:`routes <apps-wsgi-route>`. A user must implement the HTTP method
+    '''A WSGI middleware to handle client requests on multiple
+:ref:`routes <apps-wsgi-route>`. The user must implement the HTTP methods
 required by her application. For example if the route needs to serve a ``GET``
 request, the ``get(self, request)`` method must be implemented.
 
