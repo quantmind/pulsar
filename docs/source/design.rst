@@ -30,8 +30,6 @@ which control the life all :class:`Actor` and :class:`Monitor`.
 
 .. _design-arbiter:
 
-Arbiter
-~~~~~~~~~~~~~~~~~~~~~~~~
 To access the :class:`Arbiter`, from the main process, one can use the
 :func:`arbiter` high level function::
 
@@ -39,8 +37,6 @@ To access the :class:`Arbiter`, from the main process, one can use the
     >>> arbiter.running()
     False
     
-The :class:`Arbiter` is also psecial because it can be stopped and restarted
-while standard :class:`Actor`, once stopped, they are gone.
 
 .. _design-actor:
 
@@ -66,14 +62,11 @@ the following will spawn a thread-based actor::
 
 Event loop
 ~~~~~~~~~~~~~~~
-Each actor has its own :attr:`Actor.requestloop`, an instance of :class:`EventLoop`,
+Each actor has its own :attr:`Actor.event_loop`, an instance of :class:`EventLoop`,
 which can be used to register handlers on file descriptors.
-The :attr:`Actor.requestloop` is initiated just after forking (or after the
+The :attr:`Actor.event_loop` is initiated just after forking (or after the
 actor's thread starts for thread-based actors).
 Pulsar :class:`EventLoop` will be following pep-3156_ guidelines.
-In addition to the :attr:`Actor.requestloop`, :ref:`cpu bound <cpubound>`
-actors have another :class:`EventLoop`, on a different thread, for
-handling IO requests on their mailbox.
 
 .. _iobound:
 

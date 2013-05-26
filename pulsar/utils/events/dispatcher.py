@@ -13,17 +13,6 @@ def _make_id(target):
     return id(target)
 
 
-class one_time_callback:
-    all = {}
-    def __init__(self, callback):
-        self.callback = callback
-        self.all[id(self)] = self
-
-    def __call__(self, signal=None, sender=None, **kwargs):
-        self.callback(signal=signal, sender=sender, **kwargs)
-        self.all.pop(id(self))
-
-
 class Signal(object):
     """
     Base class for all signals. From PyDispatcher.
@@ -140,10 +129,6 @@ class Signal(object):
                     break
         finally:
             self.lock.release()
-
-    def add_callback(self, callback, sender=None):
-        '''Add a callback which is executed once only.'''
-        self.connect(one_time_callback(callback), sender=sender)
 
     def send(self, sender, **named):
         """

@@ -72,6 +72,7 @@ the following:
 * Distributed task queue.
 * Shell for asynchronous scripting.
 * Asynchronous test suite.
+* Application to run a Django_ site with pulsar.
 
 .. _examples:
 

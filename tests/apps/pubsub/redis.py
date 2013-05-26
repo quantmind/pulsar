@@ -6,7 +6,8 @@ from . import local
 
 try:
     import stdnet
-except:
+    stdnet.getdb('redis://')
+except Exception:
     stdnet = None
     
 
