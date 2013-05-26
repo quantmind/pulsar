@@ -595,6 +595,7 @@ parameters ``params``. Must be implemented by subclasses.'''
         '''Called at every loop in the worker IO loop, it pool a new task
 if possible and add it to the queue of tasks consumed by the worker
 CPU-bound thread.'''
+        next_time = 0
         while worker.running:
             thread_pool = worker.thread_pool
             if not thread_pool:
@@ -604,6 +605,7 @@ CPU-bound thread.'''
                     if not self.num_concurrent_tasks:
                         worker.logger.warning('Processed %s tasks. Restarting.')
                         worker.stop()
+                        return
                 else:
                     task = yield self.get_task()
                     if task:    # Got a new task
@@ -614,8 +616,9 @@ CPU-bound thread.'''
             else:
                 LOGGER.info('%s concurrent requests. Cannot poll.',
                             self.num_concurrent_tasks)
+                next_time = 2*self.num_concurrent_tasks/5
                 break
-        worker.event_loop.call_soon(self.may_pool_task, worker)
+        worker.event_loop.call_later(next_time, self.may_pool_task, worker)
             
     @async(max_errors=None)
     def _execute_task(self, worker, task):

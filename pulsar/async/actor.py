@@ -250,8 +250,8 @@ parameters *params*.'''
             elif isinstance(actor, ActorProxyMonitor):
                 mailbox = actor.mailbox
         if hasattr(mailbox, 'request'):
-            if not mailbox.closed:
-                return mailbox.request(action, self, target, args, params)
+            #if not mailbox.closed:
+            return mailbox.request(action, self, target, args, params)
         else:
             raise CommandError('Cannot execute "%s" in %s. Unknown actor '
                                '%s.' % (action, self, target))
