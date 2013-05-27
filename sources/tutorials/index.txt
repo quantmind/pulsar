@@ -26,6 +26,7 @@ Most of the material presented in the these tutorials is based on the
    chat
    taskqueue
    django
+   philosophers
    
    
 Topics

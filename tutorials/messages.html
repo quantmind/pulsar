@@ -90,7 +90,7 @@ accepting <a class="reference internal" href="../api/protocols.html#pulsar.Conne
 mailbox server.</p>
 </li>
 <li><p class="first">When an actor sends a message to another actor, the arbiter mailbox behaves
-like a proxy server by routing the message to the targeted actor.</p>
+as a proxy server by routing the message to the targeted actor.</p>
 </li>
 <li><p class="first">Communication is bidirectional and there is <strong>only one connection</strong> between
 the arbiter and any given actor.</p>
@@ -98,13 +98,8 @@ the arbiter and any given actor.</p>
 <li><p class="first">Messages are encoded and decoded using the unmasked websocket protocol
 implemented in <a class="reference internal" href="../api/utilities.html#pulsar.utils.websocket.FrameParser" title="pulsar.utils.websocket.FrameParser"><tt class="xref py py-class docutils literal"><span class="pre">pulsar.utils.websocket.FrameParser</span></tt></a>.</p>
 </li>
-<li><p class="first">If, for some reasons, the commonication between an actor and the arbiter
+<li><p class="first">If, for some reasons, the connection between an actor and the arbiter
 get broken, the actor will eventually stop running and garbaged collected.</p>
-</li>
-<li><p class="first">The <tt class="xref py py-attr docutils literal"><span class="pre">Actor.mailbox</span></tt> for <a class="reference internal" href="../design.html#cpubound"><em>CPU bound actors</em></a> has its hown
-separate <tt class="xref py py-class docutils literal"><span class="pre">EventLoop</span></tt> on a separate thread of execution. In other
-words, it does not share it with the actor so that I/O requests
-can be processed even if the actor is performing a long calculation.</p>
 </li>
 </ul>
 <div class="section" id="actor-mailbox-protocol">
