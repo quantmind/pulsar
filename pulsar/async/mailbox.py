@@ -20,17 +20,13 @@ The implementation details are outlined below:
 * The :attr:`pulsar.Actor.mailbox` is a :class:`pulsar.Client` of the arbiter
   mailbox server.
 * When an actor sends a message to another actor, the arbiter mailbox behaves
-  like a proxy server by routing the message to the targeted actor.
+  as a proxy server by routing the message to the targeted actor.
 * Communication is bidirectional and there is **only one connection** between
   the arbiter and any given actor.
 * Messages are encoded and decoded using the unmasked websocket protocol
   implemented in :class:`pulsar.utils.websocket.FrameParser`.
-* If, for some reasons, the commonication between an actor and the arbiter
+* If, for some reasons, the connection between an actor and the arbiter
   get broken, the actor will eventually stop running and garbaged collected.
-* The :attr:`Actor.mailbox` for :ref:`CPU bound actors <cpubound>` has its hown
-  separate :class:`EventLoop` on a separate thread of execution. In other
-  words, it does not share it with the actor so that I/O requests
-  can be processed even if the actor is performing a long calculation.
   
   
 Actor mailbox protocol

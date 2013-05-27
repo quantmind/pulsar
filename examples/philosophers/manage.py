@@ -1,5 +1,5 @@
 '''
-The dining philosophers problem is an example problem often used in concurrent
+The `dining philosophers`_ problem is an example problem often used in concurrent
 algorithm design to illustrate synchronization issues and techniques
 for resolving them.
 
@@ -7,7 +7,7 @@ The problem
 ===================
 
 Five silent philosophers sit at a round table with each a bowl of spaghetti.
-A fork is placed between each pair of adjacent philosophers.
+A fork ``f`` is placed between each pair of adjacent philosophers ``P``::
 
 
          P     P
@@ -34,11 +34,20 @@ There are two parameters:
 
 * Average eating period, the higher the more time is spend eating.
 * Average waiting period, the higher the more frequent philosophers
-    get a chance to eat.
+  get a chance to eat.
     
-To run the example, simply type::
+To run the example, type::
 
     pulsar manage.py
+    
+Implementation
+=====================
+
+.. autoclass:: DiningPhilosophers
+   :members:
+   :member-order: bysource
+   
+.. _`dining philosophers`: http://en.wikipedia.org/wiki/Dining_philosophers_problem
 '''
 import random
 import time
@@ -103,6 +112,11 @@ class DiningPhilosophers(pulsar.Application):
         self.take_action(philosopher)
     
     def take_action(self, philosopher):
+        '''The ``philosopher`` performs one of these two actions:
+
+* eat, if it has both forks and than :meth:`release_forks`.
+* try to :meth:`pickup_fork`, if he has less than 2 forks.
+'''
         params = philosopher.params
         eaten = params.eaten or 0
         forks = params.forks
@@ -152,6 +166,9 @@ available.'''
                           .add_callback_args(self._continue, philosopher)
     
     def release_forks(self, philosopher):
+        '''The ``philosopher`` has just eaten and is ready to release both
+forks. This method release them, one by one, by sending the ``put_down``
+action to the monitor.'''
         forks = philosopher.params.forks
         philosopher.params.forks = []
         philosopher.params.started_waiting = 0
