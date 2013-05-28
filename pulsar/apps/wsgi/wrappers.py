@@ -412,7 +412,7 @@ class WsgiRequest(Accept):
     def body_data(self):
         '''A :class:`pulsar.utils.structures.MultiValueDict` containing
 data from the request body.'''
-        data, files = self.data_and_files
+        data, _ = self.data_and_files
         return data
     
     @cached_property

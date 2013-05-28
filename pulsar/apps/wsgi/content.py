@@ -84,7 +84,7 @@ from .html import html_visitor
 
 __all__ = ['AsyncString', 'Html',
            'Json', 'HtmlDocument',
-           'html_factory', 'Media']
+           'html_factory', 'Media', 'Scripts']
 
 
 class StreamRenderer(Deferred):
@@ -552,11 +552,18 @@ class Media(AsyncString):
     def append(self, value):
         raise NotImplementedError
         
-    def absolute_path(self, path):
+    def is_relative(self, path):
         if path.startswith('http://') or path.startswith('https://')\
-            or path.startswith('/'):
+                or path.startswith('/'):
+            return False
+        else:
+            return True
+        
+    def absolute_path(self, path):
+        if self.is_relative(path):
+            return remove_double_slash('/%s/%s' % (self.media_path, path))
+        else:
             return path
-        return remove_double_slash('/%s/%s' % (self.media_path, path))
 
 
 class Css(Media):
