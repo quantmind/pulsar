@@ -106,9 +106,14 @@ def is_async(obj):
     '''Return ``True`` if *obj* is an asynchronous object'''
     return isinstance(obj, Deferred)
 
-def is_failure(obj):
-    '''Return ``True`` if *obj* is a failure'''
-    return isinstance(obj, Failure)
+def is_failure(obj, ExceptionClass=None):
+    '''Check if ``obj`` is a :class:`Failure`. If an optional ``ExceptionClass``
+is given, it checks if the error is an instance of that class.'''
+    if isinstance(obj, Failure):
+        if ExceptionClass:
+            return obj.isinstance(ExceptionClass)
+        return True
+    return False
 
 def default_maybe_failure(value, msg=None):
     if isinstance(value, BaseException):
@@ -230,17 +235,20 @@ Typical usage::
         
 ############################################################### FAILURE
 class Failure(object):
-    '''Aggregate errors during :class:`Deferred` callbacks.
+    '''The asynchronous equivalent of python Exception. It accumulate errors
+during :class:`Deferred` callbacks.
 
 .. attribute:: traces
 
     List of (``errorType``, ``errvalue``, ``traceback``) occured during
-    the execution of a :class:`Deferred`.
+    the execution of a :class:`Deferred`. Usually, this list contains
+    one element only.
 
 .. attribute:: logged
 
-    Check if the last error was logged. It can be a way ofm switching off
+    Check if the :attr:`error` was logged. It can be a way of switching off
     logging for certain errors.
+    
 '''
     def __init__(self, err=None, msg=None):
         self.msg = msg or ''
@@ -251,28 +259,37 @@ class Failure(object):
         return '\n\n'.join(self.format_all())
     __str__ = __repr__
 
-    
     def _get_logged(self):
-        return getattr(self.trace[1], '_failure_logged', False)
+        return getattr(self.error, '_failure_logged', False)
     def _set_logged(self, value):
-        err = self.trace[1]
+        err = self.error
         if err:
             setattr(err, '_failure_logged', value)
     logged = property(_get_logged, _set_logged)
     
+    @property
+    def trace(self):
+        if self.traces:
+            return self.traces[-1]
+        else:
+            return (None, None, None)
+    
+    @property
+    def error(self):
+        return self.trace[1]
+    
     def append(self, trace):
-        '''Add new failure to self.'''
+        '''append new failure to self. The input ``trace`` can be another
+:class:`Failure`, an exception or a system exception info tuple (obtained
+from ``sys.exc_info()`` call).'''
         if trace:
             if is_failure(trace):
-                self.traces.extend(trace.get_traces())
+                self.traces.extend(trace.traces)
             elif isinstance(trace, Exception):
                 self.traces.append(sys.exc_info())
             elif is_exc_info_error(trace):
                 self.traces.append(trace)
         return self
-
-    def get_traces(self):
-        return self.traces
     
     def clear(self):
         self.traces = []
@@ -287,7 +304,8 @@ class Failure(object):
                 yield str(value)
     
     def is_instance(self, classes):
-        return isinstance(self.trace[1], classes)
+        '''Check if :attr:`error` is an instance of exception ``classes``.'''
+        return isinstance(self.error, classes)
             
     def __getstate__(self):
         self.log()
@@ -324,13 +342,6 @@ class Failure(object):
             elif N > 1:
                 raise DeferredFailure(
                     'There were {0} failures during callbacks.'.format(N))
-
-    @property
-    def trace(self):
-        if self.traces:
-            return self.traces[-1]
-        else:
-            return (None, None, None)
 
     def log(self, log=None, msg=None, level=None):
         if not self.logged:
