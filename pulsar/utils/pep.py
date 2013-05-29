@@ -25,7 +25,6 @@ if ispy3k: # Python 3
     iteritems = lambda d : d.items()
     itervalues = lambda d : d.values()
     is_string = lambda s: isinstance(s, str)
-    is_string_or_native_string = is_string
 
     def to_bytes(s, encoding=None, errors=None):
         '''Convert *s* into bytes'''
@@ -74,7 +73,7 @@ else:   # pragma : no cover
     chr = unichr
     iteritems = lambda d : d.iteritems()
     itervalues = lambda d : d.itervalues()
-    is_string = lambda s: isinstance(s, unicode)
+    is_string = lambda s: isinstance(s, basestring)
     
     def to_bytes(s, encoding=None, errors='strict'):
         encoding = encoding or 'utf-8'

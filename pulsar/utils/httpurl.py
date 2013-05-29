@@ -122,7 +122,6 @@ if ispy3k: # Python 3
     iteritems = lambda d : d.items()
     itervalues = lambda d : d.values()
     is_string = lambda s: isinstance(s, str)
-    is_string_or_native_string = is_string
 
     def to_bytes(s, encoding=None, errors=None):
         errors = errors or 'strict'
@@ -175,7 +174,6 @@ else:   # pragma : no cover
     iteritems = lambda d : d.iteritems()
     itervalues = lambda d : d.itervalues()
     is_string = lambda s: isinstance(s, unicode)
-    is_string_or_native_string = lambda s: isinstance(s, basestring)
 
     if sys.version_info < (2, 7):
         #

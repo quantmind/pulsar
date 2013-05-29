@@ -112,7 +112,7 @@ of available connections.
     ##    INTERNALS
     def _try_reconnect(self, connection, exc):
         # handle Read Exception on the transport
-        if is_failure(exc) and exc.is_instance((socket.timeout, socket.error)):
+        if is_failure(exc, (socket.timeout, socket.error)):
             # Have we been here before?
             consumer = connection.current_consumer
             if consumer is None:

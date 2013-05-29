@@ -106,12 +106,12 @@ def is_async(obj):
     '''Return ``True`` if *obj* is an asynchronous object'''
     return isinstance(obj, Deferred)
 
-def is_failure(obj, ExceptionClass=None):
-    '''Check if ``obj`` is a :class:`Failure`. If an optional ``ExceptionClass``
-is given, it checks if the error is an instance of that class.'''
+def is_failure(obj, classes=None):
+    '''Check if ``obj`` is a :class:`Failure`. If optional ``classes``
+are given, it checks if the error is an instance of those classes.'''
     if isinstance(obj, Failure):
-        if ExceptionClass:
-            return obj.isinstance(ExceptionClass)
+        if classes:
+            return obj.isinstance(classes)
         return True
     return False
 
@@ -216,6 +216,14 @@ Typical usage::
     @async()
     def myfunction(...):
         ...
+        
+It can also be used to safely call functions::
+
+    async()(myfunction, ...)
+    
+This syntax will always return a :class:`Deferred`::
+
+    async(get_result=False)(myfunction, ...)
 '''
     def __init__(self, **params):
          self.params = params
@@ -258,6 +266,9 @@ during :class:`Deferred` callbacks.
     def __repr__(self):
         return '\n\n'.join(self.format_all())
     __str__ = __repr__
+    
+    def __del__(self):
+        self.log('Deferred Failure never retrieved')
 
     def _get_logged(self):
         return getattr(self.error, '_failure_logged', False)
@@ -275,23 +286,32 @@ during :class:`Deferred` callbacks.
             return (None, None, None)
     
     @property
+    def exc_info(self):
+        if self.traces:
+            return self.traces[-1]
+        else:
+            return (None, None, None)
+    
+    @property
     def error(self):
+        '''Last python :class:`Exception` instance if available.'''
         return self.trace[1]
     
-    def append(self, trace):
-        '''append new failure to self. The input ``trace`` can be another
-:class:`Failure`, an exception or a system exception info tuple (obtained
-from ``sys.exc_info()`` call).'''
-        if trace:
-            if is_failure(trace):
-                self.traces.extend(trace.traces)
-            elif isinstance(trace, Exception):
+    def append(self, failure):
+        '''Append new ``failure`` to self. The input ``failure`` can be another
+:class:`Failure`, an :class:`Exception` or a system exception info tuple
+obtained from ``sys.exc_info()``.'''
+        if failure:
+            if is_failure(failure):
+                self.traces.extend(failure.traces)
+            elif isinstance(failure, Exception):
                 self.traces.append(sys.exc_info())
-            elif is_exc_info_error(trace):
-                self.traces.append(trace)
+            elif is_exc_info_error(failure):
+                self.traces.append(failure)
         return self
     
     def clear(self):
+        '''Clear this :class:`Failure`'''
         self.traces = []
 
     def format_all(self):
@@ -303,7 +323,7 @@ from ``sys.exc_info()`` call).'''
             else:
                 yield str(value)
     
-    def is_instance(self, classes):
+    def isinstance(self, classes):
         '''Check if :attr:`error` is an instance of exception ``classes``.'''
         return isinstance(self.error, classes)
             
@@ -344,15 +364,14 @@ from ``sys.exc_info()`` call).'''
                     'There were {0} failures during callbacks.'.format(N))
 
     def log(self, log=None, msg=None, level=None):
-        if not self.logged:
+        if self.traces and not self.logged:
             self.logged = True
             log = log or LOGGER
-            msg=  msg or self.msg
-            for e in self:
-                if level:
-                    getattr(log, level)(msg)
-                else:
-                    log.error(msg, exc_info=e)
+            msg = msg or self.msg
+            if level:
+                getattr(log, level)(msg)
+            else:
+                log.error(msg, exc_info=self.trace)
 
 
 ############################################################### Deferred

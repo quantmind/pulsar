@@ -248,8 +248,8 @@ when the ``wsgi_iter`` yields bytes only.'''
         self.finish_wsgi()
         
     def handle_wsgi_error(self, environ, failure):
-        exc_info = failure.trace
-        response = handle_wsgi_error(environ, exc_info)
+        exc_info = failure.exc_info
+        response = handle_wsgi_error(environ, failure)
         self.start_response(response.status, response.get_headers(), exc_info)
         return response
         
