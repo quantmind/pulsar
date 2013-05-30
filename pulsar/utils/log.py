@@ -160,7 +160,7 @@ class LogginMixin(LocalMixin):
 and utilities for pickle.'''    
     @property
     def logger(self):
-        return self.local.logger      
+        return self.local.logger
     
     def __setstate__(self, state):
         self.__dict__ = state
@@ -168,7 +168,7 @@ and utilities for pickle.'''
         self.configure_logging(**info)
     
     def configure_logging(self, logger=None, config=None, level=None,
-                            handlers=None):
+                          handlers=None):
         '''Configure logging. This function is invoked every time an
 instance of this class is un-serialised (possibly in a different
 process domain).'''

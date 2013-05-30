@@ -467,19 +467,21 @@ as base class for other settings.'''
 
     def __init__(self, name=None, flags=None, action=None, type=None,
                  default=None, nargs=None, desc=None, validator=None,
-                 app=None):
+                 app=None, meta=None, choices=None):
+        self.app = app or self.app
+        self.choices = choices or self.choices
         self.default = default if default is not None else self.default
-        if self.default is not None:
-            self.set(self.default)
-        self.name = name or self.name
+        self.desc = desc or self.desc
         self.flags = flags or self.flags
         self.action = action or self.action
+        self.meta = meta or self.meta
+        self.name = name or self.name
         self.nargs = nargs or self.nargs
         self.type = type or self.type
-        self.desc = desc or self.desc
-        self.app = app or self.app
         self.short = self.short or self.desc
         self.desc = self.desc or self.short
+        if self.default is not None:
+            self.set(self.default)
         if self.app and not self.section:
             self.section = self.app
         if not self.section:
@@ -491,18 +493,21 @@ as base class for other settings.'''
     def __getstate__(self):
         return self.__dict__.copy()
 
-    def add_argument(self, parser):
+    def add_argument(self, parser, set_default=False):
         '''Add this :class:`Setting` to the *parser*, an instance of
 python :class:`argparse.ArgumentParser`, only if :attr:`flags` or
 :attr:`nargs` and :attr:`name` are defined.'''
+        default = self.default if set_default else None
         kwargs = {'nargs':self.nargs}
         if self.type and self.type != 'string':
             kwargs["type"] = self.type
+        if self.choices:
+            kwargs["choices"] = self.choices
         if self.flags:
             args = tuple(self.flags)
             kwargs.update({"dest": self.name,
                            "action": self.action or "store",
-                           "default": None,
+                           "default": default,
                            "help": "%s [%s]" % (self.short, self.default)})
             if kwargs["action"] != "store":
                 kwargs.pop("type",None)
