@@ -397,16 +397,13 @@ class WsgiRequest(Accept):
     
     @cached_property
     def data_and_files(self):
+        '''Returns a two-elements tuple of a
+:class:`pulsar.utils.structures.MultiValueDict` containing data from the
+request body, and data from uploaded files.'''
         if self.method not in ENCODE_URL_METHODS:
             return parse_form_data(self.environ)
         else:
             return MultiValueDict(), None
-    
-    @cached_property
-    def json_data(self):
-        if self.method not in ENCODE_URL_METHODS:
-            data = self.environ['wsgi.input'].read(MAX_BUFFER_SIZE)
-            return json.loads(data.decode(self.encoding))
         
     @property
     def body_data(self):
@@ -415,6 +412,14 @@ data from the request body.'''
         data, _ = self.data_and_files
         return data
     
+    @cached_property
+    def json_data(self):
+        '''Returns the request body data decoded via JSON. If the
+data is not in a JSON format, this method will fail.'''
+        if self.method not in ENCODE_URL_METHODS:
+            data = self.environ['wsgi.input'].read(MAX_BUFFER_SIZE)
+            return json.loads(data.decode(self.encoding))
+        
     @cached_property
     def url_data(self):
         '''A :class:`pulsar.utils.structures.MultiValueDict` containing

@@ -1,5 +1,7 @@
 Ver. 0.5.1 - Development
 ==============================
+* The :meth:`pulsar.utils.config.Config.get` method never fails. It return the
+  ``default`` value if the setting key is not available.
 * Improved ``setup.py`` so that it does not log a python 2 module syntax error
   when installing for python 3.
 * :ref:`Wsgi Router <wsgi-router>` makes sure that the ``pulsar.cache`` key in the

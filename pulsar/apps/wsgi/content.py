@@ -53,6 +53,13 @@ Body
    :members:
    :member-order: bysource
    
+Media
+~~~~~~~~~~
+
+.. autoclass:: Media
+   :members:
+   :member-order: bysource
+   
 StreamRenderer
 ==================
 
@@ -84,7 +91,7 @@ from .html import html_visitor
 
 __all__ = ['AsyncString', 'Html',
            'Json', 'HtmlDocument',
-           'html_factory', 'Media', 'Scripts']
+           'html_factory', 'Media', 'Scripts', 'Css']
 
 
 class StreamRenderer(Deferred):
@@ -543,27 +550,68 @@ with key ``name`` and value ``value`` and return ``self``.'''
             
 
 class Media(AsyncString):
+    '''A useful :class:`AsyncString` which is a container of media links
+or scripts.
+
+.. attribute:: media_path
+
+    The path to the local media files, for example "/media/". Must
+    include both slashes.
     
-    def __init__(self, media_path):
+.. attribute:: minified
+
+    Optional flag indicating if local media files should be modified to
+    end with ``.min.js`` or ``.min.css` rather than ``.js`` or ``.css``
+    rispectively.
+    
+.. attribute:: known_libraries
+
+    Optional dictionary of known media libraries, mapping a name to a
+    valid absolute or local url. For example::
+    
+        known_libraries = {'jquery': '//code.jquery.com/jquery-1.9.1.min.js'}
+'''
+    mediatype = ('js', 'css')
+    
+    def __init__(self, media_path, minified=False, known_libraries=None):
         super(Media, self).__init__()
         self.media_path = media_path
+        self.minified = minified
+        self.known_libraries = known_libraries or {}
         self._children = OrderedDict()
     
     def append(self, value):
+        '''Append new media to the container.'''
         raise NotImplementedError
         
     def is_relative(self, path):
+        '''Check if ``path`` is a local relative path.'''
         if path.startswith('http://') or path.startswith('https://')\
                 or path.startswith('/'):
             return False
         else:
             return True
-        
+    
     def absolute_path(self, path):
+        '''Return a suitable url for ``path``.'''
+        if path in self.known_libraries:
+            path = self.known_libraries[path]
         if self.is_relative(path):
+            if self.minified:
+                for media in self.mediatype:
+                    media = '.%s' % media
+                    if path.endswith(media):
+                        path = self._minify(path, media)
+                        break
             return remove_double_slash('/%s/%s' % (self.media_path, path))
         else:
             return path
+
+    def _minify(self, path, postfix):
+        new_postfix = '.min%s' % postfix
+        if not path.endswith(new_postfix):
+            path = '%s%s' % (path[:-len(postfix)], new_postfix)
+        return path
 
 
 class Css(Media):
@@ -575,11 +623,11 @@ class Css(Media):
             for media, values in value.items():
                 m = self._children.get(media, [])
                 for value in values:
+                    if not isinstance(value, (tuple, list)):
+                        value = (value, None)
+                    path, condition = value
+                    value = csslink(self.absolute_path(path), condition)
                     if value not in m:
-                        if not isinstance(value, (tuple, list)):
-                            value = csslink(value, None)
-                        else:
-                            value = csslink(*value)
                         m.append(value)
                 self._children[media] = m
 
@@ -589,7 +637,7 @@ class Css(Media):
             medium = '' if medium == 'all' else " media='%s'" % medium
             for path in paths:
                 link = "<link href='%s' type='text/css'%s rel='stylesheet'/>\n"\
-                        % (self.absolute_path(path.link), medium)
+                        % (path.link, medium)
                 if path.condition:
                     link = '<!--[if %s]>%s<![endif]-->' % (path.condition, link)
                 yield link
@@ -625,6 +673,11 @@ various part of an HTML Head element.
     :meth:`add_meta` method rather than accessing the :attr:`meta`
     attribute directly.
     
+.. attribute:: links
+
+    A container of ``css`` links. Rendered just after the :attr:`meta`
+    container.
+    
 .. attribute:: scripts
 
     A container of Javascript files to render at the end of the body tag.
@@ -650,9 +703,11 @@ various part of an HTML Head element.
     def meta(self):
         return self._children[0]
     
-    @property
-    def links(self):
+    def __get_links(self):
         return self._children[1]
+    def __set_links(self, links):
+        self._children[1] = links
+    links = property(__get_links, __set_links)
     
     def __get_scripts(self):
         return self._children[2]

@@ -181,17 +181,12 @@ instance of Mapping or :class:`Config`.'''
         '''Get the value at ``name`` for this :class:`Config` container
 following this algorithm:
 
-* check ``name`` in the :attr:`settings` dictionary.
-* if ``name`` is a known setting parameter return ``default``
-* check ``name`` in the :attr:`params` dictionary
-* raise :class:`AttributeError`.
+* returns the ``name`` value in the :attr:`settings` dictionary if available.
+* returns the ``name`` value in the :attr:`params` dictionary if available.
+* returns the ``default`` value.
 '''
         if name not in self.settings:
-            if name in KNOWN_SETTINGS:
-                return default
-            if name in self.params:
-                return self.params[name]
-            raise AttributeError("No configuration setting for: %s" % name)
+            return self.params.get(name, default)
         return self.settings[name].get()
 
     def set(self, name, value, default=False):

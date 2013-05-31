@@ -85,6 +85,13 @@ Loading test cases is accomplished via the :class:`loader.TestLoader` class. In
 this context we refer to an ``object`` as a ``module`` (including a
 directory module) or a ``class``.
 
+.. note::
+
+    Test modules are specified when initialising a :class:`TestSuite`, by
+    passing the ``modules`` tuple/list of python dotted paths. If not defined
+    the default is to load test cases from the ``tests`` module.
+    
+
 These are the rules for loading tests:
 
 * Directories that aren't packages are not inspected. This means that if a directory
@@ -278,6 +285,8 @@ from .utils import *
 from .wsgi import *
 
 def dont_run_with_thread(obj):
+    '''Decorator for disabling test cases when the test suite runs in
+threading, rather than processing, mode.'''
     actor = pulsar.get_actor()
     if actor:
         d = unittest.skipUnless(actor.cfg.concurrency=='process',
