@@ -248,7 +248,6 @@ Test Plugin
 .. _unittest2: http://pypi.python.org/pypi/unittest2
 .. _mock: http://pypi.python.org/pypi/mock
 '''
-__test__ = False
 import logging
 import time
 

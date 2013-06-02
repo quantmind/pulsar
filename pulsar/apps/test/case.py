@@ -1,19 +1,8 @@
-import sys
-import io
-import logging
-from inspect import istraceback
-from functools import partial
-
-from pulsar import is_failure, multi_async, get_actor, maybe_async,\
-                     is_async, maybe_failure, send
-from pulsar.utils.pep import pickle
+from pulsar import is_failure, multi_async, maybe_async, maybe_failure
 from pulsar.apps import tasks
 
 
 __all__ = ['sequential']
-
-
-LOGGER = logging.getLogger('pulsar.test')
 
 
 def sequential(cls):
@@ -32,13 +21,14 @@ def test_method(cls, method):
 class Test(tasks.Job):
     
     def __call__(self, consumer, testcls, tag):
-        consumer.worker.app.local.pop('runner')
-        runner = consumer.worker.app.runner
+        suite = consumer.worker.app
+        suite.local.pop('runner')
+        runner = suite.runner
         if not isinstance(testcls, type):
             testcls = testcls()
         testcls.tag = tag
         testcls.cfg = consumer.worker.cfg
-        LOGGER.debug('Testing %s', testcls.__name__)
+        suite.logger.debug('Testing %s', testcls.__name__)
         all_tests = runner.loadTestsFromTestCase(testcls)
         num = all_tests.countTestCases()
         if num:

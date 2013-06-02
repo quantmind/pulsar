@@ -23,6 +23,7 @@ be implemented:
 * The :meth:`TaskBackend.delete_tasks` method, invoked when deleting
   a bunch of :class:`Task`.
 
+.. _apps-taskqueue-task:
 
 Task
 ~~~~~~~~~~~~~

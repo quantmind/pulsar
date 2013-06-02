@@ -4,9 +4,7 @@ from functools import partial
 import threading
 
 import pulsar
-from pulsar import is_failure, maybe_async, is_async, get_actor, send, multi_async
-from pulsar.async import commands
-from pulsar.utils.pep import pickle
+from pulsar import is_failure, safe_async, get_actor, send, multi_async
 
 
 __all__ = ['run_on_arbiter',
@@ -43,27 +41,17 @@ class TestCallable:
     __str__ = __repr__
     
     def __call__(self, actor):
-        return maybe_async(self._run(actor))
-    
-    def _run(self, actor):
         test = self.test
         if self.istest:
             test = actor.app.runner.before_test_function_run(test)
         inject_async_assert(test)
         test_function = getattr(test, self.method_name)
-        try:
-            result = test_function()
-        except Exception as e:
-            result = sys.exc_info()
-        result = maybe_async(result, timeout=self.timeout)
-        if is_async(result):
-            return result.add_both(partial(self._end, actor, True))
-        else:
-            return self._end(actor, False, result) 
+        return safe_async(test_function).add_both(partial(self._end, actor))\
+                                        .set_timeout(self.timeout)
         
-    def _end(self, actor, async, result):
+    def _end(self, actor, result):
         if self.istest:
-            actor.app.runner.after_test_function_run(self.test, result, async)
+            actor.app.runner.after_test_function_run(self.test, result)
         return result
     
 
@@ -116,10 +104,7 @@ class AsyncAssertTest(object):
         if self.name == 'assertRaises':
             error, value, args = args[0], args[1], args[2:]
             if hasattr(value, '__call__'):
-                try:
-                    value = value(*args, **kwargs)
-                except Exception:
-                    value = maybe_async(sys.exc_info())
+                value = safe_async(value, *args, **kwargs)
             args = [error, value]
         d = multi_async(args, type=list, raise_on_error=False)
         return d.add_callback(self._check_result)

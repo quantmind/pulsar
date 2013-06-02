@@ -15,7 +15,7 @@ import logging
 
 from pulsar.utils.importer import import_module
 
-default_logger = logging.getLogger('pulsar.apps.test')
+LOGGER = logging.getLogger('pulsar.apps.test')
 
 
 __all__ = ['TestLoader']
@@ -39,7 +39,7 @@ you give a *root* directory and a list of submodules where to look for tests.
 '''
     def __init__(self, root, modules, runner, logger=None):
         self.runner = runner
-        self.logger = logger or default_logger
+        self.logger = logger or LOGGER
         self.root = root
         self.modules = []
         for mod in modules:

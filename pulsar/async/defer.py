@@ -30,7 +30,8 @@ __all__ = ['Deferred',
            'maybe_async',
            'async',
            'multi_async',
-           'async_sleep']
+           'async_sleep',
+           'safe_async']
 
 if ispy3k:
     from concurrent.futures._base import Error, CancelledError, TimeoutError
@@ -188,7 +189,6 @@ with pulsar :class:`Deferred` and :class:`Failure`.'''
     _maybe_async = maybe_async_callable
     _maybe_failure = maybe_failure_callable
     
-
 def async_sleep(timeout):
     '''The asynchronous equivalent of ``time.sleep(timeout)``. Use this
 function within a :ref:`coroutine <coroutine>` when you need to resume
@@ -240,6 +240,13 @@ This syntax will always return a :class:`Deferred`::
         _.async = True
         return _
 
+
+_safe_async = async(get_result=False)
+def safe_async(callable, *args, **kwargs):
+    '''Safely execute a ``callable`` and always return a :class:`Deferred`,
+even if the ``callable`` is not asynchronous. Never throws.'''
+    return _safe_async(callable)(*args, **kwargs)
+
         
 ############################################################### FAILURE
 class Failure(object):
@@ -267,8 +274,8 @@ during :class:`Deferred` callbacks.
         return '\n\n'.join(self.format_all())
     __str__ = __repr__
     
-    def __del__(self):
-        self.log('Deferred Failure never retrieved')
+    #def __del__(self):
+    #    self.log('Deferred Failure never retrieved')
 
     def _get_logged(self):
         return getattr(self.error, '_failure_logged', False)
@@ -365,13 +372,13 @@ obtained from ``sys.exc_info()``.'''
 
     def log(self, log=None, msg=None, level=None):
         if self.traces and not self.logged:
-            self.logged = True
             log = log or LOGGER
             msg = msg or self.msg
             if level:
                 getattr(log, level)(msg)
             else:
                 log.error(msg, exc_info=self.trace)
+        self.logged = True
 
 
 ############################################################### Deferred
@@ -416,11 +423,7 @@ which will be put off until later. It conforms with the
         self._description = description
         self._callbacks = deque()
         self._event_loop = event_loop
-        if timeout and timeout > 0:
-            # create the timeout. We don't cancel the timeout after
-            # a callback is received since the result may be still asynchronous
-            self._timeout = self.event_loop.call_later(timeout, self.cancel,
-                                            'timeout (%s seconds)' % timeout)
+        self.set_timeout(timeout)
 
     def __repr__(self):
         v = self._description or self.__class__.__name__
@@ -439,6 +442,24 @@ which will be put off until later. It conforms with the
 can be set during initialisation.'''
         return self._event_loop or get_event_loop()
     
+    @property
+    def timeout(self):
+        '''The :class:`TimedCall` which handles the timeout of this
+:class:`Deferred`. Available only when a timeout is set.'''
+        return self._timeout
+    
+    def set_timeout(self, timeout):
+        '''Set a the :attr:`timeout` for this :class:`Deferred`. It returns
+``self`` so that other methods can be concatenated.'''
+        if timeout and timeout > 0:
+            if self._timeout:
+                self._timeout.cancel()
+            # create the timeout. We don't cancel the timeout after
+            # a callback is received since the result may be still asynchronous
+            self._timeout = self.event_loop.call_later(timeout, self.cancel,
+                                            'timeout (%s seconds)' % timeout)
+        return self
+        
     def cancelled(self):
         '''pep-3156_ API method, it returns ``True`` if the :class:`Deferred`
 was cancelled.'''
@@ -717,7 +738,7 @@ function when a generator is passed as argument.'''
             try:
                 result = self.gen.send(result)
             except StopIteration:
-                return self._conclude(result)
+                break
             except Exception:
                 result = sys.exc_info()
             result = maybe_async(result, event_loop=self.event_loop)
@@ -725,6 +746,8 @@ function when a generator is passed as argument.'''
                 return result.add_both(self._restart)
             elif result == NOT_DONE:
                 return self.event_loop.call_soon(self._consume, None)
+        if not self.done():
+            return self._conclude(result)
 
     def _restart(self, result):
         #restart the coroutine in the same event loop it was started

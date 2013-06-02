@@ -16,7 +16,6 @@ Test Runner
 
    
 '''
-import sys
 import traceback
 import unittest
 import logging
@@ -92,7 +91,7 @@ after the ``_post_teardown`` method.'''
 behaviour in the process domain where the test run.'''
         return test
     
-    def after_test_function_run(self, test, local, result, async):
+    def after_test_function_run(self, test, local, result):
         '''Given a test-function instance return a, possibly, modified test
 instance. This function can be used by plugins to modify the behaviour of test
 cases. By default it returns *test*.'''
@@ -165,10 +164,6 @@ class TestStream(TestResultProxy):
     def startTest(self, test):
         if self.showAll:
             self.head(test, 'Started')
-            
-    #def after_test_function_run(self, test, local, result, async):
-    #    if async:
-    #        self.startTest(test)
 
     def head(self, test, v):
         v = self.getDescription(test) + ' ... %s\n' % v
@@ -441,12 +436,12 @@ class TestRunner(TestResultProxy):
             test = p.before_test_function_run(test, local) or test
         return test
     
-    def after_test_function_run(self, test, result, async):
+    def after_test_function_run(self, test, result):
         '''Called before the test starts.'''
         for p in self.plugins:
             local = test.plugins.get(p.name)
             if local is not None:
-                p.after_test_function_run(test, local, result, async)
+                p.after_test_function_run(test, local, result)
         return result
             
     def run_test_function(self, test, func, timeout=None):

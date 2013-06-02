@@ -528,7 +528,7 @@ The application is now in the arbiter but has not yet started.'''
 
 class MultiApp(Configurator):
     '''A :class:`MultiApp` is a tool for creating several :class:`Application`
-and starting them at once. It makes sure all :ref:`settings` for the
+and starting them at once. It makes sure all :ref:`settings <settings>` for the
 applications created are available in the command line.
 The :meth:`build` is the only method which must be implemented by subclasses.
 Check the :class:`examples.taskqueue.manage.server` class in the

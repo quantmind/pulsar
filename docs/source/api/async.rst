@@ -27,7 +27,7 @@ EventLoop
 
 .. _async-discovery:
 
-Async Deiscovery Functions
+Async Discovery Functions
 =================================
 
 This section describes the asynchronous discover functions which are used
@@ -68,10 +68,13 @@ Async
 
 .. autoclass:: async
 
-
 Multi Async
 ~~~~~~~~~~~~~~~~~~~~~~~~
 .. autofunction:: multi_async
+
+Safe Async
+~~~~~~~~~~~~~~~~~~~~~~~~~
+.. autofunction:: safe_async
 
 Async Sleep
 ~~~~~~~~~~~~~~~~~~~~~~~~
